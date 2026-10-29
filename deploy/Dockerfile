@@ -4,24 +4,64 @@
 # Do not edit: `majordomus generate --check` refuses a hand edit. Change
 # the deployment object and regenerate.
 
-FROM rust:1.85-alpine3.21 AS build
-RUN apk add --no-cache musl-dev
+# Where the executable comes from: `build` compiles it below; `release` takes a
+# release's published executable from the release-binary build context instead.
+ARG MAJORDOMUS_BINARY_FROM=build
+
+FROM rust:1.98.1-alpine3.21 AS toolchain
+RUN apk add --no-cache musl-dev sccache
+ENV RUSTC_WRAPPER=sccache SCCACHE_DIR=/sccache SCCACHE_CACHE_SIZE=2G SCCACHE_IDLE_TIMEOUT=0 CARGO_INCREMENTAL=0
 WORKDIR /src
+
+# The dependency graph and nothing else; see BUILDER_STAGES in the renderer.
+FROM toolchain AS recipe
+COPY apps/majordomus-cli/Cargo.toml apps/majordomus-cli/Cargo.lock /recipe/in/
+RUN mkdir -p /recipe/out \
+  && awk '/^\[/ { t = $0; skip = (t ~ /^\[\[(bench|test|example)\]\]$/) } t == "[package]" && /^version *=/ { $0 = "version = \"0.0.0\"" } !skip' /recipe/in/Cargo.toml > /recipe/out/Cargo.toml \
+  && awk 'p && /^version = / { $0 = "version = \"0.0.0\""; p = 0 } $0 == "name = \"majordomus-cli\"" { p = 1 } 1' /recipe/in/Cargo.lock > /recipe/out/Cargo.lock
+
+# Every dependency compiled, as layer content a registry cache can carry.
+FROM toolchain AS deps
+COPY --from=recipe /recipe/out/ ./apps/majordomus-cli/
+COPY apps/majordomus-core ./apps/majordomus-core
+RUN --mount=type=cache,id=majordomus-sccache,target=/sccache mkdir -p apps/majordomus-cli/src \
+  && echo 'fn main() {}' > apps/majordomus-cli/src/main.rs && echo 'fn main() {}' > apps/majordomus-cli/build.rs \
+  && touch apps/majordomus-cli/src/lib.rs \
+  && cargo build --locked --release --manifest-path apps/majordomus-cli/Cargo.toml --package majordomus-cli --bin majordomus \
+  && rm -rf apps/majordomus-cli/src apps/majordomus-cli/build.rs apps/majordomus-cli/target/release/.fingerprint/majordomus-cli-* \
+    apps/majordomus-cli/target/release/build/majordomus-cli-* apps/majordomus-cli/target/release/deps/majordomus_cli-* \
+    apps/majordomus-cli/target/release/deps/libmajordomus_cli-* apps/majordomus-cli/target/release/deps/majordomus-* \
+    apps/majordomus-cli/target/release/majordomus apps/majordomus-cli/target/release/majordomus.d \
+  && sccache --show-stats
+
+FROM deps AS build
 COPY apps/majordomus-cli ./apps/majordomus-cli
 # The commit this image is built from, compiled into the executable so that
 # /api/v1/live and /api/v1/ready can name it. The build context carries no .git,
-# so the builder cannot ask git and the deploy must say it:
-#   fly deploy --build-arg MAJORDOMUS_BUILD_COMMIT="$(git rev-parse HEAD)"
-# Left unset, the deployed process answers `unknown` rather than a guess.
+# so the builder cannot ask git and the build must say it:
+#   docker build --build-arg MAJORDOMUS_BUILD_COMMIT="$(git rev-parse HEAD)" ...
+# Left unset, the deployed process answers `unknown` rather than a guess. Declared
+# here and in no earlier stage, so a new commit never invalidates a dependency.
 ARG MAJORDOMUS_BUILD_COMMIT=unknown
 ARG MAJORDOMUS_BUILD_DIRTY=unknown
-RUN cargo build --locked --release --manifest-path apps/majordomus-cli/Cargo.toml --package majordomus-cli --bin majordomus
+RUN --mount=type=cache,id=majordomus-sccache,target=/sccache \
+  cargo build --locked --offline --release --manifest-path apps/majordomus-cli/Cargo.toml --package majordomus-cli --bin majordomus \
+  && install -Dm755 apps/majordomus-cli/target/release/majordomus /out/majordomus && sccache --show-stats
+
+# A release's own executable, published, checksummed and attested, compiled by nothing
+# here: --build-arg MAJORDOMUS_BINARY_FROM=release --build-context release-binary=<dir>, where
+# <dir> holds majordomus-amd64 and majordomus-arm64.
+FROM scratch AS release
+ARG TARGETARCH
+COPY --from=release-binary majordomus-${TARGETARCH} /out/majordomus
+
+FROM ${MAJORDOMUS_BINARY_FROM} AS binary
 
 FROM alpine:3.21
 # An unprivileged user, which is also why the declared port is above 1024.
 RUN adduser -D -H -u 10001 majordomus
 WORKDIR /app
-COPY --from=build /src/apps/majordomus-cli/target/release/majordomus /usr/local/bin/majordomus
+COPY --from=binary /out/majordomus /usr/local/bin/majordomus
 COPY share /app/share
 COPY .ai /app/.ai
 COPY docs /app/docs
@@ -33,6 +73,8 @@ COPY AGENTS.md /app/AGENTS.md
 COPY CLAUDE.md /app/CLAUDE.md
 COPY CONTRIBUTING.md /app/CONTRIBUTING.md
 COPY SECURITY.md /app/SECURITY.md
+# The one directory the process writes: the layer's checkout-local half.
+RUN install -d -o majordomus -g majordomus /app/.ai/local
 USER majordomus
 EXPOSE 8080
 # The address, the port and the interface are the object's; this command names the

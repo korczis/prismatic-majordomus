@@ -6,7 +6,9 @@
 //! OpenAPI document is derived from the same registry at request time, and the Swagger UI
 //! shell loads it.
 
+pub mod deadline;
 pub mod events;
+pub(crate) mod follow;
 pub mod mcp;
 pub mod openapi;
 pub mod router;

@@ -1,0 +1,62 @@
+id: I2147
+milestone: mcp-transports-are-reliable
+title: "The MCP transports bound what they read and follow the Streamable HTTP rules they claim"
+slug: mcp-transports-are-bounded
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Apply one declared message bound to stdin lines, request bodies and every response the bridge reads, validate MCP-Protocol-Version, issue unpredictable session ids, and never reap a session whose request is still running."
+why: "Bounds are asymmetric. stdin lines have no length bound (apps/majordomus-cli/src/mcp/stdio.rs:40); request bodies are capped at 1 MiB (apps/majordomus-cli/src/http/server.rs:20,207-214) but the owner's in-process stdio session is not; responses the bridge reads have no cap (apps/majordomus-cli/src/mcp/bridge.rs:85, read_to_end), and the mesh's rendezvous and link replies go through the same function (apps/majordomus-cli/src/mcp/bridge.rs:84-85). On the Streamable HTTP endpoint the MCP-Protocol-Version and Accept headers are ignored, session ids are pid-seq-subsecnanos and predictable (apps/majordomus-cli/src/http/mcp.rs:159), and the 90 s idle reaper can expire a session whose single request is still running, because last_seen is stamped only when a request starts (apps/majordomus-cli/src/http/mcp.rs:138). Baseline audit of 2026-10-09 at master 1fb8d6be44, lifecycle gap 14, the payload-limit row and the Streamable HTTP row."
+current_state: "One oversized line or response can exhaust a client or a server; a long request can lose its session."
+desired_state: "stdio lines are bounded at MAX_LINE_BYTES (the HTTP body bound, 1 MiB) and an over-long one is answered with a parse error while the session goes on; every reply bridge::request reads is bounded at MAX_REPLY_BYTES (32 MiB) — the stdio bridge, rendezvous and mesh links alike; MCP-Protocol-Version is validated against PROTOCOL_VERSIONS (400 otherwise); session ids are 128 bits from the OS random source; last_seen is stamped again when the answer is written. Not done here: the Accept header and the GET/SSE half of Streamable HTTP."
+scope:
+  - "apps/majordomus-cli/src/mcp/stdio.rs"
+  - "apps/majordomus-cli/src/mcp/bridge.rs"
+  - "apps/majordomus-cli/src/http/mcp.rs"
+  - "apps/majordomus-cli/src/http/server.rs"
+  - "apps/majordomus-cli/tests/mcp_conformance.rs"
+  - "apps/majordomus-cli/tests/mcp_conformance_http.rs"
+  - "docs/MCP.md"
+depends_on: []
+acceptance_criteria:
+  - "A stdin line, a request body and a response body each one byte over the declared bound are refused with a typed error, and the session survives"
+  - "A request naming an unsupported MCP-Protocol-Version is answered 400"
+  - "A session whose single request runs longer than the reap interval is not reaped"
+  - "Session ids are drawn from the operating system's random source"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mcp_conformance --test mcp_conformance_http --test mcp_stdio"
+evidence_required:
+  - "transport_bounds_test"
+  - "protocol_version_header_test"
+  - "long_request_not_reaped_test"
+created_at: 2026-10-09
+updated_at: 2026-10-14T23:26:47Z
+started_at: 2026-10-14T23:26:13Z
+started_event: sha256:06c1c731cf88425f70e38b672ec8f81d6d4ab8f4ae1197ebfa7a4a911d2e2099
+verified_at: 2026-10-14T23:26:24Z
+verified_event: sha256:2512c30270366a8c2048a62d9799b9500c0de3fb1c9456ea9de3878873dd5b41
+completed_at: 2026-10-14T23:26:47Z
+completed_event: sha256:6cbcd54c84ab922b398cabaa4188d96e6d90dc6cb0172ae1807bc9d2843a57dc
+evidence:
+  - covers: transport_bounds_test
+    type: ci
+    command: "cargo test --test mcp_transport_bounds"
+    result: "a_stdin_line_over_the_bound_is_refused_and_the_session_goes_on ... ok; a_reply_over_the_bound_is_refused ... ok — validate run 38626102499 (success) on master e8505a431d, job rust (3) 116065669794; transport code unchanged to c0e3585dc8; delivered by 9e018a302b1"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38626102499/job/116065669794"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T23:26:33Z
+  - covers: protocol_version_header_test
+    type: ci
+    command: "cargo test --test mcp_transport_bounds a_session_id_is_random_and_an_unknown_protocol_version_is_refused"
+    result: "a_session_id_is_random_and_an_unknown_protocol_version_is_refused ... ok (400 on an unspoken MCP-Protocol-Version; 128-bit OS-random session id) — validate run 38626102499 (success) on master e8505a431d, job rust (3) 116065669794; transport code unchanged to c0e3585dc8; delivered by 9e018a302b1"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38626102499/job/116065669794"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T23:26:38Z
+  - covers: long_request_not_reaped_test
+    type: ci
+    command: "cargo test --test mcp_transport_bounds a_session_is_not_reaped_behind_a_request_that_ran_long"
+    result: "a_session_is_not_reaped_behind_a_request_that_ran_long ... ok — validate run 38626102499 (success) on master e8505a431d, job rust (3) 116065669794; transport code unchanged to c0e3585dc8; delivered by 9e018a302b1"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38626102499/job/116065669794"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T23:26:42Z

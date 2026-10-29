@@ -100,6 +100,7 @@ fn fixture<I: BenchmarkCases + serde::de::DeserializeOwned + JsonSchema + 'stati
             benchmark,
             cache,
             execution: majordomus_cli::capability::ExecutionPolicy::classify(kind),
+            skill: None,
         },
         handler: handler::<Value, EchoOut, _>(|_, v| {
             Ok(EchoOut {
@@ -226,6 +227,9 @@ fn the_shipped_registry_is_fully_covered_and_every_target_traces_to_a_capability
                 }
             }
             TargetKind::System { target } => assert!(SystemTarget::ALL.contains(target)),
+            // a page is the UI's, from its own route list; the projection's unit tests hold
+            // it to that list
+            TargetKind::Page { route, .. } => assert!(route.starts_with("/ui"), "{route}"),
         }
     }
     // every MCP tool and every HTTP route of a *required* executable is a target; a waived
@@ -500,6 +504,7 @@ fn the_runners_time_a_target_through_the_executor_a_socket_and_a_child_process()
         warmup: 1,
         samples: 3,
         cold_spawns: 1,
+        deferred: true,
     };
     let mut runner = Runner::new(ctx.clone(), tiny, &f.root())
         .with_executable(common::BIN.into())
@@ -561,6 +566,33 @@ fn the_runners_time_a_target_through_the_executor_a_socket_and_a_child_process()
         assert_eq!(r[0].cache_mode, CacheMode::NotApplicable);
         assert!(r[0].stats.samples >= 1, "{}", s.key());
     }
+    // the UI's pages: a screen over the pinned context and over the live view, and a
+    // deferred panel, each cold and warm; the panel takes the expensive targets' budget and
+    // only a profile that admits deferred panels measures it
+    for (key, samples) in [
+        ("system.http.ui.index", 3),
+        ("system.http.live.ui.index", 3),
+        ("system.http.ui.panels.pull_requests", 1),
+    ] {
+        let t = projection
+            .targets
+            .iter()
+            .find(|t| t.key == key)
+            .unwrap_or_else(|| panic!("{key} is a target"));
+        assert_eq!(t.is_deferred(), samples == 1, "{key}");
+        assert_eq!(Profile::QUICK.admits(t), !t.is_deferred(), "{key}");
+        assert!(Profile::FULL.admits(t), "{key}");
+        let r = runner.run(t).unwrap();
+        assert_eq!(
+            r.iter().map(|r| r.cache_mode).collect::<Vec<_>>(),
+            [CacheMode::Cold, CacheMode::Warm],
+            "{key}"
+        );
+        for r in &r {
+            assert_eq!(r.stats.samples, samples, "{key}");
+            assert!(r.stats.p50_us > 0.0, "{key}: {:?}", r.stats);
+        }
+    }
     runner.finish();
 }
 
@@ -578,6 +610,7 @@ fn doc(results: Vec<(&str, CacheMode, f64)>, fingerprint: &str) -> ResultDocumen
             version: "0".into(),
             registry_fingerprint: fingerprint.into(),
             host: "testhost/1".into(),
+            load: "0.50".into(),
         },
         results: results
             .into_iter()
@@ -592,6 +625,80 @@ fn doc(results: Vec<(&str, CacheMode, f64)>, fingerprint: &str) -> ResultDocumen
             })
             .collect(),
     }
+}
+
+/// I2068: on 2026-10-08 one cold sample read 9 -> 23 ms on a saturated runner and failed a
+/// change that ran none of the measured code. One sample over a threshold is a `WARN` that
+/// names its sample count and does not fail; two agreeing samples are a `FAIL`, as before;
+/// and the report names the runner and the load average every verdict was measured under.
+#[test]
+fn a_single_cold_sample_is_a_warning_and_two_are_a_verdict() {
+    let policy = Policy::default();
+    let base = doc(vec![("v|cold", CacheMode::Cold, 9000.0)], "fp1");
+    let with_samples = |ms: &[u64]| {
+        let mut run = doc(vec![("v|cold", CacheMode::Cold, 0.0)], "fp1");
+        run.results[0].stats = Statistics::of(
+            &ms.iter()
+                .map(|m| Duration::from_millis(*m))
+                .collect::<Vec<_>>(),
+        );
+        run
+    };
+    let p50 = |check: &Check| {
+        check
+            .lines
+            .iter()
+            .find(|l| l.metric == "p50")
+            .cloned()
+            .unwrap()
+    };
+
+    // one cold sample, +155% over a 25% allowance: reported, not a regression
+    let check = Check::compare(&with_samples(&[23]), Some(&base), &policy);
+    let line = p50(&check);
+    assert_eq!(line.verdict, "WARN", "{line:?}");
+    assert_eq!((line.agreeing, line.samples), (1, 1), "{line:?}");
+    assert!(!check.failed(), "one sample must not fail the run");
+    let text = check.render();
+    assert!(text.contains("  WARN") && text.contains("1/1"), "{text}");
+    assert!(
+        text.contains("not a regression until they agree"),
+        "the warning says what to do: {text}"
+    );
+    assert!(
+        text.contains("within policy (runner testhost/1, load 0.50; baseline recorded on testhost/1, load 0.50)"),
+        "the verdict names the runner and its load: {text}"
+    );
+
+    // two samples, both over: the regression stands, as it did before
+    let check = Check::compare(&with_samples(&[23, 22]), Some(&base), &policy);
+    let line = p50(&check);
+    assert_eq!(line.verdict, "FAIL", "{line:?}");
+    assert_eq!((line.agreeing, line.samples), (2, 2), "{line:?}");
+    assert!(check.failed());
+    assert!(check
+        .render()
+        .contains("regression(s) found (runner testhost/1, load 0.50;"));
+
+    // five samples, one slow: the median is not moved, and the one slow sample cannot fail
+    // the p99 it alone decides even where a policy gates p99 on five samples
+    let mut strict = policy.clone();
+    strict.regression.insert(
+        "p99".into(),
+        Threshold {
+            relative: 0.5,
+            minimum_samples: 0,
+        },
+    );
+    let check = Check::compare(&with_samples(&[9, 9, 9, 9, 23]), Some(&base), &strict);
+    let median = p50(&check);
+    assert!(
+        matches!(median.verdict.as_str(), "PASS" | "NOISE"),
+        "{median:?}"
+    );
+    let p99 = check.lines.iter().find(|l| l.metric == "p99").unwrap();
+    assert_eq!(p99.verdict, "WARN", "{p99:?}");
+    assert!(!check.failed());
 }
 
 #[test]
@@ -826,6 +933,25 @@ fn the_command_line_answers_coverage_runs_benchmarks_records_and_checks_a_baseli
         out.contains("STALE  system.mcp.ping"),
         "targets the baseline has and this filtered run did not measure are named: {out}"
     );
+    // the UI's deferred panels are selected and not measured by a quick run, which says so
+    let (code, out, err) = run_in(
+        &f.root(),
+        &[
+            "bench",
+            "system.http.ui.panels",
+            "--profile",
+            "quick",
+            "--no-write",
+        ],
+        "",
+    );
+    assert_eq!(code, 0, "{err}");
+    assert!(
+        out.contains("not measured by profile quick")
+            && out.contains("system.http.ui.panels.pull_requests")
+            && out.contains("system.http.ui.panels.drain"),
+        "{out}"
+    );
     // an unknown filter is not found; a bad flag is a usage error
     let (code, _, err) = run_in(&f.root(), &["bench", "nope.none", "--no-write"], "");
     assert_eq!(code, 12, "{err}");
@@ -859,6 +985,7 @@ fn a_refusal_is_timed_and_only_an_internal_failure_stops_the_run() {
         warmup: 1,
         samples: 3,
         cold_spawns: 1,
+        deferred: true,
     };
 
     for (id, error) in [

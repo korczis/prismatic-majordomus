@@ -1,0 +1,39 @@
+id: I2941
+milestone: adopter-upgrades
+title: "A fresh init leaves doctor clean: a README that does not name AGENTS.md gains one paragraph that does"
+slug: init-leaves-doctor-clean
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the adopter's clean-install path (init, update, the two hook lines) doctor-clean: a shared init appends one paragraph naming AGENTS.md to an existing README.md that does not mention it, once, leaving the rest of the README byte for byte, and lists it with what it created; it creates no README and a personal layer leaves the project's README alone."
+why: "The alpha-contract run on released v0.29.0 (2026-10-17) found that a fresh `majordomus init` + `update` + hooks in a scratch repository with a README fails `doctor` once: 'README.md does not name AGENTS.md; a reader cannot find the agent bootstrap' (majordomus.bootstrap-integrity, lib/doctor.sh mj_validate_bootstrap), and init never says so. Every first adopter with a README met one unexplained FAIL. The rule requires the README to name AGENTS.md; nothing forbids init from adding it in a shared layer (init already appends to .gitignore the same way, and region projections exist so that a hand-written file is adopted, not replaced), while the personal layer's own rule keeps the project's README out of reach, as doctor already skips it there. So init writes the paragraph rather than printing a step."
+current_state: "init leaves README.md untouched; doctor then fails bootstrap on it."
+desired_state: "init, update and the hook lines leave doctor with 0 FAIL in a repository with a README, with none, and with one that already names AGENTS.md."
+scope:
+  - "lib/init.sh"
+  - "share/install/INSTALL.md.in"
+  - "docs/INSTALL.md"
+  - "test/cases/3340_a_fresh_init_leaves_doctor_clean.sh"
+depends_on: []
+acceptance_criteria:
+  - "A scratch repository with a README that names nothing gets init, update and the hook lines, and doctor exits 0 with no FAIL"
+  - "A rerun adds nothing; a README that names AGENTS.md is untouched; no README is created; a personal init leaves the README alone"
+validation:
+  - "bash test/run.sh 3340_a_fresh_init_leaves_doctor_clean 01_init 02_doctor_basic 03_update 19_end_to_end 2979_a_personal_layer_changes_nothing_shared"
+evidence_required:
+  - "fresh_adoption_case"
+created_at: 2026-10-17
+updated_at: 2026-10-17T20:38:39Z
+started_at: 2026-10-17T20:38:14Z
+started_event: sha256:383ad06125f60c942578b46dafcae4ac16fef5fe815c2ae85f896b255ce218bd
+verified_at: 2026-10-17T20:38:24Z
+verified_event: sha256:885bc9b675629c6fdb4aee17e1b231c69637ed0495325f2bbe95a9248179fd04
+completed_at: 2026-10-17T20:38:39Z
+completed_event: sha256:33bb1618f53316e41b496baf3cea450eb5f05ab9702bf8d682d2f7ee8fe72256
+evidence:
+  - covers: fresh_adoption_case
+    type: test
+    command: "MJ_TEST_JOBS=3 bash test/run.sh 3340_a_fresh_init_leaves_doctor_clean 01_init 02_doctor_basic 03_update 19_end_to_end 2979_a_personal_layer_changes_nothing_shared"
+    result: "tests: 6 passed, 0 failed, 0 skipped at 4f3b3490d6c (3340 also passes with MJ_ROOT exported); mutation: without the mj_init_readme call, 3340 fails on doctor exit 10, the alpha-contract finding"
+    commit: 4f3b3490d6c991d6bac152d188d2dfa87ce0e339
+    recorded_at: 2026-10-17T20:38:34Z

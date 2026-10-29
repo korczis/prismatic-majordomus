@@ -10,7 +10,10 @@
 //! argument the deployed process could only say `unknown`. `MAJORDOMUS_BUILD_DIRTY`
 //! (`true`/`false`) says whether that tree carried uncommitted changes; without it the flag
 //! is read from git when git named the commit, and is `unknown` otherwise, because a commit
-//! handed in from outside says nothing about the tree it was built from. That decision is
+//! handed in from outside says nothing about the tree it was built from. Where
+//! `MAJORDOMUS_BUILD_COMMIT` names nothing, a hosting provider's own `SOURCE_VERSION` (the
+//! Heroku-compatible build variable Gigalixir sets to the pushed commit) is taken when it is
+//! a full 40-hex commit, so a build the provider runs answers its commit too (ADR 0219). That decision is
 //! `src/build_identity.rs`, compiled in through `#[path]` like the generation below, so its
 //! table is unit-tested in the crate rather than trusted here. The flag covers the crate's
 //! directory as it stood when this script last ran, not the tree at the moment of asking.
@@ -41,8 +44,19 @@ fn main() {
     println!("cargo:rerun-if-changed=Cargo.toml");
     println!("cargo:rerun-if-changed=Cargo.lock");
     println!("cargo:rerun-if-changed=build.rs");
+    // the path dependencies of generation::PATH_DEPENDENCY_INPUTS (ADR 0170)
+    println!("cargo:rerun-if-changed=../majordomus-core/Cargo.toml");
+    println!("cargo:rerun-if-changed=../majordomus-core/src");
     println!("cargo:rerun-if-env-changed=MAJORDOMUS_BUILD_COMMIT");
     println!("cargo:rerun-if-env-changed=MAJORDOMUS_BUILD_DIRTY");
+    println!("cargo:rerun-if-env-changed=SOURCE_VERSION");
+    // Every worktree compiles this crate into one slot of the build directory they share
+    // (ADR 0139), and cargo judges that slot fresh by mtimes alone, so a tree whose sources
+    // are older than another tree's last build would be handed that build — its code, its
+    // generation, its commit. `.cargo/config.toml` sets this variable to the tree's own root;
+    // declaring it puts the tree into this script's fingerprint, so another tree's slot is
+    // stale here and this one's stays fresh. Case 1022 holds both halves.
+    println!("cargo:rerun-if-env-changed=MAJORDOMUS_BUILD_TREE");
     println!(
         "cargo:rustc-env=MAJORDOMUS_TARGET={}",
         std::env::var("TARGET").unwrap_or_else(|_| "unknown".into())
@@ -62,8 +76,12 @@ fn main() {
     // The decision is build_identity's, compiled in here and tested there; this only reads
     // what the build was handed and lends it git, from the crate's directory (cargo runs a
     // build script there), so the dirty flag is the crate's and not the whole repository's.
-    let (commit, dirty) = build_identity::identify(
+    let declared_commit = declared_commit(
         std::env::var("MAJORDOMUS_BUILD_COMMIT").ok().as_deref(),
+        std::env::var("SOURCE_VERSION").ok().as_deref(),
+    );
+    let (commit, dirty) = build_identity::identify(
+        declared_commit.as_deref(),
         std::env::var("MAJORDOMUS_BUILD_DIRTY").ok().as_deref(),
         git,
     );
@@ -82,6 +100,24 @@ fn main() {
         .and_then(|lock| locked_version(&lock, "tiktoken-rs"))
         .unwrap_or_else(|| "unknown".to_string());
     println!("cargo:rustc-env=MAJORDOMUS_TIKTOKEN_VERSION={tokenizer}");
+}
+
+/// The commit the build was handed: `MAJORDOMUS_BUILD_COMMIT` when it names one (neither
+/// empty nor `unknown`), else the provider's `SOURCE_VERSION` when that is a full 40-hex
+/// commit, else whatever `MAJORDOMUS_BUILD_COMMIT` held, which `build_identity` then judges
+/// exactly as before. A `SOURCE_VERSION` that is not a commit (a branch name, a short sha)
+/// is ignored rather than compiled in as one.
+fn declared_commit(majordomus: Option<&str>, source_version: Option<&str>) -> Option<String> {
+    let names_one = |v: &str| !v.trim().is_empty() && v.trim() != "unknown";
+    if let Some(v) = majordomus.filter(|v| names_one(v)) {
+        return Some(v.to_string());
+    }
+    let is_commit = |v: &str| v.len() == 40 && v.bytes().all(|b| b.is_ascii_hexdigit());
+    source_version
+        .map(str::trim)
+        .filter(|v| is_commit(v))
+        .map(str::to_string)
+        .or_else(|| majordomus.map(str::to_string))
 }
 
 /// The version `Cargo.lock` records for the package `name`: the `version` line that follows

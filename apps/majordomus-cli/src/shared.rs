@@ -6,7 +6,7 @@
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use crate::capability::Context;
 use crate::error::Result;
@@ -18,6 +18,12 @@ use crate::lease::{Lease, LeaseFile};
 /// How often the server looks for expired sessions while it waits for peers to leave.
 pub const REAP_INTERVAL: Duration = Duration::from_millis(500);
 
+/// How long a server asked to stop by a signal waits for its peers to leave before it closes
+/// their sessions itself: long enough for a request in flight to be answered, short enough
+/// that the whole ordered stop sits well inside `serve stop`'s default wait and the
+/// [`crate::lease::STOP_BOUND`] after which the process is ended anyway.
+pub(crate) const STOP_PEER_GRACE: Duration = Duration::from_secs(2);
+
 /// A running shared server.
 pub struct SharedServer {
     running: Running,
@@ -27,12 +33,95 @@ pub struct SharedServer {
     stopping: Arc<AtomicBool>,
     /// The mesh runtime this server activated (or left inactive, with the reason).
     mesh: Arc<crate::mesh::MeshRuntime>,
+    /// Set by whichever of the two stoppers runs the ordered stop first — [`SharedServer::stop`]
+    /// on the owner's thread, or the reader thread answering a signal — so that it runs once.
+    claimed: Arc<AtomicBool>,
+    /// Set by [`SharedServer::take_stop_requests`]: the owner's loop answers a stop signal
+    /// itself, and the reader thread leaves it to it.
+    owner_answers: Arc<AtomicBool>,
+    /// The repository as this server reads it, for what the idle timer asks of its current
+    /// context: the executions it is running and the board of its peers (I4007).
+    live: Arc<crate::live::Live>,
+}
+
+/// How a hosted hub differs from a checkout's server on the mesh (ADR 0220 decisions 2
+/// and 3). Both are what the deployment object's generated start command passes; a
+/// developer's server passes neither and keeps its key in the state directory and its
+/// interface addresses as its endpoints.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct MeshHosting {
+    /// The environment variable that holds the node's 32-byte seed, in hex. When named,
+    /// the identity is that seed and nothing else: absent or malformed, the mesh stays off
+    /// with the reason, and no key is minted that nobody trusts.
+    pub node_seed_env: Option<String>,
+    /// The one endpoint this node advertises, instead of the addresses of the interface it
+    /// is bound to: what a peer outside the platform's network can dial.
+    pub advertise: Option<String>,
+}
+
+/// The key this node signs with, or the reason the mesh stays off. A hosted hub's key is its
+/// deployment's secret, the seed in the variable it names read through `var`, held in memory
+/// only: its disk is gone at every boot, and a fresh key would be one nobody trusts (ADR
+/// 0220). A checkout's server keeps its key in the file `path` names, made on first use.
+fn node_identity(
+    hosting: &MeshHosting,
+    var: impl Fn(&str) -> Option<String>,
+    path: impl FnOnce() -> Option<std::path::PathBuf>,
+) -> std::result::Result<crate::mesh::NodeIdentity, String> {
+    match hosting.node_seed_env.as_deref() {
+        Some(name) => match var(name) {
+            Some(seed) => crate::mesh::NodeIdentity::from_seed_hex(&seed, name)
+                .map_err(|e| e.to_string()),
+            None => Err(format!(
+                "{name} is not set: a hosted hub takes its node key from that secret and mints none of its own, because a fresh key is one no trust.allow lists"
+            )),
+        },
+        None => match path() {
+            Some(path) => {
+                crate::mesh::NodeIdentity::load_or_create(&path).map_err(|e| e.to_string())
+            }
+            None => Err(
+                "no HOME and no XDG_STATE_HOME: nowhere to keep a node identity".to_string(),
+            ),
+        },
+    }
+}
+
+/// The value of the environment variable `name`, when it is set and is text.
+fn environment_variable(name: &str) -> Option<String> {
+    std::env::var(name).ok()
+}
+
+/// Where peers can reach a server bound at `bound`: the URL a hosted hub advertises, else the
+/// bound address, or every interface's address when it is bound to all of them. A loopback
+/// bind is reachable from this machine only, and `mesh doctor` says so.
+fn endpoints(hosting: &MeshHosting, bound: &str) -> Vec<String> {
+    match hosting.advertise.as_deref() {
+        Some(public) => vec![public.trim_end_matches('/').to_string()],
+        None => crate::mesh::address::advertised_endpoints(bound),
+    }
+}
+
+/// Whether a server bound at `bound` is bound to every interface, so that what it can be
+/// reached at changes with them.
+fn follows_interfaces(bound: &str) -> bool {
+    bound
+        .parse::<std::net::SocketAddr>()
+        .is_ok_and(|addr| addr.ip().is_unspecified())
 }
 
 /// Activate the mesh from the repository's declaration, when there is one and it is
 /// enabled. Every failure is a reason on `mesh.status`, never a failed server.
-fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str) {
-    let Some(parsed) = crate::capability::builtin::mesh::declaration(ctx) else {
+fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str, hosting: &MeshHosting) {
+    let resolved = crate::capability::builtin::mesh::resolved_declaration(ctx);
+    if !resolved.narrowed.is_empty() {
+        // obeyed as narrowed; `mesh doctor` fails its `trust-root` check with the same lines
+        tracing::warn!(
+            ignored = %resolved.narrowed.join("; "),
+            "the working tree's mesh declaration widens what the trunk's copy says; those lines are ignored"
+        );
+    }
+    let Some(parsed) = resolved.declaration else {
         return;
     };
     let config = match parsed {
@@ -48,24 +137,23 @@ fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str) {
         ctx.mesh.decline("the mesh declaration is disabled");
         return;
     }
-    let Some(identity_path) = crate::mesh::default_identity_path() else {
-        ctx.mesh
-            .decline("no HOME and no XDG_STATE_HOME: nowhere to keep a node identity");
-        return;
-    };
-    let identity = match crate::mesh::NodeIdentity::load_or_create(&identity_path) {
+    let identity = match node_identity(
+        hosting,
+        environment_variable,
+        crate::mesh::default_identity_path,
+    ) {
         Ok(identity) => identity,
-        Err(e) => {
-            tracing::warn!(error = %e, "the node identity did not load; the mesh stays off");
-            ctx.mesh.decline(&e.to_string());
+        Err(reason) => {
+            tracing::warn!(reason = %reason, "the node identity did not load; the mesh stays off");
+            ctx.mesh.decline(&reason);
             return;
         }
     };
-    // Where peers can reach this server: the bound address, or every interface's address
-    // when it is bound to all of them. A loopback bind is reachable from this machine
-    // only, and `mesh doctor` says so.
-    let bound = url.trim_start_matches("http://").trim_end_matches('/');
-    let endpoints = crate::mesh::address::advertised_endpoints(bound);
+    let bound = url
+        .trim_start_matches("http://")
+        .trim_end_matches('/')
+        .to_string();
+    let endpoints = endpoints(hosting, &bound);
     let root = std::path::Path::new(&ctx.index.repository.root);
     // One runtime per checkout, and one repository identity per repository on every
     // machine — derived from content or declared, never from a path.
@@ -86,8 +174,23 @@ fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str) {
         repos,
         version,
     ) {
+        Ok(()) if !ctx.mesh.status().active => {
+            // closed by the trust list (or otherwise declined): no cooperation either,
+            // because a link is a socket too
+            let why = ctx.mesh.status().reason.unwrap_or_default();
+            tracing::info!(node = %node, runtime_id = %runtime, "mesh not active: {why}");
+            ctx.mesh.decline_cooperation(&why);
+            return;
+        }
         Ok(()) => {
-            tracing::info!(node = %node, runtime_id = %runtime, "mesh active: this node announces and listens per the declaration")
+            tracing::info!(node = %node, runtime_id = %runtime, "mesh active: this node announces and listens per the declaration");
+            // a server bound to every interface advertises the addresses they hold now, not
+            // the ones they held when it started: DHCP moves a machine's address under it
+            if hosting.advertise.is_none() && follows_interfaces(&bound) {
+                ctx.mesh.follow_endpoints(Arc::new(move || {
+                    crate::mesh::address::advertised_endpoints(&bound)
+                }));
+            }
         }
         Err(e) => {
             tracing::warn!(error = %e, "the mesh did not activate");
@@ -127,6 +230,9 @@ fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str) {
     };
     match crate::mesh::cooperation::Cooperation::new(setup) {
         Ok(cooperation) => {
+            // the store this node serves, if its own file outside the repository declares one,
+            // is offered on the journal from the first heartbeat (I2671)
+            cooperation.serve_build_cache_from(crate::mesh::build_cache::offer::node_file());
             cooperation.start();
             ctx.mesh.attach_cooperation(cooperation);
         }
@@ -150,6 +256,7 @@ impl SharedServer {
         declared_by: Option<&str>,
         lease: Lease,
         share_dir: Option<&std::path::Path>,
+        hosting: &MeshHosting,
     ) -> Result<Self> {
         // Three ways to arrive at a socket, and they are not interchangeable: a canonical
         // object declared this address (bind it, say which object said so), the port is a
@@ -163,15 +270,16 @@ impl SharedServer {
         let url = bound.url();
         let ctx_for_mesh = live.current();
         let endpoint = Arc::new(McpEndpoint::new(Arc::clone(&live), version, url.clone()));
-        let router = Router::new(live, version)
+        let router = Router::new(Arc::clone(&live), version)
             .with_mcp(Arc::clone(&endpoint))
-            .with_cockpit(share_dir);
+            .with_cockpit(share_dir)
+            .with_ui(share_dir);
         // The mesh, when the repository declares one — before the workers pick up their
         // first request, so a client that connects on the "listening" line already sees
         // the activated runtime. Never blocking: providers open sockets on their own
         // threads, and a declaration that is absent, disabled or malformed leaves the
         // runtime inactive with the reason `mesh.status` reports.
-        activate_mesh(&ctx_for_mesh, version, &url);
+        activate_mesh(&ctx_for_mesh, version, &url, hosting);
         // what it serves is read off the resolution, so this line cannot name a route the
         // process does not have or miss one it does
         let surfaces = router.served()?.summary(&url);
@@ -185,12 +293,22 @@ impl SharedServer {
         // stopped pinging — on every path, not only while the owner waits for peers to
         // leave, so that a dead peer never stays `attached` on the board — and it checks
         // that the lease is still its own. A lease another process took over is that
-        // process's to remove; this one stops claiming it, serves the peers it has, and
-        // ends with them.
+        // process's to remove; this one stops claiming it and retires from the mesh,
+        // serves the peers it has, and ends with them.
+        //
+        // It is also the stopper of last resort. A signal asking this process to stop is only
+        // recorded by its handler (`crate::lease` says why); when the owner's loop does not
+        // answer it — `majordomus mcp`, whose main thread is its client's stdio session — this
+        // thread runs the ordered stop and then ends the process with that signal.
         let stopping = Arc::new(AtomicBool::new(false));
+        let claimed = Arc::new(AtomicBool::new(false));
+        let owner_answers = Arc::new(AtomicBool::new(false));
         {
             let endpoint = Arc::clone(&endpoint);
             let stopping = Arc::clone(&stopping);
+            let claimed = Arc::clone(&claimed);
+            let owner_answers = Arc::clone(&owner_answers);
+            let mesh = ctx_for_mesh.mesh.clone();
             let path = lease.path().to_path_buf();
             let token = lease.token().to_string();
             let _ = std::thread::Builder::new()
@@ -199,6 +317,22 @@ impl SharedServer {
                     let mut lost = false;
                     while !stopping.load(Ordering::SeqCst) {
                         std::thread::sleep(REAP_INTERVAL);
+                        if let Some(signal) = crate::lease::stop_requested() {
+                            if !owner_answers.load(Ordering::SeqCst)
+                                && !claimed.swap(true, Ordering::SeqCst)
+                            {
+                                tracing::info!(
+                                    signal,
+                                    "asked to stop by signal {signal}; stopping in order"
+                                );
+                                mesh.begin_stop();
+                                endpoint.close_all();
+                                crate::lease::release_held();
+                                mesh.stop();
+                                tracing::info!("shared server stopped");
+                                crate::lease::end_by_signal(signal);
+                            }
+                        }
                         let gone = endpoint.reap();
                         if !gone.is_empty() {
                             tracing::info!(peers = ?gone, "peer(s) expired: no message within the idle timeout");
@@ -210,9 +344,15 @@ impl SharedServer {
                         {
                             lost = true;
                             crate::lease::lost();
+                            // A successor has the same mesh runtime key. Leaving this
+                            // instance active makes both replace each other's links.
+                            // Retire discovery and cooperation, keeping HTTP sessions.
+                            mesh.begin_stop();
+                            mesh.stop();
+                            mesh.decline("the server no longer holds its checkout lease");
                             tracing::warn!(
                                 lease = %path.display(),
-                                "the lease is no longer this server's: another process took it over; this server serves the peers it has and ends with them"
+                                "the lease is no longer this server's: another process took it over; this server leaves the mesh, serves the peers it has and ends with them"
                             );
                         }
                     }
@@ -227,12 +367,16 @@ impl SharedServer {
             // thing a person reads when a client starts one (ADR 0044).
             "shared server listening on {url} — {surfaces}; the one server of this checkout: every later `majordomus mcp` here attaches to it, and it ends when the last peer leaves"
         );
+        crate::lease::answer_stop_requests();
         Ok(SharedServer {
             running,
             endpoint,
             lease,
             stopping,
             mesh: ctx_for_mesh.mesh.clone(),
+            claimed,
+            owner_answers,
+            live,
         })
     }
 
@@ -252,13 +396,62 @@ impl SharedServer {
         self.endpoint.active()
     }
 
-    /// Block until no HTTP session remains.
+    /// What keeps this server in use right now, for its idle timer: the peers attached (its
+    /// MCP sessions, or the rows of its peer board, whichever is more), the executions it
+    /// has not finished, its live channels, and whether a client's request was answered
+    /// within `window` — machine traffic is not counted ([`crate::idle::counts_as_use`]).
+    pub(crate) fn activity(&self, window: Duration) -> crate::idle::Activity {
+        let ctx = self.live.current();
+        crate::idle::Activity {
+            peers: self.peers_attached().max(ctx.peers.len()),
+            executions: ctx.executions.store().active(),
+            channels: server::open_channels(),
+            client_request: server::used_within(window),
+        }
+    }
+
+    /// Block until no HTTP session remains, or a signal asks this process to stop: a server
+    /// lingering for its peers is still a server that `serve stop` must be able to end in
+    /// order.
     pub fn wait_until_peers_leave(&self) {
+        self.wait_for_peers(None);
+    }
+
+    /// The owner's loop answers a stop signal itself: it polls
+    /// [`crate::lease::stop_requested`] and calls [`SharedServer::stop_within`], so that the
+    /// process ends by returning from `main`. Without this, the server's reader thread answers
+    /// the signal (see [`SharedServer::start`]).
+    pub(crate) fn take_stop_requests(&self) {
+        self.owner_answers.store(true, Ordering::SeqCst);
+    }
+
+    /// The ordered stop a signal asks for: wait up to `grace` for the attached peers to leave,
+    /// then [`SharedServer::stop`], which closes whatever sessions and episodes remain.
+    pub(crate) fn stop_within(self, grace: Duration) {
+        self.wait_for_peers(Some(Instant::now() + grace));
+        self.stop();
+    }
+
+    /// Wait until no HTTP session remains: until `deadline` when there is one, and otherwise
+    /// until a stop signal arrives.
+    fn wait_for_peers(&self, deadline: Option<Instant>) {
         let mut announced = false;
         loop {
             let n = self.peers_attached();
             if n == 0 {
                 break;
+            }
+            match deadline {
+                Some(deadline) if Instant::now() >= deadline => {
+                    tracing::info!(
+                        peers = n,
+                        "closing the sessions of the peers still attached"
+                    );
+                    break;
+                }
+                Some(_) => {}
+                None if crate::lease::stop_requested().is_some() => break,
+                None => {}
             }
             if !announced {
                 tracing::info!(
@@ -271,15 +464,29 @@ impl SharedServer {
         }
     }
 
-    /// Stop serving and release the lease.
+    /// Stop serving and release the lease. This is the ordered stop: the owner's session
+    /// ending runs it, and so does `serve stop` — its `SIGTERM` is answered by the `serve`
+    /// loop through `SharedServer::stop_within`, or, in a process whose loop does not
+    /// answer it, by the reader thread [`SharedServer::start`] spawns, which runs the same
+    /// steps short of joining the listeners and then ends the process with the signal.
     ///
     /// The order is what matters. Telling the mesh to stop is immediate, but draining its
     /// link table needs a lock a worker can hold across a dial that waits out the link
     /// timeout — several seconds. Everything a waiting `serve stop` measures happens before
-    /// that: the listeners close and the lease is released, and only then does the mesh
+    /// that: every session and every episode is closed, the listeners close (an answer in
+    /// flight is finished first) and the lease is released — only if the file is still this
+    /// server's, checked under the lock a take-over takes — and only then does the mesh
     /// drain. A lease released late is read by the next process as a server still holding
-    /// the port, which is what `serve stop` answers 10 for.
+    /// the port, which is what `serve stop` answers 10 for; `serve stop` then waits for the
+    /// process to exit, which is after the drain.
     pub fn stop(self) {
+        if self.claimed.swap(true, Ordering::SeqCst) {
+            // the reader thread is running this stop for a signal and ends the process when
+            // it is done; there is nothing left for this thread to do but not interfere
+            loop {
+                std::thread::sleep(REAP_INTERVAL);
+            }
+        }
         self.mesh.begin_stop();
         self.stopping.store(true, Ordering::SeqCst);
         self.endpoint.close_all();
@@ -387,7 +594,294 @@ mod tests {
             None,
             lease,
             None,
+            &MeshHosting::default(),
         )
         .is_err());
+    }
+
+    /// The variable that makes a run of this test binary one of the child processes below.
+    #[cfg(unix)]
+    const CHILD: &str = "MAJORDOMUS_SHARED_TEST_CHILD";
+
+    /// Run `test` of this binary in a process of its own, and insist that it ran and passed:
+    /// a filter that matched nothing would pass too.
+    #[cfg(unix)]
+    fn passes_in_a_process_of_its_own(test: &str) {
+        let out = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                &format!("shared::tests::{test}"),
+                "--nocapture",
+                "--test-threads",
+                "1",
+            ])
+            .env(CHILD, "1")
+            .output()
+            .expect("the child process runs");
+        let stdout = String::from_utf8_lossy(&out.stdout);
+        assert!(
+            out.status.success() && stdout.contains("1 passed"),
+            "{:?}\n{stdout}\n{}",
+            out.status,
+            String::from_utf8_lossy(&out.stderr)
+        );
+    }
+
+    /// A shared server over a fresh synthetic repository, holding its lease. The repository
+    /// is handed back too: it is removed when dropped, and the server's lease with it.
+    #[cfg(unix)]
+    fn a_shared_server() -> (SyntheticRepository, SharedServer) {
+        let fixture = SyntheticRepository::small().unwrap();
+        let app = App::load(&RepoArgs {
+            repo: Some(fixture.root().to_path_buf()),
+            discovery: DiscoveryMode::Filesystem,
+            share: Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share")),
+            ..Default::default()
+        })
+        .unwrap();
+        let crate::lease::Role::Server(lease) = crate::lease::elect(&app.repository).unwrap()
+        else {
+            panic!("a fresh repository has no server");
+        };
+        let shared = SharedServer::start(
+            Arc::new(crate::live::Live::pinned(app.context)),
+            crate::VERSION,
+            "127.0.0.1",
+            0,
+            false,
+            None,
+            lease,
+            None,
+            &MeshHosting::default(),
+        )
+        .unwrap();
+        (fixture, shared)
+    }
+
+    /// A server lingering for its last peer is still a server a stop signal ends: the wait
+    /// returns with the peer still attached, and the ordered stop that follows releases the
+    /// lease. In a process of its own, because the signal is the process's.
+    #[cfg(unix)]
+    #[test]
+    fn a_server_waiting_for_its_last_peer_stops_on_a_signal() {
+        if std::env::var_os(CHILD).is_none() {
+            passes_in_a_process_of_its_own("a_server_waiting_for_its_last_peer_stops_on_a_signal");
+            return;
+        }
+        let (_fixture, shared) = a_shared_server();
+        shared.take_stop_requests();
+        let init = serde_json::json!({
+            "jsonrpc": "2.0", "id": 1, "method": "initialize",
+            "params": {
+                "protocolVersion": "2025-06-18",
+                "capabilities": {},
+                "clientInfo": { "name": "unit", "version": "0" }
+            }
+        })
+        .to_string();
+        let reply = crate::mcp::bridge::request(
+            &shared.url(),
+            "POST",
+            "/mcp",
+            &[("content-type", "application/json")],
+            Some(&init),
+            Duration::from_secs(10),
+        )
+        .expect("the server answers /mcp");
+        assert_eq!(reply.status, 200, "{}", reply.body);
+        assert_eq!(shared.peers_attached(), 1, "one peer attached");
+        assert_eq!(crate::lease::stop_requested(), None);
+        // SAFETY: raising a signal whose handler, installed by the election, only touches
+        // atomics
+        unsafe { libc::raise(libc::SIGHUP) };
+        assert_eq!(crate::lease::stop_requested(), Some(libc::SIGHUP));
+        shared.wait_until_peers_leave();
+        assert_eq!(
+            shared.peers_attached(),
+            1,
+            "the wait ended on the signal, not because the peer left"
+        );
+        let lease = shared.lease.path().to_path_buf();
+        shared.stop();
+        assert_eq!(
+            LeaseFile::read(&lease),
+            LeaseFile::Absent,
+            "the lease is released"
+        );
+    }
+
+    /// When the reader thread has claimed the ordered stop for a signal, a stop on the owner's
+    /// thread does not run a second one: it closes nothing and releases nothing, and leaves
+    /// the process to the thread that will end it. In a process of its own, because that
+    /// stop never returns.
+    #[cfg(unix)]
+    #[test]
+    fn a_stop_after_the_signal_claimed_the_stop_leaves_everything_to_it() {
+        if std::env::var_os(CHILD).is_none() {
+            passes_in_a_process_of_its_own(
+                "a_stop_after_the_signal_claimed_the_stop_leaves_everything_to_it",
+            );
+            return;
+        }
+        let (_fixture, shared) = a_shared_server();
+        // what the reader thread does when it answers a signal itself
+        shared.claimed.store(true, Ordering::SeqCst);
+        let url = shared.url();
+        let lease = shared.lease.path().to_path_buf();
+        let token = shared.lease.token().to_string();
+        let root = shared.lease.root().to_path_buf();
+        let stopper = std::thread::spawn(move || shared.stop());
+        std::thread::sleep(REAP_INTERVAL * 4);
+        assert!(!stopper.is_finished(), "the second stop does not return");
+        assert!(crate::lease::probe(&url, &root), "the server still answers");
+        assert_eq!(
+            LeaseFile::read(&lease).document().map(|d| d.token.clone()),
+            Some(token),
+            "the lease is still this server's"
+        );
+    }
+
+    /// A hosted hub's key is the seed its variable holds and nothing else: one seed is one
+    /// node at every boot, and an unset or malformed seed keeps the mesh off with a reason
+    /// that names the variable and never its value. A checkout's key is its file, the same
+    /// node every time it is read, and with nowhere to keep one there is no node.
+    #[test]
+    fn a_node_key_is_a_hosted_seed_or_a_checkouts_file() {
+        let hosted = MeshHosting {
+            node_seed_env: Some("SEED".into()),
+            advertise: None,
+        };
+        let seed = "22".repeat(32);
+        let no_file = || -> Option<std::path::PathBuf> { panic!("a hosted hub reads no key file") };
+        let a = node_identity(&hosted, |v| (v == "SEED").then(|| seed.clone()), no_file).unwrap();
+        let b = node_identity(&hosted, |_| Some(format!("{seed}\n")), no_file).unwrap();
+        assert_eq!(a.public.node_id, b.public.node_id, "one seed, one node");
+        let unset = node_identity(&hosted, |_| None, no_file).unwrap_err();
+        assert!(unset.starts_with("SEED is not set"), "{unset}");
+        let bad = node_identity(&hosted, |_| Some("q".repeat(64)), no_file).unwrap_err();
+        assert!(bad.contains("SEED") && !bad.contains("qqqq"), "{bad}");
+
+        let checkout = MeshHosting::default();
+        let no_var = |_: &str| -> Option<String> { panic!("a checkout reads no seed") };
+        let nowhere = node_identity(&checkout, no_var, || None).unwrap_err();
+        assert!(
+            nowhere.contains("nowhere to keep a node identity"),
+            "{nowhere}"
+        );
+        let dir = tempfile::tempdir().unwrap();
+        let key = dir.path().join("node.json");
+        let first = node_identity(&checkout, no_var, || Some(key.clone())).unwrap();
+        let again = node_identity(&checkout, no_var, || Some(key.clone())).unwrap();
+        assert_eq!(
+            first.public.node_id, again.public.node_id,
+            "one file, one node"
+        );
+        assert!(node_identity(&checkout, no_var, || Some(dir.path().to_path_buf())).is_err());
+    }
+
+    /// A hosted hub advertises its public URL alone; a checkout's server, its bound address.
+    #[test]
+    fn a_hosted_hub_advertises_its_public_url_alone() {
+        let hosted = MeshHosting {
+            node_seed_env: None,
+            advertise: Some("https://hub.example/".into()),
+        };
+        assert_eq!(endpoints(&hosted, "0.0.0.0:4000"), ["https://hub.example"]);
+        assert_eq!(
+            endpoints(&MeshHosting::default(), "127.0.0.1:4000"),
+            crate::mesh::address::advertised_endpoints("127.0.0.1:4000")
+        );
+    }
+
+    #[test]
+    fn only_a_server_bound_to_every_interface_follows_them() {
+        assert!(follows_interfaces("0.0.0.0:8791"));
+        assert!(!follows_interfaces("127.0.0.1:8741"));
+        assert!(!follows_interfaces("192.168.100.100:8791"));
+        assert!(!follows_interfaces("hub.example:443"));
+    }
+
+    /// A hosted hub whose seed variable is unset activates no mesh: `mesh.status` says why,
+    /// naming the variable, and the server goes on serving without one.
+    #[test]
+    fn a_hosted_hub_without_its_seed_keeps_the_mesh_off_and_says_why() {
+        let fixture = SyntheticRepository::small().unwrap();
+        let sources = fixture.root().join(".ai/repo/knowledge/sources.yaml");
+        let mut text = std::fs::read_to_string(&sources).unwrap();
+        text.push_str("  - id: mesh-declaration\n    kind: mesh-declaration\n    discovery: vcs\n    pathspec: ':(glob).ai/repo/mesh/*.yaml'\n    required: false\n");
+        std::fs::write(&sources, text).unwrap();
+        let dir = fixture.root().join(".ai/repo/mesh");
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(
+            dir.join("majordomus.yaml"),
+            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntrust:\n  policy: deny_unknown\n",
+        )
+        .unwrap();
+        let app = App::load(&RepoArgs {
+            repo: Some(fixture.root().to_path_buf()),
+            discovery: DiscoveryMode::Filesystem,
+            share: Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share")),
+            ..Default::default()
+        })
+        .unwrap();
+        let ctx = Arc::new(app.context);
+        let var = "MAJORDOMUS_TEST_SEED_THAT_IS_NEVER_SET";
+        assert!(environment_variable(var).is_none());
+        let hosted = MeshHosting {
+            node_seed_env: Some(var.into()),
+            advertise: None,
+        };
+        activate_mesh(&ctx, crate::VERSION, "http://127.0.0.1:1", &hosted);
+        let reason = ctx.mesh.status().reason.unwrap_or_default();
+        assert!(reason.contains(&format!("{var} is not set")), "{reason}");
+    }
+
+    /// A server bound to every interface advertises the addresses the machine holds when a
+    /// beacon is cut, not the ones it held at start: the source it follows is read by
+    /// `mesh.status`.
+    #[test]
+    fn a_server_bound_to_every_interface_follows_the_interfaces_it_advertises() {
+        let fixture = SyntheticRepository::small().unwrap();
+        let sources = fixture.root().join(".ai/repo/knowledge/sources.yaml");
+        let mut text = std::fs::read_to_string(&sources).unwrap();
+        text.push_str("  - id: mesh-declaration\n    kind: mesh-declaration\n    discovery: vcs\n    pathspec: ':(glob).ai/repo/mesh/*.yaml'\n    required: false\n");
+        std::fs::write(&sources, text).unwrap();
+        let dir = fixture.root().join(".ai/repo/mesh");
+        std::fs::create_dir_all(&dir).unwrap();
+        // the hub's key is listed, so the mesh is open to it and the server announces
+        let seed = "07".repeat(32);
+        let key = crate::mesh::NodeIdentity::from_seed_hex(&seed, "test")
+            .unwrap()
+            .public
+            .public_key;
+        std::fs::write(
+            dir.join("majordomus.yaml"),
+            format!("schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  allow:\n    - {key}\n"),
+        )
+        .unwrap();
+        let app = App::load(&RepoArgs {
+            repo: Some(fixture.root().to_path_buf()),
+            discovery: DiscoveryMode::Filesystem,
+            share: Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share")),
+            ..Default::default()
+        })
+        .unwrap();
+        let ctx = Arc::new(app.context);
+        // a variable no other test reads: the node key of this hub, 32 bytes of hex
+        let var = "MAJORDOMUS_TEST_T7_SHARED_NODE_SEED";
+        std::env::set_var(var, &seed);
+        let hosting = MeshHosting {
+            node_seed_env: Some(var.into()),
+            advertise: None,
+        };
+        activate_mesh(&ctx, crate::VERSION, "http://0.0.0.0:1", &hosting);
+        let status = ctx.mesh.status();
+        assert!(status.active, "{:?}", status.reason);
+        assert_eq!(
+            status.advertised,
+            crate::mesh::address::advertised_endpoints("0.0.0.0:1"),
+            "the interfaces' addresses, read again when asked"
+        );
+        ctx.mesh.stop();
     }
 }

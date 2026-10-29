@@ -1,0 +1,440 @@
+<!-- The chapters of this source, as sections. assemble.py reads nothing else of it. -->
+<section id="mapa">
+      <h2>Mapa: kde co žije</h2>
+      <p>Vrstva <code>.ai/</code> má dvě poloviny. <code>.ai/repo/</code> je trackovaná a kanonická: cestuje gitem a vidí ji každý klon. <code>.ai/local/</code> patří jen tomuto checkoutu, je v <code>.gitignore</code> a pojmenovává stroj, na kterém leží. Většina rozdílů mezi záznamy plyne z toho, na které straně leží.</p>
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 720 444" role="img" aria-label="Trackovaná polovina .ai/repo a lokální polovina .ai/local; ledger se odvozuje do kandidátů znalostí, člověk je povyšuje; obojí jde přes git remote">
+            <defs>
+              <marker id="m-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="acc"/></marker>
+            </defs>
+            <rect x="16" y="20" width="408" height="340" rx="8" class="zone" stroke-width="1.25"/>
+            <text x="32" y="44" font-size="14" font-weight="600" class="ink mono">.ai/repo/</text>
+            <text x="32" y="62" font-size="11.5" class="mut">trackované, cestuje gitem, sdílí ho každý klon</text>
+            <g font-size="12" font-weight="600" class="ink mono">
+              <rect x="32" y="76" width="176" height="44" rx="6" class="box" stroke-width="1"/><text x="44" y="95">adrs/</text>
+              <rect x="232" y="76" width="176" height="44" rx="6" class="box" stroke-width="1"/><text x="244" y="95">rules/</text>
+              <rect x="32" y="132" width="176" height="44" rx="6" class="box" stroke-width="1"/><text x="44" y="151">knowledge/curated/</text>
+              <rect x="232" y="132" width="176" height="44" rx="6" fill="var(--panel)" stroke="var(--accent)" stroke-width="1.5"/><text x="244" y="151">knowledge/candidates/</text>
+              <rect x="32" y="188" width="176" height="44" rx="6" class="box" stroke-width="1"/><text x="44" y="207">sessions/</text>
+              <rect x="232" y="188" width="176" height="44" rx="6" class="box" stroke-width="1"/><text x="244" y="207">policy + profiles/</text>
+              <rect x="32" y="244" width="176" height="44" rx="6" class="box" stroke-width="1"/><text x="44" y="263">skills/, prompts/</text>
+              <rect x="232" y="244" width="176" height="44" rx="6" class="box" stroke-width="1"/><text x="244" y="263">project/</text>
+              <rect x="32" y="300" width="176" height="44" rx="6" class="box" stroke-width="1"/><text x="44" y="319">**/README.md</text>
+              <rect x="232" y="300" width="176" height="44" rx="6" class="box" stroke-width="1"/><text x="244" y="319">mesh/</text>
+            </g>
+            <g font-size="11" class="mut">
+              <text x="44" y="111">architektonická rozhodnutí</text>
+              <text x="244" y="111">pravidla: vendor + project</text>
+              <text x="44" y="167">ověřené znalosti (člověk)</text>
+              <text x="244" y="167">odvozené, čekají na review</text>
+              <text x="44" y="223">obálky uzavřených epizod</text>
+              <text x="244" y="223">jedna policy, režimy práce</text>
+              <text x="44" y="279">procedury a framingy</text>
+              <text x="244" y="279">plán: intents, issues</text>
+              <text x="44" y="335">kontextové dokumenty</text>
+              <text x="244" y="335">deklarace meshe</text>
+            </g>
+
+            <rect x="440" y="20" width="264" height="340" rx="8" class="zone" stroke-width="1.25"/>
+            <text x="456" y="44" font-size="14" font-weight="600" class="ink mono">.ai/local/</text>
+            <text x="456" y="62" font-size="11.5" class="mut">jen tento checkout, gitem necestuje</text>
+            <g font-size="12" font-weight="600" class="ink mono">
+              <rect x="456" y="72" width="232" height="40" rx="6" class="box" stroke-width="1"/><text x="468" y="89">state/current.yaml</text>
+              <rect x="456" y="118" width="232" height="40" rx="6" class="box" stroke-width="1"/><text x="468" y="135">state/checkpoints/</text>
+              <rect x="456" y="164" width="232" height="40" rx="6" class="box" stroke-width="1"/><text x="468" y="181">state/handovers/</text>
+              <rect x="456" y="210" width="232" height="40" rx="6" class="box" stroke-width="1"/><text x="468" y="227">state/decisions.md</text>
+              <rect x="456" y="256" width="232" height="40" rx="6" fill="var(--panel)" stroke="var(--accent)" stroke-width="1.5"/><text x="468" y="273">state/ledger.jsonl</text>
+              <rect x="456" y="302" width="232" height="40" rx="6" class="box" stroke-width="1"/><text x="468" y="319">session-contexts/</text>
+            </g>
+            <g font-size="11" class="mut">
+              <text x="468" y="104">aktivní task: scope, profil</text>
+              <text x="468" y="150">průběžný stav, krátký</text>
+              <text x="468" y="196">balíček pro pokračování</text>
+              <text x="468" y="242">rozhodnutí tasku, append-only</text>
+              <text x="468" y="288">historie událostí, append-only</text>
+              <text x="468" y="334">snímek kontextu při otevření</text>
+            </g>
+
+            <path d="M456 276H430V160H410" stroke="var(--accent)" stroke-width="1.5" fill="none" marker-end="url(#m-arrow)"/>
+            <circle cx="430" cy="218" r="9" fill="var(--panel)" stroke="var(--accent)" stroke-width="1.25"/>
+            <text x="430" y="222" text-anchor="middle" font-size="11" font-weight="600" class="acc">1</text>
+            <path d="M232 154H210" stroke="var(--accent)" stroke-width="1.5" fill="none" marker-end="url(#m-arrow)"/>
+            <circle cx="221" cy="138" r="9" fill="var(--panel)" stroke="var(--accent)" stroke-width="1.25"/>
+            <text x="221" y="142" text-anchor="middle" font-size="11" font-weight="600" class="acc">2</text>
+
+            <rect x="16" y="384" width="688" height="44" rx="8" class="box" stroke-width="1.25"/>
+            <text x="32" y="403" font-size="13" font-weight="600" class="ink">git remote</text>
+            <text x="32" y="420" font-size="11.5" class="mut">commity s .ai/repo/ a zvláštní ref refs/majordomus/continuity s podepsanými handovery</text>
+            <path d="M220 360V382" stroke="var(--muted)" stroke-width="1.25" fill="none" marker-end="url(#m-arrow-m)"/>
+            <path d="M572 360V382" stroke="var(--muted)" stroke-width="1.25" fill="none" marker-end="url(#m-arrow-m)"/>
+            <defs>
+              <marker id="m-arrow-m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mut"/></marker>
+            </defs>
+            <circle cx="240" cy="371" r="9" fill="var(--panel)" stroke="var(--muted)" stroke-width="1.25"/>
+            <text x="240" y="375" text-anchor="middle" font-size="11" font-weight="600" class="mut">3</text>
+            <circle cx="592" cy="371" r="9" fill="var(--panel)" stroke="var(--muted)" stroke-width="1.25"/>
+            <text x="592" y="375" text-anchor="middle" font-size="11" font-weight="600" class="mut">4</text>
+          </svg>
+        </div>
+        <figcaption>1: na konci epizody a při compaction se z ledgeru odvodí kandidáti znalostí (<code>knowledge derive</code>). 2: člověk kandidáta povýší na ověřenou znalost (<code>knowledge promote</code>). 3: trackovaná polovina cestuje běžným <code>git push</code>. 4: lokální handover se na jiný stroj dostane jen jako podepsaný záznam (<code>continuity publish</code>, <code>sync</code>, <code>resume</code>) nebo přes mesh.</figcaption>
+      </figure>
+    </section>
+
+<section id="zaznamy">
+      <h2>Který záznam odpovídá na kterou otázku</h2>
+      <p>Každý druh záznamu odpovídá na jednu otázku a má jeden domov. Identitu (branch, HEAD, task, čas) vždy počítá Majordomus z gitu; tělo, které se ji pokusí nastavit, je odmítnuto.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Záznam</th><th>Odpovídá na</th><th>Kde</th><th>Kdo píše</th><th>Měnitelnost</th></tr></thead>
+        <tbody>
+          <tr><td><strong>task</strong></td><td>na čem se pracuje, v jakém scope a profilu</td><td><code>local/state/current.yaml</code></td><td><code>start</code></td><td>jeden aktivní na checkout</td></tr>
+          <tr><td><strong>checkpoint</strong></td><td>co platilo před chvílí a co je další krok</td><td><code>local/state/checkpoints/</code></td><td>worker, hook při compaction</td><td>append-only, délka omezená</td></tr>
+          <tr><td><strong>handover</strong></td><td>záměrný balíček pro toho, kdo pokračuje</td><td><code>local/state/handovers/</code></td><td>worker, hook na konci session</td><td>append-only</td></tr>
+          <tr><td><strong>decision</strong></td><td>co se v rámci tasku rozhodlo, proč a co bylo zamítnuto</td><td><code>local/state/decisions.md</code></td><td><code>decision add</code></td><td>append-only, nahrazuje se <code>--supersedes</code></td></tr>
+          <tr><td><strong>open question</strong></td><td>co je nevyřešené; blokuje <code>finish</code></td><td><code>local/state/open-questions.md</code></td><td><code>question add / resolve</code></td><td>index; historie v ledgeru</td></tr>
+          <tr><td><strong>history event</strong></td><td>co se stalo, kdy, u kterého tasku a commitu</td><td><code>local/state/ledger.jsonl</code></td><td>jen Majordomus</td><td>append-only, s retencí</td></tr>
+          <tr><td><strong>session-context</strong></td><td>co worker dostal při otevření epizody</td><td><code>local/session-contexts/</code></td><td>hook <code>SessionStart</code></td><td>jen se připisuje</td></tr>
+          <tr><td><strong>session record</strong></td><td>co epizoda vyprodukovala, mezi kterými commity</td><td><code>repo/sessions/</code></td><td><code>session close</code></td><td>po zavření neměnná</td></tr>
+          <tr><td><strong>ADR</strong></td><td>architektonické rozhodnutí: kontext, rozhodnutí, důsledky</td><td><code>repo/adrs/</code></td><td><code>adr propose</code>, přijímá člověk</td><td>nahrazuje se supersession</td></tr>
+          <tr><td><strong>knowledge</strong></td><td>jedno tvrzení o repu s důkazem</td><td><code>repo/knowledge/</code></td><td>deriver (kandidát), člověk (ověřené)</td><td>verified jen supersession</td></tr>
+          <tr><td><strong>rule</strong></td><td>co v repu platí a kdo to vynucuje</td><td><code>repo/rules/</code></td><td>vendor balíček, autoři repa</td><td>verzované <code>id@version</code></td></tr>
+          <tr><td><strong>context document</strong></td><td>co platí pro daný adresář a pod ním</td><td><code>.ai/**/README.md</code></td><td>autoři repa</td><td>běžné úpravy, validované</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+<section id="pamet">
+      <h2>Co v Majordomusu znamená „paměť“</h2>
+      <p>Majordomus záměrně nemá paměťovou službu, agenta, který si pamatuje, ani druhé úložiště poznámek. Dokumentace to říká výslovně: žádný nový druh, žádný druhý store, žádná memory service. Paměť repozitáře je součet záznamů z předchozí tabulky. Každý je malý, typovaný a dá se ověřit proti gitu.</p>
+      <ul>
+        <li><strong>Princip č. 1 zní „Sessions are workers, not memory“.</strong> Session je pracovník, ne místo, kde se něco uchovává. Co má přežít, musí se zapsat jako záznam.</li>
+        <li><strong>Transcripty se neukládají.</strong> Pravidlo <code>project.never-store-transcripts</code>: žádný záznam neukládá ani neshrnuje konverzaci. Transcript je minulost jednoho workera, další worker potřebuje přítomnost.</li>
+        <li><strong>„Memory“ je jen hodnota pole.</strong> Znalostní záznam má <code>class</code> z uzavřené množiny <code>fact</code>, <code>convention</code>, <code>constraint</code>, <code>memory</code>, <code>lesson</code>. Paměť tedy není nový mechanismus, ale jedna třída tvrzení ve stejné knowledge base (ADR 0010).</li>
+        <li><strong>Zastaralá paměť se nevydává za aktuální.</strong> Každý načtený záznam nese štítek proti gitu: <code>exact</code>, <code>advanced</code>, <code>diverged</code>, <code>different_context</code>. Když žádný relevantní záznam není, je to platná odpověď: „No relevant handover.“</li>
+      </ul>
+      <div class="note"><p>Paměť, kterou si vede samotný provider (například auto-memory v Claude Code), do vrstvy <code>.ai/</code> nepatří a dokumentace Majordomusu s ní nepočítá. Co má platit pro každého workera a každý nástroj, patří do záznamů v repu.</p></div>
+    </section>
+
+<section id="session">
+      <h2>Session a session-context</h2>
+      <p>Task a session jsou dva různé záznamy. Task je jednotka práce: má scope, profil a může přežít workera. Session (epizoda) je jedno sezení jednoho workera: nemá scope, nerozhoduje o přijetí a může projít několika tasky. Jeden task může projít několika sessions. Ani jeden neobsahuje druhý.</p>
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 720 300" role="img" aria-label="SessionStart otevře epizodu a zmrazí kontext; PreCompact zapíše checkpoint a odvodí znalosti; SessionEnd zapíše checkpoint, znalosti, handover a obálku session">
+            <text x="24" y="28" font-size="14" font-weight="600" class="ink">Hranice epizody kreslí hooky providera, ne model</text>
+            <path d="M120 72H600" class="edge" stroke-width="1.5" stroke-dasharray="5 5"/>
+            <text x="240" y="64" text-anchor="middle" font-size="11.5" class="mut">práce</text>
+            <text x="480" y="64" text-anchor="middle" font-size="11.5" class="mut">práce</text>
+            <circle cx="120" cy="72" r="9" fill="var(--link)"/>
+            <circle cx="360" cy="72" r="9" fill="var(--accent)"/>
+            <circle cx="600" cy="72" r="9" fill="var(--link)"/>
+            <g font-size="13" font-weight="600" class="ink mono" text-anchor="middle">
+              <text x="120" y="100">SessionStart</text>
+              <text x="360" y="100">PreCompact</text>
+              <text x="600" y="100">SessionEnd</text>
+            </g>
+            <rect x="24" y="116" width="192" height="164" rx="6" class="box" stroke-width="1.25"/>
+            <rect x="264" y="116" width="192" height="164" rx="6" class="box" stroke-width="1.25"/>
+            <rect x="504" y="116" width="192" height="164" rx="6" class="box" stroke-width="1.25"/>
+            <g font-size="12" class="ink">
+              <text x="38" y="140">otevře epizodu</text>
+              <text x="38" y="160">(při resume ji ponechá)</text>
+              <text x="38" y="184">zmrazí session-context</text>
+              <text x="38" y="208">briefing na stdout,</text>
+              <text x="38" y="226">provider ho vloží</text>
+              <text x="38" y="244">do kontextu</text>
+              <text x="38" y="268">serve ensure</text>
+
+              <text x="278" y="140">checkpoint --derive</text>
+              <text x="278" y="164">knowledge derive</text>
+              <text x="278" y="196" class="mut">konverzace se zkrátí,</text>
+              <text x="278" y="214" class="mut">práce pokračuje; tohle</text>
+              <text x="278" y="232" class="mut">je poslední chvíle, kdy</text>
+              <text x="278" y="250" class="mut">se dá něco zapsat</text>
+
+              <text x="518" y="140">checkpoint --derive</text>
+              <text x="518" y="164">knowledge derive</text>
+              <text x="518" y="188">handover --derive --close</text>
+              <text x="518" y="212">session close:</text>
+              <text x="518" y="230">obálka referencí</text>
+              <text x="518" y="248">do .ai/repo/sessions/</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption>Každá událost nejdřív zapíše do ledgeru <code>provider.event.received</code>, aby se dalo rozlišit „hook nevystřelil“ od „vystřelil a nic neudělal“. Hook vždy vrátí providerovi úspěch, selhání ale zapíše jako <code>provider.event.failed</code>. Všechno běží, ať je task otevřený, nebo ne.</figcaption>
+      </figure>
+      <h3>Session-context: co worker dostal</h3>
+      <p>Při otevření epizody se do <code>.ai/local/session-contexts/&lt;stamp&gt;--&lt;session-id&gt;.md</code> zapíše snímek: front matter epizody a výstup context builderu přesně tak, jak byl v tu chvíli. Je to důkaz toho, co worker dostal, ne zdroj pravdy. Soubor se jen doplňuje, nikdy nepřepisuje, a je lokální, protože jmenuje stroj a podruhé by se poskládal jinak. Žádné rozhraní ho nepublikuje a <code>doctor</code> odmítne takový soubor, který nese konverzaci.</p>
+      <div class="code"><button type="button">Kopírovat</button><pre><code>---
+schema: session-context/v1
+kind: session-context
+session_id: s-20261012015840-2b81
+opened_at: 2026-10-12T01:58:40Z
+opened_by: hook
+provider: claude-code
+provider_session: "&lt;id session providera&gt;"
+branch: master
+head: afbc2592…
+task_id: t-20261009182131-ef1f
+profile: implementation
+---
+# Opening snapshot of session s-20261012015840-2b81
+## Context at open
+## GIT · PEERS · TASK · PROFILE · INTENT · CONTEXT DOCUMENTS · KNOWLEDGE
+## DECISIONS · REASONING · LATEST CHECKPOINT · LATEST COMPATIBLE HANDOVER · EXCLUDED · BUDGET</code></pre></div>
+      <p>Aktuální pracovní kontext epizody, včetně všeho, co od otevření zaznamenala, soubor nedrží. Skládá ho <code>majordomus session context</code> při každém čtení.</p>
+      <h3>Session record: obálka, ne vyprávění</h3>
+      <p>Uzavřená epizoda se zapíše do <code>.ai/repo/sessions/</code> jako neměnný a trackovaný záznam. Obsahuje identitu, časovou hranici, commity mezi otevřením a zavřením a <em>reference</em> na tasky, issues, checkpointy, handovery, rozhodnutí, otázky a evidence epizody. Těla těchto záznamů nekopíruje. Seznamy se při zavření spočítají z ledgeru: každý jeho řádek nese session, která ho zapsala. Dřívější verze vybírala řádky podle časového okna a při prvním reálném běhu si přivlastnila tasky jiného workera, protože ledger je jeden soubor a dva workery časem nerozlišíš.</p>
+      <p>Tělo záznamu se skládá z checkpointů, rozhodnutí a otázek epizody. Když epizoda nezaznamenala nic vlastního, sekce to řekne jménem a uvede příkaz, který by to zaznamenal. Shrnutí si nevymýšlí.</p>
+      <p>Záznamy epizod přibývají s každou session a adresář, který jen roste, přestane časem číst člověk i nástroj. Policy proto nese strop <code>session.retention_max_files</code> (výchozích 500) a <code>majordomus doctor</code> hlásí, kolik záznamů v adresáři je a jaký strop platí. Nad stropem selže a uvede příkaz <code>majordomus session archive --dry-run</code>. Samotné <code>majordomus session archive</code> přesune nejstarší záznamy nad stropem do <code>.ai/repo/sessions/archive/</code>, do ledgeru zapíše událost <code>session.archived</code> a nic nesmaže. Odmítne, když policy archivaci nepovoluje (<code>session.archive</code>) nebo když by přepsal soubor, který v archivu už je.</p>
+    </section>
+
+<section id="briefing">
+      <h2>Briefing a scoped context</h2>
+      <p><code>majordomus context</code> skládá z trvalého stavu jeden briefing a pro každý řádek ho počítá znovu. Pořadí sekcí je pořadí autority. První je git, protože jediný nemůže být zastaralý. Historie je poslední, protože o přítomnosti vypovídá nejméně.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Sekce</th><th>Zdroj</th><th>Kdy</th></tr></thead>
+        <tbody>
+          <tr><td><code>GIT</code></td><td>git</td><td>vždy</td></tr>
+          <tr><td><code>PEERS</code></td><td>peer board sdíleného serveru</td><td>když je připojený někdo další; nikdy nenese váhu</td></tr>
+          <tr><td><code>TASK</code>, <code>PROFILE</code>, <code>INTENT</code></td><td><code>current.yaml</code>, profil, plán</td><td>při aktivním tasku</td></tr>
+          <tr><td><code>CONTEXT DOCUMENTS</code></td><td><code>.ai/**/README.md</code></td><td>řetězec dokumentů pro každou cestu scope</td></tr>
+          <tr><td><code>OPEN QUESTIONS</code></td><td><code>open-questions.md</code></td><td>nevyřešená otázka tohoto tasku</td></tr>
+          <tr><td><code>KNOWLEDGE</code></td><td><code>knowledge/candidates/</code></td><td>kandidáti čekající na review na této branchi</td></tr>
+          <tr><td><code>DECISIONS</code>, <code>REASONING</code></td><td><code>decisions.md</code>, reasoning záznamy</td><td>podle profilu</td></tr>
+          <tr><td><code>LATEST CHECKPOINT</code>, <code>LATEST COMPATIBLE HANDOVER</code></td><td>lokální state</td><td>když se najde pro worktree a branch</td></tr>
+          <tr><td><code>RECENT HISTORY</code></td><td><code>ledger.jsonl</code></td><td>když ji profil chce</td></tr>
+          <tr><td><code>EXCLUDED</code>, <code>BUDGET</code></td><td>builder</td><td>vždy: co vypadlo a proč, kolik řádků z limitu</td></tr>
+        </tbody>
+      </table></div>
+      <p>Briefing má řádkový rozpočet. Při překročení vypadávají sekce v pevném pořadí: historie, soubory, rozhodnutí a pak těla checkpointu a handoveru, která se zkrátí na odkaz. Git, task, profil a blokery nevypadnou nikdy. Každé vypuštění je vidět pod <code>EXCLUDED</code>, takže chybějící kontext se dá dohledat, ne hádat.</p>
+      <h3>Scoped context: kontext je strom</h3>
+      <p>Každý <code>README.md</code> pod <code>.ai/</code> s front matter <code>schema: context/v1</code> je kontextový dokument. Má <code>id</code> (identita, která přežije přesun), <code>scope</code> (<code>directory</code>, <code>subtree</code> nebo <code>explicit</code>), <code>providers</code>, <code>audience</code> a volitelně <code>tracks</code>, tedy kód, který popisuje. Pro danou cestu se počítá řetězec od nejobecnějšího. Bližší dokument přidává (<code>extend</code>), nebo výslovně nahrazuje (<code>replace</code> se <code>supersedes</code>). Kořenový dokument je <code>final</code>. Sourozenecké adresáře o sobě nevědí. Každý adresář stromu musí mít kontrakt, jinak je to chyba <code>missing-contract</code>.</p>
+      <div class="code"><button type="button">Kopírovat</button><pre><code>majordomus context                        <span class="c"># briefing pro aktivní task</span>
+majordomus context resolve lib/auth       <span class="c"># dokumenty platné pro cestu, v pořadí</span>
+majordomus context explain lib/auth       <span class="c"># proč je každý dokument uvnitř nebo venku</span>
+majordomus context validate               <span class="c"># celý strom; exit 10 při FAIL</span>
+majordomus context affected --staged      <span class="c"># které dokumenty změna zasáhne</span>
+majordomus context check-sync             <span class="c"># to, co pouští hook</span></code></pre></div>
+    </section>
+
+<section id="rozhodnuti">
+      <h2>Decision a ADR: dvě úrovně rozhodnutí</h2>
+      <div class="two">
+        <div class="card">
+          <h4>decision: rozhodnutí v rámci tasku</h4>
+          <ul>
+            <li>jeden append-only soubor <code>.ai/local/state/decisions.md</code></li>
+            <li><code>--why</code> je povinné: rozhodnutí bez důvodu se nedá posoudit, jen znovu hádat</li>
+            <li>volitelně <code>--rejected</code> a <code>--evidence</code></li>
+            <li>nikdy se needituje; <code>--supersedes</code> musí trefit právě jeden existující titulek</li>
+            <li>profil <code>deep-work</code> ho vyžaduje pro <code>finish</code></li>
+            <li>na konci epizody se z něj odvodí kandidát znalosti s třídou <code>convention</code></li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>ADR: architektonické rozhodnutí repa</h4>
+          <ul>
+            <li>soubor <code>.ai/repo/adrs/&lt;NNNN&gt;-&lt;slug&gt;.md</code>, schéma <code>adr/v1</code></li>
+            <li>tělo: <code># Context</code>, <code># Decision</code>, <code># Consequences</code></li>
+            <li>status <code>proposed</code>, <code>accepted</code>, <code>superseded</code>, <code>rejected</code></li>
+            <li><code>provenance.derived_from</code>: odkud přišlo; <code>related</code>: co uvedlo v platnost (<code>rule:</code>, <code>claim:</code>, <code>file:</code>, <code>test:</code>)</li>
+            <li>trackované, cestuje gitem; v repu Majordomusu jich je 85 (12. 10. 2026)</li>
+          </ul>
+        </div>
+      </div>
+      <p><strong>Nástroj nikdy nenapíše <code>accepted</code>.</strong> <code>adr propose</code> zapíše jen <code>status: proposed</code> a <code>--status</code> skončí s exit 15. Kdyby nástroj uměl napsat <code>accepted</code>, proměnil by svůj odhad v pravdu repa a pozdější čtenář by nepoznal, která rozhodnutí opravdu udělal člověk. Přijetí je člověk, který upraví to pole.</p>
+      <p><strong>Číslování je monotónní a odolné vůči paralelní práci.</strong> <code>adr next</code> projde čtyři zdroje: tento working tree, každý sesterský worktree (i nezacommitované soubory), všechny refy v gitu a peer board sdíleného serveru, jediný zdroj, který ví o čísle, které si session vzala a ještě nikam nezapsala. Nové číslo je vždy o jedna nad nejvyšším, které kdy kdokoli použil, nikdy do díry. <code>adr check</code> navíc odmítne číslo, pod kterým jiný ref nese <em>jiný</em> dokument, a protože <code>doctor</code> běží jako pre-commit hook, kolize se odhalí na branchi, ne až při merge.</p>
+      <div class="code"><button type="button">Kopírovat</button><pre><code>majordomus decision add "Normalizovat callback URI před porovnáním state" \
+    --why "rozdíl je v koncovém lomítku, ne ve zfalšovaném state" \
+    --rejected "uvolnit porovnání" --evidence "test/auth/callback_test.exs:41"
+
+majordomus adr next                                      <span class="c"># další volné číslo a co prohledal</span>
+majordomus adr propose "Registry je jediná kanonická deklarace" --from file:docs/CAPABILITIES.md
+majordomus adr check                                     <span class="c"># schéma, reference, kolize čísel napříč refy</span>
+majordomus adr affected --staged                         <span class="c"># které ADR změna zasahuje (WARN, exit 0)</span></code></pre></div>
+      <p>Jestli změna vůbec vyžaduje ADR, posuzuje pravidlo <code>majordomus.decision-threshold</code>, a to rozhoduje reviewer. Nástroj validuje záznamy a hlásí, čeho se změna dotýká, ale nikdy netvrdí, že diff byl rozhodnutím.</p>
+    </section>
+
+<section id="znalosti">
+      <h2>Knowledge base: co se epizoda naučila</h2>
+      <p>Knowledge base je druh <code>knowledge</code> se schématem <code>knowledge/v1</code> v <code>.ai/repo/knowledge/</code> a nic jiného. Záznam je jedno tvrzení o repozitáři na jeden řádek s důkazem.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Pole</th><th>Hodnoty</th><th>Význam</th></tr></thead>
+        <tbody>
+          <tr><td><code>class</code></td><td><code>fact</code>, <code>convention</code>, <code>constraint</code>, <code>memory</code>, <code>lesson</code></td><td>jaký druh věci tvrdí</td></tr>
+          <tr><td><code>status</code></td><td><code>candidate</code>, <code>verified</code>, <code>superseded</code></td><td>kdo za ním stojí: deriver, člověk, nebo už nikdo</td></tr>
+          <tr><td><code>epistemics</code></td><td><code>observed</code>, <code>inferred</code>, <code>decided</code></td><td>jak se to ví</td></tr>
+          <tr><td><code>provenance.origin</code></td><td><code>authored</code>, <code>extracted</code></td><td>napsal člověk, nebo odvodil nástroj</td></tr>
+          <tr><td><code>provenance.derived_from</code></td><td><code>session:</code>, <code>decision:</code>, <code>task:</code>, <code>commit:</code>, <code>issue:</code>, <code>file:</code>, <code>test:</code></td><td>důkaz jako typované reference, které se musí rozlišit</td></tr>
+          <tr><td><code>relations</code></td><td><code>relates_to</code>, <code>documents</code>, <code>supports</code>, <code>contradicts</code>, <code>supersedes</code>, <code>depends_on</code></td><td>vztah k jiným zdrojům, nikdy jejich opakování</td></tr>
+        </tbody>
+      </table></div>
+      <ol class="pipeline">
+        <li><span class="n">1</span><div><h4>Práce zanechá stopy v ledgeru</h4><p><code>decision.recorded</code>, <code>question.resolved</code>, <code>task.finished</code>, každý řádek označený epizodou, plus commity epizody v gitu.</p></div></li>
+        <li><span class="n">2</span><div><h4>Na hranici epizody se odvodí kandidáti</h4><p>Při <code>SessionEnd</code> a <code>PreCompact</code> (nebo ručně <code>knowledge derive</code>) vznikne <code>candidates/&lt;epizoda&gt;-&lt;digest&gt;.md</code>, deterministicky, bez modelu a bez sítě. Rozhodnutí se stane <code>convention</code>, zodpovězená otázka <code>fact</code>, task skončený <code>blocked</code>/<code>failed</code> se stane <code>lesson</code> a dokončený s ověřením <code>fact</code>. Stejný ledger a git dají stejné bajty.</p></div></li>
+        <li><span class="n">3</span><div><h4>Další worker se to dozví</h4><p>Briefing dostane sekci se seznamem kandidátů čekajících na review na této branchi. Kandidáti jsou trackovaní, protože záznam, který čte jen jeden stroj, nečte nikdo.</p></div></li>
+        <li><span class="n">4</span><div><h4>Člověk rozhodne</h4><p><code>knowledge promote &lt;id&gt; [--class …] &lt; evidence.md</code> přesune kandidáta do <code>curated/</code> se <code>status: verified</code>. Prázdný stdin je odmítnut, protože akt bez důkazu je jen tvrzení. <code>knowledge reject &lt;id&gt; --reason "…"</code> ho označí <code>superseded</code> a nechá na místě jako záznam toho odmítnutí.</p></div></li>
+      </ol>
+      <p>Hlídají to tři pravidla: <code>majordomus.knowledge-observed</code> (blokující: epizody se zavírají a znalosti se neodvozují, tedy zastavený zapisovač), <code>majordomus.knowledge-integrity</code> (blokující: schéma, unikátnost, důkaz u ověřeného, žádná konverzace) a <code>majordomus.candidates-reviewed</code> (poradní: fronta je moc dlouhá nebo moc stará). Fronta se měří, ale stroj ji nikdy nevyprazdňuje.</p>
+      <p>Celá vrstva je zároveň graf. <code>knowledge sources</code> ukáže, které soubory patří do které třídy zdrojů (ADR, pravidla, skills, sessions, issues…), <code>knowledge nodes</code> a <code>knowledge edges</code> jejich uzly a hrany. Otázka „které ADR uvedlo toto pravidlo v platnost?“ je dotaz na hrany, ne druhý seznam, který někdo udržuje.</p>
+    </section>
+
+<section id="pravidla">
+      <h2>Pravidla a doktríny</h2>
+      <p>Pravidlo je přenositelný objekt: jeden Markdown soubor s YAML front matter, čitelný i bez nástroje. Identitou je <code>id</code> a <code>version</code>, ne jméno souboru.</p>
+      <div class="code"><button type="button">Kopírovat</button><pre><code>.ai/repo/rules/
+├── vendor/majordomus/     <span class="c"># připnutý standardní balíček; neupravovat, upgradovat výslovně</span>
+│   ├── manifest.yaml      <span class="c"># každý soubor s identitou a hashem obsahu</span>
+│   └── rules/*.md         <span class="c"># 10 principů + doktríny nástroje (59 souborů)</span>
+└── project/*.md           <span class="c"># pravidla, která si napsalo repo (106 v repu Majordomusu)</span>
+
+---
+id: majordomus.scope-integrity
+version: 1
+kind: rule
+statement: The normative sentence a worker follows.
+status: active                    <span class="c"># active | deprecated</span>
+class: blocking                   <span class="c"># blocking | advisory, žádná třetí třída</span>
+depends_on: [majordomus.state-consistency@1]
+x-majordomus:                     <span class="c"># vazba na nástroj, jen u vynucovaných pravidel</span>
+  validator: scope                <span class="c"># funkce mj_validate_scope</span>
+  enforced_by: [check, finish, watch]
+  exit_code: 10
+  claims: [scope-enforcement]
+  tests: [test/cases/04_start_check.sh]
+---</code></pre></div>
+      <p>Pravidlo se v <code>rules list</code> ukáže jedním ze tří způsobů vynucení: <code>enforced by &lt;příkazy&gt;</code> (pouští ho dispatcher), <code>proven by &lt;cesty&gt;</code> (drží ho gate nebo test) nebo <code>review-enforced: &lt;důvod&gt;</code> (žádný program ho neumí vyjádřit, například clean-room). Pravidlo bez bloku <code>x-majordomus</code> se vypíše jako <code>no validator; see the rule</code>, nic se neschovává.</p>
+      <h3>Pravidlo platí, až když projde celým řetězem</h3>
+      <pre class="mermaid-src" data-lang="mermaid">flowchart LR
+  principle["principle"] --&gt; doctrine["doctrine"] --&gt; validator["validator"]
+  validator --&gt; point["enforcement point"] --&gt; propagation["propagation<br/>(exit code)"] --&gt; test["test"]
+  test --&gt; ci["CI"] --&gt; claim["claim"]</pre>
+      <p><code>majordomus doctor</code> tento řetěz projde pro každou doktrínu a nahlásí první přerušený článek. Čte přitom zdrojový kód, ne popis registru o sobě samém. Motivace pochází z praxe: 17 nezávislých případů kontroly, která byla zdokumentovaná jako blokující, ležela na disku, byla spustitelná, a nic ji nevolalo. <code>scripts/ci/rule-proof-check</code> navíc vyžaduje, aby každé blokující pravidlo jmenovalo validátor, test nebo zdůvodnění, proč ho vynucuje člověk. Pravidla bez důkazu jsou v ratchetu, který se může jen zmenšovat. Řeší se zapojením vynucení, nikdy změnou třídy.</p>
+      <ul>
+        <li><strong>Rozlišení selže uzavřeně.</strong> Chybějící závislost, cyklus, jedno <code>id@version</code> ve dvou souborech nebo neznámý klíč zastaví <code>list</code>, <code>show</code> i každý příkaz, který sadu čte. Nic se neaplikuje napůl.</li>
+        <li><strong>Vendorovaná kopie je autoritativní.</strong> Novější verze nástroje jen ohlásí novější balíček (<code>vendor status</code>, <code>vendor diff</code>). Aplikuje ho až <code>vendor update</code>, které se <code>project/</code> nedotkne.</li>
+        <li><strong>Ruční úprava ve <code>vendor/</code> se pozná</strong> podle hashů v manifestu a <code>vendor update</code> ji bez <code>--force</code> nepřepíše.</li>
+      </ul>
+      <div class="code"><button type="button">Kopírovat</button><pre><code>majordomus rules list                <span class="c"># efektivní sada v pořadí závislostí a způsob vynucení</span>
+majordomus rules show project.clean-room
+majordomus rules vendor status       <span class="c"># exit 11, když nástroj nese jiný balíček</span>
+majordomus rules vendor diff
+majordomus rules vendor update
+majordomus doctrine status           <span class="c"># počty: blokující, poradní, chybějící validátory a testy</span>
+majordomus doctrine show majordomus.scope-integrity</code></pre></div>
+    </section>
+
+<section id="skills">
+      <h2>Skills a prompty</h2>
+      <div class="two">
+        <div class="card">
+          <h4>skills: procedura pro jeden druh práce</h4>
+          <ul>
+            <li><code>.ai/repo/skills/&lt;id&gt;/SKILL.md</code> s front matter <code>skill/v1</code>, volitelně <code>examples/*.md</code></li>
+            <li>povinné sekce <code># Purpose</code>, <code># Procedure</code>, <code># Output</code></li>
+            <li>nic se neregistruje: skill objeví třída zdrojů <code>skill</code></li>
+            <li><code>skills check</code> odmítne dva skills se stejným id i dva, jejichž popisy se nedají rozlišit</li>
+            <li>přes MCP jako <code>majordomus://skill/&lt;id&gt;</code></li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>prompts: znovupoužitelný framing</h4>
+          <ul>
+            <li><code>.ai/repo/prompts/&lt;name&gt;.md</code>; dodávané <code>continue</code>, <code>debug</code>, <code>handover</code>, <code>review</code></li>
+            <li>uzavřená sada tokenů: <code>{{TASK}}</code>, <code>{{SCOPE}}</code>, <code>{{BRANCH}}</code>, <code>{{HANDOVER}}</code>, <code>{{CONTEXT}}</code>…</li>
+            <li>žádný templating: žádné podmínky, smyčky, include ani shell</li>
+            <li>neznámý token je chyba, jako neznámý klíč konfigurace</li>
+            <li><code>context --prompt &lt;name&gt;</code> ho přidá do briefingu</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+<section id="stroje">
+      <h2>Napříč stroji</h2>
+      <p>Trackovaná polovina (ADR, pravidla, znalosti, session records, skills) cestuje běžným gitem. Lokální stav cestuje jen záměrně, jako podepsaný záznam. Handover se <em>publikuje</em> do zvláštního refu <code>refs/majordomus/continuity</code>, podepsaný klíčem zařízení (tím samým, který používá mesh), a druhý stroj ho <em>převezme</em>, až když to plán dovolí.</p>
+      <div class="code"><button type="button">Kopírovat</button><pre><code><span class="c"># stroj A, jednou: pojmenuj zařízení</span>
+majordomus-cli continuity device --label macbook-pro
+<span class="c"># stroj A, při odchodu</span>
+majordomus handover &lt; note.md
+majordomus-cli continuity publish --issue '#184'   <span class="c"># odmítne tajemství a domovské cesty</span>
+git push                                         <span class="c"># zdrojový kód; continuity ho nikdy nepřesouvá</span>
+majordomus-cli continuity sync                   <span class="c"># fetch, sjednocení, push refu, nikdy force</span>
+<span class="c"># stroj B</span>
+git pull
+majordomus-cli continuity sync
+majordomus-cli continuity plan                   <span class="c"># nic nezapíše; řekne, co by resume udělal</span>
+majordomus-cli continuity resume                 <span class="c"># jen na plánu ready</span>
+majordomus handover --resolve</code></pre></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Stav</th><th>Cestuje?</th><th>Jak</th></tr></thead>
+        <tbody>
+          <tr><td>zacommitovaný zdrojový kód a <code>.ai/repo/</code></td><td>ano</td><td>git, člověk: <code>push</code> / <code>pull</code></td></tr>
+          <tr><td>nezacommitovaný zdrojový kód</td><td><strong>ne</strong></td><td>záznam uvede změněné cesty a otisk; plán řekne <code>source_incomplete</code></td></tr>
+          <tr><td>handover (objective, state, next action)</td><td>ano</td><td>continuity záznam nebo mesh handover</td></tr>
+          <tr><td>záměr tasku: titulek, scope, profil</td><td>ano</td><td>plán doporučí <code>majordomus start</code></td></tr>
+          <tr><td>rozhodnutí tasku</td><td>ano</td><td>připíšou se jednou, označená <code>Carried:</code></td></tr>
+          <tr><td>epizoda, session-context</td><td>ne</td><td>otevírají se na přijímajícím stroji</td></tr>
+          <tr><td>PID, sockety, porty, lease, build</td><td>ne</td><td>záznam pro ně nemá pole</td></tr>
+          <tr><td>credentials, tajné proměnné, domovské cesty</td><td>ne</td><td>publikace, která je nese, je odmítnuta</td></tr>
+        </tbody>
+      </table></div>
+      <p>Plán ověří důvěru (podpisový klíč musí být v <code>trust.allow</code> deklarace meshe), linii (stejná práce pokračovala na dvou strojích je <code>conflict</code> a člověk vybere <code>--record</code>), stav zdrojového kódu (<code>local_behind</code>, <code>head_missing</code> s příkazem gitu, který to spraví) a aktivitu (<code>origin_may_be_active</code>, když záznam přišel z epizody otevřené před méně než hodinou). Hodiny nerozhodují nic. Pozor: ref se pushuje na synchronizovaný remote, takže ve veřejném repu jsou záznamy veřejné.</p>
+    </section>
+
+<section id="prikazy">
+      <h2>Příkazy</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Oblast</th><th>Příkaz</th><th>Co dělá</th></tr></thead>
+        <tbody>
+          <tr><td rowspan="4">Session</td><td><code>session start / status / close</code></td><td>epizoda; obvykle ji řídí hooky providera</td></tr>
+          <tr><td><code>session context</code></td><td>pracovní kontext epizody, složený při každém čtení</td></tr>
+          <tr><td><code>capture install --provider claude-code</code></td><td>hooky <code>SessionStart</code>, <code>UserPromptSubmit</code>, <code>PreCompact</code>, <code>SessionEnd</code></td></tr>
+          <tr><td><code>history [--task] [--event] [--since]</code></td><td>ledger čtený zpět jako provozní historie</td></tr>
+          <tr><td rowspan="4">Kontinuita</td><td><code>checkpoint [--derive | --show | --list]</code></td><td>průběžný stav, omezená délka</td></tr>
+          <tr><td><code>handover [--derive] [--close] [--resolve]</code></td><td>balíček pro pokračování a jeho nalezení</td></tr>
+          <tr><td><code>decision add / list / show</code></td><td>rozhodnutí tasku s povinným důvodem</td></tr>
+          <tr><td><code>question add / resolve / list</code></td><td>blokery přijetí</td></tr>
+          <tr><td rowspan="2">Kontext</td><td><code>context</code></td><td>briefing v pořadí autority, s rozpočtem</td></tr>
+          <tr><td><code>context resolve / explain / validate / affected / check-sync</code></td><td>strom kontextových dokumentů</td></tr>
+          <tr><td rowspan="2">ADR</td><td><code>adr list / show / next / check / affected</code></td><td>čtení, číslování, validace, dopad změny</td></tr>
+          <tr><td><code>adr propose "&lt;titulek&gt;" --from &lt;ref&gt;</code></td><td>nový záznam, vždy <code>proposed</code></td></tr>
+          <tr><td rowspan="3">Znalosti</td><td><code>knowledge derive / candidates / check</code></td><td>odvození, fronta, integrita</td></tr>
+          <tr><td><code>knowledge promote / reject</code></td><td>rozhodnutí člověka</td></tr>
+          <tr><td><code>knowledge sources / nodes / edges</code></td><td>graf vrstvy</td></tr>
+          <tr><td rowspan="2">Pravidla</td><td><code>rules list / show / vendor status / diff / update</code></td><td>efektivní sada a vendorovaný balíček</td></tr>
+          <tr><td><code>doctrine status / list / show</code>, <code>doctor</code>, <code>watch</code></td><td>co se vynucuje a jestli je to zapojené</td></tr>
+          <tr><td rowspan="2">Ostatní</td><td><code>skills list / show / check</code></td><td>procedury</td></tr>
+          <tr><td><code>prompt list / show / render</code></td><td>framingy s uzavřenou sadou tokenů</td></tr>
+          <tr><td>Mezi stroji</td><td><code>majordomus-cli continuity device / publish / sync / status / plan / resume</code></td><td>podepsané handovery v <code>refs/majordomus/continuity</code></td></tr>
+        </tbody>
+      </table></div>
+      <p>Čtecí strana znalostí, ADR, pravidel a skills je zároveň dostupná přes HTTP, OpenAPI, MCP a Cockpit, protože každé rozhraní je projekcí stejného registru schopností.</p>
+    </section>
+
+<section id="hranice">
+      <h2>Co to nedělá</h2>
+      <div class="two">
+        <div class="card yes">
+          <h4>Platí vždy</h4>
+          <ul>
+            <li>identita záznamů se počítá z gitu, nikdy se nepíše ručně</li>
+            <li>každý načtený záznam nese štítek proti gitu</li>
+            <li>nesouvisející záznam se nikdy nenabídne: stejný worktree a branch, pak stejná branch, jinak nic</li>
+            <li>append-only záznamy se zapisují atomicky a nikdy se nestagují</li>
+            <li>každý nález nese příkaz, který ho zreprodukuje</li>
+          </ul>
+        </div>
+        <div class="card no">
+          <h4>Nedělá nikdy</h4>
+          <ul>
+            <li>nevolá model, síť ani <code>eval</code></li>
+            <li>neukládá ani neshrnuje konverzace</li>
+            <li>nezapíše <code>accepted</code> do ADR ani <code>verified</code> do znalosti</li>
+            <li>nerozhoduje, kteří kandidáti si zaslouží povýšení</li>
+            <li>netvrdí, že diff byl rozhodnutím</li>
+          </ul>
+        </div>
+      </div>
+    </section>

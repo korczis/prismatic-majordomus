@@ -1,7 +1,7 @@
 +++
 title = "majordomus fleet status"
 description = "What every machine runs: platform, installed version, servers, and each hub's checkout and answer"
-weight = 219
+weight = 255
 [extra]
 route = "/docs/cli/fleet/status/"
 command = "majordomus fleet status"

@@ -1,0 +1,52 @@
+id: I2477
+milestone: development-runtime
+title: "A claim opens its proof: what settles it, its last run, what changed since, how to see it again"
+slug: a-claim-opens-its-proof
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Let a reader of majordomus ui open any claim of the product (/ui/evidence?claim=<id>) into an inspector from evidence.claim: what it says and where, its state and what that means, the run behind it, what changed since it was proven, the command that reproduces it, the runs the ledger holds, and the claims its test also proves, each a link."
+why: "The owner asked on 2026-10-11 to implement every view of the UI screenshots, maximally interactive (reference 09-evidence; pack v3 M10 evidence trail). The Evidence screen lists claims and findings as rows that open nothing, while evidence.claim already joins one claim to its execution, its changed files, its reproduce command and its sibling claims."
+current_state: "A claim is a row of the Evidence screen; nothing opens it."
+desired_state: "?claim=<id> asks evidence.claim for that claim and opens its inspector above the Evidence screen: its id, text, state and status, the meaning of its state, where it is said, what implements it and what settles it, its last run (outcome, seconds, commit, tree) or that it was never run, the files changed since it was proven, the reproduce command, the newest ten runs of its test, and the claims the same test proves, each a link to its own inspector. The Evidence screen's claim and finding rows lead here. A claim the matrix does not declare is shown as the capability's refusal; a value that is no claim id is never asked."
+scope:
+  - "apps/majordomus-cli/src/ui/claim.rs"
+  - "apps/majordomus-cli/src/ui/evidence.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - ".ai/repo/project/issues/I2477.yaml"
+  - "docs/MAJORDOMUS_UI.md"
+  - "test/cases/1082_a_claim_opens_its_proof.sh"
+depends_on: ["I2462"]
+acceptance_criteria:
+  - "?claim=<id> opens the inspector with what settles it, its last run, its reproduce command and the claims its test also proves as links"
+  - "the Evidence screen's claim and finding rows lead to it"
+  - "an undeclared claim is said as the capability's refusal, and a value that is no id is never asked"
+validation:
+  - "cargo test --lib ui::claim"
+  - "test/run.sh 1082_a_claim_opens_its_proof"
+evidence_required:
+  - "ui_claim_unit_tests"
+  - "ui_claim_case_1082"
+created_at: 2026-10-11
+updated_at: 2026-10-12T11:01:25Z
+started_at: 2026-10-12T11:01:09Z
+started_event: sha256:08b412b3bdf2ad3f51ab5fbbfc52780f0f2799f8d1960bc59eb3ea3601ac0e49
+verified_at: 2026-10-12T11:01:13Z
+verified_event: sha256:fc1e6f2f1f824360978e9c84e591b4b78fba27b45c090e3628f7a3985ceef49e
+completed_at: 2026-10-12T11:01:25Z
+completed_event: sha256:17ba5da0c8eea78f525e9e8c357c567ef3bd1e331963253a68104d205f339105
+evidence:
+  - covers: ui_claim_unit_tests
+    type: ci
+    command: "cargo test --lib ui::claim (validate run 38223440282 on 722228ef3c, the v0.21.0 top)"
+    result: "3 ui::claim tests ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38223440282"
+    commit: 722228ef3c9d8db8af6039010f9bf88a106d6cc2
+    recorded_at: 2026-10-12T11:01:20Z
+  - covers: ui_claim_case_1082
+    type: ci
+    command: "test/run.sh 1082_a_claim_opens_its_proof (validate run 38223440282 on 722228ef3c, the v0.21.0 top)"
+    result: "case 1082_a_claim_opens_its_proof ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38223440282"
+    commit: 722228ef3c9d8db8af6039010f9bf88a106d6cc2
+    recorded_at: 2026-10-12T11:01:23Z

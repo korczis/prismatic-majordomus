@@ -84,6 +84,13 @@ session:
   # leaving it in the working tree is the same as not writing it.
   commit_record_on_end: true
   push_record_on_end: true
+  # The cap on the closed records the sessions section holds, and whether the oldest beyond
+  # it may be moved aside. A record is history and is never deleted: `majordomus session
+  # archive` moves the oldest over the cap into the section's archive/ directory, only when
+  # it is run, and refuses to overwrite a record already there. Over the cap, `doctor` fails
+  # and `watch` drifts, the way they do for checkpoints and handovers.
+  retention_max_files: 500
+  archive: true
   briefing_budget_lines: 60              # cap on what the start event injects, per episode
   checkpoint_on_compact: true            # also the checkpoint the close records, for the
                                          # same reason: both are moments at which what the
@@ -91,6 +98,10 @@ session:
   handover_on_end: true
   handover_on_fill: true                 # ask the worker for a handover while the context
                                          # window still has room to write one (ADR 0123)
+  brief_on_interval: true                # keep the session briefed on what surrounds it, as
+                                         # its status line and on an interval (ADR 0136)
+  brief_interval_minutes: 20             # how often a session reports on itself unasked
+  edits_require_claim: false             # refuse an edit no claim covers (I2735); needs an enabled mesh
   knowledge_on_end: true                 # the evidence the episode produced is about to stop
                                          # being reachable; derive what it says as the
                                          # episode closes, on every close path
@@ -117,6 +128,13 @@ knowledge:
   candidates_max_files: 40               # more candidates than this awaiting review is a WARN
   candidate_max_age_minutes: 20160       # 14d: a candidate this old was not reviewed, it was
                                          # ignored; doctor names it
+
+# Rebuildable caches under .ai/local/cache/, which no commit carries. Each parsed YAML file
+# is kept under cache/flat/ and served only to a file with exactly the bytes it was parsed
+# from, so a command on unchanged files reads them instead of parsing them again. Past the
+# cap the oldest written go first; 0 is no cache.
+cache:
+  flatten_max_entries: 2000
 
 # `majordomus bench` samples every public command this many times after the warm-up runs;
 # `bench --check` refuses a regression larger than these fractions of the baseline's

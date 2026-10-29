@@ -31,6 +31,9 @@
 //! ```
 
 pub mod artifacts;
+pub(crate) mod blackboard;
+pub(crate) mod brief;
+pub(crate) mod cache_provision;
 pub(crate) mod capabilities;
 pub mod commands;
 pub mod commit;
@@ -46,6 +49,7 @@ pub mod devtask;
 pub(crate) mod directories;
 pub(crate) mod distribution;
 pub mod economics;
+pub(crate) mod editors;
 pub mod entity;
 pub mod environment;
 pub mod episodes;
@@ -54,17 +58,21 @@ pub(crate) mod executions;
 pub(crate) mod fleet;
 pub mod gates;
 pub(crate) mod graph;
+pub(crate) mod guard;
 pub mod health;
 pub(crate) mod integration;
 pub mod intent_realization;
 pub mod intents;
 pub mod knowledge_base;
+pub mod layout;
 pub mod lifecycle;
 pub mod mcp;
 pub(crate) mod mesh;
 pub(crate) mod models;
+pub(crate) mod monitor;
 pub mod objects;
 pub mod obligations;
+pub mod observatory;
 pub mod pack;
 pub(crate) mod peers;
 pub(crate) mod perf;
@@ -181,6 +189,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         capabilities,
         commands,
         graph,
+        guard,
         health,
         dashboard,
         continuity,
@@ -196,14 +205,18 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         executions,
         mesh,
         fleet,
+        monitor,
         models,
         reasoning,
         episodes,
         peers,
+        blackboard,
+        brief,
         server,
         mcp,
         session_domain,
         shell,
+        layout,
         pack,
         perf,
         plan,
@@ -212,6 +225,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         devcontext,
         artifacts,
         economics,
+        editors,
         environment,
         quality,
         distribution,
@@ -226,7 +240,8 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         integration,
         convergence,
         trace,
-        product
+        product,
+        observatory
     ]
 }
 
@@ -322,6 +337,12 @@ mod tests {
                 "continuity.publish",
                 "continuity.resume",
                 "continuity.sync",
+                // runs any executable capability, writers included (ADR 0126)
+                "executions.start",
+                // writes one new intent record, never a stage (ADR 0144)
+                "intents.propose",
+                // lists this machine's key in the mesh declaration's trust.allow (I2412)
+                "mesh.enrol",
                 "plan.transition",
                 "reasoning.record",
                 "recover.orphans"

@@ -14,9 +14,11 @@
 #   #4  its required check fails                  -> needs_repair throughout, never merged
 #   #5  makes the change #1 makes                 -> ready, then behind, redundant once #1 lands
 #
-# A merge lands as a merge commit, as GitHub's merge method makes it, so after any merge every
-# other open pull request is behind master and needs master brought in before it may merge
-# (the rule: a pull request merges only when it contains the current master). One drain can
+# A landing fast-forwards master to the head its checks judged (I3910), so after any landing
+# every other open pull request lacks that head's commits, is behind master, and needs master
+# brought in before it may land
+# (the rule: a pull request merges only when it contains the current master, or carries it,
+# which none here does: ADR 0129 and case 1040). One drain can
 # therefore merge one pull request of a queue like this one; the next is refreshed, its checks
 # run on the new head, and a later drain merges it. That is the cycle asserted here.
 #
@@ -118,6 +120,14 @@ case "\$1 \$2" in
       git fetch -q origin "refs/pull/\$n/head" &&
       git -c user.email=f@example.com -c user.name=forge merge -q --no-ff FETCH_HEAD -m "Merge pull request #\$n" &&
       git push -q origin HEAD:master && touch "$STATE/merged-\$n" ;;
+  # the fast-forward (I3910): master moved to the head, never forced, and refused as the
+  # forge refuses it (HTTP 422) unless master is the head's ancestor
+  "api -X")
+    sha="\${6#sha=}"; old="\$(git -C "$ORIGIN" rev-parse master)"
+    git -C "$ORIGIN" merge-base --is-ancestor "\$old" "\$sha" || { echo 'gh: Update is not a fast forward (HTTP 422)' >&2; exit 1; }
+    git -C "$ORIGIN" update-ref refs/heads/master "\$sha" "\$old" || exit 1
+    n="\$(git -C "$ORIGIN" for-each-ref --format='%(objectname) %(refname)' 'refs/pull/*/head' | awk -v s="\$sha" '\$1 == s { split(\$2, p, "/"); print p[3]; exit }')"
+    touch "$STATE/merged-\$n"; echo "landed \$n" >> "$STATE/log" ;;
   "pr view")
     case " \$* " in
       # the refresh's read of a declared dependency that is no longer open (ADR 0101: it is
@@ -161,9 +171,10 @@ expect_disp 5 ready "first observation"
 
 # ---------------------------------------------------------------- 2. the first drain
 out="$(prs drain --max 5)" || { echo "    the first drain failed: $out"; tail -8 "$STATE/log"; exit 1; }
-merged() { grep '^pr merge' "$STATE/log" | awk '{print $3}' | tr '\n' ' '; }
+merged() { grep '^landed ' "$STATE/log" | awk '{print $2}' | tr '\n' ' '; }
+pinned() { grep -q "^api -X PATCH repos/o/r/git/refs/heads/master -f sha=$1 -F force=false\$" "$STATE/log"; }
 [ "$(merged)" = "3 " ] || { echo "    the first drain merged [$(merged)], not #3 alone:"; printf '%s\n' "$out" | sed 's/^/      /'; exit 1; }
-grep -q "^pr merge 3 --merge --match-head-commit $H3\$" "$STATE/log" || { echo "    #3 was not merged pinned to its head"; exit 1; }
+pinned "$H3" || { echo "    master was not fast-forwarded to #3's head"; exit 1; }
 case "$out" in *"nothing is ready"*) ;; *) echo "    the first drain did not stop because nothing was ready: $out"; exit 1 ;; esac
 q="$(prs status --format json)" || { echo "    status after the first drain says its observation is stale"; exit 1; }
 expect_disp 1 needs_refresh "after #3 landed"
@@ -199,7 +210,7 @@ H1b="$(refresh 1)" || exit 1
 checked 1 "$H1b"
 out="$(prs drain --max 5)" || { echo "    the third drain failed: $out"; exit 1; }
 [ "$(merged)" = "3 1 " ] || { echo "    the third drain merged [$(merged)], not #1:"; printf '%s\n' "$out" | sed 's/^/      /'; exit 1; }
-grep -q "^pr merge 1 --merge --match-head-commit $H1b\$" "$STATE/log" || { echo "    #1 was not merged pinned to its refreshed head"; exit 1; }
+pinned "$H1b" || { echo "    master was not fast-forwarded to #1's refreshed head"; exit 1; }
 q="$(prs status --format json)"
 expect_disp 2 needs_refresh "after #1 landed"
 expect_disp 4 needs_repair "after #1 landed"
@@ -210,7 +221,7 @@ H2b="$(refresh 2)" || exit 1
 checked 2 "$H2b"
 out="$(prs drain --max 5)" || { echo "    the fifth drain failed: $out"; exit 1; }
 [ "$(merged)" = "3 1 2 " ] || { echo "    the fifth drain merged [$(merged)], not #2"; exit 1; }
-grep -q "^pr merge 2 --merge --match-head-commit $H2b\$" "$STATE/log" || { echo "    #2 was not merged pinned to its refreshed head"; exit 1; }
+pinned "$H2b" || { echo "    master was not fast-forwarded to #2's refreshed head"; exit 1; }
 case "$out" in *"nothing is ready"*) ;; *) echo "    the last drain did not end with nothing ready: $out"; exit 1 ;; esac
 for h in "$H3" "$H1b" "$H2b"; do git -C "$ORIGIN" merge-base --is-ancestor "$h" "$(master)" || { echo "    master does not contain $h"; exit 1; }; done
 
@@ -220,7 +231,7 @@ replanned() {   # <merged first> <selected next>
   a="$(jq -r --argjson n "$1" 'select(.action == "merge_succeeded" and .pr == $n) | .master_after' "$ev")"
   b="$(jq -r --argjson n "$2" 'select(.action == "selected" and .pr == $n) | .master_before' "$ev")"
   [ -n "$a" ] && [ "$a" = "$b" ] || { echo "    #$2 was selected against master ${b:-?}, not the ${a:-?} #$1's merge produced"; exit 1; }
-  n="$(awk -v x="^pr merge $1 " -v y="^pr merge $2 " '$0 ~ x {on=1; next} $0 ~ y {on=0} on && /^pr list/' "$STATE/log" | wc -l | tr -d ' ')"
+  n="$(awk -v x="^landed $1\$" -v y="^landed $2\$" '$0 ~ x {on=1; next} $0 ~ y {on=0} on && /^pr list/' "$STATE/log" | wc -l | tr -d ' ')"
   [ "$n" -ge 2 ] || { echo "    the forge was observed $n time(s) between the merges of #$1 and #$2"; exit 1; }
 }
 replanned 3 1
@@ -230,7 +241,7 @@ replanned 1 2
 seq="$(jq -r 'select(.action | test("^(selected|refresh_selected|stale_decision|merge_attempted|merge_succeeded|merge_failed|verification_failed|refreshed|refresh_failed)$")) | "\(.action) \(.pr)"' "$ev" | tr '\n' ',')"
 want="selected 3,merge_attempted 3,merge_succeeded 3,refresh_selected 1,refreshed 1,selected 1,merge_attempted 1,merge_succeeded 1,refresh_selected 2,refreshed 2,selected 2,merge_attempted 2,merge_succeeded 2,"
 [ "$seq" = "$want" ] || { echo "    the decision events differ from the scenario:"; echo "      got:  $seq"; echo "      want: $want"; exit 1; }
-grep -qE '^pr merge (4|5) ' "$STATE/log" && { echo "    #4 or #5 reached the forge's merge"; exit 1; }
+grep -qE '^pr merge|^landed (4|5)$' "$STATE/log" && { echo "    #4 or #5 landed, or a merge commit was asked for"; exit 1; }
 grep -q ADMIN "$STATE/log" && { echo "    a call carried --admin"; exit 1; }
 grep -q UNEXPECTED "$STATE/log" && { echo "    the executor asked the forge something this harness does not answer:"; grep -B1 UNEXPECTED "$STATE/log" | head -4; exit 1; }
 echo "    five drains: #3; #1 refreshed and merged; #2 refreshed and merged; each against the master before it; #4 and #5 never"

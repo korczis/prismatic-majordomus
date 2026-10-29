@@ -1,0 +1,78 @@
+id: I2770
+milestone: surfaces-never-disagree
+title: "majordomus ui and the Cockpit wear the site's navbar: one renderer, the same styles and scripts, and a browser comparison that refuses a difference"
+slug: the-ui-wears-the-sites-navbar
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make majordomus.dev the reference for the product's look by giving every screen of majordomus ui and every page of the Cockpit the site's own navbar: the bar the site's partial renders over site/data/nav.toml, cut out of the built site and compiled into the executable, styled by the same Tailwind build over the same tokens, driven by the site's own scripts, and held to the site's bar by a browser comparison in both themes and at every declared width."
+why: "Owner, 2026-10-16: the official site majordomus.dev is the reference for styling and UI/UX rules; /ui and the Cockpit must be derived from it, with the same layout and a pixel-identical navbar. Measured that day: the site's bar is 73 px tall at 1440 and 65 px at 390, in 16 px type, with the brand and release, four menus, search, theme toggle, the product, GitHub and the call to action; the UI's was a 67 px tool bar beside a 240 px sidebar with a brand of its own (119 px tall at 390), in 14 px type, with none of the site's entries; the Cockpit's a third bar, 53 px in 13.5 px type. The tokens were shared (one --mj-design fingerprint) and the bars were three."
+current_state: "The site renders its navbar from site/data/nav.toml through site/templates/partials/navbar.html; apps/majordomus-cli/src/ui/shell.rs draws a sidebar brand and a top bar of its own, apps/majordomus-cli/src/cockpit/view.rs a third; nothing compares them."
+desired_state: "scripts/ui navbar --write cuts the bar out of the built site into apps/majordomus-cli/src/ui/navbar.html, which ui/navbar.rs compiles in and fills with the executable's version, leading the product entry to the live UI, for the UI's shell and the Cockpit's; share/ui/src/ui.css and share/cockpit/src/cockpit.css compile the utilities that file names; nav.js and theme.js under share/ui/ and share/cockpit/ are byte copies of the site's, written and checked by scripts/cockpit-assets; scripts/ui navbar, run first by scripts/ui audit (the ui-audit gate), refuses a stale copy and any difference between the site's bar and the bar of /ui or /cockpit in an element, a box or a computed style; project.the-ui-wears-the-sites-navbar states it."
+scope:
+  - "site/templates/partials/navbar.html"
+  - "apps/majordomus-cli/src/ui/navbar.rs"
+  - "apps/majordomus-cli/src/ui/navbar.html"
+  - "apps/majordomus-cli/src/ui/shell.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/src/cockpit/html.rs"
+  - "apps/majordomus-cli/src/cockpit/view.rs"
+  - "apps/majordomus-cli/src/cockpit/mod.rs"
+  - "share/cockpit/src/cockpit.css"
+  - "share/cockpit/cockpit.css"
+  - "share/cockpit/cockpit.js"
+  - "share/cockpit/nav.js"
+  - "share/cockpit/theme.js"
+  - "scripts/lib/cockpit-probe.mjs"
+  - "docs/COCKPIT.md"
+  - "apps/majordomus-cli/src/design/render.rs"
+  - "share/ui/src/ui.css"
+  - "share/ui/ui.css"
+  - "share/ui/ui.js"
+  - "share/ui/nav.js"
+  - "share/ui/theme.js"
+  - "scripts/ui"
+  - "scripts/lib/ui-navbar.mjs"
+  - "scripts/lib/ui.test.mjs"
+  - "scripts/cockpit-assets"
+  - ".ai/repo/rules/project/the-ui-wears-the-sites-navbar.v1.md"
+  - "docs/DESIGN_SYSTEM.md"
+  - "docs/MAJORDOMUS_UI.md"
+  - ".ai/repo/project/issues/I2770.yaml"
+non_scope:
+  - "The published Cockpit snapshot keeps no script, so its copy of the bar has no working menus there; giving the snapshot the bar's two scripts is a change to the exporter's subject"
+  - "A second navigation declaration or a second renderer of the bar for any surface"
+depends_on: []
+acceptance_criteria:
+  - "Every UI screen and Cockpit page carries exactly one nav[aria-label=Main], the site's, with the executable's version and the product entry leading to /ui"
+  - "scripts/ui navbar reports no difference between the bar on the site's front page and on /ui and /cockpit at every declared width, light and dark, closed and with a menu open"
+  - "A copy that is not the built bar, and a share/ui script that is not the site's bytes, each fail their check"
+validation:
+  - "scripts/site-build && scripts/ui navbar"
+  - "scripts/ui test"
+  - "scripts/cockpit-assets --check"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- ui::navbar ui::shell cockpit::html"
+evidence_required:
+  - "navbar_parity_run"
+  - "navbar_unit_tests"
+created_at: 2026-10-16
+updated_at: 2026-10-17T18:26:36Z
+started_at: 2026-10-17T18:26:19Z
+started_event: sha256:127bf4b17adb386eb5ab28e82308b25f1a40b20466b8f7414d37023b3ccfcf8d
+verified_at: 2026-10-17T18:26:31Z
+verified_event: sha256:53e5ae8c0d3582690db95bb361423b80ad2226d82ed5f7fd9c4f5c4e46bc1d31
+completed_at: 2026-10-17T18:26:36Z
+completed_event: sha256:5fced18d6567d7217f7572c5d979f47a1c416f1292f6e6be9f3ecb80f0b8649e
+evidence:
+  - covers: navbar_parity_run
+    type: test
+    command: "scripts/site-build --no-data && scripts/ui navbar --port 8811; scripts/ui test; scripts/cockpit-assets --check"
+    result: "navbar: 40 comparisons of the site bar with /ui and /cockpit at 320, 390, 1024, 1280, 1600 px, light and dark, closed and open: 0 differences; ui test 39 passed; cockpit-assets clean (code since 3a8ca854904, an ancestor of 4a4573690f8; re-run at 4a4573690f8)"
+    commit: 4a4573690f861473fad383b4ecfd6f868065c13a
+    recorded_at: 2026-10-17T18:26:25Z
+  - covers: navbar_unit_tests
+    type: test
+    command: "cargo test --lib -- ui::navbar ui::shell cockpit::html"
+    result: "passed (56 in the combined run with mesh::journal), incl. the_compiled_bar_is_the_sites (code since 3a8ca854904, an ancestor of 4a4573690f8; re-run at 4a4573690f8)"
+    commit: 4a4573690f861473fad383b4ecfd6f868065c13a
+    recorded_at: 2026-10-17T18:26:28Z

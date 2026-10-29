@@ -1,3 +1,4 @@
+# majordomus-exclusive: economics measure walks and prices the whole repository copy with every core it can take; beside the suite's heaviest cases on CI's four-core runner it missed its 600 s bound (430 at 604 s, 431 at 608 s; alone it takes about a minute) (I4199)
 # majordomus-covers: none
 # claims: context-selection-counted
 # majordomus-timeout: 600
@@ -149,7 +150,10 @@ jq -e '[.metrics[] | select(.id == "context_reduction_ratio")][0] | .status == "
 ( cd "$R" && MAJORDOMUS_SHARE="$R/share" exec "$RB" serve --port 0 --idle 60 ) > "$T/serve.log" 2>&1 &
 serve_pid=$!
 url=""
-for _ in $(seq 1 100); do
+# Bounded at 60 s, not 10: the server builds the fixture's index before it logs its address,
+# and on a loaded runner that alone took 11 s (validate run 38187775314, #968), which failed the
+# case with nothing wrong in it.
+for _ in $(seq 1 600); do
   url="$(sed -n 's/.*listening on \(http:[^ ]*\).*/\1/p' "$T/serve.log" | head -1)"
   [ -n "$url" ] && break
   sleep 0.1

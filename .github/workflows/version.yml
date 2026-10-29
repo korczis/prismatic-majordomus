@@ -68,7 +68,11 @@ jobs:
           set -euo pipefail
           cargo build --quiet --manifest-path apps/majordomus-cli/Cargo.toml
           BIN=apps/majordomus-cli/target/debug/majordomus
-          "$BIN" release analyze --format json > analysis.json
+          # exit 10 is the answer "a bump is owed", the one this job exists to act on: under
+          # `set -e` it ended the step before the proposal was opened. Any other failure stops.
+          rc=0
+          "$BIN" release analyze --format json > analysis.json || rc=$?
+          [ "$rc" = 0 ] || [ "$rc" = 10 ] || exit "$rc"
           declared="$(jq -r '.declared_version' analysis.json)"
           required="$(jq -r '.required_version' analysis.json)"
           echo "declared=$declared" >> "$GITHUB_OUTPUT"

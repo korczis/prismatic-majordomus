@@ -1,6 +1,6 @@
 //! `majordomus prs`: the command line's rendering of [`crate::integration`].
 //!
-//! Nothing is decided here. `status`, `plan`, `explain`, `events` and `brief` render the
+//! Nothing is decided here. `status`, `plan`, `explain`, `events`, `trains` and `brief` render the
 //! queue the integration module builds from the last recorded observation — the same value
 //! the HTTP route, the MCP tool and the Cockpit page (`/cockpit/integration`) render — and
 //! never reach the network; neither does `repair` without `--apply`, which decides on the same
@@ -83,6 +83,147 @@ fn issue_line(a: &integration::PullRequestAssessment) -> Option<String> {
         Some(m) => format!("{issue} · milestone {m}"),
         None => issue.clone(),
     })
+}
+
+/// `prs trains` as text: a header, then each train with its links in landing order, one line
+/// each, then the prepared heads no train holds and the diagnostics.
+fn render_trains(v: &integration::train::TrainsView, out: &mut impl Write) -> Result<()> {
+    use integration::train::PrepState;
+    if !v.observed {
+        return w(
+            out,
+            format!(
+                "no trains: {}",
+                v.reason.as_deref().unwrap_or("nothing is observed")
+            ),
+        );
+    }
+    w(
+        out,
+        format!(
+            "{} train(s), {} link(s) of {} observed at {}; {} at {}; {} prepared head(s) pending",
+            v.tallies.trains,
+            v.tallies.links,
+            v.repository.as_deref().unwrap_or("?"),
+            v.observed_at.as_deref().unwrap_or("?"),
+            v.base.as_deref().unwrap_or("?"),
+            short(v.master_sha.as_deref().unwrap_or("?")),
+            v.tallies.pending_prep
+        ),
+    )?;
+    if v.trains.is_empty() {
+        w(
+            out,
+            "no open pull request is stacked on another, and none declares a dependency",
+        )?;
+    }
+    for t in &v.trains {
+        let list = |ns: &[u64]| {
+            ns.iter()
+                .map(|n| format!("#{n}"))
+                .collect::<Vec<_>>()
+                .join(" ")
+        };
+        w(out, "")?;
+        w(
+            out,
+            format!(
+                "{}  roots {}  tops {}  next {}",
+                t.id,
+                list(&t.roots),
+                list(&t.tops),
+                t.next
+                    .map(|n| format!("#{n}"))
+                    .unwrap_or_else(|| "none".into())
+            ),
+        )?;
+        for l in &t.links {
+            let prep = match &l.prep {
+                Some(p) if p.state == PrepState::Pushed => format!("prep {}", p.state.as_str()),
+                Some(p) => format!("prep {} {}", short(&p.sha), p.state.as_str()),
+                None => "no prep".to_string(),
+            };
+            let relation = match l.behind {
+                Some(n) if l.relation_kind == "behind" => format!("behind {n}"),
+                _ => l.relation_kind.clone(),
+            };
+            w(
+                out,
+                format!(
+                    "  {:>2}. {}#{:<5} {:<22} {:<16} {:<20} on {:<10} {}{}",
+                    l.position,
+                    if l.at_turn { "> " } else { "  " },
+                    l.number,
+                    l.disposition.as_str(),
+                    relation,
+                    prep,
+                    if l.on.is_empty() {
+                        "master".to_string()
+                    } else {
+                        list(&l.on)
+                    },
+                    trunc(&l.title, 60),
+                    if l.in_cycle { "  (in a cycle)" } else { "" }
+                ),
+            )?;
+        }
+        for b in &t.beneath {
+            w(
+                out,
+                format!(
+                    "       #{:<5} beneath, {}",
+                    b.number,
+                    serde_json::to_value(b.state)
+                        .ok()
+                        .and_then(|s| s.as_str().map(str::to_string))
+                        .unwrap_or_default()
+                ),
+            )?;
+        }
+    }
+    if !v.unattached_prep.is_empty() {
+        w(out, "")?;
+        w(out, "prepared heads no train holds:")?;
+        for p in &v.unattached_prep {
+            w(
+                out,
+                format!(
+                    "  refs/prep/{} {} ({})",
+                    p.number,
+                    short(&p.sha),
+                    if p.open {
+                        "open, stacked on nothing"
+                    } else {
+                        "not open"
+                    }
+                ),
+            )?;
+        }
+    }
+    for d in &v.diagnostics {
+        w(out, format!("! {d}"))?;
+    }
+    Ok(())
+}
+
+/// `prs trains`: the view of `root` in `format` on `out`, and its exit.
+fn trains(root: &std::path::Path, format: OutputFormat, out: &mut impl Write) -> Result<u8> {
+    let view = integration::train::trains_of(root);
+    if format == OutputFormat::Json {
+        json(out, &view)?;
+    } else {
+        render_trains(&view, out)?;
+    }
+    Ok(trains_exit(&view))
+}
+
+/// A trains view exits 0 only when it is whole: observed, and without a diagnostic.
+fn trains_exit(view: &integration::train::TrainsView) -> u8 {
+    if view.observed && view.diagnostics.is_empty() {
+        0
+    } else {
+        FINDING
+    }
 }
 
 /// Cleanup's second part: what merged pull requests left on origin, read now and recorded
@@ -509,6 +650,7 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             }
             Ok(0)
         }
+        PrsCommand::Trains => trains(&root, format, &mut out),
         PrsCommand::Events => {
             let events = drain::events(&root);
             if format == OutputFormat::Json {
@@ -590,7 +732,10 @@ fn drain_exit(report: &drain::DrainReport) -> u8 {
     } else if stopped_on(|s| {
         matches!(
             s,
-            DrainStepOutcome::VerificationFailed { .. } | DrainStepOutcome::Halted { .. }
+            // a reopen that failed may have left a release's record closed: a person looks
+            DrainStepOutcome::VerificationFailed { .. }
+                | DrainStepOutcome::Halted { .. }
+                | DrainStepOutcome::ReopenFailed { .. }
         )
     }) {
         FINDING
@@ -619,7 +764,7 @@ fn ago(at: &str) -> String {
 /// The briefing line: what the last queue built here said, who holds the lease, and the last
 /// merge — from files alone. `None` when this checkout never observed the forge, so that a
 /// briefing does not grow a section about nothing.
-fn brief(root: &std::path::Path) -> Option<String> {
+pub(crate) fn brief(root: &std::path::Path) -> Option<String> {
     let obs = integration::load_observation(root).ok().flatten()?;
     let mut parts = Vec::new();
     match integration::QueueSummary::load(root) {
@@ -789,6 +934,16 @@ pub(crate) fn describe(s: &DrainStepOutcome) -> String {
         }
         DrainStepOutcome::RefreshFailed { pr, reason, class } => {
             format!("#{pr}: bringing master in failed ({class}): {reason}")
+        }
+        DrainStepOutcome::WouldReopen { pr } => {
+            format!("would close and reopen #{pr}, a record pull request no run was started for")
+        }
+        DrainStepOutcome::Reopened { pr, head } => format!(
+            "closed and reopened #{pr} at {}: a run of its own starts now",
+            short(head)
+        ),
+        DrainStepOutcome::ReopenFailed { pr, reason, class } => {
+            format!("#{pr}: reopening failed ({class}): {reason}")
         }
         DrainStepOutcome::TrailUnwritable {
             pr,
@@ -1009,7 +1164,9 @@ fn explain(
     let relation = match &a.relation {
         RelationToMaster::Behind { behind, .. } => format!("behind master by {behind}"),
         RelationToMaster::Conflicting { paths } => format!("conflicts on {}", paths.join(", ")),
-        r => integration::classify::word(r),
+        // the relation's own word: it serialises as an object under `kind`, which is not a
+        // word, and every relation but the two above used to print here as `unknown`
+        r => integration::classify::relation_word(r).to_string(),
     };
     lines.push(format!("  relation:     {relation}"));
     lines.push(format!(
@@ -1173,7 +1330,7 @@ mod tests {
                 required_checks: Some(vec!["ci".into()]),
                 review_policy: Some(Default::default()),
                 up_to_date_required: Some(true),
-                merge_methods: vec!["merge".into()],
+                merge_methods: Some(vec!["merge".into()]),
                 pull_requests: vec![
                     pr(1, &heads[0], CheckRunState::Passed),
                     pr(2, &heads[1], CheckRunState::Failed),
@@ -1249,6 +1406,16 @@ mod tests {
             let t = text(|o| explain(&q, a, rank + 1, OutputFormat::Text, o));
             assert!(t.starts_with(&format!("#{} ", a.number)), "{t}");
             assert!(t.contains(a.disposition.as_str()), "{t}");
+            // the relation in its own word: `unknown` only when git could not answer
+            let said = t
+                .lines()
+                .find(|l| l.trim_start().starts_with("relation:"))
+                .expect("a relation line");
+            assert_eq!(
+                said.contains("unknown"),
+                matches!(a.relation, RelationToMaster::Unknown { .. }),
+                "{said}"
+            );
             let j: serde_json::Value =
                 serde_json::from_str(&text(|o| explain(&q, a, rank + 1, OutputFormat::Json, o)))
                     .unwrap();
@@ -1465,6 +1632,16 @@ mod tests {
                 unrecorded: IntegrationAction::MergeAttempted,
                 reason: "read-only".into(),
             },
+            DrainStepOutcome::WouldReopen { pr: 11 },
+            DrainStepOutcome::Reopened {
+                pr: 12,
+                head: "e".repeat(40),
+            },
+            DrainStepOutcome::ReopenFailed {
+                pr: 13,
+                reason: "left closed".into(),
+                class: drain::FailureClass::PolicyViolation,
+            },
         ];
         let said: std::collections::BTreeSet<String> = outcomes.iter().map(describe).collect();
         assert_eq!(
@@ -1474,6 +1651,15 @@ mod tests {
         );
         assert!(describe(&outcomes[3]).contains("aaaaaaaaaa -> bbbbbbbbbb"));
         assert!(describe(&outcomes[10]).contains("merge_attempted"));
+        assert!(describe(&outcomes[12]).contains("#12 at eeeeeeeeee"));
+        // a failed reopen is a finding: the record may have been left closed
+        let report = drain::DrainReport {
+            dry_run: false,
+            steps: vec![outcomes[13].clone()],
+            merged: Vec::new(),
+            stopped: String::new(),
+        };
+        assert_eq!(drain_exit(&report), FINDING);
     }
 
     #[test]
@@ -1707,6 +1893,183 @@ mod tests {
             repair_exit(&report(false, repaired, &["stale observation"])),
             0,
             "an act decides on its own fresh observation"
+        );
+    }
+
+    /// The world's trains view with every line `prs trains` can print: a prepared head in
+    /// each state, a link behind and in a cycle, a link beneath, prepared heads no train
+    /// holds, and a diagnostic.
+    fn trains_world() -> (Scratch, integration::train::TrainsView) {
+        use crate::integration::{
+            train::{BeneathLink, PrepState, PreparedHead, UnattachedPrep},
+            DependencyState,
+        };
+        let (s, _q) = world();
+        let mut v = integration::train::trains_of(&s.0);
+        assert!(v.observed, "{:?}", v.reason);
+        let t = v.trains.first_mut().expect("#6 depends on #2: a train");
+        assert_eq!(t.links.len(), 2, "{:?}", t.links);
+        t.links[0].prep = Some(PreparedHead {
+            reference: "refs/prep/2".into(),
+            sha: "0123456789abcdef".into(),
+            state: PrepState::Pushed,
+        });
+        t.links[1].prep = Some(PreparedHead {
+            reference: "refs/prep/6".into(),
+            sha: "fedcba9876543210".into(),
+            state: PrepState::Pending,
+        });
+        t.links[1].relation_kind = "behind".into();
+        t.links[1].behind = Some(3);
+        t.links[1].in_cycle = true;
+        t.beneath.push(BeneathLink {
+            number: 9,
+            state: DependencyState::Merged,
+            url: None,
+        });
+        v.unattached_prep = vec![
+            UnattachedPrep {
+                number: 7,
+                sha: "aaaaaaaaaaaaaaaa".into(),
+                open: true,
+            },
+            UnattachedPrep {
+                number: 8,
+                sha: "bbbbbbbbbbbbbbbb".into(),
+                open: false,
+            },
+        ];
+        v.diagnostics.push("a dependency cycle: #6".into());
+        (s, v)
+    }
+
+    /// A writer that accepts `.0` lines and refuses every write after them.
+    struct RefuseAfter(usize);
+
+    impl Write for RefuseAfter {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            if self.0 == 0 {
+                return Err(std::io::Error::other("refused"));
+            }
+            self.0 -= buf.iter().filter(|b| **b == b'\n').count().min(self.0);
+            Ok(buf.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    /// Every line `prs trains` prints is a write that may be refused, and each refusal is
+    /// the command's error: with trains, without any, and a train with no next link.
+    #[test]
+    fn a_refused_write_fails_the_trains_on_every_line() {
+        let (_s, mut v) = trains_world();
+        v.trains[0].next = None;
+        let t = text(|o| render_trains(&v, o));
+        assert!(t.contains("next none"), "{t}");
+        for lines in 0..t.lines().count() {
+            assert!(
+                render_trains(&v, &mut RefuseAfter(lines)).is_err(),
+                "{lines}"
+            );
+        }
+        v.trains.clear();
+        for lines in 0..2 {
+            assert!(
+                render_trains(&v, &mut RefuseAfter(lines)).is_err(),
+                "{lines}"
+            );
+        }
+    }
+
+    /// The command's own writes are refused in text and JSON alike, and its exit is 0 only
+    /// for a view observed whole.
+    #[test]
+    fn the_trains_command_refuses_a_refused_write_and_exits_by_wholeness() {
+        let (s, mut v) = trains_world();
+        for format in [OutputFormat::Text, OutputFormat::Json] {
+            assert!(
+                trains(&s.0, format, &mut RefuseAfter(0)).is_err(),
+                "{format:?}"
+            );
+        }
+        assert_eq!(trains_exit(&v), FINDING, "a diagnostic is a finding");
+        v.diagnostics.clear();
+        assert_eq!(trains_exit(&v), 0, "observed and whole");
+        v.observed = false;
+        assert_eq!(trains_exit(&v), FINDING, "nothing observed is a finding");
+    }
+
+    /// `prs trains` says each train's links in landing order, with the turn, the relation,
+    /// the prepared head and what the link stands on; then what lies beneath, the prepared
+    /// heads no train holds, and every diagnostic.
+    #[test]
+    fn the_trains_say_each_link_its_prep_and_what_no_train_holds() {
+        let (_s, mut v) = trains_world();
+        let t = text(|o| render_trains(&v, o));
+        assert!(t.contains("train(s)") && t.contains("owner/repo"), "{t}");
+        assert!(t.contains("roots #2  tops #6  next #2"), "{t}");
+        assert!(t.contains("> #2"), "the link at its turn is marked: {t}");
+        assert!(t.contains("prep pushed"), "{t}");
+        assert!(t.contains("prep fedcba9876 pending"), "{t}");
+        assert!(t.contains("behind 3"), "{t}");
+        assert!(t.contains("on #2"), "{t}");
+        assert!(t.contains('…'), "a long title is cut: {t}");
+        assert!(t.contains("(in a cycle)"), "{t}");
+        assert!(t.contains("#9     beneath, merged"), "{t}");
+        assert!(t.contains("prepared heads no train holds:"), "{t}");
+        assert!(
+            t.contains("refs/prep/7 aaaaaaaaaa (open, stacked on nothing)"),
+            "{t}"
+        );
+        assert!(t.contains("refs/prep/8 bbbbbbbbbb (not open)"), "{t}");
+        assert!(t.contains("! a dependency cycle: #6"), "{t}");
+
+        // no train at all is said, and so is nothing observed
+        v.trains.clear();
+        let t = text(|o| render_trains(&v, o));
+        assert!(
+            t.contains("no open pull request is stacked on another"),
+            "{t}"
+        );
+        let t = text(|o| {
+            render_trains(
+                &integration::train::TrainsView::unobserved("nothing here".into()),
+                o,
+            )
+        });
+        assert_eq!(t, "no trains: nothing here\n");
+    }
+
+    /// `prs trains` exits 0 only on a whole answer, observed and without a diagnostic, in
+    /// text and in JSON alike; a checkout that observed nothing is a finding.
+    #[test]
+    fn the_trains_command_exits_by_whether_the_answer_is_whole() {
+        let (s, _q) = world();
+        let view = integration::train::trains_of(&s.0);
+        let whole = if view.observed && view.diagnostics.is_empty() {
+            0
+        } else {
+            FINDING
+        };
+        let args = |repo: &std::path::Path, format| PrsArgs {
+            repo: crate::cli::RepoArgs {
+                repo: Some(repo.to_path_buf()),
+                discovery: crate::cli::DiscoveryMode::Vcs,
+                strict: false,
+                share: None,
+            },
+            command: Some(PrsCommand::Trains),
+            format,
+        };
+        for format in [OutputFormat::Text, OutputFormat::Json] {
+            assert_eq!(run(args(&s.0, format)).unwrap(), whole, "{format:?}");
+        }
+        let empty = tempfile::tempdir().unwrap();
+        git(empty.path(), &["init", "-q"]);
+        assert_eq!(
+            run(args(empty.path(), OutputFormat::Text)).unwrap(),
+            FINDING
         );
     }
 }

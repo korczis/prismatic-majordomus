@@ -43,8 +43,19 @@
 #                          added to in order to silence a finding — an entry nothing on the
 #                          page agrees with is refused rather than honoured.
 #
+#   edition <directory> <language> <why>
+#                          one edition of the handbook: the product explained to a reader
+#                          in that reader's language (project.english-only v3, ADR 0149).
+#                          The same three conditions in a second place: the path is one
+#                          directory directly under handbook/, named for its language; the
+#                          reason is required; and the directory declares the same language
+#                          in its own edition.toml. What builds an edition — handbook/*.py —
+#                          is not inside one, and stays English. Since v4 (ADR 0218) the
+#                          site's translation memory of one language, site/i18n/<language>/,
+#                          is the same population in a third place, held to the same three.
+#
 # `name` and `fixture` do not exempt a sentence; `translation` exempts exactly one, and only
-# on a published page that says what it is. A comment written in another language inside an
+# on a published page that says what it is; `edition` exempts one directory that says it. A comment written in another language inside an
 # exempted file is still a finding of the rule; what the fixture exemption says is that this
 # alphabet test cannot tell the two apart in that file, which is a limit stated rather than
 # hidden.
@@ -124,7 +135,7 @@ LETTERS='č|Č|ď|Ď|ě|Ě|ň|Ň|ř|Ř|š|Š|ť|Ť|ů|Ů|ž|Ž|ą|Ą|ć|Ć|ę|Ę
 SCRIPTS=$'[\xd0-\xd3][\x80-\xbf]|\xcd[\xb0-\xbf]|[\xce-\xcf][\x80-\xbf]|\xe3[\x81-\x83][\x80-\xbf]|[\xe4-\xe9][\x80-\xbf][\x80-\xbf]|[\xea-\xed][\x80-\xbf][\x80-\xbf]'
 
 ALLOW="$(dirname "$0")/english-only-allow.txt"
-names=""; fixtures=""; translations=""
+names=""; fixtures=""; translations=""; editions=""
 if [ -f "$ALLOW" ]; then
   names="$(awk '$1 == "name" && NF >= 2 { print $2 }' "$ALLOW" | tr '\n' '|' | sed 's/|$//')"
   # a fixture without a reason is not a declaration; it is a list entry, which is what this
@@ -169,6 +180,35 @@ if [ -f "$ALLOW" ]; then
   done <<EOF
 $(awk '$1 == "translation" && NF >= 4 { print $2, $3 }' "$ALLOW")
 EOF
+
+  # The fourth kind (v3): an edition of the handbook, one directory per language. Held to
+  # the same shape as a translation, for the same reason — a list nothing else agrees with
+  # is a list an entry can be added to in order to silence a finding.
+  editions="$(awk '$1 == "edition" && NF >= 4 { print $2 }' "$ALLOW" | sed 's|/*$||' | LC_ALL=C sort -u)"
+  thin="$(awk '$1 == "edition" && NF < 4 { print $2 }' "$ALLOW" || true)"
+  if [ -n "$thin" ]; then
+    echo "english-only-check: an edition must name its language and say why; these do not:" >&2
+    printf '  %s\n' $thin >&2
+    exit 12
+  fi
+  while IFS=' ' read -r ep elang; do
+    [ -n "$ep" ] || continue
+    ep="${ep%/}"
+    # 1. the permission belongs to an edition of the handbook, named for its language
+    if [ "$ep" != "handbook/$elang" ] && [ "$ep" != "site/i18n/$elang" ]; then
+      echo "english-only-check: an edition is one directory of the handbook or of the site's languages named for its language; $ep ($elang) is not" >&2
+      echo "  Only handbook/<language>/ and site/i18n/<language>/ may carry one." >&2
+      exit 12
+    fi
+    # 2. the directory declares the language the list claims for it
+    [ -d "$ep" ] || continue
+    grep -qE "^[[:space:]]*lang[[:space:]]*=[[:space:]]*\"$elang\"" "$ep/edition.toml" 2>/dev/null && continue
+    echo "english-only-check: $ep is declared a $elang edition and does not declare that language itself" >&2
+    echo "  Add  lang = \"$elang\"  to $ep/edition.toml, or remove the declaration." >&2
+    exit 12
+  done <<EOF
+$(awk '$1 == "edition" && NF >= 4 { print $2, $3 }' "$ALLOW")
+EOF
 fi
 
 findings=""
@@ -183,6 +223,10 @@ $translations
 " in *"
 $f
 "*) continue ;; esac
+  # a file of a declared edition: the directory above it, not the file, carries the permission
+  in_edition=""
+  for e in $editions; do case "$f" in "$e"/*) in_edition=1; break ;; esac; done
+  [ -z "$in_edition" ] || continue
   # strip the allowed names before looking, so a line that is English but for a proper noun
   # is English
   hits="$(

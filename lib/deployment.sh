@@ -9,7 +9,7 @@
 
 # ---------------------------------------------------------------- the doctrine
 # majordomus.deployment-contract: a deployment is described once, in the layer, against a
-# closed contract; every provider artifact is generated from that description.
+# closed contract; every artifact built from it is generated from that description.
 mj_validate_deployments() {
   local dir f flat n=0 bad=0 ids="" id
   [ -n "${MJ_DEPLOYMENTS_DIR:-}" ] || return 0    # a layer with no deployments section owes nothing
@@ -48,7 +48,7 @@ mj_validate_deployments() {
                listen.port listen.interface health.liveness health.readiness \
                resources.cpu_kind resources.cpus resources.memory_mb \
                machines.count machines.min_running machines.autostart machines.autostop \
-               region provider.name; do
+               region; do
       [ -n "$(mj_yget "$flat" "$key")" ] || {
         mj_doctrine_fail deployment "$(basename "$f")" "lacks $key, which every deployment states" "head -n 40 $(mj_rel "$f")"
         bad=1
@@ -92,6 +92,34 @@ mj_validate_deployments() {
              "$key '$(mj_yget "$flat" "$key")' is not a path beginning with /" "grep -n -A3 'health:' $(mj_rel "$f")"; bad=1 ;;
       esac
     done
+
+    # A provider is optional (ADR 0219); a named one is one the contract knows, states the
+    # application, stack and https address it runs at, and hosts a process that binds every
+    # interface. Its credential is never a field: the allow-list has no key for one.
+    local provider; provider="$(mj_yget "$flat" provider.name)"
+    if [ -n "$provider" ] || grep -q '^provider\.' "$flat"; then
+      case "$provider" in
+        gigalixir) ;;
+        *) mj_doctrine_fail deployment "$(basename "$f")" \
+             "provider.name '$provider' is not a provider the contract knows (gigalixir)" "grep -n -A4 'provider:' $(mj_rel "$f")"; bad=1 ;;
+      esac
+      for key in provider.app provider.stack provider.url; do
+        [ -n "$(mj_yget "$flat" "$key")" ] || {
+          mj_doctrine_fail deployment "$(basename "$f")" "lacks $key, which a named provider states" "grep -n -A4 'provider:' $(mj_rel "$f")"
+          bad=1
+        }
+      done
+      case "$(mj_yget "$flat" provider.url)" in
+        https://*|"") ;;
+        *) mj_doctrine_fail deployment "$(basename "$f")" \
+             "provider.url '$(mj_yget "$flat" provider.url)' is not an https URL" "grep -n 'url:' $(mj_rel "$f")"; bad=1 ;;
+      esac
+      [ "$(mj_yget "$flat" listen.interface)" = loopback ] && {
+        mj_doctrine_fail deployment "$(basename "$f")" \
+          "listen.interface is loopback and provider $provider hosts it; a hosted process states interface: all" "grep -n 'interface:' $(mj_rel "$f")"
+        bad=1
+      }
+    fi
 
     # No credential belongs in the layer. The contract has no field for one, so this
     # catches a value smuggled into a field that does exist.

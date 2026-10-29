@@ -1,0 +1,30 @@
+id: I3931
+milestone: ci-critical-path
+title: A stale UI bar is told in a minute, before the browser audit, and a branch does not spend the audit to learn it
+slug: the-ui-bar-is-judged-before-the-audit
+priority: p1
+profile: debugging
+parallel_safe: true
+objective: "Run `scripts/ui navbar` as its own bounded step of the ui job before `scripts/ui audit`, so that a stale apps/majordomus-cli/src/ui/navbar.html fails a branch's ui job about a minute after the site is built instead of at the end of the audit."
+why: "The audit judges the bar first but goes on to audit every page and reports the bar's verdict last: four validate runs from 2026-10-21 to 10-22 (39780445745 among them) spent the audit's 80 minutes to report `FAIL ui navbar`, a derived copy that `scripts/site-build && scripts/ui navbar --write` fixes. The branch's run self-cancels on the first red anyway, so the 80 minutes bought nothing."
+current_state: "The ui job runs the warm-screen budget, then `scripts/ui audit --report`, which checks the bar, audits every page, and fails at the end when the bar is stale."
+desired_state: "The ui job runs `scripts/ui navbar` under scripts/ci/timed with a 600 s bound before the audit; on a branch a stale bar fails that step and the audit is skipped; on an integration/* top the audit still runs so that every red of the top is shown, and never on a cancelled job."
+scope:
+  - .github/workflows/validate.yml
+  - .ai/repo/project/issues/I3931.yaml
+non_scope:
+  - Changing what the audit or the navbar check judges
+  - Making the audit itself faster or sharded (a separate issue)
+depends_on: []
+acceptance_criteria:
+  - The ui job's navbar step runs before the audit, bounded and timed
+  - On a branch the audit is skipped after a failed earlier step; on integration/* it runs unless the job was cancelled
+  - Every case that reads .github/workflows/validate.yml passes
+validation:
+  - "bash test/run.sh $(grep -lE 'validate\\.yml' test/cases/*.sh | sed 's#test/cases/##; s/\\.sh$//')"
+  - actionlint .github/workflows/validate.yml
+evidence_required:
+  - suite
+risk: "The audit also judges the bar, so the check runs twice on a green job, about a minute; the step's bound keeps a hung browser from costing more."
+created_at: 2026-10-22
+updated_at: 2026-10-22

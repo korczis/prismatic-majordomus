@@ -1,0 +1,94 @@
+intent: a-build-reuses-what-the-mesh-already-built
+reviewed_at: 2034d4a3f0b
+reviewed_by: "claude-code Plan subagent (read-only, fresh context, same model family as the author) dispatched by session 877e4b89 over the staged records of branch feature/the-mesh-cache-serves-every-build, read against ADRs 0055, 0139 and 0157, issues I2670-I2677, the I2670 model, .cargo/config.toml, lib/rust_bin.sh, scripts/derive, scripts/reap-orphans and .github/actions/setup-site; resolved by the author with the owner's three decisions of 2026-10-22 (measure the build directory first, trust only a signed offer, a generic dependency cache wired first into prismatic-platform). Read only: nothing was run. Disposition: 7 of 10 findings are blocking and all 10 are planned."
+findings:
+  - id: shared-build-dir-archive-is-unsound
+    class: unproven_assumption
+    subject: "I3952"
+    finding: "The plan archived the shared cargo build directory and judged a hit by an install's no-op check, which cargo does not have. The directory's location follows {cargo-cache-home}, which asdf sets per toolchain; the build-script fingerprint carries each tree's absolute root on purpose (.cargo/config.toml:28-29, MAJORDOMUS_BUILD_TREE); one directory accumulates every worktree's lockfile, profile, target and subcommand; it reaches 25 GB (lib/rust_bin.sh:343-344) against a 5 GiB single PUT; the reaper removes it above 6144 MB (scripts/reap-orphans:617); restoring after a cold check races mj_cargo_bounded (lib/rust_bin.sh:1135-1146); and sccache's second level already carries the same dependency objects."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3955
+      because: "Accepted. The owner chose, on 2026-10-22, to measure before building: I3955 measured the reuse the same day with node B holding its own checkout and registry: all 142 units Fresh, none compiled (566 s cold on A). The cargo build directory is therefore a kind of I3952, restored only into a cold directory under cargo's lock, extracted beside it and renamed with cargo's CACHEDIR.TAG, and saved only below one PUT's size. Compiled Rust in the shared build directory reaches the store through sccache's second level (I2673, I3953) regardless."
+  - id: probed-store-is-trusted-by-presence
+    class: regression_risk
+    subject: "a-build-reuses-what-the-mesh-already-built"
+    finding: "I3954 turned any mesh runtime's address that answered a health probe on the S3 port into an offer, against rule project.mesh-is-observation-not-authority and ADR 0157 decision 2; what a client restores is executable, so a LAN host on :9000 would gain code execution; no digest was checked before extraction and no unsafe archive entry refused; the probe could not supply the fields I2670's Offer requires."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3952
+      because: "Accepted. The owner chose the signed offer on 2026-10-22: I3954 is withdrawn, I3952 depends on I2671 (a trusted node's signed, expiring record), and I3952's acceptance now requires the SHA-256 recorded at save to match before extraction and refuses absolute, climbing or escaping entries. The intent carries both as invariants."
+  - id: cache-is-invisible-is-cited-not-planned
+    class: missed_requirement
+    subject: "a-build-reuses-what-the-mesh-already-built#store-absent-is-only-a-miss"
+    finding: "Rule project.cache-is-invisible requires a documented bypass, an equivalence case over cold, warm and bypassed runs, and a cache under .ai/local/; project.accumulation-is-measured and ADR 0055 require one predicate-driven reducer; the store had no bound in any issue."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3952
+      because: "Accepted. I3952 adds MAJORDOMUS_BUILD_CACHE=off documented in docs/CLI.md, the equivalence case, the local level under ~/.cache/majordomus/build-cache with the rule amended in the same issue (a machine-wide cache shared across checkouts cannot live under one checkout's .ai/local/), and its reduction by scripts/reap-orphans. The store's bound is MinIO's bucket quota and expiry, which I2674 provisions; the intent's invariant now requires every level to be bounded and measured."
+  - id: adr-0157-is-overridden-without-a-decision
+    class: unnecessary_work
+    subject: "builds-reuse-the-mesh-cache"
+    finding: "The plan changed ADR 0157's decisions 2 and 6 and ADR 0139's 'sccache stays optional' with no ADR in scope; it ran beside I2671-I2677 without dispositions; a new `cache` noun duplicated I2672's mesh build-cache read."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3955
+      because: "Accepted. ADR 0157 is amended in this change (it is still proposed): dependency-install kinds and the key, the signed offer kept as the only discovery, and sccache made the enforced path of the repository's own builds. Every command is under `majordomus mesh build-cache`, I2672's noun. Dispositions, recorded in the amendment: I2671 kept (the trust I3952 depends on), I2672 kept (the read the commands project), I2673 kept (the sccache derivation I3953 uses), I2674 kept and widened to the store's bounds and the build host's disk guard, I2675 kept, I2676 kept as the real two-node measurement of sccache and the archives, I2677 absorbed into docs/BUILD_CACHE.md of I3953. Each gains its `serves` in the change that implements it."
+  - id: the-motivating-disk-failure-is-not-remedied
+    class: missed_requirement
+    subject: "builds-reuse-the-mesh-cache"
+    finding: "No issue touches the GitLab runner volumes or the store's placement and headroom; only the two arm64 MacBooks can share; restores are not placed behind the free-space floor."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3952
+      because: "Accepted. The milestone now says it does not by itself free lundra's disk: lundra's host layer (a systemd disk guard with a ballast, runner volumes capped, MinIO bucket quotas and expiry) was written the same day and I2674 turns it into a provisioning capability. I3952 puts every restore behind the build's free-space floor. Mix deps, platform-independent source, are keyed 'any' (I3950), so every node shares them, not only one platform."
+  - id: every-build-path-is-undefined-here
+    class: insufficient_work
+    subject: "a-build-reuses-what-the-mesh-already-built#every-build-path-goes-through-it"
+    finding: "The tree's only npm ci runs on GitHub behind actions/cache; the tree has no mix project; cargo is called from about 30 files; a cold node has no majordomus to call."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3953
+      because: "Accepted. The criterion now names local build paths. I3953 routes cargo through its one choke point, lib/rust_bin.sh, the local site build through ensure, exempts GitHub's runners by declaration, and its gate accepts a line that declares why it bypasses. Mix is proved by the stub-based case of I3952 and used first in prismatic-platform, which the owner chose. The cold-node path is an acceptance item of I3953; the key carries a schema version (I3950)."
+  - id: sccache-second-level-leaks-or-never-applies
+    class: regression_risk
+    subject: "I3953"
+    finding: "A running sccache server ignores a new chain; credentials in AWS_* variables are readable in ps eww and /proc/<pid>/environ and in every build script; a probe per rustc call multiplies its budget; I3953 dropped I2673's requirement to read multi-level support from the executable; a slow but live store was not covered."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3953
+      because: "Accepted, and fixed the same day in lundra's host wrapper before it was installed: the credential lives in an AWS-format file of mode 0600 that sccache reads through AWS_SHARED_CREDENTIALS_FILE and AWS_PROFILE (both read from the sccache 0.17 and 0.18 executables), and only its path is exported. I3953 requires the probe only at server start and depends on I2673, which keeps the multi-level reading requirement."
+  - id: key-invariant-is-the-wrong-way-round
+    class: unproven_assumption
+    subject: "a-build-reuses-what-the-mesh-already-built#key-is-a-derived-triplet"
+    finding: "The criterion proved that unrelated inputs leave the key; the rule needs the converse, and cargo flags, npm's version and environment, and MIX_ENV were absent; mix deps are platform-independent source."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3950
+      because: "Accepted. The criterion now requires every input that changes what an install leaves to change the key; I3950 declares RUSTFLAGS, CARGO_ENCODED_RUSTFLAGS and NODE_ENV, npm's major version and companion inputs, keys mix deps 'any', and its case changes each one."
+  - id: criteria-cannot-settle-as-written
+    class: delivery_verification
+    subject: "a-build-reuses-what-the-mesh-already-built"
+    finding: "Every criterion uses evidence: command with a circular ref; the two-node measurement cannot be a test and 'or reported as not proved' would count a failure as met."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3950
+      because: "Accepted. Each carrier's acceptance now turns its criterion to evidence: test in the commit that adds its case. The two-node criterion is split: a-second-node-reuses is proved by two stub nodes sharing one stub store (I3952), and reuse-is-measured-on-real-nodes is a claim recorded by I3955 and I2676 and never counted met without the measurement."
+  - id: scopes-miss-the-capability-surfaces
+    class: surface_missing
+    subject: "I3951"
+    finding: "The scopes missed cli.rs, commands/, the capability module, generated documentation and policy schemas; three issues were parallel_safe on one module; I2670's landing gated all of them."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3950
+      because: "Accepted. Scopes now name the CLI, command, capability, generated documentation and policy schema paths; every issue is parallel_safe: false except the measurement; the local level's bound moved to I3952; the milestone records that I2670 (#1118) lands first, and this branch is stacked on it."

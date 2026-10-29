@@ -205,10 +205,23 @@ sources:
     pathspec: ':(glob).ai/repo/fleet/*.yaml'
     required: false
 
+  # The derive offload (I2398, docs/OFFLOAD.md): the hosts `majordomus offload` may send a
+  # derive to and the limits each must meet. Without this class the declaration is never read.
+  - id: derive-offload
+    kind: derive-offload
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/offload/*.yaml'
+    required: false
+
+  # Every Markdown file below docs/, at any depth. One level was the default once, and an
+  # adopter whose documents lived in docs/spec/, docs/wiki/ and docs/references/ had to
+  # declare a class for each before any of them was knowledge. `**` reaches them all, so no
+  # other class may discover a Markdown file under docs/ as a document: two classes of one
+  # kind over one path are a refusal, never a last-one-wins merge.
   - id: document
     kind: document
     discovery: vcs
-    pathspec: ':(glob)docs/*.md'
+    pathspec: ':(glob)docs/**/*.md'
     required: false
 
   - id: readme
@@ -225,8 +238,5 @@ sources:
     pathspec: ':(glob)docs/CLAIMS.yaml'
     required: false
 
-  - id: claim_page
-    kind: document
-    discovery: vcs
-    pathspec: ':(glob)docs/claims/*.md'
-    required: false
+  # A claim's detail page, docs/claims/<id>.md, is a document the `document` class already
+  # discovers: a second class of the same kind over it would claim every page twice.

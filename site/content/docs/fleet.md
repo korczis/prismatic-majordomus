@@ -1,7 +1,7 @@
 +++
 title = "Majordomus Fleet"
 description = "the fleet: the machines that run the mesh, declared once with the ssh destinations that reach them, and `majordomus fleet rollout`, which installs the release on every machine, writes and restarts each hub's service and verifies that the hubs see each other"
-weight = 58
+weight = 65
 [extra]
 source = "docs/FLEET.md"
 +++

@@ -31,6 +31,23 @@ use std::sync::LazyLock;
 /// The Swagger UI distribution version the page pins.
 pub const SWAGGER_UI_VERSION: &str = "5.17.14";
 
+/// The subresource integrity of the pinned bundle: the browser runs the script only when its
+/// bytes hash to this, so a substituted file on the CDN never runs beside the write routes.
+/// Computed from `https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui-bundle.js`.
+pub const SWAGGER_BUNDLE_SRI: &str =
+    "sha384-wmyclcVGX/WhUkdkATwhaK1X1JtiNrr2EoYJ+diV3vj4v6OC5yCeSu+yW13SYJep";
+
+/// The subresource integrity of the pinned stylesheet, for the same reason.
+pub const SWAGGER_CSS_SRI: &str =
+    "sha384-wxLW6kwyHktdDGr6Pv1zgm/VGJh99lfUbzSn6HNHBENZlCN7W602k9VkGdxuFvPn";
+
+/// The one inline script the page runs: it starts the widget on the specification.
+const BOOT: &str = "window.ui = SwaggerUIBundle({ url: \"/openapi.json\", dom_id: \"#swagger-ui\", deepLinking: true });";
+
+/// Where the page names the checkout that is serving it: [`page_for`] puts the line there,
+/// and the page rendered once keeps the bare marker, which a browser shows as nothing.
+pub const CHECKOUT_MARKER: &str = "<!-- mj:checkout -->";
+
 /// The path the page loads the specification from.
 pub const SPEC_PATH: &str = "/openapi.json";
 
@@ -49,7 +66,7 @@ static PAGE: LazyLock<String> = LazyLock::new(|| {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Majordomus API</title>
-<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@{v}/swagger-ui.css">
+<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@{v}/swagger-ui.css" integrity="{css_sri}" crossorigin="anonymous">
 <style>
 {tokens}
 /* The frame: the page around the widget, in this repository's type and colour. */
@@ -71,20 +88,26 @@ body {{ margin: 0; background: var(--mj-bg); color: var(--mj-fg); font-family: v
    h2 beneath this one, so the order holds. Without them the page has neither, which is what
    the audit found the first time it was allowed to look at this surface. */
 .mj-api-title {{ margin: 0; padding: 1rem 1.25rem 0; color: var(--mj-fg); }}
+/* Which checkout answered: several servers share one machine, and a page that does not say
+   whose it is reads the same from all of them (I1031). */
+.mj-checkout {{ margin: 0; padding: 0.25rem 1.25rem 0; color: var(--mj-muted); font-size: 0.9rem; }}
+.mj-checkout .mono {{ font-family: var(--font-mono); }}
 </style>
 </head>
 <body>
 <h1 class="mj-api-title">Majordomus API</h1>
+{checkout}
 <main id="swagger-ui" data-mj-foreign="swagger-ui-dist@{v}"></main>
-<script src="https://unpkg.com/swagger-ui-dist@{v}/swagger-ui-bundle.js" crossorigin></script>
-<script>
-window.ui = SwaggerUIBundle({{ url: "{spec}", dom_id: "#swagger-ui", deepLinking: true }});
-</script>
+<script src="https://unpkg.com/swagger-ui-dist@{v}/swagger-ui-bundle.js" integrity="{bundle_sri}" crossorigin="anonymous"></script>
+<script>{boot}</script>
 </body>
 </html>
 "##,
         v = SWAGGER_UI_VERSION,
-        spec = SPEC_PATH,
+        css_sri = SWAGGER_CSS_SRI,
+        bundle_sri = SWAGGER_BUNDLE_SRI,
+        boot = BOOT,
+        checkout = CHECKOUT_MARKER,
         tokens = crate::web::html::TOKENS
     )
 });
@@ -101,6 +124,23 @@ window.ui = SwaggerUIBundle({{ url: "{spec}", dom_id: "#swagger-ui", deepLinking
 /// ```
 pub fn page() -> &'static str {
     PAGE.as_str()
+}
+
+/// The page as one server serves it: the shell, with the line naming the checkout that is
+/// serving it where [`CHECKOUT_MARKER`] stands. `checkout` is HTML the caller has escaped —
+/// the router renders it from the repository model (`crate::web::home::Checkout::line`),
+/// which names the checkout by its identity and never by where it sits on the host.
+///
+/// ```
+/// use majordomus_cli::http::swagger;
+/// let page = swagger::page_for("<p class=\"mj-checkout\">checkout 0123456789ab</p>");
+/// assert!(page.contains("checkout 0123456789ab"));
+/// assert!(!page.contains(swagger::CHECKOUT_MARKER), "the marker is replaced, not kept");
+/// assert_eq!(page.len() - swagger::page().len() + swagger::CHECKOUT_MARKER.len(),
+///     "<p class=\"mj-checkout\">checkout 0123456789ab</p>".len(), "nothing else changes");
+/// ```
+pub fn page_for(checkout: &str) -> String {
+    page().replacen(CHECKOUT_MARKER, checkout, 1)
 }
 
 /// Whether this shell may be offered as a link a reader can follow, in an environment
@@ -120,6 +160,33 @@ pub fn offered_by_a_publication() -> bool {
         .iter()
         .find(|r| r.path == SWAGGER_PATH)
         .is_some_and(|r| r.linkable())
+}
+
+/// The Content-Security-Policy the page is served with: the pinned CDN files (whose integrity
+/// the page also names) and the one inline script, by its digest; requests to this server
+/// alone; no frame may embed it. The page shares an origin with every write route, so a
+/// script it did not ship must not run on it.
+///
+/// ```
+/// use majordomus_cli::http::swagger;
+/// let policy = swagger::csp();
+/// assert!(policy.starts_with("default-src 'none'"));
+/// assert!(policy.contains("frame-ancestors 'none'"));
+/// assert!(policy.contains("script-src https://unpkg.com/swagger-ui-dist@"));
+/// assert!(!policy.contains("unsafe-eval"));
+/// ```
+pub fn csp() -> &'static str {
+    static POLICY: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+    POLICY.get_or_init(|| {
+        use sha2::{Digest, Sha256};
+        let digest = crate::cockpit::base64(&Sha256::digest(BOOT.as_bytes()));
+        let cdn = format!("https://unpkg.com/swagger-ui-dist@{SWAGGER_UI_VERSION}/");
+        format!(
+            "default-src 'none'; script-src {cdn} 'sha256-{digest}'; \
+             style-src {cdn} 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; \
+             font-src 'self'; form-action 'none'; base-uri 'none'; frame-ancestors 'none'"
+        )
+    })
 }
 
 #[cfg(test)]

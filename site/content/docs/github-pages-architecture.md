@@ -1,7 +1,7 @@
 +++
 title = "GitHub Pages architecture"
 description = "how the website is derived from the repository and checked for drift"
-weight = 64
+weight = 74
 [extra]
 source = "docs/GITHUB_PAGES_ARCHITECTURE.md"
 +++
@@ -32,7 +32,7 @@ being maintained separately from the repository that backs it.
 | registry dataset | everything the site renders about the executable: descriptors, modules, command line, MCP and HTTP surfaces, benchmarks, the index | `site/data/registry/registry.json` | never — `majordomus generate site` |
 | public narrative | what it is, why, how, what it refuses | `README.md`, `docs/*.md` | yes |
 | claims | every capability with status, source, implementation, test | `docs/CLAIMS.yaml` | yes |
-| marketing copy | the hero's positioning sentences, section leads, button labels; no capability claims, no numbers, 60-line budget | `site/data/marketing.toml` | yes |
+| marketing copy | the hero's positioning sentences, section leads, button labels; no capability claims, no numbers, 80-line budget | `site/data/marketing.toml` | yes |
 | navigation | the intents, their dropdown items and hrefs, and the routes that moved (`[[redirects]]`, rendered as Zola aliases) | `site/data/nav.toml` | yes |
 | claim detail | what each claim means, how it works, how to see it, what it does not cover, why it exists | `docs/claims/<id>.md` | yes |
 | product features | one file per feature: the references naming what it is made of, and the editorial decisions nothing can infer; every surface, count and route beside it is derived (`docs/PRODUCT.md`, ADR 23) | `.ai/repo/features/<id>.md` | yes |
@@ -45,11 +45,11 @@ being maintained separately from the repository that backs it.
 | derived content | canonical Markdown with generated front matter; one page per profile, claim, status, responsibility, command, doctrine, use case, application, milestone, issue, case study, skill, module and capability | `site/content/{docs,profiles,guarantees,supervises,commands,doctrines,use-cases,applications,plan,why,registry,skills}/`, `render-test.md`, `architecture.md` | never |
 | derived routes and links for the executable | one route per module and per capability, the executable's pages, the API anchor, the source on GitHub, the claims attached to each surface | `site/data/generated/executable.json` | never |
 | the native command line, as the site renders it | the command tree flattened, each command with its route, usage, arguments, children and executed examples | `site/data/generated/cli.json` (from `docs/generated/cli.json`, via `scripts/lib/cli-site.jq`) | never |
-| build provenance | the commit and its cleanliness, the site's input hash, the registry and index fingerprints, and each composed surface with the commit its producer declared | `site/data/build.json`, served as `/build.json` | never — `scripts/site-build`, not committed |
+| build provenance | the commit, its time and its cleanliness, the site's input hash, the registry and index fingerprints, and each composed surface with the commit its producer declared | `site/data/build.json`, served as `/build.json` | never — `scripts/site-build`, not committed |
 | the crate's reference | the rustdoc pages of `apps/majordomus-cli`, composed at `/rustdoc` ([`RUSTDOC.md`](@/docs/rustdoc.md)) | `target/web/rustdoc/`, with the `surface.json` that declares what it was built from | never — `scripts/rust-check --doc`, not committed |
 | presentation | Zola templates and Tera 2 components | `site/templates/**` | yes |
 | styling entry | Tailwind v4 + Flowbite v4 directives | `site/tailwind.css` | yes |
-| behaviour | theme toggle, Mermaid init | `site/theme.js`, `site/diagrams.js` | yes |
+| behaviour | theme toggle, the diagram viewer, the chart component | `site/theme.js`, `site/diagrams.js`, `site/charts.js` | yes |
 | output | the static site | `site/public/**` | never |
 
 </div>
@@ -327,7 +327,7 @@ components, on the derived copy only:
 
 | in the canonical file | on the site |
 |---|---|
-| ` ```mermaid ` fence | `<pre class="mermaid">`, rendered client-side; the source stays visible without JavaScript |
+| ` ```mermaid ` fence | `<pre class="mermaid">`, named, linked and given its controls by the build, drawn client-side in the viewer ([`DIAGRAMS.md`](@/docs/diagrams.md)); the source stays visible without JavaScript |
 | `> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]` | Flowbite alert |
 | a pipe table | wrapped in `overflow-x-auto` so wide tables scroll inside their container |
 
@@ -345,12 +345,21 @@ themes `ayu-light` and `ayu-dark`). Zola writes the two theme stylesheets into `
 
 Client-side, from the pinned npm package, vendored to `static/js/mermaid.min.js` at build.
 Chosen over build-time SVG because the Mermaid CLI needs a headless browser in CI and the
-site must stay reproducible from bash, Node and Zola alone. `site/diagrams.js` initialises
-with `securityLevel: 'strict'`, a restrained palette for light and dark, and re-renders on
-the theme toggle. Four diagrams are projected from data, never drawn by hand: the task
-lifecycle from the outcome vocabulary, the policy-to-instruction-file graph from the policy's
-projections, the site pipeline from the generator's input list, and the core model from the
-README. A failed diagram leaves its source visible and never breaks the page.
+site must stay reproducible from bash, Node and Zola alone. No page loads the build with a
+script tag: `site/diagrams.js` is deferred and fetches it once the page has been parsed.
+It initialises with `securityLevel: 'strict'`, takes its colours from the page's design
+tokens, and draws again when the theme changes. Four diagrams are projected from data, never
+drawn by hand: the task lifecycle from the outcome vocabulary, the policy-to-instruction-file
+graph from the policy's projections, the site pipeline from the generator's input list, and
+the core model from the README. A failed diagram leaves its source visible and never breaks
+the page.
+
+After Zola, `scripts/site-build` runs `scripts/lib/diagrams.mjs` over the built pages: every
+diagram gets an id (`diagram-<name>`), the list of its nodes, the viewer's toolbar and a
+list of the links inferred from the identities in `site/data/generated`. The viewer, the
+address scheme and the chart component, which draws a table the page already renders with
+the vendored Apache ECharts build, are described in [`DIAGRAMS.md`](@/docs/diagrams.md)
+(ADR 0152).
 
 ## Zola structure
 
@@ -434,6 +443,88 @@ which is an index. The pages read and followed, on 2026-09-04: getting-started/q
 (`@custom-variant`, toggle markup and script, reproduced in `theme.js`), components/navbar,
 components/card, components/badge, components/footer, components/typography. The repository's
 installed `flowbite` is 4.0.2, matching the documented token vocabulary.
+
+## Languages
+
+The site is written once, in English, and offered in every language
+`site/i18n/languages.json` declares (ADR 0218). Nobody writes a second language: each copy is
+derived from the English build.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| piece | what it is |
+|---|---|
+| `site/i18n/languages.json` | the source language, the languages offered, each named in itself |
+| `site/i18n/<lang>/memory/*.jsonl` | the translation memory: one line per English segment, keyed by its hash |
+| `site/i18n/<lang>/guide.json` | the style and glossary every translator of that language is given |
+| `site/i18n/<lang>/edition.toml` | the language the directory declares, which `english-only-check` holds to its declaration |
+| `scripts/lib/site-i18n.mjs` | the `== languages` pass of `scripts/site-build`: segments every page, writes `/<lang>/` |
+| `scripts/site-translate` | carries the missing segments to a translator and its answers into the memory |
+| `scripts/lib/site-i18n-probe.mjs` | follows every link of every page, in every language, in Chromium |
+| `partials/language-switch.html`, `partials/language-detect.html` | the switch in the bar, and the choice of language on arrival |
+
+</div>
+
+
+**The pass.** After Zola, the accessibility pass and the diagrams, every built page is cut into
+segments — each run of inline content between block boundaries, and each attribute a reader
+meets (title, alt, aria-label, the description) — with inline markup replaced by numbered
+placeholders (`<t1>…</t1>`, and `<t2/>` for code and images). Code, `pre`, SVG and anything
+marked `translate="no"` is never a segment. The copy under `/<lang>/` is the English page with
+every segment the memory knows replaced, every internal link pointed at that language's copy,
+`lang`, the canonical URL and the `hreflang` alternates set, the switch pointed at each copy and
+the machine-translation notice revealed. What the memory does not know stays English, is
+counted in `/<lang>/i18n.json`, and is listed with the pages it is on in
+`target/site-i18n/missing.json`. A build calls no model: it is a pure function of the English
+pages and the memory.
+
+**Translating.** A changed English segment has a new key, so its old translation is never served.
+
+<!-- majordomus:unrun it builds the whole site and carries segments to a model or a translator outside the process; case 3590 runs the pass, the memory and the refusal of a translation that breaks its placeholders against a fixture -->
+```bash
+scripts/site-build                                   # lists what the memory lacks
+scripts/site-translate status                        # how much is open
+scripts/site-translate run --advisor <id>            # translate through an advisor of the catalogue
+scripts/site-translate export --out DIR --min-pages 2 --batch-chars 16000   # batches for subagents
+scripts/site-translate import DIR/*.json             # admit filled batches into the memory
+```
+
+A translation is admitted only when it carries every placeholder of its English exactly once,
+nested the same way; anything else is refused and the English is served.
+
+**A value inside a sentence.** The memory keys a segment by its whole text, digits included,
+so a sentence that carries a count, a date or a version gets a new key each time the value
+changes, and its copy falls back to English until the memory is filled again. Until a number
+in a segment is a placeholder of its own (I3758), a template wraps each derived value in an
+inline element the pass does not enter: `<data value="…">`, or a `<span translate="no">`. That
+element stands in the segment as a void placeholder, so the words around it keep one key
+whatever the value is. The plan's figures are written this way
+(`site/templates/plan-section.html`); a block element marked `translate="no"` is a boundary
+instead, and splits the sentence in two.
+
+**The reader's language.** The switch is Flowbite's navbar language dropdown: every language
+named in itself, `lang` and `hreflang` on each link, `aria-current` on the one being read. A
+reader who arrives from outside the site on an English page, has chosen nothing and whose browser
+prefers a declared language is sent to that page's copy in it; a choice made with the switch is
+stored and kept. A link followed inside the site, a reload and a crawler stating no such
+preference are never redirected, so every URL means the page it names.
+
+**Authored pages.** A page written in another language (`[extra] lang`, declared in
+`english-only-allow.txt`) is carried into each copy unchanged. Its copies name it canonical, and
+a pair of authored counterparts (`[extra] alternate`) keeps its own alternates.
+
+**Every link, every language.** `scripts/lib/site-i18n-probe.mjs` loads every page of every
+copy in Chromium, answered from the build itself, and holds each to its language: every link
+lands on a built file, a link inside a copy stays in that copy's language, the switch leads to
+each copy and marks the current one, and the alternates name each other both ways.
+
+**Adding a language.** One entry in `languages.json`, a `guide.json`, an `edition.toml`, its
+declaration in `scripts/ci/english-only-allow.txt`, and a translation run. No template, generator
+or page changes.
+
+**The bar of the other surfaces.** `/ui` wears the site's bar (`scripts/ui navbar`), and its
+language switch leads to the site's front page in each language until the UI itself is offered
+in them (intent `one-bar-and-one-language-on-every-surface`).
 
 ## Routes
 
@@ -607,6 +698,75 @@ kind, `/openapi.json` and `/build.json`. Run the same command by hand against an
 commit. `test/cases/500_docs_index.sh` holds the generator and the probe to their refusals
 against a served fixture.
 
+### The UI a deploy publishes
+
+The site carries `majordomus ui` at `/ui/` as a snapshot read at the published commit (ADR
+0141, `docs/MAJORDOMUS_UI.md`). The workflow's `ui-snapshot` job builds the executable from
+that commit and runs `majordomus web report ui-snapshot`; it runs beside the `rustdoc` job,
+and the deploy job waits for both. After `scripts/pages check` and before the push, the deploy
+job places the snapshot at the mount its own `surface.json` declares. It refuses a snapshot
+that is absent, one read at another commit, and a mount the site itself already built.
+
+The Cockpit is published the same way at `/cockpit/` (ADR 0147). The same job runs
+`majordomus web report cockpit-snapshot` after the UI's, because the Cockpit's snapshot reads
+first what the UI's links to and then leads those links to its own pages; both directories
+are uploaded once that step is over. The deploy job places every snapshot the model declares
+at the mount the topology gives it, and after the push
+`scripts/pages verify-ui --surface cockpit` asks the public site for it.
+
+The snapshot is a generated surface, known only where its producer ran, so it is not in the
+committed topology and `scripts/site-build` does not compose it: a local build of the site has
+no `/ui/` unless that step is repeated by hand. The site's checks do not judge its pages.
+
+That a publication holds it is declared once, in `.ai/repo/ci/pages.yaml` under
+`deploy.snapshots`: the served surface it is a snapshot of, where the producer writes it, the
+producer, and the attribute its pages state their commit with. The mount is the topology's
+mount of that surface, and `scripts/pages snapshots` prints the resolved rows. Three readers
+hold a publication to that entry (`project.the-published-ui-is-the-trunks`):
+
+- `scripts/site-deploy` refuses a site whose tree has no snapshot at the mount, one read at
+  another commit than `HEAD`, or one that declares another mount, and says how to place it.
+  A deploy from a terminal therefore cannot publish the site without `/ui/`.
+  `--release-metadata` changes two files of what is already served and is not asked.
+- `scripts/pages verify-ui` asks the public site, once it serves the deployed commit:
+  `/ui/surface.json` names that commit, the landing page's banner states it, `/ui/snapshot.json`
+  records it and says what ended the reading, and every page the record lists answers 200. It
+  prints how many pages it asked for, how many `--max-pages` left unasked, how many the
+  snapshot itself left out and what stopped it. Exit 10 is a UI that is missing, another
+  commit's or not whole; 12 is a site that never answered. The deploy's `the UI it publishes`
+  step runs it and is not `continue-on-error`.
+- The `pages-live` gate asks the same probe of the published commit (section 2c of
+  `scripts/ci/pages-check`), so the live `/ui/` is held to the trunk within the window the
+  site is.
+
+`test/cases/2983_the_published_ui_is_the_trunks.sh` holds all three against a served fixture.
+
+### The release the site offers
+
+Which release is the latest is one fact with three public surfaces: the homepage (the navbar
+badge, the hero and the trust strip's `data-release`), `/releases/latest.json`, which the
+installer resolves, and the newest GitHub release. A release reaches them in that order — GitHub,
+then `latest.json` from the release's publish job (`scripts/site-deploy --release-metadata`,
+ADR 0131), then the pages from the build of master that job asks for — and the record that
+archives it lands later still, through its own pull request.
+
+So the pages do not read the record. `scripts/site-build` derives the release the site offers as
+the newer of the record's projection (`site/data/registry/distribution.json`) and the
+`releases/latest.json` that `origin/gh-pages` serves, read from git and named in `build.json`
+(`release.source`, `release.published_from`); `base.html` sets `offered` from it and every page
+reads `offered`. When the published release is the newer, the build serves its two documents, so
+the metadata beside the pages names what they offer. `scripts/site-build --release` prints the
+derivation alone.
+
+It is checked three times: `scripts/site-check` (section 17b) refuses a build whose homepage,
+`/build.json` and `/releases/latest.json` disagree, or whose two committed projections of the latest release do;
+the deploy's `the release it offers` step runs `scripts/pages release-live` once the site serves
+the new commit; and `scripts/ci/pages-check` asks the same probe as section 5 of `pages-live`, on
+the schedule and at `finish`. A disagreement younger than `deploy.release_window`
+(`.ai/repo/ci/pages.yaml`) after GitHub's release is a publication in flight; older, or a site
+offering a version GitHub has not published, is a failure. The rule is
+`project.the-site-offers-the-release-it-published`.
+
 ### When a deploy does not happen
 
 Publication is two steps owned by two parties, and either can be missing while everything
@@ -634,7 +794,8 @@ it beyond the deploy window (30 minutes, sized from a 25-minute Actions queue ob
 2026-09-10), the live site serves what `gh-pages` published, and GitHub's own build of that
 branch did not error. A section of its own asks a fifth: the reference at `/rustdoc/` is
 whole and was built from the commit the site serves, by the same `scripts/pages verify-rustdoc`
-the deploy runs. The trigger paths it uses to decide whether a publication is *owed* are
+the deploy runs. Another asks the same of the UI's snapshot at `/ui/`, by
+`scripts/pages verify-ui`. The trigger paths it uses to decide whether a publication is *owed* are
 `scripts/pages paths` — the same list that is the workflow's own `paths:` — so a commit that
 cannot change the site does not owe a deploy.
 
@@ -681,9 +842,9 @@ proves a missing path or an untested guaranteed claim fails the generator;
 their sources and that none embeds the commit it lands in.
 
 The commit a page was built from is not a derived file's business: `scripts/site-build`
-writes `site/data/build.json` (for the footer and the architecture page) and
-`site/static/build.json`, served at `/build.json`, with the commit, whether the tree was
-dirty, the site's input hash, the registry and index fingerprints, and under `surfaces` each
+writes `site/data/build.json` (for the footer, the architecture page and the roadmap's "observed
+at") and `site/static/build.json`, served at `/build.json`, with the commit, that commit's time
+(`commit_time`, never the build's clock), whether the tree was dirty, the site's input hash, the registry and index fingerprints, and under `surfaces` each
 composed surface with the commit its producer declared; `scripts/site-check` proves the served
 file names HEAD and the data the site was built from, and that every composed surface was built
 from that same commit, so a deployment can be verified from outside against the commit that was

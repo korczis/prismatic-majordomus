@@ -10,13 +10,13 @@
 #      addresses, no seed, cooperation at its defaults, trust `deny_unknown` with an
 #      allowlist of public keys and nothing wider;
 #   2. the mesh self-check holds over this repository on a machine with no identity yet;
-#   3. two runtimes of one repository on one machine — two worktrees, one node key, which is
-#      this repository's everyday shape — run from that declaration, observe each other and
-#      link, although their key is not on the allowlist: a machine's own key is trusted as
-#      itself, and nothing else is;
+#   3. a machine whose key is not on the allowlist keeps the mesh closed (no announcement, no
+#      dial) and says which key to list; listed, two runtimes of one repository on it — two
+#      worktrees, one node key, this repository's everyday shape — run from that
+#      declaration, observe each other and link;
 #   4. a runtime of the same repository under another key (another machine that nobody
-#      listed) is observed and refused `untrusted` when it dials;
-#   5. `mesh doctor` tells that machine its key is not listed, and how to list it.
+#      listed) stays closed too: it dials nobody, so nobody has anything to refuse;
+#   5. `mesh doctor` tells an unlisted machine its key is not listed, and how to list it.
 #
 # Offline and bounded: the fixture runtimes take the committed declaration and change only
 # its transport — multicast off, and the declared hubs replaced by a loopback rendezvous
@@ -45,9 +45,15 @@ poll() {
 
 # ---------------------------------------------------------------- 1. the committed declaration
 expect_file "$DECL"
-# This repository's decision is not the tool's default: the skeleton ships no declaration.
-skeleton_mesh="$(find "$ROOT/share/skeleton" -path '*/repo/mesh/*' -name '*.yaml' 2>/dev/null)"
-[ -z "$skeleton_mesh" ] || { echo "    the skeleton ships a mesh declaration, so every new repository would inherit this one's: $skeleton_mesh"; exit 1; }
+# This repository's fleet is not the tool's default: the declaration the skeleton ships (ADR
+# 0137) lists no key and names no endpoint, so a new repository inherits nobody's trust and
+# dials nobody's hub — it stays closed until one of its own machines is enrolled.
+skeleton_mesh="$ROOT/share/skeleton/ai/repo/mesh/mesh.yaml"
+expect_file "$skeleton_mesh"
+grep -q '^  allow: \[\]$' "$skeleton_mesh" && grep -q '^  policy: deny_unknown$' "$skeleton_mesh" \
+  || { echo "    the skeleton's mesh declaration trusts somebody, or not by deny_unknown:"; cat "$skeleton_mesh"; exit 1; }
+! grep -qE 'https?://|^rendezvous:|seeds:' "$skeleton_mesh" \
+  || { echo "    the skeleton's mesh declaration names an endpoint a new repository would dial:"; cat "$skeleton_mesh"; exit 1; }
 EMPTY="$T/no-identity"; mkdir -p "$EMPTY"
 # The self-check runs in this process, under the state directory given here: `mesh doctor`
 # would ask a server serving $ROOT, whose identity is the machine's and not the fixture's
@@ -92,12 +98,16 @@ jq -e '.ok == true' "$T/doctor.json" >/dev/null \
 # none. Every other line is carried over as committed — trust, allowlist and cooperation
 # included — and the number of lines changed is checked, so a reshaped declaration fails here
 # rather than leaking a fixture's announcements onto the declared group or to a hub.
-derive_declaration() { # out want-changes [rendezvous-url [seed-url]]
-  awk -v rv="${3:-}" -v seed="${4:-}" '
+derive_declaration() { # out want-changes [rendezvous-url [seed-url [listed-key]]]
+  awk -v rv="${3:-}" -v seed="${4:-}" -v key="${5:-}" '
     /^[a-z]/ { s = $1 }
     hubs && /^    / { next }
     { hubs = 0 }
+    s == "trust:" && /^  allow:/ && key != "" { print; print "    - \"" key "\""; n++; next }
     s == "multicast:" && /^  enabled:/ { print "  enabled: false"; n++; next }
+    # the tailnet stays quiet: a fixture on a machine that runs Tailscale would register with
+    # the real hubs of the fleet and meet its siblings there
+    /^trust:/ && !tailnet { print "tailscale:"; print "  enabled: false"; tailnet = 1; n++ }
     s == "rendezvous:" && /^  endpoints:/ {
       if (rv != "") { print "  endpoints:"; print "    - " rv } else print "  endpoints: []"
       hubs = 1; n++; next
@@ -127,7 +137,7 @@ mkdir -p "$R"
   git add -A && git commit -qm base
 ) || { echo "    the fixture repository could not be made"; exit 1; }
 mkdir -p "$R/.ai/repo/mesh"
-derive_declaration "$R/.ai/repo/mesh/majordomus.yaml" 2 || exit 1
+derive_declaration "$R/.ai/repo/mesh/majordomus.yaml" 3 || exit 1
 git -C "$R" add .ai/repo/mesh/majordomus.yaml
 git -C "$R" commit -qm "the committed mesh declaration, loopback-only"
 B="$T/wt-b"; C="$T/wt-c"
@@ -146,10 +156,23 @@ has_url() { [ -n "$(url_of "$1")" ]; }
 mj() { local cwd="$1" state="$2"; shift 2; ( cd "$cwd" && XDG_STATE_HOME="$state" "$RB" "$@" 2>/dev/null ); }
 runtime_of() { mj "$1" "$2" mesh peers --format json | jq -r '.runtime // empty'; }
 
+# Unlisted first: the server creates the machine's identity and keeps the mesh closed, naming
+# the key; then the key is listed and the server restarted.
+serve "$R" "$MACHINE"
+poll 300 has_url "$R" || { cat "$R.serve.log"; exit 1; }
+KEY="$(mj "$R" "$MACHINE" mesh identity --format json | jq -r '.identity.public_key // empty')"
+[ "${#KEY}" = 64 ] || { echo "    the server created no identity: '$KEY'"; exit 1; }
+expect_exit 0 mj "$R" "$MACHINE" mesh status --format json
+jq -e --arg key "$KEY" '.active == false and (.reason | startswith("closed: ") and contains($key))' <<<"$LAST_OUT" >/dev/null \
+  || { echo "    an unlisted machine's mesh is not closed with its key named:"; echo "$LAST_OUT"; exit 1; }
+mj "$R" "$MACHINE" serve stop >/dev/null || true
+poll 100 sh -c "! [ -s '$R/.ai/local/state/mcp/server.json' ]" || true
+derive_declaration "$R/.ai/repo/mesh/majordomus.yaml" 4 "" "" "$KEY" || exit 1
+git -C "$R" commit -qam "this machine's key is listed"
 serve "$R" "$MACHINE"
 poll 300 has_url "$R" || { cat "$R.serve.log"; exit 1; }
 URL_A="$(url_of "$R")"
-derive_declaration "$B/.ai/repo/mesh/majordomus.yaml" 2 "$URL_A" || exit 1
+derive_declaration "$B/.ai/repo/mesh/majordomus.yaml" 4 "$URL_A" "" "$KEY" || exit 1
 serve "$B" "$MACHINE"
 poll 300 has_url "$B" || { cat "$B.serve.log"; exit 1; }
 
@@ -170,12 +193,12 @@ observes() { # checkout runtime-id
 }
 poll 300 observes "$R" "$RT_B" || { echo "    A never observed B"; cat "$R.serve.log"; exit 1; }
 poll 300 observes "$B" "$RT_A" || { echo "    B never observed A"; cat "$B.serve.log"; exit 1; }
-# Discovery is not trust: the fixture's key is on no allowlist, and the registry says so.
+# The fixture's key is listed now, and the registry says why B is trusted: the allowlist.
 expect_exit 0 mj "$R" "$MACHINE" mesh nodes --format json
-jq -e --arg rt "${RT_B#*-}" '.nodes[] | select(.runtime == $rt) | .trust.state == "observed"' <<<"$LAST_OUT" >/dev/null \
-  || { echo "    an unlisted key was labelled trusted by discovery:"; echo "$LAST_OUT"; exit 1; }
+jq -e --arg rt "${RT_B#*-}" '.nodes[] | select(.runtime == $rt) | .trust.state == "trusted"' <<<"$LAST_OUT" >/dev/null \
+  || { echo "    a listed key was not labelled trusted by discovery:"; echo "$LAST_OUT"; exit 1; }
 
-# and they link, trusting each other only as this machine's own key
+# and they link
 linked() { # checkout peer-runtime-id
   mj "$1" "$MACHINE" mesh peers --format json \
     | jq -e --arg rt "$2" '[.machines[].runtimes[] | select(.runtime == $rt and .link.state == "connected")] | length == 1'
@@ -188,21 +211,23 @@ expect_exit 0 mj "$B" "$MACHINE" mesh verify
 expect_grep 'cooperation verified'
 
 # ---------------------------------------------------------------- 4. another machine, unlisted
-derive_declaration "$C/.ai/repo/mesh/majordomus.yaml" 3 "$URL_A" "$URL_A" || exit 1
+# Its declaration names A as hub and seed, the same as a contributor's clone naming the
+# repository's hubs; its own key is listed nowhere, so it stays closed and dials neither.
+derive_declaration "$C/.ai/repo/mesh/majordomus.yaml" 4 "$URL_A" "$URL_A" || exit 1
 serve "$C" "$STRANGER"
 poll 300 has_url "$C" || { cat "$C.serve.log"; exit 1; }
-RT_C="$(runtime_of "$C" "$STRANGER")"
-[ -n "$RT_C" ] && [ "${RT_C%%-*}" != "${RT_A%%-*}" ] || { echo "    the stranger is not another node: $RT_C"; exit 1; }
-refused_untrusted() {
-  mj "$R" "$MACHINE" mesh peers --format json \
-    | jq -e '[.refused[]? | select(.refusal.code == "untrusted")] | length >= 1'
-}
-poll 300 observes "$R" "$RT_C" || { echo "    A never observed the stranger"; exit 1; }
-poll 300 refused_untrusted || { echo "    A did not refuse the stranger's hello as untrusted:"; mj "$R" "$MACHINE" mesh peers; cat "$C.serve.log"; exit 1; }
-linked "$R" "$RT_C" >/dev/null 2>&1 && { echo "    A linked a key nobody listed"; exit 1; }
+expect_exit 0 mj "$C" "$STRANGER" mesh status --format json
+jq -e '.active == false and (.reason | startswith("closed: ")) and ((.providers // []) | length == 0)' <<<"$LAST_OUT" >/dev/null \
+  || { echo "    an unlisted machine opened its mesh:"; echo "$LAST_OUT"; cat "$C.serve.log"; exit 1; }
+# A heard nothing from it in several of the stranger's rendezvous rounds: no registration,
+# no hello, so neither an observed node nor a refusal
+sleep 4
+expect_exit 0 mj "$R" "$MACHINE" mesh peers --format json
+jq -e '[.refused[]? | select(.refusal.code == "untrusted")] | length == 0' <<<"$LAST_OUT" >/dev/null \
+  || { echo "    the closed stranger dialed A:"; echo "$LAST_OUT"; exit 1; }
 expect_exit 0 mj "$R" "$MACHINE" mesh nodes --format json
-jq -e --arg rt "${RT_C#*-}" '.nodes[] | select(.runtime == $rt) | .trust.state == "observed"' <<<"$LAST_OUT" >/dev/null \
-  || { echo "    the stranger was labelled trusted:"; echo "$LAST_OUT"; exit 1; }
+jq -e '[.nodes[] | select(.runtime != "'"${RT_A#*-}"'" and .runtime != "'"${RT_B#*-}"'")] | length == 0' <<<"$LAST_OUT" >/dev/null \
+  || { echo "    A observed a runtime of the closed stranger:"; echo "$LAST_OUT"; exit 1; }
 
 # ---------------------------------------------------------------- 5. an unlisted machine is told
 # The fixture machine now has an identity, which is on no allowlist; the self-check over this
@@ -213,4 +238,35 @@ jq '.output' "$T/doctor-unlisted.run.json" > "$T/doctor-unlisted.json"
 jq -e '.ok == false and ([.checks[] | select(.check == "trust" and (.ok | not) and (.remediation | test("trust.allow")))] | length == 1)' \
   "$T/doctor-unlisted.json" >/dev/null \
   || { echo "    mesh doctor did not tell an unlisted machine so:"; cat "$T/doctor-unlisted.json"; exit 1; }
-echo "    ok: the declaration is on with deny_unknown; one machine's worktrees link, an unlisted key is refused"
+# ---------------------------------------------------------------- 5. enrol, as a client calls it
+# `init` seeds a closed declaration (I2412): enabled, deny_unknown, nobody listed. The one step
+# that opens it for a machine is `mesh enrol`, and an MCP client reaches it as the
+# majordomus_mesh_enrol tool: the first call lists this machine's key, a second changes nothing.
+E="$T/enrol"; ESTATE="$T/enrol-state"; mkdir -p "$E" "$ESTATE"
+(
+  cd "$E" || exit 1
+  git init -q .
+  git config user.email t@example.com
+  git config user.name t
+  "$MJ" init >/dev/null
+  git add -A && git commit -qm base
+) || { echo "    the enrol fixture could not be made"; exit 1; }
+enrol() { # -> the tool's typed answer on stdout
+  { printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case491","version":"0"}}}\n'
+    printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
+    printf '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_mesh_enrol","arguments":{}}}\n'
+  } | XDG_STATE_HOME="$ESTATE" MAJORDOMUS_SHARE="$ROOT/share" "$RB" mcp --standalone --repo "$E" 2>"$T/enrol.err" \
+    | sed -n 2p | jq -e '.result.structuredContent'
+}
+first="$(enrol)" || { echo "    majordomus_mesh_enrol returned no typed answer:"; sed 's/^/    | /' "$T/enrol.err" | head -5; exit 1; }
+key="$(printf '%s' "$first" | jq -r '.key')"
+printf '%s' "$first" | jq -e '.added == true and (.key | length) == 64' >/dev/null \
+  || { echo "    the first enrol did not add a key: $first"; exit 1; }
+grep -qF "$key" "$E/$(printf '%s' "$first" | jq -r '.path')" \
+  || { echo "    the declaration does not list the enrolled key"; exit 1; }
+second="$(enrol)" || { echo "    a second majordomus_mesh_enrol returned no typed answer"; exit 1; }
+printf '%s' "$second" | jq -e --arg k "$key" '.added == false and .key == $k' >/dev/null \
+  || { echo "    a second enrol changed something: $second"; exit 1; }
+echo "    majordomus_mesh_enrol lists this machine's key once, and a second call changes nothing"
+
+echo "    ok: the declaration is on with deny_unknown; an unlisted machine stays closed, a listed one's worktrees link"

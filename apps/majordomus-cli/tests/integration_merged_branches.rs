@@ -99,6 +99,14 @@ case "$1 $2" in
       *" --state merged "*) if [ -f "{state}/merged.json" ]; then cat "{state}/merged.json"; else echo 'refused' >&2; exit 1; fi ;;
       *) echo '[]' ;;
     esac ;;
+  "api graphql")
+    # the forge's deployments and releases, which `served forge` observes (since 3e8225a4329
+    # not `prs refresh`; I4315)
+    # (deploy::observed): none here. Any other question of this kind is not scripted.
+    case "$*" in
+      *"deployments(last"*) echo '{{"data":{{"repository":{{"url":"https://example.invalid/o/r","deployments":{{"nodes":[]}},"releases":{{"nodes":[]}}}}}}}}' ;;
+      *) echo UNEXPECTED >> "{state}/log"; exit 1 ;;
+    esac ;;
   *) echo UNEXPECTED >> "{state}/log"; exit 1 ;;
 esac
 "#,
@@ -129,7 +137,7 @@ fn prs(f: &Forge, args: &[&str]) -> (i32, String, String) {
         f.bin.display(),
         std::env::var("PATH").unwrap_or_default()
     );
-    let out = Command::new(common::BIN)
+    let out = common::majordomus()
         .arg("prs")
         .arg("--repo")
         .arg(&f.work)

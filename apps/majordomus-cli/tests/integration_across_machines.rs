@@ -23,7 +23,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
 
-use common::{dist_share, Fixture, Served, BIN};
+use common::{dist_share, Fixture, Served};
 use serde_json::{json, Value};
 
 use majordomus_cli::mesh::identity::NodeIdentity;
@@ -142,7 +142,7 @@ impl Node {
 
     fn declare(&self, allow: &[&str], seeds: &[&Served]) {
         let mut yaml = String::from(
-            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow:\n",
+            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow:\n",
         );
         for key in allow {
             yaml.push_str(&format!("    - {key}\n"));
@@ -168,7 +168,7 @@ impl Node {
     }
 
     fn prs(&self, forge: &Forge, args: &[&str]) -> Command {
-        let mut c = Command::new(BIN);
+        let mut c = common::majordomus();
         c.arg("prs")
             .arg("--repo")
             .arg(self.root())
@@ -246,7 +246,7 @@ fn connected(s: &Served) -> usize {
 
 /// The held claims on [`SCOPE`] a runtime knows of.
 fn held(s: &Served) -> Vec<Value> {
-    s.get("/api/v1/mesh/state").1["state"]["claims"]
+    s.get("/api/v1/mesh/state?view=full").1["state"]["claims"]
         .as_array()
         .cloned()
         .unwrap_or_default()

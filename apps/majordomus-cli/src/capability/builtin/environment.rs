@@ -21,7 +21,6 @@ use crate::environment::preflight::{self, Preflight, Probe, RulesTally};
 use crate::environment::{
     resolve, EnvironmentQuery, FieldSource, Inputs, RepositoryEnvironment, Resolution,
 };
-use crate::repository::Repository;
 use crate::{capability, module};
 
 use super::{get, mcp};
@@ -57,7 +56,7 @@ impl BenchmarkCases for PreflightInput {
 
 fn preflight(ctx: &Context, input: PreflightInput) -> Result<Preflight, CapabilityError> {
     let root = std::path::Path::new(&ctx.index.repository.root);
-    let repository = Repository::open(root).map_err(|e| {
+    let repository = ctx.repository().map_err(|e| {
         CapabilityError::Internal(format!("the repository could not be re-read: {e}"))
     })?;
     // Located here rather than carried on the context, so that the provider projections are
@@ -79,9 +78,7 @@ fn preflight(ctx: &Context, input: PreflightInput) -> Result<Preflight, Capabili
             write_cache: false,
         },
     );
-    let ledger =
-        crate::evidence::Ledger::load(root).unwrap_or_else(|_| crate::evidence::Ledger::empty());
-    let tally = RulesTally::of(&crate::rules::report(&ctx.index, &ledger));
+    let tally = RulesTally::of(&rules_report(ctx, root));
     let policy = crate::policy::LoadedPolicy::load(&repository).map_err(|e| e.to_string());
     let mut observations = preflight::observe(
         root,
@@ -105,6 +102,22 @@ fn preflight(ctx: &Context, input: PreflightInput) -> Result<Preflight, Capabili
         observations.peers = Ok(preflight::PeersObservation::of(&ctx.peers.list()));
     }
     Ok(preflight::derive(&observations))
+}
+
+/// The rule corpus counted against the ledger, as `rules.report` answers it: asked through
+/// the executor, so that a preflight and every other reader of the same checkout state share
+/// one computation of the most expensive thing a preflight reads. A ledger that cannot be
+/// read is counted as an empty one, as the preflight always counted it — `rules.report`
+/// refuses that ledger, so the refusal is the one case computed here.
+fn rules_report(ctx: &Context, root: &std::path::Path) -> crate::rules::RulesReport {
+    ctx.execute("rules.report", serde_json::json!({}))
+        .ok()
+        .and_then(|v| serde_json::from_value(v).ok())
+        .unwrap_or_else(|| {
+            let ledger = crate::evidence::Ledger::load(root)
+                .unwrap_or_else(|_| crate::evidence::Ledger::empty());
+            crate::rules::report(&ctx.index, &ledger)
+        })
 }
 
 /// What to include in the snapshot.
@@ -166,8 +179,7 @@ fn snapshot(
     ctx: &Context,
     input: EnvironmentInput,
 ) -> Result<RepositoryEnvironment, CapabilityError> {
-    let root = std::path::Path::new(&ctx.index.repository.root);
-    let repository = Repository::open(root).map_err(|e| {
+    let repository = ctx.repository().map_err(|e| {
         CapabilityError::Internal(format!("the repository could not be re-read: {e}"))
     })?;
     // The share directory is not carried on the context; without it the provider
@@ -307,6 +319,28 @@ pub fn module() -> ModuleDescriptor {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The preflight counts the rules `rules.report` answers, and a ledger `rules.report`
+    /// refuses is counted as an empty one, as the preflight always counted it.
+    #[test]
+    fn the_preflight_counts_the_rules_rules_report_answers() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        let root = std::path::Path::new(&ctx.index.repository.root);
+        let ledger = crate::evidence::Ledger::load(root).expect("a readable ledger");
+        assert_eq!(
+            rules_report(&ctx, root),
+            crate::rules::report(&ctx.index, &ledger)
+        );
+        let path = root.join(crate::evidence::LEDGER_PATH);
+        std::fs::create_dir_all(path.parent().expect("a parent")).expect("a directory");
+        std::fs::write(&path, "{ not a ledger").expect("an unreadable ledger");
+        assert!(ctx.execute("rules.report", serde_json::json!({})).is_err());
+        assert_eq!(
+            rules_report(&ctx, root),
+            crate::rules::report(&ctx.index, &crate::evidence::Ledger::empty())
+        );
+    }
 
     /// The declaration is the only place these names exist, and every projection — the MCP
     /// tool, the resource, the HTTP route, the OpenAPI operation, the benchmark target —
@@ -451,5 +485,30 @@ mod tests {
         assert!(!some.fields.is_empty());
         assert!(some.fields.len() < all.fields.len());
         assert!(some.fields.iter().all(|f| f.field.starts_with("project.")));
+    }
+
+    /// The snapshot and the preflight re-read the repository they answer for; once its
+    /// manifest is gone, each says it could not be re-read rather than answering from the
+    /// index it was loaded with.
+    #[test]
+    fn a_repository_that_cannot_be_re_read_is_an_internal_error() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        std::fs::remove_file(repo.root().join(crate::repository::MANIFEST))
+            .expect("the manifest removed");
+        let said = |r: Result<(), CapabilityError>| match r {
+            Err(CapabilityError::Internal(m)) => m,
+            other => panic!("not an internal error: {other:?}"),
+        };
+        let snapshot = said(snapshot(&ctx, EnvironmentInput::default()).map(|_| ()));
+        assert!(
+            snapshot.contains("the repository could not be re-read"),
+            "{snapshot}"
+        );
+        let preflight = said(preflight(&ctx, PreflightInput::default()).map(|_| ()));
+        assert!(
+            preflight.contains("the repository could not be re-read"),
+            "{preflight}"
+        );
     }
 }

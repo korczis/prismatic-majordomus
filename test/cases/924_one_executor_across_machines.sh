@@ -50,11 +50,13 @@ declare_mesh() { # repo [seed-url]
   mkdir -p "$1/.ai/repo/mesh"
   {
     printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n'
-    printf 'multicast:\n  enabled: false\ntrust:\n  policy: tofu\n'
+    printf 'multicast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: tofu\n'
     printf 'cooperation:\n  heartbeat_seconds: 1\n  expiry_seconds: 4\n  repository: case-924\n'
     [ -z "${2:-}" ] || printf '  seeds:\n    - %s\n' "$2"
   } > "$1/.ai/repo/mesh/majordomus.yaml"
   git -C "$1" add .ai/repo/mesh/majordomus.yaml
+  # and committed: trust on first use is honoured only from the trunk's copy (I2135)
+  gitq -C "$1" commit -qm "the mesh declaration"
 }
 
 serve() { # repo state
@@ -102,7 +104,7 @@ done
 # ---------------------------------------------------------------- 1. A holds it
 XDG_STATE_HOME="$T/state-a" "$RB" prs --repo "$A" drain --continuous --interval 30 >"$T/a.out" 2>"$T/a.err" &
 DRAIN=$!; PIDS="$PIDS $DRAIN"
-held_on_b() { ( cd "$B" && "$RB" mesh state --format json ) | jq -e '[.state.claims[] | select(.state.state == "held" and .scope == ["integration/o/r/master"])] | length == 1'; }
+held_on_b() { ( cd "$B" && "$RB" mesh state --full --format json ) | jq -e '[.state.claims[] | select(.state.state == "held" and .scope == ["integration/o/r/master"])] | length == 1'; }
 poll 300 held_on_b || { echo "    B never saw A's integration claim"; cat "$T/a.out" "$T/a.err"; exit 1; }
 expect_exit 0 "$RB" prs --repo "$A" brief
 expect_grep 'across machines by mesh claim'
@@ -117,7 +119,7 @@ case "$out" in *"another integration executor holds integration/o/r/master on th
 
 # ---------------------------------------------------------------- 3. released, then B's
 kill -TERM "$DRAIN"; wait "$DRAIN" 2>/dev/null || true
-free_on_b() { ( cd "$B" && "$RB" mesh state --format json ) | jq -e '[.state.claims[] | select(.state.state == "held" and .scope == ["integration/o/r/master"])] | length == 0'; }
+free_on_b() { ( cd "$B" && "$RB" mesh state --full --format json ) | jq -e '[.state.claims[] | select(.state.state == "held" and .scope == ["integration/o/r/master"])] | length == 0'; }
 poll 300 free_on_b || { echo "    A's claim was not released"; exit 1; }
 rc=0; out="$(XDG_STATE_HOME="$T/state-b" "$RB" prs --repo "$B" drain --max 1 2>&1)" || rc=$?
 [ "$rc" = 0 ] || { echo "    B's executor did not run once the repository was free (exit $rc): $out"; exit 1; }

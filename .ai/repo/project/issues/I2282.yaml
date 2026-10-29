@@ -1,0 +1,48 @@
+id: I2282
+milestone: test-evidence
+title: "The record pull request's dispatched verdict does not satisfy branch protection"
+slug: the-record-dispatch-is-not-a-verdict
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the record pull request a release proposes mergeable without a person closing and reopening it, or stop docs/DISTRIBUTION.md and case 996 from saying that it is."
+why: "docs/DISTRIBUTION.md ('Why the release asks for the verdict of its record') says the publish job dispatches validate on release/record-<tag>, that the check-runs attach to the head commit the pull request reads, and so the record no longer sits with an empty rollup until somebody closes and reopens it. On 2026-10-10 the v0.19.1 record, #866 at head 03e1d8a597, had exactly that dispatched run (38015081212) conclude success with a `ci` check-run from app 15368, the app and context master's branch protection requires (strict false, no rulesets). The merge was refused with 'base branch policy prohibits'. The pull_request run the record's opening caused (38015082449, actor github-actions[bot]) concluded failure with zero jobs; both check suites are associated with pull request 866, and its statusCheckRollup stayed empty until a close and reopen at 05:22Z started pull_request run 38027303212. The dispatch has not yet made a record mergeable on its own: v0.18.0's (#832) dispatch failed and it merged after a close/reopen run, v0.19.0's (#861) was admin-merged. Case 996 holds that the two workflows are wired to each other; it never observes a record pull request become mergeable. Each release since has lost one CI cycle, about 90 minutes, between publication and the record reaching the site."
+current_state: "The publish job opens the record pull request with GITHUB_TOKEN and dispatches validate on its branch. The dispatched run's `ci` does not count: the rollups of #1142 and #1147 list no check although their dispatched `ci` passed, and on 2026-10-16 v0.27.0's record (#1273, head a2aa25f) was refused with its dispatched `ci` green (run 38865302829). Its pull_request run (38865305333) was created action_required, not failed with zero jobs as through v0.26.0, and the record merged on that run once a person approved it. Since fix/the-record-dispatch-is-not-the-records-verdict, release.yml, the record pull request's body, docs/DISTRIBUTION.md ('Who starts the record's verdict', the runbook and the failure table) and case 996 call the dispatch an early reading and name the person's step: approve the waiting run, or close and reopen (majordomus prs drain). What remains is the owner's decision on a GitHub App or fine-grained token that would make the record's own run start without a person; until then record_pull_request_mergeable_without_reopen cannot be shown."
+desired_state: "A release's record pull request becomes mergeable on its own green `ci`, with no close, reopen or admin merge, and the documentation says what the pipeline proves. Two remedies are named. The first is the owner's decision because it needs a credential only the owner can provide: the publish job opens, or closes and reopens, the record pull request with a GitHub App or fine-grained token whose events start workflows, so the pull_request run carries `ci` itself. The second needs nothing new: the pipeline and documentation stop claiming the dispatch is a verdict, the release names the close/reopen as its remaining step and does it with a token that can, or the lander's runbook carries it, and case 996 is narrowed to what it shows."
+scope:
+  - ".github/workflows/release.yml"
+  - "docs/DISTRIBUTION.md"
+  - "test/cases/996_the_record_pull_request_gets_its_verdict.sh"
+  - ".ai/repo/ci/release.yaml"
+acceptance_criteria:
+  - "On a release, `gh pr view <record> --json mergeStateStatus` reads CLEAN once its `ci` concludes success, without the record pull request having been closed, reopened or admin-merged; or docs/DISTRIBUTION.md no longer says that it does"
+  - "docs/DISTRIBUTION.md names, for the record pull request, only steps the pipeline performs or the lander's runbook performs, and the failure table names the close/reopen if it remains"
+  - "Case 996 asserts only what it observes; if it keeps the dispatch, it does not call it the record's verdict"
+  - "If the token remedy is chosen, the credential is named in docs/DISTRIBUTION.md as the owner's, with how it is rotated, and no secret value appears in the repository"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 996"
+evidence_required:
+  - "record_pull_request_mergeable_without_reopen"
+  - "distribution_claims_match_pipeline"
+created_at: 2026-10-10
+updated_at: 2026-10-20T21:57:30Z
+started_at: 2026-10-20T21:55:35Z
+started_event: sha256:c93a0e38f53e5a8185e1e37fbc25ae0a981f9f7d3376bbe63ddfc5171d364da3
+completed_at: 2026-10-20T21:57:30Z
+completed_event: sha256:048d0db02ac1b148a909529ced0d74a354ff9e0fa3dd6dbb177b04aa49de8f4a
+evidence:
+  - covers: distribution_claims_match_pipeline
+    type: ci
+    command: "gh run view --job 118758852989 --log (validate run 39438896504, suite-shard (4), runs MJ_TEST_JOBS=4 bash test/run.sh 996)"
+    result: "996_the_record_pull_request_gets_its_verdict ok in suite-shard (4) job 118758852989 of validate run 39438896504 on master 9a5a9b77520 (carries fix 8ed40f6eb7c); listed ok in that job's suite.tsv artifact (shard 149 passed, 0 failed, 1 skipped, not 996). Sections 6-7 prove neither release.yml nor docs/DISTRIBUTION.md calls the dispatch the record's verdict ('That run is not the record's verdict.'; branch protection reads no check suite a dispatch created), and that the record PR body, the publish notice, runbook step 6 and the failure-table row name the person's step (approve the waiting run, gh pr close/reopen, majordomus prs drain); the header says the case observes no merge, approval or reopen (criterion 3)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39438896504/job/118758852989"
+    commit: 91c0b5d5658c0bcddcd724582068bfa1f51074d1
+    recorded_at: 2026-10-20T21:56:15Z
+  - covers: record_pull_request_mergeable_without_reopen
+    type: artifact
+    command: "read docs/DISTRIBUTION.md ('Who starts the record's verdict', runbook step 6, failure table) on origin/master 91c0b5d5658; gh run view --job 118758852989 --log (validate run 39438896504, suite-shard (4), case 996)"
+    result: "Criterion 1 is satisfied by its documented alternative, not by a record that merges on its own: the issue's objective and criterion 1 allow 'or docs/DISTRIBUTION.md no longer says that it does', and fix 8ed40f6eb7c took it. docs/DISTRIBUTION.md now says 'That run is not the record's verdict.', that branch protection reads no check suite a dispatch created, and names the person's step (approve the waiting run, gh pr close/reopen, majordomus prs drain) with the token remedy left as the owner's decision. Case 996 (sections 6-7) asserts exactly that text and ran ok in suite-shard (4) job 118758852989 of validate run 39438896504 on master 9a5a9b77520. A record PR mergeable without reopen is not shown; it needs the owner's GitHub App or fine-grained token and belongs in a new issue if wanted"
+    artifact: "docs/DISTRIBUTION.md"
+    commit: 91c0b5d5658c0bcddcd724582068bfa1f51074d1
+    recorded_at: 2026-10-20T21:57:03Z

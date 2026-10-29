@@ -63,7 +63,7 @@ esac
     // the repository's trail is in the way: a directory where the file belongs
     std::fs::create_dir_all(root.join(".git/majordomus/integration/events.jsonl/in-the-way"))
         .unwrap();
-    let out = Command::new(common::BIN)
+    let out = common::majordomus()
         .args(["prs", "--repo"])
         .arg(&root)
         .arg("refresh")

@@ -1,0 +1,65 @@
+id: I2151
+milestone: surfaces-never-disagree
+title: "A page served beside the write routes runs only script it shipped, and a rebinding host reads nothing"
+slug: pages-beside-writers-are-hardened
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Give /swagger the Cockpit's security headers and integrity-checked scripts, refuse a GET whose Host names another server, and escape script-breaking sequences where the site embeds JSON."
+why: "/swagger serves no Content-Security-Policy, no frame-ancestors and no subresource integrity for the scripts it loads from unpkg (apps/majordomus-cli/src/http/swagger.rs:52,79; headers confirmed live by the sub-audit), on the same origin as every POST route. The Origin check (apps/majordomus-cli/src/http/router.rs:503-508, 718-745) passes for a same-origin script, so a substituted CDN script could call plan/transition, continuity/*, recover/orphans or executions/start. GET routes do no Host validation (only non-GET is checked, apps/majordomus-cli/src/http/router.rs:504, host_is_literal at :749), and the comment at apps/majordomus-cli/src/http/router.rs:498-502 assumes a cross-origin read is contained, which DNS rebinding defeats (the exploit is unverified). The static site embeds json_encode | safe inside script elements without escaping the closing sequence (site/templates/partials/graph.html:76, site/templates/api.html:94, site/templates/why-section.html:284; exploitability unverified). The Cockpit already sends a CSP (apps/majordomus-cli/src/cockpit/mod.rs:193-204, 296-310). Baseline audit of 2026-10-09 at master 1fb8d6be44, projections gaps 7 and 11, lifecycle authorization row and drift 9."
+current_state: "/swagger trusts a CDN with the write routes' origin; GET answers any Host; three site templates embed JSON unescaped."
+desired_state: "/swagger is served with its own Content-Security-Policy (the pinned unpkg files and the one inline script by digest, frame-ancestors none, no eval) plus nosniff and no-referrer, and both CDN files carry sha384 integrity; a request from loopback whose Host is neither an address nor localhost is refused 403 forbidden before any surface answers (a rebinding page reads nothing), while a request from another host may name this machine as it knows it; the three site templates replace </ with <\/ before marking JSON safe. Verified in Chromium: /swagger renders 53 operation groups with no console error and no CSP violation."
+scope:
+  - "apps/majordomus-cli/src/http/swagger.rs"
+  - "apps/majordomus-cli/src/http/router.rs"
+  - "apps/majordomus-cli/src/cockpit/mod.rs"
+  - "site/templates/partials/graph.html"
+  - "site/templates/api.html"
+  - "site/templates/why-section.html"
+  - "apps/majordomus-cli/tests/http_host.rs"
+  - "apps/majordomus-cli/tests/http_serve.rs"
+  - "test/cases"
+  - "docs/MCP.md"
+depends_on: []
+acceptance_criteria:
+  - "GET /swagger answers with a Content-Security-Policy that includes frame-ancestors, and every script it loads carries an integrity attribute"
+  - "A GET whose Host header names another domain is refused before its handler runs"
+  - "A site data value containing a closing script tag renders as text in each template that embeds JSON"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test http_host --test http_serve"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "swagger_csp_test"
+  - "rebinding_host_refused_test"
+  - "site_script_escape_case"
+created_at: 2026-10-09
+updated_at: 2026-10-14T22:17:04Z
+started_at: 2026-10-14T22:16:25Z
+started_event: sha256:f93f4e0c3c662cb786d7a4e1c33f850cfe6fd4a3bac94314e6c91294bc236834
+verified_at: 2026-10-14T22:16:45Z
+verified_event: sha256:e6dd0292f147d0d8a2fe8cb2bb44af5a8233efcd995c817402dfaf55486deff6
+completed_at: 2026-10-14T22:17:04Z
+completed_event: sha256:2e92cbb3cfc543a3de8802185c5363c7d6fb0b64b3a54b0e84a31dd05e2cd963
+evidence:
+  - covers: site_script_escape_case
+    type: test
+    command: "MJ_TEST_JOBS=1 bash test/run.sh 3043_site_json_cannot_close_its_script"
+    result: "1 passed at c0e3585dc83: each of partials/graph.html, api.html and why-section.html escapes the closing sequence before marking JSON safe, and the chain rendered by zola 0.23 over a value carrying a closing script tag closes once and reads back unchanged; with the escape removed from api.html the case fails"
+    artifact: "test/cases/3043_site_json_cannot_close_its_script.sh"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T21:05:17Z
+  - covers: rebinding_host_refused_test
+    type: ci
+    command: "cargo test --test remote_callers a_loopback_request_under_a_foreign_host_name_reads_nothing (validate run 38626102499, job rust (3) 116065669794)"
+    result: "ok on master e8505a431d5: a loopback GET addressed to attacker.example:8741 is answered 403 forbidden before any surface reads (router.rs rebound(), delivered by 21ea43629ce)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38626102499/job/116065669794"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T22:15:51Z
+  - covers: swagger_csp_test
+    type: ci
+    command: "cargo test --test remote_callers the_api_page_runs_only_the_scripts_it_ships (validate run 38626102499, job rust (3) 116065669794)"
+    result: "ok on master e8505a431d5: /swagger carries a Content-Security-Policy with frame-ancestors none and no unsafe-eval, and each CDN script carries sha384 integrity (swagger.rs, delivered by 21ea43629ce)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38626102499/job/116065669794"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T22:15:58Z

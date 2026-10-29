@@ -1,0 +1,35 @@
+id: I3369
+milestone: the-corpus-is-registered-before-it-runs
+title: "Four medium and three small tasks join the economics corpus, each failing on its start, passing on its reference and reviewed by someone other than its author"
+slug: the-corpus-fills-its-small-and-medium-strata
+priority: p1
+profile: implementation
+objective: "Add medium tasks due-dates-overdue, invoice-numbering, report-by-country and csv-delimiter-option and small tasks money-parse-validation, report-month-boundary and currency-symbol-format on the ledgerlite fixture within the registered cut-offs, so with I3368 the corpus holds 7 small, 7 medium and 6 large tasks; record an answered review id for each as I3368 does."
+why: "T2 of the owner's report of 2026-10-19 asks for 20 tasks split by difficulty. Balancing the strata lets each be reported; the same fixture and layout keep the new tasks comparable with the proven ones."
+current_state: "grep complexity gives 4 small (csv-credit-notes, currency-czk, test-repair, vat-rounding) and 3 medium (invoice-discounts, recurring-invoices, storage-v2)."
+desired_state: "Seven new tasks proven by economics references and reviewed."
+scope:
+  - ".ai/repo/benchmarks/economics/tasks"
+  - "test/fixtures/economics/acceptance"
+  - "test/fixtures/economics/reference"
+non_scope:
+  - "Editing the fixture or an existing task"
+  - "Adding the tasks to the pilot suite"
+depends_on:
+  - "I3374"
+serves:
+  - "the-product-proves-it-pays#every-registered-task-can-be-failed-and-passed"
+acceptance_criteria:
+  - "Four tasks declare medium and three small, each inside its registered cut-offs"
+  - "economics references reports each failing on its start and passing on its reference"
+  - "No prompt names the hidden tests or the reference"
+  - "Across the corpus at least four categories hold two or more tasks"
+  - "Each task names an answered review id from a reviewer who did not write it"
+validation:
+  - "majordomus economics references --work-dir \"$(mktemp -d)\""
+  - "bash test/run.sh 430_economics"
+  - "majordomus plan validate"
+evidence_required:
+  - "references_small_and_medium_strata"
+created_at: 2026-10-19
+updated_at: 2026-10-19

@@ -1,15 +1,15 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `gates` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.20.0 -->
+     Generator: majordomus-cli 1.0.0-alpha.9 -->
 # Module `gates` — Completion gates
 
 Completion as a state the repository decides rather than a claim a worker makes: the validation gates this repository declares in its CI model, which of them a task's own change set selects, what each one last reported, whether that verdict still describes the tree it was taken over, and therefore whether the task may be called finished. A gate that has never reported is `queued` and not `pass`, a run whose files have changed since is `stale` and refuses exactly as a failure does, and a gate the change cannot affect is `exempt` rather than unknown.
 
-Stability: behaviorally_verified. Capabilities: 2.
+Stability: behaviorally_verified. Capabilities: 4.
 
 ## `gates.completion` — Whether this task may be called finished
 
-The active task's own change set — from the commit it started at to the working tree, uncommitted files included — put through the CI model: which gates it selects and why, what each one last reported and over which files, which verdicts have gone stale because the tree moved underneath them, which required gates have never reported at all, and which obligations the change implies whether or not the task declared them. `finishable` is false only when a required gate is known to be failing, stale or blocked by one that is; absence of a verdict is reported as unverified rather than silently accepted.
+The active task's own change set — from the commit it started at to the working tree, uncommitted files included — put through the CI model: which gates it selects and why, what each one last reported and over which files, which verdicts have gone stale because the tree moved underneath them, which required gates have never reported at all, and which obligations the change implies whether or not the task declared them. `finishable` is false only when a required gate is known to be failing, stale or blocked by one that is; absence of a verdict is reported as unverified rather than silently accepted. The done invariant is the questions of share/completion.yaml, in its order, each answered from the source it names; `stage` is the stage of the work those answers fold to, and `complete` is true only when every question passes or is exempt — finishable and complete are two different words.
 
 | | |
 |---|---|
@@ -30,6 +30,10 @@ everything between the commit the task started at and the working tree. |
 | `base` | string or null | no | The commit to compare with, when the task's own starting commit is not wanted. |
 | `on_demand` | boolean or null | no | Also plan the gates the model marks on-demand. Off by default, because a plan that
 selects a gate whose runner is unavailable is a plan whose verdict never arrives. |
+| `tier` | string or null | no | Plan at this tier of the model's `tiers` (ADR 0186): a gate whose lane the tier does
+not run is left out, and nothing implies or requires it back. Absent plans every lane.
+A model that declares no tiers, or a tier it does not declare, is refused as invalid
+input, in the words `scripts/ci-plan --tier` refuses it with. |
 
 Output: `Completion`.
 
@@ -52,4 +56,44 @@ Every validation gate this repository declares — the job that runs it, the com
 Input: none.
 
 Output: `GateModelReport`.
+
+## `gates.policy` — The completion policy
+
+The one definition of done: the stages of the work in order, every question a task must answer before it may be called finished, the stage each question belongs to and the source its answer is taken from — an obligation of share/obligations.yaml, a gate of the CI model, the change set, the repository's convergence or the closing readings. Read from share/completion.yaml, the file `gates.completion` takes its questions from. A token the policy names and the vocabulary lacks is reported as a problem, and a gate question this repository's CI model never answers is listed by name.
+
+| | |
+|---|---|
+| kind | query |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_completion_policy` |
+| MCP resource | `majordomus://gates/policy` |
+| HTTP | `GET /api/v1/gates/policy` |
+| cache | process, 4 entries, 5s |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::gates |
+| tags | gates, completion, policy, introspection |
+
+Input: none.
+
+Output: `CompletionPolicyReport`.
+
+## `gates.state` — How each gate last went
+
+Every gate the CI model declares with the standing of its last recorded run in this checkout, whichever task recorded it: `pass` or `fail` over the files as they stand now, `stale` when those files have changed since the run, `queued` when no run has ever reported — listed again under `never_reported`, because a missing verdict is the case an absent reader renders green — and `unknown` when a run exists and cannot be checked against this tree. Each run carries the commit it was taken at and whether that is the commit checked out now. Read offline from this checkout's own record; what it did not consult, the forge's CI runs, is named under `unreached` rather than left out.
+
+| | |
+|---|---|
+| kind | query |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_gate_state` |
+| MCP resource | `majordomus://gates/state` |
+| HTTP | `GET /api/v1/gates/state` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::gates |
+| tags | gates, ci, evidence, introspection |
+
+Input: none.
+
+Output: `GateStateReport`.
 

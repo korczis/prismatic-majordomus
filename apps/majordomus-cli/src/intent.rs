@@ -410,6 +410,8 @@ pub struct IntentRecord {
     pub cancelled: bool,
     /// The replacement, when there is one.
     pub superseded_by: String,
+    /// When the record was written, as its `created_at` says; empty when it says nothing.
+    pub created_at: String,
 }
 
 fn text(meta: &Value, key: &str) -> String {
@@ -442,10 +444,12 @@ impl IntentRecord {
     ///     ".ai/repo/project/intents/x.yaml",
     ///     &json!({"id": "x", "title": "X", "milestones": ["m"],
     ///             "satisfaction": [{"id": "c", "criterion": "c", "evidence": "test",
-    ///                               "ref": "test/cases/1_x.sh"}]}),
+    ///                               "ref": "test/cases/1_x.sh"}],
+    ///             "created_at": "2026-09-15"}),
     /// );
     /// assert_eq!(r.milestones, ["m"]);
     /// assert_eq!(r.satisfaction[0].reference, "test/cases/1_x.sh");
+    /// assert_eq!(r.created_at, "2026-09-15");
     /// ```
     pub fn from_metadata(source: &str, meta: &Value) -> IntentRecord {
         let satisfaction = meta
@@ -477,6 +481,7 @@ impl IntentRecord {
                 .and_then(Value::as_bool)
                 .unwrap_or(false),
             superseded_by: text(meta, "superseded_by"),
+            created_at: text(meta, "created_at"),
         }
     }
 
@@ -1337,13 +1342,23 @@ impl Intents {
                     format!("the record is at {} and its id says {expected}", r.source),
                 );
             }
+            // A proposal names neither a milestone nor a criterion yet (ADR 0144): its stage is
+            // `declared`, nothing can serve it, and the two absences are warnings until it is
+            // planned. An intent that names one and not the other is half planned, and each
+            // absence stays a failure.
+            let proposed = r.milestones.is_empty() && r.satisfaction.is_empty();
+            let unplanned = if proposed { WARN } else { FAIL };
             if r.milestones.is_empty() {
                 finding(
                     &mut findings,
-                    FAIL,
+                    unplanned,
                     "intent_without_milestone",
                     &r.id,
-                    "the intent names no milestone, so nothing realises it".into(),
+                    if proposed {
+                        "a proposed intent: it names no milestone yet, so nothing realises it and no work may serve it until it is planned".into()
+                    } else {
+                        "the intent names no milestone, so nothing realises it".into()
+                    },
                 );
             }
             let milestones: Vec<IntentMilestone> = r
@@ -1384,11 +1399,15 @@ impl Intents {
             if r.satisfaction.is_empty() {
                 finding(
                     &mut findings,
-                    FAIL,
+                    unplanned,
                     "intent_without_criterion",
                     &r.id,
-                    "the intent declares no satisfaction criterion, so it can never be satisfied"
-                        .into(),
+                    if proposed {
+                        "a proposed intent: it declares no satisfaction criterion yet, so it cannot be satisfied until it is planned".into()
+                    } else {
+                        "the intent declares no satisfaction criterion, so it can never be satisfied"
+                            .into()
+                    },
                 );
             }
             let satisfaction: Vec<IntentCriterion> = r
@@ -2190,6 +2209,193 @@ fn open_blocking(c: &CritiqueRecord) -> impl Iterator<Item = &CritiqueFinding> {
         .filter(|f| f.blocking && f.resolution == Some(ResolutionState::Open))
 }
 
+// ---------------------------------------------------------------- proposing an intent
+
+/// The longest identity [`propose`] derives from a title, in characters. A file name a
+/// person can read in a listing, and the slug of a sentence rather than the sentence.
+const PROPOSED_ID_MAX: usize = 64;
+
+/// What [`propose`] wrote: the identity, the file, and the record as it now reads.
+///
+/// ```
+/// use majordomus_cli::intent::Proposed;
+/// let p: Proposed = serde_json::from_str(
+///     r#"{"id": "fast-ui", "path": ".ai/repo/project/intents/fast-ui.yaml",
+///         "title": "Fast UI", "statement": "The UI answers at once"}"#,
+/// )
+/// .unwrap();
+/// // the path is the identity under the intents directory: one answer to where it lives
+/// assert_eq!(p.path, format!(".ai/repo/project/intents/{}.yaml", p.id));
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct Proposed {
+    /// The identity, which is also the file name.
+    pub id: String,
+    /// Repository-relative path of the record written.
+    pub path: String,
+    /// One line.
+    pub title: String,
+    /// What must become true, as it was given.
+    pub statement: String,
+}
+
+/// Why [`propose`] wrote nothing: the input cannot make a record, a record of that identity
+/// already exists, or the file could not be written. Each carries the sentence a caller is
+/// shown, and the three are kept apart so that a transport can answer invalid input, a
+/// refusal and its own failure differently.
+///
+/// ```
+/// use majordomus_cli::intent::{propose, ProposeError};
+/// let nowhere = std::path::Path::new("/nonexistent");
+/// // judged before anything is touched: an empty statement never reaches the disk
+/// let e = propose(nowhere, "  ", None, None, "2026-10-12").unwrap_err();
+/// assert!(matches!(e, ProposeError::Invalid(_)));
+/// assert_eq!(e.to_string(), "an intent needs a statement: what must become true");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ProposeError {
+    /// The input cannot make a record: an empty statement, or an id that is not a slug.
+    Invalid(String),
+    /// A record with this identity exists; a proposal never overwrites one.
+    Exists(String),
+    /// The file could not be written.
+    Write(String),
+}
+
+impl std::fmt::Display for ProposeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ProposeError::Invalid(m) | ProposeError::Exists(m) | ProposeError::Write(m) => {
+                f.write_str(m)
+            }
+        }
+    }
+}
+
+/// The identity a proposal takes when none is given: the slug of its title, cut at a word
+/// boundary within `PROPOSED_ID_MAX` (64) characters.
+///
+/// ```
+/// use majordomus_cli::intent::proposed_id;
+/// assert_eq!(proposed_id("Make the UI mobile-first!"), "make-the-ui-mobile-first");
+/// let long = "word ".repeat(40);
+/// assert!(proposed_id(&long).len() <= 64 && !proposed_id(&long).ends_with('-'));
+/// ```
+pub fn proposed_id(title: &str) -> String {
+    let full = crate::entity::slug(title);
+    if full.len() <= PROPOSED_ID_MAX {
+        return full;
+    }
+    let cut = &full[..PROPOSED_ID_MAX];
+    match cut.rfind('-') {
+        Some(i) if i > 0 => cut[..i].to_string(),
+        _ => cut.to_string(),
+    }
+}
+
+/// A YAML scalar that reads back as exactly `s`: a JSON string is a YAML double-quoted
+/// scalar, so the escaping is serde_json's and no hand-written quoting rule can drift from it.
+fn yaml_scalar(s: &str) -> String {
+    serde_json::to_string(s).unwrap_or_else(|_| "\"\"".into())
+}
+
+/// Write a new intent record that says what must become true and nothing else yet (ADR 0144).
+///
+/// The record names no milestone and no criterion: its stage derives as `declared`, `intent
+/// validate` reports the two absences as warnings, and no issue can serve it until a person
+/// or a later step plans it. Nothing is stored about its standing; the stage stays derived
+/// (ADR 0070). The title defaults to the statement's first line, the identity to the
+/// title's slug. An existing record is never overwritten, and the file appears whole or not
+/// at all: it is written beside its final name and renamed into place.
+///
+/// ```
+/// use majordomus_cli::intent::{propose, ProposeError};
+/// let root = std::env::temp_dir().join(format!("mj-propose-doc-{}", std::process::id()));
+/// let p = propose(&root, "The UI answers within 100 ms warm", None, None, "2026-10-12").unwrap();
+/// assert_eq!(p.id, "the-ui-answers-within-100-ms-warm");
+/// assert_eq!(p.path, ".ai/repo/project/intents/the-ui-answers-within-100-ms-warm.yaml");
+/// let text = std::fs::read_to_string(root.join(&p.path)).unwrap();
+/// assert!(text.contains("milestones: []") && text.contains("satisfaction: []"));
+/// // a second proposal of the same identity is refused, and the first record is untouched
+/// let again = propose(&root, "something else", None, Some(p.id.as_str()), "2026-10-12");
+/// assert!(matches!(again, Err(ProposeError::Exists(_))));
+/// assert_eq!(std::fs::read_to_string(root.join(&p.path)).unwrap(), text);
+/// std::fs::remove_dir_all(&root).unwrap();
+/// ```
+pub fn propose(
+    root: &Path,
+    statement: &str,
+    title: Option<&str>,
+    id: Option<&str>,
+    today: &str,
+) -> Result<Proposed, ProposeError> {
+    let statement = statement.trim();
+    if statement.is_empty() {
+        return Err(ProposeError::Invalid(
+            "an intent needs a statement: what must become true".into(),
+        ));
+    }
+    let title = match title.map(str::trim).filter(|t| !t.is_empty()) {
+        Some(t) => t.to_string(),
+        None => statement
+            .lines()
+            .next()
+            .unwrap_or(statement)
+            .trim()
+            .to_string(),
+    };
+    let id = match id.map(str::trim).filter(|i| !i.is_empty()) {
+        Some(i) => {
+            if crate::entity::slug(i) != i || i.len() > PROPOSED_ID_MAX {
+                return Err(ProposeError::Invalid(format!(
+                    "`{i}` is not an intent identity: lowercase letters, digits and single hyphens, at most {PROPOSED_ID_MAX} characters"
+                )));
+            }
+            i.to_string()
+        }
+        None => proposed_id(&title),
+    };
+    if id.is_empty() {
+        return Err(ProposeError::Invalid(
+            "the title has no letter or digit to name the intent by; give an id".into(),
+        ));
+    }
+    let rel = format!("{INTENTS_DIR}/{id}.yaml");
+    let path = root.join(&rel);
+    if path.exists() {
+        return Err(ProposeError::Exists(format!(
+            "an intent `{id}` exists at {rel}; a proposal never overwrites a record"
+        )));
+    }
+    let text = format!(
+        "id: {id}\ntitle: {title}\nstatement: {statement}\ninvariants: []\nmilestones: []\nsatisfaction: []\ncreated_at: {today}\nupdated_at: {today}\n",
+        title = yaml_scalar(&title),
+        statement = yaml_scalar(statement),
+    );
+    let dir = path.parent().unwrap_or(root);
+    std::fs::create_dir_all(dir)
+        .map_err(|e| ProposeError::Write(format!("{}: {e}", dir.display())))?;
+    let tmp = dir.join(format!(".{id}.yaml.tmp.{}", std::process::id()));
+    std::fs::write(&tmp, &text)
+        .map_err(|e| ProposeError::Write(format!("{}: {e}", tmp.display())))?;
+    // a hard link refuses an existing name where a rename would replace it, so two
+    // proposals of one identity racing each other cannot both succeed
+    let placed = std::fs::hard_link(&tmp, &path);
+    let _ = std::fs::remove_file(&tmp);
+    placed.map_err(|e| match e.kind() {
+        std::io::ErrorKind::AlreadyExists => ProposeError::Exists(format!(
+            "an intent `{id}` exists at {rel}; a proposal never overwrites a record"
+        )),
+        _ => ProposeError::Write(format!("{}: {e}", path.display())),
+    })?;
+    Ok(Proposed {
+        id,
+        path: rel,
+        title,
+        statement: statement.to_string(),
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2265,7 +2471,8 @@ mod tests {
             priority: "p1".into(),
             title: id.into(),
             slug: id.into(),
-            version: String::new(),
+            last_accepted: String::new(),
+            released_in: None,
             rank: 0,
             depends_on: vec![],
             blocked_by: vec![],
@@ -2629,6 +2836,89 @@ mod tests {
         let i = Intents::derive(vec![a, b], &p, &Table::new());
         assert_eq!(i.intents[0].stage, IntentStage::Cancelled);
         assert_eq!(i.intents[1].stage, IntentStage::Superseded);
+    }
+
+    /// A proposal names neither a milestone nor a criterion: declared, valid, two warnings.
+    /// Naming one and not the other is half a plan, and each absence is a failure again.
+    #[test]
+    fn a_proposal_is_declared_and_warned_about_while_a_half_plan_fails() {
+        let p = plan(vec![milestone("m", "READY")], vec![]);
+        let i = Intents::derive(vec![record("x", &[], &[])], &p, &Table::new());
+        assert_eq!(i.intents[0].stage, IntentStage::Declared);
+        assert_eq!(i.failures(), 0, "{:?}", i.findings);
+        for code in ["intent_without_milestone", "intent_without_criterion"] {
+            let f = i.findings.iter().find(|f| f.code == code).unwrap();
+            assert_eq!(f.level, WARN, "{code}");
+            assert!(f.message.starts_with("a proposed intent"), "{}", f.message);
+        }
+        let half = Intents::derive(vec![record("y", &["m"], &[])], &p, &Table::new());
+        let f = half
+            .findings
+            .iter()
+            .find(|f| f.code == "intent_without_criterion")
+            .unwrap();
+        assert_eq!(f.level, FAIL);
+    }
+
+    fn scratch(name: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("mj-propose-{name}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        dir
+    }
+
+    /// The record reads back as what was given, whatever the statement holds, and its
+    /// defaults are the statement's first line and that line's slug.
+    #[test]
+    fn a_proposal_is_written_whole_and_reads_back_as_given() {
+        let root = scratch("whole");
+        let statement = "The \"UI\": answers # fast\nand stays so";
+        let p = propose(&root, statement, None, None, "2026-10-12").unwrap();
+        assert_eq!(p.title, "The \"UI\": answers # fast");
+        assert_eq!(p.id, "the-ui-answers-fast");
+        assert_eq!(p.statement, statement);
+        let text = std::fs::read_to_string(root.join(&p.path)).unwrap();
+        let line = text.lines().find(|l| l.starts_with("statement: ")).unwrap();
+        let back: String = serde_json::from_str(&line["statement: ".len()..]).unwrap();
+        assert_eq!(back, statement);
+        assert!(text.ends_with("created_at: 2026-10-12\nupdated_at: 2026-10-12\n"));
+        // nothing is left beside the record
+        let left: Vec<_> = std::fs::read_dir(root.join(INTENTS_DIR)).unwrap().collect();
+        assert_eq!(left.len(), 1);
+        // an explicit title and id are taken as given
+        let q = propose(&root, "s", Some(" A title "), Some("named"), "2026-10-12").unwrap();
+        assert_eq!((q.id.as_str(), q.title.as_str()), ("named", "A title"));
+        std::fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn a_proposal_that_cannot_be_a_record_writes_nothing() {
+        let root = scratch("refused");
+        for (statement, title, id) in [
+            ("  ", None, None),
+            ("s", None, Some("Not A Slug")),
+            ("s", Some("???"), None),
+        ] {
+            match propose(&root, statement, title, id, "2026-10-12") {
+                Err(ProposeError::Invalid(m)) => assert!(!m.is_empty()),
+                other => panic!("{statement:?} {title:?} {id:?} answered {other:?}"),
+            }
+        }
+        let long = "x".repeat(PROPOSED_ID_MAX + 1);
+        assert!(matches!(
+            propose(&root, "s", None, Some(&long), "2026-10-12"),
+            Err(ProposeError::Invalid(_))
+        ));
+        assert!(!root.exists(), "a refused proposal created something");
+        // a title with no word boundary is cut at the bound
+        assert_eq!(proposed_id(&long).len(), PROPOSED_ID_MAX);
+        // a directory that cannot be made is a write failure, said with its path
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(root.join(".ai"), "a file where a directory must be").unwrap();
+        match propose(&root, "s", None, None, "2026-10-12") {
+            Err(e @ ProposeError::Write(_)) => assert!(e.to_string().contains(".ai"), "{e}"),
+            other => panic!("an unwritable root answered {other:?}"),
+        }
+        std::fs::remove_dir_all(&root).unwrap();
     }
 
     #[test]

@@ -1,7 +1,7 @@
 +++
 title = "The repository environment"
 description = "the repository environment: one typed snapshot of what a checkout is — project, layer, version control, toolchains, workflows, provider projections, local services — with a provenance entry for every value; the full and the fast resolution, the cache under `.ai/local/`, and the direnv adapter that renders it without reading the repository itself"
-weight = 50
+weight = 55
 [extra]
 source = "docs/ENVIRONMENT.md"
 +++
@@ -127,4 +127,36 @@ prepares its routes, its lease remains in the starting state.
 
 Nothing in the module writes outside `.ai/local/`, and nothing in it opens a socket to
 anything but the loopback address the lease names — and only when asked to probe.
+
+## Session telemetry
+
+An agent session can export its own telemetry to the same OpenTelemetry endpoint that CI's
+validate traces reach (`OTEL_EXPORTER_OTLP_ENDPOINT`, the repository secret CI exports to).
+For a session the endpoint is the person's: it belongs to this machine's environment and is
+never written into the repository, not into `.claude/settings.json`, not into a template and
+not into a projection. The repository carries names and the switch, no value.
+
+The one place that is the person's already is `.envrc.local` (ignored, sourced last by
+`.envrc`). A person who wants their sessions measured writes there, once, with their own
+values:
+
+```sh
+export OTEL_EXPORTER_OTLP_ENDPOINT=...   # the collector, yours
+export OTEL_EXPORTER_OTLP_HEADERS=...    # only if the collector wants them
+export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+export CLAUDE_CODE_ENABLE_TELEMETRY=1
+export OTEL_METRICS_EXPORTER=otlp
+export OTEL_LOGS_EXPORTER=otlp
+```
+
+Claude Code reads these from the environment of the shell that starts it, which direnv
+supplies on entering the repository. With nothing set nothing is exported, and no tracked
+file differs. A person who prefers `.claude/settings.local.json` (also ignored) may put the
+same names in its `env` block; the tracked `.claude/settings.json` stays free of them.
+
+Other providers name their switches differently (Gemini CLI reads `GEMINI_TELEMETRY_*`,
+Codex an `[otel]` table in its own configuration); the endpoint and headers stay the shared
+`OTEL_EXPORTER_OTLP_*` pair, and each provider's switch belongs in the same ignored,
+per-person place. `majordomus env enter` does not export any of these: it reads nothing
+about a person's endpoint, and a switch decided there would be a second place to hold it.
 {% endraw %}

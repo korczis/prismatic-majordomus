@@ -1,0 +1,58 @@
+id: I2123
+milestone: runtime-trust
+title: "A caller beyond loopback reads, and changes nothing it cannot authenticate"
+slug: a-remote-caller-cannot-write
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Refuse every capability that changes something to a request from an address that is not loopback, unless the capability's input is a signed message its handler verifies, on the HTTP routes and on MCP over HTTP alike."
+why: "On 2026-10-09 the hub on 8791 and two servers of the primary checkout listened on every interface of the owner's machine, and the only guard on a state-changing request was the Origin check, which a program passes by sending none. Any host on the LAN or tailnet could transition a plan record, run any capability through executions.start, or post a mesh claim the node then signed with its own trusted key and replicated to every runtime."
+current_state: "A remote request is admitted by any route whose browser Origin check it passes; the bind warning says a remote host can only read."
+desired_state: "ExecutionPolicy::admits_remote decides it once from the declared effect and the declared signed input; the router and the MCP endpoint refuse with forbidden/403 per request; mesh.link.hello, mesh.link.sync and mesh.register stay reachable because they authenticate their input."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/executions.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mod.rs"
+  - "apps/majordomus-cli/src/capability/handler.rs"
+  - "apps/majordomus-cli/src/capability/model.rs"
+  - "apps/majordomus-cli/src/capability/registry.rs"
+  - "apps/majordomus-cli/src/http"
+  - "apps/majordomus-cli/src/mcp"
+  - "apps/majordomus-cli/src/execution/engine.rs"
+  - "apps/majordomus-cli/tests/remote_callers.rs"
+  - "test/cases/1086_a_remote_caller_cannot_write.sh"
+  - "docs/MCP.md"
+  - "docs/MESH.md"
+acceptance_criteria:
+  - "Every HTTP route of a capability that does not admit a remote caller answers 403 forbidden to a request from a non-loopback address, before its handler runs"
+  - "A remote MCP message calling a tool that changes something is refused with error code forbidden, and the same session's next message from loopback is not"
+  - "A real server bound to 0.0.0.0 refuses plan/transition, executions/start, mesh/claims, mesh/handovers/consume and peers/announce from this machine's LAN address and still answers a read"
+  - "The three signed mesh capabilities reach their handlers from a remote address"
+  - "executions.start declares repository_mutation, so a local client is told it can write before it runs a writer through it"
+validation:
+  - "cargo test --test remote_callers"
+  - "MAJORDOMUS_BIN=<branch build> bash test/run.sh 1086_a_remote_caller_cannot_write"
+evidence_required:
+  - "remote_callers_tests"
+  - "case_1022_red_on_0_18_0_green_on_branch"
+created_at: 2026-10-09
+updated_at: 2026-10-15T07:51:01Z
+started_at: 2026-10-15T07:50:49Z
+started_event: sha256:5a5c3e152bccac19a45bce6a2e33c894be75d419193d6c8bc9fe77e5e638e109
+completed_at: 2026-10-15T07:51:01Z
+completed_event: sha256:6d1636e91008944dc8a66dc5d45feb15a1382283fa300d10e9d0c3d5ee6780eb
+evidence:
+  - covers: remote_callers_tests
+    type: ci
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test remote_callers"
+    result: "test result: ok. 9 passed; 0 failed (every_route_that_changes_something_is_refused_to_another_host, an_mcp_session_is_judged_by_where_each_message_comes_from, a_signed_link_message_from_another_host_reaches_its_handler, the_entry_that_can_start_a_writer_is_announced_as_one, a_remote_caller_still_reads, ...); master validate run 38635619021, job rust (3) 116098148455, on c0e3585dc8 = origin/master"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38635619021/job/116098148455"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-15T07:50:55Z
+  - covers: case_1022_red_on_0_18_0_green_on_branch
+    type: test
+    command: "MAJORDOMUS_BIN=<v0.18.0 aarch64-apple-darwin libexec/majordomus-cli | master c0e3585dc8 build> bash test/run.sh 1086_a_remote_caller_cannot_write (case 1022 renumbered 1086 by 94ca56fe3f)"
+    result: "red on released v0.18.0 (SHA256SUMS verified): POST /api/v1/plan/transition from 192.168.100.96 answered 400 invalid_input, not 403 forbidden - the handler ran for a remote caller; green on master c0e3585dc8 (delivering commit 8d6e0c76e7): tests: 1 passed, 0 failed, 0 skipped. Run 2026-10-15 ~07:5xZ on this Mac; also ok in master validate 38635619021 suite-shard (3) job 116098148472"
+    artifact: "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.18.0"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-15T07:50:58Z

@@ -23,9 +23,10 @@ use crate::capability::model::{
 };
 use crate::capability::module::ModuleDescriptor;
 use crate::capability::CanonicalSchema;
+use crate::execution::engine::repository_of;
 use crate::execution::{
-    Actor, ActorKind, CancelOutcome, Execution, ExecutionEvent, ExecutionId, ExecutionState,
-    SubmitError, PROTOCOL_VERSION,
+    redact, Actor, ActorKind, CancelOutcome, Execution, ExecutionEvent, ExecutionId,
+    ExecutionState, Seed, SubmitError, PROTOCOL_VERSION, REPORT_SILENCE,
 };
 use crate::{capability, module};
 
@@ -116,6 +117,7 @@ fn actor(ctx: &Context) -> Actor {
         Some(peer) => Actor {
             kind: ActorKind::Mcp,
             peer: Some(peer.to_string()),
+            pid: None,
         },
         None => Actor::of(ActorKind::Http),
     }
@@ -214,6 +216,7 @@ pub struct ExecutionList {
 
 fn executions_list(ctx: &Context, input: ListInput) -> Result<ExecutionList, CapabilityError> {
     let store = ctx.executions.store();
+    store.abandon_silent(REPORT_SILENCE);
     let limit = input.limit.unwrap_or(MAX_LIST).min(MAX_LIST);
     let executions = store.list(input.state, input.capability.as_deref(), limit);
     Ok(ExecutionList {
@@ -247,6 +250,7 @@ impl BenchmarkCases for GetInput {
 
 fn executions_get(ctx: &Context, input: GetInput) -> Result<ExecutionView, CapabilityError> {
     let id = parse_id(&input.id)?;
+    ctx.executions.store().abandon_silent(REPORT_SILENCE);
     ctx.executions
         .store()
         .get(&id)
@@ -301,6 +305,7 @@ pub struct EventHistory {
 fn executions_events(ctx: &Context, input: EventsInput) -> Result<EventHistory, CapabilityError> {
     let id = parse_id(&input.id)?;
     let store = ctx.executions.store();
+    store.abandon_silent(REPORT_SILENCE);
     let snapshot = store
         .get(&id)
         .ok_or_else(|| CapabilityError::NotFound(format!("no execution {id} in this process")))?;
@@ -372,6 +377,108 @@ fn executions_cancel(ctx: &Context, input: CancelInput) -> Result<CancelReport, 
         cancellable,
         execution: ExecutionView::of(ctx, execution),
     })
+}
+
+// ---------------------------------------------------------------- executions.report
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `executions.report`: what a process that runs an execution says about it to
+/// the server serving the same checkout.
+pub struct ReportInput {
+    /// The execution's id, as the reporting process minted it.
+    pub id: String,
+    /// The capability it runs, by its canonical id.
+    pub capability: String,
+    /// That capability's title.
+    pub title: String,
+    /// The input it was given, as the reporting process stored it: already redacted there,
+    /// and redacted again here by this registry's schema when this registry knows it.
+    #[serde(default)]
+    pub input: Value,
+    /// Whether the capability stops when asked. When it does, a cancel asked of this server
+    /// reaches the reporter in the answer to its next report.
+    #[serde(default)]
+    pub cancellable: bool,
+    /// The process that runs it.
+    pub pid: u32,
+    /// Its events after the last sequence this server answered `through`, in its own
+    /// sequence, oldest first; at most 500. Empty is a heartbeat.
+    #[serde(default)]
+    pub events: Vec<ExecutionEvent>,
+}
+
+impl BenchmarkCases for ReportInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        Vec::new()
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+/// The answer of `executions.report`.
+pub struct ReportAnswer {
+    /// How many of the reported events were applied.
+    pub applied: usize,
+    /// The reporter's sequence this server holds everything up to: the next report sends
+    /// the events after it, so a lost or repeated report costs nothing.
+    pub through: u64,
+    /// Whether somebody asked this server to stop the execution. The reporter runs it, so
+    /// the reporter cancels it.
+    pub cancel_requested: bool,
+    /// The execution as this server now holds it.
+    pub execution: ExecutionView,
+}
+
+fn executions_report(ctx: &Context, input: ReportInput) -> Result<ReportAnswer, CapabilityError> {
+    let id = parse_id(&input.id)?;
+    if input.events.len() > MAX_EVENTS {
+        return Err(CapabilityError::InvalidInput(format!(
+            "{} events in one report; at most {MAX_EVENTS}, and the answer's `through` says where the next one starts",
+            input.events.len()
+        )));
+    }
+    if let Some(other) = input.events.iter().find(|e| e.execution_id != id) {
+        return Err(CapabilityError::InvalidInput(format!(
+            "an event of {} in a report about {id}",
+            other.execution_id
+        )));
+    }
+    let store = ctx.executions.store();
+    store.abandon_silent(REPORT_SILENCE);
+    let stored = match ctx.registry.get(&input.capability) {
+        Some(c) => redact(&c.input.schema, &input.input),
+        None => input.input,
+    };
+    store
+        .adopt(
+            id.clone(),
+            Seed {
+                capability: &input.capability,
+                title: &input.title,
+                input: stored,
+                cancellable: input.cancellable,
+                actor: Actor::reported(input.pid),
+                repository: repository_of(ctx),
+            },
+            input.pid,
+        )
+        .map_err(|e| CapabilityError::Refused(e.to_string()))?;
+    // adopted just now as a reported execution, so the store answers both readings; the
+    // refusal is named once, eagerly, rather than on two paths no report can take
+    let refused = CapabilityError::NotFound(format!("no reported execution {id} in this process"));
+    store
+        .report(
+            &id,
+            input.events.into_iter().map(|e| (e.sequence, e.payload)),
+        )
+        .zip(store.get(&id))
+        .map(|(outcome, execution)| ReportAnswer {
+            applied: outcome.applied,
+            through: outcome.through,
+            cancel_requested: outcome.cancel_requested,
+            execution: ExecutionView::of(ctx, execution),
+        })
+        .ok_or(refused)
 }
 
 // ---------------------------------------------------------------- executions.protocol
@@ -586,25 +693,30 @@ pub fn module() -> ModuleDescriptor {
     module! {
         id: "executions",
         title: "Executions",
-        description: "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. In memory; an execution does not outlive the process that accepted it.",
+        description: "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. One plane per checkout: `majordomus run` executes in its own process and reports the execution to the server already serving the checkout, so that server lists it beside its own; with no server it says that nothing else can see the run. In memory; an execution does not outlive the server that holds it.",
         stability: Stability::BehaviorallyVerified,
         capabilities: [
             capability! {
                 id: "executions.start",
                 kind: CapabilityKind::Command,
                 title: "Start a capability as an execution",
-                description: "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything.",
+                description: "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.",
                 input: StartInput,
                 output: ExecutionView,
                 stability: Stability::BehaviorallyVerified,
                 exposure: Exposure { mcp: mcp("majordomus_execution_start"), http: post("/api/v1/executions/start"), cli: Some(crate::capability::CliExposure { path: vec!["run".into()] }) },
                 tags: ["executions", "control-plane"],
                 handler: executions_start,
-            },
+            }
+            // It runs any executable capability, writers included, so its effect is the
+            // strongest of what it can start: a client that asks before running a writer
+            // asks before this too, instead of being told it changes only this process's
+            // memory while it transitions a tracked record (ADR 0126).
+            .writes_repository(),
             capability! {
                 id: "executions.list",
                 title: "List executions",
-                description: "Every execution this process remembers, newest first, narrowed by state or by capability. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question.",
+                description: "Every execution this process remembers, newest first, narrowed by state or by capability: the ones it ran and the ones `majordomus run` in another process of the checkout reported to it, each with who started it. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question.",
                 input: ListInput,
                 output: ExecutionList,
                 stability: Stability::BehaviorallyVerified,
@@ -615,7 +727,10 @@ pub fn module() -> ModuleDescriptor {
                 },
                 tags: ["executions", "control-plane"],
                 handler: executions_list,
-            },
+            }
+            // this process's executions are not the repository: a caller on another host never
+            // reads them (ADR 0220 decision 4, I3842)
+            .reads_only_locally(),
             capability! {
                 id: "executions.get",
                 title: "One execution",
@@ -627,7 +742,10 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["executions", "control-plane"],
                 benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::TransientState },
                 handler: executions_get,
-            },
+            }
+            // this process's executions are not the repository: a caller on another host never
+            // reads them (ADR 0220 decision 4, I3842)
+            .reads_only_locally(),
             capability! {
                 id: "executions.events",
                 title: "An execution's event history",
@@ -639,7 +757,10 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["executions", "control-plane"],
                 benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::TransientState },
                 handler: executions_events,
-            },
+            }
+            // this process's executions are not the repository: a caller on another host never
+            // reads them (ADR 0220 decision 4, I3842)
+            .reads_only_locally(),
             capability! {
                 id: "executions.cancel",
                 kind: CapabilityKind::Command,
@@ -652,6 +773,19 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["executions", "control-plane"],
                 benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::TransientState },
                 handler: executions_cancel,
+            },
+            capability! {
+                id: "executions.report",
+                kind: CapabilityKind::Command,
+                title: "Report an execution another process runs",
+                description: "What `majordomus run` posts while it runs a capability in its own process and a server already serves the checkout: the execution's description and its events after the last sequence this server took. The server holds it as an execution started by the command line, with the pid, in the same store, listing, Cockpit pages and live channel as its own; applies each event once and in order, answering where the next report starts; tells the reporter when somebody asked it to stop; and fails it with `unavailable` once the reporter has been silent for 30 s. Nothing runs here. Changes this process's memory only.",
+                input: ReportInput,
+                output: ReportAnswer,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure { mcp: None, http: post("/api/v1/executions/report"), cli: None },
+                tags: ["executions", "control-plane"],
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::TransientState },
+                handler: executions_report,
             },
             capability! {
                 id: "executions.protocol",
@@ -679,7 +813,9 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["executions", "control-plane", "diagnostic"],
                 handler: executions_demonstrate,
             }
-            .cancellable(),
+            .cancellable()
+            // it starts an execution, which a caller on another host may not do (I3842)
+            .reads_only_locally(),
         ],
     }
 }
@@ -696,46 +832,52 @@ mod tests {
     fn the_declaration_yields_the_projections_it_claims() {
         let m = module();
         assert_eq!(m.id.as_str(), "executions");
-        let expected: &[(&str, &str, &str, CapabilityKind)] = &[
+        let expected: &[(&str, Option<&str>, &str, CapabilityKind)] = &[
             (
                 "executions.start",
-                "majordomus_execution_start",
+                Some("majordomus_execution_start"),
                 "/api/v1/executions/start",
                 CapabilityKind::Command,
             ),
             (
                 "executions.list",
-                "majordomus_executions",
+                Some("majordomus_executions"),
                 "/api/v1/executions",
                 CapabilityKind::Query,
             ),
             (
                 "executions.get",
-                "majordomus_execution",
+                Some("majordomus_execution"),
                 "/api/v1/executions/get",
                 CapabilityKind::Query,
             ),
             (
                 "executions.events",
-                "majordomus_execution_events",
+                Some("majordomus_execution_events"),
                 "/api/v1/executions/events",
                 CapabilityKind::Query,
             ),
             (
                 "executions.cancel",
-                "majordomus_execution_cancel",
+                Some("majordomus_execution_cancel"),
                 "/api/v1/executions/cancel",
                 CapabilityKind::Command,
             ),
             (
+                "executions.report",
+                None,
+                "/api/v1/executions/report",
+                CapabilityKind::Command,
+            ),
+            (
                 "executions.protocol",
-                "majordomus_execution_protocol",
+                Some("majordomus_execution_protocol"),
                 "/api/v1/executions/protocol",
                 CapabilityKind::Query,
             ),
             (
                 "executions.demonstrate",
-                "majordomus_demonstrate_execution",
+                Some("majordomus_demonstrate_execution"),
                 "/api/v1/executions/demonstrate",
                 CapabilityKind::Query,
             ),
@@ -750,8 +892,8 @@ mod tests {
             let c = &executable.capability;
             assert_eq!(
                 c.exposure.mcp.as_ref().and_then(|m| m.tool.as_deref()),
-                Some(*tool),
-                "{id} lost or renamed its MCP tool"
+                *tool,
+                "{id} lost, renamed or gained an MCP tool"
             );
             assert_eq!(
                 c.exposure.http.as_ref().map(|h| h.path.as_str()),
@@ -760,8 +902,27 @@ mod tests {
             );
             assert_eq!(c.kind, *kind, "{id} changed kind");
             let base = crate::capability::ExecutionPolicy::classify(*kind);
+            // executions.start may run a writer, so it is declared one (ADR 0126)
+            let writes = c.id.as_str() == "executions.start";
+            // what this process runs answers this machine alone (ADR 0220 decision 4, I3842)
+            let local = matches!(
+                c.id.as_str(),
+                "executions.list"
+                    | "executions.get"
+                    | "executions.events"
+                    | "executions.demonstrate"
+            );
+            let scoped = |p: crate::capability::ExecutionPolicy| {
+                if local {
+                    p.reads_only_locally()
+                } else {
+                    p
+                }
+            };
             assert!(
-                c.execution == base || c.execution == base.stoppable(),
+                c.execution == scoped(base)
+                    || c.execution == scoped(base.stoppable())
+                    || (writes && c.execution == base.writes_repository()),
                 "{id} carries a policy neither its kind nor a cancellation declaration gives it"
             );
         }
@@ -814,8 +975,158 @@ mod tests {
             variants_of(&CanonicalSchema::of::<crate::http::events::StreamMessage>().schema);
         assert_eq!(
             stream,
-            ["stream.ready", "stream.lagged", "stream.closing"],
+            [
+                "stream.ready",
+                "stream.heartbeat",
+                "stream.lagged",
+                "stream.resync",
+                "stream.closing"
+            ],
             "the control messages"
         );
+    }
+
+    fn report_of(id: &str, capability: &str, events: Vec<ExecutionEvent>) -> ReportInput {
+        ReportInput {
+            id: id.to_string(),
+            capability: capability.to_string(),
+            title: "Demonstrate an execution".into(),
+            input: serde_json::json!({ "steps": 1 }),
+            cancellable: true,
+            pid: 4242,
+            events,
+        }
+    }
+
+    fn started(id: &ExecutionId, sequence: u64) -> ExecutionEvent {
+        ExecutionEvent::new(
+            id.clone(),
+            sequence,
+            crate::execution::EventPayload::Started,
+        )
+    }
+
+    /// A report is refused before anything is held when its id is not one, when it carries
+    /// more events than one report may, or when an event in it is about another execution;
+    /// and an id this server runs itself is never written into by a report.
+    #[test]
+    fn a_report_is_refused_for_a_bad_id_too_many_events_a_foreign_event_or_an_own_execution() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        let refusal = |input: ReportInput| match executions_report(&ctx, input) {
+            Err(e) => e,
+            Ok(answer) => panic!("a report was taken: {}", answer.through),
+        };
+
+        let e = refusal(report_of("x-nope", "executions.demonstrate", Vec::new()));
+        assert!(matches!(e, CapabilityError::InvalidInput(_)), "{e}");
+
+        let id = ExecutionId::fresh();
+        let many = (2..=(MAX_EVENTS as u64 + 2))
+            .map(|n| started(&id, n))
+            .collect();
+        let e = refusal(report_of(id.as_str(), "executions.demonstrate", many));
+        assert!(e.to_string().contains("events in one report"), "{e}");
+
+        let other = ExecutionId::fresh();
+        let e = refusal(report_of(
+            id.as_str(),
+            "executions.demonstrate",
+            vec![started(&other, 2)],
+        ));
+        assert!(e.to_string().contains("in a report about"), "{e}");
+        assert!(ctx.executions.store().get(&id).is_none(), "nothing held");
+
+        let own = ExecutionId::fresh();
+        ctx.executions.store().create(
+            own.clone(),
+            "executions.demonstrate",
+            "Demonstrate an execution",
+            serde_json::json!({}),
+            true,
+            Actor::of(ActorKind::Internal),
+            repository_of(&ctx),
+        );
+        let e = refusal(report_of(
+            own.as_str(),
+            "executions.demonstrate",
+            Vec::new(),
+        ));
+        assert!(matches!(e, CapabilityError::Refused(_)), "{e}");
+    }
+
+    /// A report about a capability this registry does not know is still held, its input as
+    /// the reporter stored it; one this registry knows is held too, and answers how far the
+    /// server holds it.
+    #[test]
+    fn a_report_is_held_whether_or_not_this_registry_knows_its_capability() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+
+        let elsewhere = ExecutionId::fresh();
+        let answer = executions_report(
+            &ctx,
+            report_of(
+                elsewhere.as_str(),
+                "nowhere.known",
+                vec![started(&elsewhere, 2)],
+            ),
+        )
+        .expect("held");
+        assert_eq!((answer.applied, answer.through), (1, 2));
+        assert!(!answer.cancel_requested);
+        let held = ctx.executions.store().get(&elsewhere).expect("held");
+        assert_eq!(held.input, serde_json::json!({ "steps": 1 }));
+        assert_eq!(held.actor.pid, Some(4242));
+
+        let known = ExecutionId::fresh();
+        let answer = executions_report(
+            &ctx,
+            report_of(known.as_str(), "executions.demonstrate", Vec::new()),
+        )
+        .expect("held");
+        assert_eq!((answer.applied, answer.through), (0, 1));
+        assert_eq!(answer.execution.execution.state, ExecutionState::Queued);
+    }
+
+    /// The Cockpit's page about one execution names the process that runs a reported one and
+    /// says how a stop reaches it; about one this server runs, it says only that the flag is
+    /// set.
+    #[test]
+    fn the_execution_page_says_where_a_stop_goes_for_a_reported_and_an_own_execution() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+
+        let reported = ExecutionId::fresh();
+        executions_report(
+            &ctx,
+            report_of(
+                reported.as_str(),
+                "executions.demonstrate",
+                vec![started(&reported, 2)],
+            ),
+        )
+        .expect("held");
+        let html = crate::cockpit::pages::execution(&ctx, reported.as_str())
+            .main
+            .render();
+        assert!(html.contains("majordomus run, process 4242"), "{html}");
+        assert!(html.contains("It runs in process 4242"), "{html}");
+
+        let own = ExecutionId::fresh();
+        ctx.executions.store().create(
+            own.clone(),
+            "executions.demonstrate",
+            "Demonstrate an execution",
+            serde_json::json!({}),
+            true,
+            Actor::of(ActorKind::Internal),
+            repository_of(&ctx),
+        );
+        let html = crate::cockpit::pages::execution(&ctx, own.as_str())
+            .main
+            .render();
+        assert!(html.contains("the flag is set"), "{html}");
+        assert!(!html.contains("majordomus run, process"), "{html}");
     }
 }

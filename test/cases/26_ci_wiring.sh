@@ -131,7 +131,12 @@ done
 grep -qiE 'secrets\.|GITHUB_TOKEN|gh auth' "$CORE" "$LINT" && { echo "    a gate script reaches for a credential"; exit 1; }
 
 # 7. shellcheck covers the tests as well as the tool: an unchecked test is an unchecked gate
-grep -q 'shellcheck.*test/cases/\*\.sh' "$LINT" || { echo "    shell-lint does not shellcheck test/cases"; exit 1; }
+# The lint reads a batched list of files: the cases must be in that list, and the list must be
+# what shellcheck is handed
+grep -q 'test/cases/\*\.sh > "\$lint_dir/files"' "$LINT" \
+  || { echo "    shell-lint does not list test/cases for shellcheck"; exit 1; }
+grep -q 'xargs -0 shellcheck' "$LINT" \
+  || { echo "    shell-lint does not shellcheck the files it listed"; exit 1; }
 
 # 8. the enforcement the policy declares is the enforcement the hooks run. doctor proves this
 #    for the repository; here we prove doctor itself is invoked by both hooks and by CI.
@@ -139,6 +144,15 @@ grep -q 'majordomus doctor' "$CORE" || { echo "    core-check does not run docto
 grep -q 'majordomus watch' "$CORE" || { echo "    core-check does not run watch"; exit 1; }
 grep -q 'majordomus doctor' "$ROOT/.githooks/pre-commit" || { echo "    pre-commit does not run doctor"; exit 1; }
 grep -q 'majordomus finish --check' "$ROOT/.githooks/pre-push" || { echo "    pre-push does not run finish --check"; exit 1; }
+# and a push that changes the crate builds its rustdoc with warnings denied first: the one
+# gate of the crate nothing else stands in for, and the job the Pages deploy starts with. It
+# reports and CI's rustdoc job refuses (I3830, case 3948 drives both verdicts)
+grep -qE '^[[:space:]]+scripts/rust-check --doc$' "$ROOT/.githooks/pre-push" \
+  || { echo "    pre-push does not build the crate's rustdoc before a push that changes the crate"; exit 1; }
+grep -q 'scripts/case-numbers check' "$ROOT/.githooks/pre-push" \
+  || { echo "    pre-push does not check that no two cases share a number"; exit 1; }
+grep -q 'git diff --quiet "$base" "$head" -- apps/majordomus-cli/src' "$ROOT/.githooks/pre-push" \
+  || { echo "    pre-push does not ask the rustdoc gate only of a push that changes the crate"; exit 1; }
 
 # 9. the workflow is an adapter over the CI model, not a second copy of it: every gate the
 #    model declares is carried by a job the workflow has, every job that a plan can skip is
@@ -196,6 +210,21 @@ for j in plan $(jq -r '.gates[].job' full.json | LC_ALL=C sort -u); do
   printf '%s\n' "$ci_needs" | grep -qx "$j" || { echo "    the ci job does not need job $j; a red $j could not turn the required status red"; exit 1; }
 done
 awk '$0 == "  ci:" {f=1; next} /^  [a-z][a-z-]*:$/ {f=0} f' "$W" | grep -q '^    if: always()$' || { echo "    the ci job does not always run; a skipped job would leave the required status pending"; exit 1; }
+# Every job that carries a gate leaves its receipts, and the verdict is asked for them: a
+# job's `success` says no step failed, not that the gate's step ran, so scripts/ci/verdict
+# refuses a selected gate with no receipt (I2416). A gate job without MJ_CI_RECEIPTS writes
+# none and one that does not upload them sends none; either turns every gate of that job red
+# on the first run that plans it — this says so before that run.
+for j in $(jq -r '.gates[].job' full.json | LC_ALL=C sort -u); do
+  blk="$(awk -v j="  $j:" '$0 == j {f=1; next} /^  [a-z][a-z_-]*:$/ {f=0} f' "$W")"
+  printf '%s\n' "$blk" | grep -q '^      MJ_CI_RECEIPTS: \${{ github.workspace }}/receipts.tsv$' \
+    || { echo "    job $j carries gates and sets no MJ_CI_RECEIPTS; its gates would leave no receipt"; exit 1; }
+  printf '%s\n' "$blk" | grep -qE '^          name: ci-receipts-' \
+    || { echo "    job $j does not upload its receipts (ci-receipts-*); the verdict would find none"; exit 1; }
+done
+ci_blk="$(awk '$0 == "  ci:" {f=1; next} /^  [a-z][a-z-]*:$/ {f=0} f' "$W")"
+printf '%s\n' "$ci_blk" | grep -q 'pattern: ci-receipts-\*' || { echo "    the ci job does not download the receipts"; exit 1; }
+printf '%s\n' "$ci_blk" | grep -q 'scripts/ci/verdict .*--receipts receipts' || { echo "    the ci verdict is not asked for the receipts"; exit 1; }
 # a started run reaches its verdict: a pull request's runs queue per pull request, and a
 # newer commit never cancels the run in progress (a two-hour suite under frequent pushes
 # never finished); master's runs are each their own group
@@ -255,7 +284,9 @@ P="$ROOT/.github/workflows/pages.yml"
 grep -q 'scripts/pages verify --commit' "$P" \
   || { echo "    pages.yml no longer verifies that the site serves the commit it published"; exit 1; }
 job_to="$(awk '$0 == "  deploy:" {f=1; next} /^  [a-z-]+:$/ {f=0} f && /^    timeout-minutes: / {print $2; exit}' "$P")"
-step_to="$(awk '/^        timeout-minutes: / {s += $2} END {print s+0}' "$P")"
+# the deploy job's own steps: another job of the workflow has its own bound and its own sum,
+# and counting its steps here made the deploy job look overrun the day one gained a timeout
+step_to="$(awk '$0 == "  deploy:" {f=1; next} /^  [a-z-]+:$/ {f=0} f && /^        timeout-minutes: / {s += $2} END {print s+0}' "$P")"
 [ -n "$job_to" ] || { echo "    the pages deploy job carries no timeout; a hang holds a runner for GitHub's default six hours"; exit 1; }
 [ "$step_to" -gt 0 ] || { echo "    no step of the pages deploy job carries a timeout, so only the job's bound can fire and every overrun reads as cancelled"; exit 1; }
 [ "$job_to" -gt "$step_to" ] \

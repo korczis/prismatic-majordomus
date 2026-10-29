@@ -53,7 +53,7 @@ impl Node {
 
     fn declare(&self, allow: &[&str], seeds: &[&Served]) {
         let mut yaml = String::from(
-            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow:\n",
+            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow:\n",
         );
         for key in allow {
             yaml.push_str(&format!("    - {key}\n"));
@@ -131,7 +131,7 @@ fn post(s: &Served, path: &str, body: Value) -> (u16, Value) {
 }
 
 fn reviews(s: &Served) -> Vec<Value> {
-    s.get("/api/v1/mesh/state").1["state"]["reviews"]
+    s.get("/api/v1/mesh/state?view=full").1["state"]["reviews"]
         .as_array()
         .cloned()
         .unwrap_or_default()

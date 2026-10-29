@@ -1,11 +1,12 @@
 //! The executor through the real command line (ADR 0101): observe, decide, merge, prove what
 //! landed, and refuse what it cannot prove — against a bare origin and a scripted `gh`.
 //!
-//! The forge answers from files under its state directory, logs every call, and merges for
-//! real: a merge is a merge commit pushed to the bare origin, so what the executor proves after
-//! it is proved from git, as it is against GitHub. What the forge does on a merge is a file
-//! too (`merge-mode`): merge and answer, merge and lose the answer, or let somebody else's
-//! change land first. The cases under test/cases drive the same paths from a shell; this file
+//! The forge answers from files under its state directory, logs every call, and lands for
+//! real: a fast-forward moves the bare origin's master to the head, refused unless master is
+//! its ancestor, and a merge is a merge commit pushed there, so what the executor proves after
+//! it is proved from git, as it is against GitHub. What the forge does on a landing is a file
+//! too (`merge-mode`): land and answer, land and lose the answer, let somebody else's change
+//! land right after (`foreign`), or, for a fast-forward, just before (`moved`). The cases under test/cases drive the same paths from a shell; this file
 //! drives them from the test harness, so the executable that runs them is the instrumented
 //! one and the paths it takes are measured.
 
@@ -73,6 +74,13 @@ case "$1 $2" in
     if grep -q FAIL "$S/rules.json" 2>/dev/null; then echo 'gh: Resource not accessible by integration (HTTP 403)' >&2; exit 1; fi
     cat "$S/rules.json" 2>/dev/null || echo '[]' ;;
   "api graphql")
+    # the forge's deployments and releases, which `served forge` observes (since 3e8225a4329
+    # not `prs refresh`; I4315)
+    # (deploy::observed): none here, and no test of this file is about them
+    case "$*" in *"deployments(last"*)
+      echo '{"data":{"repository":{"url":"https://example.invalid/o/r","deployments":{"nodes":[]},"releases":{"nodes":[]}}}}'
+      exit 0 ;;
+    esac
     case "$*" in *timelineItems*)
       if [ -f "$S/declarations-transient" ]; then echo 'gh: HTTP 503: Service Unavailable' >&2; exit 1; fi
       if [ -f "$S/declarations-fails" ]; then echo 'gh: Resource not accessible by integration (HTTP 403)' >&2; exit 1; fi
@@ -126,6 +134,30 @@ case "$1 $2" in
     jq -c --argjson n "$n" '. + [$n]' "$S/gone.json" > "$S/gone.tmp" && mv "$S/gone.tmp" "$S/gone.json"
     touch "$S/merged-$n"
     if [ "$mode" = lost ]; then echo 'Post "https://api.github.com/graphql": net/http: request canceled (Client.Timeout exceeded) timed out' >&2; exit 1; fi ;;
+  "api -X")
+    # the fast-forward: master moved to the head, never forced, and refused as the forge does
+    # when master is not that head's ancestor; the pull request at that head shows as merged
+    [ "$3 $4" = "PATCH repos/o/r/git/refs/heads/master" ] || { echo UNEXPECTED >> "$S/log"; exit 1; }
+    sha=""; for a in "$@"; do case "$a" in sha=*) sha="${a#sha=}" ;; esac; done
+    mode="$(cat "$S/merge-mode" 2>/dev/null || echo ok)"
+    if [ "$mode" = silent ]; then exit 1; fi
+    if [ "$mode" = noop ]; then exit 0; fi
+    foreign() {
+      t="$(mktemp -d)"; git clone -q "$O" "$t/f" 2>/dev/null
+      (cd "$t/f" && echo "foreign $sha" >> foreign.txt && git -c user.email=f@example.com -c user.name=f add foreign.txt \
+        && git -c user.email=f@example.com -c user.name=f commit -qm foreign && git push -q origin HEAD:master)
+    }
+    if [ "$mode" = moved ]; then foreign; fi
+    old="$(git -C "$O" rev-parse master)"
+    git -C "$O" merge-base --is-ancestor "$old" "$sha" || { echo 'gh: Update is not a fast forward (HTTP 422)' >&2; exit 1; }
+    git -C "$O" update-ref refs/heads/master "$sha" "$old" || exit 1
+    for n in $(jq -r --arg s "$sha" '.[] | select(.headRefOid == $s) | .number' "$S/prs.json"); do
+      jq -c --argjson n "$n" '. + [$n]' "$S/gone.json" > "$S/gone.tmp" && mv "$S/gone.tmp" "$S/gone.json"
+      touch "$S/merged-$n"
+    done
+    if [ "$mode" = foreign ]; then foreign; fi
+    if [ "$mode" = lost ]; then echo 'Patch "https://api.github.com/repos/o/r/git/refs/heads/master": net/http: request canceled (Client.Timeout exceeded) timed out' >&2; exit 1; fi
+    echo "{\"object\":{\"sha\":\"$sha\"}}" ;;
   "pr view")
     if [ -f "$S/view-fails" ]; then echo 'HTTP 403: Resource not accessible by integration' >&2; exit 1; fi
     case " $* " in
@@ -277,6 +309,17 @@ impl Forge {
         std::fs::write(&path, serde_json::to_string(&list).unwrap()).unwrap();
     }
 
+    /// Pull request `n`'s `key`, as the forge lists it, is `value`.
+    fn edit(&self, n: u64, key: &str, value: Value) {
+        let path = self.state.join("prs.json");
+        let mut list: Vec<Value> =
+            serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+        for p in list.iter_mut().filter(|p| p["number"] == n) {
+            p[key] = value.clone();
+        }
+        std::fs::write(&path, serde_json::to_string(&list).unwrap()).unwrap();
+    }
+
     /// Master moves on: a commit of somebody else's lands on origin.
     fn advance(&self) {
         git(&self.work, &["fetch", "-q", "origin"]);
@@ -320,7 +363,7 @@ impl Forge {
             self.bin.display(),
             std::env::var("PATH").unwrap_or_default()
         );
-        let out = Command::new(common::BIN)
+        let out = common::majordomus()
             .arg("prs")
             .arg("--repo")
             .arg(&self.work)
@@ -383,6 +426,7 @@ fn a_ready_pull_request_is_merged_proved_and_recorded() {
     let (code, out, err) = f.prs(&["drain", "--dry-run"]);
     assert_eq!(code, 0, "dry run: {out}{err}");
     assert!(!f.log().contains("pr merge"), "a dry run merged");
+    assert!(!f.log().contains("api -X"), "a dry run moved master");
 
     let (code, out, err) = f.prs(&["drain", "--max", "1"]);
     assert_eq!(code, 0, "drain: {out}{err}");
@@ -390,13 +434,172 @@ fn a_ready_pull_request_is_merged_proved_and_recorded() {
     let merged = f
         .last("merge_succeeded")
         .expect("merge_succeeded on the trail");
+    // a head that contains master is fast-forwarded to: master is that head, no merge commit
     let commit = merged["merge_commit"].as_str().expect("merge_commit");
-    assert_eq!(git(&f.origin, &["rev-parse", &format!("{commit}^2")]), head);
-    assert_eq!(git(&f.origin, &["rev-parse", "master"]), commit);
+    assert_eq!(commit, head);
+    assert_eq!(git(&f.origin, &["rev-parse", "master"]), head);
 
     let (code, out, _) = f.prs(&["brief"]);
     assert_eq!(code, 0);
     assert!(out.contains("#1"), "the brief names the last merge: {out}");
+}
+
+/// A combined top whose head merges two members and contains master is ready while its
+/// members are held by the label `hold`; a drain fast-forwards master to the top's head,
+/// proves master is that head, and leaves the members redundant and open (I3910).
+#[test]
+fn a_green_train_is_fast_forwarded_and_verified() {
+    let f = Forge::new();
+    let one = f.branch(1);
+    let two = f.branch(2);
+    git(
+        &f.work,
+        &[
+            "checkout",
+            "-q",
+            "-B",
+            "integration/train-1",
+            "origin/master",
+        ],
+    );
+    git(
+        &f.work,
+        &["merge", "-q", "--no-ff", "-m", "train: #1", "feature/1"],
+    );
+    git(
+        &f.work,
+        &["merge", "-q", "--no-ff", "-m", "train: #2", "feature/2"],
+    );
+    git(
+        &f.work,
+        &[
+            "push",
+            "-q",
+            "origin",
+            "HEAD:refs/heads/integration/train-1",
+            "HEAD:refs/pull/3/head",
+        ],
+    );
+    let top = git(&f.work, &["rev-parse", "HEAD"]);
+    git(&f.work, &["checkout", "-q", "--detach", "origin/master"]);
+    let before = git(&f.origin, &["rev-parse", "master"]);
+    f.open(&[(1, &one), (2, &two), (3, &top)]);
+    f.edit(3, "headRefName", Value::from("integration/train-1"));
+    for member in [1, 2] {
+        f.edit(member, "labels", serde_json::json!([{"name": "hold"}]));
+    }
+
+    let (code, out, err) = f.prs(&["drain", "--max", "3"]);
+    assert_eq!(code, 0, "drain: {out}{err}");
+    assert!(out.contains("merged #3"), "{out}");
+    assert_eq!(git(&f.origin, &["rev-parse", "master"]), top);
+    let log = f.log();
+    assert!(
+        log.contains(&format!(
+            "api -X PATCH repos/o/r/git/refs/heads/master -f sha={top} -F force=false"
+        )),
+        "{log}"
+    );
+    assert!(
+        !log.contains("pr merge"),
+        "a merge commit was asked for: {log}"
+    );
+    assert!(!log.contains("--admin"), "{log}");
+    let attempted = f.last("merge_attempted").expect("merge_attempted");
+    assert_eq!(attempted["detail"], "--fast-forward");
+    let merged = f.last("merge_succeeded").expect("merge_succeeded");
+    assert_eq!(merged["pr"], 3);
+    assert_eq!(merged["master_before"], Value::from(before));
+    assert_eq!(merged["master_after"], Value::from(top.clone()));
+    assert_eq!(merged["merge_commit"], Value::from(top));
+
+    // the members the train carried are on master now: redundant, and nothing closed them
+    let (code, out, err) = f.prs(&["refresh"]);
+    assert_eq!(code, 0, "refresh: {err}");
+    let (code, out2, _) = f.prs(&["status", "--format", "json"]);
+    assert_eq!(code, 0, "{out}{out2}");
+    let q: Value = serde_json::from_str(&out2).unwrap();
+    for member in [1, 2] {
+        let a = q["assessments"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|a| a["number"] == member)
+            .unwrap_or_else(|| panic!("#{member} is open: {out2}"));
+        assert_eq!(a["disposition"], "redundant", "{a}");
+    }
+    assert!(!f.log().contains("pr close"), "the drain closed something");
+}
+
+/// A head that carries master without containing it (its lower link landed by a merge commit)
+/// is the one head still landed by a merge commit, pinned to that head, never a fast-forward.
+#[test]
+fn a_head_that_carries_master_is_landed_by_a_merge_commit() {
+    let f = Forge::new();
+    let one = f.branch(1);
+    git(&f.work, &["checkout", "-q", "-B", "feature/2", &one]);
+    std::fs::write(f.work.join("2.txt"), "2\n").unwrap();
+    git(&f.work, &["add", "2.txt"]);
+    git(&f.work, &["commit", "-q", "-m", "change 2"]);
+    git(
+        &f.work,
+        &[
+            "push",
+            "-q",
+            "origin",
+            "HEAD:refs/heads/feature/2",
+            "HEAD:refs/pull/2/head",
+        ],
+    );
+    let two = git(&f.work, &["rev-parse", "HEAD"]);
+    // #1 landed as a merge commit, as every landing did before the executor fast-forwarded
+    git(&f.work, &["checkout", "-q", "--detach", "origin/master"]);
+    git(&f.work, &["merge", "-q", "--no-ff", "-m", "Merge #1", &one]);
+    git(&f.work, &["push", "-q", "origin", "HEAD:master"]);
+    f.open(&[(2, &two)]);
+
+    let (code, out, err) = f.prs(&["drain", "--max", "1"]);
+    assert_eq!(code, 0, "drain: {out}{err}");
+    assert!(out.contains("merged #2"), "{out}");
+    let log = f.log();
+    assert!(
+        log.contains(&format!("pr merge 2 --merge --match-head-commit {two}")),
+        "{log}"
+    );
+    assert!(
+        !log.contains("api -X"),
+        "a carrier was fast-forwarded to: {log}"
+    );
+    let attempted = f.last("merge_attempted").expect("merge_attempted");
+    assert_eq!(attempted["detail"], "--merge");
+    assert_eq!(git(&f.origin, &["rev-parse", "master^2"]), two);
+}
+
+/// A fast-forward the forge refuses because master moved after the decision is no landing to
+/// verify: it is a stale refusal on the trail, the drain decides again from the new master,
+/// and the next drain is not held for a person.
+#[test]
+fn a_fast_forward_onto_a_master_that_moved_is_refused_and_decided_again() {
+    let f = Forge::new();
+    let head = f.branch(1);
+    f.open(&[(1, &head)]);
+    f.set("merge-mode", "moved");
+    let (code, out, err) = f.prs(&["drain", "--max", "1"]);
+    assert_eq!(code, 0, "drain: {out}{err}");
+    let failed = f.last("merge_failed").expect("merge_failed on the trail");
+    assert_eq!(failed["class"], "stale", "{failed}");
+    assert!(
+        failed["detail"]
+            .as_str()
+            .unwrap()
+            .contains("not a fast forward"),
+        "{failed}"
+    );
+    assert!(f.last("verification_failed").is_none());
+    assert_ne!(git(&f.origin, &["rev-parse", "master"]), head);
+    let (code, out, err) = f.prs(&["drain", "--max", "1"]);
+    assert_eq!(code, 0, "{out}{err}");
+    assert!(!out.contains("--resume-after-failure"), "{out}");
 }
 
 #[test]
@@ -418,9 +621,9 @@ fn a_merge_whose_answer_was_lost_is_found_landed() {
         "{merged}"
     );
     assert_eq!(
-        f.log().matches("pr merge 1 ").count(),
+        f.log().matches(&format!("sha={head} ")).count(),
         1,
-        "the merge was asked twice"
+        "the fast-forward was asked twice"
     );
 }
 
@@ -448,7 +651,10 @@ fn a_merge_onto_a_master_that_moved_holds_the_next_drain_until_acknowledged() {
     let (code, out, _) = f.prs(&["drain", "--max", "1"]);
     assert_eq!(code, 10, "{out}");
     assert!(out.contains("--resume-after-failure"), "{out}");
-    assert!(!f.log().contains("pr merge 2 "), "a held drain merged");
+    assert!(
+        !f.log().contains(&format!("sha={head2} ")),
+        "a held drain landed"
+    );
 
     let (code, out, err) = f.prs(&["drain", "--max", "1", "--resume-after-failure"]);
     assert_eq!(code, 0, "resumed: {out}{err}");
@@ -747,13 +953,13 @@ fn a_continuous_drain_stops_on_a_merge_it_cannot_prove_and_resumes_when_told() {
     assert_eq!(code, 10, "{out}{err}");
     assert!(err.contains("verified merges"), "{err}");
     assert!(f.last("failure_acknowledged").is_none());
-    assert!(!f.log().contains("pr merge 2 "), "{}", f.log());
+    assert!(!f.log().contains(&format!("sha={head} ")), "{}", f.log());
     // resumed by a bounded drain: the failure is acknowledged under the lease, and the next
     // one is merged — onto a master that moves again, so this run ends the same way
     let (code, out, err) = f.prs(&["drain", "--max", "1", "--resume-after-failure"]);
     assert_eq!(code, 10, "{out}{err}");
     assert!(f.last("failure_acknowledged").is_some());
-    assert!(f.log().contains("pr merge 2 "), "{}", f.log());
+    assert!(f.log().contains(&format!("sha={head} ")), "{}", f.log());
 }
 
 #[test]
@@ -914,8 +1120,8 @@ fn bringing_master_into_a_branch_that_cannot_derive_is_a_refresh_failure() {
         "{failed}"
     );
     assert!(
-        !f.log().contains("pr merge"),
-        "a branch behind master merged"
+        !f.log().contains("pr merge") && !f.log().contains("api -X"),
+        "a branch behind master landed"
     );
 }
 
@@ -981,7 +1187,12 @@ fn the_declarations_are_read_with_every_open_pull_request() {
     // nothing open: nothing is asked about declarations
     let (code, out, err) = f.prs(&["refresh"]);
     assert_eq!(code, 0, "{out}{err}");
-    assert!(!f.log().contains("api graphql"), "{}", f.log());
+    assert_eq!(
+        declarations_asked(&f, false) + declarations_asked(&f, true),
+        0,
+        "{}",
+        f.log()
+    );
 
     // #7 said it supersedes #1, and was merged with a merge commit; #1 is still open
     let seven = f.branch(7);

@@ -52,10 +52,15 @@ mj_question_add() {
   mj_is_multiline "$text" && mj_die "$MJ_EX_USAGE" "question add: the question must be single-line" 
   case "$text" in *" — "*) mj_die "$MJ_EX_USAGE" "question add: the question must not contain ' — '; it separates the fields" ;; esac
   mj_question_require
+  # A question is opened against a task: without one there is nothing for it to block (ADR
+  # 0164 changes only who it is attributed to, "none" when the active task is another live
+  # session's).
   mj_load_current || mj_die "$MJ_EX_MISSING" "no active task; a question is opened against a task"
-  local id; id="$(mj_cur id)"
+  mj_record_attribution
+  local id="${MJ_RECORD_TASK:-none}" fields=""
+  [ -z "$MJ_RECORD_TASK" ] || fields="\"task_id\":\"$MJ_RECORD_TASK\","
   printf -- '- [unresolved] %s — %s (%s)\n' "$id" "$text" "$(date -u +%Y-%m-%d)" >> "$MJ_Q"
-  mj_ledger_append question.opened "\"task_id\":\"$id\",\"question\":\"$(mj_json_esc "$text")\""
+  mj_ledger_append question.opened "${fields}\"question\":\"$(mj_json_esc "$text")\"" "$MJ_RECORD_SESSION"
   printf 'opened for %s: %s\n' "$id" "$text"
 }
 
@@ -88,7 +93,9 @@ mj_question_resolve() {
   # Any unresolved question can be resolved, not only one the active task opened. The gate
   # blocks on all of them, and a gate nobody can clear is a gate that gets worked around.
   # The ledger still records which task did the resolving.
-  local id; if mj_load_current; then id="$(mj_cur id)"; else id="none"; fi
+  mj_record_attribution
+  local id="${MJ_RECORD_TASK:-none}" fields=""
+  [ -z "$MJ_RECORD_TASK" ] || fields="\"task_id\":\"$MJ_RECORD_TASK\","
 
   local open; open="$(mj_question_unresolved_any "$MJ_Q")"
   [ -n "$open" ] || mj_die "$MJ_EX_MISSING" "no unresolved question"
@@ -106,7 +113,7 @@ mj_question_resolve() {
     NR==n { sub(/^- \[unresolved\]/, "- [resolved " d "]"); print $0 " — " a; next }
     { print }' "$MJ_Q" > "$tmp" && mv "$tmp" "$MJ_Q"
   local text; text="$(printf '%s' "$hits" | sed -e 's/^[0-9]*:- \[unresolved\] [^ ]* — //' -e 's/ ([0-9-]*)$//')"
-  mj_ledger_append question.resolved "\"task_id\":\"$id\",\"question\":\"$(mj_json_esc "$text")\",\"answer\":\"$(mj_json_esc "$answer")\""
+  mj_ledger_append question.resolved "${fields}\"question\":\"$(mj_json_esc "$text")\",\"answer\":\"$(mj_json_esc "$answer")\"" "$MJ_RECORD_SESSION"
   printf 'resolved for %s: %s\n' "$id" "$text"
 }
 

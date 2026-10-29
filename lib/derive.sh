@@ -74,7 +74,7 @@ mj_derive_changed() {
   if [ -n "$base" ] && [ "$base" != NONE ] && mj_git merge-base --is-ancestor "$base" HEAD 2>/dev/null; then
     mj_git diff --name-only "$base..HEAD" 2>/dev/null >> "$tmp"
   fi
-  mj_git status --porcelain=v1 2>/dev/null | cut -c4- | sed 's/^.* -> //' >> "$tmp"
+  mj_git_dirty_paths >> "$tmp"
   LC_ALL=C sort -u "$tmp" | sed '/^$/d'
   rm -f "$tmp"
   return 0
@@ -228,17 +228,28 @@ MJ_DV_N_CHECK=0; MJ_DV_N_DEC=0; MJ_DV_N_Q=0; MJ_DV_N_HAND=0; MJ_DV_ISSUES=""
 MJ_DV_LAST_CHECKPOINT=""; MJ_DV_LAST_CHECKPOINT_AGE=""; MJ_DV_SESSION=""
 
 mj_derive_gather() {
-  MJ_DV_SESSION="$(mj_open_session_id)"
+  local has_task=0
+  if [ "${1:-}" = record ]; then
+    MJ_DV_SESSION="$MJ_RECORD_SESSION"
+    [ -z "$MJ_RECORD_TASK" ] || has_task=1
+  else
+    MJ_DV_SESSION="$(mj_open_session_id)"
+    mj_load_current && has_task=1
+  fi
   MJ_DV_BRANCH="$(mj_git_branch)"; MJ_DV_HEAD="$(mj_git_head)"
 
-  if mj_load_current; then
+  if [ "$has_task" = 1 ]; then
     MJ_DV_TASK_ID="$(mj_cur id)"; MJ_DV_TASK_TEXT="$(mj_cur task)"
     MJ_DV_PROFILE="$(mj_cur profile)"
     MJ_DV_START_HEAD="$(mj_cur head)"
     MJ_DV_SCOPE="$(mj_ylist "$MJ_CUR_FLAT" scope | tr '\n' ' ' | sed 's/ $//; s/ /, /g')"
   else
-    MJ_DV_TASK_ID=none; MJ_DV_PROFILE=none; MJ_DV_START_HEAD="$MJ_DV_HEAD"
+    MJ_DV_TASK_ID=none; MJ_DV_PROFILE=none; MJ_DV_SCOPE=""; MJ_DV_START_HEAD="$MJ_DV_HEAD"
     MJ_DV_TASK_TEXT="No active task. This record describes an episode that worked outside one, which the tool permits and this line states rather than hides."
+    # A task another live episode opened is there, and is not this record's (ADR 0164).
+    if [ "${1:-}" = record ] && [ -n "${MJ_CUR:-}" ] && [ -f "$MJ_CUR" ]; then
+      MJ_DV_TASK_TEXT="No task of this episode's. The checkout's active task belongs to another episode that is still open, so this record names none (ADR 0164)."
+    fi
   fi
 
   MJ_DV_CHANGED="$(mj_derive_changed "$MJ_DV_START_HEAD")"
@@ -275,7 +286,7 @@ mj_derive_gather() {
 MJ_DERIVE_OPTIONAL_SECTIONS="Decisions Reasoning Open_Questions Verification"
 
 mj_derive_handover_body() {
-  mj_derive_gather
+  mj_derive_gather "${1:-}"
   local sec slug fn required emitted=" "
   required="$(mj_ylist "$MJ_POL_FLAT" handover.required_sections)"
 
@@ -308,10 +319,11 @@ mj_derive_handover_body() {
 # whole content: the commit, the working tree, and how many files. Everything else a reader
 # might want is one command away and named.
 mj_derive_checkpoint_body() {
-  mj_derive_gather
-  local n; n="$(mj_derive_nlines "$MJ_DV_CHANGED")"
-  printf 'At %s on %s, working tree %s; %s file(s) changed since the task started.\n' \
-    "$(printf '%.7s' "$MJ_DV_HEAD")" "$MJ_DV_BRANCH" "$(mj_git_dirty)" "$n"
+  mj_derive_gather "${1:-}"
+  local n since="since the task started"; n="$(mj_derive_nlines "$MJ_DV_CHANGED")"
+  [ "$MJ_DV_TASK_ID" != none ] || since="in this working tree; no related task"
+  printf 'At %s on %s, working tree %s; %s file(s) changed %s.\n' \
+    "$(printf '%.7s' "$MJ_DV_HEAD")" "$MJ_DV_BRANCH" "$(mj_git_dirty)" "$n" "$since"
   if [ "$MJ_DV_START_HEAD" != "$MJ_DV_HEAD" ] && \
      mj_git merge-base --is-ancestor "$MJ_DV_START_HEAD" HEAD 2>/dev/null; then
     printf '\nCommits since the task started:\n\n'
@@ -514,7 +526,7 @@ mj_derive_ses_outcome() {
 # stands, as `mj_capture_ensure_server` reported it, and its second what that server did with
 # the mesh declaration, as `mj_capture_mesh_line` reported it; each empty when nothing asked.
 mj_derive_briefing() {
-  local server="${1:-}" mesh="${2:-}" budget out
+  local server="${1:-}" mesh="${2:-}" monitor="${3:-}" budget out
   budget="$(mj_pol session.briefing_budget_lines)"
   case "$budget" in ''|*[!0-9]*) budget="$(mj_pol context.always_loaded_budget_lines)" ;; esac
   case "$budget" in ''|*[!0-9]*) budget=60 ;; esac
@@ -548,6 +560,8 @@ mj_derive_briefing_body() {
   # --- the mesh, directly under the server it lives in, whenever a declaration exists: a
   # declaration enabled and a mesh not active is said here, not discovered later (ADR 0059)
   if [ -n "$mesh" ]; then printf 'Mesh: %s\n' "$mesh"; fi
+  # --- what happened around the repository in the last hour, what names this worker first
+  if [ -n "$monitor" ]; then printf 'Monitor: %s\n' "$monitor"; fi
 
   # --- what blocks acceptance. First, because it is the only thing here that refuses a
   # command the worker is otherwise about to run.

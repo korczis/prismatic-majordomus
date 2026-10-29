@@ -1,0 +1,454 @@
+<!-- The chapters of this source, as sections. assemble.py reads nothing else of it. -->
+<section id="vrstvy">
+      <h2>Čtyři vrstvy koordinace</h2>
+      <p>Mesh je nejvyšší ze čtyř vrstev, které v Majordomusu brání kolizím. Každá má jiný dosah a jen některé opravdu odmítají. Je dobré je znát všechny, protože se doplňují.</p>
+      <div class="ladder">
+        <div class="rung">
+          <div class="k">Task scope<small>jeden checkout</small></div>
+          <div class="v">
+            <p><span class="pill refuses">odmítá</span> Soubor změněný mimo cesty deklarované při <code>start</code> je FAIL v <code>check</code>, odmítnutí ve <code>finish</code> a v pre-push hooku.</p>
+            <div class="cmds"><code>start --scope</code><code>check</code><code>finish</code></div>
+          </div>
+        </div>
+        <div class="rung">
+          <div class="k">Překryv worktrees<small>worktrees jednoho repa, jeden stroj</small></div>
+          <div class="v">
+            <p><span class="pill reports">hlásí</span> <code>start</code> projde <code>git worktree list</code> a ohlásí jiný worktree, jehož aktivní task má scope, který obsahuje ten tvůj nebo je v něm obsažený. Registrem je git, žádný vedlejší soubor.</p>
+            <div class="cmds"><code>start</code><code>check --overlap</code></div>
+          </div>
+        </div>
+        <div class="rung">
+          <div class="k">Peer board<small>všechny checkouty repa s běžícím serverem</small></div>
+          <div class="v">
+            <p><span class="pill reports">hlásí</span> Každá MCP session je peer. Ohlásí záměr a cesty (<code>majordomus_announce</code>) a dostane zpět peery, jejichž claim se s jejím potkává. <code>majordomus context</code> to ukáže v sekci <code>PEERS</code> i workerovi, který se nezeptal.</p>
+            <div class="cmds"><code>majordomus_announce</code><code>majordomus_peers</code><code>GET /api/v1/peers</code></div>
+          </div>
+        </div>
+        <div class="rung mesh">
+          <div class="k">Mesh<small>runtimes napříč stroji</small></div>
+          <div class="v">
+            <p><span class="pill refuses">odmítá</span> Exkluzivní claim, který se potká s živým exkluzivním claimem jiné session, je odmítnut (<code>claim_conflict</code>, exit 10). Handovery a reviews putují mezi stroji. Oznámení z peer boardu se do meshe promítají jako advisory claims.</p>
+            <div class="cmds"><code>mesh claim</code><code>mesh handover</code><code>mesh review</code><code>mesh verify</code></div>
+          </div>
+        </div>
+      </div>
+      <p>Dva claims se potkají, když jsou stejné nebo je jeden uvnitř druhého. <code>apps</code> se potká s <code>apps/majordomus-cli</code>, <code>app</code> ne: claim je cesta, ne prefix řetězce. Toto pravidlo platí stejně na peer boardu i v meshi.</p>
+    </section>
+
+<section id="server">
+      <h2>Sdílený server: kde to všechno běží</h2>
+      <p>Peer board i mesh žijí ve sdíleném serveru. Pro každý checkout běží jeden. První proces, který atomicky vytvoří <code>.ai/local/state/mcp/server.json</code>, se stane serverem, naváže port (výchozí <code>8741</code>) a zapíše do souboru svou URL. Každý další <code>majordomus mcp</code> si přečte lease a připojí se jako bridge.</p>
+      <ul>
+        <li><strong>Jeden server, mnoho rozhraní:</strong> MCP na stdio i <code>/mcp</code>, HTTP API <code>/api/v1/…</code>, <code>/openapi.json</code>, Swagger a Cockpit na <code>/cockpit</code> (mesh má vlastní stránku <code>/cockpit/mesh</code>).</li>
+        <li><strong>Sleduje repo:</strong> před každým požadavkem porovná otisk gitových řídicích souborů. Commit je vidět přes API, MCP i Cockpit bez restartu.</li>
+        <li><strong>Přežije pád:</strong> lease po zabitém serveru převezme další proces. Bridge, jehož server umřel, se při další zprávě sám zvolí serverem a jeho klient si ničeho nevšimne.</li>
+        <li><strong>Výchozí je loopback.</strong> Aby se k serveru dalo připojit z jiného stroje, musí poslouchat na síti: <code>serve --host 0.0.0.0</code> pro jeden proces, nebo <code>export MAJORDOMUS_HTTP_HOST=0.0.0.0</code> v profilu shellu pro všechny servery stroje. Tohle nastavení patří stroji, ne repu: nic trackovaného ho nastavit nemůže.</li>
+      </ul>
+      <div class="code"><button type="button">Kopírovat</button><pre><code>majordomus serve status          <span class="c"># všechny checkouty repa: lease, adresa, stav</span>
+majordomus serve ensure          <span class="c"># nastartuj, pokud neběží (to dělá session start)</span>
+majordomus serve --host 0.0.0.0  <span class="c"># dosažitelný z LAN / tailnetu</span>
+majordomus serve stop
+majordomus mcp                   <span class="c"># MCP klient; první se stane serverem</span></code></pre></div>
+    </section>
+
+<section id="identita">
+      <h2>Identita: kdo je kdo</h2>
+      <p>Adresa, port, hostname ani PID nejsou identita. Identita je odvozená z klíčů a z gitu, takže přežije změnu IP i restart.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Identita</th><th>Co označuje</th><th>Odvozeno z</th><th>Přežije</th></tr></thead>
+        <tbody>
+          <tr><td><strong>node</strong></td><td>klíč Majordomusu na stroji</td><td>digest veřejného Ed25519 klíče v <code>$XDG_STATE_HOME/majordomus/node.json</code></td><td>restarty, změnu adresy; se souborem zmizí</td></tr>
+          <tr><td><strong>runtime</strong></td><td>server jednoho checkoutu na nodu</td><td>digest id checkoutu</td><td>restart serveru; dva worktrees = dva runtimes</td></tr>
+          <tr><td><strong>instance</strong></td><td>jeden běh procesu</td><td>entropie OS při startu</td><td>nic, restart = nová instance</td></tr>
+          <tr><td><strong>stream</strong></td><td>kdo zapisuje události: <code>node-runtime-instance</code></td><td>tři předchozí</td><td>nic, restart = nový stream téhož runtime</td></tr>
+          <tr><td><strong>session</strong></td><td>session jednoho workera ve streamu</td><td>jméno od volajícího</td><td>stream</td></tr>
+          <tr><td><strong>repository</strong></td><td>repo, na kterém se spolupracuje</td><td>digest root commitů, nebo <code>cooperation.repository</code></td><td>klony, cesty, stroje</td></tr>
+        </tbody>
+      </table></div>
+      <p>Na identitě repa stojí izolace: root commity sdílí každý plný klon a žádné nesouvisející repo. Shallow clone má „root“ tam, kde byla historie useknutá, proto musí deklarovat <code>cooperation.repository</code>. Totéž musí udělat fork, který nemá spolupracovat se svým originálem.</p>
+    </section>
+
+<section id="cesta">
+      <h2>Od objevení ke společnému stavu</h2>
+      <p>Mezi tím, kdy runtime uslyší jiný runtime, a tím, kdy s ním sdílí stav, je šest kroků. Každý má vlastní kontrolu a vlastní typované odmítnutí.</p>
+      <ol class="pipeline">
+        <li><span class="n">1</span><div><h4>Deklarace</h4><p><code>.ai/repo/mesh/&lt;id&gt;.yaml</code> je jediné místo konfigurace, žádné proměnné prostředí. Bez deklarace nebo s <code>enabled: false</code> se neotevře ani jeden socket. To je výchozí stav nového repa.</p></div></li>
+        <li><span class="n">2</span><div><h4>Discovery</h4><p>UDP multicast (preferovaný), broadcast (záložní, deklarovaný) nebo rendezvous hub. Obálka má nejvýš 1 200 bajtů, je podepsaná a nese klíč, runtime, endpointy a identitu repa. Nikdy ne tajemství, cestu ani obsah repa. Výsledkem jsou jen kandidáti v registru.</p></div></li>
+        <li><span class="n">3</span><div><h4>Trust</h4><p>Politika z deklarace. Výchozí <code>deny_unknown</code>: neznámý klíč je vidět, ale nic nesmí. <code>allowlist</code> přidá vyjmenované klíče. <code>tofu</code> věří při prvním použití, je jen pro síť, kterou máš pod kontrolou. Vlastní klíč stroje je důvěryhodný sám sobě, proto se dva worktrees propojí.</p></div></li>
+        <li><span class="n">4</span><div><h4>Handshake</h4><p>Podepsané <code>hello</code> a <code>welcome</code> přes HTTP, s osmi kontrolami na každé straně (viz níže). Teprve tady vzniká link.</p></div></li>
+        <li><span class="n">5</span><div><h4>Link a sync</h4><p>Každý heartbeat (výchozí 5 s) proběhne jedno sync kolo. Runtimes si porovnají „marks“ (high-water sekvenci každého streamu) a pošlou si jen to, co druhému chybí, oběma směry v jednom kole. Když se marks shodují, kolo nenese žádné události.</p></div></li>
+        <li><span class="n">6</span><div><h4>Journal a fold</h4><p>Ze stejných událostí a stejných verdiktů o živosti spočítá každý runtime stejný stav: sessions, claims, konflikty, handovery, reviews. A stejný <code>digest</code>.</p></div></li>
+      </ol>
+    </section>
+
+<section id="handshake">
+      <h2>Handshake: osm kontrol, než vznikne link</h2>
+      <p>Vytáčí runtime s nižším klíčem, nebo ten, který na druhého dosáhne jako jediný, nebo kdokoli s deklarovaným seedem. Ověřují obě strany. Každé selhání má svůj kód, počítá se do <code>refused_in</code>/<code>refused_out</code> a je vidět v <code>mesh peers</code>.</p>
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 720 490" role="img" aria-label="Handshake: hello, osm kontrol, welcome, totéž ověření na straně dialera, pak sync každý heartbeat">
+            <defs>
+              <marker id="hs-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="lnk"/></marker>
+            </defs>
+            <rect x="40" y="16" width="200" height="40" rx="6" class="box" stroke-width="1.25"/>
+            <text x="140" y="41" text-anchor="middle" font-size="14" font-weight="600" class="ink">Dialer · runtime A</text>
+            <rect x="480" y="16" width="200" height="40" rx="6" class="box" stroke-width="1.25"/>
+            <text x="580" y="41" text-anchor="middle" font-size="14" font-weight="600" class="ink">Answerer · runtime B</text>
+            <path d="M140 56V476" class="stroke" stroke-width="1.5" stroke-dasharray="4 4"/>
+            <path d="M580 56V476" class="stroke" stroke-width="1.5" stroke-dasharray="4 4"/>
+
+            <path d="M140 96H578" stroke="var(--link)" stroke-width="1.75" fill="none" marker-end="url(#hs-arrow)"/>
+            <text x="360" y="86" text-anchor="middle" font-size="13.5" font-weight="600" class="lnk mono">POST /api/v1/mesh/link/hello</text>
+            <text x="360" y="114" text-anchor="middle" font-size="12" class="mut">karta runtime · nonce · čas · protokol 1..1 · podpis Ed25519</text>
+
+            <rect x="404" y="128" width="300" height="180" rx="6" fill="var(--tint)" stroke="var(--link)" stroke-width="1.25"/>
+            <text x="420" y="150" font-size="13" font-weight="600" class="ink">B přijme hello, jen když platí:</text>
+            <text x="420" y="173" font-size="12" class="ink">1  velikost ≤ 900 KiB a tvar hello</text>
+            <text x="420" y="190" font-size="12" class="ink">2  podpis Ed25519 v doméně hello</text>
+            <text x="420" y="207" font-size="12" class="ink">3  čas v rozmezí ±300 s</text>
+            <text x="420" y="224" font-size="12" class="ink">4  nonce ještě nebyl zodpovězen</text>
+            <text x="420" y="241" font-size="12" class="ink">5  rozsahy protokolu se potkají</text>
+            <text x="420" y="258" font-size="12" class="ink">6  peer není tento runtime</text>
+            <text x="420" y="275" font-size="12" class="ink">7  stejné repo (digest root commitů)</text>
+            <text x="420" y="292" font-size="12" class="ink">8  klíč je podle politiky důvěryhodný</text>
+
+            <path d="M580 340H142" stroke="var(--link)" stroke-width="1.75" fill="none" marker-end="url(#hs-arrow)"/>
+            <text x="360" y="330" text-anchor="middle" font-size="13.5" font-weight="600" class="lnk mono">welcome</text>
+            <text x="360" y="358" text-anchor="middle" font-size="12" class="mut">karta B · link id · marks · vrácený nonce · podpis</text>
+
+            <rect x="16" y="374" width="300" height="52" rx="6" fill="var(--tint)" stroke="var(--link)" stroke-width="1.25"/>
+            <text x="32" y="396" font-size="12" class="ink">A ověří welcome stejně: podpis, vrácený</text>
+            <text x="32" y="413" font-size="12" class="ink">nonce, čas, protokol, self, repo, trust</text>
+
+            <path d="M142 456H578" stroke="var(--accent)" stroke-width="1.75" fill="none" marker-start="url(#hs-arrow-a)" marker-end="url(#hs-arrow-a)"/>
+            <defs>
+              <marker id="hs-arrow-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="acc"/></marker>
+            </defs>
+            <text x="360" y="446" text-anchor="middle" font-size="13" font-weight="600" class="acc">sync každý heartbeat: marks ↔ chybějící události</text>
+            <text x="360" y="474" text-anchor="middle" font-size="12" class="mut">POST /api/v1/mesh/link/sync · jedno kolo replikuje oběma směry</text>
+          </svg>
+        </div>
+        <figcaption>Odmítnutí jsou typovaná: <code>malformed</code>, <code>oversized</code>, <code>signature</code>, <code>stale</code>, <code>replay</code>, <code>protocol_unsupported</code>, <code>self_link</code>, <code>repository_mismatch</code>, <code>untrusted</code>, <code>capacity</code>. Podpis hello nejde přehrát jako jiný druh zprávy, protože každý druh má vlastní podpisovou doménu.</figcaption>
+      </figure>
+      <p>Transport je obyčejné HTTP/1.1 bez TLS. Autenticitu zajišťuje protokol, důvěrnost musí zajistit síť: linky provozuj na privátní síti nebo v overlay jako Tailscale či WireGuard.</p>
+    </section>
+
+<section id="journal">
+      <h2>Journal a fold: jeden stav bez centrálního serveru</h2>
+      <p>Všechno kooperativní je událost journalu. Každá nese svůj stream, hustou sekvenci, Lamportův čas, identitu repa, klíč původce, tělo a podpis Ed25519 nad kanonickým JSON.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Událost</th><th>Kdy vzniká</th></tr></thead>
+        <tbody>
+          <tr><td><code>session_opened</code> / <code>session_closed</code></td><td>worker začne nebo skončí sezení (CLI <code>mesh session open</code>, MCP session)</td></tr>
+          <tr><td><code>claim_acquired</code> / <code>claim_released</code></td><td>session si vezme nebo pustí scope</td></tr>
+          <tr><td><code>handover_published</code> / <code>handover_consumed</code></td><td>handover se nabídne meshi, jiný runtime ho převezme</td></tr>
+          <tr><td><code>review_requested</code> / <code>review_answered</code></td><td>žádost o review jiného runtime a jeho verdikt</td></tr>
+        </tbody>
+      </table></div>
+      <ul>
+        <li><strong>Identita události</strong> je <code>(stream, seq)</code>.</li>
+        <li><strong>Autenticita end-to-end:</strong> relay jen přeposílá bajty, konzument ověřuje klíč původce. Relay může událost zadržet, ale nemůže ji zfalšovat ani změnit.</li>
+        <li><strong>Doručení</strong> je at-least-once, <strong>aplikace</strong> idempotentní: duplikát se započítá a nic nezmění. Exactly-once to není.</li>
+        <li><strong>Pořadí:</strong> uvnitř streamu podle sekvence (předčasná událost počká na mezeru, nejvýš 256 na stream). Napříč streamy fold řadí podle <code>(lamport, stream, seq)</code>. Pořadí doručení stav nikdy nezmění, což drží property test, který doručení permutuje a duplikuje.</li>
+        <li><strong>Dopředná kompatibilita:</strong> neznámý druh události se uloží a přepošle, ale neinterpretuje.</li>
+      </ul>
+      <h3>Compaction: journal neroste donekonečna</h3>
+      <p>Každý restart serveru je nový stream, takže journal, který by držel všechno, by rostl bez konce. Každý runtime proto každých 60 heartbeatů (při výchozích hodnotách pět minut) zkontroluje, jestli journal nepřerostl limity (20 000 událostí, 768 streamů, 48 streamů jednoho nodu), a pokud ano, zahodí streamy, které už nikdo nepotřebuje: mlčí déle než expiry plus 15 minut a nic živého na nich nevisí. Nikdy nezahodí claim, který platí, otevřenou session, handover, který se pořád nabízí (ten se drží nejvýš den), ani záznam o tom, kdo co převzal nebo zodpověděl. Notebook, který se probudí po delším spánku, peeři pošlou znovu celý a jeho platný claim zase platí.</p>
+    </section>
+
+<section id="claims">
+      <h2>Claims a leases: kdo teď drží které cesty</h2>
+      <p>Claim je scope, tedy cesty v repu, které drží session. Je buď <code>exclusive</code> (výchozí), nebo <code>advisory</code>. Lease nemá vlastní tabulku. Claim platí, dokud není uvolněný, jeho session je otevřená a beat jeho streamu stoupl v rámci expiry. Obnovuje ho heartbeat držitele a sám vyprší na každém runtime, když držitel přestane bít.</p>
+      <ul>
+        <li><strong>Přijetí:</strong> <code>mesh claim</code> odmítne exkluzivní claim, který se potká s živým exkluzivním claimem jiné session (<code>claim_conflict</code>, vyjmenuje claims, se kterými se potkal).</li>
+        <li><strong>Souběh:</strong> dva exkluzivní claimy, které vznikly tam, kde se runtimes neviděly (výpadek sítě, stejný heartbeat), se oba zapíšou. Fold na každém runtime určí stejného vítěze, nejnižší <code>(lamport, stream, seq)</code> získání, a druhý označí <code>conflicted</code>. Nikdy neplatí „poslední paket vyhrává“.</li>
+        <li><strong>Uvolnění:</strong> claim pustí jen aktuální běh držitele (<code>not_own</code> jinak). Claim mrtvého držitele místo toho vyprší.</li>
+        <li><strong>Advisory</strong> claims hlásí překryvy a nic neodmítají.</li>
+      </ul>
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 720 270" role="img" aria-label="Runtime A přestane bít v čase 10 s: link je connected do 21 s, degraded do 25 s, unreachable do 40 s a pak expired; claim vyprší ve 40 s">
+            <text x="16" y="26" font-size="14" font-weight="600" class="ink">Runtime A spadne (kill -9) v t = 10 s. Co uvidí runtime B</text>
+            <text x="16" y="74" font-size="12.5" class="ink">beat A</text>
+            <text x="16" y="134" font-size="12.5" class="ink">link na B</text>
+            <text x="16" y="194" font-size="12.5" class="ink">claim A</text>
+            <path d="M80 70H680" class="stroke" stroke-width="1"/>
+            <circle cx="80" cy="70" r="6" fill="var(--link)"/>
+            <circle cx="146.7" cy="70" r="6" fill="var(--link)"/>
+            <circle cx="213.3" cy="70" r="6" fill="var(--link)"/>
+            <text x="225" y="58" font-size="12" class="acc" font-weight="600">poslední beat, proces zabit</text>
+
+            <rect x="80" y="122" width="280" height="18" rx="3" fill="var(--good)" fill-opacity="0.25" stroke="var(--good)" stroke-width="1.25"/>
+            <rect x="360" y="122" width="53.3" height="18" rx="3" fill="var(--warn)" fill-opacity="0.25" stroke="var(--warn)" stroke-width="1.25"/>
+            <rect x="413.3" y="122" width="200" height="18" rx="3" fill="var(--bad)" fill-opacity="0.18" stroke="var(--bad)" stroke-width="1.25"/>
+            <text x="220" y="114" text-anchor="middle" font-size="12" class="ink">connected</text>
+            <text x="386.7" y="114" text-anchor="middle" font-size="12" class="ink">degraded</text>
+            <text x="513.3" y="114" text-anchor="middle" font-size="12" class="ink">unreachable</text>
+            <text x="622" y="136" font-size="12" font-weight="600" class="ink">expired</text>
+
+            <rect x="80" y="182" width="533.3" height="18" rx="3" fill="var(--accent)" fill-opacity="0.18" stroke="var(--accent)" stroke-width="1.25"/>
+            <text x="346" y="196" text-anchor="middle" font-size="12" class="ink">exkluzivní claim na apps/ platí</text>
+            <text x="622" y="196" font-size="12" font-weight="600" class="ink">B může claimnout</text>
+
+            <path d="M613.3 100V210" stroke="var(--bad)" stroke-width="1.25" stroke-dasharray="4 4" fill="none"/>
+            <path d="M80 226H680" class="edge" stroke-width="1.25"/>
+            <g font-size="11.5" class="mut" text-anchor="middle">
+              <text x="80" y="246">0 s</text><text x="146.7" y="246">5</text><text x="213.3" y="246">10</text><text x="280" y="246">15</text><text x="346.7" y="246">20</text><text x="413.3" y="246">25</text><text x="480" y="246">30</text><text x="546.7" y="246">35</text><text x="613.3" y="246">40</text><text x="680" y="246">45</text>
+            </g>
+            <g class="stroke" stroke-width="1">
+              <path d="M80 222V230M146.7 222V230M213.3 222V230M280 222V230M346.7 222V230M413.3 222V230M480 222V230M546.7 222V230M613.3 222V230M680 222V230"/>
+            </g>
+          </svg>
+        </div>
+        <figcaption>Výchozí hodnoty: heartbeat 5 s, expiry 30 s. Link je <code>connected</code>, když proběhla výměna během dvou heartbeatů plus jedné sekundy, <code>degraded</code> po nich, <code>unreachable</code> po polovině expiry a <code>expired</code> (zahozený) po celé expiry. Živost se počítá na monotónních hodinách každého runtime, nástěnné hodiny dvou strojů se nikdy neporovnávají.</figcaption>
+      </figure>
+      <div class="code"><button type="button">Kopírovat</button><pre><code>majordomus mesh session open --session s1 --client claude-code --issue '#184' --intent "refaktor CLI"
+majordomus mesh claim apps/majordomus-cli --session s1 --issue '#184'   <span class="c"># exit 10 při claim_conflict</span>
+majordomus mesh claim docs --session s1 --advisory                      <span class="c"># jen hlásí překryv</span>
+majordomus mesh release &lt;stream&gt;/&lt;claim&gt;                                <span class="c"># klíč, který vypsal mesh claim</span>
+majordomus mesh session close --session s1</code></pre></div>
+      <p>Agent v Claude Code nemusí nic z toho psát ručně. Přes MCP volá <code>majordomus_mesh_claim</code> a bez parametru <code>session</code> jedná za svou vlastní session na boardu. Majordomus dokumentace to formuluje jako pravidlo: agent si práci claimne tímto nástrojem, místo aby si vymýšlel vlastní koordinační kanál.</p>
+    </section>
+
+<section id="handovery">
+      <h2>Handovery a reviews mezi stroji</h2>
+      <p>Lokální handover (<code>majordomus handover</code>) je soubor v <code>.ai/local/state/handovers/</code>, který gitem necestuje. Mesh z něj umí udělat událost a doručit ho na jiný stroj.</p>
+      <ol class="steps">
+        <li><div><p><strong>Stroj A:</strong> napiš handover. Buď ručně se sekcemi <code># Objective</code>, <code># Current State</code> a <code># Next Action</code>, nebo <code>--derive</code> z tasku, ledgeru, gitu a posledního checkpointu.</p></div></li>
+        <li><div><p><strong>Stroj A:</strong> <code>mesh handover publish</code> vezme nejnovější záznam (nebo <code>--path</code> uvnitř adresáře handoverů, nic jiného se nečte). Z front matter převezme task, branch, HEAD a čas, z obsahu tělo, a id odvodí z digestu těla. Žádná cesta publikujícího stroje necestuje.</p></div></li>
+        <li><div><p><strong>Stroj B:</strong> <code>mesh state</code> handover vypíše. <code>mesh handover consume &lt;id&gt; --session s2</code> zaznamená převzetí a zapíše handover jako lokální záznam stejného schématu, jen jednou, bez ohledu na to, kolikrát se převezme. Jako worktree uvede <code>mesh:&lt;původní runtime&gt;</code>.</p></div></li>
+        <li><div><p><strong>Stroj B:</strong> <code>majordomus handover --resolve</code> na stejné branchi ho najde jako handover z jiného checkoutu, včetně štítku, jak daleko se git mezitím posunul.</p></div></li>
+      </ol>
+      <div class="code"><button type="button">Kopírovat</button><pre><code><span class="c"># stroj A</span>
+majordomus handover --derive
+majordomus mesh handover publish --issue '#184'
+<span class="c"># stroj B</span>
+majordomus mesh state
+majordomus mesh handover consume &lt;id&gt; --session s2
+majordomus handover --resolve
+
+<span class="c"># review napříč stroji</span>
+majordomus mesh review request feature/x --session s1 --reviewer &lt;node&gt;-&lt;runtime&gt; --scope apps/majordomus-cli
+majordomus mesh review answer &lt;stream&gt;/&lt;review&gt; --session s2 --verdict approved --note "OK"</code></pre></div>
+      <p>Verdikt review je uzavřená množina: <code>approved</code>, <code>changes_requested</code>, <code>commented</code>. Ingest handoveru z cizího stroje je opatrný: každé pole front matter musí být jednořádkové, jméno souboru se omezí na bezpečné znaky a cesta mimo adresář handoverů je odmítnuta.</p>
+    </section>
+
+<section id="stroje">
+      <h2>Napříč stroji: topologie a nastavení</h2>
+      <p>Na jednom LAN segmentu se runtimes najdou multicastem. Multicast ale nepřekročí tailnet a příchozí multicast zahodí firewall macOS. Proto existují rendezvous huby: servery repa, které poslouchají na síti, a seeds: adresy, které se vytáčejí bez ohledu na to, co slyší discovery.</p>
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 720 360" role="img" aria-label="Dva worktrees na jednom stroji sdílejí klíč; stroje na LAN se najdou multicastem; vzdálený stroj se připojí přes rendezvous hub">
+            <defs>
+              <marker id="tp-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="lnk"/></marker>
+            </defs>
+            <rect x="16" y="20" width="388" height="292" rx="8" class="zone" stroke-width="1.25"/>
+            <text x="32" y="44" font-size="13.5" font-weight="600" class="ink">LAN segment</text>
+            <text x="32" y="62" font-size="11.5" class="mut">multicast 239.255.77.77:7741, TTL 1</text>
+
+            <rect x="32" y="76" width="356" height="100" rx="6" class="box" stroke-width="1.25"/>
+            <text x="48" y="98" font-size="13.5" font-weight="600" class="ink">Laptop · klíč K1</text>
+            <rect x="48" y="112" width="156" height="48" rx="6" fill="none" stroke="var(--link)" stroke-width="1.25"/>
+            <text x="126" y="132" text-anchor="middle" font-size="12.5" font-weight="600" class="ink">worktree A</text>
+            <text x="126" y="149" text-anchor="middle" font-size="11.5" class="mut">runtime, :8741</text>
+            <rect x="216" y="112" width="156" height="48" rx="6" fill="none" stroke="var(--link)" stroke-width="1.25"/>
+            <text x="294" y="132" text-anchor="middle" font-size="12.5" font-weight="600" class="ink">worktree B</text>
+            <text x="294" y="149" text-anchor="middle" font-size="11.5" class="mut">runtime, jiný port</text>
+            <path d="M204 136H216" stroke="var(--link)" stroke-width="1.5" fill="none"/>
+
+            <rect x="32" y="212" width="356" height="88" rx="6" class="box" stroke-width="1.25"/>
+            <text x="48" y="234" font-size="13.5" font-weight="600" class="ink">Linux server · hub · klíč K2</text>
+            <text x="48" y="256" font-size="12" class="ink mono">serve --host 0.0.0.0 --port 8791</text>
+            <text x="48" y="276" font-size="11.5" class="mut">rendezvous endpoint pro ostatní segmenty</text>
+
+            <path d="M210 176V212" stroke="var(--link)" stroke-width="1.5" fill="none" marker-start="url(#tp-arrow)" marker-end="url(#tp-arrow)"/>
+            <text x="220" y="198" font-size="11.5" class="mut">multicast → handshake → link</text>
+
+            <rect x="436" y="20" width="268" height="292" rx="8" class="zone" stroke-width="1.25"/>
+            <text x="452" y="44" font-size="13.5" font-weight="600" class="ink">Jiný segment / tailnet</text>
+            <text x="452" y="62" font-size="11.5" class="mut">multicast sem nedosáhne</text>
+
+            <rect x="452" y="96" width="236" height="96" rx="6" class="box" stroke-width="1.25"/>
+            <text x="468" y="118" font-size="13.5" font-weight="600" class="ink">Druhý stroj · klíč K3</text>
+            <text x="468" y="140" font-size="12" class="ink">registruje se u hubu</text>
+            <text x="468" y="158" font-size="12" class="ink">nebo vytáčí seed:</text>
+            <text x="468" y="176" font-size="11.5" class="mut mono">seeds: [http://…:8741]</text>
+
+            <path d="M570 192V262H390" stroke="var(--link)" stroke-width="1.5" fill="none" marker-end="url(#tp-arrow)"/>
+            <text x="570" y="284" text-anchor="middle" font-size="11.5" class="mut">register, hello, sync přes HTTP</text>
+
+            <text x="16" y="340" font-size="12.5" class="ink">K1, K2 i K3 musí být v trust.allow. Cizí klíč na segmentu je vidět, ale handshake ho odmítne jako untrusted.</text>
+          </svg>
+        </div>
+        <figcaption>Dva worktrees jednoho stroje sdílejí jeho klíč, jsou to dva runtimes a propojí se jako „on sám“. Dva stroje se propojí, jen když jsou v allowlistu klíče obou. Link, který jednou vznikl, replikuje oběma směry, i když druhá strana poslouchá jen na loopbacku.</figcaption>
+      </figure>
+
+      <h3>Deklarace</h3>
+      <div class="code"><button type="button">Kopírovat</button><pre><code><span class="c"># .ai/repo/mesh/majordomus.yaml</span>
+schema: mesh/v1
+kind: mesh-declaration
+id: majordomus
+enabled: true                       <span class="c"># bez toho se neotevře nic</span>
+multicast: { enabled: true, group: 239.255.77.77, port: 7741, ttl: 1, interval_seconds: 15 }
+broadcast: { mode: disabled }
+rendezvous:
+  endpoints: [http://10.0.0.30:8791, http://100.64.0.30:8791]   <span class="c"># hub: LAN + tailnet</span>
+  interval_seconds: 30
+trust:
+  policy: deny_unknown
+  allow:                            <span class="c"># veřejné klíče z `majordomus mesh identity`</span>
+    - &lt;klíč laptopu&gt;               <span class="c"># laptop</span>
+    - &lt;klíč serveru&gt;               <span class="c"># hub</span>
+cooperation:
+  enabled: true
+  heartbeat_seconds: 5
+  expiry_seconds: 30                <span class="c"># aspoň tři heartbeaty</span>
+  seeds: []                         <span class="c"># adresy, které se vytáčejí vždy</span>
+  <span class="c"># repository: muj-projekt         # povinné pro shallow clone, odděluje fork</span></code></pre></div>
+      <p>Adresy v ukázce jsou ilustrační. V <code>trust.allow</code> jsou jen <em>veřejné</em> klíče, nic tajného do adresáře nepatří, a podpisový klíč nodu nikdy neopustí stroj, na kterém vznikl.</p>
+
+      <h3>Přidání stroje, krok za krokem</h3>
+      <ol class="steps">
+        <li><div><p>Na novém stroji vypiš jeho veřejný klíč.</p><div class="code"><button type="button">Kopírovat</button><pre><code>majordomus mesh identity</code></pre></div></div></li>
+        <li><div><p>Přidej klíč do <code>trust.allow</code> s komentářem, který stroj pojmenuje, a commitni deklaraci. Allowlist se distribuuje gitem jako každá jiná politika.</p></div></li>
+        <li><div><p>Pokud stroj není na stejném segmentu, přidej rendezvous hub nebo seed. Hub je server spuštěný s <code>--host 0.0.0.0 --port 8791</code>, jehož adresy jsou v <code>rendezvous.endpoints</code>.</p></div></li>
+        <li><div><p>Server, ke kterému se má dát připojit, musí poslouchat na síti.</p><div class="code"><button type="button">Kopírovat</button><pre><code>export MAJORDOMUS_HTTP_HOST=0.0.0.0     <span class="c"># v ~/.zshrc / ~/.bashrc, platí pro všechny servery stroje</span>
+majordomus serve --host 0.0.0.0 --port 8741 --idle 0</code></pre></div></div></li>
+        <li><div><p>Ověř předpoklady a verdikt serveru, pak spojení a konvergenci.</p><div class="code"><button type="button">Kopírovat</button><pre><code>majordomus mesh doctor     <span class="c"># declaration, identity, trust, repository, udp, multicast, runtime</span>
+majordomus mesh peers      <span class="c"># druhý stroj: connected, trusted</span>
+majordomus mesh verify     <span class="c"># živé kolo se všemi peery: ok, converged</span></code></pre></div></div></li>
+      </ol>
+      <div class="note"><p>Deklarace říká, co má běžet. Co běží, rozhoduje server, a ty dvě věci se můžou rozejít. Proto <code>mesh doctor</code> končí kontrolou <code>runtime</code>, která je verdiktem serveru: deklarace zapnutá, ale mesh neaktivní, je FAIL s důvodem. Stejný řádek dostane každá nová session do briefingu, například <code>Mesh: active — 2 of 2 provider(s) running; 2 node(s) known, 2 trusted, 2 present</code>.</p></div>
+      <p><strong>Vypnutí:</strong> commitni <code>enabled: false</code>. Server spuštěný potom neotevře nic, <code>mesh status</code> řekne proč a briefing ukáže <code>Mesh: off, as declared</code>.</p>
+    </section>
+
+<section id="prikazy">
+      <h2>Příkazy</h2>
+      <p>Každý příkaz <code>mesh</code> bere <code>--format json</code> a vypíše odpověď schopnosti beze změny. Stejné schopnosti jsou přes HTTP, MCP i Cockpit, protože všechna rozhraní jsou projekce jednoho registru.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Skupina</th><th>Příkaz</th><th>Co dělá</th></tr></thead>
+        <tbody>
+          <tr><td rowspan="4">Předpoklady</td><td><code>mesh doctor</code></td><td>předpoklady a verdikt serveru; exit 10 při selhané kontrole</td></tr>
+          <tr><td><code>mesh identity</code></td><td>veřejný klíč tohoto stroje pro <code>trust.allow</code></td></tr>
+          <tr><td><code>mesh status</code></td><td>discovery: providery, počty, odmítnutí</td></tr>
+          <tr><td><code>mesh nodes</code></td><td>discovery: řádek na node × runtime</td></tr>
+          <tr><td rowspan="5">Pohled</td><td><code>mesh peers</code></td><td>stroje → runtimes → sessions → claims a stav každého linku</td></tr>
+          <tr><td><code>mesh peer &lt;runtime&gt;</code></td><td>jeden runtime; exit 10, když je neznámý</td></tr>
+          <tr><td><code>mesh state</code></td><td>sessions, claims (held / conflicted / expired), handovery, reviews, digest</td></tr>
+          <tr><td><code>mesh events --after 0</code></td><td>journal (výchozí limit 100, nejvýš 1 000)</td></tr>
+          <tr><td><code>mesh verify</code></td><td>živé kolo se všemi vytočenými peery a konvergence; exit 10 při selhání</td></tr>
+          <tr><td rowspan="7">Akce</td><td><code>mesh session open / close</code></td><td>otevře nebo zavře session (<code>--client</code>, <code>--intent</code>, <code>--task</code>, <code>--issue</code>, <code>--branch</code>)</td></tr>
+          <tr><td><code>mesh claim &lt;scope&gt;</code></td><td>claim na cesty (<code>--advisory</code>, <code>--intent</code>, <code>--issue</code>, <code>--task</code>)</td></tr>
+          <tr><td><code>mesh release &lt;klíč&gt;</code></td><td>uvolní vlastní claim</td></tr>
+          <tr><td><code>mesh handover publish</code></td><td>nabídne lokální handover meshi</td></tr>
+          <tr><td><code>mesh handover consume &lt;id&gt;</code></td><td>převezme ho do lokálního checkoutu (<code>--no-materialize</code> jen zaznamená převzetí)</td></tr>
+          <tr><td><code>mesh review request &lt;subject&gt;</code></td><td>požádá jiný runtime o review branche, commitu nebo PR</td></tr>
+          <tr><td><code>mesh review answer &lt;klíč&gt;</code></td><td>verdikt <code>approved</code> / <code>changes_requested</code> / <code>commented</code></td></tr>
+          <tr><td rowspan="5">Souvisí</td><td><code>serve</code>, <code>serve ensure / status / stop</code></td><td>sdílený server, ve kterém board i mesh běží</td></tr>
+          <tr><td><code>handover</code>, <code>handover --resolve</code></td><td>lokální handover a jeho nalezení (i převzatého z meshe)</td></tr>
+          <tr><td><code>context</code></td><td>briefing; sekce <code>PEERS</code> ukáže, kdo jiný je připojený a čí claim se potká s tvým scope</td></tr>
+          <tr><td><code>start --scope</code>, <code>check --overlap</code></td><td>scope tasku a překryv s jinými worktrees</td></tr>
+          <tr><td><code>worktree status / topology / doctor</code></td><td>správa worktrees repa</td></tr>
+        </tbody>
+      </table></div>
+      <div class="two">
+        <div class="card">
+          <h4>HTTP (generuje se do OpenAPI)</h4>
+          <ul>
+            <li><code>GET /api/v1/mesh</code>, <code>/nodes</code>, <code>/identity</code>, <code>/doctor</code>, <code>/cooperation</code>, <code>/peers</code>, <code>/peer?runtime=</code>, <code>/state</code>, <code>/events</code></li>
+            <li><code>POST /api/v1/mesh/register</code>, <code>/verify</code>, <code>/sessions</code>, <code>/claims</code>, <code>/claims/release</code>, <code>/handovers</code>, <code>/handovers/consume</code>, <code>/reviews</code>, <code>/reviews/answer</code></li>
+            <li>protokol: <code>/link/hello</code>, <code>/link/sync</code></li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>MCP nástroje</h4>
+          <ul>
+            <li><code>majordomus_mesh</code>, <code>_nodes</code>, <code>_identity</code>, <code>_doctor</code>, <code>_peers</code>, <code>_peer</code>, <code>_state</code>, <code>_events</code>, <code>_verify</code>, <code>_cooperation</code>, <code>_register</code></li>
+            <li><code>majordomus_mesh_session_open</code> / <code>_close</code>, <code>_claim</code>, <code>_release</code>, <code>_handover_publish</code> / <code>_consume</code>, <code>_review_request</code> / <code>_answer</code></li>
+            <li>board: <code>majordomus_peers</code>, <code>majordomus_announce</code></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+<section id="bezpecnost">
+      <h2>Bezpečnost</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Hrozba</th><th>Odpověď</th></tr></thead>
+        <tbody>
+          <tr><td>podvržená advertisement, hello, welcome, sync nebo událost</td><td>Ed25519 nad kanonickými bajty v doménách podle druhu zprávy; node id se odvozuje z klíče, nikdy se nepřenáší</td></tr>
+          <tr><td>přehraný hello nebo sync</td><td>cache nonce, rostoucí čítač na linku, sekvence na instanci</td></tr>
+          <tr><td>runtime jiného repa</td><td><code>repository_mismatch</code> při handshaku, odmítnutí při ingestu</td></tr>
+          <tr><td>neznámý klíč na síti</td><td>discovery ho vidí, handshake odmítne <code>untrusted</code>, jeho přeposlané události také</td></tr>
+          <tr><td>relay, který mění nebo vymýšlí události</td><td>podpis původce selže u každého konzumenta</td></tr>
+          <tr><td>zahlcení</td><td>limity na datagramy, zprávy (900 KiB), události (48 KiB), streamy, události na node, peery a registr</td></tr>
+          <tr><td>starý peer drží scope navždy</td><td>claim žije jen, dokud beat držitele stoupá</td></tr>
+          <tr><td>webová stránka ovládá server (DNS rebinding)</td><td>požadavek měnící stav z prohlížeče se přijme jen z vlastního originu serveru, adresovaného IP literálem nebo <code>localhost</code></td></tr>
+          <tr><td>publikace libovolných souborů</td><td>publikace handoveru čte jen <code>.ai/local/state/handovers/</code></td></tr>
+        </tbody>
+      </table></div>
+      <div class="note"><p><strong>Proti čemu mesh nebrání:</strong> nic není šifrované, takže pozorovatel na síti vidí, že Majordomus běží, a u propojených peerů i záměry sessions, scopes claimů, předměty review a těla publikovaných handoverů. Držitel povoleného klíče je ten node. Kompromitovaný důvěryhodný peer může publikovat zavádějící claims a handovery pod svou identitou. Jsou mu připsané a vyprší s ním, ale do té doby se jim věří.</p></div>
+    </section>
+
+<section id="diagnostika">
+      <h2>Diagnostika</h2>
+      <ol class="steps">
+        <li><div><p><strong><code>mesh doctor</code></strong> na každém stroji. Selhaná kontrola <code>declaration</code>, <code>identity</code>, <code>trust</code>, <code>repository</code>, <code>udp</code> nebo <code>multicast</code> pojmenuje dopad a nápravu. Selhaná <code>runtime</code> znamená, že deklarace je zapnutá a mesh serveru neběží, a řekne proč.</p></div></li>
+        <li><div><p><strong><code>mesh status</code></strong> pro discovery. Žádné nody znamená, že multicast mezi stroji neprochází: deklaruj seeds nebo rendezvous. Rostoucí odmítnutí <code>signature</code> znamenají rozbitého nebo nepřátelského odesílatele. Odmítnutí <code>version</code> znamenají peera se starou verzí.</p></div></li>
+        <li><div><p><strong><code>mesh peers</code></strong> pro linky a odmítnutí. <code>repository_mismatch</code>: jiné repo, nebo shallow clone či fork s jinou identitou. <code>untrusted</code>: přidej klíč do <code>trust.allow</code>. Link zaseknutý v <code>connecting</code> s „connection refused“: peer poslouchá jen na loopbacku.</p></div></li>
+        <li><div><p><strong><code>mesh verify</code></strong>. <code>NOT converged</code> hned po dávce událostí je jedno kolo zpoždění. Trvalé, s <code>journal pending &gt; 0</code>, znamená peera, který přeposílá neúplný stream. Rozdílné digesty při konvergenci způsobuje compaction v jiném čase, nic živého se nerozešlo.</p></div></li>
+        <li><div><p><strong>Logy serveru</strong> nesou u každé události linku <code>runtime_id</code>, <code>peer</code>, <code>link_id</code>, <code>session_id</code>, <code>repository_id</code> a kód odmítnutí.</p></div></li>
+      </ol>
+    </section>
+
+<section id="zaruky">
+      <h2>Záruky a limity</h2>
+      <div class="two">
+        <div class="card yes">
+          <h4>Zaručené a testované</h4>
+          <ul>
+            <li>autentizované linky s typovanými odmítnutími</li>
+            <li>izolace repozitářů</li>
+            <li>exkluzivní claims napříč runtimes s deterministickým řešením konfliktů</li>
+            <li>živost a expirace bez shody hodin</li>
+            <li>znovupřipojení bez duplicitních peerů</li>
+            <li>konvergence přes relaye, každá událost uložená jednou</li>
+            <li>at-least-once doručení s idempotentní aplikací</li>
+            <li>handovery a reviews napříč runtimes</li>
+            <li>compaction, která nezmění nic živého</li>
+            <li>jeden stav napříč všemi rozhraními</li>
+          </ul>
+        </div>
+        <div class="card no">
+          <h4>Nezaručené</h4>
+          <ul>
+            <li>exactly-once doručení</li>
+            <li>silná konzistence a linearizovatelné claims: při rozdělení sítě si claim vezmou obě strany a konflikt se pojmenuje po spojení</li>
+            <li>důvěrnost na drátě</li>
+            <li>provoz přes WAN, NAT traversal, routovaný multicast</li>
+            <li>kompatibilita se staršími verzemi než discovery protokol 2 a link protokol 1</li>
+            <li>replikace čehokoli kromě metadat sessions, claims, handoverů a reviews; zdrojový kód vlastní git</li>
+          </ul>
+        </div>
+      </div>
+      <p>Mesh také není vzdálené spouštění: nic, co peer pošle, nic nespustí. Testuje se na pěti úrovních: unit a property testy, dva runtimes v jednom procesu, samostatné procesy <code>majordomus serve</code> přes TCP (včetně SIGKILL a restartu), síťová laboratoř se čtyřmi Linux kontejnery (partition a healing) a fyzické stroje.</p>
+    </section>
+
+<section id="overeni">
+      <h2>Ověřeno na železe</h2>
+      <p>Záznam fyzického běhu z 15. 9. 2026: MacBook Pro (Darwin arm64) a Linux server (x86_64) na jedné /24 LAN, každý s vlastním checkoutem a vlastním state adresářem. Heartbeat 2 s, expiry 10 s, klíče navzájem v allowlistu, seeds oběma směry.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Krok</th><th>Naměřeno</th></tr></thead>
+        <tbody>
+          <tr><td>discovery</td><td>Mac uslyšel Linux multicastem při prvním dotazu</td></tr>
+          <tr><td>link</td><td>Linux vytočil Mac, link connected, round trip 11 ms</td></tr>
+          <tr><td>claim</td><td>claim zapsaný na Macu platil na Linuxu o 500 ms později; překrývající exkluzivní claim z Linuxu odmítnut s 422</td></tr>
+          <tr><td>handover</td><td>handover publikovaný na Linuxu převzatý do checkoutu na Macu</td></tr>
+          <tr><td>konvergence</td><td>oba hlásili stejný digest</td></tr>
+          <tr><td>pád</td><td>server na Linuxu zabit <code>kill -9</code>; Mac po 10 s link expiroval, claim <code>expired: its runtime stopped beating</code>, scope šel claimnout</td></tr>
+          <tr><td>restart</td><td>Linux naběhl jako stejný runtime, znovu se připojil, uveden jednou s <code>restarts: 1</code></td></tr>
+          <tr><td>verify</td><td><code>mesh verify</code> prošel na obou (Linux: round trip 9 ms, converged)</td></tr>
+        </tbody>
+      </table></div>
+      <p>První pokus téhož večera selhal: krok zastavení nechal první server na Macu běžet jako sirotka; ten měl prázdný allowlist a každý link odmítal jako <code>untrusted</code>. Od té doby <code>mesh verify</code> selže, když je runtime odmítnut jako untrusted, s nekompatibilním protokolem nebo se špatným podpisem, a když deklarace jmenuje seeds a žádný peer není připojený. Dřív v takové situaci hlásil <code>ok</code>.</p>
+    </section>

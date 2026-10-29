@@ -66,7 +66,9 @@ pub const FEATURES: &[&str] = &["sessions", "claims", "handovers", "reviews"];
 /// body bound, so the protocol refuses before the transport has to.
 pub const MAX_LINK_MESSAGE: usize = 900 * 1024;
 
-/// The bytes of events one sync message carries at most; the rest follow next round.
+/// The bytes of events one sync message carries at most; the rest follow next round. Never
+/// more than [`MAX_LINK_MESSAGE`] leaves once the rest of the message is serialized: the
+/// marks of a journal at its stream bounds weigh hundreds of kilobytes (I2139).
 pub const SYNC_EVENT_BUDGET: usize = 600 * 1024;
 
 /// How far a hello's or welcome's timestamp may sit from the reader's clock.
@@ -74,6 +76,26 @@ pub const MAX_LINK_SKEW_SECONDS: u64 = super::protocol::MAX_CLOCK_SKEW_SECONDS;
 
 /// One request's bound.
 pub const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
+
+/// The largest link reply a dialer reads, as compact JSON: one message under
+/// [`MAX_LINK_MESSAGE`] inside the `{"signed":…}` of a [`LinkReply`]. The answerer builds
+/// its welcome and sync answer under [`MAX_LINK_MESSAGE`], so a reply over this is one no
+/// runtime of this protocol sends, and it is refused before a byte of it is parsed rather
+/// than read up to the HTTP client's general bound of 32 MiB (I2704). The shared server
+/// pretty-prints what it answers, and its whitespace is not counted: the dialer holds the
+/// reply without it.
+///
+/// ```
+/// use majordomus_cli::mesh::link::{MAX_LINK_MESSAGE, MAX_LINK_REPLY};
+///
+/// assert_eq!(MAX_LINK_REPLY, MAX_LINK_MESSAGE + r#"{"signed":}"#.len());
+/// ```
+pub const MAX_LINK_REPLY: usize = MAX_LINK_MESSAGE + r#"{"signed":}"#.len();
+
+/// How long a dialer waits for a whole link reply. [`REQUEST_TIMEOUT`] bounds the silence
+/// between two reads; this bounds a peer that is never silent and never done, which would
+/// otherwise hold the dialer one byte at a time for as long as it liked (I2704).
+pub const LINK_REPLY_WITHIN: Duration = Duration::from_secs(20);
 
 /// The message kinds, each its own signing domain. The domain is mixed into the bytes a
 /// signature covers, so a signature made over one kind of message cannot be presented as
@@ -435,6 +457,7 @@ impl RuntimeCard {
 ///     },
 ///     nonce: fresh_token(),
 ///     ts: 1_700_000_000,
+///     to: None,
 /// };
 /// assert_eq!(hello.nonce.len(), 32, "32 hex of fresh entropy, echoed by the welcome");
 ///
@@ -453,6 +476,13 @@ pub struct Hello {
     pub nonce: String,
     /// The dialer's clock, seconds since the Unix epoch.
     pub ts: u64,
+    /// The runtime key of the runtime this hello is addressed to, when the dialer knows it:
+    /// inside the signed bytes, so a hello captured on its way to one runtime is refused as
+    /// `misaddressed` by every other. Absent from a dialer that does not know whom it dials
+    /// (a seed, a first contact) and from releases before it existed; such a hello is still
+    /// accepted, and only an addressed one carries the protection.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub to: Option<String>,
 }
 
 /// An answerer's welcome: the mirror of the hello, plus the two things that make the link
@@ -647,6 +677,8 @@ pub enum RefusalCode {
     Capacity,
     /// The peer lacks a feature the operation needs.
     FeatureUnsupported,
+    /// A hello addressed to another runtime: captured on its way there and replayed here.
+    Misaddressed,
 }
 
 impl RefusalCode {
@@ -681,6 +713,7 @@ impl RefusalCode {
             RefusalCode::UnknownLink => "unknown_link",
             RefusalCode::Capacity => "capacity",
             RefusalCode::FeatureUnsupported => "feature_unsupported",
+            RefusalCode::Misaddressed => "misaddressed",
         }
     }
 }
@@ -858,14 +891,18 @@ pub trait LinkTransport: Send + Sync {
     fn post(&self, endpoint: &str, path: &str, message: &Signed) -> Result<LinkReply, String>;
 }
 
-/// The transport the shared server answers: plain HTTP/1.1 through the crate's one
-/// minimal client (ADR 0032: no HTTP client dependency, no TLS). A private network or an
-/// overlay provides confidentiality; the protocol provides authenticity.
+/// The transport the shared server answers: HTTP/1.1 through the crate's one minimal client
+/// (ADR 0032: no HTTP client dependency). An `https://` seed is reached over TLS with its
+/// certificate verified; anything else is cleartext, which the client sends only to a
+/// loopback, private or overlay address (ADR 0220). The protocol provides authenticity.
 ///
 /// It refuses an oversized message before opening a socket, so the bound the protocol
 /// states is enforced by the sender too and a peer is never asked to read something it
 /// would have to refuse. An endpoint may be written with or without a scheme, because a
-/// person writing a seed should not have to know which.
+/// person writing a seed should not have to know which. The reply is read the same way in
+/// reverse: at most [`MAX_LINK_REPLY`] of it is held, and all of it within
+/// [`LINK_REPLY_WITHIN`]; past either, the post fails as a transport failure that names the
+/// bound, and nothing of the reply is parsed.
 ///
 /// ```
 /// use majordomus_cli::mesh::link::{HttpTransport, LinkTransport, Signed, MAX_LINK_MESSAGE,
@@ -886,18 +923,22 @@ impl LinkTransport for HttpTransport {
                 body.len()
             ));
         }
-        let base = if endpoint.starts_with("http://") {
+        let base = if endpoint.starts_with("http://") || endpoint.starts_with("https://") {
             endpoint.to_string()
         } else {
             format!("http://{endpoint}")
         };
-        let reply = crate::mcp::bridge::request(
+        let reply = crate::mcp::bridge::request_json_within(
             &base,
             "POST",
             path,
             &[("Content-Type", "application/json")],
             Some(&body),
-            REQUEST_TIMEOUT,
+            crate::mcp::bridge::ReplyBound {
+                bytes: MAX_LINK_REPLY,
+                idle: REQUEST_TIMEOUT,
+                within: LINK_REPLY_WITHIN,
+            },
         )
         .map_err(|e| format!("{base}{path}: {e}"))?;
         if reply.status != 200 {
@@ -1036,5 +1077,26 @@ mod tests {
             .post("127.0.0.1:9", HELLO_PATH, &signed)
             .unwrap_err();
         assert!(error.contains("127.0.0.1:9"), "{error}");
+    }
+
+    /// A seed written `https://` keeps its scheme (it is not read as a host named "https"),
+    /// and a public address in cleartext is refused by the client before anything is sent.
+    #[test]
+    fn an_https_seed_keeps_its_scheme_and_a_public_cleartext_seed_is_refused() {
+        let node = NodeIdentity::ephemeral().unwrap();
+        let signed = sign(&node, Domain::Hello, serde_json::json!({}));
+        let error = HttpTransport
+            .post("https://bad..name:443", HELLO_PATH, &signed)
+            .unwrap_err();
+        assert!(error.starts_with("https://bad..name:443/"), "{error}");
+        assert!(
+            error.contains("is not a name a certificate can be checked against"),
+            "{error}"
+        );
+        let error = HttpTransport
+            .post("203.0.113.5:8742", HELLO_PATH, &signed)
+            .unwrap_err();
+        assert!(error.contains("203.0.113.5 is a public address"), "{error}");
+        assert!(error.contains("use https://203.0.113.5:8742"), "{error}");
     }
 }

@@ -1,0 +1,36 @@
+id: I2691
+milestone: development-runtime
+title: "start, check, finish and the commit and push hooks refuse a change from a session that has not joined"
+slug: work-from-a-session-that-has-not-joined-is-refused
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Make the derived state of I2690 binding: a non-trivial change from a session that is announced nowhere, or is behind the trunk by more than the policy's bound, is refused with the command that repairs it, and a read never is."
+why: "The owner, 2026-10-13, after a session worked three hours stale and unannounced in a cluster of nineteen workers: this must never happen again; it must be formalized, derived, inferred, enforced, in .ai, announced, a hard requirement, on GitHub Pages, tested, documented and on the landing page. See ADR 0226."
+current_state: "Measured on master f0696ec535 on 2026-10-13: nothing refuses a stale or unannounced session; on the owner's Mac the git hooks were not installed at all (core.hooksPath unset), and doctor said so only as six wiring failures nobody read."
+desired_state: "start, check and finish carry the join doctrine; the pre-commit and pre-push hooks run it; doctor reports a machine whose hooks are not wired as one finding with the single command that wires them; an unreachable remote, a closed mesh and a mesh with no server never refuse."
+scope:
+  - "apps/majordomus-cli/src/doctrine/"
+  - "apps/majordomus-cli/src/capability/builtin/"
+  - "lib/doctor.sh"
+  - ".githooks/"
+  - ".ai/repo/rules/project/a-session-joins-the-cluster-before-it-works.v2.md"
+non_scope:
+  - "Deriving the facts: that is I2690"
+  - "A refusal of reads, of context, of mesh or of doctor"
+depends_on:
+  - "I2690"
+acceptance_criteria:
+  - "An unannounced session's commit is refused naming the announcing command, and the same session's context and mesh peers are not"
+  - "A session behind the bound is refused at push and told to merge the trunk"
+  - "An offline machine is told the check is unverified and proceeds"
+  - "The rule is raised to blocking as version 2 with test 3004 as its decision and reviewed_because removed"
+validation:
+  - "bin/majordomus plan validate"
+  - "majordomus rules list"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3010_a_session_joins_the_cluster"
+evidence_required:
+  - "join_refusal_case_3004"
+  - "rule_v2_blocking"
+created_at: 2026-10-13
+updated_at: 2026-10-13

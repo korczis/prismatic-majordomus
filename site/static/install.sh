@@ -106,6 +106,10 @@ options:
   --prefix <DIR>        where the versioned trees go (default: \$MAJORDOMUS_PREFIX or
                         $MJ_DEFAULT_PREFIX)
   --init                run '$MJ_BINARY init' in the current directory afterwards
+  --personal            run '$MJ_BINARY init --personal' in the current directory afterwards:
+                        a layer of your own in a repository other people share. Nothing
+                        shared is changed, and the install fails unless 'git status'
+                        reads the same after it as before
   --dry-run             resolve and report; change nothing
   --force               install even when the same or a newer version is already there
   --verbose             say what is being decided, and why
@@ -127,6 +131,7 @@ USAGE
 MJ_VERBOSE=0
 MJ_DRY_RUN=0
 MJ_INIT=0
+MJ_PERSONAL=0
 MJ_FORCE=0
 MJ_INSTALLED_ANYTHING=0
 MJ_HTTP_STATUS=''
@@ -144,6 +149,7 @@ parse_arguments() {
       --prefix) [ $# -ge 2 ] || fail "--prefix needs a value"; MJ_PREFIX=$2; shift 2 ;;
       --prefix=*) MJ_PREFIX=${1#--prefix=}; shift ;;
       --init) MJ_INIT=1; shift ;;
+      --personal) MJ_INIT=1; MJ_PERSONAL=1; shift ;;
       --dry-run) MJ_DRY_RUN=1; shift ;;
       --force) MJ_FORCE=1; shift ;;
       --verbose|-v) MJ_VERBOSE=1; shift ;;
@@ -406,6 +412,14 @@ resolve_release() {
   [ "$MJ_TAG" = "v$MJ_VERSION" ] || fail "the release metadata is not usable" \
     "the tag \"$MJ_TAG\" and the version \"$MJ_VERSION\" do not agree" \
     "Metadata: $MJ_METADATA_URL"
+  # A pre-release is installed only by name. The latest release is never one, so metadata that
+  # resolves to one without being asked is a mistake upstream, not an offer (I2829).
+  case "$MJ_PINNED:$MJ_VERSION" in
+    0:*-*) fail "the release metadata is not usable" \
+             "it resolves to the pre-release $MJ_TAG, and the latest release is never a pre-release" \
+             "Install a pre-release by name: --version $MJ_TAG" \
+             "Metadata: $MJ_METADATA_URL" ;;
+  esac
 
   MJ_ARTIFACT=$(artifact_field "$MJ_TMP/release.json" "$MJ_TARGET" name)
   MJ_URL=$(artifact_field "$MJ_TMP/release.json" "$MJ_TARGET" url)
@@ -710,7 +724,12 @@ PLATFORM
   if [ -n "$current" ] && [ "$MJ_FORCE" = 0 ]; then
     if [ "$current" = "$MJ_VERSION" ]; then
       say "$MJ_BINARY v$MJ_VERSION is already installed at $MJ_INSTALL_DIR/$MJ_BINARY."
-      [ "$MJ_INIT" = 1 ] && run_init
+      # A dry run changes nothing, and initialising a repository is a change (I2942).
+      if [ "$MJ_INIT" = 1 ] && [ "$MJ_DRY_RUN" = 1 ]; then
+        say "dry run: would run $MJ_BINARY init$( [ "$MJ_PERSONAL" = 1 ] && echo ' --personal') in $(pwd); nothing was changed."
+      elif [ "$MJ_INIT" = 1 ]; then
+        run_init
+      fi
       exit 0
     fi
     if [ "$MJ_PINNED" = 0 ] && version_ge "$current" "$MJ_VERSION"; then
@@ -730,7 +749,7 @@ PLATFORM
   installed tree      $MJ_PREFIX/versions/$MJ_VERSION
   launchers           $MJ_INSTALL_DIR/$MJ_BINARY, $MJ_INSTALL_DIR/$MJ_BINARY-mcp
   already installed   ${current:-none}
-  would run init      $( [ "$MJ_INIT" = 1 ] && echo yes || echo no)
+  would run init      $( [ "$MJ_INIT" = 1 ] && { [ "$MJ_PERSONAL" = 1 ] && echo 'yes (personal)' || echo yes; } || echo no)
 REPORT
     exit 0
   fi
@@ -806,8 +825,38 @@ REPORT
   exit 0
 }
 
+# With --personal the claim is checked twice, by two programs that share nothing: init holds
+# its own result to the repository's status, and this script — which did not write the
+# layer — reads the status before and after and compares them itself. A difference is a
+# failed install, said where the person is still looking.
 run_init() {
   printf '\n' >&2
+  if [ "$MJ_PERSONAL" = 1 ]; then
+    command -v git >/dev/null 2>&1 || fail "--personal needs git, and there is none on the PATH" \
+      "$MJ_BINARY is installed at $MJ_INSTALL_DIR/$MJ_BINARY and works; nothing was initialised."
+    git rev-parse --show-toplevel >/dev/null 2>&1 || fail "--personal needs a git repository" \
+      "directory: $(pwd)" \
+      "A personal layer is kept apart through the repository's own exclude file, and there is no repository here." \
+      "$MJ_BINARY is installed at $MJ_INSTALL_DIR/$MJ_BINARY and works; nothing was initialised."
+    personal_before=$(git status --porcelain --untracked-files=all 2>/dev/null)
+    step "Running $MJ_BINARY init --personal in $(pwd) ..."
+    if "$MJ_INSTALL_DIR/$MJ_BINARY" init --personal; then
+      personal_after=$(git status --porcelain --untracked-files=all 2>/dev/null)
+      [ "$personal_before" = "$personal_after" ] || fail "the personal install changed what this repository shows" \
+        "git status read differently after '$MJ_BINARY init --personal' than before it." \
+        "See it with: git status --porcelain --untracked-files=all"
+      [ -z "$(git ls-files -- .ai 2>/dev/null)" ] || fail "the personal install left tracked files under .ai/" \
+        "See them with: git ls-files .ai"
+      printf '\nVerified (personal):\n  git status reads the same as before the install\n  nothing under .ai/ is tracked or staged\n  the cover is %s/info/exclude, which git never commits, pushes or clones\n  to propose the layer to the team later: %s init --extend --shared\n' \
+        "$(git rev-parse --git-common-dir 2>/dev/null)" "$MJ_BINARY" >&2
+      return 0
+    fi
+    code=$?
+    printf '\n%s: installation succeeded; the personal initialisation did not.\n' "$MJ_PROGRAM" >&2
+    printf '  %s is installed at %s and works.\n' "$MJ_BINARY" "$MJ_INSTALL_DIR/$MJ_BINARY" >&2
+    printf '  "%s init --personal" exited %s in %s. Read its output above.\n' "$MJ_BINARY" "$code" "$(pwd)" >&2
+    exit "$code"
+  fi
   step "Running $MJ_BINARY init in $(pwd) ..."
   if "$MJ_INSTALL_DIR/$MJ_BINARY" init; then
     return 0

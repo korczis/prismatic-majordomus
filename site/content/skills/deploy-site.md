@@ -47,7 +47,61 @@ scripts/site-deploy --probe        # add the browser probe (every route at 320, 
 projections in sync (`majordomus generate --check`), `site-build`, `site-check`. A failure
 anywhere stops before the push, with the reason; fix the source, never the output.
 
-### 3. Verify
+The site build does not compose the UI's snapshot (ADR 0141): the pages workflow writes it in a
+job of its own and its deploy job places it. A deploy from a terminal has no such job, so the
+script refuses a built site that lacks a snapshot the publication model declares
+(`scripts/pages snapshots` lists them), or carries one read at another commit, and prints the
+commands that place it (`project.the-published-ui-is-the-trunks`). After that refusal the site
+is already built and checked, so write the snapshot at this commit, copy it to its mount and
+publish what is there:
+
+```bash
+majordomus web report ui-snapshot
+mkdir -p site/public/ui && cp -R target/web/ui-snapshot/. site/public/ui/
+scripts/site-deploy --skip-build
+```
+
+### 3. Without cargo: the artifacts of the commit's Pages run
+
+The parts of a deploy that need cargo are the crate's reference and the two snapshots, and
+the Pages run of the commit already built them as the artifacts `rustdoc`, `ui-snapshot` and
+`cockpit-snapshot`. When that run produced them but did not publish (a step bound killed its
+deploy job, or the queue is too slow), do the deploy job's steps by hand with them instead of
+building from source. The operator's word is still the precondition, and so are these:
+
+- A fresh clone at the commit, with full history and tags, because the link check decides
+  commit and tag links (`scripts/pages checkout --verify` says whether it can), and `npm ci`
+  in that clone: a `node_modules` borrowed from another checkout can lack a package the build
+  loads.
+- A case-sensitive volume for the clone and for `TMPDIR`, while the UI snapshot holds two
+  paths that differ only in case (I3447): on the default case-insensitive APFS of macOS the
+  artifact does not extract whole. A sparse image formatted `Case-sensitive APFS` with
+  `hdiutil create` serves.
+
+```bash
+sha="$(git rev-parse HEAD)"
+run="$(gh run list --workflow pages.yml --commit "$sha" --limit 1 \
+  --json databaseId --jq '.[0].databaseId')"
+for a in rustdoc ui-snapshot cockpit-snapshot; do
+  gh run download "$run" -n "$a" -D "target/web/$a"
+done
+npm ci
+scripts/pages evidence --commit "$sha"     # site/data/evidence.json, as the deploy job writes it
+scripts/pages build                        # reads target/web/rustdoc; no generation, no cargo
+scripts/pages check
+scripts/pages snapshots | while IFS="$(printf '\t')" read -r id mount artifact _; do
+  [ -n "$id" ] || continue
+  mkdir -p "site/public$mount" && cp -R "$artifact/." "site/public$mount/"
+done
+scripts/site-deploy --skip-build
+```
+
+Order matters: the reference is in place before the build reads it, and the snapshots are
+placed after the check, which judges the site's own pages. `scripts/site-deploy` still
+refuses a snapshot read at another commit, so an artifact of an older run cannot go live
+under this one's name. Verify the UI and the Cockpit as well as the site (step 4).
+
+### 4. Verify
 
 GitHub serves the new branch head in about a minute. The deploy is real when the live site
 names the commit you published:
@@ -55,6 +109,11 @@ names the commit you published:
 ```bash
 curl -s https://majordomus.dev/ | grep -c "/commit/$(git rev-parse HEAD)"   # 1
 ```
+
+`scripts/pages verify-ui --commit "$(git rev-parse HEAD)"` asks the same of the UI at `/ui/`:
+its snapshot names that commit and every page it lists answers;
+`scripts/pages verify-ui --surface cockpit --commit "$(git rev-parse HEAD)"` asks it of the
+Cockpit.
 
 Then open the page you changed.
 
@@ -64,7 +123,7 @@ published it: `github-actions[bot]` for a push to master, a person for a hand de
 preview published with `--any-ref` stays live until the next push to master publishes over
 it, so a live site that is not master is expected rather than wrong.
 
-### 4. Do not
+### 5. Do not
 
 - Edit anything under `site/public/` or on `gh-pages` by hand: both are outputs. A wrong
   page is fixed in its source and redeployed.

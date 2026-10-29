@@ -122,10 +122,16 @@ jobs:
       - name: the target this artifact is for
         run: rustup target add "${{ matrix.target }}"
 
+      # The names come from the matrix the plan job has just held to the model, at the same
+      # tagged commit, and not from a debug executable built here only to be asked for them:
+      # that build was nine of the twenty-four minutes of v0.26.0's macOS Intel package, and
+      # two to five on every other runner, ahead of the release build that is the job.
       - name: package
         env:
           MAJORDOMUS_BUILD_COMMIT: ${{ github.sha }}
-        run: scripts/release-package --target "${{ matrix.target }}" --tag "${{ needs.plan.outputs.tag }}" --out dist
+        run: |
+          scripts/release-package --target "${{ matrix.target }}" --tag "${{ needs.plan.outputs.tag }}" --out dist \
+            --names-from docs/generated/distribution-matrix.json
 
       - name: verify the artifact is what the model says it is
         run: |
@@ -134,7 +140,8 @@ jobs:
           [ "${{ matrix.native }}" = "true" ] && native="--native"
           # shellcheck disable=SC2086
           scripts/release-verify --archive "dist/$artifact" \
-            --target "${{ matrix.target }}" --tag "${{ needs.plan.outputs.tag }}" $native
+            --target "${{ matrix.target }}" --tag "${{ needs.plan.outputs.tag }}" $native \
+            --names-from docs/generated/distribution-matrix.json
 
       - uses: actions/upload-artifact@v4
         with:
@@ -203,7 +210,12 @@ jobs:
               || { echo "::error::$tag exists but publishes no archive. Delete the release (gh release delete $tag) and rerun this workflow."; exit 1; }
             echo "adopted=true" >> "$GITHUB_OUTPUT"
           else
-            gh release create "$tag" --title "$tag" --generate-notes dist/*.tar.gz
+            # a tag with a pre-release part is published as a prerelease and is never GitHub's
+            # "latest": release-record derives the same channel from the tag (ADR 0172 note)
+            flags=""
+            case "$tag" in *-*) flags="--prerelease --latest=false" ;; esac
+            # shellcheck disable=SC2086
+            gh release create "$tag" --title "$tag" --generate-notes $flags dist/*.tar.gz
             echo "adopted=false" >> "$GITHUB_OUTPUT"
           fi
           ls -l dist
@@ -261,19 +273,34 @@ jobs:
       # the tree CI checks out: whatever the derivation wrote is staged first, rather than a
       # list of trees that can fall behind it — a release changes more than its own metadata;
       # the installation guide gains a row, and the site's data and content are projections
-      # of that guide. Only the downloaded artifacts are kept out; the build outputs are
-      # already ignored. A tree this refuses is not proposed: a pull request born red is one
+      # of that guide. The downloaded artifacts in dist/ and the build outputs are kept out by
+      # .gitignore, not by a pathspec: git refuses a pathspec that names an ignored path, exit
+      # 1, which is how v0.20.0 was published with no record. A tree this refuses is not proposed: a pull request born red is one
       # a person has to repair before the release can reach the site, which is the state the
       # staging above exists to prevent and this step exists to prove absent.
       - name: the proposal is what the derivation produces, judged before it is proposed
         env:
           MAJORDOMUS_BIN: ${{ github.workspace }}/apps/majordomus-cli/target/debug/majordomus
         run: |
-          git add -A -- . ':(exclude)dist'
+          git add -A -- .
           scripts/derive-check || {
             echo "::error::the record and its projections are not what scripts/derive produces from them, so the record pull request would fail generate --check; nothing was pushed. Run scripts/derive over the record and propose the result by hand."
             exit 1
           }
+
+      # The release reaches the site now, not after its record's pull request has passed a
+      # suite of an hour and a half (ADR 0131). What the installer reads is releases/latest.json
+      # and releases/<tag>.json; both are projections of the record just derived and judged
+      # above, and nothing else of the site depends on them. They go onto what gh-pages serves
+      # and nothing else does: build.json keeps naming the master commit the site was built
+      # from, so the pages-live gate still reads master. A deploy of master before the record
+      # lands keeps this release as the latest rather than taking the site back a version
+      # (scripts/site-deploy). The record's pull request follows, under the full verdict.
+      - name: the site serves this release's metadata, ahead of its record
+        env:
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        run: scripts/site-deploy --release-metadata '${{ needs.plan.outputs.tag }}'
 
       - name: propose the record and the metadata it publishes
         id: record
@@ -309,7 +336,7 @@ jobs:
           done
           url="$(gh pr create --base "${{ github.event.repository.default_branch }}" --head "$branch" \
               --title "chore(release): record ${{ needs.plan.outputs.tag }} and the metadata it publishes" \
-              --body "Written by scripts/release-record from the artifacts published for ${{ needs.plan.outputs.tag }}, with every projection regenerated by scripts/derive. Nothing here was typed. Until this merges, the published site's latest.json does not name ${{ needs.plan.outputs.tag }} and the layer holds no record for it, so majordomus release version warns about the tag." \
+              --body "Written by scripts/release-record from the artifacts published for ${{ needs.plan.outputs.tag }}, with every projection regenerated by scripts/derive. Nothing here was typed. This pull request was opened with the workflow's own token, so GitHub runs no check of its own for it until a person starts one: approve its waiting validate run, or close and reopen it (majordomus prs drain reopens it). Branch protection reads that run's ci and no other; the validate run the release dispatches on this branch is an early reading of the same tree, not the merge's verdict. Until this merges the layer holds no record for ${{ needs.plan.outputs.tag }}, so majordomus release version warns about the tag; the site already serves its metadata." \
             2>"$RUNNER_TEMP/create.err" || gh pr view "$branch" --json url --jq .url 2>/dev/null)" || {
             # Both failed: no pull request exists and none could be opened. Say why, rather
             # than exiting 1 with the reason sent to /dev/null — which is how v0.7.0's record
@@ -319,34 +346,42 @@ jobs:
             echo "::error::open it by hand (gh pr create --base ${{ github.event.repository.default_branch }} --head $branch), or allow GitHub Actions to create pull requests in the repository settings"
             exit 1
           }
-          echo "::notice::the release record is proposed in $url; the site will not name ${{ needs.plan.outputs.tag }} until it merges"
+          echo "::notice::the release record is proposed in $url; it merges on a run of its own, which starts when a person approves its waiting run or closes and reopens it (majordomus prs drain reopens it)"
           echo "record_pr=$url" >> "$GITHUB_OUTPUT"
 
-      # The record's pull request starts no check of its own.
+      # The record's pull request starts no check of its own, and this pipeline cannot start
+      # one for it.
       #
-      # It was opened with GITHUB_TOKEN, and GitHub starts no workflow from an event that
-      # token caused: the `pull_request` run it records concludes failure with no job in it.
-      # So the proposal above sat BLOCKED with an empty check rollup after v0.15.0 and again
-      # after v0.16.0, the required `ci` never reported, and each release waited for a
-      # person to close and reopen the pull request before its record could merge, with
-      # smoke failing by design the whole time. A dispatch is the one event that token may
-      # cause, so the pipeline asks for the verdict itself, on the record's branch, planned
-      # as that pull request's own run would have been (validate.yml, input plan=change).
-      # The check-runs attach to the branch's head commit, which is what the pull request
-      # and its required check read.
+      # It was opened with GITHUB_TOKEN, and GitHub runs no workflow for an event that token
+      # caused: the `pull_request` run it records concluded failure with no job in it
+      # through v0.26.0 (2026-10-14), and on v0.27.0 (2026-10-16, run 38865305333) it was
+      # created `action_required`, waiting for a person to approve it. Either way the
+      # required `ci` does not report until a person approves that run or closes and
+      # reopens the pull request (`majordomus prs drain` reopens it, I2296), and the merge
+      # waits for the run that starts.
+      #
+      # The dispatch below is not that verdict. Its check-runs land on the record's head
+      # commit, but branch protection and the pull request's check rollup read no check
+      # suite a dispatch created: v0.19.1 (#866) and v0.27.0 (#1273) were refused with
+      # `ci` green on a dispatched run at their heads, and the rollups of v0.25.0 (#1142)
+      # and v0.26.0 (#1147) list nothing although their dispatched `ci` passed (I2282).
+      # What it gives is an early reading of the record's tree, planned as the pull
+      # request's own run will be (validate.yml, input plan=change), so a red record is
+      # known before anybody starts the run that counts, and the release path
+      # (scripts/ci/release-path) holds the runners for it.
       #
       # A dispatch that cannot be started is said, with the remedy, and does not fail the
       # job: the release is published either way, and smoke must still run to say so.
-      - name: ask for the record's verdict, because its pull request starts none
+      - name: read the record's tree early; the record's verdict is its own pull request run
         if: steps.record.outputs.record_pr != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           branch="release/record-${{ needs.plan.outputs.tag }}"
           if gh workflow run validate.yml --ref "$branch" -f plan=change; then
-            echo "validate requested on $branch, planned as the change it is"
+            echo "validate requested on $branch, planned as the change it is; an early reading, not the verdict branch protection reads"
           else
-            echo "::warning::could not start validate on $branch; the record's pull request has no check until somebody closes and reopens it, or runs: gh workflow run validate.yml --ref $branch -f plan=change"
+            echo "::warning::could not start validate on $branch; the record's tree has no early reading, and its pull request's own run still waits for a person to approve it or to close and reopen the pull request. To read the tree anyway: gh workflow run validate.yml --ref $branch -f plan=change"
           fi
 
       # The step without which none of the above reaches a user.
@@ -373,6 +408,134 @@ jobs:
           gh workflow run pages.yml --ref "${{ github.event.repository.default_branch }}" \
             || { echo "::error::could not start the pages workflow; the release metadata is committed but unpublished. Start it by hand: gh workflow run pages.yml --ref ${{ github.event.repository.default_branch }}"; exit 1; }
           echo "pages requested on ${{ github.event.repository.default_branch }}"
+
+  # ------------------------------------------------------------------ image
+  # The release's deployment image, made from the release's own published executables rather
+  # than from a compile of its own. The publish job decides which bytes are the release (an
+  # existing release's assets win over this run's rebuild, which is not bit-identical), so
+  # this job reads them back from the release, holds each archive to SHA256SUMS and to the
+  # provenance attestation publish made for it, and copies the very executable a user installs
+  # into the image. The generated Dockerfile takes it through MAJORDOMUS_BINARY_FROM=release and
+  # the `release-binary` build context, and BuildKit builds only the stages the image reaches,
+  # so nothing is compiled: the image is the runtime base, the binary and the layer.
+  image:
+    needs: [plan, publish]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+      attestations: read
+    env:
+      IMAGE: ghcr.io/korczis/prismatic-majordomus
+    steps:
+      - uses: actions/checkout@v4
+        timeout-minutes: 3
+        with:
+          ref: ${{ needs.plan.outputs.tag }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      # Which archives, from the distribution model rather than from a list here: every Linux
+      # musl target, and the platform each one is for.
+      - name: the release's verified Linux executables
+        id: binaries
+        timeout-minutes: 5
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.plan.outputs.tag }}
+        run: |
+          set -eu
+          commit="$(git rev-parse HEAD)"
+          mkdir -p release-archives release-binary
+          platforms=""
+          jq -r '.include[] | select(.target | endswith("-unknown-linux-musl")) | "\(.target)\t\(.artifact)"' \
+            docs/generated/distribution-matrix.json > musl-targets.tsv
+          [ -s musl-targets.tsv ] || { echo "::error::the distribution model names no Linux musl target"; exit 1; }
+          while IFS="$(printf '\t')" read -r target artifact; do
+            archive="${artifact//\{tag\}/$TAG}"
+            case "$target" in
+              x86_64-*) arch=amd64 ;;
+              aarch64-*) arch=arm64 ;;
+              *) echo "::error::no container platform for $target"; exit 1 ;;
+            esac
+            gh release download "$TAG" -R "$GITHUB_REPOSITORY" -p "$archive" -D release-archives --clobber
+            gh attestation verify "release-archives/$archive" -R "$GITHUB_REPOSITORY" >/dev/null \
+              || { echo "::error::$archive carries no provenance attestation of this repository"; exit 1; }
+            root="${archive%.tar.gz}"
+            tar -xzf "release-archives/$archive" -C release-archives "$root/libexec/majordomus-cli" "$root/RELEASE.json"
+            built="$(jq -r .commit "release-archives/$root/RELEASE.json")"
+            [ "$built" = "$commit" ] || { echo "::error::$archive was built from $built, the tag is $commit"; exit 1; }
+            install -m 0755 "release-archives/$root/libexec/majordomus-cli" "release-binary/majordomus-$arch"
+            platforms="${platforms:+$platforms,}linux/$arch"
+            echo "$archive -> linux/$arch ($(sha256sum "release-binary/majordomus-$arch" | cut -c1-16))"
+          done < musl-targets.tsv
+          gh release download "$TAG" -R "$GITHUB_REPOSITORY" -p SHA256SUMS -D release-archives --clobber
+          ( cd release-archives && grep -- '-unknown-linux-musl\.tar\.gz$' SHA256SUMS | sha256sum -c - ) \
+            || { echo "::error::an archive does not match the release's SHA256SUMS"; exit 1; }
+          { echo "commit=$commit"; echo "platforms=$platforms"; } >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-qemu-action@v3
+        timeout-minutes: 3
+      - uses: docker/setup-buildx-action@v3
+        timeout-minutes: 3
+      - uses: docker/login-action@v3
+        timeout-minutes: 2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      # The runner's own platform first, loaded, so the smoke runs the image that is pushed.
+      - name: the image, from the release's executable (no compile)
+        timeout-minutes: 5
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile
+          load: true
+          platforms: linux/amd64
+          tags: ${{ env.IMAGE }}:${{ needs.plan.outputs.tag }}
+          build-args: MAJORDOMUS_BINARY_FROM=release
+          build-contexts: release-binary=release-binary
+
+      - name: the image runs the release
+        timeout-minutes: 3
+        uses: ./.github/actions/image-smoke
+        with:
+          image: ${{ env.IMAGE }}:${{ needs.plan.outputs.tag }}
+          commit: ${{ steps.binaries.outputs.commit }}
+
+      - name: publish the release image for every platform the release ships
+        id: publish
+        timeout-minutes: 10
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile
+          push: true
+          platforms: ${{ steps.binaries.outputs.platforms }}
+          tags: ${{ env.IMAGE }}:${{ needs.plan.outputs.tag }}
+          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          build-args: MAJORDOMUS_BINARY_FROM=release
+          build-contexts: release-binary=release-binary
+          provenance: mode=max
+          sbom: true
+
+      - name: summary
+        if: always()
+        timeout-minutes: 1
+        env:
+          REF: ${{ env.IMAGE }}:${{ needs.plan.outputs.tag }}
+          DIGEST: ${{ steps.publish.outputs.digest }}
+          PLATFORMS: ${{ steps.binaries.outputs.platforms }}
+        run: |
+          {
+            echo "### release image"
+            if [ -n "$DIGEST" ]; then echo "- published: \`$REF@$DIGEST\` ($PLATFORMS)"
+            else echo "- published: no"; fi
+            echo "- executable: the release's own musl archives, checksummed and attested"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   # ------------------------------------------------------------------ smoke
   # The published installer, from its published URL, installing the release that was just
@@ -404,41 +567,34 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RECORD_PR: ${{ needs.publish.outputs.record_pr }}
         run: |
-          # The record now reaches the default branch through review, so there is a window in
-          # which the release is published and its metadata is not. Waiting sixty times for a
-          # file that a human has not merged yet is not a smoke test, it is a timeout wearing
-          # one — so the wait does not begin while the record is still a proposal. Nor does
-          # the step pass: it used to exit 0 here with a notice, and the next step then failed
-          # inside the installer with a message about a download, not about the unmerged pull
-          # request that was the whole cause. So the step fails, and names what to merge.
-          tag='${{ needs.plan.outputs.tag }}'
-          record=".ai/repo/releases/$tag.yaml"
-          branch='${{ github.event.repository.default_branch }}'
-          rc=0
-          answer="$(gh api "repos/${{ github.repository }}/contents/$record?ref=$branch" 2>&1 >/dev/null)" || rc=$?
-          if [ "$rc" != 0 ]; then
-            case "$answer" in
-              *'HTTP 404'*)
-                pr="${RECORD_PR:-the pull request from release/record-$tag (${{ github.server_url }}/${{ github.repository }}/pulls?q=is%3Apr+head%3Arelease%2Frecord-$tag)}"
-                echo "::error::$tag is published, but $record is not on $branch: its record is still a proposal, so the site cannot name it and the installer cannot install it. Merge $pr, then re-run this job; its wait gives Pages fifteen minutes to publish the metadata."
-                ;;
-              *)
-                # a question that could not be asked is not an answer that the record is absent
-                echo "::error::could not ask whether $record is on $branch, so this release was not smoked: $(printf '%s' "$answer" | tr '\n' ' ')"
-                ;;
-            esac
-            exit 1
-          fi
+          # The publish job put this release's metadata on the site itself, ahead of its record
+          # (ADR 0131), so the wait no longer begins with the record being on the default
+          # branch: until 2026-10-10 it did, and it failed every release whose record was still
+          # a proposal, which was every release. What is waited on is what the installer reads.
           base="$(sed -n 's/.*"installer_url": "\([^"]*\)".*/\1/p' site/data/registry/distribution.json | head -n 1)"
           base="${base%/install.sh}"
           url="$(sed -n 's/.*"latest_url": "\([^"]*\)".*/\1/p' site/data/registry/distribution.json | head -n 1)"
           tag='${{ needs.plan.outputs.tag }}'
+          # A pre-release is never the latest release (I2829): its own tag file is waited on
+          # and, once served, latest.json must name another release. The pattern is the one
+          # scripts/site-deploy publishes by.
+          latest="$url"
+          if printf '%s\n' "$tag" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+-(alpha|beta|rc)\.[0-9]+$'; then
+            url="${url%latest.json}$tag.json"
+          fi
           echo "waiting for  $url"
           echo "to name      $tag"
           for attempt in $(seq 1 60); do
             if curl -fsSL --max-time 60 "$url" 2>/dev/null | grep -q "\"tag\": \"$tag\""; then
               echo "the site publishes $tag after $attempt attempt(s)"
               echo "site built from  $(curl -fsSL --max-time 60 "$base/build.json" 2>/dev/null | sed -n 's/.*"commit": "\([^"]*\)".*/\1/p' | head -n 1)"
+              if [ "$url" != "$latest" ] && latest_tag="$(curl -fsSL --max-time 60 "$latest" 2>/dev/null | sed -n 's/.*"tag": "\([^" ]*\)".*/\1/p' | head -n 1)"; then
+                case "$latest_tag" in
+                  *-alpha.[0-9]*|*-beta.[0-9]*|*-rc.[0-9]*)
+                    echo "::error::$latest names the pre-release $latest_tag; a pre-release is never the latest release"
+                    exit 1 ;;
+                esac
+              fi
               exit 0
             fi
             sleep 15
@@ -449,28 +605,17 @@ jobs:
             echo "body      $(curl -fsSL --max-time 60 "$url" 2>/dev/null | head -c 400)"
             echo "site is built from commit $(curl -fsSL --max-time 60 "$base/build.json" 2>/dev/null | sed -n 's/.*"commit": "\([^"]*\)".*/\1/p' | head -n 1)"
             echo "reproduce: curl -fsSL $url"
-            echo "the record was committed to the default branch; if that commit is on the branch"
-            echo "and Pages has run since, the pages workflow is where this failed."
+            echo "the publish job puts the metadata on gh-pages (scripts/site-deploy --release-metadata);"
+            echo "if its step passed, GitHub's own Pages build of gh-pages is where this failed."
+            echo "the record itself: ${RECORD_PR:-the pull request from release/record-$tag}"
           } >&2
           echo "::error::$url still does not name $tag after 15 minutes"
           exit 1
 
-      - name: install the published release with the published installer
-        run: |
-          installer="$(sed -n 's/.*"installer_url": "\([^"]*\)".*/\1/p' site/data/registry/distribution.json | head -n 1)"
-          curl -fsSL --max-time 120 "$installer" | sh -s -- --version "${{ needs.plan.outputs.tag }}"
-
-      - name: the installed tool is the release that was published
-        run: |
-          export PATH="$HOME/.local/bin:$PATH"
-          majordomus --version
-          [ "$(majordomus version)" = "majordomus ${{ needs.plan.outputs.version }}" ]
-          majordomus-mcp --help >/dev/null 2>&1 || true
-
-      - name: and it initialises a repository that has none
-        run: |
-          export PATH="$HOME/.local/bin:$PATH"
-          mkdir -p "$RUNNER_TEMP/smoke" && cd "$RUNNER_TEMP/smoke"
-          git init -q .
-          majordomus init
-          test -f .ai/repo/policy.yaml
+      # The published installer installs the published tag, and the installed tool does what
+      # a client configuration asks of it: it initialises a repository that is not this one
+      # and serves it over the shared server, ready and naming that repository (I2162). One
+      # gate, scripts/ci/install-check, measures this for a person, for the nightly run and
+      # here; --expect pins it to this tag, and nothing in this job swallows a failure.
+      - name: the published release installs, initialises and serves a foreign repository
+        run: scripts/ci/install-check --expect "${{ needs.plan.outputs.tag }}"

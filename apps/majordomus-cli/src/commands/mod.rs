@@ -30,6 +30,8 @@
 //! ```
 
 pub(crate) mod bench;
+pub(crate) mod blackboard;
+pub(crate) mod brief;
 pub(crate) mod capabilities;
 pub(crate) mod command_graph;
 pub(crate) mod commit;
@@ -38,6 +40,7 @@ pub(crate) mod continuity;
 pub(crate) mod convergence;
 pub(crate) mod dashboard;
 pub(crate) mod delivery;
+pub(crate) mod deploy;
 pub(crate) mod devcontext;
 pub(crate) mod devtask;
 pub(crate) mod distribution;
@@ -48,12 +51,17 @@ pub(crate) mod evidence;
 pub(crate) mod executions;
 pub(crate) mod fleet;
 pub(crate) mod generate;
+pub(crate) mod guard;
 pub(crate) mod intent;
 pub(crate) mod knowledge;
+mod layout;
 pub(crate) mod mcp;
 pub(crate) mod mesh;
 pub(crate) mod models;
+pub(crate) mod monitor;
+pub(crate) mod offload;
 pub(crate) mod pack;
+pub(crate) mod plan;
 pub(crate) mod product;
 pub(crate) mod prs;
 pub(crate) mod quality;
@@ -65,6 +73,7 @@ pub(crate) mod serve;
 pub(crate) mod served;
 pub(crate) mod shell;
 pub(crate) mod skills;
+pub(crate) mod ui;
 pub(crate) mod web;
 pub(crate) mod why;
 pub(crate) mod worktree;
@@ -77,6 +86,7 @@ pub fn run(cli: Cli) -> Result<u8> {
     match cli.command {
         Command::Mcp(args) => mcp::run(args),
         Command::Serve(args) => serve::run(args),
+        Command::Ui(args) => ui::run(args),
         Command::Capabilities(args) => capabilities::run(args),
         Command::Generate(args) => generate::run(args),
         Command::Bench(args) => bench::run(args),
@@ -90,6 +100,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Completion(args) => completion::run(args),
         Command::Worktree(args) => worktree::run(args),
         Command::Prs(args) => prs::run(args),
+        Command::Offload(args) => offload::run(args),
         Command::Convergence(args) => convergence::run(args),
         Command::Commit(args) => commit::run(args),
         Command::Product(args) => product::run(args),
@@ -98,19 +109,26 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Run(args) => executions::run(args),
         Command::Executions(args) => executions::executions(args),
         Command::Devcontext(args) => devcontext::run(args),
+        Command::Guard(args) => guard::run(args),
         Command::Mesh(args) => mesh::run(args),
+        Command::Monitor(args) => monitor::run(args),
         Command::Models(args) => models::run(args),
         Command::Reasoning(args) => reasoning::run(args),
         Command::Evidence(args) => evidence::run(args),
         Command::Served(args) => served::run(args),
+        Command::Deploy(args) => deploy::run(args),
         Command::Rules(args) => rules::run(args),
         Command::Intent(args) => intent::run(args),
         Command::Delivery(args) => delivery::run(args),
+        Command::Plan(args) => plan::run(args),
         Command::Economics(args) => economics::run(args),
         Command::Entity(args) => entity::run(args),
         Command::Shell(args) => shell::run(args),
+        Command::Layout(args) => layout::run(args),
         Command::Pack(args) => pack::run(args),
         Command::Dashboard(args) => dashboard::run(args),
+        Command::Brief(args) => brief::run(args),
+        Command::Blackboard(args) => blackboard::run(args),
         Command::Skills(args) => skills::run(args),
         Command::Knowledge(args) => knowledge::run(args),
         Command::Continuity(args) => continuity::run(args),
@@ -132,6 +150,9 @@ mod tests {
         type Case = (&'static [&'static str], fn(&Command) -> bool);
         let cases: &[Case] = &[
             (&["majordomus", "mcp"], |c| matches!(c, Command::Mcp(_))),
+            (&["majordomus", "monitor", "--follow"], |c| {
+                matches!(c, Command::Monitor(_))
+            }),
             (&["majordomus", "serve"], |c| matches!(c, Command::Serve(_))),
             (&["majordomus", "serve", "status"], |c| {
                 matches!(c, Command::Serve(_))
@@ -178,6 +199,12 @@ mod tests {
             }),
             (&["majordomus", "dashboard", "overview"], |c| {
                 matches!(c, Command::Dashboard(_))
+            }),
+            (&["majordomus", "brief", "--line"], |c| {
+                matches!(c, Command::Brief(_))
+            }),
+            (&["majordomus", "blackboard", "--this-checkout"], |c| {
+                matches!(c, Command::Blackboard(_))
             }),
             (
                 &["majordomus", "devcontext", "compile", "--issue", "I1"],

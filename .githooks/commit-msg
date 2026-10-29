@@ -1,5 +1,11 @@
 #!/bin/sh
 # install once: git config core.hooksPath .githooks
+# A hook never starts a build of the executable (I3831, ADR 0224): when it is missing or stale,
+# bin/majordomus-cli answers through the installed release of this tree's generation, or
+# refuses with exit 12 naming `just build`, and so does this hook. Every check below runs and
+# refuses as before.
+# majordomus-on-stale-executable: fallback, else refuse
+MAJORDOMUS_HOOK=1; export MAJORDOMUS_HOOK
 #
 # The commit policy, at the one moment the whole of its evidence exists: the message has
 # been written and the files are staged, so a `fix` with no test among them can be noticed

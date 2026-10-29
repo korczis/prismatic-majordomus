@@ -1,0 +1,46 @@
+id: I2812
+milestone: idd-workspace
+title: "The IDD loop is accepted end to end in a real browser on one commit"
+slug: the-idd-loop-is-accepted-end-to-end
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Add case 3220: on a fixture repository and a real server, a real browser picks a test intent in /ui/idd, reads its issues and the dependency between them, starts an issue from its move form, sees the row change without the test reloading, writes and commits the work, runs the issue's own check as a real test and records its command and result as evidence, verifies the issue from a second tab while the first shows it without navigating, marks it done, and reads the standing panel's explanation and the issue page's evidence; the recorded command, run again, gives the recorded result. No feature is added."
+why: "The owner's acceptance for v1.0.0-alpha.1 is the IDD loop walked once, on one exact commit, in CI: the pieces each have their own tests, and nothing proved that they make one loop a person can walk."
+serves:
+  - the-owner-directs-work-from-the-ui#the-loop-is-walked-end-to-end
+current_state: "Each step of the loop is tested on its own (ui_idd, ui_idd_moves, ui_idd_live, ui_idd_evidence); none walks them together in a browser."
+desired_state: "One case walks the whole loop in a real browser in the suite, and fails under CI when no browser runs it."
+scope:
+  - "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
+  - ".github/workflows/validate.yml"
+  - ".ai/repo/ci/gates.yaml"
+  - ".ai/repo/project"
+  - "docs"
+  - "site"
+depends_on:
+  - "I2789"
+acceptance_criteria:
+  - "The case walks pick, read, move, test, live, done, explained, evidence and reproduced, each step printed, and fails naming the step that did not happen"
+  - "Under CI=true a missing browser fails the case"
+validation:
+  - "majordomus plan validate"
+  - "bash test/run.sh 3220_the_idd_loop_is_walked_in_a_browser"
+evidence_required:
+  - "idd_loop_case"
+created_at: 2026-10-17
+updated_at: 2026-10-19T10:00:01Z
+started_at: 2026-10-19T09:59:34Z
+started_event: sha256:e496c17c98a111878353da66c0f1bc5e4bc315dab83f99bb19934c24b499a4d4
+verified_at: 2026-10-19T09:59:50Z
+verified_event: sha256:6f7ef722bc9b04d3190e403004dcebc57abadfc11bd5939584942428369c4e92
+completed_at: 2026-10-19T10:00:01Z
+completed_event: sha256:ec7ceaf990ab8abd3e9682e4dbe9dc79548be5ed0ec2685d0c59a12ecdf35e43
+evidence:
+  - covers: idd_loop_case
+    type: ci
+    command: "gh run view --job 117706042728 --log"
+    result: "ok 3220_the_idd_loop_is_walked_in_a_browser in the ui job (--runs-in ui) of validate run 39137437606 on 2dfff96988a, the v0.30.0 top carrying I2812's merge 627eae88290"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39137437606"
+    commit: dd4c0a87cba408222033c89f002ab2d63f48574c
+    recorded_at: 2026-10-19T09:59:45Z

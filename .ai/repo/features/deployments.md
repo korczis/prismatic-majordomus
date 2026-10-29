@@ -2,10 +2,10 @@
 schema: feature/v1
 id: deployments
 kind: feature
-title: A deployment is one canonical object, and every provider artifact is generated from it
+title: A deployment is one canonical object, and every artifact built from it is generated from it
 short_title: Deployments
-headline: The port, the routes, the resources and the build inputs of a hosted executable are stated once, and the container definition and the provider configuration are projections that cannot drift from it.
-summary: One deployment object per hosted instance of the executable, validated against the registry this process built; the container image definition, the provider configuration and the smoke expectations are generated from it and checked for drift.
+headline: The port, the routes and the build inputs of the executable's container image are stated once, and the image definition and its ignore file are projections that cannot drift from it.
+summary: One deployment object per deployment of the executable, validated against the registry this process built; the container image definition, its ignore file and the files of the provider it names are generated from it and checked for drift.
 status: draft
 weight: 200
 domain: surfaces
@@ -32,5 +32,10 @@ published and linked — every dimension computed, and unknown never a pass (ADR
 
 ## What it does not do
 
-Nothing is deployed by this repository yet; the objects describe what a deployment would
-be, and the milestone that hosts one is on the roadmap.
+It does not deploy. A deployment object may name the provider that hosts it (ADR 0219;
+this repository's names Gigalixir), and `majordomus generate deployment` renders that
+provider's files under `deploy/<provider>/` — for Gigalixir the Procfile and the inline
+buildpack's hooks — but nothing here pushes to the provider, holds its credential or
+contacts it; assembling and publishing the slug is a workflow's, and observing what it
+serves is `served.observe`'s. A provider the contract does not know is refused (Fly.io was
+named once, never ran, and stays no target since 2026-10-12).

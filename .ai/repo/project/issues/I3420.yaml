@@ -1,0 +1,37 @@
+id: I3420
+milestone: an-inference-names-its-source-and-budget
+title: "A mesh peer asked for critique receives the question and its evidence, and its answer is recorded with the session that gave it"
+slug: peer-critique-carries-the-evidence
+priority: p2
+profile: implementation
+objective: "Have the mesh-review adapter send the bounded, scrubbed question the driver built as the review request body, within the mesh's body bound. The question holds the hypothesis and prior opinions marked as opinions, the evidence references and the request for a falsifier. Return the answering session as the consultation's source."
+why: "The owner's 2026-10-19 Cognitive Fabric pack asks peer critique to reuse the mesh review request (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/04_REASONING_MESH.md). contracts/ECONOMICS.md reserves peer critique for the highest materiality, which a subject line cannot serve."
+current_state: "scripts/lib/advisors/mesh-review.mjs:31-35 posts only subject and reviewer, while docs/MESH.md:376 admits a request body of up to 8 KiB. The answer carries session, verdict and note (apps/majordomus-cli/src/mesh/state.rs:406-413), and the adapter returns only conclusion and stance (mesh-review.mjs:44-50)."
+desired_state: "The request body is the prompt cut to the mesh bound, with a marker when it is cut. The consultation carries the answering session. changes_requested maps to opposes, as today."
+scope:
+  - "scripts/lib/advisors/mesh-review.mjs"
+  - "scripts/lib/advisors/contract.test.mjs"
+  - "apps/majordomus-cli/tests/reasoning_mesh.rs"
+  - "docs/REASONING.md"
+non_scope:
+  - "Replacing the 2 s poll with the pushed channel (unmerged on feature/the-blackboard-is-pushed)"
+  - "Executing anything on the peer"
+  - "A new mesh event kind"
+depends_on:
+  - "I3418"
+serves:
+  - "a-change-reconciles-what-it-affects#an-inference-names-its-source"
+acceptance_criteria:
+  - "The review request a peer reads holds the question's evidence references and the opinion markers"
+  - "A prompt longer than the body bound is cut with a visible marker, and the request is still admitted"
+  - "The recorded consultation names the answering session"
+  - "reasoning_mesh's absence half still decides locally"
+validation:
+  - "node --test scripts/lib/advisors/contract.test.mjs"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test reasoning_mesh"
+  - "bash test/run.sh 731_advisor_transport_contract"
+evidence_required:
+  - "contract test of the peer request body"
+  - "reasoning_mesh assertion on the replicated body"
+created_at: 2026-10-19
+updated_at: 2026-10-19

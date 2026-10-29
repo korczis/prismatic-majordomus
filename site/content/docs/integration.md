@@ -1,7 +1,7 @@
 +++
 title = "Pull-request integration"
 description = "pull-request integration: every open pull request classified against the current master with its evidence, the fourteen dispositions, the deterministic rank, one merge at a time with a re-plan after each, refreshing a branch, the cleanup threshold, the lease and the audit trail (ADR 0101)"
-weight = 53
+weight = 58
 [extra]
 source = "docs/INTEGRATION.md"
 +++
@@ -12,6 +12,24 @@ Majordomus does not merge a list of pull requests. It integrates the next provab
 change into the current master, verifies that it landed, discards what it assumed, and
 decides again from what is there now. The decision is recorded in ADR 0101, the rule is
 `project.integration-follows-the-current-master`, and the code is `crate::integration`.
+
+## The model in force
+
+That is the executor. Who lands, how much at once and how often is decided by the owner, and
+the decision of 2026-10-16 is
+[rule `project.the-cooperation-model-is-the-owners-word`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md)
+and [ADR 0167](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md).
+The rule is the one record of the seats, the scope each one claims on the mesh and what each
+does, and this document does not copy it: the site renders the rule and the decision from
+those files, so they cannot drift from what is read here. Who holds each seat now is drawn
+by the Mesh screen of the UI (`/ui/mesh`) from the live claims.
+
+What the decision changes here is the lander's unit of work, not the executor. `prs drain`
+below still takes one ready pull request at a time and never passes `--admin`; a combined top
+is the landing seat's own act, the batch ADR 0101 left to a person and the owner has now
+chosen. Everything else this document says of a decision still holds for a top: it is taken
+against the current master and the heads it names, its evidence is recorded, and no check is
+bypassed.
 
 ## The pipeline
 
@@ -49,6 +67,17 @@ that range, because a merge's resolution has no patch to compare, nor a clean me
 changes authored paths: there master lacks something the head carries, such as a landed change
 that master has reverted since.
 
+A head that does not contain master is not always behind it. The relation is `carries_master`
+when two things hold: its merge into master is clean and writes the head's own tree, and every
+commit master has and the head lacks is a merge commit. Master then holds nothing the head
+lacks. That is a pull request built on another one's head, once the other has landed (see *A
+train* below). No path is merged in such a merge, so no driver decides one and the forge's
+merge writes the same tree. The second half is there because derived output is composed from
+history as well as from files: the changelog lists every commit that is not a merge, so a
+master that took a change and reverted it has the tree it had and two commits no changelog on
+the head ever listed. One change on master that the head never saw, authored or derived, or
+one commit of master's own that is not a merge, and the head is `behind`.
+
 ## Dispositions
 
 Every open pull request has exactly one. They are decided in the order below, so an earlier
@@ -76,9 +105,9 @@ answer wins. `ready` is reached only after every other question is answered in i
 | `blocked` | held | the repository's settings allow no merge commit (see the merge method below) | allow merge commits |
 | `waiting_for_review` | waiting | a required review is missing or changes were requested (see below) | a reviewer |
 | `needs_repair` | repair | a required check failed on its head, or it is behind master from a fork | the author |
-| `needs_refresh` | waiting | merges cleanly but does not contain master | `prs drain --refresh`, or `prs repair <n> --apply` for one |
-| `waiting_for_checks` | waiting | contains master; a required check is pending or missing on this head | wait |
-| `ready` | ready | contains master, and every required check passed on this head | `prs drain` |
+| `needs_refresh` | waiting | merges cleanly, and neither contains master nor carries it | `prs drain --refresh`, or `prs repair <n> --apply` for one |
+| `waiting_for_checks` | waiting | contains or carries master; a required check is pending or missing on this head | wait |
+| `ready` | ready | contains or carries master, and every required check passed on this head | `prs drain` |
 
 </div>
 
@@ -123,11 +152,11 @@ The order above is a list of gates, and every gate is asked whatever the others 
 | `auto_merge` | the forge has no auto-merge armed on it | `auto_merge_armed` |
 | `supersession` | its cross-references were read whole, and no authorised successor is open, landed, merged elsewhere or unread | `declarations_unread`, then `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, one per successor |
 | `relation_to_master` | its merge is clean and changes something | `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT` |
-| `merge_method` | the repository allows a merge commit | `merge_commit_not_allowed` |
+| `merge_method` | the repository allows a merge commit | `merge_commit_not_allowed`, or `merge_settings_unread` |
 | `dependency` | every declared dependency landed | `depends_on:#N`, one per open dependency |
 | `review` | the review policy is satisfied on the head | `review:STATE`, or `review_policy_unread` |
 | `no_failing_check` | no required check failed | `required_check_failed` |
-| `freshness` | the head contains master | `behind_master:COMMITS`, with `fork_head` for a fork |
+| `freshness` | the head contains master, or carries it: merging it writes the head's own tree and it lacks only merge commits | `behind_master:COMMITS`, with `fork_head` for a fork |
 | `required_checks` | every required check passed | `required_checks:STATE` (`pending`, `missing`, or `unknown` when a check run of an app-bound context names no app), `no_required_checks`, `required_checks_unread` |
 
 </div>
@@ -179,7 +208,11 @@ copy. No other list of labels exists. A label is compared case-insensitively.
 </div>
 
 
-`hold` makes the pull request `blocked`, with `label:NAME`. `obsolete` makes it `obsolete`,
+`hold` makes the pull request `blocked`, with `label:NAME`, until every commit of its head is
+on master: a hold has nothing left to hold then, and the relation to master decides, so a member
+a landed train carried is `redundant` (`head_reachable_from_master`). The executor closes
+nothing on that account; `prs cleanup --apply` does, when a person asks (I3910).
+`obsolete` makes it `obsolete`,
 with `label_obsolete:NAME` in the forge's spelling (owner decision D3): a person's mark is the
 only evidence that reaches the word — age, shared paths and a similar title never do — and it
 is never closed automatically. A pull request carrying both is `obsolete`, since a person acts
@@ -195,13 +228,18 @@ on its own once its own conditions hold, outside the executor and against whatev
 then, and refreshing it would only hand the forge a head to merge. Nothing acts on it until a
 person disarms it, and the queue lists every such pull request in a diagnostic.
 
-The executor merges only with a merge commit, because the derived-file driver resolves merges
+The executor lands a head that contains master by a fast-forward (see *One merge at a time*),
+and merges only with a merge commit otherwise, because the derived-file driver resolves merges
 and a squash or a rebase would replay commits it never saw. The merge method
 (`policy.merge_method`) is `merge` when the repository's settings allow a merge commit
 (`allow_merge_commit`, read with `gh api repos/OWNER/NAME`), and none otherwise. With none,
 every pull request the relation to master does not already decide is `blocked` with
-`merge_commit_not_allowed` and `repository_settings` evidence, and the queue says why. The
-executor never falls back to a squash or a rebase. The `merge_method` gate comes after
+`merge_commit_not_allowed` and `repository_settings` evidence, and the queue says why. When
+the forge's answer carries none of the merge settings — a token that may not read them gets
+the repository without them, as the Pages workflow's does — nothing is known: the policy says
+`merge_settings_unread`, such a pull request is `unknown` with `merge_settings_unread`, and
+the queue says the settings could not be read, never that the repository allows nothing
+(I2966). The executor never falls back to a squash or a rebase. The `merge_method` gate comes after
 `relation_to_master` because closing work that is already on master does not depend on the
 merge setting: a `redundant` pull request stays `redundant`, lists
 `merge_commit_not_allowed` after its own reason, and `prs cleanup --apply` still closes it. So
@@ -462,13 +500,51 @@ executor first sees the pull request as actionable, not when the forge was first
 3. observe again and rebuild the queue;
 4. act only if the second decision names the same master and head and still says `ready`,
    and otherwise record `stale_decision` and start again;
-5. merge with a merge commit (`--merge`) and `--match-head-commit <head>`, never `--admin`,
-   a squash or a rebase;
-6. verify that the forge shows it merged and that the fetched master contains its head;
-7. record the merge with the master before and after.
+5. land it: a head that contains master by a non-forced fast-forward of master to that head
+   (`gh api -X PATCH repos/OWNER/NAME/git/refs/heads/master -f sha=<head> -F force=false`),
+   and only a head that carries master without containing it by a merge commit (`--merge`,
+   `--match-head-commit <head>`); never `--admin`, a force, a squash or a rebase;
+6. verify that the forge shows it merged and that the fetched master is what was decided:
+   after a fast-forward master is the head itself and contains the master decided against,
+   after a merge master's first-parent successor of that master merges the head;
+7. record the landing with the master before and after, its method (`merge_attempted` says
+   `--fast-forward` or `--merge`) and the commit master became.
 
-A merge moves every other pull request behind master, so the next step always starts from a
+The act is a fast-forward because the owner decided so on 2026-10-22 (I3910). Branch
+protection here does not require a branch to be up to date (`strict: false`), so a merge commit
+pinned only to the head can land onto a master that moved after the decision, and two executors
+could each land one, the second with a tree nobody judged; only the parent check afterwards
+would see it. A non-forced ref update is a compare-and-swap the forge enforces: it is refused
+(HTTP 422, "Update is not a fast forward") unless master is still an ancestor of the head, so
+master always holds exactly the tree the checks judged. That refusal is not an unverified
+landing: it is recorded as `merge_failed` of class `stale`, the drain goes on, and the next step
+observes again and decides from the new master. The forge marks the pull request whose head
+master became as merged by itself. A head that does not contain master is landed by a merge
+commit only when it carries master (the `carries_master` link of a train whose lower link
+landed by a merge); that is rare, since a link above one that was fast-forwarded to contains
+master.
+
+A landing moves every other pull request behind master, so the next step always starts from a
 new observation.
+
+A merge that changes a projected plan record leaves GitHub behind by exactly that change.
+The records are the files under `.ai/repo/project/issues/` and `.ai/repo/project/milestones/`
+and every record whose derived status moves with one of them. `scripts/github-sync --apply`
+projects master and nothing else, and `prs drain` never runs it. The landing does: every push
+to master starts `.github/workflows/github.yml`, which asks what GitHub does not show yet
+(`scripts/github-sync --check`), applies it, and proves the result with
+`scripts/ci/github-check`. The workflow holds `issues: write` and nothing broader, runs one
+at a time, is never cancelled, and refuses to apply without the Rust executable. Its model is
+`.ai/repo/ci/github.yaml` and the rule is `project.the-projection-is-applied-at-landing`.
+Whoever operates the executor has no step to remember here.
+
+`scripts/ci/github-check` gives the apply a declared window, `apply.window` in the same
+file. On the pull request's own head the records it changed are reported `PENDING` and not
+refused. On master they stay `PENDING` while the landing is younger than the window. Past it
+the gate refuses master and names the command. That is the fallback, for a run that failed: a
+person runs `scripts/github-sync --apply` from the clean tip of master, with `MAJORDOMUS_BIN`
+naming the executable. Until 2026-10-12 that manual apply was the mechanism, and master went
+red on the day the executor was busy for longer than the window.
 
 When nothing is ready, `prs drain --refresh` brings master into the first `needs_refresh`
 pull request. It uses a scratch worktree under the common git directory, runs `git merge
@@ -497,6 +573,140 @@ request is refreshed, so one silent check cannot stop every refresh. A check run
 the author pushed holds nothing. A `refreshed` event recorded before `head_after` existed names
 no head, so a pull request refreshed by an older executor does not hold the pipeline.
 
+### A train
+
+One pull request per run of the required check is the cost of refreshing each head onto
+master alone. A train pays it once for several (ADR 0129). Its links are pull requests whose
+heads are stacked: the second is brought up to date on the first one's refreshed head, not on
+master, the third on the second's, and each says so with a `Stacked on #N` line in its body.
+Every link's required checks run at the same time, each on a head that holds everything below
+it.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| The link | Is |
+|---|---|
+| the lowest, with its checks passed | `ready`, `contains_master` |
+| above an open link | `waiting_for_dependency`, `depends_on:#N`, whatever its checks say |
+| above a link that was fast-forwarded to, with its checks passed | `ready`, `contains_master`: master is the link below, so it is fast-forwarded to in turn |
+| above a link that landed by a merge commit, with its checks passed | `ready`, `carries_master`: no refresh, and no second run of the checks |
+| above a link that landed after its head moved | `needs_refresh`: master holds what this head never saw |
+| above a link that was closed without a merge | `blocked`, `dependency_closed_unmerged:#N`: a person decides |
+
+</div>
+
+
+The order is the dependency gate's and not a habit: a link merges only after the one it names.
+What makes the second merge safe is the relation, decided by git and never assumed from the
+stacking: the merge of the link into the master that now holds the first must write the link's
+own tree, and the first one's merge commit must be all the link lacks. Then the verdict its
+head already has is a verdict on exactly what master becomes.
+A link that goes red costs the links above it one ordinary refresh after it is fixed and
+lands, which is what every one of them costs without a train, and never a merge of a tree
+nobody judged.
+
+A train is prepared by whoever brings the heads up to date; the executor decides each link on
+what git says of it and does not build one itself yet.
+
+### The record pull request it reopens
+
+A release proposes its record as `release/record-<tag>`, opened with the workflow's own
+token, and a forge starts no workflow from an event that token caused. Such a pull request
+has no check of its own and never will: it reads `waiting_for_checks` with
+`required_checks:missing` for as long as nobody closes and reopens it, and until the record
+is on master the release check fails on every other open head.
+
+So when nothing is ready, and before any refresh, `prs drain` looks for a pull request from
+a `release/record-` branch in that state and asks the forge what the queue does not carry:
+who opened it, when, and whether it has a single check of its own. If it is open at the head
+decided on, was opened by `app/github-actions`, is older than two minutes
+(`RECORD_REOPEN_GRACE`) and its rollup is empty, the executor closes it with a comment
+saying why and reopens it at once, which is the event that starts its run. The act is taken
+once per head: a head the trail names in `reopen_attempted` or `reopened` is never tried
+again, because a reopened pull request also reads `missing` until its run's last job exists.
+It pushes nothing, so it needs no `--refresh`, and `--dry-run` only names it.
+
+A record a person opened, one that has any check of its own, one still inside the grace,
+one the forge cannot show and every branch that is no record are left alone. If the forge
+refuses the reopen after the closure, the pull request is closed: the drain says so, names
+`gh pr reopen <n>`, records `reopen_failed` and exits 10.
+
+## An expedited landing
+
+Everything above is the executor, and the executor never passes `--admin`. One thing is
+outside it: the owner of the branch protection may decide to spend it. Rule
+`project.an-expedited-landing-is-the-owners-word` and ADR 0155 say when a named lander may
+merge past the required check, and what that never reaches.
+Since 2026-10-16 the lander is the landing seat of
+[*The model in force*](#the-model-in-force), and what it lands may be a combined top rather
+than one pull request: one seat at a time, and a landing may carry a whole top.
+
+The required check takes about an hour and the pool judges one pull request at a time. On
+2026-10-12 a release record that changed one file waited two and a half hours behind runs
+nobody was going to read, while the site named a release two versions old. The owner's order
+that followed is quoted in the ADR. What makes a landing under it safe was measured over the
+next day:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| the lander | because |
+|---|---|
+| holds the exclusive landing claim on the mesh, alone | a merge between another lander's gates and its merge makes those gates a verdict on a tree that no longer exists |
+| before it arms a follower (a loop that merges a head once its `ci` is green) on a head another seat composed, or one another seat tried to land, asks that seat on the mesh and merges only on its answer | a follower armed on a head that is already green merges on its first poll; in #1745 one did, before the composing seat's message arrived saying its own landing had been refused by its permissions, and the seat that composed a head is the one that knows why it was not merged |
+| merges master into the branch, derives the merge, then commits it | a head judged alone is not the tree that lands. `scripts/derive` derives an uncommitted merge as the commit it will be, both parents as history, so the merge commits through the pages gate in one go (I3963); before that a merge could be neither derived nor committed |
+| runs the whole structure job, the library tests and the cases the change touches on that merged tree, and names the commit each ran on | a gate nobody ran reads as a gate that passed; a landing with the structure job unfinished put two reds on master |
+| before judging, searches the tests for what reads the change: a sibling's identifier across `apps/majordomus-cli/tests` and `test/cases` when the change adds a named record (a skill, a screen, a rule, a capability), the script's name when it changes how a script calls a tool; and runs every test found | a test that lists records by name, or that replaces a tool with a stand-in and reads what it was asked, lives in the rust lanes and the suite shards, which the structure job does not run; two landings of 2026-10-13 passed that job and left the trunk red there, for 95 minutes and for the length of the next run |
+| after a red is found, searches for the same shape before pushing its fix | the first fix of 2026-10-13 named the skill in the crate test; the case that makes the same demand would have been the next red, one run later |
+| merges with `gh pr merge --admin --merge --match-head-commit <head>` | a head that moved after it was judged is refused |
+| cancels its own branch's run after the merge | a run nobody will read still holds a runner, and the trunk's run waits behind it |
+| verifies the commit production serves, with `scripts/pages verify` | every landing is a deployment, and a merge that broke the publication says nothing |
+
+</div>
+
+
+A run is stale, and is cancelled, when its pull request is merged or closed, when its head is
+no longer the head of its branch, or when another run of the same workflow already judges
+the same commit. The trunk's only run of a commit, a deployment in flight, a release run and
+another session's run on a current head are never cancelled. A landing on the trunk cancels
+nothing by itself: the trunk's validation runs are each their own concurrency group, and the
+publication queue never cancels the deploy in flight.
+
+A run that can no longer end green is cancelled as well: once one job of a branch's run has
+failed, the jobs still running decide nothing about that head, and they hold the runners the
+trunk's run waits for. The lander reads the failed job first, through the jobs API, which
+answers while the run is still going. The trunk's own run is left to finish: its other jobs
+are the only reading of the trunk's other lanes. While the trunk's run is queued, a branch
+run on a head that contains the trunk is that reading, lane by lane, and is read before it
+is cancelled. On a pull request the workflow does this by itself: the last step of every gate
+job, on `failure()` of a `pull_request` event alone, cancels the run by its own id
+(`.github/workflows/validate.yml`, case 3019). A push to master, the schedule and a dispatch
+are never cancelled that way.
+
+What the merged tree owes follows what the change touches, and rule clause 4 lists it: a
+record a crate test reads (a skill, a rule, a claim, the quality baseline, a plan record) owes
+the crate tests that open this repository itself (`tests/skills.rs`, `tests/quality.rs` and
+their siblings) and the `intent-check` gate, although no Rust moved. An active skill missing
+from the header of `tests/skills.rs` or from case 391 is refused in the structure job by the
+`skill-naming` gate, and a case that names the release record without being run by the
+`release-record-cases` gate by the `release-record-listing` gate. A change that adds or
+widens an exported Rust item owes `scripts/rust-check --quality` before it is pushed: the
+`rust-quality` gate's report, on the author's machine, with the finding the structure job
+would print; two implementations of 2026-10-14 met that gate only in the structure job.
+
+A red on the trunk has one carrier, named by the integrator. A second session that builds the
+same fix costs a disk and lands nothing sooner.
+
+Between a tag and its record nothing else lands. The record pull request the release
+workflow opens is the record and the files derived from it, generated against the master of
+that minute; a landing in that window moves those files under it, and the site keeps naming
+the previous release until the record has been merged with master and derived again. The
+record is merged first, pinned, as soon as its own gates are read.
+
+A release is never expedited. A tag is pushed only on a commit whose `ci` check concluded
+success; `scripts/ci/release-verdict` refuses anything else, the release workflow asks it
+before it builds, and no gate is disabled, skipped or edited to get there. A merge is
+corrected by the next merge. A tag publishes executables that people install.
+
 ## Repair
 
 The `repair` lane is a person's. Most pull requests here go `CONFLICTING` on the forge within
@@ -518,6 +728,7 @@ reports is then on a `merge=derived` path, which the regeneration settles.
 | relation `behind` | eligible: master is merged in, derived, committed and pushed |
 | relation `conflicting` | refused with exit 10, naming every authored file that conflicts: they are the owner's to settle |
 | relation `up_to_date` | nothing to repair: the head already contains master |
+| relation `carries_master` | nothing to repair: merging it writes its own tree, and its checks judged that tree |
 | `redundant`, `superseded`, relation `contained`, `superseded`, `patch_ids_upstream` or `derived_only` | nothing to repair: cleanup's lane, or a person's |
 | relation `unknown`, a fork's head, armed auto-merge, another base, not open | refused with exit 10 |
 
@@ -641,12 +852,19 @@ json` stays the list of pull requests to close.
 - A read writes nothing. `prs status`, `plan`, `explain`, the `integration.*` capabilities
   and the Cockpit build the queue from the recorded observation and leave the checkout as
   they found it; only `prs refresh` and the executor, which have just observed the forge,
-  keep the relations they decided and the summary a briefing reads. An observation older
+  keep the relations they decided and the summary a briefing reads. What a read decides is
+  still kept, in the process that read it: a long-running server remembers each relation and
+  shape by its `master..head` pair, and whether one mirrored head contains another by its
+  pair of commits, so its next read of the same checkout asks git again only about a head or
+  a master that moved. Reads of one checkout take turns, so concurrent readers decide each
+  pair once. `MAJORDOMUS_INTEGRATION_MEMO=off` reads without that memory; the answer is the
+  same (`integration::memo`). An observation older
   than an hour is said in the queue's diagnostics, and every reading of a queue with a
   diagnostic — `status`, `plan` and `explain` alike — exits 10.
 - The trail is written first. A merge is asked of the forge only after `merge_attempted` is
   on the trail, a refresh is pushed only after `refresh_attempted`, a repair only after
-  `repair_attempted`, and a pull request is closed only after `close_attempted`. When that
+  `repair_attempted`, a pull request is closed only after `close_attempted`, and a record
+  pull request is closed and reopened only after `reopen_attempted`. When that
   line cannot be written, the act is not taken: the step reports `trail_unwritable`, the
   drain stops, and `prs drain` exits 12 (`prs repair --apply` exits 12 too). A lease the
   trail cannot record is given back and refused. Any other write the trail refuses ends the
@@ -671,6 +889,8 @@ json` stays the list of pull requests to close.
   | `repaired` (with the head it pushed), `repair_refused` (with its class) | after it, or when the classification refused it |
   | `close_attempted` | before a redundant or superseded pull request is closed |
   | `closed_redundant`, `closed_superseded` (with its evidence), `close_failed` | after it |
+  | `reopen_attempted` | before a record pull request the workflow's token opened is closed and reopened |
+  | `reopened`, `reopen_failed` (with its class, saying whether it was left closed) | after it |
   | `idle` | nothing was ready |
   | `observe_failed` | a continuous drain's cycle met an outage short enough to wait out |
 
@@ -736,6 +956,7 @@ json` stays the list of pull requests to close.
 | `majordomus prs plan` | no | the next merge, the next refresh, and the other lanes |
 | `majordomus prs explain <n>` | no | one pull request's gates, reasons, evidence and rank |
 | `majordomus prs events` | no | the repository's audit trail, the same from every worktree |
+| `majordomus prs trains` | no | the trains of stacked pull requests in landing order: each link's disposition, relation to master, prepared head under `refs/prep/<n>` (pushed or pending) and turn; exit 10 when the observation is stale or absent |
 | `majordomus prs brief` | no | one line for a briefing: the last queue built in the repository, the lease and how far it reaches, the last merge, the last refresh, failure or stale decision; nothing in a checkout that never observed the forge |
 | `majordomus prs refresh` | yes | observe the forge and fetch every open head |
 | `majordomus prs drain [--max N] [--dry-run] [--refresh]` | yes | integrate, one merge at a time |
@@ -769,6 +990,67 @@ executor's recent actions. With nothing observed, it says so and names `prs refr
 `majordomus handover --derive` carries the same line under `# Current State`, so a session
 that continues drain work starts knowing what was merged, what remains, how the last step
 went, and whether an executor is running.
+
+## Trains
+
+A *train* is a group of open pull requests stacked on each other: each link stands on the one
+below it, and the train lands from the bottom up. The edges are the confirmed dependencies the
+classifier already reads ([Dependency markers](#dependency-markers)): a base branch that is
+another open pull request's head, or a `Stacked on #N` line, is a `STACKED_ON` edge; `Depends on`,
+`Requires` and `Land after` are `DEPENDS_ON` edges. An inferred dependency (a head that merely
+contains another) joins nothing. A pull request that declares a dependency on one that is no
+longer open is still a train of its own, with that pull request *beneath* it — landed, closed
+without a merge, or unread. The decision is ADR 0138; the code is `crate::integration::train`.
+
+Each link carries what the queue decided about it — disposition, lane, reasons, next action,
+required checks and every check on its head, relation to master with how far behind it is and
+whether it carries master (ADR 0129) — and what only a train can say:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Field | What |
+|---|---|
+| `position` | its turn, 1-based: a topological order, lower links first, ties broken by queue rank |
+| `depth` | links below it on its longest path to master; a root is 0 |
+| `at_turn` | every dependency it declares has landed, so the order allows it next |
+| `on`, `carries` | what it stands on, and the links stacked on it |
+| `prep` | the head the executor prepared for it under `refs/prep/<n>`, `pushed` when that commit is the head the forge serves and `pending` when it waits for its turn |
+| `in_cycle` | caught in a cycle of confirmed dependencies: no link of it can land first |
+
+</div>
+
+
+Per train: `roots` (no open link below them), `tops` (nothing stacked on them), `next` (the
+first link at its turn), the `edges` (satisfied when the pull request below landed) and the
+pull requests `beneath` it. Beside the trains, `unattached_prep` lists the prepared heads whose
+pull request is no link — open and stacked on nothing, or not open at all.
+
+It is all read: the queue from the recorded observation, the bodies and checks from the same
+observation, and the local `refs/prep/` refs with `git for-each-ref`. Nothing is fetched,
+pushed or moved; pushing a prepared head at its turn stays the executor's act.
+
+```text
+$ majordomus prs trains
+2 train(s), 5 link(s) of o/r observed at 2026-10-11T04:56:48Z; master at 1393d9ef2a; 1 prepared head(s) pending
+
+train-884  roots #884  tops #898  next #884
+   1. > #884   needs_refresh          behind 37        prep 9658f78da5 pending on master     fix(http): ...
+   2.   #898   waiting_for_dependency behind 37        no prep              on #884       fix(http): ...
+```
+
+The same answer is `GET /api/v1/pull-requests/trains` (MCP `majordomus_pull_request_trains`),
+declared once as `integration.trains`. The Cockpit draws it at `/cockpit/trains` in the manner
+of the Neo4j Browser: master as the anchor node, each link a circle with its number and title
+inside, coloured by its disposition from the design tokens (landed pull requests beneath a
+train in their own colour, dashed), labelled `STACKED_ON` / `DEPENDS_ON` arrows and a `TARGETS`
+arrow from each root to master; a force layout or a layered one, drag, zoom and pan, the
+neighbours of the node under the pointer lit, and a property panel with every field of the
+selected link and links to the pull request, its checks and `prs explain`. It filters by train
+and by disposition (the legend is the filter), searches by number, title or branch, and is
+driven from the keyboard (arrows move from link to link, Enter opens the pull request, `+`/`-`
+zoom, `0` fits, Escape clears); motion follows `prefers-reduced-motion`. It asks the route
+again once a minute while the tab is visible and shows when it last asked. Without JavaScript
+the page is one table per train with the same facts.
 
 ## Continuous mode
 

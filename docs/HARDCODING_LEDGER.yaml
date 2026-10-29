@@ -497,3 +497,99 @@ findings:
     priority: 1
     status: fixed
     resolved_by: "scripts/ci/run-plan --plan --job dispatches every gate of a job from the plan; the structure and rust jobs of validate.yml call it"
+
+  - id: site-navigation-rendered-three-times
+    path: site/templates/partials/navbar.html
+    lines: "the desktop dropdowns, the flat mobile list; partials/footer.html, the footer columns"
+    concept: the site's navigation as a visitor's browser receives it
+    authority: "site/data/nav.toml"
+    duplicated_in:
+      - "the bar's dropdowns, every item of every group"
+      - "the collapsed menu's flat lists, the same items a second time"
+      - "the footer's columns, the same items a third time"
+    risk: medium
+    detail: >-
+      One declaration, three full renderings on every page. Measured on production on
+      2026-10-12 (build 81178f5362): the homepage carried 104 links inside <nav> out of 305,
+      and 243,477 bytes of HTML. Nothing disagreed — every rendering derived from nav.toml —
+      but a visitor's first screen was an index. The bar now renders one list per group — a
+      dropdown on a wide screen, an accordion in the collapsed menu — holding only the items
+      marked `bar = true` and a link to the group in the site map; the footer is the one
+      complete site map; and the homepage's HTML has a budget (site/data/homepage.toml,
+      [budget] html_bytes) that scripts/ci/homepage-check holds the built page to. Measured
+      on a local build of the branch: 28 links inside <nav>, 146 KB of HTML.
+    recommended: REMOVE_DUPLICATE
+    target: site/templates/partials/navbar.html
+    priority: 1
+    status: fixed
+    resolved_by: "6c58b99744 (feature/the-landing-answers-five-questions): nav.toml `bar` marks, navbar.html renders one list per group, homepage.toml [budget] html_bytes held by scripts/ci/homepage-check and test/cases/333_homepage_narrative.sh"
+    reproduce: "scripts/site-build --no-data && scripts/ci/homepage-check --only weight; tr '\\n' ' ' < site/public/index.html | grep -o '<nav.*</nav>' | grep -o '<a ' | wc -l"
+
+  - id: three-navigation-lists
+    path: apps/majordomus-cli/src/ui/mod.rs
+    lines: "SCREENS; apps/majordomus-cli/src/cockpit/nav.rs areas(); site/data/nav.toml"
+    concept: which destinations the product has and what each is called
+    authority: none
+    duplicated_in:
+      - "site/data/nav.toml, the public site's groups and items"
+      - "apps/majordomus-cli/src/cockpit/nav.rs areas(), the Cockpit's areas"
+      - "apps/majordomus-cli/src/ui/mod.rs SCREENS, the product UI's screens"
+    risk: medium
+    detail: >-
+      Three surfaces, three hand-written lists of destinations, and no record that says which
+      screen of one answers the same question as a page of another. Each list is the
+      authority for its own surface and a test holds each to its own routes, so none of them
+      can dangle; what cannot be checked is the relation between them, because nothing
+      declares it. A visitor moving from the site to the UI or from the UI to the Cockpit
+      meets three vocabularies. The plan already names the remedy: one derivation for every
+      menu (I1009), with I1016 blocked on it.
+    recommended: REGISTRY
+    target: one declared topology of destinations the three surfaces project (I1009)
+    priority: 2
+    status: open
+    reproduce: "grep -c 'href' site/data/nav.toml; grep -n 'pub fn areas' apps/majordomus-cli/src/cockpit/nav.rs; grep -n 'const SCREENS' apps/majordomus-cli/src/ui/mod.rs"
+
+  - id: ui-shell-names-its-sibling-surfaces
+    path: apps/majordomus-cli/src/ui/shell.rs
+    lines: "the `mj-ui-tools` navigation"
+    concept: which other surfaces the product UI links to, and under what label
+    authority: "the web topology, `majordomus web surfaces` (site/data/generated/web.json)"
+    duplicated_in:
+      - "three `tool(...)` calls in shell.rs carrying the labels Docs, API and Cockpit as literals"
+    risk: low
+    detail: >-
+      The routes are constants of the modules that own them, so a link cannot point at a
+      route that does not exist. The set and the labels are literals: a surface added to the
+      topology does not appear in the UI's tools, and a surface the topology renames keeps
+      its old name here. On the published snapshot (ADR 0141) the Cockpit link leads to a
+      route Pages does not serve.
+    recommended: DERIVE
+    target: the shell's tools rendered from the topology's surfaces, with the snapshot omitting what is not published
+    priority: 2
+    status: open
+    reproduce: "grep -n 'tool(crate::' apps/majordomus-cli/src/ui/shell.rs"
+
+  - id: product-sentence-has-two-wordings
+    path: site/data/marketing.toml
+    lines: "[hero] title, subtitle"
+    concept: the one sentence that says what the product is
+    authority: none
+    duplicated_in:
+      - "site/data/marketing.toml [hero], the homepage's headline"
+      - "README.md, twice: the bold tagline and the opening paragraph, each in its own words"
+      - "site/data/generated/project.json `tagline`, which scripts/generate-site-data reads from the README's bold line"
+    risk: medium
+    detail: >-
+      The homepage says the repository decides whether the work is done; the README's
+      opening says Majordomus decides, and its bold line calls the product a lightweight
+      supervisory control layer. The generated project record is a projection of the bold
+      line, found by a grep for its first words, so rewording that line empties the record's
+      tagline. No check compares the homepage's sentence with the README's, so the sentence
+      a visitor reads depends on the door they came in by. The decision this row waits for
+      is which wording is the declaration; the others are then projections of it.
+    recommended: MOVE_TO_CANONICAL_DATA
+    target: one declared positioning record the README, the homepage and project.json read
+    priority: 2
+    status: fixed
+    resolved_by: "I3134: the owner chose the hero wording on 2026-10-20; site/data/marketing.toml [hero] title and subtitle are the one declaration, scripts/generate-site-data reads project.json's tagline from it (every page title and og:description), README.md's bold line says it, and homepage-check's sentence check fails a README that says it in other words."
+    reproduce: "grep -n '^title\\|^subtitle' site/data/marketing.toml | head -2; grep -n 'AI coding agents do the work\\|^\\*\\*A lightweight' README.md; grep -n 'TAGLINE=' scripts/generate-site-data"

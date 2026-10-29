@@ -33,6 +33,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::config::MeshConfig;
+use super::firewall;
 use super::identity::{default_identity_path, NodeIdentity};
 use super::manager::MeshStatus;
 use super::protocol;
@@ -76,6 +77,184 @@ impl DoctorCheck {
             remediation: Some(remediation.into()),
         }
     }
+}
+
+/// The `trust-root` check: which copy of the declaration is obeyed, and every line of the
+/// working tree's copy this runtime ignores because the trunk's copy does not say it
+/// ([`super::root`]). `None` when there is no declaration to judge.
+///
+/// ```
+/// use majordomus_cli::mesh::doctor::declaration_source;
+/// use majordomus_cli::mesh::root::Resolved;
+/// use majordomus_cli::mesh::MeshConfig;
+/// let config = MeshConfig::from_metadata(
+///     &serde_json::json!({"schema": "mesh/v1", "kind": "mesh-declaration", "id": "x"}), "x").unwrap();
+/// let ignored = Resolved {
+///     declaration: Some(Ok(config)),
+///     trunk: Some("master".into()),
+///     committed: true,
+///     narrowed: vec!["trust.allow: bb is not on the trunk".into()],
+/// };
+/// let check = declaration_source(&ignored).unwrap();
+/// assert!(!check.ok && check.detail.contains("bb is not on the trunk"));
+/// let nothing = Resolved { declaration: None, trunk: None, committed: false, narrowed: vec![] };
+/// assert!(declaration_source(&nothing).is_none());
+/// ```
+pub fn declaration_source(resolved: &super::root::Resolved) -> Option<DoctorCheck> {
+    resolved.declaration.as_ref()?;
+    let trunk = resolved.trunk.as_deref().unwrap_or("the trunk");
+    if resolved.narrowed.is_empty() {
+        let detail = if resolved.committed {
+            format!("obeyed as {trunk} holds it; the working tree widens nothing")
+        } else {
+            format!("not committed on {trunk}; obeyed as written, since it widens nothing a committed copy would have to")
+        };
+        return Some(DoctorCheck::pass("trust-root", detail));
+    }
+    Some(DoctorCheck::fail(
+        "trust-root",
+        format!(
+            "this checkout's runtime ignores {} line(s) of the working tree's declaration: {}",
+            resolved.narrowed.len(),
+            resolved.narrowed.join("; ")
+        ),
+        "a working tree may narrow trust and never widen it: a key, an address or a looser policy takes effect only once the trunk's copy says it",
+        &format!("commit the change on {trunk} (merge it), or revert it here"),
+    ))
+}
+
+/// The `journal` check: whether the cooperation journal's file holds what the journal
+/// holds. A failed append keeps the event in memory and in replication, loses it from this
+/// machine's disk and is not acknowledged as durable; an unreadable line is one the last
+/// reload could not use; unread bytes lie beyond the reload bound.
+///
+/// ```
+/// use majordomus_cli::mesh::doctor::journal_check;
+/// use majordomus_cli::mesh::journal::JournalTallies;
+/// assert!(journal_check(&JournalTallies::default()).ok);
+/// let lost = JournalTallies { write_failures: 2, ..Default::default() };
+/// let check = journal_check(&lost);
+/// assert!(!check.ok && check.detail.contains("2 event(s)"));
+/// let beyond = JournalTallies { unread_bytes: 4096, ..Default::default() };
+/// let check = journal_check(&beyond);
+/// assert!(!check.ok && check.detail.contains("4096 byte(s)"));
+/// ```
+pub fn journal_check(tallies: &super::journal::JournalTallies) -> DoctorCheck {
+    if tallies.write_failures == 0 && tallies.unreadable == 0 && tallies.unread_bytes == 0 {
+        return DoctorCheck::pass(
+            "journal",
+            format!(
+                "{} event(s) held, every append synced to disk, the file reloaded whole with no unreadable line",
+                tallies.events
+            ),
+        );
+    }
+    DoctorCheck::fail(
+        "journal",
+        format!(
+            "{} event(s) did not reach the journal file and were not acknowledged as durable; {} line(s) of it did not read on reload; {} byte(s) of it lie beyond the {}-byte reload bound and were left on disk unread",
+            tallies.write_failures,
+            tallies.unreadable,
+            tallies.unread_bytes,
+            super::journal::MAX_RELOAD_BYTES
+        ),
+        "an event that is not on disk is lost to this machine when the runtime restarts, unless a peer still holds it; the events beyond the reload bound are not held, so this runtime neither folds nor relays them",
+        "free disk space or fix the permissions of the mesh state directory; a torn line is left as one unreadable line, and the events after it read; a journal beyond the bound was not written by this executable's compaction — move it aside and let the peers refill it",
+    )
+}
+
+/// The `session_beats` check (I3990): whether this runtime wrote every session beat its
+/// working exclusive holders were owed. A runtime withholds beats only when its limit per
+/// window is reached; a withheld beat is never silent, because a session that is not beaten
+/// for has its exclusive claims suspended — scopes freed that its worker still means to hold.
+/// It fails while a beat was withheld within the last window, and passes, naming the count,
+/// once the window has moved past the last one.
+///
+/// ```
+/// use majordomus_cli::mesh::cooperation::SessionBeatTally;
+/// use majordomus_cli::mesh::doctor::session_beats_check;
+/// let quiet = SessionBeatTally { written: 12, limit: 192, window_seconds: 3600, ..Default::default() };
+/// assert!(session_beats_check(&quiet).ok);
+/// let biting = SessionBeatTally { withheld: 3, withheld_recently: true, ..quiet };
+/// let check = session_beats_check(&biting);
+/// assert!(!check.ok && check.detail.contains("3 session beat(s) withheld"), "{}", check.detail);
+/// ```
+pub fn session_beats_check(tally: &super::cooperation::SessionBeatTally) -> DoctorCheck {
+    if !tally.withheld_recently {
+        return DoctorCheck::pass(
+            "session_beats",
+            format!(
+                "{} session beat(s) written, {} withheld since start, none within the last {} s (limit {} per window)",
+                tally.written, tally.withheld, tally.window_seconds, tally.limit
+            ),
+        );
+    }
+    DoctorCheck::fail(
+        "session_beats",
+        format!(
+            "{} session beat(s) withheld since start, one within the last {} s: this runtime reached its limit of {} per window",
+            tally.withheld, tally.window_seconds, tally.limit
+        ),
+        "a working session this runtime could not beat for has its exclusive claims suspended: they refuse nobody, so another session may take a scope its worker still means to hold",
+        "fewer sessions holding exclusive claims on this runtime, or a longer cooperation.session_ttl_seconds (a beat is written at most once a quarter of it); the window moves on its own within the hour",
+    )
+}
+
+/// The `transport` check: how each declared rendezvous endpoint and seed would be reached —
+/// over TLS (`https://`), or in cleartext to an address that is loopback, private or an
+/// overlay's — and every one the client refuses to dial, because it would carry the mesh in
+/// cleartext across a public network (ADR 0220). Nothing is dialed; an http host name is
+/// resolved, and one that does not resolve here is reported and judged again at every dial.
+///
+/// ```
+/// use majordomus_cli::mesh::doctor::transport_check;
+/// use majordomus_cli::mesh::MeshConfig;
+/// let declare = |endpoints: serde_json::Value| -> MeshConfig {
+///     serde_json::from_value(serde_json::json!({ "schema": "mesh/v1", "kind": "mesh-declaration",
+///         "id": "x", "rendezvous": { "endpoints": endpoints } })).unwrap()
+/// };
+/// let held = transport_check(&declare(serde_json::json!(["https://hub.example", "http://10.0.0.2:8791"])));
+/// assert!(held.ok && held.detail.starts_with("1 endpoint(s) over TLS, 1 in cleartext"), "{}", held.detail);
+/// let refused = transport_check(&declare(serde_json::json!(["http://203.0.113.5:8791"])));
+/// assert!(!refused.ok && refused.detail.contains("203.0.113.5 is a public address"));
+/// ```
+pub fn transport_check(config: &MeshConfig) -> DoctorCheck {
+    use crate::mcp::bridge::{transport, Transport};
+    let (mut tls, mut cleartext) = (0usize, 0usize);
+    let (mut refused, mut unresolved) = (Vec::new(), Vec::new());
+    for endpoint in config
+        .rendezvous
+        .endpoints
+        .iter()
+        .chain(&config.cooperation.seeds)
+    {
+        match transport(endpoint) {
+            Ok(Transport::Tls) => tls += 1,
+            Ok(Transport::Cleartext) => cleartext += 1,
+            Err(e) if e.kind() == std::io::ErrorKind::PermissionDenied => {
+                refused.push(e.to_string())
+            }
+            Err(e) => unresolved.push(format!("{endpoint}: {e}")),
+        }
+    }
+    if refused.is_empty() {
+        let mut detail = format!(
+            "{tls} endpoint(s) over TLS, {cleartext} in cleartext to loopback, private or overlay addresses"
+        );
+        if !unresolved.is_empty() {
+            detail.push_str(&format!(
+                "; not resolved here, judged again at every dial: {}",
+                unresolved.join("; ")
+            ));
+        }
+        return DoctorCheck::pass("transport", detail);
+    }
+    DoctorCheck::fail(
+        "transport",
+        refused.join("; "),
+        "the client refuses to dial these: no registration and no link is sent to them, so they neither discover nor cooperate with this node",
+        "serve the hub over TLS and declare it as https://, or reach it at a private or overlay address (a tailnet)",
+    )
 }
 
 /// The whole self-check.
@@ -173,6 +352,12 @@ pub fn doctor_at(
         )),
     }
 
+    // The transport: how each declared hub and seed would be reached, and which the client
+    // refuses to dial.
+    if let Some(Ok(config)) = &declaration {
+        checks.push(transport_check(config));
+    }
+
     // The identity: where it lives, and whether what is there loads.
     let identity = match default_identity_path() {
         None => {
@@ -211,10 +396,11 @@ pub fn doctor_at(
         }
     };
 
-    // Trust: under an allowlist-shaped declaration, is this machine's own key listed? A
-    // fleet whose declaration forgot a machine links around it.
+    // Trust: under an allowlist-shaped declaration, is this machine's own key listed? An
+    // unlisted machine keeps the mesh closed (`manager::closed_to`), so this is the check
+    // that names why and what to do.
     if let (Some(Ok(config)), Some(identity)) = (&declaration, &identity) {
-        if config.enabled && !config.trust.allow.is_empty() {
+        if config.enabled && config.trust.policy != super::trust::TrustPolicy::Tofu {
             let listed = config.trust.allow.contains(&identity.public.public_key);
             checks.push(if listed {
                 DoctorCheck::pass("trust", "this machine's key is on the allowlist")
@@ -226,7 +412,7 @@ pub fn doctor_at(
                         identity.public.public_key,
                         config.trust.allow.len()
                     ),
-                    "the other machines of the fleet refuse this one's links as untrusted; this machine can still dial them if it trusts their keys",
+                    "the mesh stays closed on this machine: it neither announces nor dials, and no other machine links to it",
                     "add the key above to trust.allow in the mesh declaration and commit it",
                 )
             });
@@ -331,6 +517,12 @@ pub fn doctor_at(
         ),
     });
 
+    // The host firewall: what the declaration implies this machine must admit, and whether
+    // the host does. Every check above is a fact of the process; this one is a fact of the
+    // host, and the one that was missing when a declared hub dropped every registration
+    // at the kernel while the doctor said every check held.
+    checks.push(firewall_check(&declaration));
+
     // The runtime: what the process's mesh runtime decided about the declaration, when
     // anything decided. Every check above says the machine could run a mesh; this one says
     // whether the server did.
@@ -339,6 +531,55 @@ pub fn doctor_at(
     MeshDoctorReport {
         ok: checks.iter().all(|c| c.ok),
         checks,
+    }
+}
+
+/// The `firewall` verdict: the admissions the declaration implies on this host, derived
+/// by [`firewall::plan`] from the declaration and this machine's addresses, against what
+/// the host's firewall says and what the kernel logged it dropping. It fails when a rule
+/// is observed missing or when the kernel logged drops toward the mesh's ports in the
+/// last five minutes; a firewall that cannot be asked without root, with nothing logged, holds —
+/// an absence, not a verdict — and says how to ask as root.
+fn firewall_check(declaration: &Option<Result<MeshConfig, MeshError>>) -> DoctorCheck {
+    let config = declaration.as_ref().and_then(|d| d.as_ref().ok());
+    let local: Vec<std::net::Ipv4Addr> = super::address::interfaces()
+        .into_iter()
+        .map(|(_, ip)| ip)
+        .collect();
+    firewall_verdict(&firewall::report(config, &local, None))
+}
+
+/// The `firewall` check of a report already built. Apart from [`firewall_check`] so that
+/// the verdict is a function of the report alone: which firewall a machine runs, and
+/// whether it admits the mesh, is a fact of that machine, and the failing verdict has to
+/// be held on every machine, not only on one whose firewall happens to drop the mesh.
+fn firewall_verdict(report: &firewall::FirewallReport) -> DoctorCheck {
+    let detail = if report.plan.rules.is_empty() {
+        report.verdict.clone()
+    } else {
+        format!(
+            "{} ({}): needs {}; {}",
+            report.backend.as_str(),
+            report.platform,
+            report
+                .plan
+                .rules
+                .iter()
+                .map(firewall::FirewallRule::label)
+                .collect::<Vec<_>>()
+                .join(", "),
+            report.verdict
+        )
+    };
+    if report.ok {
+        DoctorCheck::pass("firewall", detail)
+    } else {
+        DoctorCheck::fail(
+            "firewall",
+            detail,
+            "what the firewall drops never reaches the socket: a declared hub that drops registrations is a hub nobody can register with, and a machine that drops the multicast group hears no peer on its segment, while every other check holds",
+            "run `majordomus mesh firewall` for the rules and the commands that admit them, and `sudo majordomus mesh firewall apply` to admit them",
+        )
     }
 }
 
@@ -369,6 +610,28 @@ fn declared(declaration: &Option<Result<MeshConfig, MeshError>>) -> Declared {
 /// active (a degraded one names its failed providers, and fails only when no provider
 /// runs at all), off as declared, off because there is nothing to activate, or — the one
 /// failure — off under an enabled declaration, carrying the server's reason.
+/// The `runtime` verdict alone: what a server decided about the declaration, judged as
+/// `mesh doctor` judges it. Health reads this one check rather than running the doctor's
+/// probes, which open sockets.
+///
+/// ```
+/// use majordomus_cli::mesh::doctor::runtime_verdict;
+/// use majordomus_cli::mesh::manager::MeshRuntime;
+/// use majordomus_cli::mesh::MeshConfig;
+/// let enabled: MeshConfig = serde_json::from_value(serde_json::json!({
+///     "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x", "enabled": true })).unwrap();
+/// let server = MeshRuntime::new();
+/// server.decline("the node identity did not load");
+/// assert!(!runtime_verdict(Some(Ok(enabled)), Some(&server.status())).ok);
+/// assert!(runtime_verdict(None, Some(&server.status())).ok, "no declaration, nothing owed");
+/// ```
+pub fn runtime_verdict(
+    declaration: Option<Result<MeshConfig, MeshError>>,
+    runtime: Option<&MeshStatus>,
+) -> DoctorCheck {
+    runtime_check(declared(&declaration), runtime)
+}
+
 fn runtime_check(declared: Declared, runtime: Option<&MeshStatus>) -> DoctorCheck {
     let Some(status) = runtime else {
         return DoctorCheck::pass(
@@ -393,6 +656,10 @@ fn runtime_check(declared: Declared, runtime: Option<&MeshStatus>) -> DoctorChec
     let why = reason.strip_prefix("not active: ").unwrap_or(reason);
     if !status.active {
         return match declared {
+            // closed by the trust list: the trust check carries the failure and the remedy
+            Declared::Enabled if why.starts_with("closed: ") => {
+                DoctorCheck::pass("runtime", why.to_string())
+            }
             Declared::Enabled => DoctorCheck::fail(
                 "runtime",
                 format!("the declaration is enabled and this server's mesh is not active — {why}"),
@@ -517,6 +784,27 @@ mod tests {
     use super::*;
 
     #[test]
+    fn the_runtime_verdict_judges_what_a_server_decided_about_the_declaration() {
+        let enabled: MeshConfig = serde_json::from_value(serde_json::json!({
+            "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x", "enabled": true,
+        }))
+        .unwrap();
+        let server = super::super::manager::MeshRuntime::new();
+        server.decline("the node identity did not load");
+        let declined = runtime_verdict(Some(Ok(enabled)), Some(&server.status()));
+        assert_eq!(declined.check, "runtime");
+        assert!(
+            !declined.ok,
+            "a declared mesh the server declined is owed: {declined:?}"
+        );
+        let undeclared = runtime_verdict(None, Some(&server.status()));
+        assert!(
+            undeclared.ok,
+            "no declaration, nothing owed: {undeclared:?}"
+        );
+    }
+
+    #[test]
     fn the_self_check_runs_without_a_declaration_and_without_a_network() {
         let report = doctor(None);
         let names: Vec<&str> = report.checks.iter().map(|c| c.check.as_str()).collect();
@@ -530,10 +818,11 @@ mod tests {
                 "broadcast",
                 "protocol",
                 "link",
+                "firewall",
                 "runtime"
             ]
         );
-        for check in ["protocol", "link", "runtime"] {
+        for check in ["protocol", "link", "firewall", "runtime"] {
             let c = report.checks.iter().find(|c| c.check == check).unwrap();
             assert!(c.ok, "{}", c.detail);
         }
@@ -642,6 +931,86 @@ mod tests {
         assert!(!report.ok);
     }
 
+    /// A firewall report as [`firewall::report`] builds one, for a host this suite does
+    /// not run on: ufw on Linux, asked `status`, with the multicast group the one rule an
+    /// enabled declaration with no hub implies. The report is assembled from the module's
+    /// own pure functions, so no firewall is asked and none is needed.
+    fn firewall_report(declared: bool, status: &str) -> firewall::FirewallReport {
+        let config = config(declared);
+        let plan = firewall::plan(Some(&config), &[Ipv4Addr::new(10, 0, 0, 2)], None);
+        let observation = firewall::judge_ufw(status, &plan);
+        let ok = observation.state != firewall::FirewallObservationState::Missing;
+        firewall::FirewallReport {
+            ok,
+            platform: "linux".into(),
+            backend: firewall::Backend::Ufw,
+            executable: None,
+            commands: firewall::render(firewall::Backend::Ufw, &plan, None),
+            plan,
+            verdict: format!("what ufw said: {}", observation.detail),
+            observation,
+            window_seconds: firewall::BLOCK_WINDOW_SECONDS,
+            blocked_recently: None,
+        }
+    }
+
+    #[test]
+    fn a_firewall_that_drops_the_mesh_fails_the_check_with_its_impact_and_the_command_to_run() {
+        let dropping = firewall_report(true, "Status: active\n");
+        let check = firewall_verdict(&dropping);
+        assert_eq!(check.check, "firewall");
+        assert!(!check.ok);
+        assert_eq!(
+            check.detail,
+            "ufw (linux): needs udp/7741 to 239.255.77.77 from any; what ufw said: 1 of 1 rule(s) not admitted: udp/7741 to 239.255.77.77 from any"
+        );
+        let impact = check.impact.as_deref().unwrap_or_default();
+        assert!(
+            impact.contains("never reaches the socket") && impact.contains("every other check"),
+            "{impact}"
+        );
+        let remedy = check.remediation.as_deref().unwrap_or_default();
+        assert!(
+            remedy.contains("`majordomus mesh firewall`")
+                && remedy.contains("`sudo majordomus mesh firewall apply`"),
+            "{remedy}"
+        );
+    }
+
+    #[test]
+    fn a_firewall_that_admits_the_mesh_holds_and_names_the_rules_it_was_asked_about() {
+        let admitting = firewall_report(
+            true,
+            "Status: active\n239.255.77.77 7741/udp     ALLOW IN    Anywhere\n",
+        );
+        let check = firewall_verdict(&admitting);
+        assert!(check.ok, "{}", check.detail);
+        assert_eq!(
+            check.detail,
+            "ufw (linux): needs udp/7741 to 239.255.77.77 from any; what ufw said: every rule of the plan is admitted (1 rule(s))"
+        );
+        assert!(check.impact.is_none() && check.remediation.is_none());
+    }
+
+    #[test]
+    fn a_mesh_that_needs_nothing_admitted_is_reported_by_the_verdict_alone() {
+        // A disabled declaration derives no rule, so there is no backend and no rule to
+        // name beside the verdict: the sentence is the whole detail.
+        let nothing = firewall_report(false, "Status: active\n");
+        assert!(nothing.plan.rules.is_empty());
+        let check = firewall_verdict(&nothing);
+        assert!(check.ok);
+        assert_eq!(check.detail, nothing.verdict);
+        // and the check the doctor runs on this host is that verdict over the real report
+        let here = firewall_check(&Some(Ok(config(false))));
+        assert!(here.ok, "{}", here.detail);
+        assert!(
+            here.detail.contains("needs no inbound admission"),
+            "{}",
+            here.detail
+        );
+    }
+
     #[test]
     fn a_disabled_declaration_a_server_declined_is_off_as_declared() {
         let server = super::super::MeshRuntime::new();
@@ -686,6 +1055,8 @@ mod tests {
         let identity = NodeIdentity::load_or_create(&dir.path().join("node.json")).unwrap();
         let mut quiet = config(true);
         quiet.multicast.enabled = false;
+        quiet.trust.allow = vec![identity.public.public_key.clone()];
+        quiet.tailscale.enabled = false;
         server
             .activate(&quiet, identity, vec![], vec![], "test")
             .unwrap();
@@ -717,5 +1088,69 @@ mod tests {
             "{}",
             runtime.detail
         );
+    }
+
+    #[test]
+    fn the_transport_check_counts_tls_and_private_cleartext_and_refuses_public_cleartext() {
+        let declare = |endpoints: serde_json::Value, seeds: serde_json::Value| -> MeshConfig {
+            serde_json::from_value(serde_json::json!({
+                "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x",
+                "rendezvous": { "endpoints": endpoints }, "cooperation": { "seeds": seeds }
+            }))
+            .unwrap()
+        };
+        let none = transport_check(&declare(serde_json::json!([]), serde_json::json!([])));
+        assert!(none.ok);
+        assert_eq!(
+            none.detail,
+            "0 endpoint(s) over TLS, 0 in cleartext to loopback, private or overlay addresses"
+        );
+        let held = transport_check(&declare(
+            serde_json::json!(["https://hub.example", "http://100.92.246.32:8791"]),
+            serde_json::json!(["http://127.0.0.1:8742", "http://bad..name:8742"]),
+        ));
+        assert!(held.ok, "{}", held.detail);
+        assert!(
+            held.detail
+                .starts_with("1 endpoint(s) over TLS, 2 in cleartext"),
+            "{}",
+            held.detail
+        );
+        assert!(
+            held.detail
+                .contains("not resolved here, judged again at every dial: http://bad..name:8742"),
+            "{}",
+            held.detail
+        );
+        let refused = transport_check(&declare(
+            serde_json::json!(["http://192.168.1.2:8791", "http://203.0.113.5:8791"]),
+            serde_json::json!(["http://198.51.100.7:8742"]),
+        ));
+        assert!(!refused.ok);
+        assert!(
+            refused
+                .detail
+                .contains("http://203.0.113.5:8791 was not dialed"),
+            "{}",
+            refused.detail
+        );
+        assert!(
+            refused.detail.contains("198.51.100.7 is a public address"),
+            "{}",
+            refused.detail
+        );
+        assert!(
+            !refused.detail.contains("192.168.1.2"),
+            "{}",
+            refused.detail
+        );
+        assert!(refused.remediation.unwrap().contains("https://"));
+        // and the self-check carries it, right after the declaration it judges
+        let report = doctor(Some(Ok(declare(
+            serde_json::json!(["http://203.0.113.5:8791"]),
+            serde_json::json!([]),
+        ))));
+        assert_eq!(report.checks[1].check, "transport");
+        assert!(!report.ok);
     }
 }

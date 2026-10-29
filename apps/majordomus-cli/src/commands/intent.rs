@@ -108,7 +108,33 @@ pub fn run(args: IntentArgs) -> Result<u8> {
             emit(format, &v, explain_text)?;
             Ok(0)
         }
+        IntentCommand::Propose {
+            statement,
+            title,
+            id,
+        } => {
+            let mut input = json!({ "statement": statement });
+            for (key, value) in [("title", title), ("id", id)] {
+                if let Some(value) = value {
+                    input[key] = json!(value);
+                }
+            }
+            call(&app.context, &["intent", "propose"], input)
+                .and_then(|v| emit(format, &v, propose_text))
+                .map(|()| 0)
+        }
     }
+}
+
+/// The record written, and what follows from it.
+fn propose_text(v: &Value) -> String {
+    format!(
+        "proposed {}  {}\n  {}\n  unplanned: it names no milestone and no criterion yet; `majordomus intent show {}` derives its stage\n",
+        s(v, "id"),
+        s(v, "title"),
+        s(v, "path"),
+        s(v, "id"),
+    )
 }
 
 /// Each intent with how far reality is from it and who realises it, then every unit of work
@@ -184,15 +210,24 @@ fn realization_text(v: &Value) -> String {
             s(unit, "kind"),
             s(unit, "id"),
             s(unit, "outcome"),
-            link.unwrap_or_else(|| format!("unlinked: {}", s(w, "unlinked")))
+            link.unwrap_or_else(|| match w["class"].as_str() {
+                Some(class) => format!("unlinked ({class}): {}", s(w, "unlinked")),
+                None => format!("unlinked: {}", s(w, "unlinked")),
+            })
         ));
     }
     findings_text(&mut out, &v["findings"]);
+    // only the `orphan` class is work serving no intent; the two others say why a unit is not
+    // (ADR 0075, amendment of 2026-10-15)
+    let count = |k: &str| v[k].as_u64().unwrap_or(0);
     out.push(format!(
-        "{} intent(s), {} unit(s) of work, {} serving no intent",
+        "{} intent(s), {} unit(s) of work, {} serving no intent \
+         ({} empty records, {} before the first intent)",
         v["intents"].as_array().map_or(0, Vec::len),
         work.len(),
-        v["orphans"]
+        count("orphans"),
+        count("empty"),
+        count("before_intents")
     ));
     out.join("\n")
 }
@@ -652,6 +687,67 @@ mod tests {
             .any(|l| l == "refusal     nothing_named  nothing was named"));
     }
 
+    /// `intent propose` writes the record through `intents.propose`, a second proposal of
+    /// the same identity is the capability's refusal, and the text names what was written.
+    #[test]
+    fn propose_writes_one_record_and_refuses_the_second() {
+        let repo = SyntheticRepository::small().unwrap();
+        let root = repo.root().to_string_lossy().into_owned();
+        let share = crate::synthetic::crate_share()
+            .to_string_lossy()
+            .into_owned();
+        let run = |extra: &[&str]| {
+            let mut argv = vec![
+                "majordomus",
+                "intent",
+                "propose",
+                "--repo",
+                &root,
+                "--discovery",
+                "filesystem",
+                "--share",
+                &share,
+                "--format",
+                "json",
+            ];
+            argv.extend_from_slice(extra);
+            crate::commands::run(<crate::cli::Cli as clap::Parser>::parse_from(argv))
+        };
+        let extra = [
+            "--statement",
+            "The UI answers at once",
+            "--title",
+            "Fast UI",
+            "--id",
+            "fast-ui",
+        ];
+        assert_eq!(run(&extra).unwrap(), 0);
+        let record = repo.root().join(".ai/repo/project/intents/fast-ui.yaml");
+        let text = std::fs::read_to_string(&record).unwrap();
+        assert!(
+            text.starts_with("id: fast-ui\ntitle: \"Fast UI\"\n"),
+            "{text}"
+        );
+        match run(&extra) {
+            Err(Error::Protocol { reason }) => {
+                assert!(reason.contains("never overwrites"), "{reason}")
+            }
+            other => panic!("a second proposal answered: {other:?}"),
+        }
+        assert_eq!(std::fs::read_to_string(&record).unwrap(), text);
+        match run(&["--statement", " "]) {
+            Err(Error::Protocol { reason }) => {
+                assert!(reason.contains("needs a statement"), "{reason}")
+            }
+            other => panic!("an empty statement answered: {other:?}"),
+        }
+        let said = propose_text(&json!({"id": "fast-ui", "title": "Fast UI",
+            "path": ".ai/repo/project/intents/fast-ui.yaml"}));
+        assert!(said
+            .starts_with("proposed fast-ui  Fast UI\n  .ai/repo/project/intents/fast-ui.yaml\n"));
+        assert!(said.contains("`majordomus intent show fast-ui`"));
+    }
+
     #[test]
     fn each_verb_reaches_its_capability_and_an_unexposed_one_is_named() {
         let repo = SyntheticRepository::small().unwrap();
@@ -752,11 +848,13 @@ mod tests {
     fn realization_text_separates_work_from_intents_only_when_there_is_work() {
         let intent = json!({ "intent": "I1", "stage": "proposed", "met": 0, "criteria": 1,
                              "title": "Ship it" });
-        let idle = json!({ "intents": [intent], "work": [], "findings": [], "orphans": 0 });
+        let idle = json!({ "intents": [intent], "work": [], "findings": [], "orphans": 0,
+                           "empty": 0, "before_intents": 0 });
         assert_eq!(
             realization_text(&idle),
             "I1  proposed  0/1 met  Ship it\n\
-             1 intent(s), 0 unit(s) of work, 0 serving no intent"
+             1 intent(s), 0 unit(s) of work, 0 serving no intent \
+             (0 empty records, 0 before the first intent)"
         );
 
         let busy = json!({
@@ -765,16 +863,78 @@ mod tests {
                 "work": { "kind": "task", "id": "t-1", "outcome": "active" },
                 "links": [],
                 "unlinked": "names no issue",
+                "class": "orphan",
             }],
             "findings": [],
             "orphans": 1,
+            "empty": 0,
+            "before_intents": 0,
         });
         assert_eq!(
             realization_text(&busy),
             "I1  proposed  0/1 met  Ship it\n\
              \n\
-             task t-1  active  unlinked: names no issue\n\
-             1 intent(s), 1 unit(s) of work, 1 serving no intent"
+             task t-1  active  unlinked (orphan): names no issue\n\
+             1 intent(s), 1 unit(s) of work, 1 serving no intent \
+             (0 empty records, 0 before the first intent)"
+        );
+    }
+
+    /// ADR 0075, amendment of 2026-10-15: only the `orphan` class is work serving no intent;
+    /// the summary counts the two other classes beside it and each unlinked line names its
+    /// class. An answer from before the classes (no `class`, no counts) still reads.
+    #[test]
+    fn realization_text_counts_only_orphans_as_serving_no_intent() {
+        let unlinked = |kind: &str, id: &str, outcome: &str, class: &str| {
+            json!({
+                "work": { "kind": kind, "id": id, "outcome": outcome },
+                "links": [],
+                "unlinked": "names no issue",
+                "class": class,
+            })
+        };
+        let v = json!({
+            "intents": [],
+            "work": [
+                unlinked("session", "s-1", "closed", "empty"),
+                unlinked("session", "s-2", "closed", "empty"),
+                unlinked("session", "s-3", "closed", "before_intents"),
+                unlinked("task", "t-1", "active", "orphan"),
+            ],
+            "findings": [],
+            "orphans": 1,
+            "empty": 2,
+            "before_intents": 1,
+        });
+        assert_eq!(
+            realization_text(&v),
+            "\n\
+             session s-1  closed  unlinked (empty): names no issue\n\
+             session s-2  closed  unlinked (empty): names no issue\n\
+             session s-3  closed  unlinked (before_intents): names no issue\n\
+             task t-1  active  unlinked (orphan): names no issue\n\
+             0 intent(s), 4 unit(s) of work, 1 serving no intent \
+             (2 empty records, 1 before the first intent)"
+        );
+
+        let old = json!({
+            "intents": [],
+            "work": [{
+                "work": { "kind": "task", "id": "t-1", "outcome": "active" },
+                "links": [],
+                "unlinked": "names no issue",
+            }],
+            "findings": [],
+            "orphans": 1,
+        });
+        assert!(
+            realization_text(&old).ends_with(
+                "task t-1  active  unlinked: names no issue\n\
+                 0 intent(s), 1 unit(s) of work, 1 serving no intent \
+                 (0 empty records, 0 before the first intent)"
+            ),
+            "{}",
+            realization_text(&old)
         );
     }
 }

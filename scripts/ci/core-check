@@ -65,9 +65,26 @@ bin/majordomus plan validate
 # produced fails here rather than at the moment somebody runs --apply.
 step "the GitHub projection is producible offline"
 scripts/github-sync --plan
-for id in $(bin/majordomus plan list | awk 'NR>1{print $1}'); do
-  scripts/github-sync --render "$id" | grep -q '^<!-- majordomus:begin' || { echo "no generated region for $id"; exit 1; }
-done
+# Every record's body, rendered by one adapter process: the model loads once for all of them
+# rather than once per record, which made this step cost one model load per record (461 s in
+# CI on 2026-10-11, for 273 records). Each record is still held to its own generated region —
+# its begin marker followed by its own identity — and a render that fails is a failure of this
+# step, where the per-record loop read only the begin marker and passed it.
+records="$(bin/majordomus plan list | awk 'NR>1{print $1}')"
+if [ -n "$records" ]; then
+  rendered="$(mktemp "${TMPDIR:-/tmp}/mj.core.XXXXXX")"
+  # shellcheck disable=SC2086  # one argument per record id
+  scripts/github-sync --render $records > "$rendered" \
+    || { rc=$?; rm -f "$rendered"; echo "github-sync --render could not render every record (exit $rc)"; exit 1; }
+  missing="$(printf '%s\n' "$records" | awk -v f="$rendered" '
+    BEGIN { while ((getline l < f) > 0) {
+              if (begun && l ~ /^<!-- majordomus:record [^ ]+ -->$/) { split(l, w, " "); seen[w[3]] = 1 }
+              begun = (l ~ /^<!-- majordomus:begin/) } }
+    !($1 in seen) { print $1 }')"
+  rm -f "$rendered"
+  for id in $missing; do echo "no generated region for $id"; done
+  [ -z "$missing" ] || exit 1
+fi
 # Nothing committed names the machine it was written on. Both halves of the fault — a
 # home directory written into prose, and a generator writing its own location into its
 # output — are one grep over the tracked tree, so they are one script rather than a step

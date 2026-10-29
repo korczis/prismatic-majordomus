@@ -1,0 +1,46 @@
+id: I3188
+milestone: mesh-connectivity
+title: "A cold node finds the mesh from a signed manifest on Pages, and refuses a stale, rolled-back or unsigned one"
+slug: a-bootstrap-manifest-is-signed
+priority: p3
+profile: implementation
+objective: "Publish, through the existing Pages pipeline, a manifest of hub node ids and their public reachability hints, signed by a key the trust root names, with canonical serialisation, a monotonic sequence and an expiry; a node with no live peer reads it, keeps the last valid copy, and stops needing it once linked."
+why: "The 10-16 'serverless discovery' design: Pages is static and cannot signal, so it can only be a signed, cacheable hint; a Pages outage must leave running links up. Master's declaration has 'seeds: none' and hand-written rendezvous endpoints. Proposed in ADR 0203 (GitHub Pages is a signed bootstrap anchor for the mesh, never its signalling channel) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c282#2, chatgpt-majordomus:c282#0."
+current_state: "Verified: no bootstrap or seed manifest exists; scripts/pages publishes the site only."
+desired_state: "A generated manifest beside the site; resolver with timeouts and the offline policy."
+scope:
+  - "scripts/pages"
+  - "apps/majordomus-cli/src/mesh/rendezvous.rs"
+  - "apps/majordomus-cli/src/mesh/root.rs"
+  - "share/schemas/majordomus/mesh-declaration"
+  - ".ai/repo/mesh/majordomus.yaml"
+  - ".ai/repo/adrs/0203-github-pages-is-a-signed-bootstrap-anchor-for-the-mesh-never-its.md"
+  - "apps/majordomus-cli/src/mesh/state.rs"
+  - "apps/majordomus-cli/src/mesh/config.rs"
+  - ".github/workflows/pages.yml"
+  - "docs/MESH.md"
+  - "docs/GUIDE.md"
+non_scope:
+  - "Private addresses or identities in the manifest"
+  - "Live signalling over Pages or the GitHub API"
+  - "A manifest hint that is a plain-http public address: hints obey the same rule as declared hubs (case 491)"
+depends_on:
+  - "I3176"
+serves:
+  - "an-authorised-node-connects-from-anywhere#bootstrap-is-signed"
+acceptance_criteria:
+  - "An invalid signature and a lower sequence are refused"
+  - "Pages unavailable: existing links survive and the last valid manifest is used within its expiry"
+  - "Before any code, an amendment to ADR 0203 is proposed to the owner. It names the manifest signing key in the mesh declaration, its custody (offline-signed committed artifact or CI secret, with the workflow-edit exposure stated) and how the sequence stays monotonic across stateless Pages rebuilds"
+  - "The node persists the last-seen manifest sequence in its local mesh state and refuses a lower one after a restart"
+  - "This issue writes apps/majordomus-cli/tests/mesh_bootstrap_manifest.rs and, in the same change, records it as the test ref of criterion bootstrap-is-signed (evidence: test)"
+  - "docs/MESH.md and docs/GUIDE.md describe how a cold node is configured to read the manifest and the offline policy"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --lib mesh::root"
+  - "bash test/run.sh 491_the_mesh_is_on_here"
+evidence_required:
+  - "case_a_bootstrap_manifest_is_verified"
+  - "test_a_bootstrap_manifest_is_verified"
+created_at: 2026-10-18
+updated_at: 2026-10-18

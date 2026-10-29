@@ -1,7 +1,7 @@
 +++
 title = "The design system"
 description = "the design system: the one declaration every surface is rendered from, the pipeline from `share/design/tokens.yaml` to the site, the Cockpit and the executable's own pages, how to add a role, a status word or a type step without touching a consumer, how drift is caught, and how to read a page that looks wrong"
-weight = 62
+weight = 71
 [extra]
 source = "docs/DESIGN_SYSTEM.md"
 +++
@@ -83,7 +83,7 @@ flowchart TD
   decl["apps/majordomus-cli/src/design/tokens.yaml&lt;br&gt;the declaration, compiled in"]
   declout["design.* capabilities,&lt;br&gt;Cockpit shell and Design page"]
   logo["apps/majordomus-cli/src/cockpit/logo-mark.svg&lt;br&gt;the mark, compiled in"]
-  topbar["Cockpit top bar"]
+  topbar["the UI's hero mark"]
   brand["share/cockpit/favicon.svg, site/static/favicon.svg,&lt;br&gt;site/static/images/*.svg&lt;br&gt;every copy of the brand"]
   registry["site/data/registry/design.json&lt;br&gt;vocabulary, theme contract, widths"]
   registryout["templates, site-probe, ui audit"]
@@ -104,7 +104,11 @@ flowchart TD
 
 Two hand-written files sit beside the generated ones and are imported by both Tailwind entry
 points: `base.css` (the accessible defaults) and `primitives.css` (the `.mj-*` components
-both surfaces render). They name tokens and choose nothing.
+both surfaces render). They name tokens and choose nothing. A third, `figure.css`, is the
+site's alone: the frame of the diagram viewer and of a chart
+([`DIAGRAMS.md`](@/docs/diagrams.md)), over the same tokens and the pairs the primitives already
+use. It is unlayered on purpose, because the frame is the diagram's own `<pre>` and must
+win over whatever utilities its page gave it.
 
 Both Tailwind builds import the generated sheets in the same order, after Flowbite's theme.
 The site keeps Flowbite's vocabulary in its templates — `text-heading`, `border-default`,
@@ -220,6 +224,34 @@ component's argument by its default, takes a literal argument only in braces
 (`count={4}`), allows one `for` per comprehension and arrays two levels deep; the kit is
 written within those limits.
 
+## The navbar: the site is the reference
+
+majordomus.dev is the reference for how the product looks and behaves, and the surfaces the
+executable serves derive from it rather than imitate it
+(`project.the-ui-wears-the-sites-navbar`). The first thing derived is the bar at the top of
+the page. It has one declaration (`site/data/nav.toml`, `project.navigation-is-declared-once`)
+and one renderer (`site/templates/partials/navbar.html`); every screen of `majordomus ui`
+and every page of the Cockpit wears that renderer's output:
+
+- **the markup** is the bar of the built site, cut out by `scripts/ui navbar --write` into
+  `apps/majordomus-cli/src/ui/navbar.html` and compiled into the executable — with the
+  release in the badge left for the executable to fill in, and the build's comments dropped;
+- **the styles** are the same utilities over the same tokens: the UI's and the Cockpit's
+  Tailwind entries (`share/ui/src/ui.css`, `share/cockpit/src/cockpit.css`) import what the
+  site's does and name the copy as a source, so each compiled sheet carries exactly the rules
+  the bar is written in;
+- **the behaviour** is the site's own `nav.js` and `theme.js`, served from `share/ui/` and
+  `share/cockpit/` as byte copies that `scripts/cockpit-assets --check` holds to their
+  originals.
+
+`scripts/ui navbar` (run first by `scripts/ui audit`, the `ui-audit` gate) refuses a copy that
+is not the built bar, and compares the bar on the site's front page with the bar on `/ui` in a
+browser, and the bar on `/cockpit` likewise — every element's tag, classes, text, box and computed styles, light and dark, at
+every width `viewports` declares, closed and with a menu open. The executable decides only
+what it alone knows: the version, and that the product entry leads to the UI itself rather
+than to its published snapshot. The UI's manual says the rest
+([`MAJORDOMUS_UI.md`](@/docs/majordomus-ui.md#the-navbar-comes-from-the-site)).
+
 ## Validation
 
 <div class="overflow-x-auto" tabindex="0">
@@ -234,6 +266,7 @@ written within those limits.
 | the stylesheet, the page and the dataset agree, at every declared width | `scripts/site-probe` (`site-probe` gate) | the site job |
 | the stylesheet, the page and the executable agree; every badge word is filed; no overflow at every declared width | `scripts/cockpit-probe` (`cockpit-probe` gate) | the cockpit job |
 | every page is keyboard-operable and passes contrast at every width | `scripts/ui audit` (`ui-audit` gate) | the site job |
+| the UI's navbar is the site's: the compiled copy is the built bar, and the two bars agree element by element and style by style | `scripts/ui navbar`, run first by `scripts/ui audit` (`ui-audit` gate) | the ui job |
 | every colour the declaration pairs with a ground can be read on it, in both themes | `crate::design::contrast` through `design.contrast`, asked by `scripts/ci/design-check` question 9; `test/cases/120_design_contrast.sh` | every plan that touches the declaration or a primitive |
 | the model, the renderer and the zero-registration property | the crate's tests; `test/cases/107_design_tokens.sh`; `test/cases/109_design_system.sh` | the rust and suite jobs |
 
@@ -311,7 +344,8 @@ majordomus_design_explain {"token": "--mj-ok"}
 
 ## What is deliberately not shared
 
-The two surfaces share a language, not a layout. The site is Flowbite components in
+Below the bar, the surfaces share a language, not a layout: the bar itself is the site's on
+the UI and the Cockpit too (above). The site is Flowbite components in
 templates at reading density; the Cockpit is semantic classes over the same tokens at
 operational density. The Swagger UI's own component tree keeps its third-party stylesheet
 inside a frame that is ours. Flowbite names the site uses that are not shared decisions

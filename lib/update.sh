@@ -43,6 +43,13 @@ H
   budget="$(mj_pol context.always_loaded_budget_lines)"
   while [ -n "$(mj_pol "projections.$i.target")" ]; do
     tgt="$(mj_pol "projections.$i.target")"; prov="$(mj_pol "projections.$i.provider")"
+    # A target is a path inside the repository. `../x` or `/x` would be written outside it
+    # by the `$MJ_ROOT/$tgt` below; refuse it while planning, before anything is written
+    # (I2871, found by I1101's survey).
+    if ! mj_norm_path "$tgt" >/dev/null; then
+      mj_fail projection "$tgt" "is not a path inside the repository (no .. and not absolute); nothing written" "grep -n 'target:' $MJ_POLICY_FILE"
+      rm -rf "$tmp"; exit "$MJ_EX_CONTRACT"
+    fi
     mode="$(mj_projection_mode "$i")"
     case "$mode" in file|region) ;;
       *) rm -rf "$tmp"; mj_die "$MJ_EX_CONTRACT" "projection $tgt: unknown mode '$mode' (file | region)" ;;
@@ -65,6 +72,10 @@ H
         rm -rf "$tmp"; exit "$MJ_EX_CONTRACT"
       fi
     fi
+
+    # A target the project tracks is refused here, while planning: before the hand-edit
+    # protection below can advise --force for a file that is somebody else's (ADR 0145).
+    mj_personal_refuse_tracked "$tgt"
 
     # what is on disk: the content this projection owns, and the hash its own stamp claims
     local have_c="" want_c="" present=0 cur="$tmp/cur.$i"
@@ -115,6 +126,13 @@ H
   for p in $plan; do printf '%s %s\n' "${p%%:*}" "${p#*:}"; done
   if [ "$dry" = 1 ]; then rm -rf "$tmp"; return 0; fi
 
+  # Under a personal layer every target is covered before any is written, and a target the
+  # project tracks refuses the whole update: half of it written is worse than none (ADR 0145).
+  i=0
+  while [ -n "$(mj_pol "projections.$i.target")" ]; do
+    mj_personal_guard "$(mj_pol "projections.$i.target")"
+    i=$((i+1))
+  done
   # write atomically, every target
   i=0
   while [ -n "$(mj_pol "projections.$i.target")" ]; do

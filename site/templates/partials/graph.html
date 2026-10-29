@@ -61,10 +61,15 @@
           <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ n.kind }}{% if n.status %} · {{ n.status }}{% endif %}</span>
         </p>
         {%- if n.summary %}<p class="mt-1 text-sm text-body">{{ n.summary }}</p>{% endif -%}
+        {#- An edge reads "source kind target", as graph.js draws it and as edge_kinds defines it:
+            under its source as "kind → target", under its target as "source kind → this", so
+            the list says the same thing from both ends and never inverts it (I3750). -#}
         {%- set out = [e for e in graph.edges if e.source == n.id] -%}
-        {%- if out | length %}
+        {%- set inc = [e for e in graph.edges if e.target == n.id] -%}
+        {%- if out | length or inc | length %}
         <ul class="mt-1 space-y-0.5 text-xs text-body-subtle">
-          {%- for e in out %}<li><span class="font-mono text-heading">{{ e.kind }}</span> {{ e.target }}</li>{% endfor -%}
+          {%- for e in out %}<li data-graph-edge="{{ e.source }} {{ e.kind }} {{ e.target }}"><span class="font-mono text-heading">{{ e.kind }}</span> &rarr; {{ e.target }}</li>{% endfor -%}
+          {%- for e in inc %}<li data-graph-edge="{{ e.source }} {{ e.kind }} {{ e.target }}">{{ e.source }} <span class="font-mono text-heading">{{ e.kind }}</span> &rarr; this</li>{% endfor -%}
         </ul>
         {% endif -%}
       </li>
@@ -73,6 +78,6 @@
   </details>
   {%- endif %}
   {%- if not gsrc %}
-  <script type="application/json" id="{{ graph_id }}-data">{{ graph | json_encode() | safe }}</script>
+  <script type="application/json" id="{{ graph_id }}-data">{{ graph | json_encode() | replace(from="</", to="<\\/") | safe }}</script>
   {%- endif %}
 </figure>

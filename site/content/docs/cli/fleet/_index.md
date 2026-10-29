@@ -4,7 +4,7 @@ description = "The machines that run this repository's mesh, as .ai/repo/fleet/ 
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 217
+weight = 253
 [extra]
 route = "/docs/cli/fleet/"
 command = "majordomus fleet"

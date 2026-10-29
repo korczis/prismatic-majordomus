@@ -1,0 +1,27 @@
+pack: majordomus-0.15.0-same-day-release
+purpose: Ship the next progressive intent-focused Majordomus release today
+primary_agent: Claude Code Opus 5.5
+repository: korczis/prismatic-majordomus
+expected_version: 0.15.0
+version_authority: repository measured release engine
+entrypoint: 00_MASTER_RELEASE_ORCHESTRATOR.md
+milestones:
+  - 10_RELEASE_PREFLIGHT_AND_SCOPE_FREEZE.md
+  - 20_REFRESH_AND_COMPOSE_INTENT_BATCH.md
+  - 30_INTENT_CONTRACT_PROOF.md
+  - 40_CROSS_SURFACE_AND_DOC_CLAIM_AUDIT.md
+  - 50_FULL_VALIDATION_AND_RELEASE_READINESS.md
+  - 60_INTEGRATE_TO_MASTER.md
+  - 70_MEASURE_BUMP_AND_PUBLISH.md
+  - 80_POST_RELEASE_EXTERNAL_VERIFICATION.md
+  - 90_RELEASE_CLOSEOUT_AND_NEXT_WAVE.md
+historical_context:
+  candidate_pr: 794
+  candidate_head_when_pack_created: f7b9d6d4c833fd1d5dc8d5d912b4cfc605662b42
+  historical_validate_status: success
+warnings:
+  - Re-read current master and PR state before execution.
+  - Historical green CI is not release proof.
+  - Do not hardcode 0.15.0; let release analyze/bump decide.
+  - Do not implement next-wave architecture before this release ships.
+  - Repository rules and ADRs override this pack.

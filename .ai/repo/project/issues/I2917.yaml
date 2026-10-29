@@ -1,0 +1,45 @@
+id: I2917
+milestone: idd-reads-at-a-glance
+title: "Each intent has one primary action"
+slug: each-intent-has-one-primary-action
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Show one primary action per intent (\"Start I0702\", \"Verify …\"), derived from plan.next restricted to the intent's issues and the move that issue's status admits; every other move is secondary."
+why: "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: the only action is a small \"done\" in the far column, easy to miss."
+serves:
+  - the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance
+current_state: "Every move looks alike."
+desired_state: "One primary action, the rest secondary."
+scope:
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
+  - ".ai/repo/project"
+  - "docs"
+  - "site"
+depends_on: []
+acceptance_criteria:
+  - "The primary action names the plan's next issue of the intent and the move its status admits"
+  - "Exactly one primary action is drawn, and the walk in case 3220 makes its move through it"
+validation:
+  - "majordomus plan validate"
+  - "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
+evidence_required:
+  - primary_action_tests
+created_at: 2026-10-18
+updated_at: 2026-10-20T15:36:11Z
+started_at: 2026-10-19T10:04:16Z
+started_event: sha256:1dac3f7bd1b81789cf21544f77b7056ae8712aa4475a4646b96cb5daf02c79ef
+verified_at: 2026-10-19T10:04:37Z
+verified_event: sha256:5ef213ca254fdc2cfce19fae48552a5900329b834c154622b1353c7489630bd4
+completed_at: 2026-10-19T10:05:01Z
+completed_event: sha256:4a0ece2b3ba52487a89195b007503cf7573bedfaaeeaa8a9c0af2fdb9022bad8
+evidence:
+  - covers: primary_action_tests
+    type: ci
+    command: "gh run view --job 117890228077 --log"
+    result: "ui::idd::tests::the_primary_move_is_the_plans_next_restricted_to_the_intent, the_intent_offers_one_primary_action and an_intent_with_nothing_to_move_says_so ok, in rust (2) of validate run 39192952944 on dd4c0a87cba, carrying d93b93ad168 and dd4c0a87cba"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39192952944"
+    commit: eb72106294c22a8ac4714cf37d0d135eb917160c
+    recorded_at: 2026-10-20T15:36:11Z

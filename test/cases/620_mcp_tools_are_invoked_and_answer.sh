@@ -1,5 +1,5 @@
 # majordomus-covers: none
-# Ten MCP tools asked a question about this repository — nine of which nothing had ever
+# A sample of MCP tools asked a question about this repository — nine of which nothing had ever
 # asked one — and the ratchet that stops the next tool from arriving unasked.
 #
 # The registry projects its tools over MCP. `use_cases.coverage.mcp_tools` is advisory, so a
@@ -18,7 +18,7 @@
 #
 # The repository it asks about is the checkout the suite lives in, read-only: `--standalone`
 # binds no port, writes no lease and writes nothing anywhere, and every sampled capability
-# declares `effect: read` but one, which is asked to refuse. test/run.sh permits a case to
+# declares `effect: read` but two, which are asked to refuse. test/run.sh permits a case to
 # read its checkout; it may not write into it, and this one does not.
 #
 # The second half is the gate: scripts/ci/mcp-tool-run-check, the ratchet that holds the
@@ -69,14 +69,56 @@ jq -e '(.tiers | length) >= 5 and .default_budget_tokens > 0 and ([.tiers[] | se
 jq -e '[.tiers[].position] == ([.tiers[].position] | sort)' "$S/devpolicy.json" >/dev/null \
   || bad "the tiers are not in position order:" "$S/devpolicy.json"
 
+# ---------------------------------------------------------------- 3b. gates.policy
+# The one definition of done: the stages and the questions are the ones share/completion.yaml
+# declares, in its order, and the distribution is coherent — no token the vocabulary lacks.
+answer majordomus_completion_policy '{}' "$S/completion.json"
+awk '/^stages:/ { s = 1; next } /^questions:/ { s = 0 } s && /^  - id:/ { print $3 }' \
+  "$ROOT/share/completion.yaml" > "$S/stages.want"
+awk '/^questions:/ { q = 1; next } /^[a-z]/ { q = 0 } q && /^  - id:/ { print $3 }' \
+  "$ROOT/share/completion.yaml" > "$S/questions.want"
+[ -s "$S/stages.want" ] && [ -s "$S/questions.want" ] \
+  || bad "share/completion.yaml was not read: no stage or no question found in it"
+jq -r '.stages[].id' "$S/completion.json" | cmp -s - "$S/stages.want" \
+  || bad "majordomus_completion_policy does not answer with the stages share/completion.yaml declares, in order:" "$S/completion.json"
+jq -r '.questions[].id' "$S/completion.json" | cmp -s - "$S/questions.want" \
+  || bad "majordomus_completion_policy does not answer with the questions share/completion.yaml declares, in order:" "$S/completion.json"
+jq -e '(.problems // []) == [] and (.unanswered_gates // []) == [] and .source == "share/completion.yaml" and (.outline | length) > 0' "$S/completion.json" >/dev/null \
+  || bad "majordomus_completion_policy reports a problem, a gate this repository never answers, or no outline:" "$S/completion.json"
+
+# ---------------------------------------------------------------- 3c. gates.state
+# Every gate's state at this checkout's commit, from .ai/repo/ci/gates.yaml: one entry per
+# gate it counts, each a gate the file declares, each with a status the tallies add up. What
+# the ledger holds is this machine's and is not asserted.
+answer majordomus_gate_state '{}' "$S/gatestate.json"
+head="$(git -C "$ROOT" rev-parse HEAD)"
+jq -e --arg h "$head" '.source == ".ai/repo/ci/gates.yaml" and .head == $h and .count > 0 and (.gates | length) == .count and ([.tallies[]] | add) == .count' "$S/gatestate.json" >/dev/null \
+  || bad "majordomus_gate_state does not answer with one state per gate of .ai/repo/ci/gates.yaml at HEAD $head:" "$S/gatestate.json"
+jq -r '.gates[].id' "$S/gatestate.json" | while IFS= read -r id; do
+  grep -qE "^  - id: ${id}\$" "$ROOT/.ai/repo/ci/gates.yaml" \
+    || bad "majordomus_gate_state names a gate .ai/repo/ci/gates.yaml does not declare: $id"
+done
+
 # ---------------------------------------------------------------- 4. executions.cancel
-# The one sampled capability that is not a read. It is asked to refuse, and a refusal is a
+# One of the two sampled capabilities that are not reads (4b is the other). It is asked to refuse, and a refusal is a
 # result with isError, never a transport error — the crate's own contract.
 call majordomus_execution_cancel '{"id":"not-an-execution"}' > "$S/cancel.json"
 jq -e '.result.isError == true and (.error | not)' "$S/cancel.json" >/dev/null \
   || bad "majordomus_execution_cancel does not refuse an id that is not one as a result:" "$S/cancel.json"
 jq -e '[.result.content[].text] | join(" ") | test("execution id")' "$S/cancel.json" >/dev/null \
   || bad "the refusal does not say what an execution id looks like:" "$S/cancel.json"
+
+# ---------------------------------------------------------------- 4b. mesh.review.withdraw
+# A write on the mesh, asked where no shared server activated the mesh: it refuses, as a
+# result that names why, and never as a transport error. A requester who withdraws a review
+# over MCP with nothing to withdraw from is told so in the same shape every other refusal has.
+call majordomus_mesh_review_withdraw '{"request":"none/r-0","note":"case 620"}' > "$S/withdraw.json"
+jq -e '.result.isError == true and (.error | not)' "$S/withdraw.json" >/dev/null \
+  || bad "majordomus_mesh_review_withdraw does not refuse as a result where the mesh is not active:" "$S/withdraw.json"
+jq -e '[.result.content[].text] | join(" ") | test("not_active")' "$S/withdraw.json" >/dev/null \
+  || bad "the refusal does not say the mesh is not active:" "$S/withdraw.json"
+jq -e '.result._meta.majordomus.error.code == "refused"' "$S/withdraw.json" >/dev/null \
+  || bad "the refusal carries no typed code:" "$S/withdraw.json"
 
 # ---------------------------------------------------------------- 5. distribution.status
 # The version is the crate's, the stable channel resolves to a release this tree records,
@@ -169,7 +211,7 @@ jq -e --arg id "$id" '.id == $id and .path == (".ai/repo/skills/" + $id + "/SKIL
   "$S/skill.json" >/dev/null \
   || bad "majordomus_skill_explain does not describe skill $id:" "$S/skill.json"
 
-echo "    eleven MCP tools answered about this repository, and every answer matched the tree"
+echo "    every sampled MCP tool answered about this repository, and every answer matched the tree"
 
 # ================================================================ the ratchet, by mutation
 # A synthetic tree the gate can be pointed at: a registry projecting three tools, one client
@@ -286,7 +328,8 @@ expect_grep 'majordomus generate' "$S/gate.log"
 # rather than a count written here.
 rc=0; bash "$GATE" > "$S/real.log" 2>&1 || rc=$?
 [ "$rc" = 0 ] || { echo "    the gate does not pass on this repository, exit $rc"; cat "$S/real.log"; exit 1; }
-for tool in majordomus_artifacts majordomus_deployment majordomus_devcontext_policy \
+for tool in majordomus_artifacts majordomus_completion_policy majordomus_deployment \
+            majordomus_devcontext_policy \
             majordomus_execution_cancel majordomus_install_status majordomus_mesh_identity \
             majordomus_plan_issues majordomus_product_domains majordomus_product_validate majordomus_rules \
             majordomus_skill_explain majordomus_web_surfaces; do

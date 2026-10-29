@@ -1,0 +1,108 @@
+id: a-change-reconciles-what-it-affects
+title: "A prompt, a change or an inference is reconciled with the intents, issues, knowledge and evidence it affects, deterministically, under one identity on every surface"
+statement: "Majordomus already has the mechanisms. The owner wants them to keep correlating six things: what a person asks for, what the repository knows, what proves it, the tasks that carry it, what peers and advisors said about it, and how the work ended. The correlation comes from the lifecycle events that already occur. A captured prompt is matched to the existing intents before anything new is proposed, and the task that follows records the prompt it followed. What a change touches is derived from the index, with the relation that reached each record. A session's knowledge is reconciled with what is already curated before a person reviews it, and a promotion stands on evidence that resolves. Every inference a decision rests on names its model, its source and its budget, and independence is counted by source. One read of an entity names how it is known and how fresh it is, and it reads the same on the command line, HTTP, MCP and the Cockpit. Hooks only sense and trigger, and deterministic work comes first. A model output is never authority, and a private record is read only on its own machine and never reaches a published byte. The work optimises verified, completed intents per unit of latency, human effort and compute, without a second store, orchestrator or registry."
+invariants:
+  - "No new store, no second event bus, no new intent table and no new peer identity: every slice extends one of the capture archive, the ledger, the index, devcontext, intents.binding, the reasoning store, the mesh journal or the capability registry"
+  - "A lifecycle hook senses and triggers; it carries no business logic and reaches no inference transport"
+  - "Deterministic work (hashing, parsing, index traversal, term matching, dedup) runs before any model; a model is consulted only through docs/REASONING.md, whose plan names its outcome"
+  - "entity.show never answers verified itself; verified is the answer of the proof capability its ProofRef names, and agreement between advisors is not proof"
+  - "A capability that reads the private prompt archive answers only a caller on this machine; nothing under .ai/local, no prompt text, no prompt match and no mesh secret reaches a published Pages byte or a log line"
+  - "A new capability is one capability! declaration projected by majordomus generate; no transport table or generated page is edited by hand"
+  - "The pack's acceptance targets are proposed targets; no surface states one as a measured value until it is measured"
+non_goals:
+  - "A service, framework or crate named after the Cognitive Fabric, or renaming the product"
+  - "Automatic promotion, rejection or relation of knowledge; promotion stays a person's act (ADR 0091)"
+  - "Cheap local model classification before the local-inference work on feature/a-local-runtime-is-observed lands"
+  - "A filesystem watcher or a daemon beside the shared server"
+  - "A stored prompt-to-intent match record; the match and the slice are derived on read"
+  - "Authentication of remote callers"
+  - "Mesh work assignment (I3198, I3199) and provider-session usage accounting (milestone every-sessions-usage-is-observed)"
+  - "The discovery, enforcement and delivery waves of the pack (prompts/01, prompts/06_ENFORCEMENT.md, prompts/07_DELIVERY.md), whose reuse matrices were not part of this plan's input"
+milestones:
+  - "a-prompt-reaches-the-work-it-serves"
+  - "an-entity-says-how-it-is-known-and-what-it-affects"
+  - "knowledge-is-reconciled-before-it-is-reviewed"
+  - "an-inference-names-its-source-and-budget"
+satisfaction:
+  - id: a-replayed-event-is-one-change
+    criterion: "These deliveries of one provider prompt payload leave exactly one record per provider and provider prompt id with identical text: 100 sequential deliveries, 10 concurrent ones, and deliveries on the same UTC day and on the next. The same id from two providers leaves two records. A known key carrying different text is written and counted as a key collision. capture status counts the identities that more than one record holds across the whole archive, including deliveries outside the two-day window (planned proof: case_a_replayed_prompt_is_one_record, an assertion block in test/cases/29_prompt_capture.sh written by I3406)"
+    evidence: command
+    ref: "majordomus intent explain a-change-reconciles-what-it-affects"
+  - id: a-private-read-stays-on-this-machine
+    criterion: "A capability declared as reading checkout-private records is answered on the command line and to loopback, is refused with the existing remote error to an HTTP or MCP caller beyond loopback, and its refusal log line carries no input value (planned proof: a_private_read_is_refused_to_a_remote_caller in apps/majordomus-cli/tests/remote_callers.rs written by I3434)"
+    evidence: command
+    ref: "majordomus intent explain a-change-reconciles-what-it-affects"
+  - id: a-prompt-meets-the-existing-intent
+    criterion: "A captured prompt that rephrases an existing intent is answered matched with that intent and proposes nothing. Two matches above the floor are both kept as candidates (ambiguous), and no match is answered unmatched. An instruction inside the prompt changes nothing. The answer carries identities, matched title terms and a confidence, and no other prompt text (planned proof: test_a_prompt_meets_the_existing_intent in apps/majordomus-cli/tests/intent.rs written by I3408)"
+    evidence: command
+    ref: "majordomus intent explain a-change-reconciles-what-it-affects"
+  - id: a-task-names-the-prompt-it-followed
+    criterion: "task.started carries the provider and provider prompt id of the newest prompt its episode captured before it, or no prompt key when the episode captured none, and the line carries no prompt text (planned proof: an assertion block in test/cases/960_a_task_starts_bound_to_what_it_serves.sh written by I3411)"
+    evidence: command
+    ref: "majordomus intent explain a-change-reconciles-what-it-affects"
+  - id: the-slice-is-one-identity
+    criterion: "For a fixture episode, intents.matched answers the following for each captured prompt: the match verdict; the task whose task.started names that prompt (labelled recorded) or, for a line without the key, the next task the episode started (labelled inferred); that task's bound issue and intent; its finish outcome and verify command; and the evidence state of the criterion the issue serves. The answer is equal on the command line, loopback HTTP, MCP and the live /ui inspector. It is unchanged after the capture hook is replayed 100 times and the independent ledger lines are shuffled (planned proof: test_a_prompt_reaches_its_task in apps/majordomus-cli/tests/intent.rs written by I3409)"
+    evidence: command
+    ref: "majordomus intent explain a-change-reconciles-what-it-affects"
+  - id: the-intent-shows-what-it-knows
+    criterion: "The /ui/idd standing panel and the Cockpit intent page list, under each criterion, the knowledge records that name the files or issues serving that criterion, each with its epistemic class. A record added or removed in its own file appears or disappears with no other edit (planned proof: ui_idd_standing_lists_knowledge in apps/majordomus-cli/src/ui/idd.rs written by I3430, and scripts/ui audit)"
+    evidence: command
+    ref: "majordomus intent explain a-change-reconciles-what-it-affects"
+  - id: nothing-private-is-published
+    criterion: "Every byte that the Pages workflow and scripts/site-deploy publish, the UI and Cockpit snapshots included, passes scripts/ci/local-never-published and scripts/ci/prompt-privacy in the run that publishes it. A snapshot page renders only the readings its subject declares publishable, and never a capability that refuses remote callers (planned proof: test/cases/181_local_is_never_published.sh extended by I3432, and the snapshot.rs unit tests I3433 and I3435 add)"
+    evidence: command
+    ref: "majordomus intent explain a-change-reconciles-what-it-affects"
+  - id: what-a-change-affects-is-derived
+    criterion: "entity.affected takes a path set or a revision range. It answers every issue whose scope covers a path, the milestones and intents those issues serve, the incoming entity edges of each reached object, and the records whose declared references name a path or a reached issue, each with the relation that reached it. The answer is byte-identical for any input order and truncated with a marker past its declared depth and count inputs. The perf counters repository_scans and index_builds do not move during a call (planned proof: test_what_a_change_affects_is_derived and test_records_naming_a_path_are_affected in apps/majordomus-cli/tests/objects.rs written by I3407 and I3412)"
+    evidence: command
+    ref: "majordomus intent explain a-change-reconciles-what-it-affects"
+  - id: an-entity-says-how-it-is-known
+    criterion: "entity.show answers one epistemic class among observed, derived, inferred, proposed and superseded, with the record field it was read from. It never answers verified. An object with a proof names it only through its existing ProofRef pointer, and a surface shows verified only from that proof capability's answer (planned proof: entity_epistemic_class in apps/majordomus-cli/src/capability/builtin/entity.rs written by I3427)"
+    evidence: command
+    ref: "majordomus intent explain a-change-reconciles-what-it-affects"
+  - id: every-surface-reads-one-entity
+    criterion: "For one entity of every kind entity.kinds reports, four surfaces agree: the command line, GET /api/v1/entity, majordomus_entity over MCP and the Cockpit entity page. They agree on uri, id, kind, epistemic class, evidence state, the observed envelope (index observed_at and stale_after, file blob) and relation order (planned proof: entity_surfaces_agree in apps/majordomus-cli/tests/cockpit.rs written by I3429, over the observed envelope I3428 adds)"
+    evidence: command
+    ref: "majordomus intent explain a-change-reconciles-what-it-affects"
+  - id: a-known-fact-is-one-candidate
+    criterion: "An identical observation recorded twice in one episode derives one candidate. Two episodes closing at once each leave exactly their own, and a partial task derives none. A decision, resolved question or verified task fact whose evidence digest matches a curated or pending record of another episode in this checkout is skipped, with the matched record named. Rejected subjects stay with I3164 (planned proof: test/cases/564_knowledge_derivation_is_idempotent.sh extended by I3416 and test/cases/981_an_observation_becomes_a_grouped_candidate.sh extended by I3413)"
+    evidence: command
+    ref: "majordomus intent explain a-change-reconciles-what-it-affects"
+  - id: a-candidate-names-what-already-says-it
+    criterion: "Every candidate group answered by the Rust knowledge_base.candidates reader and by /ui/knowledge lists under related the curated notes that entity.affected reaches from its subject, and the rule it names. No candidate file changes because of it (planned proof: the unit test a_group_names_the_curated_notes_and_rule_of_its_subject I3414 adds, and case 981's normalisation extended by I3414)"
+    evidence: command
+    ref: "majordomus intent explain a-change-reconciles-what-it-affects"
+  - id: promotion-cites-resolvable-evidence
+    criterion: "knowledge promote exits 10 and writes nothing when the evidence names no typed reference that exists in this checkout. Every knowledge.promoted line carries the references the promotion stood on, and the promoted record reads as decided, not verified (planned proof: test/cases/709_knowledge_promotion_is_an_act.sh extended by I3415)"
+    evidence: command
+    ref: "majordomus intent explain a-change-reconciles-what-it-affects"
+  - id: an-observation-cites-its-review
+    criterion: "knowledge observe accepts a review reference as evidence, and the derived candidate carries it in its body and never in its provenance, so knowledge check passes in a clone without the mesh (planned proof: test/cases/980_a_session_records_what_it_observed.sh extended by I3417)"
+    evidence: command
+    ref: "majordomus intent explain a-change-reconciles-what-it-affects"
+  - id: an-inference-names-its-source
+    criterion: "Every completed advisor consultation names the model that answered (or its absence, with a reason), the adapter, the vendor or peer runtime, and the session that asked. A mesh peer asked for critique receives the question's evidence references within the mesh body bound (planned proof: the contract tests I3418 and I3420 add to scripts/lib/advisors/contract.test.mjs, and cargo test --test reasoning_mesh)"
+    evidence: command
+    ref: "majordomus intent explain a-change-reconciles-what-it-affects"
+  - id: review-counts-sources-not-votes
+    criterion: "A source is the adapter plus the recorded model. A mesh peer that reported no model counts as the adapter plus its runtime, and any other consultation without a model counts as the adapter alone. Two answers from one source count as one independent review and two sources as two, and reasoning check refuses a stored count that disagrees with its sources (planned proof: the store.rs unit test duplicate_sources_are_one_review I3419 adds, and majordomus reasoning check)"
+    evidence: command
+    ref: "majordomus intent explain a-change-reconciles-what-it-affects"
+  - id: inference-stays-within-a-declared-budget
+    criterion: "Once I3295 declares a token budget, a task whose reported consultation tokens reach it gets a plan that selects no advisor, with reason budget_exhausted, the budget, the figure and its class. economics summary lists consultation usage as reported tokens per source, with no invented cost. economics check names a consultation over its plan's budget (planned proof: the policy unit test a_spent_budget_selects_nobody I3421 adds and the economics fixture I3422 adds)"
+    evidence: command
+    ref: "majordomus intent explain a-change-reconciles-what-it-affects"
+  - id: deterministic-work-calls-no-model
+    criterion: "docs/REASONING.md maps the pack's four routing levels onto the existing plan outcomes and modes, with no new field or noun, and a unit test fails when a PlanOutcome variant is missing from that mapping. majordomus reasoning check refuses an inference transport reached from the shell closure of any hook command share/providers.yaml declares, and reports none on this repository (planned proof: every_plan_outcome_is_mapped I3423 adds and a_hook_that_calls_an_advisor_is_refused I3424 adds)"
+    evidence: command
+    ref: "majordomus intent explain a-change-reconciles-what-it-affects"
+  - id: reuse-holds-while-its-evidence-holds
+    criterion: "A prior conclusion is not reused once a file it cites has changed since its recorded head or its declared window has passed, and the plan names the moved file (planned proof: the policy unit test a_conclusion_whose_evidence_moved_is_not_reused I3425 adds)"
+    evidence: command
+    ref: "majordomus intent explain a-change-reconciles-what-it-affects"
+  - id: an-advisor-answer-stays-data
+    criterion: "An advisor answer that carries instructions or forged record fields (status, verified, reviewed_by, independent_review_count) is stored only as bounded declared fields. The writer refuses a forwarded extra field, and no other record changes (planned proof: a_poisoned_answer_stays_data in scripts/lib/advisors/contract.test.mjs and the record.rs unit test I3426 adds)"
+    evidence: command
+    ref: "majordomus intent explain a-change-reconciles-what-it-affects"
+created_at: 2026-10-19
+updated_at: 2026-10-19

@@ -11,13 +11,14 @@
 DC="$ROOT/scripts/ci/design-check"
 
 # --- the fixture: the projections as generated, in the layout the gate expects
-mkdir -p share/design/brand apps/majordomus-cli/src/web apps/majordomus-cli/src/cockpit share/cockpit site/static/images site
+mkdir -p share/design/brand apps/majordomus-cli/src/web apps/majordomus-cli/src/cockpit share/cockpit share/ui site/static/images site
 cp "$ROOT"/share/design/*.css share/design/
 cp "$ROOT"/share/design/tokens.yaml share/design/
 cp "$ROOT"/share/design/brand/logo-mark.svg "$ROOT"/share/design/brand/logo.svg "$ROOT"/share/design/brand/social-card.png share/design/brand/
 cp "$ROOT"/apps/majordomus-cli/src/web/tokens.css apps/majordomus-cli/src/web/
 cp "$ROOT"/apps/majordomus-cli/src/cockpit/logo-mark.svg apps/majordomus-cli/src/cockpit/
 cp "$ROOT"/share/cockpit/favicon.svg share/cockpit/
+cp "$ROOT"/share/ui/favicon.svg share/ui/
 cp "$ROOT"/site/static/favicon.svg site/static/
 cp "$ROOT"/site/static/images/logo-mark.svg "$ROOT"/site/static/images/logo.svg "$ROOT"/site/static/images/social-card.png site/static/images/
 git add -A >/dev/null 2>&1

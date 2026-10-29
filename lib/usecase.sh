@@ -174,9 +174,11 @@ mj_uc_file() { local n="MJ_UC_FILE_$1"; printf '%s' "${!n}"; }
 mj_ap_v()    { mj_yv "MJAP$1" "$2"; }
 mj_ap_list() { mj_yvlist "MJAP$1" "$2"; }
 mj_ap_file() { local n="MJ_AP_FILE_$1"; printf '%s' "${!n}"; }
-# the index of a use case by id, or failure
-mj_uc_index() { local i=0; while [ "$i" -lt "$MJ_UC_N" ]; do [ "$(mj_uc_v "$i" id)" = "$1" ] && { printf '%s' "$i"; return 0; }; i=$((i+1)); done; return 1; }
-mj_ap_index() { local j=0; while [ "$j" -lt "$MJ_AP_N" ]; do [ "$(mj_ap_v "$j" id)" = "$1" ] && { printf '%s' "$j"; return 0; }; j=$((j+1)); done; return 1; }
+# the index of a use case by id, or failure; each id is read by expansion (mj_uc_get), not
+# by a command substitution per entry: a run asks this for every id several times, which made
+# the lookup quadratic in subshells
+mj_uc_index() { local i=0 MJ_V; while [ "$i" -lt "$MJ_UC_N" ]; do mj_uc_get "$i" id; [ "$MJ_V" = "$1" ] && { printf '%s' "$i"; return 0; }; i=$((i+1)); done; return 1; }
+mj_ap_index() { local j=0 MJ_V; while [ "$j" -lt "$MJ_AP_N" ]; do mj_ap_get "$j" id; [ "$MJ_V" = "$1" ] && { printf '%s' "$j"; return 0; }; j=$((j+1)); done; return 1; }
 # the categories of the taxonomy, one id per line
 mj_uc_categories() {
   local t="$MJ_UC_DIR/taxonomy.yaml" flat
@@ -380,10 +382,15 @@ mj_uc_validate_all() {
           # A live scenario is a question about this repository, never an action on it.
           # The class is read from share/commands.yaml, which already declares it, so
           # safety is a property of the declaration and not of the author's care (ADR 38).
+          # The whole argument vector is judged, not its first word: a command's class is
+          # its worst case, and the registry's `effects` say where a subcommand or a flag
+          # differs (I1981).
           if [ "$mode" = live ] && [ -n "$cmd" ]; then
             mj_cmdreg_load || true
-            local cls; cls="$(mj_cmdreg_class "$cmd")"
-            [ "$cls" = read-only ] || mj_uc_bad "$id" "step '$sid' runs '$cmd', which is ${cls:-undeclared}, in a live scenario; only read-only commands may run against this repository" "share/commands.yaml"
+            local cls why eff av="" an=1
+            while mj_uc_get "$i" "scenario.steps.$k.run.$an"; [ -n "$MJ_V" ]; do av="$av $MJ_V"; an=$((an+1)); done
+            eff="$(mj_cmdreg_effective "$cmd" $av)"; cls="${eff%%"$MJ_TAB"*}"; why="${eff#*"$MJ_TAB"}"
+            [ "$cls" = read-only ] || mj_uc_bad "$id" "step '$sid' runs 'majordomus $cmd$av', which is ${cls:-undeclared} by ${why:-the registry}, in a live scenario; only read-only commands may run against this repository" "share/commands.yaml"
           fi
         fi
         k=$((k+1))
@@ -529,7 +536,9 @@ mj_uc_normalise() { # repo-path
     -e '/: printf: write error: Broken pipe$/d' \
     -e '/^INFO advisor +[^ ]+ — .* — optional$/d' \
     -e '/^OK +reasoning +- — reasoning check: /d' \
-    -e 's/^(OK|INFO) +reasoning +.*$/·    reasoning   <decided by the advisors and the executable of the recording machine>/'
+    -e '/^INFO +reasoning +- — ci, claims: not run; /d' \
+    -e 's/^(OK|INFO) +reasoning +.*$/·    reasoning   <decided by the advisors and the executable of the recording machine>/' \
+    -e 's/^(OK|INFO) +layout +- — .*$/·    layout      - — <judged when the recording machine has built the executable>/'
 }
 # an argv as a reader would type it: an argument a shell would split or expand is single-quoted,
 # so a recorded command can be pasted back into a terminal and run as it was
@@ -563,6 +572,23 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
   # The scenario says it is not asked, and the reader reports that, the same everywhere; the
   # check itself is the suite's (case 405), which runs where an executable is built.
   MAJORDOMUS_KNOWLEDGE_SCHEMA=unasked; export MAJORDOMUS_KNOWLEDGE_SCHEMA
+  # A caller timing its own run (MJ_TIMING=1 scripts/generate-site-data) must not time the
+  # scenario's commands: their timing report lands in the recorded output, and the committed
+  # evidence then differs from a run without it (seen on 2026-10-21, I0832).
+  unset MJ_TIMING MJ_TIMING_FILE
+  # Nor may it carry the recorder's episode identity. A writer names the caller's own episode
+  # or none (ADR 0164), and the caller is read from MJ_SESSION_KEY, MAJORDOMUS_PROVIDER_SESSION
+  # or the provider adapter's session variable; a recorder running inside an agent session
+  # handed the scenario that agent's id, its writers looked for an episode the scenario's
+  # repository never opened, and keep-what-an-episode-learned failed on every workstation
+  # session while CI, which has no provider variable, passed (seen on 2026-10-23, I0703).
+  unset MJ_SESSION_KEY MAJORDOMUS_PROVIDER_SESSION
+  if [ -n "${MJ_LIB_DIR:-}" ] && [ -f "$MJ_LIB_DIR/capture.sh" ]; then
+    # shellcheck source=capture.sh
+    [ -n "${MJ_LIB_capture:-}" ] || . "$MJ_LIB_DIR/capture.sh"
+    local pv
+    for pv in $(mj_lifecycle_session_vars); do unset "$pv"; done
+  fi
   fix="$(mj_uc_fixture_dir)"
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj-uc.XXXXXX")"
   W="$tmp/repo"; mkdir -p "$W"
@@ -667,7 +693,7 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
 # steps are independent questions about one tree, and a gate that answered only the first
 # of them would send a worker round the loop once per finding.
 mj_uc_run_live() { # index, evidence-file
-  local i="$1" out="$2" id W k sid cmd obl argv_n a rc want pat ok all_ok=1 t0 t1 dur
+  local i="$1" out="$2" id W k sid cmd obl argv_n a rc want pat ok all_ok=1 t0 t1 dur eff ecls ewhy
   local steps_json="" first=1 raw norm asserts fail_reason n tmp j jstate jrest jmsg jrep task
   id="$(mj_uc_v "$i" id)"; W="$MJ_ROOT"
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj-uclive.XXXXXX")"
@@ -697,6 +723,17 @@ mj_uc_run_live() { # index, evidence-file
     set --; argv_n=0
     while a="$(mj_uc_v "$i" "scenario.steps.$k.run.$argv_n")"; [ -n "$a" ]; do set -- "$@" "$a"; argv_n=$((argv_n+1)); done
     want="$(mj_uc_v "$i" "scenario.steps.$k.expect.exit")"
+    # validate refuses a writing step when the scenario is authored; the runner asks again
+    # about the whole argument vector, because nothing that writes may run in this
+    # repository whatever the file said when it was last validated (I1981)
+    mj_cmdreg_load || true
+    eff="$(mj_cmdreg_effective "$@")"; ecls="${eff%%"$MJ_TAB"*}"; ewhy="${eff#*"$MJ_TAB"}"
+    if [ "$ecls" != read-only ]; then
+      fail_reason="majordomus $* is ${ecls:-undeclared} by ${ewhy:-the registry}; a live scenario runs only read-only argument vectors, and this one was not run"
+      [ "$first" = 1 ] || steps_json="$steps_json,"; first=0
+      steps_json="$steps_json{\"id\":\"$(mj_json_esc "$sid")\",\"command\":\"$(mj_json_esc "majordomus $*")\",\"argv\":$(printf '%s\n' "$@" | mj_uc_jarr),\"exit\":null,\"expected_exit\":$want,\"output\":\"\",\"assertions\":[],\"result\":\"unmet\",\"reason\":\"$(mj_json_esc "$fail_reason")\",\"timing\":{\"duration_ms\":0}}"
+      all_ok=0; k=$((k+1)); continue
+    fi
     raw="$tmp/step-$k.out"; rc=0; t0="$(mj_ms)"
     ( cd "$W" && "$MJ_BIN_DIR/majordomus" "$@" < /dev/null ) > "$raw" 2>&1 || rc=$?
     t1="$(mj_ms)"; dur=$((t1 - t0))
@@ -727,6 +764,53 @@ mj_uc_run_live() { # index, evidence-file
   return 0
 }
 
+# ---------------------------------------------------------------- the scenario cache (I0832)
+# A scenario's evidence is a function of its use case, its fixture and the tool that runs it,
+# and of nothing a records commit changes. Every derive used to execute every scenario again,
+# records-only commits included, and that was 60% of a site generation (catalogue.json, 1406 of
+# 2334 s, measured on 2026-10-21). A PASSING run is now kept beside the evidence and reused
+# when its key matches: the executable's own bytes (the binary MAJORDOMUS_BIN names), the blob
+# ids of every tracked file the tool is made of, and the use case's own file. Anything the key
+# cannot vouch for runs as before: no MAJORDOMUS_BIN, a tree that is not this tool's own source,
+# an uncommitted change outside the record paths, a failed run (never cached), --keep, or
+# MJ_UC_CACHE=0. The reused file is the very evidence that run wrote, so the site data built
+# from it is byte-identical, which `generate-site-data --check` proves.
+MJ_UC_CACHE_EXCLUDE=".ai/repo/project .ai/repo/knowledge site docs test/cases"
+mj_uc_tool_key() { # prints the key of the tool the scenarios run, or nothing
+  [ "${MJ_UC_CACHE:-1}" = 1 ] || return 0
+  [ -n "${MAJORDOMUS_BIN:-}" ] && [ -f "$MAJORDOMUS_BIN" ] || return 0
+  # the tool's own source tree only: in an adopter the repository is not the tool. Compared
+  # physically: bin/majordomus sets MJ_LIB_DIR to "<bin>/../lib", which never equals the
+  # string "$MJ_ROOT/lib", and the cache then never engaged (found taking I0832 over).
+  [ -f "$MJ_ROOT/apps/majordomus-cli/Cargo.toml" ] \
+    && [ "$(cd "$MJ_LIB_DIR" 2>/dev/null && pwd -P)" = "$(cd "$MJ_ROOT/lib" && pwd -P)" ] \
+    || return 0
+  git -C "$MJ_ROOT" rev-parse --verify -q HEAD >/dev/null 2>&1 || return 0
+  local p list
+  set -- .
+  for p in $MJ_UC_CACHE_EXCLUDE "$(mj_rel "$MJ_UC_DIR")"; do set -- "$@" ":(exclude)$p"; done
+  # an uncommitted change to the tool is in no key: then nothing is reused
+  [ -z "$(git -C "$MJ_ROOT" status --porcelain --untracked-files=all -- "$@" 2>/dev/null)" ] || return 0
+  list="$(mktemp "${TMPDIR:-/tmp}/mj-uckey.XXXXXX")"
+  { mj_sha256 "$MAJORDOMUS_BIN"; git -C "$MJ_ROOT" ls-files -s -- "$@"; } > "$list" 2>/dev/null \
+    && mj_sha256 "$list"
+  rm -f "$list"
+}
+
+mj_uc_run_cached() { # index, evidence-file, keep: a cached passing run of the same key, or a run
+  local i="$1" out="$2" keep="${3:-0}" id f key dir hit rc=0
+  [ -n "${MJ_UC_TOOL_KEY:-}" ] && [ "$keep" = 0 ] || { mj_uc_run_one "$@"; return; }
+  id="$(mj_uc_v "$i" id)"; f="$(mj_uc_file "$i")"
+  key="$(printf '%s %s' "$MJ_UC_TOOL_KEY" "$(mj_sha256 "$f")" | mj_sha256_hex)"
+  dir="$MJ_AI_LOCAL_DIR/cache/use-cases"; hit="$dir/$id.$key.json"
+  if [ -s "$hit" ]; then cp "$hit" "$out"; return 0; fi
+  mj_uc_run_one "$@" || rc=$?
+  if [ "$rc" = 0 ] && [ -s "$out" ]; then
+    mkdir -p "$dir" && rm -f "$dir/$id".*.json && cp "$out" "$hit.tmp.$$" && mv "$hit.tmp.$$" "$hit"
+  fi
+  return "$rc"
+}
+
 mj_uc_cmd_run() {
   local json="${MJ_JSON:-0}" outdir="" keep=0 ids="" named=0 want_live=0 i id ev rc fails=0 unmets=0 lived=0 ran=0 skipped=0 first=1 jobs=0 maxjobs="${MJ_UC_JOBS:-8}"
   while [ $# -gt 0 ]; do case "$1" in
@@ -746,12 +830,13 @@ mj_uc_cmd_run() {
   # the scenarios are independent (a repository each), so they run a few at a time; the
   # report is printed in list order once every one has finished, so the output is stable
   local tmp; tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj-ucrc.XXXXXX")"
+  MJ_UC_TOOL_KEY="$(mj_uc_tool_key)"
   for id in $ids; do
     i="$(mj_uc_index "$id")"
     mj_uc_has_scenario "$i" || continue
     mj_uc_selected "$i" "$named" "$want_live" || continue
     if mj_uc_is_live "$i"; then continue; fi
-    ( mj_uc_run_one "$i" "$MJ_UC_EVIDENCE/$id.json" "$keep"; echo $? > "$tmp/$id" ) &
+    ( mj_uc_run_cached "$i" "$MJ_UC_EVIDENCE/$id.json" "$keep"; echo $? > "$tmp/$id" ) &
     jobs=$((jobs+1))
     if [ "$jobs" -ge "$maxjobs" ]; then wait -n 2>/dev/null || wait; jobs=$((jobs-1)); fi
   done

@@ -13,9 +13,29 @@
 //! It never passes `--admin`, never merges a pull request whose required checks are not
 //! all passed on its current head, never merges one that does not contain the current
 //! master, never rewrites a branch — the one push it makes is a fast-forward of the head it
-//! observed, leased on that head — and never closes a pull request — closure is
+//! observed, leased on that head — and never closes a pull request for good — closure is
 //! [`super::drain::cleanup`]'s, which demands stronger evidence and an explicit `--apply`.
 //! Only one executor per base branch runs at a time ([`IntegrationLease`]).
+//!
+//! # How it lands
+//!
+//! A ready head that contains master lands by a non-forced fast-forward of the base to that
+//! head ([`FAST_FORWARD`], owner decision of 2026-10-22, I3910): master becomes exactly the
+//! tree its checks judged, and the forge refuses the update when master moved since the
+//! decision, so two executors can never both land. That refusal is a stale decision, not an
+//! unverified landing: the drain observes again and decides from the new master. Only a head
+//! that does not contain master and still yields its own tree (`carries_master`) is landed by
+//! the repository's merge commit ([`landing_method`]).
+//!
+//! # The one pull request it reopens
+//!
+//! A release proposes its record as `release/record-<tag>`, opened with the workflow's own
+//! token, and a forge starts no workflow from an event that token caused: the pull request
+//! has no check of its own and never will, so it can never merge. Closing and reopening it
+//! as a person is the event that starts its run. The executor does exactly that, once per
+//! head, when [`Integrator::record_standing`] says the pull request is in that state
+//! ([`RecordStanding::Reopenable`]) — `reopen_attempted` on the trail first, like every
+//! other act. It pushes nothing, so it needs no `--refresh`, and a dry run only names it.
 //!
 //! # The trail comes first
 //!
@@ -48,6 +68,37 @@ pub const LEASE_STALE_AFTER: Duration = Duration::from_secs(1800);
 /// How long a merge is given to show as merged on the forge before verification fails.
 pub const MERGE_VISIBLE_WITHIN: Duration = Duration::from_secs(60);
 
+/// The landing method of a head that contains master: the base ref moved to the head itself,
+/// never forced, so the forge accepts it only while the base is still an ancestor of the head.
+pub const FAST_FORWARD: &str = "fast-forward";
+
+/// How a ready pull request lands: [`FAST_FORWARD`] when its head contains master
+/// (`up_to_date`), and otherwise the repository's merge method, which only a head that carries
+/// master without containing it is landed by (a stacked head whose base landed as a merge).
+pub fn landing_method<'a>(relation: &super::RelationToMaster, merge_method: &'a str) -> &'a str {
+    match relation {
+        super::RelationToMaster::UpToDate { .. } => FAST_FORWARD,
+        _ => merge_method,
+    }
+}
+
+/// The forge request that fast-forwards `base` of `repository` (`owner/name`) to `head`: a
+/// ref update with `force=false`, which the forge refuses (HTTP 422, "Update is not a fast
+/// forward") unless the base is an ancestor of the head. Never `--admin`, never forced.
+pub fn fast_forward_args(repository: &str, base: &str, head: &str) -> Vec<String> {
+    [
+        "api".to_string(),
+        "-X".into(),
+        "PATCH".into(),
+        format!("repos/{repository}/git/refs/heads/{base}"),
+        "-f".into(),
+        format!("sha={head}"),
+        "-F".into(),
+        "force=false".into(),
+    ]
+    .to_vec()
+}
+
 /// How long a required check that has not reported (`missing`) on a head the executor pushed
 /// still holds the refresh pipeline, counted from the `refreshed` event. A forge creates no
 /// check run for an aggregate job until every job it needs has finished, so for most of a CI
@@ -56,6 +107,114 @@ pub const MERGE_VISIBLE_WITHIN: Duration = Duration::from_secs(60);
 /// with queue time and margin; past it the check is taken never to report, and the pipeline
 /// moves on rather than freezing. A run that still reports later costs one wasted CI run.
 pub const REFRESHED_HEAD_REPORTS_WITHIN: Duration = Duration::from_secs(4 * 3600);
+
+/// The head branch of a release's record pull request: `.github/workflows/release.yml`
+/// proposes the record of `<tag>` as `release/record-<tag>`.
+pub const RECORD_BRANCH_PREFIX: &str = "release/record-";
+
+/// The author a forge reports for a pull request opened with a workflow's own token. Such a
+/// pull request starts no workflow, which is the whole reason the executor reopens it.
+pub const WORKFLOW_TOKEN_AUTHOR: &str = "app/github-actions";
+
+/// How old a record pull request must be before its empty rollup is taken to mean "no run
+/// was started" rather than "the run has not registered yet". Two minutes is far above the
+/// seconds a forge needs to list a run it did start, and far below the ninety minutes a
+/// wasted cycle costs.
+pub const RECORD_REOPEN_GRACE: Duration = Duration::from_secs(120);
+
+/// The comment a record pull request is closed with, a moment before it is reopened.
+pub const RECORD_REOPEN_COMMENT: &str = "Closed and reopened by the integration executor: \
+this pull request was opened with the workflow's own token, so no workflow ran for it and its \
+required check could never report. Reopening it as a person starts that run.";
+
+/// Whether a record pull request is in the one state the executor reopens it from.
+///
+/// ```text
+/// use majordomus_cli::integration::drain::{record_standing_of, RecordStanding};
+/// use serde_json::json;
+///
+/// let view = json!({
+///     "state": "OPEN", "headRefOid": "abc", "createdAt": "2026-10-10T01:56:10Z",
+///     "author": {"is_bot": true, "login": "app/github-actions"}, "statusCheckRollup": []
+/// });
+/// let later = majordomus_cli::peers::epoch_seconds("2026-10-10T02:00:00Z").unwrap();
+/// assert_eq!(record_standing_of(&view, "abc", later), RecordStanding::Reopenable);
+/// // one second after it was opened, an empty rollup proves nothing yet
+/// let at_once = majordomus_cli::peers::epoch_seconds("2026-10-10T01:56:11Z").unwrap();
+/// assert!(matches!(record_standing_of(&view, "abc", at_once), RecordStanding::NotYet(_)));
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum RecordStanding {
+    /// Open at the head decided on, opened with the workflow's token, older than
+    /// [`RECORD_REOPEN_GRACE`], and without a single check of its own.
+    Reopenable,
+    /// Anything else, with the reason: nothing is done and nothing is recorded.
+    NotYet(String),
+}
+
+/// [`RecordStanding`] from the forge's own view of the pull request — `gh pr view --json
+/// state,headRefOid,author,createdAt,statusCheckRollup` — as of `now` (seconds since the
+/// epoch). Pure, so the decision is tested without a forge.
+///
+/// ```text
+/// use majordomus_cli::integration::drain::{record_standing_of, RecordStanding};
+/// use serde_json::json;
+///
+/// // a person opened this one: its own run exists or will, so it is left alone
+/// let view = json!({
+///     "state": "OPEN", "headRefOid": "abc", "createdAt": "2026-10-10T01:56:10Z",
+///     "author": {"is_bot": false, "login": "someone"}, "statusCheckRollup": []
+/// });
+/// let now = majordomus_cli::peers::epoch_seconds("2026-10-10T03:00:00Z").unwrap();
+/// let RecordStanding::NotYet(why) = record_standing_of(&view, "abc", now) else { panic!() };
+/// assert!(why.contains("someone"), "{why}");
+/// ```
+pub fn record_standing_of(view: &serde_json::Value, head_sha: &str, now: i64) -> RecordStanding {
+    let text = |key: &str| {
+        view.get(key)
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("")
+    };
+    let state = text("state");
+    if state != "OPEN" {
+        return RecordStanding::NotYet(format!("it is {state} on the forge, not open"));
+    }
+    let head = text("headRefOid");
+    if head != head_sha {
+        return RecordStanding::NotYet(format!(
+            "its head moved to {head}; the reopen was decided on {head_sha}"
+        ));
+    }
+    let author = view
+        .pointer("/author/login")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or("");
+    if author != WORKFLOW_TOKEN_AUTHOR {
+        return RecordStanding::NotYet(format!(
+            "{author} opened it, not the workflow's token: a run of its own exists or will"
+        ));
+    }
+    let checks = view
+        .get("statusCheckRollup")
+        .and_then(serde_json::Value::as_array)
+        .map_or(0, Vec::len);
+    if checks > 0 {
+        return RecordStanding::NotYet(format!(
+            "it has {checks} check(s) of its own: a run was started for this head"
+        ));
+    }
+    let Some(created) = crate::peers::epoch_seconds(text("createdAt")) else {
+        return RecordStanding::NotYet("the forge gave no readable creation time".to_string());
+    };
+    let grace = RECORD_REOPEN_GRACE.as_secs() as i64;
+    if now - created < grace {
+        return RecordStanding::NotYet(format!(
+            "it was opened {}s ago; an empty rollup means nothing before {grace}s",
+            now - created
+        ));
+    }
+    RecordStanding::Reopenable
+}
 
 /// The one executor of a base branch: an exclusive file under the *common* git directory,
 /// so every worktree of the repository contends on the same file and no other repository
@@ -440,6 +599,13 @@ pub enum IntegrationAction {
     ClosedSuperseded,
     /// Closing it failed.
     CloseFailed,
+    /// A record pull request the workflow's token opened is about to be closed and reopened,
+    /// so that a run of its own starts ([`RecordStanding::Reopenable`]).
+    ReopenAttempted,
+    /// It was closed and reopened; its required check can report now.
+    Reopened,
+    /// Reopening it failed; the detail says whether the pull request was left closed.
+    ReopenFailed,
     /// A person named a pull request to repair (`prs repair --apply`) and its classification
     /// makes it eligible: master is what it lacks, and nothing authored conflicts.
     RepairSelected,
@@ -484,6 +650,9 @@ impl IntegrationAction {
             IntegrationAction::ClosedRedundant => "closed_redundant",
             IntegrationAction::ClosedSuperseded => "closed_superseded",
             IntegrationAction::CloseFailed => "close_failed",
+            IntegrationAction::ReopenAttempted => "reopen_attempted",
+            IntegrationAction::Reopened => "reopened",
+            IntegrationAction::ReopenFailed => "reopen_failed",
             IntegrationAction::RepairSelected => "repair_selected",
             IntegrationAction::RepairAttempted => "repair_attempted",
             IntegrationAction::Repaired => "repaired",
@@ -548,7 +717,12 @@ impl FailureClass {
             FailureClass::Transient
         } else if r.contains("conflict") {
             FailureClass::Conflict
-        } else if r.contains("head branch was modified") || r.contains("head sha") {
+        } else if r.contains("head branch was modified")
+            || r.contains("head sha")
+            || r.contains("not a fast forward")
+        {
+            // a fast-forward the forge refused because master moved since the decision: the
+            // drain observes again and decides from the new master (I3910)
             FailureClass::Stale
         } else if r.contains("review") {
             FailureClass::ReviewRevoked
@@ -615,7 +789,8 @@ pub struct IntegrationEvent {
     /// On a failure: its class, once one is decided.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub class: Option<FailureClass>,
-    /// On `merge_succeeded`: the merge commit, once it is read.
+    /// On `merge_succeeded`: the merge commit, once it is read; the head itself after a
+    /// fast-forward.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub merge_commit: Option<String>,
 }
@@ -677,7 +852,10 @@ pub fn record(root: &Path, mut event: IntegrationEvent) -> Result<IntegrationEve
         // every failed act names its class, decided once, here, from what it says
         event.class = match event.action {
             IntegrationAction::StaleDecision => Some(FailureClass::Stale),
-            IntegrationAction::MergeFailed => Some(FailureClass::of_merge_refusal(&event.detail)),
+            // a reopen is refused in the forge's words, as a merge is
+            IntegrationAction::MergeFailed | IntegrationAction::ReopenFailed => {
+                Some(FailureClass::of_merge_refusal(&event.detail))
+            }
             IntegrationAction::RefreshFailed | IntegrationAction::RepairRefused => {
                 Some(FailureClass::of_refresh_failure(&event.detail))
             }
@@ -814,6 +992,28 @@ pub enum DrainStepOutcome {
         /// Why, as a class.
         class: FailureClass,
     },
+    /// Dry run: this record pull request would have been closed and reopened.
+    WouldReopen {
+        /// The pull request.
+        pr: u64,
+    },
+    /// A record pull request was closed and reopened; its required check now runs on the
+    /// same head, in a run of its own.
+    Reopened {
+        /// The pull request.
+        pr: u64,
+        /// Its head, unchanged by the reopen.
+        head: String,
+    },
+    /// Reopening a record pull request failed.
+    ReopenFailed {
+        /// The pull request.
+        pr: u64,
+        /// Why, saying whether it was left closed.
+        reason: String,
+        /// Why, as a class.
+        class: FailureClass,
+    },
     /// The decision went stale between planning and acting; nothing was merged.
     StaleDecision {
         /// The pull request.
@@ -874,7 +1074,8 @@ pub struct Landed {
     /// The base branch's tip after the merge, fetched.
     pub master_after: String,
     /// The commit that is this merge — the first-parent successor of the master the
-    /// decision was taken against. `None` for a rebase merge, which has no such commit.
+    /// decision was taken against, and the head itself for a fast-forward. `None` for a
+    /// rebase merge, which has no such commit.
     pub merge_commit: Option<String>,
 }
 
@@ -917,6 +1118,12 @@ pub trait Integrator {
     fn refresh_branch(&mut self, a: &PullRequestAssessment, base: &str) -> Result<String, String>;
     /// Close a pull request with a comment saying why.
     fn close(&mut self, pr: u64, head_sha: &str, comment: &str) -> Result<(), String>;
+    /// Whether a record pull request is, on the forge now, in the state the executor
+    /// reopens it from. A read; a forge that cannot be read is [`RecordStanding::NotYet`].
+    fn record_standing(&mut self, pr: u64, head_sha: &str) -> RecordStanding;
+    /// Close a record pull request with `comment` and reopen it at once, while it is open
+    /// at `head_sha`. An error says whether the pull request was left closed.
+    fn reopen(&mut self, pr: u64, head_sha: &str, comment: &str) -> Result<(), String>;
 }
 
 /// One integration step: observe, decide, observe again, act only on an unchanged
@@ -934,6 +1141,11 @@ pub fn step(
         super::wait::record_transitions(root, &first)?;
     }
     let Some(candidate) = first.next_merge.and_then(|n| first.get(n).cloned()) else {
+        // a record nothing can merge until its own run exists comes before any refresh: it
+        // pushes nothing, and every open head is red until the record has landed
+        if let Some(outcome) = reopen_step(root, integrator, &first, dry_run)? {
+            return Ok(outcome);
+        }
         if allow_refresh {
             if let Some(outcome) = refresh_step(root, integrator, &first, dry_run)? {
                 return Ok(outcome);
@@ -1026,6 +1238,7 @@ pub fn step(
             what,
         });
     };
+    let method = landing_method(&candidate.relation, &method).to_string();
     // on the trail before it reaches the forge: a merge the trail cannot name is not asked for
     let attempted = event(
         IntegrationAction::MergeAttempted,
@@ -1279,6 +1492,105 @@ pub fn acknowledge_failure(root: &Path, by: &str) -> Result<IntegrationEvent, St
 /// created until the jobs it needs finish, and a check that never reports must not hold every
 /// refresh forever. A check running on a head the author pushed is not the executor's run to
 /// wait for.
+/// Close and reopen the record pull request no run was ever started for, if there is one.
+///
+/// A candidate is a pull request from a [`RECORD_BRANCH_PREFIX`] branch that waits for a
+/// required check nothing has reported, at a head the trail names in no reopen yet: the act
+/// is taken once per head, and a head it was attempted on is never tried again, because a
+/// reopened pull request also reads `missing` until its run's last job exists. The forge is
+/// then asked what the queue cannot say — who opened it, when, and whether it has a single
+/// check of its own ([`Integrator::record_standing`]). `None` when there is nothing to do.
+fn reopen_step(
+    root: &Path,
+    integrator: &mut dyn Integrator,
+    first: &IntegrationQueue,
+    dry_run: bool,
+) -> Result<Option<DrainStepOutcome>, String> {
+    let tried: std::collections::BTreeSet<(u64, String)> = events(root)
+        .into_iter()
+        .filter(|e| {
+            matches!(
+                e.action,
+                IntegrationAction::ReopenAttempted | IntegrationAction::Reopened
+            )
+        })
+        .filter_map(|e| e.pr.zip(e.head_sha))
+        .collect();
+    // every record that could be it is asked after, in rank order: one a person opened does
+    // not hide the stranded one behind it
+    let Some(candidate) = first
+        .assessments
+        .iter()
+        .filter(|a| {
+            a.head_ref.starts_with(RECORD_BRANCH_PREFIX)
+                && a.disposition == PullRequestDisposition::WaitingForChecks
+                && a.required_checks == super::RequiredCheckState::Missing
+                && !tried.contains(&(a.number, a.evaluated_against.head_sha.clone()))
+        })
+        .find(|a| {
+            integrator.record_standing(a.number, &a.evaluated_against.head_sha)
+                == RecordStanding::Reopenable
+        })
+        .cloned()
+    else {
+        return Ok(None);
+    };
+    let head = candidate.evaluated_against.head_sha.clone();
+    if dry_run {
+        return Ok(Some(DrainStepOutcome::WouldReopen {
+            pr: candidate.number,
+        }));
+    }
+    // on the trail before the forge is asked: a closure the trail cannot name is not made
+    let attempted = event(
+        IntegrationAction::ReopenAttempted,
+        Some(&candidate),
+        format!(
+            "{} was opened with the workflow's token and has no check of its own",
+            candidate.head_ref
+        ),
+    );
+    if let Err(reason) = record(root, attempted) {
+        return Ok(Some(DrainStepOutcome::TrailUnwritable {
+            pr: candidate.number,
+            unrecorded: IntegrationAction::ReopenAttempted,
+            reason,
+        }));
+    }
+    match integrator.reopen(candidate.number, &head, RECORD_REOPEN_COMMENT) {
+        Ok(()) => {
+            record(
+                root,
+                event(
+                    IntegrationAction::Reopened,
+                    Some(&candidate),
+                    "closed and reopened; a run of its own starts on the same head",
+                ),
+            )?;
+            Ok(Some(DrainStepOutcome::Reopened {
+                pr: candidate.number,
+                head,
+            }))
+        }
+        Err(reason) => {
+            record(
+                root,
+                event(
+                    IntegrationAction::ReopenFailed,
+                    Some(&candidate),
+                    reason.clone(),
+                ),
+            )?;
+            let class = FailureClass::of_merge_refusal(&reason);
+            Ok(Some(DrainStepOutcome::ReopenFailed {
+                pr: candidate.number,
+                reason,
+                class,
+            }))
+        }
+    }
+}
+
 fn refresh_step(
     root: &Path,
     integrator: &mut dyn Integrator,
@@ -1311,7 +1623,11 @@ fn refresh_step(
     let within = REFRESHED_HEAD_REPORTS_WITHIN.as_secs() as i64;
     if let Some(waiting) = first.assessments.iter().find(|a| {
         a.disposition == PullRequestDisposition::WaitingForChecks
-            && matches!(a.relation, super::RelationToMaster::UpToDate { .. })
+            && matches!(
+                a.relation,
+                super::RelationToMaster::UpToDate { .. }
+                    | super::RelationToMaster::CarriesMaster { .. }
+            )
             && pushed
                 .get(&(a.number, a.evaluated_against.head_sha.clone()))
                 .is_some_and(|at| {
@@ -1551,6 +1867,16 @@ pub(crate) fn ends_drain(outcome: &DrainStepOutcome) -> Option<String> {
         )),
         DrainStepOutcome::RefreshFailed { pr, reason, class } => (!class.recoverable())
             .then(|| format!("bringing master into #{pr} failed: {reason}")),
+        DrainStepOutcome::WouldReopen { pr } => Some(format!(
+            "dry run: #{pr}, a record pull request the workflow's token opened, would be closed and reopened; its required check must then pass before it can merge"
+        )),
+        DrainStepOutcome::Reopened { pr, .. } => Some(format!(
+            "#{pr} was closed and reopened; its required check runs on the same head now, and the next drain merges it when it passes"
+        )),
+        // a reopen that failed may have left the record closed: said once, and the drain ends
+        DrainStepOutcome::ReopenFailed { pr, reason, .. } => {
+            Some(format!("reopening #{pr} failed: {reason}"))
+        }
         DrainStepOutcome::VerificationFailed { pr, reason } => {
             Some(format!("#{pr} could not be verified after merging: {reason}"))
         }
@@ -1826,8 +2152,9 @@ fn gh(root: &Path, args: &[&str]) -> Result<String, String> {
 /// that master and, for a merge commit, its second parent the head that was decided on. A
 /// merge that landed after another one, onto a master nobody tested together with it, is
 /// refused by name: it is the one thing a merge-after-decision can do wrong that the forge
-/// would still call merged. The merge commit, or `None` for a rebase merge, which leaves no
-/// single commit to name.
+/// would still call merged. A [`FAST_FORWARD`] is proved when master contains the decision's
+/// master and is the decided head itself. The merge commit (the head itself for a
+/// fast-forward), or `None` for a rebase merge, which leaves no single commit to name.
 pub(crate) fn landing(
     root: &Path,
     at: &EvaluatedAgainst,
@@ -1857,6 +2184,17 @@ pub(crate) fn landing(
             "master {master} does not contain {}, the master the merge was decided against",
             at.master_sha
         ));
+    }
+    if method == FAST_FORWARD {
+        // a fast-forward makes no commit of its own: master is the head the checks judged, or
+        // something else landed instead of it
+        return (master == at.head_sha)
+            .then(|| Some(master.to_string()))
+            .ok_or(format!(
+                "unexpected_master: master is {master}, not {}, the head it was fast-forwarded \
+                 to: another change landed between the decision and the fast-forward",
+                at.head_sha
+            ));
     }
     if method == "rebase" {
         // a rebase leaves copies of the head's commits, not the head and not one commit
@@ -1955,16 +2293,24 @@ impl Integrator for ForgeIntegrator<'_> {
         // Never retried either: a merge that timed out may have landed, and asking again
         // would be a second merge request; the verification after it finds out
         // (retry::forge there).
+        let args = if method == FAST_FORWARD {
+            // the repository and base the decision was observed on, which step just recorded
+            let obs = super::load_observation(self.root)?.ok_or("no observation to land on")?;
+            fast_forward_args(&obs.repository, &obs.base, head_sha)
+        } else {
+            [
+                "pr".to_string(),
+                "merge".into(),
+                pr.to_string(),
+                format!("--{method}"),
+                "--match-head-commit".into(),
+                head_sha.into(),
+            ]
+            .to_vec()
+        };
         gh(
             self.root,
-            &[
-                "pr",
-                "merge",
-                &pr.to_string(),
-                &format!("--{method}"),
-                "--match-head-commit",
-                head_sha,
-            ],
+            &args.iter().map(String::as_str).collect::<Vec<_>>(),
         )
         .map(|_| ())
     }
@@ -2077,6 +2423,47 @@ impl Integrator for ForgeIntegrator<'_> {
         .map(|_| ())
     }
 
+    fn record_standing(&mut self, pr: u64, head_sha: &str) -> RecordStanding {
+        // the forge's own view, read now: the queue does not carry who opened a pull request,
+        // when, or how many checks it has
+        let view = super::retry::forge(|| {
+            gh(
+                self.root,
+                &[
+                    "pr",
+                    "view",
+                    &pr.to_string(),
+                    "--json",
+                    "state,headRefOid,author,createdAt,statusCheckRollup",
+                ],
+            )
+        })
+        .and_then(|out| {
+            serde_json::from_str::<serde_json::Value>(&out)
+                .map_err(|e| format!("the forge's view of #{pr} is not JSON: {e}"))
+        });
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_or(0, |d| d.as_secs() as i64);
+        match view {
+            Ok(view) => record_standing_of(&view, head_sha, now),
+            // a view that cannot be read is not a state to act on
+            Err(why) => RecordStanding::NotYet(format!("#{pr} could not be read: {why}")),
+        }
+    }
+
+    fn reopen(&mut self, pr: u64, head_sha: &str, comment: &str) -> Result<(), String> {
+        // closed only while it is open at the head that was decided on, exactly as a closure is
+        self.close(pr, head_sha, comment)?;
+        // from here the pull request is closed: the reopen is asked again through an outage,
+        // and a failure says what a person finds
+        super::retry::forge(|| gh(self.root, &["pr", "reopen", &pr.to_string()]))
+            .map(|_| ())
+            .map_err(|why| {
+                format!("#{pr} was closed and could not be reopened ({why}); reopen it by hand: gh pr reopen {pr}")
+            })
+    }
+
     fn refresh_branch(&mut self, a: &PullRequestAssessment, base: &str) -> Result<String, String> {
         // a refresh runs the repository's derive, which can outlast what an observer calls a
         // stale lease: the record is kept fresh for as long as it runs
@@ -2132,6 +2519,7 @@ impl Integrator for ForgeIntegrator<'_> {
             // rerere off: a resolution recorded during some other merge is a memory of what
             // one person decided about two other commits, and replaying it here would resolve
             // paths nobody decided on
+            let policy = super::allocate::policy_at(root, &master)?;
             if let Err(e) = git_in(&[
                 "-c",
                 "rerere.enabled=false",
@@ -2140,11 +2528,26 @@ impl Integrator for ForgeIntegrator<'_> {
                 "--no-ff",
                 &master,
             ]) {
-                let why = unmerged_paths(root, &dir, &master)
-                    .unwrap_or(format!("the merge of master conflicts after all: {e}"));
-                let _ = git_in(&["merge", "--abort"]);
-                return Err(why);
+                // under allocation at landing a conflict on the version line alone is ours; a
+                // resolution that cannot be made is no resolution: the merge is aborted and the
+                // unmerged paths are the refusal, rather than a merge left half-done in the
+                // scratch worktree (relation.rs classed the conflict before a refresh is tried,
+                // so only a git or file-system failure in between reaches this)
+                let resolved = policy.allocation == crate::release::landing::Allocation::Landing
+                    && super::allocate::resolve_version_conflict(&dir).unwrap_or(false);
+                if !resolved {
+                    let why = unmerged_paths(root, &dir, &master)
+                        .unwrap_or(format!("the merge of master conflicts after all: {e}"));
+                    let _ = git_in(&["merge", "--abort"]);
+                    return Err(why);
+                }
             }
+            // the number this landing takes, from master as it is now (ADR 0134); the derive
+            // below projects it
+            let allocated = super::allocate::allocate_in(root, &dir, &master, &head, &policy)
+                .inspect_err(|_| {
+                    let _ = git_in(&["merge", "--abort"]);
+                })?;
             // the derived artifacts of the merge result, regenerated rather than resolved
             let target = root.join("apps/majordomus-cli/target");
             let derive = Command::new(dir.join("scripts/derive"))
@@ -2166,7 +2569,11 @@ impl Integrator for ForgeIntegrator<'_> {
                 ));
             }
             git_in(&["add", "-A"])?;
-            let message = format!("Merge {base} into {} with its derived artifacts regenerated\n\nBrought in by the integrator (majordomus prs) so that the required checks run against master {master}.", a.head_ref);
+            let mut message = format!("Merge {base} into {} with its derived artifacts regenerated\n\nBrought in by the integrator (majordomus prs) so that the required checks run against master {master}.", a.head_ref);
+            if let Some(decision) = &allocated {
+                message.push_str("\n\n");
+                message.push_str(&super::allocate::trailer(decision));
+            }
             let commit = Command::new("git")
                 .arg("-C")
                 .arg(&dir)
@@ -2653,7 +3060,7 @@ mod left_branch_tests {
             required_checks: None,
             review_policy: None,
             up_to_date_required: None,
-            merge_methods: vec!["merge".into()],
+            merge_methods: Some(vec!["merge".into()]),
             pull_requests: Vec::new(),
             resolved: Default::default(),
             delete_branch_on_merge: Some(true),
@@ -2731,7 +3138,7 @@ mod obsolete_and_plan_tests {
             required_checks: None,
             review_policy: None,
             up_to_date_required: None,
-            merge_methods: vec!["merge".into()],
+            merge_methods: Some(vec!["merge".into()]),
             pull_requests,
             resolved: Default::default(),
             delete_branch_on_merge: None,
@@ -2847,6 +3254,39 @@ mod obsolete_and_plan_tests {
         fn close(&mut self, pr: u64, _: &str, _: &str) -> Result<(), String> {
             panic!("cleanup closed #{pr}")
         }
+        fn record_standing(&mut self, pr: u64, _: &str) -> RecordStanding {
+            panic!("cleanup asked after #{pr}'s record")
+        }
+        fn reopen(&mut self, pr: u64, _: &str, _: &str) -> Result<(), String> {
+            panic!("cleanup reopened #{pr}")
+        }
+    }
+
+    /// A head waiting for its checks holds the refresh pipeline only when it holds master: one
+    /// still behind it (or of an unknown relation) is no run of the executor's to wait for.
+    #[test]
+    fn a_head_waiting_for_checks_that_does_not_hold_master_holds_no_pipeline() {
+        let dir = tempfile::tempdir().unwrap();
+        for relation in [
+            RelationToMaster::Behind {
+                behind: 1,
+                authored: vec!["src/a.rs".into()],
+            },
+            RelationToMaster::Unknown {
+                reason: "not asked".into(),
+            },
+        ] {
+            let mut q = queue(&[(&[], false)]);
+            q.assessments[0].disposition = PullRequestDisposition::WaitingForChecks;
+            q.assessments[0].relation = relation.clone();
+            q.next_refresh.clear();
+            let mut w = Fixed(q.clone());
+            assert_eq!(
+                refresh_step(dir.path(), &mut w, &q, true),
+                Ok(None),
+                "{relation:?}"
+            );
+        }
     }
 
     #[test]
@@ -2908,5 +3348,135 @@ mod rollout_tests {
             continuous_refused(&lost).is_some(),
             "a failure after the record ends it"
         );
+    }
+}
+
+#[cfg(test)]
+mod fast_forward_tests {
+    //! The landing act of I3910: a head that contains master is fast-forwarded to, never
+    //! merged; a refusal because master moved is a stale decision; and what landed is proved
+    //! to be the decided head itself.
+
+    use super::*;
+    use crate::integration::RelationToMaster;
+
+    /// The fast-forward is a non-forced update of the base ref to the decided head, of the
+    /// repository the observation names, and never anything with `--admin` in it.
+    #[test]
+    fn the_fast_forward_moves_the_base_ref_to_the_head_and_never_forces() {
+        let args = fast_forward_args("o/r", "master", "abc123");
+        assert_eq!(
+            args,
+            [
+                "api",
+                "-X",
+                "PATCH",
+                "repos/o/r/git/refs/heads/master",
+                "-f",
+                "sha=abc123",
+                "-F",
+                "force=false"
+            ]
+        );
+        assert!(!args
+            .iter()
+            .any(|a| a.contains("admin") || a == "force=true"));
+    }
+
+    /// A head that contains master is fast-forwarded to; only one that carries master without
+    /// containing it lands by the repository's merge commit.
+    #[test]
+    fn a_head_that_contains_master_is_fast_forwarded_and_only_a_carrier_is_merged() {
+        let up_to_date = RelationToMaster::UpToDate {
+            authored: Vec::new(),
+            owes_version: None,
+        };
+        let carries = RelationToMaster::CarriesMaster {
+            behind: 1,
+            authored: Vec::new(),
+        };
+        assert_eq!(landing_method(&up_to_date, "merge"), FAST_FORWARD);
+        assert_eq!(landing_method(&carries, "merge"), "merge");
+    }
+
+    /// The forge's refusal of a fast-forward onto a master that moved is a stale decision:
+    /// the candidate's own, so the drain goes on and decides again, never a halt.
+    #[test]
+    fn a_fast_forward_refused_because_master_moved_is_stale_and_the_drain_goes_on() {
+        let reason = "gh: Update is not a fast forward (HTTP 422)";
+        let class = FailureClass::of_merge_refusal(reason);
+        assert_eq!(class, FailureClass::Stale);
+        assert!(class.recoverable());
+        let refused = DrainStepOutcome::MergeRefused {
+            pr: 1,
+            reason: reason.into(),
+            class,
+        };
+        assert_eq!(ends_drain(&refused), None);
+    }
+
+    /// A fast-forward with no readable observation to name the repository and base asks the
+    /// forge nothing: the act fails before it, and nothing lands.
+    #[test]
+    fn a_fast_forward_without_a_readable_observation_asks_the_forge_nothing() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut forge = ForgeIntegrator {
+            root: dir.path(),
+            lease: None,
+        };
+        let none = forge.merge(1, "h", FAST_FORWARD).unwrap_err();
+        assert!(none.contains("no observation"), "{none}");
+        let path = crate::integration::state_path(dir.path(), crate::integration::OBSERVATION_FILE);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(&path, "not an observation").unwrap();
+        let unreadable = forge.merge(1, "h", FAST_FORWARD).unwrap_err();
+        assert!(unreadable.contains("observation.json"), "{unreadable}");
+    }
+
+    /// A fast-forward is proved when master is the decided head and contains the decided
+    /// master; any other master is `unexpected_master`, and the landed commit is the head.
+    #[test]
+    fn a_fast_forward_is_proved_only_when_master_is_the_decided_head() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path();
+        let git = |args: &[&str]| {
+            let out = Command::new("git")
+                .env_remove("GIT_DIR")
+                .env_remove("GIT_WORK_TREE")
+                .env_remove("GIT_INDEX_FILE")
+                .arg("-C")
+                .arg(root)
+                .args(["-c", "user.email=t@example.com", "-c", "user.name=t"])
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}: {out:?}");
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        };
+        git(&["init", "-q", "-b", "master"]);
+        git(&["commit", "-q", "--allow-empty", "-m", "base"]);
+        let base = git(&["rev-parse", "HEAD"]);
+        git(&["commit", "-q", "--allow-empty", "-m", "head"]);
+        let head = git(&["rev-parse", "HEAD"]);
+        git(&["commit", "-q", "--allow-empty", "-m", "another"]);
+        let another = git(&["rev-parse", "HEAD"]);
+        let at = EvaluatedAgainst {
+            master_sha: base.clone(),
+            head_sha: head.clone(),
+            ..Default::default()
+        };
+        assert_eq!(
+            landing(root, &at, FAST_FORWARD, &head),
+            Ok(Some(head.clone()))
+        );
+        let err = landing(root, &at, FAST_FORWARD, &another).unwrap_err();
+        assert!(err.starts_with("unexpected_master"), "{err}");
+        // a master that does not hold the decided master is refused before anything else
+        let behind = EvaluatedAgainst {
+            master_sha: another,
+            head_sha: head.clone(),
+            ..Default::default()
+        };
+        assert!(landing(root, &behind, FAST_FORWARD, &head).is_err());
     }
 }

@@ -126,7 +126,14 @@ Beyond the accessibility engine (axe-core, the WCAG 2.0 A/AA, 2.1 A/AA and 2.2 A
   the site.
 - **`page.status` / `page.unreachable` / `page.audit-failed`** — the page answered, and it
   answered in time. A page that does not is a finding about that page, never the end of the
-  run.
+  run — with one exception, a refused connection, which is the server's and not the page's
+  (see [below](#what-the-audit-refuses-to-attribute-to-a-page)). A load that times out is
+  made once more before it is `page.unreachable`, and the finding says in how many attempts:
+  the first load of a surface on a loaded runner can pay for building what every later load
+  reuses. For the same reason the audit warms the site before the first visit — the root,
+  then the first planned page of every top-level path segment of the plan, so a surface
+  served from a tree of its own (the documentation at its mount) is not first loaded by a
+  visit that is measured.
 
 ### A subtree that is not ours to fix
 
@@ -217,6 +224,10 @@ source to fix:
   order — and *which* elements scroll is read from the stylesheet the build just compiled, so
   a theme that stops making `<pre>` scroll stops the pass touching it;
 - a markdown task list's checkbox is given the accessible name of the text beside it;
+- a Markdown table's column alignment (`---:`), which the renderer writes as an inline
+  `style`, is drawn with a class instead — the content policy refuses every inline style, and
+  one right-aligned column in one decision record stopped three publications on 2026-10-12;
+  any other inline style is left for `scripts/site-check` to refuse by name;
 - the generated highlighting palettes are raised to a 4.5:1 contrast ratio against the
   background the same stylesheet declares, keeping hue and saturation and giving up only as
   much lightness as the threshold demands.
@@ -231,9 +242,10 @@ classified:
 
 - a **cancelled** request (`net::ERR_ABORTED`) is the browser saying it no longer needs the
   response — a lazily loaded asset in flight when the audit moves on — not a failed one;
-- a **refused connection** means the server the audit drives is gone, so the run stops and
-  says how many visits it actually measured, rather than recording every remaining page as
-  unreachable;
+- a **refused connection** means the server the audit drives is gone, so it is not loaded
+  again and the run stops — no tab of the pool starts another load, not only the refused
+  one — and says how many visits it actually measured, rather than recording every
+  remaining page as unreachable;
 - a **visit that exceeds its deadline** is reported as that page's finding, and the tab it
   was using is discarded, because a deadline stops waiting and not the work it abandoned.
 

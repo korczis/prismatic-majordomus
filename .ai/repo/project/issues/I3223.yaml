@@ -1,0 +1,47 @@
+id: I3223
+milestone: a-visitor-understands-and-checks-majordomus
+title: "The homepage hero lets a visitor switch between recorded scenarios, each ending in the refusal it proves"
+slug: the-hero-switches-recorded-scenarios
+priority: p2
+profile: implementation
+objective: "Offer in the hero's left column, under the reassure line, a short list of links: the challenge as the default, described as refused and then accepted, and every use case that site/data/generated/terminal.json names among its refusals, each linking to its /use-cases/<id>/ page with at most its one derived verdict line, naming the homepage problem it answers, with the build's commit; homepage-check and case 333 hold it."
+why: "On 2026-10-10 the owner asked for a friendlier, interactive, derived landing page with no big rewrite; ChatGPT proposed switchable real scenarios instead of one static terminal. The scenario corpus and replay already exist (I1600). Sources: chatgpt-majordomus:c215#8, chatgpt-majordomus:c137#5, chatgpt-majordomus:c134#3."
+current_state: "Verified on master 707a04c7ce8: site/templates/index.html links /challenge/ and does not inline a replay (only challenge.html includes partials/challenge-replay.html); site/data/homepage.toml holds html_bytes = 160000; terminal.json `refusals` lists every recorded lifecycle step that exited non-zero; committed derived data carries no commit (test/cases/51_derived_artifacts_committed.sh)."
+desired_state: "scripts/generate-site-data writes the eligible choices from terminal.json; homepage-check refuses a choice without a recorded run, and holds the order and budget."
+scope:
+  - "site/templates/index.html"
+  - "scripts/generate-site-data"
+  - "scripts/ci/homepage-check"
+non_scope:
+  - "A typed demo transcript"
+  - "A new homepage section"
+depends_on:
+  - "I2417"
+serves:
+  - "a-visitor-understands-and-checks-majordomus#scenarios-are-recorded"
+acceptance_criteria:
+  - "Every offered scenario resolves to a recorded run"
+  - "Scripts off: every scenario is reachable"
+  - "homepage-check passes with the declared order and budget"
+validation:
+  - "scripts/site-check"
+  - "scripts/ci/homepage-check"
+  - "bash test/run.sh 333_homepage_narrative"
+evidence_required:
+  - "homepage_check_scenarios"
+created_at: 2026-10-18
+updated_at: 2026-10-22T04:43:54Z
+started_at: 2026-10-20T22:08:50Z
+started_event: sha256:28648588e841d5c5bc1314fc9ecb705d4d3ca50724c4873a561f2b0e91d2dc57
+verified_at: 2026-10-22T04:40:55Z
+verified_event: sha256:6261f7aed0c550617a39f311212009e54b27084f72e46a9d3e5a445f4f8388ab
+completed_at: 2026-10-22T04:43:54Z
+completed_event: sha256:a368d7814f4928f55b5ed6a36768cf307e026bfd64d7d15db2c6b7daa03c161b
+evidence:
+  - covers: homepage_check_scenarios
+    type: ci
+    command: "scripts/ci/homepage-check --only scenarios; bash test/run.sh 333_homepage_narrative"
+    result: "passed in train 3a validate 39712017896 (76c57859663, landed on master 2026-10-22)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39712017896"
+    commit: 76c578596631b290f9291691b388f359fbce97ae
+    recorded_at: 2026-10-22T04:38:44Z

@@ -120,6 +120,45 @@
         "children": {
           "description": "What the directories below this one owe. Subtree documents only; the value nearest a directory applies, and a descendant may raise require_contract to true but never lower an inherited true.",
           "$ref": "#/$defs/Children"
+        },
+        "layout": {
+          "description": "What may live in the directory and how long it lives (I2870, I1102). Optional: a contract without it says nothing about its contents, and the boundary check (I2871) judges only what a contract declares.",
+          "$ref": "#/$defs/Layout"
+        }
+      }
+    },
+    "Layout": {
+      "description": "The contents a directory admits: the lifecycle of what lives there, the kinds it holds, and what must never appear in it. Declared in the contract the directory already has, so the layout is never a second description of the tree.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lifecycle"
+      ],
+      "properties": {
+        "lifecycle": {
+          "description": "How what lives here comes to exist and how long it lasts, in the classes of docs/TWO_FOLDER_CONSOLIDATION.md.",
+          "enum": [
+            "canonical",
+            "derived",
+            "generated",
+            "cache",
+            "runtime",
+            "accidental"
+          ]
+        },
+        "holds": {
+          "description": "The kinds (share/kinds.yaml) the directory holds. Empty: whatever its scope admits.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "excludes": {
+          "description": "Lifecycles or kinds that must never appear here: `cache` and `runtime` under the tracked half, for example.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
@@ -197,5 +236,5 @@
     }
   },
   "x-majordomus-generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the document schema `share/schemas/majordomus/context/context.v1.proto`; regenerate with `majordomus generate`",
-  "x-majordomus-generator": "majordomus-cli 0.20.0"
+  "x-majordomus-generator": "majordomus-cli 1.0.0-alpha.9"
 }

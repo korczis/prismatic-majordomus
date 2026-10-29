@@ -23,7 +23,9 @@ issues and milestones and the website's roadmap all come from `majordomus plan`,
 reads these files and nothing else.
 
 The roadmap and the diagrams are regenerated with the tree. GitHub is not: it receives the
-projection when somebody runs `scripts/github-sync --apply`, deliberately. The gate that
+projection when a change lands, from the workflow every push to the default branch starts
+(`.github/workflows/github.yml`, `project.the-projection-is-applied-at-landing@2`). A
+person's `scripts/github-sync --apply` from the trunk is the fallback. The gate that
 holds the two together is `scripts/ci/github-check`, which reads the remote and fails when
 it has stopped agreeing — because for five days it did, and nothing noticed
 (`project.github-projection-gated@1`).

@@ -24,6 +24,14 @@
 #   optional  behaves differently with and without one, and says which
 #   none      never reads the task record
 #
+# effects (optional):
+#   `class` names a command as a whole, which is the worst thing any of its argument vectors
+#   does. Where a command's subcommands or flags differ, `effects` declares the difference:
+#     subcommand: <word>   the class of that subcommand, replacing the command's own
+#     flag: <--flag>       a flag that raises the class of any argument vector it appears in
+#   A flag can only raise a class, never lower it, so an argv is never admitted as less than
+#   its worst part. A live scenario's step is judged on its whole argv against this list.
+#
 # Fields are read, not decorative. `reads` and `writes` drive the page's Reads and Writes
 # sections; `exit_codes` is reconciled against the MJ_EX_* constants each lib file
 # references; `demo` names the component that must exist; `stage` places the command on the
@@ -58,12 +66,12 @@ commands:
     requires_installed: false
     requires_task: none
     json: false
-    syntax: majordomus init [--extend]
+    syntax: majordomus init [--extend] [--personal | --shared]
     reads: [share/skeleton/ai]
-    writes: [.ai/manifest.yaml, .ai/README.md, .ai/repo/, .ai/local/state/, .gitignore]
-    exit_codes: [0, 2, 13, 15]
+    writes: [.ai/manifest.yaml, .ai/README.md, .ai/repo/, .ai/local/state/, .gitignore, .git/info/exclude]
+    exit_codes: [0, 2, 10, 13, 15]
     demo: init-refusal
-    note: The only command that runs before the .ai/ layer exists. It refuses an existing layer; --extend adds only what is missing and overwrites nothing.
+    note: "The only command that runs before the .ai/ layer exists. It refuses an existing layer; --extend adds only what is missing and overwrites nothing. With --personal the layer is one person's own in a shared repository: no .gitignore line is written, the layer is covered in the git directory's info/exclude instead, and init exits 10 unless git status reads the same after it as before. --shared hands a personal layer to the team by removing that cover."
 
   - id: update
     title: update
@@ -85,7 +93,7 @@ commands:
 
   - id: doctor
     title: doctor
-    summary: Is Majordomus itself healthy, and is every enforcement it declares actually wired here?
+    summary: "It checks governance only: is Majordomus itself healthy, and is every enforcement it declares actually wired here?"
     category: system
     stage: inspect
     visibility: public
@@ -99,7 +107,7 @@ commands:
     writes: []
     exit_codes: [0, 2, 10, 12]
     demo: doctor-findings
-    note: The primary guarantee is wiring reconciliation — a declared enforcement that no hook invokes, or whose exit code a hook swallows, is a failure rather than a passing line.
+    note: "The primary guarantee is wiring reconciliation — a declared enforcement that no hook invokes, or whose exit code a hook swallows, is a failure rather than a passing line. It reads nothing of the checkout's server, its lease or the mesh: a stale server is reported by `majordomus serve status`, the mesh by `majordomus mesh doctor`, and the server's own health by GET /api/v1/health and GET /api/v1/ready."
 
   - id: watch
     title: watch
@@ -206,6 +214,10 @@ commands:
     reads: [.ai/repo/policy.yaml, .ai/repo/profiles/, .ai/local/state/current.yaml, .ai/local/state/open-questions.md, git status, git diff]
     writes: []
     exit_codes: [0, 2, 10, 12, 13]
+    effects:
+      - flag: --checkpoint
+        class: state-mutating
+        writes: [.ai/local/state/current.yaml]
     demo: check-findings
     note: Read-only unless --checkpoint is given, which records a checkpoint after the checks run.
 
@@ -310,11 +322,19 @@ commands:
     requires_installed: true
     requires_task: required
     json: true
-    syntax: "majordomus evidence (--covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) | --gate <id> --exit <status>) [--result <r>] [--json]"
+    syntax: "majordomus evidence (--covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) | --gate <id> --exit <status>) [--result <r>] [--json] | majordomus evidence <show|claim|proves|record|stamp> [options]"
     reads: [share/obligations.yaml, .ai/repo/ci/gates.yaml, .ai/local/state/current.yaml]
     writes: [.ai/local/state/ledger.jsonl]
     exit_codes: [0, 2, 12, 13, 15]
+    effects:
+      - subcommand: show
+        class: read-only
+      - subcommand: claim
+        class: read-only
+      - subcommand: proves
+        class: read-only
     demo: obligation-evidence
+    note: "Every argument the shell command takes is an option, so a word in the first position is never its own: show, claim, proves, record and stamp are subcommands of the Rust executable, which holds the ledger of what ran (docs/EVIDENCE.md), and the launcher hands them to it with every argument unchanged. Which words those are is read from the executable's declaration, never listed in the launcher. They need no active task, their exit codes are the executable's, and what each reads and writes is on its own page under /docs/cli/evidence/."
 
   - id: skills
     title: skills
@@ -435,12 +455,12 @@ commands:
     requires_installed: true
     requires_task: none
     json: true
-    syntax: majordomus session <start|status|close|list|show|latest|context> [options]
+    syntax: majordomus session <start|status|close|list|show|latest|context|archive> [options]
     reads: [.ai/local/state/sessions-open/, .ai/local/state/session-current.yaml, .ai/repo/sessions/, .ai/local/state/ledger.jsonl]
     writes: [.ai/local/state/sessions-open/, .ai/local/state/session-current.yaml, .ai/repo/sessions/, .ai/local/session-contexts/, .ai/local/state/ledger.jsonl]
     exit_codes: [0, 2, 10, 12, 13, 15]
     demo: session-episode
-    note: "One open session per provider session, not per worktree: a second window of the same provider gets an episode of its own under state/sessions-open/, and session-current.yaml points at the episode of this checkout. The open record is never tracked. A closed record is an envelope of references selected by the session stamp on each ledger line, never by a time range. start freezes the resolved context into the local working-context store as an opening snapshot, and `session context` composes the live working context on every read instead of returning that file: the episode's identity, git now against git at the open, and the checkpoints, decisions and questions the episode recorded, taken from the ledger lines carrying its own session id. `--path` prints the snapshot instead. A closed record's body is composed the same way and is never empty; where the episode recorded nothing authored, the record says so and names the command that would have recorded it. --if-open and --if-none are what let a provider hook run the open and the close on every event."
+    note: "One open session per provider session, not per worktree: a second window of the same provider gets an episode of its own under state/sessions-open/, and session-current.yaml points at the episode of this checkout. The open record is never tracked. A closed record is an envelope of references selected by the session stamp on each ledger line, never by a time range. start freezes the resolved context into the local working-context store as an opening snapshot, and `session context` composes the live working context on every read instead of returning that file: the episode's identity, git now against git at the open, and the checkpoints, decisions and questions the episode recorded, taken from the ledger lines carrying its own session id. `--path` prints the snapshot instead. A closed record's body is composed the same way and is never empty; where the episode recorded nothing authored, the record says so and names the command that would have recorded it. --if-open and --if-none are what let a provider hook run the open and the close on every event. archive moves the oldest closed records beyond the policy's session.retention_max_files into the section's archive/ directory, only when it is run and only when session.archive is true; it deletes nothing and refuses before the first move when a record of that name is already archived."
 
   - id: knowledge
     title: knowledge
@@ -453,12 +473,31 @@ commands:
     requires_installed: true
     requires_task: none
     json: true
-    syntax: majordomus knowledge <sources|nodes|edges|derive|candidates|promote|reject|check> [--scope shared|operational|all] [--kind <kind>] [--type <type>] [--episode <id>] [--dry-run] [--class <class>] [--reason <why>] [--by <id>] [--json]
+    syntax: majordomus knowledge <sources|nodes|edges|search|show|related|derive|candidates|promote|reject|check|validate|observe> [<query>|<id>] [--scope shared|operational|all] [--kind <kind>] [--type <type>] [--episode <id>] [--dry-run] [--class <class>] [--reason <why>] [--by <id>] [--subject <ref>] [--evidence <ref>] [--json]
     reads: [.ai/repo/knowledge/sources.yaml, share/knowledge-sources.yaml, .ai/local/state/, .ai/repo/knowledge/candidates/, .ai/repo/knowledge/curated/, .ai/local/state/ledger.jsonl, .ai/repo/policy.yaml, share/allow/knowledge.txt]
     writes: [.ai/repo/knowledge/candidates/, .ai/repo/knowledge/curated/, .ai/local/state/ledger.jsonl]
     exit_codes: [0, 2, 10, 12, 13]
+    effects:
+      - subcommand: sources
+        class: read-only
+      - subcommand: nodes
+        class: read-only
+      - subcommand: edges
+        class: read-only
+      - subcommand: search
+        class: read-only
+      - subcommand: show
+        class: read-only
+      - subcommand: related
+        class: read-only
+      - subcommand: candidates
+        class: read-only
+      - subcommand: check
+        class: read-only
+      - subcommand: validate
+        class: read-only
     demo: knowledge-index
-    note: "Discovery reads the version-control index with the declared pathspecs and never walks the tree. Nodes keep their identity across a rebuild, kinds are never guessed, and an edge exists only where a file states it. sources, nodes, edges, candidates and check write nothing. derive turns the ledger lines one episode stamped into candidate records under the tracked knowledge section, deterministically and without a model; a second run over the same evidence writes nothing and says so. promote and reject are a person's acts on a candidate and each leaves a ledger line; nothing here stages a file (ADR 0091)."
+    note: "Discovery reads the version-control index with the declared pathspecs and never walks the tree. Nodes keep their identity across a rebuild, kinds are never guessed, and an edge exists only where a file states it. sources, nodes, edges, candidates and check write nothing. search, show and related look up the same nodes and edges and write nothing either: there is no stored index to go stale, so a lookup compiles what the checkout holds; search places each node on the first rung of a fixed ladder it reaches (id, title, title-prefix, path, body) and names the rung (I0811). validate judges the graph itself — duplicate ids, edges with a missing end or no provenance, declared paths and tracked sources that no longer exist — failing on a broken relationship Majordomus defines and only reporting a broken link an author wrote; doctor and watch ask the same validator through majordomus.knowledge-graph (I0812). derive turns the ledger lines one episode stamped into candidate records under the tracked knowledge section, deterministically and without a model; a second run over the same evidence writes nothing and says so. promote and reject are a person's acts on a candidate and each leaves a ledger line; nothing here stages a file (ADR 0091). observe records what a session met as one observation.recorded ledger line, refusing a kind, subject or evidence reference of the wrong shape and a statement that spans lines or opens like a conversation (ADR 0118)."
 
   - id: adr
     title: adr
@@ -561,12 +600,12 @@ commands:
     requires_installed: true
     requires_task: none
     json: true
-    syntax: majordomus bench [<command>...] [--samples <n>] [--warmup <n>] [--mode cold|warm|both] [--format text|json] [--no-save] [--list] [--check] [--write-baseline [--force]]
+    syntax: majordomus bench [<command>...] [--samples <n>] [--warmup <n>] [--cold-samples <n>] [--mode cold|warm|both] [--format text|json] [--no-save] [--list] [--check] [--write-baseline [--force]]
     reads: [share/commands.yaml, test/fixtures/commands/, .ai/repo/policy.yaml, .ai/repo/benchmarks/baseline.json]
     writes: [.ai/local/benchmarks/, .ai/repo/benchmarks/baseline.json]
     exit_codes: [0, 2, 10, 12, 13, 15]
     demo: benchmark-run
-    note: The targets are the registry's public commands; the scenarios are the command fixtures when the suite is present. A run is local evidence; only --write-baseline writes the tracked baseline, and --check refuses a regression over the policy's thresholds.
+    note: The targets are the registry's public commands; the scenarios are the command fixtures when the suite is present. A run is local evidence; only --write-baseline writes the tracked baseline, and --check refuses a regression over the policy's thresholds when two samples agree; one sample over is a warning to re-measure, and every finding names its sample count, the runner and its load average.
 
   - id: archive
     title: archive

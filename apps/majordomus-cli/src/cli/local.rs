@@ -152,6 +152,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "starts the HTTP server for this checkout as a process of its own when none answers, and waits until it is ready.",
     },
     LocalCommand {
+        command: "ui",
+        reason: LocalReason::ProcessLifecycle,
+        note: "ensures this checkout's server as `serve ensure` does and opens a browser on the invoking user's desktop, which no capability served by that server could do.",
+    },
+    LocalCommand {
         command: "serve stop",
         reason: LocalReason::ProcessLifecycle,
         note: "ends the server this checkout's lease names by signalling the process, which nothing served by that process could do to itself.",
@@ -208,6 +213,16 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "writes the UI conformance report surface from a probe's output, which is a producer of the web root rather than a reading of it.",
     },
     LocalCommand {
+        command: "web report ui-snapshot",
+        reason: LocalReason::WritesRepository,
+        note: "writes the UI's snapshot surface, one file per screen and panel read in-process, which is a producer of the web root rather than a reading of it.",
+    },
+    LocalCommand {
+        command: "web report cockpit-snapshot",
+        reason: LocalReason::WritesRepository,
+        note: "writes the Cockpit's snapshot surface, one file per page read in-process, and leads the UI snapshot's links to those pages, which is a producer of the web root rather than a reading of it.",
+    },
+    LocalCommand {
         command: "prs",
         reason: LocalReason::Alias("prs status"),
         note: "with no subcommand it answers `prs status`, the ranked integration queue.",
@@ -248,6 +263,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "writes the pack's index, shards and manifest under tmp/packs/ (or --out), after planning with pack.plan and before verifying with pack.verify.",
     },
     LocalCommand {
+        command: "offload derive",
+        reason: LocalReason::WritesRepository,
+        note: "stages the files a derive on a declared host changed into the caller's worktree, after a round trip over the caller's own ssh credentials.",
+    },
+    LocalCommand {
         command: "worktree create",
         reason: LocalReason::WritesRepository,
         note: "creates a branch and a linked worktree on disk at the path the topology derives for it.",
@@ -273,6 +293,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "prunes the worktrees git still records and whose directories are gone.",
     },
     // ---------------------------------------------------------------- the caller's own checkout
+    LocalCommand {
+        command: "offload probe",
+        reason: LocalReason::SessionLocal,
+        note: "measures the declared hosts over the invoking user's ssh keys and network, which a networked caller does not share.",
+    },
     LocalCommand {
         command: "worktree root",
         reason: LocalReason::SessionLocal,
@@ -316,6 +341,16 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "prints the canonical input or output schema that capabilities.describe already carries on the descriptor it returns.",
     },
     LocalCommand {
+        command: "offload hosts",
+        reason: LocalReason::RendersCapability("objects.get"),
+        note: "prints the derive-offload declaration, the object objects.get serves as majordomus://derive-offload/<id>, with its defaults filled in.",
+    },
+    LocalCommand {
+        command: "guard hook",
+        reason: LocalReason::RendersCapability("guard.edit"),
+        note: "answers guard.edit for the path a provider's pre-tool payload on stdin names, without building the index because it runs before every edit, and says the answer as the exit code the provider reads: 2 refuses the tool.",
+    },
+    LocalCommand {
         command: "mesh status",
         reason: LocalReason::RendersCapability("mesh.status"),
         note: "asks this checkout's running server for mesh.status and renders it: the mesh lives in the server's memory, so an in-process answer would truthfully say only that this process runs no mesh.",
@@ -341,6 +376,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "asks this checkout's running server for mesh.state and renders the folded cooperation state and its digest.",
     },
     LocalCommand {
+        command: "monitor",
+        reason: LocalReason::RendersCapability("monitor.stream"),
+        note: "asks this checkout's running server for monitor.stream and renders a page, or follows it.",
+    },
+    LocalCommand {
         command: "mesh events",
         reason: LocalReason::RendersCapability("mesh.events"),
         note: "asks this checkout's running server for mesh.events and renders one page of the journal.",
@@ -359,6 +399,11 @@ pub const LOCAL: &[LocalCommand] = &[
         command: "mesh release",
         reason: LocalReason::RendersCapability("mesh.release"),
         note: "runs mesh.release on this checkout's running server, the only process that holds the claim.",
+    },
+    LocalCommand {
+        command: "mesh beat",
+        reason: LocalReason::RendersCapability("mesh.beat"),
+        note: "runs mesh.beat on this checkout's running server, whose journal carries the session's beat to every linked runtime.",
     },
     LocalCommand {
         command: "mesh session open",
@@ -389,6 +434,11 @@ pub const LOCAL: &[LocalCommand] = &[
         command: "mesh review answer",
         reason: LocalReason::RendersCapability("mesh.review.answer"),
         note: "runs mesh.review.answer on this checkout's running server, whose journal holds the request.",
+    },
+    LocalCommand {
+        command: "mesh review withdraw",
+        reason: LocalReason::RendersCapability("mesh.review.withdraw"),
+        note: "runs mesh.review.withdraw on this checkout's running server, whose journal holds the request.",
     },
     LocalCommand {
         command: "capabilities validate",
@@ -589,6 +639,11 @@ pub const LOCAL: &[LocalCommand] = &[
         command: "release analyze",
         reason: LocalReason::RendersCapability("release.analysis"),
         note: "prints what the public contract did since the last release and the smallest version it allows.",
+    },
+    LocalCommand {
+        command: "release next",
+        reason: LocalReason::RendersCapability("release.next"),
+        note: "prints the version a landing of HEAD onto the trunk would allocate, and why.",
     },
     LocalCommand {
         command: "release bump",

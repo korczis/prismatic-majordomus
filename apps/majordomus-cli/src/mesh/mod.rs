@@ -44,22 +44,32 @@
 
 pub mod address;
 pub mod broadcast;
+pub mod build_cache;
+pub(crate) mod cache_provision;
 pub mod config;
 pub mod cooperation;
 pub mod doctor;
+pub mod enrol;
+pub mod firewall;
 pub mod handover;
 pub mod identity;
 pub mod journal;
 pub mod link;
 pub mod manager;
 pub mod multicast;
+pub mod page;
 pub mod protocol;
 pub mod provider;
 pub mod registry;
 pub mod rendezvous;
 pub mod repository;
+pub mod root;
 pub mod state;
+pub mod tailscale;
 pub mod trust;
+
+#[cfg(test)]
+pub(crate) mod testing;
 
 pub use config::{MeshConfig, KIND};
 pub use doctor::{DoctorCheck, MeshDoctorReport};
@@ -93,6 +103,23 @@ pub enum MeshError {
     /// The declaration: missing, malformed, or a version this executable does not read.
     #[error("config: {0}")]
     Config(String),
+}
+
+/// One node observed in `ctx`'s mesh with `trust`, for a test of a page that lists nodes.
+/// A Cockpit page reads the mesh only through its capabilities (`scripts/ci/mesh-check`), so
+/// the fixture that puts a node there for it to read is made here, beside the runtime.
+#[cfg(test)]
+pub(crate) fn observe_one_node(ctx: &crate::capability::Context, trust: TrustState) {
+    let id = identity::NodeIdentity::ephemeral().expect("an identity");
+    let env = protocol::advertise(&id, 1, &[], &["http".into()], &[], "0.5.0");
+    assert!(ctx.mesh.registry().observe(
+        &env.adv,
+        id.public.node_id.clone(),
+        trust,
+        registry::MeshSource::UdpMulticast,
+        "127.0.0.1:7741",
+        serde_json::Value::Null,
+    ));
 }
 
 #[cfg(test)]

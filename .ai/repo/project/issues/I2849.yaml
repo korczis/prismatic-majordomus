@@ -1,0 +1,42 @@
+id: I2849
+milestone: adopter-upgrades
+title: "release next raises from the trunk the repository names, never from a branch name written in the tool"
+slug: release-next-asks-the-trunk
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "When `majordomus release next` (capability release.next) is given no --base, it measures the landing against the remote-tracking ref of the trunk this repository names, through the one rule the delivery report already uses (delivery::revision::trunk_ref), and refuses by name when the trunk cannot be told."
+why: "Found by the code truth-sweep of master 707a04c7ce8 on 2026-10-17: the --base default was the literal `origin/master` in two places (cli.rs default_value and NextInput::base's unwrap_or), while worktree::identity::detect_trunk states the trunk is never hard-coded. In an adopting repository whose trunk is `main` the command refused, or answered about a ref that is not its trunk. The release seat ruled it P0 for v1.0.0-alpha.1."
+current_state: "--base defaults to `origin/master` on the command line and in the capability input."
+desired_state: "--base is optional on every surface; absent, release.next resolves it with delivery::revision::trunk_ref (the remote's default branch, else the identity's trunk, else the only remote-tracking branch), and a repository where none resolves is refused with the reason and the remedy (name it with --base)."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/release.rs"
+  - "apps/majordomus-cli/src/commands/release.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+non_scope:
+  - "The other places the trunk name is written as a literal: planned as I2843 (one accessor plus a ratchet scan)."
+depends_on: []
+acceptance_criteria:
+  - "In a clone whose remote default branch is main, release.next with no base raises from origin/main"
+  - "A named base is used as named"
+  - "A repository whose trunk cannot be told is refused, naming --base"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib -- capability::builtin::release:: commands::release::"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1060_the_version_is_allocated_at_landing"
+evidence_required:
+  - "unnamed_base_is_the_trunk_test"
+created_at: 2026-10-18
+updated_at: 2026-10-19T15:29:52Z
+started_at: 2026-10-19T15:29:31Z
+started_event: sha256:77e527fdd1e05f240b87f7df205a7e62021a75a4c001150e807219b6e6a394f5
+completed_at: 2026-10-19T15:29:52Z
+completed_event: sha256:7b4133415858c167d30fee49ae9c29f34b09ab1cacb98776ffc2835b9ffb6ff3
+evidence:
+  - covers: unnamed_base_is_the_trunk_test
+    type: ci
+    command: "validate run 39192952944 at master dd4c0a87cba: rust (1-3) runs cargo test --lib, including capability::builtin::release::an_unnamed_base_is_the_trunk_the_repository_names and a_landing_whose_trunk_cannot_be_told_is_refused; bash test/run.sh 1060_the_version_is_allocated_at_landing locally"
+    result: "success; case 1060: 3 passed, 0 failed, 0 skipped on master dd4c0a87cba"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39192952944"
+    commit: dd4c0a87cba408222033c89f002ab2d63f48574c
+    recorded_at: 2026-10-19T15:29:45Z

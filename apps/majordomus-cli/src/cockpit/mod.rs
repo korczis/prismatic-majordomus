@@ -25,10 +25,12 @@ pub mod assets;
 pub mod html;
 pub(crate) mod intents;
 pub(crate) mod mcp;
+pub(crate) mod monitor;
 pub(crate) mod nav;
 pub(crate) mod pages;
 pub(crate) mod plan;
 pub(crate) mod reasoning;
+pub(crate) mod trains;
 pub(crate) mod view;
 
 use std::sync::Arc;
@@ -42,19 +44,38 @@ use assets::Assets;
 /// Every Cockpit route starts here.
 pub const PREFIX: &str = "/cockpit";
 
+/// The Cockpit's identity in the web topology (`web.surfaces`).
+pub const SURFACE: &str = "cockpit";
+
 /// The stylesheet the shell links.
 pub const STYLESHEET: &str = "cockpit.css";
 
-/// The script modules every page loads. `cockpit.js` is not among them and must not be:
-/// every other module imports it by its bare relative URL, and a `<script src=...?v=>`
-/// tag beside that is a *second* URL for the same file — the browser loads the module
-/// twice, runs its top level twice, and starts Alpine twice. The palette imports it, so
-/// it is in the graph of every page anyway, and it is answered `no-cache` rather than
-/// immutable, which is right for the one URL that carries no digest.
+/// The script modules every page loads. `cockpit.js` is not among them: the palette
+/// imports it, so it is in the graph of every page anyway. Every module that imports it
+/// names it by the one digested URL the server rewrites the import to (`assets.rs`), so a
+/// `<script>` tag here would add nothing but a second request.
 ///
 /// A page adds its own module to this list, which is what keeps a graph library off the
 /// overview.
 pub const SHELL_SCRIPTS: &[&str] = &["palette.js"];
+
+/// The site's own scripts the bar at the top of every page behaves by — its menus, then its
+/// theme toggle — served as byte copies of `site/nav.js` and `site/theme.js` that
+/// `scripts/cockpit-assets` writes and checks (`project.the-ui-wears-the-sites-navbar`).
+pub(crate) const BAR_SCRIPTS: &[&str] = &["nav.js", "theme.js"];
+
+/// The vendored libraries the page modules load at run time, through `vendor()` and
+/// `vendorModule()` in `cockpit.js`. A run-time URL is not a static import the server can
+/// rewrite, so the page publishes each one's digested URL on its body (`data-vendor`), the
+/// way the UI hands its graph library over in `data-graph-lib`; a file not there is left
+/// out, and the script falls back to its plain path. A library a module imports itself
+/// (`three.core.min.js`, imported by `three.module.min.js`) is versioned by that import.
+pub(crate) const VENDOR: &[&str] = &[
+    "alpine.csp.min.js",
+    "cytoscape.min.js",
+    "three.module.min.js",
+    "p5.min.js",
+];
 
 /// The Cockpit over the repository as it is now. Cheap to clone into every worker thread:
 /// the assets are shared and the view of the repository is an `Arc`.
@@ -64,52 +85,45 @@ pub struct Cockpit {
     assets: Assets,
 }
 
+/// The plain routes the dispatcher answers that no area of the navigation names: pages a
+/// reader reaches from another page, which the sidebar does not carry.
+const PAGES_WITHOUT_AN_AREA: &[&str] = &[
+    "/cockpit/object",
+    "/cockpit/graphs/topology",
+    "/cockpit/monitor",
+    "/cockpit/search",
+    "/cockpit/activity",
+];
+
 /// Every route the dispatcher answers without an identifier in the path, and the area each
 /// one belongs to — `""` for a page that belongs to none, which the sidebar does not carry.
 ///
-/// Written beside the `match` that answers them rather than derived from it, because a
-/// `match` over string literals is not data a program can read back at run time. What keeps
-/// the two honest is that both are compared, in each direction:
-/// `every_page_renders_complete_html_with_the_shell_and_the_security_headers` drives this
-/// list over a socket, so a route the dispatcher lost is a failure;
+/// Derived from the navigation (I1009): every area of `nav::areas` is a route under its
+/// own id, so the sidebar and this list cannot name different Cockpits, and only the pages
+/// no area names are written down, in `PAGES_WITHOUT_AN_AREA`. The `match` that answers
+/// them is not data a program can read back at run time, so what keeps the two honest is
+/// that both are compared, in each direction:
+/// `every_page_renders_complete_html_with_the_shell_and_the_security_headers` drives these
+/// routes over a socket, so a route the dispatcher lost is a failure;
 /// `every_plain_arm_of_the_dispatcher_is_a_static_route` reads the `match` from this file's
-/// source, so an arm added there and not here is a failure; and
-/// `every_area_has_a_route_and_every_route_its_area` compares it against the navigation, so
-/// a page nothing links to is a failure too. Integration, Reasoning and Economics were the
-/// second kind: each arm and area landed after this list was written, and nothing compared
-/// the list with the `match` it describes. `/cockpit/quality` was exactly that page: the
-/// dispatcher answered it, the navigation did not name it, and no test and no browser sweep
-/// could reach it, for as long as the two lists were kept by hand and never compared.
-pub const STATIC_ROUTES: &[(&str, &str)] = &[
-    (PREFIX, "overview"),
-    ("/cockpit/capabilities", "capabilities"),
-    ("/cockpit/commands", "commands"),
-    ("/cockpit/objects", "objects"),
-    ("/cockpit/object", ""),
-    ("/cockpit/executions", "executions"),
-    ("/cockpit/graphs", "graphs"),
-    ("/cockpit/graphs/topology", ""),
-    ("/cockpit/continuity", "continuity"),
-    ("/cockpit/intents", "intents"),
-    ("/cockpit/plan", "plan"),
-    ("/cockpit/worktrees", "worktrees"),
-    ("/cockpit/peers", "peers"),
-    ("/cockpit/integration", "integration"),
-    ("/cockpit/mesh", "mesh"),
-    ("/cockpit/models", "models"),
-    ("/cockpit/reasoning", "reasoning"),
-    ("/cockpit/economics", "economics"),
-    ("/cockpit/directories", "directories"),
-    ("/cockpit/health", "health"),
-    ("/cockpit/quality", "quality"),
-    ("/cockpit/artifacts", "artifacts"),
-    ("/cockpit/release", "release"),
-    ("/cockpit/design", "design"),
-    ("/cockpit/api", "api"),
-    ("/cockpit/mcp", "mcp"),
-    ("/cockpit/search", ""),
-    ("/cockpit/activity", ""),
-];
+/// source, so an arm added there and not here is a failure. Integration, Reasoning and
+/// Economics were that kind: each arm and area landed after a hand-kept list of these routes
+/// was written, and nothing compared the list with the `match` it describes.
+/// `/cockpit/quality` was exactly that page: the dispatcher answered it, the navigation did
+/// not name it, and no test and no browser sweep could reach it.
+///
+/// ```
+/// let routes = majordomus_cli::cockpit::static_routes();
+/// assert!(routes.contains(&("/cockpit/capabilities", "capabilities")));
+/// assert!(routes.contains(&("/cockpit/monitor", "")));
+/// ```
+pub fn static_routes() -> Vec<(&'static str, &'static str)> {
+    nav::areas()
+        .iter()
+        .map(|area| (area.href, area.id))
+        .chain(PAGES_WITHOUT_AN_AREA.iter().map(|path| (*path, "")))
+        .collect()
+}
 
 impl Cockpit {
     /// A Cockpit over a view of the repository, serving its assets from `share_dir/cockpit`.
@@ -157,12 +171,7 @@ impl Cockpit {
             );
         }
         if let Some(name) = req.path.strip_prefix(assets::PREFIX) {
-            let version = req
-                .query
-                .iter()
-                .find(|(k, _)| k == "v")
-                .map(|(_, v)| v.as_str());
-            return self.assets.respond(name, version);
+            return self.assets.respond(name, req);
         }
 
         // One reading of the repository for the whole page: the navigation and the page
@@ -183,7 +192,10 @@ impl Cockpit {
             breadcrumbs: page.breadcrumbs.clone(),
             navigation: &navigation,
             stylesheet: self.assets.url(STYLESHEET),
+            favicon: self.assets.url("favicon.svg"),
             scripts,
+            bar_scripts: BAR_SCRIPTS.iter().map(|s| self.assets.url(s)).collect(),
+            vendor: self.vendor_urls(),
             assets_present: self.assets.present(),
             version: self.version,
         };
@@ -205,6 +217,18 @@ impl Cockpit {
             .headers
             .push(("Referrer-Policy".into(), "no-referrer".into()));
         response
+    }
+
+    /// The digested URL of every vendored library that is there, by the file name
+    /// `vendor()` is called with, as the JSON object the page publishes in `data-vendor`.
+    fn vendor_urls(&self) -> String {
+        let urls: std::collections::BTreeMap<&str, String> = VENDOR
+            .iter()
+            .map(|file| (*file, format!("vendor/{file}")))
+            .filter(|(_, path)| self.assets.has(path))
+            .map(|(file, path)| (file, self.assets.url(&path)))
+            .collect();
+        serde_json::to_string(&urls).unwrap_or_else(|_| "{}".into())
     }
 
     fn route(&self, ctx: &Arc<Context>, req: &Request) -> pages::Page {
@@ -230,7 +254,9 @@ impl Cockpit {
             "/cockpit/worktrees" => pages::worktrees(ctx),
             "/cockpit/peers" => pages::peers(ctx),
             "/cockpit/integration" => pages::integration(ctx),
+            "/cockpit/trains" => trains::page(ctx),
             "/cockpit/mesh" => pages::mesh(ctx),
+            "/cockpit/monitor" => monitor::page(ctx, query),
             "/cockpit/models" => pages::models(ctx),
             "/cockpit/reasoning" => reasoning::page(ctx),
             "/cockpit/economics" => pages::economics(ctx),
@@ -349,6 +375,38 @@ pub fn base64(bytes: &[u8]) -> String {
 mod tests {
     use super::*;
 
+    /// Every library a script loads at run time is one the page publishes a digested URL
+    /// for: a `vendor('x')` that `VENDOR` does not name would still load, from its plain
+    /// path, and be downloaded again on every navigation without anything saying so.
+    #[test]
+    fn every_vendored_library_a_script_loads_is_published_with_its_digest() {
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share/cockpit");
+        let mut named = Vec::new();
+        for entry in std::fs::read_dir(&dir).expect("share/cockpit") {
+            let path = entry.expect("an entry").path();
+            if path.extension().is_none_or(|e| e != "js") {
+                continue;
+            }
+            let source = std::fs::read_to_string(&path).expect("a script");
+            for call in ["vendor('", "vendorModule('"] {
+                for rest in source.split(call).skip(1) {
+                    let file = rest.split('\'').next().unwrap_or_default();
+                    named.push((path.display().to_string(), file.to_string()));
+                }
+            }
+        }
+        assert!(
+            named.iter().any(|(_, f)| f == "alpine.csp.min.js"),
+            "the scan found the shell's own Alpine load: {named:?}"
+        );
+        for (script, file) in &named {
+            assert!(
+                VENDOR.contains(&file.as_str()),
+                "{script} loads {file}, which VENDOR does not name"
+            );
+        }
+    }
+
     #[test]
     fn the_policy_allows_no_remote_origin_and_no_unsafe_source() {
         let policy = csp();
@@ -384,34 +442,32 @@ mod tests {
 
     /// A page the dispatcher answers and the navigation does not name is a page a reader
     /// cannot reach, a crawl cannot find and therefore no test covers. The reverse — an area
-    /// the sidebar offers and no route answers — is a link to nothing. Both are failures.
+    /// the sidebar offers and no route answers — is a link to nothing. The routes are derived
+    /// from the areas (I1009), so what is left to go wrong is one address twice: a page
+    /// written down as area-less that an area also names, or two areas at one address.
     #[test]
     fn every_area_has_a_route_and_every_route_its_area() {
-        let areas = nav::areas();
-        let missing_route: Vec<&str> = areas
+        let routes = static_routes();
+        for area in nav::areas() {
+            assert!(
+                routes.contains(&(area.href, area.id)),
+                "the navigation offers {} and no route answers it",
+                area.href
+            );
+        }
+        let mut seen = std::collections::BTreeSet::new();
+        let twice: Vec<&str> = routes
             .iter()
-            .filter(|a| !STATIC_ROUTES.iter().any(|(path, _)| *path == a.href))
-            .map(|a| a.href)
-            .collect();
-        assert!(
-            missing_route.is_empty(),
-            "the navigation offers areas no route answers: {missing_route:?}"
-        );
-
-        let unnavigable: Vec<&str> = STATIC_ROUTES
-            .iter()
-            .filter(|(_, area)| !area.is_empty())
-            .filter(|(_, area)| !areas.iter().any(|a| a.id == *area))
             .map(|(path, _)| *path)
+            .filter(|path| !seen.insert(*path))
             .collect();
         assert!(
-            unnavigable.is_empty(),
-            "the dispatcher answers routes the navigation does not name, so nothing links to \
-             them and no crawl reaches them: {unnavigable:?}"
+            twice.is_empty(),
+            "one address is two routes, an area's and an area-less page's: {twice:?}"
         );
     }
 
-    /// `STATIC_ROUTES` is a claim about the `match` in `Cockpit::route`, and a claim checked
+    /// `static_routes()` is a claim about the `match` in `Cockpit::route`, and a claim checked
     /// only from its own side drifts: three arms were added to the dispatcher after the list
     /// was written, and every test that read the list went on passing. This reads the arms
     /// from the source the dispatcher is compiled from and compares both directions.
@@ -443,20 +499,20 @@ mod tests {
         let unlisted: Vec<&str> = arms
             .iter()
             .copied()
-            .filter(|arm| !STATIC_ROUTES.iter().any(|(path, _)| path == arm))
+            .filter(|arm| !static_routes().iter().any(|(path, _)| path == arm))
             .collect();
         assert!(
             unlisted.is_empty(),
-            "the dispatcher answers plain routes STATIC_ROUTES does not list: {unlisted:?}"
+            "the dispatcher answers plain routes static_routes() does not list: {unlisted:?}"
         );
-        let unanswered: Vec<&str> = STATIC_ROUTES
+        let unanswered: Vec<&str> = static_routes()
             .iter()
             .map(|(path, _)| *path)
             .filter(|path| !arms.contains(path))
             .collect();
         assert!(
             unanswered.is_empty(),
-            "STATIC_ROUTES lists routes the dispatcher has no arm for: {unanswered:?}"
+            "static_routes() lists routes the dispatcher has no arm for: {unanswered:?}"
         );
     }
 
@@ -481,7 +537,7 @@ mod tests {
             .map(|route| route.split('?').next().unwrap_or(route))
             .collect();
 
-        let undocumented: Vec<&str> = STATIC_ROUTES
+        let undocumented: Vec<&str> = static_routes()
             .iter()
             .map(|(path, _)| *path)
             .filter(|path| !documented.contains(path))
@@ -495,7 +551,7 @@ mod tests {
             .iter()
             .copied()
             .filter(|route| route.starts_with("/cockpit") && !route.starts_with("/cockpit/assets"))
-            .filter(|route| !STATIC_ROUTES.iter().any(|(path, _)| path == route))
+            .filter(|route| !static_routes().iter().any(|(path, _)| path == route))
             .collect();
         assert!(
             unrouted.is_empty(),

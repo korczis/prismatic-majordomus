@@ -16,9 +16,9 @@ use common::{Fixture, Served};
 /// selects something is a page whose failure nobody sees, and each of these is one arm of
 /// the same match.
 ///
-/// The plain routes are not listed here. They come from `cockpit::STATIC_ROUTES`, the list
-/// the dispatcher is written beside, so a route added there is swept the moment it exists
-/// and a sweep cannot quietly fall behind the Cockpit. This list used to name thirteen of
+/// The plain routes are not listed here. They come from `cockpit::static_routes()`, derived
+/// from the navigation and held to the dispatcher, so a route added there is swept the
+/// moment it exists and a sweep cannot quietly fall behind the Cockpit. This list used to name thirteen of
 /// the twenty-one plain routes; `/cockpit/commands`, `/cockpit/executions`, `/cockpit/mesh`,
 /// `/cockpit/models`, `/cockpit/quality`, `/cockpit/release`, `/cockpit/design` and
 /// `/cockpit/object` were served and swept by nothing.
@@ -37,6 +37,10 @@ const QUERY_PAGES: &[&str] = &[
     "/cockpit/objects?q=scope",
     "/cockpit/objects?page=2",
     "/cockpit/graphs/registry",
+    // The largest page the Cockpit serves, and the one no test rendered: every other graph
+    // composed into one, its tables paged by `?nodes=` and `?edges=` like the registry's.
+    "/cockpit/graphs/composed",
+    "/cockpit/graphs/composed?nodes=2&edges=2",
     "/cockpit/search?q=scope",
     // The two route shapes an entity's own address adds: a kind's index and one object of
     // it. They are the newest arms of the dispatcher and the only ones that resolve an
@@ -54,7 +58,7 @@ const QUERY_PAGES: &[&str] = &[
 /// Every page this file sweeps: each plain route the dispatcher answers, from the list it is
 /// written beside, then the query-string arms above.
 fn pages() -> Vec<String> {
-    majordomus_cli::cockpit::STATIC_ROUTES
+    majordomus_cli::cockpit::static_routes()
         .iter()
         .map(|(path, _)| (*path).to_string())
         .chain(QUERY_PAGES.iter().map(|p| (*p).to_string()))
@@ -712,6 +716,7 @@ fn assets_are_served_from_the_distribution_with_immutable_urls_and_no_traversal(
         &format!("/cockpit/assets/cockpit.css?v={versioned}"),
         None,
     );
+    const IMMUTABLE: &str = majordomus_cli::cockpit::assets::IMMUTABLE;
     assert_eq!(status, 200);
     assert!(
         body.contains(".mj-card"),
@@ -724,12 +729,101 @@ fn assets_are_served_from_the_distribution_with_immutable_urls_and_no_traversal(
         "a digest-addressed asset is immutable: {headers:?}"
     );
 
-    // the same file without the digest revalidates instead
-    let (status, headers, _) = s.request("GET", "/cockpit/assets/cockpit.css", None);
-    assert_eq!(status, 200);
-    assert!(headers
+    // the same file without the digest revalidates instead, and so does every `v` that is
+    // not exactly the one the page emits: an empty one, a prefix of it, a wrong one
+    for target in [
+        "/cockpit/assets/cockpit.css".to_string(),
+        "/cockpit/assets/cockpit.css?v=".to_string(),
+        format!("/cockpit/assets/cockpit.css?v={}", &versioned[..3]),
+        "/cockpit/assets/cockpit.css?v=0000000000000000".to_string(),
+    ] {
+        let (status, headers, _) = s.request("GET", &target, None);
+        assert_eq!(status, 200, "{target}");
+        assert!(
+            headers
+                .iter()
+                .any(|(k, v)| k == "cache-control" && v == "no-cache"),
+            "{target} is not the page's URL and must revalidate: {headers:?}"
+        );
+    }
+
+    // a revalidation that still holds is a 304: no body, and the 200's length
+    let etag = headers
         .iter()
-        .any(|(k, v)| k == "cache-control" && v == "no-cache"));
+        .find(|(k, _)| k == "etag")
+        .map(|(_, v)| v.clone())
+        .expect("an ETag");
+    for target in [
+        format!("/cockpit/assets/cockpit.css?v={versioned}"),
+        "/cockpit/assets/cockpit.css".to_string(),
+    ] {
+        let (status, not_modified, rest) =
+            s.request_with("GET", &target, None, &[("If-None-Match", &etag)]);
+        assert_eq!(status, 304, "{target}: {not_modified:?}");
+        assert!(
+            rest.is_empty(),
+            "a 304 carries no body: {} bytes",
+            rest.len()
+        );
+        let length = |h: &[(String, String)]| {
+            h.iter()
+                .find(|(k, _)| k == "content-length")
+                .map(|(_, v)| v.clone())
+        };
+        assert_eq!(length(&not_modified), Some(body.len().to_string()));
+        assert!(not_modified.iter().any(|(k, v)| k == "etag" && *v == etag));
+    }
+    let (status, _, _) = s.request_with(
+        "GET",
+        "/cockpit/assets/cockpit.css",
+        None,
+        &[("If-None-Match", "\"stale\"")],
+    );
+    assert_eq!(
+        status, 200,
+        "a validator that no longer holds gets the file"
+    );
+
+    // every asset URL the page emits carries its digest: the stylesheet, the favicon, the
+    // shell's modules, and the vendored libraries the scripts load at run time
+    for url in page.split("/cockpit/assets/").skip(1) {
+        let url = url.split(['"', '&']).next().unwrap_or_default();
+        assert!(url.contains("?v="), "an asset URL without a digest: {url}");
+    }
+    assert!(
+        page.contains("/cockpit/assets/favicon.svg?v="),
+        "the favicon"
+    );
+    assert!(
+        page.contains("/cockpit/assets/vendor/alpine.csp.min.js?v="),
+        "the page names Alpine's digested URL for vendor()"
+    );
+
+    // and a module names the modules it imports by their digested URLs, which are the
+    // immutable ones: one URL per module, whoever imports it
+    let palette = page
+        .split("/cockpit/assets/palette.js?v=")
+        .nth(1)
+        .and_then(|rest| rest.split('"').next())
+        .expect("the palette's module script");
+    let (status, _, module) = s.request(
+        "GET",
+        &format!("/cockpit/assets/palette.js?v={palette}"),
+        None,
+    );
+    assert_eq!(status, 200);
+    let core = module
+        .split("./cockpit.js?v=")
+        .nth(1)
+        .and_then(|rest| rest.split(['\'', '"']).next())
+        .unwrap_or_else(|| panic!("palette.js imports cockpit.js without a digest: {module}"));
+    let (_, headers, _) = s.request("GET", &format!("/cockpit/assets/cockpit.js?v={core}"), None);
+    assert!(
+        headers
+            .iter()
+            .any(|(k, v)| k == "cache-control" && v == IMMUTABLE),
+        "the URL an import names is immutable: {headers:?}"
+    );
 
     // nothing escapes the asset directory, and nothing outside the served types is served
     for hostile in [

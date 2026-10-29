@@ -105,6 +105,9 @@ handover:
 ledger:
   retention_max_lines: 5000
 
+cache:
+  flatten_max_entries: 2000              # parsed YAML files kept under .ai/local/cache/flat/; 0 is no cache
+
 benchmark:
   samples: 10            # warm samples per target in `majordomus bench`
   warmup: 2              # unsampled runs before them
@@ -160,6 +163,9 @@ never reported as drift.
 
 `wired_by` values: `git-hook:<name>` (resolved through `core.hooksPath` or
 `.git/hooks/`), `ci:<path>` (a file that must exist and contain the invocation),
+`git-config:<key>` (a key the clone's own git configuration must set to a value naming the tool),
+`toolchain:<file>` (the pinned Rust toolchain the file names is installed on this machine, so
+`scripts/derive` and `prs repair --apply` can build),
 `manual` (documented, not verified; doctor lists it as unverified, never as wired).
 The hook line must not swallow the exit code (`|| true`, `|| exit 0`).
 
@@ -221,6 +227,8 @@ context:                      # toggles; projections turn them into loading guid
   failing_output: true
   recent_history_depth: 50    # commits; 0 disables
   architecture_notes: false
+  knowledge: true             # knowledge pointers: what the task's issue references
+  knowledge_max_items: 8      # at most this many; capped by context.max_list_items
 
 verification:
   verify_command_required: true
@@ -247,7 +255,7 @@ The four shipped profiles:
 | effort | low | medium | high | high, escalates to xhigh |
 | verbosity | terse | concise | concise | detailed |
 | presentation | machine | engineering | engineering | engineering |
-| context | task, state | + decisions, files | + failing output, history 50 | + architecture, history 200 |
+| context | task, state | + decisions, files, knowledge 8 | + failing output, history 50 | + architecture, history 200, knowledge 12 |
 | verify command | if files changed | required | required | required |
 | regression test | no | no | required | no |
 | decision record | no | no | no | required |
@@ -618,6 +626,85 @@ local, so upgrading does not turn an existing installation red.
 `outcome` and `checkpoint_at` are the only fields a command changes after `start`.
 `active` refuses a new `start`; every other outcome lets `start` archive the record to
 `state/archive/<id>.yaml` and begin a new task.
+
+---
+
+## `.ai/local/state/telemetry/<task-id>.yaml` — a telemetry record
+
+What a provider reported about the execution of one task. Majordomus invokes no model, so
+it measures none of this itself: every number in the record was handed to it, and the
+record keeps who handed it.
+
+**This section is ahead of its writer, and says so.** The contract is defined
+(`share/schemas/majordomus/telemetry/telemetry.v1.schema.json`, kind `telemetry` in
+`share/kinds.yaml`, allow-list `share/allow/telemetry.txt`) and a record that breaks it is
+refused wherever a `telemetry` document is validated, but nothing writes one yet. The
+writer is the usage receiver of issue I3288 (`every-sessions-usage-is-observed`), which takes
+a provider's usage from its official seam (ADR 0213, `offers.usage` in `share/providers.yaml`)
+rather than from a command a worker hands numbers to; I0302, which planned that command,
+was cancelled for it. Until I3288 lands, the directory does not exist and nothing reads it. It is the one format in this document described before something produces it,
+because every later statement about what a task consumed rests on this shape and it had to
+be fixed first.
+
+```yaml
+schema: telemetry/v1
+kind: telemetry
+task_id: t-20261012201705-7bf9        # the task `majordomus start` allocated
+session_id: s-20261012201704-3c1e     # optional; the episode the facts were reported in
+recorded_at: 2026-10-12T21:04:10Z     # when the record was written, never the provider's clock
+facts:
+  input_uncached_tokens:
+    value: 1840
+    reporter: claude-code
+  cache_write_tokens:
+    value: 52210
+    reporter: claude-code
+  cache_read_tokens:
+    value: 903377
+    reporter: claude-code
+  output_tokens:
+    value: 21504
+    reporter: claude-code
+  reasoning_tokens:
+    not_reported: "the harness reports reasoning inside output_tokens, not apart"
+    reporter: claude-code
+  requests:
+    value: 61
+    reporter: claude-code
+  tool_calls:
+    value: 0                          # a measurement: the reporter said zero
+    reporter: claude-code
+  cost_microusd:
+    not_reported: "no price table was reported for this session"
+    reporter: claude-code
+```
+
+Three rules make the record what it is, and the schema enforces each of them:
+
+- **Every fact names its reporter.** `reporter` is the party the value came from — a
+  provider by its id in `share/providers.yaml`, or another named source. A fact without one
+  is refused. For an absent fact it is the party that would have reported it and did not.
+- **Absence is a value.** A fact is `value` or `not_reported`, exactly one of them, and
+  `not_reported` carries the reason. All eight facts are required in every record: a record
+  that leaves one out is refused, because an omitted key is what a reader takes for zero.
+  A provider that reports nothing produces a record in which every fact is `not_reported`.
+- **Nothing derived is stored.** There is no total and no ratio here; those are arithmetic
+  over the facts, done by the reader. `cost_microusd` is what the reporter says the work
+  cost, in millionths of a US dollar — a harness's projection or a bill, as the reporter
+  states it — and is never computed from the other facts.
+
+The fact names are the provider-neutral ones `majordomus economics` already normalises
+recorded runs onto (`apps/majordomus-cli/src/economics/usage.rs`): input that touched no
+cache, input written to the cache, input read from it, and output with reasoning included.
+A provider whose own field means something else — one input figure with the cached part
+inside it — is mapped by whatever hands the facts in, and what it cannot separate is
+`not_reported`, not a guess.
+
+What version 1 does not carry: the model or models that answered, per-request detail, wall
+time, and anything a session said or read. None of them is estimated to fill the gap.
+
+Unknown keys are an error at every level, as in every other Majordomus YAML file. These
+files are **not tracked**: the numbers belong to one checkout's work.
 
 ---
 
@@ -1186,8 +1273,9 @@ See [`CLI.md`](@/docs/cli-specification.md) for `majordomus adr`.
 ## `.ai/repo/deployments/<id>.yaml`
 
 One deployment of this repository's executable, and the only authoritative statement of
-it. The container image definition, its ignore file and the provider configuration
-(`fly.toml`) are **generated** from this object; each carries a provenance header naming
+it. The container image definition (`deploy/Dockerfile`), its ignore file
+(`.dockerignore`) and the files of the provider it names (`deploy/<provider>/`) are
+**generated** from this object; each carries a provenance header naming
 this file and the command that regenerates it, and `majordomus generate --check` fails
 when one is edited by hand. Contract:
 [`share/schemas/majordomus/deployment/deployment.v1.schema.json`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/share/schemas/majordomus/deployment/deployment.v1.schema.json)
@@ -1201,7 +1289,7 @@ title: ...                      # one line, for a listing
 description: ...                # one line: what it serves and to whom
 status: declared                # declared | active | retired
 
-application: majordomus         # the application's name at the provider
+application: majordomus         # the application's name, for a listing
 
 build:
   package: majordomus-cli       # the Cargo package built
@@ -1232,7 +1320,7 @@ machines:
   autostart: true
   autostop: true
 
-region: fra                     # the provider's own vocabulary
+region: fra                     # required; no generated artifact reads it now
 
 budgets:                        # each written by the run that measured it; none guessed
   image_bytes: ...
@@ -1243,17 +1331,42 @@ budgets:                        # each written by the run that measured it; none
   blocking_check_ms: ...
   request_p99_ms: ...
 
-provider:
-  name: fly                     # provider-specific facts live here and nowhere else
-  fly:
-    org: ...
-    force_https: true
-    concurrency: { soft_limit: 20, hard_limit: 40 }
+provider:                       # optional: the provider that hosts it (ADR 0219)
+  name: gigalixir               # only a provider the contract knows; another is refused
+  app: prismatic-majordomus     # the application at the provider, ^[a-z][a-z0-9-]{2,62}$
+  stack: gigalixir-24           # the provider's stack
+  url: https://prismatic-majordomus.gigalixirapp.com   # always https://
 ```
 
-**The port is stated once.** The process, the image and the provider configuration all
-read this one field; a literal port anywhere else is the drift this kind exists to
-prevent. The same holds for the region, the resources, the machine count, the health
+**A provider is optional, and only a known one.** Absent, nobody hosts the deployment: the
+GHCR image built from `deploy/Dockerfile` is published and run by nobody. Named, it is one
+the contract knows — today `gigalixir` — and `majordomus generate deployment` renders every
+file it reads under `deploy/<provider>/`: for Gigalixir `Procfile` (the executable the slug
+carries at `.majordomus/bin/<binary>`, started with `serve --discovery filesystem` on the
+listen interface and the provider's `PORT`, falling back to `listen.port`) and the inline
+buildpack's `bin/detect`, `bin/compile` and `bin/release`, each opening with `#!/bin/sh` and
+carrying the provenance header on the next line. The buildpack itself, pinned by commit, is
+a constant of the renderer (`render::buildpack`) rather than a file, because a buildpack
+list cannot carry a header. A provider beside `listen.interface: loopback`, or a URL that is
+not `https://`, is refused. Fly.io was named here once, never ran, and stays no target
+(2026-10-12).
+
+**What a provider receives is assembled, never the repository.** `majordomus deploy slug
+--deployment <id> --commit <sha> --executable <path> --out <dir>` writes, into a directory
+outside the checkout that is absent or empty, the object's `build.inputs` read from git at
+that commit except the package the executable is compiled from, the provider's generated
+files of that commit at the slug's root (each held to what the object renders, the hooks
+mode 755), `.buildpacks` holding the pinned buildpack line, the executable at
+`.majordomus/bin/<binary>`, and `.majordomus/SOURCE.json` naming the deployment, the commit,
+the executable's SHA-256 and the provider. `.github/workflows/provider.yml` (model
+`.ai/repo/ci/provider.yaml`) runs it after master's `validate` concludes success, with an
+executable built at that commit, pushes the slug as one fast-forward commit on the
+provider's own history, and waits until `provider.url` + `health.liveness` answers that
+commit.
+
+**The port is stated once.** The process, the image and the provider's Procfile all read
+this one field; a literal
+port anywhere else is the drift this kind exists to prevent. The same holds for the health
 routes and the build inputs.
 
 **No credential belongs here.** The token that authorises a deployment comes from outside
@@ -1262,8 +1375,33 @@ layer or into a log.
 
 The schema decides shape; `majordomus deploy doctor` decides sense — a health route no
 capability registers, a package or binary the workspace does not contain, a build input
-that does not resolve, a `min_running` above `count` — and each refusal names the file, the
+that does not resolve, a `min_running` above `count`, a provider URL that is not https, a
+provider beside a loopback interface — and each refusal names the file, the
 key, the value found and the correction.
+
+**The image is built in stages that a cache can carry.** `deploy/Dockerfile` is rendered with
+four builder stages before the runtime (`BUILDER_STAGES` in `src/deploy/render.rs`):
+`toolchain` (the Rust image at the exact `channel` of `rust-toolchain.toml` — the generator
+refuses a repository without one rather than pin a second version), `recipe` (the manifest
+and lockfile with the package's own version masked, so a release bump reaches the same
+recipe), `deps` (every dependency compiled against stub sources, as layer content) and
+`build` (the real sources; the only stage that reads the commit). A cache mount would keep
+compiled dependencies only on the machine that built them; a layer travels with a registry
+cache export, so a fresh runner compiles only the package. `.github/workflows/docker-image.yml`
+builds the image, runs it and checks that `/api/v1/live` names the commit, and publishes
+`ghcr.io/korczis/prismatic-majordomus:sha-<commit>` only after that commit's `validate` run on
+master succeeded; it alone writes the shared `:buildcache` ref.
+A release image compiles nothing: `.github/workflows/release.yml` downloads the release's
+published Linux musl archives, holds each to `SHA256SUMS`, to its provenance attestation and to
+the tagged commit, and builds with `MAJORDOMUS_BINARY_FROM=release` and the `release-binary`
+build context, so the image published as `:<tag>` runs the bytes the archives ship, for every
+platform they ship.
+
+```console
+$ docker buildx build -f deploy/Dockerfile \
+    --cache-from type=registry,ref=ghcr.io/korczis/prismatic-majordomus:buildcache \
+    --build-arg MAJORDOMUS_BUILD_COMMIT="$(git rev-parse HEAD)" -t majordomus:dev --load .
+```
 
 ---
 
@@ -1511,10 +1649,12 @@ Events and their extra fields:
 | `session.recovered` | `session_id` (the episode recovered, which is never the one the envelope's own `session` stamp names), `reason` (the evidence that decided it — the last sign of life and its source for a stranded episode, the count of folded records for a duplicate), `session_path` |
 | `provider.event.received` | `provider`, `provider_event` (`start`/`end`/`compact`), `provider_session` when the provider named one. Written as the first act of every lifecycle adapter, before any guard decides what to do about the event |
 | `provider.event.failed` | `provider`, `provider_event`, `reason`. The other half of the receipt: the event arrived and the work it should have done did not complete. A receipt with neither a resulting record nor one of these beside it is itself a finding |
+| `observation.recorded` | `task_id` (`none` outside a task), `kind`, `subject`, `statement`, `evidence` (a list of typed references, possibly empty). Written by `knowledge observe`; the episode boundary derives a candidate from it (ADR 0118) |
 | `knowledge.derived` | `episode`, `written`, `unchanged`, `paths`; `skipped` when a line was refused. Written by every non-dry-run derivation that resolved an episode, even when it wrote nothing; `episode` is explicit because the envelope's `session` stamp is present only while the episode is open |
 | `knowledge.promoted` | `id`, `path` (the curated record's repository-relative path). A person promoted a candidate to verified with evidence |
 | `knowledge.rejected` | `id`, `reason`; `superseded_by` when `--by` named the record that replaces it. A person rejected a candidate; it is superseded in place |
 | `ledger.rotated` | `archived` (lines moved), `kept`, `archive` (path) |
+| `session.archived` | `archived` (records moved), `kept` (the cap), `archive` (the directory, repository-relative). Written only when `majordomus session archive` moved something; no record is deleted |
 | `prompts.reconciled` | `records` (prompt records re-examined), `linked`, `unlinked`. Every record in the archive is re-matched to the episode it belongs to, from evidence that still exists; a record whose evidence is gone is counted as unlinked rather than guessed at |
 | `task.gate` | `task`, `gate`, `exit`, `inputs_hash` (over the union of the paths of the CI classes that select the gate, so a change to any of them makes the run stale rather than merely old). A gate that has never emitted this event is reported as queued, never as passing |
 | `prompts.pruned` | `records` (prompt records touched), `pruned` (bodies replaced with a tombstone), `bytes_left`. A record is never deleted: what is taken is the body, and the record left behind still says when the prompt happened, in which episode, and the digest and length of what was removed |
@@ -1548,6 +1688,12 @@ the one portable monotonic ordering available without sub-second timestamps.
 `ledger.<utc-compact>.jsonl.archived` and appends a `ledger.rotated` event. It never
 deletes and refuses to overwrite an existing archive.
 
+`session archive` is the same promise for the sessions section: it moves the oldest closed
+records beyond `session.retention_max_files` into the section's `archive/` directory and
+appends a `session.archived` event. It runs only when asked and only when the policy's
+`session.archive` is `true`, it never deletes, and it refuses before the first move when a
+record of the same name is already archived.
+
 ---
 
 ## `.ai/local/benchmarks/runs/<run-id>.json` — a benchmark run
@@ -1570,6 +1716,31 @@ layer; never a baseline.
 `status` is `ok`, `setup-failed`, or `exit-<code>` when the command exited with a code its
 scenario does not accept. Percentiles are nearest-rank over the sorted samples. `clock`
 names the source of the milliseconds (`epochrealtime` or `seconds`).
+
+## `.ai/local/cache/flat/<parser>/<slot>` — a parsed YAML file
+
+What the shell tool's YAML reader printed for one file, kept so that the next command on the
+same bytes reads it instead of parsing it again. `<parser>` is the first 16 hex digits of the
+SHA-256 of the parser itself, so an entry is only ever read by the parser that wrote it.
+`<slot>` is where an entry is looked for — the file's length and sixteen of its characters as
+numbers, all computed without starting a process — and never what it is trusted on: hashing
+the file would cost the one process a cached read is there to save. One entry is one file:
+
+```text
+mjflat 1 <source length> <flat length>
+<the source, byte for byte><the flat lines, byte for byte>
+```
+
+An entry is served only when the header adds up to the file's own length and the source it
+holds is exactly the file asked about, compared in full; anything else is a miss, which
+parses the file again and writes the entry back. Two files that land in one slot evict each
+other and neither is ever served the other's lines. A parse that failed is never kept. An
+entry is written beside the others and renamed into place, so a reader never sees half of
+one. After each new entry the directory holds at most the policy's
+`cache.flatten_max_entries`, the oldest written removed first; without the key, or with 0,
+there is no cache. Nothing reads this directory but the reader that wrote it; deleting it
+costs one parse per file. With `MJ_TIMING=1`, `yaml_flatten` still counts every file asked
+for and `flatten_cache_hit` counts the ones served from here.
 
 ## `baseline.json` under `.ai/repo/benchmarks/` — the accepted baseline
 

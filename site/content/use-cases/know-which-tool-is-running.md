@@ -1,7 +1,7 @@
 +++
 title = "Check the version before trusting a diagnosis"
 description = "Print the version every other surface derives from, and see the argument it refuses."
-weight = 41
+weight = 42
 [extra]
 id = "know-which-tool-is-running"
 source = ".ai/repo/use-cases/know-which-tool-is-running.md"
@@ -25,7 +25,7 @@ steps:
     note: 'the one string the projections, the ledger and the site derive their version from'
     expect:
       exit: 0
-      stdout_contains: ['^majordomus [0-9]+\.[0-9]+\.[0-9]+$']
+      stdout_contains: ['^majordomus [0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?$']
   - id: refuse
     run: ['version', '--no-such-option']
     note: 'an argument the command does not know is a usage error, never ignored'

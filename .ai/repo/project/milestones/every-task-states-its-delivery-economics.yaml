@@ -1,0 +1,46 @@
+id: every-task-states-its-delivery-economics
+title: "Every task states its delivery economics: wall time, typed human interventions, CI reruns, spend and acceptance, each from a named record or said not observed"
+slug: every-task-states-its-delivery-economics
+order: 205
+priority: p0
+problem: "The owner's report of 2026-10-19 asks, as T3, for real time, human interventions, CI reruns, spend and accepted results. The records exist only in pieces: each checkout's ledger holds task.started, task.refused and task.finished with their episode; the prompt archive holds prompts linked to episodes; the drain's trail holds refresh rounds; benchmark runs hold durations, tokens and hidden-test checks. Nothing joins them per task, interventions are not typed, a permission approval leaves no record, CI run attempts are not read (I3202 is not on master), session usage is not received (I3288, I3293) and accepted has no written definition (I0401)."
+outcome: "One capability, economics.tasks, served by CLI, HTTP and MCP, answers one record per task with every field either a value with its class and record ids or not observed with a reason, never zero for an absence."
+current_state: "lib/start.sh:158-160 writes task.started with task_id, profile, owner, scope and, when bound, issue and intent. apps/majordomus-cli/src/ledger.rs:10-12 says the ledger is per checkout and untracked. intent_realization.rs:1185 folds tasks from a ledger, but gather (intent_realization.rs:1282-1284) reads only the root checkout's. lib/capture.sh:286 and :1508-1512 wire SessionStart, SessionEnd and PreCompact and no permission event. grep -rn run_attempt apps/majordomus-cli/src/integration finds nothing. I2740 (plan.delivery) is merged as ee02079b1bc."
+desired_state: "majordomus economics tasks returns the typed record for every task of every checkout; the fields waiting on I3202, I3293 or I0401 read not observed with that reason until those land."
+scope:
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/src/economics/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/economics.rs"
+  - "apps/majordomus-cli/src/commands/economics.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/intent_realization.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "docs/ECONOMICS.md"
+  - "lib/capture.sh"
+  - ".claude/settings.json"
+  - ".claude/hooks"
+  - "test/fixtures/commands/stdin"
+  - ".ai/repo/automation/inventory.jsonl"
+  - "test/cases/54_session_lifecycle_hooks.sh"
+  - "test/cases/3113_the_adoption_footprint_is_inventoried.sh"
+  - "docs/claims/session-lifecycle.md"
+  - ".ai/repo/mcp-tool-run-baseline.txt"
+non_scope:
+  - "A second ledger, metrics store or stored join"
+  - "Receiving or attributing usage (I3288, I3293), reading Actions run attempts (I3202) or defining an accepted outcome (I0401)"
+  - "Publishing any figure (delivery-economics-are-measured-over-declared-windows)"
+  - "A productivity percentage, score or forecast"
+acceptance_criteria:
+  - "economics.tasks returns one record per distinct task_id among the task.started lines of every checkout read, and lists each ledger with its line and skipped-line counts"
+  - "Every record carries wall time, interventions by type, ci_reruns, spend and accepted, each a value with class and record ids or not_observed with a reason"
+  - "CLI JSON, HTTP and MCP return the same reading for the same fixture"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+risks:
+  - "A removed worktree removes its ledger from the denominator; the reading lists what it read and the window measurement states the unread checkouts"
+  - "The prompt archive filters injected messages only by declared markers (lib/capture.sh:239-249), so prompt records overstate human prompts in a mesh; the field is named prompt records"
+  - "Approvals in auto-approval modes may never reach the person; the receipt counts requests unless the captured payload says how the request was decided"
+  - "I3377 to I3381 edit separate functions of tasks.rs after I3376 fixed the record shape, so they add no response-shape change"
+created_at: 2026-10-19
+updated_at: 2026-10-19

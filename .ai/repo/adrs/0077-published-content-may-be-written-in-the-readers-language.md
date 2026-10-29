@@ -14,7 +14,7 @@ related:
   - rule:project.english-only
   - claim:authored-files-are-english
   - claim:published-translation-is-declared
-  - file:.ai/repo/rules/project/english-only.v2.md
+  - file:.ai/repo/rules/project/english-only.v4.md
   - file:scripts/ci/english-only-check
   - file:scripts/ci/english-only-allow.txt
   - file:docs/claims/authored-files-are-english.md

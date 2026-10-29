@@ -71,7 +71,9 @@ impl Node {
 
     fn declare(&self, repository: &str, allow: &[&str], seeds: &[&Served]) {
         let mut yaml = String::from(
-            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow:\n",
+            // the tailnet stays quiet: a fixture on a machine that runs Tailscale would
+            // otherwise register with the real hubs of the tailnet and meet its siblings there
+            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow:\n",
         );
         for key in allow {
             yaml.push_str(&format!("    - {key}\n"));
@@ -143,7 +145,7 @@ fn connected(s: &Served) -> usize {
 }
 
 fn state(s: &Served) -> Value {
-    s.get("/api/v1/mesh/state").1["state"].clone()
+    s.get("/api/v1/mesh/state?view=full").1["state"].clone()
 }
 
 fn claims_in(s: &Served, st: &str) -> Vec<Value> {
@@ -278,6 +280,44 @@ fn two_runtimes_link_and_share_sessions_claims_reviews_and_a_handover() {
         })
     });
 
+    // B asks again, with a body; nobody else may end it, B withdraws it with its result,
+    // and A folds the request withdrawn with that result and no answer.
+    let (status, requested) = post(
+        &sb,
+        "/api/v1/mesh/reviews",
+        json!({"session": "b1", "subject": "pre-flight", "body": "45 gates\n12 cases"}),
+    );
+    assert_eq!(status, 200, "{requested}");
+    let preflight = requested["key"].as_str().unwrap().to_string();
+    wait_until("A sees the request's body", Duration::from_secs(10), || {
+        state(&sa)["reviews"].as_array().is_some_and(|r| {
+            r.iter()
+                .any(|x| x["key"] == json!(preflight) && x["body"] == json!("45 gates\n12 cases"))
+        })
+    });
+    let (status, refused) = post(
+        &sa,
+        "/api/v1/mesh/reviews/withdraw",
+        json!({"request": preflight, "session": "a1"}),
+    );
+    assert_eq!(status, 400, "only the asker withdraws: {refused}");
+    let (status, withdrawn) = post(
+        &sb,
+        "/api/v1/mesh/reviews/withdraw",
+        json!({"request": preflight, "session": "b1", "note": "clean"}),
+    );
+    assert_eq!(status, 200, "{withdrawn}");
+    wait_until("A sees the withdrawal", Duration::from_secs(10), || {
+        state(&sa)["reviews"].as_array().is_some_and(|r| {
+            r.iter().any(|x| {
+                x["key"] == json!(preflight)
+                    && x["state"] == json!("withdrawn")
+                    && x["result"] == json!("clean")
+                    && x["answers"] == json!([])
+            })
+        })
+    });
+
     // A publishes its handover; B consumes it into its own handovers directory.
     a.fixture.write(
         ".ai/local/state/handovers/20260915T120000Z--feature-mesh--0123456--00000000000000aa.md",
@@ -331,6 +371,30 @@ fn two_runtimes_link_and_share_sessions_claims_reviews_and_a_handover() {
     let http = sb.get("/api/v1/mesh/peers").1;
     assert_eq!(cli["runtime"], http["runtime"]);
     assert_eq!(cli["repository"], http["repository"]);
+    assert_eq!(http["view"], json!("summary"), "the default is the summary");
+
+    // The state's default answer is the summary too: bounded, closed by the whole fold's
+    // digest; a filter narrows the full view and never changes that digest.
+    let whole = state(&sb)["digest"].clone();
+    let summary = sb.get("/api/v1/mesh/state").1;
+    assert_eq!(summary["view"], json!("summary"));
+    assert!(
+        summary["state"].is_null(),
+        "the summary does not carry the fold"
+    );
+    assert_eq!(summary["summary"]["digest"], whole);
+    assert!(summary.to_string().len() < 16 * 1024);
+    let nobody = sb
+        .get("/api/v1/mesh/state?view=full&claims=live&session=nobody")
+        .1;
+    assert_eq!(nobody["state"]["claims"], json!([]));
+    assert_eq!(nobody["state"]["sessions"], json!([]));
+    assert_eq!(nobody["state"]["digest"], whole);
+    let (status, refused) = sb.get("/api/v1/mesh/state?view=everything");
+    assert_eq!(
+        status, 400,
+        "an unknown view is refused, not read as the default: {refused}"
+    );
     let (code, _, _) = run_in(
         &b.fixture.root(),
         &[
@@ -560,7 +624,48 @@ fn three_runtimes_in_a_line_converge_through_the_middle_without_loops() {
     for s in [&sa, &sb, &sc] {
         let events = s.get("/api/v1/mesh/events?limit=1000").1;
         assert_eq!(events["count"], json!(4), "{events}");
+        // The journal as it stands now: `newest` answers its last events, in the same order,
+        // and names the newest stamp, where the default page answers its first ones.
+        let newest = s.get("/api/v1/mesh/events?limit=2&newest=true").1;
+        assert_eq!(newest["count"], json!(2), "{newest}");
+        assert_eq!(newest["events"][0], events["events"][2], "{newest}");
+        assert_eq!(newest["events"][1], events["events"][3], "{newest}");
+        assert_eq!(newest["lamport"], events["lamport"], "{newest}");
+        let first = s.get("/api/v1/mesh/events?after=0&limit=2").1;
+        assert_eq!(first["events"][0], events["events"][0], "{first}");
+        // The default walk is by arrival: resumed from the cursor each page answers, it
+        // returns the same four events, each once, whatever order they arrived in (I2733).
+        let identity = |e: &Value| format!("{}/{}", e["stream"], e["seq"]);
+        let mut walked = Vec::new();
+        let mut cursor: Option<String> = None;
+        loop {
+            let page = match &cursor {
+                None => s.get("/api/v1/mesh/events?limit=1").1,
+                Some(c) => s.get(&format!("/api/v1/mesh/events?limit=1&cursor={c}")).1,
+            };
+            cursor = Some(
+                page["cursor"]
+                    .as_str()
+                    .expect("a cursor walk answers one")
+                    .into(),
+            );
+            let list = page["events"].as_array().cloned().unwrap_or_default();
+            if list.is_empty() {
+                break;
+            }
+            walked.extend(list.iter().map(identity));
+        }
+        let mut held: Vec<_> = events["events"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(identity)
+            .collect();
+        walked.sort();
+        held.sort();
+        assert_eq!(walked, held, "every event once over the walk");
     }
+
     // Quiet rounds carry nothing further: replication stopped rather than looping.
     let served = |s: &Served| {
         s.get("/api/v1/mesh/cooperation").1["counters"]["events_served"]
@@ -586,6 +691,58 @@ fn three_runtimes_in_a_line_converge_through_the_middle_without_loops() {
         json!({"session": "a2", "scope": ["docs/MESH.md"]}),
     );
     assert_eq!(status, 422, "C's claim excludes A through B");
+    // The Observatory follows this journal from a cursor (I2679): the newest page, then only
+    // what was appended above the cursor, a duplicate delivery carries the same identity, and
+    // a cursor this journal never reached is expired rather than answered empty.
+    let newest = sa.get("/api/v1/observatory/events").1;
+    assert_eq!(newest["active"], json!(true), "{newest}");
+    let marks = newest["events"].as_array().cloned().unwrap_or_default();
+    assert!(!marks.is_empty(), "{newest}");
+    assert!(
+        marks.iter().all(|m| m.get("body").is_none()),
+        "a mark carries no body: {newest}"
+    );
+    let cursor = newest["cursor"].as_u64().expect("a cursor");
+    let quiet = sa
+        .get(&format!("/api/v1/observatory/events?after={cursor}"))
+        .1;
+    assert_eq!(
+        (quiet["events"].clone(), quiet["expired"].clone()),
+        (json!([]), json!(false)),
+        "{quiet}"
+    );
+    post(
+        &sa,
+        "/api/v1/mesh/claims",
+        json!({"session": "a3", "scope": ["site"]}),
+    );
+    let mut appended = Value::Null;
+    wait_until(
+        "the appended claim reaches the cursor",
+        Duration::from_secs(10),
+        || {
+            appended = sa
+                .get(&format!("/api/v1/observatory/events?after={cursor}"))
+                .1;
+            appended["events"].as_array().is_some_and(|e| !e.is_empty())
+        },
+    );
+    assert!(appended["cursor"].as_u64().unwrap() > cursor, "{appended}");
+    let again = sa
+        .get(&format!("/api/v1/observatory/events?after={cursor}"))
+        .1;
+    assert_eq!(
+        again["events"][0]["id"], appended["events"][0]["id"],
+        "the same event, the same identity"
+    );
+    let lost = sa
+        .get(&format!(
+            "/api/v1/observatory/events?after={}",
+            cursor + 1_000_000
+        ))
+        .1;
+    assert_eq!(lost["expired"], json!(true), "{lost}");
+    assert_eq!(lost["events"], json!([]), "{lost}");
 }
 
 #[test]
@@ -616,6 +773,7 @@ fn malformed_forged_and_future_link_messages_are_typed_refusals_over_http() {
         card: card.clone(),
         nonce: majordomus_cli::mesh::link::fresh_token(),
         ts: majordomus_cli::mesh::protocol::now(),
+        to: None,
     };
     let future = sign(
         &stranger,
@@ -711,4 +869,92 @@ fn two_worktrees_of_one_machine_are_two_runtimes_under_one_key() {
         status, 422,
         "a claim in one worktree excludes the other worktree's session"
     );
+}
+
+/// One runtime on its own: a session opened from the command line carries the client
+/// process it names, by pid or found by `auto`, and `mesh events --cursor` resumes the walk
+/// exactly after the page that cursor closed. A cursor the walk cannot take is refused.
+#[test]
+fn the_command_line_names_its_client_and_resumes_the_event_walk_from_a_cursor() {
+    let a = Node::new();
+    a.declare("one-repository", &[&a.key], &[]);
+    let sa = a.serve();
+    let root = a.fixture.root();
+
+    // this test's own process is the client: alive, and on this machine
+    let pid = std::process::id().to_string();
+    for (session, client) in [("named", pid.as_str()), ("found", "auto")] {
+        let (code, out, err) = run_in(
+            &root,
+            &[
+                "mesh",
+                "session",
+                "open",
+                "--session",
+                session,
+                "--client-pid",
+                client,
+                "--format",
+                "json",
+            ],
+            "",
+        );
+        assert_eq!(code, 0, "mesh session open {session}: {out}\n{err}");
+    }
+    let sessions = state(&sa)["sessions"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+    let named = sessions
+        .iter()
+        .find(|s| s["info"]["session"] == json!("named"))
+        .unwrap_or_else(|| panic!("the named session is held: {sessions:?}"));
+    assert_eq!(named["info"]["client_pid"], json!(std::process::id()));
+    assert!(named["info"]["client_started"].is_string(), "{named}");
+    assert!(
+        sessions
+            .iter()
+            .any(|s| s["info"]["session"] == json!("found")),
+        "{sessions:?}"
+    );
+
+    // the first page, one event long, and the rest resumed from its cursor
+    let (status, first) = sa.get("/api/v1/mesh/events?limit=1");
+    assert_eq!(status, 200, "{first}");
+    let cursor = first["cursor"].as_str().expect("a cursor walk answers one");
+    let (code, out, err) = run_in(
+        &root,
+        &["mesh", "events", "--cursor", cursor, "--format", "json"],
+        "",
+    );
+    assert_eq!(code, 0, "{out}\n{err}");
+    let rest: Value = serde_json::from_str(&out).expect("mesh events --format json is JSON");
+    let all = sa.get("/api/v1/mesh/events?limit=1000").1;
+    assert_eq!(
+        rest["count"].as_u64().unwrap() + 1,
+        all["count"].as_u64().unwrap(),
+        "every event but the first page's: {rest}"
+    );
+    assert!(
+        !rest["events"]
+            .as_array()
+            .unwrap()
+            .contains(&first["events"][0]),
+        "{rest}"
+    );
+
+    // two walks at once, a cursor that is not one, and one another run issued
+    let (status, both) = sa.get(&format!("/api/v1/mesh/events?after=0&cursor={cursor}"));
+    assert_eq!(status, 400, "{both}");
+    assert!(both.to_string().contains("two different walks"), "{both}");
+    let (status, malformed) = sa.get("/api/v1/mesh/events?cursor=nope");
+    assert_eq!(status, 400, "{malformed}");
+    let (instance, arrival) = cursor.split_once(':').unwrap();
+    let other = if instance == "0000000000000000" {
+        "1111111111111111"
+    } else {
+        "0000000000000000"
+    };
+    let (status, stale) = sa.get(&format!("/api/v1/mesh/events?cursor={other}:{arrival}"));
+    assert_eq!(status, 422, "a cursor of another run is refused: {stale}");
 }

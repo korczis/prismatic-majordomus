@@ -33,17 +33,17 @@
 
 mod common;
 
-use common::{Fixture, Served};
+use common::{run_in, Fixture, Served};
 use serde_json::{json, Value};
 
-use majordomus_cli::mesh::config::{MeshConfig, MulticastConfig};
+use majordomus_cli::mesh::config::{MeshConfig, MulticastConfig, TailscaleConfig};
 use majordomus_cli::mesh::identity::NodeIdentity;
 use majordomus_cli::mesh::protocol::advertise;
 use majordomus_cli::mesh::MeshRuntime;
 
 /// An enabled declaration with every socket-opening transport off: activation, identity
 /// and registration under test, and not one datagram anywhere.
-const ENABLED_QUIET: &str = "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntrust:\n  policy: tofu\n";
+const ENABLED_QUIET: &str = "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: tofu\n";
 
 const DISABLED: &str = "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: false\n";
 
@@ -70,6 +70,8 @@ fn post(s: &Served, path: &str, body: &Value) -> (u16, Value) {
 fn a_server_activates_the_mesh_and_registration_converges_to_one_record() {
     let f = Fixture::new();
     f.write(".ai/repo/mesh/majordomus.yaml", ENABLED_QUIET);
+    // committed: trust on first use is honoured only from the trunk's copy (I2135)
+    f.commit("the mesh declaration");
     let state = f.root().join("xdg-state");
     let mut s = Served::start_with_env(
         &f.root(),
@@ -281,7 +283,9 @@ fn a_disabled_declaration_opens_nothing_and_says_why() {
 #[test]
 fn two_runtimes_discover_each_other_through_the_rendezvous_handshake() {
     let dir = tempfile::tempdir().unwrap();
-    let quiet = |id: &str| MeshConfig {
+    // each runtime lists only its own key: an unlisted machine stays closed, and the
+    // other's key stays unknown, so its verdict is observed
+    let quiet = |id: &str, own: &str| MeshConfig {
         schema: "mesh/v1".into(),
         kind: "mesh-declaration".into(),
         id: id.into(),
@@ -292,12 +296,24 @@ fn two_runtimes_discover_each_other_through_the_rendezvous_handshake() {
         },
         broadcast: Default::default(),
         rendezvous: Default::default(),
-        trust: Default::default(),
+        // this test is about the rendezvous: the tailnet stays quiet
+        tailscale: TailscaleConfig {
+            enabled: false,
+            ..TailscaleConfig::default()
+        },
+        trust: majordomus_cli::mesh::config::TrustConfig {
+            allow: vec![own.to_string()],
+            ..Default::default()
+        },
         cooperation: Default::default(),
     };
     let a_id = NodeIdentity::load_or_create(&dir.path().join("a.json")).unwrap();
     let b_id = NodeIdentity::load_or_create(&dir.path().join("b.json")).unwrap();
     let a_node = a_id.public.node_id.clone();
+    let (a_key, b_key) = (
+        a_id.public.public_key.clone(),
+        b_id.public.public_key.clone(),
+    );
     let b_node = b_id.public.node_id.clone();
     let b_envelope = advertise(
         &b_id,
@@ -310,7 +326,7 @@ fn two_runtimes_discover_each_other_through_the_rendezvous_handshake() {
 
     let a = MeshRuntime::new();
     a.activate(
-        &quiet("a"),
+        &quiet("a", &a_key),
         a_id,
         vec!["127.0.0.1:1".into()],
         vec![],
@@ -319,7 +335,7 @@ fn two_runtimes_discover_each_other_through_the_rendezvous_handshake() {
     .unwrap();
     let b = MeshRuntime::new();
     b.activate(
-        &quiet("b"),
+        &quiet("b", &b_key),
         b_id,
         vec!["127.0.0.1:2".into()],
         vec![],
@@ -392,4 +408,784 @@ fn an_enabled_declaration_the_server_could_not_activate_fails_the_doctor_and_nam
         "{runtime}"
     );
     assert_eq!(s.stop(), 0);
+}
+
+/// An enabled declaration whose one transport is the multicast group: the plan it implies
+/// on any machine is that group's port and nothing else — no hub, no broadcast, no link.
+const ENABLED_MULTICAST: &str =
+    "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n";
+
+/// `mesh firewall --format json` in the repository at `root`: the exit code and the report.
+fn firewall(root: &std::path::Path, extra: &[&str]) -> (i32, Value) {
+    let mut args = vec!["mesh", "firewall"];
+    args.extend_from_slice(extra);
+    args.extend_from_slice(&["--format", "json"]);
+    let (code, out, err) = run_in(root, &args, "");
+    let report = serde_json::from_str(&out).unwrap_or_else(|e| {
+        panic!(
+            "`majordomus {}` is not JSON ({e}): {out}\n{err}",
+            args.join(" ")
+        )
+    });
+    (code, report)
+}
+
+/// `mesh-firewall-is-derived`, on the command line: a mesh that is off needs nothing
+/// admitted, and `mesh firewall apply` over a plan that needs nothing is refused before
+/// any privilege is asked about — so this test runs no firewall tool on any machine, as
+/// any user, root included, and can never change the firewall of the machine it runs on.
+#[test]
+fn a_mesh_that_is_off_needs_no_firewall_rule_and_apply_refuses_without_running_anything() {
+    let f = Fixture::new();
+    let root = f.root();
+    // No declaration at all, then a disabled one: the same answer for the same reason.
+    for declaration in [None, Some(DISABLED)] {
+        if let Some(text) = declaration {
+            f.write(".ai/repo/mesh/majordomus.yaml", text);
+            f.commit("declare the mesh, disabled");
+        }
+        let (code, report) = firewall(&root, &["--port", "8741"]);
+        assert_eq!(code, 0, "nothing needed is not a failure: {report}");
+        assert_eq!(report["ok"], json!(true), "{report}");
+        assert_eq!(report["plan"]["rules"], json!([]), "{report}");
+        assert_eq!(report["commands"], json!([]), "{report}");
+        assert_eq!(report["observation"]["state"], json!("present"));
+        assert_eq!(report["platform"], json!(std::env::consts::OS));
+        assert!(
+            report.get("blocked_recently").is_none(),
+            "an empty plan reads no kernel log: {report}"
+        );
+
+        let (code, out, err) = run_in(&root, &["mesh", "firewall"], "");
+        assert_eq!(code, 0, "{err}");
+        assert!(out.starts_with("backend     "), "{out}");
+        assert!(out.contains("\nplan        0 rule(s)\n"), "{out}");
+        assert!(!out.contains("commands    "), "{out}");
+        assert!(
+            out.trim_end()
+                .lines()
+                .last()
+                .is_some_and(|l| l.starts_with("verdict     ") && l.contains("needs no inbound")),
+            "{out}"
+        );
+
+        let (code, applied) = firewall(&root, &["apply"]);
+        assert_eq!(code, 10, "a refusal exits 10: {applied}");
+        assert_eq!(applied["ok"], json!(false));
+        assert_eq!(applied["applied"], json!([]), "nothing ran: {applied}");
+        assert!(
+            applied["refused"]
+                .as_str()
+                .unwrap_or_default()
+                .ends_with("nothing to apply"),
+            "{applied}"
+        );
+        assert_eq!(applied["observation"], applied["before"]["observation"]);
+
+        let (code, out, err) = run_in(&root, &["mesh", "firewall", "apply", "--port", "8741"], "");
+        assert_eq!(code, 10, "{err}");
+        assert!(out.starts_with("refused     "), "{out}");
+        assert!(
+            out.trim_end()
+                .ends_with("verdict     the host firewall does not admit the mesh (see above)"),
+            "{out}"
+        );
+
+        // The command line renders a capability's answer and adds nothing to it: the
+        // capability, asked in this process over the same repository, refuses the same way.
+        let app = common::load_app(&f);
+        let answer = |id: &str| {
+            app.context
+                .execute(id, json!({ "port": 8741 }))
+                .unwrap_or_else(|e| panic!("{id} refused: {e:?}"))
+        };
+        let needed = answer("mesh.firewall");
+        assert_eq!(needed["ok"], json!(true), "{needed}");
+        assert_eq!(needed["plan"]["rules"], json!([]), "{needed}");
+        let refused = answer("mesh.firewall.apply");
+        assert_eq!(refused["ok"], json!(false), "{refused}");
+        assert_eq!(refused["applied"], json!([]), "{refused}");
+        assert_eq!(refused["refused"], applied["refused"], "{refused}");
+    }
+}
+
+/// The report over an enabled declaration, on whatever host runs the suite. `mesh firewall`
+/// only reads: it asks the firewall for its status and the kernel log for its last five
+/// minutes, as the invoking user, and what it cannot read it reports as unobservable. So
+/// the plan and the shape of the answer are held here on every machine, and the verdict —
+/// which is a fact of this machine's firewall — is only required to agree with itself.
+#[test]
+fn an_enabled_declaration_derives_the_group_rule_and_the_report_agrees_with_its_exit_code() {
+    let f = Fixture::new();
+    f.write(".ai/repo/mesh/majordomus.yaml", ENABLED_MULTICAST);
+    f.commit("declare the mesh");
+    let root = f.root();
+
+    let (code, report) = firewall(&root, &[]);
+    let rules = report["plan"]["rules"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+    assert_eq!(rules.len(), 1, "{report}");
+    assert_eq!(rules[0]["role"], json!("multicast"));
+    assert_eq!(rules[0]["protocol"], json!("udp"));
+    assert_eq!(rules[0]["port"], json!(7741));
+    assert_eq!(rules[0]["destination"], json!("239.255.77.77"));
+    assert_eq!(rules[0]["sources"], json!([]));
+    assert_eq!(report["plan"]["hub_ports"], json!([]));
+    assert_eq!(report["window_seconds"], json!(300));
+    let state = report["observation"]["state"].as_str().unwrap_or_default();
+    assert!(
+        [
+            "no_backend",
+            "inactive",
+            "present",
+            "missing",
+            "unobservable"
+        ]
+        .contains(&state),
+        "{report}"
+    );
+    let ok = report["ok"] == json!(true);
+    assert_eq!(code, if ok { 0 } else { 10 }, "{report}");
+    if state == "missing" {
+        assert!(!ok, "a rule observed missing fails the report: {report}");
+    }
+
+    // A server beyond loopback is dialed on its port, so the port is admitted too.
+    let (_, report) = firewall(&root, &["--port", "8741"]);
+    let roles: Vec<&str> = report["plan"]["rules"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|r| r["role"].as_str())
+        .collect();
+    assert_eq!(roles, ["multicast", "link"], "{report}");
+}
+
+/// I2133: a rendezvous answers a refused caller with the refusal alone, and an admitted one
+/// with this node and the trusted nodes of the caller's own repositories — never the
+/// strangers it merely observed, nor another repository's topology.
+#[test]
+fn a_registration_learns_only_the_trusted_nodes_of_its_own_repository() {
+    let dir = tempfile::tempdir().unwrap();
+    let key = |name: &str| {
+        NodeIdentity::load_or_create(&dir.path().join(format!("{name}.json"))).unwrap()
+    };
+    let (hub_id, trusted_id, stranger_id, caller_id, other_id, untrusted_id) = (
+        key("hub"),
+        key("trusted"),
+        key("stranger"),
+        key("caller"),
+        key("other"),
+        key("untrusted"),
+    );
+    let mut config = MeshConfig {
+        schema: "mesh/v1".into(),
+        kind: "mesh-declaration".into(),
+        id: "hub".into(),
+        enabled: true,
+        multicast: MulticastConfig {
+            enabled: false,
+            ..MulticastConfig::default()
+        },
+        broadcast: Default::default(),
+        rendezvous: Default::default(),
+        // the hub is reached by its address here: the tailnet stays quiet
+        tailscale: TailscaleConfig {
+            enabled: false,
+            ..TailscaleConfig::default()
+        },
+        trust: Default::default(),
+        cooperation: Default::default(),
+    };
+    // the hub lists its own key beside the trusted nodes': a machine its trust list does not
+    // name keeps its mesh closed and admits nobody. The two callers are trusted too; what an
+    // untrusted caller learns is asked of `untrusted` below (ADR 0220 decision 5, I3826)
+    config.trust.allow = vec![
+        hub_id.public.public_key.clone(),
+        trusted_id.public.public_key.clone(),
+        caller_id.public.public_key.clone(),
+        other_id.public.public_key.clone(),
+    ];
+    let hub_id_pk = hub_id.public.public_key.clone();
+    let hub = MeshRuntime::new();
+    hub.activate(&config, hub_id, vec!["127.0.0.1:1".into()], vec![], "test")
+        .unwrap();
+    let envelope = |id: &NodeIdentity, repos: &[&str], port: u16| {
+        let repos: Vec<String> = repos.iter().map(|r| r.to_string()).collect();
+        serde_json::to_value(advertise(
+            id,
+            1,
+            &[format!("127.0.0.1:{port}")],
+            &["http".into()],
+            &repos,
+            "n",
+        ))
+        .unwrap()
+    };
+    // the hub knows a trusted node and a stranger of repository r1
+    assert!(
+        hub.register(&envelope(&trusted_id, &["r1"], 2), "test")
+            .accepted
+    );
+    assert!(
+        hub.register(&envelope(&stranger_id, &["r1"], 3), "test")
+            .accepted
+    );
+
+    // a caller whose envelope is refused learns nothing
+    let refused = hub.register(&json!({ "v": 0 }), "test");
+    assert!(!refused.accepted);
+    assert!(refused.candidates.is_empty(), "{:?}", refused.candidates);
+
+    // the keys an answer names, in a stable order
+    let learned = |candidates: &[majordomus_cli::mesh::protocol::Envelope]| {
+        let mut keys: Vec<String> = candidates.iter().map(|c| c.adv.pk.clone()).collect();
+        keys.sort();
+        keys
+    };
+    let sorted = |keys: &[&String]| {
+        let mut keys: Vec<String> = keys.iter().map(|k| (*k).clone()).collect();
+        keys.sort();
+        keys
+    };
+
+    // a trusted caller of r1 learns the hub and the trusted nodes of r1, itself among them,
+    // and never the stranger
+    let same = hub.register(&envelope(&caller_id, &["r1"], 4), "test");
+    assert!(same.accepted);
+    assert_eq!(
+        learned(&same.candidates),
+        sorted(&[
+            &hub_id_pk,
+            &trusted_id.public.public_key,
+            &caller_id.public.public_key
+        ]),
+    );
+
+    // a trusted caller of another repository learns the hub and itself, no node of r1
+    let other = hub.register(&envelope(&other_id, &["r2"], 5), "test");
+    assert!(other.accepted);
+    assert_eq!(
+        learned(&other.candidates),
+        sorted(&[&hub_id_pk, &other_id.public.public_key]),
+    );
+
+    // a caller of r1 whose key nobody trusts is answered, and learns the hub alone: who
+    // trusts whom is told only to those trusted (ADR 0220 decision 5, I3826)
+    let unknown = hub.register(&envelope(&untrusted_id, &["r1"], 6), "test");
+    assert!(unknown.accepted);
+    let keys: Vec<String> = unknown
+        .candidates
+        .iter()
+        .map(|c| c.adv.pk.clone())
+        .collect();
+    assert_eq!(
+        keys,
+        vec![hub_id_pk.clone()],
+        "an untrusted caller learned {keys:?}"
+    );
+    hub.stop();
+}
+
+/// A discovery provider that floods the manager: it hands over `total` copies of this node's
+/// own signed advertisement as fast as the queue takes them, counting what the queue took and
+/// what it dropped. Each copy the manager reads costs it a full parse and signature check
+/// before it is recognised as this node's echo, so the flood outruns the manager by orders of
+/// magnitude — what a segment shouting datagrams does to a real one.
+struct Flood {
+    total: usize,
+    accepted: std::sync::Arc<std::sync::atomic::AtomicU64>,
+    dropped: std::sync::Arc<std::sync::atomic::AtomicU64>,
+    done: std::sync::Arc<std::sync::atomic::AtomicBool>,
+}
+
+impl majordomus_cli::mesh::MeshProvider for Flood {
+    fn id(&self) -> &'static str {
+        "flood"
+    }
+
+    fn start(
+        &mut self,
+        ctx: &majordomus_cli::mesh::ProviderContext,
+    ) -> Result<(), majordomus_cli::mesh::MeshError> {
+        use std::sync::atomic::Ordering;
+        let bytes = majordomus_cli::mesh::protocol::encode(&ctx.beacon.next_envelope())?;
+        let tx = ctx.tx.clone();
+        let (total, accepted, dropped, done) = (
+            self.total,
+            std::sync::Arc::clone(&self.accepted),
+            std::sync::Arc::clone(&self.dropped),
+            std::sync::Arc::clone(&self.done),
+        );
+        std::thread::spawn(move || {
+            for _ in 0..total {
+                let sent = tx.send(majordomus_cli::mesh::Observation {
+                    source: majordomus_cli::mesh::MeshSource::UdpMulticast,
+                    path: "flood".into(),
+                    bytes: bytes.clone(),
+                });
+                // counted after the queue answered, so a reader never sees more accepted
+                // than the queue took
+                if sent {
+                    accepted.fetch_add(1, Ordering::SeqCst);
+                } else {
+                    dropped.fetch_add(1, Ordering::SeqCst);
+                }
+            }
+            done.store(true, Ordering::SeqCst);
+        });
+        Ok(())
+    }
+
+    fn status(&self) -> majordomus_cli::mesh::ProviderStatus {
+        majordomus_cli::mesh::ProviderStatus {
+            id: "flood".into(),
+            state: majordomus_cli::mesh::provider::MeshProviderState::Running,
+            detail: None,
+            sent: 0,
+            received: 0,
+        }
+    }
+}
+
+/// A discovery flood costs the process a bounded queue and a counter, and the counter is what
+/// the mesh status answers (I2133): every observation beyond `OBSERVATION_QUEUE` is dropped at
+/// the provider, never more than the bound waits for the manager at any moment, and each drop
+/// is the `overflow` refusal `mesh.status` reports — through the capability and through its
+/// HTTP route, the same number the provider counted.
+#[test]
+fn discovery_flood_bounded_test() {
+    use majordomus_cli::mesh::provider::OBSERVATION_QUEUE;
+    use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+    use std::sync::Arc;
+    use std::time::{Duration, Instant};
+
+    let f = Fixture::new();
+    let app = common::load_app(&f);
+    let mesh = &app.context.mesh;
+    let config: MeshConfig = serde_json::from_value(json!({
+        "schema": "mesh/v1", "kind": "mesh-declaration", "id": "majordomus", "enabled": true,
+        "multicast": { "enabled": false }, "trust": { "policy": "tofu" },
+    }))
+    .unwrap();
+    mesh.activate_as(
+        &config,
+        Arc::new(NodeIdentity::ephemeral().unwrap()),
+        "0000000000000001",
+        vec![],
+        vec![],
+        "test",
+    )
+    .expect("the mesh activates");
+    assert_eq!(mesh.status().refusals.overflow, 0, "nothing dropped yet");
+
+    let total = 50 * OBSERVATION_QUEUE;
+    let accepted = Arc::new(AtomicU64::new(0));
+    let dropped = Arc::new(AtomicU64::new(0));
+    let done = Arc::new(AtomicBool::new(false));
+    mesh.attach(Box::new(Flood {
+        total,
+        accepted: Arc::clone(&accepted),
+        dropped: Arc::clone(&dropped),
+        done: Arc::clone(&done),
+    }))
+    .expect("the flood starts");
+
+    // while the flood runs and after it: what the queue took, less what the manager has
+    // finished reading, is at most the bound — plus the one observation being read. Read in
+    // this order (the queue's count first) the difference can only understate the queue.
+    let bound = OBSERVATION_QUEUE as u64 + 1;
+    let deadline = Instant::now() + Duration::from_secs(60);
+    loop {
+        let finished = done.load(Ordering::SeqCst);
+        let took = accepted.load(Ordering::SeqCst);
+        let read = mesh.status().refusals.self_heard;
+        assert!(
+            took.saturating_sub(read) <= bound,
+            "{took} observations taken and {read} read: the queue held more than its bound of {OBSERVATION_QUEUE}"
+        );
+        if finished {
+            break;
+        }
+        assert!(Instant::now() < deadline, "the flood did not end");
+        std::thread::sleep(Duration::from_millis(1));
+    }
+    let took = accepted.load(Ordering::SeqCst);
+    let lost = dropped.load(Ordering::SeqCst);
+    assert_eq!(
+        took + lost,
+        total as u64,
+        "every observation was taken or dropped"
+    );
+    assert!(
+        lost > 0,
+        "{total} observations at once overflowed nothing: the flood never filled the queue"
+    );
+
+    // the manager drains what the queue took, and nothing more
+    let deadline = Instant::now() + Duration::from_secs(60);
+    while mesh.status().refusals.self_heard < took {
+        assert!(
+            Instant::now() < deadline,
+            "the manager did not drain the queue: {} of {took} read",
+            mesh.status().refusals.self_heard
+        );
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    let status = mesh.status();
+    assert_eq!(status.refusals.self_heard, took, "{:?}", status.refusals);
+    assert_eq!(
+        status.refusals.overflow, lost,
+        "the status counts every drop the provider saw"
+    );
+
+    // and the answer a client reads says the same: the capability and its HTTP route
+    let answer = app
+        .context
+        .execute("mesh.status", json!({}))
+        .expect("mesh.status answers");
+    assert_eq!(answer["refusals"]["overflow"], json!(lost), "{answer}");
+    let router = majordomus_cli::http::Router::new(app.context.clone(), "test");
+    let response = router.handle(&majordomus_cli::http::Request::parse_target(
+        "GET",
+        "/api/v1/mesh",
+        vec![],
+    ));
+    assert_eq!(response.status, 200);
+    let routed: Value = serde_json::from_str(&response.body.text()).expect("a JSON status");
+    assert_eq!(routed["refusals"]["overflow"], json!(lost), "{routed}");
+    mesh.stop();
+}
+
+/// A peer that answers one connection with `write`, after reading the request's first bytes:
+/// whatever a dialer meets on the far side of a link or a rendezvous it does not control.
+fn peer_answering(
+    write: impl FnOnce(&mut std::net::TcpStream) + Send + 'static,
+) -> std::net::SocketAddr {
+    use std::io::Read;
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let addr = listener.local_addr().unwrap();
+    std::thread::spawn(move || {
+        let (mut stream, _) = listener.accept().unwrap();
+        let mut head = [0u8; 8192];
+        let _ = stream.read(&mut head);
+        write(&mut stream);
+    });
+    addr
+}
+
+/// A peer answering one connection with `body`, as the shared server does: 200, its length,
+/// and the JSON pretty-printed.
+fn peer_answering_json(body: &impl serde::Serialize) -> std::net::SocketAddr {
+    use std::io::Write;
+    let text = serde_json::to_string_pretty(body).unwrap();
+    peer_answering(move |s| {
+        let _ = s.write_all(
+            format!(
+                "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n",
+                text.len()
+            )
+            .as_bytes(),
+        );
+        let _ = s.write_all(text.as_bytes());
+    })
+}
+
+/// A dialer reads no reply beyond its bound (I2704). A link reply is held at most at
+/// `MAX_LINK_REPLY` — one message under `MAX_LINK_MESSAGE` in its `{"signed":…}` — counted
+/// without the whitespace the server pretty-prints, so the reply at the bound is read and the
+/// one a byte over is refused; a register answer is held at most at `MAX_REGISTER_ANSWER`
+/// and carries at most `MAX_ANSWER_CANDIDATES` envelopes, so 33 are read, 34 are refused as
+/// too many before the 34th is built and 10 000 are refused as oversized after 81 KiB; and a
+/// peer that drips its reply a byte at a time is cut at the whole-reply deadline, with
+/// nothing of the padding held.
+#[test]
+fn reply_bound_test() {
+    use majordomus_cli::mcp::bridge::{request_json_within, ReplyBound, ReplyRefused};
+    use majordomus_cli::mesh::link::{
+        HttpTransport, LinkReply, LinkTransport, Signed, MAX_LINK_MESSAGE, MAX_LINK_REPLY,
+        SYNC_PATH,
+    };
+    use majordomus_cli::mesh::rendezvous::{
+        register, RegisterAnswer, RegisterError, MAX_ANSWER_CANDIDATES, MAX_REGISTER_ANSWER,
+    };
+    use std::time::{Duration, Instant};
+
+    // a link reply whose compact JSON is `extra` bytes over MAX_LINK_REPLY
+    let link_reply = |extra: usize| {
+        let bare = serde_json::to_string(&LinkReply::accepted(Signed {
+            body: json!(""),
+            sig: String::new(),
+        }))
+        .unwrap()
+        .len();
+        LinkReply::accepted(Signed {
+            body: json!("x".repeat(MAX_LINK_REPLY - bare + extra)),
+            sig: String::new(),
+        })
+    };
+    let at_bound = link_reply(0);
+    assert_eq!(
+        serde_json::to_string(at_bound.signed.as_ref().unwrap())
+            .unwrap()
+            .len(),
+        MAX_LINK_MESSAGE,
+        "the reply at the bound carries a message at the message bound"
+    );
+    let ask = Signed {
+        body: json!({}),
+        sig: String::new(),
+    };
+    let peer = peer_answering_json(&at_bound);
+    let read = HttpTransport
+        .post(&peer.to_string(), SYNC_PATH, &ask)
+        .expect("a reply at the bound is read, its pretty-printing not counted");
+    assert_eq!(read.signed, at_bound.signed);
+
+    let peer = peer_answering_json(&link_reply(1));
+    let refused = HttpTransport
+        .post(&peer.to_string(), SYNC_PATH, &ask)
+        .expect_err("a reply a byte over the bound");
+    assert!(
+        refused.contains(&format!("{MAX_LINK_REPLY}-byte bound")),
+        "the failure names the bound: {refused}"
+    );
+
+    // the rendezvous: the bound on candidates, and the bound on bytes beneath it
+    let node = NodeIdentity::ephemeral().unwrap();
+    let envelope = advertise(&node, 1, &[], &[], &[], "test");
+    let answer = |n: usize| RegisterAnswer {
+        accepted: true,
+        refusal: None,
+        candidates: vec![envelope.clone(); n],
+    };
+    let peer = peer_answering_json(&answer(MAX_ANSWER_CANDIDATES));
+    let read = register(&format!("http://{peer}"), &envelope).expect("33 candidates are read");
+    assert_eq!(read.candidates.len(), MAX_ANSWER_CANDIDATES);
+
+    let peer = peer_answering_json(&answer(MAX_ANSWER_CANDIDATES + 1));
+    assert_eq!(
+        register(&format!("http://{peer}"), &envelope).unwrap_err(),
+        RegisterError::TooManyCandidates {
+            endpoint: format!("http://{peer}"),
+            bound: MAX_ANSWER_CANDIDATES,
+        }
+    );
+
+    let peer = peer_answering_json(&answer(10_000));
+    assert_eq!(
+        register(&format!("http://{peer}"), &envelope).unwrap_err(),
+        RegisterError::Refused {
+            endpoint: format!("http://{peer}"),
+            refused: ReplyRefused::Oversized {
+                bound: MAX_REGISTER_ANSWER
+            },
+        },
+        "10 000 candidates are never read as far as their count"
+    );
+
+    // a peer that never stops and never finishes: a space every 20 ms, which no bound
+    // between two reads ever catches and which the dialer never holds
+    let peer = peer_answering(|s| {
+        use std::io::Write;
+        let _ = s.write_all(b"HTTP/1.1 200 OK\r\n\r\n");
+        for _ in 0..1500 {
+            if s.write_all(b" ").is_err() {
+                return;
+            }
+            std::thread::sleep(Duration::from_millis(20));
+        }
+    });
+    let started = Instant::now();
+    let bound = ReplyBound {
+        bytes: 1024,
+        idle: Duration::from_secs(5),
+        within: Duration::from_millis(600),
+    };
+    let late = request_json_within(&format!("http://{peer}"), "POST", "/", &[], None, bound)
+        .expect_err("a dripping reply is cut");
+    assert_eq!(
+        ReplyRefused::of(&late),
+        Some(&ReplyRefused::Late { millis: 600 })
+    );
+    assert!(
+        started.elapsed() < Duration::from_secs(5),
+        "cut at the whole-reply deadline, not at the idle one: {:?}",
+        started.elapsed()
+    );
+}
+
+#[test]
+fn enrolment_lists_this_machines_key_once_and_opens_the_mesh_here() {
+    let f = Fixture::new();
+    // the declaration `majordomus init` ships: enabled, deny_unknown, nobody listed
+    let seeded = std::fs::read_to_string(
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../share/skeleton/ai/repo/mesh/mesh.yaml"),
+    )
+    .unwrap();
+    f.write(".ai/repo/mesh/mesh.yaml", &seeded);
+    let state = f.root().join("xdg-state");
+    let mj = |args: &[&str]| {
+        let out = std::process::Command::new(common::BIN)
+            .args(args)
+            .args(["--discovery", "filesystem"])
+            .current_dir(f.root())
+            .env("XDG_STATE_HOME", &state)
+            .env("MAJORDOMUS_SHARE", common::dist_share())
+            .output()
+            .unwrap();
+        (
+            out.status.code().unwrap_or(-1),
+            String::from_utf8_lossy(&out.stdout).to_string(),
+        )
+    };
+
+    // closed before: the doctor's trust check names this machine as unlisted
+    let (_, doctor) = mj(&["mesh", "doctor", "--format", "json"]);
+    let trust = |report: &str| -> Value {
+        serde_json::from_str::<Value>(report).unwrap()["checks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|c| c["check"] == json!("trust"))
+            .cloned()
+            .unwrap_or(Value::Null)
+    };
+    // no identity yet: nothing to check against, so no trust verdict either way
+    assert_ne!(trust(&doctor)["ok"], json!(true), "{doctor}");
+
+    let (code, out) = mj(&["mesh", "enrol", "--format", "json"]);
+    assert_eq!(code, 0, "{out}");
+    let enrolled: Value = serde_json::from_str(&out).unwrap();
+    assert_eq!(enrolled["added"], json!(true), "{enrolled}");
+    let key = enrolled["key"].as_str().unwrap().to_string();
+    assert_eq!(key.len(), 64);
+    assert!(
+        state.join("majordomus").join("node.json").is_file(),
+        "enrolment created this machine's identity under its state directory"
+    );
+    let written = std::fs::read_to_string(f.path(".ai/repo/mesh/mesh.yaml")).unwrap();
+    assert!(written.contains(&format!("    - \"{key}\"")), "{written}");
+    assert!(
+        written.starts_with("# The mesh of this repository"),
+        "the comments stay"
+    );
+
+    // once: a second enrolment changes nothing
+    let (code, out) = mj(&["mesh", "enrol", "--format", "json"]);
+    assert_eq!(code, 0, "{out}");
+    assert_eq!(
+        serde_json::from_str::<Value>(&out).unwrap()["added"],
+        json!(false)
+    );
+    assert_eq!(
+        std::fs::read_to_string(f.path(".ai/repo/mesh/mesh.yaml")).unwrap(),
+        written
+    );
+
+    // and the machine is listed: the trust check passes
+    let (_, doctor) = mj(&["mesh", "doctor", "--format", "json"]);
+    assert_eq!(trust(&doctor)["ok"], json!(true), "{doctor}");
+}
+
+/// `mesh enrol` in `f` under `env` (a `None` removes the variable): the exit code, stdout
+/// and stderr.
+fn enrol_in(f: &Fixture, env: &[(&str, Option<&std::path::Path>)]) -> (i32, String, String) {
+    let mut command = common::majordomus();
+    command
+        .args([
+            "mesh",
+            "enrol",
+            "--format",
+            "json",
+            "--discovery",
+            "filesystem",
+        ])
+        .current_dir(f.root())
+        .env("MAJORDOMUS_SHARE", common::dist_share());
+    for (name, value) in env {
+        match value {
+            Some(value) => command.env(name, value),
+            None => command.env_remove(name),
+        };
+    }
+    let out = command.output().unwrap();
+    (
+        out.status.code().unwrap_or(-1),
+        String::from_utf8_lossy(&out.stdout).to_string(),
+        String::from_utf8_lossy(&out.stderr).to_string(),
+    )
+}
+
+const SEEDED: &str = "schema: mesh/v1\nkind: mesh-declaration\nid: mesh\nenabled: true\ntrust:\n  policy: deny_unknown\n  allow: []\n";
+
+/// With nowhere to keep this machine's identity, or a state directory that cannot hold
+/// one, enrolment is refused with the reason and the declaration is left as it was.
+#[test]
+fn enrolment_without_a_place_for_the_identity_is_refused_and_writes_nothing() {
+    let f = Fixture::new();
+    f.write(".ai/repo/mesh/mesh.yaml", SEEDED);
+
+    let (code, out, err) = enrol_in(&f, &[("HOME", None), ("XDG_STATE_HOME", None)]);
+    assert_ne!(code, 0, "{out}");
+    assert!(
+        err.contains("no HOME and no XDG_STATE_HOME: nowhere to keep this machine's node identity"),
+        "{err}"
+    );
+
+    // a state directory that is a file: the identity cannot be created under it
+    let blocker = f.root().join("blocker");
+    std::fs::write(&blocker, "a file, not a directory").unwrap();
+    let (code, out, err) = enrol_in(&f, &[("XDG_STATE_HOME", Some(&blocker))]);
+    assert_ne!(code, 0, "{out}");
+    assert!(err.contains("refused"), "{err}");
+
+    assert_eq!(
+        std::fs::read_to_string(f.path(".ai/repo/mesh/mesh.yaml")).unwrap(),
+        SEEDED
+    );
+}
+
+/// A machine whose host name cannot be read is still enrolled: its allowlist entry is
+/// named "this machine" beside its node id and platform.
+#[test]
+fn enrolment_names_a_machine_without_a_readable_host_name_this_machine() {
+    let f = Fixture::new();
+    f.write(".ai/repo/mesh/mesh.yaml", SEEDED);
+    let state = f.root().join("xdg-state");
+    // no `hostname` on an empty PATH
+    let empty = f.root().join("empty-path");
+    std::fs::create_dir_all(&empty).unwrap();
+    let (code, out, err) = enrol_in(
+        &f,
+        &[("XDG_STATE_HOME", Some(&state)), ("PATH", Some(&empty))],
+    );
+    assert_eq!(code, 0, "{out}\n{err}");
+    let written = std::fs::read_to_string(f.path(".ai/repo/mesh/mesh.yaml")).unwrap();
+    let label = format!(
+        " — this machine ({} {})\n",
+        std::env::consts::OS,
+        std::env::consts::ARCH
+    );
+    assert!(written.contains(&label), "{written}");
+}
+
+/// A declaration that cannot be written is an internal error naming it, and the file
+/// keeps what it held.
+#[cfg(unix)]
+#[test]
+fn a_declaration_that_cannot_be_written_is_an_error_and_stays_as_it_was() {
+    use std::os::unix::fs::PermissionsExt;
+    let f = Fixture::new();
+    f.write(".ai/repo/mesh/mesh.yaml", SEEDED);
+    let declaration = f.path(".ai/repo/mesh/mesh.yaml");
+    std::fs::set_permissions(&declaration, std::fs::Permissions::from_mode(0o444)).unwrap();
+    let state = f.root().join("xdg-state");
+    let (code, out, err) = enrol_in(&f, &[("XDG_STATE_HOME", Some(&state))]);
+    assert_ne!(code, 0, "{out}");
+    assert!(err.contains("internal: .ai/repo/mesh/mesh.yaml"), "{err}");
+    assert_eq!(std::fs::read_to_string(&declaration).unwrap(), SEEDED);
 }

@@ -76,6 +76,12 @@ anything that holds work; copy what is ignored and valuable out of the tree befo
 the tree; stop a process by its own id, never by a pattern. A high-risk candidate is not
 removed in this session unless its owner says so in words; record it instead.
 
+Then prove the step, in the same command that is about to remove: `git rev-parse --verify
+<ref>` prints the sha, and for anything that is leaving the remote, `git ls-remote <remote>
+<ref>` prints it too. A rescue ref remembered, or written in a summary, is not a rescue ref.
+On 2026-10-20 a remote branch was deleted on the word of a summary that named a rescue ref
+which had never been created; the commit survived only as a local branch.
+
 ## 5. Remove, then verify
 
 Remove the low and medium candidates, one class at a time. Afterwards run what would notice
