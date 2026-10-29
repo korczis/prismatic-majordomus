@@ -71847,6 +71847,8 @@
             ".github/workflows/validate.yml",
             "scripts/ci-baseline",
             "scripts/ci/step-bound-check",
+            "scripts/ci/shell-lint",
+            "scripts/ci/run-plan",
             "apps/majordomus-cli/src/gates/model.rs",
             "apps/majordomus-cli/src/integration/job_budget.rs",
             "apps/majordomus-cli/src/integration/mod.rs",
@@ -95418,6 +95420,13 @@
         "label": "test/cases/431_economics_claims_gated.sh",
         "route": "/cockpit/objects/test/test-cases-431-economics-claims-gated-sh",
         "source": "test/cases/431_economics_claims_gated.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4381_the_structure_job_fits_in_half_its_bound.sh",
+        "kind": "test",
+        "label": "test/cases/4381_the_structure_job_fits_in_half_its_bound.sh",
+        "route": "/cockpit/objects/test/test-cases-4381-the-structure-job-fits-in-half-its-bound-sh",
+        "source": "test/cases/4381_the_structure_job_fits_in_half_its_bound.sh"
       },
       {
         "id": "majordomus://test/test/cases/43_plan_command.sh",
@@ -140969,6 +140978,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4381_the_structure_job_fits_in_half_its_bound.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/43_plan_command.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -146050,8 +146064,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4034,
-      "edges": 9315,
+      "nodes": 4035,
+      "edges": 9316,
       "acyclic": false,
       "truncated": false
     }

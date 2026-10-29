@@ -67785,6 +67785,8 @@
         ".github/workflows/validate.yml",
         "scripts/ci-baseline",
         "scripts/ci/step-bound-check",
+        "scripts/ci/shell-lint",
+        "scripts/ci/run-plan",
         "apps/majordomus-cli/src/gates/model.rs",
         "apps/majordomus-cli/src/integration/job_budget.rs",
         "apps/majordomus-cli/src/integration/mod.rs",
@@ -113951,6 +113953,12 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I3830",
+      "message": "shares scripts/ci/run-plan with I4381; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I3835",
       "message": "shares apps/majordomus-cli/src/mesh with I3990; they may not run concurrently"
     },
@@ -114787,7 +114795,7 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "count": 6979,
+      "count": 6980,
       "examples": [
         {
           "level": "WARN",

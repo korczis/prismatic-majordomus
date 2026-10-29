@@ -10,14 +10,19 @@ set -eu
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 # What is linted is discovered, not listed: every tracked file under bin/, lib/, scripts/
-# and the harness whose first line says it is a shell script. A list here would be a mirror
-# of the directory, and the day it went stale would be the day a new script stopped being
-# linted (docs/DYNAMICITY.md).
+# and the harness whose first line says it is a shell script, or whose name ends in .sh. A
+# list here would be a mirror of the directory, and the day it went stale would be the day a
+# new script stopped being linted (docs/DYNAMICITY.md).
+# The name counts because a sourced library has no shebang, and `shellcheck -x` reports no
+# finding inside a file it follows, only in the file it was given: lib/rust_bin.sh,
+# lib/sha256.sh, lib/machine_lock.sh and test/lib.sh were followed from every case and linted
+# by nothing until I4381, which stopped the cases following rust_bin.sh.
 shell_files() {
   git ls-files -z bin lib test/run.sh test/lib.sh scripts 2>/dev/null \
     | tr '\0' '\n' \
     | while IFS= read -r f; do
         [ -f "$f" ] || continue
+        case "$f" in *.sh) printf '%s\n' "$f"; continue ;; esac
         case "$(head -n 1 "$f")" in
           '#!'*sh) printf '%s\n' "$f" ;;
         esac
