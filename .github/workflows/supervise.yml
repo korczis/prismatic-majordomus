@@ -89,7 +89,7 @@ jobs:
             echo "MJ=$dir/majordomus" >> "$GITHUB_ENV"
           else
             echo "::warning::no master validate run keeps an executable that runs here; the published release supervises"
-            curl -fsSL https://majordomus.dev/install.sh \
+            curl -fsSL --max-time 60 https://majordomus.dev/install.sh \
               | sh -s -- --install-dir "$RUNNER_TEMP/bin" --prefix "$RUNNER_TEMP/opt"
             echo "MJ=$RUNNER_TEMP/bin/majordomus" >> "$GITHUB_ENV"
           fi
