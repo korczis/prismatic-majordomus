@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "ae04180b4942df4e80efdaa316e69d6962a02cf0b26519fe5988450f65bf3a65",
+    "fingerprint": "ee435104db0902475a66c6259ae9d9d4de9e608b17c637d5e9689d0140371036",
     "summary": {
-      "total": 3558,
+      "total": 3576,
       "builtin": 220,
-      "declarative": 3338,
+      "declarative": 3356,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3338
+        "resource": 3356
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3348
+        "implemented": 3366
       },
       "mcp_tools": 206,
-      "mcp_resources": 3395,
+      "mcp_resources": 3413,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91383,7 +91383,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1037,
+        "capabilities": 1054,
         "capability_ids": []
       },
       {
@@ -91391,7 +91391,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 63,
+        "capabilities": 64,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "747fe07c53794837517963e4257dd250f9d3415ea3e832a7c742ec778f703652",
+    "fingerprint": "e2f9a8ade6586ed9f7a37db7bf8512fc799ffb67ff7df8bda90c2f20c02b1a5b",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92113,8 +92113,8 @@
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1037,
-      "knowledge": 63,
+      "issue": 1054,
+      "knowledge": 64,
       "mesh-declaration": 1,
       "milestone": 111,
       "moment": 38,
@@ -99558,7 +99558,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 997160
+        "bytes": 1044928
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -111190,12 +111190,12 @@
         "uri": "majordomus://issue/I3241",
         "kind": "issue",
         "identity": "I3241",
-        "title": "Only a job that reads history fetches all of it",
-        "description": "Declare in gates.yaml which gates read history, and give fetch-depth 0 only to the jobs that run one of them.",
+        "title": "Every checkout fetches only what its gates read, blobless by default, and no checkout takes more than 120 s",
+        "description": "The default checkout of validate.yml is HEAD's ancestry with `filter: blob:none`. Tags and other heads are fetched only by a job one of whose gates declares `history_reads` in gates.yaml: adr-collision (blobs on other heads), collision-check, the pages walk and version-matches-surface. scripts/ci/step-bound-check refuses a `fetch-depth: 0` checkout without `blob:none` unless its job declares a history_reads entry, and a fetch of `refs/heads/*` without a gate that reads other branches. 96_site_deploy works from a partial clone.",
         "path": ".ai/repo/project/issues/I3241.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1288
+        "bytes": 4012
       },
       {
         "uri": "majordomus://issue/I3242",
@@ -113732,11 +113732,11 @@
         "kind": "issue",
         "identity": "I3825",
         "title": "A build refuses to start beside five others or below 35 GiB free",
-        "description": "The build guard holds the two machine limits of rule project.the-cooperation-model-is-the-owners-word clause 7: no build starts while five builders already run on the machine or while less than 35 GiB is free, each refusal naming the limit, the measured value and the override, so the limits stop being numbers a session has to remember.",
+        "description": "The build guard holds the two machine limits of rule project.the-cooperation-model-is-the-owners-word clause 7: no build starts while five builders already run on the machine or while less than 35 GiB is free, each refusal naming the limit, the measured value and the override, so the limits stop being numbers a session has to remember. The order of the admission floors in lib/rust_bin.sh is stated in I4354 and this issue follows it: disk_emergency below 10 GiB (I4355) first, then this 35 GiB floor, then the builder count, then the machine slot (I4006).",
         "path": ".ai/repo/project/issues/I3825.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1912
+        "bytes": 2133
       },
       {
         "uri": "majordomus://issue/I3826",
@@ -114883,6 +114883,105 @@
         "bytes": 3014
       },
       {
+        "uri": "majordomus://issue/I4341",
+        "kind": "issue",
+        "identity": "I4341",
+        "title": "release-check excuses a tag without a record until its grace ends, whatever the job fetched and whenever the release run concluded",
+        "description": "Make the excuse scripts/ci/release-check gives a published tag without a record monotonic over its grace: when proposed_record() finds no local release/record-<tag> ref it asks `git ls-remote --heads origin release/record-<tag>` and fetches that one ref, and release_in_flight() reads a GitHub release of the tag younger than RECORD_GRACE_HOURS as pending whatever its release run concluded.",
+        "path": ".ai/repo/project/issues/I4341.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3199
+      },
+      {
+        "uri": "majordomus://issue/I4342",
+        "kind": "issue",
+        "identity": "I4342",
+        "title": "A release's record lands without a person within two hours of its tag",
+        "description": "The record pull request a release opens gets its own pull_request run started without a person: the publish job opens it, or the drain closes and reopens it, with a GitHub App or fine-grained token the owner supplies, whose events start workflows, so that run posts `ci` on the record's head and branch protection counts it. release-check reports an unlanded record's age, and the release seat's check fails once a record has waited more than two hours, naming the pull request; that bound holds today, with or without the credential.",
+        "path": ".ai/repo/project/issues/I4342.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4442
+      },
+      {
+        "uri": "majordomus://issue/I4343",
+        "kind": "issue",
+        "identity": "I4343",
+        "title": "A build host's disk guard is observed live every five minutes, and the observation fails while it is not",
+        "description": "On a node the policy declares a build host, `mesh doctor --build-host` observes disk-guard.timer active, the ballast present, /var/lib/majordomus/disk-guard.json younger than 15 minutes and every declared drop-in present, and each missing item is a failure with a non-zero exit naming the item and `mesh build-cache provision`. Nobody has to ask: the provision installs build-host-observe.service with build-host-observe.timer, which runs that observation every five minutes, writes its verdict and failing items to /var/lib/majordomus/build-host.json and publishes it as a mesh event build_host_observed, which `mesh events` and `monitor` show. The build host layer is applied on lundra and the evidence is recorded on this issue. Lundra's baseline tenants (the korczis home, docker, minio and swap) are named in the policy, each with a bound the observation reads.",
+        "path": ".ai/repo/project/issues/I4343.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5770
+      },
+      {
+        "uri": "majordomus://issue/I4344",
+        "kind": "issue",
+        "identity": "I4344",
+        "title": "A CI runner's home stays under its cap during a job, not only between jobs",
+        "description": "Bound a self-hosted runner's build directory inside a job, not only around it. The build host policy gives each runner home's build directory a filesystem of its own size, a loop-mounted ext4 image or an XFS project quota the provision creates from the policy's per-home cap, so a job that outgrows it fails with ENOSPC inside its own home while the root filesystem keeps its floor. Around that hard bound: on runner.environment == 'self-hosted', .github/actions/setup-rust runs the build directory bound (mj_rust_bound_build_dir) before cargo and again in a post step; scripts/rust-coverage removes llvm-cov-target on a self-hosted runner once its report is exported; and every job that builds on a self-hosted runner samples its build directory every 30 s and writes the job summary facts `build-dir size` and `build-dir peak`.",
+        "path": ".ai/repo/project/issues/I4344.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5014
+      },
+      {
+        "uri": "majordomus://issue/I4345",
+        "kind": "issue",
+        "identity": "I4345",
+        "title": "A CI runner that systemd shows active while its listener crash-loops is recovered within five minutes",
+        "description": "The build host policy installs a root watchdog, runner-watchdog.service with runner-watchdog.timer, that for each actions.runner.* unit detects a listener crash loop or free space below the hard floor, then runs disk-guard's hard tier, releases the ballast (root may use the reserved ext4 blocks), restarts the unit and emits a mesh monitor event naming the runner; a runner GitHub reports offline is reported the same way.",
+        "path": ".ai/repo/project/issues/I4345.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3584
+      },
+      {
+        "uri": "majordomus://issue/I4346",
+        "kind": "issue",
+        "identity": "I4346",
+        "title": "Every sweep that deletes asks one liveness predicate, and it fails closed",
+        "description": "scripts/reap-orphans --targets, `majordomus worktree cleanup` and the build host's disk-guard decide liveness through one typed capability, worktree.liveness (`majordomus worktree liveness <path>`, declared in the worktree module and implemented in apps/majordomus-cli/src/worktree/liveness.rs), which answers keep or reclaim with its reason. worktree cleanup calls it in process; reap-orphans and disk-guard call the executable, disk-guard through the path disk-guard.service hands it, and keep everything when that executable is absent. A tree or build directory is live if a mesh or board claim names it, an open majordomus task exists in it, the derive lock's owner names it, a queue pid file or a running runner job names it, another process's CARGO_*_DIR or MAJORDOMUS_BIN points into it, or its index, HEAD or reflog changed within the idle window; an unreadable claim source or stat counts as live. No new shell unit is added.",
+        "path": ".ai/repo/project/issues/I4346.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5150
+      },
+      {
+        "uri": "majordomus://issue/I4347",
+        "kind": "issue",
+        "identity": "I4347",
+        "title": "A labeled event starts a gate job only for ci:full, so opening a train with its label runs its head once",
+        "description": "The first step of validate.yml's plan job yields when github.event.action == 'labeled' and the label is not ci:full, without replacing the `ci` conclusion an earlier run of the same head wrote; opening a pull request with its label produces one gate-running run per head.",
+        "path": ".ai/repo/project/issues/I4347.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2603
+      },
+      {
+        "uri": "majordomus://issue/I4348",
+        "kind": "issue",
+        "identity": "I4348",
+        "title": "Rule: a superseded or duplicate run never holds a pull request's validate group",
+        "description": "A blocking project rule, a-superseded-run-never-holds-a-validate-group, whose case fails when validate.yml keeps a per-pull-request group with cancel-in-progress: false while no supervising workflow with a workflow_run trigger and a schedule exists, when `labeled` reaches the gates without a label filter, or when the group expression is not keyed on pull_request.number; docs/CI.md lists the five dated occurrences it answers.",
+        "path": ".ai/repo/project/issues/I4348.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2748
+      },
+      {
+        "uri": "majordomus://issue/I4349",
+        "kind": "issue",
+        "identity": "I4349",
+        "title": "Checkout time and repository size have a budget, and a run past it is red",
+        "description": "Every validate run records a per-step checkout-seconds fact and a `repository kb` fact, with a baseline in scripts/ci-baseline; a new typed capability, integration.checkout_budget (`majordomus prs checkout-budget`, implemented in apps/majordomus-cli/src/integration/checkout_budget.rs), run as a gate in structure, fails when the p90 checkout time measured under concurrency passes 50% of its step bound or when the repository size passes its budget in .ai/repo/policy.yaml, and flags a re-run of a job that died at its checkout bound.",
+        "path": ".ai/repo/project/issues/I4349.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3594
+      },
+      {
         "uri": "majordomus://issue/I4350",
         "kind": "issue",
         "identity": "I4350",
@@ -114892,6 +114991,94 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2558
+      },
+      {
+        "uri": "majordomus://issue/I4351",
+        "kind": "issue",
+        "identity": "I4351",
+        "title": "A tracked derived file over 1 MB is declared with a delta budget, written to delta well, or built rather than committed",
+        "description": "Stop the history's growth from derived files: site/data/registry/registry.json, docs/generated/graph.json, site/data/generated/plan.json, docs/generated/registry.json, docs/generated/registry.yaml and the three openapi copies (site/data/generated/openapi.json, docs/generated/openapi.json, docs/generated/openapi.yaml) each either leave git (built where they are served) or are written to delta well (stable key order, one record per line, no volatile body fields), and each one that stays carries a max_delta_bytes in .ai/repo/policy.yaml; scripts/derive-check refuses an undeclared tracked derived file over 1 MB. A file that leaves git is built by its producer (scripts/generate-site-data or `majordomus generate`) where its readers (scripts/site-build, scripts/site-deploy, scripts/pages, scripts/ci/homepage-check) need it, and is listed in .gitignore. Which file takes which road is decided first in an ADR whose number is taken on the board when the work starts.",
+        "path": ".ai/repo/project/issues/I4351.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3926
+      },
+      {
+        "uri": "majordomus://issue/I4353",
+        "kind": "issue",
+        "identity": "I4353",
+        "title": "A train's top goes first on the runner pool, and resume never re-runs a held member",
+        "description": "scripts/ci/release-path gains a landing path beside the release path: while an integration/* run is queued or running, other pull requests' runs yield; `preempt` cancels queued pull_request runs that are not a top, never a push, schedule or dispatch run; `resume` waits until no top is in flight and skips a pull request that carries any hold label of LABEL_POLICY, read live from the forge.",
+        "path": ".ai/repo/project/issues/I4353.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2862
+      },
+      {
+        "uri": "majordomus://issue/I4354",
+        "kind": "issue",
+        "identity": "I4354",
+        "title": "Under disk pressure the shared build directory is reclaimed without cargo's lock, and a build is admitted before cargo takes it",
+        "description": "On a developer machine: a reclaim triggered by free space removes idle incremental sessions under rustc's own s-*.lock, with no age floor under pressure; a cargo shim, share/libexec/cargo-shim/cargo, first on PATH, admits a build before cargo takes its lock and holds new builds while a reclaim is pending; admission reclaims before it refuses, the shared build directory first and a worktree's target only below MAJORDOMUS_MIN_FREE_MB. Admission is one function in lib/rust_bin.sh, and this issue states the order of its floors, which every record that adds one follows: (1) disk_emergency below 10 GiB (I4355) refuses every build, with no override; (2) the machine floor of rule project.the-cooperation-model-is-the-owners-word clause 7, 35 GiB, read from rule data (I4006) and held by I3825, refuses a local build only after this issue's reclaim has run, naming the free space, the floor, the override and the offload route; (3) the builder count of clause 7 (I3825); (4) the machine slot (I4006). CI keeps its own floor and is refused by none of (2) to (4). This issue changes no number of clause 7. #2397 (I4006) and #2567 are fixed to match and land.",
+        "path": ".ai/repo/project/issues/I4354.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5294
+      },
+      {
+        "uri": "majordomus://issue/I4355",
+        "kind": "issue",
+        "identity": "I4355",
+        "title": "A machine announces its own disk emergency on the mesh and names who holds the build lock",
+        "description": "A watcher, `scripts/reap-orphans --watch`, run every 60 s by a launchd agent or systemd user timer the mesh enrolment installs, publishes an advisory claim machine/<id>/disk while free space is below 35 GiB and withdraws it at 40 GiB or more; below 10 GiB it lists the holders of debug/.cargo-build-lock (pid, worktree, age) and lib/rust_bin.sh refuses admission with reason disk_emergency. The watcher deletes nothing. Clause 7 of the cooperation rule stops saying the limit is owed and names the cases that hold it.",
+        "path": ".ai/repo/project/issues/I4355.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3316
+      },
+      {
+        "uri": "majordomus://issue/I4356",
+        "kind": "issue",
+        "identity": "I4356",
+        "title": "An exclusive claim is bound to a known session and its holder's process, and a claim is answered Written only when it is Held",
+        "description": "An exclusive claim for a session nobody opened is refused with session_unknown, naming `mesh session open --client-pid auto`, instead of opening the session implicitly; `mesh claim` sends client_pid and client_started, accepted only when the serving runtime is on the caller's machine; claim() reads the fold back and returns an error carrying the state when the claim is not Held; a claim sent to a runtime that holds only a closed record of a session live elsewhere is refused or forwarded; an exclusive claim also excludes by its issue field; mj_mesh_task_claim stops ignoring the answer. No beat-only suspension is introduced until CLI holders have an automatic beat source.",
+        "path": ".ai/repo/project/issues/I4356.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3993
+      },
+      {
+        "uri": "majordomus://issue/I4357",
+        "kind": "issue",
+        "identity": "I4357",
+        "title": "Issue, ADR and case numbers are reserved atomically at origin and checked at landing",
+        "description": "`next --kind issue|adr|case --reserve` reserves a number by creating refs/ids/<kind>/<n> on the forge (`gh api repos/{owner}/{repo}/git/refs -f ref=refs/ids/<kind>/<n> -f sha=<commit>`), which fails atomically with 422 when the ref exists and runs no local hook, and takes the next number on that refusal; .githooks/pre-push skips refs/ids/* as it skips refs/majordomus/*, so a reservation that does reach origin through git does no hook work; a required landing check refuses an id that is already on master or reserved under different content; the identifier gates (collision-check, adr-collision, case-numbers) run in a job that needs only plan, is exempt from the first-red cancel and checks out blobless.",
+        "path": ".ai/repo/project/issues/I4357.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4060
+      },
+      {
+        "uri": "majordomus://issue/I4358",
+        "kind": "issue",
+        "identity": "I4358",
+        "title": "A seat is taken by `start --seat` under its provider session, kept between that session's tasks and lost with it, and an unbound seat is named by the doctor",
+        "description": "`majordomus start --seat release|landing|repair` takes, or keeps, the seat's exclusive claim under the mesh session that carries the task's provider_session digest, so I3072's derived join (a task is the seat's when release/seat is held by a mesh session whose provider_session equals the one start recorded) finds the seat's task with nothing declared; a start with no observable provider session is refused the seat. finish and abandon do not drop the claim at once: they shorten its expiry to a grace, and a `start --seat` of the same provider session inside the grace keeps it, so the seat never reads vacant between one session's tasks (I3072's reason) while a session that has stopped loses it within the grace. A mesh doctor check, unbound_exclusive_claims, fails on an exclusive claim whose provider session has no open task past the grace, naming the claim's runtime URL and the exact release command; the scope seat/release is refused as scope_not_a_seat; the hub's served version is checked against the newest tag. The cooperation rule says seats are taken this way, at v3.",
+        "path": ".ai/repo/project/issues/I4358.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6247
+      },
+      {
+        "uri": "majordomus://issue/I4359",
+        "kind": "issue",
+        "identity": "I4359",
+        "title": "Rule: no CI runs on a host whose runner layer is undeclared or whose guard is not observed live, and the runner layer is documented",
+        "description": "A blocking project rule, no-ci-routes-to-an-undeclared-runner-host, held at two points. In the repository, a typed capability, mesh.runner_routing (`majordomus mesh runner-routing`), run as a gate in structure, fails when a self-hosted label reachable from a workflow or from a repository variable's default names no policy node that declares its runner units, their homes, their caps and the guard, observation and watchdog timers. On the host, the build host policy installs a runner job-started hook (apps/majordomus-cli/assets/mesh-cache-provider/runner-job-started, set as ACTIONS_RUNNER_HOOK_JOB_STARTED in the runner units' drop-in) that fails the job at its start, naming the failing item, while the host's latest observation (/var/lib/majordomus/build-host.json, written every five minutes by I4343) is missing, failing or older than 15 minutes; so a host whose guard has stopped takes no CI, and the refusal does not wait for anyone to ask. docs/CI.md gains a section 'Self-hosted runners' with the runbook of the 2026-10-28 recovery.",
+        "path": ".ai/repo/project/issues/I4359.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5693
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -115421,6 +115608,25 @@
         "tags": [
           "providers-economics",
           "chatgpt-project"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/none-of-the-failures-of-2026-10-28-was-prevented",
+        "kind": "knowledge",
+        "identity": "none-of-the-failures-of-2026-10-28-was-prevented",
+        "title": "Eleven failures of 2026-10-28, and why none of them was prevented",
+        "description": "The incident review of 2026-10-28 - eleven failures with their verified root causes and evidence, what already covers each, the issues filed to prevent each, and what is still owed.",
+        "path": ".ai/repo/knowledge/curated/none-of-the-failures-of-2026-10-28-was-prevented.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 17786,
+        "tags": [
+          "post-mortem",
+          "ci",
+          "runners",
+          "disk",
+          "mesh",
+          "release"
         ]
       },
       {
@@ -128454,7 +128660,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1037
+      "objects": 1054
     },
     {
       "name": "knowledge",
@@ -128464,7 +128670,7 @@
       "identity": [
         "id"
       ],
-      "objects": 63
+      "objects": 64
     },
     {
       "name": "mesh-declaration",

@@ -1,0 +1,37 @@
+id: I4348
+milestone: the-runtime-supervises-itself
+title: "Rule: a superseded or duplicate run never holds a pull request's validate group"
+slug: a-superseded-run-never-holds-a-validate-group
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "A blocking project rule, a-superseded-run-never-holds-a-validate-group, whose case fails when validate.yml keeps a per-pull-request group with cancel-in-progress: false while no supervising workflow with a workflow_run trigger and a schedule exists, when `labeled` reaches the gates without a label filter, or when the group expression is not keyed on pull_request.number; docs/CI.md lists the five dated occurrences it answers."
+why: "Incident 4 of 2026-10-28, its fifth occurrence (2026-10-10, 10-22, 10-26 and twice on 10-28): superseded and same-head duplicate runs held trains 10a (#2630) and 10b (#2631) for 73 and 108 minutes. Each occurrence was repaired by hand and nothing refuses the configuration that lets it recur: no automated actor that cannot be starved retires redundant runs. I3903 (#2645, open) is that actor and, as reviewed on 2026-10-28, cannot yet see same-head twins; I4347 removes the label duplicates."
+current_state: "Measured at 81ef931a3e1: no rule under .ai/repo/rules/project names validate.yml's group; the group is validate-<pull request number> with cancel-in-progress: false; .github/workflows holds no supervising workflow."
+desired_state: "The rule exists, is class blocking, names its case in x-majordomus tests, and fails on each planted violation while passing on the fixed tree. Enforced by case 4348 in the structure gate and `majordomus rule proves`."
+scope:
+  - ".ai/repo/project/issues/I4348.yaml"
+  - ".ai/repo/rules/project/a-superseded-run-never-holds-a-validate-group.v1.md"
+  - "test/cases/4348_a_superseded_run_never_holds_a_validate_group.sh"
+  - ".ai/repo/ci/gates.yaml"
+  - "docs/CI.md"
+non_scope:
+  - "The supervising workflow itself (I3903, #2645)"
+  - "The label filter (I4347)"
+acceptance_criteria:
+  - "Case 4348 fails on a planted validate.yml with a per-PR group, cancel-in-progress: false and no supervising workflow"
+  - "Case 4348 fails on a planted `labeled` trigger with no label filter, and on a group expression not keyed on pull_request.number"
+  - "Case 4348 passes on the tree after I4347 and I3903 land"
+  - "`majordomus rule proves project.a-superseded-run-never-holds-a-validate-group` resolves the rule to case 4348"
+  - "docs/CI.md lists the five dated occurrences"
+validation:
+  - "bash test/run.sh 4348_a_superseded_run_never_holds_a_validate_group"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+depends_on:
+  - "I4347"
+  - "I3903"
+serves: []
+created_at: 2026-10-29
+updated_at: 2026-10-29
