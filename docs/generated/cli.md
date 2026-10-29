@@ -3175,10 +3175,10 @@ Examples:
 
   Verified: exits 12.
 
-- **A covering lane asks the forge before it stands aside** — `--unless-supervised-within 8 --supervised-by lundra` is how the hosted fallback runs (with `--apply`): when lundra's supervise job succeeded at most eight minutes ago it reads nothing else and exits 0 (`stood aside`), so two lanes do not both spend the repository's one request budget on every tick. Only lundra's success counts, because a job that stood aside succeeded too and a lane counting its own would stand aside behind itself for ever. The answer is the forge's, so where there is none, or no bounds are declared, it exits 12 and stands aside from nothing.
+- **A covering lane asks the forge before it stands aside** — `--unless-supervised-within 15 --supervised-by lundra` is how the hosted fallback runs (with `--apply`): when lundra's supervise job succeeded at most fifteen minutes ago (the schedule's ten and a margin) it reads nothing else and exits 0 (`stood aside`), so two lanes do not both spend the repository's one request budget on every tick. Only lundra's success counts, because a job that stood aside succeeded too and a lane counting its own would stand aside behind itself for ever. The answer is the forge's, so where there is none, or no bounds are declared, it exits 12 and stands aside from nothing.
 
   ```console
-  $ majordomus prs supervise --unless-supervised-within 8 --supervised-by lundra
+  $ majordomus prs supervise --unless-supervised-within 15 --supervised-by lundra
   ```
 
   Verified: exits 12.

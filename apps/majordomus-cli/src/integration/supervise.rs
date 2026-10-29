@@ -30,7 +30,8 @@
 //!     never cancelled once admitted, and a judged run is never the older half of a pair: its
 //!     twin has been admitted by then.
 //!   - *the older run reaches its verdict*. When the older run is itself to be ended, now or
-//!     within [`TWIN_HORIZON_MINUTES`], by a bound or for being superseded, the twin is held
+//!     within [`TWIN_HORIZON_MINUTES`], by a bound or for being superseded, or was cancelled
+//!     already and runs only its `if: always()` jobs, the twin is held
 //!     ([`HoldReason::EarlierRunEnds`]): cancelling both would leave the commit with no run.
 //!   - *one burst*. A run created later than the window was asked for — a reopen tests the head
 //!     against a master that moved, a label added hours later asks again — and so is a re-run
@@ -38,14 +39,19 @@
 //!     request labelled [`FULL_LABEL`] ([`HoldReason::FullRunRequested`]).
 //! - [`CancelReason::SupersededBlocksSuccessor`]: a `pull_request` run of a workflow whose
 //!   concurrency group is one per pull request, whose head is no longer its pull request's
-//!   head, while a newer run of the same pull request waits in the same group. Cancelling it
-//!   is what lets the verdict that matters start. With no successor waiting it is left alone
+//!   head, while a newer run of the same pull request at its current head waits in the same
+//!   group. Cancelling it is what lets the verdict that matters start; a newer run of the old
+//!   commit (its twin) is no such verdict. With no successor waiting it is left alone
 //!   ([`HoldReason::SupersededWithoutSuccessor`]): that is the concurrency rationale.
 //! - [`CancelReason::QueuedPastBound`]: its attempt queued longer than its workflow's declared
-//!   bound with no job of it started, measured from [`RunObservation::queued_since`]: the
-//!   later of its creation and `run_started_at`, which a re-run resets and its creation it
-//!   does not. Only a pull request's run is ended this way, since a run that waits in a queue
-//!   holds no runner and frees nothing for anyone but a newer run of its own pull request: an
+//!   bound with no job of it started, measured from [`RunObservation::queued_since`]: its
+//!   admission by its concurrency group, the creation of the attempt's first job. Neither its
+//!   creation nor `run_started_at` is that: a twin that waited hours in its group behind its
+//!   older run is admitted with both hours old, and a clock from them would end it at once (and
+//!   its `if: always()` `ci` would write a failure). A run with no job of its attempt is pending
+//!   in its group and is never ended for waiting. Only a pull request's run is ended this way,
+//!   since a run that waits in a queue holds no runner and frees nothing for anyone but a
+//!   newer run of its own pull request: an
 //!   `integration/*` top waits for a runner and its verdict is the one a landing needs
 //!   ([`HoldReason::IntegrationTopWaits`]), and a run of the trunk, a tag, the schedule, a
 //!   dispatch or a release is in a group of its own ([`HoldReason::ProtectedRunWaits`]).
@@ -117,6 +123,10 @@ pub struct JobObservation {
     /// (with its creation), so it says when only once [`JobObservation::started`] says whether.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub started_at: Option<String>,
+    /// When the forge created it, RFC 3339: when its run's concurrency group admitted the run,
+    /// for the first job of an attempt ([`RunObservation::queued_since`]).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub created_at: Option<String>,
     /// `success`, `failure`, `skipped`, ... once completed.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub conclusion: Option<String>,
@@ -198,14 +208,35 @@ impl RunObservation {
         self.jobs.iter().any(|j| j.started() && !self.carried(j))
     }
 
-    /// Since when its current attempt has waited, in seconds since the epoch: the later of its
-    /// creation and its `run_started_at`. A re-run keeps `created_at`; a first attempt that
-    /// waited in its group has `run_started_at` at its creation. `None` when its creation is
-    /// not a time.
-    pub fn queued_since(&self) -> Option<u64> {
-        let created = seconds(&self.created_at)?;
+    /// Since when its current attempt has waited for a runner, in seconds since the epoch: when
+    /// its concurrency group admitted it, which is when the forge created the first job of the
+    /// attempt (its `created_at`, or for a job that names none its `started_at`, which the forge
+    /// fills with its creation while it is queued), and never before the attempt's
+    /// `run_started_at` or the run's creation. Neither of those is the admission: a first attempt
+    /// has `run_started_at` at its creation however long it then waited in its group, and
+    /// 40811621641, created at 03:20:59Z, was admitted at 05:31:53Z. `Ok(None)` while no job of
+    /// the attempt exists: the run is `pending` in its group, waiting behind a run of its own
+    /// pull request rather than for a runner, and no queue bound is measured. Err names a time
+    /// that cannot be read.
+    pub fn queued_since(&self) -> Result<Option<u64>, String> {
+        let created = seconds(&self.created_at)
+            .ok_or_else(|| format!("its creation `{}` is not a time", self.created_at))?;
         let attempt = self.run_started_at.as_deref().and_then(seconds);
-        Some(attempt.map_or(created, |a| a.max(created)))
+        let mut admitted: Option<u64> = None;
+        for j in self.jobs.iter().filter(|j| !self.carried(j)) {
+            let stamp = j.created_at.as_deref().or(j.started_at.as_deref());
+            let Some(stamp) = stamp else {
+                return Err(format!("job `{}` names no creation", j.name));
+            };
+            let t = seconds(stamp).ok_or_else(|| {
+                format!(
+                    "job `{}` was created at `{stamp}`, which is not a time",
+                    j.name
+                )
+            })?;
+            admitted = Some(admitted.map_or(t, |a| a.min(t)));
+        }
+        Ok(admitted.map(|a| a.max(created).max(attempt.unwrap_or(created))))
     }
 
     /// The job of it that has been in progress longest at `now`, with its minutes;
@@ -351,7 +382,8 @@ pub enum CancelReason {
         earlier_state: String,
     },
     /// A pull request's run of a head that is no longer the pull request's, while a newer run
-    /// of the same pull request waits behind it in the same concurrency group.
+    /// of the same pull request at its current head waits behind it in the same concurrency
+    /// group.
     SupersededBlocksSuccessor {
         /// The pull request.
         pull_request: u64,
@@ -363,7 +395,7 @@ pub enum CancelReason {
     /// A pull request's run whose attempt queued past its workflow's bound with no job of it
     /// started.
     QueuedPastBound {
-        /// Minutes since its attempt began to wait ([`RunObservation::queued_since`]).
+        /// Minutes since its group admitted its attempt ([`RunObservation::queued_since`]).
         minutes: u64,
         /// The declared bound.
         bound: u64,
@@ -469,14 +501,15 @@ pub enum HoldReason {
         earlier: u64,
     },
     /// The twin of an older run of its commit that is itself to be ended, now or within
-    /// [`TWIN_HORIZON_MINUTES`]: cancelling both would leave the commit with no run, so this one
-    /// waits to take the older one's place.
+    /// [`TWIN_HORIZON_MINUTES`], or that was cancelled already and runs only its `if: always()`
+    /// jobs: cancelling both would leave the commit with no run, so this one waits to take the
+    /// older one's place.
     EarlierRunEnds {
         /// The pull request.
         pull_request: u64,
         /// The older run of the same commit.
         earlier: u64,
-        /// Why the older run ends, as a [`CancelReason::word`].
+        /// Why the older run ends, as a [`CancelReason::word`], or `cancelled`.
         ends_for: String,
     },
     /// A re-run (`run_attempt` above one) of a commit with an older run in flight: a person
@@ -628,8 +661,15 @@ fn newer(a: &RunObservation, b: &RunObservation) -> bool {
     }
 }
 
-/// The newer run of the same pull request that waits in `run`'s concurrency group.
-fn successor<'a>(run: &RunObservation, n: u64, s: &Situation<'a>) -> Option<&'a RunObservation> {
+/// The newer run of pull request `n` at its current head `head` that waits in `run`'s
+/// concurrency group. A newer run of another commit is no verdict that matters: a same-commit
+/// twin of a superseded run would only test that head again from scratch.
+fn successor<'a>(
+    run: &RunObservation,
+    n: u64,
+    head: &str,
+    s: &Situation<'a>,
+) -> Option<&'a RunObservation> {
     s.runs
         .iter()
         .filter(|o| {
@@ -637,6 +677,7 @@ fn successor<'a>(run: &RunObservation, n: u64, s: &Situation<'a>) -> Option<&'a 
                 && o.workflow == run.workflow
                 && o.event == "pull_request"
                 && o.pull_request == Some(n)
+                && o.head_sha == head
                 && o.waiting()
                 && newer(o, run)
         })
@@ -674,18 +715,33 @@ fn earlier_twin<'a>(run: &RunObservation, n: u64, s: &Situation<'a>) -> Option<&
         .min_by_key(|o| o.id)
 }
 
-/// Why `earlier` is itself to be ended, now or within [`TWIN_HORIZON_MINUTES`]; `None` when it
-/// reaches its verdict as far as this supervisor can tell. Its own twins are older, so this ends.
-fn ends_for(earlier: &RunObservation, s: &Situation<'_>) -> Option<CancelReason> {
+/// The word a twin's older run ends for when it has been cancelled already and is still in
+/// flight: its `if: always()` jobs run on, so it is listed in flight with a verdict nobody reads.
+const ENDS_CANCELLED: &str = "cancelled";
+
+/// Why `earlier` ends without its verdict, as a [`CancelReason::word`] when it is to be ended,
+/// now or within [`TWIN_HORIZON_MINUTES`], or [`ENDS_CANCELLED`] when a job of its attempt was
+/// cancelled already; `None` when it reaches its verdict as far as this supervisor can tell. Its
+/// own twins are older, so this ends.
+fn ends_for(earlier: &RunObservation, s: &Situation<'_>) -> Option<String> {
+    // cancelled, by an earlier pass or by hand: its `ci` still waits for a runner (one waited
+    // eleven minutes on 2026-10-29), and the twin is the commit's only run from then on
+    if earlier
+        .jobs
+        .iter()
+        .any(|j| j.conclusion.as_deref() == Some("cancelled") && !earlier.carried(j))
+    {
+        return Some(ENDS_CANCELLED.into());
+    }
     if let Verdict::Cancel(reason) = judge(earlier, s) {
-        return Some(reason);
+        return Some(reason.word().into());
     }
     let later = Situation {
         now: s.now.saturating_add(TWIN_HORIZON_MINUTES * 60),
         ..*s
     };
     match judge(earlier, &later) {
-        Verdict::Cancel(reason) => Some(reason),
+        Verdict::Cancel(reason) => Some(reason.word().into()),
         _ => None,
     }
 }
@@ -728,10 +784,10 @@ pub fn judge(run: &RunObservation, s: &Situation<'_>) -> Verdict {
                 return match ends_for(earlier, s) {
                     // it takes the older run's place, and its wait is the older run's time:
                     // ended for waiting, it would leave the commit with no run either
-                    Some(reason) => Verdict::Hold(HoldReason::EarlierRunEnds {
+                    Some(ends_for) => Verdict::Hold(HoldReason::EarlierRunEnds {
                         pull_request: n,
                         earlier: earlier.id,
-                        ends_for: reason.word().into(),
+                        ends_for,
                     }),
                     None => Verdict::Cancel(CancelReason::DuplicateRun {
                         pull_request: n,
@@ -755,7 +811,7 @@ fn superseded_or_bounded(
     if bound.superseded == SupersededGroup::PerPullRequest {
         if let Some(n) = run.pull_request {
             if let Some(head) = s.pr_heads.get(&n).filter(|h| **h != run.head_sha) {
-                match successor(run, n, s) {
+                match successor(run, n, head, s) {
                     Some(next) => match protection(run, s.default_branch) {
                         Some(protection) => {
                             return Verdict::Hold(HoldReason::Protected { protection })
@@ -813,11 +869,12 @@ fn bounded(run: &RunObservation, bound: &WorkflowBound, s: &Situation<'_>) -> Ve
     if run.any_job_started() {
         return Verdict::Fine;
     }
-    // (b) its attempt queued past its bound, nothing of it started
-    let Some(since) = run.queued_since() else {
-        return Verdict::Hold(HoldReason::Unjudgeable {
-            detail: format!("its creation `{}` is not a time", run.created_at),
-        });
+    // (b) its attempt queued past its bound, nothing of it started, from its admission: a run
+    // with no job is pending in its group, and its wait there is its older run's time
+    let since = match run.queued_since() {
+        Err(detail) => return Verdict::Hold(HoldReason::Unjudgeable { detail }),
+        Ok(None) => return Verdict::Fine,
+        Ok(Some(since)) => since,
     };
     let minutes = s.now.saturating_sub(since) / 60;
     if minutes <= bound.queued_minutes {
@@ -1076,9 +1133,20 @@ mod tests {
                     name: "rust".into(),
                     status: "in_progress".into(),
                     started_at: Some(at(minutes_ago)),
+                    created_at: None,
+                    conclusion: None,
+                }]
+            } else if status == "queued" {
+                // admitted by its group at its creation: its first job waits for a runner
+                vec![JobObservation {
+                    name: "plan".into(),
+                    status: "queued".into(),
+                    started_at: Some(at(minutes_ago)),
+                    created_at: Some(at(minutes_ago)),
                     conclusion: None,
                 }]
             } else {
+                // pending in its group, or not yet read: no job
                 Vec::new()
             },
         }
@@ -1126,6 +1194,43 @@ mod tests {
         assert_eq!(d.reason.word(), "superseded_blocks_successor");
         // the successor is at the head and within its bound: nothing to say of it
         assert!(s.held.is_empty(), "{:?}", s.held);
+    }
+
+    #[test]
+    fn a_superseded_run_is_not_cancelled_for_a_twin_of_its_own_commit() {
+        // train #7 opened with --label train: run 100 of S1 in progress, its twin 101 of S1
+        // pending; the head moved to S2 and no run of S2 is in the group yet (a [skip ci] push,
+        // a push by the workflow token, or a pass before the synchronize run was created)
+        let mut runs = vec![
+            run(100, "S1", Some(7), "in_progress", 90),
+            run(101, "S1", Some(7), "pending", 90),
+        ];
+        let s = decide_over(&runs, &heads(&[(7, "S2")]));
+        // the twin would only test S1 again from scratch: 100 reaches its verdict
+        assert!(s.decisions.iter().all(|d| d.run != 100), "{s:?}");
+        assert_eq!(
+            s.held
+                .iter()
+                .find(|h| h.run == 100)
+                .map(|h| h.reason.clone()),
+            Some(HoldReason::SupersededWithoutSuccessor { pull_request: 7 }),
+            "{s:?}"
+        );
+        // once a run of S2 waits, that is the verdict that matters
+        runs.push(run(102, "S2", Some(7), "pending", 1));
+        let s = decide_over(&runs, &heads(&[(7, "S2")]));
+        assert_eq!(
+            s.decisions
+                .iter()
+                .find(|d| d.run == 100)
+                .map(|d| d.reason.clone()),
+            Some(CancelReason::SupersededBlocksSuccessor {
+                pull_request: 7,
+                current_head: "S2".into(),
+                successor: 102
+            }),
+            "{s:?}"
+        );
     }
 
     #[test]
@@ -1272,6 +1377,7 @@ mod tests {
             name: "plan".into(),
             status: "completed".into(),
             started_at: Some(at(10)),
+            created_at: None,
             conclusion: Some("success".into()),
         });
         assert!(decide_over(&runs, &heads(&[(7, "a")])).decisions.is_empty());
@@ -1282,12 +1388,14 @@ mod tests {
                 name: "rust".into(),
                 status: "queued".into(),
                 started_at: Some(at(241)),
+                created_at: None,
                 conclusion: None,
             },
             JobObservation {
                 name: "macos".into(),
                 status: "completed".into(),
                 started_at: Some(at(241)),
+                created_at: None,
                 conclusion: Some("skipped".into()),
             },
         ];
@@ -1310,7 +1418,7 @@ mod tests {
             }
         );
         // a run of the trunk waits in a group of its own and holds no runner: held
-        let mut runs = vec![run(100, "a", None, "pending", 300)];
+        let mut runs = vec![run(100, "a", None, "queued", 300)];
         runs[0].event = "push".into();
         runs[0].head_branch = "master".into();
         let s = decide_over(&runs, &heads(&[]));
@@ -1337,12 +1445,16 @@ mod tests {
             }
         );
         // a job an earlier attempt left behind is not a start of this one
-        runs[0].jobs.push(JobObservation {
-            name: "plan".into(),
-            status: "completed".into(),
-            started_at: Some(at(300)),
-            conclusion: Some("success".into()),
-        });
+        runs[0].jobs.insert(
+            0,
+            JobObservation {
+                name: "plan".into(),
+                status: "completed".into(),
+                started_at: Some(at(300)),
+                created_at: None,
+                conclusion: Some("success".into()),
+            },
+        );
         assert!(runs[0].carried(&runs[0].jobs[0]));
         assert!(!runs[0].any_job_started());
         assert_eq!(
@@ -1375,6 +1487,7 @@ mod tests {
             name: "plan".into(),
             status: "completed".into(),
             started_at: Some(at(590)),
+            created_at: None,
             conclusion: Some("success".into()),
         });
         assert!(decide_over(&runs, &heads(&[(7, "a")])).decisions.is_empty());
@@ -1383,6 +1496,7 @@ mod tests {
             name: "suite".into(),
             status: "in_progress".into(),
             started_at: Some(at(300)),
+            created_at: None,
             conclusion: None,
         });
         assert_eq!(
@@ -1544,6 +1658,27 @@ mod tests {
         let s = decide_over(&runs, &heads(&[]));
         assert!(s.decisions.is_empty());
         assert!(matches!(s.held[0].reason, HoldReason::Unjudgeable { .. }));
+        // and so is an admission that cannot be read: a job created at no time, or never
+        let mut runs = vec![run(100, "a", Some(7), "queued", 300)];
+        runs[0].jobs[0].created_at = Some("soon".into());
+        let s = decide_over(&runs, &heads(&[(7, "a")]));
+        assert!(s.decisions.is_empty(), "{s:?}");
+        assert_eq!(
+            s.held[0].reason,
+            HoldReason::Unjudgeable {
+                detail: "job `plan` was created at `soon`, which is not a time".into()
+            }
+        );
+        runs[0].jobs[0].created_at = None;
+        runs[0].jobs[0].started_at = None;
+        assert_eq!(
+            runs[0].queued_since(),
+            Err("job `plan` names no creation".into())
+        );
+        // a job's creation stands in for nothing when it has one: it is the admission
+        runs[0].jobs[0].created_at = Some(at(30));
+        runs[0].jobs[0].started_at = Some(at(300));
+        assert_eq!(runs[0].queued_since(), Ok(Some(NOW - 30 * 60)));
     }
 
     #[test]
@@ -1606,6 +1741,7 @@ mod tests {
             name: "plan".into(),
             status: "queued".into(),
             started_at: Some(at(0)),
+            created_at: None,
             conclusion: None,
         }];
         let s = over(&[first.clone(), admitted], NOW);

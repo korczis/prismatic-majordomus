@@ -72,8 +72,15 @@ for job in "$LUNDRA" "$HOSTED"; do
 done
 grep -q 'timeout 45 gh run download' "$CODE" && grep -q 'timeout 40 sh' "$CODE" \
   || { echo "    a download of the executable or of the release is not bounded"; exit 1; }
-grep -q -- '--unless-supervised-within "$COVER"' "$CODE" && grep -q "COVER: '8'" "$HOSTED" \
+grep -q -- '--unless-supervised-within "$COVER"' "$CODE" && grep -q "COVER: '15'" "$HOSTED" \
   || { echo "    the hosted fallback runs a second full apply on every request"; exit 1; }
+# the window outlasts the schedule's period with a margin: the lundra success before a burst is
+# 8 to 10 minutes old after a quiet stretch, and a window shorter than the period lets a burst's
+# hosted lane apply beside a lundra lane that is still applying
+period="$(sed -n "s|^    - cron: '\*/\([0-9]*\) .*|\1|p" "$CODE" | head -1)"
+cover="$(sed -n "s|^ *COVER: '\([0-9]*\)'.*|\1|p" "$HOSTED" | head -1)"
+[ -n "$period" ] && [ -n "$cover" ] && [ "$cover" -ge "$((period + 2))" ] \
+  || { echo "    the hosted lane's stand-aside window (${cover:-none} min) does not outlast the schedule's period (${period:-none} min) with a margin"; exit 1; }
 grep -q -- '--supervised-by lundra' "$CODE" \
   || { echo "    the hosted fallback counts its own stand-aside as a supervision, and stands aside for ever"; exit 1; }
 # validate's first wave may take lundra's runners (vars.MJ_RUNNER, #2596); its shards stay
@@ -82,7 +89,7 @@ grep -q -- '--supervised-by lundra' "$CODE" \
 VALIDATE="$ROOT/.github/workflows/validate.yml"
 grep -vE '^[[:space:]]*#' "$VALIDATE" | grep -E '^ *runs-on:' | grep -qi 'lundra' \
   && { echo "    validate names lundra outright: the supervisor's lane would wait behind it with no way back"; exit 1; }
-echo "    lundra, then a hosted lane of the same run when lundra did not supervise, from a downloaded executable that has the command, each step bounded under its job"
+echo "    lundra, then a hosted lane of the same run when lundra did not supervise and lundra's last success is older than the schedule's period and a margin, from a downloaded executable that has the command, each step bounded under its job"
 
 # ---------------------------------------------------------------- 4. its stopping is reported
 QCODE="$T/queue-code.yml"

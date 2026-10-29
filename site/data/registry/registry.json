@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "83a636c749e609c7e5fc30412c6101eb6c585bbfe91bf5d030d89ab93f49b7ba",
+    "fingerprint": "cf597bfb87b132eecc0c7b4c52a44235938061858edebdc0e68695277679232d",
     "summary": {
       "total": 3553,
       "builtin": 220,
@@ -35981,6 +35981,11 @@
                     "type": "string",
                     "const": "run_cancel_failed",
                     "description": "The forge refused to cancel it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_already_ended",
+                    "description": "The run had ended before the cancel reached it: another supervision, in a lane that\napplied in the same minute, cancelled it, or it completed on its own. Nothing was left\nto do, and nothing failed."
                   }
                 ],
                 "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
@@ -37497,6 +37502,11 @@
                     "type": "string",
                     "const": "run_cancel_failed",
                     "description": "The forge refused to cancel it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_already_ended",
+                    "description": "The run had ended before the cancel reached it: another supervision, in a lane that\napplied in the same minute, cancelled it, or it completed on its own. Nothing was left\nto do, and nothing failed."
                   }
                 ],
                 "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
@@ -39376,6 +39386,11 @@
                     "type": "string",
                     "const": "run_cancel_failed",
                     "description": "The forge refused to cancel it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_already_ended",
+                    "description": "The run had ended before the cancel reached it: another supervision, in a lane that\napplied in the same minute, cancelled it, or it completed on its own. Nothing was left\nto do, and nothing failed."
                   }
                 ],
                 "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
@@ -92118,7 +92133,7 @@
     ]
   },
   "index": {
-    "fingerprint": "50ad568108b9ae92084dcf25859bf87a0e20cff5847e941f1dc754459380059f",
+    "fingerprint": "7ade8b65a4797f930cedffb98cccdb933f2a807dd5fda532ee21874ef079373e",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99180,7 +99195,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 56822
+        "bytes": 58209
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -99477,7 +99492,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 75702
+        "bytes": 75925
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
@@ -125520,7 +125535,7 @@
         "identity": "test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh",
         "path": "test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh",
         "source_class": "case",
-        "bytes": 8004
+        "bytes": 8724
       },
       {
         "uri": "majordomus://test/test/cases/390_unresolved_relation_refuses_generation.sh",
@@ -142412,16 +142427,16 @@
               {
                 "id": "prs-supervise-covering-lane-no-forge",
                 "title": "A covering lane asks the forge before it stands aside",
-                "description": "`--unless-supervised-within 8 --supervised-by lundra` is how the hosted fallback runs (with `--apply`): when lundra's supervise job succeeded at most eight minutes ago it reads nothing else and exits 0 (`stood aside`), so two lanes do not both spend the repository's one request budget on every tick. Only lundra's success counts, because a job that stood aside succeeded too and a lane counting its own would stand aside behind itself for ever. The answer is the forge's, so where there is none, or no bounds are declared, it exits 12 and stands aside from nothing.",
+                "description": "`--unless-supervised-within 15 --supervised-by lundra` is how the hosted fallback runs (with `--apply`): when lundra's supervise job succeeded at most fifteen minutes ago (the schedule's ten and a margin) it reads nothing else and exits 0 (`stood aside`), so two lanes do not both spend the repository's one request budget on every tick. Only lundra's success counts, because a job that stood aside succeeded too and a lane counting its own would stand aside behind itself for ever. The answer is the forge's, so where there is none, or no bounds are declared, it exits 12 and stands aside from nothing.",
                 "argv": [
                   "prs",
                   "supervise",
                   "--unless-supervised-within",
-                  "8",
+                  "15",
                   "--supervised-by",
                   "lundra"
                 ],
-                "command": "majordomus prs supervise --unless-supervised-within 8 --supervised-by lundra",
+                "command": "majordomus prs supervise --unless-supervised-within 15 --supervised-by lundra",
                 "setup": [],
                 "expectation": "exits 12"
               }

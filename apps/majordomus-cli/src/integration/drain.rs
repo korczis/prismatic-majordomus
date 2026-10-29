@@ -629,6 +629,10 @@ pub enum IntegrationAction {
     RunCancelled,
     /// The forge refused to cancel it.
     RunCancelFailed,
+    /// The run had ended before the cancel reached it: another supervision, in a lane that
+    /// applied in the same minute, cancelled it, or it completed on its own. Nothing was left
+    /// to do, and nothing failed.
+    RunAlreadyEnded,
 }
 
 impl IntegrationAction {
@@ -669,6 +673,7 @@ impl IntegrationAction {
             IntegrationAction::RunCancelAttempted => "run_cancel_attempted",
             IntegrationAction::RunCancelled => "run_cancelled",
             IntegrationAction::RunCancelFailed => "run_cancel_failed",
+            IntegrationAction::RunAlreadyEnded => "run_already_ended",
         }
     }
 }

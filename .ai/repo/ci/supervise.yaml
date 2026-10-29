@@ -27,18 +27,23 @@ version: 1
 #                                then writes a failure over the twin's pass (#2678, run
 #                                40811621641, 2026-10-29), so a judged run is never the older
 #                                half. Never while the older run is itself to be ended, now or
-#                                within 30 min (held as earlier_run_ends: it takes that run's
-#                                place). Outside the burst a second run was asked for (a
+#                                within 30 min, or was cancelled and runs only its always()
+#                                jobs (held as earlier_run_ends: it takes that run's place). Outside the burst a second run was asked for (a
 #                                reopen, a label added later, a re-run); a re-run, or a pull
 #                                request labelled `ci:full`, is held.
 #   superseded_blocks_successor  a pull_request run of a workflow declared `superseded:
 #                                per_pull_request`, whose head is no longer its pull
-#                                request's, while a newer run of the same pull request waits in
-#                                the same group. With nothing waiting it is left alone: the
-#                                concurrency rationale stands.
+#                                request's, while a newer run of the same pull request at its
+#                                current head waits in the same group (its own twin is not
+#                                one). With nothing waiting it is left alone: the concurrency
+#                                rationale stands.
 #   queued_past_bound            a pull request's run whose attempt queued longer than
-#                                `queued_minutes` with no job of it started, from the later of
-#                                created_at and run_started_at (a re-run keeps its creation).
+#                                `queued_minutes` with no job of it started, from its admission
+#                                by its group: its first job's created_at, never before
+#                                run_started_at (a first attempt's run_started_at is its
+#                                creation however long it waited in the group: 40811621641,
+#                                created 03:20:59Z, admitted 05:31:53Z). A run with no job is
+#                                pending in its group and never ends for waiting.
 #                                Never an integration/* top (it waits for a runner, and its
 #                                verdict is the one a landing needs), nor a push, the schedule,
 #                                a dispatch or a release: each waits in a group of its own, so
@@ -66,9 +71,11 @@ version: 1
 # concurrency group with cancel-in-progress false, so a lundra job that waits for a runner (none
 # online, or all busy with validate's first wave once vars.MJ_RUNNER sends it there, #2596) is
 # replaced by the next trigger's but one, and the replaced run's hosted lane applies. A hosted
-# lane still stands aside when lundra's supervision succeeded in the last eight minutes in
-# another run (`--unless-supervised-within 8 --supervised-by lundra`; its own stand-aside is a
-# success that must not count). Both lanes run a downloaded executable that answers `prs
+# lane still stands aside when lundra's supervision succeeded in the last fifteen minutes in
+# another run (`--unless-supervised-within 15 --supervised-by lundra`: the schedule's ten
+# minutes and five of margin; its own stand-aside is a success that must not count). A cancel
+# the forge refuses because the run ended (409, or completed on the re-read) is
+# run_already_ended, a skipped act: two lanes of one burst decide the same cancels. Both lanes run a downloaded executable that answers `prs
 # supervise --help`; each step is bounded on its own (checkout 1, executable 2, supervise 4
 # minutes, under the job's 8), so the job is never killed in the middle of an act. Its liveness
 # is the queue workflow's to report: no successful supervision by lundra for thirty minutes is

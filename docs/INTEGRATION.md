@@ -836,6 +836,7 @@ json` stays the list of pull requests to close.
   | `observe_failed` | a continuous drain's cycle met an outage short enough to wait out |
   | `run_cancel_attempted` | `prs supervise --apply` is about to force-cancel a CI run; the detail names the run and its reason, read again just now |
   | `run_cancelled`, `run_cancel_failed` (with its class) | after it |
+  | `run_already_ended` | after it, when the forge refused the cancel because the run had ended (a 409, or the run read again completed): another lane's cancel of the same burst landed first; a skipped act, not a failure |
 
   An event may also carry `evidence` (the assessment's, on the acts named above as carrying it),
   `class` (why it failed, once classified) and `merge_commit`. Each is left out when empty,

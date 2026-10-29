@@ -26,6 +26,12 @@
 //! 40811610939 passed, and its cancel ran its `ci` job over the pass: replayed at 05:35Z, no
 //! cancel. #2674's 40801560222, with a job past its bound, is ended while a twin of it is held to
 //! take its place, and its real second run 2.5 hours later is no twin at all.
+//!
+//! The verification of that fix carried both pairs on to the twin's admission. A twin pending in
+//! its group for hours is admitted with its creation and `run_started_at` hours old, so the queue
+//! clock starts at its admission (40811621641: created 03:20:59Z, admitted 05:31:53Z); and the
+//! twin of #2674's ended run is held while that run runs only its `ci`, then waits for a runner,
+//! and is cancelled on no tick from 06:06Z to 06:50Z.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -181,16 +187,33 @@ fn train_10bs_waiting_run_replayed_at_00_50z_is_not_cancelled() {
             bound: 255
         }
     );
-    // with no job started it is never running past its bound, however old
+    // with no job started it is never running past its bound, however old; its queue is
+    // measured from its admission at 22:21:01Z, when its plan job was created, not from its
+    // creation at 20:33:33Z: 148 minutes at 00:50Z, so nothing to say
     let mut waiting = c;
-    waiting.jobs.clear();
+    waiting.jobs = vec![JobObservation {
+        name: "plan".into(),
+        status: "queued".into(),
+        started_at: Some("2026-10-28T22:21:01Z".into()),
+        created_at: Some("2026-10-28T22:21:01Z".into()),
+        conclusion: None,
+    }];
     waiting.status = "in_progress".into();
-    let s = replay(&[waiting], HEAD_C, &[], "2026-10-29T00:50:00Z");
+    let s = replay(
+        std::slice::from_ref(&waiting),
+        HEAD_C,
+        &[],
+        "2026-10-29T00:50:00Z",
+    );
+    assert!(s.decisions.is_empty(), "{s:?}");
+    assert!(s.held.is_empty(), "{s:?}");
+    // and 241 minutes after its admission it is past the queue bound, and held
+    let s = replay(&[waiting], HEAD_C, &[], "2026-10-29T02:22:01Z");
     assert!(s.decisions.is_empty(), "{s:?}");
     assert_eq!(
         s.held[0].reason,
         HoldReason::IntegrationTopWaits {
-            minutes: 256,
+            minutes: 241,
             bound: 240
         },
         "an integration top past the queue bound waits, it is not cancelled"
@@ -714,8 +737,8 @@ fn a_re_run_created_six_hours_earlier_and_queued_two_minutes_is_not_cancelled() 
         "2026-10-29T14:02:00Z",
     );
     assert!(s.decisions.is_empty(), "{s:?}");
-    // the attempt is held to the bound from its own start
-    let s = decide_at(&[r], &[(7, "aaaa")], &[], "2026-10-29T18:01:00Z");
+    // the attempt is held to the bound from its admission, its plan job's creation at 14:00:01Z
+    let s = decide_at(&[r], &[(7, "aaaa")], &[], "2026-10-29T18:01:01Z");
     assert_eq!(s.decisions.len(), 1, "{s:?}");
     assert_eq!(
         s.decisions[0].reason,
@@ -734,10 +757,17 @@ const RUN_40796031054: &str = r#"{"id":40796031054,"name":"validate",
  "created_at":"2026-10-29T00:44:35Z","run_started_at":"2026-10-29T00:44:35Z",
  "run_attempt":1,"pull_requests":[]}"#;
 
+/// Its plan job, waiting for a runner. A push's group is its own run, so the run is admitted as
+/// it is created; the job's creation is taken to be the run's.
+const JOBS_40796031054: &str = r#"[
+ {"name":"plan","status":"queued","conclusion":null,"started_at":"2026-10-29T00:44:35Z",
+  "created_at":"2026-10-29T00:44:35Z"}
+]"#;
+
 #[test]
 fn a_trunk_push_or_a_tag_release_queued_300_minutes_is_held() {
     let at = "2026-10-29T05:44:35Z";
-    let master = run(RUN_40796031054, None);
+    let master = run(RUN_40796031054, Some(JOBS_40796031054));
     let s = decide_at(std::slice::from_ref(&master), &[], &[], at);
     assert!(s.decisions.is_empty(), "{s:?}");
     assert_eq!(kind(&s.held[0].reason), "protected_run_waits", "{s:?}");
@@ -884,7 +914,8 @@ const RUN_40811621641_AT_0535: &str = r#"{"id":40811621641,"name":"validate",
  "pull_requests":[{"number":2678,"head":{"ref":"fix/the-incidents-issues-serve-their-intents"}}]}"#;
 
 const JOBS_40811621641_AT_0535: &str = r#"[
- {"name":"plan","status":"queued","conclusion":null,"started_at":"2026-10-29T05:31:53Z"}
+ {"name":"plan","status":"queued","conclusion":null,"started_at":"2026-10-29T05:31:53Z",
+  "created_at":"2026-10-29T05:31:53Z"}
 ]"#;
 
 #[test]
@@ -909,6 +940,50 @@ fn the_admitted_twin_of_2678_replayed_at_05_35z_is_not_cancelled() {
     older.status = "in_progress".into();
     older.conclusion = None;
     let s = decide_at(&[older, twin], &[(2678, head)], &[], "2026-10-29T05:35:00Z");
+    assert!(s.decisions.is_empty(), "{s:?}");
+}
+
+#[test]
+fn the_twin_of_2678_waits_for_a_runner_from_its_admission() {
+    let head = "3a45c8c73163c6213767048ee8c7888ec641be25";
+    let twin = run(RUN_40811621641_AT_0535, Some(JOBS_40811621641_AT_0535));
+    // created, and its attempt started, at 03:20:59Z; its group admitted it at 05:31:53Z, when
+    // 40811610939 passed: that is when it began to wait for a runner
+    assert_eq!(twin.run_started_at.as_deref(), Some("2026-10-29T03:20:59Z"));
+    assert_eq!(twin.queued_since(), Ok(Some(t("2026-10-29T05:31:53Z"))));
+    let runs = [run(RUN_40811610939, None), twin];
+    // at its admission and for the whole bound after it, no cancel: a clock from its creation
+    // would have ended it at 07:21Z with its plan job still waiting
+    for at in [
+        "2026-10-29T05:31:53Z",
+        "2026-10-29T07:22:00Z",
+        "2026-10-29T09:31:53Z",
+        "2026-10-29T09:32:52Z",
+    ] {
+        let s = decide_at(&runs, &[(2678, head)], &[], at);
+        assert!(s.decisions.is_empty(), "{at}: {s:?}");
+    }
+    // past the bound from its admission, a plan job that never got a runner is ended
+    let s = decide_at(&runs, &[(2678, head)], &[], "2026-10-29T09:32:53Z");
+    assert_eq!(
+        s.decisions
+            .iter()
+            .map(|d| (d.run, d.reason.clone()))
+            .collect::<Vec<_>>(),
+        vec![(
+            40811621641,
+            CancelReason::QueuedPastBound {
+                minutes: 241,
+                bound: 240
+            }
+        )],
+        "{s:?}"
+    );
+    // and before its admission, pending in its group with no job, it is never ended for waiting
+    let mut pending = run(RUN_40811621641_AT_0535, None);
+    pending.status = "pending".into();
+    assert_eq!(pending.queued_since(), Ok(None));
+    let s = decide_at(&[pending], &[(2678, head)], &[], "2026-10-29T09:00:00Z");
     assert!(s.decisions.is_empty(), "{s:?}");
 }
 
@@ -999,6 +1074,101 @@ fn a_twin_of_2674s_run_past_its_bound_is_never_cancelled_with_it() {
             "{at}: {s:?}"
         );
     }
+}
+
+/// 40801560222's jobs, carried on from the replay above: ended at 06:05:30Z for running past its
+/// bound, its `if: always()` `ci` then waits eleven minutes for a runner (as a cancelled run's
+/// `ci` did on 2026-10-29, 04:16:36Z to 04:27:58Z) and fails, and the run completes, cancelled,
+/// at 06:17:00Z.
+const JOBS_40801560222_ENDED: &str = "\
+ plan|2026-10-29T01:47:36Z|2026-10-29T01:47:58Z|success\n\
+ suite-shard (3)|2026-10-29T01:47:58Z|2026-10-29T06:05:30Z|cancelled\n\
+ ci|2026-10-29T06:16:30Z|2026-10-29T06:17:00Z|failure\n\
+";
+
+/// When the group admits the twin, the older run having completed: the twin's plan job is created
+/// then and waits 27 minutes for a runner, as 40811610939's did (03:20:53Z to 03:48:13Z).
+const TWIN_ADMITTED: &str = "2026-10-29T06:17:01Z";
+const TWIN_PLAN_STARTS: &str = "2026-10-29T06:44:01Z";
+
+#[test]
+fn a_twin_of_2674s_ended_run_is_not_cancelled_until_it_has_its_verdict() {
+    let head = "f565f56407dbbd91f00225192da439b6f7e37b7d";
+    let older_at = |at: &str| {
+        let mut r = run_at(RUN_40801560222, JOBS_40801560222_ENDED, at);
+        if t(at) >= t("2026-10-29T06:17:00Z") {
+            r.status = "completed".into();
+            r.conclusion = Some("cancelled".into());
+        }
+        r
+    };
+    // the same commit's twin from one burst, eight seconds younger: pending with no job until the
+    // group admits it, then queued with its plan job created at the admission
+    let twin_at = |at: &str| {
+        let mut r = run(RUN_40816501443, None);
+        r.created_at = "2026-10-29T01:37:55Z".into();
+        r.run_started_at = Some("2026-10-29T01:37:55Z".into());
+        if t(at) >= t(TWIN_ADMITTED) {
+            let started = t(at) >= t(TWIN_PLAN_STARTS);
+            r.status = if started { "in_progress" } else { "queued" }.into();
+            r.jobs = vec![JobObservation {
+                name: "plan".into(),
+                status: if started { "in_progress" } else { "queued" }.into(),
+                started_at: Some(
+                    if started {
+                        TWIN_PLAN_STARTS
+                    } else {
+                        TWIN_ADMITTED
+                    }
+                    .into(),
+                ),
+                created_at: Some(TWIN_ADMITTED.into()),
+                conclusion: None,
+            }];
+        }
+        r
+    };
+    // the clock the twin used to be held to: its creation, 279 minutes before its admission
+    assert!((t(TWIN_ADMITTED) - t("2026-10-29T01:37:55Z")) / 60 > 240);
+    assert_eq!(
+        twin_at(TWIN_ADMITTED).queued_since(),
+        Ok(Some(t(TWIN_ADMITTED)))
+    );
+    // every minute from the older run's end until the twin's plan job runs: no cancel of either
+    let mut at = t("2026-10-29T06:06:00Z");
+    while at <= t("2026-10-29T06:50:00Z") {
+        let stamp =
+            crate::peers::rfc3339(std::time::UNIX_EPOCH + std::time::Duration::from_secs(at));
+        let runs = [older_at(&stamp), twin_at(&stamp)];
+        let s = decide_at(&runs, &[(2674, head)], &[], &stamp);
+        assert!(s.decisions.is_empty(), "{stamp}: {s:?}");
+        // nor when the pull request asked for the second run (ci:full)
+        let s = decide_at(&runs, &[(2674, head)], &[2674], &stamp);
+        assert!(s.decisions.is_empty(), "{stamp} (ci:full): {s:?}");
+        at += 60;
+    }
+    // while the cancelled older run runs only its `ci`, the twin waits to take its place
+    let s = decide_at(
+        &[
+            older_at("2026-10-29T06:10:00Z"),
+            twin_at("2026-10-29T06:10:00Z"),
+        ],
+        &[(2674, head)],
+        &[],
+        "2026-10-29T06:10:00Z",
+    );
+    assert_eq!(
+        s.held
+            .iter()
+            .find(|h| h.run == 40816501443)
+            .map(|h| h.reason.clone()),
+        Some(HoldReason::EarlierRunEnds {
+            pull_request: 2674,
+            earlier: 40801560222,
+            ends_for: "cancelled".into()
+        }),
+        "{s:?}"
+    );
 }
 
 #[test]
@@ -1289,7 +1459,24 @@ fn five_validate_requests_within_a_minute_let_a_supervise_apply_complete() {
     assert!(hosted.contains("group: supervise-hosted"), "{hosted}");
     // the hosted lane covers, and stands aside after a recent success in another run
     assert!(c.contains("--unless-supervised-within \"$COVER\""), "{c}");
-    assert!(hosted.contains("COVER: '8'"), "{hosted}");
+    assert!(hosted.contains("COVER: '15'"), "{hosted}");
+    // the window outlasts the schedule's period with a margin: after a quiet stretch the lundra
+    // success before a burst is 8 to 10 minutes old, and it must still stand the hosted lane aside
+    let period: u64 = c
+        .lines()
+        .find_map(|l| l.trim().strip_prefix("- cron: '*/"))
+        .and_then(|r| r.split(' ').next())
+        .and_then(|n| n.parse().ok())
+        .expect("a */N schedule");
+    let cover: u64 = hosted
+        .lines()
+        .find_map(|l| l.trim().strip_prefix("COVER: '"))
+        .and_then(|r| r.trim_end_matches('\'').parse().ok())
+        .expect("a hosted stand-aside window");
+    assert!(
+        cover >= period + 2,
+        "window {cover} min, period {period} min"
+    );
     assert!(
         lundra.contains("COVER: ''"),
         "the lundra lane always applies"

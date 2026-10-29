@@ -7,7 +7,9 @@
 //! read again, and the run is cancelled only if the same reason still holds
 //! ([`super::supervise::still_holds`]). The act is appended to the integration audit trail
 //! (`run_cancel_attempted`) before it is taken; a trail that cannot be written stops every
-//! act. The outcome follows it: `run_cancelled` or `run_cancel_failed`.
+//! act. The outcome follows it: `run_cancelled`, `run_cancel_failed`, or `run_already_ended`
+//! when the forge refused because the run had completed (a 409, or the run read again
+//! completed): two lanes that decided the same cancel in one burst skip the second, not fail it.
 //!
 //! The cancel is GitHub's `force-cancel`, not `gh run cancel`: a cancel GitHub accepted for a
 //! queued run has returned success and done nothing, and a cancelled run's job has gone on
@@ -123,6 +125,7 @@ pub fn job_of(v: &Value) -> Option<JobObservation> {
         name: text(v, "name").unwrap_or_default(),
         status: text(v, "status")?,
         started_at: text(v, "started_at"),
+        created_at: text(v, "created_at"),
         conclusion: text(v, "conclusion"),
     })
 }
@@ -610,6 +613,28 @@ fn event(action: IntegrationAction, d: &Decision, detail: String) -> Integration
     }
 }
 
+/// Why a cancel the forge refused found nothing left to do, or `None` when the refusal stands:
+/// the run read again has completed, or the forge answered 409, which it gives for a run that can
+/// no longer be cancelled because it completed. A second supervision that decided the same cancel
+/// in the same minute (two lanes in one burst) meets exactly this.
+fn already_ended(forge: &dyn RunForge, id: u64, refusal: &ForgeError) -> Option<String> {
+    match forge.run(id) {
+        Ok(r) if !r.in_flight() => Some(format!(
+            "it had already ended ({}{})",
+            r.status,
+            r.conclusion
+                .as_deref()
+                .map(|c| format!(", {c}"))
+                .unwrap_or_default()
+        )),
+        _ if refusal.0.contains("HTTP 409") => Some(format!(
+            "the forge answered that it can no longer be cancelled: {}",
+            refusal.0.trim()
+        )),
+        _ => None,
+    }
+}
+
 /// When a lane that covers for another stands aside (`--unless-supervised-within`,
 /// `--supervised-by`).
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -842,11 +867,25 @@ pub fn supervise(
                         format!("force-cancelled {}", subject(&held)),
                     )
                 }
-                Err(e) => (
-                    IntegrationAction::RunCancelFailed,
-                    ActOutcome::Failed,
-                    format!("could not cancel {}: {e}", subject(&held)),
-                ),
+                Err(e) => match already_ended(forge, d.run, &e) {
+                    // two lanes in one burst can decide the same cancel: the second finds it
+                    // done, which is no failure
+                    Some(why) => {
+                        if let Some(r) = current.iter_mut().find(|r| r.id == d.run) {
+                            r.status = "completed".into();
+                        }
+                        (
+                            IntegrationAction::RunAlreadyEnded,
+                            ActOutcome::Skipped,
+                            format!("not cancelled, {why}: {}", subject(&held)),
+                        )
+                    }
+                    None => (
+                        IntegrationAction::RunCancelFailed,
+                        ActOutcome::Failed,
+                        format!("could not cancel {}: {e}", subject(&held)),
+                    ),
+                },
             };
             let detail = match drain::record(root, event(action, &held, detail.clone())) {
                 Ok(_) => detail,
@@ -948,7 +987,18 @@ mod tests {
             created_at: at(minutes_ago),
             run_started_at: Some(at(minutes_ago)),
             run_attempt: 1,
-            jobs: Vec::new(),
+            // a run its group admitted at its creation has its first job; a pending one has none
+            jobs: if status == "queued" {
+                vec![JobObservation {
+                    name: "plan".into(),
+                    status: "queued".into(),
+                    started_at: Some(at(minutes_ago)),
+                    created_at: Some(at(minutes_ago)),
+                    conclusion: None,
+                }]
+            } else {
+                Vec::new()
+            },
         }
     }
 
@@ -960,7 +1010,8 @@ mod tests {
         reread: BTreeMap<u64, RunObservation>,
         /// What a second read of a pull request's head says.
         reread_heads: BTreeMap<u64, Option<String>>,
-        refuse_cancel: bool,
+        /// How the forge refuses a cancel, when it does.
+        refuse_cancel: Option<&'static str>,
         cancelled: RefCell<Vec<u64>>,
         /// What the supervisor's newest success is; `None` reads as "an hour ago".
         success: Option<Result<Option<String>, String>>,
@@ -1001,8 +1052,8 @@ mod tests {
             Ok(self.obs.as_ref().and_then(|o| o.pr_heads.get(&n).cloned()))
         }
         fn force_cancel(&mut self, id: u64) -> Result<(), ForgeError> {
-            if self.refuse_cancel {
-                return Err(ForgeError("HTTP 409: refused".into()));
+            if let Some(why) = self.refuse_cancel {
+                return Err(ForgeError(why.into()));
             }
             self.cancelled.borrow_mut().push(id);
             Ok(())
@@ -1152,6 +1203,7 @@ mod tests {
             name: "plan".into(),
             status: "in_progress".into(),
             started_at: Some(at(1)),
+            created_at: None,
             conclusion: None,
         }];
         f.reread.insert(200, started);
@@ -1408,13 +1460,60 @@ mod tests {
         let d = repo();
         let m = model();
         let mut f = train();
-        f.refuse_cancel = true;
+        f.refuse_cancel = Some("gh: Resource not accessible by integration (HTTP 403)");
         let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
         assert!(r.acts.iter().all(|a| a.outcome == ActOutcome::Failed));
         assert_eq!(r.exit_code(), 12);
         let t = trail(d.path());
         assert_eq!(t[1].action, IntegrationAction::RunCancelFailed);
         assert!(t[1].class.is_some(), "a failed act names its class");
+    }
+
+    #[test]
+    fn a_cancel_another_lane_already_took_is_skipped_not_failed() {
+        // two lanes of one burst decided the same cancels; this one re-read them still in
+        // flight, and the other lane's force-cancels landed before its own: GitHub answers 409
+        let d = repo();
+        let m = model();
+        let mut f = train();
+        f.refuse_cancel = Some("gh: Cannot cancel a workflow run that is completed. (HTTP 409)");
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
+        assert!(!r.acts.is_empty(), "{r:?}");
+        assert!(
+            r.acts.iter().all(|a| a.outcome == ActOutcome::Skipped),
+            "{r:?}"
+        );
+        assert_eq!(
+            r.exit_code(),
+            0,
+            "a cancel that is already done fails nothing"
+        );
+        let t = trail(d.path());
+        assert_eq!(t[1].action, IntegrationAction::RunAlreadyEnded);
+        assert!(t[1].class.is_none(), "it is no failure: {:?}", t[1]);
+        assert!(t[1].detail.contains("HTTP 409"), "{}", t[1].detail);
+        // whatever else the forge says, a run that reads completed after the refusal had ended
+        let mut f = train();
+        let other = ForgeError("gh: Server Error (HTTP 502)".into());
+        assert_eq!(
+            already_ended(&f, 100, &other),
+            None,
+            "still in flight: it stands"
+        );
+        let mut done = run(100, "old", 7, "completed", 90);
+        done.conclusion = Some("cancelled".into());
+        f.reread.insert(100, done);
+        assert_eq!(
+            already_ended(&f, 100, &other).as_deref(),
+            Some("it had already ended (completed, cancelled)")
+        );
+        // and a 409 is the forge's own word for it, even when the run cannot be read again
+        let unread = Fake::default();
+        assert_eq!(
+            already_ended(&unread, 1, &ForgeError("HTTP 403".into())),
+            None
+        );
+        assert!(already_ended(&unread, 1, &ForgeError("x (HTTP 409)".into())).is_some());
     }
 
     #[test]

@@ -22,12 +22,15 @@
 # and the one after replaces that one, which cancels it: the replaced run's hosted lane then
 # applies. So a lundra that takes no job is covered from the third trigger on, by the pool that
 # validate's first wave then does not fill. A hosted lane that runs still stands aside if
-# lundra's supervision succeeded in the last eight minutes (`--unless-supervised-within 8
-# --supervised-by lundra`), as it may have in another run. Only lundra's success counts: a job
+# lundra's supervision succeeded in the last fifteen minutes (`--unless-supervised-within 15
+# --supervised-by lundra`), as it may have in another run: the ten minutes of the schedule and
+# five of margin, so that the lundra success before a burst, 8 to 10 minutes old on a quiet
+# stretch, still counts and the burst's hosted lane does not apply beside lundra's. Only lundra's success counts: a job
 # that stood aside succeeded too, and a lane counting its own would stand aside behind itself
 # for ever once lundra stopped. Each lane is its own concurrency group, and a second apply finds
 # the first one's cancels already done (each act reads its run again first, and a run that
-# completed is skipped). The queue workflow reports when lundra has not supervised for thirty
+# completed is skipped; a cancel the forge refuses with 409, because the other lane's landed
+# between the re-read and the act, is `run_already_ended`, not a failure). The queue workflow reports when lundra has not supervised for thirty
 # minutes (`supervise_stale`).
 #
 # Each step is bounded on its own, and their bounds add up to less than the job's, so the job is
@@ -211,7 +214,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           LANE: hosted
-          COVER: '8'
+          COVER: '15'
         run: |
           rc=0
           set -- --apply

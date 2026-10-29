@@ -25867,6 +25867,9 @@ capabilities:
               - type: string
                 const: run_cancel_failed
                 description: The forge refused to cancel it.
+              - type: string
+                const: run_already_ended
+                description: "The run had ended before the cancel reached it: another supervision, in a lane that\napplied in the same minute, cancelled it, or it completed on its own. Nothing was left\nto do, and nothing failed."
             description: "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
           IntegrationEvidence:
             type: object
@@ -26858,6 +26861,9 @@ capabilities:
               - type: string
                 const: run_cancel_failed
                 description: The forge refused to cancel it.
+              - type: string
+                const: run_already_ended
+                description: "The run had ended before the cancel reached it: another supervision, in a lane that\napplied in the same minute, cancelled it, or it completed on its own. Nothing was left\nto do, and nothing failed."
             description: "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
           RankFactors:
             type: object
@@ -28132,6 +28138,9 @@ capabilities:
               - type: string
                 const: run_cancel_failed
                 description: The forge refused to cancel it.
+              - type: string
+                const: run_already_ended
+                description: "The run had ended before the cancel reached it: another supervision, in a lane that\napplied in the same minute, cancelled it, or it completed on its own. Nothing was left\nto do, and nothing failed."
             description: "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
           RankFactors:
             type: object

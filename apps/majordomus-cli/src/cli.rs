@@ -4135,7 +4135,7 @@ pub struct PrsArgs {
 /// assert!(matches!(args.command, Some(PrsCommand::Supervise { apply: true, .. })));
 /// assert!(Cli::try_parse_from(["majordomus", "prs", "supervise", "--apply", "--dry-run"]).is_err());
 /// let cli = Cli::try_parse_from([
-///     "majordomus", "prs", "supervise", "--apply", "--unless-supervised-within", "8",
+///     "majordomus", "prs", "supervise", "--apply", "--unless-supervised-within", "15",
 ///     "--supervised-by", "lundra",
 /// ])
 /// .unwrap();
@@ -4144,7 +4144,7 @@ pub struct PrsArgs {
 ///     args.command,
 ///     Some(PrsCommand::Supervise {
 ///         apply: true,
-///         unless_supervised_within: Some(8),
+///         unless_supervised_within: Some(15),
 ///         supervised_by: Some(ref lane),
 ///         ..
 ///     }) if lane == "lundra"
@@ -6447,8 +6447,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }, ExampleDoc {
             id: "prs-supervise-covering-lane-no-forge",
             title: "A covering lane asks the forge before it stands aside",
-            description: "`--unless-supervised-within 8 --supervised-by lundra` is how the hosted fallback runs (with `--apply`): when lundra's supervise job succeeded at most eight minutes ago it reads nothing else and exits 0 (`stood aside`), so two lanes do not both spend the repository's one request budget on every tick. Only lundra's success counts, because a job that stood aside succeeded too and a lane counting its own would stand aside behind itself for ever. The answer is the forge's, so where there is none, or no bounds are declared, it exits 12 and stands aside from nothing.",
-            argv: &["prs", "supervise", "--unless-supervised-within", "8", "--supervised-by", "lundra"],
+            description: "`--unless-supervised-within 15 --supervised-by lundra` is how the hosted fallback runs (with `--apply`): when lundra's supervise job succeeded at most fifteen minutes ago (the schedule's ten and a margin) it reads nothing else and exits 0 (`stood aside`), so two lanes do not both spend the repository's one request budget on every tick. Only lundra's success counts, because a job that stood aside succeeded too and a lane counting its own would stand aside behind itself for ever. The answer is the forge's, so where there is none, or no bounds are declared, it exits 12 and stands aside from nothing.",
+            argv: &["prs", "supervise", "--unless-supervised-within", "15", "--supervised-by", "lundra"],
             setup: &[],
             expect: Expect::ExitCode(12),
         }],
