@@ -1,0 +1,34 @@
+id: I4230
+milestone: development-runtime
+title: "Below the reclaim mark, the shared build directory's bound evicts what is idle for minutes, not an hour"
+slug: the-bound-evicts-under-pressure
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "When the volume has less free than the reclaim mark, mj_rust_bound_build_dir counts a unit idle for MAJORDOMUS_SHARED_BUILD_PRESSURE_IDLE_MIN minutes (default 10) as stale, so the bound can bring the shared build directory down while many worktrees build inside an hour."
+why: "On 2026-10-25 between 15:16Z and 15:48Z the shared build directory grew from 66 GB to 94 GB and the volume fell from 44 GiB to 16 GiB free; every session had to stop building. The bound's log (~/.cache/majordomus/bound-<cksum>.log) shows each pass took cargo's lock, evicted what was idle for the hour (2 to 14 GB a pass) and ended 'stays over its bound: every other unit was written within 60 min': about ten worktrees each wrote a generation of this crate and an incremental session, 2 to 6 GB each, inside the hour. Diagnosed by 39 with fc; given to 39 by 641b at ~15:47Z on 2026-10-25."
+current_state: "Measured at origin/master 71857dbb609 on 2026-10-25: lib/rust_bin.sh's mj_rust_bound_build_dir evicts only units idle for MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN minutes (default 60), whatever the volume has free."
+desired_state: "mj_rust_bound_build_dir asks mj_rust_pressure_idle for the idle age: below MAJORDOMUS_RECLAIM_BELOW_MB free on the build directory's volume it is MAJORDOMUS_SHARED_BUILD_PRESSURE_IDLE_MIN (default 10; 0 keeps the hour), and the bound says which age it applied and why. A free space that cannot be read keeps the hour. An idle age of 0 still turns eviction off. The lock, the second look under it (written since, held open, named by a process) and the named-dependency rule are unchanged."
+scope:
+  - "lib/rust_bin.sh"
+  - "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh"
+  - "docs/WORKTREES.md"
+  - ".ai/repo/project/issues/I4230.yaml"
+non_scope:
+  - "the bound's size (MAJORDOMUS_SHARED_BUILD_CAP_MB) and its lock wait"
+  - "the age sweeps of I2713 and I2787 and the private build directories"
+depends_on:
+  - I3959
+acceptance_criteria:
+  - "With more free than the reclaim mark, a generation idle for 30 minutes is kept and the bound says every other unit was written within 60 min"
+  - "Below the reclaim mark, the same generation is evicted, one idle for 2 minutes is kept, and the bound names the free space, the mark and the age it applied"
+  - "A pressure age of 0 keeps the hour, and an idle age of 0 evicts nothing, under the mark too"
+  - "Without the change, case 3959's pressure section fails"
+validation:
+  - "MJ_TEST_JOBS=1 bash test/run.sh 3959_the_shared_build_dir_stays_under_its_bound"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - suite
+serves: []
+created_at: 2026-10-25
+updated_at: 2026-10-25
