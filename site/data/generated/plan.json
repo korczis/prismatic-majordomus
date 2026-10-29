@@ -66626,6 +66626,8 @@
         ".github/workflows/validate.yml",
         "docs/CI.md",
         "test/cases/4242_the_runner_is_planned.sh",
+        "scripts/cockpit-probe",
+        "test/mesh-lab/run",
         ".ai/repo/project/issues/I4242.yaml"
       ],
       "non_scope": [
@@ -66635,12 +66637,13 @@
       ],
       "objective": "The plan job of validate.yml chooses the runner of the first wave, the jobs that run once beside the critical path or are its cheap unions (the shards stay on GitHub-hosted runners, which take them twenty at once): the repository variable MJ_RUNNER (a label, or a JSON list of labels) for a push, the schedule, a dispatch and a pull request from a branch of this repository; GitHub-hosted ubuntu-latest for a pull request from a fork, for an unset or unreadable variable, and for the macOS jobs. A dispatch may name the runner for one run, so the self-hosted pool is proved on a branch before the variable sends every run to it.",
       "why": "On 2026-10-26 train 8's verdict crawled because sixteen validate-sized runs shared the account's GitHub-hosted concurrency, and the owner asked for lundra, a machine of the fleet that costs nothing per minute, to be the first wave. Three runners (lundra-1..3, label lundra) were registered and sat idle: every job of validate.yml named ubuntu-latest, so nothing could reach them. The repository is public, so a fork's pull request must never run on a machine of the fleet.",
-      "current_state": "Every Linux job of validate.yml says runs-on: ubuntu-latest; the three lundra runners are online and idle.",
+      "current_state": "Every Linux job of validate.yml says runs-on: ubuntu-latest; the three lundra runners are online and idle. The trial run 40776563391 on lundra (2026-10-28) failed two jobs, both from a loaded host (8 cores, 15 GB, three runners and offload derives, swapping): cockpit on lundra-3 spent its probe's whole 1800 s bound in a silent cold debug build (a self-hosted runner has no build cache), and mesh-lab on lundra-2 saw node a answer after about 64 s against a 60 s wait, its container running and its log empty. Chrome, the rustup HOME warning and the missing buildx were each ruled out by reproduction on lundra.",
       "desired_state": "One expression in the plan job decides the runner; every Linux job reads it from needs.plan.outputs.runner; a fork's pull request is refused the self-hosted pool by the plan itself; unsetting MJ_RUNNER returns every run to GitHub-hosted runners with no other change.",
       "acceptance_criteria": [
         "Every first-wave job of validate.yml takes runs-on from needs.plan.outputs.runner, every other Linux job stays on ubuntu-latest, and a case fails when either names another runner",
         "A pull request whose head repository is not this one is planned onto ubuntu-latest whatever MJ_RUNNER says, and the case drives the plan's runner step with a fork's event to show it",
-        "A dispatch with runner=lundra on this branch runs its jobs on lundra runners and reaches its ci verdict"
+        "A dispatch with runner=lundra on this branch runs its jobs on lundra runners and reaches its ci verdict",
+        "The cockpit job serves the executable the build job made (majordomus-bin), the probe says before it builds one and bounds its first request, and the mesh lab waits MESH_LAB_START_WAIT (240 s) for a node and names a late node's container state"
       ],
       "validation": [
         "majordomus plan validate",
@@ -106319,6 +106322,12 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I3174",
+      "message": "shares test/mesh-lab/run with I4242; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I3175",
       "message": "shares docs/MESH.md with I3322; they may not run concurrently"
     },
@@ -110669,6 +110678,12 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I3862",
+      "message": "shares test/mesh-lab/run with I4242; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I3910",
       "message": "shares apps/majordomus-cli/tests/integration_executor.rs with I3911; they may not run concurrently"
     },
@@ -111079,7 +111094,7 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "count": 6564,
+      "count": 6566,
       "examples": [
         {
           "level": "WARN",

@@ -1735,7 +1735,7 @@ jobs:
   # selects it is a change to the crate or to share/cockpit/, and neither of those builds
   # the website.
   cockpit:
-    needs: plan
+    needs: [plan, build]
     if: needs.plan.outputs.cockpit_probe == 'true'
     # the probe crawls every route the server answers: 1048 s of its 1200 s bound on
     # 2026-10-19 (39285861377), then over it as the routes grew a fifth (6554 -> 7699 crawled);
@@ -1751,6 +1751,15 @@ jobs:
         uses: ./.github/actions/setup-site
       - id: rust
         uses: ./.github/actions/setup-rust
+      # I4242: the executable the build job made once, not a cold debug build inside the
+      # probe's bound. On lundra-3 that build ran silent for all of the probe's 1800 s while
+      # other jobs and derives shared the host (run 40776563391): a self-hosted runner has no
+      # build cache (setup-rust skips it there) and the probe prints nothing until it serves.
+      - name: the executable the probe serves
+        uses: ./.github/actions/majordomus-bin
+        with:
+          exe: "true"
+          setup: "false"
       # the graph and topology pages load vendored libraries that are deliberately not
       # committed (two megabytes nothing on the critical path needs), so the runner has to
       # build them out of node_modules before a browser is pointed at those pages. Without

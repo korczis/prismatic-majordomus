@@ -70922,13 +70922,7 @@
         "route": "/cockpit/objects/issue/i4242",
         "source": ".ai/repo/project/issues/I4242.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "Every first-wave job of validate.yml takes runs-on from needs.plan.outputs.runner, every other Linux job stays on ubuntu-latest, and a case fails when either names another runner",
-            "A pull request whose head repository is not this one is planned onto ubuntu-latest whatever MJ_RUNNER says, and the case drives the plan's runner step with a fork's event to show it",
-            "A dispatch with runner=lundra on this branch runs its jobs on lundra runners and reaches its ci verdict"
-          ],
           "created_at": "2026-10-26",
-          "current_state": "Every Linux job of validate.yml says runs-on: ubuntu-latest; the three lundra runners are online and idle.",
           "depends_on": [],
           "evidence_required": [
             "case_runner_is_planned"
@@ -70946,6 +70940,8 @@
             ".github/workflows/validate.yml",
             "docs/CI.md",
             "test/cases/4242_the_runner_is_planned.sh",
+            "scripts/cockpit-probe",
+            "test/mesh-lab/run",
             ".ai/repo/project/issues/I4242.yaml"
           ],
           "serves": [
@@ -70955,7 +70951,7 @@
           "slug": "lundra-is-the-first-wave",
           "started_at": "2026-10-26T20:21:23Z",
           "started_event": "sha256:c93de354943c8c0250b11df2bb6fc53e853400d42d3f7a7e24e0c1895a93f257",
-          "updated_at": "2026-10-26T20:21:23Z",
+          "updated_at": "2026-10-29T02:40:00Z",
           "validation": [
             "majordomus plan validate",
             "bash test/run.sh 4242"
