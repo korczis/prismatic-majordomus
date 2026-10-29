@@ -119,9 +119,12 @@ fn root(ctx: &Context) -> PathBuf {
 }
 
 /// The limits the policy declares, from the file on disk: a policy edited while a server runs
-/// is the policy the next admission is judged by.
-fn limits(root: &Path) -> SlotLimits {
-    let loaded = crate::repository::Repository::open(root)
+/// is the policy the next admission is judged by. The repository is the context's
+/// ([`Context::repository`]), not a discovery of this module's own (I3016); the policy is
+/// read afresh from it on every call.
+fn limits(ctx: &Context) -> SlotLimits {
+    let loaded = ctx
+        .repository()
         .ok()
         .and_then(|r| crate::policy::LoadedPolicy::load(&r).ok());
     match loaded {
@@ -151,7 +154,7 @@ fn slot_status(ctx: &Context, input: SlotStatusInput) -> Result<SlotStatus, Capa
     let root = root(ctx);
     let dir = directory(&root)?;
     let volume = input.volume.map(PathBuf::from);
-    machine_slot::status(&dir, &limits(&root), volume.as_deref()).map_err(internal)
+    machine_slot::status(&dir, &limits(ctx), volume.as_deref()).map_err(internal)
 }
 
 fn slot_acquire(ctx: &Context, input: SlotAcquireInput) -> Result<SlotAnswer, CapabilityError> {
@@ -167,7 +170,7 @@ fn slot_acquire(ctx: &Context, input: SlotAcquireInput) -> Result<SlotAnswer, Ca
         volume: input.volume.map(PathBuf::from),
         ..Request::new(input.pid, input.purpose.trim())
     };
-    machine_slot::acquire(&dir, &limits(&root), &request).map_err(internal)
+    machine_slot::acquire(&dir, &limits(ctx), &request).map_err(internal)
 }
 
 fn slot_release(ctx: &Context, input: SlotReleaseInput) -> Result<SlotRelease, CapabilityError> {
@@ -290,10 +293,10 @@ mod tests {
     /// function and the judgement through the domain, against a directory of the test's own.
     #[test]
     fn the_limits_are_the_policys_and_absence_is_absence() {
-        let (repo, _ctx) = with_policy(
+        let (repo, ctx) = with_policy(
             "version: 1\nmachine:\n  heavy_work:\n    slots: 5\n    min_free_gib: 35\n    wait_seconds: 600\n",
         );
-        let l = limits(repo.root());
+        let l = limits(&ctx);
         assert_eq!(
             (l.slots, l.min_free_gib, l.wait_seconds),
             (Some(5), Some(35), Some(600))
@@ -305,8 +308,20 @@ mod tests {
             l.declared_in
         );
 
-        let (bare, _ctx) = with_policy("version: 1\n");
-        let l = limits(bare.root());
+        // a policy edited after the context was built is the policy the next call reads
+        std::fs::write(
+            repo.root().join(".ai/repo/policy.yaml"),
+            "version: 1\nmachine:\n  heavy_work:\n    slots: 2\n",
+        )
+        .unwrap();
+        let l = limits(&ctx);
+        assert_eq!(
+            (l.slots, l.min_free_gib, l.wait_seconds),
+            (Some(2), None, None)
+        );
+
+        let (_bare, ctx) = with_policy("version: 1\n");
+        let l = limits(&ctx);
         assert_eq!(
             (l.slots, l.min_free_gib, l.wait_seconds),
             (None, None, None)
