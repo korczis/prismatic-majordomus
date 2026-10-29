@@ -622,6 +622,28 @@ pub enum IntegrationAction {
     /// A continuous drain's cycle could not observe the forge, and the outage was short
     /// enough to wait out ([`CONTINUOUS_TRANSIENT_LIMIT`]).
     ObserveFailed,
+    /// `prs supervise --apply` is about to force-cancel a CI run; the detail names the run
+    /// and the reason it was decided on, read again just now ([`super::runs`]).
+    RunCancelAttempted,
+    /// The run was force-cancelled.
+    RunCancelled,
+    /// The forge refused to cancel it.
+    RunCancelFailed,
+    /// The run had ended before the cancel reached it: another supervision, in a lane that
+    /// applied in the same minute, cancelled it, or it completed on its own. Nothing was left
+    /// to do, and nothing failed.
+    RunAlreadyEnded,
+    /// A run this supervision ended, the last of its pull request's head, is about to be asked
+    /// to run again: paired with its cancel, or on a later pass because the head still has no
+    /// run ([`super::runs`]). Each one counts against [`super::runs::RERUN_ATTEMPTS`].
+    RunRerunAttempted,
+    /// The run just force-cancelled was asked to run again: it was the last run of its pull
+    /// request's head on its way to a verdict, ended because a job of it ran past its bound
+    /// ([`super::supervise::Decision::rerun`]).
+    RunRerunRequested,
+    /// The re-run of the run just force-cancelled could not be asked: its pull request's head
+    /// has no run until somebody re-runs it.
+    RunRerunFailed,
 }
 
 impl IntegrationAction {
@@ -659,6 +681,13 @@ impl IntegrationAction {
             IntegrationAction::RepairRefused => "repair_refused",
             IntegrationAction::Idle => "idle",
             IntegrationAction::ObserveFailed => "observe_failed",
+            IntegrationAction::RunCancelAttempted => "run_cancel_attempted",
+            IntegrationAction::RunCancelled => "run_cancelled",
+            IntegrationAction::RunCancelFailed => "run_cancel_failed",
+            IntegrationAction::RunAlreadyEnded => "run_already_ended",
+            IntegrationAction::RunRerunAttempted => "run_rerun_attempted",
+            IntegrationAction::RunRerunRequested => "run_rerun_requested",
+            IntegrationAction::RunRerunFailed => "run_rerun_failed",
         }
     }
 }
@@ -793,6 +822,9 @@ pub struct IntegrationEvent {
     /// fast-forward.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub merge_commit: Option<String>,
+    /// On the `run_*` events of `prs supervise`: the CI run acted on.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub run: Option<u64>,
 }
 
 impl IntegrationEvent {
@@ -813,6 +845,7 @@ impl IntegrationEvent {
             evidence: Vec::new(),
             class: None,
             merge_commit: None,
+            run: None,
         }
     }
 
@@ -853,7 +886,10 @@ pub fn record(root: &Path, mut event: IntegrationEvent) -> Result<IntegrationEve
         event.class = match event.action {
             IntegrationAction::StaleDecision => Some(FailureClass::Stale),
             // a reopen is refused in the forge's words, as a merge is
-            IntegrationAction::MergeFailed | IntegrationAction::ReopenFailed => {
+            IntegrationAction::MergeFailed
+            | IntegrationAction::ReopenFailed
+            | IntegrationAction::RunCancelFailed
+            | IntegrationAction::RunRerunFailed => {
                 Some(FailureClass::of_merge_refusal(&event.detail))
             }
             IntegrationAction::RefreshFailed | IntegrationAction::RepairRefused => {

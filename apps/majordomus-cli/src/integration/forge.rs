@@ -383,7 +383,7 @@ pub struct GhForge<'a> {
     pub root: &'a Path,
 }
 
-fn gh(root: &Path, args: &[&str]) -> Result<(bool, String, String), ForgeError> {
+pub(super) fn gh(root: &Path, args: &[&str]) -> Result<(bool, String, String), ForgeError> {
     let out = Command::new("gh")
         .current_dir(root)
         .args(args)
@@ -396,9 +396,88 @@ fn gh(root: &Path, args: &[&str]) -> Result<(bool, String, String), ForgeError> 
     ))
 }
 
+/// `gh`, ended when it has not answered within `limit`: a forge that hangs is then a
+/// timed-out call (which [`super::retry::transient`] reads as transient) rather than a step
+/// that waits until its job's own timeout kills it. The output is read while it runs, so a
+/// long answer cannot fill a pipe and stall it.
+pub(super) fn gh_within(
+    root: &Path,
+    args: &[&str],
+    limit: std::time::Duration,
+) -> Result<(bool, String, String), ForgeError> {
+    run_within("gh", root, args, limit)
+}
+
+/// `program` with `args` in `root`, ended when it has not exited within `limit`.
+fn run_within(
+    program: &str,
+    root: &Path,
+    args: &[&str],
+    limit: std::time::Duration,
+) -> Result<(bool, String, String), ForgeError> {
+    use std::io::Read;
+    let mut child = Command::new(program)
+        .current_dir(root)
+        .args(args)
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .map_err(|e| ForgeError(format!("{program} could not run: {e}")))?;
+    let drain = |pipe: Option<Box<dyn Read + Send>>| {
+        std::thread::spawn(move || {
+            let mut buf = Vec::new();
+            if let Some(mut p) = pipe {
+                let _ = p.read_to_end(&mut buf);
+            }
+            buf
+        })
+    };
+    let out = drain(
+        child
+            .stdout
+            .take()
+            .map(|p| Box::new(p) as Box<dyn Read + Send>),
+    );
+    let err = drain(
+        child
+            .stderr
+            .take()
+            .map(|p| Box::new(p) as Box<dyn Read + Send>),
+    );
+    let deadline = std::time::Instant::now() + limit;
+    let status = loop {
+        match child.try_wait() {
+            Ok(Some(status)) => break status,
+            Ok(None) if std::time::Instant::now() >= deadline => {
+                let _ = child.kill();
+                let _ = child.wait();
+                return Err(ForgeError(format!(
+                    "{program} {} timed out after {} ms",
+                    args.join(" "),
+                    limit.as_millis()
+                )));
+            }
+            Ok(None) => std::thread::sleep(std::time::Duration::from_millis(25)),
+            Err(e) => {
+                return Err(ForgeError(format!(
+                    "{program} could not be waited for: {e}"
+                )))
+            }
+        }
+    };
+    let text = |h: std::thread::JoinHandle<Vec<u8>>| {
+        String::from_utf8_lossy(&h.join().unwrap_or_default()).into_owned()
+    };
+    Ok((status.success(), text(out), text(err)))
+}
+
 /// `gh`, asked again on a transient failure ([`super::retry`]): every call here is a read,
 /// so asking twice is harmless. A refusal is returned as it came, for the caller to read.
-fn gh_retrying(root: &Path, args: &[&str]) -> Result<(bool, String, String), ForgeError> {
+pub(super) fn gh_retrying(
+    root: &Path,
+    args: &[&str],
+) -> Result<(bool, String, String), ForgeError> {
     super::retry::forge(|| {
         let (ok, out, err) = gh(root, args).map_err(|e| e.0)?;
         if !ok && super::retry::transient(&err) {
@@ -1980,6 +2059,48 @@ mod tests {
         );
         // an entry that says nothing has not completed, so it has not passed
         assert_eq!(check_state(&json!({})), CheckRunState::Pending);
+    }
+
+    #[test]
+    fn a_call_that_does_not_answer_within_its_bound_is_ended_as_timed_out() {
+        let root = std::env::temp_dir();
+        let started = std::time::Instant::now();
+        let e = run_within(
+            "sleep",
+            &root,
+            &["5"],
+            std::time::Duration::from_millis(200),
+        )
+        .unwrap_err();
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(3),
+            "not ended"
+        );
+        assert!(e.0.contains("timed out"), "{e}");
+        assert!(
+            super::super::retry::transient(&e.0),
+            "a timeout is asked again"
+        );
+        // one that answers is read whole, out and err
+        let (ok, out, err) = run_within(
+            "sh",
+            &root,
+            &["-c", "printf out; printf err >&2; exit 3"],
+            std::time::Duration::from_secs(10),
+        )
+        .unwrap();
+        assert_eq!((ok, out.as_str(), err.as_str()), (false, "out", "err"));
+        let (ok, out, _) = run_within(
+            "sh",
+            &root,
+            &["-c", "head -c 200000 /dev/zero | tr '\\0' x"],
+            std::time::Duration::from_secs(10),
+        )
+        .unwrap();
+        assert!(
+            ok && out.len() == 200_000,
+            "a long answer does not stall its pipe"
+        );
     }
 
     #[test]
