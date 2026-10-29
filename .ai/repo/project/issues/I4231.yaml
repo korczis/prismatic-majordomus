@@ -5,7 +5,8 @@ slug: a-mirror-whose-history-is-missing-decides-nothing
 priority: p0
 profile: implementation
 parallel_safe: true
-serves: []
+serves:
+  - "landing-survives-any-session#one-executor"
 objective: "integration::memo::tests::containment_answers_as_containing_and_asks_each_pair_once builds its unwalkable mirror deterministically, so it fails only when CheckoutMemo::containing answers for a mirror git cannot walk, never because git found the history elsewhere."
 why: "The test failed on #2519's coverage job (run 40204784145, job 121204410486, git 2.55.0) at memo.rs:466 with walked = {one: [(1, one), (2, two)], two: [(2, two)]}, and passed on master's run 40196303175. It made the mirror unwalkable by deleting the loose object of its tip's parent. Reproduced on this machine (git 2.55.0): with no commit-graph, git rev-list on the tip exits 128; with a commit-graph written before the deletion, it exits 0, because git reads the parent links from the graph without opening the object. So whether the test passed depended on whether anything had written a commit-graph in the temporary repository."
 current_state: "The test deletes .git/objects/<lost> and asserts that containment then answers nothing for the mirror."
