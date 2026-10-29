@@ -1,0 +1,54 @@
+id: I4351
+milestone: a-change-is-judged-in-minutes
+title: "A tracked derived file over 1 MB is declared with a delta budget, written to delta well, or built rather than committed"
+slug: a-large-derived-file-is-declared
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Stop the history's growth from derived files: site/data/registry/registry.json, docs/generated/graph.json, site/data/generated/plan.json, docs/generated/registry.json, docs/generated/registry.yaml and the three openapi copies (site/data/generated/openapi.json, docs/generated/openapi.json, docs/generated/openapi.yaml) each either leave git (built where they are served) or are written to delta well (stable key order, one record per line, no volatile body fields), and each one that stays carries a max_delta_bytes in .ai/repo/policy.yaml; scripts/derive-check refuses an undeclared tracked derived file over 1 MB. A file that leaves git is built by its producer (scripts/generate-site-data or `majordomus generate`) where its readers (scripts/site-build, scripts/site-deploy, scripts/pages, scripts/ci/homepage-check) need it, and is listed in .gitignore. Which file takes which road is decided first in an ADR whose number is taken on the board when the work starts."
+why: "Incident 2 of 2026-10-28: hosted validate checkouts timed out at 600 s six times across runs 40708407384 and 40733537887 because every full checkout fetched 2.85 GiB. Multi-MB derived files are re-committed on almost every commit: registry.json alone is 1.76 GB packed. A budget (I4349) and a narrow fetch (I3241, #2633) bound the symptom; only this removes the growth."
+current_state: "Measured at 81ef931a3e1: eight tracked derived files exceed 1 MB in the working tree, the largest site/data/registry/registry.json at 8245297 bytes, then docs/generated/graph.json (5739491) and site/data/generated/plan.json (5703165); .ai/repo/policy.yaml declares no size or delta budget for a derived file."
+desired_state: "No tracked derived file over 1 MB is undeclared; a one-record change keeps each declared file's diff under its max_delta_bytes; packed growth over 50 commits stays under its budget. Enforced by scripts/derive-check in pre-commit and in the structure gate."
+scope:
+  - ".ai/repo/project/issues/I4351.yaml"
+  - "scripts/derive"
+  - "scripts/derive-check"
+  - "scripts/generate-site-data"
+  - "apps/majordomus-cli/src/commands/generate.rs"
+  - "scripts/site-build"
+  - "scripts/site-deploy"
+  - "scripts/pages"
+  - "scripts/ci/homepage-check"
+  - ".gitattributes"
+  - ".gitignore"
+  - "site/data/registry/registry.json"
+  - "docs/generated/graph.json"
+  - "site/data/generated/plan.json"
+  - "docs/generated/registry.json"
+  - "docs/generated/registry.yaml"
+  - "site/data/generated/openapi.json"
+  - "docs/generated/openapi.json"
+  - "docs/generated/openapi.yaml"
+  - ".ai/repo/policy.yaml"
+  - "test/cases/4351_a_large_derived_file_is_declared.sh"
+  - "docs/CI.md"
+non_scope:
+  - "Rewriting existing history"
+  - "Campaign reference images, which are sources, not derived output"
+acceptance_criteria:
+  - "The ADR naming each file's road is accepted before the derive changes, and this scope names it"
+  - "Case 4351: an undeclared 2 MB staged derived file is refused by derive-check, naming its path and size"
+  - "Case 4351: a one-record change keeps each declared file's diff under its max_delta_bytes"
+  - "Case 4351: for each file that leaves git, the site build and deploy readers find it after its producer runs in a clean checkout, and `git ls-files` no longer lists it"
+  - "Packed growth over 50 commits of the change's branch stays under the policy's budget, measured with git count-objects"
+validation:
+  - "bash test/run.sh 4351_a_large_derived_file_is_declared"
+  - "scripts/derive-check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+depends_on:
+  - "I4349"
+serves: []
+created_at: 2026-10-29
+updated_at: 2026-10-29
