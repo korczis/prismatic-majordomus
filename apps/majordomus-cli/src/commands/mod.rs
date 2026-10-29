@@ -41,6 +41,7 @@ pub(crate) mod convergence;
 pub(crate) mod dashboard;
 pub(crate) mod delivery;
 pub(crate) mod deploy;
+pub(crate) mod design_licence;
 pub(crate) mod devcontext;
 pub(crate) mod devtask;
 pub(crate) mod distribution;
@@ -124,6 +125,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Entity(args) => entity::run(args),
         Command::Shell(args) => shell::run(args),
         Command::Layout(args) => layout::run(args),
+        Command::Design(args) => design_licence::run(args),
         Command::Pack(args) => pack::run(args),
         Command::Dashboard(args) => dashboard::run(args),
         Command::Brief(args) => brief::run(args),

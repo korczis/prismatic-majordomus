@@ -119,6 +119,8 @@ pub enum Command {
     Shell(ShellArgs),
     /// The boundary between the layer's tracked and local halves, checked against the layouts their contracts declare: every path a contract excludes, named with the contract
     Layout(LayoutArgs),
+    /// The licensed kit the repository's interface may adapt and never publish: whether a public tree holds a licensed file's bytes, judged from kit-evidence/v1 fingerprints
+    Design(DesignArgs),
     /// The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output
     Pack(PackArgs),
     /// The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it
@@ -520,6 +522,67 @@ pub struct LayoutArgs {
 pub enum LayoutCommand {
     /// Refuse every path a declared layout excludes, naming the contract; exit 10 on a finding, 12 when the halves cannot be read
     Check,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus design`. The output shape is global, so it reads where a person writes it.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, DesignArgs, DesignCommand, OutputFormat};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "design", "licence", "--format", "json"]).unwrap();
+/// let Command::Design(args) = cli.command else { panic!("not the design command") };
+/// let args: DesignArgs = args;
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// let DesignCommand::Licence(licence) = args.command;
+/// assert!(licence.evidence.is_none() && !licence.json);
+/// // the group runs nothing of its own
+/// assert!(Cli::try_parse_from(["majordomus", "design"]).is_err());
+/// ```
+pub struct DesignArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `licence`. Required: the group runs nothing of its own.
+    pub command: DesignCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus design`: `licence` judges whether a public tree holds a
+/// licensed kit's files.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, DesignCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "design", "licence", "--evidence", "ev.tsv", "--json"]).unwrap();
+/// let Command::Design(args) = cli.command else { panic!("not the design command") };
+/// let DesignCommand::Licence(licence) = args.command;
+/// assert_eq!(licence.evidence.as_deref(), Some(std::path::Path::new("ev.tsv")));
+/// assert!(licence.json);
+/// ```
+pub enum DesignCommand {
+    /// Whether a public tree holds a licensed kit's files: active, inactive, not_judged or refused, each match with its file, licensed source and kind; exit 0 for active and inactive, 10 when refused, 12 when not judged (no evidence here, or a ui: block that cannot be used), 2 for evidence that cannot be read, 13 when the tree cannot be listed
+    Licence(LicenceArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus design licence`: the never-publish gate.
+pub struct LicenceArgs {
+    /// A kit-evidence/v1 file; absent reads the policy's ui.evidence entries under $HOME
+    #[arg(long, value_name = "FILE")]
+    pub evidence: Option<PathBuf>,
+
+    /// The same as --format json
+    #[arg(long)]
+    pub json: bool,
 }
 
 #[derive(Debug, Args)]
@@ -6016,6 +6079,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["layout", "check", "--format", "json"],
             setup: &[],
             expect: Expect::StdoutContains(&["\"checked\"", "\"findings\"", "\"passes\""]),
+        }],
+    },
+    CommandExamples {
+        command: "design licence",
+        examples: &[ExampleDoc {
+            id: "design-licence-json",
+            title: "Whether a public tree holds a licensed kit's files",
+            description: "The same answer the MCP tool `majordomus_design_licence` returns: `/verdict` (`active`, `inactive`, `not_judged` or `refused`), `/fails`, the declared `/kit` and `/visibility`, why under `/reason`, and every file that holds a licensed file's bytes under `/matches`. This repository's policy declares no kit (`ui.kit` is empty), so the gate is skipped: the verdict is `inactive` and the exit is 0. A refusal exits 10, a public tree with a declared kit and no evidence exits 12, and an evidence file that cannot be read exits 2 naming the file and the line, never its content.",
+            argv: &["design", "licence", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/verdict", "/fails", "/kit", "/visibility", "/matches"]),
         }],
     },
     CommandExamples {
