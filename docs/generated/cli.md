@@ -113,6 +113,11 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus prs trains`](#majordomus-prs-trains) | `/docs/cli/prs/trains/` | The trains of stacked pull requests, in landing order: each link's disposition, relation to master, prepared head under `refs/prep/<n>` (pushed or pending) and turn. Offline and read-only, from the last recorded observation; exit 10 when it is stale or absent |
 | [`majordomus prs brief`](#majordomus-prs-brief) | `/docs/cli/prs/brief/` | One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease and whether it reaches across machines, the last merge, and the last refresh, failure or stale decision. Offline, decides no relation, and prints nothing where the forge was never observed |
 | [`majordomus prs prove-dry-run`](#majordomus-prs-prove-dry-run) | `/docs/cli/prs/prove-dry-run/` | Prove the non-mutating cycle moves nothing: snapshot origin's refs, the open pull requests, the audit trail, the lease and the local refs, run refresh, plan, drain --dry-run and cleanup (listing), snapshot again and compare; the refresh's fetched mirrors must equal what origin serves. Exit 10 naming what moved. Takes no flag: there is nothing to turn on |
+| [`majordomus prs service`](#majordomus-prs-service) | `/docs/cli/prs/service/` | The executor as a user service (launchd on macOS, systemd --user on Linux) outside every agent session: restarted after a crash, an outage or a lease another executor held, never after a halt, an unverified merge or the rollout gate (I3913) |
+| [`majordomus prs service install`](#majordomus-prs-service-install) | `/docs/cli/prs/service/install/` | Write this checkout's executor unit and have the service manager run it; a second install of the same unit changes nothing. The owner runs this: an agent session never installs a service |
+| [`majordomus prs service status`](#majordomus-prs-service-status) | `/docs/cli/prs/service/status/` | Whether the unit is installed and running, its process, what the service manager says, and the last decision a run left with what to do next |
+| [`majordomus prs service uninstall`](#majordomus-prs-service-uninstall) | `/docs/cli/prs/service/uninstall/` | Stop the unit and remove it; nothing is left behind |
+| [`majordomus prs service run`](#majordomus-prs-service-run) | `/docs/cli/prs/service/run/` | What the unit starts: one continuous drain under the lease, ending in exit 0 when a person must look first (a halt, an unverified merge, the rollout gate, a stop) and in exit 75 when what ended it is expected to pass (an outage, an unwritable trail, a lease another executor holds), so the service manager restarts only the second |
 | [`majordomus offload`](#majordomus-offload) | `/docs/cli/offload/` | A branch's derive run on another machine the repository declares (.ai/repo/offload/), in that machine's turn: the hosts and their limits, a probe that names the host a derive would take, and the derive itself — bundle in, a FIFO queue on the host, a build directory of its own, bundle back, staged and never committed |
 | [`majordomus offload hosts`](#majordomus-offload-hosts) | `/docs/cli/offload/hosts/` | The declared hosts and their limits, the queue and the remote layout, as the declaration states them; reads no host. A repository that declares none says so and exits 0 |
 | [`majordomus offload probe`](#majordomus-offload-probe) | `/docs/cli/offload/probe/` | Measure every declared host — free space, derives running or waiting — and name the one a derive would take; exit 12 when none can take one |
@@ -2918,7 +2923,7 @@ Examples:
 
 Pull-request integration: every open pull request classified against the current master with its evidence, the ranked plan, and the executor that merges the next provably safe one — one at a time, re-planning after each (ADR 0101)
 
-Subcommands: [`majordomus prs status`](#majordomus-prs-status), [`majordomus prs plan`](#majordomus-prs-plan), [`majordomus prs explain`](#majordomus-prs-explain), [`majordomus prs refresh`](#majordomus-prs-refresh), [`majordomus prs drain`](#majordomus-prs-drain), [`majordomus prs cleanup`](#majordomus-prs-cleanup), [`majordomus prs repair`](#majordomus-prs-repair), [`majordomus prs events`](#majordomus-prs-events), [`majordomus prs trains`](#majordomus-prs-trains), [`majordomus prs brief`](#majordomus-prs-brief), [`majordomus prs prove-dry-run`](#majordomus-prs-prove-dry-run).
+Subcommands: [`majordomus prs status`](#majordomus-prs-status), [`majordomus prs plan`](#majordomus-prs-plan), [`majordomus prs explain`](#majordomus-prs-explain), [`majordomus prs refresh`](#majordomus-prs-refresh), [`majordomus prs drain`](#majordomus-prs-drain), [`majordomus prs cleanup`](#majordomus-prs-cleanup), [`majordomus prs repair`](#majordomus-prs-repair), [`majordomus prs events`](#majordomus-prs-events), [`majordomus prs trains`](#majordomus-prs-trains), [`majordomus prs brief`](#majordomus-prs-brief), [`majordomus prs prove-dry-run`](#majordomus-prs-prove-dry-run), [`majordomus prs service`](#majordomus-prs-service).
 
 ```text
 majordomus prs [OPTIONS] [COMMAND]
@@ -3250,6 +3255,150 @@ Examples:
   ```
 
   Verified: exits 12.
+
+<a id="majordomus-prs-service"></a>
+## `majordomus prs service`
+
+The executor as a user service (launchd on macOS, systemd --user on Linux) outside every agent session: restarted after a crash, an outage or a lease another executor held, never after a halt, an unverified merge or the rollout gate (I3913)
+
+Subcommands: [`majordomus prs service install`](#majordomus-prs-service-install), [`majordomus prs service status`](#majordomus-prs-service-status), [`majordomus prs service uninstall`](#majordomus-prs-service-uninstall), [`majordomus prs service run`](#majordomus-prs-service-run).
+
+```text
+majordomus prs service [OPTIONS] [COMMAND]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The executor service of a checkout that never installed one** — With no subcommand `service` is `status`: whether this checkout's executor unit is installed and running, what the service manager says and the last decision a run left. A checkout that never installed one says so and exits 10, a finding, with `majordomus prs service install` as what to do next.
+
+  ```console
+  $ majordomus prs service
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-prs-service-install"></a>
+## `majordomus prs service install`
+
+Write this checkout's executor unit and have the service manager run it; a second install of the same unit changes nothing. The owner runs this: an agent session never installs a service
+
+```text
+majordomus prs service install [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--executable` | `<EXECUTABLE>` | — | The executable the unit starts. Default: this one, which must not live under a build directory that a clean removes |
+| `--interval` | `<INTERVAL>` | `60` | Seconds between cycles, 30 to 900 |
+| `--max` | `<MAX>` | `3` | Merges per cycle at most |
+| `--no-refresh` | flag | — | Never bring master into a pull request; by default a cycle with nothing ready refreshes the first one that needs it |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **A unit never starts an executable a rebuild removes** — `install` writes the unit only for a stable executable. One under a `target/` build directory, which a clean or a rebuild deletes, is refused with exit 10 before anything is written or asked of the service manager.
+
+  ```console
+  $ majordomus prs service install --executable /opt/majordomus/target/debug/majordomus
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-prs-service-status"></a>
+## `majordomus prs service status`
+
+Whether the unit is installed and running, its process, what the service manager says, and the last decision a run left with what to do next
+
+```text
+majordomus prs service status [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Status reads the unit and the last run, and installs nothing** — `status` reads the unit file under the user's service directory, asks launchd or systemd whether it runs, and reads the last decision a run left beside the executor's state. Nothing installed is a finding, exit 10, never an error.
+
+  ```console
+  $ majordomus prs service status
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-prs-service-uninstall"></a>
+## `majordomus prs service uninstall`
+
+Stop the unit and remove it; nothing is left behind
+
+```text
+majordomus prs service uninstall [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Uninstalling what was never installed** — `uninstall` stops and removes this checkout's unit. Where there is none it asks the service manager nothing, says so and exits 0, so it is safe to run twice.
+
+  ```console
+  $ majordomus prs service uninstall
+  ```
+
+  Verified: exits 0; prints was not installed.
+
+<a id="majordomus-prs-service-run"></a>
+## `majordomus prs service run`
+
+What the unit starts: one continuous drain under the lease, ending in exit 0 when a person must look first (a halt, an unverified merge, the rollout gate, a stop) and in exit 75 when what ended it is expected to pass (an outage, an unwritable trail, a lease another executor holds), so the service manager restarts only the second
+
+```text
+majordomus prs service run [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--interval` | `<INTERVAL>` | `60` | Seconds between cycles, 30 to 900 |
+| `--max` | `<MAX>` | `3` | Merges per cycle at most |
+| `--refresh` | flag | — | Bring master into the first pull request that needs it when nothing is ready |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The rollout gate stops a service run, and the manager leaves it stopped** — `run` is what the unit starts. A checkout whose audit trail holds fewer than five verified merges is refused a continuous drain (ADR 0101 §13): the run records why, says Stop, and exits 0, so launchd or systemd does not start it again until a person has looked.
+
+  ```console
+  $ majordomus prs service run
+  ```
+
+  Verified: exits 0; prints service run ended (Stop).
 
 <a id="majordomus-offload"></a>
 ## `majordomus offload`
