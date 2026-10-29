@@ -800,7 +800,8 @@ fn a_host_step_that_fails_is_named_with_its_host() {
             "h0: the bundle could not be sent: ssh: injected failure",
         ),
         (
-            "git fetch -q origin",
+            // the preparation's one fetch of origin, through its bounded retry (I4375)
+            "fetch origin",
             "1",
             "h0: the host could not prepare the worktree: ssh: injected failure",
         ),
