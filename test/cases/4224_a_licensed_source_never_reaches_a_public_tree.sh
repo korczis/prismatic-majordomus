@@ -5,7 +5,8 @@
 # declared kit's licensed files, exactly and with every run of whitespace made one space.
 #
 #   1  public, a tracked file byte-identical to a licensed one: refused, naming the file and
-#      the licensed source, kind exact; the --json answer says the same
+#      the licensed source, kind exact; the --json answer says the same, and so does the
+#      MCP tool majordomus_design_licence over tools/call
 #   2  the same file reformatted (CRLF, tabs): refused, kind normalised
 #   3  the same tree declared private: active; MAJORDOMUS_VISIBILITY=public tightens it back
 #      to refused, and the word private never loosens a public tree
@@ -67,6 +68,13 @@ expect_no_grep 'web/index\.html' || exit 1
 jq -e '.verdict == "refused" and .fails and .kit == "examplekit" and .visibility == "public"
   and .matches == [{"path":"web/shell.html","source":"examplekit/blocks/shell.html","kind":"exact"}]' \
   "$S/a.json" >/dev/null || { echo "    the --json answer is not the refusal:"; cat "$S/a.json"; exit 1; }
+# the same refusal as a client reaches it, over MCP; --standalone touches no shared server
+{
+  printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case4224","version":"0"}}}\n'
+  printf '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_design_licence","arguments":{"evidence":"%s"}}}\n' "$EV"
+} | "$RB" mcp --standalone --repo "$T" 2>/dev/null | sed -n '2p' | jq -r '.result.content[0].text' > "$S/m.json"
+jq -e --slurpfile cli "$S/a.json" '.verdict == "refused" and .matches == $cli[0].matches' \
+  "$S/m.json" >/dev/null || { echo "    the MCP answer is not the refusal:"; cat "$S/m.json"; exit 1; }
 
 # ---------------------------------------------------------------- 2. reformatted: normalised
 printf '<div class="examplekit-shell">\r\n\t<nav>pro</nav>\r\n</div>\r\n' > web/shell.html

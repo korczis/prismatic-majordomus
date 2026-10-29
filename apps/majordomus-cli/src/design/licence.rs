@@ -63,6 +63,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 use crate::metadata::yaml;
+use crate::order::{self, OrderKey, Ordered};
 use crate::policy::{is_safe_relative, POLICY_SECTION};
 use crate::repository::Repository;
 
@@ -807,8 +808,8 @@ fn under(path: &str, dir: &str) -> bool {
 }
 
 /// A published path on the disk, read as `upload-pages-artifact` archives it: through
-/// every symbolic link, a directory walked in name order, `.git` aside. A directory reached
-/// twice is walked once; a dangling link publishes nothing.
+/// every symbolic link, a directory walked in canonical name order, `.git` aside. A
+/// directory reached twice is walked once; a dangling link publishes nothing.
 fn walk(full: PathBuf, rel: String, all: &mut BTreeSet<Content>, seen: &mut HashSet<PathBuf>) {
     let Ok(meta) = std::fs::metadata(&full) else {
         return;
@@ -823,11 +824,30 @@ fn walk(full: PathBuf, rel: String, all: &mut BTreeSet<Content>, seen: &mut Hash
     let Ok(dir) = std::fs::read_dir(&full) else {
         return;
     };
-    let mut names: Vec<_> = dir.filter_map(|e| e.ok().map(|e| e.file_name())).collect();
-    names.sort();
-    for name in names.into_iter().filter(|n| n != ".git") {
-        let child = format!("{rel}/{}", name.to_string_lossy());
-        walk(full.join(&name), child, all, seen);
+    let mut names: Vec<DirName> =
+        dir.filter_map(|e| e.ok().map(|e| DirName::new(e.file_name()))).collect();
+    order::canonical(&mut names);
+    for DirName { shown, name } in names.into_iter().filter(|n| n.name != ".git") {
+        walk(full.join(&name), format!("{rel}/{shown}"), all, seen);
+    }
+}
+
+/// One entry of a published directory: its name as the disk holds it, which is what the walk
+/// opens, and as a person reads it, which is what the walk records and orders by.
+struct DirName {
+    shown: String,
+    name: std::ffi::OsString,
+}
+
+impl DirName {
+    fn new(name: std::ffi::OsString) -> Self {
+        DirName { shown: name.to_string_lossy().into_owned(), name }
+    }
+}
+
+impl Ordered for DirName {
+    fn order_key(&self) -> OrderKey<'_> {
+        OrderKey::plain(&self.shown, &self.shown)
     }
 }
 
