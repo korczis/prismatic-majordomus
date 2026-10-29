@@ -84,7 +84,8 @@ Four things the command refuses, each met by a worker who followed this step:
   `session start` has just opened one, the episode was opened under another key than the
   one `observe` looks up: run `ls .ai/local/state/sessions-open/` and pass the key it lists
   as `MJ_SESSION_KEY=<key>` to every `observe` and `derive` of the episode. Pull request
-  2646 makes `session start` take the key `observe` reads; this remedy goes when it lands.
+  2646 (commit af8f52b0273) makes `session start` take the key `observe` reads; this
+  remedy goes when it lands.
 - `--kind` is one of `friction`, `workaround`, `defect`, `drift`, `repetition`. A lesson is
   what a candidate becomes when it is promoted, not a kind of observation.
 - `--subject` is a repository-relative path, or `capability:`, `rule:`, `command:` or
@@ -159,7 +160,17 @@ scripts/derive
 
 Run the gate of everything the change touched before the derive, so that one derive is
 enough. A lesson about a gate is proven by a case that breaks the thing and watches the
-gate refuse it.
+gate refuse it. On a machine under its disk floor, `majordomus offload derive .` is the
+derive of record: it runs on a build host and stages what it derived, and a local build
+there takes the disk from every other worker of the machine.
+
+Before step 5 the change goes to an adversarial review whose lenses differ from the
+author's: correctness of what the change claims, whether its tests fail when it is reverted,
+and what it leaves out. The author's passing cases are not that review. On 2026-10-28 such a
+review found two defects every passing case missed (case 60 was green in CI only because no
+provider runs there, and a record lacked its provider session; both fixed by pull request
+2646), and the incident review of pull request 2645 found the clock and duplicate-run
+defects its own tests did not.
 
 ### 5. Deliver, and let the surfaces follow
 
