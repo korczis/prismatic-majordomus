@@ -87,6 +87,8 @@ tags:
     description: "The boundary between the layer's tracked and local halves, checked against the layouts their contracts declare: what lives where, and what must never appear there (I1102)."
   - name: lifecycle
     description: "The episode lifecycle as an operator sees it: every open episode of this checkout's store rather than only the one the pointer follows, the episodes that can no longer close themselves, the commit this process is answering about against the commit the repository is on, what each provider's adapter declares it can do, and the tracked records a clone receives. Read from the local half of the layer and from the index; written by nothing here."
+  - name: machine
+    description: "What one machine admits at once: a counting slot for heavy work (a build, a test run), kept beside the derive lock where every checkout of the machine agrees on it, and held to rule project.the-cooperation-model-is-the-owners-word clause 7 — at most the declared number of holders, and none admitted below the declared free disk — with the numbers read from the policy's machine.heavy_work."
   - name: mcp
     description: "The MCP projection of this registry, described as one typed value: who answers `initialize` and with which protocol versions, the transports and how many sessions each holds, what of the protocol is served and what is not, every tool with the effect and the hints its annotations are derived from, the tools that write the repository, the resources, and where each declared client's configuration stands in this repository. Nothing in it is a list of its own: the tools are the registry's, the effect is the capability's classification, the clients are the distribution's providers."
   - name: mesh
@@ -6544,6 +6546,210 @@ paths:
       x-majordomus-cache:
         policy: disabled
       x-majordomus-effect: read
+  "/api/v1/machine/slot/acquire":
+    post:
+      operationId: machine.slot.acquire
+      summary: Take a machine slot for heavy work
+      description: "Take one of the machine's slots for a running process, named by its pid, with a purpose a person reads. Holders whose process is proven gone — the pid no longer runs, or runs with another start time — are reclaimed first and named. Below the declared free disk it refuses at once; with every slot held it waits in arrival order, listed as a waiter, up to the bound (the input's, else the policy's), and then refuses. A refusal is an answer, not an error: it names the limit, the measured value, every holder with its pid, purpose and age, and what to do instead. A process that already holds a slot is told so and holds one, not two."
+      tags:
+        - machine
+      requestBody:
+        required: true
+        description: "The input of `machine.slot.acquire`."
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/SlotAcquireInput"
+            examples:
+              a-build:
+                value:
+                  pid: 48213
+                  purpose: cargo build in this worktree
+                  wait_seconds: 600
+      responses:
+        "200":
+          description: "Take a machine slot for heavy work: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/SlotAnswer"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "422":
+          description: "`refused`: The command was understood and turned down for the reason the message gives."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: machine.slot.acquire
+      x-majordomus-kind: command
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::machine_slot
+      x-majordomus-benchmark:
+        policy: waived
+        reason: destructive
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: process_state
+      x-majordomus-mcp:
+        tool: majordomus_machine_slot_acquire
+      x-majordomus-cli: machine slot acquire
+  "/api/v1/machine/slot/release":
+    post:
+      operationId: machine.slot.release
+      summary: Give a machine slot back
+      description: "Give back the slot a process holds, and withdraw it from the queue if it waits; the next waiter is admitted on its next look. Releasing a slot nobody holds answers `released: false` and changes nothing."
+      tags:
+        - machine
+      requestBody:
+        required: true
+        description: "The input of `machine.slot.release`."
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/SlotReleaseInput"
+            examples:
+              a-build:
+                value:
+                  pid: 48213
+      responses:
+        "200":
+          description: "Give a machine slot back: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/SlotRelease"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "422":
+          description: "`refused`: The command was understood and turned down for the reason the message gives."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: machine.slot.release
+      x-majordomus-kind: command
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::machine_slot
+      x-majordomus-benchmark:
+        policy: waived
+        reason: destructive
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: process_state
+      x-majordomus-mcp:
+        tool: majordomus_machine_slot_release
+      x-majordomus-cli: machine slot release
+  "/api/v1/machine/slot/status":
+    get:
+      operationId: machine.slot.status
+      summary: "Who holds the machine's slots, and who waits"
+      description: "The slot directory as it stands: the limits and where they are declared, the free space on the volume measured, every holder with its pid, purpose, age and whether its process still runs (a pid that runs with another start time is a reused pid, and dead), and every waiter with how long it has waited and what it waits on (`machine.slot: 5 of 5 held`) — the progress a waiting session reports. Reads only: a dead holder is reported here and reclaimed by the next acquisition."
+      tags:
+        - machine
+      parameters:
+        - name: volume
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "A path the work writes to, whose volume's free space is measured; the slot\ndirectory's own volume when absent."
+          examples:
+            a-build-directory:
+              value: apps/majordomus-cli/target
+      responses:
+        "200":
+          description: "Who holds the machine's slots, and who waits: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/SlotStatus"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: machine.slot.status
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::machine_slot
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_machine_slot_status
+      x-majordomus-cli: machine slot status
   "/api/v1/mcp":
     get:
       operationId: mcp.projection
@@ -43527,6 +43733,282 @@ components:
         - warnings
         - findings
       description: "The verdict over every skill: valid when no finding refuses.\n\n```\nuse majordomus_cli::capability::builtin::skills::SkillVerification;\nlet v = SkillVerification { valid: true, skills: 3, failures: 0, warnings: 2, findings: vec![] };\n// warnings are debts, reported; they do not make the verdict false\nassert!(v.valid);\n```"
+    SlotAcquireInput:
+      type: object
+      additionalProperties: false
+      properties:
+        pid:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: "The process that will hold the slot: the build's own shell, not the caller of this\ncapability. It must be running; the slot is reclaimed when it stops."
+        purpose:
+          type: string
+          description: "What the holder is about to do, in a person's words: it is what every waiter and\nevery refusal names."
+        wait_seconds:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "How long to wait for a slot, in seconds; the policy's `machine.heavy_work.wait_seconds`\nwhen absent, and no wait when that is absent too."
+        volume:
+          type:
+            - string
+            - "null"
+          description: "A path the work writes to, whose volume the disk floor is judged on; the slot\ndirectory's own volume when absent."
+      required:
+        - pid
+        - purpose
+      description: "What to ask of `machine.slot.acquire`."
+    SlotAnswer:
+      type: object
+      properties:
+        verdict:
+          "$ref": "#/components/schemas/SlotVerdict"
+          description: "Admitted, already held, or refused."
+        refusal:
+          anyOf:
+            - "$ref": "#/components/schemas/SlotRefusal"
+            - type: "null"
+          description: Present when refused.
+        waited_seconds:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Seconds the caller waited in the queue.
+        reclaimed:
+          type: array
+          items:
+            "$ref": "#/components/schemas/SlotHolder"
+          description: "Holders reclaimed on the way, because their process was proven gone."
+        status:
+          "$ref": "#/components/schemas/SlotStatus"
+          description: The slot directory as it stood when the answer was given.
+      required:
+        - verdict
+        - waited_seconds
+        - reclaimed
+        - status
+      description: The answer to an acquisition.
+    SlotHolder:
+      type: object
+      properties:
+        pid:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: The process that holds the slot.
+        purpose:
+          type: string
+          description: What it said it is doing.
+        since:
+          type: string
+          description: "When it was admitted (RFC 3339, UTC)."
+        age_seconds:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Seconds since then.
+        liveness:
+          "$ref": "#/components/schemas/SlotLiveness"
+          description: Whether that process still runs.
+      required:
+        - pid
+        - purpose
+        - since
+        - age_seconds
+        - liveness
+      description: "One holder of a slot, as a reader sees it."
+    SlotLimits:
+      type: object
+      properties:
+        slots:
+          type:
+            - integer
+            - "null"
+          format: uint32
+          minimum: 0
+          description: How many holders the machine admits at once; absent admits every caller.
+        min_free_gib:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: GiB that must be free; absent refuses nobody for disk.
+        wait_seconds:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "How long a caller that names no bound waits, in seconds; absent waits not at all."
+        rule:
+          type: string
+          description: The rule whose numbers these are.
+        declared_in:
+          type: string
+          description: "Where they are declared: the policy file and the key."
+      required:
+        - rule
+        - declared_in
+      description: "The limits an admission is judged by, and where they were read."
+    SlotLiveness:
+      oneOf:
+        - type: string
+          const: alive
+          description: "The pid runs, with the start time the record names."
+        - type: string
+          const: unverified
+          description: "The pid runs, and its start time could not be read: kept, never reclaimed."
+        - type: string
+          const: dead
+          description: "The pid no longer runs, or runs with another start time: the slot is reclaimable."
+      description: "Whether a holder's process is still the one that took the slot."
+    SlotRefusal:
+      type: object
+      properties:
+        reason:
+          "$ref": "#/components/schemas/SlotRefusalReason"
+          description: Which limit refused.
+        detail:
+          type: string
+          description: "The measured values and every holder, in a sentence."
+        remedy:
+          type: string
+          description: What the caller can do instead.
+      required:
+        - reason
+        - detail
+        - remedy
+      description: "A refusal, with what it measured and what to do."
+    SlotRefusalReason:
+      oneOf:
+        - type: string
+          const: slots_full
+          description: Every slot stayed held for the whole wait.
+        - type: string
+          const: disk_floor
+          description: Less than the floor is free on the volume the work writes to.
+      description: Why an acquisition was refused.
+    SlotRelease:
+      type: object
+      properties:
+        released:
+          type: boolean
+          description: Whether the process held a slot that is now free.
+        holder:
+          anyOf:
+            - "$ref": "#/components/schemas/SlotHolder"
+            - type: "null"
+          description: The record that was removed.
+        withdrew_waiter:
+          type: boolean
+          description: Whether a waiter record of the process was withdrawn as well.
+      required:
+        - released
+        - withdrew_waiter
+      description: The answer to a release.
+    SlotReleaseInput:
+      type: object
+      additionalProperties: false
+      properties:
+        pid:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: The process whose slot is given back.
+      required:
+        - pid
+      description: "What to ask of `machine.slot.release`."
+    SlotStatus:
+      type: object
+      properties:
+        directory:
+          type: string
+          description: The directory the slots are kept in.
+        limits:
+          "$ref": "#/components/schemas/SlotLimits"
+          description: "The limits, and where they were read."
+        free_mib:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: MiB free on the volume measured; absent when it could not be measured.
+        volume:
+          type: string
+          description: "The volume measured: the work's own path, or the slot directory."
+        held:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many holders whose process is not proven gone.
+        holders:
+          type: array
+          items:
+            "$ref": "#/components/schemas/SlotHolder"
+          description: "Every holder, oldest first."
+        waiters:
+          type: array
+          items:
+            "$ref": "#/components/schemas/SlotWaiter"
+          description: "Every waiter, in the order they will be admitted."
+        summary:
+          type: string
+          description: "One line: held of slots, free against the floor, the waiters."
+      required:
+        - directory
+        - limits
+        - volume
+        - held
+        - holders
+        - waiters
+        - summary
+      description: The slot directory as it stands.
+    SlotVerdict:
+      oneOf:
+        - type: string
+          const: admitted
+          description: "A slot was taken for the caller's process."
+        - type: string
+          const: already_held
+          description: "The caller's process already held one; nothing was taken."
+        - type: string
+          const: refused
+          description: Refused; the refusal says why and who holds the slots.
+      description: What an acquisition came to.
+    SlotWaiter:
+      type: object
+      properties:
+        pid:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: The process that waits.
+        purpose:
+          type: string
+          description: What it will do once admitted.
+        since:
+          type: string
+          description: "When it started waiting (RFC 3339, UTC)."
+        waiting_seconds:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Seconds it has waited.
+        waiting_on:
+          type: string
+          description: "What it waits on, in the words a progress report carries: `machine.slot: 5 of 5 held`."
+      required:
+        - pid
+        - purpose
+        - since
+        - waiting_seconds
+        - waiting_on
+      description: "One waiter for a slot, as a reader sees it: the progress a waiting session reports."
     Snapshot:
       type: object
       properties:
