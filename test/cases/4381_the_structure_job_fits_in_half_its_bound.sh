@@ -24,7 +24,7 @@
 #   3. rust_bin.sh and the declarations file are both in shell-lint's own list;
 #   4. a file that only sources test/lib.sh lints in at most three times the CPU of test/lib.sh
 #      alone (it took nine to ten times as long while rust_bin.sh was followed);
-#   5. SC2033 holds: `xargs mj_cargo_target_dir`, `sudo mj_rust_resolve` and
+#   5. SC2033 holds: `xargs mj_cargo_target_dir`, `sudo -n mj_rust_resolve` and
 #      `find -exec mj_cargo_target_dir` in a file that sources test/lib.sh are each reported, and
 #      with the directives pointed at /dev/null the same file is not (the review's fixture);
 #   6. nothing is relaxed by not following: a read of a variable that only a function of
@@ -131,11 +131,13 @@ for fn in mj_cargo_target_dir mj_rust_resolve; do
   grep -qx "f $fn" "$T/lib.names" \
     || { echo "    lib/rust_bin.sh no longer defines $fn, which the SC2033 fixture hands to xargs, sudo and find"; exit 1; }
 done
+# the fixture is linted, never run; `sudo -n` because a sudo that may ask for a password is
+# refused in every case (08, project.commands-run-non-interactively), and SC2033 is the same
 cat > "$T/hands-a-function.sh" <<'EOF'
 #!/usr/bin/env bash
 . "$ROOT/test/lib.sh"
 printf '%s\n' apps/majordomus-cli | xargs mj_cargo_target_dir
-sudo mj_rust_resolve "$ROOT" '    '
+sudo -n mj_rust_resolve "$ROOT" '    '
 find "$ROOT/apps" -maxdepth 0 -exec mj_cargo_target_dir {} \;
 EOF
 expect_exit 1 lint "$ROOT" "$T/hands-a-function.sh"
@@ -173,7 +175,7 @@ RULE="$ROOT/.ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md
 expect_file "$CIJ"
 expect_file "$RULE"
 sed -n 's/^[[:space:]]*job:[[:space:]]*\(structure\(-[a-z0-9]*\)\{0,1\}\)[[:space:]]*$/\1/p' \
-  "$ROOT/.ai/repo/ci/gates.yaml" | sort -u > "$T/structure.jobs"
+  "$ROOT/.ai/repo/ci/gates.yaml" | LC_ALL=C sort -u > "$T/structure.jobs"
 grep -qx structure "$T/structure.jobs" && [ "$(wc -l < "$T/structure.jobs")" -ge 2 ] \
   || { echo "    .ai/repo/ci/gates.yaml assigns gates to fewer than two structure jobs; the reader is stale"; exit 1; }
 recipe_body() { # <ci.just>: the lines of the ci-structure recipe
