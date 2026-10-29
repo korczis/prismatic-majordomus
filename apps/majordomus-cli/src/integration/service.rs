@@ -123,7 +123,12 @@ impl LastRun {
         let (why, failure, cycles, merged) = match ended {
             Ended::RolloutRefused(r) => (r.to_string(), None, 0, Vec::new()),
             Ended::LeaseUnavailable(r) => (r.to_string(), Some(r.to_string()), 0, Vec::new()),
-            Ended::Drained(c) => (c.stopped.clone(), c.failure.clone(), c.cycles, c.merged.clone()),
+            Ended::Drained(c) => (
+                c.stopped.clone(),
+                c.failure.clone(),
+                c.cycles,
+                c.merged.clone(),
+            ),
         };
         LastRun {
             at,
@@ -203,7 +208,10 @@ fn xml(s: &str) -> String {
 
 /// Quote one word for a systemd `ExecStart=` line.
 fn systemd_word(s: &str) -> String {
-    if !s.is_empty() && s.chars().all(|c| c.is_ascii_alphanumeric() || "/._-=:,+@".contains(c)) {
+    if !s.is_empty()
+        && s.chars()
+            .all(|c| c.is_ascii_alphanumeric() || "/._-=:,+@".contains(c))
+    {
         s.to_string()
     } else {
         format!("\"{}\"", s.replace('\\', "\\\\").replace('"', "\\\""))
@@ -444,7 +452,11 @@ pub fn install(
             let (loaded, _) = ask("launchctl", vec!["print".into(), target.clone()], &mut ran)?;
             if loaded == 0 && changed {
                 // a loaded agent keeps the definition it was loaded with until it is booted out
-                ask("launchctl", vec!["bootout".into(), target.clone()], &mut ran)?;
+                ask(
+                    "launchctl",
+                    vec!["bootout".into(), target.clone()],
+                    &mut ran,
+                )?;
             }
             if loaded != 0 || changed {
                 let (code, out) = ask(
@@ -453,22 +465,38 @@ pub fn install(
                     &mut ran,
                 )?;
                 if code != 0 {
-                    return Err(format!("launchctl bootstrap {}: {}", path.display(), out.trim()));
+                    return Err(format!(
+                        "launchctl bootstrap {}: {}",
+                        path.display(),
+                        out.trim()
+                    ));
                 }
             }
         }
         Manager::SystemdUser => {
             let name = format!("{}.service", unit.label);
             if changed {
-                ask("systemctl", vec!["--user".into(), "daemon-reload".into()], &mut ran)?;
+                ask(
+                    "systemctl",
+                    vec!["--user".into(), "daemon-reload".into()],
+                    &mut ran,
+                )?;
             }
             let (code, out) = ask(
                 "systemctl",
-                vec!["--user".into(), "enable".into(), "--now".into(), name.clone()],
+                vec![
+                    "--user".into(),
+                    "enable".into(),
+                    "--now".into(),
+                    name.clone(),
+                ],
                 &mut ran,
             )?;
             if code != 0 {
-                return Err(format!("systemctl --user enable --now {name}: {}", out.trim()));
+                return Err(format!(
+                    "systemctl --user enable --now {name}: {}",
+                    out.trim()
+                ));
             }
         }
     }
@@ -503,12 +531,20 @@ pub fn uninstall(
     }
     match manager {
         Manager::Launchd => {
-            runner.run("launchctl", &["bootout".into(), format!("{}/{label}", gui_domain())])?;
+            runner.run(
+                "launchctl",
+                &["bootout".into(), format!("{}/{label}", gui_domain())],
+            )?;
         }
         Manager::SystemdUser => {
             runner.run(
                 "systemctl",
-                &["--user".into(), "disable".into(), "--now".into(), format!("{label}.service")],
+                &[
+                    "--user".into(),
+                    "disable".into(),
+                    "--now".into(),
+                    format!("{label}.service"),
+                ],
             )?;
         }
     }
@@ -542,14 +578,18 @@ pub struct ServiceStatus {
 
 /// Read a `key = value` line out of `launchctl print`.
 fn launchctl_field<'a>(text: &'a str, key: &str) -> Option<&'a str> {
-    text.lines()
-        .map(str::trim)
-        .find_map(|l| l.strip_prefix(key)?.trim_start().strip_prefix('=').map(str::trim))
+    text.lines().map(str::trim).find_map(|l| {
+        l.strip_prefix(key)?
+            .trim_start()
+            .strip_prefix('=')
+            .map(str::trim)
+    })
 }
 
 /// Read a `Key=value` line out of `systemctl show`.
 fn systemd_field<'a>(text: &'a str, key: &str) -> Option<&'a str> {
-    text.lines().find_map(|l| l.strip_prefix(key)?.strip_prefix('='))
+    text.lines()
+        .find_map(|l| l.strip_prefix(key)?.strip_prefix('='))
 }
 
 /// The service of the checkout at `root`.
@@ -580,12 +620,21 @@ pub fn status(root: &Path, home: &Path, runner: &mut dyn Runner) -> ServiceStatu
     let installed = path.exists().then(|| path.display().to_string());
     let (running, pid, says) = match manager {
         Manager::Launchd => {
-            match runner.run("launchctl", &["print".into(), format!("{}/{label}", gui_domain())]) {
+            match runner.run(
+                "launchctl",
+                &["print".into(), format!("{}/{label}", gui_domain())],
+            ) {
                 Ok((0, text)) => {
-                    let state = launchctl_field(&text, "state").unwrap_or("unknown").to_string();
+                    let state = launchctl_field(&text, "state")
+                        .unwrap_or("unknown")
+                        .to_string();
                     let pid = launchctl_field(&text, "pid").and_then(|p| p.parse().ok());
                     let exit = launchctl_field(&text, "last exit code").unwrap_or("-");
-                    (state == "running", pid, Some(format!("state {state}, last exit {exit}")))
+                    (
+                        state == "running",
+                        pid,
+                        Some(format!("state {state}, last exit {exit}")),
+                    )
                 }
                 Ok(_) => (false, None, Some("not loaded".into())),
                 Err(e) => (false, None, Some(e)),
@@ -601,12 +650,18 @@ pub fn status(root: &Path, home: &Path, runner: &mut dyn Runner) -> ServiceStatu
             ];
             match runner.run("systemctl", &args) {
                 Ok((0, text)) => {
-                    let state = systemd_field(&text, "ActiveState").unwrap_or("unknown").to_string();
+                    let state = systemd_field(&text, "ActiveState")
+                        .unwrap_or("unknown")
+                        .to_string();
                     let pid = systemd_field(&text, "MainPID")
                         .and_then(|p| p.parse().ok())
                         .filter(|p| *p != 0);
                     let exit = systemd_field(&text, "ExecMainStatus").unwrap_or("-");
-                    (state == "active", pid, Some(format!("{state}, last exit {exit}")))
+                    (
+                        state == "active",
+                        pid,
+                        Some(format!("{state}, last exit {exit}")),
+                    )
                 }
                 Ok((_, text)) => (false, None, Some(text.trim().to_string())),
                 Err(e) => (false, None, Some(e)),
@@ -615,7 +670,11 @@ pub fn status(root: &Path, home: &Path, runner: &mut dyn Runner) -> ServiceStatu
     };
     let next = if installed.is_none() {
         Some("majordomus prs service install".into())
-    } else if !running && last_run.as_ref().is_some_and(|l| l.disposition == Disposition::Stop) {
+    } else if !running
+        && last_run
+            .as_ref()
+            .is_some_and(|l| l.disposition == Disposition::Stop)
+    {
         Some(match manager {
             Manager::Launchd => format!(
                 "a person looks at why it stopped; then `majordomus prs drain --resume-after-failure --max 1` \
@@ -711,10 +770,24 @@ mod tests {
         assert!(p.contains("<key>SuccessfulExit</key>\n    <false/>"), "{p}");
         assert!(p.contains("<key>RunAtLoad</key>\n  <true/>"));
         assert!(p.contains(&format!("<integer>{THROTTLE_SECONDS}</integer>")));
-        for word in ["--repo", "/r/repo", "service", "run", "--interval", "60", "--refresh"] {
-            assert!(p.contains(&format!("<string>{word}</string>")), "{word} in {p}");
+        for word in [
+            "--repo",
+            "/r/repo",
+            "service",
+            "run",
+            "--interval",
+            "60",
+            "--refresh",
+        ] {
+            assert!(
+                p.contains(&format!("<string>{word}</string>")),
+                "{word} in {p}"
+            );
         }
-        assert!(!p.contains("MAJORDOMUS_SHARE"), "a unit must not pin another share");
+        assert!(
+            !p.contains("MAJORDOMUS_SHARE"),
+            "a unit must not pin another share"
+        );
     }
 
     #[test]
@@ -722,9 +795,14 @@ mod tests {
         let s = unit().systemd_unit();
         assert!(s.contains("Restart=on-failure"));
         assert!(s.contains(&format!("RestartSec={THROTTLE_SECONDS}")));
-        assert!(s.contains("StartLimitIntervalSec=0"), "an outage of any length is waited out");
+        assert!(
+            s.contains("StartLimitIntervalSec=0"),
+            "an outage of any length is waited out"
+        );
         assert!(s.contains("WantedBy=default.target"));
-        assert!(s.contains("ExecStart=/home/u/.local/bin/majordomus prs --repo /r/repo service run"));
+        assert!(
+            s.contains("ExecStart=/home/u/.local/bin/majordomus prs --repo /r/repo service run")
+        );
     }
 
     #[test]
@@ -753,7 +831,10 @@ mod tests {
             self.asked.push(format!("{program} {}", args.join(" ")));
             if program == "launchctl" && args.first().map(String::as_str) == Some("print") {
                 return Ok(if self.print_loaded {
-                    (0, "\tstate = running\n\tpid = 42\n\tlast exit code = (never exited)\n".into())
+                    (
+                        0,
+                        "\tstate = running\n\tpid = 42\n\tlast exit code = (never exited)\n".into(),
+                    )
                 } else {
                     (113, "Could not find service".into())
                 });
@@ -765,31 +846,59 @@ mod tests {
     #[test]
     fn a_second_install_changes_nothing_and_uninstall_leaves_nothing() {
         let home = tempfile::tempdir().unwrap();
-        let mut r = Scripted { asked: Vec::new(), print_loaded: false };
-        let u = Unit { log: home.path().join("logs/service.log"), ..unit() };
+        let mut r = Scripted {
+            asked: Vec::new(),
+            print_loaded: false,
+        };
+        let u = Unit {
+            log: home.path().join("logs/service.log"),
+            ..unit()
+        };
         let first = install(&u, Manager::Launchd, home.path(), &mut r).unwrap();
         assert!(first.changed);
-        assert!(first.ran.iter().any(|c| c.starts_with("launchctl bootstrap")));
+        assert!(first
+            .ran
+            .iter()
+            .any(|c| c.starts_with("launchctl bootstrap")));
         assert!(Path::new(&first.path).exists());
 
-        let mut r = Scripted { asked: Vec::new(), print_loaded: true };
+        let mut r = Scripted {
+            asked: Vec::new(),
+            print_loaded: true,
+        };
         let second = install(&u, Manager::Launchd, home.path(), &mut r).unwrap();
         assert!(!second.changed);
-        assert_eq!(second.ran, vec![format!("launchctl print {}/{}", gui_domain(), u.label)]);
+        assert_eq!(
+            second.ran,
+            vec![format!("launchctl print {}/{}", gui_domain(), u.label)]
+        );
 
         let removed = uninstall(&u.label, Manager::Launchd, home.path(), &mut r).unwrap();
         assert_eq!(removed.as_deref(), Some(first.path.as_str()));
         assert!(!Path::new(&first.path).exists());
         let asked = r.asked.len();
-        assert_eq!(uninstall(&u.label, Manager::Launchd, home.path(), &mut r).unwrap(), None);
-        assert_eq!(r.asked.len(), asked, "nothing installed: the manager is asked nothing");
+        assert_eq!(
+            uninstall(&u.label, Manager::Launchd, home.path(), &mut r).unwrap(),
+            None
+        );
+        assert_eq!(
+            r.asked.len(),
+            asked,
+            "nothing installed: the manager is asked nothing"
+        );
     }
 
     #[test]
     fn a_systemd_install_reloads_only_when_the_unit_changed() {
         let home = tempfile::tempdir().unwrap();
-        let u = Unit { log: home.path().join("logs/service.log"), ..unit() };
-        let mut r = Scripted { asked: Vec::new(), print_loaded: false };
+        let u = Unit {
+            log: home.path().join("logs/service.log"),
+            ..unit()
+        };
+        let mut r = Scripted {
+            asked: Vec::new(),
+            print_loaded: false,
+        };
         let first = install(&u, Manager::SystemdUser, home.path(), &mut r).unwrap();
         assert!(first.ran[0].ends_with("daemon-reload"));
         let second = install(&u, Manager::SystemdUser, home.path(), &mut r).unwrap();

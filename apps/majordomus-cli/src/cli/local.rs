@@ -258,6 +258,31 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "closes pull requests on the forge whose work is provably on master, only with --apply.",
     },
     LocalCommand {
+        command: "prs service",
+        reason: LocalReason::Alias("prs service status"),
+        note: "with no subcommand it answers `prs service status`, whether this checkout's executor unit is installed and running.",
+    },
+    LocalCommand {
+        command: "prs service status",
+        reason: LocalReason::SessionLocal,
+        note: "reads the invoking user's unit file and asks that user's launchd or systemd about it, which a caller over a socket does not share.",
+    },
+    LocalCommand {
+        command: "prs service install",
+        reason: LocalReason::ProcessLifecycle,
+        note: "writes the invoking user's launchd or systemd unit for this checkout's executor and starts it, a process kept running outside every session.",
+    },
+    LocalCommand {
+        command: "prs service uninstall",
+        reason: LocalReason::ProcessLifecycle,
+        note: "stops this checkout's executor service and removes its unit from the invoking user's service directory.",
+    },
+    LocalCommand {
+        command: "prs service run",
+        reason: LocalReason::ProcessLifecycle,
+        note: "becomes the continuous drain the unit starts, and exits zero or non-zero so the service manager restarts it only after a crash or an outage.",
+    },
+    LocalCommand {
         command: "pack build",
         reason: LocalReason::WritesRepository,
         note: "writes the pack's index, shards and manifest under tmp/packs/ (or --out), after planning with pack.plan and before verifying with pack.verify.",

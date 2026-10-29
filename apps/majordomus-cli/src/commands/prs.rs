@@ -777,7 +777,11 @@ fn service(
             if format == OutputFormat::Json {
                 json(out, &report)?;
             } else {
-                let done = if report.changed { "installed" } else { "unchanged" };
+                let done = if report.changed {
+                    "installed"
+                } else {
+                    "unchanged"
+                };
                 w(out, format!("{done} {} ({})", report.label, report.path))?;
                 for c in &report.ran {
                     w(out, format!("  ran {c}"))?;
@@ -791,7 +795,10 @@ fn service(
             let removed =
                 svc::uninstall(&label, manager()?, &home, &mut SystemRunner).map_err(unusable)?;
             if format == OutputFormat::Json {
-                json(out, &serde_json::json!({ "label": label, "removed": removed }))?;
+                json(
+                    out,
+                    &serde_json::json!({ "label": label, "removed": removed }),
+                )?;
             } else {
                 w(
                     out,
