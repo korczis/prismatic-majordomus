@@ -500,10 +500,15 @@ mj_plan_transition() {
     done)
       [ -n "$bb" ] && mj_die "$MJ_EX_REFUSED" "$id cannot be DONE while $bb is not DONE"
       case "$st" in ACTIVE|VERIFY) ;; *) mj_die "$MJ_EX_REFUSED" "$id is $st; only an ACTIVE or VERIFY issue can move to DONE" ;; esac
+      # one token per line, read whole: a token may hold spaces ("anthropic api adapter:
+      # request normalisation, credential, usage"), and a word-split loop asked for each word
       local need missing=""
-      for need in $(mj_pj_list "$id" evidence_required); do
+      while IFS= read -r need; do
+        [ -n "$need" ] || continue
         mj_plan_has_evidence "$id" "$need" || missing="$missing $need"
-      done
+      done <<EOF
+$(mj_pj_list "$id" evidence_required)
+EOF
       [ -n "$missing" ] && mj_die "$MJ_EX_CONTRACT" "$id has no evidence for:$missing (run: majordomus plan evidence $id --covers <token> ...)"
       mj_plan_stamp "$id" completed_at completed_event plan_done "$now"
       printf 'plan: %s DONE\n' "$id" ;;
@@ -568,7 +573,8 @@ mj_plan_evidence() {
   {
     if grep -qE '^evidence:' "$f"; then cat "$f"
     else cat "$f"; printf 'evidence:\n'; fi
-    printf -- '  - covers: %s\n    type: %s\n' "$covers" "$etype"
+    # quoted as the command and the result are: a token holding ": " is no plain YAML scalar
+    printf -- '  - covers: "%s"\n    type: %s\n' "$(printf '%s' "$covers" | sed 's/"/\\"/g')" "$etype"
     [ -n "$ecmd" ] && printf '    command: "%s"\n' "$(printf '%s' "$ecmd" | sed 's/"/\\"/g')"
     [ -n "$eres" ] && printf '    result: "%s"\n' "$(printf '%s' "$eres" | sed 's/"/\\"/g')"
     [ -n "$eart" ] && printf '    artifact: "%s"\n' "$(printf '%s' "$eart" | sed 's/"/\\"/g')"

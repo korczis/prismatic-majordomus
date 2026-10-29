@@ -64405,6 +64405,8 @@
             "The adapter never logs, stores or echoes the credential or the prompt body",
             "The advisor's note states that it shares a Claude author's model family"
           ],
+          "completed_at": "2026-10-26T11:07:33Z",
+          "completed_event": "sha256:883d6a6453cc5f06b1dc74f5707b5216dfcae5ae89b14f32f8a0d14cd71dbdeb",
           "created_at": "2026-10-20",
           "current_state": "Advisors: chatgpt (openai API), gemini and codex (CLI), ollama and lmstudio (local), mesh peers; no Anthropic API advisor.",
           "depends_on": [],
@@ -64425,11 +64427,15 @@
             "every-model-call-is-paid-from-a-declared-source#anthropic-api-reaches-the-advisors"
           ],
           "slug": "an-anthropic-api-advisor-is-declared",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-26T11:06:53Z",
+          "started_event": "sha256:c7b95f7fdf97c36e0be6c0a17c7dfd08372dba0b15939bef79f292fb7bb83b28",
+          "updated_at": "2026-10-26T11:07:33Z",
           "validation": [
             "node --test scripts/lib/advisors/contract.test.mjs",
             "env -u MAJORDOMUS_SHARE majordomus reasoning check"
-          ]
+          ],
+          "verified_at": "2026-10-26T11:07:17Z",
+          "verified_event": "sha256:286a469f5e49ed053a0f6b89a9a44b18f2ed054f443591ed623802ffd70c5ac7"
         }
       },
       {
@@ -70022,7 +70028,7 @@
             "a-stranger-adopts-it-unaided#friction-becomes-a-case"
           ],
           "slug": "a-task-started-before-the-first-commit-finishes",
-          "updated_at": "2026-10-23",
+          "updated_at": "2026-10-26T11:01:54Z",
           "validation": [
             "bash test/run.sh 3995_a_task_started_before_the_first_commit_finishes",
             "bin/majordomus plan validate"
@@ -71284,6 +71290,57 @@
             "scripts/rust-check --portable-core",
             "bin/majordomus plan validate"
           ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4235",
+        "kind": "issue",
+        "label": "I4235",
+        "summary": "An evidence token is matched whole, so an issue that requires one with spaces can be done",
+        "route": "/cockpit/objects/issue/i4235",
+        "source": ".ai/repo/project/issues/I4235.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An issue whose required token holds spaces, a colon and commas reaches DONE once that token is recorded",
+            "The recorded token is written quoted, and plan validate passes over the record",
+            "Without the line-wise read the case fails at done; without the quoting it fails at the written record"
+          ],
+          "completed_at": "2026-10-26T11:20:52Z",
+          "completed_event": "sha256:82ab413b8812efe94c3dfeb8a3e062cbae13ab3fb788dea1ed5063705434f79e",
+          "created_at": "2026-10-26",
+          "current_state": "Measured at origin/master 6259dac47af on 2026-10-26: lib/plan.sh:504 loops `for need in $(mj_pj_list \\\"$id\\\" evidence_required)`, and mj_plan_evidence prints `  - covers: %s` unquoted.",
+          "depends_on": [],
+          "desired_state": "The done transition loops `while IFS= read -r need` over the required tokens, and mj_plan_evidence prints `  - covers: \\\"%s\\\"` with any double quote escaped.",
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "plan.transition in the executable (#2414, I1504, moves the done transition there)",
+            "Rewording any issue's evidence_required"
+          ],
+          "objective": "`plan done` reads the evidence an issue requires one token per line and matches each whole, and `plan evidence` writes the token it records quoted, as it already writes the command and the result.",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "lib/plan.sh",
+            "test/cases/4235_an_evidence_token_is_matched_whole.sh",
+            ".ai/repo/project/issues/I4235.yaml",
+            ".ai/repo/project/issues/I3663.yaml",
+            ".ai/repo/project/issues/I3995.yaml"
+          ],
+          "serves": [],
+          "slug": "an-evidence-token-is-matched-whole",
+          "started_at": "2026-10-26T11:20:08Z",
+          "started_event": "sha256:9790f54663415ad1ede6fa760d85bc8981d2ceb50e31b8cdbf93fb8ff4e713cb",
+          "updated_at": "2026-10-26T11:20:52Z",
+          "validation": [
+            "MJ_TEST_JOBS=1 bash test/run.sh 4235_an_evidence_token_is_matched_whole 43_plan_command",
+            "bin/majordomus plan validate"
+          ],
+          "verified_at": "2026-10-26T11:20:35Z",
+          "verified_event": "sha256:c898f7093f955e8d90910adb480b84ba9deec46bd51251aebd9421d532a75e86"
         }
       },
       {
@@ -98101,6 +98158,13 @@
         "label": "test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
         "route": "/cockpit/objects/test/test-cases-4232-a-core-build-keeps-its-own-rlib-sh",
         "source": "test/cases/4232_a_core_build_keeps_its_own_rlib.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4235_an_evidence_token_is_matched_whole.sh",
+        "kind": "test",
+        "label": "test/cases/4235_an_evidence_token_is_matched_whole.sh",
+        "route": "/cockpit/objects/test/test-cases-4235-an-evidence-token-is-matched-whole-sh",
+        "source": "test/cases/4235_an_evidence_token_is_matched_whole.sh"
       },
       {
         "id": "majordomus://test/test/cases/4251_a_mod_links_nothing_outside_the_repository.sh",
@@ -136923,6 +136987,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4235",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4235",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4241",
         "target": "kind:issue",
         "kind": "is_a"
@@ -144388,6 +144462,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4235_an_evidence_token_is_matched_whole.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/4251_a_mod_links_nothing_outside_the_repository.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -149509,8 +149588,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4097,
-      "edges": 9459,
+      "nodes": 4099,
+      "edges": 9462,
       "acyclic": false,
       "truncated": false
     }
