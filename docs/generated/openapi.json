@@ -41685,7 +41685,7 @@
           {
             "type": "string",
             "const": "run_rerun_attempted",
-            "description": "A run this supervision ended, the last of its pull request's head, is about to be asked\nto run again: paired with its cancel, or on a later pass because the head still has no\nrun (`super::runs`). Each one counts against `super::runs::RERUN_ATTEMPTS`."
+            "description": "A run, the newest of its pull request's head, is about to be asked to run again: paired\nwith this supervision's cancel of it, or on a later pass of any lane because the head has\nno run in flight and no verdict (`super::runs`). A record only: GitHub's own\n`run_attempt` bounds the asks (`super::runs::MAX_ATTEMPTS`), never this trail."
           },
           {
             "type": "string",

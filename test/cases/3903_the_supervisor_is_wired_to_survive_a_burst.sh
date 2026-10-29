@@ -112,3 +112,21 @@ SUP="$ROOT/apps/majordomus-cli/src/integration/supervise.rs"
 grep -q 'pub const STALE_MINUTES: u64 = 30;' "$SUP" && grep -q 'pub const SUPERVISE_STALE: &str = "supervise_stale";' "$SUP" \
   || { echo "    the decision no longer names supervise_stale at thirty minutes"; exit 1; }
 echo "    a lundra lane with no success for thirty minutes fails the queue workflow"
+
+# ---------------------------------------------------------------- 5. one stuck pull request is a warning
+# a head no re-run is asked of any more (`head_exhausted`), or whose runs could not be read, is
+# printed as a `::warning` line and must reach the run as an annotation: the output is indented
+# when it is shown, and GitHub reads no command there. It never fails the lane: a lane red for
+# one stuck pull request stops the hosted lane standing aside and reads as supervise_stale
+for job in "$LUNDRA" "$HOSTED"; do
+  awk '/sed .s\/\^\/    \/. "\$RUNNER_TEMP\/supervise.txt"/ { s = 1 }
+       s && /grep .\^::warning . "\$RUNNER_TEMP\/supervise.txt" [|][|] true/ { found = 1 }
+       END { exit !found }' "$job" \
+    || { echo "    a lane does not raise the supervisor's warnings as annotations"; exit 1; }
+done
+RUNS="$ROOT/apps/majordomus-cli/src/integration/runs.rs"
+grep -q 'pub const MAX_ATTEMPTS: u64 = 3;' "$RUNS" \
+  || { echo "    re-runs are no longer bounded by GitHub's own run_attempt"; exit 1; }
+grep -q 'fn recover(' "$RUNS" && ! sed -n '/^fn recover(/,/^}/p' "$RUNS" | grep -q 'drain::events' \
+  || { echo "    recovery reads the trail of the checkout that acted, which another runner does not have"; exit 1; }
+echo "    an exhausted head is a warning annotation, never a red lane, and recovery reads the forge alone"

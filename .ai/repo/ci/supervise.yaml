@@ -67,13 +67,21 @@ version: 1
 # running_past_bound (its job holds a runner its own timeout did not free). A force-cancel skips
 # the if: always() jobs, so without this the required `ci` would never be written and nothing
 # would ask for a run again. superseded_blocks_successor never meets it: its run is not at the
-# head. The re-run is asked whenever the run reads completed without passing after the act,
+# head. The re-run is asked whenever the run reads completed without a verdict after the act,
 # whatever the forge answered the cancel (a `gh` that timed out or got a 502 while the cancel
-# landed), and nothing when it passed on its own. A head a pass still left bare (its re-run
-# refused, or its cancel landing after the forge reported it failed) is found by every later
-# pass from the trail and its newest run, one this supervisor cancelled, asked again: at most
-# three asks in all (RERUN_ATTEMPTS in integration/runs.rs, each `run_rerun_attempted`), then
-# exit 12 naming the pull request. The property test is
+# landed), and never when the head has a verdict: the commit's runs are read whole first, so a
+# hung twin whose older twin passed is ended and not run again (#2678's shape).
+#
+# Recovery is stateless (the review of #2645 at 68fa1c17b6c): lundra's three runners each keep a
+# trail of their own and the hosted lane starts from a fresh checkout, so a head one runner left
+# bare is judged from the forge, by any runner of any lane. Every pass reads the open pull
+# requests' heads with no bounded run in flight (first those with a run cancelled in the last six
+# hours, from one listing, then a rotating few), and asks again a head's newest run when none of
+# its runs is in flight or has a verdict and that run ended `cancelled`, by anyone, within six
+# hours (RECOVERY_WINDOW_MINUTES), at a GitHub `run_attempt` below MAX_ATTEMPTS (3, in
+# integration/runs.rs). At the bound the head is held as head_exhausted: a warning naming the
+# pull request on every pass, never exit 12, since one stuck pull request is not a supervisor
+# that stopped; so is a recovery re-run the forge refused, which the next pass asks again. The trail records every ask and decides none. The property test is
 # apps/majordomus-cli/src/integration/supervise_property.rs.
 #
 # What is never cancelled for being superseded is fixed in the code, not declared here: a push

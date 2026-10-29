@@ -215,6 +215,10 @@ pub struct RunObservation {
     /// Which attempt it is: 1, or more once re-run. A re-run keeps its id and `created_at`.
     #[serde(default = "first_attempt")]
     pub run_attempt: u64,
+    /// When the forge last changed it, RFC 3339: for a completed run, when it ended, which is
+    /// when a cancel of it landed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub updated_at: Option<String>,
     /// Its jobs.
     #[serde(default)]
     pub jobs: Vec<JobObservation>,
@@ -228,6 +232,16 @@ impl RunObservation {
     /// Whether it has not completed.
     pub fn in_flight(&self) -> bool {
         IN_FLIGHT.contains(&self.status.as_str())
+    }
+
+    /// When it ended, or last changed, in seconds since the epoch: its `updated_at`, else its
+    /// attempt's start, else its creation; `None` when none of them is a time.
+    pub fn ended_at(&self) -> Option<u64> {
+        self.updated_at
+            .as_deref()
+            .and_then(seconds)
+            .or_else(|| self.run_started_at.as_deref().and_then(seconds))
+            .or_else(|| seconds(&self.created_at))
     }
 
     /// Whether it waits rather than runs: in flight and not `in_progress`.
@@ -629,6 +643,17 @@ pub enum HoldReason {
         pull_request: u64,
         /// What it would have been ended for, as a [`CancelReason::word`].
         would_end_for: String,
+    },
+    /// The newest run of its pull request's current head, completed `cancelled` with no other
+    /// run of the head in flight and no verdict among them, at GitHub's own attempt
+    /// [`super::runs::MAX_ATTEMPTS`] or past it: no more re-runs are asked of it, and the head
+    /// has no run until a person re-runs it or pushes. A pull request's state, not the
+    /// supervisor's: it never fails the pass ([`super::runs::SuperviseReport::exit_code`]).
+    HeadExhausted {
+        /// The pull request.
+        pull_request: u64,
+        /// The run's `run_attempt`.
+        attempts: u64,
     },
     /// A time it would be judged by could not be read.
     Unjudgeable {
@@ -1272,6 +1297,7 @@ mod tests {
             created_at: at(minutes_ago),
             run_started_at: Some(at(minutes_ago)),
             run_attempt: 1,
+            updated_at: None,
             jobs: if status == "in_progress" {
                 vec![JobObservation {
                     name: "rust".into(),

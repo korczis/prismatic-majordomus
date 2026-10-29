@@ -38,22 +38,42 @@
 //!
 //! A cancel paired with a re-run ([`super::supervise::Decision::rerun`]: the last run of a pull
 //! request's head, a job of it past its bound) asks for the re-run as soon as the cancel is
-//! taken: the forge re-runs only a run that has ended, and accepts a force-cancel before it has,
-//! so [`RunForge::rerun`] reads the run until it reads completed ([`RERUN_READS`] reads,
-//! [`RERUN_WAIT_SECONDS`] apart) and then asks once. Its outcome is on the trail after the
-//! cancel's (`run_rerun_attempted`, then `run_rerun_requested` or `run_rerun_failed`), and a
-//! re-run that could not be asked is a failed act (exit 12): the head has no run until it is
-//! asked again. It is asked whenever the run reads completed without passing after the act,
-//! whatever the forge answered the cancel: a `gh` that timed out or met a 502 while the cancel
-//! landed leaves the run ended all the same.
+//! taken, unless the head has its verdict already: the commit's runs are read whole first
+//! ([`RunForge::runs_at`]), and when a run of the same workflow and branch completed with a
+//! verdict the hung run is ended and not run again, so that no newer `ci` is written over that
+//! verdict (#2678's shape). Nor is a run asked again once GitHub's own `run_attempt` of it has
+//! reached [`MAX_ATTEMPTS`]. The forge re-runs only a run that has ended, and accepts a
+//! force-cancel before it has, so [`RunForge::rerun`] reads the run until it reads completed
+//! ([`RERUN_READS`] reads, [`RERUN_WAIT_SECONDS`] apart) and then asks once, unless the run
+//! completed with a verdict of its own ([`Rerun::Decided`]). Its outcome is on the trail after
+//! the cancel's (`run_rerun_attempted`, then `run_rerun_requested` or `run_rerun_failed`), and a
+//! re-run that could not be asked is a failed act (exit 12). It is asked whenever the run reads
+//! completed without a verdict after the act, whatever the forge answered the cancel: a `gh`
+//! that timed out or met a 502 while the cancel landed leaves the run ended all the same.
 //!
-//! That leaves a head bare only for a while. The observation lists runs in flight, so a later
-//! pass would never see it again; instead every pass reads the trail for the runs it cancelled
-//! that may have left their head with none (a re-run attempted or refused, a cancel the forge
-//! reported failed that landed later, a paired cancel with no re-run after it), reads such a
-//! head's commit whole ([`RunForge::runs_at`]), and asks its newest run again when it is one
-//! this supervision cancelled and the head has no run in flight and no verdict: at most
-//! [`RERUN_ATTEMPTS`] asks in all, counted on the trail, then exit 12 naming the pull request.
+//! That can still leave a head bare: the re-run refused, a cancel the forge reported failed that
+//! landed a minute later, a cancel by a person or by another lane. The observation lists runs in
+//! flight, so a later pass would never see the head again, and the trail cannot find it either:
+//! lundra has three runners, each with a checkout and a trail of its own, and the hosted lane
+//! starts from a fresh checkout every time, so the runner that left a head bare need not be the
+//! one that takes the next pass. So recovery is stateless, judged from what the forge holds, and
+//! any runner of any lane recovers any head ([`recover`]). Each pass reads the open pull
+//! requests' heads that have no run of a bounded workflow in flight, each commit's runs whole,
+//! and judges each workflow's runs of the pull request's branch ([`head_need`]): none in flight,
+//! none with a verdict, the newest completed `cancelled` (by this supervisor, another lane or a
+//! person) within [`RECOVERY_WINDOW_MINUTES`], and its `run_attempt` below [`MAX_ATTEMPTS`]: that
+//! run is asked again. At [`MAX_ATTEMPTS`] the head is held as `head_exhausted`, a warning that
+//! names the pull request on every pass that finds it and never a failed pass: one stuck pull
+//! request is not a supervisor that stopped. So is a recovery re-run the forge refused, which
+//! the next pass asks again: the pass whose own act bared the head was the red one. The trail
+//! records each ask and decides nothing.
+//!
+//! Which heads are read is bounded as well ([`heads_to_read`]): first those with a run cancelled
+//! within the window, from one listing of the pull requests' cancelled runs created in the last
+//! [`CANCELLED_REACH_MINUTES`] ([`RunForge::cancelled_since`]), at most [`RECOVERY_READS`]; then
+//! [`ROTATING_READS`] of the others, a different few every ten minutes, so that a head whose run
+//! was created before the listing reaches is read within hours all the same. One pass asks at
+//! most [`RECOVERY_RERUNS`] re-runs; the rest wait for the next.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
@@ -85,6 +105,9 @@ pub struct RunsObservation {
     /// The open pull requests labelled [`FULL_LABEL`].
     #[serde(default)]
     pub full: BTreeSet<u64>,
+    /// Each open pull request's head branch: a recovered head's runs are its branch's.
+    #[serde(default)]
+    pub pr_branches: BTreeMap<u64, String>,
 }
 
 /// A source of run observations and the one act on them. The command line uses
@@ -101,12 +124,16 @@ pub trait RunForge {
     /// End one run at once.
     fn force_cancel(&mut self, id: u64) -> Result<(), ForgeError>;
     /// Run again a run just ended: once it reads completed, ask for its re-run, every job of
-    /// it, unless it completed with `success` ([`Rerun::Passed`]). Err when it did not end in
+    /// it, unless it completed with a verdict ([`Rerun::Decided`]). Err when it did not end in
     /// time or the forge refused.
     fn rerun(&mut self, id: u64) -> Result<Rerun, ForgeError>;
-    /// Every run of commit `sha`, completed ones among them, without jobs: whether a head this
-    /// supervision left without a run has one again, or a verdict ([`RERUN_ATTEMPTS`]).
+    /// Every run of commit `sha`, completed ones among them, without jobs: whether a head has a
+    /// run in flight, a verdict, or neither ([`recover`]).
     fn runs_at(&self, sha: &str) -> Result<Vec<RunObservation>, ForgeError>;
+    /// The pull requests' runs that completed `cancelled` and were created at or after
+    /// `created_since` (seconds since the epoch), newest first, without jobs: the heads a pass
+    /// reads first for recovery ([`heads_to_read`]).
+    fn cancelled_since(&self, created_since: u64) -> Result<Vec<RunObservation>, ForgeError>;
     /// When the newest successful job of `workflow` ended, RFC 3339; `None` when there is none
     /// among its recent runs, or none of them `among` admits.
     fn newest_success(
@@ -121,9 +148,10 @@ pub trait RunForge {
 pub enum Rerun {
     /// The re-run was asked.
     Asked,
-    /// The run read completed with `success`: it passed before its cancel reached it, its head
-    /// has its verdict, and nothing was asked.
-    Passed,
+    /// The run read completed with a verdict (`success`, `failure` or `timed_out`): it reached
+    /// one before its cancel did, its head has it, and nothing was asked, since a re-run would
+    /// write a newer `ci` over it.
+    Decided,
 }
 
 /// Which successful jobs [`RunForge::newest_success`] counts; the default counts every one.
@@ -206,6 +234,7 @@ pub fn run_of(v: &Value) -> Option<RunObservation> {
             .and_then(Value::as_u64)
             .filter(|n| *n > 0)
             .unwrap_or(1),
+        updated_at: text(v, "updated_at"),
         jobs: Vec::new(),
     })
 }
@@ -242,11 +271,39 @@ pub const RERUN_READS: u32 = 10;
 /// How long apart those reads are: ten of them are half a minute, inside the forge's budget.
 pub const RERUN_WAIT_SECONDS: u64 = 3;
 
-/// How many times a run this supervision ended is asked to run again, at most, while its pull
-/// request's head has no other run and no verdict: the re-run paired with its cancel, then
-/// one on each later pass. Each is `run_rerun_attempted` on the trail before it is asked, and
-/// the trail is what counts them; once they are spent the head is reported, exit 12.
-pub const RERUN_ATTEMPTS: u32 = 3;
+/// GitHub's own `run_attempt` past which a run is not asked to run again: a re-run is asked only
+/// of a run whose attempt is below it, so a head gets two re-runs at most, the one paired with a
+/// cancel or a later pass's. The forge counts them, so every runner and lane reads the same
+/// count, and a head whose newest run reached it is held as `head_exhausted`.
+pub const MAX_ATTEMPTS: u64 = 3;
+
+/// How long after its newest run was cancelled a head is still recovered, in minutes. A cancel
+/// older than this was no pass's transient: a live supervisor passes every ten minutes, and the
+/// queue reports one that has not for thirty. On 2026-10-29 at 13:42Z, 93 of the 127 open pull
+/// requests' heads had only cancelled validate runs, most cancelled days before, and a recovery
+/// without a window would have asked every one of them again at once.
+pub const RECOVERY_WINDOW_MINUTES: u64 = 360;
+
+/// How far back the listing of cancelled runs reaches, by the runs' creation, in minutes: the
+/// window and a day, the longest a validate run lives from its creation to its end (240 minutes
+/// queued, a chain of jobs that took 579 minutes in 40576851731). The listing orders by
+/// creation; a run re-run long after it was created is found by [`ROTATING_READS`] instead.
+pub const CANCELLED_REACH_MINUTES: u64 = RECOVERY_WINDOW_MINUTES + 24 * 60;
+
+/// How many pages of that listing, a hundred runs each, are read at most: a day of cancels on
+/// 2026-10-29 was one page.
+pub const CANCELLED_PAGES: u32 = 3;
+
+/// How many heads with a run cancelled within the window one pass reads whole, at most.
+pub const RECOVERY_READS: usize = 12;
+
+/// How many of the other heads without a run in flight one pass reads besides, a different few
+/// every ten minutes: with 120 of them, each is read within five hours, inside the window.
+pub const ROTATING_READS: usize = 4;
+
+/// How many re-runs one pass asks for recovery, at most: a burst of cancels re-runs a few heads
+/// a pass, not the queue's worth at once.
+pub const RECOVERY_RERUNS: usize = 3;
 
 /// How many pages of the supervising workflow's runs, a hundred each, are read for its newest
 /// success: a day of them at a request every few minutes, newest first.
@@ -391,6 +448,7 @@ impl RunForge for GhRunForge<'_> {
         let endpoint = format!("repos/{}/pulls?state=open&per_page=100", self.repository);
         let mut pr_heads = BTreeMap::new();
         let mut branches = BTreeMap::new();
+        let mut pr_branches = BTreeMap::new();
         let mut full = BTreeSet::new();
         for v in self.paged(
             &endpoint,
@@ -403,6 +461,7 @@ impl RunForge for GhRunForge<'_> {
                 )));
             };
             if let Some(b) = text(&v, "branch") {
+                pr_branches.insert(n, b.clone());
                 branches.insert(b, n);
             }
             let labelled = v
@@ -422,6 +481,7 @@ impl RunForge for GhRunForge<'_> {
             runs,
             pr_heads,
             full,
+            pr_branches,
         })
     }
 
@@ -487,7 +547,7 @@ impl RunForge for GhRunForge<'_> {
     fn rerun(&mut self, id: u64) -> Result<Rerun, ForgeError> {
         // a force-cancel is accepted before the run has ended, and the forge re-runs only a run
         // that has: read it until it reads completed, then ask once, never again; a run that
-        // passed before its cancel reached it has its verdict, and is not asked
+        // reached a verdict before its cancel did has it, and is not asked
         let endpoint = format!("repos/{}/actions/runs/{id}", self.repository);
         let mut ended = None;
         for read in 0..RERUN_READS {
@@ -507,7 +567,9 @@ impl RunForge for GhRunForge<'_> {
                      re-run was not asked"
                 )))
             }
-            Some(Some(c)) if c == "success" => return Ok(Rerun::Passed),
+            Some(Some(c)) if matches!(c.as_str(), "success" | "failure" | "timed_out") => {
+                return Ok(Rerun::Decided)
+            }
             Some(_) => {}
         }
         let again = format!("{endpoint}/rerun");
@@ -539,6 +601,37 @@ impl RunForge for GhRunForge<'_> {
                     .ok_or_else(|| ForgeError(format!("{endpoint}: a run this cannot read: {v}")))
             })
             .collect()
+    }
+
+    fn cancelled_since(&self, created_since: u64) -> Result<Vec<RunObservation>, ForgeError> {
+        // newest first, page by page, never past CANCELLED_PAGES: the creation filter bounds it,
+        // and the pages bound a day of cancels that filled it
+        let since = crate::peers::rfc3339(
+            std::time::UNIX_EPOCH + std::time::Duration::from_secs(created_since),
+        );
+        let mut out = Vec::new();
+        for page in 1..=CANCELLED_PAGES {
+            let endpoint = format!(
+                "repos/{}/actions/runs?status=cancelled&event=pull_request&per_page=100\
+                 &page={page}&created=%3E%3D{since}",
+                self.repository
+            );
+            let listed = self.one(&endpoint)?;
+            let runs = listed
+                .get("workflow_runs")
+                .and_then(Value::as_array)
+                .cloned()
+                .unwrap_or_default();
+            for v in &runs {
+                out.push(run_of(v).ok_or_else(|| {
+                    ForgeError(format!("{endpoint}: a run this cannot read: {v}"))
+                })?);
+            }
+            if runs.len() < 100 {
+                break;
+            }
+        }
+        Ok(out)
     }
 
     fn newest_success(
@@ -639,36 +732,38 @@ pub enum ActOutcome {
     Failed,
 }
 
-/// What became of a head this supervision left without a run, found on a later pass.
+/// What became of a head found with no run, on a pass after the one that left it so.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum RecoveryOutcome {
-    /// Its run was asked to run again.
+    /// Its newest run was asked to run again.
     Rerun,
-    /// Its run had passed: the head has its verdict, and nothing was asked.
-    Passed,
-    /// The re-run could not be asked: the head still has no run.
+    /// Its newest run read completed with a verdict when it was to be asked: nothing was asked.
+    Decided,
+    /// The forge refused the re-run: the head still has no run, and the next pass asks again.
+    /// A warning naming the pull request, never a failed pass: a refusal that persists comes
+    /// back on every pass, and the pass whose act bared the head was the red one.
     RerunFailed,
-    /// Every one of [`RERUN_ATTEMPTS`] was spent: the head has no run until somebody runs it.
-    Exhausted,
-    /// The head's runs could not be read: whether it has one is not known.
-    Unobserved,
-    /// The trail could not record the attempt: nothing was asked.
+    /// This pass had asked [`RECOVERY_RERUNS`] re-runs already: the next pass asks.
+    Deferred,
+    /// The trail could not record the attempt, or its outcome: a failed pass, since a trail that
+    /// refuses writes is this supervisor's own fault.
     Unrecorded,
 }
 
-/// A run this supervision ended that is still its pull request's head's newest, with no other
-/// run of the head in flight and no verdict of it ([`RERUN_ATTEMPTS`]).
+/// An open pull request's head with no run in flight and no verdict, whose newest run was
+/// cancelled within [`RECOVERY_WINDOW_MINUTES`] at an attempt below [`MAX_ATTEMPTS`], and what
+/// this pass did for it ([`recover`]).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Recovery {
     /// The pull request.
     pub pull_request: u64,
     /// Its head.
     pub head_sha: String,
-    /// The run.
+    /// The head's newest run.
     pub run: u64,
-    /// Which re-run of it this was, counted on the trail since its cancel.
-    pub attempt: u32,
+    /// The attempt of it this asked for: its `run_attempt` and one.
+    pub attempt: u64,
     /// What became of it.
     pub outcome: RecoveryOutcome,
     /// What happened, for a person.
@@ -706,10 +801,14 @@ pub struct SuperviseReport {
     /// Under `--apply`, what became of each decision.
     #[serde(default)]
     pub acts: Vec<Act>,
-    /// Under `--apply`, the heads an earlier pass left without a run (its re-run failed, or its
-    /// cancel landed after the forge refused it), and what was done for each.
+    /// Under `--apply`, the heads found with no run in flight and no verdict whose newest run
+    /// was cancelled, by anyone, within the window, and what was done for each ([`recover`]).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub recovered: Vec<Recovery>,
+    /// Under `--apply`, what recovery could not read, each for a person: a head's runs, or the
+    /// listing of cancelled runs. A warning, never a failed pass: the next pass reads again.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub unread: Vec<String>,
     /// How many runs' jobs were read: only those a rule could act on.
     #[serde(default)]
     pub jobs_read: usize,
@@ -726,8 +825,15 @@ pub struct SuperviseReport {
 
 impl SuperviseReport {
     /// 0 when nothing needed doing or every act succeeded or was rightly skipped; 10 for
-    /// decisions a dry run found; 12 when an act could not be taken, or a pull request's head
-    /// is left with no run (each such act and recovery names the pull request).
+    /// decisions a dry run found; 12 when an act of this pass could not be taken, its paired
+    /// re-run among them (each names the pull request), or the trail refused a write. What
+    /// recovery finds is a pull request's state, not this pass's: a head held as
+    /// `head_exhausted`, a head or listing it could not read, and a recovery re-run the forge
+    /// refused never make it 12. They are warnings, reported on every pass that finds them, since
+    /// a lane that failed on every pass for one stuck pull request would read as a supervisor
+    /// that stopped (the hosted lane would stop standing aside, the queue would report
+    /// `supervise_stale`), and which pass found one first is nothing the forge says. The pass
+    /// whose own act bared a head and could not give it its run back is the one that is red.
     pub fn exit_code(&self) -> u8 {
         if !self.applied {
             return if self.decisions.is_empty() { 0 } else { 10 };
@@ -741,7 +847,7 @@ impl SuperviseReport {
         let recovered = self
             .recovered
             .iter()
-            .all(|r| matches!(r.outcome, RecoveryOutcome::Rerun | RecoveryOutcome::Passed));
+            .all(|r| r.outcome != RecoveryOutcome::Unrecorded);
         if acts && recovered {
             0
         } else {
@@ -750,8 +856,8 @@ impl SuperviseReport {
     }
 }
 
-/// What a paired cancel's `run_cancel_attempted` says after its reason: a later pass reads it
-/// to tell a cancel that ended its head's last run from one that left the head another.
+/// What a paired cancel's `run_cancel_attempted` says after its reason, for a person reading the
+/// trail; nothing reads it back.
 const PAIRED: &str = "; the last run of its pull request's head, so it is run again once ended";
 
 fn subject(d: &Decision) -> String {
@@ -792,13 +898,14 @@ fn event(action: IntegrationAction, d: &Decision, detail: String) -> Integration
 enum Asked {
     /// Asked: the head has its run again.
     Rerun,
-    /// The run had passed: nothing was asked.
-    Passed,
+    /// The run had a verdict: nothing was asked.
+    Decided,
     /// Not asked, or refused: the head has no run.
     Failed,
 }
 
-/// Ask run `run` of #`pr` at `head_sha` to run again, as attempt `attempt`: on the trail before
+/// Ask run `run` of #`pr` at `head_sha` to run again, as attempt `attempt` of at most
+/// [`MAX_ATTEMPTS`]: on the trail before
 /// it is asked (`run_rerun_attempted`), or not asked, and its outcome after it
 /// (`run_rerun_requested`, or `run_rerun_failed` naming the pull request). A run asked again
 /// reads as requested in `current`. The words for the act's detail come back with the outcome.
@@ -810,7 +917,7 @@ fn ask_rerun(
     head_sha: &str,
     run: u64,
     workflow: &str,
-    attempt: u32,
+    attempt: u64,
     current: &mut [RunObservation],
     trail_broken: &mut bool,
 ) -> (Asked, String) {
@@ -823,7 +930,7 @@ fn ask_rerun(
             pr,
             head_sha,
             run,
-            format!("re-run {attempt} of {RERUN_ATTEMPTS} of {what}"),
+            format!("attempt {attempt} of at most {MAX_ATTEMPTS} of {what}"),
         ),
     ) {
         *trail_broken = true;
@@ -846,20 +953,20 @@ fn ask_rerun(
             (
                 IntegrationAction::RunRerunRequested,
                 Asked::Rerun,
-                format!("re-requested {what} (re-run {attempt} of {RERUN_ATTEMPTS})"),
+                format!("re-requested {what} (attempt {attempt} of at most {MAX_ATTEMPTS})"),
             )
         }
-        Ok(Rerun::Passed) => (
+        Ok(Rerun::Decided) => (
             IntegrationAction::RunRerunRequested,
-            Asked::Passed,
-            format!("did not re-run {what}: it had passed before its cancel reached it"),
+            Asked::Decided,
+            format!("did not re-run {what}: it had its verdict before its cancel reached it"),
         ),
         Err(e) => (
             IntegrationAction::RunRerunFailed,
             Asked::Failed,
             format!(
-                "could not re-run {what} (re-run {attempt} of {RERUN_ATTEMPTS}), and #{n} has \
-                 no run of its head: {e}"
+                "could not re-run {what} (attempt {attempt} of at most {MAX_ATTEMPTS}), and #{n} \
+                 has no run of its head: {e}"
             ),
         ),
     };
@@ -875,241 +982,286 @@ fn ask_rerun(
     }
 }
 
-/// One run this supervision attempted to cancel, as its trail tells it.
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct Story {
+/// The runs of `runs` that judge #`pr`'s head for `workflow`: its `pull_request` runs of the
+/// pull request's branch, or, when the branch is not known, the runs the forge attributed to it.
+fn of_head<'a>(
+    runs: &'a [RunObservation],
+    workflow: &str,
     pr: u64,
-    head_sha: String,
-    /// The trail's newest word of it.
-    last: IntegrationAction,
-    /// Whether its newest cancel was paired with a re-run ([`PAIRED`]).
-    paired: bool,
-    /// Its re-runs attempted since its newest cancel attempt.
-    attempts: u32,
-    /// Where on the trail its newest word is.
-    order: usize,
+    branch: Option<&str>,
+) -> Vec<&'a RunObservation> {
+    runs.iter()
+        .filter(|r| r.workflow == workflow && r.event == "pull_request")
+        .filter(|r| match branch {
+            Some(b) => r.head_branch == b,
+            None => r.pull_request == Some(pr),
+        })
+        .collect()
 }
 
-impl Story {
-    /// Whether it may have left its head with no run: its cancel was attempted, failed (and may
-    /// have landed later), or ended the head's last run, or its re-run was attempted or failed.
-    /// A run whose re-run was asked, or whose cancel left the head another run, did not.
-    fn may_have_left_its_head_bare(&self) -> bool {
-        use IntegrationAction as A;
-        match self.last {
-            A::RunCancelAttempted
-            | A::RunCancelFailed
-            | A::RunRerunAttempted
-            | A::RunRerunFailed => true,
-            A::RunCancelled | A::RunAlreadyEnded => self.paired,
-            _ => false,
+/// What one workflow's runs of a head say it needs ([`head_need`]).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum HeadNeed {
+    /// A run of it is in flight, or one has its verdict: nothing.
+    Covered,
+    /// It has no run, or its newest did not end `cancelled` (it was skipped, or awaits an
+    /// approval), or it ended more than [`RECOVERY_WINDOW_MINUTES`] ago: nobody's transient, and
+    /// nothing is asked.
+    Settled,
+    /// Its newest run, `run`, ended `cancelled` within the window at attempt `attempts`, at or
+    /// past [`MAX_ATTEMPTS`]: held as `head_exhausted`.
+    Exhausted {
+        /// The run.
+        run: u64,
+        /// Its `run_attempt`.
+        attempts: u64,
+    },
+    /// Its newest run, `run`, ended `cancelled` within the window at attempt `attempts`, below
+    /// [`MAX_ATTEMPTS`]: asked to run again.
+    Rerun {
+        /// The run.
+        run: u64,
+        /// Its `run_attempt`.
+        attempts: u64,
+    },
+}
+
+/// What a head needs, from one workflow's runs of it, completed ones among them, at `now`
+/// (seconds since the epoch). Pure: judged from the runs the forge lists, whoever cancelled
+/// them, and never from a trail. The newest is the one whose attempt started last.
+pub fn head_need(runs: &[&RunObservation], now: u64) -> HeadNeed {
+    if runs.iter().any(|r| r.in_flight() || r.verdict_written()) {
+        return HeadNeed::Covered;
+    }
+    let Some(newest) = runs
+        .iter()
+        .max_by_key(|r| (r.run_started_at.clone().unwrap_or_default(), r.id))
+    else {
+        return HeadNeed::Settled;
+    };
+    let recent = newest
+        .ended_at()
+        .is_some_and(|t| t.saturating_add(RECOVERY_WINDOW_MINUTES * 60) >= now);
+    if newest.conclusion.as_deref() != Some("cancelled") || !recent {
+        return HeadNeed::Settled;
+    }
+    if newest.run_attempt >= MAX_ATTEMPTS {
+        HeadNeed::Exhausted {
+            run: newest.id,
+            attempts: newest.run_attempt,
+        }
+    } else {
+        HeadNeed::Rerun {
+            run: newest.id,
+            attempts: newest.run_attempt,
         }
     }
 }
 
-/// Every run this supervision attempted to cancel, by run: its story from its newest
-/// `run_cancel_attempted` on.
-fn stories(trail: &[IntegrationEvent]) -> BTreeMap<u64, Story> {
-    use IntegrationAction as A;
-    let mut runs: BTreeMap<u64, Story> = BTreeMap::new();
-    for (i, e) in trail.iter().enumerate() {
-        let (Some(run), Some(pr), Some(sha)) = (e.run, e.pr, e.head_sha.as_ref()) else {
-            continue;
-        };
-        match e.action {
-            A::RunCancelAttempted => {
-                runs.insert(
-                    run,
-                    Story {
-                        pr,
-                        head_sha: sha.clone(),
-                        last: e.action,
-                        paired: e.detail.contains(PAIRED),
-                        attempts: 0,
-                        order: i,
-                    },
-                );
-            }
-            A::RunCancelled
-            | A::RunCancelFailed
-            | A::RunAlreadyEnded
-            | A::RunRerunAttempted
-            | A::RunRerunRequested
-            | A::RunRerunFailed => {
-                // a run's story starts at a cancel this supervision attempted
-                if let Some(story) = runs.get_mut(&run) {
-                    if e.action == A::RunRerunAttempted {
-                        story.attempts += 1;
-                    }
-                    story.last = e.action;
-                    story.order = i;
-                }
-            }
-            _ => {}
-        }
+/// The open pull requests' heads a pass reads whole for recovery, in order: those of `obs` with
+/// no `pull_request` run of a bounded workflow in flight in `current` (which is also not among
+/// `skip`, the pull requests this pass acted on), first the ones a run in `cancelled` names,
+/// cancelled within the window, newest cancel first, at most [`RECOVERY_READS`]; then
+/// [`ROTATING_READS`] of the rest, by pull request, from an offset the clock moves every ten
+/// minutes. Stateless: two runners at the same ten minutes read the same heads, and every head
+/// is read within `rest / ROTATING_READS` ten-minute slots.
+pub fn heads_to_read(
+    obs: &RunsObservation,
+    current: &[RunObservation],
+    cancelled: &[RunObservation],
+    model: &SuperviseModel,
+    skip: &BTreeSet<u64>,
+    now: u64,
+) -> Vec<(u64, String)> {
+    let bounded = |w: &str| model.bounds.contains_key(w);
+    let branch = |n: u64| obs.pr_branches.get(&n).map(String::as_str);
+    let candidates: Vec<(u64, &String)> = obs
+        .pr_heads
+        .iter()
+        .filter(|(n, _)| !skip.contains(n))
+        .filter(|(n, head)| {
+            !model.bounds.keys().any(|w| {
+                of_head(current, w, **n, branch(**n))
+                    .iter()
+                    .any(|r| r.head_sha == **head && r.in_flight())
+            })
+        })
+        .map(|(n, h)| (*n, h))
+        .collect();
+    // newest cancel first, then by pull request: a set's own order, the same on every runner
+    let first: Vec<(u64, u64)> = candidates
+        .iter()
+        .filter_map(|(n, head)| {
+            cancelled
+                .iter()
+                .filter(|r| r.head_sha == **head && bounded(&r.workflow))
+                .filter(|r| r.event == "pull_request")
+                .filter(|r| match branch(*n) {
+                    Some(b) => r.head_branch == b,
+                    None => r.pull_request == Some(*n),
+                })
+                .filter_map(RunObservation::ended_at)
+                .filter(|t| t.saturating_add(RECOVERY_WINDOW_MINUTES * 60) >= now)
+                .max()
+                .map(|t| (std::cmp::Reverse(t), *n))
+        })
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .take(RECOVERY_READS)
+        .map(|(std::cmp::Reverse(t), n)| (n, t))
+        .collect();
+    let chosen: BTreeSet<u64> = first.iter().map(|(n, _)| *n).collect();
+    let rest: Vec<u64> = candidates
+        .iter()
+        .map(|(n, _)| *n)
+        .filter(|n| !chosen.contains(n))
+        .collect();
+    let mut out: Vec<u64> = first.into_iter().map(|(n, _)| n).collect();
+    if !rest.is_empty() {
+        let slot = usize::try_from(now / 600).unwrap_or(usize::MAX);
+        let start = slot.wrapping_mul(ROTATING_READS) % rest.len();
+        out.extend(
+            rest.iter()
+                .cycle()
+                .skip(start)
+                .take(ROTATING_READS.min(rest.len())),
+        );
     }
-    runs
+    out.into_iter()
+        .filter_map(|n| obs.pr_heads.get(&n).map(|h| (n, h.clone())))
+        .collect()
 }
 
-/// The durable half of the invariant: a head an earlier pass left without a run, because the
-/// re-run paired with its cancel failed or its cancel landed after the forge refused it, is
-/// found here from the trail, and asked for a run again, at most [`RERUN_ATTEMPTS`] times in
-/// all. The observation lists only runs in flight, so a head that may be bare
-/// ([`Story::may_have_left_its_head_bare`], at its pull request's current head) has its
-/// commit's runs read whole ([`RunForge::runs_at`]). Only when none of them of its workflow
-/// and branch is in flight or has a verdict, and the newest of them is one this supervision
-/// cancelled and did not re-run since, is that one asked to run again: a twin cancelled as a
-/// duplicate is the newest when the older run its bound ended could not be re-run. The runs
-/// `acted` on this pass are left to their act.
+/// The durable half of the invariant, judged from the forge alone: every open pull request's
+/// head [`heads_to_read`] names has its commit's runs read whole ([`RunForge::runs_at`]), and
+/// each bounded workflow's runs of its branch judged ([`head_need`]). A newest run cancelled
+/// within the window, by anyone, below [`MAX_ATTEMPTS`], is asked to run again, at most
+/// [`RECOVERY_RERUNS`] in the pass; one at [`MAX_ATTEMPTS`] is held as `head_exhausted` in
+/// `held`; a head or listing that cannot be read is said in `unread`. Any runner of any lane
+/// finds the same heads: nothing here reads the trail.
+#[allow(clippy::too_many_arguments)]
 fn recover(
     root: &Path,
     forge: &mut dyn RunForge,
-    heads: &BTreeMap<u64, String>,
+    obs: &RunsObservation,
+    model: &SuperviseModel,
+    now: u64,
     current: &mut [RunObservation],
     acted: &BTreeSet<u64>,
     trail_broken: &mut bool,
+    held: &mut Vec<Hold>,
+    unread: &mut Vec<String>,
 ) -> Vec<Recovery> {
-    let stories = stories(&drain::events(root));
-    // newest first: keyed by where on the trail each story's newest word is
-    let triggers: BTreeMap<std::cmp::Reverse<usize>, (&u64, &Story)> = stories
-        .iter()
-        .filter(|(_, s)| heads.get(&s.pr) == Some(&s.head_sha))
-        .filter(|(_, s)| s.may_have_left_its_head_bare())
-        .map(|t| (std::cmp::Reverse(t.1.order), t))
-        .collect();
-    let mut out = Vec::new();
-    let mut read: BTreeMap<String, Result<Vec<RunObservation>, String>> = BTreeMap::new();
-    let mut handled = BTreeSet::new();
-    for (&trigger, story) in triggers.into_values() {
-        if acted.contains(&trigger) || current.iter().any(|c| c.id == trigger && c.in_flight()) {
-            continue;
+    let reach = now.saturating_sub(CANCELLED_REACH_MINUTES * 60);
+    let cancelled = match forge.cancelled_since(reach) {
+        Ok(c) => c,
+        Err(e) => {
+            unread.push(format!(
+                "the pull requests' cancelled runs could not be listed; only the rotating few \
+                 heads were read for recovery: {e}"
+            ));
+            Vec::new()
         }
-        let (pr, head) = (story.pr, story.head_sha.clone());
-        let recovery = |run, attempt, outcome, detail| Recovery {
-            pull_request: pr,
-            head_sha: head.clone(),
-            run,
-            attempt,
-            outcome,
-            detail,
-        };
-        let runs = match read
-            .entry(head.clone())
-            .or_insert_with(|| forge.runs_at(&head).map_err(|e| e.0))
-        {
-            Ok(r) => r.clone(),
+    };
+    let heads = heads_to_read(obs, current, &cancelled, model, acted, now);
+    let mut out = Vec::new();
+    let mut asked = 0;
+    for (pr, head) in heads {
+        let runs = match forge.runs_at(&head) {
+            Ok(r) => r,
             Err(e) => {
-                if handled.insert((pr, String::new())) {
-                    out.push(recovery(
-                        trigger,
-                        story.attempts,
-                        RecoveryOutcome::Unobserved,
-                        format!(
-                            "#{pr}'s head {head} may have no run: run {trigger}, which this \
-                             supervision ended, and the head's other runs could not be read: {e}"
-                        ),
-                    ));
-                }
+                unread.push(format!(
+                    "#{pr}'s head {head}: its runs could not be read, so whether it has one is \
+                     not known: {e}"
+                ));
                 continue;
             }
         };
-        let Some(mine) = runs.iter().find(|r| r.id == trigger) else {
-            out.push(recovery(
-                trigger,
-                story.attempts,
-                RecoveryOutcome::Unobserved,
-                format!(
-                    "#{pr}'s head {head} may have no run: run {trigger}, which this supervision \
-                     ended, is not among the commit's runs"
-                ),
-            ));
-            continue;
-        };
-        if !handled.insert((pr, mine.workflow.clone())) {
-            continue;
-        }
-        let same: Vec<&RunObservation> = runs
-            .iter()
-            .filter(|r| {
-                r.workflow == mine.workflow
-                    && r.event == "pull_request"
-                    && r.head_branch == mine.head_branch
-            })
-            .collect();
-        // a run on its way, or a verdict: the head has what it needs
-        if same.iter().any(|r| r.in_flight() || r.verdict_written()) {
-            continue;
-        }
-        let Some(newest) = same
-            .iter()
-            .max_by_key(|r| (r.run_started_at.clone().unwrap_or_default(), r.id))
-        else {
-            continue;
-        };
-        // a newer run of the head that this supervision did not end is not its to run again,
-        // nor one it re-ran that was cancelled since
-        let Some(target) = stories
-            .get(&newest.id)
-            .filter(|s| s.last != IntegrationAction::RunRerunRequested)
-        else {
-            continue;
-        };
-        let run = newest.id;
-        if target.attempts >= RERUN_ATTEMPTS {
-            out.push(recovery(
-                run,
-                target.attempts,
-                RecoveryOutcome::Exhausted,
-                format!(
-                    "#{pr} has no run of its head {head}: run {run} of {}, which this \
-                     supervision ended, was asked to run again {} times and has not; re-run \
-                     it or push",
-                    mine.workflow, target.attempts
-                ),
-            ));
-            continue;
-        }
-        let attempt = target.attempts + 1;
-        if *trail_broken {
-            out.push(recovery(
+        let branch = obs.pr_branches.get(&pr).map(String::as_str);
+        for workflow in model.bounds.keys() {
+            let of = of_head(&runs, workflow, pr, branch);
+            let (run, attempts) = match head_need(&of, now) {
+                HeadNeed::Covered | HeadNeed::Settled => continue,
+                HeadNeed::Exhausted { run, attempts } => {
+                    held.push(Hold {
+                        run,
+                        workflow: workflow.clone(),
+                        event: "pull_request".into(),
+                        reason: supervise::HoldReason::HeadExhausted {
+                            pull_request: pr,
+                            attempts,
+                        },
+                    });
+                    continue;
+                }
+                HeadNeed::Rerun { run, attempts } => (run, attempts),
+            };
+            let attempt = attempts + 1;
+            let recovery = |outcome, detail| Recovery {
+                pull_request: pr,
+                head_sha: head.clone(),
                 run,
                 attempt,
-                RecoveryOutcome::Unrecorded,
-                format!(
-                    "#{pr} has no run of its head {head}: run {run} was not asked to run again, \
-                     since the trail refused an earlier write"
-                ),
-            ));
-            continue;
+                outcome,
+                detail,
+            };
+            if asked == RECOVERY_RERUNS {
+                out.push(recovery(
+                    RecoveryOutcome::Deferred,
+                    format!(
+                        "#{pr} has no run of its head {head}: run {run} of {workflow} waits for \
+                         the next pass, which asks it again ({RECOVERY_RERUNS} were asked in \
+                         this one)"
+                    ),
+                ));
+                continue;
+            }
+            if *trail_broken {
+                out.push(recovery(
+                    RecoveryOutcome::Unrecorded,
+                    format!(
+                        "#{pr} has no run of its head {head}: run {run} was not asked to run \
+                         again, since the trail refused an earlier write"
+                    ),
+                ));
+                continue;
+            }
+            asked += 1;
+            let broken_before = *trail_broken;
+            let (a, said) = ask_rerun(
+                root,
+                forge,
+                Some(pr),
+                &head,
+                run,
+                workflow,
+                attempt,
+                current,
+                trail_broken,
+            );
+            let outcome = match a {
+                _ if *trail_broken && !broken_before => RecoveryOutcome::Unrecorded,
+                Asked::Rerun => RecoveryOutcome::Rerun,
+                Asked::Decided => RecoveryOutcome::Decided,
+                Asked::Failed => RecoveryOutcome::RerunFailed,
+            };
+            out.push(recovery(outcome, said));
         }
-        let (asked, said) = ask_rerun(
-            root,
-            forge,
-            Some(pr),
-            &head,
-            run,
-            &mine.workflow,
-            attempt,
-            current,
-            trail_broken,
-        );
-        let outcome = match asked {
-            Asked::Rerun => RecoveryOutcome::Rerun,
-            Asked::Passed => RecoveryOutcome::Passed,
-            Asked::Failed => RecoveryOutcome::RerunFailed,
-        };
-        out.push(recovery(run, attempt, outcome, said));
     }
     out
 }
 
-/// Why a cancel the forge refused found nothing left to do, with whether the run is known to
-/// have passed, or `None` when the refusal stands: the run read again has completed, or the
+/// Why a cancel the forge refused found nothing left to do, with the conclusion the run is known
+/// to have ended with, or `None` when the refusal stands: the run read again has completed, or the
 /// forge answered 409, which it gives for a run that can no longer be cancelled because it
 /// completed. A second supervision that decided the same cancel in the same minute (two lanes
 /// in one burst) meets exactly this, and so does a cancel that landed although `gh` reported an
 /// error (a timeout, a 502).
-fn already_ended(forge: &dyn RunForge, id: u64, refusal: &ForgeError) -> Option<(String, bool)> {
+fn already_ended(
+    forge: &dyn RunForge,
+    id: u64,
+    refusal: &ForgeError,
+) -> Option<(String, Option<String>)> {
     match forge.run(id) {
         Ok(r) if !r.in_flight() => Some((
             format!(
@@ -1120,17 +1272,68 @@ fn already_ended(forge: &dyn RunForge, id: u64, refusal: &ForgeError) -> Option<
                     .map(|c| format!(", {c}"))
                     .unwrap_or_default()
             ),
-            r.conclusion.as_deref() == Some("success"),
+            r.conclusion,
         )),
         _ if refusal.0.contains("HTTP 409") => Some((
             format!(
                 "the forge answered that it can no longer be cancelled: {}",
                 refusal.0.trim()
             ),
-            false,
+            None,
         )),
         _ => None,
     }
+}
+
+/// Whether the paired re-run of run `d.run`, just ended, is to be asked: `Ok(None)` when it is,
+/// or the reason it is not. The head's commit is read whole first, so that a run of the same
+/// workflow and branch that has its verdict (an older twin that passed, #2678's) or is on its way
+/// to one keeps the head, and nothing writes a newer `ci` over that verdict; and a run whose
+/// `run_attempt` reached [`MAX_ATTEMPTS`] is not asked (`Ok(Some(_))` with `true`: the head is
+/// held as `head_exhausted`). Err when the commit's runs could not be read: nothing is asked.
+fn paired_rerun_needed(
+    forge: &dyn RunForge,
+    d: &Decision,
+    fresh: &RunObservation,
+    branch: Option<&str>,
+) -> Result<Option<(String, bool)>, ForgeError> {
+    let n = d.pull_request.unwrap_or_default();
+    let runs = forge.runs_at(&d.head_sha)?;
+    let others: Vec<&RunObservation> = of_head(&runs, &d.workflow, n, branch)
+        .into_iter()
+        .filter(|r| r.id != d.run)
+        .collect();
+    if let Some(v) = others.iter().find(|r| r.verdict_written()) {
+        return Ok(Some((
+            format!(
+                "not run again: run {} of #{n}'s head has its verdict ({}), which a re-run would \
+                 write a newer `ci` over",
+                v.id,
+                v.conclusion.as_deref().unwrap_or_default()
+            ),
+            false,
+        )));
+    }
+    if let Some(o) = others.iter().find(|r| r.toward_verdict()) {
+        return Ok(Some((
+            format!(
+                "not run again: run {} of #{n}'s head is on its way to a verdict",
+                o.id
+            ),
+            false,
+        )));
+    }
+    if fresh.run_attempt >= MAX_ATTEMPTS {
+        return Ok(Some((
+            format!(
+                "not run again: it was attempt {} of at most {MAX_ATTEMPTS}, and #{n} has no run \
+                 of its head until a person re-runs it or pushes",
+                fresh.run_attempt
+            ),
+            true,
+        )));
+    }
+    Ok(None)
 }
 
 /// When a lane that covers for another stands aside (`--unless-supervised-within`,
@@ -1199,6 +1402,7 @@ pub fn supervise(
                 held: Vec::new(),
                 acts: Vec::new(),
                 recovered: Vec::new(),
+                unread: Vec::new(),
                 jobs_read: 0,
                 skipped: Some(format!(
                     "a supervision{} succeeded {minutes} min ago, within {within}: nothing \
@@ -1249,6 +1453,9 @@ pub fn supervise(
     // act's re-check, so that no decision rests on a run this pass already ended
     let mut current = obs.runs.clone();
     let mut trail_broken = false;
+    let mut exhausted_holds = Vec::new();
+    // the pull requests whose head's re-run an act of this pass judged: recovery leaves them be
+    let mut paired_heads = BTreeSet::new();
     if apply {
         for d in &decided.decisions {
             let word = d.reason.word().to_string();
@@ -1376,7 +1583,7 @@ pub fn supervise(
                 });
                 continue;
             }
-            // `ended`: the run reads completed after the act and did not pass, whatever the
+            // `ended`: the run reads completed after the act without a verdict, whatever the
             // forge answered the cancel, so that a paired re-run is asked of it
             let (action, outcome, detail, ended) = match forge.force_cancel(d.run) {
                 Ok(()) => {
@@ -1394,18 +1601,22 @@ pub fn supervise(
                 Err(e) => match already_ended(forge, d.run, &e) {
                     // two lanes in one burst can decide the same cancel: the second finds it
                     // done, which is no failure; and a cancel `gh` called failed may have landed
-                    Some((why, passed)) => {
+                    Some((why, conclusion)) => {
+                        let decided = matches!(
+                            conclusion.as_deref(),
+                            Some("success" | "failure" | "timed_out")
+                        );
                         if let Some(r) = current.iter_mut().find(|r| r.id == d.run) {
                             r.status = "completed".into();
-                            if passed {
-                                r.conclusion = Some("success".into());
+                            if conclusion.is_some() {
+                                r.conclusion = conclusion;
                             }
                         }
                         (
                             IntegrationAction::RunAlreadyEnded,
                             ActOutcome::Skipped,
                             format!("not cancelled, {why}: {}", subject(&held)),
-                            !passed,
+                            !decided,
                         )
                     }
                     // still in flight: the head keeps it, and a cancel that lands later is
@@ -1426,27 +1637,60 @@ pub fn supervise(
                 }
             };
             // the pair of a cancel that ended its head's last run: asked whatever the forge
-            // answered the cancel and the trail said of it, once the run reads ended without
-            // passing, since it is what gives the head a run again
+            // answered the cancel and the trail said of it, once the run reads ended without a
+            // verdict, since it is what gives the head a run again; unless the head has a
+            // verdict or a run on its way after all, or the run's attempts are spent
             let mut outcome = outcome;
             if ended && held.rerun {
-                let (asked, said) = ask_rerun(
-                    root,
-                    forge,
-                    held.pull_request,
-                    &held.head_sha,
-                    d.run,
-                    &d.workflow,
-                    1,
-                    &mut current,
-                    &mut trail_broken,
-                );
-                match asked {
-                    Asked::Rerun => outcome = ActOutcome::CancelledAndRerun,
-                    Asked::Passed => {}
-                    Asked::Failed => outcome = ActOutcome::RerunFailed,
+                paired_heads.extend(held.pull_request);
+                let branch = obs
+                    .pr_branches
+                    .get(&held.pull_request.unwrap_or_default())
+                    .map(String::as_str);
+                match paired_rerun_needed(forge, &held, &fresh, branch) {
+                    Ok(None) => {
+                        let (asked, said) = ask_rerun(
+                            root,
+                            forge,
+                            held.pull_request,
+                            &held.head_sha,
+                            d.run,
+                            &d.workflow,
+                            fresh.run_attempt + 1,
+                            &mut current,
+                            &mut trail_broken,
+                        );
+                        match asked {
+                            Asked::Rerun => outcome = ActOutcome::CancelledAndRerun,
+                            Asked::Decided => {}
+                            Asked::Failed => outcome = ActOutcome::RerunFailed,
+                        }
+                        detail = format!("{detail}; {said}");
+                    }
+                    Ok(Some((why, exhausted))) => {
+                        if exhausted {
+                            exhausted_holds.push(Hold {
+                                run: d.run,
+                                workflow: d.workflow.clone(),
+                                event: d.event.clone(),
+                                reason: supervise::HoldReason::HeadExhausted {
+                                    pull_request: held.pull_request.unwrap_or_default(),
+                                    attempts: fresh.run_attempt,
+                                },
+                            });
+                        }
+                        detail = format!("{detail}; {why}");
+                    }
+                    Err(e) => {
+                        outcome = ActOutcome::RerunFailed;
+                        detail = format!(
+                            "{detail}; not run again: #{}'s head's runs could not be read, so \
+                             whether it has a verdict is not known, and the next pass judges it \
+                             from the forge: {e}",
+                            held.pull_request.unwrap_or_default()
+                        );
+                    }
                 }
-                detail = format!("{detail}; {said}");
             }
             acts.push(Act {
                 run: d.run,
@@ -1456,16 +1700,25 @@ pub fn supervise(
             });
         }
     }
-    // a head an earlier pass left without a run is asked for one again, after this pass's acts
+    // a head left without a run, by any pass of any lane or by a person, is asked for one again,
+    // after this pass's acts; a head whose re-run an act judged is left to that act
+    let mut held = decided.held;
+    held.append(&mut exhausted_holds);
+    let mut unread = Vec::new();
     let recovered = if apply {
-        let acted: BTreeSet<u64> = decided.decisions.iter().map(|d| d.run).collect();
+        let acted = paired_heads;
+        let at = now();
         recover(
             root,
             forge,
-            &obs.pr_heads,
+            &obs,
+            model,
+            at,
             &mut current,
             &acted,
             &mut trail_broken,
+            &mut held,
+            &mut unread,
         )
     } else {
         Vec::new()
@@ -1504,9 +1757,10 @@ pub fn supervise(
         applied: apply,
         in_flight: obs.runs.iter().filter(|r| r.in_flight()).count(),
         decisions: decided.decisions,
-        held: decided.held,
+        held,
         acts,
         recovered,
+        unread,
         jobs_read: wanted.len(),
         skipped: None,
     })
@@ -1556,6 +1810,7 @@ mod tests {
             created_at: at(minutes_ago),
             run_started_at: Some(at(minutes_ago)),
             run_attempt: 1,
+            updated_at: None,
             // a run its group admitted at its creation has its first job; a pending one has none
             jobs: if status == "queued" {
                 vec![JobObservation {
@@ -1594,6 +1849,10 @@ mod tests {
         cancelled: RefCell<Vec<u64>>,
         /// How the forge refuses a re-run, when it does.
         refuse_rerun: Option<&'static str>,
+        /// What the listing of cancelled runs answers; nothing listed when absent.
+        listed_cancelled: Option<Result<Vec<RunObservation>, &'static str>>,
+        /// The commits whose runs were asked for, in order.
+        commits_asked: RefCell<Vec<String>>,
         /// The runs asked to run again, in order.
         rerun: RefCell<Vec<u64>>,
         /// What the supervisor's newest success is; `None` reads as "an hour ago".
@@ -1653,9 +1912,19 @@ mod tests {
             Ok(())
         }
         fn rerun(&mut self, id: u64) -> Result<Rerun, ForgeError> {
-            if let Some(r) = self.after_cancel.get(&id).or(self.reread.get(&id)) {
-                if r.conclusion.as_deref() == Some("success") {
-                    return Ok(Rerun::Passed);
+            let listed = self
+                .at_commit
+                .as_ref()
+                .and_then(|c| c.as_ref().ok())
+                .and_then(|c| c.iter().find(|r| r.id == id));
+            if let Some(r) = self
+                .after_cancel
+                .get(&id)
+                .or(self.reread.get(&id))
+                .or(listed)
+            {
+                if r.verdict_written() {
+                    return Ok(Rerun::Decided);
                 }
             } else if !self.cancelled.borrow().contains(&id) {
                 return Err(ForgeError(format!("run {id} was never cancelled")));
@@ -1667,6 +1936,7 @@ mod tests {
             Ok(Rerun::Asked)
         }
         fn runs_at(&self, sha: &str) -> Result<Vec<RunObservation>, ForgeError> {
+            self.commits_asked.borrow_mut().push(sha.to_string());
             if let Some(r) = &self.at_commit {
                 return r.clone().map_err(|e| ForgeError(e.into()));
             }
@@ -1677,6 +1947,12 @@ mod tests {
                 .filter(|r| r.head_sha == sha)
                 .map(|r| self.reread.get(&r.id).unwrap_or(r).clone())
                 .collect())
+        }
+        fn cancelled_since(&self, _since: u64) -> Result<Vec<RunObservation>, ForgeError> {
+            match &self.listed_cancelled {
+                None => Ok(Vec::new()),
+                Some(r) => r.clone().map_err(|e| ForgeError(e.into())),
+            }
         }
         fn newest_success(
             &self,
@@ -1712,6 +1988,7 @@ mod tests {
                     .into_iter()
                     .collect(),
                 full: BTreeSet::new(),
+                pr_branches: BTreeMap::new(),
             }),
             ..Fake::default()
         }
@@ -1790,6 +2067,7 @@ mod tests {
                 runs: vec![run(1, "a", 7, "in_progress", 5)],
                 pr_heads: [(7, "a".to_string())].into_iter().collect(),
                 full: BTreeSet::new(),
+                pr_branches: BTreeMap::new(),
             }),
             ..Fake::default()
         };
@@ -2128,7 +2406,7 @@ mod tests {
             already_ended(&f, 100, &other),
             Some((
                 "it had already ended (completed, cancelled)".to_string(),
-                false
+                Some("cancelled".to_string())
             ))
         );
         // and a 409 is the forge's own word for it, even when the run cannot be read again
@@ -2160,6 +2438,7 @@ mod tests {
                 runs: vec![r],
                 pr_heads: [(8, "h".to_string())].into_iter().collect(),
                 full: BTreeSet::new(),
+                pr_branches: BTreeMap::new(),
             }),
             ..Fake::default()
         }
@@ -2276,9 +2555,9 @@ mod tests {
                 IntegrationAction::RunRerunRequested
             ]
         );
-        // a run that ended any other way than passing is run again too: a 409 with the run
-        // unread, or a failure of the hung job's own
-        for conclusion in ["failure", "timed_out"] {
+        // it reached a verdict of its own before the cancel did, passed, failed or timed out:
+        // the head has it, and nothing is asked, since a re-run would write a newer `ci` over it
+        for conclusion in ["success", "failure", "timed_out"] {
             let d = repo();
             let mut f = last_run_of_head("in_progress", 300);
             f.refuse_cancel =
@@ -2288,21 +2567,14 @@ mod tests {
             ended.conclusion = Some(conclusion.into());
             f.after_cancel.insert(300, ended);
             let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
-            assert_eq!(*f.rerun.borrow(), vec![300], "{conclusion}: {r:?}");
+            assert!(f.rerun.borrow().is_empty(), "{conclusion}: {r:?}");
+            assert_eq!(
+                r.acts[0].outcome,
+                ActOutcome::Skipped,
+                "{conclusion}: {r:?}"
+            );
+            assert_eq!(r.exit_code(), 0);
         }
-        // it passed on its own before the cancel reached it: the head has its verdict, and
-        // nothing is asked
-        let d = repo();
-        let mut f = last_run_of_head("in_progress", 300);
-        f.refuse_cancel = Some("gh: Cannot cancel a workflow run that is completed. (HTTP 409)");
-        let mut passed = f.obs.as_ref().unwrap().runs[0].clone();
-        passed.status = "completed".into();
-        passed.conclusion = Some("success".into());
-        f.after_cancel.insert(300, passed);
-        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
-        assert!(f.rerun.borrow().is_empty(), "{r:?}");
-        assert_eq!(r.acts[0].outcome, ActOutcome::Skipped, "{r:?}");
-        assert_eq!(r.exit_code(), 0);
         // still in flight after the refusal: the head keeps that run, and the act failed
         let d = repo();
         let mut f = last_run_of_head("in_progress", 300);
@@ -2313,141 +2585,424 @@ mod tests {
         assert_eq!(r.exit_code(), 12);
     }
 
-    /// The world a pass after the act that left #8's head bare: run 300 reads completed and
-    /// cancelled, so nothing is in flight, and the trail of `root` is the act's.
-    fn after_a_bare_act(root: &Path) -> Fake {
-        let m = model();
-        let mut f = last_run_of_head("in_progress", 300);
-        f.refuse_rerun = Some("gh: Server Error (HTTP 502)");
-        supervise(root, &mut f, &m, &|| NOW, None, true, None).unwrap();
-        let mut gone = f.obs.as_ref().unwrap().runs[0].clone();
-        gone.status = "completed".into();
-        gone.conclusion = Some("cancelled".into());
-        gone.jobs.clear();
+    /// #8's head `h` with no run in flight: `runs` are every run the forge lists for the commit,
+    /// on #8's branch `fix/y`, and nothing else is open or in flight.
+    fn bare_head(runs: Vec<RunObservation>) -> Fake {
         Fake {
             obs: Some(RunsObservation {
+                repository: "o/r".into(),
+                default_branch: "master".into(),
                 runs: Vec::new(),
-                ..f.obs.clone().unwrap()
+                pr_heads: [(8, "h".to_string())].into_iter().collect(),
+                full: BTreeSet::new(),
+                pr_branches: [(8, "fix/y".to_string())].into_iter().collect(),
             }),
-            at_commit: Some(Ok(vec![gone])),
+            at_commit: Some(Ok(runs)),
             ..Fake::default()
         }
     }
 
+    /// A run of #8's head on its branch, completed with `conclusion` (or in flight with `status`
+    /// when that is not `completed`), its attempt started and last updated `minutes_ago`.
+    fn ended(id: u64, status: &str, conclusion: Option<&str>, minutes_ago: u64) -> RunObservation {
+        let mut r = run(id, "h", 8, status, minutes_ago);
+        r.head_branch = "fix/y".into();
+        r.conclusion = conclusion.map(str::to_string);
+        r.updated_at = Some(at(minutes_ago));
+        r.jobs.clear();
+        r
+    }
+
     #[test]
-    fn a_head_left_without_a_run_is_run_again_on_a_later_pass_a_bounded_number_of_times() {
-        let d = repo();
+    fn a_head_one_runner_left_bare_is_run_again_by_any_other_from_the_forge_alone() {
+        // the review of #2645 at 68fa1c17b6c: lundra's three runners each keep a trail of their
+        // own, and the hosted lane starts from a fresh checkout. Runner one cancels #8's last
+        // run and its re-run is refused; runner two, whose trail has never heard of it, is the
+        // one that takes the next pass
         let m = model();
-        let mut f = after_a_bare_act(d.path());
-        // pass two: nothing in flight, so no decision; the trail names run 300 as ended by this
-        // supervision with its re-run failed, the commit's runs say the head has no other run
-        // and no verdict, and its re-run is asked again
+        let one = repo();
+        let mut f = last_run_of_head("in_progress", 300);
+        f.refuse_rerun = Some("gh: Server Error (HTTP 502)");
+        let r = supervise(one.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
+        assert_eq!(r.acts[0].outcome, ActOutcome::RerunFailed, "{r:?}");
+        assert_eq!(
+            r.exit_code(),
+            12,
+            "the pass whose own ask was refused says so"
+        );
+        let on_one = trail(one.path()).len();
+        let two = repo();
+        let mut f = bare_head(vec![ended(300, "completed", Some("cancelled"), 1)]);
         f.cancelled.borrow_mut().push(300);
-        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
+        let r = supervise(two.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
         assert!(r.decisions.is_empty());
         assert_eq!(*f.rerun.borrow(), vec![300], "{r:?}");
         assert_eq!(r.recovered.len(), 1, "{r:?}");
         assert_eq!(r.recovered[0].outcome, RecoveryOutcome::Rerun);
-        assert_eq!(r.recovered[0].attempt, 2);
+        assert_eq!(r.recovered[0].attempt, 2, "GitHub's attempt 1, re-run as 2");
         assert_eq!(r.recovered[0].pull_request, 8);
         assert_eq!(r.exit_code(), 0);
-        // asked, it is not asked again: the trail's newest word of it is the request
-        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
-        assert!(r.recovered.is_empty(), "{r:?}");
-        assert_eq!(f.rerun.borrow().len(), 1);
-
-        // refused every time: one attempt a pass, until the bound, then exit 12 naming #8
-        let d = repo();
-        let mut f = after_a_bare_act(d.path());
+        // runner two's trail records the ask, and runner one's is untouched: neither decides
+        let t: Vec<_> = trail(two.path()).into_iter().map(|e| e.action).collect();
+        assert_eq!(
+            t,
+            vec![
+                IntegrationAction::RunRerunAttempted,
+                IntegrationAction::RunRerunRequested
+            ]
+        );
+        assert_eq!(trail(one.path()).len(), on_one);
+        // and a lane with a trail full of the run's story reads the same forge the same way:
+        // the trail is a record, never the source
+        let mut f = bare_head(vec![ended(300, "completed", Some("cancelled"), 1)]);
         f.cancelled.borrow_mut().push(300);
-        f.refuse_rerun = Some("gh: Resource not accessible by integration (HTTP 403)");
-        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
-        assert_eq!(
-            r.recovered[0].outcome,
-            RecoveryOutcome::RerunFailed,
-            "{r:?}"
-        );
-        assert_eq!(r.recovered[0].attempt, 2);
-        assert_eq!(r.exit_code(), 12);
-        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
-        assert_eq!(r.recovered[0].attempt, 3);
-        assert_eq!(r.recovered[0].outcome, RecoveryOutcome::RerunFailed);
-        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
-        assert_eq!(r.recovered[0].outcome, RecoveryOutcome::Exhausted, "{r:?}");
-        assert!(r.recovered[0].detail.contains("#8 has no run"), "{r:?}");
-        assert_eq!(r.exit_code(), 12);
-        let attempted = trail(d.path())
-            .iter()
-            .filter(|e| e.action == IntegrationAction::RunRerunAttempted)
-            .count();
-        assert_eq!(
-            attempted, RERUN_ATTEMPTS as usize,
-            "bounded, and counted on the trail"
-        );
-        // and the text a person reads names the pull request
-        let mut out = Vec::new();
-        crate::commands::prs::render_supervise(&r, &mut out).unwrap();
-        let text = String::from_utf8(out).unwrap();
-        assert!(text.contains("exhausted") && text.contains("#8"), "{text}");
+        let r = supervise(one.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
+        assert_eq!(r.recovered[0].outcome, RecoveryOutcome::Rerun, "{r:?}");
     }
 
     #[test]
-    fn a_head_that_has_a_run_or_a_verdict_again_is_left_alone() {
+    fn the_newest_run_needs_no_story_whoever_cancelled_it() {
+        // finding 1 of the review of 68fa1c17b6c: #8 was opened with a label, run A (300) and
+        // its twin B (301); B was cancelled by hand, or by another lane as a duplicate, so this
+        // trail tells no story of it; A then ran past its bound, its paired cancel landed and
+        // its re-run was refused. B, started later, is the head's newest run. The trail-read
+        // recovery found no story of B and gave up with exit 0, for good
         let m = model();
-        let of = |status: &str, conclusion: Option<&str>, id: u64| {
-            let mut r = run(id, "h", 8, status, 10);
-            r.head_branch = "fix/y".into();
-            r.conclusion = conclusion.map(str::to_string);
-            r.jobs.clear();
-            r
-        };
-        let cancelled = of("completed", Some("cancelled"), 300);
-        for (others, why) in [
-            (vec![of("completed", Some("success"), 300)], "it passed"),
+        let d = repo();
+        let mut f = last_run_of_head("in_progress", 300);
+        f.refuse_rerun = Some("gh: Server Error (HTTP 502)");
+        supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
+        assert!(
+            trail(d.path()).iter().all(|e| e.run == Some(300)),
+            "B is on no trail here"
+        );
+        let a = ended(300, "completed", Some("cancelled"), 2);
+        let mut b = ended(301, "completed", Some("cancelled"), 1);
+        b.created_at = at(299);
+        let mut f = bare_head(vec![a, b]);
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
+        assert_eq!(*f.rerun.borrow(), vec![301], "the newest is asked: {r:?}");
+        assert_eq!(r.recovered[0].outcome, RecoveryOutcome::Rerun, "{r:?}");
+        assert_eq!(r.exit_code(), 0);
+        // and with no trail at all, a head a person cancelled by hand is recovered the same way
+        let fresh = repo();
+        let mut f = bare_head(vec![ended(310, "completed", Some("cancelled"), 5)]);
+        let r = supervise(fresh.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
+        assert_eq!(*f.rerun.borrow(), vec![310], "{r:?}");
+    }
+
+    #[test]
+    fn a_head_is_run_again_until_githubs_own_attempt_reaches_the_bound_then_held() {
+        let m = model();
+        let d = repo();
+        // attempts one and two are asked again
+        for attempt in 1..MAX_ATTEMPTS {
+            let mut gone = ended(300, "completed", Some("cancelled"), 1);
+            gone.run_attempt = attempt;
+            let mut f = bare_head(vec![gone]);
+            let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
+            assert_eq!(*f.rerun.borrow(), vec![300], "attempt {attempt}: {r:?}");
+            assert_eq!(r.recovered[0].attempt, attempt + 1);
+        }
+        // at the bound nothing is asked: held as head_exhausted, a warning naming #8, exit 0 on
+        // this pass and on every later one that finds it, from any runner
+        for root in [repo(), repo()] {
+            for _ in 0..3 {
+                let mut gone = ended(300, "completed", Some("cancelled"), 1);
+                gone.run_attempt = MAX_ATTEMPTS;
+                let mut f = bare_head(vec![gone]);
+                let r = supervise(root.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
+                assert!(f.rerun.borrow().is_empty(), "{r:?}");
+                assert!(r.recovered.is_empty(), "{r:?}");
+                assert_eq!(
+                    r.held.last().map(|h| &h.reason),
+                    Some(&crate::integration::supervise::HoldReason::HeadExhausted {
+                        pull_request: 8,
+                        attempts: MAX_ATTEMPTS
+                    }),
+                    "{r:?}"
+                );
+                assert_eq!(
+                    r.exit_code(),
+                    0,
+                    "one stuck pull request is no stopped supervisor"
+                );
+                let mut out = Vec::new();
+                crate::commands::prs::render_supervise(&r, &mut out).unwrap();
+                let text = String::from_utf8(out).unwrap();
+                assert!(
+                    text.lines()
+                        .any(|l| l.starts_with("::warning ") && l.contains("#8")),
+                    "{text}"
+                );
+                assert!(
+                    trail(root.path()).is_empty(),
+                    "nothing asked, nothing recorded"
+                );
+            }
+        }
+        // a recovery re-run the forge refuses, on every pass and from every runner, is a warning
+        // naming #8 and never a red lane (finding 4: a refusal that persists would fail every
+        // pass); the next pass asks again at the same attempt, since the forge counted none
+        for root in [repo(), repo()] {
+            for _ in 0..3 {
+                let mut f = bare_head(vec![ended(300, "completed", Some("cancelled"), 1)]);
+                f.refuse_rerun = Some("gh: Server Error (HTTP 502)");
+                let r = supervise(root.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
+                assert_eq!(
+                    r.recovered[0].outcome,
+                    RecoveryOutcome::RerunFailed,
+                    "{r:?}"
+                );
+                assert!(r.recovered[0].detail.contains("#8 has no run"), "{r:?}");
+                assert_eq!(
+                    r.exit_code(),
+                    0,
+                    "a refusal that persists is no stopped supervisor"
+                );
+                let mut out = Vec::new();
+                crate::commands::prs::render_supervise(&r, &mut out).unwrap();
+                let text = String::from_utf8(out).unwrap();
+                assert!(
+                    text.lines()
+                        .any(|l| l.starts_with("::warning ") && l.contains("#8")),
+                    "{text}"
+                );
+            }
+        }
+        let d = repo();
+        let mut f = bare_head(vec![ended(300, "completed", Some("cancelled"), 1)]);
+        f.refuse_rerun = Some("gh: Server Error (HTTP 502)");
+        supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
+        f.refuse_rerun = None;
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
+        assert_eq!(r.recovered[0].outcome, RecoveryOutcome::Rerun, "{r:?}");
+        assert_eq!(r.recovered[0].attempt, 2);
+        assert_eq!(r.exit_code(), 0);
+    }
+
+    #[test]
+    fn a_head_that_has_a_run_or_a_verdict_or_was_cancelled_long_ago_is_left_alone() {
+        let m = model();
+        let cancelled = ended(300, "completed", Some("cancelled"), 10);
+        let window = RECOVERY_WINDOW_MINUTES;
+        for (runs, why) in [
             (
-                vec![cancelled.clone(), of("completed", Some("failure"), 301)],
+                vec![ended(300, "completed", Some("success"), 10)],
+                "it passed",
+            ),
+            (
+                vec![
+                    cancelled.clone(),
+                    ended(301, "completed", Some("failure"), 5),
+                ],
                 "another run of the head has a verdict",
             ),
             (
-                vec![cancelled.clone(), of("queued", None, 301)],
+                vec![cancelled.clone(), ended(301, "queued", None, 5)],
                 "another run of the head is on its way",
             ),
             (
-                vec![cancelled.clone(), {
-                    let mut newer = of("completed", Some("cancelled"), 301);
-                    newer.run_started_at = Some(at(1));
-                    newer
-                }],
-                "the newest run of the head is somebody else's",
+                vec![ended(300, "completed", Some("skipped"), 10)],
+                "its newest run was skipped, not cancelled",
             ),
+            (
+                vec![ended(300, "completed", Some("cancelled"), window + 1)],
+                "its newest run was cancelled before the window",
+            ),
+            (Vec::new(), "it has no run at all"),
         ] {
             let d = repo();
-            let mut f = after_a_bare_act(d.path());
-            f.at_commit = Some(Ok(others));
+            let mut f = bare_head(runs);
             let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
             assert!(r.recovered.is_empty(), "{why}: {r:?}");
             assert!(f.rerun.borrow().is_empty(), "{why}");
+            assert!(
+                !r.held.iter().any(|h| matches!(
+                    h.reason,
+                    crate::integration::supervise::HoldReason::HeadExhausted { .. }
+                )),
+                "{why}"
+            );
             assert_eq!(r.exit_code(), 0, "{why}");
         }
-        // a head that moved, or a pull request closed, is no longer this one's
+        // another branch's run of the same commit (a train opened at its member's tip) is not
+        // the pull request's
         let d = repo();
-        let mut f = after_a_bare_act(d.path());
-        f.obs.as_mut().unwrap().pr_heads.insert(8, "h2".into());
+        let mut other = cancelled.clone();
+        other.head_branch = "integration/x".into();
+        let mut f = bare_head(vec![other]);
         let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
         assert!(r.recovered.is_empty(), "{r:?}");
-        // and a head whose runs cannot be read is said, exit 12
+        // a head whose runs cannot be read is a warning, not a failed pass: the next pass reads
         let d = repo();
-        let mut f = after_a_bare_act(d.path());
+        let mut f = bare_head(Vec::new());
         f.at_commit = Some(Err("gh: Server Error (HTTP 502)"));
         let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
-        assert_eq!(r.recovered[0].outcome, RecoveryOutcome::Unobserved, "{r:?}");
-        assert_eq!(r.exit_code(), 12);
+        assert!(r.unread.iter().any(|u| u.contains("#8")), "{r:?}");
+        assert_eq!(r.exit_code(), 0);
+        let mut out = Vec::new();
+        crate::commands::prs::render_supervise(&r, &mut out).unwrap();
+        let text = String::from_utf8(out).unwrap();
+        assert!(
+            text.contains("::warning title=supervise::#8's head h"),
+            "{text}"
+        );
+        // nor is a listing of cancelled runs that cannot be read: the rotating heads are read
+        let d = repo();
+        let mut f = bare_head(vec![cancelled.clone()]);
+        f.listed_cancelled = Some(Err("gh: Server Error (HTTP 502)"));
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
+        assert_eq!(r.unread.len(), 1, "{r:?}");
+        assert_eq!(*f.rerun.borrow(), vec![300], "{r:?}");
+        assert_eq!(r.exit_code(), 0);
         // a dry run asks nothing and reads no commit
         let d = repo();
-        let mut f = after_a_bare_act(d.path());
+        let mut f = bare_head(vec![cancelled]);
         f.at_commit = Some(Err("not asked"));
         let r = supervise(d.path(), &mut f, &m, &|| NOW, None, false, None).unwrap();
-        assert!(r.recovered.is_empty());
+        assert!(r.recovered.is_empty() && r.unread.is_empty(), "{r:?}");
+        assert!(f.commits_asked.borrow().is_empty());
+        assert_eq!(r.exit_code(), 0);
+    }
+
+    #[test]
+    fn one_pass_asks_a_bounded_number_of_re_runs_and_the_next_asks_the_rest() {
+        let m = model();
+        let d = repo();
+        let prs: Vec<u64> = (1..=RECOVERY_RERUNS as u64 + 2).collect();
+        let mut gone = Vec::new();
+        for n in &prs {
+            let mut r = ended(500 + n, "completed", Some("cancelled"), 1);
+            r.pull_request = Some(*n);
+            r.head_branch = format!("fix/{n}");
+            r.head_sha = format!("h{n}");
+            gone.push(r);
+        }
+        let mut f = Fake {
+            obs: Some(RunsObservation {
+                repository: "o/r".into(),
+                default_branch: "master".into(),
+                runs: Vec::new(),
+                pr_heads: prs.iter().map(|n| (*n, format!("h{n}"))).collect(),
+                full: BTreeSet::new(),
+                pr_branches: prs.iter().map(|n| (*n, format!("fix/{n}"))).collect(),
+            }),
+            listed_cancelled: Some(Ok(gone.clone())),
+            at_commit: Some(Ok(gone.clone())),
+            ..Fake::default()
+        };
+        f.cancelled.borrow_mut().extend(gone.iter().map(|r| r.id));
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
+        let count = |o| r.recovered.iter().filter(|x| x.outcome == o).count();
+        assert_eq!(count(RecoveryOutcome::Rerun), RECOVERY_RERUNS, "{r:?}");
+        assert_eq!(count(RecoveryOutcome::Deferred), 2, "{r:?}");
+        assert_eq!(
+            r.exit_code(),
+            0,
+            "a deferred head is asked by the next pass"
+        );
+    }
+
+    #[test]
+    fn the_heads_read_are_the_recently_cancelled_first_then_a_rotating_few() {
+        let m = model();
+        let n_prs = 30u64;
+        let obs = RunsObservation {
+            repository: "o/r".into(),
+            default_branch: "master".into(),
+            runs: vec![{
+                // #3 has a run in flight: it is not read
+                let mut r = run(903, "h3", 3, "queued", 5);
+                r.head_branch = "fix/3".into();
+                r
+            }],
+            pr_heads: (1..=n_prs).map(|n| (n, format!("h{n}"))).collect(),
+            full: BTreeSet::new(),
+            pr_branches: (1..=n_prs).map(|n| (n, format!("fix/{n}"))).collect(),
+        };
+        let cancel = |n: u64, minutes_ago: u64| {
+            let mut r = run(700 + n, &format!("h{n}"), n, "completed", minutes_ago);
+            r.head_branch = format!("fix/{n}");
+            r.conclusion = Some("cancelled".into());
+            r.updated_at = Some(at(minutes_ago));
+            r
+        };
+        // #20 cancelled a minute ago, #10 an hour ago, #5 before the window
+        let listed = vec![
+            cancel(20, 1),
+            cancel(10, 60),
+            cancel(5, RECOVERY_WINDOW_MINUTES + 5),
+        ];
+        let skip: BTreeSet<u64> = [7].into_iter().collect();
+        let read = heads_to_read(&obs, &obs.runs, &listed, &m, &skip, NOW);
+        let numbers: Vec<u64> = read.iter().map(|(n, _)| *n).collect();
+        assert_eq!(&numbers[..2], &[20, 10], "newest cancel first: {numbers:?}");
+        assert_eq!(numbers.len(), 2 + ROTATING_READS, "{numbers:?}");
+        // over enough ten-minute slots every other head is read, and #3 (in flight) and #7
+        // (acted on this pass) never
+        let mut seen = BTreeSet::new();
+        for slot in 0..n_prs {
+            for (n, _) in heads_to_read(&obs, &obs.runs, &listed, &m, &skip, NOW + slot * 600) {
+                seen.insert(n);
+            }
+        }
+        let want: BTreeSet<u64> = (1..=n_prs).filter(|n| *n != 3 && *n != 7).collect();
+        assert_eq!(seen, want);
+        // two runners at the same moment read the same heads
+        assert_eq!(
+            read,
+            heads_to_read(&obs, &obs.runs, &listed, &m, &skip, NOW)
+        );
+    }
+
+    #[test]
+    fn a_hung_twin_is_never_run_again_over_its_older_twins_verdict() {
+        // finding 3 of the review of 68fa1c17b6c, #2678's shape: twins A (299) and B (300) of
+        // #8's head; A passed, the group admitted B, and B's job hung past its bound. The
+        // observation lists only B, so B reads as the head's last run and its cancel is paired;
+        // the commit's runs read whole say A has the verdict, so B is ended and not run again
+        let m = model();
+        let d = repo();
+        let mut f = last_run_of_head("in_progress", 300);
+        let b = f.obs.as_ref().unwrap().runs[0].clone();
+        let mut a = ended(299, "completed", Some("success"), 301);
+        a.created_at = at(302);
+        f.at_commit = Some(Ok(vec![a, b]));
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
+        assert!(r.decisions[0].rerun, "decided as the head's last: {r:?}");
+        assert_eq!(*f.cancelled.borrow(), vec![300], "the runner is freed");
+        assert!(
+            f.rerun.borrow().is_empty(),
+            "no newer ci over the pass: {r:?}"
+        );
+        assert_eq!(r.acts[0].outcome, ActOutcome::Cancelled, "{r:?}");
+        assert!(r.acts[0].detail.contains("has its verdict"), "{r:?}");
+        assert_eq!(r.exit_code(), 0);
+        // a head whose runs cannot be read is not asked either: the act failed, and the next
+        // pass judges the head from the forge
+        let d = repo();
+        let mut f = last_run_of_head("in_progress", 300);
+        f.at_commit = Some(Err("gh: Server Error (HTTP 502)"));
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
+        assert!(f.rerun.borrow().is_empty(), "{r:?}");
+        assert_eq!(r.acts[0].outcome, ActOutcome::RerunFailed, "{r:?}");
+        assert_eq!(r.exit_code(), 12);
+        // and a run at GitHub's attempt bound is ended, not asked: the head is held exhausted
+        let d = repo();
+        let mut f = last_run_of_head("in_progress", 300);
+        f.obs.as_mut().unwrap().runs[0].run_attempt = MAX_ATTEMPTS;
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
+        assert_eq!(*f.cancelled.borrow(), vec![300]);
+        assert!(f.rerun.borrow().is_empty(), "{r:?}");
+        assert!(
+            r.held.iter().any(|h| h.reason
+                == crate::integration::supervise::HoldReason::HeadExhausted {
+                    pull_request: 8,
+                    attempts: MAX_ATTEMPTS
+                }),
+            "{r:?}"
+        );
         assert_eq!(r.exit_code(), 0);
     }
 

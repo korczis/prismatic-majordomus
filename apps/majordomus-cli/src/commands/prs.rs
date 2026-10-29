@@ -551,6 +551,15 @@ pub(crate) fn render_supervise(
                 "the last run of #{pull_request}'s head, which {would_end_for} would end: it \
                  waits, holding no runner, and ending it would leave the head with no run"
             ),
+            integration::supervise::HoldReason::HeadExhausted {
+                pull_request,
+                attempts,
+            } => format!(
+                "the newest run of #{pull_request}'s head, cancelled at attempt {attempts} of at \
+                 most {}: no more re-runs are asked, and the head has no run until a person \
+                 re-runs it or pushes",
+                integration::runs::MAX_ATTEMPTS
+            ),
             integration::supervise::HoldReason::Unjudgeable { detail } => {
                 format!("not judged: {detail}")
             }
@@ -579,6 +588,9 @@ pub(crate) fn render_supervise(
             r.run, r.pull_request, r.head_sha, r.detail
         ));
     }
+    for u in &report.unread {
+        lines.push(format!("unread      {u}"));
+    }
     if report.decisions.is_empty() {
         lines.push("nothing to cancel".into());
     }
@@ -599,6 +611,34 @@ pub(crate) fn render_supervise(
         ),
         (None, None) => "supervisor alive".into(),
     });
+    // a pull request's head no pass can give a run, one whose re-run the forge refused, and what
+    // recovery could not read: warnings the workflow raises as annotations, never a failed pass
+    for h in &report.held {
+        if let integration::supervise::HoldReason::HeadExhausted {
+            pull_request,
+            attempts,
+        } = &h.reason
+        {
+            lines.push(format!(
+                "::warning title=supervise::#{pull_request} has no run of its head: run {} of \
+                 {} was cancelled at attempt {attempts} of at most {}; re-run it or push",
+                h.run,
+                h.workflow,
+                integration::runs::MAX_ATTEMPTS
+            ));
+        }
+    }
+    for r in &report.recovered {
+        if r.outcome == integration::runs::RecoveryOutcome::RerunFailed {
+            lines.push(format!(
+                "::warning title=supervise::#{} has no run of its head {}: {}",
+                r.pull_request, r.head_sha, r.detail
+            ));
+        }
+    }
+    for u in &report.unread {
+        lines.push(format!("::warning title=supervise::{u}"));
+    }
     w(out, lines.join("\n"))
 }
 

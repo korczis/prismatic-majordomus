@@ -633,9 +633,10 @@ pub enum IntegrationAction {
     /// applied in the same minute, cancelled it, or it completed on its own. Nothing was left
     /// to do, and nothing failed.
     RunAlreadyEnded,
-    /// A run this supervision ended, the last of its pull request's head, is about to be asked
-    /// to run again: paired with its cancel, or on a later pass because the head still has no
-    /// run ([`super::runs`]). Each one counts against [`super::runs::RERUN_ATTEMPTS`].
+    /// A run, the newest of its pull request's head, is about to be asked to run again: paired
+    /// with this supervision's cancel of it, or on a later pass of any lane because the head has
+    /// no run in flight and no verdict ([`super::runs`]). A record only: GitHub's own
+    /// `run_attempt` bounds the asks ([`super::runs::MAX_ATTEMPTS`]), never this trail.
     RunRerunAttempted,
     /// The run just force-cancelled was asked to run again: it was the last run of its pull
     /// request's head on its way to a verdict, ended because a job of it ran past its bound

@@ -477,19 +477,55 @@ past its bound is ended, since that job holds a runner its own timeout did not f
 again once it has ended (`rerun` on the decision; `run_rerun_attempted` then
 `run_rerun_requested` on the trail, or `run_rerun_failed` and exit 12), as the release path's
 `resume` re-runs a run that yielded. The re-run is asked whenever the run reads completed without
-passing after the act, whatever the forge answered the cancel: the review of #2645 at
+a verdict after the act, whatever the forge answered the cancel: the review of #2645 at
 e54560c6d31 found a force-cancel that reaches GitHub while `gh` reports an error (its 20 s ran
 out, or a 502 while the cancel applied), filed as `run_already_ended` with nothing asked, and
-the head bare with exit 0. A run that passed on its own is not asked. A pass can still leave a
-head bare, when the re-run is refused or a cancel the forge reported failed lands a minute
-later, and the observation lists only runs in flight, so no later pass would see it. So every
-pass also reads the trail for the runs it cancelled that may have left their head without a run,
-reads such a head's commit whole (`repos/<repo>/actions/runs?head_sha=`), and when no run of
-the head is in flight or has a verdict and the newest is one this supervisor cancelled, asks it
-again: at most three asks per cancel in all, each `run_rerun_attempted` first, after which the
-pass exits 12 naming the pull request (`exhausted`); a head whose runs cannot be read is exit
-12 too (`unobserved`). The trail is the checkout's, so the lane that acted is the one that
-recovers. A
+the head bare with exit 0. It is never asked over a verdict: the observation lists only runs in
+flight, so before the paired re-run the commit's runs are read whole
+(`repos/<repo>/actions/runs?head_sha=`), and when a run of the same workflow and branch has its
+verdict (an older twin that passed while the group then admitted the twin that hung) the hung
+run is ended and not run again, since its re-run would write a newer `ci` over that pass, which
+is #2678's shape (the review of #2645 at 68fa1c17b6c). A run that reached a verdict of its own
+before its cancel did, passed, failed or timed out, is not asked either.
+
+A pass can still leave a head bare, when the re-run is refused or a cancel the forge reported
+failed lands a minute later, and so can a person, or the other lane, cancelling a head's last
+run. The observation lists only runs in flight, so no later pass would see the head again; and a
+trail cannot find it either, because the trail is a checkout's: lundra has three runners, each
+with a workspace and a trail of its own, and the hosted lane starts from a fresh checkout every
+time, so the runner that left a head bare need not be the one that takes the next pass (the
+same review found a head one runner left bare unrecovered for as long as that runner was busy
+with validate's first wave). So recovery is stateless, judged from what the forge holds, and any
+runner of any lane recovers any head. Every pass reads the open pull requests' heads that have
+no run of a bounded workflow in flight, each commit's runs whole, and judges each workflow's runs
+of the pull request's branch: when none is in flight, none has a verdict, and the newest ended
+`cancelled`, by anyone, within six hours, it is asked to run again while GitHub's own
+`run_attempt` of it is below three (`MAX_ATTEMPTS`). The forge counts the attempts, so every
+runner reads the same count, and the trail records each ask and decides none. At the bound the
+head is held as `head_exhausted`, printed as a `::warning` naming the pull request, which both
+lanes raise as an annotation, on every pass that finds it while it is within the window, and it
+never makes a pass exit 12; nor does a head whose runs could not be read (`unread`), nor a
+recovery re-run the forge refused, each a `::warning` naming the pull request that the next pass
+reads or asks again. Exit 12 is this pass's own act failing, a paired re-run refused among them,
+never a pull request's state: a lane that failed every pass for one stuck pull request (a
+refusal that persists, a head at the bound) would stop the hosted lane standing aside, which
+counts only lundra's successes, and make the queue report `supervise_stale` for a supervisor
+that works. Which pass first found such a head is not something the forge says, so no pass is
+red for finding one; the pass whose own act bared the head and could not run it again already
+was.
+
+The window is what keeps recovery to transients. On 2026-10-29 at 13:42Z, 93 of the 127 open
+pull requests' heads had only cancelled validate runs, most of them cancelled days before; a
+recovery without a window would have asked every one of them again at once, and filled the
+queue that validate's first wave already fills. A live supervisor passes every ten minutes and
+the queue reports one that has not for thirty, so a cancel six hours old was no pass's transient.
+The reads are bounded too, since every workflow spends one request budget: first the heads with
+a run cancelled within the window, from one listing of the pull requests' cancelled runs created
+in the last thirty hours (`repos/<repo>/actions/runs?status=cancelled&event=pull_request`, at
+most three pages; a validate run lives at most about a day from its creation), at most twelve;
+then four of the others, a different four every ten minutes, so that a head whose run was
+created before the listing reaches (a re-run of an old run) is read within five hours all the
+same. A pass asks at most three re-runs for recovery, and the next pass asks the rest. A
 superseded run's cancel never meets the rule: its head is not the pull request's, and its
 successor is. The incidents of 2026-10-28 stay fixed: their runs waited behind runs of heads
 nobody would merge, or behind a twin whose older run was in flight, and neither cancel ends a
@@ -498,10 +534,17 @@ success was weighed and refused: the group admits the twin the moment its older 
 an admitted twin is never cancelled (below), so that rule would never cancel one and would bring
 back 10b's seven-hour twin. `supervise_property.rs` holds the rule as a property, over every
 replay and unit scenario and over generated worlds of moving heads, twins, admissions, re-runs,
-passing bounds and a supervisor down for hours, through the command's own apply; its forge also
+passing bounds and a supervisor down for hours, through the command's own apply. Its forge also
 half-fails (a cancel that lands while `gh` reports an error, at once or a minute later, and
-re-runs refused up to twice in a row), and a head so bared must have its run back within three
-passes, each bare pass exiting 12 and naming the pull request.
+re-runs refused up to twice in a row), people cancel runs by hand (in one world of four, every
+run of one pull request, so that its head reaches the attempt bound and stays there), each pass
+lands on one of three runners with a trail of its own, and in some minutes a second lane applies
+right after the first. A head so bared must have its run back within three passes, from
+whichever runners take them, and a pass that leaves it bare names the pull request, exit 12 on
+the pass whose own act bared it and a warning on a later one; an exhausted head must be held,
+with a warning, on every pass that finds it; a pass is red only when the forge refused one of its
+own acts; and no re-run is ever asked over a verdict of its head, or of a run at the attempt
+bound.
 
 The duplicate is the `labeled` twin: a train opened with `--label train` is `opened` and
 `labeled` at once, and both start validate, so 6 of the 8 trains of 2026-10-28 had two full runs

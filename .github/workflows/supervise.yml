@@ -126,8 +126,12 @@ jobs:
 
       # `--apply`: each run decided on is read again, recorded on the trail, then cancelled.
       # 0 is nothing to do, every act done, or a covering lane that stood aside; 12 is a forge
-      # that could not be read or an act that could not be taken, and that fails this lane.
-      # Four minutes: the executable reads the forge for at most 180 s and then asks nothing.
+      # that could not be read or an act of this pass that could not be taken, and that fails
+      # this lane. A pull request's head no re-run is asked of any more (`head_exhausted`), one
+      # whose re-run recovery asked was refused, or one whose runs could not be read, is a
+      # `::warning` line raised here as an annotation, never a failure: a lane red for one stuck
+      # pull request reads as a supervisor that stopped. Four minutes: the executable reads the
+      # forge for at most 180 s, then asks nothing.
       - id: supervise
         timeout-minutes: 4
         env:
@@ -140,6 +144,8 @@ jobs:
           [ -z "$COVER" ] || set -- "$@" --unless-supervised-within "$COVER" --supervised-by lundra
           "$MJ" prs supervise "$@" > "$RUNNER_TEMP/supervise.txt" 2>&1 || rc=$?
           sed 's/^/    /' "$RUNNER_TEMP/supervise.txt"
+          # indented above, GitHub reads no command there: the warnings again, as annotations
+          grep '^::warning ' "$RUNNER_TEMP/supervise.txt" || true
           {
             printf '## The CI runs, supervised here (%s)\n\n```\n' "$LANE"
             cat "$RUNNER_TEMP/supervise.txt"
@@ -207,8 +213,12 @@ jobs:
 
       # `--apply`: each run decided on is read again, recorded on the trail, then cancelled.
       # 0 is nothing to do, every act done, or a covering lane that stood aside; 12 is a forge
-      # that could not be read or an act that could not be taken, and that fails this lane.
-      # Four minutes: the executable reads the forge for at most 180 s and then asks nothing.
+      # that could not be read or an act of this pass that could not be taken, and that fails
+      # this lane. A pull request's head no re-run is asked of any more (`head_exhausted`), one
+      # whose re-run recovery asked was refused, or one whose runs could not be read, is a
+      # `::warning` line raised here as an annotation, never a failure: a lane red for one stuck
+      # pull request reads as a supervisor that stopped. Four minutes: the executable reads the
+      # forge for at most 180 s, then asks nothing.
       - id: supervise
         timeout-minutes: 4
         env:
@@ -221,6 +231,8 @@ jobs:
           [ -z "$COVER" ] || set -- "$@" --unless-supervised-within "$COVER" --supervised-by lundra
           "$MJ" prs supervise "$@" > "$RUNNER_TEMP/supervise.txt" 2>&1 || rc=$?
           sed 's/^/    /' "$RUNNER_TEMP/supervise.txt"
+          # indented above, GitHub reads no command there: the warnings again, as annotations
+          grep '^::warning ' "$RUNNER_TEMP/supervise.txt" || true
           {
             printf '## The CI runs, supervised here (%s)\n\n```\n' "$LANE"
             cat "$RUNNER_TEMP/supervise.txt"
