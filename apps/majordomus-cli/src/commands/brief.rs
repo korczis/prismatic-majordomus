@@ -75,7 +75,10 @@ fn render(out: &mut impl Write, v: &serde_json::Value, args: &BriefArgs) -> std:
     }
     // the header: when, by whom, in how long, under which contract
     if !text("/at").is_empty() {
-        let ms = v.pointer("/answered_by/elapsed_ms").and_then(|x| x.as_u64()).unwrap_or(0);
+        let ms = v
+            .pointer("/answered_by/elapsed_ms")
+            .and_then(|x| x.as_u64())
+            .unwrap_or(0);
         writeln!(
             out,
             "majordomus brief  {}  {}{}  ({:.1} s)  report {} #{}",

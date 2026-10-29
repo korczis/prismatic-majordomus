@@ -64,7 +64,7 @@ use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CachePolicy, CliExposure, Exposure, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::lease;
-use crate::peers::Peer;
+use crate::peers::{Announcement, Peer};
 use crate::{capability, module};
 
 use super::lifecycle::Episodes;
@@ -105,12 +105,14 @@ pub(crate) const BUDGETS: &[(&str, Duration)] = &[
     ("work", Duration::from_secs(5)),
     ("peers", Duration::from_secs(4)),
     ("mesh", Duration::from_millis(200)),
-    ("integration", Duration::from_millis(300)),
+    // reads two files and asks git one count; measured at 336-396 ms on 2026-10-29 at a load
+    // average of 29, past the 300 ms first declared, so it is given a second
+    ("integration", Duration::from_secs(1)),
     ("ci", Duration::from_secs(5)),
     ("machine", Duration::from_secs(1)),
-    // release.currency reads tags and the trunk's history: measured at about 1 s in a
-    // server under load, so its budget is twice that
-    ("release", Duration::from_secs(2)),
+    // release.currency reads tags and the trunk's history: measured at about 1 s in a server
+    // under load, and past 2 s at a load average of 29 (2026-10-29), so its budget is 3 s
+    ("release", Duration::from_secs(3)),
     ("derive", Duration::from_millis(100)),
 ];
 
@@ -404,9 +406,13 @@ pub struct BriefPeer {
     pub worktree: Option<String>,
     /// Where the branch was read: `announce` (a `refs/heads/` scope it announced), `claim` (one of its mesh claims), `session` (its mesh session) or `server` (the checkout of the server it is attached to, the last resort).
     pub branch_source: String,
-    /// What it announced, whole.
+    /// What it announced, whole: the intent of the claim whose `refs/heads/` scope named the
+    /// branch, so that the branch and the intent describe one piece of work; else its latest.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub intent: Option<String>,
+    /// How many other claims it holds beside the one `intent` is, listed by `majordomus peers`.
+    #[serde(default)]
+    pub other_claims: usize,
     /// Whether this is the session the brief is about.
     pub you: bool,
 }
@@ -521,7 +527,10 @@ impl BriefRun {
             branch: s("headBranch"),
             head_sha: s("headSha"),
             status: s("status"),
-            conclusion: v["conclusion"].as_str().filter(|c| !c.is_empty()).map(str::to_string),
+            conclusion: v["conclusion"]
+                .as_str()
+                .filter(|c| !c.is_empty())
+                .map(str::to_string),
             created_at: s("createdAt"),
             ..BriefRun::default()
         }
@@ -840,7 +849,9 @@ impl Default for BriefWorkSection {
             provider_background: Vec::new(),
             provider_background_exposed: false,
             delivered: Vec::new(),
-            summary: "unread: the server that composed this brief does not measure this session's work".into(),
+            summary:
+                "unread: the server that composed this brief does not measure this session's work"
+                    .into(),
         }
     }
 }
@@ -978,7 +989,8 @@ impl Default for BriefMachineSection {
             max_builders: None,
             builder_processes: Vec::new(),
             word: String::new(),
-            summary: "unread: the server that composed this brief does not measure the machine".into(),
+            summary: "unread: the server that composed this brief does not measure the machine"
+                .into(),
         }
     }
 }
@@ -1150,7 +1162,13 @@ fn brief(ctx: &Context, input: BriefInput) -> Result<SessionBrief, CapabilityErr
     let mut origin = origin;
     origin.elapsed_ms = started.elapsed().as_millis() as u64;
     origin.slowest = sections.slowest();
-    Ok(compose(crate::ledger::now(), interval_minutes, origin, sections, input.since))
+    Ok(compose(
+        crate::ledger::now(),
+        interval_minutes,
+        origin,
+        sections,
+        input.since,
+    ))
 }
 
 /// A leaseholder's answer, finished here when it is older than the report contract: its
@@ -1159,7 +1177,13 @@ fn brief(ctx: &Context, input: BriefInput) -> Result<SessionBrief, CapabilityErr
 fn finish_forwarded(mut b: SessionBrief, input: &BriefInput) -> SessionBrief {
     if b.report.prompt.is_empty() {
         let s = Sections::of(&b);
-        b = compose(b.at.clone(), b.interval_minutes, b.answered_by.clone(), s, input.since.clone());
+        b = compose(
+            b.at.clone(),
+            b.interval_minutes,
+            b.answered_by.clone(),
+            s,
+            input.since.clone(),
+        );
     }
     b
 }
@@ -1327,24 +1351,26 @@ macro_rules! section_impl {
     };
 }
 
-section_impl!(BriefSessionSection, |observed, summary| BriefSessionSection {
-    state: BriefSectionState::Unread,
-    observed,
-    episode: None,
-    episode_started_at: None,
-    provider_session: None,
-    resolved_by: None,
-    branch: String::new(),
-    head: String::new(),
-    task_id: None,
-    task: None,
-    last_task: None,
-    task_outcome: None,
-    task_started_at: None,
-    task_checkpoint_at: None,
-    task_owner_session: None,
-    caller: None,
-    summary,
+section_impl!(BriefSessionSection, |observed, summary| {
+    BriefSessionSection {
+        state: BriefSectionState::Unread,
+        observed,
+        episode: None,
+        episode_started_at: None,
+        provider_session: None,
+        resolved_by: None,
+        branch: String::new(),
+        head: String::new(),
+        task_id: None,
+        task: None,
+        last_task: None,
+        task_outcome: None,
+        task_started_at: None,
+        task_checkpoint_at: None,
+        task_owner_session: None,
+        caller: None,
+        summary,
+    }
 });
 section_impl!(BriefWorkSection, |observed, summary| BriefWorkSection {
     observed,
@@ -1379,36 +1405,42 @@ section_impl!(BriefMeshSection, |observed, summary| BriefMeshSection {
     overlaps_for_you: 0,
     summary,
 });
-section_impl!(BriefIntegrationSection, |observed, summary| BriefIntegrationSection {
-    state: BriefSectionState::Unread,
-    observed,
-    observed_at: None,
-    age_seconds: None,
-    observed_master: None,
-    master_now: None,
-    master_fetched_at: None,
-    master_fetched_age_seconds: None,
-    moved_by: None,
-    master_ci: None,
-    last_merge: None,
-    stale: false,
-    remedy: None,
-    summary,
+section_impl!(BriefIntegrationSection, |observed, summary| {
+    BriefIntegrationSection {
+        state: BriefSectionState::Unread,
+        observed,
+        observed_at: None,
+        age_seconds: None,
+        observed_master: None,
+        master_now: None,
+        master_fetched_at: None,
+        master_fetched_age_seconds: None,
+        moved_by: None,
+        master_ci: None,
+        last_merge: None,
+        stale: false,
+        remedy: None,
+        summary,
+    }
 });
 section_impl!(BriefCiSection, |observed, summary| BriefCiSection {
     observed,
     summary,
     ..BriefCiSection::default()
 });
-section_impl!(BriefMachineSection, |observed, summary| BriefMachineSection {
-    observed,
-    summary,
-    ..BriefMachineSection::default()
+section_impl!(BriefMachineSection, |observed, summary| {
+    BriefMachineSection {
+        observed,
+        summary,
+        ..BriefMachineSection::default()
+    }
 });
-section_impl!(BriefReleaseSection, |observed, summary| BriefReleaseSection {
-    observed,
-    summary,
-    ..BriefReleaseSection::default()
+section_impl!(BriefReleaseSection, |observed, summary| {
+    BriefReleaseSection {
+        observed,
+        summary,
+        ..BriefReleaseSection::default()
+    }
 });
 section_impl!(BriefDeriveSection, |observed, summary| BriefDeriveSection {
     state: BriefSectionState::Unread,
@@ -1432,7 +1464,10 @@ struct Pending<T> {
 
 /// Start `work` in a thread of its own. The thread is never joined: a section past its
 /// budget is reported unread and left to finish (every child it runs is bounded on its own).
-fn spawn<T: Send + 'static>(name: &'static str, work: impl FnOnce() -> T + Send + 'static) -> Pending<T> {
+fn spawn<T: Send + 'static>(
+    name: &'static str,
+    work: impl FnOnce() -> T + Send + 'static,
+) -> Pending<T> {
     let (tx, rx) = mpsc::channel();
     let started = Instant::now();
     let spawned = std::thread::Builder::new()
@@ -1479,10 +1514,11 @@ fn run_sections(
         .caller
         .as_ref()
         .and_then(|id| ctx.peers.list().into_iter().find(|p| &p.id == id));
-    let psid: Option<String> = input
-        .session
-        .clone()
-        .or_else(|| caller_peer.as_ref().and_then(|p| p.address.as_ref()?.session.clone()));
+    let psid: Option<String> = input.session.clone().or_else(|| {
+        caller_peer
+            .as_ref()
+            .and_then(|p| p.address.as_ref()?.session.clone())
+    });
     let board_ids: Vec<String> = ctx
         .peers
         .list()
@@ -1499,12 +1535,25 @@ fn run_sections(
     let procs = std::sync::Arc::new(machine::process_table());
 
     let session = {
-        let (ctx, root, psid, ids) = (ctx.clone(), root.to_path_buf(), psid.clone(), board_ids.clone());
-        spawn("session", move || session_section(&ctx, &root, psid.as_deref(), &ids))
+        let (ctx, root, psid, ids) = (
+            ctx.clone(),
+            root.to_path_buf(),
+            psid.clone(),
+            board_ids.clone(),
+        );
+        spawn("session", move || {
+            session_section(&ctx, &root, psid.as_deref(), &ids)
+        })
     };
     let work = {
-        let (ctx, root, psid, ids) = (ctx.clone(), root.to_path_buf(), psid.clone(), board_ids.clone());
-        let (since, background, procs) = (input.since.clone(), input.background.clone(), procs.clone());
+        let (ctx, root, psid, ids) = (
+            ctx.clone(),
+            root.to_path_buf(),
+            psid.clone(),
+            board_ids.clone(),
+        );
+        let (since, background, procs) =
+            (input.since.clone(), input.background.clone(), procs.clone());
         spawn("work", move || {
             work::section(&work::Inputs {
                 ctx: &ctx,
@@ -1519,8 +1568,12 @@ fn run_sections(
         })
     };
     let peers = {
-        let (ctx, checkouts, psid, unanswered) =
-            (ctx.clone(), input.checkouts, psid.clone(), unanswered.clone());
+        let (ctx, checkouts, psid, unanswered) = (
+            ctx.clone(),
+            input.checkouts,
+            psid.clone(),
+            unanswered.clone(),
+        );
         spawn("peers", move || {
             peers_section(&ctx, checkouts, superseded_by, unanswered, psid.as_deref())
         })
@@ -1600,7 +1653,9 @@ fn master_run(root: &Path) -> Option<BriefRun> {
     let first = answer.value.as_array()?.first()?.clone();
     let mut run = BriefRun::from_gh(&first);
     if run.wants_jobs() {
-        if let Ok(j) = crate::monitor::github::run_jobs(root, run.id, crate::monitor::github::BUDGET) {
+        if let Ok(j) =
+            crate::monitor::github::run_jobs(root, run.id, crate::monitor::github::BUDGET)
+        {
             work::Jobs::of(&j.value).apply(&mut run);
         }
     }
@@ -1612,9 +1667,18 @@ fn master_run(root: &Path) -> Option<BriefRun> {
 /// The provider session the environment names, in `mj_provider_session_env`'s order: what
 /// the command line asks with when the caller gives none.
 pub(crate) fn provider_session_from_env(env: impl Fn(&str) -> Option<String>) -> Option<String> {
-    ["MAJORDOMUS_PROVIDER_SESSION", "CLAUDE_CODE_SESSION_ID", "CODEX_SESSION_ID", "GEMINI_SESSION_ID"]
-        .iter()
-        .find_map(|k| env(k).map(|v| v.trim().to_string()).filter(|v| !v.is_empty()))
+    [
+        "MAJORDOMUS_PROVIDER_SESSION",
+        "CLAUDE_CODE_SESSION_ID",
+        "CODEX_SESSION_ID",
+        "GEMINI_SESSION_ID",
+    ]
+    .iter()
+    .find_map(|k| {
+        env(k)
+            .map(|v| v.trim().to_string())
+            .filter(|v| !v.is_empty())
+    })
 }
 
 fn session_section(
@@ -1636,12 +1700,22 @@ fn session_section(
         Ok(e) => {
             let by_session = provider_session
                 .and_then(|s| e.episodes.iter().find(|ep| ep.provider_session == s));
-            let mine = by_session.or_else(|| e.episodes.iter().find(|ep| ep.session_id == e.current));
+            let mine =
+                by_session.or_else(|| e.episodes.iter().find(|ep| ep.session_id == e.current));
             (
                 mine.map(|ep| ep.session_id.clone()),
-                mine.map(|ep| ep.provider_session.clone()).filter(|s| !s.is_empty()),
-                mine.map(|ep| ep.started_at.clone()).filter(|s| !s.is_empty()),
-                mine.map(|_| if by_session.is_some() { "provider_session" } else { "pointer" }.to_string()),
+                mine.map(|ep| ep.provider_session.clone())
+                    .filter(|s| !s.is_empty()),
+                mine.map(|ep| ep.started_at.clone())
+                    .filter(|s| !s.is_empty()),
+                mine.map(|_| {
+                    if by_session.is_some() {
+                        "provider_session"
+                    } else {
+                        "pointer"
+                    }
+                    .to_string()
+                }),
             )
         }
         Err(_) => (None, None, None, None),
@@ -1655,7 +1729,12 @@ fn session_section(
         None => match &ctx.index.repository.git {
             crate::git::GitState::Available(i) => (
                 i.branch.clone().unwrap_or_else(|| "DETACHED".into()),
-                i.head.clone().unwrap_or_default().chars().take(10).collect(),
+                i.head
+                    .clone()
+                    .unwrap_or_default()
+                    .chars()
+                    .take(10)
+                    .collect(),
             ),
             crate::git::GitState::Unavailable { .. } => (String::new(), String::new()),
         },
@@ -1675,11 +1754,17 @@ fn session_section(
     match (&episode, resolved_by.as_deref()) {
         (Some(ep), Some("provider_session")) => s.push_str(&format!(
             "; episode {ep}{}",
-            opened.as_deref().map(|o| format!(", opened {}", ago_words(o))).unwrap_or_default()
+            opened
+                .as_deref()
+                .map(|o| format!(", opened {}", ago_words(o)))
+                .unwrap_or_default()
         )),
         (Some(ep), _) => s.push_str(&format!(
             "; episode {ep}, the checkout's pointer (owner {}), not necessarily this session",
-            owner.as_deref().map(short_session).unwrap_or_else(|| "unknown".into())
+            owner
+                .as_deref()
+                .map(short_session)
+                .unwrap_or_else(|| "unknown".into())
         )),
         (None, _) => match (&episodes, provider_session) {
             (Err(e), _) => s.push_str(&format!("; episodes unread ({e})")),
@@ -1693,13 +1778,21 @@ fn session_section(
         (Some(t), None) => s.push_str(&format!(
             "; no active task (last {} [{}]{}, owner {}) — source current.yaml, read now",
             t.id,
-            if t.outcome.is_empty() { "unknown" } else { t.outcome.as_str() },
+            if t.outcome.is_empty() {
+                "unknown"
+            } else {
+                t.outcome.as_str()
+            },
             if t.checkpoint_at.is_empty() {
                 String::new()
             } else {
                 format!(", checkpointed {}", day_words(&t.checkpoint_at))
             },
-            if t.provider_session.is_empty() { "unknown".to_string() } else { short_session(&t.provider_session) }
+            if t.provider_session.is_empty() {
+                "unknown".to_string()
+            } else {
+                short_session(&t.provider_session)
+            }
         )),
         (None, _) => s.push_str("; no task recorded — source current.yaml, read now"),
     }
@@ -1720,10 +1813,22 @@ fn session_section(
         task_id: running.map(|t| t.id.clone()),
         task: running.map(|t| t.task.clone()),
         last_task: task.as_ref().map(|t| t.id.clone()),
-        task_outcome: task.as_ref().map(|t| t.outcome.clone()).filter(|o| !o.is_empty()),
-        task_started_at: task.as_ref().map(|t| t.started_at.clone()).filter(|o| !o.is_empty()),
-        task_checkpoint_at: task.as_ref().map(|t| t.checkpoint_at.clone()).filter(|o| !o.is_empty()),
-        task_owner_session: task.as_ref().map(|t| t.provider_session.clone()).filter(|o| !o.is_empty()),
+        task_outcome: task
+            .as_ref()
+            .map(|t| t.outcome.clone())
+            .filter(|o| !o.is_empty()),
+        task_started_at: task
+            .as_ref()
+            .map(|t| t.started_at.clone())
+            .filter(|o| !o.is_empty()),
+        task_checkpoint_at: task
+            .as_ref()
+            .map(|t| t.checkpoint_at.clone())
+            .filter(|o| !o.is_empty()),
+        task_owner_session: task
+            .as_ref()
+            .map(|t| t.provider_session.clone())
+            .filter(|o| !o.is_empty()),
         caller,
         summary,
     }
@@ -1744,7 +1849,11 @@ fn caller_words(caller: Option<&str>, provider_session: Option<&str>, board_read
 /// The caller, named from the peers section when the session section could not: a command
 /// line composes the brief with an empty board of its own, and this checkout's board is the
 /// leaseholder's, which the peers section asks for (I4390). Says when that board was unread.
-fn name_the_caller(session: &mut BriefSessionSection, peers: &BriefPeersSection, psid: Option<&str>) {
+fn name_the_caller(
+    session: &mut BriefSessionSection,
+    peers: &BriefPeersSection,
+    psid: Option<&str>,
+) {
     if session.caller.is_some() || psid.is_none() {
         return;
     }
@@ -1754,7 +1863,11 @@ fn name_the_caller(session: &mut BriefSessionSection, peers: &BriefPeersSection,
             session.caller = Some(you.id.clone());
             caller_words(Some(&you.id), psid, true)
         }
-        None if peers.unread.iter().any(|u| u.starts_with(THIS_BOARD_UNREAD)) => {
+        None if peers
+            .unread
+            .iter()
+            .any(|u| u.starts_with(THIS_BOARD_UNREAD)) =>
+        {
             caller_words(None, psid, false)
         }
         None => return,
@@ -1823,7 +1936,11 @@ fn peers_section(
             let summary = format!("unread: peers.list did not answer ({e})");
             return BriefPeersSection {
                 state: BriefSectionState::Unread,
-                observed: BriefObservation::read("peers.list", BriefSectionState::Unread, "majordomus peers"),
+                observed: BriefObservation::read(
+                    "peers.list",
+                    BriefSectionState::Unread,
+                    "majordomus peers",
+                ),
                 attached: 0,
                 boards: 0,
                 unread: Vec::new(),
@@ -1915,7 +2032,11 @@ fn peers_section(
     }
     BriefPeersSection {
         state,
-        observed: BriefObservation::read("peers.list (every board's server)", state, "majordomus peers"),
+        observed: BriefObservation::read(
+            "peers.list (every board's server)",
+            state,
+            "majordomus peers",
+        ),
         attached: attached.len(),
         // every checkout covered, listed or counted: the summary lists only the ones that
         // hold a board (peers::PeerView), and a checkout with none is still covered
@@ -1949,14 +2070,34 @@ fn mesh_branches(ctx: &Context) -> BTreeMap<String, String> {
     out
 }
 
+/// The claim a peer is named by, and the branch it names: the most recent claim whose scope
+/// holds a `refs/heads/` entry, so that the branch and the intent the brief shows describe the
+/// same piece of work; a peer that names no branch is named by its latest claim.
+///
+/// On 2026-10-29 a session holding nine claims was shown on the branch of one and with the
+/// intent of another, announced a minute later by a sibling workflow.
+fn naming_claim(claims: &[Announcement]) -> (Option<&Announcement>, Option<String>) {
+    let branch_of = |c: &Announcement| {
+        c.scope
+            .iter()
+            .find_map(|s| s.strip_prefix("refs/heads/").map(str::to_string))
+    };
+    let named = claims
+        .iter()
+        .filter_map(|c| branch_of(c).map(|b| (c, b)))
+        .max_by(|(a, _), (b, _)| a.at.cmp(&b.at));
+    match named {
+        Some((c, b)) => (Some(c), Some(b)),
+        None => (claims.iter().max_by(|a, b| a.at.cmp(&b.at)), None),
+    }
+}
+
 /// One peer as the brief names it: its branch from what it announced, then its mesh
 /// session, then, as the last resort, the checkout of the server it is attached to.
 fn brief_peer(p: &Peer, psid: Option<&str>, sessions: &BTreeMap<String, String>) -> BriefPeer {
-    let announced = p
-        .claims
-        .iter()
-        .flat_map(|c| c.scope.iter())
-        .find_map(|s| s.strip_prefix("refs/heads/").map(str::to_string));
+    let (claim, announced) = naming_claim(&p.claims);
+    let intent = claim.or(p.announcement.as_ref()).map(|a| a.intent.clone());
+    let other_claims = p.claims.len().saturating_sub(usize::from(claim.is_some()));
     let address = p.address.as_ref();
     let session_branch = address
         .and_then(|a| a.mesh_session())
@@ -1965,10 +2106,7 @@ fn brief_peer(p: &Peer, psid: Option<&str>, sessions: &BTreeMap<String, String>)
     let (branch, branch_source) = match (announced, session_branch) {
         (Some(b), _) => (Some(b), "announce"),
         (None, Some(b)) => (Some(b), "session"),
-        (None, None) => (
-            p.checkout.as_ref().and_then(|c| c.branch.clone()),
-            "server",
-        ),
+        (None, None) => (p.checkout.as_ref().and_then(|c| c.branch.clone()), "server"),
     };
     BriefPeer {
         id: p.id.as_str().to_string(),
@@ -1977,9 +2115,13 @@ fn brief_peer(p: &Peer, psid: Option<&str>, sessions: &BTreeMap<String, String>)
         host: address.map(|a| a.host.clone()),
         socket: address.and_then(|a| a.socket.clone()),
         branch,
-        worktree: p.checkout.as_ref().map(|c| c.worktree.display().to_string()),
+        worktree: p
+            .checkout
+            .as_ref()
+            .map(|c| c.worktree.display().to_string()),
         branch_source: branch_source.into(),
-        intent: p.announcement.as_ref().map(|a| a.intent.clone()),
+        intent,
+        other_claims,
         you: psid.is_some() && address.and_then(|a| a.session.as_deref()) == psid,
     }
 }
@@ -2004,6 +2146,12 @@ fn peer_text(p: &BriefPeer) -> String {
     }
     s.push_str(": ");
     s.push_str(p.intent.as_deref().unwrap_or("announced nothing"));
+    if p.other_claims > 0 {
+        s.push_str(&format!(
+            " (+{} other claim(s): majordomus peers)",
+            p.other_claims
+        ));
+    }
     s
 }
 
@@ -2056,17 +2204,25 @@ fn mesh_section(ctx: &Context, unanswered: Option<&str>) -> BriefMeshSection {
                 BriefSectionState::Unread,
                 "majordomus mesh state",
             );
-            section.summary = format!("unread: the mesh runs in the leaseholder at {url}, which did not answer");
+            section.summary =
+                format!("unread: the mesh runs in the leaseholder at {url}, which did not answer");
             return section;
         }
-        let reason = status.reason.as_deref().unwrap_or("cooperation is not running in this process");
+        let reason = status
+            .reason
+            .as_deref()
+            .unwrap_or("cooperation is not running in this process");
         // the cooperation status words its own reason "not active: ..."; said once
         let reason = reason.strip_prefix("not active: ").unwrap_or(reason);
         section.summary = format!("not active here: {reason}");
         return section;
     };
     section.state = BriefSectionState::Read;
-    section.observed = BriefObservation::read("the mesh journal (memory)", BriefSectionState::Read, "majordomus mesh state");
+    section.observed = BriefObservation::read(
+        "the mesh journal (memory)",
+        BriefSectionState::Read,
+        "majordomus mesh state",
+    );
     section.connected = status
         .peers
         .iter()
@@ -2166,10 +2322,13 @@ fn integration_section(root: &Path) -> BriefIntegrationSection {
     let master_now = common
         .as_deref()
         .and_then(|c| refs::resolve(c, &format!("refs/remotes/origin/{}", obs.base)));
-    let age = crate::peers::epoch_seconds(&obs.observed_at).map(|t| (now_epoch() - t).max(0) as u64);
+    let age =
+        crate::peers::epoch_seconds(&obs.observed_at).map(|t| (now_epoch() - t).max(0) as u64);
     let moved = match (&obs.observed_master, &master_now) {
-        (Some(o), Some(n)) if o != n => work::git_bounded(root, &["rev-list", "--count", &format!("{o}..{n}")])
-            .and_then(|t| t.trim().parse::<u64>().ok()),
+        (Some(o), Some(n)) if o != n => {
+            work::git_bounded(root, &["rev-list", "--count", &format!("{o}..{n}")])
+                .and_then(|t| t.trim().parse::<u64>().ok())
+        }
         _ => None,
     };
     let differs = matches!((&obs.observed_master, &master_now), (Some(o), Some(n)) if o != n);
@@ -2186,11 +2345,17 @@ fn integration_section(root: &Path) -> BriefIntegrationSection {
     let mut section = BriefIntegrationSection {
         state: BriefSectionState::Read,
         observed: BriefObservation {
-            source: ".ai/local/state/integration/observation.json and the queue's summary.json (files)".into(),
+            source:
+                ".ai/local/state/integration/observation.json and the queue's summary.json (files)"
+                    .into(),
             observed_at: Some(obs.observed_at.clone()),
             age_seconds: age,
             bound_seconds: Some(bound),
-            verdict: if stale { BriefVerdict::Stale } else { BriefVerdict::Current },
+            verdict: if stale {
+                BriefVerdict::Stale
+            } else {
+                BriefVerdict::Current
+            },
             remedy: remedy.clone(),
             elapsed_ms: 0,
             budget_ms: 0,
@@ -2225,12 +2390,21 @@ fn integration_summary(s: &BriefIntegrationSection) -> String {
     words
 }
 
-fn integration_words(s: &BriefIntegrationSection, obs: &crate::commands::prs::IntegrationBrief) -> String {
-    let short = |x: &Option<String>| x.as_deref().map(|v| v.chars().take(10).collect::<String>()).unwrap_or_else(|| "?".into());
+fn integration_words(
+    s: &BriefIntegrationSection,
+    obs: &crate::commands::prs::IntegrationBrief,
+) -> String {
+    let short = |x: &Option<String>| {
+        x.as_deref()
+            .map(|v| v.chars().take(10).collect::<String>())
+            .unwrap_or_else(|| "?".into())
+    };
     let mut w = if s.stale {
         format!(
             "[stale] queue observed {} ago ({}) at {}; origin/master {}{}",
-            s.age_seconds.map(report::span).unwrap_or_else(|| "?".into()),
+            s.age_seconds
+                .map(report::span)
+                .unwrap_or_else(|| "?".into()),
             obs.observed_at,
             short(&s.observed_master),
             short(&s.master_now),
@@ -2242,7 +2416,9 @@ fn integration_words(s: &BriefIntegrationSection, obs: &crate::commands::prs::In
     } else {
         format!(
             "[current] queue observed {} ago at {}",
-            s.age_seconds.map(report::span).unwrap_or_else(|| "?".into()),
+            s.age_seconds
+                .map(report::span)
+                .unwrap_or_else(|| "?".into()),
             short(&s.observed_master)
         )
     };
@@ -2275,7 +2451,13 @@ fn integration_words(s: &BriefIntegrationSection, obs: &crate::commands::prs::In
 fn last_merge(root: &Path) -> Option<BriefMerge> {
     let text = work::git_bounded(
         root,
-        &["log", "-1", "--first-parent", "--format=%H%x09%cI%x09%s", "refs/remotes/origin/master"],
+        &[
+            "log",
+            "-1",
+            "--first-parent",
+            "--format=%H%x09%cI%x09%s",
+            "refs/remotes/origin/master",
+        ],
     )?;
     let mut f = text.trim().splitn(3, '\t');
     let sha: String = f.next()?.chars().take(10).collect();
@@ -2305,7 +2487,11 @@ fn release_section(ctx: &Context) -> BriefReleaseSection {
             };
             BriefReleaseSection {
                 state,
-                observed: BriefObservation::read("release.currency", state, "majordomus release next"),
+                observed: BriefObservation::read(
+                    "release.currency",
+                    state,
+                    "majordomus release next",
+                ),
                 stance: Some(a.stance),
                 landed: a.landed,
                 summary: a.summary,
@@ -2313,7 +2499,11 @@ fn release_section(ctx: &Context) -> BriefReleaseSection {
         }
         Err(why) => BriefReleaseSection {
             summary: format!("release.currency did not answer: {why}"),
-            observed: BriefObservation::read("release.currency", BriefSectionState::Unread, "majordomus release next"),
+            observed: BriefObservation::read(
+                "release.currency",
+                BriefSectionState::Unread,
+                "majordomus release next",
+            ),
             ..BriefReleaseSection::default()
         },
     }
@@ -2345,7 +2535,11 @@ fn primary_home(root: &Path) -> Option<PathBuf> {
 fn derive_from(declared: bool, lock: Option<&Path>, priority: Option<&Path>) -> BriefDeriveSection {
     let mut section = BriefDeriveSection {
         state: BriefSectionState::Undeclared,
-        observed: BriefObservation::read("the derive lock (files)", BriefSectionState::Undeclared, "majordomus doctor"),
+        observed: BriefObservation::read(
+            "the derive lock (files)",
+            BriefSectionState::Undeclared,
+            "majordomus doctor",
+        ),
         holder: None,
         pid: None,
         alive: None,
@@ -2357,7 +2551,11 @@ fn derive_from(declared: bool, lock: Option<&Path>, priority: Option<&Path>) -> 
         return section;
     }
     section.state = BriefSectionState::Read;
-    section.observed = BriefObservation::read("the derive lock (files)", BriefSectionState::Read, "majordomus doctor");
+    section.observed = BriefObservation::read(
+        "the derive lock (files)",
+        BriefSectionState::Read,
+        "majordomus doctor",
+    );
     section.priority = priority.filter(|p| p.exists()).map(|p| {
         std::fs::read_to_string(p)
             .unwrap_or_default()
@@ -2614,8 +2812,14 @@ fn brief_lines(s: &Sections, attention: &[BriefAttention], origin: &BriefOrigin)
             lines.extend(wrapped(if i == 0 { "attention" } else { "" }, &text));
         }
     }
-    lines.extend(wrapped("session", &worded(s.session.observed.verdict.as_str(), &s.session.summary)));
-    lines.extend(wrapped("work", &worded(s.work.observed.verdict.as_str(), &s.work.summary)));
+    lines.extend(wrapped(
+        "session",
+        &worded(s.session.observed.verdict.as_str(), &s.session.summary),
+    ));
+    lines.extend(wrapped(
+        "work",
+        &worded(s.work.observed.verdict.as_str(), &s.work.summary),
+    ));
     for item in &s.work.items {
         lines.extend(wrapped("", &work_item_words(item)));
     }
@@ -2624,7 +2828,14 @@ fn brief_lines(s: &Sections, attention: &[BriefAttention], origin: &BriefOrigin)
             .work
             .background
             .iter()
-            .map(|p| format!("{} (pid {}, {})", p.command, p.pid, report::span(p.age_seconds)))
+            .map(|p| {
+                format!(
+                    "{} (pid {}, {})",
+                    p.command,
+                    p.pid,
+                    report::span(p.age_seconds)
+                )
+            })
             .collect();
         if bg.is_empty() {
             bg.push("none".into());
@@ -2633,13 +2844,30 @@ fn brief_lines(s: &Sections, attention: &[BriefAttention], origin: &BriefOrigin)
             s.work
                 .provider_background
                 .iter()
-                .map(|t| format!("{} {} [{}]", t.id, t.description, if t.status.is_empty() { "unknown" } else { &t.status }))
+                .map(|t| {
+                    format!(
+                        "{} {} [{}]",
+                        t.id,
+                        t.description,
+                        if t.status.is_empty() {
+                            "unknown"
+                        } else {
+                            &t.status
+                        }
+                    )
+                })
                 .collect::<Vec<_>>()
                 .join(", ")
         } else {
             "not exposed".into()
         };
-        lines.extend(wrapped("", &format!("background  {}; provider background: {provider}", bg.join(", "))));
+        lines.extend(wrapped(
+            "",
+            &format!(
+                "background  {}; provider background: {provider}",
+                bg.join(", ")
+            ),
+        ));
     }
     for d in &s.work.delivered {
         lines.extend(wrapped(
@@ -2654,22 +2882,43 @@ fn brief_lines(s: &Sections, attention: &[BriefAttention], origin: &BriefOrigin)
             ),
         ));
     }
-    lines.extend(wrapped("peers", &worded(s.peers.observed.verdict.as_str(), &s.peers.summary)));
+    lines.extend(wrapped(
+        "peers",
+        &worded(s.peers.observed.verdict.as_str(), &s.peers.summary),
+    ));
     for n in &s.peers.named {
         lines.extend(wrapped("", n));
     }
-    lines.extend(wrapped("mesh", &worded(s.mesh.observed.verdict.as_str(), &s.mesh.summary)));
-    lines.extend(wrapped("integration", &worded(integration_word(&s.integration), &s.integration.summary)));
+    lines.extend(wrapped(
+        "mesh",
+        &worded(s.mesh.observed.verdict.as_str(), &s.mesh.summary),
+    ));
+    lines.extend(wrapped(
+        "integration",
+        &worded(integration_word(&s.integration), &s.integration.summary),
+    ));
     for t in &s.work.trains {
         lines.extend(wrapped(
             "",
             &format!("train {} carries #{} (from {})", t.branch, t.pr, t.source),
         ));
     }
-    lines.extend(wrapped("ci", &worded(s.ci.observed.verdict.as_str(), &s.ci.summary)));
-    lines.extend(wrapped("machine", &worded(s.machine.observed.verdict.as_str(), &s.machine.summary)));
-    lines.extend(wrapped("release", &worded(release_word(&s.release), &s.release.summary)));
-    lines.extend(wrapped("derive", &worded(s.derive.observed.verdict.as_str(), &s.derive.summary)));
+    lines.extend(wrapped(
+        "ci",
+        &worded(s.ci.observed.verdict.as_str(), &s.ci.summary),
+    ));
+    lines.extend(wrapped(
+        "machine",
+        &worded(s.machine.observed.verdict.as_str(), &s.machine.summary),
+    ));
+    lines.extend(wrapped(
+        "release",
+        &worded(release_word(&s.release), &s.release.summary),
+    ));
+    lines.extend(wrapped(
+        "derive",
+        &worded(s.derive.observed.verdict.as_str(), &s.derive.summary),
+    ));
     let mut answered = format!("{} ", origin.process);
     if let Some(u) = &origin.url {
         answered.push_str(&format!("{u} "));
@@ -2718,7 +2967,14 @@ fn work_item_words(i: &BriefWorkItem) -> String {
     if let Some(h) = &i.head {
         s.push_str(&format!(" @ {}", h.chars().take(10).collect::<String>()));
     }
-    s.push_str(&format!(" [{}]", if i.word.is_empty() { "unknown" } else { &i.word }));
+    s.push_str(&format!(
+        " [{}]",
+        if i.word.is_empty() {
+            "unknown"
+        } else {
+            &i.word
+        }
+    ));
     match (&i.pr, &i.merge_state) {
         (Some(_), Some(m)) => s.push_str(&format!(" mergeStateStatus {m}")),
         (None, _) if i.pushed => s.push_str(" no PR"),
@@ -2753,7 +3009,11 @@ fn one_line(s: &Sections, attention: &[BriefAttention]) -> String {
         (None, Some(e)) => e.clone(),
         (None, None) => "no task".into(),
     };
-    let caller = session.caller.clone().map(|c| format!("{c} ")).unwrap_or_default();
+    let caller = session
+        .caller
+        .clone()
+        .map(|c| format!("{c} "))
+        .unwrap_or_default();
     let first = if session.state == BriefSectionState::Unread {
         format!("{caller}session ?")
     } else {
@@ -2761,7 +3021,11 @@ fn one_line(s: &Sections, attention: &[BriefAttention]) -> String {
         format!(
             "{caller}{who} @{}{}",
             session.branch,
-            if prs > 0 { format!(" +{prs}PR") } else { String::new() }
+            if prs > 0 {
+                format!(" +{prs}PR")
+            } else {
+                String::new()
+            }
         )
     };
     let mut tokens = vec![first];
@@ -2774,7 +3038,12 @@ fn one_line(s: &Sections, attention: &[BriefAttention]) -> String {
             .fact
             .strip_prefix(&format!("{} ", worst.section))
             .unwrap_or(&worst.fact);
-        tokens.push(format!("{} {} {}", worst.section, worst.word, clip(fact, 48)));
+        tokens.push(format!(
+            "{} {} {}",
+            worst.section,
+            worst.word,
+            clip(fact, 48)
+        ));
     }
     // the work's facts are in the attention entries and the first token; the line says it
     // only when it could not be read
@@ -2787,7 +3056,8 @@ fn one_line(s: &Sections, attention: &[BriefAttention]) -> String {
     tokens.push(match s.mesh.state {
         BriefSectionState::Read => {
             let mut m = format!("mesh {}/{}", s.mesh.connected, s.mesh.links);
-            let addressed = s.mesh.reviews_for_you + s.mesh.handovers_waiting + s.mesh.overlaps_for_you;
+            let addressed =
+                s.mesh.reviews_for_you + s.mesh.handovers_waiting + s.mesh.overlaps_for_you;
             if addressed > 0 {
                 m.push_str(&format!(" +{addressed} for you"));
             }
@@ -2817,7 +3087,10 @@ fn one_line(s: &Sections, attention: &[BriefAttention]) -> String {
         (_, Some(h)) => tokens.push(format!(
             "derive {}{}",
             clip(h.split_whitespace().next().unwrap_or("?"), 28),
-            s.derive.held_seconds.map(|x| format!(" {}m", x / 60)).unwrap_or_default()
+            s.derive
+                .held_seconds
+                .map(|x| format!(" {}m", x / 60))
+                .unwrap_or_default()
         )),
     }
     fit(tokens, LINE_WIDTH)
@@ -2993,7 +3266,9 @@ mod tests {
             task_checkpoint_at: None,
             task_owner_session: None,
             caller: Some("p2".into()),
-            summary: "[current] p2 = 07a5ffde (provider session); episode s-1 on feature/x at abc1234567".into(),
+            summary:
+                "[current] p2 = 07a5ffde (provider session); episode s-1 on feature/x at abc1234567"
+                    .into(),
         }
     }
 
@@ -3064,7 +3339,10 @@ mod tests {
 
     fn quiet_machine() -> BriefMachineSection {
         machine::section(
-            vec![BriefVolume { path: "/".into(), free_bytes: 41 << 30 }],
+            vec![BriefVolume {
+                path: "/".into(),
+                free_bytes: 41 << 30,
+            }],
             Some((1 << 30, 10 << 30)),
             &Ok(Vec::new()),
             Some(35),
@@ -3085,7 +3363,15 @@ mod tests {
             peers: peers(0, false),
             mesh: mesh_off(),
             integration: integration_never(),
-            ci: ci::compose(Some(0), Some(0), Ok(vec![]), vec![], "o/r".into(), Duration::ZERO, Duration::ZERO),
+            ci: ci::compose(
+                Some(0),
+                Some(0),
+                Ok(vec![]),
+                vec![],
+                "o/r".into(),
+                Duration::ZERO,
+                Duration::ZERO,
+            ),
             machine: quiet_machine(),
             release: release(Stance::Current, 0),
             derive: derive_from(false, None, None),
@@ -3175,17 +3461,27 @@ mod tests {
         s.ci = ci::compose(
             Some(1),
             Some(10),
-            Err(crate::monitor::github::Unanswered::Forbidden("403: Resource not accessible by integration".into())),
+            Err(crate::monitor::github::Unanswered::Forbidden(
+                "403: Resource not accessible by integration".into(),
+            )),
             vec![],
             "o/r".into(),
             Duration::ZERO,
             Duration::ZERO,
         );
         s.machine = machine::section(
-            vec![BriefVolume { path: "/".into(), free_bytes: 20 << 30 }],
+            vec![BriefVolume {
+                path: "/".into(),
+                free_bytes: 20 << 30,
+            }],
             Some((9 << 30, 10 << 30)),
             &Ok((0..5)
-                .map(|i| machine::Proc { pid: i, ppid: 1, age_seconds: 1, command: "cargo".into() })
+                .map(|i| machine::Proc {
+                    pid: i,
+                    ppid: 1,
+                    age_seconds: 1,
+                    command: "cargo".into(),
+                })
                 .collect()),
             Some(35),
             Some(5),
@@ -3206,10 +3502,17 @@ mod tests {
 
     #[test]
     fn every_attention_row_has_a_condition_and_every_condition_a_row() {
-        let declared: std::collections::BTreeSet<&str> =
-            report::contract().attention.iter().map(|r| r.id.as_str()).collect();
-        let conditions: std::collections::BTreeSet<&str> = report::CONDITIONS.iter().copied().collect();
-        assert_eq!(declared, conditions, "the contract's rows and the Rust conditions are one set");
+        let declared: std::collections::BTreeSet<&str> = report::contract()
+            .attention
+            .iter()
+            .map(|r| r.id.as_str())
+            .collect();
+        let conditions: std::collections::BTreeSet<&str> =
+            report::CONDITIONS.iter().copied().collect();
+        assert_eq!(
+            declared, conditions,
+            "the contract's rows and the Rust conditions are one set"
+        );
         // and every condition fires on what it is about: the set measured is the set declared,
         // the runner and the CI-pool rows each on a fixture of their own
         let mut emitted: std::collections::BTreeSet<String> = brief_of(everything_wrong())
@@ -3218,16 +3521,44 @@ mod tests {
             .map(|a| a.id.clone())
             .collect();
         let mut idle = everything_wrong();
-        idle.ci = ci::compose(Some(1), Some(10), Ok(vec![BriefRunner { name: "l1".into(), status: "online".into(), busy: false }]), vec![], "o/r".into(), Duration::ZERO, Duration::ZERO);
+        idle.ci = ci::compose(
+            Some(1),
+            Some(10),
+            Ok(vec![BriefRunner {
+                name: "l1".into(),
+                status: "online".into(),
+                busy: false,
+            }]),
+            vec![],
+            "o/r".into(),
+            Duration::ZERO,
+            Duration::ZERO,
+        );
         let mut none = everything_wrong();
-        none.ci = ci::compose(Some(1), Some(10), Ok(vec![BriefRunner { name: "l1".into(), status: "offline".into(), busy: false }]), vec![], "o/r".into(), Duration::ZERO, Duration::ZERO);
+        none.ci = ci::compose(
+            Some(1),
+            Some(10),
+            Ok(vec![BriefRunner {
+                name: "l1".into(),
+                status: "offline".into(),
+                busy: false,
+            }]),
+            vec![],
+            "o/r".into(),
+            Duration::ZERO,
+            Duration::ZERO,
+        );
         let mut overdue = everything_wrong();
         overdue.release = release(Stance::Overdue, 30);
         for s in [idle, none, overdue] {
             emitted.extend(brief_of(s).attention.iter().map(|a| a.id.clone()));
         }
-        let emitted: std::collections::BTreeSet<&str> = emitted.iter().map(String::as_str).collect();
-        assert_eq!(emitted, conditions, "a declared row no condition fires is dead wording");
+        let emitted: std::collections::BTreeSet<&str> =
+            emitted.iter().map(String::as_str).collect();
+        assert_eq!(
+            emitted, conditions,
+            "a declared row no condition fires is dead wording"
+        );
     }
 
     #[test]
@@ -3256,15 +3587,29 @@ mod tests {
             .flat_map(|l| {
                 l.split_once('[')
                     .and_then(|(_, r)| r.split_once(']'))
-                    .map(|(w, _)| w.split(',').map(|x| x.trim().to_string()).collect::<Vec<_>>())
+                    .map(|(w, _)| {
+                        w.split(',')
+                            .map(|x| x.trim().to_string())
+                            .collect::<Vec<_>>()
+                    })
                     .unwrap_or_default()
             })
             .collect();
-        let mut words: Vec<String> = report::contract().attention.iter().map(|r| r.word.clone()).collect();
+        let mut words: Vec<String> = report::contract()
+            .attention
+            .iter()
+            .map(|r| r.word.clone())
+            .collect();
         words.extend(
-            [BriefVerdict::Current, BriefVerdict::Stale, BriefVerdict::Partial, BriefVerdict::Unread, BriefVerdict::Undeclared]
-                .iter()
-                .map(|v| v.as_str().to_string()),
+            [
+                BriefVerdict::Current,
+                BriefVerdict::Stale,
+                BriefVerdict::Partial,
+                BriefVerdict::Unread,
+                BriefVerdict::Undeclared,
+            ]
+            .iter()
+            .map(|v| v.as_str().to_string()),
         );
         for w in words {
             assert_eq!(
@@ -3283,7 +3628,10 @@ mod tests {
         for a in &b.attention {
             let line = report::attention_line(a);
             assert!(b.report.prompt.contains(&line), "the prompt lacks {line}");
-            assert!(b.report.reminder.contains(&line), "the reminder lacks {line}");
+            assert!(
+                b.report.reminder.contains(&line),
+                "the reminder lacks {line}"
+            );
         }
         for banned in [
             "two to four lines",
@@ -3298,8 +3646,16 @@ mod tests {
         let p = &b.report.prompt;
         assert!(p.contains("[stale] integration: queue observed 17 h ago at 81ef931a3e; origin/master is 5370ee63d1 (+3) — majordomus prs refresh (session)"), "{p}");
         assert!(p.contains("[failing] work: integration/train-10a-20261028: run 40813274272 24/36, failed structure (timed_out)"), "{p}");
-        assert!(p.contains("[degraded] machine: swap 9.0/10.0 GiB (90 %) — top -o mem"), "{p}");
-        assert!(p.contains("[dirty] work: #2656 conflicts with master — git -C /w/docs/a merge origin/master"), "{p}");
+        assert!(
+            p.contains("[degraded] machine: swap 9.0/10.0 GiB (90 %) — top -o mem"),
+            "{p}"
+        );
+        assert!(
+            p.contains(
+                "[dirty] work: #2656 conflicts with master — git -C /w/docs/a merge origin/master"
+            ),
+            "{p}"
+        );
         // a person's entries lead
         assert_eq!(b.attention[0].actor, "person", "{:?}", b.attention[0]);
     }
@@ -3310,9 +3666,16 @@ mod tests {
         s.session.task_id = Some("t-1".into());
         let b = brief_of(s);
         assert!(b.attention.is_empty(), "{:?}", b.attention);
-        assert_eq!(b.report.prompt.matches("Attention: none measured.").count(), 1);
+        assert_eq!(
+            b.report.prompt.matches("Attention: none measured.").count(),
+            1
+        );
         assert!(!b.report.prompt.contains("()"), "an empty parenthetical");
-        assert!(b.lines[0].starts_with("attention    none measured"), "{:?}", b.lines);
+        assert!(
+            b.lines[0].starts_with("attention    none measured"),
+            "{:?}",
+            b.lines
+        );
     }
 
     #[test]
@@ -3324,7 +3687,11 @@ mod tests {
         assert!(!k.contains("two to four"), "{k}");
         assert!(!k.contains("/loop 7m majordomus brief"), "{k}");
         for section in &report::contract().sections {
-            assert!(k.contains(&section.holds), "keep_awake lacks the section {}", section.key);
+            assert!(
+                k.contains(&section.holds),
+                "keep_awake lacks the section {}",
+                section.key
+            );
         }
     }
 
@@ -3341,9 +3708,25 @@ mod tests {
             .collect();
         assert_eq!(
             labels,
-            ["attention", "session", "work", "peers", "mesh", "integration", "ci", "machine", "release", "derive", "answered by"]
+            [
+                "attention",
+                "session",
+                "work",
+                "peers",
+                "mesh",
+                "integration",
+                "ci",
+                "machine",
+                "release",
+                "derive",
+                "answered by"
+            ]
         );
-        assert!(b.lines.iter().all(|l| l.chars().count() <= WRAP_WIDTH), "{:?}", b.lines);
+        assert!(
+            b.lines.iter().all(|l| l.chars().count() <= WRAP_WIDTH),
+            "{:?}",
+            b.lines
+        );
     }
 
     #[test]
@@ -3351,7 +3734,11 @@ mod tests {
         let b = brief_of(everything_wrong());
         assert!(b.line.chars().count() <= LINE_WIDTH, "{}", b.line);
         // the worst entry that is not the absent task follows the caller
-        let worst = b.attention.iter().find(|a| a.id != "session.no_task").unwrap();
+        let worst = b
+            .attention
+            .iter()
+            .find(|a| a.id != "session.no_task")
+            .unwrap();
         let second = b.line.split(" | ").nth(1).unwrap_or_default();
         let lead = format!("{} {} ", worst.section, worst.word);
         assert!(second.starts_with(&lead), "{} / {lead}", b.line);
@@ -3387,6 +3774,7 @@ mod tests {
             worktree: None,
             branch_source: "announce".into(),
             intent: Some(intent.trim().to_string()),
+            other_claims: 0,
             you: i == 2,
         };
         let mut s = calm();
@@ -3397,12 +3785,81 @@ mod tests {
         let b = brief_of(s);
         let text = b.lines.join(" ");
         let words_in_lines = text.matches("word").count();
-        assert!(words_in_lines >= 8 * 80, "every word of every named intent is there");
+        assert!(
+            words_in_lines >= 8 * 80,
+            "every word of every named intent is there"
+        );
         assert!(text.contains("+4 more: majordomus peers"));
         assert!(!text.contains('…'), "nothing is clipped in the lines");
-        assert!(!text.contains("/tmp/x.sock"), "the socket is the JSON's, not the line's");
-        assert!(text.contains("p2  you, claude-code pid 1002 on lundra @fix/2 (announce):"), "{text}");
+        assert!(
+            !text.contains("/tmp/x.sock"),
+            "the socket is the JSON's, not the line's"
+        );
+        assert!(
+            text.contains("p2  you, claude-code pid 1002 on lundra @fix/2 (announce):"),
+            "{text}"
+        );
         assert!(b.lines.iter().all(|l| l.chars().count() <= WRAP_WIDTH));
+    }
+
+    #[test]
+    fn a_peers_branch_and_intent_come_from_one_claim() {
+        let claim = |name: &str, intent: &str, scope: &[&str], at: &str| Announcement {
+            name: Some(name.into()),
+            intent: intent.into(),
+            scope: scope.iter().map(|s| s.to_string()).collect(),
+            at: at.into(),
+        };
+        let claims = vec![
+            claim(
+                "I4390",
+                "the brief",
+                &["refs/heads/feature/brief", "docs/BRIEF.md"],
+                "2026-10-29T17:35:13Z",
+            ),
+            claim("batch", "a sibling's batch", &[], "2026-10-29T18:00:00Z"),
+            claim(
+                "old",
+                "an older branch",
+                &["refs/heads/fix/old"],
+                "2026-10-28T09:00:00Z",
+            ),
+        ];
+        let (c, b) = naming_claim(&claims);
+        assert_eq!(
+            c.map(|c| c.intent.as_str()),
+            Some("the brief"),
+            "not the latest claim's intent"
+        );
+        assert_eq!(
+            b.as_deref(),
+            Some("feature/brief"),
+            "the newest claim naming a branch"
+        );
+        let unbranched = vec![
+            claim("a", "first", &[], "2026-10-29T10:00:00Z"),
+            claim("b", "second", &[], "2026-10-29T11:00:00Z"),
+        ];
+        let (c, b) = naming_claim(&unbranched);
+        assert_eq!((c.map(|c| c.intent.as_str()), b), (Some("second"), None));
+        assert_eq!(naming_claim(&[]), (None, None));
+        let p = BriefPeer {
+            id: "p2".into(),
+            client: "claude-code".into(),
+            pid: Some(4041),
+            host: None,
+            socket: None,
+            branch: Some("feature/brief".into()),
+            worktree: None,
+            branch_source: "announce".into(),
+            intent: Some("the brief".into()),
+            other_claims: 2,
+            you: true,
+        };
+        assert_eq!(
+            peer_text(&p),
+            "p2  you, claude-code pid 4041 @feature/brief (announce): the brief (+2 other claim(s): majordomus peers)"
+        );
     }
 
     #[test]
@@ -3419,7 +3876,10 @@ mod tests {
         assert_eq!(clip("abcdefghij", 5), "abcd…");
         assert_eq!(clip("the quick brown fox jumps", 16), "the quick brown…");
         assert_eq!(percent_encode("a b/c-d_e.f~"), "a%20b%2Fc-d_e.f~");
-        assert_eq!(serde_json::to_value(BriefSectionState::Partial).unwrap(), json!("partial"));
+        assert_eq!(
+            serde_json::to_value(BriefSectionState::Partial).unwrap(),
+            json!("partial")
+        );
     }
 
     #[test]
@@ -3453,14 +3913,28 @@ mod tests {
     #[test]
     fn the_provider_session_is_read_in_the_lifecycles_order() {
         let env = |pairs: &'static [(&'static str, &'static str)]| {
-            move |k: &str| pairs.iter().find(|(n, _)| *n == k).map(|(_, v)| v.to_string())
+            move |k: &str| {
+                pairs
+                    .iter()
+                    .find(|(n, _)| *n == k)
+                    .map(|(_, v)| v.to_string())
+            }
         };
         assert_eq!(
-            provider_session_from_env(env(&[("CLAUDE_CODE_SESSION_ID", "b"), ("MAJORDOMUS_PROVIDER_SESSION", "a")])),
+            provider_session_from_env(env(&[
+                ("CLAUDE_CODE_SESSION_ID", "b"),
+                ("MAJORDOMUS_PROVIDER_SESSION", "a")
+            ])),
             Some("a".into())
         );
-        assert_eq!(provider_session_from_env(env(&[("CLAUDE_CODE_SESSION_ID", "b")])), Some("b".into()));
-        assert_eq!(provider_session_from_env(env(&[("CLAUDE_CODE_SESSION_ID", " ")])), None);
+        assert_eq!(
+            provider_session_from_env(env(&[("CLAUDE_CODE_SESSION_ID", "b")])),
+            Some("b".into())
+        );
+        assert_eq!(
+            provider_session_from_env(env(&[("CLAUDE_CODE_SESSION_ID", " ")])),
+            None
+        );
     }
 
     // ------------------------------------------------ budgets
@@ -3475,12 +3949,24 @@ mod tests {
         let fast = spawn("machine", quiet_machine);
         let late_one: BriefDeriveSection = slow.take();
         let budget = budget_of("derive");
-        assert!(started.elapsed() < budget + Duration::from_millis(50), "{:?}", started.elapsed());
+        assert!(
+            started.elapsed() < budget + Duration::from_millis(50),
+            "{:?}",
+            started.elapsed()
+        );
         assert_eq!(late_one.observed.verdict, BriefVerdict::Unread);
-        assert!(late_one.summary.contains("took > 100 ms"), "{}", late_one.summary);
+        assert!(
+            late_one.summary.contains("took > 100 ms"),
+            "{}",
+            late_one.summary
+        );
         assert!(late_one.observed.elapsed_ms > late_one.observed.budget_ms);
         let read: BriefMachineSection = fast.take();
-        assert_eq!(read.state, BriefSectionState::Read, "the other sections are read");
+        assert_eq!(
+            read.state,
+            BriefSectionState::Read,
+            "the other sections are read"
+        );
         assert!(
             read.observed.elapsed_ms < budget_of("machine").as_millis() as u64,
             "a section collected after a slow one says what it took itself: {} ms",
@@ -3490,12 +3976,18 @@ mod tests {
         s.derive = late_one;
         let b = brief_of(s);
         assert!(
-            b.attention.iter().any(|a| a.id == "section.over_budget" && a.fact == "derive took > 100 ms"),
+            b.attention
+                .iter()
+                .any(|a| a.id == "section.over_budget" && a.fact == "derive took > 100 ms"),
             "{:?}",
             b.attention
         );
         // the line leads with it, naming its section once
-        assert!(b.line.contains(" | derive unread took > 100 ms"), "{}", b.line);
+        assert!(
+            b.line.contains(" | derive unread took > 100 ms"),
+            "{}",
+            b.line
+        );
         assert!(!b.line.contains("derive unread derive"), "{}", b.line);
     }
 
@@ -3503,7 +3995,15 @@ mod tests {
     fn an_older_servers_answer_still_deserialises() {
         let mut v = serde_json::to_value(brief_of(calm())).unwrap();
         let m = v.as_object_mut().unwrap();
-        for k in ["work", "ci", "machine", "attention", "report", "fingerprints", "release"] {
+        for k in [
+            "work",
+            "ci",
+            "machine",
+            "attention",
+            "report",
+            "fingerprints",
+            "release",
+        ] {
             m.remove(k);
         }
         for section in ["session", "peers", "mesh", "integration", "derive"] {
@@ -3572,7 +4072,9 @@ mod tests {
         let held = derive_from(true, Some(&lock), Some(&priority));
         assert_eq!(held.pid, Some(me));
         assert_eq!(held.alive, Some(true));
-        assert!(held.summary.starts_with("lock held by derive:feature/x (pid"));
+        assert!(held
+            .summary
+            .starts_with("lock held by derive:feature/x (pid"));
         assert!(held.summary.contains("running"));
         assert!(held.summary.ends_with("; priority to release/v1"));
         assert_eq!(owner_pid("derive:feature/x 4242"), Some(4242));
@@ -3623,7 +4125,13 @@ mod tests {
         ] {
             assert_eq!(serde_json::to_value(state).unwrap(), json!(word));
         }
-        for v in [BriefVerdict::Current, BriefVerdict::Stale, BriefVerdict::Partial, BriefVerdict::Unread, BriefVerdict::Undeclared] {
+        for v in [
+            BriefVerdict::Current,
+            BriefVerdict::Stale,
+            BriefVerdict::Partial,
+            BriefVerdict::Unread,
+            BriefVerdict::Undeclared,
+        ] {
             assert_eq!(serde_json::to_value(v).unwrap(), json!(v.as_str()));
         }
     }
@@ -3846,14 +4354,28 @@ mod tests {
         assert_eq!(mine.caller.as_deref(), Some(me.as_str()));
         assert_eq!(mine.task_id.as_deref(), Some("t-1"));
         assert_eq!(mine.task_owner_session.as_deref(), Some("prov-9"));
-        assert!(mine.summary.starts_with(&format!("[current] {} = prov-2 (provider session); episode s-0002, opened ", me.as_str())), "{}", mine.summary);
-        assert!(mine.summary.contains("; task t-1 [active]: I2399: cover the brief"), "{}", mine.summary);
+        assert!(
+            mine.summary.starts_with(&format!(
+                "[current] {} = prov-2 (provider session); episode s-0002, opened ",
+                me.as_str()
+            )),
+            "{}",
+            mine.summary
+        );
+        assert!(
+            mine.summary
+                .contains("; task t-1 [active]: I2399: cover the brief"),
+            "{}",
+            mine.summary
+        );
 
         let pointed = session_section(&ctx, &root, None, &[]);
         assert_eq!(pointed.episode.as_deref(), Some("s-0001"));
         assert_eq!(pointed.resolved_by.as_deref(), Some("pointer"));
         assert!(
-            pointed.summary.contains("the checkout's pointer (owner prov-1), not necessarily this session"),
+            pointed
+                .summary
+                .contains("the checkout's pointer (owner prov-1), not necessarily this session"),
             "{}",
             pointed.summary
         );
@@ -3867,21 +4389,44 @@ mod tests {
         let ctx = canned_context(&repo);
         can("lifecycle.episodes", two_episodes());
         let root = canonical(&repo);
-        for outcome in ["partial", "completed", "blocked", "failed", "no_match", "handed_over"] {
+        for outcome in [
+            "partial",
+            "completed",
+            "blocked",
+            "failed",
+            "no_match",
+            "handed_over",
+        ] {
             task_record(&repo, outcome);
             let s = session_section(&ctx, &root, None, &[]);
-            assert_eq!((s.task_id.as_deref(), s.task.as_deref()), (None, None), "{outcome}");
+            assert_eq!(
+                (s.task_id.as_deref(), s.task.as_deref()),
+                (None, None),
+                "{outcome}"
+            );
             assert_eq!(s.task_outcome.as_deref(), Some(outcome));
             assert!(
-                s.summary.contains(&format!("no active task (last t-1 [{outcome}], checkpointed 10-27, owner prov-9)")),
+                s.summary.contains(&format!(
+                    "no active task (last t-1 [{outcome}], checkpointed 10-27, owner prov-9)"
+                )),
                 "{outcome}: {}",
                 s.summary
             );
-            let line = brief_of(Sections { session: s, ..calm() }).line;
-            assert!(!line.contains("t-1"), "a finished task is off the line: {line}");
+            let line = brief_of(Sections {
+                session: s,
+                ..calm()
+            })
+            .line;
+            assert!(
+                !line.contains("t-1"),
+                "a finished task is off the line: {line}"
+            );
         }
         task_record(&repo, "active");
-        assert_eq!(session_section(&ctx, &root, None, &[]).task_id.as_deref(), Some("t-1"));
+        assert_eq!(
+            session_section(&ctx, &root, None, &[]).task_id.as_deref(),
+            Some("t-1")
+        );
     }
 
     #[test]
@@ -3892,7 +4437,11 @@ mod tests {
         let partial = session_section(&ctx, &canonical(&repo), Some("prov-2"), &[]);
         assert_eq!(partial.state, BriefSectionState::Partial);
         assert_eq!(partial.episode, None);
-        assert!(partial.summary.contains("episodes unread ("), "{}", partial.summary);
+        assert!(
+            partial.summary.contains("episodes unread ("),
+            "{}",
+            partial.summary
+        );
         assert_eq!(partial.observed.verdict, BriefVerdict::Partial);
         assert!(partial.observed.remedy.is_some());
     }
@@ -3943,7 +4492,12 @@ mod tests {
             ["/elsewhere: its server is starting and has no board to read yet"]
         );
         assert_eq!((s.named.len(), s.people.len()), (PEERS_NAMED, PEERS_NAMED));
-        assert!(s.named[0].ends_with("@? : worker 0 at work") || s.named[0].ends_with("@?: worker 0 at work"), "{}", s.named[0]);
+        assert!(
+            s.named[0].ends_with("@? : worker 0 at work")
+                || s.named[0].ends_with("@?: worker 0 at work"),
+            "{}",
+            s.named[0]
+        );
         assert_eq!(s.people[0].intent.as_deref(), Some("worker 0 at work"));
         assert_eq!(
             s.summary,
@@ -3972,7 +4526,8 @@ mod tests {
             let repo = SyntheticRepository::small().expect("a repository");
             let ctx = repo.context().expect("a context");
             let p = ctx.peers.attach(Transport::Http);
-            ctx.peers.announce(&p, "the leaseholder's worker", vec!["lib".into()]);
+            ctx.peers
+                .announce(&p, "the leaseholder's worker", vec!["lib".into()]);
             serde_json::to_value(ctx.peers.list()).expect("its board")
         };
         let board = json!({ "peers": leaseholder }).to_string();
@@ -3992,14 +4547,27 @@ mod tests {
 
         let s = peers_section(&ctx, Checkouts::This, None, Some(url), None);
         assert_eq!(s.state, BriefSectionState::Read, "{}", s.summary);
-        assert_eq!(s.attached, 1, "the leaseholder's worker is on this checkout's board");
-        assert!(s.named.iter().any(|n| n.contains("the leaseholder's worker")), "{:?}", s.named);
+        assert_eq!(
+            s.attached, 1,
+            "the leaseholder's worker is on this checkout's board"
+        );
+        assert!(
+            s.named
+                .iter()
+                .any(|n| n.contains("the leaseholder's worker")),
+            "{:?}",
+            s.named
+        );
 
         let s = peers_section(&ctx, Checkouts::This, None, Some(dead_url()), None);
         assert_eq!(s.state, BriefSectionState::Partial, "{}", s.summary);
         assert_eq!(s.unread.len(), 1, "{:?}", s.unread);
         assert!(s.unread[0].starts_with("this checkout's board, held by the leaseholder: "));
-        assert!(s.summary.starts_with("[partial] 0 attached"), "{}", s.summary);
+        assert!(
+            s.summary.starts_with("[partial] 0 attached"),
+            "{}",
+            s.summary
+        );
     }
 
     #[test]
@@ -4007,7 +4575,8 @@ mod tests {
         let psid = "07a5ffde-74b3-4ca6-ab0d-1ad2c9e56d9e";
         let unnamed = || {
             let mut s = BriefSessionSection::over_budget("session", Duration::ZERO, Duration::ZERO);
-            s.summary = format!("[current] provider session {psid} (not on this board); episode e1");
+            s.summary =
+                format!("[current] provider session {psid} (not on this board); episode e1");
             s
         };
         let none = || BriefPeersSection::over_budget("peers", Duration::ZERO, Duration::ZERO);
@@ -4022,23 +4591,36 @@ mod tests {
             worktree: None,
             branch_source: "server".into(),
             intent: None,
+            other_claims: 0,
             you: true,
         });
         let mut s = unnamed();
         name_the_caller(&mut s, &found, Some(psid));
         assert_eq!(s.caller.as_deref(), Some("p2"));
-        assert_eq!(s.summary, "[current] p2 = 07a5ffde (provider session); episode e1");
+        assert_eq!(
+            s.summary,
+            "[current] p2 = 07a5ffde (provider session); episode e1"
+        );
 
         let mut unread = none();
-        unread.unread.push("this checkout's board, held by the leaseholder: x did not answer".into());
+        unread
+            .unread
+            .push("this checkout's board, held by the leaseholder: x did not answer".into());
         let mut s = unnamed();
         name_the_caller(&mut s, &unread, Some(psid));
         assert_eq!(s.caller, None);
-        assert!(s.summary.contains("(this checkout's board unread)"), "{}", s.summary);
+        assert!(
+            s.summary.contains("(this checkout's board unread)"),
+            "{}",
+            s.summary
+        );
 
         let mut s = unnamed();
         name_the_caller(&mut s, &none(), Some(psid));
-        assert!(s.summary.contains("(not on this board)"), "a board that was read and lacks it");
+        assert!(
+            s.summary.contains("(not on this board)"),
+            "a board that was read and lacks it"
+        );
     }
 
     // ------------------------------------------------ a superseded server
@@ -4078,11 +4660,19 @@ mod tests {
         assert_eq!(b.answered_by.process, "superseded");
         assert_eq!(b.peers.state, BriefSectionState::Partial);
         assert_eq!(b.peers.attached, 2, "its own worker and the leaseholder's");
-        assert!(b.peers.named.iter().any(|n| n.contains("the leaseholder's worker")));
+        assert!(b
+            .peers
+            .named
+            .iter()
+            .any(|n| n.contains("the leaseholder's worker")));
         let said = b.peers.superseded.clone().expect("superseded");
         assert!(said.contains(&format!("superseded by {url}")), "{said}");
         assert!(b.line.contains(" superseded"), "{}", b.line);
-        assert!(b.attention.iter().any(|a| a.id == "peers.superseded"), "{:?}", b.attention);
+        assert!(
+            b.attention.iter().any(|a| a.id == "peers.superseded"),
+            "{:?}",
+            b.attention
+        );
 
         lease_of_another(&repo, Some(&dead_url()));
         let b = brief(
@@ -4142,25 +4732,47 @@ mod tests {
             (owed.state, owed.stance, owed.landed),
             (BriefSectionState::Read, Some(Stance::Owed), 3)
         );
-        for broken in [bare_context(&repo), currency_context(&repo, canned_unreadable)] {
+        for broken in [
+            bare_context(&repo),
+            currency_context(&repo, canned_unreadable),
+        ] {
             let section = release_section(&broken);
             assert_eq!(section.state, BriefSectionState::Unread);
-            assert!(section.summary.starts_with("release.currency did not answer:"));
+            assert!(section
+                .summary
+                .starts_with("release.currency did not answer:"));
         }
     }
 
     #[test]
     fn the_release_is_said_in_the_line() {
-        assert_eq!(release_token(&release(Stance::Overdue, 4)), "release overdue 4");
+        assert_eq!(
+            release_token(&release(Stance::Overdue, 4)),
+            "release overdue 4"
+        );
         assert_eq!(release_token(&release(Stance::Owed, 1)), "release owed 1");
-        assert_eq!(release_token(&BriefReleaseSection::default()), "release unread");
-        let current = brief_of(Sections { release: release(Stance::Current, 0), ..calm() }).line;
+        assert_eq!(
+            release_token(&BriefReleaseSection::default()),
+            "release unread"
+        );
+        let current = brief_of(Sections {
+            release: release(Stance::Current, 0),
+            ..calm()
+        })
+        .line;
         assert!(current.contains("release current"), "{current}");
         // a release that needs attention leads the line as its worst entry, named by its
         // section, so the line says it even when the release token is dropped at the right
-        let overdue = brief_of(Sections { release: release(Stance::Overdue, 4), ..calm() }).line;
+        let overdue = brief_of(Sections {
+            release: release(Stance::Overdue, 4),
+            ..calm()
+        })
+        .line;
         assert!(
-            overdue.split(" | ").nth(1).is_some_and(|t| t.starts_with("release overdue 4 landed")),
+            overdue
+                .split(" | ")
+                .nth(1)
+                .is_some_and(|t| t.starts_with("release overdue 4 landed")),
             "{overdue}"
         );
     }
@@ -4177,7 +4789,10 @@ mod tests {
         let ctx = canned_context(&repo);
         let dead = dead_url();
         let e = forward(&ctx, &dead, &asked).expect_err("nobody listens");
-        assert!(e.starts_with(&format!("the leaseholder at {dead} did not answer (")), "{e}");
+        assert!(
+            e.starts_with(&format!("the leaseholder at {dead} did not answer (")),
+            "{e}"
+        );
 
         let old = serve(|_| (404, "{}".into()));
         let e = forward(&ctx, &old, &asked).expect_err("an older server");
@@ -4195,17 +4810,27 @@ mod tests {
             (200, body.clone())
         });
         assert_eq!(forward(&ctx, &good, &asked), Ok(theirs));
-        assert_eq!(seen.lock().unwrap().as_str(), "/api/v1/brief?local=true&checkouts=this");
+        assert_eq!(
+            seen.lock().unwrap().as_str(),
+            "/api/v1/brief?local=true&checkouts=this"
+        );
         // since and the provider's background travel with the question
         let full = BriefInput {
             since: Some("2026-10-29T09:20:00Z".into()),
-            background: vec![BriefBackground { id: "b1".into(), description: "x".into(), status: String::new() }],
+            background: vec![BriefBackground {
+                id: "b1".into(),
+                description: "x".into(),
+                status: String::new(),
+            }],
             ..asked
         };
         let _ = forward(&ctx, &good, &full);
         let path = seen.lock().unwrap().clone();
         assert!(path.contains("&since=2026-10-29T09%3A20%3A00Z"), "{path}");
-        assert!(path.contains("&background=%5B%7B%22id%22%3A%22b1%22"), "{path}");
+        assert!(
+            path.contains("&background=%5B%7B%22id%22%3A%22b1%22"),
+            "{path}"
+        );
     }
 
     #[test]
@@ -4214,7 +4839,10 @@ mod tests {
         let id = crate::repository::identity(&canonical(&repo));
         let url = serve(move |path| {
             if path == "/" {
-                (200, json!({ "name": "majordomus", "repository_id": id }).to_string())
+                (
+                    200,
+                    json!({ "name": "majordomus", "repository_id": id }).to_string(),
+                )
             } else {
                 (404, "{}".into())
             }
@@ -4226,11 +4854,18 @@ mod tests {
         let b = brief(&ctx, input(Checkouts::This, Some("prov-2"))).expect("a brief");
         assert_eq!(b.answered_by.process, "this_process");
         let note = b.answered_by.note.clone().expect("why");
-        assert!(note.contains(&format!("the leaseholder at {url} answered 404")), "{note}");
+        assert!(
+            note.contains(&format!("the leaseholder at {url} answered 404")),
+            "{note}"
+        );
         assert_eq!(b.session.episode.as_deref(), Some("s-0002"));
         // a composition that is not the leaseholder's reads no forge, and says so
         assert_eq!(b.ci.state, BriefSectionState::Unread);
-        assert!(b.ci.summary.contains("not the leaseholder"), "{}", b.ci.summary);
+        assert!(
+            b.ci.summary.contains("not the leaseholder"),
+            "{}",
+            b.ci.summary
+        );
         assert!(b.report.prompt.starts_with(&report::contract().marker));
     }
 
@@ -4244,10 +4879,19 @@ mod tests {
     fn an_active_mesh_is_read_for_its_links_its_claims_and_what_it_addresses_here() {
         use crate::mesh::journal::{ClaimMode, HandoverBody, SessionInfo};
         let net = std::sync::Arc::new(mesh_world::Net::default());
-        let (a, b) = (mesh_world::runtime(&net, "a:1"), mesh_world::runtime(&net, "b:1"));
+        let (a, b) = (
+            mesh_world::runtime(&net, "a:1"),
+            mesh_world::runtime(&net, "b:1"),
+        );
         a.dial(&["b:1".into()]).expect("B welcomes A");
-        a.claim(&SessionInfo::named("s1", "cli"), vec!["apps".into()], None, ClaimMode::Advisory, None)
-            .unwrap();
+        a.claim(
+            &SessionInfo::named("s1", "cli"),
+            vec!["apps".into()],
+            None,
+            ClaimMode::Advisory,
+            None,
+        )
+        .unwrap();
         a.claim(
             &SessionInfo::named("s2", "cli"),
             vec!["apps/majordomus-cli".into()],
@@ -4280,7 +4924,11 @@ mod tests {
         assert_eq!((fresh.links, fresh.connected, fresh.failing), (1, 1, 0));
         assert_eq!((fresh.claims_held, fresh.own_claims), (2, 2));
         assert_eq!(
-            (fresh.reviews_for_you, fresh.handovers_waiting, fresh.overlaps_for_you),
+            (
+                fresh.reviews_for_you,
+                fresh.handovers_waiting,
+                fresh.overlaps_for_you
+            ),
             (1, 0, 0)
         );
         assert_eq!(
@@ -4300,11 +4948,20 @@ mod tests {
     fn an_overlap_among_this_runtimes_own_claims_is_not_for_it() {
         use crate::mesh::journal::{ClaimMode, SessionInfo};
         let net = std::sync::Arc::new(mesh_world::Net::default());
-        let (a, b) = (mesh_world::runtime(&net, "a:1"), mesh_world::runtime(&net, "b:1"));
+        let (a, b) = (
+            mesh_world::runtime(&net, "a:1"),
+            mesh_world::runtime(&net, "b:1"),
+        );
         let key = a.dial(&["b:1".into()]).expect("B welcomes A");
         let claim = |r: &crate::mesh::cooperation::Cooperation, session: &str, scope: &str| {
-            r.claim(&SessionInfo::named(session, "cli"), vec![scope.into()], None, ClaimMode::Advisory, None)
-                .unwrap();
+            r.claim(
+                &SessionInfo::named(session, "cli"),
+                vec![scope.into()],
+                None,
+                ClaimMode::Advisory,
+                None,
+            )
+            .unwrap();
         };
         let sync = || {
             for _ in 0..2 {
@@ -4341,36 +4998,83 @@ mod tests {
         // the cooperation status words its reason "not active: ..."; the section says it once
         let repo = SyntheticRepository::small().expect("a repository");
         let ctx = repo.context().expect("a context");
-        ctx.mesh.decline_cooperation("not active: no shared server activated the mesh in this process");
+        ctx.mesh
+            .decline_cooperation("not active: no shared server activated the mesh in this process");
         let once = mesh_section(&ctx, None);
-        assert_eq!(once.summary, "not active here: no shared server activated the mesh in this process");
+        assert_eq!(
+            once.summary,
+            "not active here: no shared server activated the mesh in this process"
+        );
         // a command line whose leaseholder did not answer did not read the mesh: unread, not off
         let unread = mesh_section(&ctx, Some("http://0.0.0.0:62328"));
         assert_eq!(unread.state, BriefSectionState::Unread);
         assert_eq!(unread.observed.verdict, BriefVerdict::Unread);
-        assert!(unread.summary.starts_with("unread: the mesh runs in the leaseholder at http://0.0.0.0:62328"));
-        let line = brief_of(Sections { mesh: unread, ..calm() }).line;
+        assert!(unread
+            .summary
+            .starts_with("unread: the mesh runs in the leaseholder at http://0.0.0.0:62328"));
+        let line = brief_of(Sections {
+            mesh: unread,
+            ..calm()
+        })
+        .line;
         assert!(line.contains("mesh unread"), "{line}");
     }
 
     #[test]
     fn every_section_line_leads_with_its_status_word() {
         assert_eq!(worded("current", "lock free"), "[current] lock free");
-        assert_eq!(worded("current", "[stale] queue observed 2 h ago"), "[stale] queue observed 2 h ago");
-        assert_eq!(worded("unread", "unread: not the leaseholder"), "unread: not the leaseholder");
+        assert_eq!(
+            worded("current", "[stale] queue observed 2 h ago"),
+            "[stale] queue observed 2 h ago"
+        );
+        assert_eq!(
+            worded("unread", "unread: not the leaseholder"),
+            "unread: not the leaseholder"
+        );
         assert_eq!(release_word(&release(Stance::Owed, 2)), "owed");
         assert_eq!(release_word(&release(Stance::Overdue, 2)), "overdue");
         assert_eq!(release_word(&BriefReleaseSection::default()), "unread");
-        let b = brief_of(Sections { release: release(Stance::Owed, 2), ..calm() });
-        let release_line = b.lines.iter().find(|l| l.starts_with("release ")).expect("a release line");
-        assert!(release_line.starts_with("release      [owed] "), "{release_line}");
-        let derive_line = b.lines.iter().find(|l| l.starts_with("derive ")).expect("a derive line");
+        let b = brief_of(Sections {
+            release: release(Stance::Owed, 2),
+            ..calm()
+        });
+        let release_line = b
+            .lines
+            .iter()
+            .find(|l| l.starts_with("release "))
+            .expect("a release line");
+        assert!(
+            release_line.starts_with("release      [owed] "),
+            "{release_line}"
+        );
+        let derive_line = b
+            .lines
+            .iter()
+            .find(|l| l.starts_with("derive "))
+            .expect("a derive line");
         assert!(derive_line.contains("] "), "{derive_line}");
         // every section's first line leads with a status word, bracketed or `unread`
-        for name in ["session", "work", "peers", "mesh", "integration", "ci", "machine", "release", "derive"] {
-            let line = b.lines.iter().find(|l| l.starts_with(&format!("{name} "))).expect("a section line");
+        for name in [
+            "session",
+            "work",
+            "peers",
+            "mesh",
+            "integration",
+            "ci",
+            "machine",
+            "release",
+            "derive",
+        ] {
+            let line = b
+                .lines
+                .iter()
+                .find(|l| l.starts_with(&format!("{name} ")))
+                .expect("a section line");
             let text = line[LABEL_WIDTH..].trim_start();
-            assert!(text.starts_with('[') || text.starts_with("unread"), "{line}");
+            assert!(
+                text.starts_with('[') || text.starts_with("unread"),
+                "{line}"
+            );
         }
         // a checkout that never observed the forge has its queue unread, not undeclared
         let repo = SyntheticRepository::small().expect("a repository");
@@ -4379,7 +5083,10 @@ mod tests {
         assert_eq!(never.state, BriefSectionState::Undeclared);
         assert_eq!(integration_word(&never), "unread");
         let line = worded(integration_word(&never), &never.summary);
-        assert_eq!(line, "[unread] this checkout never observed the forge: majordomus prs refresh");
+        assert_eq!(
+            line,
+            "[unread] this checkout never observed the forge: majordomus prs refresh"
+        );
     }
 
     // ------------------------------------------------ integration
@@ -4392,7 +5099,11 @@ mod tests {
             .args(args)
             .output()
             .expect("git runs");
-        assert!(out.status.success(), "git {args:?}: {}", String::from_utf8_lossy(&out.stderr));
+        assert!(
+            out.status.success(),
+            "git {args:?}: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
         String::from_utf8_lossy(&out.stdout).trim().to_string()
     }
 
@@ -4408,10 +5119,12 @@ mod tests {
         let base = git(&root, &["rev-parse", "HEAD"]);
         git(&root, &["commit", "-q", "--allow-empty", "-m", tip]);
         let now_sha = git(&root, &["rev-parse", "HEAD"]);
-        git(&root, &["update-ref", "refs/remotes/origin/master", &now_sha]);
-        let at = crate::peers::rfc3339(
-            std::time::SystemTime::now() - Duration::from_secs(ago as u64),
+        git(
+            &root,
+            &["update-ref", "refs/remotes/origin/master", &now_sha],
         );
+        let at =
+            crate::peers::rfc3339(std::time::SystemTime::now() - Duration::from_secs(ago as u64));
         store_observation(
             &root,
             &ForgeObservation {
@@ -4438,21 +5151,39 @@ mod tests {
         let repo = SyntheticRepository::small().expect("a repository");
         let never = integration_section(repo.root());
         assert_eq!(never.state, BriefSectionState::Undeclared);
-        assert_eq!(never.observed.remedy.as_deref(), Some("majordomus prs refresh"));
+        assert_eq!(
+            never.observed.remedy.as_deref(),
+            Some("majordomus prs refresh")
+        );
 
         let (_d, old) = observed_clone(false, 2 * 3600, "two");
         let s = integration_section(&old);
         assert!(s.stale, "{}", s.summary);
         assert_eq!(s.observed.verdict, BriefVerdict::Stale);
         assert_eq!(s.remedy.as_deref(), Some("majordomus prs refresh"));
-        assert!(s.summary.starts_with("[stale] queue observed 2 h ago"), "{}", s.summary);
-        let line = brief_of(Sections { integration: s, ..calm() }).line;
+        assert!(
+            s.summary.starts_with("[stale] queue observed 2 h ago"),
+            "{}",
+            s.summary
+        );
+        let line = brief_of(Sections {
+            integration: s,
+            ..calm()
+        })
+        .line;
         assert!(line.contains("prs stale 2h"), "{line}");
-        assert!(!line.contains(" open, next #"), "never the bare count: {line}");
+        assert!(
+            !line.contains(" open, next #"),
+            "never the bare count: {line}"
+        );
 
         let (_d, moved) = observed_clone(true, 60, "moved");
         let s = integration_section(&moved);
-        assert!(s.stale, "master moved past the observation within the bound: {}", s.summary);
+        assert!(
+            s.stale,
+            "master moved past the observation within the bound: {}",
+            s.summary
+        );
         assert_eq!(s.moved_by, Some(1));
         let fresh_dir = observed_clone(false, 60, "fresh");
         let fresh = integration_section(&fresh_dir.1);
@@ -4474,8 +5205,21 @@ mod tests {
         )
         .expect("recorded");
         let s = integration_section(&root);
-        assert_eq!(s.last_merge.as_ref().and_then(|m| m.pr), Some(2653), "{}", s.summary);
-        assert!(s.summary.contains("last merge on master #2653"), "{}", s.summary);
-        assert!(s.summary.contains("last executor merge #2366"), "{}", s.summary);
+        assert_eq!(
+            s.last_merge.as_ref().and_then(|m| m.pr),
+            Some(2653),
+            "{}",
+            s.summary
+        );
+        assert!(
+            s.summary.contains("last merge on master #2653"),
+            "{}",
+            s.summary
+        );
+        assert!(
+            s.summary.contains("last executor merge #2366"),
+            "{}",
+            s.summary
+        );
     }
 }

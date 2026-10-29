@@ -11,7 +11,10 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
-use super::{BriefMachineSection, BriefObservation, BriefProcess, BriefSectionState, BriefVerdict, BriefVolume};
+use super::{
+    BriefMachineSection, BriefObservation, BriefProcess, BriefSectionState, BriefVerdict,
+    BriefVolume,
+};
 
 /// How long the one `ps` may take.
 pub(super) const PS_BUDGET: Duration = Duration::from_secs(1);
@@ -65,7 +68,12 @@ pub(crate) fn parse_ps(text: &str) -> Vec<Proc> {
             let ppid = w.next()?.parse().ok()?;
             let age_seconds = etime_seconds(w.next()?)?;
             let command = w.collect::<Vec<_>>().join(" ");
-            Some(Proc { pid, ppid, age_seconds, command })
+            Some(Proc {
+                pid,
+                ppid,
+                age_seconds,
+                command,
+            })
         })
         .collect()
 }
@@ -76,7 +84,10 @@ pub(crate) fn etime_seconds(e: &str) -> Option<u64> {
         Some((d, r)) => (d.parse::<u64>().ok()?, r),
         None => (0, e),
     };
-    let parts: Vec<u64> = rest.split(':').map(|p| p.parse().ok()).collect::<Option<_>>()?;
+    let parts: Vec<u64> = rest
+        .split(':')
+        .map(|p| p.parse().ok())
+        .collect::<Option<_>>()?;
     let (h, m, s) = match parts.as_slice() {
         [m, s] => (0, *m, *s),
         [h, m, s] => (*h, *m, *s),
@@ -103,7 +114,9 @@ pub(crate) fn swap() -> Option<(u64, u64)> {
     }
     #[cfg(target_os = "linux")]
     {
-        std::fs::read_to_string("/proc/meminfo").ok().and_then(|t| parse_meminfo(&t))
+        std::fs::read_to_string("/proc/meminfo")
+            .ok()
+            .and_then(|t| parse_meminfo(&t))
     }
     #[cfg(not(any(target_os = "macos", target_os = "linux")))]
     {
@@ -175,7 +188,9 @@ fn volumes(primary: &Path) -> Vec<PathBuf> {
 
 fn device(p: &Path) -> Option<u64> {
     use std::os::unix::fs::MetadataExt;
-    p.ancestors().find_map(|a| std::fs::metadata(a).ok()).map(|m| m.dev())
+    p.ancestors()
+        .find_map(|a| std::fs::metadata(a).ok())
+        .map(|m| m.dev())
 }
 
 /// The limits the policy declares: `machine.heavy_work.min_free_gib` and `.slots`.
@@ -216,7 +231,10 @@ pub(crate) fn section(
     let builders = procs.as_ref().ok().map(|_| {
         // a cargo and the rustc it runs are one build: count the cargo processes, and the
         // rustc ones only when no cargo is there to own them
-        let cargo = builders_list.iter().filter(|b| b.command == "cargo").count() as u64;
+        let cargo = builders_list
+            .iter()
+            .filter(|b| b.command == "cargo")
+            .count() as u64;
         if cargo > 0 {
             cargo
         } else {
@@ -251,13 +269,25 @@ pub(crate) fn section(
         (Some(f), None) => words.push(format!("disk {:.0} GiB free (no floor declared)", gib(f))),
         (None, _) => words.push("disk [unread]".into()),
     }
-    match swap.and_then(|(used, total)| used.saturating_mul(100).checked_div(total).map(|p| (used, total, p))) {
+    match swap.and_then(|(used, total)| {
+        used.saturating_mul(100)
+            .checked_div(total)
+            .map(|p| (used, total, p))
+    }) {
         Some((used, total, pct)) => {
-            let w = if pct > super::SWAP_DEGRADED_PERCENT { "degraded" } else { "current" };
+            let w = if pct > super::SWAP_DEGRADED_PERCENT {
+                "degraded"
+            } else {
+                "current"
+            };
             if w == "degraded" {
                 verdict_of("degraded");
             }
-            words.push(format!("swap {:.1}/{:.1} GiB ({pct} %) [{w}]", gib(used), gib(total)));
+            words.push(format!(
+                "swap {:.1}/{:.1} GiB ({pct} %) [{w}]",
+                gib(used),
+                gib(total)
+            ));
         }
         None if swap.is_some() => words.push("swap none".into()),
         None => words.push("swap [unread]".into()),
@@ -284,7 +314,10 @@ pub(crate) fn section(
     } else {
         BriefSectionState::Partial
     };
-    let summary = format!("[{worst}] {}; statvfs, sysctl and ps, read now", words.join("; "));
+    let summary = format!(
+        "[{worst}] {}; statvfs, sysctl and ps, read now",
+        words.join("; ")
+    );
     BriefMachineSection {
         state,
         observed: BriefObservation {
@@ -294,7 +327,8 @@ pub(crate) fn section(
             } else {
                 BriefVerdict::Partial
             },
-            remedy: (state != BriefSectionState::Read).then(|| "df -g / ; sysctl vm.swapusage".into()),
+            remedy: (state != BriefSectionState::Read)
+                .then(|| "df -g / ; sysctl vm.swapusage".into()),
             ..BriefObservation::now()
         },
         volumes,
@@ -349,7 +383,10 @@ mod tests {
     }
 
     fn vol(free_gib: u64) -> Vec<BriefVolume> {
-        vec![BriefVolume { path: "/".into(), free_bytes: free_gib * GIB }]
+        vec![BriefVolume {
+            path: "/".into(),
+            free_bytes: free_gib * GIB,
+        }]
     }
 
     #[test]
@@ -358,14 +395,39 @@ mod tests {
         assert_eq!(fine.word, "current", "{}", fine.summary);
         let low = section(vol(20), Some((GIB, 10 * GIB)), &procs(0), Some(35), Some(5));
         assert_eq!(low.word, "blocked", "{}", low.summary);
-        assert!(low.summary.contains("disk 20 GiB free (floor 35 GiB) [blocked]"), "{}", low.summary);
-        let swapping = section(vol(41), Some((9 * GIB, 10 * GIB)), &procs(0), Some(35), Some(5));
+        assert!(
+            low.summary
+                .contains("disk 20 GiB free (floor 35 GiB) [blocked]"),
+            "{}",
+            low.summary
+        );
+        let swapping = section(
+            vol(41),
+            Some((9 * GIB, 10 * GIB)),
+            &procs(0),
+            Some(35),
+            Some(5),
+        );
         assert_eq!(swapping.word, "degraded");
-        assert!(swapping.summary.contains("(90 %) [degraded]"), "{}", swapping.summary);
+        assert!(
+            swapping.summary.contains("(90 %) [degraded]"),
+            "{}",
+            swapping.summary
+        );
         let full = section(vol(41), Some((GIB, 10 * GIB)), &procs(5), Some(35), Some(5));
         assert_eq!(full.word, "blocked");
-        assert!(full.summary.contains("builders 5/5 [blocked]"), "{}", full.summary);
-        let unread = section(vol(41), None, &Err("ps took longer than 1000 ms".into()), None, None);
+        assert!(
+            full.summary.contains("builders 5/5 [blocked]"),
+            "{}",
+            full.summary
+        );
+        let unread = section(
+            vol(41),
+            None,
+            &Err("ps took longer than 1000 ms".into()),
+            None,
+            None,
+        );
         assert_eq!(unread.state, BriefSectionState::Partial);
         assert_eq!(unread.observed.verdict, BriefVerdict::Partial);
         assert!(unread.observed.remedy.is_some());
@@ -389,7 +451,10 @@ mod tests {
         assert_eq!(rows.len(), 2);
         assert!(is_builder(&rows[0]) && is_builder(&rows[1]));
         assert_eq!(rows[1].ppid, 10);
-        assert_eq!(parse_meminfo("SwapTotal: 100 kB\nSwapFree: 25 kB\n"), Some((75 * 1024, 100 * 1024)));
+        assert_eq!(
+            parse_meminfo("SwapTotal: 100 kB\nSwapFree: 25 kB\n"),
+            Some((75 * 1024, 100 * 1024))
+        );
         assert!(process_table().is_ok(), "this machine has a ps");
     }
 }

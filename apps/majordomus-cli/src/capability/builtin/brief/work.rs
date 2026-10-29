@@ -112,14 +112,21 @@ pub(crate) fn section(i: &Inputs<'_>) -> BriefWorkSection {
                 .iter()
                 .find(|c| c.scope.iter().any(|s| s == &format!("refs/heads/{b}")))
                 .and_then(|c| c.issue.clone())
-                .or_else(|| task.as_ref().map(|t| t.issue.clone()).filter(|s| !s.is_empty()));
+                .or_else(|| {
+                    task.as_ref()
+                        .map(|t| t.issue.clone())
+                        .filter(|s| !s.is_empty())
+                });
             BriefWorkItem {
                 branch: b.clone(),
                 issue,
                 pushed: remote.is_some(),
                 head: remote,
                 worktree: wt.map(|w| w.display().to_string()),
-                task: task.as_ref().filter(|t| t.outcome == "active").map(|t| t.id.clone()),
+                task: task
+                    .as_ref()
+                    .filter(|t| t.outcome == "active")
+                    .map(|t| t.id.clone()),
                 task_outcome: task.map(|t| t.outcome),
                 ..BriefWorkItem::default()
             }
@@ -135,9 +142,13 @@ pub(crate) fn section(i: &Inputs<'_>) -> BriefWorkSection {
             Ok(a) => {
                 forge_age = Some(a.age);
                 for item in items.iter_mut() {
-                    if let Some(pr) = a.value.as_array().into_iter().flatten().find(|p| {
-                        p["headRefName"].as_str() == Some(item.branch.as_str())
-                    }) {
+                    if let Some(pr) = a
+                        .value
+                        .as_array()
+                        .into_iter()
+                        .flatten()
+                        .find(|p| p["headRefName"].as_str() == Some(item.branch.as_str()))
+                    {
                         item.pr = pr["number"].as_u64();
                         item.title = pr["title"].as_str().map(str::to_string);
                         item.merge_state = pr["mergeStateStatus"].as_str().map(str::to_string);
@@ -276,7 +287,14 @@ pub(crate) fn section(i: &Inputs<'_>) -> BriefWorkSection {
         suspended,
         claims,
         items,
-        trains: trains.into_iter().map(|(pr, train)| super::BriefTrain { pr, branch: train, source: "claim intent".into() }).collect(),
+        trains: trains
+            .into_iter()
+            .map(|(pr, train)| super::BriefTrain {
+                pr,
+                branch: train,
+                source: "claim intent".into(),
+            })
+            .collect(),
         background,
         provider_background: i.background.to_vec(),
         provider_background_exposed: !i.background.is_empty(),
@@ -294,7 +312,11 @@ fn own_claims(i: &Inputs<'_>) -> (Vec<BriefClaim>, Option<u32>, Vec<String>) {
     };
     let runtime = i.ctx.mesh.cooperation_status().runtime.unwrap_or_default();
     let provider_suffix = i.psid.map(|p| format!("/claude-code-{p}"));
-    let board_suffixes: Vec<String> = i.board_ids.iter().map(|id| format!("/board-{id}")).collect();
+    let board_suffixes: Vec<String> = i
+        .board_ids
+        .iter()
+        .map(|id| format!("/board-{id}"))
+        .collect();
     let state = coop.state();
     let mine = |key: &str, rt: &str| {
         provider_suffix.as_deref().is_some_and(|s| key.ends_with(s))
@@ -353,7 +375,10 @@ pub(crate) fn primary_checkout(root: &Path) -> Option<PathBuf> {
 
 /// The canonical worktree of a branch: `<primary>-wt/<branch>` (`project.worktree-topology`).
 pub(crate) fn worktree_of(primary: &Path, branch: &str) -> PathBuf {
-    let name = primary.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+    let name = primary
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_default();
     primary.with_file_name(format!("{name}-wt")).join(branch)
 }
 
@@ -370,7 +395,11 @@ fn trains_of(ctx: &Context, items: &[BriefWorkItem]) -> BTreeMap<u64, String> {
         return out;
     }
     let state = coop.state();
-    for c in state.claims.iter().filter(|c| matches!(c.state, ClaimState::Held)) {
+    for c in state
+        .claims
+        .iter()
+        .filter(|c| matches!(c.state, ClaimState::Held))
+    {
         let Some(train) = c.scope.iter().find_map(|s| {
             let s = s.strip_prefix("refs/heads/").unwrap_or(s);
             s.starts_with("integration/train-").then(|| s.to_string())
@@ -390,13 +419,15 @@ fn trains_of(ctx: &Context, items: &[BriefWorkItem]) -> BTreeMap<u64, String> {
 /// Whether `text` names `#<pr>` as a whole number.
 pub(crate) fn mentions(text: &str, pr: u64) -> bool {
     let needle = format!("#{pr}");
-    text.match_indices(&needle).any(|(at, _)| {
-        !text[at + needle.len()..].starts_with(|c: char| c.is_ascii_digit())
-    })
+    text.match_indices(&needle)
+        .any(|(at, _)| !text[at + needle.len()..].starts_with(|c: char| c.is_ascii_digit()))
 }
 
 /// The latest run of each branch, asked in parallel; `Ok(None)` for a branch with no run.
-fn latest_runs(root: &Path, branches: &[String]) -> BTreeMap<String, Result<Option<BriefRun>, String>> {
+fn latest_runs(
+    root: &Path,
+    branches: &[String],
+) -> BTreeMap<String, Result<Option<BriefRun>, String>> {
     std::thread::scope(|s| {
         let handles: Vec<_> = branches
             .iter()
@@ -404,7 +435,12 @@ fn latest_runs(root: &Path, branches: &[String]) -> BTreeMap<String, Result<Opti
                 let b = b.clone();
                 s.spawn(move || {
                     let r = github::runs_by_branch(root, &b, FORGE_BUDGET)
-                        .map(|a| a.value.as_array().and_then(|v| v.first()).map(BriefRun::from_gh))
+                        .map(|a| {
+                            a.value
+                                .as_array()
+                                .and_then(|v| v.first())
+                                .map(BriefRun::from_gh)
+                        })
                         .map_err(|e| e.reason().to_string());
                     (b, r)
                 })
@@ -428,15 +464,30 @@ impl Jobs {
         let st = |j: &Value, k: &str| j[k].as_str().unwrap_or_default().to_string();
         Jobs {
             total: jobs.len() as u32,
-            done: jobs.iter().filter(|j| st(j, "status") == "completed").count() as u32,
-            queued: jobs.iter().filter(|j| matches!(st(j, "status").as_str(), "queued" | "waiting" | "pending")).count() as u32,
+            done: jobs
+                .iter()
+                .filter(|j| st(j, "status") == "completed")
+                .count() as u32,
+            queued: jobs
+                .iter()
+                .filter(|j| matches!(st(j, "status").as_str(), "queued" | "waiting" | "pending"))
+                .count() as u32,
             failed: jobs
                 .iter()
-                .filter(|j| matches!(st(j, "conclusion").as_str(), "failure" | "timed_out" | "startup_failure"))
+                .filter(|j| {
+                    matches!(
+                        st(j, "conclusion").as_str(),
+                        "failure" | "timed_out" | "startup_failure"
+                    )
+                })
                 .map(|j| {
                     let c = st(j, "conclusion");
                     let n = st(j, "name");
-                    if c == "failure" { n } else { format!("{n} ({c})") }
+                    if c == "failure" {
+                        n
+                    } else {
+                        format!("{n} ({c})")
+                    }
                 })
                 .collect(),
         }
@@ -457,7 +508,12 @@ fn jobs_of(root: &Path, ids: &[u64]) -> BTreeMap<u64, Result<Jobs, Unanswered>> 
             .iter()
             .map(|id| {
                 let id = *id;
-                s.spawn(move || (id, github::run_jobs(root, id, FORGE_BUDGET).map(|a| Jobs::of(&a.value))))
+                s.spawn(move || {
+                    (
+                        id,
+                        github::run_jobs(root, id, FORGE_BUDGET).map(|a| Jobs::of(&a.value)),
+                    )
+                })
             })
             .collect();
         handles.into_iter().filter_map(|h| h.join().ok()).collect()
@@ -502,7 +558,11 @@ fn is_background(p: &Proc) -> bool {
 
 fn describe(p: &Proc) -> String {
     let b = base(&p.command);
-    if b == "cargo" { "cargo".into() } else { b.to_string() }
+    if b == "cargo" {
+        "cargo".into()
+    } else {
+        b.to_string()
+    }
 }
 
 /// Own pull requests merged into origin/master since `since`, and own branch heads whose
@@ -525,7 +585,9 @@ fn delivered_since(root: &Path, since: &str, items: &[BriefWorkItem]) -> Vec<Bri
             let (Some(sha), Some(at), Some(subject)) = (f.next(), f.next(), f.next()) else {
                 continue;
             };
-            let Some((pr, branch)) = merged_pr(subject) else { continue };
+            let Some((pr, branch)) = merged_pr(subject) else {
+                continue;
+            };
             if own.contains(branch.as_str()) {
                 out.push(BriefDelivered {
                     kind: "merged".into(),
@@ -544,7 +606,9 @@ fn delivered_since(root: &Path, since: &str, items: &[BriefWorkItem]) -> Vec<Bri
         if let Some(text) = git_bounded(root, &args) {
             let then = crate::peers::epoch_seconds(since).unwrap_or(i64::MAX);
             for l in text.lines() {
-                let Some((sha, at)) = l.split_once('\t') else { continue };
+                let Some((sha, at)) = l.split_once('\t') else {
+                    continue;
+                };
                 if crate::peers::epoch_seconds(at).is_some_and(|t| t > then) {
                     if let Some(item) = heads.iter().find(|i| i.head.as_deref() == Some(sha)) {
                         out.push(BriefDelivered {
@@ -637,13 +701,21 @@ mod tests {
         let j = Jobs::of(&v);
         let mut r = BriefRun::default();
         j.apply(&mut r);
-        assert_eq!((r.jobs_done, r.jobs_total, r.jobs_queued), (Some(3), Some(4), Some(1)));
+        assert_eq!(
+            (r.jobs_done, r.jobs_total, r.jobs_queued),
+            (Some(3), Some(4), Some(1))
+        );
         assert_eq!(r.failed_jobs, ["structure (timed_out)", "lint"]);
     }
 
     #[test]
     fn the_background_is_the_clients_descendants_that_build_or_ask() {
-        let p = |pid, ppid, c: &str| Proc { pid, ppid, age_seconds: 840, command: c.into() };
+        let p = |pid, ppid, c: &str| Proc {
+            pid,
+            ppid,
+            age_seconds: 840,
+            command: c.into(),
+        };
         let table = vec![
             p(10, 1, "claude"),
             p(11, 10, "/bin/zsh"),
@@ -656,7 +728,11 @@ mod tests {
             .filter(|p| is_background(p))
             .map(|p| p.pid)
             .collect();
-        assert_eq!(under.len(), 2, "cargo and its rustc, not another session's cargo");
+        assert_eq!(
+            under.len(),
+            2,
+            "cargo and its rustc, not another session's cargo"
+        );
         assert!(under.contains(&12) && under.contains(&13));
     }
 
@@ -681,18 +757,36 @@ mod tests {
         });
         assert_eq!(s.state, BriefSectionState::Partial, "{}", s.summary);
         assert!(!s.summary.contains("claim(s) held"), "{}", s.summary);
-        assert_eq!(s.summary.matches("claims unread").count(), 1, "{}", s.summary);
-        assert!(s.summary.contains("claims unread: the mesh is not active in this process"), "{}", s.summary);
+        assert_eq!(
+            s.summary.matches("claims unread").count(),
+            1,
+            "{}",
+            s.summary
+        );
+        assert!(
+            s.summary
+                .contains("claims unread: the mesh is not active in this process"),
+            "{}",
+            s.summary
+        );
     }
 
     #[test]
     fn each_item_has_its_word() {
-        let mut it = BriefWorkItem { branch: "b".into(), pushed: true, ..BriefWorkItem::default() };
+        let mut it = BriefWorkItem {
+            branch: "b".into(),
+            pushed: true,
+            ..BriefWorkItem::default()
+        };
         assert_eq!(word_of(&it), "unmerged");
         it.pr = Some(1);
         it.merge_state = Some("DIRTY".into());
         assert_eq!(word_of(&it), "dirty");
-        it.run = Some(BriefRun { status: "completed".into(), conclusion: Some("failure".into()), ..BriefRun::default() });
+        it.run = Some(BriefRun {
+            status: "completed".into(),
+            conclusion: Some("failure".into()),
+            ..BriefRun::default()
+        });
         assert_eq!(word_of(&it), "failing");
     }
 }

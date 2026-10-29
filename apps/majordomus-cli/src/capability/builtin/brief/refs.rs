@@ -15,7 +15,10 @@ pub(crate) fn git_dir(root: &Path) -> Option<PathBuf> {
         return Some(dot);
     }
     let text = std::fs::read_to_string(&dot).ok()?;
-    let named = text.lines().find_map(|l| l.strip_prefix("gitdir: "))?.trim();
+    let named = text
+        .lines()
+        .find_map(|l| l.strip_prefix("gitdir: "))?
+        .trim();
     let p = PathBuf::from(named);
     Some(if p.is_absolute() { p } else { root.join(p) })
 }
@@ -88,7 +91,10 @@ pub(crate) fn fetched_seconds_ago(root: &Path) -> Option<u64> {
 /// When `FETCH_HEAD` was written, RFC 3339.
 pub(crate) fn fetched_at(root: &Path) -> Option<String> {
     let common = common_dir(&git_dir(root)?);
-    let t = std::fs::metadata(common.join("FETCH_HEAD")).ok()?.modified().ok()?;
+    let t = std::fs::metadata(common.join("FETCH_HEAD"))
+        .ok()?
+        .modified()
+        .ok()?;
     Some(crate::peers::rfc3339(t))
 }
 
@@ -107,7 +113,11 @@ mod tests {
             .args(args)
             .output()
             .expect("git runs");
-        assert!(out.status.success(), "git {args:?}: {}", String::from_utf8_lossy(&out.stderr));
+        assert!(
+            out.status.success(),
+            "git {args:?}: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
         String::from_utf8_lossy(&out.stdout).trim().to_string()
     }
 
@@ -119,19 +129,55 @@ mod tests {
         let root = dir.path().join("repo");
         std::fs::create_dir(&root).unwrap();
         git(&root, &["init", "-q", "-b", "master"]);
-        git(&root, &["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--allow-empty", "-m", "one"]);
+        git(
+            &root,
+            &[
+                "-c",
+                "user.name=t",
+                "-c",
+                "user.email=t@t",
+                "commit",
+                "-q",
+                "--allow-empty",
+                "-m",
+                "one",
+            ],
+        );
         let one = git(&root, &["rev-parse", "HEAD"]);
         git(&root, &["update-ref", "refs/remotes/origin/master", &one]);
-        assert_eq!(head(&root), Some((Some("master".into()), Some(one.clone()))));
+        assert_eq!(
+            head(&root),
+            Some((Some("master".into()), Some(one.clone())))
+        );
         let common = common_dir(&git_dir(&root).unwrap());
-        assert_eq!(resolve(&common, "refs/remotes/origin/master"), Some(one.clone()));
+        assert_eq!(
+            resolve(&common, "refs/remotes/origin/master"),
+            Some(one.clone())
+        );
         git(&root, &["pack-refs", "--all"]);
-        assert_eq!(resolve(&common, "refs/remotes/origin/master"), Some(one.clone()), "packed");
+        assert_eq!(
+            resolve(&common, "refs/remotes/origin/master"),
+            Some(one.clone()),
+            "packed"
+        );
         assert_eq!(resolve(&common, "refs/remotes/origin/nothing"), None);
 
         let wt = dir.path().join("wt");
-        git(&root, &["worktree", "add", "-q", "-b", "feature/x", wt.to_str().unwrap()]);
-        assert_eq!(head(&wt), Some((Some("feature/x".into()), Some(one.clone()))));
+        git(
+            &root,
+            &[
+                "worktree",
+                "add",
+                "-q",
+                "-b",
+                "feature/x",
+                wt.to_str().unwrap(),
+            ],
+        );
+        assert_eq!(
+            head(&wt),
+            Some((Some("feature/x".into()), Some(one.clone())))
+        );
         let wcommon = common_dir(&git_dir(&wt).unwrap());
         assert_eq!(resolve(&wcommon, "refs/remotes/origin/master"), Some(one));
         assert_eq!(fetched_seconds_ago(&root), None, "nothing was ever fetched");

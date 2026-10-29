@@ -35,7 +35,9 @@ pub(crate) fn section(root: &Path, leaseholder: bool) -> BriefCiSection {
         )
     });
     let total = |r: &Result<github::Answer, Unanswered>| {
-        r.as_ref().ok().and_then(|a| a.value["total_count"].as_u64())
+        r.as_ref()
+            .ok()
+            .and_then(|a| a.value["total_count"].as_u64())
     };
     let age = [&running, &queued, &runners]
         .iter()
@@ -62,7 +64,11 @@ pub(crate) fn section(root: &Path, leaseholder: bool) -> BriefCiSection {
                 })
                 .collect()
         }),
-        [running.err(), queued.err()].into_iter().flatten().map(|e| e.reason().to_string()).collect(),
+        [running.err(), queued.err()]
+            .into_iter()
+            .flatten()
+            .map(|e| e.reason().to_string())
+            .collect(),
         repository,
         age,
         started.elapsed(),
@@ -81,11 +87,17 @@ pub(crate) fn compose(
 ) -> BriefCiSection {
     let (list, unread) = match runners {
         Ok(l) => (l, None),
-        Err(Unanswered::Forbidden(r)) => (Vec::new(), Some(format!("{r}, needs admin on the repository"))),
+        Err(Unanswered::Forbidden(r)) => (
+            Vec::new(),
+            Some(format!("{r}, needs admin on the repository")),
+        ),
         Err(Unanswered::Failed(r)) => (Vec::new(), Some(r)),
     };
     let online = list.iter().filter(|r| r.status == "online").count();
-    let busy = list.iter().filter(|r| r.status == "online" && r.busy).count();
+    let busy = list
+        .iter()
+        .filter(|r| r.status == "online" && r.busy)
+        .count();
     let offline = list.len() - online;
     let complete = running.is_some() && queued.is_some() && unread.is_none();
     let state = if running.is_none() && queued.is_none() {
@@ -111,7 +123,11 @@ pub(crate) fn compose(
         Some(r) => summary.push_str(&format!("; self-hosted [unread] ({r})")),
         None if list.is_empty() => summary.push_str("; no self-hosted runner"),
         None => {
-            let names: Vec<&str> = list.iter().filter(|r| r.status == "online").map(|r| r.name.as_str()).collect();
+            let names: Vec<&str> = list
+                .iter()
+                .filter(|r| r.status == "online")
+                .map(|r| r.name.as_str())
+                .collect();
             summary.push_str(&format!(
                 "; self-hosted {online} online ({}), {busy} busy, {offline} offline",
                 names.join(", ")
@@ -127,7 +143,10 @@ pub(crate) fn compose(
     if !errors.is_empty() {
         summary.push_str(&format!("; {}", errors.join("; ")));
     }
-    summary.push_str(&format!("; gh via the monitor cache, {} s old", age.as_secs()));
+    summary.push_str(&format!(
+        "; gh via the monitor cache, {} s old",
+        age.as_secs()
+    ));
     BriefCiSection {
         state,
         observed: BriefObservation {
@@ -158,7 +177,11 @@ mod tests {
     use super::*;
 
     fn runner(name: &str, status: &str, busy: bool) -> BriefRunner {
-        BriefRunner { name: name.into(), status: status.into(), busy }
+        BriefRunner {
+            name: name.into(),
+            status: status.into(),
+            busy,
+        }
     }
 
     #[test]
@@ -166,7 +189,10 @@ mod tests {
         let s = section(Path::new("/nowhere"), false);
         assert_eq!(s.state, BriefSectionState::Unread);
         assert_eq!(s.observed.verdict, BriefVerdict::Unread);
-        assert_eq!(s.observed.remedy.as_deref(), Some("majordomus serve ensure"));
+        assert_eq!(
+            s.observed.remedy.as_deref(),
+            Some("majordomus serve ensure")
+        );
         assert!(s.summary.contains("not the leaseholder"), "{}", s.summary);
     }
 
@@ -181,18 +207,30 @@ mod tests {
             Duration::from_secs(12),
             Duration::from_millis(5),
         );
-        assert!(s.summary.contains("[blocked] no runner online"), "{}", s.summary);
+        assert!(
+            s.summary.contains("[blocked] no runner online"),
+            "{}",
+            s.summary
+        );
         let idle = compose(
             Some(1),
             Some(10),
-            Ok(vec![runner("lundra-1", "online", false), runner("lundra-2", "online", false)]),
+            Ok(vec![
+                runner("lundra-1", "online", false),
+                runner("lundra-2", "online", false),
+            ]),
             vec![],
             "o/r".into(),
             Duration::from_secs(12),
             Duration::from_millis(5),
         );
         assert_eq!((idle.online, idle.busy), (2, 0));
-        assert!(idle.summary.contains("queued for hosted labels, self-hosted idle"), "{}", idle.summary);
+        assert!(
+            idle.summary
+                .contains("queued for hosted labels, self-hosted idle"),
+            "{}",
+            idle.summary
+        );
         let forbidden = compose(
             Some(1),
             Some(0),
@@ -203,6 +241,9 @@ mod tests {
             Duration::ZERO,
         );
         assert_eq!(forbidden.state, BriefSectionState::Partial);
-        assert!(forbidden.runners_unread.as_deref().is_some_and(|r| r.contains("needs admin")));
+        assert!(forbidden
+            .runners_unread
+            .as_deref()
+            .is_some_and(|r| r.contains("needs admin")));
     }
 }

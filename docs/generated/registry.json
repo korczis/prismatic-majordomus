@@ -3063,7 +3063,14 @@
                     "string",
                     "null"
                   ],
-                  "description": "What it announced, whole."
+                  "description": "What it announced, whole: the intent of the claim whose `refs/heads/` scope named the\nbranch, so that the branch and the intent describe one piece of work; else its latest."
+                },
+                "other_claims": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many other claims it holds beside the one `intent` is, listed by `majordomus peers`.",
+                  "default": 0
                 },
                 "you": {
                   "type": "boolean",

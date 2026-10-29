@@ -147,7 +147,11 @@ fn has_the_report(b: &Value) {
         "{b}"
     );
     assert!(b["report"]["reminder"].is_string(), "{b}");
-    assert_eq!(b["fingerprints"].as_object().map(|m| m.len()), Some(9), "{b}");
+    assert_eq!(
+        b["fingerprints"].as_object().map(|m| m.len()),
+        Some(9),
+        "{b}"
+    );
 }
 
 #[test]

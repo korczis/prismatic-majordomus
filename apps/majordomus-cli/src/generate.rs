@@ -1083,7 +1083,11 @@ pub(crate) fn brief_report_artifacts(app: &App) -> Result<Vec<Artifact>> {
     }
     page.push_str("\n## Rules\n\n| Id | Rule |\n|---|---|\n");
     for r in &contract.rules {
-        page.push_str(&format!("| `{}` | {} |\n", r.id, r.text.replace('|', "\\|")));
+        page.push_str(&format!(
+            "| `{}` | {} |\n",
+            r.id,
+            r.text.replace('|', "\\|")
+        ));
     }
     page.push_str("\n## Attention rows\n\nEach row is filled by one condition of `brief.session`; the two sets are held equal by a unit test.\n\n| Id | Section | Word | Actor | Fact | Remedy |\n|---|---|---|---|---|---|\n");
     for a in &contract.attention {

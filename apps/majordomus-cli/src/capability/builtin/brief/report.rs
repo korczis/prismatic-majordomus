@@ -412,10 +412,16 @@ pub fn derive_attention(m: &Measured<'_>) -> Vec<BriefAttention> {
         ("release", &m.release.observed),
         ("derive", &m.derive.observed),
     ] {
-        if obs.verdict == BriefVerdict::Unread && obs.budget_ms > 0 && obs.elapsed_ms > obs.budget_ms {
+        if obs.verdict == BriefVerdict::Unread
+            && obs.budget_ms > 0
+            && obs.elapsed_ms > obs.budget_ms
+        {
             push(
                 "section.over_budget",
-                &[("section", name.into()), ("budget", obs.budget_ms.to_string())],
+                &[
+                    ("section", name.into()),
+                    ("budget", obs.budget_ms.to_string()),
+                ],
             );
         }
     }
@@ -427,23 +433,49 @@ pub fn derive_attention(m: &Measured<'_>) -> Vec<BriefAttention> {
             "integration.stale",
             &[
                 ("age", i.age_seconds.map(span).unwrap_or_else(|| "?".into())),
-                ("observed", i.observed_master.as_deref().map(short).unwrap_or_else(|| "?".into())),
-                ("now", i.master_now.as_deref().map(short).unwrap_or_else(|| "?".into())),
-                ("moved", i.moved_by.map(|n| n.to_string()).unwrap_or_else(|| "?".into())),
+                (
+                    "observed",
+                    i.observed_master
+                        .as_deref()
+                        .map(short)
+                        .unwrap_or_else(|| "?".into()),
+                ),
+                (
+                    "now",
+                    i.master_now
+                        .as_deref()
+                        .map(short)
+                        .unwrap_or_else(|| "?".into()),
+                ),
+                (
+                    "moved",
+                    i.moved_by
+                        .map(|n| n.to_string())
+                        .unwrap_or_else(|| "?".into()),
+                ),
             ],
         );
     }
-    if let Some(age) = i.master_fetched_age_seconds.filter(|a| *a > super::FETCH_STALE_AFTER.as_secs()) {
+    if let Some(age) = i
+        .master_fetched_age_seconds
+        .filter(|a| *a > super::FETCH_STALE_AFTER.as_secs())
+    {
         push("integration.unfetched", &[("age", span(age))]);
     }
     if let Some(run) = i.master_ci.as_ref().filter(|r| r.is_failing()) {
         push(
             "master.failing",
             &[
-                ("sha", i.master_now.as_deref().map(short).unwrap_or_default()),
+                (
+                    "sha",
+                    i.master_now.as_deref().map(short).unwrap_or_default(),
+                ),
                 ("workflow", run.workflow.clone()),
                 ("run", run.id.to_string()),
-                ("conclusion", run.conclusion.clone().unwrap_or_else(|| run.status.clone())),
+                (
+                    "conclusion",
+                    run.conclusion.clone().unwrap_or_else(|| run.status.clone()),
+                ),
             ],
         );
     }
@@ -454,10 +486,23 @@ pub fn derive_attention(m: &Measured<'_>) -> Vec<BriefAttention> {
             push(
                 "run.failing",
                 &[
-                    ("branch", item.train.clone().unwrap_or_else(|| item.branch.clone())),
+                    (
+                        "branch",
+                        item.train.clone().unwrap_or_else(|| item.branch.clone()),
+                    ),
                     ("run", run.id.to_string()),
-                    ("done", run.jobs_done.map(|n| n.to_string()).unwrap_or_else(|| "?".into())),
-                    ("total", run.jobs_total.map(|n| n.to_string()).unwrap_or_else(|| "?".into())),
+                    (
+                        "done",
+                        run.jobs_done
+                            .map(|n| n.to_string())
+                            .unwrap_or_else(|| "?".into()),
+                    ),
+                    (
+                        "total",
+                        run.jobs_total
+                            .map(|n| n.to_string())
+                            .unwrap_or_else(|| "?".into()),
+                    ),
                     (
                         "jobs",
                         if run.failed_jobs.is_empty() {
@@ -474,7 +519,10 @@ pub fn derive_attention(m: &Measured<'_>) -> Vec<BriefAttention> {
                 "pr.dirty",
                 &[
                     ("pr", pr.to_string()),
-                    ("worktree", item.worktree.clone().unwrap_or_else(|| "<worktree>".into())),
+                    (
+                        "worktree",
+                        item.worktree.clone().unwrap_or_else(|| "<worktree>".into()),
+                    ),
                 ],
             ),
             (Some(pr), Some("BLOCKED")) => push("pr.blocked", &[("pr", pr.to_string())]),
@@ -499,7 +547,10 @@ pub fn derive_attention(m: &Measured<'_>) -> Vec<BriefAttention> {
             if ci.online == 0 {
                 push(
                     "ci.no_runner",
-                    &[("queued", queued.to_string()), ("repo", ci.repository.clone())],
+                    &[
+                        ("queued", queued.to_string()),
+                        ("repo", ci.repository.clone()),
+                    ],
                 );
             } else if ci.busy < ci.online {
                 push(
@@ -519,7 +570,10 @@ pub fn derive_attention(m: &Measured<'_>) -> Vec<BriefAttention> {
     let mc = m.machine;
     if let (Some(free), Some(floor)) = (mc.free_bytes, mc.floor_gib) {
         if free < floor.saturating_mul(1 << 30) {
-            push("machine.below_floor", &[("free", gib(free)), ("floor", floor.to_string())]);
+            push(
+                "machine.below_floor",
+                &[("free", gib(free)), ("floor", floor.to_string())],
+            );
         }
     }
     if let (Some(used), Some(total)) = (mc.swap_used_bytes, mc.swap_total_bytes) {
@@ -527,14 +581,21 @@ pub fn derive_attention(m: &Measured<'_>) -> Vec<BriefAttention> {
             if pct > super::SWAP_DEGRADED_PERCENT {
                 push(
                     "machine.swap",
-                    &[("used", gib(used)), ("total", gib(total)), ("pct", pct.to_string())],
+                    &[
+                        ("used", gib(used)),
+                        ("total", gib(total)),
+                        ("pct", pct.to_string()),
+                    ],
                 );
             }
         }
     }
     if let (Some(n), Some(max)) = (mc.builders, mc.max_builders) {
         if max > 0 && n >= max {
-            push("machine.builders_full", &[("n", n.to_string()), ("max", max.to_string())]);
+            push(
+                "machine.builders_full",
+                &[("n", n.to_string()), ("max", max.to_string())],
+            );
         }
     }
 
@@ -553,7 +614,10 @@ pub fn derive_attention(m: &Measured<'_>) -> Vec<BriefAttention> {
             push("mesh.review", &[("n", mesh.reviews_for_you.to_string())]);
         }
         if mesh.handovers_waiting > 0 {
-            push("mesh.handover", &[("n", mesh.handovers_waiting.to_string())]);
+            push(
+                "mesh.handover",
+                &[("n", mesh.handovers_waiting.to_string())],
+            );
         }
         if mesh.overlaps_for_you > 0 {
             push("mesh.overlap", &[("n", mesh.overlaps_for_you.to_string())]);
@@ -569,9 +633,10 @@ pub fn derive_attention(m: &Measured<'_>) -> Vec<BriefAttention> {
         (BriefSectionState::Read, Some(Stance::Owed)) => {
             push("release.owed", &[("landed", m.release.landed.to_string())])
         }
-        (BriefSectionState::Read, Some(Stance::Overdue)) => {
-            push("release.overdue", &[("landed", m.release.landed.to_string())])
-        }
+        (BriefSectionState::Read, Some(Stance::Overdue)) => push(
+            "release.overdue",
+            &[("landed", m.release.landed.to_string())],
+        ),
         _ => {}
     }
 
@@ -581,7 +646,13 @@ pub fn derive_attention(m: &Measured<'_>) -> Vec<BriefAttention> {
             "derive.dead_holder",
             &[
                 ("pid", pid.to_string()),
-                ("held", m.derive.held_seconds.map(span).unwrap_or_else(|| "?".into())),
+                (
+                    "held",
+                    m.derive
+                        .held_seconds
+                        .map(span)
+                        .unwrap_or_else(|| "?".into()),
+                ),
             ],
         );
     }
@@ -591,8 +662,17 @@ pub fn derive_attention(m: &Measured<'_>) -> Vec<BriefAttention> {
         push(
             "session.no_task",
             &[
-                ("task", m.session.last_task.clone().unwrap_or_else(|| "none".into())),
-                ("outcome", m.session.task_outcome.clone().unwrap_or_else(|| "none".into())),
+                (
+                    "task",
+                    m.session.last_task.clone().unwrap_or_else(|| "none".into()),
+                ),
+                (
+                    "outcome",
+                    m.session
+                        .task_outcome
+                        .clone()
+                        .unwrap_or_else(|| "none".into()),
+                ),
             ],
         );
     }
@@ -605,7 +685,8 @@ pub fn derive_attention(m: &Measured<'_>) -> Vec<BriefAttention> {
 /// first, then by id.
 impl crate::order::Ordered for BriefAttention {
     fn order_key(&self) -> crate::order::OrderKey<'_> {
-        let rank = i64::from(u8::from(self.actor != "person")) * 10 + i64::from(severity(&self.word));
+        let rank =
+            i64::from(u8::from(self.actor != "person")) * 10 + i64::from(severity(&self.word));
         crate::order::OrderKey::plain(&self.id, &self.id).ranked(rank)
     }
 }
@@ -636,7 +717,10 @@ mod tests {
             "{COMPILED_PATH} is not {SOURCE}: run majordomus generate"
         );
         assert_eq!(canonical(), share);
-        assert!(COMPILED.starts_with("# GENERATED FILE"), "the compiled copy carries its banner");
+        assert!(
+            COMPILED.starts_with("# GENERATED FILE"),
+            "the compiled copy carries its banner"
+        );
     }
 
     #[test]
@@ -646,16 +730,27 @@ mod tests {
         let keys: Vec<&str> = c.sections.iter().map(|s| s.key.as_str()).collect();
         assert_eq!(
             keys,
-            ["header", "blocked", "delivered", "in_flight", "integration", "mesh", "machine_ci", "next"]
+            [
+                "header",
+                "blocked",
+                "delivered",
+                "in_flight",
+                "integration",
+                "mesh",
+                "machine_ci",
+                "next"
+            ]
         );
         assert!(!c.marker.is_empty() && !c.rules.is_empty() && !c.live_reads.is_empty());
     }
 
     #[test]
     fn the_contract_is_valid_against_its_schema() {
-        let schema_path = repo().join("share/schemas/majordomus/brief-report/brief-report.v1.schema.json");
+        let schema_path =
+            repo().join("share/schemas/majordomus/brief-report/brief-report.v1.schema.json");
         let schema: serde_json::Value =
-            serde_json::from_str(&std::fs::read_to_string(&schema_path).expect("the schema")).expect("JSON");
+            serde_json::from_str(&std::fs::read_to_string(&schema_path).expect("the schema"))
+                .expect("JSON");
         let doc = serde_json::Value::Object(
             crate::metadata::yaml::parse_mapping(canonical()).expect("the subset parses it"),
         );
@@ -670,7 +765,10 @@ mod tests {
 
     #[test]
     fn a_banner_is_taken_off_and_nothing_else() {
-        assert_eq!(strip_banner("# GENERATED FILE x\n# Source: y\n# Generator: z\nbody\n"), "body\n");
+        assert_eq!(
+            strip_banner("# GENERATED FILE x\n# Source: y\n# Generator: z\nbody\n"),
+            "body\n"
+        );
         assert_eq!(strip_banner("# a comment\nbody\n"), "# a comment\nbody\n");
         assert_eq!(span(59), "59 s");
         assert_eq!(span(17 * 3600), "17 h");

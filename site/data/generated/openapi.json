@@ -7347,11 +7347,18 @@
           "type": "string"
         },
         {
-          "description": "What it announced, whole.",
+          "description": "What it announced, whole: the intent of the claim whose `refs/heads/` scope named the\nbranch, so that the branch and the intent describe one piece of work; else its latest.",
           "name": "intent",
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "How many other claims it holds beside the one `intent` is, listed by `majordomus peers`.",
+          "name": "other_claims",
+          "refs": [],
+          "required": false,
+          "type": "integer (uint)"
         },
         {
           "description": "Whether this is the session the brief is about.",

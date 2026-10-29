@@ -425,13 +425,23 @@ fn brief_card(ctx: &Context) -> El {
         ));
     }
     body = body.child(table(
-        &["Section", "Verdict", "Age", "What its owner answered", "Remedy"],
+        &[
+            "Section",
+            "Verdict",
+            "Age",
+            "What its owner answered",
+            "Remedy",
+        ],
         vec![
             section("session", &b.session.observed, &b.session.summary),
             section("work", &b.work.observed, &b.work.summary),
             section("peers", &b.peers.observed, &b.peers.summary),
             section("mesh", &b.mesh.observed, &b.mesh.summary),
-            section("integration", &b.integration.observed, &b.integration.summary),
+            section(
+                "integration",
+                &b.integration.observed,
+                &b.integration.summary,
+            ),
             section("ci", &b.ci.observed, &b.ci.summary),
             section("machine", &b.machine.observed, &b.machine.summary),
             section("release", &b.release.observed, &b.release.summary),
