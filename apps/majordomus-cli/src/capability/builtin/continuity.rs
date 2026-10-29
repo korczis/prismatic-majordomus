@@ -1543,6 +1543,60 @@ mod tests {
         );
     }
 
+    /// The chosen record past the stale threshold keeps its path and loses the section a
+    /// reader would act on, with the reason in its place; one inside it keeps the section.
+    #[test]
+    fn a_stale_record_is_history_and_its_next_action_is_withheld() {
+        let t = Thresholds {
+            fresh_minutes: Some(720),
+            stale_minutes: Some(2880),
+        };
+        let now = epoch_seconds("2026-06-15T12:00:00Z").expect("a parseable instant");
+        let repo = Repo::new();
+        let head = repo.head();
+        let root = repo.root().to_string_lossy().to_string();
+        let dir = repo.root().join("h");
+
+        repo.write(
+            "h/old.md",
+            &record(
+                "2026-06-01T12:00:00Z",
+                &head,
+                "main",
+                &root,
+                "Do the old thing",
+            ),
+        );
+        let (r, _) = resolve(repo.root(), &dir, "main", Some(&head), t, now);
+        let r = r.expect("the stale record is still resolved");
+        assert_eq!(r.freshness, Freshness::Stale);
+        assert_eq!(r.path, "h/old.md", "a stale record keeps its path");
+        assert!(r.next_action.is_empty(), "{:?}", r.next_action);
+        assert!(
+            r.next_action_withheld.starts_with("the record is stale: ")
+                && r.next_action_withheld
+                    .contains("history, not an instruction"),
+            "{}",
+            r.next_action_withheld
+        );
+
+        repo.write(
+            "h/new.md",
+            &record(
+                "2026-06-15T11:00:00Z",
+                &head,
+                "main",
+                &root,
+                "Do the new thing",
+            ),
+        );
+        let (r, _) = resolve(repo.root(), &dir, "main", Some(&head), t, now);
+        let r = r.expect("the fresh record");
+        assert_eq!(r.freshness, Freshness::Fresh);
+        assert_eq!(r.next_action, "Do the new thing");
+        assert!(r.next_action_withheld.is_empty());
+    }
+
     /// A detached HEAD has no branch to match on, so tier 1 is unreachable: "the same
     /// branch" is not a relation a detached checkout has with anything.
     #[test]
