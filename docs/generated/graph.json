@@ -42672,6 +42672,8 @@
             "After a rotation, peers that trusted the old key link to the new one, and the old key's next hello is refused",
             "A key withdrawn from trust.allow on a running runtime has its events dropped from the running journal at the reload that withdrew it, with no restart"
           ],
+          "completed_at": "2026-10-29T00:48:34Z",
+          "completed_event": "sha256:c9a4c2b52f70bc33a771bce26ef1f142850f0f9f3514859674075ab9e2267a92",
           "created_at": "2026-10-14",
           "depends_on": [
             "I2134"
@@ -42698,12 +42700,16 @@
             "docs/MESH.md"
           ],
           "slug": "a-node-key-can-be-rotated",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-29T00:46:17Z",
+          "started_event": "sha256:077aa384c9417be9c4253c64afd4e8cc8544b909f9db1a6f472080d45ea049b7",
+          "updated_at": "2026-10-29T00:48:34Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test mesh_cooperation",
             "cargo test --lib mesh::identity"
-          ]
+          ],
+          "verified_at": "2026-10-29T00:46:35Z",
+          "verified_event": "sha256:068b2255ec32b971373bf6dad5ae06c6999c7fc045f59c3698c4bf028d020fc6"
         }
       },
       {
@@ -66865,6 +66871,8 @@
             "A case fails when /plan/ in the built site passes its declared element ceiling, and passes at the tree it lands with",
             "scripts/ui audit visits /plan/ at every declared width within VISIT_DEADLINE_MS on a loaded machine"
           ],
+          "completed_at": "2026-10-29T00:48:53Z",
+          "completed_event": "sha256:07910411cbb8a3ac7d3ebe25251cd158e3cbb1c1170da24c442a1841bfd251be",
           "created_at": "2026-10-21",
           "depends_on": [],
           "evidence_required": [
@@ -66891,11 +66899,15 @@
             "a-change-is-judged-in-minutes#pr-verdict-within-five-minutes"
           ],
           "slug": "the-plan-page-fits-the-audit-budget",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-29T00:46:53Z",
+          "started_event": "sha256:72093d2b8e4a9556f8a18cc63562b822d2b4727a192b7bf77f3dc4241afbf253",
+          "updated_at": "2026-10-29T00:48:53Z",
           "validation": [
             "bash test/run.sh 3848_the_plan_page_fits_the_audit_budget",
             "scripts/ui audit --report"
-          ]
+          ],
+          "verified_at": "2026-10-29T00:47:13Z",
+          "verified_event": "sha256:ebc02a4c88209e5240d9563caa283d2308ad767c71f4759d0985f49bab576d0a"
         }
       },
       {
@@ -69124,6 +69136,8 @@
         "route": "/cockpit/objects/issue/i3962",
         "source": ".ai/repo/project/issues/I3962.yaml",
         "facts": {
+          "completed_at": "2026-10-29T00:49:46Z",
+          "completed_event": "sha256:38d0ef8b85cfbbd7b683c2619e0f60d6ef5be7af4ff65cf2de5b7a959627d3c9",
           "created_at": "2026-10-22",
           "current_state": "scripts/lib/advisors/codex-exec.mjs runs codex exec without --output-schema and falls back to run.stdout when the -o file is absent.",
           "depends_on": [],
@@ -69145,12 +69159,16 @@
             "scripts/lib/advisors/contract.test.mjs"
           ],
           "slug": "the-codex-advisor-answers-to-a-schema",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-10-29T00:47:32Z",
+          "started_event": "sha256:5168ccddad7e4e93975f79b7a7636ca4f11bfe00d1c2ec271fc160d7635a9cf7",
+          "updated_at": "2026-10-29T00:49:46Z",
           "validation": [
             "node --test scripts/lib/advisors/contract.test.mjs",
             "bash test/run.sh 731_advisor_transport_contract",
             "bin/majordomus plan validate"
-          ]
+          ],
+          "verified_at": "2026-10-29T00:47:50Z",
+          "verified_event": "sha256:141217a6352a004b42b689104397141089f6a33760b11d55a9f4b6a6fffdb669"
         }
       },
       {
