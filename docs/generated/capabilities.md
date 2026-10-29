@@ -107,7 +107,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `deploy.slug` | `deploy` | command | behaviorally_verified | — | — | — | `majordomus deploy slug` | — | waived (destructive) |
 | `design.contrast` | `design` | query | behaviorally_verified | `majordomus_design_contrast` | — | `GET /api/v1/design/contrast` | — | — | required |
 | `design.explain` | `design` | query | behaviorally_verified | `majordomus_design_explain` | — | `GET /api/v1/design/explain` | — | — | required |
-| `design.kit` | `design` | query | behaviorally_verified | `majordomus_design_kit` | — | `GET /api/v1/design/kit` | `majordomus design kit` | — | required |
+| `design.kit` | `design` | query | behaviorally_verified | `majordomus_design_kit` | — | — | `majordomus design kit` | — | required |
 | `design.kit.adopt` | `design` | command | experimental | — | — | — | `majordomus design kit adopt` | — | waived (destructive) |
 | `design.licence` | `design` | query | behaviorally_verified | `majordomus_design_licence` | — | — | `majordomus design licence` | — | required |
 | `design.system` | `design` | query | behaviorally_verified | `majordomus_design` | `majordomus://design` | `GET /api/v1/design` | — | — | required |

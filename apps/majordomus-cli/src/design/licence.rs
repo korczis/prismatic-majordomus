@@ -824,8 +824,9 @@ fn walk(full: PathBuf, rel: String, all: &mut BTreeSet<Content>, seen: &mut Hash
     let Ok(dir) = std::fs::read_dir(&full) else {
         return;
     };
-    let mut names: Vec<DirName> =
-        dir.filter_map(|e| e.ok().map(|e| DirName::new(e.file_name()))).collect();
+    let mut names: Vec<DirName> = dir
+        .filter_map(|e| e.ok().map(|e| DirName::new(e.file_name())))
+        .collect();
     order::canonical(&mut names);
     for DirName { shown, name } in names.into_iter().filter(|n| n.name != ".git") {
         walk(full.join(&name), format!("{rel}/{shown}"), all, seen);
@@ -841,7 +842,10 @@ struct DirName {
 
 impl DirName {
     fn new(name: std::ffi::OsString) -> Self {
-        DirName { shown: name.to_string_lossy().into_owned(), name }
+        DirName {
+            shown: name.to_string_lossy().into_owned(),
+            name,
+        }
     }
 }
 

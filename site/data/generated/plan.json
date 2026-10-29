@@ -66689,10 +66689,11 @@
         ".ai/repo/features/interfaces.md",
         "apps/majordomus-cli/src/capability/builtin/mod.rs",
         "apps/majordomus-cli/src/design/licence.rs",
-        "apps/majordomus-cli/src/commands/design_licence.rs"
+        "apps/majordomus-cli/src/commands/design_licence.rs",
+        "bin/majordomus"
       ],
       "non_scope": [],
-      "objective": "A typed, read-only capability design.kit (CLI majordomus design kit [--check] [--repo PATH], MCP majordomus_design_kit, HTTP GET /api/v1/design/kit) judges a repository's tree against the kit profile share/design/kits/flowbite-pro.yaml, which holds markers only and no Pro source: S0 has a UI, S1 the flowbite (or flowbite-react) dependency, S2 the Tailwind 4 @plugin and @source or the Tailwind 3 config with no Play CDN or CDN-only Flowbite, S3 Flowbite JS behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute with no re-implementation, S4 no other kit with Alpine reported, S5 the Pro shell on every root layout. Each finding is {signal, path, evidence, remedy}; the policy side is the ui block I4336 declares, ui.kit naming the profile and ui.exempt holding exemptions of exactly {path, because}, and the exit is 0 when clean or without a UI, 10 for a finding under --check and 2 for a bad policy. design kit adopt flowbite-pro writes the rule project.ui-uses-flowbite-pro from share/design/kits/flowbite-pro.rule.md, ui.kit and the design-kit and design-kit-on-push enforcement entries, idempotently.",
+      "objective": "A typed, read-only capability design.kit (CLI majordomus design kit [--check] [--repo PATH], MCP majordomus_design_kit; no HTTP route, as its evidence input names a file the process opens) judges a repository's tree against the kit profile share/design/kits/flowbite-pro.yaml, which holds markers only and no Pro source: S0 has a UI, S1 the flowbite (or flowbite-react) dependency, S2 the Tailwind 4 @plugin and @source or the Tailwind 3 config with no Play CDN or CDN-only Flowbite, S3 Flowbite JS behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute with no re-implementation, S4 no other kit with Alpine reported, S5 the Pro shell on every root layout. Each finding is {signal, path, evidence, remedy}; the policy side is the ui block I4336 declares, ui.kit naming the profile and ui.exempt holding exemptions of exactly {path, because}, and the exit is 0 when clean or without a UI, 10 for a finding under --check and 2 for a bad policy. design kit adopt flowbite-pro writes the rule project.ui-uses-flowbite-pro from share/design/kits/flowbite-pro.rule.md, ui.kit and the design-kit and design-kit-on-push enforcement entries, idempotently.",
       "why": "On 2026-10-28 the owner ordered that every project with a user interface is built on their licensed Flowbite Pro, documented, enforced, back-propagated and verified. The audit that day found free Flowbite with hand-rolled shells, the Tailwind Play CDN, daisyUI, Preline, TW Elements and shadcn/Radix mixed in, and drawers wired by hand (this repository's own site/nav.js), and the only check was a scanner on one machine that a CI or a pre-push hook cannot require. ADR 0230 records that Pro is adapted onto Tailwind 4 and Flowbite 4 and that a brand's colour is the primary scale.",
       "current_state": "On 81ef931a3e1 the design module answers only for this tool's own design (design.system, design.tokens, design.explain, design.contrast); no capability judges a repository's UI kit; no project rule names Flowbite Pro; the policy schema has no design_kit block; the owner's skill carries verify.mjs, which checks dependencies and the rule file only.",
       "desired_state": "crate::design::kit is a pure judge over a tree with a unit test for every signal, the vacuous pass, exemptions and the marketing shell; design.kit and design.kit.adopt are declared once in capability/builtin/design.rs and projected by majordomus generate; share/design/kits/ holds the profile, with its wiring, usage and licensed markers, and the rule template, whose last section 'In this repository' is the repository's and is never overwritten by a later adoption; S0 finds published pages and cuts the tree into surfaces (the root, every declared workspace, every nested app), each passing S1 to S3 only with usage in its own files; a licensed marker (a Pro distribution directory, a manifest named after a Pro product, a Pro package among a manifest's dependencies) the design licence does not decide as active is a finding no exemption moves, through licence_answer, which calls I4336's design::licence library function and maps its verdict (active and inactive pass through, refused stays refused, not_judged or no answer is undecided); the policy is read only through policy_block from I4336's ui block, ui.kit and ui.exempt [{path, because}], with the layouts, the role aliases and the marketing layouts the profile's alone, and the policy schema is I4336's; nothing under examples or fixtures counts, a Mix project included; a submodule or a nested repository is named in a notice and judged in its own repository; ADR 0230 is proposed; case 4334 proves each signal by mutation in a disposable repository. This repository does not adopt the rule in this issue: its site would fail S3 and S5 today, and adoption here is a later slice.",
@@ -66704,7 +66705,8 @@
         "A published page is an interface; a workspace or nested app that is wired and uses the kit in none of its own files is a finding; a manifest that is no surface is a notice",
         "A licensed marker the design licence does not judge (a public tree with a kit adopted, a UI and no evidence) is an undecided finding an exemption does not move, and one in a tree that adopts no kit is unlicensed",
         "A Mix project under examples or fixtures is no surface and adds nothing to S4 or the stacks; a submodule or a nested repository is named in a notice; a script key named like a Pro product is no licensed marker; another object's .plugin() or .content() does not configure flowbite-react; an unrelated template beside layouts.ex supplies no shell",
-        "A second adoption keeps the rule's section 'In this repository' as the repository wrote it"
+        "A second adoption keeps the rule's section 'In this repository' as the repository wrote it",
+        "design.kit has no HTTP route, so no HTTP caller names a file its evidence input opens; the launcher routes design kit and design licence through mj_fleet_design_judge when a MAJORDOMUS_KIT_EVIDENCE_<KIT> variable is exported"
       ],
       "validation": [
         "cargo test --lib design::kit",
@@ -77015,7 +77017,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1999",
-      "message": "shares apps/majordomus-cli/src with I4334; they may not run concurrently"
+      "message": "shares bin/majordomus with I4334; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -106168,6 +106170,12 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I3156",
+      "message": "shares bin/majordomus with I4334; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I3160",
       "message": "shares .ai/repo/ci/gates.yaml with I3319; they may not run concurrently"
     },
@@ -111438,7 +111446,7 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "count": 6610,
+      "count": 6611,
       "examples": [
         {
           "level": "WARN",

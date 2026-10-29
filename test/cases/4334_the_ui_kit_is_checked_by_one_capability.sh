@@ -29,9 +29,12 @@
 #   ... with --evidence                exit 0: the licence is active and the marker licensed;
 #                                      another kit's file is not judged; no line of the
 #                                      evidence reaches any output
-#   ... from the CI secret             mj_fleet_design_judge (lib/fleet.sh) decodes
+#   ... from the CI secret             `majordomus design kit` (bin/majordomus) goes through
+#                                      mj_fleet_design_judge (lib/fleet.sh) when the variable is
+#                                      exported, which decodes
 #                                      MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO, passes it, removes
-#                                      it; another kit's or an empty one fails closed (10); a
+#                                      it; none exported is the executable's own answer (10);
+#                                      another kit's or an empty one fails closed (10); a
 #                                      malformed one exits 2 naming the variable, not the value
 #   a retired design_kit: block        a notice naming ui.kit
 #   an exemption with its reason       ui.exempt {path, because}: every finding at the path
@@ -238,9 +241,9 @@ expect S1 "$pro" "a licensed marker nobody could judge"
 # ---------------------------------------------------------------- the licence evidence
 # The design licence judges a licensed marker by a kit-evidence/v1 file, which the executable
 # reads through --evidence and never from the environment. In CI the secret
-# MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO carries base64(gzip(kit-evidence/v1)), and the shell's
-# seam (mj_fleet_design_judge, lib/fleet.sh) decodes it into a private file and hands that
-# over first. Its one
+# MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO carries base64(gzip(kit-evidence/v1)), and the
+# launcher, through the shell's seam (mj_fleet_design_judge, lib/fleet.sh), decodes it into a
+# private file and hands that over first. Its one
 # fingerprint is of no file of the tree: the tree is clean, so the licence is active and the
 # licensed marker licensed. No line of the evidence, nor the secret, ever reaches an output.
 command -v gzip >/dev/null 2>&1 && command -v base64 >/dev/null 2>&1 || { echo "    gzip and base64 are needed"; exit 1; }
@@ -271,13 +274,17 @@ sed 's/^# kit: flowbite-pro$/# kit: examplekit/' "$EV" > "$S/other.tsv"
 [ "$code" = 10 ] && jq -e '.licence.state == "not_judged" and (.licence.reason | test("another kit"))' "$S/out" >/dev/null \
   || { echo "    another kit's evidence was taken for this one's (exit $code): $(cat "$S/out")"; exit 1; }
 
-# through the shell's seam, as a CI step runs it: the secret is decoded, handed over, removed
+# through the launcher, as a CI step runs it: `majordomus design kit` with a
+# MAJORDOMUS_KIT_EVIDENCE_* variable exported goes through the shell's seam, which decodes the
+# secret, hands it over and removes it
 mkdir -p "$S/tmpd"
 ci_kit() {
-  TMPDIR="$S/tmpd" MAJORDOMUS_BIN="$RB" MJ_BIN_DIR="$ROOT/bin" MJ_LIB_DIR="$ROOT/lib" \
-    bash -c '. "$MJ_LIB_DIR/common.sh" && . "$MJ_LIB_DIR/fleet.sh" && mj_fleet_design_judge "$@"' \
-    ci_kit kit --check --format json "$@" >"$S/out" 2>"$S/err"
+  TMPDIR="$S/tmpd" MAJORDOMUS_BIN="$RB" "$MJ" design kit --check --format json "$@" >"$S/out" 2>"$S/err"
 }
+# with no such variable the command is the executable's: no evidence, so undecided
+ci_kit && code=0 || code=$?
+[ "$code" = 10 ] && jq -e '.licence.state == "not_judged"' "$S/out" >/dev/null \
+  || { echo "    the launcher without a secret did not leave the licence undecided (exit $code): $(cat "$S/out" "$S/err")"; exit 1; }
 MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO="$SECRET" ci_kit && code=0 || code=$?
 [ "$code" = 0 ] && jq -e '.licence.state == "active" and .passes' "$S/out" >/dev/null \
   || { echo "    the launcher did not judge from the secret (exit $code): $(cat "$S/out" "$S/err")"; exit 1; }

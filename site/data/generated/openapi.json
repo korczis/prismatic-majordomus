@@ -32,7 +32,6 @@
     "op-deploy-observed": "docs/api/deploy/",
     "op-design-contrast": "docs/api/design/",
     "op-design-explain": "docs/api/design/",
-    "op-design-kit": "docs/api/design/",
     "op-design-system": "docs/api/design/",
     "op-design-tokens": "docs/api/design/",
     "op-devcontext-compile": "docs/api/devcontext/",
@@ -743,16 +742,6 @@
     "schema-KindEntry": "docs/api/entity/",
     "schema-KindList": "docs/api/entity/",
     "schema-KindRef": "docs/api/product/",
-    "schema-KitExempted": "docs/api/design/",
-    "schema-KitExemption": "docs/api/design/",
-    "schema-KitFinding": "docs/api/design/",
-    "schema-KitLicence": "docs/api/design/",
-    "schema-KitReport": "docs/api/design/",
-    "schema-KitSignal": "docs/api/design/",
-    "schema-KitSurface": "docs/api/design/",
-    "schema-KitSurfaceKind": "docs/api/design/",
-    "schema-KitVariant": "docs/api/design/",
-    "schema-KitVerdict": "docs/api/design/",
     "schema-KnowledgeCandidate": "docs/api/knowledge-base/",
     "schema-KnowledgeCandidates": "docs/api/knowledge-base/",
     "schema-KnowledgeGroup": "docs/api/knowledge-base/",
@@ -771,7 +760,6 @@
     "schema-LeftBranch": "docs/api/integration/",
     "schema-LeftBranchReport": "docs/api/integration/",
     "schema-Libc": "docs/api/distribution/",
-    "schema-LicenceState": "docs/api/design/",
     "schema-LifecycleStage": "docs/api/gates/",
     "schema-LimitsView": "docs/api/executions/",
     "schema-LineState": "docs/api/continuity/",
@@ -1369,8 +1357,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 213,
-    "schemas": 1093,
+    "operations": 212,
+    "schemas": 1082,
     "tags": 60
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1494,7 +1482,6 @@
     "deploy.observed": "deploy",
     "design.contrast": "design",
     "design.explain": "design",
-    "design.kit": "design",
     "design.system": "design",
     "design.tokens": "design",
     "devcontext.compile": "devcontext",
@@ -2209,16 +2196,6 @@
     "KindEntry": "entity",
     "KindList": "entity",
     "KindRef": "product",
-    "KitExempted": "design",
-    "KitExemption": "design",
-    "KitFinding": "design",
-    "KitLicence": "design",
-    "KitReport": "design",
-    "KitSignal": "design",
-    "KitSurface": "design",
-    "KitSurfaceKind": "design",
-    "KitVariant": "design",
-    "KitVerdict": "design",
     "KnowledgeCandidate": "knowledge-base",
     "KnowledgeCandidates": "knowledge-base",
     "KnowledgeGroup": "knowledge-base",
@@ -2237,7 +2214,6 @@
     "LeftBranch": "integration",
     "LeftBranchReport": "integration",
     "Libc": "distribution",
-    "LicenceState": "design",
     "LifecycleStage": "gates",
     "LimitsView": "executions",
     "LineState": "continuity",
@@ -21812,7 +21788,6 @@
         "design.system",
         "design.contrast",
         "design.explain",
-        "design.kit",
         "design.tokens",
         "devcontext.compile",
         "devcontext.explain",
@@ -32369,513 +32344,6 @@
       "variants": []
     },
     {
-      "description": "A finding a policy exemption covers, with the reason.",
-      "home": "design",
-      "is_enum": false,
-      "name": "KitExempted",
-      "properties": [
-        {
-          "description": "The finding.",
-          "name": "finding",
-          "refs": [
-            "KitFinding"
-          ],
-          "required": true,
-          "type": "KitFinding"
-        },
-        {
-          "description": "The exemption's path.",
-          "name": "exemption",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "The exemption's reason.",
-          "name": "because",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "KitReport"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "One exemption of the policy: `ui.exempt[n]`, exactly `{path, because}`.",
-      "home": "design",
-      "is_enum": false,
-      "name": "KitExemption",
-      "properties": [
-        {
-          "description": "The path or glob a finding's path matches.",
-          "name": "path",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "Why the path is not held to the kit.",
-          "name": "because",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "How many findings it moved to the exempted list.",
-          "name": "matched",
-          "refs": [],
-          "required": false,
-          "type": "integer (uint)"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "KitReport"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "One finding: the signal, the path it is about, what was seen and what to do.",
-      "home": "design",
-      "is_enum": false,
-      "name": "KitFinding",
-      "properties": [
-        {
-          "description": "The signal.",
-          "name": "signal",
-          "refs": [
-            "KitSignal"
-          ],
-          "required": true,
-          "type": "KitSignal"
-        },
-        {
-          "description": "The path, repository-relative; empty for the repository as a whole.",
-          "name": "path",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "What was seen, with the line where there is one.",
-          "name": "evidence",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "What to do.",
-          "name": "remedy",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "KitExempted",
-        "KitReport"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "How the tree stands against a licensed kit's licence.",
-      "home": "design",
-      "is_enum": false,
-      "name": "KitLicence",
-      "properties": [
-        {
-          "description": "The evidence format the profile names.",
-          "name": "evidence",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "What the licence evidence said.",
-          "name": "state",
-          "refs": [
-            "LicenceState"
-          ],
-          "required": true,
-          "type": "LicenceState"
-        },
-        {
-          "description": "What the judge decided.",
-          "name": "variant",
-          "refs": [
-            "KitVariant"
-          ],
-          "required": true,
-          "type": "KitVariant"
-        },
-        {
-          "description": "Where each licensed marker was seen, with its name.",
-          "name": "markers",
-          "refs": [],
-          "required": true,
-          "type": "array of string"
-        },
-        {
-          "description": "Why the design licence answered as it did, when it says: the reason of an inactive\nor unjudged licence, or what stopped it. It names a file and a line at most, never\nwhat the evidence holds.",
-          "name": "reason",
-          "refs": [],
-          "required": false,
-          "type": "string | null"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "KitReport"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "What `design.kit` answers.",
-      "home": "design",
-      "is_enum": false,
-      "name": "KitReport",
-      "properties": [
-        {
-          "description": "The profile judged.",
-          "name": "profile",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "What the profile is, for a person.",
-          "name": "title",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "Where the profile lives in the distribution.",
-          "name": "profile_source",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "The rule the profile enforces.",
-          "name": "rule",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "Whether the repository's policy declares the kit's block.",
-          "name": "policy_declared",
-          "refs": [],
-          "required": true,
-          "type": "boolean"
-        },
-        {
-          "description": "Why the policy cannot be read; non-empty only for `bad_policy`.",
-          "name": "policy_errors",
-          "refs": [],
-          "required": true,
-          "type": "array of string"
-        },
-        {
-          "description": "Whether the repository has a user interface (S0).",
-          "name": "ui",
-          "refs": [],
-          "required": true,
-          "type": "boolean"
-        },
-        {
-          "description": "What showed it.",
-          "name": "ui_evidence",
-          "refs": [],
-          "required": true,
-          "type": "array of string"
-        },
-        {
-          "description": "The surfaces S1 to S3 judged, each with the usage markers its own files carry.",
-          "name": "surfaces",
-          "refs": [
-            "KitSurface"
-          ],
-          "required": true,
-          "type": "array of KitSurface"
-        },
-        {
-          "description": "The stacks recognised: `tailwind-4`, `tailwind-3`, `react`, `phoenix`.",
-          "name": "stacks",
-          "refs": [],
-          "required": true,
-          "type": "array of string"
-        },
-        {
-          "description": "The root layouts S5 judged.",
-          "name": "layouts",
-          "refs": [],
-          "required": true,
-          "type": "array of string"
-        },
-        {
-          "description": "Every finding that stands.",
-          "name": "findings",
-          "refs": [
-            "KitFinding"
-          ],
-          "required": true,
-          "type": "array of KitFinding"
-        },
-        {
-          "description": "Every finding an exemption covers.",
-          "name": "exempted",
-          "refs": [
-            "KitExempted"
-          ],
-          "required": true,
-          "type": "array of KitExempted"
-        },
-        {
-          "description": "What is reported and never refused, such as Alpine.js.",
-          "name": "reported",
-          "refs": [],
-          "required": true,
-          "type": "array of string"
-        },
-        {
-          "description": "What S0 left out and a reader should know: a manifest with UI packages that is no\nsurface, pages that are no interface. Never a finding.",
-          "name": "notices",
-          "refs": [],
-          "required": true,
-          "type": "array of string"
-        },
-        {
-          "description": "How the tree stands against a licensed kit's licence; absent for a free kit.",
-          "name": "licence",
-          "refs": [
-            "KitLicence"
-          ],
-          "required": false,
-          "type": "KitLicence | null"
-        },
-        {
-          "description": "The policy's exemptions, each with how many findings it covered.",
-          "name": "exemptions",
-          "refs": [
-            "KitExemption"
-          ],
-          "required": true,
-          "type": "array of KitExemption"
-        },
-        {
-          "description": "The verdict.",
-          "name": "verdict",
-          "refs": [
-            "KitVerdict"
-          ],
-          "required": true,
-          "type": "KitVerdict"
-        },
-        {
-          "description": "Whether the rule holds: `no_ui` or `clean`.",
-          "name": "passes",
-          "refs": [],
-          "required": true,
-          "type": "boolean"
-        }
-      ],
-      "type": "object",
-      "used_by": [
-        "design.kit"
-      ],
-      "used_by_schemas": [],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "A signal of the profile.",
-      "home": "design",
-      "is_enum": true,
-      "name": "KitSignal",
-      "properties": [],
-      "type": "\"S0\" | \"S1\" | \"S2\" | \"S3\" | \"S4\" | \"S5\"",
-      "used_by": [],
-      "used_by_schemas": [
-        "KitFinding"
-      ],
-      "values": [
-        {
-          "description": "The user interface exists.",
-          "value": "S0"
-        },
-        {
-          "description": "The dependency, and the kit in use.",
-          "value": "S1"
-        },
-        {
-          "description": "The plugin and the source.",
-          "value": "S2"
-        },
-        {
-          "description": "The kit's JavaScript.",
-          "value": "S3"
-        },
-        {
-          "description": "No other kit.",
-          "value": "S4"
-        },
-        {
-          "description": "The shell on each root layout.",
-          "value": "S5"
-        }
-      ],
-      "variants": []
-    },
-    {
-      "description": "One surface S1 to S3 judged.",
-      "home": "design",
-      "is_enum": false,
-      "name": "KitSurface",
-      "properties": [
-        {
-          "description": "Its directory, repository-relative; empty for the root.",
-          "name": "dir",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "How it was found.",
-          "name": "kind",
-          "refs": [
-            "KitSurfaceKind"
-          ],
-          "required": true,
-          "type": "KitSurfaceKind"
-        },
-        {
-          "description": "Its manifests.",
-          "name": "manifests",
-          "refs": [],
-          "required": true,
-          "type": "array of string"
-        },
-        {
-          "description": "The first usage markers its own files carry; empty is a finding.",
-          "name": "usage",
-          "refs": [],
-          "required": true,
-          "type": "array of string"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "KitReport"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "How a surface was found.",
-      "home": "design",
-      "is_enum": true,
-      "name": "KitSurfaceKind",
-      "properties": [],
-      "type": "\"root\" | \"workspace\" | \"app\"",
-      "used_by": [],
-      "used_by_schemas": [
-        "KitSurface"
-      ],
-      "values": [
-        {
-          "description": "The root's manifests and every file no other surface owns.",
-          "value": "root"
-        },
-        {
-          "description": "A workspace the root manifest or the pnpm workspace file declares.",
-          "value": "workspace"
-        },
-        {
-          "description": "A nested manifest with markup in its own subtree.",
-          "value": "app"
-        }
-      ],
-      "variants": []
-    },
-    {
-      "description": "Which variant of a licensed kit the tree is, as the judge decides it.",
-      "home": "design",
-      "is_enum": true,
-      "name": "KitVariant",
-      "properties": [],
-      "type": "\"not_used\" | \"licensed\" | \"unlicensed\" | \"undecided\"",
-      "used_by": [],
-      "used_by_schemas": [
-        "KitLicence"
-      ],
-      "values": [
-        {
-          "description": "The tree carries no licensed marker: nothing the licence covers is used.",
-          "value": "not_used"
-        },
-        {
-          "description": "Licensed markers, and the licence is active.",
-          "value": "licensed"
-        },
-        {
-          "description": "Licensed markers, and the licence is inactive or the design licence refused the\ntree: a finding.",
-          "value": "unlicensed"
-        },
-        {
-          "description": "Licensed markers, and a licence nobody could judge: the judge cannot decide, and that\nis a finding, never a pass.",
-          "value": "undecided"
-        }
-      ],
-      "variants": []
-    },
-    {
-      "description": "How the tree stands against the profile.",
-      "home": "design",
-      "is_enum": true,
-      "name": "KitVerdict",
-      "properties": [],
-      "type": "\"no_ui\" | \"clean\" | \"findings\" | \"bad_policy\"",
-      "used_by": [],
-      "used_by_schemas": [
-        "KitReport"
-      ],
-      "values": [
-        {
-          "description": "No user interface: the rule holds vacuously.",
-          "value": "no_ui"
-        },
-        {
-          "description": "A user interface, and no finding stands.",
-          "value": "clean"
-        },
-        {
-          "description": "At least one finding stands.",
-          "value": "findings"
-        },
-        {
-          "description": "The policy cannot be read; nothing was judged.",
-          "value": "bad_policy"
-        }
-      ],
-      "variants": []
-    },
-    {
       "description": "One candidate record awaiting review: what a reader needs to decide whether to open it.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeCandidate;\nlet c: KnowledgeCandidate = serde_json::from_str(r#\"{\n  \"id\": \"e1-0123456789ab\", \"uri\": \"majordomus://knowledge/e1-0123456789ab\",\n  \"path\": \".ai/repo/knowledge/candidates/e1-0123456789ab.md\", \"class\": \"convention\",\n  \"status\": \"candidate\", \"epistemics\": \"decided\", \"title\": \"Tests run in disposable repositories\",\n  \"date\": \"2026-09-12\", \"derived_from\": [\"session:e1\"], \"episode\": \"e1\",\n  \"freshness\": \"unknown\", \"freshness_reason\": \"no timestamp\", \"age_source\": \"date\"\n}\"#).unwrap();\nassert_eq!(c.episode, \"e1\");\nassert_eq!(c.branch, None, \"an episode this checkout never saw has no branch, and says so\");\n```",
       "home": "knowledge-base",
       "is_enum": false,
@@ -34007,37 +33475,6 @@
         {
           "description": "musl: Alpine, and any statically linked artifact.",
           "value": "musl"
-        }
-      ],
-      "variants": []
-    },
-    {
-      "description": "What the design licence (I4336, `crate::design::licence`) says about a repository,\nas the judge of a licensed kit's markers reads it. `licence_answer` maps its verdict.",
-      "home": "design",
-      "is_enum": true,
-      "name": "LicenceState",
-      "properties": [],
-      "type": "\"active\" | \"inactive\" | \"not_judged\" | \"refused\"",
-      "used_by": [],
-      "used_by_schemas": [
-        "KitLicence"
-      ],
-      "values": [
-        {
-          "description": "The design licence judged the tree with the evidence held and found it clean, or the\ntree is private: the licence holds.",
-          "value": "active"
-        },
-        {
-          "description": "The design licence judged nothing and needed to judge nothing: no kit is declared, a\nprivate tree without evidence, or no UI file. Licensed markers there are unlicensed.",
-          "value": "inactive"
-        },
-        {
-          "description": "The design licence owed a judgement and could not give one, or could not be asked:\nno evidence where a public tree owes it, a `ui:` block it cannot use, a tree it\ncannot list.",
-          "value": "not_judged"
-        },
-        {
-          "description": "The design licence refused the tree: a public tree holds a licensed file's bytes.",
-          "value": "refused"
         }
       ],
       "variants": []
@@ -65935,73 +65372,6 @@
           "result_schema": "Token",
           "stability": "behaviorally_verified",
           "summary": "What a design token means"
-        },
-        {
-          "benchmark": "required",
-          "benchmark_reason": "",
-          "body_examples": [],
-          "body_schema": "",
-          "cache": "disabled",
-          "cache_detail": "",
-          "cli": "design kit",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/design/kit?evidence=kit-evidence.tsv\"",
-          "description": "The supervised repository's user interface judged against the kit profile its policy's `ui.kit` names (flowbite-pro when it names none), from markers in the tree and never the kit's own source: S0 whether there is an interface at all and its surfaces (the root's manifest or the one in assets/, every workspace the root manifest or pnpm-workspace.yaml declares, every nested app manifest with markup in its own subtree outside examples, fixtures, tests, vendor, docs, deps and priv; Phoenix LiveView in mix.exs, HEEx or HTML templates, a Next.js root layout; published pages: a root index.html, pages under site/, www/, public/, under a directory a Pages workflow or a deploy or build script publishes, and under docs/ when it is published), any other manifest with UI packages being a notice and never a finding; S1 the kit's package in each surface, its React binding for React and Next.js, and the kit in use in the surface's own files (an attribute the kit's JavaScript drives, a flowbite-react component, a call of the kit's API), because wiring alone passes nothing; S2 the Tailwind plugin and source (Tailwind 4's @plugin and @source, Tailwind 3's config), a Play CDN or a CDN-only kit being a finding; S3 the kit's JavaScript behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute, a script that reads them itself being a re-implementation; S4 no other kit (daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui and Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation, Materialize), Alpine.js reported and not refused; S5 the shell on every root layout: a fixed top navbar, an aside labelled Sidebar that both drawer attributes name, a breadcrumb, and the page, surface and border roles, a published site's layout being judged by a navbar and a footer instead; the layouts, the roles and the marketing layouts are the profile's alone. Each finding names its signal, path, evidence and remedy; each exemption the policy declares under `ui.exempt`, exactly `{path, because}`, moves every finding at its path and names its reason and how many findings it covered. A licensed kit's profile declares its licensed markers (a distribution directory, a manifest named after a Pro product, a dependency on a Pro package), and where the tree carries one the design licence decides it: active passes, while inactive, refused or not judged is a finding no exemption moves, since a variant the judge cannot decide is never a pass. The licence evidence is the kit-evidence/v1 file the input names (in CI the file the shell's `mj_fleet_design_judge` decoded `MAJORDOMUS_KIT_EVIDENCE_<KIT>` into; this capability reads a file and never the environment), else the policy's `~`-relative `ui.evidence` entries; a file whose leading comment `# kit: <id>` names another kit is not judged, and `licence.reason` says why the licence answered as it did, naming a file and a line at most and never what the evidence holds. A repository without an interface passes vacuously; a policy that cannot be read is `bad_policy` and judges nothing; a policy that still carries the retired top-level `design_kit:` block earns a notice naming `ui.kit` as its replacement. Reads the repository's files (in a Git work tree the tracked ones and the untracked ones Git does not ignore; a submodule or a nested repository is named in a notice and judged in its own repository), skipping dependencies and build output and listing vendored directories by path only; no build and no network.",
-          "home": "design",
-          "id": "design.kit",
-          "kind": "query",
-          "mcp_resource": "",
-          "mcp_tool": "majordomus_design_kit",
-          "method": "GET",
-          "parameters": [
-            {
-              "description": "A kit-evidence/v1 file, as the caller names it (CI points this at the file it decoded\n`MAJORDOMUS_KIT_EVIDENCE_<KIT>` into through the shell's `mj_fleet_design_judge`).\nAbsent reads the policy's `ui.evidence` entries under `$HOME`.\nA file whose leading comment `# kit: <id>` names another kit than the profile judges\nnothing.",
-              "examples": [
-                {
-                  "case": "evidence",
-                  "value": "\"kit-evidence.tsv\""
-                }
-              ],
-              "name": "evidence",
-              "required": false,
-              "type": "string"
-            }
-          ],
-          "path": "/api/v1/design/kit",
-          "primary": true,
-          "provenance": {
-            "module": "majordomus_cli::capability::builtin::design",
-            "source": "builtin"
-          },
-          "responses": [
-            {
-              "description": "Whether the interface is built on the kit: the result.",
-              "schema": "KitReport",
-              "status": "200"
-            },
-            {
-              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
-              "schema": "ErrorBody",
-              "status": "400"
-            },
-            {
-              "description": "`not_found`: The input names something the repository does not hold.",
-              "schema": "ErrorBody",
-              "status": "404"
-            },
-            {
-              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
-              "schema": "ErrorBody",
-              "status": "500"
-            },
-            {
-              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
-              "schema": "ErrorBody",
-              "status": "default"
-            }
-          ],
-          "result_schema": "KitReport",
-          "stability": "behaviorally_verified",
-          "summary": "Whether the interface is built on the kit"
         },
         {
           "benchmark": "required",

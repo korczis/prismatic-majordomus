@@ -23526,7 +23526,7 @@ cli:
             - name: evidence
               long: evidence
               positional: false
-              help: "The kit-evidence/v1 file the design licence judges a licensed marker by (in CI, the file the shell's mj_fleet_design_judge decoded MAJORDOMUS_KIT_EVIDENCE_<KIT> into); absent reads the policy's ui.evidence entries under $HOME"
+              help: "The kit-evidence/v1 file the design licence judges a licensed marker by (in CI the launcher decodes an exported MAJORDOMUS_KIT_EVIDENCE_<KIT> into a private file and passes it here); absent reads the policy's ui.evidence entries under $HOME"
               value_name: FILE
               takes_value: true
               required: false
@@ -23597,7 +23597,7 @@ cli:
           examples:
             - id: design-kit-json
               title: The interface against the kit profile
-              description: "The same answer `GET /api/v1/design/kit` and the MCP tool `majordomus_design_kit` return: the profile judged, whether the repository has a user interface and what showed it under `/ui` and `/ui_evidence`, every finding with its signal, path, evidence and remedy under `/findings`, every exemption the policy declares under `/exemptions`, and `/verdict`. This repository has no user interface, so the rule holds vacuously: the verdict is `no_ui` and the exit is 0, as it is for `--check`. A finding under `--check` exits 10, and a policy that cannot be read exits 2."
+              description: "The same answer the MCP tool `majordomus_design_kit` returns (there is no HTTP route: the input names a file this process opens): the profile judged, whether the repository has a user interface and what showed it under `/ui` and `/ui_evidence`, every finding with its signal, path, evidence and remedy under `/findings`, every exemption the policy declares under `/exemptions`, and `/verdict`. This repository has no user interface, so the rule holds vacuously: the verdict is `no_ui` and the exit is 0, as it is for `--check`. A finding under `--check` exits 10, and a policy that cannot be read exits 2."
               argv:
                 - design
                 - kit
@@ -23609,7 +23609,7 @@ cli:
               expectation: "exits 0; prints one JSON document carrying /ui, /findings, /exemptions, /verdict, /passes"
             - id: design-kit-evidence
               title: The kit judged with the licence evidence CI decoded
-              description: "`--evidence` names the kit-evidence/v1 file the design licence judges a licensed marker by, as `design licence --evidence` does; the executable reads that file and never the environment. In CI the shell's `mj_fleet_design_judge` (lib/fleet.sh) decodes `MAJORDOMUS_KIT_EVIDENCE_<KIT>` (the kit `ui.kit` names) into a private temporary file, passes its path and removes it afterwards; a value that is not base64(gzip(kit-evidence/v1)) exits 2 naming the variable, never its value. Without evidence, a public tree that adopts a licensed kit and carries a licensed marker is undecided and exits 10 under `--check`: it fails closed. A file whose leading comment says `# kit: <id>` for another kit judges nothing. `/licence/state` and `/licence/reason` say what the design licence answered and why; this repository adopts no kit, so the licence is `inactive` and the file is never opened."
+              description: "`--evidence` names the kit-evidence/v1 file the design licence judges a licensed marker by, as `design licence --evidence` does; the executable reads that file and never the environment. In CI the launcher does it: `majordomus design kit` or `design licence` run where a `MAJORDOMUS_KIT_EVIDENCE_<KIT>` variable is exported goes through the shell's `mj_fleet_design_judge` (lib/fleet.sh), which decodes the variable of the kit `ui.kit` names into a private temporary file, passes its path and removes it afterwards; a value that is not base64(gzip(kit-evidence/v1)) exits 2 naming the variable, never its value. Without evidence, a public tree that adopts a licensed kit and carries a licensed marker is undecided and exits 10 under `--check`: it fails closed. A file whose leading comment says `# kit: <id>` for another kit judges nothing. `/licence/state` and `/licence/reason` say what the design licence answered and why; this repository adopts no kit, so the licence is `inactive` and the file is never opened."
               argv:
                 - design
                 - kit

@@ -245,6 +245,8 @@ mj_fleet_evidence_materialise() {
 # fails closed (undecided, exit 10 under --check); a malformed value is exit 2, naming the
 # variable and never its value, and nothing is judged. The policy read is the one the kit
 # judge reads: .ai/repo/policy.yaml at the git toplevel of --repo, else of the cwd.
+# bin/majordomus calls it for `design kit` and `design licence` when a
+# MAJORDOMUS_KIT_EVIDENCE_<KIT> variable is exported, and execs the executable otherwise.
 mj_fleet_design_judge() {
   local a prev="" repo="" root kit="" evf="" rc=0
   for a in "$@"; do

@@ -270,8 +270,8 @@ always shows the word beside it.
 | surface | how |
 |---|---|
 | MCP | `majordomus_design`, `majordomus_design_tokens`, `majordomus_design_explain`, `majordomus_design_contrast`, `majordomus_design_kit`; resource `majordomus://design` |
-| HTTP | `GET /api/v1/design`, `/api/v1/design/tokens?kind=role`, `/api/v1/design/explain?token=fg`, `/api/v1/design/contrast`, `/api/v1/design/kit` |
-| OpenAPI, Swagger | the same five operations, from the registry |
+| HTTP | `GET /api/v1/design`, `/api/v1/design/tokens?kind=role`, `/api/v1/design/explain?token=fg`, `/api/v1/design/contrast` |
+| OpenAPI, Swagger | the same four operations, from the registry |
 | Cockpit | `/cockpit/design`: every role with both themes' swatches, every status with its words as badges, the type scale at its own sizes, the projections — and the badge that says whether the stylesheet the page loaded agrees with the executable |
 | reference | `docs/generated/design.md`, and the JSON and YAML beside it |
 
@@ -327,14 +327,19 @@ dependency on a Pro package. Where a tree carries one, the design licence
 its verdict as `active`, `inactive`, `refused` or `not_judged`. Only `active` passes;
 `inactive` and `refused` make the marker unlicensed, and `not_judged` (a public tree with a
 UI and no evidence on this machine) is undecided, a finding that no exemption moves. The
-same answer is `GET /api/v1/design/kit` and the MCP tool `majordomus_design_kit`.
+same answer is the MCP tool `majordomus_design_kit`. There is no HTTP route, as there is
+none for the design licence: the input `evidence` names a file the process opens, and a
+query parameter naming a file on the server would let any HTTP caller probe its files.
 
 The evidence is a kit-evidence/v1 file. `--evidence <file>` names it (the input `evidence`
-over MCP and HTTP). Without it, the judge reads the policy's `~`-relative `ui.evidence`
+over MCP). Without it, the judge reads the policy's `~`-relative `ui.evidence`
 entries. The executable reads a file and never the environment. In CI the secret
 `MAJORDOMUS_KIT_EVIDENCE_<KIT>` holds base64(gzip(kit-evidence/v1)). For flowbite-pro the
-name is `MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO`. The shell's `mj_fleet_design_judge`
-(`lib/fleet.sh`) handles it for `design kit` and `design licence`. It decodes the secret of
+name is `MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO`. The launcher handles it: where a
+`MAJORDOMUS_KIT_EVIDENCE_<KIT>` variable is exported, `majordomus design kit` and
+`majordomus design licence` (not `design kit adopt`) run through the shell's
+`mj_fleet_design_judge` (`lib/fleet.sh`), and anywhere else the command is the
+executable's, unchanged. The seam decodes the secret of
 the kit `ui.kit` names into a private temporary file, passes that file as `--evidence`, and
 removes it after the run. A value that is not kit-evidence/v1 exits 2 and names the
 variable, never its value. If the secret is unset, empty or for another kit, nothing is
