@@ -13,8 +13,13 @@
 //! queued run has returned success and done nothing, and a cancelled run's job has gone on
 //! holding its runner; `POST repos/<repo>/actions/runs/<id>/force-cancel` ends it at once
 //! (docs/CI.md).
+//!
+//! It also reports whether the supervisor itself is alive ([`super::supervise::liveness`]):
+//! the newest successful job of the supervising workflow, older than thirty minutes, is
+//! `supervise_stale` — the one failure a supervisor cannot report about itself, so the queue
+//! workflow fails on it.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
 use schemars::JsonSchema;
@@ -24,7 +29,8 @@ use serde_json::Value;
 use super::drain::{self, IntegrationAction, IntegrationEvent};
 use super::forge::{gh, gh_retrying, ForgeError};
 use super::supervise::{
-    self, Decision, Hold, JobObservation, RunObservation, Situation, SuperviseModel, IN_FLIGHT,
+    self, Decision, Hold, JobObservation, Liveness, RunObservation, Situation, SuperviseModel,
+    FULL_LABEL, IN_FLIGHT,
 };
 
 /// What the forge said about the runs, at one moment.
@@ -34,10 +40,14 @@ pub struct RunsObservation {
     pub repository: String,
     /// The default branch.
     pub default_branch: String,
-    /// Every run of [`IN_FLIGHT`], with its jobs.
+    /// Every run of [`IN_FLIGHT`], with its jobs, and the completed runs of the commits a
+    /// waiting pull request's run is of (without jobs): what a duplicate is judged against.
     pub runs: Vec<RunObservation>,
     /// Each open pull request's head.
     pub pr_heads: BTreeMap<u64, String>,
+    /// The open pull requests labelled [`FULL_LABEL`].
+    #[serde(default)]
+    pub full: BTreeSet<u64>,
 }
 
 /// A source of run observations and the one act on them. The command line uses
@@ -51,6 +61,9 @@ pub trait RunForge {
     fn pr_head(&self, number: u64) -> Result<Option<String>, ForgeError>;
     /// End one run at once.
     fn force_cancel(&mut self, id: u64) -> Result<(), ForgeError>;
+    /// When the newest successful job of `workflow` ended, RFC 3339; `None` when there is none
+    /// among its recent runs.
+    fn newest_success(&self, workflow: &str) -> Result<Option<String>, ForgeError>;
 }
 
 /// The workflow key of a run: its file name without the extension
@@ -76,6 +89,7 @@ pub fn job_of(v: &Value) -> Option<JobObservation> {
         name: text(v, "name").unwrap_or_default(),
         status: text(v, "status")?,
         started_at: text(v, "started_at"),
+        conclusion: text(v, "conclusion"),
     })
 }
 
@@ -94,6 +108,7 @@ pub fn run_of(v: &Value) -> Option<RunObservation> {
             .and_then(|p| p.get("number"))
             .and_then(Value::as_u64),
         status: text(v, "status")?,
+        conclusion: text(v, "conclusion"),
         created_at: text(v, "created_at")?,
         run_started_at: text(v, "run_started_at"),
         jobs: Vec::new(),
@@ -165,6 +180,25 @@ impl<'a> GhRunForge<'a> {
         lines_of(&out, endpoint)
     }
 
+    fn one(&self, endpoint: &str) -> Result<Value, ForgeError> {
+        let (ok, out, err) = gh_retrying(self.root, &["api", endpoint])?;
+        if !ok {
+            return Err(ForgeError(format!(
+                "gh api {endpoint} failed: {}",
+                err.trim()
+            )));
+        }
+        serde_json::from_str(&out).map_err(|e| ForgeError(format!("{endpoint}: {e}")))
+    }
+
+    fn jobs_raw(&self, id: u64) -> Result<Vec<Value>, ForgeError> {
+        let endpoint = format!(
+            "repos/{}/actions/runs/{id}/jobs?per_page=100",
+            self.repository
+        );
+        self.paged(&endpoint, ".jobs[]")
+    }
+
     fn jobs(&self, id: u64) -> Result<Vec<JobObservation>, ForgeError> {
         let endpoint = format!(
             "repos/{}/actions/runs/{id}/jobs?per_page=100",
@@ -196,9 +230,10 @@ impl RunForge for GhRunForge<'_> {
         let endpoint = format!("repos/{}/pulls?state=open&per_page=100", self.repository);
         let mut pr_heads = BTreeMap::new();
         let mut branches = BTreeMap::new();
+        let mut full = BTreeSet::new();
         for v in self.paged(
             &endpoint,
-            ".[] | {number: .number, sha: .head.sha, branch: .head.ref}",
+            ".[] | {number: .number, sha: .head.sha, branch: .head.ref, labels: [.labels[].name]}",
         )? {
             let (Some(n), Some(sha)) = (v.get("number").and_then(Value::as_u64), text(&v, "sha"))
             else {
@@ -209,10 +244,35 @@ impl RunForge for GhRunForge<'_> {
             if let Some(b) = text(&v, "branch") {
                 branches.insert(b, n);
             }
+            let labelled = v
+                .get("labels")
+                .and_then(Value::as_array)
+                .is_some_and(|a| a.iter().any(|l| l.as_str() == Some(FULL_LABEL)));
+            if labelled {
+                full.insert(n);
+            }
             pr_heads.insert(n, sha);
         }
+        // the commits a waiting pull request's run is of: their other runs, the judged ones
+        // among them, are what a duplicate is judged against
+        let twins_of: BTreeSet<String> = by_id
+            .values()
+            .filter(|r: &&RunObservation| r.event == "pull_request" && r.waiting())
+            .map(|r| r.head_sha.clone())
+            .collect();
+        for sha in twins_of {
+            let endpoint = format!(
+                "repos/{}/actions/runs?head_sha={sha}&event=pull_request&per_page=100",
+                self.repository
+            );
+            for v in self.paged(&endpoint, ".workflow_runs[]")? {
+                if let Some(run) = run_of(&v) {
+                    by_id.entry(run.id).or_insert(run);
+                }
+            }
+        }
         let mut runs: Vec<RunObservation> = by_id.into_values().collect();
-        for r in &mut runs {
+        for r in runs.iter_mut().filter(|r| r.in_flight()) {
             r.jobs = self.jobs(r.id)?;
         }
         attach_pull_requests(&mut runs, &branches);
@@ -221,6 +281,7 @@ impl RunForge for GhRunForge<'_> {
             default_branch: self.default_branch.clone(),
             runs,
             pr_heads,
+            full,
         })
     }
 
@@ -273,6 +334,33 @@ impl RunForge for GhRunForge<'_> {
             )))
         }
     }
+
+    fn newest_success(&self, workflow: &str) -> Result<Option<String>, ForgeError> {
+        // one page of its newest runs, newest first: a run whose other lane waits for a
+        // runner has not concluded, so the success is its job's, not the run's
+        let endpoint = format!(
+            "repos/{}/actions/workflows/{workflow}.yml/runs?per_page=20&exclude_pull_requests=true",
+            self.repository
+        );
+        let page = self.one(&endpoint)?;
+        let ids: Vec<u64> = page
+            .get("workflow_runs")
+            .and_then(Value::as_array)
+            .map(|a| a.iter().filter_map(|r| r.get("id")?.as_u64()).collect())
+            .unwrap_or_default();
+        for id in ids {
+            let newest = self
+                .jobs_raw(id)?
+                .iter()
+                .filter(|j| j.get("conclusion").and_then(Value::as_str) == Some("success"))
+                .filter_map(|j| text(j, "completed_at"))
+                .max();
+            if newest.is_some() {
+                return Ok(newest);
+            }
+        }
+        Ok(None)
+    }
 }
 
 /// What became of one decision under `--apply`.
@@ -322,6 +410,11 @@ pub struct SuperviseReport {
     /// Under `--apply`, what became of each decision.
     #[serde(default)]
     pub acts: Vec<Act>,
+    /// Whether the supervisor itself is alive; a `finding` here (`supervise_stale`,
+    /// `supervise_unobserved`) is what the queue workflow fails on. It never changes the exit:
+    /// the run that reports it is not the one that stopped.
+    #[serde(default)]
+    pub liveness: Liveness,
 }
 
 impl SuperviseReport {
@@ -379,6 +472,7 @@ pub fn supervise(
     let situation = Situation {
         runs: &obs.runs,
         pr_heads: &obs.pr_heads,
+        full: &obs.full,
         default_branch: &obs.default_branch,
         model,
         now: first,
@@ -495,13 +589,23 @@ pub fn supervise(
             });
         }
     }
+    // read last, so that an unreadable answer costs no act
+    let liveness = supervise::liveness(
+        forge
+            .newest_success(&model.supervisor)
+            .as_ref()
+            .map(Option::as_deref)
+            .map_err(ToString::to_string),
+        now(),
+    );
     Ok(SuperviseReport {
+        liveness,
         repository: obs.repository,
         observed_at: crate::peers::rfc3339(
             std::time::UNIX_EPOCH + std::time::Duration::from_secs(first),
         ),
         applied: apply,
-        in_flight: obs.runs.len(),
+        in_flight: obs.runs.iter().filter(|r| r.in_flight()).count(),
         decisions: decided.decisions,
         held: decided.held,
         acts,
@@ -548,6 +652,7 @@ mod tests {
             head_sha: sha.into(),
             pull_request: Some(pr),
             status: status.into(),
+            conclusion: None,
             created_at: at(minutes_ago),
             run_started_at: Some(at(minutes_ago)),
             jobs: Vec::new(),
@@ -564,6 +669,8 @@ mod tests {
         reread_heads: BTreeMap<u64, Option<String>>,
         refuse_cancel: bool,
         cancelled: RefCell<Vec<u64>>,
+        /// What the supervisor's newest success is; `None` reads as "an hour ago".
+        success: Option<Result<Option<String>, String>>,
     }
 
     impl RunForge for Fake {
@@ -594,6 +701,12 @@ mod tests {
             self.cancelled.borrow_mut().push(id);
             Ok(())
         }
+        fn newest_success(&self, _workflow: &str) -> Result<Option<String>, ForgeError> {
+            match &self.success {
+                None => Ok(Some(at(60))),
+                Some(r) => r.clone().map_err(ForgeError),
+            }
+        }
     }
 
     /// Train 10a's shape: run 100 of the old head in progress, run 101 of the new one
@@ -613,6 +726,7 @@ mod tests {
                 pr_heads: [(7, "new".to_string()), (8, "b".to_string())]
                     .into_iter()
                     .collect(),
+                full: BTreeSet::new(),
             }),
             ..Fake::default()
         }
@@ -690,6 +804,7 @@ mod tests {
                 default_branch: "master".into(),
                 runs: vec![run(1, "a", 7, "in_progress", 5)],
                 pr_heads: [(7, "a".to_string())].into_iter().collect(),
+                full: BTreeSet::new(),
             }),
             ..Fake::default()
         };
@@ -711,6 +826,12 @@ mod tests {
         let mut started = f.obs.as_ref().unwrap().runs[2].clone();
         started.status = "in_progress".into();
         started.run_started_at = Some(at(1));
+        started.jobs = vec![JobObservation {
+            name: "plan".into(),
+            status: "in_progress".into(),
+            started_at: Some(at(1)),
+            conclusion: None,
+        }];
         f.reread.insert(200, started);
         let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true).unwrap();
         assert_eq!(r.decisions.len(), 2);
@@ -754,6 +875,38 @@ mod tests {
     }
 
     #[test]
+    fn the_report_says_whether_the_supervisor_is_alive_and_never_exits_on_it() {
+        let d = repo();
+        let m = model();
+        let mut f = train();
+        f.success = Some(Ok(Some(at(31))));
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, false).unwrap();
+        assert_eq!(r.liveness.finding.as_deref(), Some("supervise_stale"));
+        assert_eq!(
+            r.exit_code(),
+            10,
+            "the decisions decide the exit, not liveness"
+        );
+        let mut f = train();
+        f.success = Some(Ok(Some(at(9))));
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true).unwrap();
+        assert_eq!(r.liveness.finding, None);
+        assert_eq!(r.liveness.minutes, Some(9));
+        assert_eq!(r.exit_code(), 0);
+        let mut f = train();
+        f.success = Some(Err("HTTP 502".into()));
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true).unwrap();
+        assert_eq!(r.liveness.finding.as_deref(), Some("supervise_unobserved"));
+        assert_eq!(
+            *f.cancelled.borrow(),
+            vec![100, 200],
+            "an unread liveness costs no act"
+        );
+        let j = serde_json::to_value(&r).unwrap();
+        assert_eq!(j["liveness"]["finding"], "supervise_unobserved");
+    }
+
+    #[test]
     fn a_refused_cancel_is_recorded_and_exits_twelve() {
         let d = repo();
         let m = model();
@@ -787,6 +940,16 @@ mod tests {
         );
         let j = job_of(&json!({"name": "plan", "status": "queued", "started_at": null})).unwrap();
         assert!(!j.started());
+        // the forge fills started_at for a queued job too: it is not started
+        let j = job_of(&json!({"name": "rust (1)", "status": "queued",
+            "started_at": "2026-10-28T22:24:29Z", "conclusion": null}))
+        .unwrap();
+        assert!(!j.started());
+        let j = job_of(&json!({"name": "plan", "status": "completed",
+            "started_at": "2026-10-28T22:24:09Z", "conclusion": "success"}))
+        .unwrap();
+        assert!(j.started());
+        assert_eq!(j.conclusion.as_deref(), Some("success"));
         let lines = lines_of("{\"a\":1}\n\n{\"a\":2}\n", "x").unwrap();
         assert_eq!(lines.len(), 2);
         assert!(lines_of("{nope", "x").is_err());

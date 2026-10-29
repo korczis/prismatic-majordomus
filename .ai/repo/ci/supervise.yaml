@@ -16,13 +16,27 @@ version: 1
 # mattered waited behind it; the owner ordered that CI never stay stuck for hours again.
 #
 # What ends a run, and nothing else:
+#   duplicate_run                a pull_request run that waits with no job started while an
+#                                older run of the same pull request and the same commit is in
+#                                flight or judged (success or failure). Opening a train with
+#                                `--label train` is `opened` and `labeled` at once and starts
+#                                validate twice (6 of 8 trains on 2026-10-28; 10b's twin
+#                                40713048283 held its group seven hours). A pull request
+#                                labelled `ci:full` asked for the second run: it is held.
 #   superseded_blocks_successor  a pull_request run of a workflow declared `superseded:
 #                                per_pull_request`, whose head is no longer its pull
 #                                request's, while a newer run of the same pull request waits in
 #                                the same group. With nothing waiting it is left alone: the
 #                                concurrency rationale stands.
-#   queued_past_bound            queued longer than `queued_minutes` with no job started.
-#   running_past_bound           in progress longer than `running_minutes`, from its start.
+#   queued_past_bound            queued longer than `queued_minutes` with no job started; an
+#                                integration/* top never (it waits for a runner, and its
+#                                verdict is the one a landing needs).
+#   running_past_bound           running longer than `running_minutes`, from its first job's
+#                                start. Not from `run_started_at`, which is the creation time
+#                                of a run that waited in its group: that clock would have
+#                                cancelled train 10b's legitimate run 40764355688 at about
+#                                00:48Z, two hours into its real work. A run with no started
+#                                job is never running past its bound.
 #
 # What is never cancelled for being superseded is fixed in the code, not declared here: a push
 # to the default branch, any other push (a tag push among them), the schedule, a dispatch, a
@@ -33,6 +47,17 @@ version: 1
 # cancelled only if the same reason still holds (the drain's observe-twice discipline). The
 # act is recorded first; a trail that cannot be written stops every act. The cancel is the
 # forge's force-cancel: `gh run cancel` on a queued run has returned success and done nothing.
+# Where it runs: two lanes at once, lundra ([self-hosted, lundra]) and GitHub-hosted, each its
+# own concurrency group with cancel-in-progress false, from a downloaded executable, bounded at
+# five minutes. A supervisor queued behind the validate jobs it supervises supervises nothing.
+# Its liveness is the queue workflow's to report: no successful supervise job for thirty
+# minutes is `supervise_stale` (.ai/repo/ci/queue.yaml).
+runs_on:
+  lanes: [lundra, hosted]
+  timeout_minutes: 5
+  cancel_in_progress: false
+  stale_minutes: 30
+
 trigger:
   branch: master
   schedule: '*/10 * * * *'

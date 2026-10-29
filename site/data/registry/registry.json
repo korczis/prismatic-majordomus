@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "fc26763da788f4264fdc69a2167af8cc8e0b8d55123518999d9d0c5049c3e9a9",
+    "fingerprint": "1bfd16c7e8bf005afd616ccf3d28b9a8344620ec6701dc37503fc2d404728cb3",
     "summary": {
-      "total": 3552,
+      "total": 3553,
       "builtin": 220,
-      "declarative": 3332,
+      "declarative": 3333,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3332
+        "resource": 3333
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3342
+        "implemented": 3343
       },
       "mcp_tools": 206,
-      "mcp_resources": 3389,
+      "mcp_resources": 3390,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -92026,7 +92026,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 654,
+        "capabilities": 655,
         "capability_ids": []
       },
       {
@@ -92118,7 +92118,7 @@
     ]
   },
   "index": {
-    "fingerprint": "8f23115c81efda9f00e162bbea3140b9aceaebfc50cd9a49165691ae31665e0f",
+    "fingerprint": "94d1f222f749f8a4292ab444b86d39702a857456e362414db8f0aa398c98033c",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92172,7 +92172,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 654,
+      "test": 655,
       "use-case": 49,
       "workspace": 1
     },
@@ -99180,7 +99180,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 46762
+        "bytes": 49143
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -99477,7 +99477,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 75504
+        "bytes": 75702
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
@@ -114023,7 +114023,7 @@
         "path": ".ai/repo/project/issues/I3903.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2632
+        "bytes": 3573
       },
       {
         "uri": "majordomus://issue/I3910",
@@ -125515,6 +125515,14 @@
         "bytes": 5093
       },
       {
+        "uri": "majordomus://test/test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh",
+        "kind": "test",
+        "identity": "test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh",
+        "path": "test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh",
+        "source_class": "case",
+        "bytes": 4314
+      },
+      {
         "uri": "majordomus://test/test/cases/390_unresolved_relation_refuses_generation.sh",
         "kind": "test",
         "identity": "test/cases/390_unresolved_relation_refuses_generation.sh",
@@ -128575,7 +128583,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 654
+      "objects": 655
     },
     {
       "name": "use-case",
@@ -142248,7 +142256,7 @@
             "route": "/docs/cli/prs/supervise/",
             "executable": true,
             "usage": "majordomus prs supervise [OPTIONS]",
-            "about": "Judge every in-flight CI run against the bounds `.ai/repo/ci/supervise.yaml` declares, and name each one to cancel with its reason: a pull request's run of a head that moved while a newer run of it waits behind it in the same concurrency group, a run queued past its workflow's bound with no job started, or one in progress past its bound. A run of the default branch, a tag, the schedule, a dispatch or a release, and every pages or release run, is never cancelled for being superseded; the supervising workflow's own run never at all. A dry run by default, which reaches the forge to read and changes nothing. Exit 0 when nothing needs doing, 10 for decisions a dry run found, 12 when the forge could not be read or an act could not be taken",
+            "about": "Judge every in-flight CI run against the bounds `.ai/repo/ci/supervise.yaml` declares, and name each one to cancel with its reason: a pull request's waiting run of a commit that already has a run in flight or judged (unless the pull request is labelled ci:full), a pull request's run of a head that moved while a newer run of it waits behind it in the same concurrency group, a run queued past its workflow's bound with no job started (never an integration/* top), or one running past its bound from its first job's start. A run of the default branch, a tag, the schedule, a dispatch or a release, and every pages or release run, is never cancelled for being superseded; the supervising workflow's own run never at all. It also reports supervise_stale when the supervisor's newest success is older than 30 minutes. A dry run by default, which reaches the forge to read and changes nothing. Exit 0 when nothing needs doing, 10 for decisions a dry run found, 12 when the forge could not be read or an act could not be taken",
             "args": [
               {
                 "name": "apply",

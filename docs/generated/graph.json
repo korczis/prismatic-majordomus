@@ -67298,7 +67298,12 @@
           "acceptance_criteria": [
             "A queued or in-progress run past its declared bound is cancelled once, with its reason recorded",
             "A pull-request run whose head moved is cancelled; a run of master, a release, a tag or a deploy never is for that reason",
-            "A dry run decides without acting, and the decision is the same"
+            "A dry run decides without acting, and the decision is the same",
+            "A run's running bound is measured from its first job's start, so a replay of run 40764355688 at 00:50Z gives no cancel; a run with no started job is never running past its bound",
+            "A waiting pull-request run of a commit that already has a run in flight or judged is cancelled as a duplicate (a replay of 40713048283 by 15:10Z), and held when the pull request carries ci:full",
+            "An integration/* run is never cancelled through queued_past_bound",
+            "supervise.yml runs on lundra with a hosted fallback, from a prebuilt executable, bounded at five minutes, with cancel-in-progress false, so five validate requests within 60 s let an apply complete",
+            "A newest supervise success older than 30 minutes is reported as supervise_stale, and queue.yml fails on it"
           ],
           "created_at": "2026-10-22",
           "current_state": "Stuck and superseded runs hold runners until GitHub's six-hour limit or a person cancels them.",
@@ -67323,6 +67328,7 @@
             "scripts/ci/release-path",
             "docs/CI.md",
             "docs/INTEGRATION.md",
+            "test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh",
             "apps/majordomus-cli/src/cli.rs",
             "apps/majordomus-cli/src/commands/prs.rs",
             "SECURITY.md"
@@ -67333,7 +67339,8 @@
           "slug": "a-stuck-run-is-stopped-by-its-bound",
           "updated_at": "2026-10-28",
           "validation": [
-            "cargo test --lib integration"
+            "cargo test --lib integration",
+            "bash test/run.sh 3903_the_supervisor_is_wired_to_survive_a_burst 350_the_queue_measures_itself"
           ]
         }
       },
@@ -94172,6 +94179,13 @@
         "label": "test/cases/389_cockpit_projection.sh",
         "route": "/cockpit/objects/test/test-cases-389-cockpit-projection-sh",
         "source": "test/cases/389_cockpit_projection.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh",
+        "kind": "test",
+        "label": "test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh",
+        "route": "/cockpit/objects/test/test-cases-3903-the-supervisor-is-wired-to-survive-a-burst-sh",
+        "source": "test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh"
       },
       {
         "id": "majordomus://test/test/cases/390_unresolved_relation_refuses_generation.sh",
@@ -139543,6 +139557,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/390_unresolved_relation_refuses_generation.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -144849,8 +144868,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4016,
-      "edges": 9261,
+      "nodes": 4017,
+      "edges": 9262,
       "acyclic": false,
       "truncated": false
     }

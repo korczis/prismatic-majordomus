@@ -1,13 +1,27 @@
-# The CI runs, supervised: a run superseded while a newer run of its pull request waits behind
-# it, or one queued or running past its workflow's declared bound, is force-cancelled with its
-# reason recorded (I3903). An adapter over `majordomus prs supervise --apply`; the model and its
-# rationale are .ai/repo/ci/supervise.yaml, the decision is
-# apps/majordomus-cli/src/integration/supervise.rs, and docs/CI.md is the prose.
+# The CI runs, supervised: a waiting run of a commit that already has its run, a run superseded
+# while a newer run of its pull request waits behind it, or one queued or running past its
+# workflow's declared bound, is force-cancelled with its reason recorded (I3903). An adapter
+# over `majordomus prs supervise --apply`; the model and its rationale are
+# .ai/repo/ci/supervise.yaml, the decision is apps/majordomus-cli/src/integration/supervise.rs,
+# and docs/CI.md is the prose.
 #
 # Event-driven first, the clock as the watchdog: every requested validate run starts this, so a
-# new run that would wait behind its pull request's superseded one is unblocked within a minute;
-# the schedule catches whatever an event did not, and survives every local restart because it
-# runs here, not on anybody's machine.
+# new run that would wait behind its pull request's superseded run or its own twin is retired
+# within a minute; the schedule catches whatever an event did not, and survives every local
+# restart because it runs here, not on anybody's machine.
+#
+# It must not be starved by what it supervises. On 2026-10-28 the hosted pool was full of
+# validate's jobs, and a supervisor queued behind them supervises nothing; so it runs in two
+# lanes at once: lundra, the repository's own machine (it does not share the account's hosted
+# concurrency), and GitHub-hosted, the fallback when lundra has no runner online. Whichever pool
+# has room runs first. Each lane is its own concurrency group, so a lane with no runner holds
+# only itself, and a second apply finds the first one's cancels already done (each act reads its
+# run again first, and a run that completed is skipped). The queue workflow fails when neither
+# lane has succeeded for thirty minutes (`supervise_stale`).
+#
+# It compiles nothing: an apply that waited twenty minutes for a build was cancelled by the next
+# request before it acted. It downloads the executable the newest master validate run built
+# (`majordomus-exe`, kept a day), or the published release when none is kept.
 name: supervise
 on:
   schedule:
@@ -17,45 +31,82 @@ on:
     types: [requested]
   workflow_dispatch:
 
-# Cancelling a run is Actions write. Reading the open pull requests' heads is pull-requests
-# read; nothing here writes the tree, a pull request or an issue.
+# Cancelling a run is Actions write, which also reads the artifact. Reading the open pull
+# requests' heads and labels is pull-requests read; nothing here writes the tree, a pull request
+# or an issue.
 permissions:
   actions: write
   contents: read
   pull-requests: read
 
-# One supervisor at a time, and the newest observation wins: a tick that is still reading when
-# a newer event arrives has nothing to say that the newer one will not say better.
-concurrency:
-  group: supervise
-  cancel-in-progress: true
-
 jobs:
   supervise:
-    runs-on: ubuntu-latest
-    # a build from the cache and a handful of API calls; the bound turns a hang into a failure
-    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - lane: lundra
+            runner: [self-hosted, lundra]
+          - lane: hosted
+            runner: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
+    # a lane that fails is the other lane's to cover; the liveness finding is what reports it
+    continue-on-error: true
+    # One apply per lane at a time, and never cancelled by the next request: five validate
+    # requests within a minute used to cancel every apply before it acted. The newest request
+    # waits, and its observation is the one that runs next.
+    concurrency:
+      group: supervise-${{ matrix.lane }}
+      cancel-in-progress: false
+    # a download and a handful of API calls; the bound turns a hang into a failure
+    timeout-minutes: 5
     steps:
+      # the model is all it reads of the tree
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .ai
 
-      - uses: ./.github/actions/setup-rust
-
-      - name: the executable that supervises the runs
-        run: cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
-
-      # `--apply`: each run decided on is read again, recorded on the trail, then cancelled.
-      # 0 is nothing to do or every act done; 12 is a forge that could not be read or an act
-      # that could not be taken, and that fails the job.
-      - id: supervise
+      - name: the executable that supervises the runs, prebuilt
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          mj="$PWD/apps/majordomus-cli/target/debug/majordomus"
+          command -v gh >/dev/null || { echo "supervise: no GitHub CLI on this runner" >&2; exit 12; }
+          dir="$RUNNER_TEMP/mj"
+          mkdir -p "$dir"
+          for id in $(gh run list --repo "$GITHUB_REPOSITORY" --workflow validate.yml --branch master \
+              --event push --limit 10 --json databaseId --jq '.[].databaseId'); do
+            # built on GitHub-hosted Linux: where its architecture or libc does not fit it does
+            # not run, and the release (built for each) is taken instead
+            if gh run download "$id" --repo "$GITHUB_REPOSITORY" --name majordomus-exe --dir "$dir" 2>/dev/null \
+                && [ -s "$dir/majordomus" ] && chmod +x "$dir/majordomus" \
+                && "$dir/majordomus" --version >/dev/null 2>&1; then
+              echo "the executable validate run $id built: $(cat "$dir/majordomus-cli.json" 2>/dev/null)"
+              break
+            fi
+            rm -rf "$dir" && mkdir -p "$dir"
+          done
+          if [ -x "$dir/majordomus" ]; then
+            echo "MJ=$dir/majordomus" >> "$GITHUB_ENV"
+          else
+            echo "::warning::no master validate run keeps an executable that runs here; the published release supervises"
+            curl -fsSL https://majordomus.dev/install.sh \
+              | sh -s -- --install-dir "$RUNNER_TEMP/bin" --prefix "$RUNNER_TEMP/opt"
+            echo "MJ=$RUNNER_TEMP/bin/majordomus" >> "$GITHUB_ENV"
+          fi
+
+      # `--apply`: each run decided on is read again, recorded on the trail, then cancelled.
+      # 0 is nothing to do or every act done; 12 is a forge that could not be read or an act
+      # that could not be taken, and that fails this lane.
+      - id: supervise
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LANE: ${{ matrix.lane }}
+        run: |
           rc=0
-          "$mj" prs supervise --apply > "$RUNNER_TEMP/supervise.txt" 2>&1 || rc=$?
+          "$MJ" prs supervise --apply > "$RUNNER_TEMP/supervise.txt" 2>&1 || rc=$?
           sed 's/^/    /' "$RUNNER_TEMP/supervise.txt"
           {
-            printf '## The CI runs, supervised here\n\n```\n'
+            printf '## The CI runs, supervised here (%s)\n\n```\n' "$LANE"
             cat "$RUNNER_TEMP/supervise.txt"
             printf '```\n'
           } >> "$GITHUB_STEP_SUMMARY"

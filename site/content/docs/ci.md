@@ -448,18 +448,30 @@ verdicts nobody would read. `.github/workflows/supervise.yml` runs
 `majordomus prs supervise --apply` on every requested validate run (`workflow_run`, so a new run
 that would wait is unblocked within a minute), every ten minutes on the schedule, and on
 dispatch. It judges every queued, waiting and running run of the repository against the bounds
-`.ai/repo/ci/supervise.yaml` declares, and force-cancels a run for one of three reasons:
+`.ai/repo/ci/supervise.yaml` declares, and force-cancels a run for one of four reasons:
 
 <div class="overflow-x-auto" tabindex="0">
 
 | Reason | When |
 |---|---|
+| `duplicate_run` | a `pull_request` run of validate that waits with no job started while an older run of the same pull request and the same commit is in flight or judged (success or failure), and the pull request is not labelled `ci:full` |
 | `superseded_blocks_successor` | a `pull_request` run of validate whose head is no longer its pull request's, while a newer run of the same pull request waits in the same group |
-| `queued_past_bound` | queued longer than its workflow's `queued_minutes` (240 everywhere) with no job started |
-| `running_past_bound` | in progress longer than its workflow's `running_minutes`: its largest job timeout plus 30 |
+| `queued_past_bound` | queued longer than its workflow's `queued_minutes` (240 everywhere) with no job started; never an `integration/*` top |
+| `running_past_bound` | running longer than its workflow's `running_minutes` (its largest job timeout plus 30), from its first job's start |
 
 </div>
 
+
+The duplicate is the `labeled` twin: a train opened with `--label train` is `opened` and
+`labeled` at once, and both start validate, so 6 of the 8 trains of 2026-10-28 had two full runs
+of one head; train 10b's twin, run 40713048283, waited in the group behind the first and then
+ran for hours. A pull request labelled `ci:full` asked for the second run, and its twin is held.
+A run's age is measured from its first job's start, never from `run_started_at`: the forge sets
+that at creation, so a run that waited two hours in its group would read as running for them,
+and that clock would have cancelled train 10b's legitimate run 40764355688 at about 00:48Z. A
+run with no started job is never running past its bound, and an `integration/*` top queued
+past its bound is held (`integration_top_waits`): it waits for a runner, and its verdict is the
+one a landing needs.
 
 A superseded run with nothing waiting behind it is left alone: a started run reaches its
 verdict, which is the reason the group never cancels in progress. A push to master, any other
@@ -472,7 +484,23 @@ that cannot be written stops every act. Without `--apply` the command prints the
 and exits 10 when there are any. The decision is
 `apps/majordomus-cli/src/integration/supervise.rs`, the forge side `integration/runs.rs`, and
 the test `the_declared_bounds_hold_to_every_workflows_real_timeouts` holds the record to every
-workflow's job timeouts.
+workflow's job timeouts; `supervise_replay.rs` replays both runs of 2026-10-28 from what the
+forge recorded of them.
+
+The supervisor must not be starved by what it supervises. It runs in two lanes at once, lundra
+(`[self-hosted, lundra]`, which does not share the account's hosted concurrency) and
+GitHub-hosted, the fallback when lundra has no runner online; each lane is its own concurrency
+group with `cancel-in-progress: false`, so a burst of requested validate runs never cancels the
+apply that runs (it used to: five requests within a minute cancelled every apply before it
+acted), and a lane with no runner holds only itself. It compiles nothing: it downloads the
+executable the newest master validate run built (`majordomus-exe`), or the published release
+when none is kept, and each lane is bounded at five minutes. Case 3903 holds the wiring.
+
+Its stopping is reported. `prs supervise` reads the newest successful job of the supervise
+workflow and reports `supervise_stale` when it is older than 30 minutes or there is none
+(`supervise_unobserved` when it cannot be read), in its text and in `liveness` of its JSON,
+without changing its exit. The queue workflow runs that dry run every thirty minutes and fails
+on either finding.
 
 The `pages` job judges the site only after the deployment of its own commit (I2711). It starts
 minutes after the push that also starts that commit's deploy, and on 2026-10-14 run

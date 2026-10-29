@@ -467,6 +467,18 @@ fn supervise(
                     .unwrap_or_default()
             ),
             integration::supervise::HoldReason::Supervisor => "the supervisor's own run".into(),
+            integration::supervise::HoldReason::FullRunRequested {
+                pull_request,
+                earlier,
+            } => format!(
+                "a second run of #{pull_request}'s commit (run {earlier} is the first), asked for \
+                 with {}",
+                integration::supervise::FULL_LABEL
+            ),
+            integration::supervise::HoldReason::IntegrationTopWaits { minutes, bound } => format!(
+                "an integration top queued {minutes} min (bound {bound}): it waits for a runner \
+                 and is never cancelled for it"
+            ),
             integration::supervise::HoldReason::Unjudgeable { detail } => {
                 format!("not judged: {detail}")
             }
@@ -488,6 +500,19 @@ fn supervise(
     if report.decisions.is_empty() {
         lines.push("nothing to cancel".into());
     }
+    let l = &report.liveness;
+    lines.push(match (&l.finding, &l.newest_success_at) {
+        (Some(f), _) => format!(
+            "{f}: {}",
+            l.detail.as_deref().unwrap_or("the supervisor is not alive")
+        ),
+        (None, Some(at)) => format!(
+            "supervisor alive: its newest success ended {} min ago ({at}), within {} min",
+            l.minutes.unwrap_or(0),
+            l.bound_minutes
+        ),
+        (None, None) => "supervisor alive".into(),
+    });
     w(out, lines.join("\n"))?;
     Ok(report.exit_code())
 }

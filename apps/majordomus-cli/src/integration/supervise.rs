@@ -14,23 +14,37 @@
 //! looked at and deliberately left alone. The forge side, which observes and acts, is
 //! [`super::runs`]; a dry run and `--apply` call this same function, so they decide alike.
 //!
-//! Three reasons, and nothing else, end a run:
+//! Four reasons, and nothing else, end a run:
 //!
+//! - [`CancelReason::DuplicateRun`]: a `pull_request` run that waits with no job started
+//!   while an older run of the same pull request and the same commit is in flight or has
+//!   already been judged. A train opened with `--label train` is `opened` and `labeled` at
+//!   once, and both events start validate: 6 of the 8 trains of 2026-10-28 had such a twin,
+//!   and train 10b's (40713048283) held its group for seven hours. A pull request labelled
+//!   [`FULL_LABEL`] asked for the second run, and its twin is held
+//!   ([`HoldReason::FullRunRequested`]).
 //! - [`CancelReason::SupersededBlocksSuccessor`]: a `pull_request` run of a workflow whose
 //!   concurrency group is one per pull request, whose head is no longer its pull request's
 //!   head, while a newer run of the same pull request waits in the same group. Cancelling it
 //!   is what lets the verdict that matters start. With no successor waiting it is left alone
 //!   ([`HoldReason::SupersededWithoutSuccessor`]): that is the concurrency rationale.
 //! - [`CancelReason::QueuedPastBound`]: queued longer than its workflow's declared bound with
-//!   no job started.
-//! - [`CancelReason::RunningPastBound`]: in progress longer than its workflow's declared bound.
+//!   no job started. An `integration/*` top is never ended this way
+//!   ([`HoldReason::IntegrationTopWaits`]): it waits for a runner, and its verdict is the one a
+//!   landing needs.
+//! - [`CancelReason::RunningPastBound`]: running longer than its workflow's declared bound,
+//!   measured from its first job's start ([`RunObservation::first_job_start`]). Not from
+//!   `run_started_at`: the forge sets that at creation, so a run that waited two hours in its
+//!   concurrency group would read as running for those two hours too — the old clock would
+//!   have cancelled train 10b's legitimate run 40764355688 at about 00:48Z, two hours into its
+//!   real work. A run with no started job is never running past its bound.
 //!
 //! What is never cancelled for being superseded is fixed here, not declared: a push to the
 //! default branch, any other push (a tag push among them), the schedule, a dispatch, a
 //! release, and every run of the pages or release workflows ([`Protection`]). The supervising
 //! workflow's own runs are never cancelled for any reason.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -45,6 +59,22 @@ pub const PROTECTED_WORKFLOWS: &[&str] = &["pages", "release"];
 /// The statuses of a run that has not completed, as the forge words them.
 pub const IN_FLIGHT: &[&str] = &["queued", "in_progress", "waiting", "pending", "requested"];
 
+/// The label with which a pull request asks for every gate, and so for a second full run of
+/// a head that already has one: its same-head twin is held, not cancelled.
+pub const FULL_LABEL: &str = "ci:full";
+
+/// The branches of the landing seat's combined tops: never ended for waiting in the queue.
+pub const INTEGRATION_PREFIX: &str = "integration/";
+
+/// Minutes after which the newest successful supervision is reported as `supervise_stale`.
+pub const STALE_MINUTES: u64 = 30;
+
+/// The finding of a supervisor whose newest success is older than [`STALE_MINUTES`].
+pub const SUPERVISE_STALE: &str = "supervise_stale";
+
+/// The finding of a supervisor whose newest success could not be read.
+pub const SUPERVISE_UNOBSERVED: &str = "supervise_unobserved";
+
 /// One job of a run, as the forge reported it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct JobObservation {
@@ -52,16 +82,24 @@ pub struct JobObservation {
     pub name: String,
     /// `queued`, `in_progress`, `completed`, `waiting`, ...
     pub status: String,
-    /// When a runner took it, RFC 3339; `None` while it has not started.
+    /// When a runner took it, RFC 3339. The forge also fills it for a job still `queued`
+    /// (with its creation), so it says when only once [`JobObservation::started`] says whether.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub started_at: Option<String>,
+    /// `success`, `failure`, `skipped`, ... once completed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub conclusion: Option<String>,
 }
 
 impl JobObservation {
-    /// Whether a runner ever took this job.
+    /// Whether a runner ever took this job: in progress, or completed without being skipped.
+    /// A `queued` job is not started whatever its `started_at` says.
     pub fn started(&self) -> bool {
-        self.started_at.as_deref().is_some_and(|s| !s.is_empty())
-            || matches!(self.status.as_str(), "in_progress" | "completed")
+        match self.status.as_str() {
+            "in_progress" => true,
+            "completed" => self.conclusion.as_deref() != Some("skipped"),
+            _ => false,
+        }
     }
 }
 
@@ -83,9 +121,13 @@ pub struct RunObservation {
     pub pull_request: Option<u64>,
     /// One of [`IN_FLIGHT`], or `completed` when it has ended since.
     pub status: String,
+    /// `success`, `failure`, `cancelled`, ... once completed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub conclusion: Option<String>,
     /// When it was created, RFC 3339.
     pub created_at: String,
-    /// When it started, RFC 3339; the forge sets it at creation and again on a re-run.
+    /// When it started, RFC 3339; the forge sets it at creation and again on a re-run, so it
+    /// is not when it started to run: [`RunObservation::first_job_start`] is.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub run_started_at: Option<String>,
     /// Its jobs.
@@ -102,6 +144,33 @@ impl RunObservation {
     /// Whether it waits rather than runs: in flight and not `in_progress`.
     pub fn waiting(&self) -> bool {
         self.in_flight() && self.status != "in_progress"
+    }
+
+    /// Whether it has already been judged: completed with a verdict, `success` or `failure`.
+    /// A cancelled or skipped run judged nothing.
+    pub fn judged(&self) -> bool {
+        self.status == "completed"
+            && matches!(self.conclusion.as_deref(), Some("success" | "failure"))
+    }
+
+    /// Whether any of its jobs was taken by a runner.
+    pub fn any_job_started(&self) -> bool {
+        self.jobs.iter().any(JobObservation::started)
+    }
+
+    /// When it started to run: the earliest `started_at` of its started jobs, in seconds
+    /// since the epoch; `Ok(None)` when no job has started. Err names a started job whose
+    /// start is not a time.
+    pub fn first_job_start(&self) -> Result<Option<u64>, String> {
+        let mut first: Option<u64> = None;
+        for j in self.jobs.iter().filter(|j| j.started()) {
+            let stamp = j.started_at.as_deref().unwrap_or("");
+            let t = seconds(stamp).ok_or_else(|| {
+                format!("job `{}` started at `{stamp}`, which is not a time", j.name)
+            })?;
+            first = Some(first.map_or(t, |f| f.min(t)));
+        }
+        Ok(first)
     }
 }
 
@@ -215,6 +284,17 @@ pub fn read_model(root: &std::path::Path) -> Result<SuperviseModel, String> {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum CancelReason {
+    /// A pull request's run that waits with no job started while an older run of the same
+    /// pull request and commit is in flight or judged, and the pull request is not labelled
+    /// [`FULL_LABEL`].
+    DuplicateRun {
+        /// The pull request.
+        pull_request: u64,
+        /// The older run of the same commit.
+        earlier: u64,
+        /// What the older run is: its status, or its conclusion once judged.
+        earlier_state: String,
+    },
     /// A pull request's run of a head that is no longer the pull request's, while a newer run
     /// of the same pull request waits behind it in the same concurrency group.
     SupersededBlocksSuccessor {
@@ -232,9 +312,9 @@ pub enum CancelReason {
         /// The declared bound.
         bound: u64,
     },
-    /// In progress past its workflow's bound.
+    /// Running past its workflow's bound, from its first job's start.
     RunningPastBound {
-        /// Minutes since it started.
+        /// Minutes since its first job started.
         minutes: u64,
         /// The declared bound.
         bound: u64,
@@ -245,6 +325,7 @@ impl CancelReason {
     /// The wire word of the kind.
     pub fn word(&self) -> &'static str {
         match self {
+            CancelReason::DuplicateRun { .. } => "duplicate_run",
             CancelReason::SupersededBlocksSuccessor { .. } => "superseded_blocks_successor",
             CancelReason::QueuedPastBound { .. } => "queued_past_bound",
             CancelReason::RunningPastBound { .. } => "running_past_bound",
@@ -254,6 +335,14 @@ impl CancelReason {
     /// The reason, for a person.
     pub fn explain(&self) -> String {
         match self {
+            CancelReason::DuplicateRun {
+                pull_request,
+                earlier,
+                earlier_state,
+            } => format!(
+                "run {earlier} of #{pull_request}'s same commit is {earlier_state}; this one only \
+                 waits behind it (label {FULL_LABEL} to ask for a second run)"
+            ),
             CancelReason::SupersededBlocksSuccessor {
                 pull_request,
                 current_head,
@@ -266,7 +355,9 @@ impl CancelReason {
                 format!("queued {minutes} min with no job started; the bound is {bound} min")
             }
             CancelReason::RunningPastBound { minutes, bound } => {
-                format!("in progress {minutes} min; the bound is {bound} min")
+                format!(
+                    "running {minutes} min since its first job started; the bound is {bound} min"
+                )
             }
         }
     }
@@ -309,6 +400,22 @@ pub enum HoldReason {
     },
     /// A run of the supervising workflow.
     Supervisor,
+    /// A same-commit twin of a pull request labelled [`FULL_LABEL`]: the second run was
+    /// asked for.
+    FullRunRequested {
+        /// The pull request.
+        pull_request: u64,
+        /// The older run of the same commit.
+        earlier: u64,
+    },
+    /// An `integration/*` top queued past its bound: it waits for a runner and is never
+    /// cancelled for that.
+    IntegrationTopWaits {
+        /// Minutes since it was created.
+        minutes: u64,
+        /// The declared bound.
+        bound: u64,
+    },
     /// A time it would be judged by could not be read.
     Unjudgeable {
         /// Which.
@@ -368,6 +475,8 @@ pub struct Situation<'a> {
     pub runs: &'a [RunObservation],
     /// Each open pull request's head now.
     pub pr_heads: &'a BTreeMap<u64, String>,
+    /// The open pull requests labelled [`FULL_LABEL`].
+    pub full: &'a BTreeSet<u64>,
     /// The repository's default branch.
     pub default_branch: &'a str,
     /// The bounds.
@@ -432,6 +541,23 @@ fn successor<'a>(run: &RunObservation, n: u64, s: &Situation<'a>) -> Option<&'a 
         .max_by_key(|o| o.id)
 }
 
+/// The older run of the same pull request and the same commit that `run` duplicates: in
+/// flight, or already judged; the oldest when there are several.
+fn earlier_twin<'a>(run: &RunObservation, n: u64, s: &Situation<'a>) -> Option<&'a RunObservation> {
+    s.runs
+        .iter()
+        .filter(|o| {
+            o.id != run.id
+                && o.workflow == run.workflow
+                && o.event == "pull_request"
+                && o.pull_request == Some(n)
+                && o.head_sha == run.head_sha
+                && (o.in_flight() || o.judged())
+                && newer(run, o)
+        })
+        .min_by_key(|o| o.id)
+}
+
 /// The verdict on one run.
 pub fn judge(run: &RunObservation, s: &Situation<'_>) -> Verdict {
     if !run.in_flight() {
@@ -443,6 +569,32 @@ pub fn judge(run: &RunObservation, s: &Situation<'_>) -> Verdict {
     let Some(bound) = s.model.bounds.get(&run.workflow) else {
         return Verdict::Fine;
     };
+    // (d) a twin of a commit that already has its run: it would only wait in the group
+    if bound.superseded == SupersededGroup::PerPullRequest
+        && run.waiting()
+        && !run.any_job_started()
+        && protection(run, s.default_branch).is_none()
+    {
+        if let Some(n) = run.pull_request {
+            if let Some(earlier) = earlier_twin(run, n, s) {
+                if s.full.contains(&n) {
+                    return Verdict::Hold(HoldReason::FullRunRequested {
+                        pull_request: n,
+                        earlier: earlier.id,
+                    });
+                }
+                return Verdict::Cancel(CancelReason::DuplicateRun {
+                    pull_request: n,
+                    earlier: earlier.id,
+                    earlier_state: if earlier.in_flight() {
+                        earlier.status.clone()
+                    } else {
+                        earlier.conclusion.clone().unwrap_or_default()
+                    },
+                });
+            }
+        }
+    }
     // (a) superseded, and something waits behind it
     if bound.superseded == SupersededGroup::PerPullRequest {
         if let Some(n) = run.pull_request {
@@ -480,53 +632,51 @@ pub fn judge(run: &RunObservation, s: &Situation<'_>) -> Verdict {
 
 /// The verdict of the two bounds alone.
 fn bounded(run: &RunObservation, bound: &WorkflowBound, now: u64) -> Verdict {
-    if run.status == "in_progress" {
-        // (c) running past its bound, from its start
-        let from = run
-            .run_started_at
-            .as_deref()
-            .filter(|s| !s.is_empty())
-            .unwrap_or(&run.created_at);
-        let Some(start) = seconds(from) else {
-            return Verdict::Hold(HoldReason::Unjudgeable {
-                detail: format!("its start `{from}` is not a time"),
-            });
-        };
-        let minutes = now.saturating_sub(start) / 60;
-        if minutes > bound.running_minutes {
-            return Verdict::Cancel(CancelReason::RunningPastBound {
-                minutes,
-                bound: bound.running_minutes,
-            });
+    match run.first_job_start() {
+        Err(detail) => Verdict::Hold(HoldReason::Unjudgeable { detail }),
+        // (c) running past its bound, from its first job's start: never from
+        // `run_started_at`, which is its creation while it waited in its group
+        Ok(Some(start)) => {
+            let minutes = now.saturating_sub(start) / 60;
+            if minutes > bound.running_minutes {
+                return Verdict::Cancel(CancelReason::RunningPastBound {
+                    minutes,
+                    bound: bound.running_minutes,
+                });
+            }
+            Verdict::Fine
         }
-        return Verdict::Fine;
+        // (b) queued past its bound, nothing started
+        Ok(None) => {
+            let Some(created) = seconds(&run.created_at) else {
+                return Verdict::Hold(HoldReason::Unjudgeable {
+                    detail: format!("its creation `{}` is not a time", run.created_at),
+                });
+            };
+            let minutes = now.saturating_sub(created) / 60;
+            if minutes <= bound.queued_minutes {
+                return Verdict::Fine;
+            }
+            if run.head_branch.starts_with(INTEGRATION_PREFIX) {
+                return Verdict::Hold(HoldReason::IntegrationTopWaits {
+                    minutes,
+                    bound: bound.queued_minutes,
+                });
+            }
+            Verdict::Cancel(CancelReason::QueuedPastBound {
+                minutes,
+                bound: bound.queued_minutes,
+            })
+        }
     }
-    // (b) queued past its bound, nothing started
-    if run.jobs.iter().any(JobObservation::started) {
-        return Verdict::Fine;
-    }
-    let Some(created) = seconds(&run.created_at) else {
-        return Verdict::Hold(HoldReason::Unjudgeable {
-            detail: format!("its creation `{}` is not a time", run.created_at),
-        });
-    };
-    let minutes = now.saturating_sub(created) / 60;
-    if minutes > bound.queued_minutes {
-        return Verdict::Cancel(CancelReason::QueuedPastBound {
-            minutes,
-            bound: bound.queued_minutes,
-        });
-    }
-    Verdict::Fine
 }
 
 /// Every decision over one observation.
 pub fn decide(s: &Situation<'_>) -> Supervision {
-    let mut runs: Vec<&RunObservation> = s.runs.iter().collect();
-    runs.sort_by_key(|r| r.id);
-    runs.dedup_by_key(|r| r.id);
+    // in run order, each run once: the map is the order
+    let runs: BTreeMap<u64, &RunObservation> = s.runs.iter().map(|r| (r.id, r)).collect();
     let mut out = Supervision::default();
-    for run in runs {
+    for run in runs.into_values() {
         match judge(run, s) {
             Verdict::Cancel(reason) => out.decisions.push(Decision {
                 run: run.id,
@@ -558,7 +708,12 @@ pub fn still_holds(
     fresh: Option<&RunObservation>,
     s: &Situation<'_>,
 ) -> Option<CancelReason> {
-    let fresh = fresh?;
+    let mut fresh = fresh?.clone();
+    // a run the forge names no pull request for keeps the one it was decided under
+    if fresh.pull_request.is_none() && fresh.event == "pull_request" {
+        fresh.pull_request = decision.pull_request;
+    }
+    let fresh = &fresh;
     let mut runs: Vec<RunObservation> = s
         .runs
         .iter()
@@ -575,6 +730,68 @@ pub fn still_holds(
         }
         _ => None,
     }
+}
+
+/// Whether the supervisor itself is alive: its newest success, against [`STALE_MINUTES`].
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema)]
+pub struct Liveness {
+    /// When the newest successful supervision ended, RFC 3339; `None` when none was found.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub newest_success_at: Option<String>,
+    /// Its age in minutes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub minutes: Option<u64>,
+    /// [`STALE_MINUTES`].
+    pub bound_minutes: u64,
+    /// [`SUPERVISE_STALE`] or [`SUPERVISE_UNOBSERVED`]; `None` while it is alive.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub finding: Option<String>,
+    /// What the finding means, for a person.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
+}
+
+/// The liveness of a supervisor whose newest success ended at `newest_success` (`Ok(None)`:
+/// none found; `Err`: it could not be read), at `now`. Older than [`STALE_MINUTES`], none, or
+/// unread is a finding: a supervisor that stopped is the failure this exists to name.
+pub fn liveness(newest_success: Result<Option<&str>, String>, now: u64) -> Liveness {
+    let mut l = Liveness {
+        bound_minutes: STALE_MINUTES,
+        ..Liveness::default()
+    };
+    match newest_success {
+        Err(e) => {
+            l.finding = Some(SUPERVISE_UNOBSERVED.into());
+            l.detail = Some(format!(
+                "the supervisor's newest success could not be read: {e}"
+            ));
+        }
+        Ok(None) => {
+            l.finding = Some(SUPERVISE_STALE.into());
+            l.detail = Some("no successful supervision was found".into());
+        }
+        Ok(Some(at)) => {
+            l.newest_success_at = Some(at.to_string());
+            match seconds(at) {
+                None => {
+                    l.finding = Some(SUPERVISE_UNOBSERVED.into());
+                    l.detail = Some(format!("its newest success `{at}` is not a time"));
+                }
+                Some(t) => {
+                    let minutes = now.saturating_sub(t) / 60;
+                    l.minutes = Some(minutes);
+                    if minutes > STALE_MINUTES {
+                        l.finding = Some(SUPERVISE_STALE.into());
+                        l.detail = Some(format!(
+                            "the newest successful supervision ended {minutes} min ago; the bound \
+                             is {STALE_MINUTES} min: nothing retires a stuck or duplicate run"
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    l
 }
 
 #[cfg(test)]
@@ -620,6 +837,7 @@ mod tests {
             head_sha: sha.into(),
             pull_request: pr,
             status: status.into(),
+            conclusion: None,
             created_at: at(minutes_ago),
             run_started_at: Some(at(minutes_ago)),
             jobs: if status == "in_progress" {
@@ -627,6 +845,7 @@ mod tests {
                     name: "plan".into(),
                     status: "completed".into(),
                     started_at: Some(at(minutes_ago)),
+                    conclusion: Some("success".into()),
                 }]
             } else {
                 Vec::new()
@@ -643,6 +862,7 @@ mod tests {
         decide(&Situation {
             runs,
             pr_heads: h,
+            full: &BTreeSet::new(),
             default_branch: "master",
             model: &m,
             now: NOW,
@@ -733,6 +953,7 @@ mod tests {
         let s = decide(&Situation {
             runs: &runs,
             pr_heads: &h,
+            full: &BTreeSet::new(),
             default_branch: "master",
             model: &m,
             now: NOW,
@@ -784,6 +1005,7 @@ mod tests {
             let s = decide(&Situation {
                 runs: &runs,
                 pr_heads: &h,
+                full: &BTreeSet::new(),
                 default_branch: "master",
                 model: &m,
                 now: NOW,
@@ -813,14 +1035,49 @@ mod tests {
         // at the bound it is not past it
         let runs = vec![run(100, "a", Some(7), "queued", 240)];
         assert!(decide_over(&runs, &heads(&[(7, "a")])).decisions.is_empty());
-        // a job that started means it is not stuck in the queue
+        // a job that started means it is not stuck in the queue: it is running, from then
         let mut runs = vec![run(100, "a", Some(7), "queued", 500)];
         runs[0].jobs.push(JobObservation {
             name: "plan".into(),
             status: "completed".into(),
-            started_at: Some(at(499)),
+            started_at: Some(at(10)),
+            conclusion: Some("success".into()),
         });
         assert!(decide_over(&runs, &heads(&[(7, "a")])).decisions.is_empty());
+        // a queued or skipped job is not started, whatever its started_at says
+        let mut runs = vec![run(100, "a", Some(7), "queued", 241)];
+        runs[0].jobs = vec![
+            JobObservation {
+                name: "rust".into(),
+                status: "queued".into(),
+                started_at: Some(at(241)),
+                conclusion: None,
+            },
+            JobObservation {
+                name: "macos".into(),
+                status: "completed".into(),
+                started_at: Some(at(241)),
+                conclusion: Some("skipped".into()),
+            },
+        ];
+        assert_eq!(
+            decide_over(&runs, &heads(&[(7, "a")])).decisions[0]
+                .reason
+                .word(),
+            "queued_past_bound"
+        );
+        // an integration/* top waits for a runner and is never ended for it
+        let mut runs = vec![run(100, "a", Some(7), "queued", 600)];
+        runs[0].head_branch = "integration/train-10b-20261028".into();
+        let s = decide_over(&runs, &heads(&[(7, "a")]));
+        assert!(s.decisions.is_empty(), "{s:?}");
+        assert_eq!(
+            s.held[0].reason,
+            HoldReason::IntegrationTopWaits {
+                minutes: 600,
+                bound: 240
+            }
+        );
         // the bound applies to the trunk's runs too: only superseding is protected
         let mut runs = vec![run(100, "a", None, "pending", 300)];
         runs[0].event = "push".into();
@@ -844,10 +1101,22 @@ mod tests {
         );
         let runs = vec![run(100, "a", Some(7), "in_progress", 255)];
         assert!(decide_over(&runs, &heads(&[(7, "a")])).decisions.is_empty());
-        // measured from its start, not its creation: a re-run starts again
+        // measured from its first job's start, not its creation nor `run_started_at`: a run
+        // that waited in its group, or a re-run (whose jobs are the new attempt's), starts then
         let mut runs = vec![run(100, "a", Some(7), "in_progress", 600)];
-        runs[0].run_started_at = Some(at(10));
+        runs[0].jobs[0].started_at = Some(at(10));
         assert!(decide_over(&runs, &heads(&[(7, "a")])).decisions.is_empty());
+        // an in-progress run with no job started is never running past its bound
+        let mut runs = vec![run(100, "a", Some(7), "in_progress", 239)];
+        runs[0].jobs.clear();
+        assert!(decide_over(&runs, &heads(&[(7, "a")])).decisions.is_empty());
+        // a started job whose start is not a time holds rather than cancels
+        let mut runs = vec![run(100, "a", Some(7), "in_progress", 600)];
+        runs[0].jobs[0].started_at = None;
+        assert!(matches!(
+            decide_over(&runs, &heads(&[(7, "a")])).held[0].reason,
+            HoldReason::Unjudgeable { .. }
+        ));
         // a superseded run with nothing waiting still ends at its bound
         let runs = vec![run(100, "old", Some(7), "in_progress", 300)];
         assert_eq!(
@@ -872,6 +1141,7 @@ mod tests {
         let s = decide(&Situation {
             runs: &runs,
             pr_heads: &h,
+            full: &BTreeSet::new(),
             default_branch: "master",
             model: &m,
             now: NOW,
@@ -901,6 +1171,7 @@ mod tests {
         let s = Situation {
             runs: &runs,
             pr_heads: &h,
+            full: &BTreeSet::new(),
             default_branch: "master",
             model: &m,
             now: NOW,

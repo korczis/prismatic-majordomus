@@ -7,7 +7,9 @@ on:
     - cron: '*/30 * * * *'
   workflow_dispatch:
 
+# actions read: the supervisor's liveness is read from its runs' jobs (I3903)
 permissions:
+  actions: read
   contents: read
   pull-requests: read
 
@@ -62,3 +64,24 @@ jobs:
           # report nobody can trust is worse than none, so that is the one that fails the job.
           [ "$rc" != 12 ] || { echo "queue: the measurement could not be made" >&2; exit 12; }
           [ "$rc" = 0 ] || [ "$rc" = 10 ] || { echo "queue: majordomus prs exited $rc" >&2; exit "$rc"; }
+
+      # I3903: the supervisor cannot say that it stopped, so this clock says it for it. A dry
+      # run of `prs supervise` (no --apply: this job never acts) reports its newest success, and
+      # one older than thirty minutes, or none, is `supervise_stale`: nothing then retires a
+      # stuck or duplicate run, and that fails this job.
+      - name: the supervisor is alive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mj="$PWD/apps/majordomus-cli/target/debug/majordomus"
+          rc=0
+          "$mj" prs supervise --format json > "$RUNNER_TEMP/supervise.json" || rc=$?
+          [ "$rc" != 12 ] || { echo "queue: the supervisor's runs could not be read" >&2; exit 12; }
+          finding="$(jq -r '.liveness.finding // empty' "$RUNNER_TEMP/supervise.json")"
+          detail="$(jq -r '.liveness.detail // empty' "$RUNNER_TEMP/supervise.json")"
+          {
+            printf '## The supervisor\n\n'
+            if [ -n "$finding" ]; then printf '%s: %s\n' "$finding" "$detail"; else printf 'alive\n'; fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          [ -z "$finding" ] || { echo "queue: $finding: $detail" >&2; exit 1; }
+          echo "the supervisor is alive: $(jq -r '.liveness.newest_success_at' "$RUNNER_TEMP/supervise.json")"

@@ -967,7 +967,7 @@ json` stays the list of pull requests to close.
 | `majordomus prs cleanup [--apply]` | yes | close what is provably on master, or superseded by an authorised successor that landed; list what is a person's (possibly redundant, obsolete) and the branches merged pull requests left on origin |
 | `majordomus prs repair <n\|branch>` | no | whether master may be brought into that pull request, from the last observation (a dry run) |
 | `majordomus prs repair <n\|branch> --apply` | yes | bring master into it, under the lease, as `drain --refresh` does |
-| `majordomus prs supervise [--apply]` | yes | judge every in-flight CI run against `.ai/repo/ci/supervise.yaml` and name each to cancel with its reason; `--apply` force-cancels them, each read again and recorded first (docs/CI.md) |
+| `majordomus prs supervise [--apply]` | yes | judge every in-flight CI run against `.ai/repo/ci/supervise.yaml` and name each to cancel with its reason (a same-commit duplicate, a superseded run that blocks its successor, a run queued or running past its bound); `--apply` force-cancels them, each read again and recorded first; it also reports `supervise_stale` when the supervisor has not succeeded for 30 minutes (docs/CI.md) |
 
 </div>
 
