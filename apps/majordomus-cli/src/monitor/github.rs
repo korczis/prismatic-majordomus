@@ -771,44 +771,114 @@ type Cached = (Instant, Result<Value, Unanswered>);
 /// A question: the repository and the arguments `gh` was asked with.
 type Question = (PathBuf, Vec<String>);
 
+/// How many times its TTL an answer is still served while a fresh one is asked for in the
+/// background. Past it the question is asked again before anything is answered.
+///
+/// On 2026-10-29 the work section of a leaseholder's brief read `unread (took > 5000 ms)` on
+/// every other status-line tick: the mod asks once a minute, the answers live 30 s, so every
+/// second tick found them expired and waited on `gh` at a load average of 50. An answer is
+/// now refreshed past its TTL without anyone waiting for it, and the brief says how old the
+/// one it shows is.
+pub(crate) const SERVE_STALE_FACTOR: u32 = 4;
+
+/// The age past which a brief calls a forge answer read with `ttl` stale: the longest it is
+/// ever served.
+pub(crate) fn served_bound(ttl: Duration) -> Duration {
+    ttl * SERVE_STALE_FACTOR
+}
+
 /// Every question the brief has asked, by repository and argument list, shared by every
 /// reader of this process for its TTL: the status line of every session asks the
 /// leaseholder, so a reading costs one call per TTL, never one per session.
 static ASKED: Mutex<Option<std::collections::BTreeMap<Question, Cached>>> = Mutex::new(None);
 
-/// `gh <args>` in `root`, from the cache when it is younger than `ttl`, else asked now within
-/// `budget`. The program is `MAJORDOMUS_GH` when set (a test's stand-in), else `gh`.
+/// The questions being asked again in the background, so that a burst of readers starts
+/// one refresh, not one each.
+static REFRESHING: Mutex<Option<std::collections::BTreeSet<Question>>> = Mutex::new(None);
+
+/// `gh <args>` in `root`: from the cache when it is younger than `ttl`; from the cache, with
+/// its age, while a refresh runs in the background, when it is younger than
+/// [`served_bound`]; else asked now within `budget`. The program is `MAJORDOMUS_GH` when set
+/// (a test's stand-in), else `gh`.
 pub(crate) fn ask(
     root: &Path,
     args: &[&str],
     ttl: Duration,
     budget: Duration,
 ) -> Result<Answer, Unanswered> {
-    let key = (
+    let program = std::env::var("MAJORDOMUS_GH").unwrap_or_else(|_| "gh".into());
+    ask_with(&program, root, args, ttl, budget)
+}
+
+fn ask_with(
+    program: &str,
+    root: &Path,
+    args: &[&str],
+    ttl: Duration,
+    budget: Duration,
+) -> Result<Answer, Unanswered> {
+    let key: Question = (
         root.to_path_buf(),
         args.iter().map(|s| s.to_string()).collect::<Vec<_>>(),
     );
-    if let Ok(asked) = ASKED.lock() {
-        if let Some((at, answer)) = asked.as_ref().and_then(|m| m.get(&key)) {
-            if at.elapsed() < ttl {
-                return answer.clone().map(|value| Answer {
-                    value,
-                    age: at.elapsed(),
-                });
+    let cached = ASKED
+        .lock()
+        .ok()
+        .and_then(|asked| asked.as_ref().and_then(|m| m.get(&key)).cloned());
+    if let Some((at, answer)) = cached {
+        let age = at.elapsed();
+        if age < served_bound(ttl) {
+            if age >= ttl {
+                refresh_in_background(program, key, budget);
             }
+            return answer.map(|value| Answer { value, age });
         }
     }
-    let program = std::env::var("MAJORDOMUS_GH").unwrap_or_else(|_| "gh".into());
-    let answer = ask_now(&program, root, args, budget);
-    if let Ok(mut asked) = ASKED.lock() {
-        asked
-            .get_or_insert_with(Default::default)
-            .insert(key, (Instant::now(), answer.clone()));
-    }
+    let answer = ask_now(program, root, args, budget);
+    remember(key, answer.clone());
     answer.map(|value| Answer {
         value,
         age: Duration::ZERO,
     })
+}
+
+fn remember(key: Question, answer: Result<Value, Unanswered>) {
+    if let Ok(mut asked) = ASKED.lock() {
+        asked
+            .get_or_insert_with(Default::default)
+            .insert(key, (Instant::now(), answer));
+    }
+}
+
+/// Ask `key` again in a thread of its own, unless a refresh of it already runs. The thread
+/// is bounded by `budget` like any other call, and the answer replaces the cached one.
+fn refresh_in_background(program: &str, key: Question, budget: Duration) {
+    let started = REFRESHING
+        .lock()
+        .map(|mut r| r.get_or_insert_with(Default::default).insert(key.clone()))
+        .unwrap_or(false);
+    if !started {
+        return;
+    }
+    let program = program.to_string();
+    let spawned = std::thread::Builder::new()
+        .name("brief-forge-refresh".into())
+        .spawn({
+            let key = key.clone();
+            move || {
+                let args: Vec<&str> = key.1.iter().map(String::as_str).collect();
+                let answer = ask_now(&program, &key.0, &args, budget);
+                remember(key.clone(), answer);
+                if let Ok(mut r) = REFRESHING.lock() {
+                    r.get_or_insert_with(Default::default).remove(&key);
+                }
+            }
+        });
+    if spawned.is_err() {
+        if let Ok(mut r) = REFRESHING.lock() {
+            r.get_or_insert_with(Default::default).remove(&key);
+        }
+    }
 }
 
 /// One bounded call, its output read while it runs (so that an answer larger than a pipe's
@@ -999,4 +1069,53 @@ pub(crate) fn repository(root: &Path, budget: Duration) -> Result<Answer, Unansw
         Duration::from_secs(3600),
         budget,
     )
+}
+
+#[cfg(test)]
+mod brief_reads {
+    use super::*;
+    use serde_json::json;
+
+    fn age(key: &Question, by: Duration) {
+        let mut asked = ASKED.lock().unwrap();
+        let entry = asked
+            .get_or_insert_with(Default::default)
+            .get_mut(key)
+            .unwrap();
+        entry.0 = Instant::now().checked_sub(by).unwrap();
+    }
+
+    #[test]
+    fn an_expired_answer_is_served_with_its_age_while_it_is_asked_again() {
+        let dir = std::env::temp_dir();
+        let root = dir.join(format!("majordomus-brief-reads-{}", std::process::id()));
+        std::fs::create_dir_all(&root).expect("a directory to ask in");
+        let ttl = Duration::from_secs(30);
+        let budget = Duration::from_secs(4);
+        let first = ask_with("echo", &root, &["[1]"], ttl, budget).unwrap();
+        assert_eq!((first.value, first.age), (json!([1]), Duration::ZERO));
+        let key: Question = (root.clone(), vec!["[1]".to_string()]);
+
+        // past its TTL, inside the served bound: answered at once, old, and refreshed
+        age(&key, Duration::from_secs(45));
+        let served = ask_with("echo", &root, &["[1]"], ttl, budget).unwrap();
+        assert!(served.age >= Duration::from_secs(45), "{:?}", served.age);
+        let refreshed = (0..400).any(|_| {
+            std::thread::sleep(Duration::from_millis(10));
+            ASKED.lock().unwrap().as_ref().unwrap()[&key].0.elapsed() < Duration::from_secs(5)
+        });
+        assert!(
+            refreshed,
+            "the background refresh replaced the cached answer"
+        );
+        let fresh = ask_with("echo", &root, &["[1]"], ttl, budget).unwrap();
+        assert!(fresh.age < Duration::from_secs(5), "{:?}", fresh.age);
+
+        // past the served bound: asked again before anything is answered
+        age(&key, served_bound(ttl) + Duration::from_secs(1));
+        let asked = ask_with("echo", &root, &["[1]"], ttl, budget).unwrap();
+        assert_eq!(asked.age, Duration::ZERO);
+        assert_eq!(served_bound(ttl), Duration::from_secs(120));
+        let _ = std::fs::remove_dir(&root);
+    }
 }

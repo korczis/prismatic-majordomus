@@ -521,7 +521,10 @@ pub fn derive_attention(m: &Measured<'_>) -> Vec<BriefAttention> {
                     ("pr", pr.to_string()),
                     (
                         "worktree",
-                        item.worktree.clone().unwrap_or_else(|| "<worktree>".into()),
+                        item.worktree
+                            .as_deref()
+                            .map(super::home_words)
+                            .unwrap_or_else(|| "<worktree>".into()),
                     ),
                 ],
             ),

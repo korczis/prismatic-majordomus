@@ -2954,6 +2954,29 @@ fn brief_lines(s: &Sections, attention: &[BriefAttention], origin: &BriefOrigin)
     lines
 }
 
+/// A worktree as a line names it: from the primary checkout's name on
+/// (`prismatic-majordomus-wt/fix/x`), since a canonical worktree is `<primary>-wt/<branch>` and
+/// its parent directories say nothing the reader needs. The JSON keeps the whole path. On
+/// 2026-10-29 the whole path made a work line 130 columns wide, past the 100 the lines wrap
+/// at, because a path has no space to wrap at.
+fn worktree_words(path: &str) -> &str {
+    match path.find("-wt/") {
+        Some(at) => &path[path[..at].rfind('/').map_or(0, |slash| slash + 1)..],
+        None => path,
+    }
+}
+
+/// A path as a command a person types names it: under the home directory as `~/...`, which
+/// every shell expands, and otherwise whole.
+pub(crate) fn home_words(path: &str) -> String {
+    match std::env::var("HOME") {
+        Ok(home) if !home.is_empty() && path.starts_with(&format!("{home}/")) => {
+            format!("~{}", &path[home.len()..])
+        }
+        _ => path.to_string(),
+    }
+}
+
 /// One item of work in words: `I4334  #2656 docs/x @ 8afdc0c934 [dirty] ...`.
 fn work_item_words(i: &BriefWorkItem) -> String {
     let mut s = String::new();
@@ -2989,7 +3012,8 @@ fn work_item_words(i: &BriefWorkItem) -> String {
     }
     if let Some(w) = &i.worktree {
         s.push_str(&format!(
-            "; worktree {w}, task [{}]",
+            "; worktree {}, task [{}]",
+            worktree_words(w),
             match (&i.task, &i.task_outcome) {
                 (Some(_), _) => "active",
                 (None, Some(o)) => o.as_str(),
@@ -3800,6 +3824,40 @@ mod tests {
             "{text}"
         );
         assert!(b.lines.iter().all(|l| l.chars().count() <= WRAP_WIDTH));
+    }
+
+    #[test]
+    fn a_work_line_names_its_worktree_from_the_primarys_name() {
+        assert_eq!(
+            worktree_words("/Users/k/dev/prismatic-majordomus-wt/fix/a-stuck-run-is-stopped"),
+            "prismatic-majordomus-wt/fix/a-stuck-run-is-stopped"
+        );
+        assert_eq!(worktree_words("repo-wt/feature/x"), "repo-wt/feature/x");
+        assert_eq!(
+            worktree_words("/srv/checkout"),
+            "/srv/checkout",
+            "not canonical: whole"
+        );
+        let item = BriefWorkItem {
+            branch: "fix/a-stuck-run-is-stopped-by-its-bound".into(),
+            worktree: Some(
+                "/Users/korczis/dev/prismatic-majordomus-wt/fix/a-stuck-run-is-stopped-by-its-bound"
+                    .into(),
+            ),
+            ..BriefWorkItem::default()
+        };
+        let lines = wrapped("", &work_item_words(&item));
+        assert!(
+            lines.iter().all(|l| l.chars().count() <= WRAP_WIDTH),
+            "{lines:?}"
+        );
+        assert!(lines
+            .join(" ")
+            .contains("prismatic-majordomus-wt/fix/a-stuck-run-is-stopped-by-its-bound"));
+        if let Ok(home) = std::env::var("HOME") {
+            assert_eq!(home_words(&format!("{home}/dev/r-wt/x")), "~/dev/r-wt/x");
+        }
+        assert_eq!(home_words("/elsewhere/r-wt/x"), "/elsewhere/r-wt/x");
     }
 
     #[test]

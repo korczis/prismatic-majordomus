@@ -270,7 +270,7 @@ pub(crate) fn section(i: &Inputs<'_>) -> BriefWorkSection {
             source: sources.join(", "),
             observed_at: Some(crate::ledger::now()),
             age_seconds: forge_age.map(|a| a.as_secs()),
-            bound_seconds: Some(github::BRIEF_TTL.as_secs()),
+            bound_seconds: Some(github::served_bound(github::BRIEF_TTL).as_secs()),
             verdict,
             remedy: (verdict != BriefVerdict::Current).then(|| {
                 if i.leaseholder {

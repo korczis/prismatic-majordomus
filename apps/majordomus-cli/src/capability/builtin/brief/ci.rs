@@ -153,7 +153,7 @@ pub(crate) fn compose(
             source: "gh api actions/runs and actions/runners (monitor cache)".into(),
             observed_at: Some(crate::ledger::now()),
             age_seconds: Some(age.as_secs()),
-            bound_seconds: Some(github::BRIEF_TTL.as_secs()),
+            bound_seconds: Some(github::served_bound(github::BRIEF_TTL).as_secs()),
             verdict,
             remedy: (verdict != BriefVerdict::Current)
                 .then(|| format!("gh api repos/{repository}/actions/runners")),
