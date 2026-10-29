@@ -127,7 +127,7 @@
         },
         "brief_on_interval": {
           "type": "boolean",
-          "description": "Install the provider mod that keeps a session briefed on what surrounds it: the one-line `majordomus brief` as its status line, the full brief put before the model once per interval, and a prompt of its own when the session is idle, so that it reports on itself without being asked; and have the start event tell the session how to keep itself awake. `capture install` converges on the value: only true installs the mod, and anything else removes a mod it wrote. Absent means off, for the reason handover_on_fill gives; the skeleton declares true (ADR 0136)."
+          "description": "Install the provider mod that keeps a session briefed on what surrounds it: the one-line `majordomus brief` as its status line and, when the interval has passed and a section of the brief changed, the report brief.session composes (share/brief/report.yaml) as a prompt of its own once the session is idle, so that it reports on itself without being asked; and have the start event relay the brief's keep-awake text. `capture install` converges on the value: only true installs the mod, and anything else removes a mod it wrote. Absent means off, for the reason handover_on_fill gives; the skeleton declares true (ADR 0136)."
         },
         "edits_require_claim": {
           "type": "boolean",
@@ -554,6 +554,35 @@
               "type": "integer",
               "minimum": 1,
               "description": "At or past this many commits behind, the checkout is stale: doctor fails, and with it the commit hook that runs doctor."
+            }
+          }
+        }
+      }
+    },
+    "machine": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "What one machine admits at once (rule project.the-cooperation-model-is-the-owners-word clause 7). Read by machine.slot on every acquisition; absent declares no limit, and an acquisition then says so.",
+      "properties": {
+        "heavy_work": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "The counting slot for heavy work — a build, a test run — kept beside the derive lock where every checkout of the machine agrees on it.",
+          "properties": {
+            "slots": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "How many holders the machine admits at once; the next waits in turn."
+            },
+            "min_free_gib": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "GiB that must be free on the volume the work writes to; below it an acquisition is refused at once, naming the measurement and the holders."
+            },
+            "wait_seconds": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "How long an acquisition that names no bound waits for a slot before it is refused, naming every holder."
             }
           }
         }

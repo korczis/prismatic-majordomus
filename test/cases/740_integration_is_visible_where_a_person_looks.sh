@@ -111,14 +111,14 @@ prs explain 3 | grep -q "waiting:.*passed over 1×" || { echo "    explain does 
 
 # ---------------------------------------------------------------- 3. the briefing
 line="$(prs brief)" || { echo "    prs brief failed"; exit 1; }
-for want in "master at" "1 open" "lease free" "last merge #1"; do
+for want in "master at" "1 open" "lease free" "last executor merge #1"; do
   case "$line" in *"$want"*) ;; *) echo "    the brief lacks '$want': $line"; exit 1 ;; esac
 done
 ctx="$("$MJ" context 2>/dev/null)" || true
 printf '%s\n' "$ctx" | grep -q '^## INTEGRATION' || { echo "    context has no INTEGRATION section"; printf '%s\n' "$ctx" | grep '^## '; exit 1; }
 # the same line — its "N s ago" moves with the clock, so the parts that do not are compared
 section="$(printf '%s\n' "$ctx" | sed -n '/^## INTEGRATION/,/^## /p')"
-for want in "1 open" "lease free" "last merge #1" "$(printf '%s' "$line" | sed 's/ observed .*//')"; do
+for want in "1 open" "lease free" "last executor merge #1" "$(printf '%s' "$line" | sed 's/ observed .*//')"; do
   printf '%s\n' "$section" | grep -qF "$want" || { echo "    context's INTEGRATION lacks '$want':"; printf '%s\n' "$section"; exit 1; }
 done
 # a derived handover carries the same line under its current state, for a session resuming
@@ -126,7 +126,7 @@ derived="$("$MJ" handover --derive --no-task 2>/dev/null)" && [ -f "$derived" ] 
   || { echo "    handover --derive wrote no record: $derived"; exit 1; }
 grep -qF "Integration: $(printf '%s' "$line" | sed 's/ observed .*//')" "$derived" \
   || { echo "    the derived handover lacks the integration line:"; cat "$derived"; exit 1; }
-grep -q "last merge #1" "$derived" || { echo "    the derived handover lacks the last merge"; exit 1; }
+grep -q "last executor merge #1" "$derived" || { echo "    the derived handover lacks the last merge"; exit 1; }
 [ "$(wc -l < "$STATE/log" | tr -d ' ')" = "$calls_before" ] || { echo "    a read reached the forge"; exit 1; }
 # a checkout that never observed the forge: no line, no section
 E="$T/../empty-740"; rm -rf "$E"; mkdir -p "$E"; ( cd "$E" && gitq init -q && echo x > x && gitq add x && gitq commit -qm x && "$MJ" init >/dev/null 2>&1 )
@@ -140,7 +140,7 @@ gitq -C "$W" worktree add -q --detach "$B" master 2>/dev/null || { echo "    no 
   || { echo "    the second worktree does not share the first one's git directory"; exit 1; }
 "$RB" prs --repo "$B" refresh >/dev/null || { echo "    refresh in the second worktree failed"; exit 1; }
 lineb="$("$RB" prs --repo "$B" brief)" || { echo "    prs brief failed in the second worktree"; exit 1; }
-case "$lineb" in *"last merge #1"*) ;; *) echo "    the second worktree's brief does not see the first one's merge: $lineb"; exit 1 ;; esac
+case "$lineb" in *"last executor merge #1"*) ;; *) echo "    the second worktree's brief does not see the first one's merge: $lineb"; exit 1 ;; esac
 evb="$("$RB" prs --repo "$B" events --format json)" || { echo "    prs events failed in the second worktree"; exit 1; }
 for act in lease_acquired merge_attempted merge_succeeded lease_released; do
   printf '%s' "$evb" | jq -e --arg a "$act" 'map(select(.action == $a)) | length > 0' >/dev/null \

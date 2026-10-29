@@ -1,0 +1,62 @@
+id: I4390
+milestone: peer-blackboard
+title: "A session reports what it measured, from one declared report contract, and the brief says how old each fact is"
+slug: the-brief-tells-the-truth-and-the-report-shows-it
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Declare the self-report once, in share/brief/report.yaml, and have brief.session compose from it the three texts every carrier relays verbatim (keep_awake, report.prompt, report.reminder), each carrying the attention entries the brief measured; give every section of the brief one evidence envelope (source, age, bound, verdict, remedy, cost) so that a stale or unread fact is never shown as current; make the session section the caller's; add this session's own work, the CI pool and the machine; and bound every section by a budget so that a slow owner reads unread instead of stalling the brief."
+why: "On 2026-10-29 the owner read the interval prompt and called it a placeholder: it asked for a fixed number of lines and named categories rather than anything measured, and the same contract was worded four ways (brief.rs keep_awake, the mod's selfReport, docs/BRIEF.md, ADR 0136). The same morning majordomus brief named another session's episode and a task that had finished partial on 10-23, showed a 17 h old integration observation as current while origin/master was three merges further on, cut peer intents mid-word, and said nothing about the machine (swap 91 %), the CI pool (16 queued, three self-hosted runners idle) or the session's own pull requests and runs, which were the night's blockers."
+current_state: "On bd373b4b7d7 (#2605's head merged with master 5370ee63d19): brief.rs keep_awake asks for a report of a fixed number of lines and names five categories; register.ts selfReport appends the same in other words and parses the brief's prose with regular expressions to decide what changed; session_section asks continuity.state (50 s cold) and falls back to the pointer's episode without saying so; integration_section relays prs brief's sentence with no age verdict; peers lines clip intents at 72 characters; there is no work, CI or machine section and no attention list."
+desired_state: "share/brief/report.yaml (schema majordomus/brief-report/v1) is the one declaration of the report; majordomus generate writes its compiled copy; brief.session answers attention, report.prompt, report.reminder and per-section fingerprints beside the sections session, work, peers, mesh, integration, ci, machine, release and derive, each with its observed envelope and budget; the mod relays report.prompt and report.reminder verbatim and decides a change by the fingerprints; docs/BRIEF.md, the mod README and ADR 0136 cite the contract without copying it; cases 4401 to 4405 hold it."
+scope:
+  - ".ai/repo/project/issues/I4390.yaml"
+  - ".ai/repo/project/intents/the-peer-blackboard-is-one-reality.yaml"
+  - "share/brief/"
+  - "share/schemas/majordomus/brief-report/"
+  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
+  - "apps/majordomus-cli/src/capability/builtin/brief/"
+  - "apps/majordomus-cli/src/capability/builtin/continuity.rs"
+  - "apps/majordomus-cli/src/commands/brief.rs"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/monitor/github.rs"
+  - "apps/majordomus-cli/src/policy.rs"
+  - "apps/majordomus-cli/src/generate.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/tests/brief.rs"
+  - "share/mods/claude-code/majordomus-brief/"
+  - "share/design/tokens.yaml"
+  - "share/schemas/majordomus/policy/policy.v1.schema.json"
+  - "share/allow/policy.txt"
+  - ".ai/repo/policy.yaml"
+  - "lib/start.sh"
+  - "docs/BRIEF.md"
+  - "docs/README.md"
+  - ".ai/repo/adrs/0136-every-session-briefs-itself-on-an-interval.md"
+  - "test/cases/1065_a_session_briefs_itself.sh"
+  - "test/cases/4401_the_report_contract_is_declared_once.sh"
+  - "test/cases/4402_brief_words_are_status_words.sh"
+  - "test/cases/4403_a_stale_source_is_never_shown_as_current.sh"
+  - "test/cases/4404_a_brief_never_truncates_without_a_count.sh"
+  - "test/cases/4405_a_brief_is_bounded_and_never_builds.sh"
+non_scope:
+  - "The builder floor and the builder limit themselves: they are machine.heavy_work of I4006 (#2397), which the machine section reads and does not redeclare"
+  - "lib/rust_bin.sh's free-space floor: I4006 (#2397) moves it onto machine.heavy_work and so closes I3825"
+  - "Refreshing the integration observation from the brief: the brief names majordomus prs refresh and never runs it"
+  - "A /ui page for the brief: the Cockpit overview renders it, and a /ui page is a separate decision"
+acceptance_criteria:
+  - "The unit tests of brief/report.rs, brief/machine.rs, brief/ci.rs, brief/work.rs, brief/refs.rs and brief/mod.rs pass, among them the_compiled_contract_is_the_share_file, every_attention_row_has_a_condition_and_every_condition_a_row, the_prompt_carries_every_attention_entry_verbatim_and_no_category_list, an_observation_past_its_bound_is_stale, peers_lines_are_never_clipped and a_section_over_budget_is_unread_not_late"
+  - "Cases 4401 to 4405, 1065 and 501 pass"
+  - "The mod's test proves report.prompt is submitted byte for byte and that only a changed section fingerprint triggers a report"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- capability::builtin::brief commands::brief"
+  - "bash test/run.sh 4401 4402 4403 4404 4405 1065 501"
+evidence_required:
+  - "the_report_contract_is_declared_once"
+depends_on:
+  - I4293
+serves:
+  - "the-peer-blackboard-is-one-reality#a-session-reports-what-it-measured"
+created_at: 2026-10-29
+updated_at: 2026-10-29

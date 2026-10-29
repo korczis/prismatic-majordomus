@@ -84,13 +84,30 @@ fn without_a_server_the_command_line_composes_the_brief_and_says_so() {
             .is_some_and(|n| n.contains("no server answers")),
         "{b}"
     );
-    for section in ["session", "peers", "mesh", "integration", "derive"] {
+    for section in [
+        "session",
+        "work",
+        "peers",
+        "mesh",
+        "integration",
+        "ci",
+        "machine",
+        "release",
+        "derive",
+    ] {
         assert!(b[section]["state"].is_string(), "{section} is missing: {b}");
         assert!(
             b[section]["summary"].is_string(),
             "{section} says nothing: {b}"
         );
+        assert!(
+            b[section]["observed"]["verdict"].is_string(),
+            "{section} says nothing of what it observed: {b}"
+        );
     }
+    has_the_report(&b);
+    // a composition that is not the leaseholder's reads no forge, and says so
+    assert_eq!(b["ci"]["state"], "unread", "{b}");
     assert_eq!(
         b["peers"]["attached"], 0,
         "nobody is attached without a server"
@@ -106,12 +123,31 @@ fn without_a_server_the_command_line_composes_the_brief_and_says_so() {
     assert_eq!(out.lines().count(), 1, "{out}");
     let (code, out, _) = run_in(&f.root(), &["brief", "--keep-awake", "--this-checkout"], "");
     assert_eq!(code, 0);
-    assert!(out.starts_with("Keep yourself awake"), "{out}");
+    assert!(out.starts_with("Report on yourself every "), "{out}");
+    assert!(!out.contains("two to four lines"), "{out}");
     assert!(out.contains("\nNow: "), "{out}");
+    let (code, out, _) = run_in(&f.root(), &["brief", "--report", "--this-checkout"], "");
+    assert_eq!(code, 0);
+    assert!(out.starts_with("Majordomus report owed: "), "{out}");
     let (code, out, _) = run_in(&f.root(), &["brief", "--this-checkout"], "");
     assert_eq!(code, 0);
-    assert!(out.starts_with("session      "), "{out}");
+    assert!(out.starts_with("majordomus brief  "), "{out}");
+    assert!(out.contains("\nattention    "), "{out}");
     assert!(out.contains("\nanswered by  this_process"), "{out}");
+}
+
+/// The attention entries and the report every surface carries.
+fn has_the_report(b: &Value) {
+    assert!(b["attention"].is_array(), "no attention: {b}");
+    assert_eq!(b["report"]["contract"], "brief-report/v1", "{b}");
+    assert!(
+        b["report"]["prompt"]
+            .as_str()
+            .is_some_and(|p| p.starts_with("Majordomus report owed")),
+        "{b}"
+    );
+    assert!(b["report"]["reminder"].is_string(), "{b}");
+    assert_eq!(b["fingerprints"].as_object().map(|m| m.len()), Some(9), "{b}");
 }
 
 #[test]
@@ -132,16 +168,22 @@ fn beside_a_server_every_surface_carries_the_leaseholders_board() {
     );
     assert_eq!(over_mcp["session"]["caller"], "p1", "{over_mcp}");
     assert_eq!(over_mcp["peers"]["attached"], 1, "{over_mcp}");
+    has_the_report(&over_mcp);
 
     // HTTP: the same board
     let (status, over_http) = served.get("/api/v1/brief?checkouts=this");
     assert_eq!(status, 200, "{over_http}");
     assert_eq!(over_http["peers"]["attached"], 1, "{over_http}");
+    has_the_report(&over_http);
 
     // the command line: asked of the server, not composed from this process's empty board
     let b = brief_json(&f, &["--session", "no-such-provider-session"]);
     assert_eq!(b["answered_by"]["process"], "leaseholder", "{b}");
     assert_eq!(b["peers"]["attached"], 1, "{b}");
+    has_the_report(&b);
+    let (code, out, _) = run_in(&f.root(), &["brief", "--report", "--this-checkout"], "");
+    assert_eq!(code, 0);
+    assert!(out.starts_with("Majordomus report owed: "), "{out}");
     assert!(
         b["peers"]["named"]
             .as_array()

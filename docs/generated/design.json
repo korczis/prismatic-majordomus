@@ -2,8 +2,8 @@
   "schema": "majordomus/design-system/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: share/design/tokens.yaml, the one declaration of the design; regenerate with `majordomus generate`",
   "generator": "majordomus-cli 1.0.0-alpha.9",
-  "fingerprint": "944a896b2646060d5dc100adcc36737fd5d8086e2f53d43d6858ac6fdad39540",
-  "design": "944a896b2646",
+  "fingerprint": "b9369893c5e238fe183b4d18bcac47a02a79c09dd37e235a278fc3aa656025cc",
+  "design": "b9369893c5e2",
   "source": "share/design/tokens.yaml",
   "projections": [
     "share/design/theme.css",
@@ -21,7 +21,7 @@
     "font": 2,
     "role": 22,
     "status": 5,
-    "state": 105,
+    "state": 109,
     "tone": 6,
     "type": 4,
     "tracking": 2,
@@ -962,7 +962,8 @@
         "clean",
         "merged",
         "documented",
-        "proven"
+        "proven",
+        "read"
       ],
       "aliases": [
         "--color-fg-success-strong",
@@ -1150,7 +1151,9 @@
         "foreign",
         "misplaced",
         "failing",
-        "unrunnable"
+        "unrunnable",
+        "unread",
+        "overdue"
       ],
       "aliases": [
         "--color-fg-danger-strong",
@@ -1338,7 +1341,8 @@
         "inspect",
         "conclude",
         "not-run",
-        "no-test"
+        "no-test",
+        "undeclared"
       ],
       "projections": [
         "share/design/theme.css",
@@ -1773,6 +1777,24 @@
       "css": [
         ".mj-badge--proven",
         ".mj-status--proven"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "read",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--read",
+        ".mj-status--read"
       ],
       "role": "ok",
       "projections": [
@@ -2457,6 +2479,42 @@
       "css": [
         ".mj-badge--unrunnable",
         ".mj-status--unrunnable"
+      ],
+      "role": "bad",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "unread",
+      "kind": "state",
+      "about": "a state word filed under `bad`",
+      "css": [
+        ".mj-badge--unread",
+        ".mj-status--unread"
+      ],
+      "role": "bad",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "overdue",
+      "kind": "state",
+      "about": "a state word filed under `bad`",
+      "css": [
+        ".mj-badge--overdue",
+        ".mj-status--overdue"
       ],
       "role": "bad",
       "projections": [
@@ -3231,6 +3289,24 @@
       "css": [
         ".mj-badge--no-test",
         ".mj-status--no-test"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "undeclared",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--undeclared",
+        ".mj-status--undeclared"
       ],
       "role": "neutral",
       "projections": [
@@ -5129,7 +5205,8 @@
           "clean",
           "merged",
           "documented",
-          "proven"
+          "proven",
+          "read"
         ],
         "warn": [
           "warn",
@@ -5173,7 +5250,9 @@
           "foreign",
           "misplaced",
           "failing",
-          "unrunnable"
+          "unrunnable",
+          "unread",
+          "overdue"
         ],
         "info": [
           "info",
@@ -5222,7 +5301,8 @@
           "inspect",
           "conclude",
           "not-run",
-          "no-test"
+          "no-test",
+          "undeclared"
         ]
       }
     },

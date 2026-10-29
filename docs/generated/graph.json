@@ -22921,7 +22921,7 @@
             "A second board, registry or message store; the blackboard reads the records that already exist",
             "Presence of a provider that cannot be observed through a supported, authenticated interface"
           ],
-          "updated_at": "2026-10-19"
+          "updated_at": "2026-10-29"
         }
       },
       {
@@ -71920,6 +71920,74 @@
         }
       },
       {
+        "id": "majordomus://issue/I4390",
+        "kind": "issue",
+        "label": "I4390",
+        "summary": "A session reports what it measured, from one declared report contract, and the brief says how old each fact is",
+        "route": "/cockpit/objects/issue/i4390",
+        "source": ".ai/repo/project/issues/I4390.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I4293"
+          ],
+          "evidence_required": [
+            "the_report_contract_is_declared_once"
+          ],
+          "milestone": "peer-blackboard",
+          "non_scope": [
+            "The builder floor and the builder limit themselves: they are machine.heavy_work of I4006 (#2397), which the machine section reads and does not redeclare",
+            "lib/rust_bin.sh's free-space floor: I4006 (#2397) moves it onto machine.heavy_work and so closes I3825",
+            "Refreshing the integration observation from the brief: the brief names majordomus prs refresh and never runs it",
+            "A /ui page for the brief: the Cockpit overview renders it, and a /ui page is a separate decision"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4390.yaml",
+            ".ai/repo/project/intents/the-peer-blackboard-is-one-reality.yaml",
+            "share/brief/",
+            "share/schemas/majordomus/brief-report/",
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "apps/majordomus-cli/src/capability/builtin/brief/",
+            "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+            "apps/majordomus-cli/src/commands/brief.rs",
+            "apps/majordomus-cli/src/commands/prs.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/monitor/github.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "apps/majordomus-cli/src/generate.rs",
+            "apps/majordomus-cli/src/cockpit/pages.rs",
+            "apps/majordomus-cli/tests/brief.rs",
+            "share/mods/claude-code/majordomus-brief/",
+            "share/design/tokens.yaml",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/allow/policy.txt",
+            ".ai/repo/policy.yaml",
+            "lib/start.sh",
+            "docs/BRIEF.md",
+            "docs/README.md",
+            ".ai/repo/adrs/0136-every-session-briefs-itself-on-an-interval.md",
+            "test/cases/1065_a_session_briefs_itself.sh",
+            "test/cases/4401_the_report_contract_is_declared_once.sh",
+            "test/cases/4402_brief_words_are_status_words.sh",
+            "test/cases/4403_a_stale_source_is_never_shown_as_current.sh",
+            "test/cases/4404_a_brief_never_truncates_without_a_count.sh",
+            "test/cases/4405_a_brief_is_bounded_and_never_builds.sh"
+          ],
+          "serves": [
+            "the-peer-blackboard-is-one-reality#a-session-reports-what-it-measured"
+          ],
+          "slug": "the-brief-tells-the-truth-and-the-report-shows-it",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- capability::builtin::brief commands::brief",
+            "bash test/run.sh 4401 4402 4403 4404 4405 1065 501"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -95481,6 +95549,41 @@
         "label": "test/cases/43_plan_command.sh",
         "route": "/cockpit/objects/test/test-cases-43-plan-command-sh",
         "source": "test/cases/43_plan_command.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4401_the_report_contract_is_declared_once.sh",
+        "kind": "test",
+        "label": "test/cases/4401_the_report_contract_is_declared_once.sh",
+        "route": "/cockpit/objects/test/test-cases-4401-the-report-contract-is-declared-once-sh",
+        "source": "test/cases/4401_the_report_contract_is_declared_once.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4402_brief_words_are_status_words.sh",
+        "kind": "test",
+        "label": "test/cases/4402_brief_words_are_status_words.sh",
+        "route": "/cockpit/objects/test/test-cases-4402-brief-words-are-status-words-sh",
+        "source": "test/cases/4402_brief_words_are_status_words.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4403_a_stale_source_is_never_shown_as_current.sh",
+        "kind": "test",
+        "label": "test/cases/4403_a_stale_source_is_never_shown_as_current.sh",
+        "route": "/cockpit/objects/test/test-cases-4403-a-stale-source-is-never-shown-as-current-sh",
+        "source": "test/cases/4403_a_stale_source_is_never_shown_as_current.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4404_a_brief_never_truncates_without_a_count.sh",
+        "kind": "test",
+        "label": "test/cases/4404_a_brief_never_truncates_without_a_count.sh",
+        "route": "/cockpit/objects/test/test-cases-4404-a-brief-never-truncates-without-a-count-sh",
+        "source": "test/cases/4404_a_brief_never_truncates_without_a_count.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4405_a_brief_is_bounded_and_never_builds.sh",
+        "kind": "test",
+        "label": "test/cases/4405_a_brief_is_bounded_and_never_builds.sh",
+        "route": "/cockpit/objects/test/test-cases-4405-a-brief-is-bounded-and-never-builds-sh",
+        "source": "test/cases/4405_a_brief_is_bounded_and_never_builds.sh"
       },
       {
         "id": "majordomus://test/test/cases/44_model_doctrine.sh",
@@ -134515,6 +134618,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4390",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4390",
+        "target": "majordomus://issue/I4293",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4390",
+        "target": "majordomus://milestone/peer-blackboard",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -141075,6 +141193,31 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4401_the_report_contract_is_declared_once.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4402_brief_words_are_status_words.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4403_a_stale_source_is_never_shown_as_current.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4404_a_brief_never_truncates_without_a_count.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4405_a_brief_is_bounded_and_never_builds.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/44_model_doctrine.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -146151,8 +146294,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4037,
-      "edges": 9324,
+      "nodes": 4043,
+      "edges": 9332,
       "acyclic": false,
       "truncated": false
     }

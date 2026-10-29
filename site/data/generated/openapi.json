@@ -282,14 +282,32 @@
     "schema-BoardView": "docs/api/shared/",
     "schema-BranchState": "docs/api/worktree/",
     "schema-BranchTrace": "docs/api/trace/",
+    "schema-BriefAttention": "docs/api/brief/",
+    "schema-BriefBackground": "docs/api/brief/",
+    "schema-BriefCiSection": "docs/api/brief/",
+    "schema-BriefClaim": "docs/api/brief/",
+    "schema-BriefDelivered": "docs/api/brief/",
     "schema-BriefDeriveSection": "docs/api/brief/",
     "schema-BriefIntegrationSection": "docs/api/brief/",
+    "schema-BriefMachineSection": "docs/api/brief/",
+    "schema-BriefMerge": "docs/api/brief/",
     "schema-BriefMeshSection": "docs/api/brief/",
+    "schema-BriefObservation": "docs/api/brief/",
     "schema-BriefOrigin": "docs/api/brief/",
+    "schema-BriefPeer": "docs/api/brief/",
     "schema-BriefPeersSection": "docs/api/brief/",
+    "schema-BriefProcess": "docs/api/brief/",
     "schema-BriefReleaseSection": "docs/api/brief/",
+    "schema-BriefReport": "docs/api/brief/",
+    "schema-BriefRun": "docs/api/brief/",
+    "schema-BriefRunner": "docs/api/brief/",
     "schema-BriefSectionState": "docs/api/brief/",
     "schema-BriefSessionSection": "docs/api/brief/",
+    "schema-BriefTrain": "docs/api/brief/",
+    "schema-BriefVerdict": "docs/api/brief/",
+    "schema-BriefVolume": "docs/api/brief/",
+    "schema-BriefWorkItem": "docs/api/brief/",
+    "schema-BriefWorkSection": "docs/api/brief/",
     "schema-BrowserSource": "docs/api/product/",
     "schema-Budget": "docs/api/devcontext/",
     "schema-Budgets": "docs/api/deploy/",
@@ -1358,7 +1376,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 212,
-    "schemas": 1082,
+    "schemas": 1100,
     "tags": 60
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1736,14 +1754,32 @@
     "BoardView": "shared",
     "BranchState": "worktree",
     "BranchTrace": "trace",
+    "BriefAttention": "brief",
+    "BriefBackground": "brief",
+    "BriefCiSection": "brief",
+    "BriefClaim": "brief",
+    "BriefDelivered": "brief",
     "BriefDeriveSection": "brief",
     "BriefIntegrationSection": "brief",
+    "BriefMachineSection": "brief",
+    "BriefMerge": "brief",
     "BriefMeshSection": "brief",
+    "BriefObservation": "brief",
     "BriefOrigin": "brief",
+    "BriefPeer": "brief",
     "BriefPeersSection": "brief",
+    "BriefProcess": "brief",
     "BriefReleaseSection": "brief",
+    "BriefReport": "brief",
+    "BriefRun": "brief",
+    "BriefRunner": "brief",
     "BriefSectionState": "brief",
     "BriefSessionSection": "brief",
+    "BriefTrain": "brief",
+    "BriefVerdict": "brief",
+    "BriefVolume": "brief",
+    "BriefWorkItem": "brief",
+    "BriefWorkSection": "brief",
     "BrowserSource": "product",
     "Budget": "devcontext",
     "Budgets": "deploy",
@@ -2801,6 +2837,20 @@
         {
           "description": "When it started.",
           "name": "started_at",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "When it was last checkpointed.",
+          "name": "checkpoint_at",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The provider session that started it (`start` records it beside its mesh claim), so\nthat a brief can tell this session's task from the checkout's last one.",
+          "name": "provider_session",
           "refs": [],
           "required": false,
           "type": "string"
@@ -6362,6 +6412,299 @@
       "variants": []
     },
     {
+      "description": "One condition the sections measured, in the words of its row of the report contract.",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefAttention",
+      "properties": [
+        {
+          "description": "The row's id (`integration.stale`).",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The section it is about.",
+          "name": "section",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "A status word of the design declaration.",
+          "name": "word",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The fact, with what was measured.",
+          "name": "fact",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The command that refreshes or acts on it.",
+          "name": "remedy",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Who must act: `session`, `person` or `seat:<name>`.",
+          "name": "actor",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SessionBrief"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One task the provider runs in the background of the session, as its engine reports it.",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefBackground",
+      "properties": [
+        {
+          "description": "The provider's id for it.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it is, in the provider's words.",
+          "name": "description",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its state in the provider's words (`running`, `completed`, ...).",
+          "name": "status",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "brief.session"
+      ],
+      "used_by_schemas": [
+        "BriefWorkSection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The CI pool: hosted runs in progress and queued, and the self-hosted runners.",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefCiSection",
+      "properties": [
+        {
+          "description": "Whether it could be read.",
+          "name": "state",
+          "refs": [
+            "BriefSectionState"
+          ],
+          "required": true,
+          "type": "BriefSectionState"
+        },
+        {
+          "description": "What it observed.",
+          "name": "observed",
+          "refs": [
+            "BriefObservation"
+          ],
+          "required": false,
+          "type": "BriefObservation"
+        },
+        {
+          "description": "`owner/name` of the repository.",
+          "name": "repository",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Runs in progress.",
+          "name": "in_progress",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Runs queued.",
+          "name": "queued",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Self-hosted runners online.",
+          "name": "online",
+          "refs": [],
+          "required": false,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Of them, busy.",
+          "name": "busy",
+          "refs": [],
+          "required": false,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Self-hosted runners offline.",
+          "name": "offline",
+          "refs": [],
+          "required": false,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The runners, by name.",
+          "name": "runners",
+          "refs": [
+            "BriefRunner"
+          ],
+          "required": false,
+          "type": "array of BriefRunner"
+        },
+        {
+          "description": "Why the runners could not be read, when they could not.",
+          "name": "runners_unread",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The section in words.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SessionBrief"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One mesh claim this session holds.",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefClaim",
+      "properties": [
+        {
+          "description": "Its key on the mesh.",
+          "name": "key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The issue it names.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What it says it is for.",
+          "name": "intent",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The paths and refs it claims.",
+          "name": "scope",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "`held`, `conflicted` or `suspended`.",
+          "name": "state",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "BriefWorkSection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Something this session delivered since the previous report.",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefDelivered",
+      "properties": [
+        {
+          "description": "`merged` (an own pull request merged into master) or `pushed` (an own branch head committed after it).",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The pull request.",
+          "name": "pr",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The branch.",
+          "name": "branch",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit, abbreviated.",
+          "name": "sha",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When, RFC 3339.",
+          "name": "at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "BriefWorkSection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The machine's derive queue: its lock and its priority marker (`lib/machine_lock.sh`).",
       "home": "brief",
       "is_enum": false,
@@ -6375,6 +6718,15 @@
           ],
           "required": true,
           "type": "BriefSectionState"
+        },
+        {
+          "description": "What it observed.",
+          "name": "observed",
+          "refs": [
+            "BriefObservation"
+          ],
+          "required": false,
+          "type": "BriefObservation"
         },
         {
           "description": "The lock's owner line, when the lock is held.",
@@ -6428,7 +6780,7 @@
       "variants": []
     },
     {
-      "description": "The integration queue, as `majordomus prs brief` says it.",
+      "description": "The integration queue, with how old its observation is and what master did since.",
       "home": "brief",
       "is_enum": false,
       "name": "BriefIntegrationSection",
@@ -6441,6 +6793,96 @@
           ],
           "required": true,
           "type": "BriefSectionState"
+        },
+        {
+          "description": "What it observed.",
+          "name": "observed",
+          "refs": [
+            "BriefObservation"
+          ],
+          "required": false,
+          "type": "BriefObservation"
+        },
+        {
+          "description": "When the forge was observed, RFC 3339.",
+          "name": "observed_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How old that observation is, in seconds.",
+          "name": "age_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The master commit the forge reported then.",
+          "name": "observed_master",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "This clone's `origin/master` now, from its ref.",
+          "name": "master_now",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When this clone last fetched, RFC 3339.",
+          "name": "master_fetched_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How long ago that was, in seconds.",
+          "name": "master_fetched_age_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "How many commits master moved past the observation, when it did.",
+          "name": "moved_by",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The latest run of the required workflow on master now, from the forge cache.",
+          "name": "master_ci",
+          "refs": [
+            "BriefRun"
+          ],
+          "required": false,
+          "type": "BriefRun | null"
+        },
+        {
+          "description": "The last merge on master's first-parent line.",
+          "name": "last_merge",
+          "refs": [
+            "BriefMerge"
+          ],
+          "required": false,
+          "type": "BriefMerge | null"
+        },
+        {
+          "description": "Whether the observation is past its bound or contradicted by master.",
+          "name": "stale",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "description": "The command that refreshes it, when it is stale.",
+          "name": "remedy",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         },
         {
           "description": "The section in words.",
@@ -6459,6 +6901,149 @@
       "variants": []
     },
     {
+      "description": "The machine: free disk against the builder floor, swap, and builders against their limit.",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefMachineSection",
+      "properties": [
+        {
+          "description": "Whether it could be read.",
+          "name": "state",
+          "refs": [
+            "BriefSectionState"
+          ],
+          "required": true,
+          "type": "BriefSectionState"
+        },
+        {
+          "description": "What it observed.",
+          "name": "observed",
+          "refs": [
+            "BriefObservation"
+          ],
+          "required": false,
+          "type": "BriefObservation"
+        },
+        {
+          "description": "Every volume measured.",
+          "name": "volumes",
+          "refs": [
+            "BriefVolume"
+          ],
+          "required": false,
+          "type": "array of BriefVolume"
+        },
+        {
+          "description": "The least free of them, in bytes.",
+          "name": "free_bytes",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The floor no builder may start below, GiB (`machine.heavy_work.min_free_gib`).",
+          "name": "floor_gib",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Swap used, bytes.",
+          "name": "swap_used_bytes",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Swap in all, bytes.",
+          "name": "swap_total_bytes",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Builds running (cargo, or rustc with no cargo over it).",
+          "name": "builders",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "How many the machine admits at once (`machine.heavy_work.slots`).",
+          "name": "max_builders",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The builder processes.",
+          "name": "builder_processes",
+          "refs": [
+            "BriefProcess"
+          ],
+          "required": false,
+          "type": "array of BriefProcess"
+        },
+        {
+          "description": "The worst word of the three: `current`, `degraded` or `blocked`.",
+          "name": "word",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The section in words.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SessionBrief"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A merge on master's first-parent line.",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefMerge",
+      "properties": [
+        {
+          "description": "The pull request it merged, when its subject names one.",
+          "name": "pr",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The merge commit, abbreviated.",
+          "name": "sha",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When it was committed, RFC 3339.",
+          "name": "at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "BriefIntegrationSection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The mesh: the links of this runtime and what the journal addresses to it.",
       "home": "brief",
       "is_enum": false,
@@ -6472,6 +7057,15 @@
           ],
           "required": true,
           "type": "BriefSectionState"
+        },
+        {
+          "description": "What it observed.",
+          "name": "observed",
+          "refs": [
+            "BriefObservation"
+          ],
+          "required": false,
+          "type": "BriefObservation"
         },
         {
           "description": "Whether cooperation runs in the composing process.",
@@ -6560,6 +7154,87 @@
       "variants": []
     },
     {
+      "description": "What one section observed: from where, when, how old it is against the bound its owner\ndeclares, the word a reader may take it for, the command that refreshes it, and what\nasking cost.",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefObservation",
+      "properties": [
+        {
+          "description": "The owner asked: a capability, a file, a command.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When the fact was observed, RFC 3339; absent when it was not.",
+          "name": "observed_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How old the fact is, in seconds, when it was not read now.",
+          "name": "age_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The age past which the owner calls the fact stale.",
+          "name": "bound_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "What a reader may take it for.",
+          "name": "verdict",
+          "refs": [
+            "BriefVerdict"
+          ],
+          "required": true,
+          "type": "BriefVerdict"
+        },
+        {
+          "description": "The exact command that refreshes or explains it; present whenever the verdict is not `current`.",
+          "name": "remedy",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What composing the section took, in milliseconds.",
+          "name": "elapsed_ms",
+          "refs": [],
+          "required": false,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "What it was allowed, in milliseconds.",
+          "name": "budget_ms",
+          "refs": [],
+          "required": false,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "BriefCiSection",
+        "BriefDeriveSection",
+        "BriefIntegrationSection",
+        "BriefMachineSection",
+        "BriefMeshSection",
+        "BriefPeersSection",
+        "BriefReleaseSection",
+        "BriefSessionSection",
+        "BriefWorkSection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Which process composed the brief, and why that one.",
       "home": "brief",
       "is_enum": false,
@@ -6585,12 +7260,111 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "What composing the whole brief took, in milliseconds.",
+          "name": "elapsed_ms",
+          "refs": [],
+          "required": false,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The section that took longest, and how long.",
+          "name": "slowest",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         }
       ],
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
         "SessionBrief"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One worker of the repository, as the brief names it.",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefPeer",
+      "properties": [
+        {
+          "description": "Its place on its board (`p1`); never its identity across a reconnect.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its client's name.",
+          "name": "client",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The worker's process, when its address names one.",
+          "name": "pid",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The machine it runs on, when its address names one.",
+          "name": "host",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The socket other sessions message it through.",
+          "name": "socket",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The branch it works on.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The checkout it is attached to.",
+          "name": "worktree",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Where the branch was read: `announce` (a `refs/heads/` scope it announced), `claim` (one of its mesh claims), `session` (its mesh session) or `server` (the checkout of the server it is attached to, the last resort).",
+          "name": "branch_source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it announced, whole.",
+          "name": "intent",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether this is the session the brief is about.",
+          "name": "you",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "BriefPeersSection"
       ],
       "values": [],
       "variants": []
@@ -6609,6 +7383,15 @@
           ],
           "required": true,
           "type": "BriefSectionState"
+        },
+        {
+          "description": "What it observed.",
+          "name": "observed",
+          "refs": [
+            "BriefObservation"
+          ],
+          "required": false,
+          "type": "BriefObservation"
         },
         {
           "description": "Attached peers across the boards read, the caller included.",
@@ -6646,11 +7429,27 @@
           "type": "string | null"
         },
         {
-          "description": "The attached peers, one short line each, at most a bounded number.",
+          "description": "The leaseholder a superseded server lost the lease to.",
+          "name": "leaseholder",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The attached peers, one unclipped line each, at most a bounded number.",
           "name": "named",
           "refs": [],
           "required": true,
           "type": "array of string"
+        },
+        {
+          "description": "The attached peers, at most a bounded number, each with its branch and whole intent.",
+          "name": "people",
+          "refs": [
+            "BriefPeer"
+          ],
+          "required": false,
+          "type": "array of BriefPeer"
         },
         {
           "description": "The section in words.",
@@ -6669,6 +7468,43 @@
       "variants": []
     },
     {
+      "description": "A local process: a build or a forge call under this session, or a builder on the machine.",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefProcess",
+      "properties": [
+        {
+          "description": "Its pid.",
+          "name": "pid",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Its command's name.",
+          "name": "command",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How long it has run, in seconds.",
+          "name": "age_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "BriefMachineSection",
+        "BriefWorkSection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Whether the trunk's landed work is released, as `release.currency` says it (I3070).",
       "home": "brief",
       "is_enum": false,
@@ -6682,6 +7518,15 @@
           ],
           "required": true,
           "type": "BriefSectionState"
+        },
+        {
+          "description": "What it observed. Left out when it is the default, so that this section's own default\n(what an older server's answer reads as) is the value it always was.",
+          "name": "observed",
+          "refs": [
+            "BriefObservation"
+          ],
+          "required": false,
+          "type": "BriefObservation"
         },
         {
           "description": "Current, owed, overdue or unknown, when the capability answered.",
@@ -6716,6 +7561,192 @@
       "variants": []
     },
     {
+      "description": "The report this brief owes, composed from the report contract (share/brief/report.yaml).",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefReport",
+      "properties": [
+        {
+          "description": "The contract's name and version.",
+          "name": "contract",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The contract's fingerprint: 12 hex digits of its sha256.",
+          "name": "fingerprint",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The first words of the prompt.",
+          "name": "marker",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The prompt a session is woken with on the interval, verbatim.",
+          "name": "prompt",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The text that rides on a prompt the person sends, verbatim.",
+          "name": "reminder",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The previous report's instant, when the caller gave one.",
+          "name": "since",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SessionBrief"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One workflow run, as the forge reported it.",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefRun",
+      "properties": [
+        {
+          "description": "Its id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Its workflow's name.",
+          "name": "workflow",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The branch it ran on.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The commit it ran on.",
+          "name": "head_sha",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "`queued`, `in_progress` or `completed`.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How it finished, once it did.",
+          "name": "conclusion",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When it was created, RFC 3339.",
+          "name": "created_at",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Jobs finished, when its jobs were read.",
+          "name": "jobs_done",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Jobs in all, when its jobs were read.",
+          "name": "jobs_total",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Jobs still waiting for a runner, when its jobs were read.",
+          "name": "jobs_queued",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Every job that failed or timed out, by name.",
+          "name": "failed_jobs",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "BriefIntegrationSection",
+        "BriefWorkItem"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One self-hosted runner.",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefRunner",
+      "properties": [
+        {
+          "description": "Its name.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`online` or `offline`.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether it runs a job.",
+          "name": "busy",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "BriefCiSection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Whether a section of the brief could be read.",
       "home": "brief",
       "is_enum": true,
@@ -6724,12 +7755,15 @@
       "type": "\"read\" | \"partial\" | \"unread\" | \"undeclared\"",
       "used_by": [],
       "used_by_schemas": [
+        "BriefCiSection",
         "BriefDeriveSection",
         "BriefIntegrationSection",
+        "BriefMachineSection",
         "BriefMeshSection",
         "BriefPeersSection",
         "BriefReleaseSection",
-        "BriefSessionSection"
+        "BriefSessionSection",
+        "BriefWorkSection"
       ],
       "values": [
         {
@@ -6767,6 +7801,15 @@
           "type": "BriefSectionState"
         },
         {
+          "description": "What it observed.",
+          "name": "observed",
+          "refs": [
+            "BriefObservation"
+          ],
+          "required": false,
+          "type": "BriefObservation"
+        },
+        {
           "description": "The open episode, when one is found.",
           "name": "episode",
           "refs": [],
@@ -6774,8 +7817,22 @@
           "type": "string | null"
         },
         {
+          "description": "When that episode opened, RFC 3339.",
+          "name": "episode_started_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
           "description": "The provider session that owns it.",
           "name": "provider_session",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How the episode was found: `provider_session` (the caller's own) or `pointer` (the checkout's pointer, not necessarily this session's).",
+          "name": "resolved_by",
           "refs": [],
           "required": false,
           "type": "string | null"
@@ -6809,11 +7866,376 @@
           "type": "string | null"
         },
         {
-          "description": "The calling MCP session's place on this board, when the call came through one.",
+          "description": "The id of the last task the checkout recorded, whatever its outcome.",
+          "name": "last_task",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "That task's outcome: `active`, `partial`, `completed`, `handed_over`, ...",
+          "name": "task_outcome",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When that task started.",
+          "name": "task_started_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When it was last checkpointed.",
+          "name": "task_checkpoint_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The provider session that started it, when its record names one.",
+          "name": "task_owner_session",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The caller's place on this checkout's board: the MCP session the call came through, else the board peer whose address carries the provider session.",
           "name": "caller",
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "The section in words.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SessionBrief"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A train carrying one of this session's pull requests.",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefTrain",
+      "properties": [
+        {
+          "description": "The pull request.",
+          "name": "pr",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The train's branch.",
+          "name": "branch",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where the membership was read.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "BriefWorkSection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a reader may take a section's facts for: a status word of the design declaration.",
+      "home": "brief",
+      "is_enum": true,
+      "name": "BriefVerdict",
+      "properties": [],
+      "type": "\"current\" | \"stale\" | \"partial\" | \"unread\" | \"undeclared\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "BriefObservation"
+      ],
+      "values": [
+        {
+          "description": "Its owner answered, within the bound its owner declares.",
+          "value": "current"
+        },
+        {
+          "description": "Its owner answered with a fact older than its bound, or contradicted by a newer one.",
+          "value": "stale"
+        },
+        {
+          "description": "Its owner answered part of what it covers.",
+          "value": "partial"
+        },
+        {
+          "description": "Its owner did not answer, or not within the section's budget.",
+          "value": "unread"
+        },
+        {
+          "description": "The repository declares nothing for it.",
+          "value": "undeclared"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One volume the machine section measured.",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefVolume",
+      "properties": [
+        {
+          "description": "A path on it.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Bytes free.",
+          "name": "free_bytes",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "BriefMachineSection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One item of this session's work: a branch, its pull request, its train and its run.",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefWorkItem",
+      "properties": [
+        {
+          "description": "The branch.",
+          "name": "branch",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The issue it executes, from its claim or its task.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether origin carries the branch.",
+          "name": "pushed",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "description": "Its head: the pull request's, else origin's.",
+          "name": "head",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Its canonical worktree, when it exists.",
+          "name": "worktree",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The active task in that worktree.",
+          "name": "task",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The outcome of the last task recorded there.",
+          "name": "task_outcome",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Its open pull request.",
+          "name": "pr",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The pull request's title.",
+          "name": "title",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The forge's mergeStateStatus (`CLEAN`, `BLOCKED`, `DIRTY`, ...).",
+          "name": "merge_state",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The train carrying it, when one does.",
+          "name": "train",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Its latest run: the train's when a train carries it.",
+          "name": "run",
+          "refs": [
+            "BriefRun"
+          ],
+          "required": false,
+          "type": "BriefRun | null"
+        },
+        {
+          "description": "Its status word.",
+          "name": "word",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "BriefWorkSection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "This session's own work: its claims, branches, worktrees, pull requests, trains, runs and\nbackground processes, and what it delivered since the previous report.",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefWorkSection",
+      "properties": [
+        {
+          "description": "Whether it could be read.",
+          "name": "state",
+          "refs": [
+            "BriefSectionState"
+          ],
+          "required": true,
+          "type": "BriefSectionState"
+        },
+        {
+          "description": "What it observed.",
+          "name": "observed",
+          "refs": [
+            "BriefObservation"
+          ],
+          "required": false,
+          "type": "BriefObservation"
+        },
+        {
+          "description": "Claims held.",
+          "name": "held",
+          "refs": [],
+          "required": false,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Claims in conflict.",
+          "name": "conflicted",
+          "refs": [],
+          "required": false,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Claims suspended.",
+          "name": "suspended",
+          "refs": [],
+          "required": false,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The claims.",
+          "name": "claims",
+          "refs": [
+            "BriefClaim"
+          ],
+          "required": false,
+          "type": "array of BriefClaim"
+        },
+        {
+          "description": "One item per branch.",
+          "name": "items",
+          "refs": [
+            "BriefWorkItem"
+          ],
+          "required": false,
+          "type": "array of BriefWorkItem"
+        },
+        {
+          "description": "The trains carrying its pull requests.",
+          "name": "trains",
+          "refs": [
+            "BriefTrain"
+          ],
+          "required": false,
+          "type": "array of BriefTrain"
+        },
+        {
+          "description": "Builds and forge calls running under its client.",
+          "name": "background",
+          "refs": [
+            "BriefProcess"
+          ],
+          "required": false,
+          "type": "array of BriefProcess"
+        },
+        {
+          "description": "The provider's own background tasks, as the caller passed them.",
+          "name": "provider_background",
+          "refs": [
+            "BriefBackground"
+          ],
+          "required": false,
+          "type": "array of BriefBackground"
+        },
+        {
+          "description": "Whether the caller passed them at all.",
+          "name": "provider_background_exposed",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "description": "What it delivered since the previous report.",
+          "name": "delivered",
+          "refs": [
+            "BriefDelivered"
+          ],
+          "required": false,
+          "type": "array of BriefDelivered"
         },
         {
           "description": "The section in words.",
@@ -54539,7 +55961,7 @@
       "variants": []
     },
     {
-      "description": "The answer of `brief.session`: what surrounds one session, in one line and in a few.",
+      "description": "The answer of `brief.session`: what surrounds one session, in one line and in a few, the\nconditions that need attention, and the report it owes.",
       "home": "brief",
       "is_enum": false,
       "name": "SessionBrief",
@@ -54559,7 +55981,7 @@
           "type": "string"
         },
         {
-          "description": "The brief in a few lines: one per section, then the peers it names.",
+          "description": "The brief in a few lines: the attention block, then one or more per section.",
           "name": "lines",
           "refs": [],
           "required": true,
@@ -54573,7 +55995,7 @@
           "type": "integer (uint64)"
         },
         {
-          "description": "What a session is told at its start about keeping itself awake.",
+          "description": "What a session is told at its start about reporting on itself, composed from the report contract (share/brief/report.yaml).",
           "name": "keep_awake",
           "refs": [],
           "required": true,
@@ -54589,6 +56011,31 @@
           "type": "BriefOrigin"
         },
         {
+          "description": "Every condition the sections measured, the person's first, then worst first.",
+          "name": "attention",
+          "refs": [
+            "BriefAttention"
+          ],
+          "required": false,
+          "type": "array of BriefAttention"
+        },
+        {
+          "description": "The report this brief owes, composed from the report contract (share/brief/report.yaml).",
+          "name": "report",
+          "refs": [
+            "BriefReport"
+          ],
+          "required": false,
+          "type": "BriefReport"
+        },
+        {
+          "description": "Per section, a fingerprint of its facts with every instant and age taken out: two briefs differ in a section exactly when its fingerprint does.",
+          "name": "fingerprints",
+          "refs": [],
+          "required": false,
+          "type": "map of string"
+        },
+        {
           "description": "This session: its episode and task.",
           "name": "session",
           "refs": [
@@ -54596,6 +56043,15 @@
           ],
           "required": true,
           "type": "BriefSessionSection"
+        },
+        {
+          "description": "This session's own work.",
+          "name": "work",
+          "refs": [
+            "BriefWorkSection"
+          ],
+          "required": false,
+          "type": "BriefWorkSection"
         },
         {
           "description": "The workers of every board.",
@@ -54623,6 +56079,24 @@
           ],
           "required": true,
           "type": "BriefIntegrationSection"
+        },
+        {
+          "description": "The CI pool.",
+          "name": "ci",
+          "refs": [
+            "BriefCiSection"
+          ],
+          "required": false,
+          "type": "BriefCiSection"
+        },
+        {
+          "description": "The machine.",
+          "name": "machine",
+          "refs": [
+            "BriefMachineSection"
+          ],
+          "required": false,
+          "type": "BriefMachineSection"
         },
         {
           "description": "Whether the trunk's landed work is released. Absent from the answer of a server older\nthan this section, which leaves it unread rather than failing the whole brief.",
@@ -63332,7 +64806,7 @@
       "slug": "blackboard"
     },
     {
-      "description": "What surrounds one working session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, each section asked of its owner once and saying whether it could be read. The answer a session reports on itself from without being asked, and the one a provider mod shows as its status line (ADR 0136). Writes nothing.",
+      "description": "What surrounds one working session, in one line and in a few: its episode and task, its own work (claims, branches, worktrees, pull requests, trains, runs, background processes), the peers of every board, the mesh, the integration queue, the CI pool, the machine, the release and the derive queue, each section asked of its owner once under its own budget and saying what it observed, from where, how old it is against its bound, a verdict word and the command that refreshes it; the conditions that need attention, derived from those sections; and the report the session owes, composed from the report contract share/brief/report.yaml (ADR 0136). Writes nothing and builds nothing.",
       "name": "brief",
       "operations": [
         {
@@ -63343,8 +64817,8 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "brief",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/brief?session=00000000-0000-0000-0000-000000000000&checkouts=this&local=true\"",
-          "description": "One line and a few: this session's episode and task (the one the given provider session owns, else the pointer's), the peers of every board with the boards that could not be read named, the mesh's links and what its journal addresses to this runtime, the integration queue as `majordomus prs brief` says it, and the machine's derive lock. Composed by the server holding this checkout's lease, which holds the board and the mesh: the command line asks it and composes the brief itself only when none answers, saying so; a superseded server says its own board is unreachable by the repository's gather. Carries the reporting interval the policy declares (`session.brief_interval_minutes`) and the keep-awake text a session is told at its start. Writes nothing.",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/brief?session=00000000-0000-0000-0000-000000000000&checkouts=this&local=true&since=2026-10-29T09%3A20%3A00Z&background=%5B%7B%22id%22%3A%22b1%22%2C%22description%22%3A%22cargo%20test%20--lib%20brief%22%2C%22status%22%3A%22running%22%7D%5D\"",
+          "description": "One line and a few, in the order session, work, peers, mesh, integration, ci, machine, release, derive, led by the attention entries the sections measured. The session is the caller's (the provider session given, else the calling board peer's, else the checkout's pointer, said as such); work is this session's own claims, branches and their canonical worktrees, pull requests, trains, latest runs with their jobs and background processes; integration says how old the queue observation is and whether origin/master moved past it; ci and the forge parts of work are read by the leaseholder alone through the monitor's shared cache; machine is free disk, swap and builders against machine.heavy_work. Every section carries its observation (source, age, bound, verdict, remedy, cost) and runs under its own budget, a section past it reading unread. Composed by the server holding this checkout's lease: the command line asks it and composes the brief itself only when none answers, saying so. Carries the reporting interval (`session.brief_interval_minutes`), per-section fingerprints of its clock-free facts, and the three texts composed from the report contract share/brief/report.yaml: keep_awake, report.prompt and report.reminder. Writes nothing.",
           "home": "brief",
           "id": "brief.session",
           "kind": "query",
@@ -63353,7 +64827,7 @@
           "method": "GET",
           "parameters": [
             {
-              "description": "The provider's own session identity (Claude Code's session id): the brief names the open episode that session owns. Absent, the episode the pointer resolves to.",
+              "description": "The provider's own session identity (Claude Code's session id): the brief names the open episode that session owns and the work it holds. Absent, the calling board peer's, then the episode the pointer resolves to, which the answer says is not necessarily this session.",
               "examples": [
                 {
                   "case": "default",
@@ -63387,6 +64861,30 @@
               "name": "local",
               "required": false,
               "type": "boolean"
+            },
+            {
+              "description": "The previous report's instant, RFC 3339: the work section then says what was delivered since.",
+              "examples": [
+                {
+                  "case": "default",
+                  "value": "\"2026-10-29T09:20:00Z\""
+                }
+              ],
+              "name": "since",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "The provider's background tasks, when its engine exposes them; absent, the brief says the provider's background is not exposed.",
+              "examples": [
+                {
+                  "case": "default",
+                  "value": "[{\"id\":\"b1\",\"description\":\"cargo test --lib brief\",\"status\":\"running\"}]"
+                }
+              ],
+              "name": "background",
+              "required": false,
+              "type": "array of BriefBackground"
             }
           ],
           "path": "/api/v1/brief",

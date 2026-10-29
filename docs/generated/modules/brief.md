@@ -3,13 +3,13 @@
      Generator: majordomus-cli 1.0.0-alpha.9 -->
 # Module `brief` — The session brief
 
-What surrounds one working session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, each section asked of its owner once and saying whether it could be read. The answer a session reports on itself from without being asked, and the one a provider mod shows as its status line (ADR 0136). Writes nothing.
+What surrounds one working session, in one line and in a few: its episode and task, its own work (claims, branches, worktrees, pull requests, trains, runs, background processes), the peers of every board, the mesh, the integration queue, the CI pool, the machine, the release and the derive queue, each section asked of its owner once under its own budget and saying what it observed, from where, how old it is against its bound, a verdict word and the command that refreshes it; the conditions that need attention, derived from those sections; and the report the session owes, composed from the report contract share/brief/report.yaml (ADR 0136). Writes nothing and builds nothing.
 
 Stability: behaviorally_verified. Capabilities: 1.
 
 ## `brief.session` — The session brief
 
-One line and a few: this session's episode and task (the one the given provider session owns, else the pointer's), the peers of every board with the boards that could not be read named, the mesh's links and what its journal addresses to this runtime, the integration queue as `majordomus prs brief` says it, and the machine's derive lock. Composed by the server holding this checkout's lease, which holds the board and the mesh: the command line asks it and composes the brief itself only when none answers, saying so; a superseded server says its own board is unreachable by the repository's gather. Carries the reporting interval the policy declares (`session.brief_interval_minutes`) and the keep-awake text a session is told at its start. Writes nothing.
+One line and a few, in the order session, work, peers, mesh, integration, ci, machine, release, derive, led by the attention entries the sections measured. The session is the caller's (the provider session given, else the calling board peer's, else the checkout's pointer, said as such); work is this session's own claims, branches and their canonical worktrees, pull requests, trains, latest runs with their jobs and background processes; integration says how old the queue observation is and whether origin/master moved past it; ci and the forge parts of work are read by the leaseholder alone through the monitor's shared cache; machine is free disk, swap and builders against machine.heavy_work. Every section carries its observation (source, age, bound, verdict, remedy, cost) and runs under its own budget, a section past it reading unread. Composed by the server holding this checkout's lease: the command line asks it and composes the brief itself only when none answers, saying so. Carries the reporting interval (`session.brief_interval_minutes`), per-section fingerprints of its clock-free facts, and the three texts composed from the report contract share/brief/report.yaml: keep_awake, report.prompt and report.reminder. Writes nothing.
 
 | | |
 |---|---|
@@ -25,9 +25,11 @@ One line and a few: this session's episode and task (the one the given provider 
 
 | input | type | required | description |
 |---|---|---|---|
-| `session` | string or null | no | The provider's own session identity (Claude Code's session id): the brief names the open episode that session owns. Absent, the episode the pointer resolves to. |
+| `session` | string or null | no | The provider's own session identity (Claude Code's session id): the brief names the open episode that session owns and the work it holds. Absent, the calling board peer's, then the episode the pointer resolves to, which the answer says is not necessarily this session. |
 | `checkouts` | Checkouts | no | Which checkouts the peers section covers: `repository` (every board, the default) or `this`. |
 | `local` | boolean | no | Compose in the process that answers and never ask the checkout's leaseholder: what a forwarded request says, so that it is never forwarded again. |
+| `since` | string or null | no | The previous report's instant, RFC 3339: the work section then says what was delivered since. |
+| `background` | array | no | The provider's background tasks, when its engine exposes them; absent, the brief says the provider's background is not exposed. |
 
 Output: `SessionBrief`.
 

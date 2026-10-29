@@ -871,6 +871,9 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
     if share_is_here && crate_is_here && targets.contains(&Target::Design) {
         out.extend(design_artifacts(app)?);
     }
+    if share_is_here && crate_is_here && targets.contains(&Target::Docs) {
+        out.extend(brief_report_artifacts(app)?);
+    }
     if targets.contains(&Target::Deployment) {
         for object in app
             .context
@@ -1038,6 +1041,77 @@ pub fn distribution_artifacts(app: &App) -> Result<Vec<Artifact>> {
 /// A source file a projection compiles, read as text: a failure names the path it read.
 fn read_source(path: &Path) -> Result<String> {
     std::fs::read_to_string(path).map_err(|e| Error::io(path, e))
+}
+
+/// The report contract's two projections (I4390): the compiled copy the executable
+/// includes, byte for byte behind its banner, and the reader page the site renders. The
+/// declaration is parsed first, so that a contract the executable could not read is
+/// refused here rather than compiled in.
+pub(crate) fn brief_report_artifacts(app: &App) -> Result<Vec<Artifact>> {
+    use crate::capability::builtin::brief::report;
+    let path = app.share.dir().join("brief/report.yaml");
+    let text = std::fs::read_to_string(&path).map_err(|e| Error::io(&path, e))?;
+    let contract: report::ReportContract =
+        crate::metadata::yaml::parse_into(&text).map_err(|reason| Error::Protocol {
+            reason: format!("{}: {reason}", report::SOURCE),
+        })?;
+    let version = crate::VERSION;
+    let source = "share/brief/report.yaml, the one declaration of the self-report";
+    let mut page = format!(
+        "# The self-report contract\n\n{} Declared in `{}` (`{}/v{}`, schema `{}`, \
+         fingerprint `{}`). `majordomus brief --report` prints the report owed now. This page \
+         is rendered from the declaration; edit the declaration, never this page.\n\n{}\n\n",
+        contract.about,
+        report::SOURCE,
+        contract.id,
+        contract.version,
+        contract.schema,
+        report::fingerprint_of(&text),
+        contract.order_note
+    );
+    page.push_str("## Sections, in order\n\n| # | Key | Heading | Holds | Evidence | Cap |\n|---|---|---|---|---|---|\n");
+    for (i, sec) in contract.sections.iter().enumerate() {
+        page.push_str(&format!(
+            "| {} | `{}` | {} | {} | {} | {} |\n",
+            i + 1,
+            sec.key,
+            sec.heading,
+            sec.holds,
+            sec.evidence,
+            sec.cap
+        ));
+    }
+    page.push_str("\n## Rules\n\n| Id | Rule |\n|---|---|\n");
+    for r in &contract.rules {
+        page.push_str(&format!("| `{}` | {} |\n", r.id, r.text.replace('|', "\\|")));
+    }
+    page.push_str("\n## Attention rows\n\nEach row is filled by one condition of `brief.session`; the two sets are held equal by a unit test.\n\n| Id | Section | Word | Actor | Fact | Remedy |\n|---|---|---|---|---|---|\n");
+    for a in &contract.attention {
+        page.push_str(&format!(
+            "| `{}` | {} | `{}` | {} | {} | `{}` |\n",
+            a.id,
+            a.section,
+            a.word,
+            a.actor,
+            a.fact.replace('|', "\\|"),
+            a.remedy.replace('|', "\\|")
+        ));
+    }
+    page.push_str("\n## Live reads\n\n| Fact | Command |\n|---|---|\n");
+    for l in &contract.live_reads {
+        page.push_str(&format!("| {} | `{}` |\n", l.fact, l.command));
+    }
+    Ok(vec![
+        Artifact::verbatim(
+            report::COMPILED_PATH,
+            "brief-report-declaration",
+            ArtifactFormat::Yaml,
+            None,
+            source,
+            comment_banner(source, version) + text.as_str(),
+        ),
+        Artifact::markdown(report::READER_PAGE, "brief-report", source, version, &page),
+    ])
 }
 
 /// A file of the tool's data directory, read as text.

@@ -734,3 +734,230 @@ mod tests {
         assert_eq!(run("echo", &dir, &["[1]"]).unwrap(), json!([1]));
     }
 }
+
+// ---------------------------------------------------------------- reads for the brief
+
+/// How long a read of the forge for the brief is shared, per question.
+pub(crate) const BRIEF_TTL: Duration = TTL;
+/// How long the self-hosted runners are shared: they change by the minute, not the second.
+pub(crate) const RUNNERS_TTL: Duration = Duration::from_secs(60);
+
+/// One answer of the forge, as the brief reads it: the value, and how old the reading is.
+#[derive(Debug, Clone)]
+pub(crate) struct Answer {
+    pub(crate) value: Value,
+    pub(crate) age: Duration,
+}
+
+/// Why a read of the forge could not answer: a forbidden read is its own case, because its
+/// remedy is a person's (a token scope), not a retry.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum Unanswered {
+    /// The forge refused the token (HTTP 403).
+    Forbidden(String),
+    /// Anything else, with its reason.
+    Failed(String),
+}
+
+impl Unanswered {
+    pub(crate) fn reason(&self) -> &str {
+        match self {
+            Unanswered::Forbidden(r) | Unanswered::Failed(r) => r,
+        }
+    }
+}
+
+type Cached = (Instant, Result<Value, Unanswered>);
+/// A question: the repository and the arguments `gh` was asked with.
+type Question = (PathBuf, Vec<String>);
+
+/// Every question the brief has asked, by repository and argument list, shared by every
+/// reader of this process for its TTL: the status line of every session asks the
+/// leaseholder, so a reading costs one call per TTL, never one per session.
+static ASKED: Mutex<Option<std::collections::BTreeMap<Question, Cached>>> =
+    Mutex::new(None);
+
+/// `gh <args>` in `root`, from the cache when it is younger than `ttl`, else asked now within
+/// `budget`. The program is `MAJORDOMUS_GH` when set (a test's stand-in), else `gh`.
+pub(crate) fn ask(
+    root: &Path,
+    args: &[&str],
+    ttl: Duration,
+    budget: Duration,
+) -> Result<Answer, Unanswered> {
+    let key = (root.to_path_buf(), args.iter().map(|s| s.to_string()).collect::<Vec<_>>());
+    if let Ok(asked) = ASKED.lock() {
+        if let Some((at, answer)) = asked.as_ref().and_then(|m| m.get(&key)) {
+            if at.elapsed() < ttl {
+                return answer.clone().map(|value| Answer { value, age: at.elapsed() });
+            }
+        }
+    }
+    let program = std::env::var("MAJORDOMUS_GH").unwrap_or_else(|_| "gh".into());
+    let answer = ask_now(&program, root, args, budget);
+    if let Ok(mut asked) = ASKED.lock() {
+        asked
+            .get_or_insert_with(Default::default)
+            .insert(key, (Instant::now(), answer.clone()));
+    }
+    answer.map(|value| Answer { value, age: Duration::ZERO })
+}
+
+/// One bounded call, its output read while it runs (so that an answer larger than a pipe's
+/// buffer never stalls it), its stdout parsed as JSON.
+fn ask_now(program: &str, root: &Path, args: &[&str], budget: Duration) -> Result<Value, Unanswered> {
+    let mut child = Command::new(program)
+        .args(args)
+        .current_dir(root)
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| Unanswered::Failed(format!("{program} could not be started: {e}")))?;
+    let mut out = child.stdout.take();
+    let mut err = child.stderr.take();
+    let reader = std::thread::spawn(move || {
+        let mut o = String::new();
+        let mut e = String::new();
+        if let Some(s) = out.as_mut() {
+            let _ = s.read_to_string(&mut o);
+        }
+        if let Some(s) = err.as_mut() {
+            let _ = s.read_to_string(&mut e);
+        }
+        (o, e)
+    });
+    let deadline = Instant::now() + budget;
+    let status = loop {
+        match child.try_wait() {
+            Ok(Some(status)) => break status,
+            _ if Instant::now() < deadline => std::thread::sleep(Duration::from_millis(10)),
+            _ => {
+                let _ = child.kill();
+                let _ = child.wait();
+                return Err(Unanswered::Failed(format!(
+                    "gh {} took longer than {} ms",
+                    args.first().copied().unwrap_or_default(),
+                    budget.as_millis()
+                )));
+            }
+        }
+    };
+    let (out, err) = reader.join().unwrap_or_default();
+    if !status.success() {
+        let reason = err.lines().next().unwrap_or("no reason given").trim().to_string();
+        return Err(if err.contains("HTTP 403") || err.contains("403 Forbidden") {
+            Unanswered::Forbidden(format!("403: {reason}"))
+        } else {
+            Unanswered::Failed(format!(
+                "gh {} failed: {reason}",
+                args.first().copied().unwrap_or_default()
+            ))
+        });
+    }
+    serde_json::from_str(&out).map_err(|e| {
+        Unanswered::Failed(format!(
+            "gh {} printed no JSON: {e}",
+            args.first().copied().unwrap_or_default()
+        ))
+    })
+}
+
+/// The open pull requests, with the state each would merge in.
+pub(crate) fn open_prs(root: &Path, budget: Duration) -> Result<Answer, Unanswered> {
+    ask(
+        root,
+        &[
+            "pr",
+            "list",
+            "--state",
+            "open",
+            "--limit",
+            "200",
+            "--json",
+            "number,title,headRefName,headRefOid,mergeStateStatus,isDraft",
+        ],
+        BRIEF_TTL,
+        budget,
+    )
+}
+
+/// The newest runs of one branch.
+pub(crate) fn runs_by_branch(root: &Path, branch: &str, budget: Duration) -> Result<Answer, Unanswered> {
+    ask(
+        root,
+        &[
+            "run",
+            "list",
+            "--branch",
+            branch,
+            "--limit",
+            "5",
+            "--json",
+            "databaseId,workflowName,status,conclusion,headBranch,headSha,createdAt,displayTitle",
+        ],
+        BRIEF_TTL,
+        budget,
+    )
+}
+
+/// The newest runs of one workflow on one commit.
+pub(crate) fn runs_of_commit(root: &Path, workflow: &str, sha: &str, budget: Duration) -> Result<Answer, Unanswered> {
+    ask(
+        root,
+        &[
+            "run",
+            "list",
+            "--workflow",
+            workflow,
+            "--commit",
+            sha,
+            "--limit",
+            "1",
+            "--json",
+            "databaseId,workflowName,status,conclusion,headBranch,headSha,createdAt",
+        ],
+        BRIEF_TTL,
+        budget,
+    )
+}
+
+/// The jobs of one run.
+pub(crate) fn run_jobs(root: &Path, id: u64, budget: Duration) -> Result<Answer, Unanswered> {
+    ask(root, &["run", "view", &id.to_string(), "--json", "jobs"], BRIEF_TTL, budget)
+}
+
+/// How many runs of the repository are in one status (`in_progress`, `queued`).
+pub(crate) fn run_total(root: &Path, status: &str, budget: Duration) -> Result<Answer, Unanswered> {
+    ask(
+        root,
+        &[
+            "api",
+            &format!("repos/{{owner}}/{{repo}}/actions/runs?status={status}&per_page=1"),
+            "--jq",
+            "{total_count: .total_count}",
+        ],
+        BRIEF_TTL,
+        budget,
+    )
+}
+
+/// The repository's self-hosted runners: a 403 is [`Unanswered::Forbidden`].
+pub(crate) fn runners(root: &Path, budget: Duration) -> Result<Answer, Unanswered> {
+    ask(
+        root,
+        &["api", "repos/{owner}/{repo}/actions/runners", "--jq", "{runners: [.runners[] | {name, status, busy}]}"],
+        RUNNERS_TTL,
+        budget,
+    )
+}
+
+/// `owner/name` of the repository, as the forge spells it.
+pub(crate) fn repository(root: &Path, budget: Duration) -> Result<Answer, Unanswered> {
+    ask(
+        root,
+        &["repo", "view", "--json", "nameWithOwner"],
+        Duration::from_secs(3600),
+        budget,
+    )
+}

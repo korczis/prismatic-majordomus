@@ -264,7 +264,7 @@
           "route": "/docs/cli/dashboard/"
         },
         {
-          "about": "What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout's lease",
+          "about": "What surrounds this session, in one line and in a few, led by what needs attention: its episode and task, its own work (claims, branches, pull requests, trains, runs, background), the peers of every board, the mesh, the integration queue with its age, the CI pool, the machine, the release and the derive queue, asked of the server holding this checkout's lease; --report prints the report owed, composed from share/brief/report.yaml",
           "command": "majordomus brief",
           "name": "brief",
           "route": "/docs/cli/brief/"
@@ -37472,7 +37472,7 @@
       "usage": "majordomus dashboard overview [OPTIONS]"
     },
     {
-      "about": "What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout's lease",
+      "about": "What surrounds this session, in one line and in a few, led by what needs attention: its episode and task, its own work (claims, branches, pull requests, trains, runs, background), the peers of every board, the mesh, the integration queue with its age, the CI pool, the machine, the release and the derive queue, asked of the server holding this checkout's lease; --report prints the report owed, composed from share/brief/report.yaml",
       "ancestors": [
         {
           "command": "majordomus",
@@ -37561,7 +37561,7 @@
             "false"
           ],
           "global": false,
-          "help": "Print what a session is told at its start about keeping itself awake, then the one-line brief",
+          "help": "Print what a session is told at its start about reporting on itself, then the one-line brief",
           "long": "keep-awake",
           "name": "keep_awake",
           "positional": false,
@@ -37571,9 +37571,23 @@
           "value_name": "KEEP_AWAKE"
         },
         {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Print the report this session owes now, composed from the report contract share/brief/report.yaml",
+          "long": "report",
+          "name": "report",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "REPORT"
+        },
+        {
           "defaults": [],
           "global": false,
-          "help": "The provider's own session identity: the brief names the open episode it owns",
+          "help": "The provider's own session identity (default: MAJORDOMUS_PROVIDER_SESSION, then CLAUDE_CODE_SESSION_ID): the brief names the open episode and the work it owns",
           "long": "session",
           "name": "session",
           "positional": false,
@@ -37581,6 +37595,30 @@
           "required": false,
           "takes_value": true,
           "value_name": "ID"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The previous report's instant: the brief says what this session delivered since",
+          "long": "since",
+          "name": "since",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "RFC3339"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The provider's background tasks as a JSON array of {id, description, status}, when its engine exposes them",
+          "long": "background-json",
+          "name": "background_json",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "JSON"
         },
         {
           "defaults": [
@@ -37631,11 +37669,24 @@
             "--this-checkout"
           ],
           "command": "majordomus brief --line --this-checkout",
-          "description": "The same answer `GET /api/v1/brief` and the MCP tool `majordomus_brief` return, rendered as its one line: this session's task or episode and branch, the peers of the boards read, the mesh, the integration queue and the derive lock, every section present whatever its state. The command line asks the server holding this checkout's lease, which holds the board and the mesh; this fixture has no server, so the brief is composed by this process and says so in its multi-line form.",
+          "description": "The same answer `GET /api/v1/brief` and the MCP tool `majordomus_brief` return, rendered as its one line of at most 160 columns: the caller and this session's task or episode and branch, the worst attention entry, then the CI pool, the integration queue with its age, the machine, the mesh, the peers, the release and the derive lock, every stale or unread one saying so, and a count of what did not fit. The command line asks the server holding this checkout's lease, which holds the board, the mesh and the forge cache; this fixture has no server, so the brief is composed by this process, reads no forge, and says so in its multi-line form.",
           "expectation": "exits 0",
           "id": "brief-line",
           "setup": [],
           "title": "The one-line brief, composed here when no server answers"
+        },
+        {
+          "argv": [
+            "brief",
+            "--report",
+            "--this-checkout"
+          ],
+          "command": "majordomus brief --report --this-checkout",
+          "description": "`report.prompt` of the same answer: the contract's marker, the brief's instant and the contract's fingerprint, the brief's lines, the attention entries the sections measured one per line as `[word] section: fact — remedy (actor)`, then the report's sections, rules and live reads from share/brief/report.yaml. This is the text the majordomus-brief mod submits verbatim on the interval.",
+          "expectation": "exits 0",
+          "id": "brief-report",
+          "setup": [],
+          "title": "The report a session owes, composed from the report contract"
         }
       ],
       "executable": true,
@@ -40038,9 +40089,9 @@
     }
   ],
   "counts": {
-    "arguments": 1735,
+    "arguments": 1738,
     "commands": 252,
-    "examples": 253,
+    "examples": 254,
     "runnable": 220
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",

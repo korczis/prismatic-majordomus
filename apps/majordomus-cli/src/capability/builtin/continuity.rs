@@ -505,6 +505,13 @@ pub struct ActiveTask {
     /// When it started.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub started_at: String,
+    /// When it was last checkpointed.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub checkpoint_at: String,
+    /// The provider session that started it (`start` records it beside its mesh claim), so
+    /// that a brief can tell this session's task from the checkout's last one.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub provider_session: String,
     /// The commit it started at.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub head: String,
@@ -1013,6 +1020,8 @@ pub(crate) fn read_task(path: &Path) -> Option<ActiveTask> {
         scope,
         requires,
         started_at: s("started_at"),
+        checkpoint_at: s("checkpoint_at"),
+        provider_session: s("provider_session"),
         head: s("head"),
         issue: s("issue"),
         intent: s("intent"),

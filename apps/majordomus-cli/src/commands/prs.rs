@@ -775,12 +775,41 @@ fn stale_note(base: &str, reported: &str, local: Option<&str>) -> Option<String>
     })
 }
 
+/// What the briefing reads of the last queue built here, typed: the brief judges the
+/// observation's age against master itself (I4390), and `prs brief` prints [`brief`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct IntegrationBrief {
+    /// The briefing line, as `prs brief` prints it.
+    pub(crate) summary: String,
+    /// The integration base.
+    pub(crate) base: String,
+    /// When the forge was observed, RFC 3339.
+    pub(crate) observed_at: String,
+    /// The base's commit as the forge reported it then.
+    pub(crate) observed_master: Option<String>,
+    /// The queue's counts and next merge, as observed: `52 open — ready 1; next merge #902`.
+    pub(crate) counts: String,
+    /// Who holds the integration lease.
+    pub(crate) lease: Option<String>,
+    /// The last merge the executor's trail records, as `#2366 6 d ago`: the executor's, which
+    /// is not master's last merge when a person merged by hand.
+    pub(crate) last_executor_merge: Option<String>,
+}
+
 /// The briefing line: what the last queue built here said, who holds the lease, and the last
 /// merge — from files alone. `None` when this checkout never observed the forge, so that a
 /// briefing does not grow a section about nothing.
 pub(crate) fn brief(root: &std::path::Path) -> Option<String> {
+    brief_typed(root).map(|b| b.summary)
+}
+
+/// [`brief`], typed.
+pub(crate) fn brief_typed(root: &std::path::Path) -> Option<IntegrationBrief> {
     let obs = integration::load_observation(root).ok().flatten()?;
     let mut parts = Vec::new();
+    let mut counts: String;
+    let mut observed_at = obs.observed_at.clone();
+    let mut observed_master = (!obs.base_sha.is_empty()).then(|| obs.base_sha.clone());
     match integration::QueueSummary::load(root) {
         Some(s) => {
             let lanes: Vec<String> = s
@@ -798,16 +827,23 @@ pub(crate) fn brief(root: &std::path::Path) -> Option<String> {
                 s.tallies.open,
                 lanes.join(", ")
             ));
+            observed_at = s.observed_at.clone();
+            if !s.master_sha.is_empty() {
+                observed_master = Some(s.master_sha.clone());
+            }
+            counts = format!("{} open — {}", s.tallies.open, lanes.join(", "));
             // the counts above are the forge's at that observation; once this clone's trunk
             // has moved past what the forge reported, they are not today's (I4293)
             let local = integration::local_master(root, &obs.base);
             if let Some(note) = stale_note(&obs.base, &obs.base_sha, local.as_deref()) {
                 parts.push(note);
             }
-            parts.push(match s.next_merge {
+            let next = match s.next_merge {
                 Some(n) => format!("next merge #{n}"),
                 None => "nothing ready".into(),
-            });
+            };
+            counts.push_str(&format!("; {next}"));
+            parts.push(next);
             if !s.starving.is_empty() {
                 let list: Vec<String> = s.starving.iter().map(|n| format!("#{n}")).collect();
                 parts.push(format!("starving {}", list.join(" ")));
@@ -819,12 +855,15 @@ pub(crate) fn brief(root: &std::path::Path) -> Option<String> {
                 ));
             }
         }
-        None => parts.push(format!(
-            "observed {} at {}; no queue built since — majordomus prs status",
-            obs.repository, obs.observed_at
-        )),
+        None => {
+            counts = "no queue built since".into();
+            parts.push(format!(
+                "observed {} at {}; no queue built since — majordomus prs status",
+                obs.repository, obs.observed_at
+            ))
+        }
     }
-    parts.push(match IntegrationLease::read(root, &obs.base) {
+    let lease = match IntegrationLease::read(root, &obs.base) {
         Ok(Some(l)) => match (&l.holder, l.stale) {
             (_, true) => format!(
                 "lease stale (renewed {} s ago; the next executor takes it over)",
@@ -843,18 +882,16 @@ pub(crate) fn brief(root: &std::path::Path) -> Option<String> {
         },
         Ok(None) => "lease free".into(),
         Err(_) => "lease unknown".into(),
-    });
+    };
+    parts.push(lease.clone());
     let trail = drain::events(root);
-    if let Some(m) = trail
+    let last_executor_merge = trail
         .iter()
         .rev()
         .find(|e| e.action == drain::IntegrationAction::MergeSucceeded)
-    {
-        parts.push(format!(
-            "last merge #{} {}",
-            m.pr.unwrap_or_default(),
-            ago(&m.at)
-        ));
+        .map(|m| format!("#{} {}", m.pr.unwrap_or_default(), ago(&m.at)));
+    if let Some(m) = &last_executor_merge {
+        parts.push(format!("last executor merge {m}"));
     }
     if let Some(e) = last_outcome(&trail) {
         parts.push(format!(
@@ -864,7 +901,15 @@ pub(crate) fn brief(root: &std::path::Path) -> Option<String> {
             ago(&e.at)
         ));
     }
-    Some(parts.join("; "))
+    Some(IntegrationBrief {
+        summary: parts.join("; "),
+        base: obs.base.clone(),
+        observed_at,
+        observed_master,
+        counts,
+        lease: Some(lease),
+        last_executor_merge,
+    })
 }
 
 /// The last event that says how the executor's work last went — a refresh it pushed, a merge
@@ -1614,7 +1659,7 @@ mod tests {
         }
         let lease = IntegrationLease::acquire(&s.0, "master").expect("the lease");
         let b = brief(&s.0).expect("a brief");
-        assert!(b.contains("last merge #5"), "{b}");
+        assert!(b.contains("last executor merge #5"), "{b}");
         assert!(b.contains("last stale_decision #6"), "{b}");
         assert!(
             !b.contains("merge_failed"),

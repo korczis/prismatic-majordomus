@@ -123,7 +123,7 @@ pub enum Command {
     Pack(PackArgs),
     /// The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it
     Dashboard(DashboardArgs),
-    /// What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout's lease
+    /// What surrounds this session, in one line and in a few, led by what needs attention: its episode and task, its own work (claims, branches, pull requests, trains, runs, background), the peers of every board, the mesh, the integration queue with its age, the CI pool, the machine, the release and the derive queue, asked of the server holding this checkout's lease; --report prints the report owed, composed from share/brief/report.yaml
     Brief(BriefArgs),
     /// Who works on what in this repository, on every board and every linked machine: each worker with its client, intent, checkout, branch and claims, the claims that meet, the reviews and handovers that wait, typed relations verified only by an explicit identifier, and whether every source could be read — asked of the server holding this checkout's lease
     Blackboard(BlackboardArgs),
@@ -333,12 +333,24 @@ pub struct BriefArgs {
     pub line: bool,
 
     #[arg(long)]
-    /// Print what a session is told at its start about keeping itself awake, then the one-line brief
+    /// Print what a session is told at its start about reporting on itself, then the one-line brief
     pub keep_awake: bool,
 
+    #[arg(long)]
+    /// Print the report this session owes now, composed from the report contract share/brief/report.yaml
+    pub report: bool,
+
     #[arg(long, value_name = "ID")]
-    /// The provider's own session identity: the brief names the open episode it owns
+    /// The provider's own session identity (default: MAJORDOMUS_PROVIDER_SESSION, then CLAUDE_CODE_SESSION_ID): the brief names the open episode and the work it owns
     pub session: Option<String>,
+
+    #[arg(long, value_name = "RFC3339")]
+    /// The previous report's instant: the brief says what this session delivered since
+    pub since: Option<String>,
+
+    #[arg(long = "background-json", value_name = "JSON")]
+    /// The provider's background tasks as a JSON array of {id, description, status}, when its engine exposes them
+    pub background_json: Option<String>,
 
     #[arg(long = "this-checkout")]
     /// Read this checkout's board alone instead of every checkout's
@@ -5946,8 +5958,16 @@ pub const EXAMPLES: &[CommandExamples] = &[
         examples: &[ExampleDoc {
             id: "brief-line",
             title: "The one-line brief, composed here when no server answers",
-            description: "The same answer `GET /api/v1/brief` and the MCP tool `majordomus_brief` return, rendered as its one line: this session's task or episode and branch, the peers of the boards read, the mesh, the integration queue and the derive lock, every section present whatever its state. The command line asks the server holding this checkout's lease, which holds the board and the mesh; this fixture has no server, so the brief is composed by this process and says so in its multi-line form.",
+            description: "The same answer `GET /api/v1/brief` and the MCP tool `majordomus_brief` return, rendered as its one line of at most 160 columns: the caller and this session's task or episode and branch, the worst attention entry, then the CI pool, the integration queue with its age, the machine, the mesh, the peers, the release and the derive lock, every stale or unread one saying so, and a count of what did not fit. The command line asks the server holding this checkout's lease, which holds the board, the mesh and the forge cache; this fixture has no server, so the brief is composed by this process, reads no forge, and says so in its multi-line form.",
             argv: &["brief", "--line", "--this-checkout"],
+            setup: &[],
+            expect: Expect::Success,
+        },
+        ExampleDoc {
+            id: "brief-report",
+            title: "The report a session owes, composed from the report contract",
+            description: "`report.prompt` of the same answer: the contract's marker, the brief's instant and the contract's fingerprint, the brief's lines, the attention entries the sections measured one per line as `[word] section: fact — remedy (actor)`, then the report's sections, rules and live reads from share/brief/report.yaml. This is the text the majordomus-brief mod submits verbatim on the interval.",
+            argv: &["brief", "--report", "--this-checkout"],
             setup: &[],
             expect: Expect::Success,
         }],

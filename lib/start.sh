@@ -140,8 +140,13 @@ H
   local id; id="t-$(mj_now_compact | tr -d 'TZ')-$(mj_rand16 | cut -c1-4)"
   local now; now="$(mj_now)"
   mkdir -p "$MJ_STATE_DIR"
+  local psid; psid="$(mj_provider_session_env)"
   {
-    printf 'id: %s\ntask: "%s"\nprofile: %s\nowner: "%s"\nscope:\n' "$id" "$(printf '%s' "$task" | sed 's/"/\\"/g')" "$profile" "$owner"
+    printf 'id: %s\ntask: "%s"\nprofile: %s\nowner: "%s"\n' "$id" "$(printf '%s' "$task" | sed 's/"/\\"/g')" "$profile" "$owner"
+    # the provider session that started it, as the lifecycle resolves it, so that a brief can
+    # tell this session's task from the checkout's last one (I4390)
+    [ -z "$psid" ] || printf 'provider_session: %s\n' "$psid"
+    printf 'scope:\n'
     for p in $norm; do printf '  - %s\n' "$p"; done
     if [ -n "$req_norm" ]; then printf 'requires:\n'; for tok in $req_norm; do printf '  - %s\n' "$tok"; done; fi
     # what the worker named, and two pins; never the intent's stage, verdict or criteria

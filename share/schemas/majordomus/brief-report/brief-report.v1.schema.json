@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/brief-report/brief-report.v1.schema.json",
+  "x-majordomus-schema": "majordomus/brief-report/v1",
+  "title": "Brief report contract",
+  "description": "share/brief/report.yaml: the one declaration of what a session reports about itself on the interval. brief.session composes it, with the attention entries it measured, into keep_awake, report.prompt and report.reminder (ADR 0136). Every attention word must also be filed once in share/design/tokens.yaml status.states, which a unit test of brief.session and case 4402 hold.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "version", "marker", "about", "order_note", "sections", "rules", "attention", "live_reads"],
+  "properties": {
+    "schema": { "const": "majordomus/brief-report/v1" },
+    "id": { "const": "brief-report" },
+    "version": { "type": "integer", "minimum": 1 },
+    "marker": { "type": "string", "minLength": 1, "description": "The first words of every interval prompt: the mod's guard against briefing its own prompt." },
+    "about": { "type": "string", "minLength": 1 },
+    "order_note": { "type": "string", "minLength": 1 },
+    "sections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["key", "heading", "holds", "evidence", "cap"],
+        "properties": {
+          "key": { "type": "string", "pattern": "^[a-z][a-z_]*$" },
+          "heading": { "type": "string", "minLength": 1 },
+          "holds": { "type": "string", "minLength": 1 },
+          "evidence": { "type": "string", "minLength": 1 },
+          "cap": { "type": "string", "minLength": 1 },
+          "empty": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "text"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z-]*$" },
+          "text": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "attention": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "section", "word", "actor", "fact", "remedy"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z]+\\.[a-z_]+$" },
+          "section": { "type": "string", "minLength": 1 },
+          "word": { "type": "string", "pattern": "^[a-z][a-z-]*$", "description": "A status word filed once in share/design/tokens.yaml status.states." },
+          "actor": { "type": "string", "pattern": "^(session|person|seat:[a-z][a-z-]*)$" },
+          "fact": { "type": "string", "minLength": 1 },
+          "remedy": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "live_reads": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["fact", "command"],
+        "properties": {
+          "fact": { "type": "string", "minLength": 1 },
+          "command": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

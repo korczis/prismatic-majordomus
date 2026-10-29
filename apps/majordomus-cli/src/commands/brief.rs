@@ -32,8 +32,22 @@ fn answer(ctx: &Context, args: &BriefArgs, out: &mut impl Write) -> Result<()> {
     let mut input = json!({
         "checkouts": if args.this_checkout { "this" } else { "repository" },
     });
-    if let Some(s) = &args.session {
+    // the caller's provider session, as the shell lifecycle resolves it, when none is given:
+    // a brief about the checkout's pointer is not necessarily about this session
+    let session = args.session.clone().or_else(|| {
+        crate::capability::builtin::brief::provider_session_from_env(|k| std::env::var(k).ok())
+    });
+    if let Some(s) = &session {
         input["session"] = json!(s);
+    }
+    if let Some(s) = &args.since {
+        input["since"] = json!(s);
+    }
+    if let Some(b) = &args.background_json {
+        let tasks: serde_json::Value = serde_json::from_str(b).map_err(|e| Error::Protocol {
+            reason: format!("--background-json is not a JSON array of tasks: {e}"),
+        })?;
+        input["background"] = tasks;
     }
     let v = ctx.execute(&id, input).map_err(|e| Error::Protocol {
         reason: e.to_string(),
@@ -53,8 +67,28 @@ fn render(out: &mut impl Write, v: &serde_json::Value, args: &BriefArgs) -> std:
         writeln!(out, "{}", text("/keep_awake"))?;
         return writeln!(out, "Now: {}", text("/line"));
     }
+    if args.report {
+        return writeln!(out, "{}", text("/report/prompt"));
+    }
     if args.line {
         return writeln!(out, "{}", text("/line"));
+    }
+    // the header: when, by whom, in how long, under which contract
+    if !text("/at").is_empty() {
+        let ms = v.pointer("/answered_by/elapsed_ms").and_then(|x| x.as_u64()).unwrap_or(0);
+        writeln!(
+            out,
+            "majordomus brief  {}  {}{}  ({:.1} s)  report {} #{}",
+            text("/at"),
+            text("/answered_by/process"),
+            match text("/answered_by/url") {
+                "" => String::new(),
+                u => format!(" {u}"),
+            },
+            ms as f64 / 1000.0,
+            text("/report/contract"),
+            text("/report/fingerprint"),
+        )?;
     }
     let empty = Vec::new();
     for l in v["lines"].as_array().unwrap_or(&empty) {
@@ -93,6 +127,7 @@ mod tests {
             "line": "I1 @main | peers 1/1b | mesh off | prs ?",
             "lines": ["session      a", "peers        b"],
             "keep_awake": "Keep yourself awake.",
+            "report": { "prompt": "Majordomus report owed: x" },
         });
         assert_eq!(rendered(&v, &[]), "session      a\npeers        b\n");
         assert_eq!(
@@ -103,6 +138,7 @@ mod tests {
             rendered(&v, &["--keep-awake"]),
             "Keep yourself awake.\nNow: I1 @main | peers 1/1b | mesh off | prs ?\n"
         );
+        assert_eq!(rendered(&v, &["--report"]), "Majordomus report owed: x\n");
         let json_out = rendered(&v, &["--format", "json"]);
         let back: serde_json::Value = serde_json::from_str(&json_out).expect("one JSON document");
         assert_eq!(back, v);
@@ -131,11 +167,13 @@ mod tests {
             "line": "I1 @main",
             "lines": ["session      a"],
             "keep_awake": "Keep yourself awake.",
+            "report": { "prompt": "Majordomus report owed: x" },
         });
         for argv in [
             &[][..],
             &["--line"][..],
             &["--keep-awake"][..],
+            &["--report"][..],
             &["--format", "json"][..],
         ] {
             let e = render(&mut Closed, &v, &args(argv)).expect_err("nothing can be written");

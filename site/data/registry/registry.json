@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "b5833aed94d5773664edafc07bc9c07bb38787346d90189060488a06f0c6b322",
+    "fingerprint": "6ffd4d165262a8fe7ad009124f314009db6c10d3b44c8b389bf8c242d0e72a4f",
     "summary": {
-      "total": 3573,
+      "total": 3579,
       "builtin": 220,
-      "declarative": 3353,
+      "declarative": 3359,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3353
+        "resource": 3359
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3363
+        "implemented": 3369
       },
       "mcp_tools": 206,
-      "mcp_resources": 3410,
+      "mcp_resources": 3416,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -1438,7 +1438,7 @@
         "module": "brief",
         "kind": "query",
         "title": "The session brief",
-        "description": "One line and a few: this session's episode and task (the one the given provider session owns, else the pointer's), the peers of every board with the boards that could not be read named, the mesh's links and what its journal addresses to this runtime, the integration queue as `majordomus prs brief` says it, and the machine's derive lock. Composed by the server holding this checkout's lease, which holds the board and the mesh: the command line asks it and composes the brief itself only when none answers, saying so; a superseded server says its own board is unreachable by the repository's gather. Carries the reporting interval the policy declares (`session.brief_interval_minutes`) and the keep-awake text a session is told at its start. Writes nothing.",
+        "description": "One line and a few, in the order session, work, peers, mesh, integration, ci, machine, release, derive, led by the attention entries the sections measured. The session is the caller's (the provider session given, else the calling board peer's, else the checkout's pointer, said as such); work is this session's own claims, branches and their canonical worktrees, pull requests, trains, latest runs with their jobs and background processes; integration says how old the queue observation is and whether origin/master moved past it; ci and the forge parts of work are read by the leaseholder alone through the monitor's shared cache; machine is free disk, swap and builders against machine.heavy_work. Every section carries its observation (source, age, bound, verdict, remedy, cost) and runs under its own budget, a section past it reading unread. Composed by the server holding this checkout's lease: the command line asks it and composes the brief itself only when none answers, saying so. Carries the reporting interval (`session.brief_interval_minutes`), per-section fingerprints of its clock-free facts, and the three texts composed from the report contract share/brief/report.yaml: keep_awake, report.prompt and report.reminder. Writes nothing.",
         "input": {
           "name": "BriefInput",
           "schema": {
@@ -1449,7 +1449,7 @@
                   "string",
                   "null"
                 ],
-                "description": "The provider's own session identity (Claude Code's session id): the brief names the open episode that session owns. Absent, the episode the pointer resolves to."
+                "description": "The provider's own session identity (Claude Code's session id): the brief names the open episode that session owns and the work it holds. Absent, the calling board peer's, then the episode the pointer resolves to, which the answer says is not necessarily this session."
               },
               "checkouts": {
                 "$ref": "#/$defs/Checkouts",
@@ -1460,6 +1460,20 @@
                 "type": "boolean",
                 "description": "Compose in the process that answers and never ask the checkout's leaseholder: what a forwarded request says, so that it is never forwarded again.",
                 "default": false
+              },
+              "since": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The previous report's instant, RFC 3339: the work section then says what was delivered since."
+              },
+              "background": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/BriefBackground"
+                },
+                "description": "The provider's background tasks, when its engine exposes them; absent, the brief says the provider's background is not exposed."
               }
             },
             "description": "What to ask of `brief.session`.",
@@ -1479,6 +1493,28 @@
                   }
                 ],
                 "description": "Which checkouts a reading of the server status covers.\n\nThe two answers cost differently and that is the whole reason the choice exists: the\nrepository's checkouts are read from git's registry of them and each one costs a lease\nread and a probe, while this checkout alone costs one of each and enumerates nothing.\nThe word each variant serialises to is the word the query parameter, the tool input and\nthe command-line flag all take.\n\n```\nuse majordomus_cli::capability::builtin::server::Checkouts;\nassert_eq!(serde_json::to_value(Checkouts::This).unwrap(), \"this\");\nassert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), \"repository\");\nassert_eq!(Checkouts::default(), Checkouts::Repository, \"the wide answer is what a caller who says nothing has always got\");\n```"
+              },
+              "BriefBackground": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The provider's id for it."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "What it is, in the provider's words."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "Its state in the provider's words (`running`, `completed`, ...)."
+                  }
+                },
+                "required": [
+                  "id",
+                  "description"
+                ],
+                "description": "One task the provider runs in the background of the session, as its engine reports it."
               }
             }
           }
@@ -1501,7 +1537,7 @@
                 "items": {
                   "type": "string"
                 },
-                "description": "The brief in a few lines: one per section, then the peers it names."
+                "description": "The brief in a few lines: the attention block, then one or more per section."
               },
               "interval_minutes": {
                 "type": "integer",
@@ -1511,15 +1547,61 @@
               },
               "keep_awake": {
                 "type": "string",
-                "description": "What a session is told at its start about keeping itself awake."
+                "description": "What a session is told at its start about reporting on itself, composed from the report contract (share/brief/report.yaml)."
               },
               "answered_by": {
                 "$ref": "#/$defs/BriefOrigin",
                 "description": "Which process composed it."
               },
+              "attention": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/BriefAttention"
+                },
+                "description": "Every condition the sections measured, the person's first, then worst first.",
+                "default": []
+              },
+              "report": {
+                "$ref": "#/$defs/BriefReport",
+                "description": "The report this brief owes, composed from the report contract (share/brief/report.yaml).",
+                "default": {
+                  "contract": "",
+                  "fingerprint": "",
+                  "marker": "",
+                  "prompt": "",
+                  "reminder": ""
+                }
+              },
+              "fingerprints": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Per section, a fingerprint of its facts with every instant and age taken out: two briefs differ in a section exactly when its fingerprint does.",
+                "default": {}
+              },
               "session": {
                 "$ref": "#/$defs/BriefSessionSection",
                 "description": "This session: its episode and task."
+              },
+              "work": {
+                "$ref": "#/$defs/BriefWorkSection",
+                "description": "This session's own work.",
+                "default": {
+                  "state": "unread",
+                  "observed": {
+                    "source": "not observed by the server that composed this brief",
+                    "verdict": "unread",
+                    "remedy": "majordomus brief --format json",
+                    "elapsed_ms": 0,
+                    "budget_ms": 0
+                  },
+                  "held": 0,
+                  "conflicted": 0,
+                  "suspended": 0,
+                  "provider_background_exposed": false,
+                  "summary": "unread: the server that composed this brief does not measure this session's work"
+                }
               },
               "peers": {
                 "$ref": "#/$defs/BriefPeersSection",
@@ -1532,6 +1614,41 @@
               "integration": {
                 "$ref": "#/$defs/BriefIntegrationSection",
                 "description": "The integration queue."
+              },
+              "ci": {
+                "$ref": "#/$defs/BriefCiSection",
+                "description": "The CI pool.",
+                "default": {
+                  "state": "unread",
+                  "observed": {
+                    "source": "the forge, read by the leaseholder only",
+                    "verdict": "unread",
+                    "remedy": "majordomus serve ensure",
+                    "elapsed_ms": 0,
+                    "budget_ms": 0
+                  },
+                  "repository": "",
+                  "online": 0,
+                  "busy": 0,
+                  "offline": 0,
+                  "summary": "unread: not the leaseholder (the CI pool is read by the server holding this checkout's lease)"
+                }
+              },
+              "machine": {
+                "$ref": "#/$defs/BriefMachineSection",
+                "description": "The machine.",
+                "default": {
+                  "state": "unread",
+                  "observed": {
+                    "source": "not observed by the server that composed this brief",
+                    "verdict": "unread",
+                    "remedy": "majordomus brief --format json",
+                    "elapsed_ms": 0,
+                    "budget_ms": 0
+                  },
+                  "word": "",
+                  "summary": "unread: the server that composed this brief does not measure the machine"
+                }
               },
               "release": {
                 "$ref": "#/$defs/BriefReleaseSection",
@@ -1560,7 +1677,7 @@
               "integration",
               "derive"
             ],
-            "description": "The answer of `brief.session`: what surrounds one session, in one line and in a few.",
+            "description": "The answer of `brief.session`: what surrounds one session, in one line and in a few, the\nconditions that need attention, and the report it owes.",
             "title": "SessionBrief",
             "$defs": {
               "BriefOrigin": {
@@ -1583,12 +1700,104 @@
                       "null"
                     ],
                     "description": "Why this process and not the leaseholder, when it is not the leaseholder."
+                  },
+                  "elapsed_ms": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "What composing the whole brief took, in milliseconds.",
+                    "default": 0
+                  },
+                  "slowest": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The section that took longest, and how long."
                   }
                 },
                 "required": [
                   "process"
                 ],
                 "description": "Which process composed the brief, and why that one."
+              },
+              "BriefAttention": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The row's id (`integration.stale`)."
+                  },
+                  "section": {
+                    "type": "string",
+                    "description": "The section it is about."
+                  },
+                  "word": {
+                    "type": "string",
+                    "description": "A status word of the design declaration."
+                  },
+                  "fact": {
+                    "type": "string",
+                    "description": "The fact, with what was measured."
+                  },
+                  "remedy": {
+                    "type": "string",
+                    "description": "The command that refreshes or acts on it."
+                  },
+                  "actor": {
+                    "type": "string",
+                    "description": "Who must act: `session`, `person` or `seat:<name>`."
+                  }
+                },
+                "required": [
+                  "id",
+                  "section",
+                  "word",
+                  "fact",
+                  "remedy",
+                  "actor"
+                ],
+                "description": "One condition the sections measured, in the words of its row of the report contract."
+              },
+              "BriefReport": {
+                "type": "object",
+                "properties": {
+                  "contract": {
+                    "type": "string",
+                    "description": "The contract's name and version."
+                  },
+                  "fingerprint": {
+                    "type": "string",
+                    "description": "The contract's fingerprint: 12 hex digits of its sha256."
+                  },
+                  "marker": {
+                    "type": "string",
+                    "description": "The first words of the prompt."
+                  },
+                  "prompt": {
+                    "type": "string",
+                    "description": "The prompt a session is woken with on the interval, verbatim."
+                  },
+                  "reminder": {
+                    "type": "string",
+                    "description": "The text that rides on a prompt the person sends, verbatim."
+                  },
+                  "since": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The previous report's instant, when the caller gave one."
+                  }
+                },
+                "required": [
+                  "contract",
+                  "fingerprint",
+                  "marker",
+                  "prompt",
+                  "reminder"
+                ],
+                "description": "The report this brief owes, composed from the report contract (share/brief/report.yaml)."
               },
               "BriefSessionSection": {
                 "type": "object",
@@ -1597,6 +1806,17 @@
                     "$ref": "#/$defs/BriefSectionState",
                     "description": "Whether it could be read."
                   },
+                  "observed": {
+                    "$ref": "#/$defs/BriefObservation",
+                    "description": "What it observed.",
+                    "default": {
+                      "source": "not observed by the server that composed this brief",
+                      "verdict": "unread",
+                      "remedy": "majordomus brief --format json",
+                      "elapsed_ms": 0,
+                      "budget_ms": 0
+                    }
+                  },
                   "episode": {
                     "type": [
                       "string",
@@ -1604,12 +1824,26 @@
                     ],
                     "description": "The open episode, when one is found."
                   },
+                  "episode_started_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When that episode opened, RFC 3339."
+                  },
                   "provider_session": {
                     "type": [
                       "string",
                       "null"
                     ],
                     "description": "The provider session that owns it."
+                  },
+                  "resolved_by": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "How the episode was found: `provider_session` (the caller's own) or `pointer` (the checkout's pointer, not necessarily this session's)."
                   },
                   "branch": {
                     "type": "string",
@@ -1633,12 +1867,47 @@
                     ],
                     "description": "The active task's words."
                   },
+                  "last_task": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The id of the last task the checkout recorded, whatever its outcome."
+                  },
+                  "task_outcome": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "That task's outcome: `active`, `partial`, `completed`, `handed_over`, ..."
+                  },
+                  "task_started_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When that task started."
+                  },
+                  "task_checkpoint_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When it was last checkpointed."
+                  },
+                  "task_owner_session": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The provider session that started it, when its record names one."
+                  },
                   "caller": {
                     "type": [
                       "string",
                       "null"
                     ],
-                    "description": "The calling MCP session's place on this board, when the call came through one."
+                    "description": "The caller's place on this checkout's board: the MCP session the call came through, else the board peer whose address carries the provider session."
                   },
                   "summary": {
                     "type": "string",
@@ -1678,12 +1947,542 @@
                 ],
                 "description": "Whether a section of the brief could be read."
               },
+              "BriefObservation": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "description": "The owner asked: a capability, a file, a command."
+                  },
+                  "observed_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When the fact was observed, RFC 3339; absent when it was not."
+                  },
+                  "age_seconds": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How old the fact is, in seconds, when it was not read now."
+                  },
+                  "bound_seconds": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The age past which the owner calls the fact stale."
+                  },
+                  "verdict": {
+                    "$ref": "#/$defs/BriefVerdict",
+                    "description": "What a reader may take it for."
+                  },
+                  "remedy": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The exact command that refreshes or explains it; present whenever the verdict is not `current`."
+                  },
+                  "elapsed_ms": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "What composing the section took, in milliseconds.",
+                    "default": 0
+                  },
+                  "budget_ms": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "What it was allowed, in milliseconds.",
+                    "default": 0
+                  }
+                },
+                "required": [
+                  "source",
+                  "verdict"
+                ],
+                "description": "What one section observed: from where, when, how old it is against the bound its owner\ndeclares, the word a reader may take it for, the command that refreshes it, and what\nasking cost."
+              },
+              "BriefVerdict": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "current",
+                    "description": "Its owner answered, within the bound its owner declares."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stale",
+                    "description": "Its owner answered with a fact older than its bound, or contradicted by a newer one."
+                  },
+                  {
+                    "type": "string",
+                    "const": "partial",
+                    "description": "Its owner answered part of what it covers."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unread",
+                    "description": "Its owner did not answer, or not within the section's budget."
+                  },
+                  {
+                    "type": "string",
+                    "const": "undeclared",
+                    "description": "The repository declares nothing for it."
+                  }
+                ],
+                "description": "What a reader may take a section's facts for: a status word of the design declaration."
+              },
+              "BriefWorkSection": {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "$ref": "#/$defs/BriefSectionState",
+                    "description": "Whether it could be read."
+                  },
+                  "observed": {
+                    "$ref": "#/$defs/BriefObservation",
+                    "description": "What it observed.",
+                    "default": {
+                      "source": "not observed by the server that composed this brief",
+                      "verdict": "unread",
+                      "remedy": "majordomus brief --format json",
+                      "elapsed_ms": 0,
+                      "budget_ms": 0
+                    }
+                  },
+                  "held": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Claims held.",
+                    "default": 0
+                  },
+                  "conflicted": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Claims in conflict.",
+                    "default": 0
+                  },
+                  "suspended": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Claims suspended.",
+                    "default": 0
+                  },
+                  "claims": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/BriefClaim"
+                    },
+                    "description": "The claims."
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/BriefWorkItem"
+                    },
+                    "description": "One item per branch."
+                  },
+                  "trains": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/BriefTrain"
+                    },
+                    "description": "The trains carrying its pull requests."
+                  },
+                  "background": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/BriefProcess"
+                    },
+                    "description": "Builds and forge calls running under its client."
+                  },
+                  "provider_background": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/BriefBackground"
+                    },
+                    "description": "The provider's own background tasks, as the caller passed them."
+                  },
+                  "provider_background_exposed": {
+                    "type": "boolean",
+                    "description": "Whether the caller passed them at all.",
+                    "default": false
+                  },
+                  "delivered": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/BriefDelivered"
+                    },
+                    "description": "What it delivered since the previous report."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "The section in words."
+                  }
+                },
+                "required": [
+                  "state",
+                  "summary"
+                ],
+                "description": "This session's own work: its claims, branches, worktrees, pull requests, trains, runs and\nbackground processes, and what it delivered since the previous report."
+              },
+              "BriefClaim": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "description": "Its key on the mesh."
+                  },
+                  "issue": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The issue it names."
+                  },
+                  "intent": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What it says it is for."
+                  },
+                  "scope": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The paths and refs it claims."
+                  },
+                  "state": {
+                    "type": "string",
+                    "description": "`held`, `conflicted` or `suspended`."
+                  }
+                },
+                "required": [
+                  "key",
+                  "scope",
+                  "state"
+                ],
+                "description": "One mesh claim this session holds."
+              },
+              "BriefWorkItem": {
+                "type": "object",
+                "properties": {
+                  "branch": {
+                    "type": "string",
+                    "description": "The branch."
+                  },
+                  "issue": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The issue it executes, from its claim or its task."
+                  },
+                  "pushed": {
+                    "type": "boolean",
+                    "description": "Whether origin carries the branch.",
+                    "default": false
+                  },
+                  "head": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Its head: the pull request's, else origin's."
+                  },
+                  "worktree": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Its canonical worktree, when it exists."
+                  },
+                  "task": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The active task in that worktree."
+                  },
+                  "task_outcome": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The outcome of the last task recorded there."
+                  },
+                  "pr": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Its open pull request."
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The pull request's title."
+                  },
+                  "merge_state": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The forge's mergeStateStatus (`CLEAN`, `BLOCKED`, `DIRTY`, ...)."
+                  },
+                  "train": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The train carrying it, when one does."
+                  },
+                  "run": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/BriefRun"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Its latest run: the train's when a train carries it."
+                  },
+                  "word": {
+                    "type": "string",
+                    "description": "Its status word.",
+                    "default": ""
+                  }
+                },
+                "required": [
+                  "branch"
+                ],
+                "description": "One item of this session's work: a branch, its pull request, its train and its run."
+              },
+              "BriefRun": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Its id."
+                  },
+                  "workflow": {
+                    "type": "string",
+                    "description": "Its workflow's name."
+                  },
+                  "branch": {
+                    "type": "string",
+                    "description": "The branch it ran on."
+                  },
+                  "head_sha": {
+                    "type": "string",
+                    "description": "The commit it ran on."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "`queued`, `in_progress` or `completed`."
+                  },
+                  "conclusion": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "How it finished, once it did."
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "description": "When it was created, RFC 3339."
+                  },
+                  "jobs_done": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Jobs finished, when its jobs were read."
+                  },
+                  "jobs_total": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Jobs in all, when its jobs were read."
+                  },
+                  "jobs_queued": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Jobs still waiting for a runner, when its jobs were read."
+                  },
+                  "failed_jobs": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Every job that failed or timed out, by name."
+                  }
+                },
+                "required": [
+                  "id",
+                  "workflow",
+                  "status"
+                ],
+                "description": "One workflow run, as the forge reported it."
+              },
+              "BriefTrain": {
+                "type": "object",
+                "properties": {
+                  "pr": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The pull request."
+                  },
+                  "branch": {
+                    "type": "string",
+                    "description": "The train's branch."
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "Where the membership was read."
+                  }
+                },
+                "required": [
+                  "pr",
+                  "branch",
+                  "source"
+                ],
+                "description": "A train carrying one of this session's pull requests."
+              },
+              "BriefProcess": {
+                "type": "object",
+                "properties": {
+                  "pid": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Its pid."
+                  },
+                  "command": {
+                    "type": "string",
+                    "description": "Its command's name."
+                  },
+                  "age_seconds": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How long it has run, in seconds."
+                  }
+                },
+                "required": [
+                  "pid",
+                  "command",
+                  "age_seconds"
+                ],
+                "description": "A local process: a build or a forge call under this session, or a builder on the machine."
+              },
+              "BriefBackground": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The provider's id for it."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "What it is, in the provider's words."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "Its state in the provider's words (`running`, `completed`, ...)."
+                  }
+                },
+                "required": [
+                  "id",
+                  "description"
+                ],
+                "description": "One task the provider runs in the background of the session, as its engine reports it."
+              },
+              "BriefDelivered": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "description": "`merged` (an own pull request merged into master) or `pushed` (an own branch head committed after it)."
+                  },
+                  "pr": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The pull request."
+                  },
+                  "branch": {
+                    "type": "string",
+                    "description": "The branch."
+                  },
+                  "sha": {
+                    "type": "string",
+                    "description": "The commit, abbreviated."
+                  },
+                  "at": {
+                    "type": "string",
+                    "description": "When, RFC 3339."
+                  }
+                },
+                "required": [
+                  "kind",
+                  "branch",
+                  "sha",
+                  "at"
+                ],
+                "description": "Something this session delivered since the previous report."
+              },
               "BriefPeersSection": {
                 "type": "object",
                 "properties": {
                   "state": {
                     "$ref": "#/$defs/BriefSectionState",
                     "description": "Whether every board could be read."
+                  },
+                  "observed": {
+                    "$ref": "#/$defs/BriefObservation",
+                    "description": "What it observed.",
+                    "default": {
+                      "source": "not observed by the server that composed this brief",
+                      "verdict": "unread",
+                      "remedy": "majordomus brief --format json",
+                      "elapsed_ms": 0,
+                      "budget_ms": 0
+                    }
                   },
                   "attached": {
                     "type": "integer",
@@ -1717,12 +2516,26 @@
                     ],
                     "description": "Set when the composing server is superseded: its own board is unreachable by the repository's gather."
                   },
+                  "leaseholder": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The leaseholder a superseded server lost the lease to."
+                  },
                   "named": {
                     "type": "array",
                     "items": {
                       "type": "string"
                     },
-                    "description": "The attached peers, one short line each, at most a bounded number."
+                    "description": "The attached peers, one unclipped line each, at most a bounded number."
+                  },
+                  "people": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/BriefPeer"
+                    },
+                    "description": "The attached peers, at most a bounded number, each with its branch and whole intent."
                   },
                   "summary": {
                     "type": "string",
@@ -1739,12 +2552,95 @@
                 ],
                 "description": "The workers of this repository, from every board the brief could read."
               },
+              "BriefPeer": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Its place on its board (`p1`); never its identity across a reconnect."
+                  },
+                  "client": {
+                    "type": "string",
+                    "description": "Its client's name."
+                  },
+                  "pid": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The worker's process, when its address names one."
+                  },
+                  "host": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The machine it runs on, when its address names one."
+                  },
+                  "socket": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The socket other sessions message it through."
+                  },
+                  "branch": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The branch it works on."
+                  },
+                  "worktree": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The checkout it is attached to."
+                  },
+                  "branch_source": {
+                    "type": "string",
+                    "description": "Where the branch was read: `announce` (a `refs/heads/` scope it announced), `claim` (one of its mesh claims), `session` (its mesh session) or `server` (the checkout of the server it is attached to, the last resort)."
+                  },
+                  "intent": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What it announced, whole."
+                  },
+                  "you": {
+                    "type": "boolean",
+                    "description": "Whether this is the session the brief is about."
+                  }
+                },
+                "required": [
+                  "id",
+                  "client",
+                  "branch_source",
+                  "you"
+                ],
+                "description": "One worker of the repository, as the brief names it."
+              },
               "BriefMeshSection": {
                 "type": "object",
                 "properties": {
                   "state": {
                     "$ref": "#/$defs/BriefSectionState",
                     "description": "Whether cooperation could be read."
+                  },
+                  "observed": {
+                    "$ref": "#/$defs/BriefObservation",
+                    "description": "What it observed.",
+                    "default": {
+                      "source": "not observed by the server that composed this brief",
+                      "verdict": "unread",
+                      "remedy": "majordomus brief --format json",
+                      "elapsed_ms": 0,
+                      "budget_ms": 0
+                    }
                   },
                   "active": {
                     "type": "boolean",
@@ -1832,6 +2728,106 @@
                     "$ref": "#/$defs/BriefSectionState",
                     "description": "Whether this checkout ever observed the forge."
                   },
+                  "observed": {
+                    "$ref": "#/$defs/BriefObservation",
+                    "description": "What it observed.",
+                    "default": {
+                      "source": "not observed by the server that composed this brief",
+                      "verdict": "unread",
+                      "remedy": "majordomus brief --format json",
+                      "elapsed_ms": 0,
+                      "budget_ms": 0
+                    }
+                  },
+                  "observed_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When the forge was observed, RFC 3339."
+                  },
+                  "age_seconds": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How old that observation is, in seconds."
+                  },
+                  "observed_master": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The master commit the forge reported then."
+                  },
+                  "master_now": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "This clone's `origin/master` now, from its ref."
+                  },
+                  "master_fetched_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When this clone last fetched, RFC 3339."
+                  },
+                  "master_fetched_age_seconds": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How long ago that was, in seconds."
+                  },
+                  "moved_by": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How many commits master moved past the observation, when it did."
+                  },
+                  "master_ci": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/BriefRun"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The latest run of the required workflow on master now, from the forge cache."
+                  },
+                  "last_merge": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/BriefMerge"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The last merge on master's first-parent line."
+                  },
+                  "stale": {
+                    "type": "boolean",
+                    "description": "Whether the observation is past its bound or contradicted by master.",
+                    "default": false
+                  },
+                  "remedy": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The command that refreshes it, when it is stale."
+                  },
                   "summary": {
                     "type": "string",
                     "description": "The section in words."
@@ -1841,7 +2837,266 @@
                   "state",
                   "summary"
                 ],
-                "description": "The integration queue, as `majordomus prs brief` says it."
+                "description": "The integration queue, with how old its observation is and what master did since."
+              },
+              "BriefMerge": {
+                "type": "object",
+                "properties": {
+                  "pr": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The pull request it merged, when its subject names one."
+                  },
+                  "sha": {
+                    "type": "string",
+                    "description": "The merge commit, abbreviated."
+                  },
+                  "at": {
+                    "type": "string",
+                    "description": "When it was committed, RFC 3339."
+                  }
+                },
+                "required": [
+                  "sha",
+                  "at"
+                ],
+                "description": "A merge on master's first-parent line."
+              },
+              "BriefCiSection": {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "$ref": "#/$defs/BriefSectionState",
+                    "description": "Whether it could be read."
+                  },
+                  "observed": {
+                    "$ref": "#/$defs/BriefObservation",
+                    "description": "What it observed.",
+                    "default": {
+                      "source": "not observed by the server that composed this brief",
+                      "verdict": "unread",
+                      "remedy": "majordomus brief --format json",
+                      "elapsed_ms": 0,
+                      "budget_ms": 0
+                    }
+                  },
+                  "repository": {
+                    "type": "string",
+                    "description": "`owner/name` of the repository.",
+                    "default": ""
+                  },
+                  "in_progress": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Runs in progress."
+                  },
+                  "queued": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Runs queued."
+                  },
+                  "online": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Self-hosted runners online.",
+                    "default": 0
+                  },
+                  "busy": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Of them, busy.",
+                    "default": 0
+                  },
+                  "offline": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Self-hosted runners offline.",
+                    "default": 0
+                  },
+                  "runners": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/BriefRunner"
+                    },
+                    "description": "The runners, by name."
+                  },
+                  "runners_unread": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why the runners could not be read, when they could not."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "The section in words."
+                  }
+                },
+                "required": [
+                  "state",
+                  "summary"
+                ],
+                "description": "The CI pool: hosted runs in progress and queued, and the self-hosted runners."
+              },
+              "BriefRunner": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Its name."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "`online` or `offline`."
+                  },
+                  "busy": {
+                    "type": "boolean",
+                    "description": "Whether it runs a job."
+                  }
+                },
+                "required": [
+                  "name",
+                  "status",
+                  "busy"
+                ],
+                "description": "One self-hosted runner."
+              },
+              "BriefMachineSection": {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "$ref": "#/$defs/BriefSectionState",
+                    "description": "Whether it could be read."
+                  },
+                  "observed": {
+                    "$ref": "#/$defs/BriefObservation",
+                    "description": "What it observed.",
+                    "default": {
+                      "source": "not observed by the server that composed this brief",
+                      "verdict": "unread",
+                      "remedy": "majordomus brief --format json",
+                      "elapsed_ms": 0,
+                      "budget_ms": 0
+                    }
+                  },
+                  "volumes": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/BriefVolume"
+                    },
+                    "description": "Every volume measured."
+                  },
+                  "free_bytes": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The least free of them, in bytes."
+                  },
+                  "floor_gib": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The floor no builder may start below, GiB (`machine.heavy_work.min_free_gib`)."
+                  },
+                  "swap_used_bytes": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Swap used, bytes."
+                  },
+                  "swap_total_bytes": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Swap in all, bytes."
+                  },
+                  "builders": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Builds running (cargo, or rustc with no cargo over it)."
+                  },
+                  "max_builders": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How many the machine admits at once (`machine.heavy_work.slots`)."
+                  },
+                  "builder_processes": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/BriefProcess"
+                    },
+                    "description": "The builder processes."
+                  },
+                  "word": {
+                    "type": "string",
+                    "description": "The worst word of the three: `current`, `degraded` or `blocked`.",
+                    "default": ""
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "The section in words."
+                  }
+                },
+                "required": [
+                  "state",
+                  "summary"
+                ],
+                "description": "The machine: free disk against the builder floor, swap, and builders against their limit."
+              },
+              "BriefVolume": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "A path on it."
+                  },
+                  "free_bytes": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Bytes free."
+                  }
+                },
+                "required": [
+                  "path",
+                  "free_bytes"
+                ],
+                "description": "One volume the machine section measured."
               },
               "BriefReleaseSection": {
                 "type": "object",
@@ -1849,6 +3104,10 @@
                   "state": {
                     "$ref": "#/$defs/BriefSectionState",
                     "description": "`read` when it was measured, `unread` when it could not be, with the summary saying why."
+                  },
+                  "observed": {
+                    "$ref": "#/$defs/BriefObservation",
+                    "description": "What it observed. Left out when it is the default, so that this section's own default\n(what an older server's answer reads as) is the value it always was."
                   },
                   "stance": {
                     "anyOf": [
@@ -1910,6 +3169,17 @@
                   "state": {
                     "$ref": "#/$defs/BriefSectionState",
                     "description": "`undeclared` when the repository ships no derive lock."
+                  },
+                  "observed": {
+                    "$ref": "#/$defs/BriefObservation",
+                    "description": "What it observed.",
+                    "default": {
+                      "source": "not observed by the server that composed this brief",
+                      "verdict": "unread",
+                      "remedy": "majordomus brief --format json",
+                      "elapsed_ms": 0,
+                      "budget_ms": 0
+                    }
                   },
                   "holder": {
                     "type": [
@@ -9139,6 +10409,14 @@
                   "started_at": {
                     "type": "string",
                     "description": "When it started."
+                  },
+                  "checkpoint_at": {
+                    "type": "string",
+                    "description": "When it was last checkpointed."
+                  },
+                  "provider_session": {
+                    "type": "string",
+                    "description": "The provider session that started it (`start` records it beside its mesh claim), so\nthat a brief can tell this session's task from the checkout's last one."
                   },
                   "head": {
                     "type": "string",
@@ -33193,6 +34471,14 @@
                   "started_at": {
                     "type": "string",
                     "description": "When it started."
+                  },
+                  "checkpoint_at": {
+                    "type": "string",
+                    "description": "When it was last checkpointed."
+                  },
+                  "provider_session": {
+                    "type": "string",
+                    "description": "The provider session that started it (`start` records it beside its mesh claim), so\nthat a brief can tell this session's task from the checkout's last one."
                   },
                   "head": {
                     "type": "string",
@@ -60220,6 +61506,14 @@
                   "started_at": {
                     "type": "string",
                     "description": "When it started."
+                  },
+                  "checkpoint_at": {
+                    "type": "string",
+                    "description": "When it was last checkpointed."
+                  },
+                  "provider_session": {
+                    "type": "string",
+                    "description": "The provider session that started it (`start` records it beside its mesh claim), so\nthat a brief can tell this session's task from the checkout's last one."
                   },
                   "head": {
                     "type": "string",
@@ -90802,7 +92096,7 @@
       {
         "id": "brief",
         "title": "The session brief",
-        "description": "What surrounds one working session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, each section asked of its owner once and saying whether it could be read. The answer a session reports on itself from without being asked, and the one a provider mod shows as its status line (ADR 0136). Writes nothing.",
+        "description": "What surrounds one working session, in one line and in a few: its episode and task, its own work (claims, branches, worktrees, pull requests, trains, runs, background processes), the peers of every board, the mesh, the integration queue, the CI pool, the machine, the release and the derive queue, each section asked of its owner once under its own budget and saying what it observed, from where, how old it is against its bound, a verdict word and the command that refreshes it; the conditions that need attention, derived from those sections; and the report the session owes, composed from the report contract share/brief/report.yaml (ADR 0136). Writes nothing and builds nothing.",
         "stability": "behaviorally_verified",
         "source": "builtin",
         "capabilities": 1,
@@ -91383,7 +92677,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1055,
+        "capabilities": 1056,
         "capability_ids": []
       },
       {
@@ -91981,7 +93275,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 655,
+        "capabilities": 660,
         "capability_ids": []
       },
       {
@@ -92073,7 +93367,7 @@
     ]
   },
   "index": {
-    "fingerprint": "35532d451c06ad0492616fa033f2ea9f47b5ade8c389d331b6695a2b4798dfcf",
+    "fingerprint": "a8062103e6f5eae745639a5fa7074f08c02552fae079fba815a9c7644a189537",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92113,7 +93407,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1055,
+      "issue": 1056,
       "knowledge": 59,
       "mesh-declaration": 1,
       "milestone": 111,
@@ -92127,7 +93421,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 655,
+      "test": 660,
       "use-case": 49,
       "workspace": 1
     },
@@ -93695,7 +94989,7 @@
         "path": ".ai/repo/adrs/0136-every-session-briefs-itself-on-an-interval.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 11894,
+        "bytes": 15949,
         "tags": [
           "session",
           "peers",
@@ -99099,7 +100393,7 @@
         "title": "The session brief — `majordomus brief`",
         "path": "docs/BRIEF.md",
         "source_class": "document",
-        "bytes": 9788
+        "bytes": 14120
       },
       {
         "uri": "majordomus://document/docs/BUILD_CACHE.md",
@@ -99558,7 +100852,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 1047073
+        "bytes": 1047282
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -99594,7 +100888,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 26255
+        "bytes": 26459
       },
       {
         "uri": "majordomus://document/docs/REASONING.md",
@@ -102987,7 +104281,7 @@
         "identity": "lib/start.sh",
         "path": "lib/start.sh",
         "source_class": "library",
-        "bytes": 13380
+        "bytes": 13666
       },
       {
         "uri": "majordomus://implementation/lib/update.sh",
@@ -103429,7 +104723,7 @@
         "path": ".ai/repo/project/intents/the-peer-blackboard-is-one-reality.yaml",
         "section": "project",
         "source_class": "intent",
-        "bytes": 4472
+        "bytes": 5271
       },
       {
         "uri": "majordomus://intent/the-product-proves-it-pays",
@@ -115092,6 +116386,17 @@
         "bytes": 5693
       },
       {
+        "uri": "majordomus://issue/I4390",
+        "kind": "issue",
+        "identity": "I4390",
+        "title": "A session reports what it measured, from one declared report contract, and the brief says how old each fact is",
+        "description": "Declare the self-report once, in share/brief/report.yaml, and have brief.session compose from it the three texts every carrier relays verbatim (keep_awake, report.prompt, report.reminder), each carrying the attention entries the brief measured; give every section of the brief one evidence envelope (source, age, bound, verdict, remedy, cost) so that a stale or unread fact is never shown as current; make the session section the caller's; add this session's own work, the CI pool and the machine; and bound every section by a budget so that a slow owner reads unread instead of stalling the brief.",
+        "path": ".ai/repo/project/issues/I4390.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5694
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -117867,7 +119172,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 26296
+        "bytes": 27207
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -122959,7 +124264,7 @@
         "identity": "test/cases/1065_a_session_briefs_itself.sh",
         "path": "test/cases/1065_a_session_briefs_itself.sh",
         "source_class": "case",
-        "bytes": 4776
+        "bytes": 5969
       },
       {
         "uri": "majordomus://test/test/cases/106_context_peers.sh",
@@ -126039,7 +127344,7 @@
         "identity": "test/cases/4250_the_brief_reports_only_what_changed.sh",
         "path": "test/cases/4250_the_brief_reports_only_what_changed.sh",
         "source_class": "case",
-        "bytes": 2851
+        "bytes": 3431
       },
       {
         "uri": "majordomus://test/test/cases/42_dag_waves.sh",
@@ -126072,6 +127377,46 @@
         "path": "test/cases/43_plan_command.sh",
         "source_class": "case",
         "bytes": 4717
+      },
+      {
+        "uri": "majordomus://test/test/cases/4401_the_report_contract_is_declared_once.sh",
+        "kind": "test",
+        "identity": "test/cases/4401_the_report_contract_is_declared_once.sh",
+        "path": "test/cases/4401_the_report_contract_is_declared_once.sh",
+        "source_class": "case",
+        "bytes": 4710
+      },
+      {
+        "uri": "majordomus://test/test/cases/4402_brief_words_are_status_words.sh",
+        "kind": "test",
+        "identity": "test/cases/4402_brief_words_are_status_words.sh",
+        "path": "test/cases/4402_brief_words_are_status_words.sh",
+        "source_class": "case",
+        "bytes": 3870
+      },
+      {
+        "uri": "majordomus://test/test/cases/4403_a_stale_source_is_never_shown_as_current.sh",
+        "kind": "test",
+        "identity": "test/cases/4403_a_stale_source_is_never_shown_as_current.sh",
+        "path": "test/cases/4403_a_stale_source_is_never_shown_as_current.sh",
+        "source_class": "case",
+        "bytes": 4440
+      },
+      {
+        "uri": "majordomus://test/test/cases/4404_a_brief_never_truncates_without_a_count.sh",
+        "kind": "test",
+        "identity": "test/cases/4404_a_brief_never_truncates_without_a_count.sh",
+        "path": "test/cases/4404_a_brief_never_truncates_without_a_count.sh",
+        "source_class": "case",
+        "bytes": 5360
+      },
+      {
+        "uri": "majordomus://test/test/cases/4405_a_brief_is_bounded_and_never_builds.sh",
+        "kind": "test",
+        "identity": "test/cases/4405_a_brief_is_bounded_and_never_builds.sh",
+        "path": "test/cases/4405_a_brief_is_bounded_and_never_builds.sh",
+        "source_class": "case",
+        "bytes": 3657
       },
       {
         "uri": "majordomus://test/test/cases/44_model_doctrine.sh",
@@ -126887,7 +128232,7 @@
         "identity": "test/cases/740_integration_is_visible_where_a_person_looks.sh",
         "path": "test/cases/740_integration_is_visible_where_a_person_looks.sh",
         "source_class": "case",
-        "bytes": 12708
+        "bytes": 12744
       },
       {
         "uri": "majordomus://test/test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
@@ -128604,7 +129949,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1055
+      "objects": 1056
     },
     {
       "name": "knowledge",
@@ -128766,7 +130111,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 655
+      "objects": 660
     },
     {
       "name": "use-case",
@@ -161029,7 +162374,7 @@
         "route": "/docs/cli/brief/",
         "executable": true,
         "usage": "majordomus brief [OPTIONS]",
-        "about": "What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout's lease",
+        "about": "What surrounds this session, in one line and in a few, led by what needs attention: its episode and task, its own work (claims, branches, pull requests, trains, runs, background), the peers of every board, the mesh, the integration queue with its age, the CI pool, the machine, the release and the derive queue, asked of the server holding this checkout's lease; --report prints the report owed, composed from share/brief/report.yaml",
         "args": [
           {
             "name": "repo",
@@ -161110,8 +162455,22 @@
             "name": "keep_awake",
             "long": "keep-awake",
             "positional": false,
-            "help": "Print what a session is told at its start about keeping itself awake, then the one-line brief",
+            "help": "Print what a session is told at its start about reporting on itself, then the one-line brief",
             "value_name": "KEEP_AWAKE",
+            "takes_value": false,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "report",
+            "long": "report",
+            "positional": false,
+            "help": "Print the report this session owes now, composed from the report contract share/brief/report.yaml",
+            "value_name": "REPORT",
             "takes_value": false,
             "required": false,
             "global": false,
@@ -161124,8 +162483,32 @@
             "name": "session",
             "long": "session",
             "positional": false,
-            "help": "The provider's own session identity: the brief names the open episode it owns",
+            "help": "The provider's own session identity (default: MAJORDOMUS_PROVIDER_SESSION, then CLAUDE_CODE_SESSION_ID): the brief names the open episode and the work it owns",
             "value_name": "ID",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "since",
+            "long": "since",
+            "positional": false,
+            "help": "The previous report's instant: the brief says what this session delivered since",
+            "value_name": "RFC3339",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "background_json",
+            "long": "background-json",
+            "positional": false,
+            "help": "The provider's background tasks as a JSON array of {id, description, status}, when its engine exposes them",
+            "value_name": "JSON",
             "takes_value": true,
             "required": false,
             "global": false,
@@ -161174,13 +162557,26 @@
           {
             "id": "brief-line",
             "title": "The one-line brief, composed here when no server answers",
-            "description": "The same answer `GET /api/v1/brief` and the MCP tool `majordomus_brief` return, rendered as its one line: this session's task or episode and branch, the peers of the boards read, the mesh, the integration queue and the derive lock, every section present whatever its state. The command line asks the server holding this checkout's lease, which holds the board and the mesh; this fixture has no server, so the brief is composed by this process and says so in its multi-line form.",
+            "description": "The same answer `GET /api/v1/brief` and the MCP tool `majordomus_brief` return, rendered as its one line of at most 160 columns: the caller and this session's task or episode and branch, the worst attention entry, then the CI pool, the integration queue with its age, the machine, the mesh, the peers, the release and the derive lock, every stale or unread one saying so, and a count of what did not fit. The command line asks the server holding this checkout's lease, which holds the board, the mesh and the forge cache; this fixture has no server, so the brief is composed by this process, reads no forge, and says so in its multi-line form.",
             "argv": [
               "brief",
               "--line",
               "--this-checkout"
             ],
             "command": "majordomus brief --line --this-checkout",
+            "setup": [],
+            "expectation": "exits 0"
+          },
+          {
+            "id": "brief-report",
+            "title": "The report a session owes, composed from the report contract",
+            "description": "`report.prompt` of the same answer: the contract's marker, the brief's instant and the contract's fingerprint, the brief's lines, the attention entries the sections measured one per line as `[word] section: fact — remedy (actor)`, then the report's sections, rules and live reads from share/brief/report.yaml. This is the text the majordomus-brief mod submits verbatim on the interval.",
+            "argv": [
+              "brief",
+              "--report",
+              "--this-checkout"
+            ],
+            "command": "majordomus brief --report --this-checkout",
             "setup": [],
             "expectation": "exits 0"
           }
@@ -163275,7 +164671,7 @@
         "name": "majordomus_brief",
         "id": "brief.session",
         "title": "The session brief",
-        "description": "One line and a few: this session's episode and task (the one the given provider session owns, else the pointer's), the peers of every board with the boards that could not be read named, the mesh's links and what its journal addresses to this runtime, the integration queue as `majordomus prs brief` says it, and the machine's derive lock. Composed by the server holding this checkout's lease, which holds the board and the mesh: the command line asks it and composes the brief itself only when none answers, saying so; a superseded server says its own board is unreachable by the repository's gather. Carries the reporting interval the policy declares (`session.brief_interval_minutes`) and the keep-awake text a session is told at its start. Writes nothing.",
+        "description": "One line and a few, in the order session, work, peers, mesh, integration, ci, machine, release, derive, led by the attention entries the sections measured. The session is the caller's (the provider session given, else the calling board peer's, else the checkout's pointer, said as such); work is this session's own claims, branches and their canonical worktrees, pull requests, trains, latest runs with their jobs and background processes; integration says how old the queue observation is and whether origin/master moved past it; ci and the forge parts of work are read by the leaseholder alone through the monitor's shared cache; machine is free disk, swap and builders against machine.heavy_work. Every section carries its observation (source, age, bound, verdict, remedy, cost) and runs under its own budget, a section past it reading unread. Composed by the server holding this checkout's lease: the command line asks it and composes the brief itself only when none answers, saying so. Carries the reporting interval (`session.brief_interval_minutes`), per-section fingerprints of its clock-free facts, and the three texts composed from the report contract share/brief/report.yaml: keep_awake, report.prompt and report.reminder. Writes nothing.",
         "kind": "query",
         "read_only": true,
         "effect": "read",

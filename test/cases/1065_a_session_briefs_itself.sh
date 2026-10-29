@@ -43,9 +43,16 @@ done
 grep -qF 'Written by `majordomus capture install`' "$MOD/hooks/register.ts" \
   || fail 'the installed hooks module carries no marker, so the next install cannot own it'
 grep -qF '$.ui.status' "$MOD/hooks/register.ts" || fail 'the installed module shows no status line'
-# what is installed reports only a changed fact (I4250); case 4250 runs the rule's own test
-grep -qF 'fingerprint(b) !== fingerprint(told)' "$MOD/hooks/register.ts" \
+# what is installed reports only a changed fact (I4250), by the brief's own section
+# fingerprints, and relays the report the brief composed (I4390); case 4250 runs its test
+grep -qF 'changedSections(told, b).length > 0' "$MOD/hooks/register.ts" \
   || fail 'the installed module self-reports whether or not anything changed'
+grep -qF 'b.report?.prompt' "$MOD/hooks/register.ts" \
+  || fail 'the installed module does not relay report.prompt'
+! grep -qF 'Report to the person in two to four lines' "$MOD/hooks/register.ts" \
+  || fail 'the installed module still carries the placeholder prompt'
+! grep -qF 'two to four lines' "$MOD/hooks/register.ts" \
+  || fail 'the installed module states a line count'
 expect_no_grep 'majordomus-brief' .claude/settings.json
 
 # ---------------------------------------------------------------- idempotent
@@ -68,16 +75,27 @@ pol_set brief_interval_minutes 7
 brief() { "$RB" brief --repo . --this-checkout "$@" 2>/dev/null || fail "brief $* failed"; }
 LAST_OUT="$(brief --line)"
 [ "$(printf '%s\n' "$LAST_OUT" | wc -l | tr -d ' ')" = 1 ] || fail "the one-line brief is not one line: $LAST_OUT"
-expect_grep '\| peers 0/1b \| mesh off \|'
+expect_grep '\| mesh off \| peers 0/1b \|'
 LAST_OUT="$(brief --keep-awake)"
-expect_grep '^Keep yourself awake and reporting \(ADR 0136\): every 7 minutes'
-expect_grep 'only when a fact in it changed since your last report'
-expect_grep 'unless the majordomus-brief mod is loaded'
+expect_grep '^Report on yourself every 7 minutes without being asked \(brief-report/v1 #[0-9a-f]{12}, ADR 0136\)'
+expect_grep '/loop 7m /mj-brief'
+expect_grep 'A brief in which only times and ages moved is owed no report'
+expect_no_grep 'two to four lines'
 expect_grep '^Now: '
+LAST_OUT="$(brief --report)"
+expect_grep '^Majordomus report owed: the brief composed at '
+expect_grep '^Rules:$'
+expect_no_grep 'two to four lines'
+expect_no_grep 'a board that could not be read, a superseded server'
 LAST_OUT="$(brief)"
-for section in session peers mesh integration derive; do
+expect_grep '^majordomus brief  [0-9T:-]+Z  this_process'
+for section in attention session work peers mesh integration ci machine release derive; do
   expect_grep "^$section +"
 done
 expect_grep '^answered by  this_process \(no server answers for this checkout'
+expect_grep '^ci +unread: not the leaseholder'
 LAST_OUT="$(brief --format json)"
 expect_grep '"interval_minutes": 7'
+expect_grep '"contract": "brief-report/v1"'
+printf '%s' "$LAST_OUT" | jq -e '(.attention | type) == "array" and (.report.prompt | startswith("Majordomus report owed")) and (.fingerprints | length) == 9' >/dev/null \
+  || fail 'the JSON brief carries no attention array, no report.prompt or not nine section fingerprints'

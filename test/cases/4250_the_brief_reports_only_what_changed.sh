@@ -12,9 +12,10 @@
 #
 # What it proves:
 #   1  the mod's own test passes
-#   2  the test fails when the comparison of fingerprints is replaced by `true`, so a self-report
-#      on every interval again, whatever changed, cannot pass unseen
-#   3  it fails when the clock is no longer taken out of the brief
+#   2  the test fails when the comparison of the brief's section fingerprints is replaced by
+#      `true`, so a self-report on every interval again, whatever changed, cannot pass unseen
+#   3  it fails when the clock is no longer taken out of an older executable's brief
+#   4  it fails when the prompt is no longer the brief's report.prompt verbatim (I4390)
 . "$ROOT/test/lib.sh"
 command -v claude >/dev/null 2>&1 || skip "no claude on PATH: the mod's test runs only in Claude Code's engine"
 
@@ -42,7 +43,7 @@ plugin_test || { cat "$T/out"; fail "the mod's own test fails"; }
 
 # ---------------------------------------------------------------- 2  the dedupe is held
 copy
-mutate 'fingerprint(b) !== fingerprint(told)' 'true'
+mutate 'changedSections(told, b).length > 0' 'true'
 if plugin_test; then fail 'a self-report on every interval, changed or not, passes the mod'"'"'s test'; fi
 grep -q 'an idle session whose surroundings only aged is never woken' "$T/out" \
   || fail "the mutation failed the test, but not where the quiet session is held: $(tail -5 "$T/out")"
@@ -51,4 +52,11 @@ grep -q 'an idle session whose surroundings only aged is never woken' "$T/out" \
 copy
 mutate ".replace(DURATION, '<age>')" ''
 if plugin_test; then fail 'a brief whose ages count as facts passes the mod'"'"'s test'; fi
+
+# ---------------------------------------------------------------- 4  the report is relayed verbatim
+copy
+mutate 'b.report?.prompt ||' '(b.report?.prompt ?? "").trim() + " " ||'
+if plugin_test; then fail 'a prompt that is not report.prompt byte for byte passes the mod'"'"'s test'; fi
+grep -q 'the submitted prompt is report.prompt, byte for byte' "$T/out" \
+  || fail "the mutation failed the test, but not where the relay is held: $(tail -5 "$T/out")"
 exit 0

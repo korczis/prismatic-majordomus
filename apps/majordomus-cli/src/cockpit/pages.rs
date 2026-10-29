@@ -383,33 +383,59 @@ pub fn overview(ctx: &Context) -> Page {
 /// the state its owner answered in, so that a section that could not be read reads so here
 /// as it does on the command line.
 fn brief_card(ctx: &Context) -> El {
-    use crate::capability::builtin::brief::{state_word, BriefSectionState, SessionBrief};
+    use crate::capability::builtin::brief::{BriefObservation, SessionBrief};
     let b: SessionBrief = match ask(ctx, "brief.session", json!({})) {
         Ok(b) => b,
         Err(e) => return card("Session brief", alert("fail", e)),
     };
-    let status = |s: BriefSectionState| match s {
-        BriefSectionState::Read => "ok",
-        BriefSectionState::Partial => "warn",
-        BriefSectionState::Unread => "fail",
-        BriefSectionState::Undeclared => "info",
+    // every word below is a status word of the design declaration, so its badge is coloured
+    // by status.states (share/design/tokens.yaml) and never by a mapping written here
+    let age = |o: &BriefObservation| match (o.age_seconds, o.bound_seconds) {
+        (Some(a), Some(bound)) => format!("{a} s old (stale past {bound} s)"),
+        (Some(a), None) => format!("{a} s old"),
+        (None, _) => "read now".to_string(),
     };
-    let section = |name: &str, s: BriefSectionState, summary: &str| {
+    let section = |name: &str, o: &BriefObservation, summary: &str| {
         row(vec![
             text_cell(name),
-            cell(badge(status(s), state_word(s))),
+            cell(badge(o.verdict.as_str(), o.verdict.as_str())),
+            text_cell(age(o)),
             text_cell(summary),
+            text_cell(o.remedy.clone().unwrap_or_default()),
         ])
     };
-    let mut body = el("div").child(el("p").child(mono(&b.line))).child(table(
-        &["Section", "State", "What its owner answered"],
+    let mut body = el("div").child(el("p").child(mono(&b.line)));
+    if b.attention.is_empty() {
+        body = body.child(el("p").class("mj-empty").text("Attention: none measured."));
+    } else {
+        body = body.child(table(
+            &["Attention", "Section", "Fact", "Remedy", "Who acts"],
+            b.attention
+                .iter()
+                .map(|a| {
+                    row(vec![
+                        cell(badge(&a.word, &a.word)),
+                        text_cell(&a.section),
+                        text_cell(&a.fact),
+                        cell(mono(&a.remedy)),
+                        text_cell(&a.actor),
+                    ])
+                })
+                .collect(),
+        ));
+    }
+    body = body.child(table(
+        &["Section", "Verdict", "Age", "What its owner answered", "Remedy"],
         vec![
-            section("session", b.session.state, &b.session.summary),
-            section("peers", b.peers.state, &b.peers.summary),
-            section("mesh", b.mesh.state, &b.mesh.summary),
-            section("integration", b.integration.state, &b.integration.summary),
-            section("release", b.release.state, &b.release.summary),
-            section("derive", b.derive.state, &b.derive.summary),
+            section("session", &b.session.observed, &b.session.summary),
+            section("work", &b.work.observed, &b.work.summary),
+            section("peers", &b.peers.observed, &b.peers.summary),
+            section("mesh", &b.mesh.observed, &b.mesh.summary),
+            section("integration", &b.integration.observed, &b.integration.summary),
+            section("ci", &b.ci.observed, &b.ci.summary),
+            section("machine", &b.machine.observed, &b.machine.summary),
+            section("release", &b.release.observed, &b.release.summary),
+            section("derive", &b.derive.observed, &b.derive.summary),
         ],
     ));
     if !b.peers.named.is_empty() {
@@ -424,10 +450,13 @@ fn brief_card(ctx: &Context) -> El {
         );
     }
     body = body.child(el("p").class("mj-empty").text(format!(
-        "Answered by the {} process at {}; a session reports this every {} minutes.",
+        "Answered by the {} process at {} in {} ms; a session reports every {} minutes under {} #{}.",
         b.answered_by.process.replace('_', " "),
         b.at,
-        b.interval_minutes
+        b.answered_by.elapsed_ms,
+        b.interval_minutes,
+        b.report.contract,
+        b.report.fingerprint
     )));
     card_with(
         "Session brief",
