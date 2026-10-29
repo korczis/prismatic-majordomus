@@ -185,4 +185,50 @@ jobs:
 Y
 expect_exit 0 "$CHECK" fine.yml
 
-echo "    an optional step is bounded inside its own bound, so it degrades instead of being killed"
+# --- a forge outage leaves the deployed stage unknown, never red (I4380 with I4315, ADR 0227).
+#     `served forge` says whether it observed the deployments; the step after it judges what
+#     Pages published only when it did. Merged without that, a hung or failed `served forge`
+#     left the publication unread, the deployed-stage step failed ui-snapshot, and publish was
+#     skipped: the defect this issue removes. Both steps are run as written, against a stub
+#     executable, so the shape is proved by what they do and not by what they say.
+script_of() { step_of "$1" | awk '/^        run: \|$/ { f = 1; next } f { sub(/^          /, ""); print }'; }
+script_of 'the deployments and releases, observed' > served.sh
+script_of 'the deployed stage reads what Pages published' > stage.sh
+[ -s served.sh ] && [ -s stage.sh ] \
+  || { echo "    the forge's deployment step or the deployed-stage step is missing"; exit 1; }
+grep -q 'steps.forge.outputs.observed' <(step_of 'the deployed stage reads what Pages published') \
+  || { echo "    the deployed-stage step does not read whether the forge was observed"; exit 1; }
+grep -q '^        id: forge$' served.step \
+  || { echo "    the deployments step has no id the deployed-stage step can read"; exit 1; }
+mkdir -p apps/majordomus-cli/target/debug runner
+stub="apps/majordomus-cli/target/debug/majordomus"
+judge() { # $1 FORGE_OBSERVED, then the stub's body
+  printf '#!/usr/bin/env bash\n%s\n' "$2" > "$stub"; chmod +x "$stub"
+  FORGE_OBSERVED="$1" RUNNER_TEMP="$PWD/runner" bash -e stage.sh > stage.out 2>&1
+}
+observe() { # the stub's body; writes observed to forge.out
+  printf '#!/usr/bin/env bash\n%s\n' "$1" > "$stub"; chmod +x "$stub"
+  : > forge.out
+  GITHUB_OUTPUT="$PWD/forge.out" bash -e served.sh > served.out 2>&1
+}
+command -v timeout >/dev/null 2>&1 || { echo "    timeout(1) is needed to run the forge step"; exit 1; }
+observe 'exit 12' || { echo "    a failed served forge failed its step"; cat served.out; exit 1; }
+grep -qx 'observed=false' forge.out && grep -q '::warning title=Forge not observed::.*(exit 12)' served.out \
+  || { echo "    a failed served forge did not say it observed nothing"; cat forge.out served.out; exit 1; }
+observe 'exit 0' && grep -qx 'observed=true' forge.out \
+  || { echo "    a served forge that answered did not say so"; cat forge.out; exit 1; }
+unread='echo "{\"sources\":[{\"name\":\"publication\",\"state\":\"unread\",\"detail\":\"neither path\"}],\"tallies\":{}}"'
+read_ok='echo "{\"sources\":[{\"name\":\"publication\",\"state\":\"read\",\"detail\":\"releases/latest.json\"}],\"tallies\":{}}"'
+judge false 'echo "plan delivery must not be asked" >&2; exit 3' \
+  || { echo "    the forge was not observed and the deployed stage failed the job"; cat stage.out; exit 1; }
+grep -q '::warning title=The deployed stage is unknown::' stage.out \
+  && ! grep -q 'must not be asked' stage.out \
+  || { echo "    an unobserved forge did not leave the deployed stage unknown"; cat stage.out; exit 1; }
+judge '' 'exit 3' || { echo "    a forge step that wrote no output failed the job"; cat stage.out; exit 1; }
+judge true "$unread" && { echo "    an unread publication after an observed forge stayed green"; cat stage.out; exit 1; }
+grep -q '::error title=The deployed stage is unread::neither path' stage.out \
+  || { echo "    an unread publication was not named red"; cat stage.out; exit 1; }
+judge true "$read_ok" || { echo "    a read publication failed the job"; cat stage.out; exit 1; }
+
+echo "    an optional step is bounded inside its own bound, so it degrades instead of being killed;"
+echo "    a forge outage leaves the deployed stage unknown, and an unread publication stays red"

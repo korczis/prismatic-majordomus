@@ -355,13 +355,49 @@ jobs:
         run: |
           timeout --kill-after=10 420 apps/majordomus-cli/target/debug/majordomus prs refresh \
             || echo "::warning title=Forge not observed::majordomus prs refresh could not read the pull requests in time (exit $?); the PR Drain is published saying the forge was not observed"
+      # `observed` tells the next step whether the deployments were read at all: the deployed
+      # stage can only be judged against a forge that answered (I4315 with I4380).
       - name: the deployments and releases, observed
+        id: forge
         timeout-minutes: 3
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          timeout --kill-after=10 135 apps/majordomus-cli/target/debug/majordomus served forge \
-            || echo "::warning title=Forge not observed::majordomus served forge could not read the deployments and releases in time (exit $?); the Deployments screen is published without them"
+          if timeout --kill-after=10 135 apps/majordomus-cli/target/debug/majordomus served forge; then
+            echo "observed=true" >> "$GITHUB_OUTPUT"
+          else
+            rc=$?
+            echo "observed=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Forge not observed::majordomus served forge could not read the deployments and releases in time (exit $rc); the Deployments screen is published without them"
+          fi
+      # The deployed stage, read from what was just observed (I4315, ADR 0227). Every Pages
+      # deployment is a gh-pages commit carrying the built site; the reader, from its first
+      # day (2026-10-16), looked for the pointer at its source path, and plan delivery read
+      # deployed for none of 1036 issues while the site served the trunk. This job published
+      # that answer every time, green. Once the forge has been observed, a publication the
+      # reader cannot read is a defect of this commit: only "no successful deployment" is an
+      # answer. When the forge was not observed, the stage is unknown, not wrong: the step
+      # says so and the publication goes on, because a forge outage must not hold the site
+      # back (I4380); the red is for a forge that answered.
+      - name: the deployed stage reads what Pages published
+        timeout-minutes: 3
+        env:
+          FORGE_OBSERVED: ${{ steps.forge.outputs.observed }}
+        run: |
+          if [ "$FORGE_OBSERVED" != true ]; then
+            echo "::warning title=The deployed stage is unknown::served forge did not observe the deployments, so what Pages published was not judged; the publication goes on"
+            exit 0
+          fi
+          d="$RUNNER_TEMP/delivery.json"
+          apps/majordomus-cli/target/debug/majordomus plan delivery --format json > "$d"
+          state="$(jq -r '.sources[] | select(.name == "publication") | .state' "$d")"
+          detail="$(jq -r '.sources[] | select(.name == "publication") | .detail' "$d")"
+          echo "publication: ${state:-absent} — $detail"
+          case "$state:$detail" in
+            read:*|*"holds no successful"*) ;;
+            *) echo "::error title=The deployed stage is unread::${detail:-plan delivery names no publication source}"; exit 1 ;;
+          esac
+          jq -c '.tallies' "$d"
       # Every page the screens link to, not the first few: the default budget is sized for a
       # person waiting at a terminal and left most inspectors out of the published snapshot.
       # What was still left out is in snapshot.json, and `scripts/pages verify-ui` reports it.

@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "e41d1f33059c89a9002c860cd3e3a6098cab0e22dcc6f69531f2ce54b2d12870",
+    "fingerprint": "1042f0f376be1c33de6b6fb31d90803bbfe68c2a8dda2736dc6b6df5d48b94e9",
     "summary": {
-      "total": 3572,
+      "total": 3574,
       "builtin": 220,
-      "declarative": 3352,
+      "declarative": 3354,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3352
+        "resource": 3354
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3362
+        "implemented": 3364
       },
       "mcp_tools": 206,
-      "mcp_resources": 3409,
+      "mcp_resources": 3411,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -63272,7 +63272,7 @@
                   },
                   "latest_json": {
                     "type": "string",
-                    "description": "Where that `latest.json` was read: `<commit>:site/static/releases/latest.json`, the\ncommit the observed Pages deployment published."
+                    "description": "Where that `latest.json` was read: `<commit>:releases/latest.json` when the observed\nPages deployment published a gh-pages commit (the built site),\n`<commit>:site/static/releases/latest.json` when it published a source commit."
                   },
                   "observed_at": {
                     "type": "string",
@@ -90743,7 +90743,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 166,
+        "capabilities": 167,
         "capability_ids": []
       },
       {
@@ -91083,7 +91083,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 353,
+        "capabilities": 352,
         "capability_ids": []
       },
       {
@@ -91383,7 +91383,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1054,
+        "capabilities": 1055,
         "capability_ids": []
       },
       {
@@ -91391,7 +91391,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 59,
+        "capabilities": 60,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "6f233c087b50c8323967a442d3c918794faa951670a495dbd174c3f4cad5f8e1",
+    "fingerprint": "592a109c5671285b8ff14e73834c8bed7eca53e8289cf3564a8deb4a502b9f66",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92096,7 +92096,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 166,
+      "adr": 167,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -92107,14 +92107,14 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 353,
+      "document": 352,
       "domain": 6,
       "feature": 29,
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1054,
-      "knowledge": 59,
+      "issue": 1055,
+      "knowledge": 60,
       "mesh-declaration": 1,
       "milestone": 111,
       "moment": 38,
@@ -92131,7 +92131,9 @@
       "use-case": 49,
       "workspace": 1
     },
-    "diagnostics": {},
+    "diagnostics": {
+      "warning": 1
+    },
     "objects": [
       {
         "uri": "majordomus://adr/adr-0001",
@@ -94824,6 +94826,22 @@
           "mesh",
           "governance",
           "enforcement"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0227",
+        "kind": "adr",
+        "identity": "adr-0227",
+        "title": "The deployed stage reads the pointer where Pages published it",
+        "description": "The deployed stage reads the pointer where Pages published it",
+        "path": ".ai/repo/adrs/0227-the-deployed-stage-reads-the-pointer-where-pages-published-i.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5150,
+        "tags": [
+          "delivery",
+          "pages",
+          "plan"
         ]
       },
       {
@@ -99468,7 +99486,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 44191
+        "bytes": 44548
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -99549,16 +99567,7 @@
         "title": "Planning — milestones, issues, and the graph between them",
         "path": "docs/PLANNING.md",
         "source_class": "document",
-        "bytes": 44972
-      },
-      {
-        "uri": "majordomus://document/docs/PLAN_STATUS.md",
-        "kind": "document",
-        "identity": "docs/PLAN_STATUS.md",
-        "title": "Plan status",
-        "path": "docs/PLAN_STATUS.md",
-        "source_class": "document",
-        "bytes": 1047199
+        "bytes": 46647
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -114883,6 +114892,17 @@
         "bytes": 3014
       },
       {
+        "uri": "majordomus://issue/I4315",
+        "kind": "issue",
+        "identity": "I4315",
+        "title": "The deployed stage reads the release pointer where the Pages deployment published it, and a deploy whose pointer it cannot read is red",
+        "description": "plan delivery reads releases/latest.json from the gh-pages commit the newest successful Pages deployment published, so an issue whose release that pointer names reads deployed; the Pages workflow refuses a snapshot whose publication source is unread.",
+        "path": ".ai/repo/project/issues/I4315.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3787
+      },
+      {
         "uri": "majordomus://issue/I4341",
         "kind": "issue",
         "identity": "I4341",
@@ -115898,6 +115918,23 @@
         "tags": [
           "fabric",
           "chatgpt-project"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/the-deployed-stage-read-a-path-nobody-published",
+        "kind": "knowledge",
+        "identity": "the-deployed-stage-read-a-path-nobody-published",
+        "title": "The deployed stage read a path no deployment had ever published, and every check was green",
+        "description": "The measurement of 2026-10-28 - why plan delivery proved deployed for no issue while majordomus.dev served the trunk, the two causes, and what now refuses it.",
+        "path": ".ai/repo/knowledge/curated/the-deployed-stage-read-a-path-nobody-published.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 3826,
+        "tags": [
+          "post-mortem",
+          "delivery",
+          "pages",
+          "plan"
         ]
       },
       {
@@ -126052,7 +126089,7 @@
         "identity": "test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
         "path": "test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
         "source_class": "case",
-        "bytes": 8012
+        "bytes": 11607
       },
       {
         "uri": "majordomus://test/test/cases/43_plan_command.sh",
@@ -128430,7 +128467,7 @@
       "identity": [
         "id"
       ],
-      "objects": 166
+      "objects": 167
     },
     {
       "name": "application",
@@ -128536,7 +128573,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 353
+      "objects": 352
     },
     {
       "name": "domain",
@@ -128593,7 +128630,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1054
+      "objects": 1055
     },
     {
       "name": "knowledge",
@@ -128603,7 +128640,7 @@
       "identity": [
         "id"
       ],
-      "objects": 59
+      "objects": 60
     },
     {
       "name": "mesh-declaration",
