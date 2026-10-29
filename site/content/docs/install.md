@@ -10,7 +10,7 @@ source = "docs/INSTALL.md"
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL);
      regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.8 -->
+     Generator: majordomus-cli 1.0.0-alpha.9 -->
 
 ## Quick install
 
@@ -195,6 +195,8 @@ the tool's, and no command of this project deletes them.
 
 | Release | Published | Channel | Artifacts | Metadata |
 |---|---|---|---|---|
+| `v1.0.0-alpha.9` | 2026-10-28 | prerelease | 6 | [`v1.0.0-alpha.9.json`](https://majordomus.dev/releases/v1.0.0-alpha.9.json) |
+| `v1.0.0-alpha.8` | 2026-10-25 | prerelease | 6 | [`v1.0.0-alpha.8.json`](https://majordomus.dev/releases/v1.0.0-alpha.8.json) |
 | `v1.0.0-alpha.5` | 2026-10-22 | prerelease | 6 | [`v1.0.0-alpha.5.json`](https://majordomus.dev/releases/v1.0.0-alpha.5.json) |
 | `v1.0.0-alpha.4` | 2026-10-21 | prerelease | 6 | [`v1.0.0-alpha.4.json`](https://majordomus.dev/releases/v1.0.0-alpha.4.json) |
 | `v1.0.0-alpha.2` | 2026-10-21 | prerelease | 6 | [`v1.0.0-alpha.2.json`](https://majordomus.dev/releases/v1.0.0-alpha.2.json) |

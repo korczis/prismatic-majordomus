@@ -1,7 +1,7 @@
 +++
 title = "majordomus mesh enrol"
 description = "Add this machine's public key to the mesh declaration's trust list, once; commit it to join"
-weight = 142
+weight = 143
 [extra]
 route = "/docs/cli/mesh/enrol/"
 command = "majordomus mesh enrol"

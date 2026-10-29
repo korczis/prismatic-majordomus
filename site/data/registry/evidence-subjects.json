@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "1.0.0-alpha.8"
+    "version": "1.0.0-alpha.9"
   },
   "route": "/evidence/",
   "kinds": [
@@ -586,6 +586,11 @@
       "kind": "capability",
       "subject": "capability:mcp.projection",
       "path": "/evidence/capabilities/mcp-projection/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:mesh.beat",
+      "path": "/evidence/capabilities/mesh-beat/"
     },
     {
       "kind": "capability",
@@ -2944,6 +2949,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:mesh beat",
+      "path": "/evidence/commands/mesh-beat/"
+    },
+    {
+      "kind": "command",
       "subject": "command:mesh build-cache ensure",
       "path": "/evidence/commands/mesh-build-cache-ensure/"
     },
@@ -3416,6 +3426,11 @@
       "kind": "command",
       "subject": "command:start",
       "path": "/evidence/commands/start/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:ui",
+      "path": "/evidence/commands/ui/"
     },
     {
       "kind": "command",
@@ -5285,6 +5300,16 @@
       "kind": "capability",
       "id": "mcp.projection",
       "page": "/evidence/capabilities/mcp-projection/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.beat": {
+      "kind": "capability",
+      "id": "mesh.beat",
+      "page": "/evidence/capabilities/mesh-beat/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -12712,6 +12737,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:4251_a_mod_links_nothing_outside_the_repository",
+          "path": "test/cases/4251_a_mod_links_nothing_outside_the_repository.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:494_the_mesh_is_declared_and_held",
           "path": "test/cases/494_the_mesh_is_declared_and_held.sh",
           "category": "e2e"
@@ -14169,6 +14200,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:4265_the_adopter_hook_runs_doctor_in_commit_context",
+          "path": "test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:44_model_doctrine",
           "path": "test/cases/44_model_doctrine.sh",
           "category": "e2e"
@@ -15512,6 +15549,18 @@
           "category": "e2e"
         },
         {
+          "via": "behaviour",
+          "test": "suite:4258_documents_below_docs_are_discovered",
+          "path": "test/cases/4258_documents_below_docs_are_discovered.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:4265_the_adopter_hook_runs_doctor_in_commit_context",
+          "path": "test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh",
+          "category": "e2e"
+        },
+        {
           "via": "negative",
           "test": "suite:01_init",
           "path": "test/cases/01_init.sh",
@@ -15763,6 +15812,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:4258_documents_below_docs_are_discovered",
+          "path": "test/cases/4258_documents_below_docs_are_discovered.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:563_knowledge_is_derived_at_the_boundary",
           "path": "test/cases/563_knowledge_is_derived_at_the_boundary.sh",
           "category": "e2e"
@@ -15989,6 +16044,25 @@
       "kind": "command",
       "id": "mcp",
       "page": "/evidence/commands/mcp/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:mesh beat": {
+      "kind": "command",
+      "id": "mesh beat",
+      "page": "/evidence/commands/mesh-beat/",
       "programs": [
         "native"
       ],
@@ -18277,6 +18351,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:4253_every_skill_remedy_runs",
+          "path": "test/cases/4253_every_skill_remedy_runs.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:95_skills",
           "path": "test/cases/95_skills.sh",
           "category": "e2e"
@@ -18476,6 +18556,25 @@
           "test": "suite:32_refusal_lifecycle",
           "path": "test/cases/32_refusal_lifecycle.sh",
           "category": "e2e"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:ui": {
+      "kind": "command",
+      "id": "ui",
+      "page": "/evidence/commands/ui/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
         }
       ],
       "mechanisms": [],
@@ -21374,6 +21473,18 @@
       "programs": [],
       "members": [
         "capability:mesh.status"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_mesh_beat": {
+      "kind": "mcp",
+      "id": "majordomus_mesh_beat",
+      "alias_of": "capability:mesh.beat",
+      "programs": [],
+      "members": [
+        "capability:mesh.beat"
       ],
       "routes": [],
       "mechanisms": [],
@@ -24557,6 +24668,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:project.an-exclusive-claim-lives-by-its-holders-progress": {
+      "kind": "rule",
+      "id": "project.an-exclusive-claim-lives-by-its-holders-progress",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:3990_a_claim_lapses_when_its_session_stops_progressing",
+          "path": "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
+            ".ai/repo/rules/project/an-exclusive-claim-lives-by-its-holders-progress.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [
+        "scripts/ci/mesh-check"
+      ],
+      "findings": []
+    },
     "rule:project.an-expedited-landing-is-the-owners-word": {
       "kind": "rule",
       "id": "project.an-expedited-landing-is-the-owners-word",
@@ -27693,6 +27827,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:project.ui-uses-flowbite-pro": {
+      "kind": "rule",
+      "id": "project.ui-uses-flowbite-pro",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [
+        "scripts/ci/design-check"
+      ],
+      "findings": []
+    },
     "rule:project.unknown-keys-are-errors": {
       "kind": "rule",
       "id": "project.unknown-keys-are-errors",
@@ -29433,6 +29579,7 @@
     "suite:194_audit_rows_are_planned",
     "suite:240_the_session_domain_is_typed",
     "suite:241_merge_policy_claims_only_generator_output",
+    "suite:2484_majordomus_ui_opens_the_dashboard",
     "suite:278_the_gate_runner_clears_the_share",
     "suite:279_the_publication_age_is_the_oldest_debt",
     "suite:280_capture_status_states_its_denominator",
@@ -29581,6 +29728,8 @@
     "suite:417_the_suite_finishes_inside_its_bound",
     "suite:4199_a_case_that_compiles_never_starves_its_neighbours",
     "suite:4223_a_failed_cases_reason_reaches_the_artifact",
+    "suite:4232_a_core_build_keeps_its_own_rlib",
+    "suite:4318_the_homepage_rule_figure_agrees_with_its_link",
     "suite:46_cross_surface",
     "suite:47_mutation",
     "suite:48_roadmap_graph",

@@ -464,6 +464,7 @@ mod tests {
             branch: None,
             pr_open: None,
             merged: None,
+            planned: None,
             released: None,
             deployed: None,
         }
