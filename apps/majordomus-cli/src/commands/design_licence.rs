@@ -38,17 +38,24 @@ fn run_to(args: DesignArgs, out: &mut dyn Write) -> Result<u8> {
         Some(path) => json!({ "evidence": path.to_string_lossy() }),
         None => json!({}),
     };
-    let value = app.context.execute(CAPABILITY, input).map_err(refusal)?;
-    let report: LicenceReport =
-        serde_json::from_value(value.clone()).map_err(|e| Error::Protocol {
-            reason: format!("{CAPABILITY} answered with something this command cannot read: {e}"),
-        })?;
+    let (value, report) = app
+        .context
+        .execute(CAPABILITY, input)
+        .map_err(refusal)
+        .and_then(|value| report_of(&value).map(|report| (value, report)))?;
     if licence.json || matches!(args.format, OutputFormat::Json) {
         writeln!(out, "{value:#}").map_err(Error::Transport)?;
     } else {
         render(out, &report)?;
     }
     Ok(exit_code(&report))
+}
+
+/// The capability's answer as a report; an answer of another shape is a protocol error.
+fn report_of(value: &serde_json::Value) -> Result<LicenceReport> {
+    serde_json::from_value(value.clone()).map_err(|e| Error::Protocol {
+        reason: format!("{CAPABILITY} answered with something this command cannot read: {e}"),
+    })
 }
 
 /// The exit code when no answer could be made at all: a tree git cannot list. Distinct
@@ -323,6 +330,45 @@ mod tests {
         assert!(String::from_utf8(out)
             .unwrap()
             .contains("a.html holds a licensed file the evidence does not name (exact copy)"));
+    }
+
+    /// An output that cannot be written.
+    struct Closed;
+    impl Write for Closed {
+        fn write(&mut self, _: &[u8]) -> std::io::Result<usize> {
+            Err(std::io::ErrorKind::BrokenPipe.into())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    /// A closed output is a transport error in either form, never a verdict lost; a
+    /// directory that holds no repository is refused; an answer of another shape is a
+    /// protocol error; an unusable publish entry reaches the command as not judged.
+    #[test]
+    fn what_cannot_be_written_read_or_loaded_is_named() {
+        let (repo, side) = licensed_repo();
+        let ev = side.path().join("ev.tsv");
+        for json in [false, true] {
+            let got = run_to(args(repo.root(), Some(ev.clone()), json), &mut Closed);
+            assert!(matches!(got, Err(Error::Transport(_))), "json {json}: {got:?}");
+        }
+        let mut r = report(Verdict::Refused);
+        r.matches.push(Match { path: "a".into(), source: None, kind: MatchKind::Exact });
+        assert!(matches!(render(&mut Closed, &r), Err(Error::Transport(_))));
+
+        let empty = tempfile::tempdir().unwrap();
+        assert!(run_to(args(empty.path(), None, false), &mut Vec::new()).is_err());
+
+        assert!(matches!(report_of(&json!({ "verdict": 1 })), Err(Error::Protocol { .. })));
+
+        let policy = repo.root().join(".ai/repo/policy.yaml");
+        let text = std::fs::read_to_string(&policy).unwrap();
+        std::fs::write(&policy, text.replace("publish: []", "publish: [\"/srv/www\"]")).unwrap();
+        let mut out = Vec::new();
+        assert_eq!(run_to(args(repo.root(), Some(ev), false), &mut out).unwrap(), EXIT_NOT_JUDGED);
+        assert!(String::from_utf8(out).unwrap().contains("ui.publish entry `/srv/www`"));
     }
 
     #[test]
