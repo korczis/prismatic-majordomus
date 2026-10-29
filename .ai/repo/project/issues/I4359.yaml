@@ -1,0 +1,56 @@
+id: I4359
+milestone: a-change-is-judged-in-minutes
+title: "Rule: no CI runs on a host whose runner layer is undeclared or whose guard is not observed live, and the runner layer is documented"
+slug: no-ci-routes-to-an-undeclared-runner-host
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "A blocking project rule, no-ci-routes-to-an-undeclared-runner-host, held at two points. In the repository, a typed capability, mesh.runner_routing (`majordomus mesh runner-routing`), run as a gate in structure, fails when a self-hosted label reachable from a workflow or from a repository variable's default names no policy node that declares its runner units, their homes, their caps and the guard, observation and watchdog timers. On the host, the build host policy installs a runner job-started hook (apps/majordomus-cli/assets/mesh-cache-provider/runner-job-started, set as ACTIONS_RUNNER_HOOK_JOB_STARTED in the runner units' drop-in) that fails the job at its start, naming the failing item, while the host's latest observation (/var/lib/majordomus/build-host.json, written every five minutes by I4343) is missing, failing or older than 15 minutes; so a host whose guard has stopped takes no CI, and the refusal does not wait for anyone to ask. docs/CI.md gains a section 'Self-hosted runners' with the runbook of the 2026-10-28 recovery."
+why: "Incident 1 of 2026-10-28: lundra's runners lundra-1..3 went offline when its disk filled during run 40680986818; the runner layer had been provisioned by hand on 2026-10-26 (I4242's non_scope, on feature/lundra-is-the-first-wave) and is declared nowhere, and #2596 routes validate's first wave to lundra through MJ_RUNNER, widening the exposure. Its root cause was that no check fails while the guard is missing; a validator that reads only the policy, or a doctor nobody runs, would repeat it: if disk-guard.timer stopped again, CI would keep routing to lundra until the disk filled. The review's order for lundra serving CI 24/7 is I4343, I4344, I4346, I4345 and then this rule. The runner units' drop-in is rendered by I4352 (fix/lundra-provisions-its-runners, not landed), which this issue takes into depends_on once it is on master. The repository half is a capability, not a script, under ADR 0069; the hook is a host payload with a platform-adaptor exemption, as disk-guard is."
+current_state: "Measured at 81ef931a3e1: apps/majordomus-cli/assets/mesh-cache-provider/policy.json declares no runner unit, home or cap; no rule names a self-hosted label; nothing on lundra refuses a job while its guard is down; docs/CI.md has no section on self-hosted runners."
+desired_state: "Routing a workflow to a self-hosted label fails validate unless the label's host declares its runner layer; a job that reaches a host whose latest observation is missing, failing or stale fails at its start, naming the item, instead of filling the disk; the docs name every unit, its HOME, its cap and the timers that guard it. Enforced by the capability's gate in structure, the job-started hook on the host, case 4359 and the rule."
+scope:
+  - ".ai/repo/project/issues/I4359.yaml"
+  - ".ai/repo/rules/project/no-ci-routes-to-an-undeclared-runner-host.v1.md"
+  - "apps/majordomus-cli/src/mesh/runner_routing.rs"
+  - "apps/majordomus-cli/src/mesh/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/src/commands/mesh.rs"
+  - "apps/majordomus-cli/src/mesh/cache_provision.rs"
+  - "apps/majordomus-cli/assets/mesh-cache-provider/runner-job-started"
+  - "apps/majordomus-cli/assets/mesh-cache-provider/policy.json"
+  - ".ai/repo/automation/inventory.jsonl"
+  - ".ai/repo/ci/gates.yaml"
+  - "test/cases/4359_no_ci_routes_to_an_undeclared_runner_host.sh"
+  - ".github/workflows/validate.yml"
+  - "docs/CI.md"
+  - "docs/MESH.md"
+non_scope:
+  - "Choosing the runner of a job (I4242, #2596)"
+  - "Provisioning the runner units and rendering their drop-in (I4352)"
+  - "Writing and publishing the observation (I4343)"
+acceptance_criteria:
+  - "Unit test of mesh::runner_routing and case 4359: the gate fails on a workflow routing to lundra while the policy declares no runner units for it, and passes once they are declared"
+  - "Case 4359 with fixture observation files: missing, verdict fail, and 16 minutes old each make runner-job-started exit non-zero naming the item; a passing observation 4 minutes old exits 0"
+  - "Unit test: the provision plan installs runner-job-started and sets ACTIONS_RUNNER_HOOK_JOB_STARTED in each declared runner unit's drop-in"
+  - "On lundra: with build-host-observe.timer stopped for 16 minutes a job routed there fails at its start naming the stale observation, and passes again once the timer runs (evidence names both runs)"
+  - "Case 4359: docs/CI.md names each declared runner unit, its HOME, its cap and the guard, observation and watchdog timer names"
+  - "`majordomus shell check` passes with runner-job-started carrying an F (platform adaptor) exemption in .ai/repo/automation/inventory.jsonl giving why (the runner runs a hook as a script) and removal (the runner can call the executable directly)"
+  - "`majordomus rule proves project.no-ci-routes-to-an-undeclared-runner-host` resolves the rule to case 4359"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::"
+  - "bash test/run.sh 4359_no_ci_routes_to_an_undeclared_runner_host"
+  - "bin/majordomus mesh runner-routing"
+  - "bin/majordomus shell check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+  - "rust"
+  - "stale_observation_refuses_a_job_on_lundra"
+depends_on:
+  - "I4343"
+  - "I4344"
+  - "I4345"
+serves: []
+created_at: 2026-10-29
+updated_at: 2026-10-29
