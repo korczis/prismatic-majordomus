@@ -1164,7 +1164,12 @@ if [ -f "$RDS" ] && [ -f "$EXJ" ]; then
   jq -r '.modules[] | [.slug, .route] | @tsv' "$EXJ" | while IFS="$(printf '\t')" read -r slug route; do
     [ -f "$PUB/registry/modules/$slug/index.html" ] || { echo "no page for module $slug"; continue; }
   done > "$PAGEROWS.found"; while read -r l; do bad registry "$l"; done < "$PAGEROWS.found"
-  jq -r '.capabilities[] | [.id, .slug, .module_route, .api_anchor // "", .tool // ""] | @tsv' "$EXJ" | while IFS="$(printf '\t')" read -r id slug mroute anchor tool; do
+  # An absent anchor or tool is written as "-", never as an empty field: tab is whitespace to
+  # `read`, so two tabs in a row would collapse and the tool would be read as the anchor (a
+  # capability with an MCP tool and no HTTP route, design.licence, was the first to show it).
+  jq -r '.capabilities[] | [.id, .slug, .module_route, (.api_anchor // "-"), (.tool // "-")] | @tsv' "$EXJ" | while IFS="$(printf '\t')" read -r id slug mroute anchor tool; do
+    [ "$anchor" = "-" ] && anchor=""
+    [ "$tool" = "-" ] && tool=""
     pg="$PUB/registry/capabilities/$slug/index.html"
     [ -f "$pg" ] || { echo "no page for capability $id"; continue; }
     grep -q "$PREFIX$mroute\"" "$pg" || echo "capability page $id does not link its module $mroute"
