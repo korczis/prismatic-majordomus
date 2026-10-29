@@ -115,7 +115,12 @@ A promoted record is tracked, so its provenance must resolve in a clean clone. `
 keeps the candidate's `session:` and `task:` ids, which live only in this machine's
 `.ai/local`; a fresh checkout's doctor fails them as unresolved references, and the
 structure gate fails the train. Replace them with the issue the work serves and the files,
-tests or commits the lesson rests on before committing, until `promote` does it itself.
+tests or commits the lesson rests on before committing, until `promote` does it itself
+(planned in pull request 2677).
+
+Every issue record this run writes names the criterion it serves (`serves:`) of the intent
+its milestone realises; `majordomus intent validate` refuses one that serves none, and
+`plan validate` only warns, so run both before the commit.
 
 Before deciding, look for the lesson already in flight: the board's claims, the open pull
 requests (`gh pr list`), the issues that name its subject (`majordomus plan list`, then
