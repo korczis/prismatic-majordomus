@@ -575,6 +575,18 @@ pub enum DesignCommand {
 
 #[derive(Debug, Args)]
 /// `majordomus design licence`: the never-publish gate.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, DesignCommand, LicenceArgs};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "design", "licence"]).unwrap();
+/// let Command::Design(args) = cli.command else { panic!("not the design command") };
+/// let DesignCommand::Licence(licence) = args.command else { panic!("not design licence") };
+/// let licence: LicenceArgs = licence;
+/// // without --evidence the policy's ui.evidence entries are read
+/// assert!(licence.evidence.is_none() && !licence.json);
+/// ```
 pub struct LicenceArgs {
     /// A kit-evidence/v1 file; absent reads the policy's ui.evidence entries under $HOME
     #[arg(long, value_name = "FILE")]
