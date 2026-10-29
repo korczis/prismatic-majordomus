@@ -343,9 +343,9 @@ mod tests {
             .expect("git")
             .success());
         let dir = machine_slot::directory(repo.root()).expect("a git repository");
-        if std::env::var_os(machine_slot::DIRECTORY_ENV).is_some() {
-            return; // the environment points every test at one directory; nothing to prove here
-        }
+        // the environment points every test at one directory; nothing to prove here then
+        let named = std::env::var_os(machine_slot::DIRECTORY_ENV);
+        let None = named else { return };
         let input =
             serde_json::json!({"pid": std::process::id(), "purpose": "a test", "wait_seconds": 0});
         let answer: SlotAnswer =
@@ -365,5 +365,32 @@ mod tests {
             Err(CapabilityError::InvalidInput(_))
         ));
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_policy_that_does_not_load_declares_no_limits() {
+        let (_repo, ctx) = with_policy("machine: [this is not\n");
+        let l = limits(&ctx);
+        assert_eq!(
+            (l.slots, l.min_free_gib, l.wait_seconds),
+            (None, None, None)
+        );
+    }
+
+    #[test]
+    fn an_unusable_pid_is_the_callers_error_and_any_other_failure_the_directorys() {
+        let refused = internal(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "pid 1 is not a running process",
+        ));
+        assert!(
+            matches!(&refused, CapabilityError::InvalidInput(r) if r == "pid 1 is not a running process"),
+            "{refused:?}"
+        );
+        let broken = internal(std::io::Error::other("read-only file system"));
+        assert!(
+            matches!(&broken, CapabilityError::Internal(r) if r == "the slot directory: read-only file system"),
+            "{broken:?}"
+        );
     }
 }

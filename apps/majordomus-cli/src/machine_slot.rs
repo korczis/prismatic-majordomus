@@ -261,10 +261,17 @@ impl crate::order::Ordered for Record {
 /// The slot directory for a checkout: `MAJORDOMUS_MACHINE_SLOTS`, else `.machine.slots` in
 /// the directory holding the primary checkout, beside the derive lock. `None` outside git.
 pub fn directory(root: &Path) -> Option<PathBuf> {
-    if let Some(dir) = std::env::var_os(DIRECTORY_ENV).filter(|d| !d.is_empty()) {
-        return Some(PathBuf::from(dir));
+    directory_from(std::env::var_os(DIRECTORY_ENV), root)
+}
+
+/// [`directory`] with the environment's value handed in; an empty value is no value.
+fn directory_from(named: Option<std::ffi::OsString>, root: &Path) -> Option<PathBuf> {
+    match named.filter(|d| !d.is_empty()) {
+        Some(dir) => Some(PathBuf::from(dir)),
+        None => {
+            crate::capability::builtin::brief::primary_home(root).map(|h| h.join(DIRECTORY_NAME))
+        }
     }
-    crate::capability::builtin::brief::primary_home(root).map(|h| h.join(DIRECTORY_NAME))
 }
 
 /// The start time of a process, as a string that changes when the pid is reused; `None`
@@ -325,9 +332,7 @@ pub fn free_mib(path: &Path) -> Option<u64> {
     let c = std::ffi::CString::new(existing.as_os_str().as_bytes()).ok()?;
     // SAFETY: statvfs is plain old data; the path is a NUL-terminated string this frame owns.
     let mut s: libc::statvfs = unsafe { std::mem::zeroed() };
-    if unsafe { libc::statvfs(c.as_ptr(), &mut s) } != 0 {
-        return None;
-    }
+    (unsafe { libc::statvfs(c.as_ptr(), &mut s) } == 0).then_some(())?;
     #[allow(clippy::unnecessary_cast)] // the field widths differ between platforms
     let bytes = (s.f_bavail as u64).saturating_mul(s.f_frsize as u64);
     Some(bytes / (1024 * 1024))
@@ -342,6 +347,19 @@ fn now() -> u64 {
 
 fn stamp(secs: u64) -> String {
     crate::peers::rfc3339(UNIX_EPOCH + Duration::from_secs(secs))
+}
+
+/// Take an exclusive flock(2) on `fd`, looking again when a signal interrupts the wait; any
+/// other failure is the caller's error. By hand: File::lock is newer than the crate's minimum
+/// Rust version.
+fn flock_exclusive(fd: std::os::unix::io::RawFd) -> io::Result<()> {
+    // SAFETY: flock(2) on a descriptor the caller owns; no memory is touched.
+    let once = || (unsafe { libc::flock(fd, libc::LOCK_EX) } == 0).then_some(());
+    let interrupted =
+        |r: &io::Result<()>| matches!(r, Err(e) if e.kind() == io::ErrorKind::Interrupted);
+    std::iter::repeat_with(|| once().ok_or_else(io::Error::last_os_error))
+        .find(|r| !interrupted(r))
+        .unwrap_or(Ok(())) // repeat_with never ends, so find always answers
 }
 
 /// The directory, its two record directories and the lock every change is made under.
@@ -366,18 +384,8 @@ impl Slots {
             .truncate(false)
             .write(true)
             .open(self.dir.join(".lock"))?;
-        // flock(2) by hand: File::lock is newer than the crate's minimum Rust version
         use std::os::unix::io::AsRawFd;
-        loop {
-            // SAFETY: flock(2) on a descriptor this frame owns; no memory is touched.
-            if unsafe { libc::flock(f.as_raw_fd(), libc::LOCK_EX) } == 0 {
-                return Ok(f);
-            }
-            let e = io::Error::last_os_error();
-            if e.kind() != io::ErrorKind::Interrupted {
-                return Err(e);
-            }
-        }
+        flock_exclusive(f.as_raw_fd()).map(|()| f)
     }
 
     fn path(&self, kind: &str, pid: u32) -> PathBuf {
@@ -805,7 +813,9 @@ mod tests {
             identity: String::new(),
         };
         slots.write("holders", &forged).unwrap();
-        if process_start(me).is_some() {
+        // where the platform says a start time, the forged one is told from the real one
+        #[cfg(any(target_os = "macos", target_os = "linux"))]
+        {
             assert_eq!(liveness(&forged), SlotLiveness::Dead);
             let mut b = sleeper();
             let got = acquire(&d, &limits, &quick(b.id(), "after reuse", 0)).unwrap();
@@ -897,10 +907,12 @@ mod tests {
     #[test]
     fn the_same_process_has_the_same_start_and_a_gone_one_has_none() {
         let me = process_start(std::process::id());
-        if cfg!(any(target_os = "macos", target_os = "linux")) {
-            assert!(me.is_some());
-            assert_eq!(me, process_start(std::process::id()));
-        }
+        // the platforms that say a start time say it for this process, and say it again
+        assert_eq!(
+            me.is_some(),
+            cfg!(any(target_os = "macos", target_os = "linux"))
+        );
+        assert_eq!(me, process_start(std::process::id()));
         let mut a = sleeper();
         let pid = a.id();
         a.kill().unwrap();
@@ -923,5 +935,71 @@ mod tests {
         .unwrap_err();
         assert_eq!(err.kind(), io::ErrorKind::InvalidInput);
         let _ = fs::remove_dir_all(&d);
+    }
+
+    #[test]
+    fn a_process_that_holds_a_slot_and_asks_again_is_told_it_holds_one_not_two() {
+        let d = dir("again");
+        let limits = SlotLimits::declared(Some(2), None, None);
+        let mut a = sleeper();
+        let first = acquire(&d, &limits, &quick(a.id(), "a build", 0)).unwrap();
+        assert_eq!(first.verdict, SlotVerdict::Admitted);
+        let again = acquire(&d, &limits, &quick(a.id(), "a build", 0)).unwrap();
+        assert_eq!(again.verdict, SlotVerdict::AlreadyHeld);
+        assert_eq!(again.refusal, None);
+        assert_eq!(again.status.held, 1, "one slot, not two");
+        let _ = a.kill();
+        let _ = a.wait();
+        fs::remove_dir_all(&d).unwrap();
+    }
+
+    #[test]
+    fn a_floor_the_disk_meets_admits_and_a_volume_that_cannot_be_measured_is_not_judged() {
+        let d = dir("met");
+        let met = SlotLimits::declared(Some(5), Some(0), None);
+        let got = acquire(&d, &met, &quick(std::process::id(), "small", 0)).unwrap();
+        assert_eq!(
+            got.verdict,
+            SlotVerdict::Admitted,
+            "every disk has 0 GiB free"
+        );
+        assert!(release(&d, std::process::id()).unwrap().released);
+
+        // a relative path none of whose ancestors exists has no volume to measure
+        let nowhere = PathBuf::from(format!("mj-slot-nowhere-{}/work", std::process::id()));
+        assert_eq!(free_mib(&nowhere), None);
+        let unmet = SlotLimits::declared(Some(5), Some(u64::MAX / 4096), None);
+        let request = Request {
+            volume: Some(nowhere),
+            ..quick(std::process::id(), "unmeasured", 0)
+        };
+        let got = acquire(&d, &unmet, &request).unwrap();
+        assert_eq!(
+            got.verdict,
+            SlotVerdict::Admitted,
+            "no measurement, no refusal"
+        );
+        fs::remove_dir_all(&d).unwrap();
+    }
+
+    #[test]
+    fn the_directory_named_by_the_environment_wins_and_an_empty_name_is_none() {
+        let root = dir("named");
+        fs::create_dir_all(&root).unwrap();
+        let named = std::ffi::OsString::from("/somewhere/slots");
+        assert_eq!(
+            directory_from(Some(named), &root),
+            Some(PathBuf::from("/somewhere/slots"))
+        );
+        // outside git, with no name or an empty one, there is no slot directory
+        assert_eq!(directory_from(None, &root), None);
+        assert_eq!(directory_from(Some("".into()), &root), None);
+        fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn a_lock_that_cannot_be_taken_is_an_error_not_a_spin() {
+        let err = flock_exclusive(-1).unwrap_err();
+        assert_eq!(err.raw_os_error(), Some(libc::EBADF));
     }
 }
