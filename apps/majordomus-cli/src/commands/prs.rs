@@ -555,9 +555,9 @@ pub(crate) fn render_supervise(
                 pull_request,
                 attempts,
             } => format!(
-                "the newest run of #{pull_request}'s head, cancelled at attempt {attempts} of at \
-                 most {}: no more re-runs are asked, and the head has no run until a person \
-                 re-runs it or pushes",
+                "the newest run of #{pull_request}'s head, cancelled at attempt {attempts}, at \
+                 most {} besides those the release path took: no more re-runs are asked, and the \
+                 head has no run until a person re-runs it or pushes",
                 integration::runs::MAX_ATTEMPTS
             ),
             integration::supervise::HoldReason::Unjudgeable { detail } => {
@@ -621,7 +621,8 @@ pub(crate) fn render_supervise(
         {
             lines.push(format!(
                 "::warning title=supervise::#{pull_request} has no run of its head: run {} of \
-                 {} was cancelled at attempt {attempts} of at most {}; re-run it or push",
+                 {} was cancelled at attempt {attempts}, at most {} besides those the release \
+                 path took; re-run it or push",
                 h.run,
                 h.workflow,
                 integration::runs::MAX_ATTEMPTS

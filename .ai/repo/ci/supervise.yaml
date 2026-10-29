@@ -81,7 +81,16 @@ version: 1
 # hours (RECOVERY_WINDOW_MINUTES), at a GitHub `run_attempt` below MAX_ATTEMPTS (3, in
 # integration/runs.rs). At the bound the head is held as head_exhausted: a warning naming the
 # pull request on every pass, never exit 12, since one stuck pull request is not a supervisor
-# that stopped; so is a recovery re-run the forge refused, which the next pass asks again. The trail records every ask and decides none. The property test is
+# that stopped; so is a recovery re-run the forge refused, which the next pass asks again. The
+# trail records every ask and decides none. A run that reads `cancelled` with a verdict in its
+# jobs is a verdict (the review of #2645 at 859039b21de): validate's pull_request run cancels
+# itself at its first red (I2664) and its always() `ci` writes the failure, so before anything is
+# asked or held the jobs of the head's cancelled runs are read, newest first, until one shows a
+# verdict (at most VERDICT_READS, 24, in a pass), and the forge's own last check before a re-run
+# reads them too. A pull request
+# labelled ci:yielded (release-path.yaml) is the release path's: recovery neither re-runs nor
+# holds it and no paired re-run is asked, and the attempts it took, one per note the release path
+# left naming the run, do not count toward MAX_ATTEMPTS. The property test is
 # apps/majordomus-cli/src/integration/supervise_property.rs.
 #
 # What is never cancelled for being superseded is fixed in the code, not declared here: a push

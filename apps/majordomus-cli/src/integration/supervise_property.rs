@@ -24,6 +24,12 @@
 //! bound and stays there. The supervisor is several runners, each with a trail of its own (a
 //! pass lands on any of them, as lundra's three runners and the hosted lane's fresh checkout
 //! do), and in some minutes a second lane applies right after the first, on the same heads.
+//! Most failing runs cancel themselves at their first red, as validate's do (I2664): they read
+//! `cancelled` and their `ci` job writes the failure, a verdict only their jobs show. And now and
+//! then, in one world of three, a release holds the runners: its tag push preempts every run in flight and a run that
+//! starts meanwhile yields, each labelled `ci:yielded` and noted, the admitted ones writing their
+//! `ci` unless the cancel was forced, and now and then a preempt's cancel does not land and the
+//! run's job hangs on; once the path is clear `resume` runs them again.
 //!
 //! Then a head can be left with no run, and the properties are these. A head that is not
 //! exhausted gets its run back within [`super::runs::MAX_ATTEMPTS`] passes, from whichever runner
@@ -33,8 +39,11 @@
 //! bare (its recovery re-run refused) with a warning naming it. A head whose newest run was
 //! cancelled at GitHub's attempt bound is held as `head_exhausted`, with a warning, on every pass
 //! while it is within the window, and never makes a pass exit 12: a pass is red only when the
-//! forge refused one of its own acts during it. And no re-run is ever asked over a verdict of its head,
-//! nor of a run at the attempt bound: the forge of the world counts every one that is.
+//! forge refused one of its own acts during it. A head labelled `ci:yielded` is the release
+//! path's while it is. And no re-run is ever asked over a written verdict of its head, a verdict
+//! in a cancelled run's jobs among them, nor of a run past the attempt bound and the attempts the
+//! release path took, nor of a head labelled `ci:yielded`: the forge of the world counts every one
+//! that is, and does not stand in for the supervisor's own reads.
 //!
 //! The generator is a xorshift seeded per world, so a failure names the seed that reproduces it.
 
@@ -50,14 +59,31 @@ use super::supervise::{
     Supervision, WorkflowBound, IN_FLIGHT,
 };
 
-/// Whether `r` decides its head, or will: completed with a verdict, or in flight with no job of
-/// its attempt cancelled. Stated here on its own, not through the rules it checks.
-fn covers(r: &RunObservation) -> bool {
-    if r.status == "completed" {
-        return matches!(
+/// Whether `r` completed with its head's verdict written: concluded `success`, `failure` or
+/// `timed_out`, or `cancelled` with a job of its attempt red, or with its `ci` job written (a
+/// run that went red and cancelled itself, whose always() `ci` wrote the failure). Stated here
+/// on its own, not through the rules it checks; only as good as the jobs `r` carries.
+fn decided(r: &RunObservation) -> bool {
+    r.status == "completed"
+        && (matches!(
             r.conclusion.as_deref(),
             Some("success" | "failure" | "timed_out")
-        );
+        ) || r.jobs.iter().any(|j| {
+            !r.carried(j)
+                && (matches!(j.conclusion.as_deref(), Some("failure" | "timed_out"))
+                    || (j.name == "ci"
+                        && matches!(
+                            j.conclusion.as_deref(),
+                            Some("success" | "failure" | "timed_out")
+                        )))
+        }))
+}
+
+/// Whether `r` decides its head, or will: completed with a verdict ([`decided`]), or in flight
+/// with no job of its attempt cancelled. Stated here on its own, not through the rules it checks.
+fn covers(r: &RunObservation) -> bool {
+    if r.status == "completed" {
+        return decided(r);
     }
     IN_FLIGHT.contains(&r.status.as_str())
         && !r
@@ -158,6 +184,10 @@ struct SimRun {
     passes: bool,
     /// When it completed.
     ended: Option<u64>,
+    /// Whether it went red and cancelled itself (I2664): it reads `cancelled`, its job `failure`.
+    red_cancel: bool,
+    /// What its `ci` job wrote after a cancel that let the always() jobs run, when one did.
+    ci: Option<&'static str>,
 }
 
 impl SimRun {
@@ -166,18 +196,29 @@ impl SimRun {
             return Vec::new();
         };
         let (status, conclusion) = match (self.status, self.started) {
+            ("completed", _) if self.red_cancel => ("completed", Some("failure")),
             ("completed", _) => ("completed", self.conclusion),
             (_, Some(_)) => ("in_progress", None),
             _ => ("queued", None),
         };
-        vec![JobObservation {
+        let mut jobs = vec![JobObservation {
             name: "suite".into(),
             status: status.into(),
             // the forge fills a queued job's start with its creation
             started_at: Some(stamp(self.started.unwrap_or(created))),
             created_at: Some(stamp(created)),
             conclusion: conclusion.map(str::to_string),
-        }]
+        }];
+        if let (Some(c), Some(end)) = (self.ci, self.ended) {
+            jobs.push(JobObservation {
+                name: "ci".into(),
+                status: "completed".into(),
+                started_at: Some(stamp(end)),
+                created_at: Some(stamp(end)),
+                conclusion: Some(c.into()),
+            });
+        }
+        jobs
     }
 
     fn observed(&self, with_jobs: bool) -> RunObservation {
@@ -221,9 +262,26 @@ struct World {
     injected: BTreeMap<&'static str, u64>,
     /// The pull request whose every admitted run a person cancels, in one world of four.
     canceller: Option<u64>,
-    /// What the forge was asked that it must never be: a re-run over a verdict of its head, or
-    /// of a run at the attempt bound.
+    /// What the forge was asked that it must never be: a re-run over a verdict of its head, of
+    /// a run at the attempt bound, or of a head the release path holds.
     violations: Vec<String>,
+    /// How the runs fare and what the release path does, drawn apart from `rng`: a failing run
+    /// that cancels itself, a release that holds the runners. Adding them to the world changes
+    /// none of its other interleavings.
+    fate: Rng,
+    /// Until when the release path holds the runners: a pull request's run that starts then
+    /// yields, and the ones in flight when it began were preempted.
+    release_until: u64,
+    /// Whether releases happen in this world: in one of three, so that the others keep the
+    /// hung runs a release would preempt, and with them the rules that end such runs.
+    releases: bool,
+    /// The pull requests labelled ci:yielded.
+    yielded: BTreeSet<u64>,
+    /// How many yield notes the release path left for each run.
+    yield_notes: BTreeMap<u64, u64>,
+    /// What the release path and the runs' fates did, counted apart from `injected`: none of it
+    /// is a half-failure of the forge.
+    reached: BTreeMap<&'static str, u64>,
 }
 
 impl World {
@@ -243,10 +301,17 @@ impl World {
             injected: BTreeMap::new(),
             canceller: None,
             violations: Vec::new(),
+            fate: Rng::new(seed ^ 0xFA7E_0000_2664_2710),
+            release_until: 0,
+            releases: false,
+            yielded: BTreeSet::new(),
+            yield_notes: BTreeMap::new(),
+            reached: BTreeMap::new(),
         };
         if w.people.chance(250) {
             w.canceller = Some(w.people.range(1, prs));
         }
+        w.releases = w.fate.chance(333);
         for pr in 1..=prs {
             w.heads.insert(pr, format!("p{pr}-h0"));
             w.pushes.insert(pr, 0);
@@ -297,6 +362,8 @@ impl World {
             takes,
             passes,
             ended: None,
+            red_cancel: false,
+            ci: None,
         });
         self.enter(id);
     }
@@ -359,20 +426,43 @@ impl World {
                 self.admit(pr);
             }
         }
+        let busy = now < self.release_until;
         for r in self.runs.iter_mut() {
             match r.status {
                 "queued" if r.waits != NEVER && now >= r.admitted.unwrap() + r.waits => {
                     r.status = "in_progress";
                     r.started = Some(r.admitted.unwrap() + r.waits);
+                    if busy {
+                        // its plan's first step: the release path holds the runners, so it
+                        // labels its pull request, leaves its note and cancels itself; the
+                        // always() jobs run, and its `ci` writes the failure, unless the cancel
+                        // was forced
+                        r.status = "completed";
+                        r.conclusion = Some("cancelled");
+                        r.ended = Some(now);
+                        r.ci = self.fate.chance(500).then_some("failure");
+                        self.yielded.insert(r.pr);
+                        *self.yield_notes.entry(r.id).or_default() += 1;
+                        *self.reached.entry("yield").or_default() += 1;
+                    }
                 }
                 "in_progress" if r.takes != NEVER && now >= r.started.unwrap() + r.takes => {
                     r.status = "completed";
                     r.conclusion = Some(if r.passes { "success" } else { "failure" });
                     r.ended = Some(now);
+                    // a pull request's run cancels itself at its first red (I2664): it reads
+                    // `cancelled`, and its always() `ci` writes the failure
+                    if !r.passes && self.fate.chance(600) {
+                        r.conclusion = Some("cancelled");
+                        r.red_cancel = true;
+                        r.ci = Some("failure");
+                        *self.reached.entry("red_cancel").or_default() += 1;
+                    }
                 }
                 _ => {}
             }
         }
+        self.release_path();
         // a person who cancels every run of one pull request a few minutes after its admission
         if let Some(pr) = self.canceller {
             let doomed: Vec<u64> = self
@@ -453,7 +543,12 @@ impl World {
 
     /// A new attempt of a completed run: every job again, entering its group.
     fn rerun(&mut self, id: u64) {
-        let (waits, takes, passes) = self.behaviour();
+        let drawn = self.behaviour();
+        self.rerun_as(id, drawn);
+    }
+
+    /// A new attempt of run `id` that will do `drawn`.
+    fn rerun_as(&mut self, id: u64, (waits, takes, passes): (u64, u64, bool)) {
         let now = self.now;
         let r = self.runs.iter_mut().find(|r| r.id == id).unwrap();
         r.attempt += 1;
@@ -466,7 +561,84 @@ impl World {
         r.takes = takes;
         r.passes = passes;
         r.ended = None;
+        r.red_cancel = false;
+        r.ci = None;
         self.enter(id);
+    }
+
+    /// The release path, one minute of it: now and then a release holds the runners for a while,
+    /// and its tag push preempts every pull request's run in flight (labelled, noted, cancelled;
+    /// the ones admitted write their `ci` unless the cancel was forced, the pending ones have no
+    /// job); and once it is clear, every quarter of an hour, `resume` runs again the newest run of
+    /// each labelled pull request's head when that run is the cancelled one, and the label goes.
+    /// Its draws are `fate`'s, so that none of the world's other interleavings change.
+    fn release_path(&mut self) {
+        let now = self.now;
+        if self.releases && now >= self.release_until && self.fate.chance(3) {
+            self.release_until = now + self.fate.range(20, 90) * 60;
+            *self.reached.entry("release").or_default() += 1;
+            let mut freed = BTreeSet::new();
+            for r in self.runs.iter_mut().filter(|r| r.status != "completed") {
+                self.yielded.insert(r.pr);
+                *self.yield_notes.entry(r.id).or_default() += 1;
+                // a cancel that does not land: its job goes on holding its runner (2026-10-19),
+                // and the run stays in flight on a labelled head until a bound ends it
+                if r.status == "in_progress" && self.fate.chance(300) {
+                    r.takes = NEVER;
+                    *self.reached.entry("cancel_ignored").or_default() += 1;
+                    continue;
+                }
+                r.ci = (r.admitted.is_some() && self.fate.chance(500)).then_some("failure");
+                r.status = "completed";
+                r.conclusion = Some("cancelled");
+                r.ended = Some(now);
+                *self.reached.entry("preempted").or_default() += 1;
+                freed.insert(r.pr);
+            }
+            for pr in freed {
+                self.admit(pr);
+            }
+            return;
+        }
+        if now < self.release_until || now % (15 * 60) != 7 * 60 {
+            return;
+        }
+        for pr in std::mem::take(&mut self.yielded) {
+            let head = self.heads[&pr].clone();
+            let newest = self
+                .runs
+                .iter()
+                .filter(|r| r.pr == pr && r.sha == head)
+                .max_by_key(|r| (r.created, r.id))
+                .map(|r| (r.id, r.status, r.conclusion));
+            if let Some((id, "completed", Some("cancelled"))) = newest {
+                let drawn = self.fate_behaviour();
+                self.rerun_as(id, drawn);
+                *self.reached.entry("resumed").or_default() += 1;
+            }
+        }
+    }
+
+    /// What one attempt `resume` asks for will do, drawn from `fate`.
+    fn fate_behaviour(&mut self) -> (u64, u64, bool) {
+        let waits = self.fate.range(0, 60 * 60);
+        let takes = match self.fate.draw() % 100 {
+            0..=79 => self.fate.range(10 * 60, 150 * 60),
+            80..=89 => self.fate.range(200 * 60, 290 * 60),
+            _ => NEVER,
+        };
+        (waits, takes, self.fate.chance(800))
+    }
+
+    /// How many attempts of run `id` the release path took.
+    fn yields_of(&self, id: u64) -> u64 {
+        self.yield_notes.get(&id).copied().unwrap_or_default()
+    }
+
+    /// Whether run `id` at attempt `attempt` has spent the attempts the supervisor may ask: the
+    /// release path's own aside. Stated here, not through the rule it checks.
+    fn spent(&self, id: u64, attempt: u64) -> bool {
+        attempt >= MAX_ATTEMPTS + self.yields_of(id)
     }
 
     /// Whether `pr`'s head is decided, or will be: by the world's whole truth.
@@ -492,8 +664,9 @@ impl World {
             .ended
             .is_some_and(|e| e + RECOVERY_WINDOW_MINUTES * 60 >= self.now);
         (!self.head_covered(pr)
+            && !self.yielded.contains(&pr)
             && newest.conclusion == Some("cancelled")
-            && newest.attempt >= MAX_ATTEMPTS
+            && self.spent(newest.id, newest.attempt)
             && recent)
             .then_some(newest.attempt)
     }
@@ -507,7 +680,27 @@ impl World {
             .iter()
             .filter(|r| r.pr == pr && r.sha == *head)
             .max_by_key(|r| (r.attempt_started, r.id))
-            .is_some_and(|r| r.conclusion == Some("cancelled") && r.attempt >= MAX_ATTEMPTS)
+            .is_some_and(|r| r.conclusion == Some("cancelled") && self.spent(r.id, r.attempt))
+    }
+
+    /// Whether `pr`'s head's newest run went red and cancelled itself within the window, with no
+    /// run of the head in flight: what a recovery that read no jobs would have asked again.
+    fn head_red_and_cancelled(&self, pr: u64) -> bool {
+        let head = &self.heads[&pr];
+        let at_head: Vec<&SimRun> = self
+            .runs
+            .iter()
+            .filter(|r| r.pr == pr && r.sha == *head)
+            .collect();
+        at_head.iter().all(|r| r.status == "completed")
+            && at_head
+                .iter()
+                .max_by_key(|r| (r.attempt_started, r.id))
+                .is_some_and(|r| {
+                    r.red_cancel
+                        && r.ended
+                            .is_some_and(|e| e + RECOVERY_WINDOW_MINUTES * 60 >= self.now)
+                })
     }
 
     /// Whether `pr`'s head's newest run ended within the window: a bare head older than it is
@@ -552,6 +745,7 @@ impl RunForge for SimForge<'_> {
                 .keys()
                 .map(|n| (*n, format!("fix/p{n}")))
                 .collect(),
+            yielded: self.world.yielded.clone(),
         })
     }
     fn jobs(&self, id: u64) -> Result<Vec<JobObservation>, ForgeError> {
@@ -606,22 +800,34 @@ impl RunForge for SimForge<'_> {
         if matches!(r.conclusion, Some("success" | "failure" | "timed_out")) {
             return Ok(Rerun::Decided);
         }
-        // what the supervisor must check before it asks: the other runs of the head
-        if let Some(v) = self.world.runs.iter().find(|o| {
-            o.id != id
-                && o.pr == r.pr
-                && o.sha == r.sha
-                && matches!(o.conclusion, Some("success" | "failure" | "timed_out"))
-        }) {
+        // what the supervisor must check before it asks: every run of the head, this one among
+        // them, its verdict in its jobs too. GhRunForge reads a cancelled run's jobs before it
+        // asks; that check is not the world's, so that the supervisor's own reads are judged
+        if let Some(v) = self
+            .world
+            .runs
+            .iter()
+            .find(|o| o.pr == r.pr && o.sha == r.sha && decided(&o.observed(true)))
+        {
             self.world.violations.push(format!(
-                "run {id} of #{} at {} re-run over run {}'s verdict {:?}",
-                r.pr, r.sha, v.id, v.conclusion
+                "run {id} of #{} at {} re-run over run {}'s written verdict ({:?}, ci {:?})",
+                r.pr, r.sha, v.id, v.conclusion, v.ci
+            ));
+        }
+        let yields = self.world.yields_of(id);
+        if self.world.spent(id, r.attempt) {
+            self.world.violations.push(format!(
+                "run {id} of #{} re-run at attempt {}, past {MAX_ATTEMPTS} and {yields} yield(s)",
+                r.pr, r.attempt
             ));
         }
         if r.attempt >= MAX_ATTEMPTS {
+            *self.world.reached.entry("yield_spared_budget").or_default() += 1;
+        }
+        if self.world.yielded.contains(&r.pr) {
             self.world.violations.push(format!(
-                "run {id} of #{} re-run at attempt {}, past {MAX_ATTEMPTS}",
-                r.pr, r.attempt
+                "run {id} of #{} re-run while it is labelled ci:yielded: the release path's",
+                r.pr
             ));
         }
         let refused = self.world.refused_reruns.get(&id).copied().unwrap_or(0);
@@ -642,6 +848,9 @@ impl RunForge for SimForge<'_> {
             .filter(|r| r.sha == sha)
             .map(|r| r.observed(false))
             .collect())
+    }
+    fn yields(&self, _pr: u64, run: u64) -> Result<u64, ForgeError> {
+        Ok(self.world.yields_of(run))
     }
     fn cancelled_since(&self, created_since: u64) -> Result<Vec<RunObservation>, ForgeError> {
         // newest first: the world creates its runs in order of time, and never reorders them
@@ -910,6 +1119,9 @@ fn live(seed: u64, m: &SuperviseModel, seen: &mut Seen) {
                 if a.detail.contains("has its verdict") {
                     seen.saw("verdict_kept");
                 }
+                if a.detail.contains("is labelled ci:yielded") {
+                    seen.saw("paired_left_to_the_release_path");
+                }
             }
             for r in &report.recovered {
                 assert!(
@@ -948,6 +1160,18 @@ fn live(seed: u64, m: &SuperviseModel, seen: &mut Seen) {
                 covered.insert(pr, w.heads[&pr].clone());
             }
             let head = w.heads[&pr].clone();
+            // a head labelled ci:yielded is the release path's to give back, by `resume`
+            if w.yielded.contains(&pr) {
+                bare.remove(&pr);
+                exhausted.remove(&pr);
+                seen.saw("yielded_left_to_the_release_path");
+                continue;
+            }
+            // a head whose newest run went red and cancelled itself has its verdict, which no
+            // re-run was asked over (the forge counts one that is): the read that kept it
+            if w.head_red_and_cancelled(pr) {
+                seen.saw("red_cancel_kept");
+            }
             if let Some(attempts) = w.head_exhausted(pr) {
                 bare.remove(&pr);
                 assert!(
@@ -1017,7 +1241,7 @@ fn live(seed: u64, m: &SuperviseModel, seen: &mut Seen) {
         }
         injected_before_last = injected_at_start;
     }
-    for (what, n) in &w.injected {
+    for (what, n) in w.injected.iter().chain(w.reached.iter()) {
         *seen.words.entry((*what).to_string()).or_default() += n;
     }
 }
@@ -1060,6 +1284,22 @@ fn no_supervision_leaves_a_pull_requests_head_without_a_run() {
         "head_exhausted",
         "exhausted_found",
         "exhausted_persists",
+        // a run that went red and cancelled itself, kept as its head's verdict within the window
+        "red_cancel",
+        "red_cancel_kept",
+        // the release path: a release preempts and a run yields, its head is left to it, and
+        // `resume` runs it again; a run past GitHub's attempt bound asked again for the attempts
+        // the release path took
+        "release",
+        "preempted",
+        "yield",
+        "resumed",
+        "yielded_left_to_the_release_path",
+        "yield_spared_budget",
+        // a preempt whose cancel did not land, its run ended past its bound while labelled: the
+        // paired re-run is the release path's
+        "cancel_ignored",
+        "paired_left_to_the_release_path",
     ] {
         assert!(seen.count(word) > 0, "no world reached {word}: {seen:?}");
     }

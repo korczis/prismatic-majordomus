@@ -488,6 +488,43 @@ run is ended and not run again, since its re-run would write a newer `ci` over t
 is #2678's shape (the review of #2645 at 68fa1c17b6c). A run that reached a verdict of its own
 before its cancel did, passed, failed or timed out, is not asked either.
 
+A run that reads `cancelled` can still carry its head's verdict, and the run listing does not
+say so: only its jobs do. A pull request's validate run cancels itself at its first red (I2664),
+and its `if: always()` jobs then run, so `ci` writes the failure while the run's own conclusion
+is `cancelled`. The review of #2645 at 859039b21de found that at 18:49Z every head recovery would
+have re-run was one of these (#2682 run 40906901071, #2520 run 40885641288, #2687 run
+40868113225), and in 13 of 16 cancelled pull-request validate runs sampled on 2026-10-28/29 `ci`
+concluded `failure`; each re-run would have put a pending `ci` over a written red, spent a full
+suite, and could have turned a real red green on a flaky gate. So a cancelled run whose job of
+the current attempt concluded `failure` or `timed_out`, or whose `ci` job concluded `success`,
+`failure` or `timed_out`, is a verdict (`RunObservation::verdict_in_jobs`), in recovery, in the
+paired re-run's look at the head's other runs, and in the forge's own last check before it asks a
+re-run (`GhRunForge::rerun`, which reads a cancelled run's jobs once). A force-cancel skips the
+always() jobs, so a run the supervisor ended carries no verdict (its `ci` is `cancelled`, as on
+40713048283), and neither does a twin cancelled while it waited in its group, which has no job.
+The jobs are read only where the runs alone would ask a re-run or hold the head: the commit's
+cancelled runs of that workflow, newest first, until one shows a verdict or none is left, since a
+twin cancelled while it waited in its group has no job and can stand between a run that went red
+and its re-run. Each read is one request (`actions/runs/<id>/jobs`, one page for validate's
+forty-odd jobs), so a pass usually spends one per head it would otherwise ask or hold, and never
+more than 24 (`VERDICT_READS`) across its acts and its recovery; a head the budget does not reach
+is not asked in that pass, is said in `unread` (a warning naming the pull request), and is read
+by the next. The 18:49Z sample would have cost three requests a pass.
+
+A pull request whose run yielded to the release path (I2710, `scripts/ci/release-path`) is the
+release path's to give back: the run labels its pull request `ci:yielded`, leaves a note naming
+itself, and cancels itself, and `resume` runs it again once the path is clear and takes the
+label off. The observation reads the label with the pull requests, so recovery reads no labelled
+head, neither asking it again (each ask would yield again while the release is busy, and take the
+plan jobs' runners from the release the yield was clearing) nor holding it, and the paired re-run
+of a labelled head's hung run is not asked. The attempts the release path took do not count
+toward `MAX_ATTEMPTS`: the review found that a head that yielded and was resumed could reach the
+bound on its first hang and be held, with no run, which is the invariant broken. Only for a run at
+the bound are its pull request's comments read (one request, at most three pages) for the release
+path's notes naming that run, and each one gives the head one attempt more; a note the release
+path could not post counts nothing, so the head is held a little early, with a warning, rather
+than asked without bound.
+
 A pass can still leave a head bare, when the re-run is refused or a cancel the forge reported
 failed lands a minute later, and so can a person, or the other lane, cancelling a head's last
 run. The observation lists only runs in flight, so no later pass would see the head again; and a
@@ -539,12 +576,17 @@ half-fails (a cancel that lands while `gh` reports an error, at once or a minute
 re-runs refused up to twice in a row), people cancel runs by hand (in one world of four, every
 run of one pull request, so that its head reaches the attempt bound and stays there), each pass
 lands on one of three runners with a trail of its own, and in some minutes a second lane applies
-right after the first. A head so bared must have its run back within three passes, from
+right after the first. Its failing runs mostly cancel themselves at their first red with `ci`
+written, and now and then a release holds the runners: its tag push preempts the runs in flight
+and a run that starts meanwhile yields, each labelled and noted (now and then a preempt's cancel
+does not land and the run's job hangs on, labelled), and `resume` runs them again once the path is
+clear. A head so bared must have its run back within three passes, from
 whichever runners take them, and a pass that leaves it bare names the pull request, exit 12 on
 the pass whose own act bared it and a warning on a later one; an exhausted head must be held,
 with a warning, on every pass that finds it; a pass is red only when the forge refused one of its
-own acts; and no re-run is ever asked over a verdict of its head, or of a run at the attempt
-bound.
+own acts; and no re-run is ever asked over a verdict of its head, a verdict in a cancelled run's
+jobs among them, nor of a run past the attempt bound and the attempts the release path took, nor
+of a head labelled `ci:yielded`.
 
 The duplicate is the `labeled` twin: a train opened with `--label train` is `opened` and
 `labeled` at once, and both start validate, so 6 of the 8 trains of 2026-10-28 had two full runs

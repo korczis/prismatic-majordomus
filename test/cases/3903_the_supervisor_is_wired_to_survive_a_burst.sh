@@ -129,4 +129,15 @@ grep -q 'pub const MAX_ATTEMPTS: u64 = 3;' "$RUNS" \
   || { echo "    re-runs are no longer bounded by GitHub's own run_attempt"; exit 1; }
 grep -q 'fn recover(' "$RUNS" && ! sed -n '/^fn recover(/,/^}/p' "$RUNS" | grep -q 'drain::events' \
   || { echo "    recovery reads the trail of the checkout that acted, which another runner does not have"; exit 1; }
-echo "    an exhausted head is a warning annotation, never a red lane, and recovery reads the forge alone"
+# a run that went red and cancelled itself (I2664) reads `cancelled` with its verdict in its jobs:
+# recovery and the paired re-run read those jobs before they ask, and the forge's last check too
+sed -n '/^fn recover(/,/^}/p' "$RUNS" | grep -q 'read_verdicts(' \
+  && sed -n '/^fn paired_rerun_needed(/,/^}/p' "$RUNS" | grep -q 'read_verdicts(' \
+  && grep -q 'pub fn verdict_in_jobs(' "$SUP" \
+  || { echo "    recovery asks a re-run over a red its cancelled run's jobs show"; exit 1; }
+# a head labelled ci:yielded is the release path's: the label is the model's, and recovery skips it
+label="$(sed -n 's/^  label: *//p' "$ROOT/.ai/repo/ci/release-path.yaml" | head -1)"
+grep -q "pub const YIELDED_LABEL: &str = \"$label\";" "$SUP" \
+  && sed -n '/^pub fn heads_to_read(/,/^}/p' "$RUNS" | grep -q 'obs.yielded.contains' \
+  || { echo "    recovery re-runs a head the release path holds (${label:-no label} in release-path.yaml)"; exit 1; }
+echo "    an exhausted head is a warning annotation, never a red lane, and recovery reads the forge alone, a verdict in a cancelled run's jobs among it, and leaves a yielded head to the release path"

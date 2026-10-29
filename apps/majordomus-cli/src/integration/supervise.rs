@@ -128,6 +128,17 @@ pub const IN_FLIGHT: &[&str] = &["queued", "in_progress", "waiting", "pending", 
 /// a head that already has one: its same-head twin is held, not cancelled.
 pub const FULL_LABEL: &str = "ci:full";
 
+/// The label the release path puts on a pull request whose validate run yielded to it, and
+/// takes off when `scripts/ci/release-path resume` runs that run again (I2710; the model's
+/// `yield.label` in `.ai/repo/ci/release-path.yaml`). While it is there the head is the release
+/// path's to give back: recovery neither re-runs it nor holds it, and a paired re-run is not
+/// asked ([`super::runs`]).
+pub const YIELDED_LABEL: &str = "ci:yielded";
+
+/// The job whose conclusion is a workflow's verdict on its head, when it has one: validate's
+/// `ci`, `if: always()`, which a cancel that lets the always() jobs run still writes.
+pub const VERDICT_JOB: &str = "ci";
+
 /// The branches of the landing seat's combined tops: never ended for waiting in the queue.
 pub const INTEGRATION_PREFIX: &str = "integration/";
 
@@ -279,15 +290,33 @@ impl RunObservation {
         self.in_flight() && !self.cancelled_already()
     }
 
-    /// Whether it has completed with a verdict: `success`, `failure` or `timed_out`. A
-    /// cancelled or skipped run decided nothing. The supervisor observes only the runs in
-    /// flight, so it sees one only where it is handed it.
+    /// Whether it has completed with a verdict: `success`, `failure` or `timed_out`, or
+    /// `cancelled` with a verdict in its jobs ([`Self::verdict_in_jobs`]). A run cancelled or
+    /// skipped with none decided nothing. The supervisor observes only the runs in flight, so
+    /// it sees one only where it is handed it, and the verdict in a cancelled run's jobs only
+    /// where its jobs were read.
     pub fn verdict_written(&self) -> bool {
         self.status == "completed"
-            && matches!(
+            && (matches!(
                 self.conclusion.as_deref(),
                 Some("success" | "failure" | "timed_out")
-            )
+            ) || self.verdict_in_jobs())
+    }
+
+    /// Whether its jobs, as read, show a verdict whatever the run's own conclusion says: a job
+    /// of its current attempt concluded `failure` or `timed_out` (a gate went red), or its
+    /// [`VERDICT_JOB`] concluded `success`, `failure` or `timed_out`. A validate pull_request
+    /// run cancels itself at its first red (I2664) and its `if: always()` `ci` still writes
+    /// the failure, so the run reads `cancelled` with its head's red verdict written: 13 of 16
+    /// cancelled pull-request validate runs sampled on 2026-10-28/29 (40906901071 among them).
+    /// A force-cancel skips the always() jobs, so a run the supervisor ended has none, and
+    /// neither has a run cancelled while it waited in its group (no job of it exists).
+    pub fn verdict_in_jobs(&self) -> bool {
+        self.jobs.iter().filter(|j| !self.carried(j)).any(|j| {
+            let c = j.conclusion.as_deref();
+            matches!(c, Some("failure" | "timed_out"))
+                || (j.name == VERDICT_JOB && c == Some("success"))
+        })
     }
 
     /// Since when its current attempt has waited for a runner, in seconds since the epoch: when
