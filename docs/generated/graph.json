@@ -71842,6 +71842,7 @@
           "scope": [
             ".ai/repo/project/issues/I4381.yaml",
             "test/lib.sh",
+            "test/lib/rust_bin.functions.sh",
             ".ai/repo/ci/gates.yaml",
             ".ai/repo/ci/structure-durations.tsv",
             ".github/workflows/validate.yml",
@@ -71855,7 +71856,9 @@
             "apps/majordomus-cli/src/capability/builtin/integration.rs",
             "test/cases/94_ci_plan.sh",
             "test/cases/4381_the_structure_job_fits_in_half_its_bound.sh",
-            "docs/CI.md"
+            "docs/CI.md",
+            ".just/ci.just",
+            ".ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md"
           ],
           "serves": [
             "a-change-is-judged-in-minutes#a-regression-fails-its-budget"
@@ -71863,7 +71866,7 @@
           "slug": "the-structure-lane-is-planned-to-fit-its-bound",
           "updated_at": "2026-10-29",
           "validation": [
-            "bash test/run.sh 94_ci_plan 4381_the_structure_job_fits_in_half_its_bound",
+            "bash test/run.sh 94_ci_plan 4381_the_structure_job_fits_in_half_its_bound 3943_a_second_gate_list_is_found 2999_delivery_is_expedited_only_where_the_rule_says",
             "scripts/ci/shell-lint",
             "scripts/ci/step-bound-check",
             "actionlint .github/workflows/validate.yml",

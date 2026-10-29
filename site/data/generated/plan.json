@@ -67780,6 +67780,7 @@
       "scope": [
         ".ai/repo/project/issues/I4381.yaml",
         "test/lib.sh",
+        "test/lib/rust_bin.functions.sh",
         ".ai/repo/ci/gates.yaml",
         ".ai/repo/ci/structure-durations.tsv",
         ".github/workflows/validate.yml",
@@ -67793,7 +67794,9 @@
         "apps/majordomus-cli/src/capability/builtin/integration.rs",
         "test/cases/94_ci_plan.sh",
         "test/cases/4381_the_structure_job_fits_in_half_its_bound.sh",
-        "docs/CI.md"
+        "docs/CI.md",
+        ".just/ci.just",
+        ".ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md"
       ],
       "non_scope": [
         "Dropping, sampling or weakening any gate, or lowering shellcheck's severity (`-S warning` stays)",
@@ -67803,14 +67806,17 @@
         "The per-job budget of the pull-request critical path (I3242) and the checkout budget (I4349): this issue budgets the structure job's wall time against its own bound",
         "Raising `timeout-minutes` of structure to follow runner load"
       ],
-      "objective": "Bring the structure job of validate.yml under 50% of its 55-minute bound (1650 s) at p90, and drop no gate. First, put `# shellcheck source=/dev/null` above the two `. \\\"$ROOT/lib/rust_bin.sh\\\"` lines of test/lib.sh (168 and 175). Then shellcheck -x stops re-reading the 1942 lines of lib/rust_bin.sh once for each of the 654 cases, and lib/rust_bin.sh is still linted on its own with -x as part of shell-lint's lib/ set. Second, move github-projection and worktree-topology to a new job, structure-b, through the `job:` field of .ai/repo/ci/gates.yaml. structure-b runs `run-plan --plan plan.json --job structure-b` and uploads its own timings and receipts, and the ci job lists it in `needs`. Third, add a gate that fails when the p90 wall time of either job over the committed baseline window passes 50% of that job's `timeout-minutes`. The gate names the job and its three most expensive gates. Finally, refresh .ai/repo/ci/structure-durations.tsv so that its figures are the ones measured now.",
+      "objective": "Bring the structure job of validate.yml under 50% of its 55-minute bound (1650 s) at p90, and drop no gate. First, put `# shellcheck source=test/lib/rust_bin.functions.sh` above the two `. \\\"$ROOT/lib/rust_bin.sh\\\"` lines of test/lib.sh (168 and 175), a declarations file of one stub per function and one empty assignment per global of lib/rust_bin.sh that a case holds to rust_bin.sh's own names. Then shellcheck -x stops re-reading the 1942 lines of lib/rust_bin.sh once for each of the 654 cases and still knows the names are shell functions (SC2033), and lib/rust_bin.sh is still linted on its own with -x as part of shell-lint's lib/ set. Second, move github-projection and worktree-topology to a new job, structure-b, through the `job:` field of .ai/repo/ci/gates.yaml. structure-b runs `run-plan --plan plan.json --job structure-b` and uploads its own timings and receipts, and the ci job lists it in `needs`. Third, add a gate that fails when the p90 wall time of either job over the committed baseline window passes 50% of that job's `timeout-minutes`. The gate names the job and its three most expensive gates. Finally, refresh .ai/repo/ci/structure-durations.tsv so that its figures are the ones measured now.",
       "why": "Run 40813274272 (train 10a) passed all 59 structure gates, which took 3263 s in sum. The last gate, merge-policy, finished at 08:27:11Z. The job's 3300 s timeout fired 8 s later, at 08:27:19Z, during the post-steps, so the summary, the timings upload and receipts.tsv never ran. The ci verdict therefore had no receipts although every gate was green. Train 10b's run 40815097006 took 2760 s. Over the 33 full-plan structure jobs since 2026-10-25T00:55Z (13 on master, 20 on trains), the per-gate sums are p50 2720 s and p90 3256 s. Job setup adds about 54 s, so a p90 job reaches the bound. 6 of those 33 jobs were cancelled at or near the bound. shell-lint is p50 1242 s / p90 1388 s, against 416 s in structure-durations.tsv around 10-12, and the shellcheck step is 1372 s of its 1380 s in 10a. scripts/ci/shell-lint has not changed since 39b0587 (10-12); what grew is the input it reads. Every case runs `. \\\"$ROOT/test/lib.sh\\\"`, and shellcheck -x follows that source and, through it, lib/rust_bin.sh, once for each case. lib/rust_bin.sh grew from 429 to 1942 lines between 10-12 and 10-25 (e7a37c6, 3096650, 36de9d1, f6d28ad, 8c8a331, f134eb5, 61a50ef, b3ace7b, fe6bf11), and the cases grew from 446 to 654. A one-line file that sources test/lib.sh took 0.34 s to lint on the 10-12 tree and 2.25 s today. A 16-line case takes 2.4 s with -x and 0.02 s without. Over the whole case set, shellcheck takes 287 s with the chain followed and 33 s with rust_bin.sh not followed (-P 14, locally): 8.7x less. The work is CPU-bound (one 16-case batch: 50.3 s wall, 47.9 s user, 0 block inputs, 828 MB peak) and already runs on `xargs -P $(nproc)`, so more parallelism cannot help. The rest of the bound goes to core-check (p50 683 / p90 793 s, serial and CPU- and git-bound) and to two gates that do not need to share a job with it. github-projection is network-bound and costs p50 389 / p90 589 s, against 56 s in the baseline. worktree-topology costs p50 156 / p90 179 s. The fastest and the slowest of the 33 runs (1575 s and 3271 s in total; shell-lint 601 s and 1434 s) differ by about 2.2x with the same gates, so the margin has to absorb runner load. A bound that holds only on a quiet pool does not hold. Measured gate by gate from `==> <gate>: ok (Ns)` in the job logs (gh api actions/jobs/<id>/logs).",
       "current_state": "Measured at master 5370ee63d19, 2026-10-29: .github/workflows/validate.yml gives the structure job `timeout-minutes: 55` and runs every structure gate one after another in one run-plan. .ai/repo/ci/gates.yaml assigns `job: structure` to all 59 of them, github-projection (line 660) and worktree-topology (line 558) included. test/lib.sh sources lib/rust_bin.sh at lines 168 and 175 with no shellcheck directive, so shell-lint's `shellcheck -x` follows it for every case. lib/rust_bin.sh is 1942 lines and test/cases holds 654 cases. .ai/repo/ci/structure-durations.tsv still records shell-lint at 416 s, core-check at 883 s, github-projection at 56 s and worktree-topology at 207 s, from five master runs. Nothing fails while the job's wall time approaches its bound: the first sign is a cancelled job with no receipts. Also, the `# shellcheck source=../lib/sha256.sh` directive at test/lib.sh:141 does not resolve when shellcheck runs from the repository root (SC1091, info). It is harmless, but a reader takes it for a working directive.",
       "desired_state": "structure runs shell-lint, core-check and the 53 smaller gates at a projected p50 of about 1130 s and p90 of about 1325 s on a loaded pool. shell-lint falls to about 145 s p50 / 170 s p90. structure-b runs github-projection and worktree-topology at about 600 s p50 / 825 s p90. Every gate still runs in every plan that selects it. The ci verdict requires both jobs' receipts. A job whose p90 passes half its bound turns a gate red before it reaches the timeout, and the gate names the job and the gates that cost the most.",
       "acceptance_criteria": [
-        "test/lib.sh carries `# shellcheck source=/dev/null` directly above both `. \\\"$ROOT/lib/rust_bin.sh\\\"` lines, and the misleading `source=../lib/sha256.sh` directive resolves from the repository root or is corrected",
+        "test/lib.sh carries `# shellcheck source=test/lib/rust_bin.functions.sh` directly above both `. \\\"$ROOT/lib/rust_bin.sh\\\"` lines, and the misleading `source=../lib/sha256.sh` directive resolves from the repository root or is corrected",
+        "Case 4381: test/lib/rust_bin.functions.sh lists exactly lib/rust_bin.sh's top-level `name() ` functions and `NAME=` globals, in its order, and a copy of rust_bin.sh with one function added is reported as drift. Functions defined another way, globals set by export, readonly or declare, and variables assigned inside a function are not declared and not checked",
+        "Case 4381: `xargs mj_cargo_target_dir`, `sudo mj_rust_resolve` and `find -exec mj_cargo_target_dir` in a file that sources test/lib.sh are each SC2033, and the same file with the directives pointed at /dev/null is not; a file that only sources test/lib.sh still lints in at most three times the CPU of test/lib.sh alone",
         "Linting all cases at `-x -S warning` with the trimmed test/lib.sh reports the same findings as with the current one (0 at master), and lib/rust_bin.sh is still linted with -x as part of shell-lint's lib/ set",
-        "Case 4381: a case that reads a variable defined only in lib/rust_bin.sh fails shell-lint loudly (SC2154 or SC2034); the /dev/null source never lets it pass silently",
+        "Case 4381: a case that reads a variable only a function of lib/rust_bin.sh assigns fails shell-lint loudly (SC2154); the declarations never let it pass silently, and with rust_bin.sh followed the same file passes",
+        "`just ci-structure` runs both structure and structure-b, and clause 4 of project.an-expedited-landing-is-the-owners-word names both as the whole structure job; case 4381 reads every `structure` or `structure-<x>` job of .ai/repo/ci/gates.yaml and fails on one the recipe does not run or the clause does not name",
         "github-projection and worktree-topology carry `job: structure-b` in .ai/repo/ci/gates.yaml. validate.yml has a structure-b job that runs `run-plan --plan plan.json --job structure-b` and uploads its own timings and receipts, and the ci job's `needs` names it",
         "Case 94_ci_plan: every gate of a plan that selects it still runs, the verdict refuses a run that lacks structure-b's receipts, and the model readers (case 94, apps/majordomus-cli/src/gates/model.rs) refuse a gate assigned to a job the workflow does not define",
         "A gate in the CI model, a typed capability under ADR 0069 and not shell, fails when the p90 wall time of structure or structure-b over the committed baseline window passes 50% of that job's `timeout-minutes`. It names the job and its three most expensive gates. Case 4381: a fixture window at 49% of the bound passes, one at 51% fails, and a missing window is a failure, never a pass",
@@ -67819,7 +67825,7 @@
         "On GitHub, over the first 10 full-plan runs that carry this change, the p90 wall time of structure and of structure-b is each under 1650 s, and no run is cancelled at its bound. The run ids are recorded as this issue's ci evidence"
       ],
       "validation": [
-        "bash test/run.sh 94_ci_plan 4381_the_structure_job_fits_in_half_its_bound",
+        "bash test/run.sh 94_ci_plan 4381_the_structure_job_fits_in_half_its_bound 3943_a_second_gate_list_is_found 2999_delivery_is_expedited_only_where_the_rule_says",
         "scripts/ci/shell-lint",
         "scripts/ci/step-bound-check",
         "actionlint .github/workflows/validate.yml",
@@ -108625,6 +108631,12 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I3154",
+      "message": "shares .just with I4381; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I3155",
       "message": "shares apps/majordomus-cli/src/ui/mod.rs with I3318; they may not run concurrently"
     },
@@ -114795,7 +114807,7 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "count": 6980,
+      "count": 6981,
       "examples": [
         {
           "level": "WARN",

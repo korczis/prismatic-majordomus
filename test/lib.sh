@@ -160,14 +160,16 @@ sha256_of_file() { mj_sha256_hex "$1"; }
 # The one skip is the one the Rust cases always had, 3, for a machine with no cargo at all:
 # there the explicit build cannot be run either, and the case says so in its skip line.
 #
-# Both sources of lib/rust_bin.sh below say `source=/dev/null` (I4381). Every case sources this
-# file, and shellcheck -x followed it into rust_bin.sh's 1942 lines once per case: the structure
-# job's shell-lint grew from 416 s to 1388 s at p90 with no change to the gate. Following it
-# linted none of it (shellcheck reports no finding inside a file it follows); rust_bin.sh is
-# linted on its own, with -x, in shell-lint's lib/ set, which discovers a .sh by its name.
-# /dev/null resolves to an empty file rather than to nothing, so no check is relaxed: a case
-# that came to read a variable only rust_bin.sh sets is reported (SC2154), never passed
-# (case 4381).
+# Both sources of lib/rust_bin.sh below point shellcheck at test/lib/rust_bin.functions.sh
+# (I4381), one stub per function and one empty assignment per global of rust_bin.sh. Every case
+# sources this file, and shellcheck -x followed it into rust_bin.sh's 1942 lines once per case:
+# the structure job's shell-lint grew from 416 s to 1388 s at p90 with no change to the gate.
+# Following it linted none of it (shellcheck reports no finding inside a file it follows);
+# rust_bin.sh is linted on its own, with -x, in shell-lint's lib/ set, which discovers a .sh by
+# its name. The stubs keep what the names told the linter: a case that hands one of these
+# functions to xargs, sudo or find -exec is still SC2033. A variable a function of rust_bin.sh
+# sets is not declared, so a case that reads one is reported (SC2154). Case 4381 holds the
+# stubs to rust_bin.sh's own names.
 # majordomus-on-stale-executable: fallback, else refuse
 rust_bin() {
   if [ -n "${MAJORDOMUS_BIN:-}" ]; then
@@ -176,7 +178,7 @@ rust_bin() {
     # measure, and a reader who takes it for the second spends an afternoon on a branch that
     # was never broken. lib/rust_bin.sh says it, once, for every caller that resolves one.
     if [ ! -x "$MAJORDOMUS_BIN" ]; then
-      # shellcheck source=/dev/null # I4381: linted on its own as part of lib/, see above
+      # shellcheck source=test/lib/rust_bin.functions.sh # I4381: its names only, see above
       . "$ROOT/lib/rust_bin.sh"
       mj_rust_bin_missing "$ROOT" "$MAJORDOMUS_BIN" '    '
       return 1
@@ -184,7 +186,7 @@ rust_bin() {
     printf '%s' "$MAJORDOMUS_BIN"; return 0
   fi
   local rb
-  # shellcheck source=/dev/null # I4381: linted on its own as part of lib/, see above
+  # shellcheck source=test/lib/rust_bin.functions.sh # I4381: its names only, see above
   . "$ROOT/lib/rust_bin.sh"
   if ! rb="$(mj_rust_resolve "$ROOT" '    ')"; then
     command -v cargo >/dev/null 2>&1 || return 3
