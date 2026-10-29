@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "bffe5fa8e6cc96e4dbcf05c2304243034b892a98644c721ddc92d5a18b9edfbe",
+    "fingerprint": "ed2093ffd36fa8483c6b690294efea7cac25d0c2f085e15b28eda9841da9cd37",
     "summary": {
       "total": 3553,
       "builtin": 220,
@@ -92118,7 +92118,7 @@
     ]
   },
   "index": {
-    "fingerprint": "93030d4f7d16b34de47c588c8977830c950f32ef6af21bc835b726c896ad54ac",
+    "fingerprint": "c39081a524f328a511dc48832b9c1176618cd824e01179b982d11a0e1e3831eb",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99180,7 +99180,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 50918
+        "bytes": 53468
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -114023,7 +114023,7 @@
         "path": ".ai/repo/project/issues/I3903.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4102
+        "bytes": 4377
       },
       {
         "uri": "majordomus://issue/I3910",
@@ -125520,7 +125520,7 @@
         "identity": "test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh",
         "path": "test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh",
         "source_class": "case",
-        "bytes": 4314
+        "bytes": 5481
       },
       {
         "uri": "majordomus://test/test/cases/390_unresolved_relation_refuses_generation.sh",
@@ -142287,6 +142287,30 @@
                 ]
               },
               {
+                "name": "unless_supervised_within",
+                "long": "unless-supervised-within",
+                "positional": false,
+                "help": "Stand aside when a supervision succeeded at most this many minutes ago: read only the supervisor's newest success, observe nothing, and exit 0. For a lane that covers for another, so that two lanes do not both spend the repository's request budget on every tick",
+                "value_name": "MINUTES",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "supervised_by",
+                "long": "supervised-by",
+                "positional": false,
+                "help": "With `--unless-supervised-within`, count only a supervision by this lane's job (one named `<anything> (<LANE>)`): the lane covered for. A job that stood aside succeeded too, so a lane that counted its own would stand aside behind itself once the lane it covers for stopped",
+                "value_name": "LANE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
                 "name": "repo",
                 "long": "repo",
                 "positional": false,
@@ -142382,6 +142406,22 @@
                   "--dry-run"
                 ],
                 "command": "majordomus prs supervise --dry-run",
+                "setup": [],
+                "expectation": "exits 12"
+              },
+              {
+                "id": "prs-supervise-covering-lane-no-forge",
+                "title": "A covering lane asks the forge before it stands aside",
+                "description": "`--unless-supervised-within 8 --supervised-by lundra` is how the hosted fallback runs (with `--apply`): when lundra's supervise job succeeded at most eight minutes ago it reads nothing else and exits 0 (`stood aside`), so two lanes do not both spend the repository's one request budget on every tick. Only lundra's success counts, because a job that stood aside succeeded too and a lane counting its own would stand aside behind itself for ever. The answer is the forge's, so where there is none, or no bounds are declared, it exits 12 and stands aside from nothing.",
+                "argv": [
+                  "prs",
+                  "supervise",
+                  "--unless-supervised-within",
+                  "8",
+                  "--supervised-by",
+                  "lundra"
+                ],
+                "command": "majordomus prs supervise --unless-supervised-within 8 --supervised-by lundra",
                 "setup": [],
                 "expectation": "exits 12"
               }

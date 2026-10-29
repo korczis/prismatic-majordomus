@@ -411,6 +411,7 @@ fn render_proof(p: &integration::proof::DryRunProof, out: &mut impl Write) -> Re
 fn supervise(
     root: &std::path::Path,
     apply: bool,
+    unless: Option<integration::runs::StandAside>,
     format: OutputFormat,
     out: &mut impl Write,
 ) -> Result<u8> {
@@ -427,11 +428,22 @@ fn supervise(
             .map(|d| d.as_secs())
             .unwrap_or(0)
     };
-    let report = integration::runs::supervise(root, &mut forge, &model, &now, self_run, apply)
-        .map_err(|e| unusable(format!("the forge could not be read: {e}")))?;
+    let report = integration::runs::supervise(
+        root,
+        &mut forge,
+        &model,
+        &now,
+        self_run,
+        apply,
+        unless.as_ref(),
+    )
+    .map_err(|e| unusable(format!("the forge could not be read: {e}")))?;
     if format == OutputFormat::Json {
         json(out, &report)?;
         return Ok(report.exit_code());
+    }
+    if let Some(why) = &report.skipped {
+        return w(out, format!("stood aside: {why}")).map(|()| report.exit_code());
     }
     let mut lines = vec![format!(
         "{} in-flight run(s) of {} judged at {}{}",
@@ -790,7 +802,19 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             Ok(0)
         }
         PrsCommand::Trains => trains(&root, format, &mut out),
-        PrsCommand::Supervise { apply, .. } => supervise(&root, apply, format, &mut out),
+        PrsCommand::Supervise {
+            apply,
+            unless_supervised_within,
+            supervised_by,
+            ..
+        } => {
+            let unless =
+                unless_supervised_within.map(|within_minutes| integration::runs::StandAside {
+                    within_minutes,
+                    lane: supervised_by,
+                });
+            supervise(&root, apply, unless, format, &mut out)
+        }
         PrsCommand::Events => {
             let events = drain::events(&root);
             if format == OutputFormat::Json {

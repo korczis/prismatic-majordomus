@@ -14,6 +14,15 @@
 //! holding its runner; `POST repos/<repo>/actions/runs/<id>/force-cancel` ends it at once
 //! (docs/CI.md).
 //!
+//! What it costs is bounded. Every workflow of the repository spends one `GITHUB_TOKEN` budget
+//! (1,000 requests an hour), so a supervisor that read every in-flight run's jobs on every
+//! requested validate run would spend it for all of them: a run's jobs are read only when a
+//! rule could act on it ([`super::supervise::needs_jobs`]). Each `gh` call is ended after
+//! [`GH_CALL_SECONDS`], and the whole observation after [`BUDGET_SECONDS`], so a degraded forge
+//! is a failed apply (exit 12) within its job's five minutes, never a job killed mid-act.
+//! A lane that only covers for another passes `--unless-supervised-within`: a supervision
+//! that succeeded that recently is the one that counts, and this one reads one page and stops.
+//!
 //! It also reports whether the supervisor itself is alive ([`super::supervise::liveness`]):
 //! the newest successful job of the supervising workflow, older than thirty minutes, is
 //! `supervise_stale` — the one failure a supervisor cannot report about itself, so the queue
@@ -27,7 +36,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use super::drain::{self, IntegrationAction, IntegrationEvent};
-use super::forge::{gh, gh_retrying, ForgeError};
+use super::forge::{gh_within, ForgeError};
 use super::supervise::{
     self, Decision, Hold, JobObservation, Liveness, RunObservation, Situation, SuperviseModel,
     FULL_LABEL, IN_FLIGHT,
@@ -40,8 +49,9 @@ pub struct RunsObservation {
     pub repository: String,
     /// The default branch.
     pub default_branch: String,
-    /// Every run of [`IN_FLIGHT`], with its jobs, and the completed runs of the commits a
-    /// waiting pull request's run is of (without jobs): what a duplicate is judged against.
+    /// Every run of [`IN_FLIGHT`], and the completed runs of the commits a waiting pull
+    /// request's run is of: what a duplicate is judged against. Without their jobs, which
+    /// [`supervise`] reads only for the runs a rule could act on.
     pub runs: Vec<RunObservation>,
     /// Each open pull request's head.
     pub pr_heads: BTreeMap<u64, String>,
@@ -53,8 +63,10 @@ pub struct RunsObservation {
 /// A source of run observations and the one act on them. The command line uses
 /// [`GhRunForge`]; tests use a value.
 pub trait RunForge {
-    /// Observe every in-flight run and every open pull request's head.
+    /// Observe every in-flight run and every open pull request's head, without jobs.
     fn observe(&self) -> Result<RunsObservation, ForgeError>;
+    /// Read one run's jobs, its latest attempt's.
+    fn jobs(&self, id: u64) -> Result<Vec<JobObservation>, ForgeError>;
     /// Read one run again, with its jobs.
     fn run(&self, id: u64) -> Result<RunObservation, ForgeError>;
     /// Read one pull request's head again; `None` when it is no longer open.
@@ -62,8 +74,24 @@ pub trait RunForge {
     /// End one run at once.
     fn force_cancel(&mut self, id: u64) -> Result<(), ForgeError>;
     /// When the newest successful job of `workflow` ended, RFC 3339; `None` when there is none
-    /// among its recent runs.
-    fn newest_success(&self, workflow: &str) -> Result<Option<String>, ForgeError>;
+    /// among its recent runs, or none of them `among` admits.
+    fn newest_success(
+        &self,
+        workflow: &str,
+        among: Successes<'_>,
+    ) -> Result<Option<String>, ForgeError>;
+}
+
+/// Which successful jobs [`RunForge::newest_success`] counts; the default counts every one.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct Successes<'a> {
+    /// Only a job of this lane: one named `<anything> (<lane>)`, as a matrix job of
+    /// `name: supervise (${{ matrix.lane }})` is.
+    pub lane: Option<&'a str>,
+    /// Only among the runs last updated at or after this time, in seconds since the epoch. A
+    /// job that ended then belongs to a run updated no earlier, so the other runs' jobs need
+    /// not be read: a lane that may have stopped long ago costs one page, not twenty.
+    pub since: Option<u64>,
 }
 
 /// The workflow key of a run: its file name without the extension
@@ -156,6 +184,13 @@ pub fn attach_pull_requests(runs: &mut [RunObservation], branches: &BTreeMap<Str
     }
 }
 
+/// The longest one `gh` call may take before it is ended as timed out.
+pub const GH_CALL_SECONDS: u64 = 20;
+
+/// The longest the forge may be read for, from [`GhRunForge::connect`]: a supervise job is
+/// bounded at five minutes, and the executable's download comes first.
+pub const BUDGET_SECONDS: u64 = 180;
+
 /// The GitHub CLI, run in the repository.
 pub struct GhRunForge<'a> {
     /// The repository root.
@@ -164,14 +199,55 @@ pub struct GhRunForge<'a> {
     pub repository: String,
     /// Its default branch.
     pub default_branch: String,
+    /// After when no call is started: [`BUDGET_SECONDS`] from connecting.
+    pub deadline: std::time::Instant,
+}
+
+/// One `gh` call within `deadline`, at most [`GH_CALL_SECONDS`]; with `retrying`, asked
+/// again on a transient failure, a timeout among them, while the budget lasts.
+fn call(
+    root: &Path,
+    deadline: std::time::Instant,
+    args: &[&str],
+    retrying: bool,
+) -> Result<(bool, String, String), ForgeError> {
+    let once = || {
+        let left = deadline.saturating_duration_since(std::time::Instant::now());
+        if left.is_zero() {
+            return Err(ForgeError(format!(
+                "the forge's budget of {BUDGET_SECONDS} s is spent; gh {} was not asked",
+                args.join(" ")
+            )));
+        }
+        gh_within(
+            root,
+            args,
+            left.min(std::time::Duration::from_secs(GH_CALL_SECONDS)),
+        )
+    };
+    if !retrying {
+        return once();
+    }
+    super::retry::forge(|| {
+        let (ok, out, err) = once().map_err(|e| e.0)?;
+        if !ok && super::retry::transient(&err) {
+            Err(format!("gh {} failed: {}", args.join(" "), err.trim()))
+        } else {
+            Ok((ok, out, err))
+        }
+    })
+    .map_err(ForgeError)
 }
 
 impl<'a> GhRunForge<'a> {
-    /// Ask the forge which repository `root` is.
+    /// Ask the forge which repository `root` is; the budget starts now.
     pub fn connect(root: &'a Path) -> Result<Self, ForgeError> {
-        let (ok, out, err) = gh_retrying(
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(BUDGET_SECONDS);
+        let (ok, out, err) = call(
             root,
+            deadline,
             &["repo", "view", "--json", "nameWithOwner,defaultBranchRef"],
+            true,
         )?;
         if !ok {
             return Err(ForgeError(format!("gh repo view failed: {}", err.trim())));
@@ -187,12 +263,17 @@ impl<'a> GhRunForge<'a> {
                 .and_then(Value::as_str)
                 .ok_or_else(|| ForgeError("gh repo view named no default branch".into()))?
                 .to_string(),
+            deadline,
         })
+    }
+
+    fn read(&self, args: &[&str]) -> Result<(bool, String, String), ForgeError> {
+        call(self.root, self.deadline, args, true)
     }
 
     fn paged(&self, endpoint: &str, jq: &str) -> Result<Vec<Value>, ForgeError> {
         let args = ["api", "--paginate", endpoint, "--jq", jq];
-        let (ok, out, err) = gh_retrying(self.root, &args)?;
+        let (ok, out, err) = self.read(&args)?;
         if !ok {
             return Err(ForgeError(format!(
                 "gh api {endpoint} failed: {}",
@@ -203,7 +284,7 @@ impl<'a> GhRunForge<'a> {
     }
 
     fn one(&self, endpoint: &str) -> Result<Value, ForgeError> {
-        let (ok, out, err) = gh_retrying(self.root, &["api", endpoint])?;
+        let (ok, out, err) = self.read(&["api", endpoint])?;
         if !ok {
             return Err(ForgeError(format!(
                 "gh api {endpoint} failed: {}",
@@ -221,16 +302,8 @@ impl<'a> GhRunForge<'a> {
         self.paged(&endpoint, ".jobs[]")
     }
 
-    fn jobs(&self, id: u64) -> Result<Vec<JobObservation>, ForgeError> {
-        let endpoint = format!(
-            "repos/{}/actions/runs/{id}/jobs?per_page=100",
-            self.repository
-        );
-        Ok(self
-            .paged(&endpoint, ".jobs[]")?
-            .iter()
-            .filter_map(job_of)
-            .collect())
+    fn read_jobs(&self, id: u64) -> Result<Vec<JobObservation>, ForgeError> {
+        Ok(self.jobs_raw(id)?.iter().filter_map(job_of).collect())
     }
 }
 
@@ -294,9 +367,6 @@ impl RunForge for GhRunForge<'_> {
             }
         }
         let mut runs: Vec<RunObservation> = by_id.into_values().collect();
-        for r in runs.iter_mut().filter(|r| r.in_flight()) {
-            r.jobs = self.jobs(r.id)?;
-        }
         attach_pull_requests(&mut runs, &branches);
         Ok(RunsObservation {
             repository: self.repository.clone(),
@@ -307,9 +377,13 @@ impl RunForge for GhRunForge<'_> {
         })
     }
 
+    fn jobs(&self, id: u64) -> Result<Vec<JobObservation>, ForgeError> {
+        self.read_jobs(id)
+    }
+
     fn run(&self, id: u64) -> Result<RunObservation, ForgeError> {
         let endpoint = format!("repos/{}/actions/runs/{id}", self.repository);
-        let (ok, out, err) = gh_retrying(self.root, &["api", &endpoint])?;
+        let (ok, out, err) = self.read(&["api", &endpoint])?;
         if !ok {
             return Err(ForgeError(format!(
                 "gh api {endpoint} failed: {}",
@@ -320,13 +394,13 @@ impl RunForge for GhRunForge<'_> {
             serde_json::from_str(&out).map_err(|e| ForgeError(format!("{endpoint}: {e}")))?;
         let mut run =
             run_of(&v).ok_or_else(|| ForgeError(format!("{endpoint}: a run this cannot read")))?;
-        run.jobs = self.jobs(id)?;
+        run.jobs = self.read_jobs(id)?;
         Ok(run)
     }
 
     fn pr_head(&self, number: u64) -> Result<Option<String>, ForgeError> {
         let endpoint = format!("repos/{}/pulls/{number}", self.repository);
-        let (ok, out, err) = gh_retrying(self.root, &["api", &endpoint])?;
+        let (ok, out, err) = self.read(&["api", &endpoint])?;
         if !ok {
             return Err(ForgeError(format!(
                 "gh api {endpoint} failed: {}",
@@ -346,7 +420,12 @@ impl RunForge for GhRunForge<'_> {
     fn force_cancel(&mut self, id: u64) -> Result<(), ForgeError> {
         // the one write: asked once, never retried — the next tick observes again
         let endpoint = format!("repos/{}/actions/runs/{id}/force-cancel", self.repository);
-        let (ok, _, err) = gh(self.root, &["api", "-X", "POST", &endpoint])?;
+        let (ok, _, err) = call(
+            self.root,
+            self.deadline,
+            &["api", "-X", "POST", &endpoint],
+            false,
+        )?;
         if ok {
             Ok(())
         } else {
@@ -357,7 +436,11 @@ impl RunForge for GhRunForge<'_> {
         }
     }
 
-    fn newest_success(&self, workflow: &str) -> Result<Option<String>, ForgeError> {
+    fn newest_success(
+        &self,
+        workflow: &str,
+        among: Successes<'_>,
+    ) -> Result<Option<String>, ForgeError> {
         // one page of its newest runs, newest first: a run whose other lane waits for a
         // runner has not concluded, so the success is its job's, not the run's
         let endpoint = format!(
@@ -365,24 +448,47 @@ impl RunForge for GhRunForge<'_> {
             self.repository
         );
         let page = self.one(&endpoint)?;
-        let ids: Vec<u64> = page
-            .get("workflow_runs")
-            .and_then(Value::as_array)
-            .map(|a| a.iter().filter_map(|r| r.get("id")?.as_u64()).collect())
-            .unwrap_or_default();
-        for id in ids {
-            let newest = self
-                .jobs_raw(id)?
-                .iter()
-                .filter(|j| j.get("conclusion").and_then(Value::as_str) == Some("success"))
-                .filter_map(|j| text(j, "completed_at"))
-                .max();
+        for id in runs_updated_since(&page, among.since) {
+            let newest = newest_success_of(&self.jobs_raw(id)?, among.lane);
             if newest.is_some() {
                 return Ok(newest);
             }
         }
         Ok(None)
     }
+}
+
+/// The ids of a page of runs, in its order; with `since`, only the runs last updated at or
+/// after it (a run whose update is not a time is read).
+fn runs_updated_since(page: &Value, since: Option<u64>) -> Vec<u64> {
+    page.get("workflow_runs")
+        .and_then(Value::as_array)
+        .map(|a| {
+            a.iter()
+                .filter(|r| match since {
+                    Some(t) => text(r, "updated_at")
+                        .and_then(|u| crate::peers::parse_rfc3339(&u))
+                        .is_none_or(|u| u >= t),
+                    None => true,
+                })
+                .filter_map(|r| r.get("id")?.as_u64())
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// When the newest successful job among `jobs` ended; with `lane`, only a job named
+/// `<anything> (<lane>)` counts.
+fn newest_success_of(jobs: &[Value], lane: Option<&str>) -> Option<String> {
+    let suffix = lane.map(|l| format!("({l})"));
+    jobs.iter()
+        .filter(|j| j.get("conclusion").and_then(Value::as_str) == Some("success"))
+        .filter(|j| match &suffix {
+            Some(s) => text(j, "name").is_some_and(|n| n.ends_with(s.as_str())),
+            None => true,
+        })
+        .filter_map(|j| text(j, "completed_at"))
+        .max()
 }
 
 /// What became of one decision under `--apply`.
@@ -432,6 +538,13 @@ pub struct SuperviseReport {
     /// Under `--apply`, what became of each decision.
     #[serde(default)]
     pub acts: Vec<Act>,
+    /// How many runs' jobs were read: only those a rule could act on.
+    #[serde(default)]
+    pub jobs_read: usize,
+    /// Why nothing was observed: a supervision succeeded within the minutes
+    /// `--unless-supervised-within` allows, and this one stood aside.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub skipped: Option<String>,
     /// Whether the supervisor itself is alive; a `finding` here (`supervise_stale`,
     /// `supervise_unobserved`) is what the queue workflow fails on. It never changes the exit:
     /// the run that reports it is not the one that stopped.
@@ -479,8 +592,22 @@ fn event(action: IntegrationAction, d: &Decision, detail: String) -> Integration
     }
 }
 
+/// When a lane that covers for another stands aside (`--unless-supervised-within`,
+/// `--supervised-by`).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct StandAside {
+    /// A supervision that succeeded at most this many minutes ago is the one that counts.
+    pub within_minutes: u64,
+    /// Only a supervision by this lane's job counts. A covering lane names the lane it covers
+    /// for: a job that stood aside also succeeded, and a lane that counted its own would stand
+    /// aside behind itself for ever once the lane it covers for had stopped.
+    pub lane: Option<String>,
+}
+
 /// Observe, decide, and — with `apply` — act. `now` is asked once for the decision and again
-/// before each act. Err only when the forge could not be observed.
+/// before each act. With `unless`, a supervision that succeeded at most that many minutes ago
+/// (by its lane, when it names one) is read first, and if there is one nothing else is: the
+/// report says so and exits 0. Err only when the forge could not be observed.
 pub fn supervise(
     root: &Path,
     forge: &mut dyn RunForge,
@@ -488,9 +615,78 @@ pub fn supervise(
     now: &dyn Fn() -> u64,
     self_run: Option<u64>,
     apply: bool,
+    unless: Option<&StandAside>,
 ) -> Result<SuperviseReport, ForgeError> {
-    let obs = forge.observe()?;
+    // read once: the answer that decides whether to stand aside is the one reported, unless it
+    // was one lane's, which is not the supervisor's liveness
+    let mut early = None;
+    if let Some(StandAside {
+        within_minutes: within,
+        lane,
+    }) = unless
+    {
+        let within = *within;
+        let at = now();
+        // with a lane, only the runs updated in the window (a minute of margin for the
+        // rounding to minutes): a success older than it does not stand this one aside anyway
+        let read = forge.newest_success(
+            &model.supervisor,
+            Successes {
+                lane: lane.as_deref(),
+                since: lane
+                    .as_ref()
+                    .map(|_| at.saturating_sub(within.saturating_add(1).saturating_mul(60))),
+            },
+        );
+        let liveness = supervise::liveness(
+            read.as_ref()
+                .map(Option::as_deref)
+                .map_err(ToString::to_string),
+            at,
+        );
+        if let Some(minutes) = liveness.minutes.filter(|m| *m <= within) {
+            return Ok(SuperviseReport {
+                repository: String::new(),
+                observed_at: crate::peers::rfc3339(
+                    std::time::UNIX_EPOCH + std::time::Duration::from_secs(at),
+                ),
+                applied: apply,
+                in_flight: 0,
+                decisions: Vec::new(),
+                held: Vec::new(),
+                acts: Vec::new(),
+                jobs_read: 0,
+                skipped: Some(format!(
+                    "a supervision{} succeeded {minutes} min ago, within {within}: nothing \
+                     observed",
+                    lane.as_deref()
+                        .map(|l| format!(" by {l}"))
+                        .unwrap_or_default()
+                )),
+                liveness,
+            });
+        }
+        if lane.is_none() {
+            early = Some(liveness);
+        }
+    }
+    let mut obs = forge.observe()?;
     let first = now();
+    // a run's jobs only where a rule could act on it: the rest are judged without them, and a
+    // run judged without jobs is too young for a bound and has no twin to duplicate
+    let wanted: BTreeSet<u64> = obs
+        .runs
+        .iter()
+        .filter(|r| supervise::needs_jobs(r, &obs.runs, model, first))
+        .map(|r| r.id)
+        .collect();
+    for r in obs.runs.iter_mut() {
+        r.jobs = if wanted.contains(&r.id) {
+            forge.jobs(r.id)?
+        } else {
+            Vec::new()
+        };
+    }
     let situation = Situation {
         runs: &obs.runs,
         pr_heads: &obs.pr_heads,
@@ -612,14 +808,17 @@ pub fn supervise(
         }
     }
     // read last, so that an unreadable answer costs no act
-    let liveness = supervise::liveness(
-        forge
-            .newest_success(&model.supervisor)
-            .as_ref()
-            .map(Option::as_deref)
-            .map_err(ToString::to_string),
-        now(),
-    );
+    let liveness = match early {
+        Some(l) => l,
+        None => supervise::liveness(
+            forge
+                .newest_success(&model.supervisor, Successes::default())
+                .as_ref()
+                .map(Option::as_deref)
+                .map_err(ToString::to_string),
+            now(),
+        ),
+    };
     Ok(SuperviseReport {
         liveness,
         repository: obs.repository,
@@ -631,6 +830,8 @@ pub fn supervise(
         decisions: decided.decisions,
         held: decided.held,
         acts,
+        jobs_read: wanted.len(),
+        skipped: None,
     })
 }
 
@@ -694,6 +895,10 @@ mod tests {
         cancelled: RefCell<Vec<u64>>,
         /// What the supervisor's newest success is; `None` reads as "an hour ago".
         success: Option<Result<Option<String>, String>>,
+        /// The runs whose jobs were asked for, in order.
+        jobs_asked: RefCell<Vec<u64>>,
+        /// How often the newest success was asked for, and for which lane.
+        success_asked: RefCell<Vec<Option<String>>>,
     }
 
     impl RunForge for Fake {
@@ -701,6 +906,15 @@ mod tests {
             self.obs
                 .clone()
                 .ok_or_else(|| ForgeError("no forge here".into()))
+        }
+        fn jobs(&self, id: u64) -> Result<Vec<JobObservation>, ForgeError> {
+            self.jobs_asked.borrow_mut().push(id);
+            Ok(self
+                .obs
+                .as_ref()
+                .and_then(|o| o.runs.iter().find(|r| r.id == id))
+                .map(|r| r.jobs.clone())
+                .unwrap_or_default())
         }
         fn run(&self, id: u64) -> Result<RunObservation, ForgeError> {
             if let Some(r) = self.reread.get(&id) {
@@ -724,7 +938,14 @@ mod tests {
             self.cancelled.borrow_mut().push(id);
             Ok(())
         }
-        fn newest_success(&self, _workflow: &str) -> Result<Option<String>, ForgeError> {
+        fn newest_success(
+            &self,
+            _workflow: &str,
+            among: Successes<'_>,
+        ) -> Result<Option<String>, ForgeError> {
+            self.success_asked
+                .borrow_mut()
+                .push(among.lane.map(str::to_string));
             match &self.success {
                 None => Ok(Some(at(60))),
                 Some(r) => r.clone().map_err(ForgeError),
@@ -776,14 +997,14 @@ mod tests {
         let d = repo();
         let m = model();
         let mut dry = train();
-        let a = supervise(d.path(), &mut dry, &m, &|| NOW, None, false).unwrap();
+        let a = supervise(d.path(), &mut dry, &m, &|| NOW, None, false, None).unwrap();
         assert!(dry.cancelled.borrow().is_empty());
         assert!(a.acts.is_empty());
         assert!(trail(d.path()).is_empty(), "a dry run writes nothing");
         assert_eq!(a.exit_code(), 10);
 
         let mut wet = train();
-        let b = supervise(d.path(), &mut wet, &m, &|| NOW, None, true).unwrap();
+        let b = supervise(d.path(), &mut wet, &m, &|| NOW, None, true, None).unwrap();
         assert_eq!(a.decisions, b.decisions);
         assert_eq!(a.held, b.held);
         let words: Vec<_> = b
@@ -831,11 +1052,20 @@ mod tests {
             }),
             ..Fake::default()
         };
-        let r = supervise(d.path(), &mut quiet, &m, &|| NOW, None, false).unwrap();
+        let r = supervise(d.path(), &mut quiet, &m, &|| NOW, None, false, None).unwrap();
         assert_eq!(r.exit_code(), 0);
-        let r = supervise(d.path(), &mut quiet, &m, &|| NOW, None, true).unwrap();
+        let r = supervise(d.path(), &mut quiet, &m, &|| NOW, None, true, None).unwrap();
         assert_eq!(r.exit_code(), 0);
-        assert!(supervise(d.path(), &mut Fake::default(), &m, &|| NOW, None, true).is_err());
+        assert!(supervise(
+            d.path(),
+            &mut Fake::default(),
+            &m,
+            &|| NOW,
+            None,
+            true,
+            None
+        )
+        .is_err());
     }
 
     #[test]
@@ -856,7 +1086,7 @@ mod tests {
             conclusion: None,
         }];
         f.reread.insert(200, started);
-        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true).unwrap();
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
         assert_eq!(r.decisions.len(), 2);
         assert!(f.cancelled.borrow().is_empty());
         assert!(
@@ -873,7 +1103,7 @@ mod tests {
         let mut done = f.obs.as_ref().unwrap().runs[0].clone();
         done.status = "completed".into();
         f.reread.insert(100, done);
-        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true).unwrap();
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
         assert_eq!(*f.cancelled.borrow(), vec![200]);
         assert_eq!(r.acts[0].outcome, ActOutcome::Skipped);
     }
@@ -884,7 +1114,7 @@ mod tests {
         let m = model();
         let mut f = train();
         drain::FAIL_WRITE.with(|n| n.set(1));
-        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true).unwrap();
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
         drain::FAIL_WRITE.with(|n| n.set(0));
         assert!(
             f.cancelled.borrow().is_empty(),
@@ -903,7 +1133,7 @@ mod tests {
         let m = model();
         let mut f = train();
         f.success = Some(Ok(Some(at(31))));
-        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, false).unwrap();
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, false, None).unwrap();
         assert_eq!(r.liveness.finding.as_deref(), Some("supervise_stale"));
         assert_eq!(
             r.exit_code(),
@@ -912,13 +1142,13 @@ mod tests {
         );
         let mut f = train();
         f.success = Some(Ok(Some(at(9))));
-        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true).unwrap();
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
         assert_eq!(r.liveness.finding, None);
         assert_eq!(r.liveness.minutes, Some(9));
         assert_eq!(r.exit_code(), 0);
         let mut f = train();
         f.success = Some(Err("HTTP 502".into()));
-        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true).unwrap();
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
         assert_eq!(r.liveness.finding.as_deref(), Some("supervise_unobserved"));
         assert_eq!(
             *f.cancelled.borrow(),
@@ -930,12 +1160,122 @@ mod tests {
     }
 
     #[test]
+    fn jobs_are_read_only_for_the_runs_a_rule_could_act_on() {
+        let d = repo();
+        let m = model();
+        let mut f = train();
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, false, None).unwrap();
+        // 100 (in progress 90 min) and 101 (pending 60 min, no twin) are younger than every
+        // bound; 200 has queued 300 minutes
+        assert_eq!(*f.jobs_asked.borrow(), vec![200]);
+        assert_eq!(r.jobs_read, 1);
+        assert_eq!(r.in_flight, 3);
+        // a waiting twin of its branch and commit is read, whatever its age
+        let mut f = train();
+        let obs = f.obs.as_mut().unwrap();
+        obs.runs.push(run(102, "new", 7, "pending", 59));
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, false, None).unwrap();
+        assert_eq!(*f.jobs_asked.borrow(), vec![200, 102]);
+        assert_eq!(r.decisions.len(), 3, "{r:?}");
+        assert_eq!(r.decisions[1].reason.word(), "duplicate_run");
+    }
+
+    #[test]
+    fn a_lane_that_covers_stands_aside_when_a_supervision_just_succeeded() {
+        let d = repo();
+        let m = model();
+        let within = |minutes, lane: Option<&str>| StandAside {
+            within_minutes: minutes,
+            lane: lane.map(str::to_string),
+        };
+        // succeeded three minutes ago: nothing is observed, nothing acted on, exit 0
+        let mut f = Fake {
+            success: Some(Ok(Some(at(3)))),
+            ..Fake::default()
+        };
+        let cover = within(8, None);
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, Some(&cover)).unwrap();
+        assert!(r.skipped.is_some(), "{r:?}");
+        assert!(r.acts.is_empty() && r.decisions.is_empty());
+        assert_eq!(r.liveness.minutes, Some(3));
+        assert_eq!(r.exit_code(), 0);
+        // nine minutes ago is outside eight: it supervises, and asks for the success once
+        let mut f = train();
+        f.success = Some(Ok(Some(at(9))));
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, Some(&cover)).unwrap();
+        assert!(r.skipped.is_none());
+        assert_eq!(*f.cancelled.borrow(), vec![100, 200]);
+        assert_eq!(*f.success_asked.borrow(), vec![None]);
+        assert_eq!(r.liveness.minutes, Some(9));
+        // none, or one that cannot be read, never stands it aside
+        for success in [Ok(None), Err("HTTP 502".to_string())] {
+            let mut f = train();
+            f.success = Some(success);
+            let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, Some(&cover)).unwrap();
+            assert!(r.skipped.is_none());
+            assert_eq!(*f.cancelled.borrow(), vec![100, 200]);
+        }
+        // a lane that covers for lundra asks for lundra's success only, since a job that
+        // stood aside succeeded too: counting its own, it would stand aside behind itself for
+        // ever once lundra stopped. Supervising, it reports the supervisor's liveness, not
+        // lundra's, and asks for it again
+        let by = within(8, Some("lundra"));
+        let mut f = Fake {
+            success: Some(Ok(Some(at(3)))),
+            ..Fake::default()
+        };
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, Some(&by)).unwrap();
+        assert!(r.skipped.is_some(), "{r:?}");
+        assert_eq!(*f.success_asked.borrow(), vec![Some("lundra".to_string())]);
+        let mut f = train();
+        f.success = Some(Ok(Some(at(9))));
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, Some(&by)).unwrap();
+        assert!(r.skipped.is_none());
+        assert_eq!(*f.cancelled.borrow(), vec![100, 200]);
+        assert_eq!(
+            *f.success_asked.borrow(),
+            vec![Some("lundra".to_string()), None]
+        );
+    }
+
+    #[test]
+    fn a_success_is_counted_for_a_lane_only_when_its_job_is_that_lanes() {
+        let jobs = [
+            json!({"name": "supervise (hosted)", "conclusion": "success",
+                   "completed_at": "2026-10-29T03:00:00Z"}),
+            json!({"name": "supervise (lundra)", "conclusion": "success",
+                   "completed_at": "2026-10-29T02:50:00Z"}),
+            json!({"name": "supervise (lundra)", "conclusion": "failure",
+                   "completed_at": "2026-10-29T02:55:00Z"}),
+        ];
+        assert_eq!(
+            newest_success_of(&jobs, None).as_deref(),
+            Some("2026-10-29T03:00:00Z")
+        );
+        assert_eq!(
+            newest_success_of(&jobs, Some("lundra")).as_deref(),
+            Some("2026-10-29T02:50:00Z")
+        );
+        assert_eq!(newest_success_of(&jobs, Some("arm")), None);
+        assert_eq!(newest_success_of(&jobs[..1], Some("lundra")), None);
+        // and only the runs updated in the window are read for it
+        let page = json!({"workflow_runs": [
+            {"id": 3, "updated_at": "2026-10-29T03:00:00Z"},
+            {"id": 2, "updated_at": "2026-10-29T01:00:00Z"},
+            {"id": 1, "updated_at": "not a time"},
+        ]});
+        assert_eq!(runs_updated_since(&page, None), vec![3, 2, 1]);
+        let since = crate::peers::parse_rfc3339("2026-10-29T02:51:00Z");
+        assert_eq!(runs_updated_since(&page, since), vec![3, 1]);
+    }
+
+    #[test]
     fn a_refused_cancel_is_recorded_and_exits_twelve() {
         let d = repo();
         let m = model();
         let mut f = train();
         f.refuse_cancel = true;
-        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true).unwrap();
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
         assert!(r.acts.iter().all(|a| a.outcome == ActOutcome::Failed));
         assert_eq!(r.exit_code(), 12);
         let t = trail(d.path());

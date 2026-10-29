@@ -10127,6 +10127,26 @@ cli:
               possible_values: []
               defaults:
                 - "false"
+            - name: unless_supervised_within
+              long: unless-supervised-within
+              positional: false
+              help: "Stand aside when a supervision succeeded at most this many minutes ago: read only the supervisor's newest success, observe nothing, and exit 0. For a lane that covers for another, so that two lanes do not both spend the repository's request budget on every tick"
+              value_name: MINUTES
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: supervised_by
+              long: supervised-by
+              positional: false
+              help: "With `--unless-supervised-within`, count only a supervision by this lane's job (one named `<anything> (<LANE>)`): the lane covered for. A job that stood aside succeeded too, so a lane that counted its own would stand aside behind itself once the lane it covers for stopped"
+              value_name: LANE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
             - name: repo
               long: repo
               positional: false
@@ -10197,6 +10217,19 @@ cli:
                 - supervise
                 - "--dry-run"
               command: majordomus prs supervise --dry-run
+              setup: []
+              expectation: exits 12
+            - id: prs-supervise-covering-lane-no-forge
+              title: A covering lane asks the forge before it stands aside
+              description: "`--unless-supervised-within 8 --supervised-by lundra` is how the hosted fallback runs (with `--apply`): when lundra's supervise job succeeded at most eight minutes ago it reads nothing else and exits 0 (`stood aside`), so two lanes do not both spend the repository's one request budget on every tick. Only lundra's success counts, because a job that stood aside succeeded too and a lane counting its own would stand aside behind itself for ever. The answer is the forge's, so where there is none, or no bounds are declared, it exits 12 and stands aside from nothing."
+              argv:
+                - prs
+                - supervise
+                - "--unless-supervised-within"
+                - "8"
+                - "--supervised-by"
+                - lundra
+              command: majordomus prs supervise --unless-supervised-within 8 --supervised-by lundra
               setup: []
               expectation: exits 12
           subcommands: []

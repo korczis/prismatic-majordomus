@@ -1026,6 +1026,25 @@ fn five_validate_requests_within_a_minute_let_a_supervise_apply_complete() {
     assert!(c.contains("fail-fast: false"));
     // each lane its own group, so a lane with no runner never holds the other
     assert!(c.contains("group: supervise-${{ matrix.lane }}"), "{c}");
+    // an executable is taken only if it has the command: every build before I3903 runs
+    // `--version` and fails `prs supervise`, so both the artifact and the release are asked
+    assert_eq!(
+        c.matches("prs supervise --help >/dev/null").count(),
+        2,
+        "the artifact and the release are each asked whether they have prs supervise"
+    );
+    assert!(
+        c.contains("exit 12"),
+        "an executable without the command is not a silent pass"
+    );
+    // the hosted lane covers, and stands aside after a recent success: not a second full apply
+    assert!(c.contains("--unless-supervised-within \"$COVER\""), "{c}");
+    assert!(c.contains("cover: '8'"), "{c}");
+    assert!(
+        c.contains("--supervised-by lundra"),
+        "a covering lane that counted its own stand-aside would stand aside for ever"
+    );
+    assert!(c.contains("cover: ''"), "the lundra lane always applies");
 
     // five requests in 60 s, each apply taking its whole bound: the first apply completes,
     // and so does the one the last request leaves waiting
@@ -1062,4 +1081,29 @@ fn the_queue_workflow_fails_on_a_stale_supervisor() {
         "listing runs needs actions read"
     );
     assert!(!c.contains("--apply"), "the queue never acts");
+    // the liveness is its own job, off the pool the supervisor waits on, compiling nothing
+    let alive = c
+        .split("\n  alive:")
+        .nth(1)
+        .expect("no `alive` job in queue.yml");
+    assert!(alive.contains("[self-hosted, lundra]"), "{alive}");
+    assert!(alive.contains("ubuntu-latest"), "{alive}");
+    assert!(alive.contains("fail-fast: false"), "{alive}");
+    assert!(
+        !alive.contains("cargo build"),
+        "it compiles before it reports"
+    );
+    assert!(alive.contains("prs supervise --help >/dev/null"), "{alive}");
+    assert!(alive.contains("--unless-supervised-within 30"), "{alive}");
+    assert!(
+        alive.contains("group: queue-alive-${{ matrix.lane }}"),
+        "{alive}"
+    );
+    assert!(alive.contains(".liveness.finding"), "{alive}");
+    // and a lane waiting for a runner holds no measurement: the group is the job's
+    let head = c.split("\njobs:").next().unwrap();
+    assert!(
+        !head.contains("concurrency:"),
+        "a workflow-level group holds the next measurement behind a waiting lane"
+    );
 }

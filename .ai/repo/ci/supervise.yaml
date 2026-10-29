@@ -54,11 +54,15 @@ version: 1
 # cancelled only if the same reason still holds (the drain's observe-twice discipline). The
 # act is recorded first; a trail that cannot be written stops every act. The cancel is the
 # forge's force-cancel: `gh run cancel` on a queued run has returned success and done nothing.
-# Where it runs: two lanes at once, lundra ([self-hosted, lundra]) and GitHub-hosted, each its
-# own concurrency group with cancel-in-progress false, from a downloaded executable, bounded at
-# five minutes. A supervisor queued behind the validate jobs it supervises supervises nothing.
-# Its liveness is the queue workflow's to report: no successful supervise job for thirty
-# minutes is `supervise_stale` (.ai/repo/ci/queue.yaml).
+# Where it runs: lundra ([self-hosted, lundra]), with a GitHub-hosted fallback for a lundra with
+# no runner online; each lane its own concurrency group with cancel-in-progress false, from a
+# downloaded executable that answers `prs supervise --help`, bounded at five minutes. A
+# supervisor queued behind the validate jobs it supervises supervises nothing, and the hosted
+# lane is such a job: it cannot start while the hosted pool is saturated, and it stands aside
+# when lundra's supervision succeeded in the last eight minutes (`--unless-supervised-within 8
+# --supervised-by lundra`; its own stand-aside is a success that must not count). Its
+# liveness is the queue workflow's to report: no successful supervise job for thirty minutes
+# is `supervise_stale` (.ai/repo/ci/queue.yaml).
 runs_on:
   lanes: [lundra, hosted]
   timeout_minutes: 5

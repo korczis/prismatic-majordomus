@@ -3157,6 +3157,8 @@ majordomus prs supervise [OPTIONS]
 |---|---|---|---|
 | `--apply` | flag | — | Act: read each run and its pull request's head again, and only if the decision still holds, record the act on the integration trail and force-cancel the run. A trail that cannot be written stops every act |
 | `--dry-run` | flag | — | Decide and change nothing: the default, spelled out |
+| `--unless-supervised-within` | `<MINUTES>` | — | Stand aside when a supervision succeeded at most this many minutes ago: read only the supervisor's newest success, observe nothing, and exit 0. For a lane that covers for another, so that two lanes do not both spend the repository's request budget on every tick |
+| `--supervised-by` | `<LANE>` | — | With `--unless-supervised-within`, count only a supervision by this lane's job (one named `<anything> (<LANE>)`): the lane covered for. A job that stood aside succeeded too, so a lane that counted its own would stand aside behind itself once the lane it covers for stopped |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
@@ -3169,6 +3171,14 @@ Examples:
 
   ```console
   $ majordomus prs supervise --dry-run
+  ```
+
+  Verified: exits 12.
+
+- **A covering lane asks the forge before it stands aside** — `--unless-supervised-within 8 --supervised-by lundra` is how the hosted fallback runs (with `--apply`): when lundra's supervise job succeeded at most eight minutes ago it reads nothing else and exits 0 (`stood aside`), so two lanes do not both spend the repository's one request budget on every tick. Only lundra's success counts, because a job that stood aside succeeded too and a lane counting its own would stand aside behind itself for ever. The answer is the forge's, so where there is none, or no bounds are declared, it exits 12 and stands aside from nothing.
+
+  ```console
+  $ majordomus prs supervise --unless-supervised-within 8 --supervised-by lundra
   ```
 
   Verified: exits 12.

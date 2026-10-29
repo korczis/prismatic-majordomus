@@ -11,17 +11,24 @@
 # restart because it runs here, not on anybody's machine.
 #
 # It must not be starved by what it supervises. On 2026-10-28 the hosted pool was full of
-# validate's jobs, and a supervisor queued behind them supervises nothing; so it runs in two
-# lanes at once: lundra, the repository's own machine (it does not share the account's hosted
-# concurrency), and GitHub-hosted, the fallback when lundra has no runner online. Whichever pool
-# has room runs first. Each lane is its own concurrency group, so a lane with no runner holds
-# only itself, and a second apply finds the first one's cancels already done (each act reads its
-# run again first, and a run that completed is skipped). The queue workflow fails when neither
-# lane has succeeded for thirty minutes (`supervise_stale`).
+# validate's jobs, and a supervisor queued behind them supervises nothing; so it runs on lundra,
+# the repository's own machine, which does not share the account's hosted concurrency. The
+# GitHub-hosted lane is the fallback for a lundra with no runner online, and it is no more than
+# that: it queues behind validate's jobs like any other hosted job, so it cannot start while the
+# hosted pool is saturated, and when it does start it stands aside if lundra's supervision
+# succeeded in the last eight minutes (`--unless-supervised-within 8 --supervised-by lundra`), so
+# that two lanes do not both spend the repository's one request budget on every tick. Only
+# lundra's success counts: a job that stood aside succeeded too, and a lane counting its own would
+# stand aside behind itself for ever once lundra stopped. Each lane is its own concurrency group, so a lane
+# with no runner holds only itself, and a second apply finds the first one's cancels already done
+# (each act reads its run again first, and a run that completed is skipped). The queue workflow
+# reports when no lane has succeeded for thirty minutes (`supervise_stale`).
 #
 # It compiles nothing: an apply that waited twenty minutes for a build was cancelled by the next
 # request before it acted. It downloads the executable the newest master validate run built
-# (`majordomus-exe`, kept a day), or the published release when none is kept.
+# (`majordomus-exe`, kept a day), or the published release when none is kept, and takes only one
+# that has `prs supervise`: every executable built before I3903 landed answers `--version` and
+# not this command.
 name: supervise
 on:
   schedule:
@@ -41,14 +48,18 @@ permissions:
 
 jobs:
   supervise:
+    name: supervise (${{ matrix.lane }})
     strategy:
       fail-fast: false
       matrix:
         include:
           - lane: lundra
             runner: [self-hosted, lundra]
+            cover: ''
+          # the fallback: it stands aside when lundra's supervision succeeded in the last 8 minutes
           - lane: hosted
             runner: ubuntu-latest
+            cover: '8'
     runs-on: ${{ matrix.runner }}
     # a lane that fails is the other lane's to cover; the liveness finding is what reports it
     continue-on-error: true
@@ -76,10 +87,11 @@ jobs:
           for id in $(gh run list --repo "$GITHUB_REPOSITORY" --workflow validate.yml --branch master \
               --event push --limit 10 --json databaseId --jq '.[].databaseId'); do
             # built on GitHub-hosted Linux: where its architecture or libc does not fit it does
-            # not run, and the release (built for each) is taken instead
+            # not run, and the release (built for each) is taken instead. It must have the
+            # command, not only run: a build older than I3903 answers --version and nothing more
             if gh run download "$id" --repo "$GITHUB_REPOSITORY" --name majordomus-exe --dir "$dir" 2>/dev/null \
                 && [ -s "$dir/majordomus" ] && chmod +x "$dir/majordomus" \
-                && "$dir/majordomus" --version >/dev/null 2>&1; then
+                && "$dir/majordomus" prs supervise --help >/dev/null 2>&1; then
               echo "the executable validate run $id built: $(cat "$dir/majordomus-cli.json" 2>/dev/null)"
               break
             fi
@@ -88,22 +100,29 @@ jobs:
           if [ -x "$dir/majordomus" ]; then
             echo "MJ=$dir/majordomus" >> "$GITHUB_ENV"
           else
-            echo "::warning::no master validate run keeps an executable that runs here; the published release supervises"
+            echo "::warning::no master validate run keeps an executable with prs supervise that runs here; the published release supervises"
             curl -fsSL --max-time 60 https://majordomus.dev/install.sh \
               | sh -s -- --install-dir "$RUNNER_TEMP/bin" --prefix "$RUNNER_TEMP/opt"
+            if ! "$RUNNER_TEMP/bin/majordomus" prs supervise --help >/dev/null 2>&1; then
+              echo "::error::supervise: neither a master validate run's majordomus-exe (kept a day) nor the published release $("$RUNNER_TEMP/bin/majordomus" --version 2>/dev/null) has prs supervise; nothing supervises until master's validate builds one or a release ships it" >&2
+              exit 12
+            fi
             echo "MJ=$RUNNER_TEMP/bin/majordomus" >> "$GITHUB_ENV"
           fi
 
       # `--apply`: each run decided on is read again, recorded on the trail, then cancelled.
-      # 0 is nothing to do or every act done; 12 is a forge that could not be read or an act
-      # that could not be taken, and that fails this lane.
+      # 0 is nothing to do, every act done, or a covering lane that stood aside; 12 is a forge
+      # that could not be read or an act that could not be taken, and that fails this lane.
       - id: supervise
         env:
           GH_TOKEN: ${{ github.token }}
           LANE: ${{ matrix.lane }}
+          COVER: ${{ matrix.cover }}
         run: |
           rc=0
-          "$MJ" prs supervise --apply > "$RUNNER_TEMP/supervise.txt" 2>&1 || rc=$?
+          set -- --apply
+          [ -z "$COVER" ] || set -- "$@" --unless-supervised-within "$COVER" --supervised-by lundra
+          "$MJ" prs supervise "$@" > "$RUNNER_TEMP/supervise.txt" 2>&1 || rc=$?
           sed 's/^/    /' "$RUNNER_TEMP/supervise.txt"
           {
             printf '## The CI runs, supervised here (%s)\n\n```\n' "$LANE"

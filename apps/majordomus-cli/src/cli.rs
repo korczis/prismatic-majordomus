@@ -4134,6 +4134,26 @@ pub struct PrsArgs {
 /// let Command::Prs(args) = cli.command else { panic!() };
 /// assert!(matches!(args.command, Some(PrsCommand::Supervise { apply: true, .. })));
 /// assert!(Cli::try_parse_from(["majordomus", "prs", "supervise", "--apply", "--dry-run"]).is_err());
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "prs", "supervise", "--apply", "--unless-supervised-within", "8",
+///     "--supervised-by", "lundra",
+/// ])
+/// .unwrap();
+/// let Command::Prs(args) = cli.command else { panic!() };
+/// assert!(matches!(
+///     args.command,
+///     Some(PrsCommand::Supervise {
+///         apply: true,
+///         unless_supervised_within: Some(8),
+///         supervised_by: Some(ref lane),
+///         ..
+///     }) if lane == "lundra"
+/// ));
+/// // a lane is named only for a stand-aside
+/// assert!(
+///     Cli::try_parse_from(["majordomus", "prs", "supervise", "--supervised-by", "lundra"])
+///         .is_err()
+/// );
 /// // with no subcommand it is `status`
 /// let cli = Cli::try_parse_from(["majordomus", "prs"]).unwrap();
 /// let Command::Prs(args) = cli.command else { panic!() };
@@ -4200,6 +4220,12 @@ pub enum PrsCommand {
         /// Decide and change nothing: the default, spelled out.
         #[arg(long, conflicts_with = "apply")]
         dry_run: bool,
+        /// Stand aside when a supervision succeeded at most this many minutes ago: read only the supervisor's newest success, observe nothing, and exit 0. For a lane that covers for another, so that two lanes do not both spend the repository's request budget on every tick.
+        #[arg(long, value_name = "MINUTES")]
+        unless_supervised_within: Option<u64>,
+        /// With `--unless-supervised-within`, count only a supervision by this lane's job (one named `<anything> (<LANE>)`): the lane covered for. A job that stood aside succeeded too, so a lane that counted its own would stand aside behind itself once the lane it covers for stopped.
+        #[arg(long, value_name = "LANE", requires = "unless_supervised_within")]
+        supervised_by: Option<String>,
     },
     /// The audit trail: every selection, merge, refusal, stale decision and closure this checkout's executor recorded
     Events,
@@ -6416,6 +6442,13 @@ pub const EXAMPLES: &[CommandExamples] = &[
             title: "Supervising the CI runs starts from the forge, or not at all",
             description: "`supervise` reads every queued, waiting and running workflow run and every open pull request's head, and decides which runs to cancel and why: superseded while a newer run waits behind it, queued past its bound, or running past it. Without `--apply` it only prints the decisions. A repository that declares no bounds, or has no GitHub remote to read runs from, cannot be supervised: it exits 12 before deciding anything, and nothing is cancelled or recorded.",
             argv: &["prs", "supervise", "--dry-run"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }, ExampleDoc {
+            id: "prs-supervise-covering-lane-no-forge",
+            title: "A covering lane asks the forge before it stands aside",
+            description: "`--unless-supervised-within 8 --supervised-by lundra` is how the hosted fallback runs (with `--apply`): when lundra's supervise job succeeded at most eight minutes ago it reads nothing else and exits 0 (`stood aside`), so two lanes do not both spend the repository's one request budget on every tick. Only lundra's success counts, because a job that stood aside succeeded too and a lane counting its own would stand aside behind itself for ever. The answer is the forge's, so where there is none, or no bounds are declared, it exits 12 and stands aside from nothing.",
+            argv: &["prs", "supervise", "--unless-supervised-within", "8", "--supervised-by", "lundra"],
             setup: &[],
             expect: Expect::ExitCode(12),
         }],

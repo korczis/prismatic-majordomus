@@ -793,6 +793,48 @@ fn bounded(run: &RunObservation, bound: &WorkflowBound, s: &Situation<'_>) -> Ve
     })
 }
 
+/// Whether a rule could act on `run` only once its jobs are read, among `runs` at `now`. A
+/// run's jobs cost a request each, out of the one `GITHUB_TOKEN` budget every workflow of the
+/// repository spends, so they are read only where they can change the verdict:
+///
+/// - a bounded run older than the smaller of its two bounds: every job of it started after it
+///   was created, and its attempt waits from its creation at the earliest, so a younger run
+///   can be past neither;
+/// - a pull request's waiting run of a workflow with a per-pull-request group that has an
+///   older run of its branch and commit: the duplicate rule asks whether a job of it started.
+///
+/// Every other run is judged without its jobs, and the verdict is the same. A creation that
+/// is not a time reads them, and the run is then held as unjudgeable.
+pub fn needs_jobs(
+    run: &RunObservation,
+    runs: &[RunObservation],
+    model: &SuperviseModel,
+    now: u64,
+) -> bool {
+    if !run.in_flight() || run.workflow == model.supervisor {
+        return false;
+    }
+    let Some(bound) = model.bounds.get(&run.workflow) else {
+        return false;
+    };
+    let Some(created) = seconds(&run.created_at) else {
+        return true;
+    };
+    if now.saturating_sub(created) / 60 > bound.queued_minutes.min(bound.running_minutes) {
+        return true;
+    }
+    bound.superseded == SupersededGroup::PerPullRequest
+        && run.event == "pull_request"
+        && run.waiting()
+        && runs.iter().any(|o| {
+            o.id != run.id
+                && o.workflow == run.workflow
+                && o.head_branch == run.head_branch
+                && o.head_sha == run.head_sha
+                && newer(run, o)
+        })
+}
+
 /// Every decision over one observation.
 pub fn decide(s: &Situation<'_>) -> Supervision {
     // in run order, each run once: the map is the order
@@ -1320,6 +1362,70 @@ mod tests {
                 .reason
                 .word(),
             "running_past_bound"
+        );
+    }
+
+    #[test]
+    fn jobs_are_read_only_where_a_rule_could_act() {
+        let m = model();
+        let young = run(100, "a", Some(7), "in_progress", 60);
+        assert!(
+            !needs_jobs(&young, &[], &m, NOW),
+            "younger than every bound"
+        );
+        // validate's smaller bound is 240 minutes
+        assert!(!needs_jobs(
+            &run(100, "a", Some(7), "queued", 240),
+            &[],
+            &m,
+            NOW
+        ));
+        assert!(needs_jobs(
+            &run(100, "a", Some(7), "queued", 241),
+            &[],
+            &m,
+            NOW
+        ));
+        // release's running bound, 75, is its smaller one
+        let mut tag = run(100, "a", None, "in_progress", 76);
+        tag.workflow = "release".into();
+        assert!(needs_jobs(&tag, &[], &m, NOW));
+        // a waiting run with an older run of its branch and commit: is it a duplicate?
+        let first = run(100, "a", Some(7), "in_progress", 30);
+        let twin = run(101, "a", Some(7), "pending", 29);
+        assert!(needs_jobs(&twin, &[first.clone(), twin.clone()], &m, NOW));
+        assert!(!needs_jobs(&first, &[first.clone(), twin.clone()], &m, NOW));
+        let mut elsewhere = twin.clone();
+        elsewhere.head_branch = "integration/10a".into();
+        assert!(!needs_jobs(
+            &elsewhere,
+            &[first.clone(), elsewhere.clone()],
+            &m,
+            NOW
+        ));
+        // never the supervisor's, an unbounded workflow's or a completed run's
+        let mut own = run(100, "a", None, "queued", 10_000);
+        own.workflow = "supervise".into();
+        assert!(!needs_jobs(&own, &[], &m, NOW));
+        own.workflow = "pages-build-deployment".into();
+        assert!(!needs_jobs(&own, &[], &m, NOW));
+        assert!(!needs_jobs(
+            &run(100, "a", Some(7), "completed", 10_000),
+            &[],
+            &m,
+            NOW
+        ));
+        // a creation that is not a time is read, and held as unjudgeable
+        let mut odd = run(100, "a", Some(7), "queued", 0);
+        odd.created_at = "yesterday".into();
+        assert!(needs_jobs(&odd, &[], &m, NOW));
+        // and a run judged without its jobs is judged alike: young, it has nothing to say
+        let mut bare = young.clone();
+        bare.jobs.clear();
+        let h = heads(&[(7, "a")]);
+        assert_eq!(
+            decide_over(std::slice::from_ref(&young), &h),
+            decide_over(&[bare], &h)
         );
     }
 

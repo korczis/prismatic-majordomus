@@ -46,7 +46,13 @@ grep -q 'name majordomus-exe' "$CODE" || { echo "    the supervisor does not dow
 bad="$(sed -n 's/^ *timeout-minutes: *//p' "$CODE" | awk '$1 > 5')"
 [ -z "$bad" ] || { echo "    a supervise job is bounded above five minutes: $bad"; exit 1; }
 sed -n 's/^ *timeout-minutes: *//p' "$CODE" | grep -q . || { echo "    the supervise job has no bound"; exit 1; }
-echo "    two lanes, lundra and hosted, from a downloaded executable, bounded at five minutes"
+[ "$(grep -c 'prs supervise --help >/dev/null' "$CODE")" -ge 2 ] \
+  || { echo "    an executable is taken without asking whether it has prs supervise (a build older than I3903 runs --version)"; exit 1; }
+grep -q -- '--unless-supervised-within "$COVER"' "$CODE" && grep -q "cover: '8'" "$CODE" \
+  || { echo "    the hosted fallback runs a second full apply on every request"; exit 1; }
+grep -q -- '--supervised-by lundra' "$CODE" \
+  || { echo "    the hosted fallback counts its own stand-aside as a supervision, and stands aside for ever"; exit 1; }
+echo "    two lanes, lundra and a hosted fallback that stands aside, from a downloaded executable that has the command, bounded at five minutes"
 
 # ---------------------------------------------------------------- 4. its stopping is reported
 QCODE="$T/queue-code.yml"
@@ -55,6 +61,14 @@ grep -q '"$mj" prs supervise --format json' "$QCODE" \
   || { echo "    the queue workflow does not read the supervisor's liveness"; exit 1; }
 grep -q '.liveness.finding' "$QCODE" || { echo "    the queue workflow does not fail on supervise_stale"; exit 1; }
 grep -q 'actions: read' "$QCODE" || { echo "    the queue workflow cannot read the supervisor's runs"; exit 1; }
+ALIVE="$T/queue-alive.yml"
+sed -n '/^  alive:/,$p' "$QCODE" > "$ALIVE"
+[ -s "$ALIVE" ] || { echo "    the supervisor's liveness is not a job of its own"; exit 1; }
+grep -qF '[self-hosted, lundra]' "$ALIVE" \
+  || { echo "    the supervisor's liveness is read only on the hosted pool the supervisor waits on"; exit 1; }
+grep -q 'cargo build' "$ALIVE" && { echo "    the liveness check compiles before it reports"; exit 1; }
+grep -q 'prs supervise --help >/dev/null' "$ALIVE" \
+  || { echo "    the liveness check takes an executable without the command"; exit 1; }
 SUP="$ROOT/apps/majordomus-cli/src/integration/supervise.rs"
 grep -q 'pub const STALE_MINUTES: u64 = 30;' "$SUP" && grep -q 'pub const SUPERVISE_STALE: &str = "supervise_stale";' "$SUP" \
   || { echo "    the decision no longer names supervise_stale at thirty minutes"; exit 1; }

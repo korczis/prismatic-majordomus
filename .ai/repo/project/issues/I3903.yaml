@@ -32,6 +32,7 @@ acceptance_criteria:
   - "The queue bound runs from the later of created_at and run_started_at, so a re-run of a run created six hours earlier and queued two minutes is not cancelled"
   - "A waiting first-attempt pull-request run of a commit that has a run of the same branch in flight, or one that passed within 120 s of it, is cancelled as a duplicate (a replay of 40713048283 by 15:10Z); a re-run, a reopen, a head back at a judged sha, a judged failure and a train sharing a member's sha are not, and ci:full holds it"
   - "An integration/* run is never cancelled through queued_past_bound or running_past_bound, and a queued run of the trunk, a tag, the schedule, a dispatch or a release is held"
+  - "A run's jobs are read only where a rule could act on it, each gh call is bounded at 20 s and the observation at 180 s, and --unless-supervised-within with --supervised-by lets a covering lane stand aside on the covered lane's success only, never on its own stand-aside"
   - "supervise.yml runs on lundra with a hosted fallback, from a prebuilt executable, bounded at five minutes, with cancel-in-progress false, so five validate requests within 60 s let an apply complete"
   - "A newest supervise success older than 30 minutes is reported as supervise_stale, and queue.yml fails on it"
 validation:

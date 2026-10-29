@@ -479,20 +479,48 @@ the test `the_declared_bounds_hold_to_every_workflows_real_timeouts` holds the r
 workflow's job timeouts; `supervise_replay.rs` replays both runs of 2026-10-28 and the four
 runs of the review of 2026-10-29 from what the forge recorded of them.
 
-The supervisor must not be starved by what it supervises. It runs in two lanes at once, lundra
-(`[self-hosted, lundra]`, which does not share the account's hosted concurrency) and
-GitHub-hosted, the fallback when lundra has no runner online; each lane is its own concurrency
-group with `cancel-in-progress: false`, so a burst of requested validate runs never cancels the
-apply that runs (it used to: five requests within a minute cancelled every apply before it
-acted), and a lane with no runner holds only itself. It compiles nothing: it downloads the
-executable the newest master validate run built (`majordomus-exe`), or the published release
-when none is kept, and each lane is bounded at five minutes. Case 3903 holds the wiring.
+The supervisor must not be starved by what it supervises. It runs on lundra
+(`[self-hosted, lundra]`, which does not share the account's hosted concurrency), with a
+GitHub-hosted lane as the fallback for a lundra with no runner online. That fallback is only
+that: it queues behind validate's jobs like any hosted job, so it cannot start while the hosted
+pool is saturated, and when it starts it stands aside if lundra's supervision succeeded in the
+last eight minutes (`--unless-supervised-within 8 --supervised-by lundra`). Only lundra's
+success counts: a job that stood aside succeeded too, and a lane that counted its own would
+stand aside behind itself for ever once lundra stopped. Each lane is its own concurrency group with
+`cancel-in-progress: false`, so a burst of requested validate runs never cancels the apply that
+runs (it used to: five requests within a minute cancelled every apply before it acted), and a
+lane with no runner holds only itself. It compiles nothing: it downloads the executable the
+newest master validate run built (`majordomus-exe`), or the published release when none is
+kept, and takes one only if `prs supervise --help` answers, since every build before I3903
+answers `--version` and not the command; when neither has it the lane fails with exit 12 and
+says why. Each lane is bounded at five minutes. Case 3903 holds the wiring.
+
+What it costs is bounded. Every workflow of the repository spends one `GITHUB_TOKEN` budget of
+1,000 requests an hour, and a full apply on every requested validate run in two lanes, reading
+every in-flight run's jobs, would spend about 2,000 on a busy day, after which every `gh` call
+of every workflow fails. So a run's jobs are read only where a rule could act on it: a bounded
+run older than the smaller of its two bounds, or a pull request's waiting run with an older run
+of its branch and commit (`needs_jobs`; the report counts them in `jobs_read`). Every other run
+is judged alike without them. Each `gh` call is ended after 20 seconds and the observation after
+180, so a degraded forge fails the apply (exit 12) inside its job's five minutes rather than
+having the job killed in the middle of its acts. `--unless-supervised-within <minutes>` makes a
+lane stand aside when a supervision succeeded that recently: it reads the supervisor's newest
+success, observes nothing and exits 0. With `--supervised-by <lane>` only that lane's job
+counts (one named `supervise (<lane>)`), and only the runs updated within the window are read
+for it, so a lane that stopped long ago costs one page rather than twenty runs' jobs.
 
 Its stopping is reported. `prs supervise` reads the newest successful job of the supervise
 workflow and reports `supervise_stale` when it is older than 30 minutes or there is none
 (`supervise_unobserved` when it cannot be read), in its text and in `liveness` of its JSON,
-without changing its exit. The queue workflow runs that dry run every thirty minutes and fails
-on either finding.
+without changing its exit. The queue workflow's `alive` job runs that dry run every thirty
+minutes, with `--unless-supervised-within 30` so that a live supervisor costs one page of reads,
+and fails on either finding. A hosted stand-aside counts there as a success, so a supervisor
+that stopped right after one is reported at most eight minutes late. It runs in two lanes like the supervisor, its own concurrency
+group each and from the same prebuilt executable: on lundra it reports a supervisor that runs
+there and fails, hosted it reports a lundra with no runner. What no job in Actions can report is
+lundra offline while the hosted pool is saturated, since both lanes then queue; that is read
+from outside Actions, by `majordomus prs supervise --format json` on any machine of the mesh
+(`.liveness.finding`).
 
 The `pages` job judges the site only after the deployment of its own commit (I2711). It starts
 minutes after the push that also starts that commit's deploy, and on 2026-10-14 run
