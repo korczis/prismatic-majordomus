@@ -46147,20 +46147,23 @@
         "id": "majordomus://issue/I2901",
         "kind": "issue",
         "label": "I2901",
-        "summary": "One grammar names an issue id, and every surface reads it",
+        "summary": "One grammar names a record id, and every surface reads it: a capital letter and three or more digits that name a record file of the tree read",
         "route": "/cockpit/objects/issue/i2901",
         "source": ".ai/repo/project/issues/I2901.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "The issue schema refuses an id that is not I and four digits",
-            "ui/prs.rs and ui/idd.rs call one plan::is_issue_id"
-          ],
           "created_at": "2026-10-18",
-          "current_state": "issue.v1.schema.json types id as a bare string; four surfaces carry their own predicate.",
           "depends_on": [],
-          "desired_state": "The schema states the pattern; one predicate exists and every surface calls it; a test fails if a second one appears.",
-          "evidence_required": [],
+          "evidence_required": [
+            "test",
+            "rust"
+          ],
           "milestone": "idd-reads-at-a-glance",
+          "non_scope": [
+            "Changing this repository's own I and four digits ids or any existing record id",
+            "Changing which text a surface scans (title, subject, branch, or a commit body for the changelog)",
+            "Case-insensitive branch components in worktree/state.rs issue_of and merge subjects written by the forge's PR_TITLE setting (I4366, the merge-subject draft)",
+            "The reference gate of I3973 and the commit rule of I3976, which call the predicate once it exists"
+          ],
           "parallel_safe": false,
           "priority": "p2",
           "profile": "implementation",
@@ -46168,8 +46171,18 @@
             "share/schemas/majordomus/issue/issue.v1.schema.json",
             "apps/majordomus-cli/src/plan.rs",
             "apps/majordomus-cli/src/ui/prs.rs",
-            "apps/majordomus-cli/src/ui/idd.rs",
+            "apps/majordomus-cli/src/plan/delivery.rs",
+            "apps/majordomus-cli/src/release/commits.rs",
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "apps/majordomus-cli/src/commands/plan.rs",
+            "lib/plan.sh",
+            "lib/project.awk",
+            "scripts/github-sync",
+            "scripts/ci/audit-plan-check",
             "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
+            "test/cases/3970_a_pull_request_carries_its_metadata.sh",
+            "test/cases/2901_one_grammar_names_a_record_id.sh",
             ".ai/repo/project",
             "docs",
             "site"
@@ -46178,11 +46191,13 @@
             "the-owner-directs-work-from-the-ui#workspace-is-derived"
           ],
           "slug": "one-grammar-names-an-issue-id",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-10-29",
           "validation": [
-            "majordomus plan validate",
-            "majordomus plan validate",
-            "cargo test --lib plan::"
+            "bin/majordomus plan validate",
+            "bin/majordomus generate --check",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- plan:: ui::prs worktree::state release::commits",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --doc release::commits",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 2901_one_grammar_names_a_record_id 3970_a_pull_request_carries_its_metadata 3220_the_idd_loop_is_walked_in_a_browser"
           ]
         }
       },
@@ -71816,6 +71831,377 @@
             "bash test/run.sh 4359_no_ci_routes_to_an_undeclared_runner_host",
             "bin/majordomus mesh runner-routing",
             "bin/majordomus shell check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4366",
+        "kind": "issue",
+        "label": "I4366",
+        "summary": "A merge whose subject is its pull request's title is read as that pull request, and an adopter's lower-case branch names its upper-case record",
+        "route": "/cockpit/objects/issue/i4366",
+        "source": ".ai/repo/project/issues/I4366.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I2901"
+          ],
+          "evidence_required": [
+            "test",
+            "rust",
+            "an_adopter_merge_is_attributed_to_its_record"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "The id grammar and its predicate (I2901)",
+            "Reading an id from a pull request body or a commit body: title, subject and branch only, as delivery reads today",
+            "Changing issues_named's rule that an id may sit anywhere in the branch",
+            "Delivery reading the projected Refs region (the observed-metadata draft, I4367)",
+            "Changing any caller of issue_of other than through issue_of itself"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4366.yaml",
+            "apps/majordomus-cli/src/plan/delivery.rs",
+            "apps/majordomus-cli/src/worktree/state.rs",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "test/cases/4366_a_merge_titled_by_its_pull_request_is_attributed.sh",
+            "docs",
+            "site/data"
+          ],
+          "serves": [],
+          "slug": "a-merge-titled-by-its-pull-request-is-attributed",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- plan::delivery worktree::state",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --doc worktree::state",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4366_a_merge_titled_by_its_pull_request_is_attributed",
+            "bin/majordomus generate --check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4367",
+        "kind": "issue",
+        "label": "I4367",
+        "summary": "The merged pull requests' observation records the machine-written Refs region, and the live delivery answer reads the region and never the prose around it",
+        "route": "/cockpit/objects/issue/i4367",
+        "source": ".ai/repo/project/issues/I4367.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I3970",
+            "I2901",
+            "I4366"
+          ],
+          "evidence_required": [
+            "test",
+            "rust"
+          ],
+          "milestone": "work-graph-github",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4367.yaml",
+            "apps/majordomus-cli/src/deploy/observed.rs",
+            "apps/majordomus-cli/src/plan/delivery.rs",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "test/fixtures/pr-meta",
+            "test/cases/4367_delivery_reads_the_projected_refs_region.sh",
+            "docs/PLANNING.md",
+            "docs/generated"
+          ],
+          "serves": [],
+          "slug": "delivery-reads-the-projected-refs-region",
+          "updated_at": "2026-10-29"
+        }
+      },
+      {
+        "id": "majordomus://issue/I4368",
+        "kind": "issue",
+        "label": "I4368",
+        "summary": "An adopter's changelog links into its own repository and trunk, and a repository that declares first-parent history is listed by its pull requests",
+        "route": "/cockpit/objects/issue/i4368",
+        "source": ".ai/repo/project/issues/I4368.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I4366"
+          ],
+          "evidence_required": [
+            "test",
+            "rust"
+          ],
+          "milestone": "adopter-upgrades",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4368.yaml",
+            "apps/majordomus-cli/src/release/changelog.rs",
+            "apps/majordomus-cli/src/release/commits.rs",
+            "apps/majordomus-cli/src/release/model.rs",
+            "apps/majordomus-cli/src/release/mod.rs",
+            "share/schemas/majordomus/project",
+            "share/allow/project.txt",
+            "share/schemas/generated/changelog.schema.json",
+            "test/cases/4368_an_adopters_changelog_links_into_its_own_repository.sh",
+            "site/data/generated",
+            "docs"
+          ],
+          "serves": [],
+          "slug": "an-adopters-changelog-links-into-its-own-repository",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- release::",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4368_an_adopters_changelog_links_into_its_own_repository 103_release_projection",
+            "bin/majordomus generate changelog --check",
+            "bin/majordomus generate --check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4369",
+        "kind": "issue",
+        "label": "I4369",
+        "summary": "A record renamed with `replaces:` keeps its GitHub issue or milestone, and an issue whose record was renamed without one stays unmanaged, names the commit that removed its record, and is never closed or reused",
+        "route": "/cockpit/objects/issue/i4369",
+        "source": ".ai/repo/project/issues/I4369.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I1401",
+            "I3920",
+            "I4357"
+          ],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "work-graph-github",
+          "non_scope": [
+            "Renaming any record of this repository",
+            "Closing an issue for any reason other than a declared replacement",
+            "A new drift state: an issue whose record is gone without `replaces:` stays `unmanaged`",
+            "Re-attributing commits and pull requests that name a former id (delivery, trace, the PR projection)",
+            "The forge command's packaging (I4370)"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4369.yaml",
+            "scripts/github-sync",
+            "share/libexec/github-sync",
+            "lib/forge.sh",
+            "scripts/ci/collision-gate",
+            "share/schemas/majordomus/issue/issue.v1.schema.json",
+            "share/schemas/majordomus/milestone/milestone.v1.schema.json",
+            "share/allow/issue.txt",
+            "share/allow/milestone.txt",
+            "lib/project.awk",
+            "apps/majordomus-cli/src/plan.rs",
+            "test/cases/45_github_projection.sh",
+            "test/cases/99_plan_capabilities.sh",
+            "test/cases/894_github_sync_applies_only_the_trunk.sh",
+            "test/cases/4369_a_renamed_record_keeps_its_github_issue.sh",
+            "docs/PLANNING.md"
+          ],
+          "serves": [],
+          "slug": "a-renamed-record-keeps-its-github-issue",
+          "updated_at": "2026-10-29"
+        }
+      },
+      {
+        "id": "majordomus://issue/I4370",
+        "kind": "issue",
+        "label": "I4370",
+        "summary": "The pull-request and plan projection ships in the release as `majordomus forge`, reads an adopter's own models and facts, and writes only what they declare",
+        "route": "/cockpit/objects/issue/i4370",
+        "source": ".ai/repo/project/issues/I4370.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I3970",
+            "I3979",
+            "I3920",
+            "I2901",
+            "I4366"
+          ],
+          "evidence_required": [
+            "test",
+            "rust",
+            "an_installed_release_projects_an_adopter"
+          ],
+          "milestone": "merging-and-referencing-are-enforced",
+          "non_scope": [
+            "Merging, arming auto-merge or landing anything: the intent's non-goal 'Auto-merge on GitHub' stands",
+            "Moving the plan to GitHub issues or Projects, or reading anything back from GitHub into a record",
+            "A network call in the Rust executable beyond ADR 0101's exception: the adapter stays shell over gh, as github-sync is; the one issue-events read for release-freeze is part of prs refresh's observation",
+            "The adopter's workflow files (I4371), renamed records (I4369) and the repository-settings comparison behind `forge check --repo` (I4372)"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4370.yaml",
+            "bin/majordomus",
+            "lib/forge.sh",
+            "lib/common.sh",
+            "scripts/github-sync",
+            "scripts/release-package",
+            "share/libexec/github-sync",
+            "share/schemas/majordomus/pr-facts",
+            "share/schemas/majordomus/forge-plan",
+            "share/commands.yaml",
+            ".ai/repo/automation/inventory.jsonl",
+            ".ai/repo/ci/pr-meta.yaml",
+            ".ai/repo/ci/github.yaml",
+            "apps/majordomus-cli/src/integration/classify.rs",
+            "apps/majordomus-cli/src/integration/forge.rs",
+            "apps/majordomus-cli/src/capability/builtin",
+            ".ai/repo/adrs",
+            "SECURITY.md",
+            ".ai/repo/project/issues/I3979.yaml",
+            ".ai/repo/project/milestones/work-graph-github.yaml",
+            "test/cases/08_no_forbidden_constructs.sh",
+            "test/cases/30_command_registry.sh",
+            "test/cases/31_command_coverage.sh",
+            "test/cases/3970_a_pull_request_carries_its_metadata.sh",
+            "test/cases/894_github_sync_applies_only_the_trunk.sh",
+            "test/cases/45_github_projection.sh",
+            "test/cases/4370_the_projection_ships_as_majordomus_forge.sh",
+            "docs"
+          ],
+          "serves": [
+            "merging-and-referencing-are-enforced#pr-metadata-projected"
+          ],
+          "slug": "the-projection-ships-as-majordomus-forge",
+          "updated_at": "2026-10-29"
+        }
+      },
+      {
+        "id": "majordomus://issue/I4371",
+        "kind": "issue",
+        "label": "I4371",
+        "summary": "An adopter's pull-request and trunk projection workflows are rendered from the tool by `majordomus update`, pinned to a release digest written into the workflow, with a read-only derive job apart from the writing one",
+        "route": "/cockpit/objects/issue/i4371",
+        "source": ".ai/repo/project/issues/I4371.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I3970",
+            "I4370"
+          ],
+          "evidence_required": [
+            "test",
+            "rendered_workflows_pass_the_adopters_rules"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "The forge command itself (I4370)",
+            "An adopter's other workflows, or merging any rendered workflow into an adopter (the adopter commits it)",
+            "Provider bootstraps, whose mechanism stays as it is",
+            "Fetching a digest from the network during `majordomus update`"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4371.yaml",
+            "lib/update.sh",
+            "lib/common.sh",
+            "lib/doctor.sh",
+            "share/ci/github",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/schemas/majordomus",
+            "share/allow/policy.txt",
+            ".ai/repo/policy.yaml",
+            ".ai/repo/ci/pr-meta.yaml",
+            ".ai/repo/ci/github.yaml",
+            ".github/workflows/pr-meta.yml",
+            ".github/workflows/github.yml",
+            "test/fixtures/oscilla-ci-workflow-rules",
+            "test/cases/1097_the_projection_is_applied_at_landing.sh",
+            "test/cases/3970_a_pull_request_carries_its_metadata.sh",
+            "test/cases/4371_an_adopters_projection_workflows_are_generated.sh",
+            "docs/ADOPTION.md",
+            "docs/CI.md"
+          ],
+          "serves": [],
+          "slug": "an-adopters-projection-workflows-are-generated",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4371_an_adopters_projection_workflows_are_generated",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 1097_the_projection_is_applied_at_landing",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3970_a_pull_request_carries_its_metadata",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 08_no_forbidden_constructs",
+            "bin/majordomus generate --check",
+            "bin/majordomus doctor",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4372",
+        "kind": "issue",
+        "label": "I4372",
+        "summary": "A repository's merge methods, merge-commit message settings and required checks are compared with a declared block, and a drift is a report that names the command that repairs it",
+        "route": "/cockpit/objects/issue/i4372",
+        "source": ".ai/repo/project/issues/I4372.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I3113",
+            "I3200",
+            "I4370"
+          ],
+          "evidence_required": [
+            "test",
+            "rust",
+            "case_merge_settings_drift_reported"
+          ],
+          "milestone": "a-claim-stands-only-on-its-evidence",
+          "non_scope": [
+            "Changing any repository setting or protection from the tool",
+            "Requiring the comparison as a check: it is a report and a scheduled drift finding",
+            "The protection readings themselves and scripts/ci/github-check (I3113), and the verdict-check declaration (I3200)",
+            "The allowed-methods reading and the drain's landing method (I2966), which this reuses unchanged",
+            "Reading the forge from doctor: doctor reads the recorded observation, as I3200 declares"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4372.yaml",
+            ".ai/repo/ci/github.yaml",
+            "apps/majordomus-cli/src/integration/forge.rs",
+            "apps/majordomus-cli/src/integration/classify.rs",
+            "apps/majordomus-cli/src/capability/builtin/integration.rs",
+            "lib/forge.sh",
+            "share/libexec/github-sync",
+            "share/commands.yaml",
+            "bin/majordomus",
+            "lib/doctor.sh",
+            "test/cases/4372_repository_merge_settings_are_compared_with_a_declaration.sh",
+            "test/cases/30_command_registry.sh",
+            "test/cases/31_command_coverage.sh",
+            "docs/INTEGRATION.md"
+          ],
+          "serves": [
+            "a-claim-stands-only-on-its-evidence#bypass-observed"
+          ],
+          "slug": "repository-merge-settings-are-compared-with-a-declaration",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::forge",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4372_repository_merge_settings_are_compared_with_a_declaration 30_command_registry 31_command_coverage",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3970_a_pull_request_carries_its_metadata 894_github_sync_applies_only_the_trunk 45_github_projection",
             "bin/majordomus plan validate"
           ]
         }
@@ -134364,6 +134750,166 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4366",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4366",
+        "target": "majordomus://issue/I2901",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4366",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4367",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4367",
+        "target": "majordomus://issue/I2901",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4367",
+        "target": "majordomus://issue/I3970",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4367",
+        "target": "majordomus://issue/I4366",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4367",
+        "target": "majordomus://milestone/work-graph-github",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4368",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4368",
+        "target": "majordomus://issue/I4366",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4368",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4369",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4369",
+        "target": "majordomus://issue/I1401",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4369",
+        "target": "majordomus://issue/I3920",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4369",
+        "target": "majordomus://issue/I4357",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4369",
+        "target": "majordomus://milestone/work-graph-github",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4370",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4370",
+        "target": "majordomus://issue/I2901",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4370",
+        "target": "majordomus://issue/I3920",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4370",
+        "target": "majordomus://issue/I3970",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4370",
+        "target": "majordomus://issue/I3979",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4370",
+        "target": "majordomus://issue/I4366",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4370",
+        "target": "majordomus://milestone/merging-and-referencing-are-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4371",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4371",
+        "target": "majordomus://issue/I3970",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4371",
+        "target": "majordomus://issue/I4370",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4371",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4372",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4372",
+        "target": "majordomus://issue/I3113",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4372",
+        "target": "majordomus://issue/I3200",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4372",
+        "target": "majordomus://issue/I4370",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4372",
+        "target": "majordomus://milestone/a-claim-stands-only-on-its-evidence",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -145995,8 +146541,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4034,
-      "edges": 9314,
+      "nodes": 4041,
+      "edges": 9346,
       "acyclic": false,
       "truncated": false
     }
