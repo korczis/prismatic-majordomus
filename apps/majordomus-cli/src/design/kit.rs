@@ -1399,6 +1399,13 @@ struct Surface {
     mix: Option<String>,
 }
 
+/// Surfaces are reported in the canonical order of their directories, which are unique.
+impl crate::order::Ordered for Surface {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.dir, &self.dir)
+    }
+}
+
 impl Surface {
     /// The path a finding about the surface as a whole names: its first manifest, its Mix
     /// project file, or the repository as a whole for a root with neither.
@@ -1758,7 +1765,7 @@ impl Judgement<'_> {
                 mix: Some(path.to_string()),
             });
         }
-        surfaces.sort_by(|a, b| a.dir.cmp(&b.dir));
+        crate::order::canonical(&mut surfaces);
         let nested = |p: &str| surfaces.iter().any(|s| below(p, &s.dir));
         let root_deps = manifest_deps(tree, &root_manifests);
         let mut root_evidence = Vec::new();
@@ -4609,8 +4616,8 @@ mod tests {
         "<html><body class=\"bg-gray-50 dark:bg-gray-900\"><%= @inner_content %></body></html>";
     const V3_CONFIG: &str = "module.exports = { content: ['./js/**/*.js', '../lib/**/*.*ex', '../../../deps/flowbite/**/*.js'], plugins: [require('flowbite/plugin')] };\n";
 
-    /// An umbrella as prismatic-platform keeps it: a root manifest for tooling, and a Phoenix
-    /// app whose bundle's manifest is apps/x_web/assets/package.json.
+    /// A Phoenix umbrella: a root manifest for tooling, and a Phoenix app whose bundle's
+    /// manifest is apps/x_web/assets/package.json.
     fn umbrella(extra: &[(&'static str, &'static str)]) -> Vec<(&'static str, String)> {
         let mut files: Vec<(&'static str, String)> = vec![
             ("mix.exs", "def project, do: [apps_path: \"apps\"]\n".into()),
