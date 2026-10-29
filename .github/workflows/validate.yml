@@ -136,6 +136,26 @@ jobs:
       pages_live: ${{ steps.plan.outputs.pages_live }}
       rustdoc: ${{ steps.plan.outputs.rustdoc }}
     steps:
+      # I4338: a pull request labelled hold is a train member. Its train's top runs the validate
+      # that judges it, and it lands only with that top, so its own run decides nothing and only
+      # holds a slot of the one validate the pool runs at a time: on 2026-10-28 twelve member
+      # runs queued ahead of trains 10a and 10b. It gives the slot back before any job asks for a
+      # runner, as the release path does below, and since it never reaches ci it can never read
+      # green and land on its own. A cancel that does not take hold fails the step instead.
+      - name: a held member yields to its train
+        if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'hold')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          {
+            echo "## held"; echo
+            echo "Pull request #$PR_NUMBER carries the hold label: it is a train member, judged by its train's top, and lands with it. This run gives its runners back (I4338)."
+          } >> "$GITHUB_STEP_SUMMARY"
+          gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY"
+          sleep 120
+          echo "::error::the run was not cancelled; a held member's run must not go on"
+          exit 1
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
