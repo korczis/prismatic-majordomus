@@ -17332,14 +17332,6 @@
         "source": "docs/PLANNING.md"
       },
       {
-        "id": "majordomus://document/docs/PLAN_STATUS.md",
-        "kind": "document",
-        "label": "docs/PLAN_STATUS.md",
-        "summary": "Plan status",
-        "route": "/cockpit/objects/document/docs-plan-status-md",
-        "source": "docs/PLAN_STATUS.md"
-      },
-      {
         "id": "majordomus://document/docs/PREFLIGHT.md",
         "kind": "document",
         "label": "docs/PREFLIGHT.md",
@@ -71821,6 +71813,64 @@
         }
       },
       {
+        "id": "majordomus://issue/I4381",
+        "kind": "issue",
+        "label": "I4381",
+        "summary": "The structure job fits in half its bound: shellcheck stops re-reading lib/rust_bin.sh for every case, and the network gates run in a second job",
+        "route": "/cockpit/objects/issue/i4381",
+        "source": ".ai/repo/project/issues/I4381.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "test",
+            "rust",
+            "ci"
+          ],
+          "milestone": "a-change-is-judged-in-minutes",
+          "non_scope": [
+            "Dropping, sampling or weakening any gate, or lowering shellcheck's severity (`-S warning` stays)",
+            "Linting only changed files: master and the trains run the full plan, so it saves nothing where the time is spent, and it misses a case whose behaviour changes with test/lib.sh or lib/rust_bin.sh",
+            "More shellcheck parallelism: the step already uses `xargs -P $(nproc)` and saturates the 4 vCPUs of ubuntu-latest",
+            "Sharding shell-lint into a matrix: it needs more runners from a loaded pool, and the directive removes the repeated work instead",
+            "The per-job budget of the pull-request critical path (I3242) and the checkout budget (I4349): this issue budgets the structure job's wall time against its own bound",
+            "Raising `timeout-minutes` of structure to follow runner load"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4381.yaml",
+            "test/lib.sh",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/ci/structure-durations.tsv",
+            ".github/workflows/validate.yml",
+            "scripts/ci-baseline",
+            "scripts/ci/step-bound-check",
+            "apps/majordomus-cli/src/gates/model.rs",
+            "apps/majordomus-cli/src/integration/job_budget.rs",
+            "apps/majordomus-cli/src/integration/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/integration.rs",
+            "test/cases/94_ci_plan.sh",
+            "test/cases/4381_the_structure_job_fits_in_half_its_bound.sh",
+            "docs/CI.md"
+          ],
+          "serves": [
+            "a-change-is-judged-in-minutes#a-regression-fails-its-budget"
+          ],
+          "slug": "the-structure-lane-is-planned-to-fit-its-bound",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "bash test/run.sh 94_ci_plan 4381_the_structure_job_fits_in_half_its_bound",
+            "scripts/ci/shell-lint",
+            "scripts/ci/step-bound-check",
+            "actionlint .github/workflows/validate.yml",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib gates::model",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -117169,11 +117219,6 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://document/docs/PLAN_STATUS.md",
-        "target": "kind:document",
-        "kind": "is_a"
-      },
-      {
         "source": "majordomus://document/docs/PREFLIGHT.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -134364,6 +134409,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4381",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4381",
+        "target": "majordomus://milestone/a-change-is-judged-in-minutes",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -145996,7 +146051,7 @@
     ],
     "metadata": {
       "nodes": 4034,
-      "edges": 9314,
+      "edges": 9315,
       "acyclic": false,
       "truncated": false
     }

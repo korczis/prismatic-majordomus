@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "bfe498ecbbafb51ab21c50cc4dc9185b76a3fcf7249658d9b88dd39da2371a64",
+    "fingerprint": "354325989ff65911ac88a2c0372f2da1ea39125566e0855713fd0e09f4c19149",
     "summary": {
       "total": 3570,
       "builtin": 220,
@@ -91083,7 +91083,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 353,
+        "capabilities": 352,
         "capability_ids": []
       },
       {
@@ -91383,7 +91383,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1053,
+        "capabilities": 1054,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "84641565beac2d30a44cdbbb11cb6055de486182af4f4b3015068dd94aa8f6c4",
+    "fingerprint": "294be07169a4d30a63fa1212d5df91739954bde3ef7b5ff9ee120c21e3c15fc8",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92107,13 +92107,13 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 353,
+      "document": 352,
       "domain": 6,
       "feature": 29,
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1053,
+      "issue": 1054,
       "knowledge": 59,
       "mesh-declaration": 1,
       "milestone": 111,
@@ -92131,7 +92131,9 @@
       "use-case": 49,
       "workspace": 1
     },
-    "diagnostics": {},
+    "diagnostics": {
+      "warning": 1
+    },
     "objects": [
       {
         "uri": "majordomus://adr/adr-0001",
@@ -99550,15 +99552,6 @@
         "path": "docs/PLANNING.md",
         "source_class": "document",
         "bytes": 44972
-      },
-      {
-        "uri": "majordomus://document/docs/PLAN_STATUS.md",
-        "kind": "document",
-        "identity": "docs/PLAN_STATUS.md",
-        "title": "Plan status",
-        "path": "docs/PLAN_STATUS.md",
-        "source_class": "document",
-        "bytes": 1041324
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -115070,6 +115063,17 @@
         "bytes": 5693
       },
       {
+        "uri": "majordomus://issue/I4381",
+        "kind": "issue",
+        "identity": "I4381",
+        "title": "The structure job fits in half its bound: shellcheck stops re-reading lib/rust_bin.sh for every case, and the network gates run in a second job",
+        "description": "Bring the structure job of validate.yml under 50% of its 55-minute bound (1650 s) at p90, and drop no gate. First, put `# shellcheck source=/dev/null` above the two `. \\\"$ROOT/lib/rust_bin.sh\\\"` lines of test/lib.sh (168 and 175). Then shellcheck -x stops re-reading the 1942 lines of lib/rust_bin.sh once for each of the 654 cases, and lib/rust_bin.sh is still linted on its own with -x as part of shell-lint's lib/ set. Second, move github-projection and worktree-topology to a new job, structure-b, through the `job:` field of .ai/repo/ci/gates.yaml. structure-b runs `run-plan --plan plan.json --job structure-b` and uploads its own timings and receipts, and the ci job lists it in `needs`. Third, add a gate that fails when the p90 wall time of either job over the committed baseline window passes 50% of that job's `timeout-minutes`. The gate names the job and its three most expensive gates. Finally, refresh .ai/repo/ci/structure-durations.tsv so that its figures are the ones measured now.",
+        "path": ".ai/repo/project/issues/I4381.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 9190
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -128517,7 +128521,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 353
+      "objects": 352
     },
     {
       "name": "domain",
@@ -128574,7 +128578,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1053
+      "objects": 1054
     },
     {
       "name": "knowledge",
