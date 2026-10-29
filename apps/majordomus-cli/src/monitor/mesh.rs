@@ -387,6 +387,23 @@ impl Memory {
             EventBody::BuildCacheOffered { .. } | EventBody::BuildCacheWithdrawn { .. } => {
                 return None
             }
+            // a build host's own word on itself (I4343): shown here, unlike the offer
+            // above, because nothing else surfaces that a guard stopped guarding
+            EventBody::BuildHostObserved { ok, failing } => MonitorSignal::new(
+                event.at,
+                MonitorSource::Mesh,
+                "build_host_observed",
+                if ok {
+                    MonitorSeverity::Info
+                } else {
+                    MonitorSeverity::Attention
+                },
+                &if ok {
+                    "its own guard holds".to_string()
+                } else {
+                    format!("its own guard is down: {}", failing.join("; "))
+                },
+            ),
         };
         signal.machine = Some(machine);
         Some(signal)

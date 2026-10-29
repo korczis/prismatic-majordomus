@@ -25,8 +25,8 @@ use crate::app::App;
 use crate::capability::CapabilityError;
 use crate::cli::{
     MeshArgs, MeshBuildCacheCommand, MeshBuildCacheEnsureArgs, MeshBuildCacheEnvArgs, MeshCommand,
-    MeshFirewallCommand, MeshHandoverCommand, MeshQueryArgs, MeshReviewCommand, MeshSessionCommand,
-    OutputFormat,
+    MeshDoctorArgs, MeshFirewallCommand, MeshHandoverCommand, MeshQueryArgs, MeshReviewCommand,
+    MeshSessionCommand, OutputFormat,
 };
 use crate::error::{Error, Result};
 
@@ -273,25 +273,37 @@ fn not_ok(v: &Value) -> bool {
 
 /// `mesh doctor`: the running server's report when one answers for this checkout
 /// ([`choose`]), because its `runtime` check is that server's verdict on the declaration;
-/// this process's otherwise. Exit 10 when a check failed.
-fn doctor(args: MeshQueryArgs) -> Result<u8> {
-    let serving = server_url(&args)?;
+/// this process's otherwise. `--build-host` adds the build host's own guard (I4343). Exit
+/// 10 when a check failed.
+fn doctor(args: MeshDoctorArgs) -> Result<u8> {
+    let serving = server_url(&args.query)?;
     doctor_through(serving, args)
 }
 
 /// [`doctor`] once the server that answers, if any, is known.
-fn doctor_through(serving: Option<Serving>, args: MeshQueryArgs) -> Result<u8> {
+fn doctor_through(serving: Option<Serving>, args: MeshDoctorArgs) -> Result<u8> {
+    let build_host = args.build_host;
     match serving {
         Some(serving) => ask_at(
             &serving.url,
-            &args,
+            &args.query,
             "GET",
-            "/api/v1/mesh/doctor",
+            if build_host {
+                "/api/v1/mesh/doctor?build_host=true"
+            } else {
+                "/api/v1/mesh/doctor"
+            },
             None,
             render_doctor,
             not_ok,
         ),
-        None => in_process(args, &["mesh", "doctor"], json!({}), render_doctor, not_ok),
+        None => in_process(
+            args.query,
+            &["mesh", "doctor"],
+            json!({ "build_host": build_host }),
+            render_doctor,
+            not_ok,
+        ),
     }
 }
 
@@ -1584,7 +1596,7 @@ mod tests {
     fn a_doctor_outside_any_repository_is_an_error_not_a_report() {
         let plain = tempfile::tempdir().unwrap();
         let args = query(Some(plain.path().to_path_buf()), OutputFormat::Json);
-        assert!(doctor(args).is_err());
+        assert!(doctor(MeshDoctorArgs { query: args, build_host: false }).is_err());
     }
 
     /// Through a borrowed server, a publish is refused by name on the text surface too.
@@ -1627,8 +1639,11 @@ mod tests {
         )
         .expect_err("nothing answers");
         assert!(asked.to_string().contains(&url), "{asked}");
-        let doctor = doctor_through(Some(serving()), query(None, OutputFormat::Json))
-            .expect_err("nothing answers");
+        let doctor = doctor_through(
+            Some(serving()),
+            MeshDoctorArgs { query: query(None, OutputFormat::Json), build_host: false },
+        )
+        .expect_err("nothing answers");
         assert!(
             doctor.to_string().contains("/api/v1/mesh/doctor"),
             "{doctor}"

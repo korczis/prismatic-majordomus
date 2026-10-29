@@ -14982,7 +14982,7 @@ cli:
           route: /docs/cli/mesh/doctor/
           executable: true
           usage: "majordomus mesh doctor [OPTIONS]"
-          about: "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall"
+          about: "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall; --build-host adds whether this build host's own guard is observed live (I4343)"
           args:
             - name: repo
               long: repo
@@ -15045,6 +15045,17 @@ cli:
                   help: "One JSON document, deterministic"
               defaults:
                 - text
+            - name: build_host
+              long: build-host
+              positional: false
+              help: "Also observe this build host's own guard: disk-guard.timer and build-host-observe.timer active, the ballast present, its state fresh, every declared critical-service drop-in present and every declared tenant at or under its bound. Exits non-zero while any of it is not so, naming each"
+              value_name: BUILD_HOST
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
           examples:
             - id: mesh-doctor
               title: "Every mesh prerequisite, and the server's verdict on the declaration"

@@ -818,8 +818,8 @@ pub enum MeshCommand {
     Identity(MeshQueryArgs),
     /// Add this machine's public key to the mesh declaration's trust list, once; commit it to join
     Enrol(MeshQueryArgs),
-    /// Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall
-    Doctor(MeshQueryArgs),
+    /// Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall; --build-host adds whether this build host's own guard is observed live (I4343)
+    Doctor(MeshDoctorArgs),
     /// What the host firewall must admit for the declared mesh and whether it does; `apply` admits it, as root
     Firewall(MeshFirewallArgs),
     /// Every machine and runtime this checkout's server cooperates with, each link's state, and the active sessions; --full for every session and claim
@@ -1019,6 +1019,20 @@ pub struct MeshFirewallArgs {
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh doctor`'s arguments (I4343).
+pub struct MeshDoctorArgs {
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+    #[arg(long)]
+    /// Also observe this build host's own guard: disk-guard.timer and
+    /// build-host-observe.timer active, the ballast present, its state fresh, every
+    /// declared critical-service drop-in present and every declared tenant at or under its
+    /// bound. Exits non-zero while any of it is not so, naming each.
+    pub build_host: bool,
 }
 
 #[derive(Debug, Subcommand)]

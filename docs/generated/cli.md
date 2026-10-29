@@ -157,7 +157,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus mesh nodes`](#majordomus-mesh-nodes) | `/docs/cli/mesh/nodes/` | Every node the running server has observed, deduplicated by node identity, with trust, presence, endpoints and provenance |
 | [`majordomus mesh identity`](#majordomus-mesh-identity) | `/docs/cli/mesh/identity/` | This machine's node identity, public half only; absent is an answer, not an error |
 | [`majordomus mesh enrol`](#majordomus-mesh-enrol) | `/docs/cli/mesh/enrol/` | Add this machine's public key to the mesh declaration's trust list, once; commit it to join |
-| [`majordomus mesh doctor`](#majordomus-mesh-doctor) | `/docs/cli/mesh/doctor/` | Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall |
+| [`majordomus mesh doctor`](#majordomus-mesh-doctor) | `/docs/cli/mesh/doctor/` | Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall; --build-host adds whether this build host's own guard is observed live (I4343) |
 | [`majordomus mesh firewall`](#majordomus-mesh-firewall) | `/docs/cli/mesh/firewall/` | What the host firewall must admit for the declared mesh and whether it does; `apply` admits it, as root |
 | [`majordomus mesh firewall apply`](#majordomus-mesh-firewall-apply) | `/docs/cli/mesh/firewall/apply/` | Run the commands that admit the plan on this host's firewall; needs root, and exits 10 when it refuses or the firewall still does not admit the mesh |
 | [`majordomus mesh peers`](#majordomus-mesh-peers) | `/docs/cli/mesh/peers/` | Every machine and runtime this checkout's server cooperates with, each link's state, and the active sessions; --full for every session and claim |
@@ -4544,7 +4544,7 @@ Examples:
 <a id="majordomus-mesh-doctor"></a>
 ## `majordomus mesh doctor`
 
-Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall
+Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall; --build-host adds whether this build host's own guard is observed live (I4343)
 
 ```text
 majordomus mesh doctor [OPTIONS]
@@ -4557,6 +4557,7 @@ majordomus mesh doctor [OPTIONS]
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
 | `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
 | `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--build-host` | flag | — | Also observe this build host's own guard: disk-guard.timer and build-host-observe.timer active, the ballast present, its state fresh, every declared critical-service drop-in present and every declared tenant at or under its bound. Exits non-zero while any of it is not so, naming each |
 
 Examples:
 

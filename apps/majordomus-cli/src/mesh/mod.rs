@@ -71,6 +71,7 @@ pub mod trust;
 #[cfg(test)]
 pub(crate) mod testing;
 
+pub use cache_provision::BuildHostObserved;
 pub use config::{MeshConfig, KIND};
 pub use doctor::{DoctorCheck, MeshDoctorReport};
 pub use identity::{default_identity_path, InstanceId, NodeId, NodeIdentity, PublicIdentity};

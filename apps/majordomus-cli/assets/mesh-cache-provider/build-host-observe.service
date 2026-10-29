@@ -1,0 +1,11 @@
+[Unit]
+Description=Observe the build host's own guard (disk-guard.timer, the ballast, its state, every declared drop-in and tenant bound)
+Documentation=file:docs/MESH.md
+After=disk-guard.timer
+
+[Service]
+Type=oneshot
+ExecStart=/home/korczis/.local/bin/majordomus mesh doctor --build-host
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=2min

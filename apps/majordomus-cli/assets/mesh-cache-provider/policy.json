@@ -13,5 +13,9 @@
   "policy_name": "mesh-build-cache-rw",
   "local_node": "lundra",
   "nodes": ["lundra", "mbp", "mb2", "imac", "jetson"],
-  "critical_services": ["minio", "gitlab-runner", "tailscaled"]
+  "critical_services": ["minio", "gitlab-runner", "tailscaled"],
+  "build_host_tenants": [
+    {"name": "korczis home", "path": "/home/korczis", "bound_gib": 159},
+    {"name": "docker", "path": "/var/lib/docker", "bound_gib": 53}
+  ]
 }

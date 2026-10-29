@@ -38,3 +38,15 @@ npm ci   # build-cache: the lockfile is generated here, nothing to reuse
 GitHub workflows are a declared exemption: their runners cannot reach the store. Installing
 JavaScript and Elixir dependencies through `majordomus mesh build-cache ensure` (`scripts/site-build`)
 follows once that command lands.
+
+## The build host's own guard
+
+The host that serves the store and runs CI (lundra) bounds its own disk with `disk-guard`, a
+timer every five minutes; `build-host-observe.timer` runs `majordomus mesh doctor --build-host`
+on the same cadence to prove the guard is still running rather than assume it (I4343). It fails,
+naming each item, while disk-guard.timer or its own timer is not active, the ballast is missing,
+disk-guard's state is older than 15 minutes, a declared critical-service drop-in is missing, or a
+declared tenant (`build_host_tenants` in the policy) is over its bound. The verdict is written to
+`/var/lib/majordomus/build-host.json` and, where a shared server runs, journaled as
+`build_host_observed` for `mesh events` and `monitor`. See
+[MESH.md](MESH.md#the-build-hosts-own-guard) for the mechanism.

@@ -228,9 +228,28 @@ fn cursor_refusal(e: CursorError) -> CapabilityError {
     }
 }
 
-// ---------------------------------------------------------------- mesh.doctor
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `mesh.doctor`.
+pub struct DoctorInput {
+    /// Also observe this build host's own guard (I4343): disk-guard.timer and
+    /// build-host-observe.timer active, the ballast present, its state fresh, every
+    /// declared critical-service drop-in present and every declared tenant at or under its
+    /// bound. Observed against `/`, never a fixture: a test calls
+    /// [`crate::mesh::cache_provision::observe_build_host`] directly.
+    #[serde(default)]
+    pub build_host: bool,
+}
 
-fn mesh_doctor(ctx: &Context, _: Empty) -> Result<MeshDoctorReport, CapabilityError> {
+impl BenchmarkCases for DoctorInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        // `build_host` is never cased here: true shells to systemctl and writes host
+        // state, which a benchmark run must not do.
+        vec![NamedCase::new("default", DoctorInput { build_host: false })]
+    }
+}
+
+fn mesh_doctor(ctx: &Context, input: DoctorInput) -> Result<MeshDoctorReport, CapabilityError> {
     let root = std::path::Path::new(&ctx.index.repository.root);
     // The runtime's verdict is reported only where a shared server made one: in the
     // command line's process nothing activates the mesh, and that absence is not news.
@@ -250,6 +269,32 @@ fn mesh_doctor(ctx: &Context, _: Empty) -> Result<MeshDoctorReport, CapabilityEr
         report.checks.push(crate::mesh::doctor::session_beats_check(
             &cooperation.session_beat_tally(),
         ));
+    }
+    if input.build_host {
+        let policy = crate::mesh::cache_provision::Policy::declared();
+        let host_root = std::path::Path::new("/");
+        let observed = crate::mesh::cache_provision::observe_build_host(
+            &policy,
+            host_root,
+            &crate::mesh::cache_provision::systemctl_is_active,
+            &crate::mesh::cache_provision::du_gib,
+        );
+        let check = crate::mesh::doctor::build_host_check(
+            &observed,
+            crate::mesh::cache_provision::BUILD_HOST_STATE_MAX_AGE,
+        );
+        // the host's own file and the mesh event are written only for the real host, never
+        // for a `--repo` pointed at a test fixture, and never fail the check itself: an
+        // unwritable state file or no local journal to publish to is this run's own
+        // problem, not evidence the guard is down
+        let _ = crate::mesh::cache_provision::write_build_host_state(&observed, check.ok);
+        if let Some(cooperation) = ctx.mesh.cooperation() {
+            let _ = cooperation.journal().append_own(crate::mesh::journal::EventBody::BuildHostObserved {
+                ok: check.ok,
+                failing: observed.failing(crate::mesh::cache_provision::BUILD_HOST_STATE_MAX_AGE),
+            });
+        }
+        report.checks.push(check);
     }
     // one conjunction over every check, so neither added check's failure can be lost
     report.ok = report.checks.iter().all(|c| c.ok);
@@ -1767,8 +1812,8 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "mesh.doctor",
                 title: "The mesh self-check",
-                description: "Every prerequisite proved on this machine alone — the declaration parses, the identity loads and, under an allowlist, is on it, the repository has a mesh identity, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory — and then the server's own verdict: in a shared server, whether an enabled declaration actually activated the mesh and, when it did not, the server's reason, which fails the report. Each failed check names its impact and its remedy. Deterministic, no second node required.",
-                input: Empty,
+                description: "Every prerequisite proved on this machine alone — the declaration parses, the identity loads and, under an allowlist, is on it, the repository has a mesh identity, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory — and then the server's own verdict: in a shared server, whether an enabled declaration actually activated the mesh and, when it did not, the server's reason, which fails the report. Each failed check names its impact and its remedy. Deterministic, no second node required. `build_host` adds whether this build host's own guard is observed live: disk-guard.timer and build-host-observe.timer active, the ballast present, its state fresh, every declared critical-service drop-in present and every declared tenant at or under its bound (I4343).",
+                input: DoctorInput,
                 output: MeshDoctorReport,
                 stability: Stability::Experimental,
                 exposure: Exposure {
