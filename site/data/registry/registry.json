@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "51da7df55fc413f1ec7b15a2648ceef351eed8140ee2072215023d076b4b59e2",
+    "fingerprint": "ed540aa91ee82966508a0446462a08a412744327844b300344b3ec0f520ec64a",
     "summary": {
       "total": 3557,
       "builtin": 222,
@@ -14368,7 +14368,7 @@
         "module": "design",
         "kind": "query",
         "title": "Whether the interface is built on the kit",
-        "description": "The supervised repository's user interface judged against the kit profile its policy's `design_kit` block names (flowbite-pro when it names none), from markers in the tree and never the kit's own source: S0 whether there is an interface at all (a package manifest with Tailwind, React, Next.js, Vue, Svelte or Flowbite, Phoenix LiveView in mix.exs, HEEx or HTML templates, a Next.js root layout); S1 the kit's package, its React binding for React and Next.js; S2 the Tailwind plugin and source (Tailwind 4's @plugin and @source, Tailwind 3's config), a Play CDN or a CDN-only kit being a finding; S3 the kit's JavaScript behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute, a script that reads them itself being a re-implementation; S4 no other kit (daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui and Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation, Materialize), Alpine.js reported and not refused; S5 the shell on every root layout: a fixed top navbar, an aside labelled Sidebar that both drawer attributes name, a breadcrumb, and the page, surface and border roles. Each finding names its signal, path, evidence and remedy; each exemption the policy declares names its reason and how many findings it covered. A repository without an interface passes vacuously; a policy that cannot be read is `bad_policy` and judges nothing. Reads the tree below the root, skipping dependencies and build output; no build and no network.",
+        "description": "The supervised repository's user interface judged against the kit profile its policy's `design_kit` block names (flowbite-pro when it names none), from markers in the tree and never the kit's own source: S0 whether there is an interface at all and its surfaces (the root's manifest or the one in assets/, every workspace the root manifest or pnpm-workspace.yaml declares, every nested app manifest with markup in its own subtree outside examples, fixtures, tests, vendor, docs, deps and priv; Phoenix LiveView in mix.exs, HEEx or HTML templates, a Next.js root layout; published pages: a root index.html, pages under site/, www/, public/, under a directory a Pages workflow or a deploy or build script publishes, and under docs/ when it is published), any other manifest with UI packages being a notice and never a finding; S1 the kit's package in each surface, its React binding for React and Next.js, and the kit in use in the surface's own files (an attribute the kit's JavaScript drives, a flowbite-react component, a call of the kit's API), because wiring alone passes nothing; S2 the Tailwind plugin and source (Tailwind 4's @plugin and @source, Tailwind 3's config), a Play CDN or a CDN-only kit being a finding; S3 the kit's JavaScript behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute, a script that reads them itself being a re-implementation; S4 no other kit (daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui and Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation, Materialize), Alpine.js reported and not refused; S5 the shell on every root layout: a fixed top navbar, an aside labelled Sidebar that both drawer attributes name, a breadcrumb, and the page, surface and border roles. Each finding names its signal, path, evidence and remedy; each exemption the policy declares names its reason and how many findings it covered. A licensed kit's profile declares its licensed markers, and where the tree carries one the licence evidence decides it: active passes, while inactive, refused or not judged (nothing judges the evidence until the design licence lands) is a finding no exemption moves, since a variant the judge cannot decide is never a pass. A repository without an interface passes vacuously; a policy that cannot be read is `bad_policy` and judges nothing. Reads the tree below the root, skipping dependencies and build output; no build and no network.",
         "input": {
           "name": "Empty",
           "schema": {
@@ -14401,7 +14401,7 @@
               },
               "policy_declared": {
                 "type": "boolean",
-                "description": "Whether the repository's policy declares the `design_kit` block."
+                "description": "Whether the repository's policy declares the kit's block."
               },
               "policy_errors": {
                 "type": "array",
@@ -14420,6 +14420,13 @@
                   "type": "string"
                 },
                 "description": "What showed it."
+              },
+              "surfaces": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/KitSurface"
+                },
+                "description": "The surfaces S1 to S3 judged, each with the usage markers its own files carry."
               },
               "stacks": {
                 "type": "array",
@@ -14456,6 +14463,24 @@
                 },
                 "description": "What is reported and never refused, such as Alpine.js."
               },
+              "notices": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What S0 left out and a reader should know: a manifest with UI packages that is no\nsurface, pages that are no interface. Never a finding."
+              },
+              "licence": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/KitLicence"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "How the tree stands against a licensed kit's licence; absent for a free kit."
+              },
               "exemptions": {
                 "type": "array",
                 "items": {
@@ -14481,11 +14506,13 @@
               "policy_errors",
               "ui",
               "ui_evidence",
+              "surfaces",
               "stacks",
               "layouts",
               "findings",
               "exempted",
               "reported",
+              "notices",
               "exemptions",
               "verdict",
               "passes"
@@ -14493,6 +14520,60 @@
             "description": "What `design.kit` answers.",
             "title": "KitReport",
             "$defs": {
+              "KitSurface": {
+                "type": "object",
+                "properties": {
+                  "dir": {
+                    "type": "string",
+                    "description": "Its directory, repository-relative; empty for the root."
+                  },
+                  "kind": {
+                    "$ref": "#/$defs/KitSurfaceKind",
+                    "description": "How it was found."
+                  },
+                  "manifests": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Its manifests."
+                  },
+                  "usage": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The first usage markers its own files carry; empty is a finding."
+                  }
+                },
+                "required": [
+                  "dir",
+                  "kind",
+                  "manifests",
+                  "usage"
+                ],
+                "description": "One surface S1 to S3 judged."
+              },
+              "KitSurfaceKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "root",
+                    "description": "The root's manifests and every file no other surface owns."
+                  },
+                  {
+                    "type": "string",
+                    "const": "workspace",
+                    "description": "A workspace the root manifest or the pnpm workspace file declares."
+                  },
+                  {
+                    "type": "string",
+                    "const": "app",
+                    "description": "A nested manifest with markup in its own subtree."
+                  }
+                ],
+                "description": "How a surface was found."
+              },
               "KitFinding": {
                 "type": "object",
                 "properties": {
@@ -14531,7 +14612,7 @@
                   {
                     "type": "string",
                     "const": "S1",
-                    "description": "The dependency."
+                    "description": "The dependency, and the kit in use."
                   },
                   {
                     "type": "string",
@@ -14578,6 +14659,87 @@
                   "because"
                 ],
                 "description": "A finding a policy exemption covers, with the reason."
+              },
+              "KitLicence": {
+                "type": "object",
+                "properties": {
+                  "evidence": {
+                    "type": "string",
+                    "description": "The evidence format the profile names."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/LicenceState",
+                    "description": "What the licence evidence said."
+                  },
+                  "variant": {
+                    "$ref": "#/$defs/KitVariant",
+                    "description": "What the judge decided."
+                  },
+                  "markers": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Where each licensed marker was seen, with its name."
+                  }
+                },
+                "required": [
+                  "evidence",
+                  "state",
+                  "variant",
+                  "markers"
+                ],
+                "description": "How the tree stands against a licensed kit's licence."
+              },
+              "LicenceState": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "active",
+                    "description": "The evidence was read and the licence holds."
+                  },
+                  {
+                    "type": "string",
+                    "const": "inactive",
+                    "description": "The evidence was read and the licence does not hold."
+                  },
+                  {
+                    "type": "string",
+                    "const": "not_judged",
+                    "description": "Nothing judged the evidence."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "The evidence could not be judged: absent where it is owed, or unreadable."
+                  }
+                ],
+                "description": "What the licence evidence of a licensed kit says about a repository: the seam the design\nlicence (I4336) fills. Until it does, `licence_state` answers `not_judged`."
+              },
+              "KitVariant": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "not_used",
+                    "description": "The tree carries no licensed marker: nothing the licence covers is used."
+                  },
+                  {
+                    "type": "string",
+                    "const": "licensed",
+                    "description": "Licensed markers, and the licence is active."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unlicensed",
+                    "description": "Licensed markers, and the licence is inactive: a finding."
+                  },
+                  {
+                    "type": "string",
+                    "const": "undecided",
+                    "description": "Licensed markers, and evidence nobody judged or that was refused: the judge cannot\ndecide, and that is a finding, never a pass."
+                  }
+                ],
+                "description": "Which variant of a licensed kit the tree is, as the judge decides it."
               },
               "KitExemption": {
                 "type": "object",
@@ -14691,7 +14853,7 @@
         "module": "design",
         "kind": "command",
         "title": "Declare the kit in the repository",
-        "description": "Writes what makes `design.kit` the repository's gate, and nothing that is there already: the profile's rule (project.ui-uses-flowbite-pro for flowbite-pro) into .ai/repo/rules/project/ from the distribution's template, the `design_kit` block naming the profile in .ai/repo/policy.yaml, and two enforcement entries running `majordomus design kit --check`, design-kit-on-push wired by the pre-push hook and design-kit wired by the repository's CI workflow when it has one. Idempotent: a second adoption reports every file unchanged. A rule that differs from the template is kept and named, a block naming another profile is refused, and a policy that would not read back is never written. `dry_run` reports the same and writes nothing. Wiring the hook and the workflow step is left to the repository, and `majordomus doctor` names each entry until it is wired.",
+        "description": "Writes what makes `design.kit` the repository's gate, and nothing that is there already: the profile's rule (project.ui-uses-flowbite-pro for flowbite-pro) into .ai/repo/rules/project/ from the distribution's template, the `design_kit` block naming the profile in .ai/repo/policy.yaml, and two enforcement entries running `majordomus design kit --check`, design-kit-on-push wired by the pre-push hook and design-kit wired by the repository's CI workflow when it has one. Idempotent: a second adoption reports every file unchanged. The rule's last section, 'In this repository', is the repository's own: a later adoption brings the rest of the rule up to the template and never overwrites that section, and a rule that differs from the template and has no such section is kept and named, a block naming another profile is refused, and a policy that would not read back is never written. `dry_run` reports the same and writes nothing. Wiring the hook and the workflow step is left to the repository, and `majordomus doctor` names each entry until it is wired.",
         "input": {
           "name": "KitAdoptInput",
           "schema": {
@@ -92562,7 +92724,7 @@
     ]
   },
   "index": {
-    "fingerprint": "8a640ca7d17e18830d8502cfb388212c5eb66ff95b3d11dd2ddd84b95a9361d1",
+    "fingerprint": "c52c1113acf74f46a90042c814d5e3d229f7a2b469bed4f10b0a733448a8458c",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -95316,15 +95478,15 @@
         ]
       },
       {
-        "uri": "majordomus://adr/adr-0229",
+        "uri": "majordomus://adr/adr-0230",
         "kind": "adr",
-        "identity": "adr-0229",
+        "identity": "adr-0230",
         "title": "Flowbite Pro is adapted onto Tailwind 4 and Flowbite 4, a brand's colour is the primary scale, and one capability judges every repository's interface against it",
         "description": "Flowbite Pro is adapted onto Tailwind 4 and Flowbite 4, a brand's colour is the primary scale, and one capability judges every repository's interface against it",
-        "path": ".ai/repo/adrs/0229-flowbite-pro-is-adapted-onto-tailwind-4.md",
+        "path": ".ai/repo/adrs/0230-flowbite-pro-is-adapted-onto-tailwind-4.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 8099,
+        "bytes": 9830,
         "tags": [
           "design",
           "ui",
@@ -99748,7 +99910,7 @@
         "title": "The design system — one declaration, every surface",
         "path": "docs/DESIGN_SYSTEM.md",
         "source_class": "document",
-        "bytes": 26518
+        "bytes": 27960
       },
       {
         "uri": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
@@ -100063,7 +100225,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 1008238
+        "bytes": 999598
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -102834,7 +102996,7 @@
         "path": ".ai/repo/features/interfaces.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 3745,
+        "bytes": 3765,
         "tags": [
           "mcp",
           "http",
@@ -115396,7 +115558,7 @@
         "path": ".ai/repo/project/issues/I4334.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4706
+        "bytes": 5724
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -126351,7 +126513,7 @@
         "identity": "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
         "path": "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
         "source_class": "case",
-        "bytes": 10650
+        "bytes": 16473
       },
       {
         "uri": "majordomus://test/test/cases/43_plan_command.sh",
@@ -160845,7 +161007,7 @@
                     "possible_values": [
                       {
                         "name": "flowbite-pro",
-                        "help": "The owner's licensed Flowbite Pro on Tailwind 4 and Flowbite 4 (ADR 0229)"
+                        "help": "The owner's licensed Flowbite Pro on Tailwind 4 and Flowbite 4 (ADR 0230)"
                       }
                     ],
                     "defaults": []
@@ -164433,7 +164595,7 @@
         "name": "majordomus_design_kit",
         "id": "design.kit",
         "title": "Whether the interface is built on the kit",
-        "description": "The supervised repository's user interface judged against the kit profile its policy's `design_kit` block names (flowbite-pro when it names none), from markers in the tree and never the kit's own source: S0 whether there is an interface at all (a package manifest with Tailwind, React, Next.js, Vue, Svelte or Flowbite, Phoenix LiveView in mix.exs, HEEx or HTML templates, a Next.js root layout); S1 the kit's package, its React binding for React and Next.js; S2 the Tailwind plugin and source (Tailwind 4's @plugin and @source, Tailwind 3's config), a Play CDN or a CDN-only kit being a finding; S3 the kit's JavaScript behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute, a script that reads them itself being a re-implementation; S4 no other kit (daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui and Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation, Materialize), Alpine.js reported and not refused; S5 the shell on every root layout: a fixed top navbar, an aside labelled Sidebar that both drawer attributes name, a breadcrumb, and the page, surface and border roles. Each finding names its signal, path, evidence and remedy; each exemption the policy declares names its reason and how many findings it covered. A repository without an interface passes vacuously; a policy that cannot be read is `bad_policy` and judges nothing. Reads the tree below the root, skipping dependencies and build output; no build and no network.",
+        "description": "The supervised repository's user interface judged against the kit profile its policy's `design_kit` block names (flowbite-pro when it names none), from markers in the tree and never the kit's own source: S0 whether there is an interface at all and its surfaces (the root's manifest or the one in assets/, every workspace the root manifest or pnpm-workspace.yaml declares, every nested app manifest with markup in its own subtree outside examples, fixtures, tests, vendor, docs, deps and priv; Phoenix LiveView in mix.exs, HEEx or HTML templates, a Next.js root layout; published pages: a root index.html, pages under site/, www/, public/, under a directory a Pages workflow or a deploy or build script publishes, and under docs/ when it is published), any other manifest with UI packages being a notice and never a finding; S1 the kit's package in each surface, its React binding for React and Next.js, and the kit in use in the surface's own files (an attribute the kit's JavaScript drives, a flowbite-react component, a call of the kit's API), because wiring alone passes nothing; S2 the Tailwind plugin and source (Tailwind 4's @plugin and @source, Tailwind 3's config), a Play CDN or a CDN-only kit being a finding; S3 the kit's JavaScript behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute, a script that reads them itself being a re-implementation; S4 no other kit (daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui and Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation, Materialize), Alpine.js reported and not refused; S5 the shell on every root layout: a fixed top navbar, an aside labelled Sidebar that both drawer attributes name, a breadcrumb, and the page, surface and border roles. Each finding names its signal, path, evidence and remedy; each exemption the policy declares names its reason and how many findings it covered. A licensed kit's profile declares its licensed markers, and where the tree carries one the licence evidence decides it: active passes, while inactive, refused or not judged (nothing judges the evidence until the design licence lands) is a finding no exemption moves, since a variant the judge cannot decide is never a pass. A repository without an interface passes vacuously; a policy that cannot be read is `bad_policy` and judges nothing. Reads the tree below the root, skipping dependencies and build output; no build and no network.",
         "kind": "query",
         "read_only": true,
         "effect": "read",

@@ -1,6 +1,6 @@
 //! `majordomus design kit`: the repository's user interface against a kit profile, through
 //! the registry's `design.kit`, and `design kit adopt`, through `design.kit.adopt`
-//! (I4334, ADR 0229).
+//! (I4334, ADR 0230).
 //!
 //! The command renders the capability's answer and chooses the exit code from it; the
 //! enumeration, the judgement and the verdict are the capability's, so the terminal, the
@@ -173,6 +173,38 @@ fn render(report: &KitReport) -> String {
     for n in &report.reported {
         out.push(format!("NOTE  {n}"));
     }
+    for n in &report.notices {
+        out.push(format!("NOTICE  {n}"));
+    }
+    if let Some(l) = &report.licence {
+        out.push(format!(
+            "licence: {:?}, {:?} ({}){}",
+            l.variant,
+            l.state,
+            l.evidence,
+            if l.markers.is_empty() {
+                String::new()
+            } else {
+                format!("; licensed markers: {}", l.markers.join("; "))
+            }
+        ));
+    }
+    for s in &report.surfaces {
+        let dir = if s.dir.is_empty() {
+            "."
+        } else {
+            s.dir.as_str()
+        };
+        out.push(format!(
+            "surface {dir} ({:?}): {}",
+            s.kind,
+            if s.usage.is_empty() {
+                "no usage marker".to_string()
+            } else {
+                s.usage.join("; ")
+            }
+        ));
+    }
     if report.ui {
         out.push(format!(
             "interface: {}; stacks: {}; layouts: {}",
@@ -284,7 +316,28 @@ mod tests {
             because: "a render canvas".into(),
         }];
         r.reported = vec!["Alpine.js".into()];
+        r.notices = vec!["examples/x/package.json declares react and is no surface".into()];
+        r.surfaces = vec![kit::KitSurface {
+            dir: String::new(),
+            kind: kit::KitSurfaceKind::Root,
+            manifests: vec!["package.json".into()],
+            usage: Vec::new(),
+        }];
+        r.licence = Some(kit::KitLicence {
+            evidence: "kit-evidence/v1".into(),
+            state: kit::LicenceState::NotJudged,
+            variant: kit::KitVariant::Undecided,
+            markers: vec!["flowbite-pro-x/README.md (a distribution)".into()],
+        });
         let t = render(&r);
+        assert!(t.contains("NOTICE  examples/x/package.json"), "{t}");
+        assert!(t.contains("surface . (Root): no usage marker"), "{t}");
+        assert!(
+            t.contains(
+                "licence: Undecided, NotJudged (kit-evidence/v1); licensed markers: flowbite-pro-x"
+            ),
+            "{t}"
+        );
         assert!(
             t.contains("FAIL  S4  package.json  package.json declares daisyui"),
             "{t}"

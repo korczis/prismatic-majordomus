@@ -24,9 +24,14 @@ to follow it. This rule is therefore judged by a command, from markers in the tr
 
 # Required behaviour
 
-- **Dependency.** `flowbite` is a dependency of the package manifest that builds the
-  interface (`package.json` or `assets/package.json`); a React or Next.js interface uses
-  `flowbite-react`.
+- **Every surface.** A surface is one interface manifest and the files below it: the
+  root's (the `package.json` at the root, or the one in the `assets` directory Phoenix keeps),
+  every declared workspace's, and every nested app's. Published pages are an interface
+  whatever builds them. Every rule below holds for each surface in its own files, and a
+  manifest that is no surface is reported, not judged.
+- **Dependency, and the kit in use.** `flowbite` is a dependency of each surface; a React or
+  Next.js surface uses `flowbite-react`. Wiring is not use: each surface's own files carry
+  Flowbite's attributes, its `flowbite-react` components or calls of its JavaScript API.
 - **Plugin and source.** Under Tailwind 4, the stylesheet that imports Tailwind carries
   `@plugin "flowbite/plugin"` and an `@source` over Flowbite. Under Tailwind 3,
   `tailwind.config.*` requires `flowbite/plugin` and its `content` globs Flowbite. Tailwind
@@ -42,23 +47,34 @@ to follow it. This rule is therefore judged by a command, from markers in the tr
   `nav[aria-label="Breadcrumb"]` page header on application pages; the page, surface and
   border roles (`bg-gray-50`/`dark:bg-gray-900`, `bg-white`/`dark:bg-gray-800`,
   `border-gray-200`/`dark:border-gray-700`, or the role aliases a token rule declares). A
-  brand's colour is Tailwind's `primary` scale on the Pro structure (ADR 0229).
+  brand's colour is Tailwind's `primary` scale on the Pro structure (ADR 0230).
 - **Exemptions are declared, never silent.** `.ai/repo/policy.yaml` carries
   `design_kit: {profile: flowbite-pro, exempt: [{path, because}]}`. An exemption with
   `shell: marketing` judges a landing or marketing page by the Pro marketing blocks instead:
   a navbar and a footer.
 - **Licence.** Pro markup is adapted into the owner's products. Pro source files (templates,
-  blocks, bundles) are never committed to a public repository or published verbatim.
+  blocks, bundles) are never committed to a public repository or published verbatim. Where
+  the tree carries the licensed distribution itself, the licence evidence decides it, and a
+  licence nobody could judge is a finding no exemption moves.
 
 # Failure behaviour
 
 `majordomus design kit --check` exits 10 and names each finding with its signal, path,
 evidence and remedy; CI and the pre-push hook run it (enforcement entries `design-kit` and
 `design-kit-on-push`). A policy that cannot be read, or an exemption without a reason, exits
-2. A repository with no user interface passes vacuously.
+2. A repository with no user interface passes vacuously, and what S0 leaves out is printed
+as a notice.
 
 # Verification
 
 `majordomus design kit --check` in CI and before every push; `majordomus doctor` reports
 whether both entries are wired. A review of a UI change compares it with the Pro template or
 block it starts from: spacing, radius, typography, cards, tables, badges and buttons.
+
+# In this repository
+
+This section is the repository's own. `majordomus design kit adopt` writes it once, with
+this paragraph, and never again: a later adoption brings everything above the heading up to
+the distribution's template and keeps this section as the repository wrote it. Record here
+what is particular to this repository: its interface surfaces, the Pro template or block
+each root layout starts from, and the context of each exemption its policy declares.

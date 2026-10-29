@@ -1,19 +1,27 @@
-+++
-title = "Flowbite Pro is adapted onto Tailwind 4 and Flowbite 4, a brand's colour is the primary scale, and one capability judges every repository's interface against it"
-description = "Flowbite Pro is adapted onto Tailwind 4 and Flowbite 4, a brand's colour is the primary scale, and one capability judges every repository's interface against it"
-weight = 167
-[extra]
-kind = "adr"
-slug = "adr-0229"
-identity = "adr-0229"
-status = "proposed"
-source = ".ai/repo/adrs/0229-flowbite-pro-is-adapted-onto-tailwind-4.md"
-+++
-{% raw %}
+---
+schema: adr/v1
+id: adr-0230
+kind: adr
+title: Flowbite Pro is adapted onto Tailwind 4 and Flowbite 4, a brand's colour is the primary scale, and one capability judges every repository's interface against it
+status: proposed
+date: 2026-10-28
+tags:
+  - design
+  - ui
+  - enforcement
+related:
+  - file:share/design/kits/flowbite-pro.yaml
+  - file:share/design/kits/flowbite-pro.rule.md
+  - file:apps/majordomus-cli/src/design/kit.rs
+  - file:.ai/repo/project/issues/I4334.yaml
+  - test:test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh
+provenance:
+  origin: authored
+---
 
-## 229. Flowbite Pro is adapted onto Tailwind 4 and Flowbite 4, a brand's colour is the primary scale, and one capability judges every repository's interface against it
+# 230. Flowbite Pro is adapted onto Tailwind 4 and Flowbite 4, a brand's colour is the primary scale, and one capability judges every repository's interface against it
 
-### Context
+## Context
 
 On 2026-10-28 the owner ordered that every one of their projects with a user interface is
 built on their licensed Flowbite Pro: documented, enforced, back-propagated to every
@@ -38,7 +46,7 @@ Two facts make the order more than a checklist:
 A rule nobody can run drifts the way the audit found. The owner's skill ships an interim
 scanner (`verify.mjs`), but it checks only dependencies and whether the rule file exists.
 
-### Decision
+## Decision
 
 1. **Pro's structure, adapted onto Tailwind 4 and Flowbite 4.** A repository takes Pro's
    markup and class lists and builds them with Tailwind 4 and Flowbite 4. It does not pin
@@ -89,6 +97,15 @@ scanner (`verify.mjs`), but it checks only dependencies and whether the rule fil
    - S4: no other kit;
    - S5: the shell on every root layout.
 
+   S0 cuts the tree into surfaces: the root's manifest (or the one in `assets/`), every
+   workspace the root declares, and every nested app manifest with markup in its own
+   subtree. Published pages count as an interface whatever builds them. A manifest that is
+   no surface is printed as a notice, never judged. The profile's markers are of two
+   kinds. Wiring markers connect the kit to a build: the package, the plugin and source,
+   the script that loads it. Usage markers show it in use: the attributes its JavaScript
+   drives, its React components, its API. A surface passes S1 to S3 only with usage in its
+   own files, because a dependency nobody uses proves nothing.
+
    Each finding names its signal, path, evidence and remedy. `--check` exits 10 on a
    finding. A repository without a user interface passes vacuously. A policy that cannot be
    read exits 2. An exemption is a `{path, because}` entry in the `design_kit` policy block,
@@ -106,7 +123,18 @@ scanner (`verify.mjs`), but it checks only dependencies and whether the rule fil
    file shapes. No Pro template, block, stylesheet or script is copied into this
    repository, the distribution or a published page.
 
-### Consequences
+   A licensed kit's profile also declares its licensed markers: what in a tree is the
+   licensed distribution itself, such as a directory or a manifest named after a Pro
+   product. Where a tree carries one, the licence evidence decides it. The judge receives
+   that evidence as one of four states: `active`, `inactive`, `not_judged` or `refused`.
+   Only `active` passes. A variant the judge cannot decide is a finding no exemption moves,
+   never a pass. The design licence (I4336) reads the evidence. Until it lands, the one
+   function that answers, `licence_state`, says `not_judged`.
+6. **The adopted rule keeps a section of the repository's own.** The template ends with
+   `# In this repository`. Adoption writes it once, and a later adoption brings the rest of
+   the rule up to the template without overwriting that section.
+
+## Consequences
 
 - Every supervised repository gets the same gate in one command, and an unsupervised one
   can be judged with `--repo` without Majordomus being installed into it. The decision to
@@ -121,7 +149,7 @@ scanner (`verify.mjs`), but it checks only dependencies and whether the rule fil
   time from components the profile does not name will read as missing. Such a layout is
   declared under `design_kit.layouts` or exempted with its reason, never passed silently.
 
-### Alternatives rejected
+## Alternatives rejected
 
 - **Pinning Pro's Tailwind 3 stack.** It would freeze every repository on a major version
   that the current ones have left, and it would fork the configuration of each product
@@ -133,11 +161,13 @@ scanner (`verify.mjs`), but it checks only dependencies and whether the rule fil
   the registry, and it cannot be required by CI or by a pre-push hook in the repositories
   it judges.
 
-### Verification
+## Verification
 
 - `cargo test --lib design::kit` covers every signal, the vacuous pass, exemptions, the
   marketing shell, policy parsing and idempotent adoption.
 - `test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh` mutates a conformant
   disposable repository once per signal and expects each finding and exit code. It adopts
-  twice to prove idempotence, and refuses an exemption without a reason.
-{% endraw %}
+  twice to prove idempotence, and refuses an exemption without a reason. It also proves
+  a published page, a workspace that is wired and uses nothing, a manifest that is only a
+  notice, a licensed marker nobody could judge, and the rule's own section surviving a
+  second adoption.

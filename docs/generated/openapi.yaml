@@ -2279,7 +2279,7 @@ paths:
     get:
       operationId: design.kit
       summary: Whether the interface is built on the kit
-      description: "The supervised repository's user interface judged against the kit profile its policy's `design_kit` block names (flowbite-pro when it names none), from markers in the tree and never the kit's own source: S0 whether there is an interface at all (a package manifest with Tailwind, React, Next.js, Vue, Svelte or Flowbite, Phoenix LiveView in mix.exs, HEEx or HTML templates, a Next.js root layout); S1 the kit's package, its React binding for React and Next.js; S2 the Tailwind plugin and source (Tailwind 4's @plugin and @source, Tailwind 3's config), a Play CDN or a CDN-only kit being a finding; S3 the kit's JavaScript behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute, a script that reads them itself being a re-implementation; S4 no other kit (daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui and Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation, Materialize), Alpine.js reported and not refused; S5 the shell on every root layout: a fixed top navbar, an aside labelled Sidebar that both drawer attributes name, a breadcrumb, and the page, surface and border roles. Each finding names its signal, path, evidence and remedy; each exemption the policy declares names its reason and how many findings it covered. A repository without an interface passes vacuously; a policy that cannot be read is `bad_policy` and judges nothing. Reads the tree below the root, skipping dependencies and build output; no build and no network."
+      description: "The supervised repository's user interface judged against the kit profile its policy's `design_kit` block names (flowbite-pro when it names none), from markers in the tree and never the kit's own source: S0 whether there is an interface at all and its surfaces (the root's manifest or the one in assets/, every workspace the root manifest or pnpm-workspace.yaml declares, every nested app manifest with markup in its own subtree outside examples, fixtures, tests, vendor, docs, deps and priv; Phoenix LiveView in mix.exs, HEEx or HTML templates, a Next.js root layout; published pages: a root index.html, pages under site/, www/, public/, under a directory a Pages workflow or a deploy or build script publishes, and under docs/ when it is published), any other manifest with UI packages being a notice and never a finding; S1 the kit's package in each surface, its React binding for React and Next.js, and the kit in use in the surface's own files (an attribute the kit's JavaScript drives, a flowbite-react component, a call of the kit's API), because wiring alone passes nothing; S2 the Tailwind plugin and source (Tailwind 4's @plugin and @source, Tailwind 3's config), a Play CDN or a CDN-only kit being a finding; S3 the kit's JavaScript behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute, a script that reads them itself being a re-implementation; S4 no other kit (daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui and Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation, Materialize), Alpine.js reported and not refused; S5 the shell on every root layout: a fixed top navbar, an aside labelled Sidebar that both drawer attributes name, a breadcrumb, and the page, surface and border roles. Each finding names its signal, path, evidence and remedy; each exemption the policy declares names its reason and how many findings it covered. A licensed kit's profile declares its licensed markers, and where the tree carries one the licence evidence decides it: active passes, while inactive, refused or not judged (nothing judges the evidence until the design licence lands) is a finding no exemption moves, since a variant the judge cannot decide is never a pass. A repository without an interface passes vacuously; a policy that cannot be read is `bad_policy` and judges nothing. Reads the tree below the root, skipping dependencies and build output; no build and no network."
       tags:
         - design
       parameters: []
@@ -30439,6 +30439,29 @@ components:
         - evidence
         - remedy
       description: "One finding: the signal, the path it is about, what was seen and what to do."
+    KitLicence:
+      type: object
+      properties:
+        evidence:
+          type: string
+          description: The evidence format the profile names.
+        state:
+          "$ref": "#/components/schemas/LicenceState"
+          description: What the licence evidence said.
+        variant:
+          "$ref": "#/components/schemas/KitVariant"
+          description: What the judge decided.
+        markers:
+          type: array
+          items:
+            type: string
+          description: "Where each licensed marker was seen, with its name."
+      required:
+        - evidence
+        - state
+        - variant
+        - markers
+      description: "How the tree stands against a licensed kit's licence."
     KitReport:
       type: object
       properties:
@@ -30456,7 +30479,7 @@ components:
           description: The rule the profile enforces.
         policy_declared:
           type: boolean
-          description: "Whether the repository's policy declares the `design_kit` block."
+          description: "Whether the repository's policy declares the kit's block."
         policy_errors:
           type: array
           items:
@@ -30470,6 +30493,11 @@ components:
           items:
             type: string
           description: What showed it.
+        surfaces:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KitSurface"
+          description: "The surfaces S1 to S3 judged, each with the usage markers its own files carry."
         stacks:
           type: array
           items:
@@ -30495,6 +30523,16 @@ components:
           items:
             type: string
           description: "What is reported and never refused, such as Alpine.js."
+        notices:
+          type: array
+          items:
+            type: string
+          description: "What S0 left out and a reader should know: a manifest with UI packages that is no\nsurface, pages that are no interface. Never a finding."
+        licence:
+          anyOf:
+            - "$ref": "#/components/schemas/KitLicence"
+            - type: "null"
+          description: "How the tree stands against a licensed kit's licence; absent for a free kit."
         exemptions:
           type: array
           items:
@@ -30515,11 +30553,13 @@ components:
         - policy_errors
         - ui
         - ui_evidence
+        - surfaces
         - stacks
         - layouts
         - findings
         - exempted
         - reported
+        - notices
         - exemptions
         - verdict
         - passes
@@ -30531,7 +30571,7 @@ components:
           description: The user interface exists.
         - type: string
           const: S1
-          description: The dependency.
+          description: "The dependency, and the kit in use."
         - type: string
           const: S2
           description: The plugin and the source.
@@ -30545,6 +30585,58 @@ components:
           const: S5
           description: The shell on each root layout.
       description: A signal of the profile.
+    KitSurface:
+      type: object
+      properties:
+        dir:
+          type: string
+          description: "Its directory, repository-relative; empty for the root."
+        kind:
+          "$ref": "#/components/schemas/KitSurfaceKind"
+          description: How it was found.
+        manifests:
+          type: array
+          items:
+            type: string
+          description: Its manifests.
+        usage:
+          type: array
+          items:
+            type: string
+          description: The first usage markers its own files carry; empty is a finding.
+      required:
+        - dir
+        - kind
+        - manifests
+        - usage
+      description: One surface S1 to S3 judged.
+    KitSurfaceKind:
+      oneOf:
+        - type: string
+          const: root
+          description: "The root's manifests and every file no other surface owns."
+        - type: string
+          const: workspace
+          description: A workspace the root manifest or the pnpm workspace file declares.
+        - type: string
+          const: app
+          description: A nested manifest with markup in its own subtree.
+      description: How a surface was found.
+    KitVariant:
+      oneOf:
+        - type: string
+          const: not_used
+          description: "The tree carries no licensed marker: nothing the licence covers is used."
+        - type: string
+          const: licensed
+          description: "Licensed markers, and the licence is active."
+        - type: string
+          const: unlicensed
+          description: "Licensed markers, and the licence is inactive: a finding."
+        - type: string
+          const: undecided
+          description: "Licensed markers, and evidence nobody judged or that was refused: the judge cannot\ndecide, and that is a finding, never a pass."
+      description: "Which variant of a licensed kit the tree is, as the judge decides it."
     KitVerdict:
       oneOf:
         - type: string
@@ -31182,6 +31274,21 @@ components:
           const: musl
           description: "musl: Alpine, and any statically linked artifact."
       description: The C library a Linux artifact is linked against.
+    LicenceState:
+      oneOf:
+        - type: string
+          const: active
+          description: The evidence was read and the licence holds.
+        - type: string
+          const: inactive
+          description: The evidence was read and the licence does not hold.
+        - type: string
+          const: not_judged
+          description: Nothing judged the evidence.
+        - type: string
+          const: refused
+          description: "The evidence could not be judged: absent where it is owed, or unreadable."
+      description: "What the licence evidence of a licensed kit says about a repository: the seam the design\nlicence (I4336) fills. Until it does, `licence_state` answers `not_judged`."
     LifecycleStage:
       type: object
       properties:

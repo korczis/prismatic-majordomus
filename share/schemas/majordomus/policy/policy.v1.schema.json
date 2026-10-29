@@ -571,48 +571,6 @@
         }
       }
     },
-    "design_kit": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "The UI kit `majordomus design kit` judges this repository's user interface against (I4334, ADR 0229), written by `majordomus design kit adopt <profile>`. Absent judges the distribution's default profile, flowbite-pro, and reports that no policy declared it.",
-      "required": ["profile"],
-      "properties": {
-        "profile": {
-          "type": "string",
-          "description": "A kit profile of the distribution, share/design/kits/<profile>.yaml."
-        },
-        "layouts": {
-          "type": "array",
-          "items": {"type": "string"},
-          "description": "The root layouts the shell signal (S5) judges, as globs; absent takes the profile's."
-        },
-        "roles": {
-          "type": "object",
-          "additionalProperties": false,
-          "description": "Role aliases this repository's token rule declares, each one alternative added to the profile's for its role.",
-          "properties": {
-            "page": {"type": "array", "items": {"type": "string"}},
-            "surface": {"type": "array", "items": {"type": "string"}},
-            "border": {"type": "array", "items": {"type": "string"}}
-          }
-        },
-        "exempt": {
-          "type": "array",
-          "description": "Every finding this repository does not owe, each with its reason. An exemption is never silent: every answer lists it.",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["path", "because"],
-            "properties": {
-              "path": {"type": "string", "description": "A repository-relative path or glob the finding's path matches."},
-              "because": {"type": "string", "minLength": 1, "description": "Why this path does not owe it."},
-              "signals": {"type": "array", "items": {"type": "string", "enum": ["S1", "S2", "S3", "S4", "S5"]}, "description": "Only these signals; absent exempts every signal at the path."},
-              "shell": {"type": "string", "enum": ["marketing"], "description": "A landing or marketing layout: S5 judges a navbar and a footer instead of the application shell."}
-            }
-          }
-        }
-      }
-    },
     "server": {
       "type": "object",
       "additionalProperties": false,

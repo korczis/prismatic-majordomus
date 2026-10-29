@@ -635,7 +635,7 @@ pub enum KitAction {
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 pub enum KitProfileArg {
-    /// The owner's licensed Flowbite Pro on Tailwind 4 and Flowbite 4 (ADR 0229)
+    /// The owner's licensed Flowbite Pro on Tailwind 4 and Flowbite 4 (ADR 0230)
     FlowbitePro,
 }
 

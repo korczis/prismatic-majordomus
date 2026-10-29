@@ -1,5 +1,5 @@
 # The Flowbite Pro kit profile: what `majordomus design kit` judges a repository's user
-# interface against (I4334, ADR 0229).
+# interface against (I4334, ADR 0230).
 #
 # Markers only. This file names the attributes, class lists, package names and file
 # shapes by which a tree shows that it is built on Flowbite Pro on Tailwind, and the
@@ -34,43 +34,90 @@ markup: [html, htm, heex, eex, leex, tsx, jsx, vue, svelte, astro, erb, hbs, njk
 scripts: [js, mjs, cjs, ts, tsx, jsx, vue, svelte]
 styles: [css, pcss, postcss, scss]
 
-# S0: whether the repository has a user interface at all. A repository without one
-# passes vacuously. A page at the root (`index.html`) is a site, whatever builds it.
+# S0: whether the repository has a user interface at all, and the surfaces it has. A
+# repository without one passes vacuously.
+#
+# A surface is one UI manifest and the files below its directory. The root surface is
+# `package_manifests` (Phoenix keeps its bundle's manifest in assets/) and every file no
+# other surface owns. Every declared workspace (`workspaces` in the root manifest, plain or
+# under `packages`, and the `pnpm_workspace` file) is a surface of its own when its manifest
+# declares a UI package, and so is a nested app: a manifest outside `not_app_dirs` with
+# `app_markup` in its own subtree. Any other manifest that declares a UI package is a notice,
+# never a finding and never a surface, so a vacuous pass is never a silent one.
+#
+# Published pages are an interface whatever builds them: a page at the root, and a page
+# under `published.dirs`, under a directory an upload-pages-artifact step or a deploy, build,
+# publish or release script names, and under docs/ when docs/ is published (a CNAME or a
+# .nojekyll there, or a workflow whose path is docs).
 ui:
   package_manifests: [package.json, assets/package.json]
+  manifest: package.json
+  pnpm_workspace: pnpm-workspace.yaml
+  not_app_dirs: [examples, example, fixtures, fixture, tests, test, __tests__, spec, vendor, docs, deps, priv, node_modules]
+  app_markup: [html, htm, heex, jsx, tsx, vue, svelte]
   packages: [tailwindcss, '@tailwindcss/vite', '@tailwindcss/postcss', '@tailwindcss/cli', react, next, vue, svelte, flowbite, flowbite-react]
   mix_file: mix.exs
   mix_deps: [phoenix_live_view]
-  files: ['**/*.heex', '**/templates/*.html', 'app/layout.tsx', 'src/app/layout.tsx', index.html, src/index.html]
+  files: ['**/*.heex', '**/templates/*.html', 'app/layout.tsx', 'src/app/layout.tsx', index.html, src/index.html, app/index.html, web/index.html, client/index.html, ui/index.html]
+  published:
+    dirs: [site, www, public]
+    pages: [html, htm]
+    skip: [public/assets, public/build]
+    docs: docs
+    docs_markers: [docs/CNAME, docs/.nojekyll]
 
-# S1: the dependency. React and Next take the framework binding.
-dependency:
-  package: flowbite
-  react_package: flowbite-react
-  react_when: [react, next]
-
-# S2: the Tailwind plugin and the source Tailwind scans for Flowbite's classes.
-plugin:
-  # Tailwind 4: CSS-first configuration.
-  v4_entry: '@import\s+["'']tailwindcss["'']'
-  v4_plugin: '@plugin\s+["'']flowbite(-react)?/plugin(\.js)?["'']'
-  v4_source: '@source\s+["''][^"'']*flowbite[^"'']*["'']'
-  # Tailwind 3: tailwind.config.* with the plugin and a content glob over Flowbite.
-  v3_entry: '@tailwind\s+(base|components|utilities)'
-  v3_configs: [tailwind.config.js, tailwind.config.cjs, tailwind.config.mjs, tailwind.config.ts, assets/tailwind.config.js, assets/tailwind.config.cjs, assets/tailwind.config.mjs, assets/tailwind.config.ts]
-  v3_plugin: '(require\(\s*["'']flowbite(-react)?/plugin["'']\s*\)|from\s+["'']flowbite(-react)?/plugin["''])'
-  v3_content: '["''][^"'']*flowbite[^"'']*\*[^"'']*["'']'
-  # Tailwind compiled in the browser is not a build.
-  play_cdn: '(cdn\.tailwindcss\.com|@tailwindcss/browser)'
-  # Flowbite fetched from a CDN, with no package behind it.
-  cdn_flowbite: '(src|href)=["'']https?://[^"'']*(cdn|unpkg|jsdelivr|cdnjs)[^"'']*flowbite[^"'']*["'']'
-
-# S3: the attributes Flowbite's JavaScript reads, and what proves it is loaded.
-interactive:
-  attributes: '\bdata-(drawer|dropdown|modal|tabs|collapse|tooltip)-[a-z-]+'
+# The wiring markers: what connects the kit to a surface's build. Wiring is owed, and it is
+# never enough: a surface passes S1 to S3 only when its own files also carry a usage marker.
+wiring:
+  # S1: the dependency. React and Next take the framework binding.
+  dependency:
+    package: flowbite
+    react_package: flowbite-react
+    react_when: [react, next]
+  # S2: the Tailwind plugin and the source Tailwind scans for Flowbite's classes.
+  plugin:
+    # Tailwind 4: CSS-first configuration.
+    v4_entry: '@import\s+["'']tailwindcss["'']'
+    v4_plugin: '@plugin\s+["'']flowbite(-react)?/plugin(\.js)?["'']'
+    v4_source: '@source\s+["''][^"'']*flowbite[^"'']*["'']'
+    # Tailwind 3: tailwind.config.* with the plugin and a content glob over Flowbite. The
+    # paths are relative to the surface's directory.
+    v3_entry: '@tailwind\s+(base|components|utilities)'
+    v3_configs: [tailwind.config.js, tailwind.config.cjs, tailwind.config.mjs, tailwind.config.ts, assets/tailwind.config.js, assets/tailwind.config.cjs, assets/tailwind.config.mjs, assets/tailwind.config.ts]
+    v3_plugin: '(require\(\s*["'']flowbite(-react)?/plugin["'']\s*\)|from\s+["'']flowbite(-react)?/plugin["''])'
+    v3_content: '["''][^"'']*flowbite[^"'']*\*[^"'']*["'']'
+    # Tailwind compiled in the browser is not a build.
+    play_cdn: '(cdn\.tailwindcss\.com|@tailwindcss/browser)'
+    # Flowbite fetched from a CDN, with no package behind it.
+    cdn_flowbite: '(src|href)=["'']https?://[^"'']*(cdn|unpkg|jsdelivr|cdnjs)[^"'']*flowbite[^"'']*["'']'
+  # S3: what proves Flowbite's JavaScript is loaded.
   loaded: '((import|from)\s+["'']flowbite(/[^"'']*)?["'']|require\(\s*["'']flowbite(/[^"'']*)?["'']\s*\)|<script\b[^>]*\bsrc=["''][^"'']*flowbite[^"'']*\.js[^"'']*["'']|from\s+["'']flowbite-react["''])'
+
+# The usage markers: what shows that a surface's own files use the kit, rather than only
+# declaring and loading it.
+usage:
+  # The attributes Flowbite's JavaScript drives; S3 owes the JavaScript behind them.
+  attributes: '\bdata-(drawer|dropdown|modal|tabs|collapse|tooltip|popover|accordion|dial|carousel|dismiss)-[a-z-]+'
+  # A flowbite-react component in use.
+  components: 'import\s*\{[^}]*\}\s*from\s*["'']flowbite-react["'']'
+  # Flowbite's JavaScript API called by name.
+  api: '\bnew\s+(Drawer|Dropdown|Modal|Tabs|Collapse|Tooltip|Popover|Accordion|Dial|Carousel|Dismiss|Datepicker)\s*\('
   # A script that reads those attributes itself re-implements Flowbite.
   reimplemented: '(querySelector(All)?\(\s*["''][^"'']*\[data-(drawer|dropdown|modal|tabs|collapse|tooltip)-|getAttribute\(\s*["'']data-(drawer|dropdown|modal|tabs|collapse|tooltip)-|dataset\.(drawer|dropdown|modal|tabs|collapse|tooltip)[A-Z])'
+
+# The licence. Flowbite Pro is licensed, so the profile declares its licensed markers: what
+# in a tree is the licensed distribution itself (a directory or a manifest named after a
+# Pro product), as opposed to markup adapted from it. Where a tree carries one, the licence
+# evidence (kit-evidence/v1, read by the design licence of I4336) decides it: active passes,
+# and inactive, refused or not judged is a finding no exemption moves, because a variant the
+# judge cannot decide is never a pass.
+licence:
+  evidence: kit-evidence/v1
+  markers:
+    - name: a Flowbite Pro distribution directory
+      path: '(^|/)(flowbite-pro-[a-z0-9.-]+|flowbite-react-blocks-[a-z0-9.-]+|publisher-ui-blocks-[a-z0-9.-]+)(/|$)'
+    - name: a manifest named after a Flowbite Pro product
+      text: '"name"\s*:\s*"(flowbite-pro-[a-z0-9.-]+|flowbite-react-blocks[a-z0-9.-]*)"'
 
 # S4: the kits that must not also be used. A name ending in `/` is an npm scope: every
 # package under it is that kit. `mix` names Hex packages read from mix.exs, `files` the

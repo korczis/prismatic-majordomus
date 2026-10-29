@@ -9638,12 +9638,12 @@
         }
       },
       {
-        "id": "majordomus://adr/adr-0229",
+        "id": "majordomus://adr/adr-0230",
         "kind": "adr",
-        "label": "adr-0229",
+        "label": "adr-0230",
         "summary": "Flowbite Pro is adapted onto Tailwind 4 and Flowbite 4, a brand's colour is the primary scale, and one capability judges every repository's interface against it",
-        "route": "/cockpit/objects/adr/adr-0229",
-        "source": ".ai/repo/adrs/0229-flowbite-pro-is-adapted-onto-tailwind-4.md",
+        "route": "/cockpit/objects/adr/adr-0230",
+        "source": ".ai/repo/adrs/0230-flowbite-pro-is-adapted-onto-tailwind-4.md",
         "status": "proposed",
         "facts": {
           "date": "2026-10-28",
@@ -71035,7 +71035,10 @@
             "majordomus design kit --check exits 0 in a repository without a UI and in a conformant one, 10 when any one signal's marker is removed, and 2 for an exemption without a because",
             "Every finding carries signal, path, evidence and remedy, and every exemption is listed with its reason and how many findings it covered",
             "majordomus design kit adopt flowbite-pro writes the rule, the design_kit block and both enforcement entries, and a second run reports every file unchanged",
-            "The profile and the rule template carry no Pro source file"
+            "The profile and the rule template carry no Pro source file",
+            "A published page is an interface; a workspace or nested app that is wired and uses the kit in none of its own files is a finding; a manifest that is no surface is a notice",
+            "A licensed marker with licence evidence that is not judged is a finding an exemption does not move",
+            "A second adoption keeps the rule's section 'In this repository' as the repository wrote it"
           ],
           "created_at": "2026-10-28",
           "evidence_required": [
@@ -71053,14 +71056,15 @@
             "apps/majordomus-cli/src/commands/design.rs",
             "apps/majordomus-cli/src/commands/mod.rs",
             "share/design/kits",
-            "share/schemas/majordomus/policy/policy.v1.schema.json",
-            ".ai/repo/adrs/0229-flowbite-pro-is-adapted-onto-tailwind-4.md",
+            ".ai/repo/adrs/0230-flowbite-pro-is-adapted-onto-tailwind-4.md",
             ".ai/repo/project/issues/I4334.yaml",
             "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
-            "docs"
+            "docs/DESIGN_SYSTEM.md",
+            ".ai/repo/features/interfaces.md",
+            "apps/majordomus-cli/src/capability/builtin/mod.rs"
           ],
           "slug": "the-ui-kit-is-checked-by-one-capability",
-          "updated_at": "2026-10-28",
+          "updated_at": "2026-10-29",
           "validation": [
             "cargo test --lib design::kit",
             "cargo test --test cli_examples --test cli_docs",
@@ -110123,32 +110127,32 @@
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0229",
+        "source": "majordomus://adr/adr-0230",
         "target": "file:apps/majordomus-cli/src/design/kit.rs",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0229",
+        "source": "majordomus://adr/adr-0230",
         "target": "file:share/design/kits/flowbite-pro.rule.md",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0229",
+        "source": "majordomus://adr/adr-0230",
         "target": "file:share/design/kits/flowbite-pro.yaml",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0229",
+        "source": "majordomus://adr/adr-0230",
         "target": "kind:adr",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://adr/adr-0229",
+        "source": "majordomus://adr/adr-0230",
         "target": "majordomus://issue/I4334",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0229",
+        "source": "majordomus://adr/adr-0230",
         "target": "majordomus://test/test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
         "kind": "put_in_force"
       },

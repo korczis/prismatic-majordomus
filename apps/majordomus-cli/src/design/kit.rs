@@ -1,27 +1,36 @@
 //! The UI kit a repository's interface is built on, judged from markers in its tree
-//! (I4334, ADR 0229).
+//! (I4334, ADR 0230).
 //!
 //! A kit profile (`share/design/kits/<id>.yaml`, the distribution's) names the markers by
-//! which a tree shows that its interface is built on one kit: the package, the Tailwind
-//! plugin and source, the attributes the kit's JavaScript drives, the shell every root
-//! layout carries, and the packages of every other kit. The profile holds markers only and
-//! never a line of the kit's own source, which for Flowbite Pro is licensed.
+//! which a tree shows that its interface is built on one kit. They come in two kinds:
+//!
+//! - **wiring markers** connect the kit to a build: the package, the Tailwind plugin and
+//!   source, the script that loads the kit's JavaScript;
+//! - **usage markers** show the kit in use: the attributes its JavaScript drives, its React
+//!   components, its JavaScript API.
+//!
+//! Wiring is owed and is never enough. The tree is cut into **surfaces**, one per UI manifest
+//! (the root's, every declared workspace's, every nested app's), and a surface passes S1 to S3
+//! only when its own files carry a usage marker. The profile also names the shell every root
+//! layout carries, the packages of every other kit and, for a licensed kit, the licensed
+//! markers whose use the licence evidence decides. It holds markers only and never a line of
+//! the kit's own source, which for Flowbite Pro is licensed.
 //!
 //! The judgement is in two halves so that the half that decides is pure:
 //!
 //! - [`Tree::read`] is the only code that touches the filesystem: it walks the repository
 //!   below its root, skipping what the profile calls dependencies and build output, and
 //!   keeps the text of the files a signal reads.
-//! - [`judge`] takes that tree, the profile and the repository's `design_kit` policy and
-//!   returns a [`KitReport`]. It reads nothing else, so every signal is unit-tested on a tree
-//!   built in memory.
+//! - [`judge`] takes that tree, the profile, the repository's policy and the licence
+//!   evidence's [`LicenceState`] and returns a [`KitReport`]. It reads nothing else, so every
+//!   signal is unit-tested on a tree built in memory.
 //!
 //! The signals:
 //!
 //! | Signal | Asks |
 //! |---|---|
-//! | S0 | Is there a user interface at all? None passes vacuously. |
-//! | S1 | Is the kit's package a dependency (its React binding for React and Next)? |
+//! | S0 | Is there a user interface at all, and which surfaces? None passes vacuously. |
+//! | S1 | Is the kit's package a dependency of each surface, and does the surface use the kit? |
 //! | S2 | Is the Tailwind plugin configured and its source scanned, not a CDN? |
 //! | S3 | Is every interactive attribute driven by the kit's JavaScript, not a copy of it? |
 //! | S4 | Is no other kit a dependency or an import? (Alpine is reported, not refused.) |
@@ -30,7 +39,8 @@
 //! Every finding names its signal, the path, the evidence and the remedy. An exemption is a
 //! policy entry `{path, because}`; it moves a finding to the exempted list, which every
 //! answer prints, so an exemption is never silent. A policy that cannot be read, or an
-//! exemption without a reason, is a bad policy: nothing is judged under it.
+//! exemption without a reason, is a bad policy: nothing is judged under it. A licensed marker
+//! the licence evidence does not decide as active is a finding no exemption moves.
 //!
 //! The module is the crate's own (its parent is `pub(crate)`), so its examples are the unit
 //! tests below: `a_conformant_tree_is_clean` is the example this header would carry.
@@ -41,7 +51,7 @@ use std::path::Path;
 use regex::Regex;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::{Map, Value};
 
 use crate::discovery::glob::Glob;
 use crate::metadata::yaml;
@@ -52,14 +62,37 @@ pub const KITS_DIR: &str = "design/kits";
 /// The profile judged when a repository's policy declares none.
 pub const DEFAULT_PROFILE: &str = "flowbite-pro";
 
-/// The repository's policy, where the `design_kit` block is read from.
+/// The repository's policy, where the kit's block is read from.
 pub const POLICY: &str = ".ai/repo/policy.yaml";
 
-/// The policy key of the block.
+/// The policy key of the block. Read only through [`policy_block`].
 pub const POLICY_KEY: &str = "design_kit";
 
 /// The format version of a kit profile this module reads.
 pub const PROFILE_SCHEMA: u64 = 1;
+
+/// Where a repository's workflows live; a workflow can publish a directory as a site.
+const WORKFLOWS_DIR: &str = ".github/workflows/";
+
+/// A Pages deploy's artifact directory, in a workflow.
+const PAGES_ARTIFACT: &str = r#"(?s)upload-pages-artifact.{0,400}?path:\s*["']?([^\s"']+)"#;
+
+/// A deploy, build, publish or release script, a justfile or a Makefile, by its path.
+const PUBLISH_SCRIPT: &str =
+    r"(?i)(^|/)((deploy|publish|build|release)[\w.-]*\.(sh|m?js|ts|py)|justfile|makefile)$";
+
+/// A directory such a script copies or deploys.
+const SCRIPT_DIR: &str =
+    r"(?m)(?:rsync|cp|scp|publish_dir|deploy)\b[^\n]*?\s\.?/?([\w.-]+)/(?:\*|\s|$)";
+
+/// What a script copies that is never a site.
+const NOT_PUBLISHED: [&str; 5] = ["node_modules", "deps", "_build", "tmp", ".git"];
+
+/// A workflow whose artifact or publish path is docs/.
+const DOCS_WORKFLOW: &str = r#"path:\s*["']?\.?/?docs\b"#;
+
+/// An entry of a pnpm workspace file's package list.
+const PNPM_ENTRY: &str = r#"(?m)^\s*-\s*["']?([^"'\s]+)"#;
 
 // ------------------------------------------------------------------ the profile
 
@@ -89,14 +122,15 @@ pub struct Profile {
     pub scripts: Vec<String>,
     /// Extensions of stylesheets.
     pub styles: Vec<String>,
-    /// S0.
+    /// S0, and the surfaces.
     pub ui: UiMarkers,
-    /// S1.
-    pub dependency: DependencyMarkers,
-    /// S2.
-    pub plugin: PluginMarkers,
-    /// S3.
-    pub interactive: InteractiveMarkers,
+    /// What connects the kit to a surface's build (S1, S2, S3).
+    pub wiring: WiringMarkers,
+    /// What shows a surface's own files use the kit.
+    pub usage: UsageMarkers,
+    /// The licence a licensed kit's markers are decided by; absent for a free kit.
+    #[serde(default)]
+    pub licence: Option<LicenceMarkers>,
     /// S4.
     pub forbidden: Vec<KitMarker>,
     /// Reported, never refused.
@@ -105,12 +139,20 @@ pub struct Profile {
     pub shell: ShellMarkers,
 }
 
-/// What shows that a repository has a user interface.
+/// What shows that a repository has a user interface, and where its surfaces are.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct UiMarkers {
-    /// The package manifests read, repository-relative.
+    /// The root surface's manifests, repository-relative.
     pub package_manifests: Vec<String>,
+    /// The file name of a package manifest.
+    pub manifest: String,
+    /// The pnpm workspace file at the root.
+    pub pnpm_workspace: String,
+    /// A manifest below a directory of one of these names is never a nested app.
+    pub not_app_dirs: Vec<String>,
+    /// Extensions whose presence below a manifest makes it a nested app.
+    pub app_markup: Vec<String>,
     /// A dependency on any of these is a user interface.
     pub packages: Vec<String>,
     /// The Mix project file.
@@ -119,6 +161,36 @@ pub struct UiMarkers {
     pub mix_deps: Vec<String>,
     /// A file matching any of these globs is a user interface.
     pub files: Vec<String>,
+    /// What a published site is.
+    pub published: PublishedMarkers,
+}
+
+/// The pages a repository publishes, which are an interface whatever builds them.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PublishedMarkers {
+    /// The conventional site directories.
+    pub dirs: Vec<String>,
+    /// Extensions of a page.
+    pub pages: Vec<String>,
+    /// Directories below a site directory that hold build output.
+    pub skip: Vec<String>,
+    /// The documentation directory, published only when it says so.
+    pub docs: String,
+    /// The files that say the documentation directory is published.
+    pub docs_markers: Vec<String>,
+}
+
+/// The wiring markers.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct WiringMarkers {
+    /// S1.
+    pub dependency: DependencyMarkers,
+    /// S2.
+    pub plugin: PluginMarkers,
+    /// S3: what shows the kit's JavaScript is loaded.
+    pub loaded: String,
 }
 
 /// The kit's package.
@@ -145,7 +217,7 @@ pub struct PluginMarkers {
     pub v4_source: String,
     /// A Tailwind 3 entry stylesheet.
     pub v3_entry: String,
-    /// The Tailwind 3 configuration files.
+    /// The Tailwind 3 configuration files, relative to a surface's directory.
     pub v3_configs: Vec<String>,
     /// The plugin under Tailwind 3.
     pub v3_plugin: String,
@@ -157,16 +229,42 @@ pub struct PluginMarkers {
     pub cdn_flowbite: String,
 }
 
-/// The kit's JavaScript.
+/// The usage markers, as regular expressions.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct InteractiveMarkers {
-    /// The attributes it drives.
+pub struct UsageMarkers {
+    /// The attributes the kit's JavaScript drives.
     pub attributes: String,
-    /// What shows it is loaded.
-    pub loaded: String,
+    /// A component of the kit's React binding in use.
+    pub components: String,
+    /// The kit's JavaScript API called by name.
+    pub api: String,
     /// What shows a script reads the attributes itself.
     pub reimplemented: String,
+}
+
+/// The licence of a licensed kit: its evidence format and its licensed markers.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct LicenceMarkers {
+    /// The format of the evidence the design licence reads.
+    pub evidence: String,
+    /// What in a tree is the licensed distribution itself; never empty.
+    pub markers: Vec<LicensedMarker>,
+}
+
+/// One licensed marker: an expression over a path, over a read file's text, or both.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct LicensedMarker {
+    /// What it is, for a person.
+    pub name: String,
+    /// Matched against every path of the tree.
+    #[serde(default)]
+    pub path: Option<String>,
+    /// Matched against the text of every file a signal reads.
+    #[serde(default)]
+    pub text: Option<String>,
 }
 
 /// Another kit.
@@ -288,6 +386,13 @@ pub enum ProfileError {
     Invalid(String),
 }
 
+/// One licensed marker, compiled.
+struct LicensedRe {
+    name: String,
+    path: Option<Regex>,
+    text: Option<Regex>,
+}
+
 /// The profile's expressions, compiled.
 struct Compiled {
     v4_entry: Regex,
@@ -298,8 +403,10 @@ struct Compiled {
     v3_content: Regex,
     play_cdn: Regex,
     cdn_flowbite: Regex,
-    attributes: Regex,
     loaded: Regex,
+    attributes: Regex,
+    components: Regex,
+    api: Regex,
     reimplemented: Regex,
     fixed_nav: Regex,
     sidebar: Regex,
@@ -310,8 +417,14 @@ struct Compiled {
     marketing_footer: Regex,
     reported_markup: Vec<Option<Regex>>,
     forbidden_imports: Vec<Option<Regex>>,
+    licensed: Vec<LicensedRe>,
     aside: Regex,
     id: Regex,
+    pages_artifact: Regex,
+    publish_script: Regex,
+    script_dir: Regex,
+    docs_workflow: Regex,
+    pnpm_entry: Regex,
 }
 
 fn compile(name: &str, pattern: &str) -> Result<Regex, String> {
@@ -331,18 +444,52 @@ impl Compiled {
                 None => None,
             });
         }
+        let mut licensed = Vec::new();
+        if let Some(licence) = &p.licence {
+            if licence.markers.is_empty() {
+                return Err(
+                    "the profile's licence declares no licensed markers: a profile with licence evidence names what it licenses"
+                        .into(),
+                );
+            }
+            for (n, m) in licence.markers.iter().enumerate() {
+                if m.path.is_none() && m.text.is_none() {
+                    return Err(format!(
+                        "the profile's licence.markers[{n}] ({}) has neither a path nor a text expression",
+                        m.name
+                    ));
+                }
+                let at = |what: &str| format!("licence.markers[{n}].{what}");
+                licensed.push(LicensedRe {
+                    name: m.name.clone(),
+                    path: m
+                        .path
+                        .as_deref()
+                        .map(|r| compile(&at("path"), r))
+                        .transpose()?,
+                    text: m
+                        .text
+                        .as_deref()
+                        .map(|r| compile(&at("text"), r))
+                        .transpose()?,
+                });
+            }
+        }
+        let plugin = &p.wiring.plugin;
         Ok(Compiled {
-            v4_entry: compile("plugin.v4_entry", &p.plugin.v4_entry)?,
-            v4_plugin: compile("plugin.v4_plugin", &p.plugin.v4_plugin)?,
-            v4_source: compile("plugin.v4_source", &p.plugin.v4_source)?,
-            v3_entry: compile("plugin.v3_entry", &p.plugin.v3_entry)?,
-            v3_plugin: compile("plugin.v3_plugin", &p.plugin.v3_plugin)?,
-            v3_content: compile("plugin.v3_content", &p.plugin.v3_content)?,
-            play_cdn: compile("plugin.play_cdn", &p.plugin.play_cdn)?,
-            cdn_flowbite: compile("plugin.cdn_flowbite", &p.plugin.cdn_flowbite)?,
-            attributes: compile("interactive.attributes", &p.interactive.attributes)?,
-            loaded: compile("interactive.loaded", &p.interactive.loaded)?,
-            reimplemented: compile("interactive.reimplemented", &p.interactive.reimplemented)?,
+            v4_entry: compile("wiring.plugin.v4_entry", &plugin.v4_entry)?,
+            v4_plugin: compile("wiring.plugin.v4_plugin", &plugin.v4_plugin)?,
+            v4_source: compile("wiring.plugin.v4_source", &plugin.v4_source)?,
+            v3_entry: compile("wiring.plugin.v3_entry", &plugin.v3_entry)?,
+            v3_plugin: compile("wiring.plugin.v3_plugin", &plugin.v3_plugin)?,
+            v3_content: compile("wiring.plugin.v3_content", &plugin.v3_content)?,
+            play_cdn: compile("wiring.plugin.play_cdn", &plugin.play_cdn)?,
+            cdn_flowbite: compile("wiring.plugin.cdn_flowbite", &plugin.cdn_flowbite)?,
+            loaded: compile("wiring.loaded", &p.wiring.loaded)?,
+            attributes: compile("usage.attributes", &p.usage.attributes)?,
+            components: compile("usage.components", &p.usage.components)?,
+            api: compile("usage.api", &p.usage.api)?,
+            reimplemented: compile("usage.reimplemented", &p.usage.reimplemented)?,
             fixed_nav: compile("shell.fixed_nav", &p.shell.fixed_nav)?,
             sidebar: compile("shell.sidebar", &p.shell.sidebar)?,
             react_sidebar: compile("shell.react_sidebar", &p.shell.react_sidebar)?,
@@ -352,8 +499,14 @@ impl Compiled {
             marketing_footer: compile("shell.marketing_footer", &p.shell.marketing_footer)?,
             reported_markup,
             forbidden_imports,
+            licensed,
             aside: compile("aside", r"<aside\b[^>]*>")?,
             id: compile("id", r#"\bid=["']([^"']+)["']"#)?,
+            pages_artifact: compile("pages artifact", PAGES_ARTIFACT)?,
+            publish_script: compile("publish script", PUBLISH_SCRIPT)?,
+            script_dir: compile("script directory", SCRIPT_DIR)?,
+            docs_workflow: compile("docs workflow", DOCS_WORKFLOW)?,
+            pnpm_entry: compile("pnpm entry", PNPM_ENTRY)?,
         })
     }
 }
@@ -380,7 +533,86 @@ fn import_pattern(packages: &[String]) -> Result<Option<Regex>, String> {
     compile("forbidden import", &pattern).map(Some)
 }
 
+// ------------------------------------------------------------------ the licence
+
+/// What the licence evidence of a licensed kit says about a repository: the seam the design
+/// licence (I4336) fills. Until it does, [`licence_state`] answers `not_judged`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum LicenceState {
+    /// The evidence was read and the licence holds.
+    Active,
+    /// The evidence was read and the licence does not hold.
+    Inactive,
+    /// Nothing judged the evidence.
+    NotJudged,
+    /// The evidence could not be judged: absent where it is owed, or unreadable.
+    Refused,
+}
+
+/// Which variant of a licensed kit the tree is, as the judge decides it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum KitVariant {
+    /// The tree carries no licensed marker: nothing the licence covers is used.
+    NotUsed,
+    /// Licensed markers, and the licence is active.
+    Licensed,
+    /// Licensed markers, and the licence is inactive: a finding.
+    Unlicensed,
+    /// Licensed markers, and evidence nobody judged or that was refused: the judge cannot
+    /// decide, and that is a finding, never a pass.
+    Undecided,
+}
+
+impl KitVariant {
+    /// Whether the variant passes.
+    pub fn passes(self) -> bool {
+        matches!(self, KitVariant::NotUsed | KitVariant::Licensed)
+    }
+}
+
+/// Decide the variant from whether the tree carries a licensed marker and what the
+/// evidence says. Only an active licence turns licensed markers into a pass.
+pub fn decide(carries_licensed_markers: bool, state: LicenceState) -> KitVariant {
+    if !carries_licensed_markers {
+        return KitVariant::NotUsed;
+    }
+    match state {
+        LicenceState::Active => KitVariant::Licensed,
+        LicenceState::Inactive => KitVariant::Unlicensed,
+        LicenceState::NotJudged | LicenceState::Refused => KitVariant::Undecided,
+    }
+}
+
+/// What the licence evidence says for `profile` in the repository at `root`. This is the
+/// one function the design licence (I4336) replaces; until then nothing reads the evidence
+/// and the answer is `not_judged`, which [`decide`] never turns into a pass.
+pub fn licence_state(_root: &Path, _profile: &Profile) -> LicenceState {
+    LicenceState::NotJudged
+}
+
+/// How the tree stands against a licensed kit's licence.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct KitLicence {
+    /// The evidence format the profile names.
+    pub evidence: String,
+    /// What the licence evidence said.
+    pub state: LicenceState,
+    /// What the judge decided.
+    pub variant: KitVariant,
+    /// Where each licensed marker was seen, with its name.
+    pub markers: Vec<String>,
+}
+
 // ------------------------------------------------------------------ the policy
+
+/// The kit's block of a parsed policy. This is the one place the policy is read for the
+/// kit, by judgement and by adoption alike, so moving the block from `design_kit` to the
+/// `ui.kit` and `ui.exempt` keys of the design licence (I4336) is a change here alone.
+pub fn policy_block(map: &Map<String, Value>) -> Option<&Value> {
+    map.get(POLICY_KEY)
+}
 
 /// A signal of the profile.
 #[derive(
@@ -389,7 +621,7 @@ fn import_pattern(packages: &[String]) -> Result<Option<Regex>, String> {
 pub enum KitSignal {
     /// The user interface exists.
     S0,
-    /// The dependency.
+    /// The dependency, and the kit in use.
     S1,
     /// The plugin and the source.
     S2,
@@ -457,7 +689,7 @@ impl KitExemption {
     }
 }
 
-/// The repository's `design_kit` block, read.
+/// The repository's kit block, read.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct KitPolicy {
     /// Whether the policy declares the block.
@@ -491,7 +723,7 @@ impl KitPolicy {
         };
         let map =
             yaml::parse_mapping(text).map_err(|e| vec![format!("{POLICY} does not parse: {e}")])?;
-        match map.get(POLICY_KEY) {
+        match policy_block(&map) {
             None => Ok(KitPolicy::absent()),
             Some(block) => KitPolicy::from_block(block),
         }
@@ -679,6 +911,7 @@ impl Tree {
     /// Walk `root`, skipping the profile's directories, links and oversized files, and keep
     /// the text of every file a signal reads.
     pub fn read(root: &Path, profile: &Profile) -> std::io::Result<Self> {
+        let publish_script = Regex::new(PUBLISH_SCRIPT).map_err(std::io::Error::other)?;
         let mut tree = Tree::default();
         let mut stack = vec![(root.to_path_buf(), String::new())];
         while let Some((dir, rel)) = stack.pop() {
@@ -709,7 +942,7 @@ impl Tree {
                     if size > profile.max_file_bytes {
                         continue;
                     }
-                    if read_by_a_signal(profile, &path) {
+                    if read_by_a_signal(profile, &publish_script, &path) {
                         if let Ok(text) = std::fs::read_to_string(entry.path()) {
                             tree.texts.insert(path.clone(), text);
                         }
@@ -756,11 +989,31 @@ fn file_name(path: &str) -> &str {
     path.rsplit('/').next().unwrap_or(path)
 }
 
-fn read_by_a_signal(profile: &Profile, path: &str) -> bool {
+/// The directory of a repository-relative path; `""` at the root.
+fn parent(path: &str) -> &str {
+    path.rsplit_once('/').map(|(d, _)| d).unwrap_or("")
+}
+
+/// Whether `path` lies below `dir`; everything lies below the root.
+fn below(path: &str, dir: &str) -> bool {
+    dir.is_empty() || path.starts_with(&format!("{dir}/"))
+}
+
+/// A workflow file of the repository.
+fn is_workflow(path: &str) -> bool {
+    path.strip_prefix(WORKFLOWS_DIR)
+        .is_some_and(|n| !n.contains('/') && (n.ends_with(".yml") || n.ends_with(".yaml")))
+}
+
+fn read_by_a_signal(profile: &Profile, publish_script: &Regex, path: &str) -> bool {
     let name = file_name(path);
     profile.ui.package_manifests.iter().any(|m| m == path)
+        || name == profile.ui.manifest
+        || path == profile.ui.pnpm_workspace
         || path == profile.ui.mix_file
-        || profile.plugin.v3_configs.iter().any(|c| c == path)
+        || is_workflow(path)
+        || publish_script.is_match(path)
+        || profile.wiring.plugin.v3_configs.iter().any(|c| c == path)
         || profile
             .markup
             .iter()
@@ -795,6 +1048,31 @@ pub struct KitExempted {
     pub because: String,
 }
 
+/// How a surface was found.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum KitSurfaceKind {
+    /// The root's manifests and every file no other surface owns.
+    Root,
+    /// A workspace the root manifest or the pnpm workspace file declares.
+    Workspace,
+    /// A nested manifest with markup in its own subtree.
+    App,
+}
+
+/// One surface S1 to S3 judged.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct KitSurface {
+    /// Its directory, repository-relative; empty for the root.
+    pub dir: String,
+    /// How it was found.
+    pub kind: KitSurfaceKind,
+    /// Its manifests.
+    pub manifests: Vec<String>,
+    /// The first usage markers its own files carry; empty is a finding.
+    pub usage: Vec<String>,
+}
+
 /// How the tree stands against the profile.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -820,7 +1098,7 @@ pub struct KitReport {
     pub profile_source: String,
     /// The rule the profile enforces.
     pub rule: String,
-    /// Whether the repository's policy declares the `design_kit` block.
+    /// Whether the repository's policy declares the kit's block.
     pub policy_declared: bool,
     /// Why the policy cannot be read; non-empty only for `bad_policy`.
     pub policy_errors: Vec<String>,
@@ -828,6 +1106,8 @@ pub struct KitReport {
     pub ui: bool,
     /// What showed it.
     pub ui_evidence: Vec<String>,
+    /// The surfaces S1 to S3 judged, each with the usage markers its own files carry.
+    pub surfaces: Vec<KitSurface>,
     /// The stacks recognised: `tailwind-4`, `tailwind-3`, `react`, `phoenix`.
     pub stacks: Vec<String>,
     /// The root layouts S5 judged.
@@ -838,6 +1118,11 @@ pub struct KitReport {
     pub exempted: Vec<KitExempted>,
     /// What is reported and never refused, such as Alpine.js.
     pub reported: Vec<String>,
+    /// What S0 left out and a reader should know: a manifest with UI packages that is no
+    /// surface, pages that are no interface. Never a finding.
+    pub notices: Vec<String>,
+    /// How the tree stands against a licensed kit's licence; absent for a free kit.
+    pub licence: Option<KitLicence>,
     /// The policy's exemptions, each with how many findings it covered.
     pub exemptions: Vec<KitExemption>,
     /// The verdict.
@@ -858,11 +1143,14 @@ impl KitReport {
             policy_errors: errors,
             ui: false,
             ui_evidence: Vec::new(),
+            surfaces: Vec::new(),
             stacks: Vec::new(),
             layouts: Vec::new(),
             findings: Vec::new(),
             exempted: Vec::new(),
             reported: Vec::new(),
+            notices: Vec::new(),
+            licence: None,
             exemptions: Vec::new(),
             verdict: KitVerdict::BadPolicy,
             passes: false,
@@ -878,23 +1166,19 @@ pub fn profile_source(id: &str) -> String {
 // ------------------------------------------------------------------ the judgement
 
 /// One npm dependency: where it was declared, and the version asked for.
+#[derive(Debug, Clone)]
 struct Dependency {
     manifest: String,
     version: String,
 }
 
-/// The first line of `text` an expression matches, 1-based, with the matched text.
-fn first_match(re: &Regex, text: &str) -> Option<(usize, String)> {
-    re.find(text).map(|m| {
-        let line = text[..m.start()].matches('\n').count() + 1;
-        let shown: String = m.as_str().chars().take(80).collect();
-        (line, shown)
-    })
-}
-
-fn dependencies(tree: &Tree, profile: &Profile) -> BTreeMap<String, Dependency> {
+/// The dependencies `manifests` declare, the first declaration of a name winning.
+fn manifest_deps<'a>(
+    tree: &Tree,
+    manifests: impl IntoIterator<Item = &'a String>,
+) -> BTreeMap<String, Dependency> {
     let mut out = BTreeMap::new();
-    for manifest in &profile.ui.package_manifests {
+    for manifest in manifests {
         let Some(text) = tree.text(manifest) else {
             continue;
         };
@@ -918,6 +1202,49 @@ fn dependencies(tree: &Tree, profile: &Profile) -> BTreeMap<String, Dependency> 
         }
     }
     out
+}
+
+/// One surface, as the judgement holds it.
+#[derive(Debug, Clone)]
+struct Surface {
+    dir: String,
+    kind: KitSurfaceKind,
+    manifests: Vec<String>,
+    deps: BTreeMap<String, Dependency>,
+}
+
+impl Surface {
+    /// The path a finding about the surface as a whole names: its first manifest, or the
+    /// repository as a whole for a root without one.
+    fn path(&self) -> String {
+        self.manifests.first().cloned().unwrap_or_default()
+    }
+
+    /// The surface, for a person.
+    fn label(&self) -> String {
+        if self.dir.is_empty() {
+            "the root surface".to_string()
+        } else {
+            format!("the surface {}/", self.dir)
+        }
+    }
+}
+
+/// What S0 found.
+struct Interface {
+    evidence: Vec<String>,
+    surfaces: Vec<Surface>,
+    /// Every manifest S1 to S4 count: the root's, every declared workspace's, every app's.
+    counted: Vec<String>,
+    notices: Vec<String>,
+}
+
+fn first_match(re: &Regex, text: &str) -> Option<(usize, String)> {
+    re.find(text).map(|m| {
+        let line = text[..m.start()].matches('\n').count() + 1;
+        let shown: String = m.as_str().chars().take(80).collect();
+        (line, shown)
+    })
 }
 
 fn mix_depends_on(text: &str, package: &str) -> bool {
@@ -946,11 +1273,50 @@ fn class_tokens(text: &str) -> BTreeSet<&str> {
         .collect()
 }
 
+/// The workspace globs the root declares: `workspaces` in its manifest (a list, or a
+/// mapping with `packages`) and the pnpm workspace file's list, each as the glob of a
+/// workspace's manifest.
+fn workspace_globs(tree: &Tree, profile: &Profile, re: &Compiled) -> Vec<Glob> {
+    let mut globs = Vec::new();
+    if let Some(json) = tree
+        .text(&profile.ui.manifest)
+        .and_then(|t| serde_json::from_str::<Value>(t).ok())
+    {
+        let list = match json.get("workspaces") {
+            Some(Value::Array(items)) => items.clone(),
+            Some(Value::Object(map)) => map
+                .get("packages")
+                .and_then(Value::as_array)
+                .cloned()
+                .unwrap_or_default(),
+            _ => Vec::new(),
+        };
+        globs.extend(list.iter().filter_map(Value::as_str).map(str::to_string));
+    }
+    if let Some(text) = tree.text(&profile.ui.pnpm_workspace) {
+        globs.extend(
+            re.pnpm_entry
+                .captures_iter(text)
+                .map(|c| c[1].to_string())
+                .filter(|g| !g.starts_with('!')),
+        );
+    }
+    globs
+        .iter()
+        .map(|g| {
+            let g = g.trim_start_matches("./").trim_end_matches('/');
+            Glob::new(&format!("{g}/{}", profile.ui.manifest))
+        })
+        .collect()
+}
+
 struct Judgement<'a> {
     tree: &'a Tree,
     profile: &'a Profile,
     re: Compiled,
+    /// The dependencies of every counted manifest.
     deps: BTreeMap<String, Dependency>,
+    surfaces: Vec<Surface>,
     findings: Vec<KitFinding>,
     reported: Vec<String>,
     policy_roles: Roles,
@@ -970,73 +1336,288 @@ impl Judgement<'_> {
         self.tree.with_extension(&self.profile.markup)
     }
 
-    fn scripts_and_markup(&self) -> impl Iterator<Item = (&str, &str)> {
-        let p = self.profile;
-        self.tree.texts.iter().filter_map(move |(path, text)| {
-            p.scripts
-                .iter()
-                .chain(&p.markup)
-                .any(|e| has_extension(path, e))
-                .then_some((path.as_str(), text.as_str()))
-        })
+    fn is_script_or_markup(&self, path: &str) -> bool {
+        self.profile
+            .scripts
+            .iter()
+            .chain(&self.profile.markup)
+            .any(|e| has_extension(path, e))
     }
 
-    fn react(&self) -> bool {
+    fn scripts_and_markup(&self) -> impl Iterator<Item = (&str, &str)> {
+        self.tree
+            .texts
+            .iter()
+            .filter(|(path, _)| self.is_script_or_markup(path))
+            .map(|(p, t)| (p.as_str(), t.as_str()))
+    }
+
+    /// The surface that owns `path`: the deepest surface whose directory holds it, the root
+    /// when none does and the root is a surface.
+    fn owner(&self, path: &str) -> Option<usize> {
+        let mut best: Option<(usize, usize)> = None;
+        for (i, s) in self.surfaces.iter().enumerate() {
+            if below(path, &s.dir) && best.is_none_or(|(_, len)| s.dir.len() > len) {
+                best = Some((i, s.dir.len()));
+            }
+        }
+        best.map(|(i, _)| i)
+    }
+
+    /// The files of `extensions` surface `i` owns.
+    fn owned<'b>(
+        &'b self,
+        i: usize,
+        extensions: &'b [String],
+    ) -> impl Iterator<Item = (&'b str, &'b str)> + 'b {
+        self.tree
+            .with_extension(extensions)
+            .filter(move |(p, _)| self.owner(p) == Some(i))
+    }
+
+    fn owned_scripts_and_markup(&self, i: usize) -> impl Iterator<Item = (&str, &str)> {
+        self.scripts_and_markup()
+            .filter(move |(p, _)| self.owner(p) == Some(i))
+    }
+
+    fn react_in(&self, deps: &BTreeMap<String, Dependency>) -> bool {
         self.profile
+            .wiring
             .dependency
             .react_when
             .iter()
-            .any(|p| self.deps.contains_key(p))
+            .any(|p| deps.contains_key(p))
     }
 
-    /// S0: whether there is a user interface, and what showed it.
-    fn has_ui(&self) -> Vec<String> {
+    fn react(&self) -> bool {
+        self.react_in(&self.deps)
+    }
+
+    /// S0: whether there is a user interface, which surfaces it has, and what showed it.
+    fn interface(&self) -> Interface {
+        let ui = &self.profile.ui;
+        let tree = self.tree;
+        let root_manifests: Vec<String> = ui
+            .package_manifests
+            .iter()
+            .filter(|m| tree.paths.contains(*m))
+            .cloned()
+            .collect();
+        let globs = workspace_globs(tree, self.profile, &self.re);
         let mut evidence = Vec::new();
-        for package in &self.profile.ui.packages {
-            if let Some(d) = self.deps.get(package) {
-                evidence.push(format!("{} declares {package}", d.manifest));
+        let mut surfaces = Vec::new();
+        let mut counted = root_manifests.clone();
+        let mut notices = Vec::new();
+        for path in &tree.paths {
+            if file_name(path) != ui.manifest || ui.package_manifests.contains(path) {
+                continue;
+            }
+            let dir = parent(path);
+            let workspace = globs.iter().any(|g| g.matches(path));
+            let app = !workspace
+                && !dir
+                    .split('/')
+                    .any(|seg| ui.not_app_dirs.iter().any(|n| n == seg))
+                && tree
+                    .paths
+                    .iter()
+                    .any(|f| below(f, dir) && ui.app_markup.iter().any(|e| has_extension(f, e)));
+            if workspace || app {
+                counted.push(path.clone());
+            }
+            let deps = manifest_deps(tree, [path]);
+            let packages: Vec<&str> = ui
+                .packages
+                .iter()
+                .filter(|p| deps.contains_key(*p))
+                .map(String::as_str)
+                .collect();
+            if packages.is_empty() {
+                continue;
+            }
+            if !(workspace || app) {
+                notices.push(format!(
+                    "{path} declares {} and is no surface: it is no declared workspace, and no markup ({}) lies in its own subtree outside {}; S1 to S4 do not count it",
+                    packages.join(", "),
+                    ui.app_markup.join(", "),
+                    ui.not_app_dirs.join(", ")
+                ));
+                continue;
+            }
+            let (kind, how) = if workspace {
+                (KitSurfaceKind::Workspace, "a declared workspace")
+            } else {
+                (KitSurfaceKind::App, "an app with markup in its own subtree")
+            };
+            evidence.push(format!("{path} declares {} ({how})", packages.join(", ")));
+            let mut deps = deps;
+            if workspace {
+                // a workspace resolves what the root declares
+                for (name, d) in manifest_deps(tree, &root_manifests) {
+                    deps.entry(name).or_insert(d);
+                }
+            }
+            surfaces.push(Surface {
+                dir: dir.to_string(),
+                kind,
+                manifests: vec![path.clone()],
+                deps,
+            });
+        }
+        let nested = |p: &str| surfaces.iter().any(|s| below(p, &s.dir));
+        let root_deps = manifest_deps(tree, &root_manifests);
+        let mut root_evidence = Vec::new();
+        for package in &ui.packages {
+            if let Some(d) = root_deps.get(package) {
+                root_evidence.push(format!("{} declares {package}", d.manifest));
             }
         }
-        if let Some(text) = self.tree.text(&self.profile.ui.mix_file) {
-            for dep in &self.profile.ui.mix_deps {
+        if let Some(text) = tree.text(&ui.mix_file) {
+            for dep in &ui.mix_deps {
                 if mix_depends_on(text, dep) {
-                    evidence.push(format!("{} depends on {dep}", self.profile.ui.mix_file));
+                    root_evidence.push(format!("{} depends on {dep}", ui.mix_file));
                 }
             }
         }
-        for glob in &self.profile.ui.files {
+        for glob in &ui.files {
             let g = Glob::new(glob);
-            if let Some(path) = self.tree.paths.iter().find(|p| g.matches(p)) {
-                evidence.push(format!("{path} matches {glob}"));
+            if let Some(path) = tree.paths.iter().find(|p| g.matches(p) && !nested(p)) {
+                root_evidence.push(format!("{path} matches {glob}"));
             }
         }
-        evidence
+        let (dirs, pages) = self.published();
+        let pages: Vec<&String> = pages.iter().filter(|p| !nested(p)).collect();
+        if let Some(first) = pages.first() {
+            root_evidence.push(format!(
+                "{} published page(s) ({}), such as {first}",
+                pages.len(),
+                dirs.join(", ")
+            ));
+        }
+        if !root_evidence.is_empty() {
+            surfaces.insert(
+                0,
+                Surface {
+                    dir: String::new(),
+                    kind: KitSurfaceKind::Root,
+                    manifests: root_manifests,
+                    deps: root_deps,
+                },
+            );
+        }
+        root_evidence.append(&mut evidence);
+        if root_evidence.is_empty() {
+            let pages: Vec<&String> = tree
+                .paths
+                .iter()
+                .filter(|p| ui.app_markup.iter().any(|e| has_extension(p, e)))
+                .collect();
+            if let Some(first) = pages.first() {
+                notices.push(format!(
+                    "{} markup file(s), such as {first}, and none of them is an interface by S0 (a published page, a surface's manifest, a template or a layout); if one is a product's interface, publish it or give it a manifest",
+                    pages.len()
+                ));
+            }
+        }
+        Interface {
+            evidence: root_evidence,
+            surfaces,
+            counted,
+            notices,
+        }
     }
 
-    /// The Tailwind major version the tree builds with, if any.
-    fn tailwind(&self) -> Option<u64> {
-        if let Some(v) = self.deps.get("tailwindcss").and_then(|d| major(&d.version)) {
+    /// The directories the repository publishes as a site, and every page in them: the
+    /// conventional site directories, an upload-pages-artifact step's path, a directory a
+    /// deploy or build script copies, docs/ when it says it is published, and a root
+    /// `index.html` always.
+    fn published(&self) -> (Vec<String>, Vec<String>) {
+        let p = &self.profile.ui.published;
+        let mut dirs: BTreeSet<String> = p.dirs.iter().cloned().collect();
+        let mut workflows = String::new();
+        for (path, text) in &self.tree.texts {
+            if is_workflow(path) {
+                workflows.push_str(text);
+                workflows.push('\n');
+                for c in self.re.pages_artifact.captures_iter(text) {
+                    let d = c[1].trim_start_matches("./").trim_end_matches('/');
+                    dirs.insert(if d.is_empty() { ".".into() } else { d.into() });
+                }
+            } else if self.re.publish_script.is_match(path) {
+                for c in self.re.script_dir.captures_iter(text) {
+                    if !NOT_PUBLISHED.contains(&&c[1]) {
+                        dirs.insert(c[1].to_string());
+                    }
+                }
+            }
+        }
+        if p.docs_markers.iter().any(|m| self.tree.paths.contains(m))
+            || self.re.docs_workflow.is_match(&workflows)
+        {
+            dirs.insert(p.docs.clone());
+        }
+        let pages: Vec<String> = self
+            .tree
+            .paths
+            .iter()
+            .filter(|f| p.pages.iter().any(|e| has_extension(f, e)))
+            .filter(|f| !p.skip.iter().any(|s| below(f, s)))
+            .filter(|f| f.as_str() == "index.html" || dirs.iter().any(|d| d == "." || below(f, d)))
+            .cloned()
+            .collect();
+        let used: Vec<String> = dirs
+            .into_iter()
+            .filter(|d| pages.iter().any(|f| d == "." || below(f, d)))
+            .chain(
+                pages
+                    .iter()
+                    .any(|f| f == "index.html")
+                    .then_some("index.html".to_string()),
+            )
+            .collect();
+        (used, pages)
+    }
+
+    /// The Tailwind major version surface `i` builds with, if any.
+    fn tailwind(&self, i: usize) -> Option<u64> {
+        let s = &self.surfaces[i];
+        if let Some(v) = s.deps.get("tailwindcss").and_then(|d| major(&d.version)) {
             return Some(v);
         }
-        let styles: Vec<(&str, &str)> = self.tree.with_extension(&self.profile.styles).collect();
+        let styles: Vec<(&str, &str)> = self.owned(i, &self.profile.styles).collect();
         if styles.iter().any(|(_, t)| self.re.v4_entry.is_match(t)) {
             return Some(4);
         }
-        let v3_config = self
-            .profile
-            .plugin
-            .v3_configs
-            .iter()
-            .any(|c| self.tree.paths.contains(c));
+        let v3_config = !self.v3_configs(i).is_empty();
         if v3_config || styles.iter().any(|(_, t)| self.re.v3_entry.is_match(t)) {
             return Some(3);
         }
         None
     }
 
-    fn s1(&mut self) {
-        let dep = &self.profile.dependency;
-        let (wanted, why) = if self.react() {
+    /// The Tailwind 3 configurations of surface `i`, relative to its directory.
+    fn v3_configs(&self, i: usize) -> Vec<String> {
+        let dir = &self.surfaces[i].dir;
+        self.profile
+            .wiring
+            .plugin
+            .v3_configs
+            .iter()
+            .map(|c| {
+                if dir.is_empty() {
+                    c.clone()
+                } else {
+                    format!("{dir}/{c}")
+                }
+            })
+            .filter(|c| self.tree.paths.contains(c))
+            .collect()
+    }
+
+    fn s1(&mut self, i: usize) {
+        let s = self.surfaces[i].clone();
+        let dep = &self.profile.wiring.dependency;
+        let (wanted, why) = if self.react_in(&s.deps) {
             (
                 dep.react_package.clone(),
                 "React and Next.js take the kit's React binding",
@@ -1044,17 +1625,10 @@ impl Judgement<'_> {
         } else {
             (dep.package.clone(), "the kit's package")
         };
-        if self.deps.contains_key(&wanted) {
+        if s.deps.contains_key(&wanted) {
             return;
         }
-        let manifest = self
-            .profile
-            .ui
-            .package_manifests
-            .iter()
-            .find(|m| self.tree.paths.contains(*m))
-            .cloned();
-        let (path, evidence) = match manifest {
+        let (path, evidence) = match s.manifests.first() {
             Some(m) => (m.clone(), format!("{m} does not declare {wanted} ({why})")),
             None => (
                 String::new(),
@@ -1068,29 +1642,66 @@ impl Judgement<'_> {
         self.finding(KitSignal::S1, &path, evidence, &remedy);
     }
 
-    fn s2(&mut self, tailwind: Option<u64>) {
+    /// The usage markers surface `i`'s own files carry, and a finding when there is none:
+    /// wiring alone never passes S1 to S3.
+    fn usage(&mut self, i: usize) -> Vec<String> {
+        let mut seen = Vec::new();
+        for (path, text) in self.owned_scripts_and_markup(i) {
+            for re in [&self.re.attributes, &self.re.components, &self.re.api] {
+                if let Some((line, shown)) = first_match(re, text) {
+                    seen.push(format!("{shown} in {path}:{line}"));
+                    break;
+                }
+            }
+            if seen.len() >= 3 {
+                break;
+            }
+        }
+        if seen.is_empty() {
+            let s = &self.surfaces[i];
+            let (path, label) = (s.path(), s.label());
+            self.finding(
+                KitSignal::S1,
+                &path,
+                format!(
+                    "{label} uses the kit in none of its own files: no attribute Flowbite's JavaScript drives, no flowbite-react component and no call of Flowbite's API; wiring alone does not pass S1 to S3"
+                ),
+                "build the surface's pages from the Flowbite Pro blocks and components, whose data-* attributes or flowbite-react components are what shows the kit in use",
+            );
+        }
+        seen
+    }
+
+    fn s2(&mut self, i: usize, tailwind: Option<u64>) {
+        let at = if self.surfaces[i].dir.is_empty() {
+            String::new()
+        } else {
+            self.surfaces[i].path()
+        };
         match tailwind {
-            Some(4) => self.s2_v4(),
-            Some(3) => self.s2_v3(),
+            Some(4) => self.s2_v4(i),
+            Some(3) => self.s2_v3(i),
             Some(other) => self.finding(
                 KitSignal::S2,
-                "",
+                &at,
                 format!("tailwindcss {other} is neither Tailwind 3 nor Tailwind 4"),
-                "build with Tailwind 4 and Flowbite 4 (ADR 0229)",
+                "build with Tailwind 4 and Flowbite 4 (ADR 0230)",
             ),
             None => self.finding(
                 KitSignal::S2,
-                "",
-                "no stylesheet imports Tailwind and no package declares tailwindcss".into(),
+                &at,
+                format!(
+                    "no stylesheet imports Tailwind in {} and no package declares tailwindcss",
+                    self.surfaces[i].label()
+                ),
                 "build the interface with Tailwind 4: a stylesheet with @import \"tailwindcss\", @plugin \"flowbite/plugin\" and @source over flowbite",
             ),
         }
-        let deps_have_kit = self.deps.contains_key(&self.profile.dependency.package)
-            || self
-                .deps
-                .contains_key(&self.profile.dependency.react_package);
+        let deps = &self.surfaces[i].deps;
+        let deps_have_kit = deps.contains_key(&self.profile.wiring.dependency.package)
+            || deps.contains_key(&self.profile.wiring.dependency.react_package);
         let mut cdn = Vec::new();
-        for (path, text) in self.markup() {
+        for (path, text) in self.owned(i, &self.profile.markup) {
             if let Some((line, seen)) = first_match(&self.re.play_cdn, text) {
                 cdn.push((
                     path.to_string(),
@@ -1113,10 +1724,9 @@ impl Judgement<'_> {
         }
     }
 
-    fn s2_v4(&mut self) {
+    fn s2_v4(&mut self, i: usize) {
         let styles: Vec<(String, String)> = self
-            .tree
-            .with_extension(&self.profile.styles)
+            .owned(i, &self.profile.styles)
             .map(|(p, t)| (p.to_string(), t.to_string()))
             .collect();
         let entry = styles
@@ -1124,12 +1734,12 @@ impl Judgement<'_> {
             .find(|(_, t)| self.re.v4_entry.is_match(t))
             .map(|(p, _)| p.clone())
             .unwrap_or_default();
+        let at = if entry.is_empty() {
+            "no stylesheet".to_string()
+        } else {
+            entry.clone()
+        };
         if !styles.iter().any(|(_, t)| self.re.v4_plugin.is_match(t)) {
-            let at = if entry.is_empty() {
-                "no stylesheet".to_string()
-            } else {
-                entry.clone()
-            };
             self.finding(
                 KitSignal::S2,
                 &entry,
@@ -1138,11 +1748,6 @@ impl Judgement<'_> {
             );
         }
         if !styles.iter().any(|(_, t)| self.re.v4_source.is_match(t)) {
-            let at = if entry.is_empty() {
-                "no stylesheet".to_string()
-            } else {
-                entry.clone()
-            };
             self.finding(
                 KitSignal::S2,
                 &entry,
@@ -1152,23 +1757,22 @@ impl Judgement<'_> {
         }
     }
 
-    fn s2_v3(&mut self) {
+    fn s2_v3(&mut self, i: usize) {
         let configs: Vec<(String, String)> = self
-            .profile
-            .plugin
-            .v3_configs
-            .iter()
-            .filter_map(|c| self.tree.text(c).map(|t| (c.clone(), t.to_string())))
+            .v3_configs(i)
+            .into_iter()
+            .filter_map(|c| self.tree.text(&c).map(|t| (c.clone(), t.to_string())))
             .collect();
         let Some((path, text)) = configs.first().cloned() else {
             self.finding(
                 KitSignal::S2,
-                "",
+                &self.surfaces[i].path(),
                 format!(
-                    "Tailwind 3, and no configuration ({}) exists",
-                    self.profile.plugin.v3_configs.join(", ")
+                    "Tailwind 3, and no configuration ({}) exists in {}",
+                    self.profile.wiring.plugin.v3_configs.join(", "),
+                    self.surfaces[i].label()
                 ),
-                "add tailwind.config.js with require('flowbite/plugin') and a content glob over flowbite, or move to Tailwind 4 (ADR 0229)",
+                "add tailwind.config.js with require('flowbite/plugin') and a content glob over flowbite, or move to Tailwind 4 (ADR 0230)",
             );
             return;
         };
@@ -1190,34 +1794,36 @@ impl Judgement<'_> {
         }
     }
 
-    fn s3(&mut self) {
-        let mut carriers = Vec::new();
-        for (path, text) in self.markup() {
-            if let Some((line, seen)) = first_match(&self.re.attributes, text) {
-                carriers.push(format!("{seen} in {path}:{line}"));
+    fn s3(&mut self, i: usize) {
+        let carriers: Vec<(String, String)> = self
+            .owned(i, &self.profile.markup)
+            .filter_map(|(path, text)| {
+                first_match(&self.re.attributes, text)
+                    .map(|(line, seen)| (path.to_string(), format!("{seen} in {path}:{line}")))
+            })
+            .collect();
+        let loaded = self
+            .owned_scripts_and_markup(i)
+            .any(|(_, t)| self.re.loaded.is_match(t));
+        if let Some((first, shown)) = carriers.first().cloned() {
+            if !loaded {
+                let evidence = format!(
+                    "{} file(s) of {} carry attributes Flowbite's JavaScript drives (first: {shown}) and none of its scripts loads Flowbite",
+                    carriers.len(),
+                    self.surfaces[i].label()
+                );
+                self.finding(
+                    KitSignal::S3,
+                    &first,
+                    evidence,
+                    "import 'flowbite' in the bundle the layout loads (Phoenix: flowbite/dist/flowbite.phoenix.js)",
+                );
             }
         }
-        let loaded = self
-            .scripts_and_markup()
-            .any(|(_, t)| self.re.loaded.is_match(t));
-        if !carriers.is_empty() && !loaded {
-            let first = self
-                .markup()
-                .find(|(_, t)| self.re.attributes.is_match(t))
-                .map(|(p, _)| p.to_string())
-                .unwrap_or_default();
-            let evidence = format!(
-                "{} file(s) carry attributes Flowbite's JavaScript drives (first: {}) and no script loads Flowbite",
-                carriers.len(),
-                carriers[0]
-            );
-            self.finding(
-                KitSignal::S3,
-                &first,
-                evidence,
-                "import 'flowbite' in the bundle the layout loads (Phoenix: flowbite/dist/flowbite.phoenix.js)",
-            );
-        }
+    }
+
+    /// S3's other half, over every script: a script that reads the attributes itself.
+    fn s3_copies(&mut self) {
         let mut copies = Vec::new();
         for (path, text) in self.tree.with_extension(&self.profile.scripts) {
             if let Some((line, seen)) = first_match(&self.re.reimplemented, text) {
@@ -1362,7 +1968,7 @@ impl Judgement<'_> {
         for layout in layouts {
             let mut text = self.tree.text(layout).unwrap_or("").to_string();
             if layout.ends_with(".html.heex") {
-                let dir = layout.rsplit_once('/').map(|(d, _)| d).unwrap_or("");
+                let dir = parent(layout);
                 let companion = if dir.is_empty() {
                     self.profile.shell.companion.clone()
                 } else {
@@ -1499,25 +2105,97 @@ impl Judgement<'_> {
                 KitSignal::S5,
                 layout,
                 format!("{layout} does not carry the role(s) {}", missing.join(", ")),
-                "use the Pro grays for page, surface and border, or declare the token rule's aliases under design_kit.roles; a brand colour is the primary scale (ADR 0229)",
+                "use the Pro grays for page, surface and border, or declare the token rule's aliases under design_kit.roles; a brand colour is the primary scale (ADR 0230)",
             );
         }
     }
+
+    /// The licence of a licensed kit: where the tree carries a licensed marker, and what the
+    /// judge decides from the evidence. The findings it returns are no exemption's to move.
+    fn licence(&self, state: LicenceState) -> Option<(KitLicence, Vec<KitFinding>)> {
+        let licence = self.profile.licence.as_ref()?;
+        let mut markers = Vec::new();
+        let mut first_path = String::new();
+        for m in &self.re.licensed {
+            if let Some(re) = &m.path {
+                if let Some(p) = self.tree.paths.iter().find(|p| re.is_match(p)) {
+                    markers.push(format!("{p} ({})", m.name));
+                    if first_path.is_empty() {
+                        first_path = p.clone();
+                    }
+                }
+            }
+            if let Some(re) = &m.text {
+                for (path, text) in &self.tree.texts {
+                    if let Some((line, _)) = first_match(re, text) {
+                        markers.push(format!("{path}:{line} ({})", m.name));
+                        if first_path.is_empty() {
+                            first_path = path.clone();
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        let variant = decide(!markers.is_empty(), state);
+        let mut findings = Vec::new();
+        let why = (!variant.passes()).then_some(match (variant, state) {
+            (KitVariant::Unlicensed, _) => "the licence evidence says the licence is inactive",
+            (_, LicenceState::Refused) => {
+                "the licence evidence was refused, so the judge cannot decide the variant"
+            }
+            _ => "nothing judged the licence evidence, so the judge cannot decide the variant",
+        });
+        if let Some(why) = why {
+            findings.push(KitFinding {
+                signal: KitSignal::S1,
+                path: first_path,
+                evidence: format!(
+                    "the tree carries licensed markers of {} ({}) and {why}; an undecided licence is never a pass",
+                    self.profile.title,
+                    markers.join("; ")
+                ),
+                remedy: format!(
+                    "keep the licensed distribution out of the tree and adapt its markup into the product, or provide the {} evidence the design licence reads",
+                    licence.evidence
+                ),
+            });
+        }
+        Some((
+            KitLicence {
+                evidence: licence.evidence.clone(),
+                state,
+                variant,
+                markers,
+            },
+            findings,
+        ))
+    }
 }
 
-/// Judge a tree against a profile under a policy. Pure: it reads only its arguments.
-pub fn judge(tree: &Tree, profile: &Profile, policy: &KitPolicy) -> Result<KitReport, String> {
+/// Judge a tree against a profile under a policy, with what the licence evidence says.
+/// Pure: it reads only its arguments.
+pub fn judge(
+    tree: &Tree,
+    profile: &Profile,
+    policy: &KitPolicy,
+    licence: LicenceState,
+) -> Result<KitReport, String> {
     let re = Compiled::new(profile)?;
     let mut j = Judgement {
         tree,
         profile,
         re,
-        deps: dependencies(tree, profile),
+        deps: BTreeMap::new(),
+        surfaces: Vec::new(),
         findings: Vec::new(),
         reported: Vec::new(),
         policy_roles: policy.roles.clone(),
     };
-    let ui_evidence = j.has_ui();
+    let interface = j.interface();
+    j.deps = manifest_deps(tree, &interface.counted);
+    j.surfaces = interface.surfaces;
+    let licence = j.licence(licence);
     let mut report = KitReport {
         profile: profile.id.clone(),
         title: profile.title.clone(),
@@ -1525,23 +2203,36 @@ pub fn judge(tree: &Tree, profile: &Profile, policy: &KitPolicy) -> Result<KitRe
         rule: profile.rule.clone(),
         policy_declared: policy.declared,
         policy_errors: Vec::new(),
-        ui: !ui_evidence.is_empty(),
-        ui_evidence,
+        ui: !interface.evidence.is_empty(),
+        ui_evidence: interface.evidence,
+        surfaces: Vec::new(),
         stacks: Vec::new(),
         layouts: Vec::new(),
         findings: Vec::new(),
         exempted: Vec::new(),
         reported: Vec::new(),
+        notices: interface.notices,
+        licence: licence.as_ref().map(|(l, _)| l.clone()),
         exemptions: policy.exempt.clone(),
         verdict: KitVerdict::NoUi,
         passes: true,
     };
+    let unexemptable = licence.map(|(_, f)| f).unwrap_or_default();
     if !report.ui {
+        if !unexemptable.is_empty() {
+            report.findings = unexemptable;
+            report.verdict = KitVerdict::Findings;
+            report.passes = false;
+        }
         return Ok(report);
     }
-    let tailwind = j.tailwind();
-    if let Some(v) = tailwind {
-        report.stacks.push(format!("tailwind-{v}"));
+    for i in 0..j.surfaces.len() {
+        if let Some(v) = j.tailwind(i) {
+            let stack = format!("tailwind-{v}");
+            if !report.stacks.contains(&stack) {
+                report.stacks.push(stack);
+            }
+        }
     }
     if j.react() {
         report.stacks.push("react".into());
@@ -1552,9 +2243,21 @@ pub fn judge(tree: &Tree, profile: &Profile, policy: &KitPolicy) -> Result<KitRe
     {
         report.stacks.push("phoenix".into());
     }
-    j.s1();
-    j.s2(tailwind);
-    j.s3();
+    for i in 0..j.surfaces.len() {
+        j.s1(i);
+        let usage = j.usage(i);
+        let tailwind = j.tailwind(i);
+        j.s2(i, tailwind);
+        j.s3(i);
+        let s = &j.surfaces[i];
+        report.surfaces.push(KitSurface {
+            dir: s.dir.clone(),
+            kind: s.kind,
+            manifests: s.manifests.clone(),
+            usage,
+        });
+    }
+    j.s3_copies();
     j.s4();
     let layouts = j.layouts(policy);
     j.s5(policy, &layouts);
@@ -1577,6 +2280,7 @@ pub fn judge(tree: &Tree, profile: &Profile, policy: &KitPolicy) -> Result<KitRe
             None => report.findings.push(finding),
         }
     }
+    report.findings.extend(unexemptable);
     report.verdict = if report.findings.is_empty() {
         KitVerdict::Clean
     } else {
@@ -1588,7 +2292,8 @@ pub fn judge(tree: &Tree, profile: &Profile, policy: &KitPolicy) -> Result<KitRe
 
 // ------------------------------------------------------------------ inspection
 
-/// Read a repository's policy, the profile it names and its tree, and judge it.
+/// Read a repository's policy, the profile it names, its tree and its licence evidence, and
+/// judge it.
 ///
 /// A policy that cannot be read, or that names a profile the distribution does not ship,
 /// is answered as `bad_policy` with every reason; the error side is for what is never the
@@ -1619,7 +2324,8 @@ pub fn inspect(root: &Path, share: &Path) -> Result<KitReport, String> {
         Err(ProfileError::Invalid(reason)) => return Err(reason),
     };
     let tree = Tree::read(root, &profile).map_err(|e| format!("{}: {e}", root.display()))?;
-    judge(&tree, &profile, &policy)
+    let licence = licence_state(root, &profile);
+    judge(&tree, &profile, &policy, licence)
 }
 
 // ------------------------------------------------------------------ adoption
@@ -1632,6 +2338,37 @@ pub const ON_PUSH: &str = "design-kit-on-push";
 
 /// The enforcement entry that runs the check in CI.
 pub const IN_CI: &str = "design-kit";
+
+/// The heading of the adopted rule's last section, which is the repository's own: adoption
+/// writes it from the template once, and a later adoption keeps it as the repository wrote
+/// it, whatever else of the rule it brings up to the template.
+pub const SLOT_HEADING: &str = "# In this repository";
+
+/// A rule's text split at [`SLOT_HEADING`]: what the distribution owns, and the slot from its
+/// heading line to the end of the file when the text has one.
+pub fn split_slot(text: &str) -> (&str, Option<&str>) {
+    let mut at = 0;
+    for line in text.split_inclusive('\n') {
+        if line.trim_end() == SLOT_HEADING {
+            return (&text[..at], Some(&text[at..]));
+        }
+        at += line.len();
+    }
+    (text, None)
+}
+
+/// What adoption does to a rule that is already there, and the text it writes, if any: the
+/// template's text with the repository's slot kept. A rule without a slot is kept and named,
+/// because nothing tells adoption which of its text is the repository's.
+fn adopted_rule(current: &str, template: &str) -> (AdoptAction, Option<String>) {
+    let (theirs, _) = split_slot(template);
+    match split_slot(current) {
+        _ if current == template => (AdoptAction::Unchanged, None),
+        (ours, Some(_)) if ours == theirs => (AdoptAction::Unchanged, None),
+        (_, Some(slot)) => (AdoptAction::Updated, Some(format!("{theirs}{slot}"))),
+        (_, None) => (AdoptAction::Kept, None),
+    }
+}
 
 /// What adoption did, or would do, to one file.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -1712,7 +2449,7 @@ pub fn ci_workflow(paths: &BTreeSet<String>) -> Option<String> {
 /// The policy with the `design_kit` block appended when it has none.
 pub fn policy_with_block(text: &str, profile: &str) -> Result<(String, AdoptAction), String> {
     let map = yaml::parse_mapping(text).map_err(|e| format!("{POLICY} does not parse: {e}"))?;
-    if let Some(block) = map.get(POLICY_KEY) {
+    if let Some(block) = policy_block(&map) {
         let named = block.get("profile").and_then(Value::as_str).unwrap_or("");
         if named == profile {
             return Ok((text.to_string(), AdoptAction::Unchanged));
@@ -1727,7 +2464,7 @@ pub fn policy_with_block(text: &str, profile: &str) -> Result<(String, AdoptActi
     }
     out.push_str(&format!(
         "\n# The UI kit `majordomus design kit` judges this repository against (rule\n\
-         # project.ui-uses-flowbite-pro, ADR 0229), written by `majordomus design kit adopt\n\
+         # project.ui-uses-flowbite-pro, ADR 0230), written by `majordomus design kit adopt\n\
          # {profile}`. Declare every exemption under `exempt:`, a block list whose entries\n\
          # carry `path:` and `because:` (optionally `signals:` and `shell: marketing`).\n\
          {POLICY_KEY}:\n  profile: {profile}\n"
@@ -1867,25 +2604,46 @@ pub fn plan_adoption(
 
     let rule_path = format!("{RULES_DIR}/{}", profile.rule_file);
     match std::fs::read_to_string(root.join(&rule_path)) {
-        Ok(current) if current == template => writes.push(AdoptWrite {
-            path: rule_path.clone(),
-            action: AdoptAction::Unchanged,
-            detail: format!("{} is the template", profile.rule),
-        }),
-        Ok(_) => {
-            writes.push(AdoptWrite {
+        Ok(current) => match adopted_rule(&current, &template) {
+            (AdoptAction::Unchanged, _) => writes.push(AdoptWrite {
                 path: rule_path.clone(),
-                action: AdoptAction::Kept,
+                action: AdoptAction::Unchanged,
                 detail: format!(
-                    "{} differs from share/{}",
-                    profile.rule, profile.rule_template
+                    "{} is the template, and its section '{}' is the repository's",
+                    profile.rule,
+                    SLOT_HEADING.trim_start_matches("# ")
                 ),
-            });
-            notes.push(format!(
-                "{rule_path} differs from the template share/{}; compare them and raise the rule's version if the change is meant",
-                profile.rule_template
-            ));
-        }
+            }),
+            (AdoptAction::Updated, Some(text)) => {
+                writes.push(AdoptWrite {
+                    path: rule_path.clone(),
+                    action: AdoptAction::Updated,
+                    detail: format!(
+                        "{} brought up to share/{}, keeping the repository's section '{}' as it was",
+                        profile.rule,
+                        profile.rule_template,
+                        SLOT_HEADING.trim_start_matches("# ")
+                    ),
+                });
+                files.push((rule_path, text));
+            }
+            _ => {
+                writes.push(AdoptWrite {
+                    path: rule_path.clone(),
+                    action: AdoptAction::Kept,
+                    detail: format!(
+                        "{} differs from share/{} and has no section '{}'",
+                        profile.rule,
+                        profile.rule_template,
+                        SLOT_HEADING.trim_start_matches("# ")
+                    ),
+                });
+                notes.push(format!(
+                    "{rule_path} differs from the template share/{} and has no '{SLOT_HEADING}' section; move what is the repository's own under that heading at the end, and adoption brings the rest up to the template",
+                    profile.rule_template
+                ));
+            }
+        },
         Err(_) => {
             writes.push(AdoptWrite {
                 path: rule_path.clone(),
@@ -2055,7 +2813,7 @@ mod tests {
     }
 
     fn judged(files: &BTreeMap<&'static str, String>, policy: &KitPolicy) -> KitReport {
-        judge(&tree(files), &profile(), policy).expect("a judgement")
+        judge(&tree(files), &profile(), policy, LicenceState::NotJudged).expect("a judgement")
     }
 
     fn signals(r: &KitReport) -> Vec<(KitSignal, String)> {
@@ -2586,7 +3344,8 @@ mod tests {
         let mut files = conformant();
         files.insert(
             "index.html",
-            "<html><body><nav>brand</nav><main></main></body></html>".into(),
+            "<html><body><nav data-collapse-toggle=\"menu\">brand</nav><main></main></body></html>"
+                .into(),
         );
         files.insert("src/main.js", SCRIPT.into());
         let policy = KitPolicy {
@@ -2613,7 +3372,10 @@ mod tests {
         );
         assert!(s5[0].evidence.contains("footer"));
         assert_eq!(r.exemptions[0].matched, 1);
-        files.insert("index.html", "<nav>brand</nav><footer>c</footer>".into());
+        files.insert(
+            "index.html",
+            "<nav data-collapse-toggle=\"menu\">brand</nav><footer>c</footer>".into(),
+        );
         assert!(judged(&files, &policy).passes);
     }
 
@@ -2984,7 +3746,411 @@ mod tests {
         for key in ["signal", "path", "evidence", "remedy"] {
             assert!(v["findings"][0].get(key).is_some(), "{key}");
         }
+        for key in ["surfaces", "notices", "licence"] {
+            assert!(v.get(key).is_some(), "{key}");
+        }
+        assert_eq!(v["surfaces"][0]["kind"], "root");
+        assert_eq!(v["licence"]["state"], "not_judged");
+        assert_eq!(v["licence"]["variant"], "not_used");
         let bad = serde_json::to_value(KitReport::bad_policy("p", vec!["x".into()])).unwrap();
         assert_eq!(bad["verdict"], "bad_policy");
+    }
+
+    /// A tree of `(path, text)` pairs, judged with no policy and the given licence state.
+    fn judged_files(files: &[(&str, &str)], licence: LicenceState) -> KitReport {
+        judge(
+            &Tree::from_files(files.iter().copied()),
+            &profile(),
+            &KitPolicy::absent(),
+            licence,
+        )
+        .expect("a judgement")
+    }
+
+    #[test]
+    fn s0_a_published_page_is_an_interface_whatever_builds_it() {
+        let ui = |files: &[(&str, &str)]| judged_files(files, LicenceState::NotJudged);
+        // a conventional site directory
+        let r = ui(&[("site/about.html", "<p></p>")]);
+        assert!(r.ui, "{r:#?}");
+        assert!(r
+            .ui_evidence
+            .iter()
+            .any(|e| e.contains("published page") && e.contains("site/about.html")));
+        // build output below a site directory is not a page
+        assert!(!ui(&[("public/assets/x.html", "<p></p>")]).ui);
+        // the directory a Pages workflow uploads
+        let pages = "jobs:\n  deploy:\n    steps:\n      - uses: actions/upload-pages-artifact@v3\n        with:\n          path: ./book\n";
+        assert!(!ui(&[("book/x.html", "<p></p>")]).ui);
+        assert!(
+            ui(&[
+                ("book/x.html", "<p></p>"),
+                (".github/workflows/pages.yml", pages)
+            ])
+            .ui
+        );
+        // the directory a deploy script copies
+        assert!(
+            ui(&[
+                ("html/x.html", "<p></p>"),
+                ("scripts/deploy.sh", "rsync -a html/ host:/var/www\n")
+            ])
+            .ui
+        );
+        // docs/ only when it says it is published
+        assert!(!ui(&[("docs/guide.html", "<p></p>")]).ui);
+        assert!(ui(&[("docs/guide.html", "<p></p>"), ("docs/.nojekyll", "")]).ui);
+        // a single-file app
+        assert!(ui(&[("web/index.html", "<p></p>")]).ui);
+        // pages that are no interface are a notice, never silent
+        let r = ui(&[("notes/x.html", "<p></p>")]);
+        assert!(!r.ui && r.passes);
+        assert!(
+            r.notices.iter().any(|n| n.contains("notes/x.html")),
+            "{:?}",
+            r.notices
+        );
+    }
+
+    const WEB_PACKAGE: &str =
+        r#"{"dependencies": {"next": "15", "flowbite-react": "0.12", "tailwindcss": "4"}}"#;
+    const WEB_STYLE: &str = "@import \"tailwindcss\";\n@plugin \"flowbite-react/plugin\";\n@source \"../node_modules/flowbite-react\";\n";
+    const WEB_LAYOUT: &str = "import { Sidebar, Breadcrumb } from 'flowbite-react';\nexport default () => <Sidebar aria-label=\"Sidebar\"/>;\n";
+
+    /// The conformant root, a workspace `apps/web` and whatever `extra` adds.
+    fn monorepo(extra: &[(&'static str, &'static str)]) -> Vec<(&'static str, String)> {
+        let mut files: Vec<(&'static str, String)> = conformant().into_iter().collect();
+        files.retain(|(p, _)| *p != "package.json");
+        files.push((
+            "package.json",
+            r#"{"workspaces": ["apps/*"], "devDependencies": {"tailwindcss": "^4.1.0", "flowbite": "^4.0.1"}}"#
+                .into(),
+        ));
+        files.push(("apps/web/package.json", WEB_PACKAGE.into()));
+        files.push(("apps/web/app/globals.css", WEB_STYLE.into()));
+        files.push(("apps/web/app/page.tsx", WEB_LAYOUT.into()));
+        for (p, t) in extra {
+            files.retain(|(q, _)| q != p);
+            files.push((*p, t.to_string()));
+        }
+        files
+    }
+
+    fn judged_owned(files: &[(&'static str, String)]) -> KitReport {
+        let pairs: Vec<(&str, &str)> = files.iter().map(|(p, t)| (*p, t.as_str())).collect();
+        judged_files(&pairs, LicenceState::NotJudged)
+    }
+
+    #[test]
+    fn s0_the_surfaces_are_the_root_every_declared_workspace_and_every_app() {
+        let r = judged_owned(&monorepo(&[
+            // an example is never a surface, and its kit is never counted
+            (
+                "examples/demo/package.json",
+                r#"{"dependencies": {"react": "19", "daisyui": "5"}}"#,
+            ),
+            ("examples/demo/index.html", "<div></div>"),
+            // a nested app: a manifest with markup in its own subtree
+            (
+                "tools/admin/package.json",
+                r#"{"dependencies": {"vue": "3", "flowbite": "4", "tailwindcss": "4"}}"#,
+            ),
+            (
+                "tools/admin/src/App.vue",
+                "<button data-modal-toggle=\"m\"></button><script>import 'flowbite';</script>",
+            ),
+            ("tools/admin/src/app.css", STYLE),
+            // a manifest with UI packages and no markup of its own is a notice
+            (
+                "lib/preset/package.json",
+                r#"{"peerDependencies": {"tailwindcss": "4"}}"#,
+            ),
+        ]));
+        let dirs: Vec<(&str, KitSurfaceKind)> = r
+            .surfaces
+            .iter()
+            .map(|s| (s.dir.as_str(), s.kind))
+            .collect();
+        assert_eq!(
+            dirs,
+            [
+                ("", KitSurfaceKind::Root),
+                ("apps/web", KitSurfaceKind::Workspace),
+                ("tools/admin", KitSurfaceKind::App)
+            ],
+            "{r:#?}"
+        );
+        assert!(
+            r.findings.iter().all(|f| f.signal != KitSignal::S4),
+            "{r:#?}"
+        );
+        for notice in ["examples/demo/package.json", "lib/preset/package.json"] {
+            assert!(
+                r.notices.iter().any(|n| n.starts_with(notice)),
+                "{notice}: {:?}",
+                r.notices
+            );
+        }
+        assert!(r.passes, "{r:#?}");
+
+        // a pnpm workspace file declares workspaces too
+        let files = [
+            ("pnpm-workspace.yaml", "packages:\n  - 'packages/*'\n"),
+            (
+                "packages/ui/package.json",
+                r#"{"dependencies": {"svelte": "5"}}"#,
+            ),
+        ];
+        let r = judged_files(&files, LicenceState::NotJudged);
+        assert_eq!(r.surfaces.len(), 1, "{r:#?}");
+        assert_eq!(r.surfaces[0].kind, KitSurfaceKind::Workspace);
+        assert!(r
+            .findings
+            .iter()
+            .any(|f| f.signal == KitSignal::S1 && f.path == "packages/ui/package.json"));
+    }
+
+    #[test]
+    fn a_surface_passes_s1_to_s3_only_with_usage_in_its_own_files() {
+        // the workspace is wired and uses nothing; the root's usage is not its own
+        let unused = "export default () => <main className=\"p-4\"/>;\n";
+        let r = judged_owned(&monorepo(&[("apps/web/app/page.tsx", unused)]));
+        let usage: Vec<&KitFinding> = r
+            .findings
+            .iter()
+            .filter(|f| f.evidence.contains("wiring alone"))
+            .collect();
+        assert_eq!(usage.len(), 1, "{r:#?}");
+        assert_eq!(usage[0].signal, KitSignal::S1);
+        assert_eq!(usage[0].path, "apps/web/package.json");
+        assert!(
+            r.surfaces[0].usage[0].contains("data-drawer-target"),
+            "{r:#?}"
+        );
+        assert!(r.surfaces[1].usage.is_empty());
+
+        // a declared workspace resolves the root's dependency; an app does not
+        let r = judged_owned(&monorepo(&[(
+            "apps/web/package.json",
+            r#"{"dependencies": {"next": "15", "tailwindcss": "4"}}"#,
+        )]));
+        assert!(
+            r.findings.iter().any(|f| f.signal == KitSignal::S1
+                && f.path == "apps/web/package.json"
+                && f.evidence.contains("flowbite-react")),
+            "next takes the binding even when the root declares flowbite: {r:#?}"
+        );
+        let r = judged_owned(&monorepo(&[(
+            "apps/web/package.json",
+            r#"{"dependencies": {"vue": "3", "tailwindcss": "4"}}"#,
+        )]));
+        assert!(
+            r.findings.iter().all(|f| f.path != "apps/web/package.json"),
+            "the workspace takes flowbite from the root: {r:#?}"
+        );
+
+        // S2 and S3 are the surface's own: the root's stylesheet does not configure it
+        let r = judged_owned(&monorepo(&[(
+            "apps/web/app/globals.css",
+            "@import \"tailwindcss\";\n",
+        )]));
+        assert!(r
+            .findings
+            .iter()
+            .any(|f| f.signal == KitSignal::S2 && f.path == "apps/web/app/globals.css"));
+
+        // every usage marker counts: attributes, components, the API
+        for text in [
+            "<div data-tooltip-target=\"t\"></div>",
+            "import { Button } from 'flowbite-react';",
+            "import { Modal } from 'flowbite';\nnew Modal(el);",
+        ] {
+            let r = judged_owned(&monorepo(&[("apps/web/app/page.tsx", text)]));
+            assert!(
+                r.findings
+                    .iter()
+                    .all(|f| !f.evidence.contains("wiring alone")),
+                "{text}: {r:#?}"
+            );
+        }
+    }
+
+    const PRO_DIR: &str = "design/flowbite-pro-admin-dashboard-1.2.0/README.md";
+
+    #[test]
+    fn the_licence_decides_a_licensed_marker_and_an_undecided_one_fails() {
+        use KitVariant::*;
+        use LicenceState::*;
+        for (carries, state, variant) in [
+            (false, NotJudged, NotUsed),
+            (false, Refused, NotUsed),
+            (true, Active, Licensed),
+            (true, Inactive, Unlicensed),
+            (true, NotJudged, Undecided),
+            (true, Refused, Undecided),
+        ] {
+            assert_eq!(decide(carries, state), variant, "{carries} {state:?}");
+            assert_eq!(variant.passes(), matches!(variant, NotUsed | Licensed));
+        }
+        assert_eq!(licence_state(Path::new("."), &profile()), NotJudged);
+
+        let mut files: Vec<(&str, &str)> = vec![
+            ("package.json", PACKAGE),
+            ("src/input.css", STYLE),
+            ("src/main.js", SCRIPT),
+            ("index.html", LAYOUT),
+        ];
+        let clean = judged_files(&files, NotJudged);
+        assert!(clean.passes, "{clean:#?}");
+        assert_eq!(clean.licence.as_ref().unwrap().variant, NotUsed);
+
+        files.push((PRO_DIR, "the distribution"));
+        let undecided = judged_files(&files, NotJudged);
+        assert!(!undecided.passes, "an undecided licence is never a pass");
+        let l = undecided.licence.as_ref().unwrap();
+        assert_eq!((l.state, l.variant), (NotJudged, Undecided));
+        assert!(l.markers[0].starts_with(PRO_DIR), "{l:#?}");
+        assert!(undecided.findings.iter().any(|f| f.signal == KitSignal::S1
+            && f.path == PRO_DIR
+            && f.evidence.contains("cannot decide")));
+        assert!(!judged_files(&files, Refused).passes);
+        let inactive = judged_files(&files, Inactive);
+        assert_eq!(inactive.licence.unwrap().variant, Unlicensed);
+        assert!(!inactive.passes);
+        let active = judged_files(&files, Active);
+        assert!(active.passes, "{active:#?}");
+        assert_eq!(active.licence.unwrap().variant, Licensed);
+
+        // no exemption moves it
+        let policy = KitPolicy {
+            declared: true,
+            exempt: vec![KitExemption {
+                path: "design/".into(),
+                because: "kept for reference".into(),
+                signals: Vec::new(),
+                shell: None,
+                matched: 0,
+            }],
+            ..KitPolicy::absent()
+        };
+        let r = judge(
+            &Tree::from_files(files.iter().copied()),
+            &profile(),
+            &policy,
+            NotJudged,
+        )
+        .unwrap();
+        assert!(!r.passes && r.exempted.is_empty(), "{r:#?}");
+
+        // a manifest named after a Pro product is a licensed marker by its text
+        let named = r#"{"name": "flowbite-pro-nextjs-admin-dashboard", "dependencies": {"tailwindcss": "4", "flowbite": "4"}}"#;
+        let r = judged_files(&[("package.json", named)], NotJudged);
+        assert!(r.licence.unwrap().markers[0].starts_with("package.json:1"));
+        // and it is judged even where S0 finds no interface
+        let r = judged_files(&[(PRO_DIR, "x")], NotJudged);
+        assert!(
+            !r.ui && !r.passes && r.verdict == KitVerdict::Findings,
+            "{r:#?}"
+        );
+    }
+
+    #[test]
+    fn a_profile_with_licence_evidence_declares_its_licensed_markers() {
+        let text = std::fs::read_to_string(
+            crate::synthetic::crate_share().join("design/kits/flowbite-pro.yaml"),
+        )
+        .unwrap();
+        let start = text.find("licence:\n").unwrap();
+        let end = text.find("\nforbidden:").unwrap();
+        let none = format!(
+            "{}licence:\n  evidence: kit-evidence/v1\n  markers: []\n{}",
+            &text[..start],
+            &text[end..]
+        );
+        assert!(Profile::parse(&none)
+            .unwrap_err()
+            .contains("declares no licensed markers"));
+        let empty = format!(
+            "{}licence:\n  evidence: kit-evidence/v1\n  markers:\n    - name: nothing\n{}",
+            &text[..start],
+            &text[end..]
+        );
+        assert!(Profile::parse(&empty)
+            .unwrap_err()
+            .contains("neither a path nor a text"));
+        let free = format!("{}{}", &text[..start], &text[end + 1..]);
+        let p = Profile::parse(&free).expect("a free kit declares no licence");
+        let r = judge(
+            &Tree::from_files([("index.html", LAYOUT), (PRO_DIR, "x")]),
+            &p,
+            &KitPolicy::absent(),
+            LicenceState::NotJudged,
+        )
+        .unwrap();
+        assert!(r.licence.is_none());
+        let shipped = profile();
+        let licence = shipped.licence.as_ref().expect("Flowbite Pro is licensed");
+        assert_eq!(licence.evidence, "kit-evidence/v1");
+        assert!(!licence.markers.is_empty());
+    }
+
+    #[test]
+    fn the_policy_is_read_through_one_function() {
+        let map = yaml::parse_mapping("design_kit:\n  profile: flowbite-pro\n").unwrap();
+        assert_eq!(policy_block(&map).unwrap()["profile"], "flowbite-pro");
+        assert!(policy_block(&yaml::parse_mapping("version: 1\n").unwrap()).is_none());
+        // adoption and judgement agree on the block, because both read it there
+        let (text, _) = policy_with_block("version: 1\n", "flowbite-pro").unwrap();
+        assert!(KitPolicy::from_policy_text(Some(&text)).unwrap().declared);
+    }
+
+    #[test]
+    fn the_rule_s_last_section_is_the_repository_s_and_adoption_keeps_it() {
+        let template = std::fs::read_to_string(
+            crate::synthetic::crate_share().join("design/kits/flowbite-pro.rule.md"),
+        )
+        .unwrap();
+        let (theirs, slot) = split_slot(&template);
+        let slot = slot.expect("the template carries the slot");
+        assert!(slot.starts_with(SLOT_HEADING));
+        assert!(theirs.contains("# Verification"));
+        assert_eq!(split_slot("no slot\n"), ("no slot\n", None));
+        assert_eq!(
+            split_slot("a\n# In this repository\nours\n"),
+            ("a\n", Some("# In this repository\nours\n"))
+        );
+        assert_eq!(split_slot("a\n## In this repository\n").1, None);
+
+        let ours = format!("{theirs}{SLOT_HEADING}\n\nThe site is built from the Pro blocks.\n");
+        assert_eq!(
+            adopted_rule(&template, &template),
+            (AdoptAction::Unchanged, None)
+        );
+        assert_eq!(
+            adopted_rule(&ours, &template),
+            (AdoptAction::Unchanged, None)
+        );
+        let stale = ours.replace("version: 1", "version: 0");
+        assert_eq!(
+            adopted_rule(&stale, &template),
+            (AdoptAction::Updated, Some(ours.clone()))
+        );
+        assert_eq!(adopted_rule("edited", &template), (AdoptAction::Kept, None));
+
+        // through adoption on disk
+        let share = crate::synthetic::crate_share();
+        let dir = repository(&[(POLICY, POLICY_TEXT)]);
+        adopt(dir.path(), &share, DEFAULT_PROFILE, false).unwrap();
+        let rule = dir
+            .path()
+            .join(RULES_DIR)
+            .join("ui-uses-flowbite-pro.v1.md");
+        std::fs::write(&rule, &stale).unwrap();
+        let again = adopt(dir.path(), &share, DEFAULT_PROFILE, false).unwrap();
+        assert_eq!(again.writes[0].action, AdoptAction::Updated, "{again:#?}");
+        assert_eq!(std::fs::read_to_string(&rule).unwrap(), ours);
+        let third = adopt(dir.path(), &share, DEFAULT_PROFILE, false).unwrap();
+        assert_eq!(third.writes[0].action, AdoptAction::Unchanged);
+        assert_eq!(std::fs::read_to_string(&rule).unwrap(), ours);
     }
 }

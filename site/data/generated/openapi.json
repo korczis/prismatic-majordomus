@@ -746,8 +746,12 @@
     "schema-KitExempted": "docs/api/design/",
     "schema-KitExemption": "docs/api/design/",
     "schema-KitFinding": "docs/api/design/",
+    "schema-KitLicence": "docs/api/design/",
     "schema-KitReport": "docs/api/design/",
     "schema-KitSignal": "docs/api/design/",
+    "schema-KitSurface": "docs/api/design/",
+    "schema-KitSurfaceKind": "docs/api/design/",
+    "schema-KitVariant": "docs/api/design/",
     "schema-KitVerdict": "docs/api/design/",
     "schema-KnowledgeCandidate": "docs/api/knowledge-base/",
     "schema-KnowledgeCandidates": "docs/api/knowledge-base/",
@@ -767,6 +771,7 @@
     "schema-LeftBranch": "docs/api/integration/",
     "schema-LeftBranchReport": "docs/api/integration/",
     "schema-Libc": "docs/api/distribution/",
+    "schema-LicenceState": "docs/api/design/",
     "schema-LifecycleStage": "docs/api/gates/",
     "schema-LimitsView": "docs/api/executions/",
     "schema-LineState": "docs/api/continuity/",
@@ -1365,7 +1370,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 213,
-    "schemas": 1088,
+    "schemas": 1093,
     "tags": 60
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -2207,8 +2212,12 @@
     "KitExempted": "design",
     "KitExemption": "design",
     "KitFinding": "design",
+    "KitLicence": "design",
     "KitReport": "design",
     "KitSignal": "design",
+    "KitSurface": "design",
+    "KitSurfaceKind": "design",
+    "KitVariant": "design",
     "KitVerdict": "design",
     "KnowledgeCandidate": "knowledge-base",
     "KnowledgeCandidates": "knowledge-base",
@@ -2228,6 +2237,7 @@
     "LeftBranch": "integration",
     "LeftBranchReport": "integration",
     "Libc": "distribution",
+    "LicenceState": "design",
     "LifecycleStage": "gates",
     "LimitsView": "executions",
     "LineState": "continuity",
@@ -32495,6 +32505,53 @@
       "variants": []
     },
     {
+      "description": "How the tree stands against a licensed kit's licence.",
+      "home": "design",
+      "is_enum": false,
+      "name": "KitLicence",
+      "properties": [
+        {
+          "description": "The evidence format the profile names.",
+          "name": "evidence",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the licence evidence said.",
+          "name": "state",
+          "refs": [
+            "LicenceState"
+          ],
+          "required": true,
+          "type": "LicenceState"
+        },
+        {
+          "description": "What the judge decided.",
+          "name": "variant",
+          "refs": [
+            "KitVariant"
+          ],
+          "required": true,
+          "type": "KitVariant"
+        },
+        {
+          "description": "Where each licensed marker was seen, with its name.",
+          "name": "markers",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "KitReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "What `design.kit` answers.",
       "home": "design",
       "is_enum": false,
@@ -32529,7 +32586,7 @@
           "type": "string"
         },
         {
-          "description": "Whether the repository's policy declares the `design_kit` block.",
+          "description": "Whether the repository's policy declares the kit's block.",
           "name": "policy_declared",
           "refs": [],
           "required": true,
@@ -32555,6 +32612,15 @@
           "refs": [],
           "required": true,
           "type": "array of string"
+        },
+        {
+          "description": "The surfaces S1 to S3 judged, each with the usage markers its own files carry.",
+          "name": "surfaces",
+          "refs": [
+            "KitSurface"
+          ],
+          "required": true,
+          "type": "array of KitSurface"
         },
         {
           "description": "The stacks recognised: `tailwind-4`, `tailwind-3`, `react`, `phoenix`.",
@@ -32594,6 +32660,22 @@
           "refs": [],
           "required": true,
           "type": "array of string"
+        },
+        {
+          "description": "What S0 left out and a reader should know: a manifest with UI packages that is no\nsurface, pages that are no interface. Never a finding.",
+          "name": "notices",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "How the tree stands against a licensed kit's licence; absent for a free kit.",
+          "name": "licence",
+          "refs": [
+            "KitLicence"
+          ],
+          "required": false,
+          "type": "KitLicence | null"
         },
         {
           "description": "The policy's exemptions, each with how many findings it covered.",
@@ -32647,7 +32729,7 @@
           "value": "S0"
         },
         {
-          "description": "The dependency.",
+          "description": "The dependency, and the kit in use.",
           "value": "S1"
         },
         {
@@ -32665,6 +32747,109 @@
         {
           "description": "The shell on each root layout.",
           "value": "S5"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One surface S1 to S3 judged.",
+      "home": "design",
+      "is_enum": false,
+      "name": "KitSurface",
+      "properties": [
+        {
+          "description": "Its directory, repository-relative; empty for the root.",
+          "name": "dir",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How it was found.",
+          "name": "kind",
+          "refs": [
+            "KitSurfaceKind"
+          ],
+          "required": true,
+          "type": "KitSurfaceKind"
+        },
+        {
+          "description": "Its manifests.",
+          "name": "manifests",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The first usage markers its own files carry; empty is a finding.",
+          "name": "usage",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "KitReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How a surface was found.",
+      "home": "design",
+      "is_enum": true,
+      "name": "KitSurfaceKind",
+      "properties": [],
+      "type": "\"root\" | \"workspace\" | \"app\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "KitSurface"
+      ],
+      "values": [
+        {
+          "description": "The root's manifests and every file no other surface owns.",
+          "value": "root"
+        },
+        {
+          "description": "A workspace the root manifest or the pnpm workspace file declares.",
+          "value": "workspace"
+        },
+        {
+          "description": "A nested manifest with markup in its own subtree.",
+          "value": "app"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Which variant of a licensed kit the tree is, as the judge decides it.",
+      "home": "design",
+      "is_enum": true,
+      "name": "KitVariant",
+      "properties": [],
+      "type": "\"not_used\" | \"licensed\" | \"unlicensed\" | \"undecided\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "KitLicence"
+      ],
+      "values": [
+        {
+          "description": "The tree carries no licensed marker: nothing the licence covers is used.",
+          "value": "not_used"
+        },
+        {
+          "description": "Licensed markers, and the licence is active.",
+          "value": "licensed"
+        },
+        {
+          "description": "Licensed markers, and the licence is inactive: a finding.",
+          "value": "unlicensed"
+        },
+        {
+          "description": "Licensed markers, and evidence nobody judged or that was refused: the judge cannot\ndecide, and that is a finding, never a pass.",
+          "value": "undecided"
         }
       ],
       "variants": []
@@ -33832,6 +34017,37 @@
         {
           "description": "musl: Alpine, and any statically linked artifact.",
           "value": "musl"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "What the licence evidence of a licensed kit says about a repository: the seam the design\nlicence (I4336) fills. Until it does, `licence_state` answers `not_judged`.",
+      "home": "design",
+      "is_enum": true,
+      "name": "LicenceState",
+      "properties": [],
+      "type": "\"active\" | \"inactive\" | \"not_judged\" | \"refused\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "KitLicence"
+      ],
+      "values": [
+        {
+          "description": "The evidence was read and the licence holds.",
+          "value": "active"
+        },
+        {
+          "description": "The evidence was read and the licence does not hold.",
+          "value": "inactive"
+        },
+        {
+          "description": "Nothing judged the evidence.",
+          "value": "not_judged"
+        },
+        {
+          "description": "The evidence could not be judged: absent where it is owed, or unreadable.",
+          "value": "refused"
         }
       ],
       "variants": []
@@ -65739,7 +65955,7 @@
           "cache_detail": "",
           "cli": "design kit",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/design/kit\"",
-          "description": "The supervised repository's user interface judged against the kit profile its policy's `design_kit` block names (flowbite-pro when it names none), from markers in the tree and never the kit's own source: S0 whether there is an interface at all (a package manifest with Tailwind, React, Next.js, Vue, Svelte or Flowbite, Phoenix LiveView in mix.exs, HEEx or HTML templates, a Next.js root layout); S1 the kit's package, its React binding for React and Next.js; S2 the Tailwind plugin and source (Tailwind 4's @plugin and @source, Tailwind 3's config), a Play CDN or a CDN-only kit being a finding; S3 the kit's JavaScript behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute, a script that reads them itself being a re-implementation; S4 no other kit (daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui and Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation, Materialize), Alpine.js reported and not refused; S5 the shell on every root layout: a fixed top navbar, an aside labelled Sidebar that both drawer attributes name, a breadcrumb, and the page, surface and border roles. Each finding names its signal, path, evidence and remedy; each exemption the policy declares names its reason and how many findings it covered. A repository without an interface passes vacuously; a policy that cannot be read is `bad_policy` and judges nothing. Reads the tree below the root, skipping dependencies and build output; no build and no network.",
+          "description": "The supervised repository's user interface judged against the kit profile its policy's `design_kit` block names (flowbite-pro when it names none), from markers in the tree and never the kit's own source: S0 whether there is an interface at all and its surfaces (the root's manifest or the one in assets/, every workspace the root manifest or pnpm-workspace.yaml declares, every nested app manifest with markup in its own subtree outside examples, fixtures, tests, vendor, docs, deps and priv; Phoenix LiveView in mix.exs, HEEx or HTML templates, a Next.js root layout; published pages: a root index.html, pages under site/, www/, public/, under a directory a Pages workflow or a deploy or build script publishes, and under docs/ when it is published), any other manifest with UI packages being a notice and never a finding; S1 the kit's package in each surface, its React binding for React and Next.js, and the kit in use in the surface's own files (an attribute the kit's JavaScript drives, a flowbite-react component, a call of the kit's API), because wiring alone passes nothing; S2 the Tailwind plugin and source (Tailwind 4's @plugin and @source, Tailwind 3's config), a Play CDN or a CDN-only kit being a finding; S3 the kit's JavaScript behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute, a script that reads them itself being a re-implementation; S4 no other kit (daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui and Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation, Materialize), Alpine.js reported and not refused; S5 the shell on every root layout: a fixed top navbar, an aside labelled Sidebar that both drawer attributes name, a breadcrumb, and the page, surface and border roles. Each finding names its signal, path, evidence and remedy; each exemption the policy declares names its reason and how many findings it covered. A licensed kit's profile declares its licensed markers, and where the tree carries one the licence evidence decides it: active passes, while inactive, refused or not judged (nothing judges the evidence until the design licence lands) is a finding no exemption moves, since a variant the judge cannot decide is never a pass. A repository without an interface passes vacuously; a policy that cannot be read is `bad_policy` and judges nothing. Reads the tree below the root, skipping dependencies and build output; no build and no network.",
           "home": "design",
           "id": "design.kit",
           "kind": "query",

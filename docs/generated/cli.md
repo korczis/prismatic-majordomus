@@ -7005,7 +7005,7 @@ majordomus design kit adopt [OPTIONS] <PROFILE>
 
 | argument | value | default | description |
 |---|---|---|---|
-| `<PROFILE>` | `flowbite-pro` | required | The kit profile, from share/design/kits/ — `flowbite-pro`: The owner's licensed Flowbite Pro on Tailwind 4 and Flowbite 4 (ADR 0229) |
+| `<PROFILE>` | `flowbite-pro` | required | The kit profile, from share/design/kits/ — `flowbite-pro`: The owner's licensed Flowbite Pro on Tailwind 4 and Flowbite 4 (ADR 0230) |
 | `--dry-run` | flag | — | Report what would be written, and write nothing |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
