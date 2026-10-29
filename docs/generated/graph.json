@@ -71455,6 +71455,43 @@
         }
       },
       {
+        "id": "majordomus://issue/I4252",
+        "kind": "issue",
+        "label": "I4252",
+        "summary": "init seeds the scope of a Python, Node or Go repository, not only Elixir and Rust",
+        "route": "/cockpit/objects/issue/i4252",
+        "source": ".ai/repo/project/issues/I4252.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "init in a repository with pyproject.toml seeds the python block and no other",
+            "init with no marker names every marker it looked for"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "share/skeleton/ai/repo/scope.yaml carries stack blocks for mix.exs and Cargo.toml only.",
+          "depends_on": [],
+          "desired_state": "Blocks for pyproject.toml (Python), package.json (Node) and go.mod (Go) are seeded when their marker is at the root, and the message names every marker it looked for.",
+          "evidence_required": [
+            "case_init_seeds_python_node_and_go_stacks"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Blocks for pyproject.toml (Python), package.json (Node) and go.mod (Go) are seeded when their marker is at the root, and the message names every marker it looked for.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4252.yaml",
+            "share/skeleton/ai/repo/scope.yaml",
+            "lib/init.sh",
+            "test/cases/3016_init_seeds_the_scope_of_the_stack_it_finds.sh"
+          ],
+          "slug": "init-seeds-python-node-and-go-stacks",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 3016_init_seeds_the_scope_of_the_stack_it_finds"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4253",
         "kind": "issue",
         "label": "I4253",
@@ -136963,6 +137000,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4252",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4252",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4253",
         "target": "kind:issue",
         "kind": "is_a"
@@ -149509,8 +149556,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4097,
-      "edges": 9459,
+      "nodes": 4098,
+      "edges": 9461,
       "acyclic": false,
       "truncated": false
     }

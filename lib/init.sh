@@ -316,6 +316,8 @@ mj_init_scope() {
   [ -e "$dst" ] && return 0
   while read -r name marker; do
     marker="${marker#(}"; marker="${marker%)}"
+    # a stack may keep blocks in several sections; it is looked for, and found, once
+    case ", $known, " in *", $marker, "*) continue ;; esac
     known="$known${known:+, }$marker"
     if [ -e "$MJ_ROOT/$marker" ]; then keep="$keep$name "; found="$found${found:+, }$name ($marker)"; fi
   done < <(sed -n 's/^[[:space:]]*# stack: \([a-z0-9_-]*\) (\(.*\))[[:space:]]*$/\1 (\2)/p' "$src")
