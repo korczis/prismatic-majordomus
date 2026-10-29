@@ -1,0 +1,38 @@
+id: I3983
+milestone: one-click-implement
+title: "implement.issue judges readiness, claims the issue's scope as the execution's lease, creates its worktree and hands it to a worker, each a step of one execution"
+slug: an-issue-is-implemented-by-one-capability
+priority: p0
+profile: implementation
+objective: "Declare the capability implement.issue (capability! under capability/builtin, then majordomus generate) whose steps are: readiness (devtask.issue readiness; refuse with its reason), lease (an exclusive mesh.claim of the issue's scope held by the execution's session; refuse naming the claim it meets; released at the terminal state, expiring with the heartbeat), worktree (majordomus worktree create for the issue's branch), dispatch (I3982's adapter). Started only as an execution."
+why: "ADR 0225 decision 4. The pieces exist apart (devtask/readiness.rs, mesh.claim, worktree/*), unconnected, and nothing is called a lease."
+current_state: "devtask.issue reports readiness read-only; plan.transition is the only move an issue offers; no capability starts work on an issue."
+desired_state: "One capability, one execution, four recorded steps; every refusal is typed and shown verbatim."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/devtask"
+  - "apps/majordomus-cli/src/worktree"
+  - "apps/majordomus-cli/src/execution"
+  - "apps/majordomus-cli/tests/issue_implement.rs"
+non_scope:
+  - "Opening a pull request or merging (P2 Deliver)"
+  - "Picking the issue: the owner picks it in the UI"
+depends_on:
+  - "I3980"
+  - "I3981"
+  - "I3982"
+serves:
+  - "an-issue-is-implemented-from-one-click#an-issue-is-implemented-by-one-capability"
+acceptance_criteria:
+  - "A not-ready issue is refused with devtask's reason and starts no step after readiness"
+  - "An issue whose scope another live exclusive claim holds is refused naming that claim"
+  - "A ready issue yields one execution whose steps are readiness, lease, worktree, dispatch"
+  - "The lease is released when the execution ends and is not left behind by an interrupted one past its heartbeat"
+  - "The capability is defined once (capability!) and projected by majordomus generate, never by hand"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test issue_implement"
+  - "majordomus generate --check"
+evidence_required:
+  - "apps/majordomus-cli/tests/issue_implement.rs"
+created_at: 2026-10-23
+updated_at: 2026-10-23

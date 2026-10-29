@@ -194,6 +194,10 @@ Run any executable capability of this registry as an execution: the input is che
 |---|---|---|---|
 | `capability` | string | yes | The canonical id of the capability to run (`health.report`, `objects.verify`). |
 | `input` | object | no | Its input, as its own input schema describes it; an empty object when it takes none. |
+| `idempotency_key` | string or null | no | A key that makes the start idempotent (ADR 0225): the same key with the same
+capability and input answers the execution it already started, and the same key
+with anything else is refused, naming that execution. 1 to 128 letters, digits and
+`. _ : -`; a client sends a fresh one per click and the same one on a retried request. |
 
 Output: `ExecutionView`.
 

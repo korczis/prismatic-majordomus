@@ -128,7 +128,11 @@ fn first(index: &Index, kind: &str) -> Option<String> {
 /// One canonical record of a kind, by identity: its repository-relative path and its parsed
 /// metadata. The index has already discovered, parsed and schema-validated it, so this is
 /// the model itself rather than a second reading of the directory it lives in.
-fn record<'a>(index: &'a Index, kind: &str, identity: &str) -> Option<(&'a str, &'a Value)> {
+pub(crate) fn record<'a>(
+    index: &'a Index,
+    kind: &str,
+    identity: &str,
+) -> Option<(&'a str, &'a Value)> {
     index
         .objects
         .iter()
@@ -158,7 +162,7 @@ fn issue_ids(index: &Index) -> Vec<String> {
 /// restated here — which a rename can break. The first is derived, the second inferred, and
 /// [`SessionRef::declares_issue`] is which, so that the field carrying each can state its
 /// own provenance instead of one of them borrowing the other's.
-fn sessions_of(index: &Index, issue: &str) -> Vec<SessionRef> {
+pub(crate) fn sessions_of(index: &Index, issue: &str) -> Vec<SessionRef> {
     let ids = vec![issue.to_string()];
     let mut out: Vec<SessionRef> = index
         .objects
@@ -202,11 +206,11 @@ fn sessions_of(index: &Index, issue: &str) -> Vec<SessionRef> {
 }
 
 /// The repository the external projection targets, as `project.yaml` declares it.
-fn repository_of(plan: &Plan) -> Option<&str> {
+pub(crate) fn repository_of(plan: &Plan) -> Option<&str> {
     Some(plan.project.repository.as_str()).filter(|r| !r.is_empty())
 }
 
-fn refused(e: WorktreeError) -> CapabilityError {
+pub(crate) fn refused(e: WorktreeError) -> CapabilityError {
     match e.exit_code() {
         crate::worktree::EXIT_MISSING => CapabilityError::NotFound(e.to_string()),
         crate::worktree::EXIT_REFUSED => CapabilityError::Refused(e.to_string()),
@@ -220,7 +224,7 @@ fn refused(e: WorktreeError) -> CapabilityError {
 /// canonical half of the answer is still the whole canonical half, and the execution group
 /// reports `git_consulted: false` rather than an empty list that would read as "nothing
 /// realised this issue".
-fn trace_of(ctx: &Context, issue: &str) -> Result<Option<IssueTrace>, CapabilityError> {
+pub(crate) fn trace_of(ctx: &Context, issue: &str) -> Result<Option<IssueTrace>, CapabilityError> {
     let tracer = match Tracer::open(Path::new(&ctx.index.repository.root)) {
         Ok(t) => t.with_issues(issue_ids(&ctx.index)),
         Err(e) if e.exit_code() == crate::worktree::EXIT_MISSING => return Ok(None),

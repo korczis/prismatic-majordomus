@@ -97,6 +97,7 @@ pub mod synthetic;
 pub mod ui;
 pub mod web;
 pub mod why;
+pub mod worker;
 pub mod worktree;
 
 pub use error::Error;

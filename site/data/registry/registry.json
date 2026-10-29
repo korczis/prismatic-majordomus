@@ -6,28 +6,28 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "bfe498ecbbafb51ab21c50cc4dc9185b76a3fcf7249658d9b88dd39da2371a64",
+    "fingerprint": "d3b10b58221464141203de2f26623d6bec75e095b160739785ca28200573fd82",
     "summary": {
-      "total": 3570,
-      "builtin": 220,
-      "declarative": 3350,
+      "total": 3582,
+      "builtin": 221,
+      "declarative": 3361,
       "by_kind": {
-        "command": 36,
+        "command": 37,
         "query": 184,
-        "resource": 3350
+        "resource": 3361
       },
       "by_stability": {
         "behaviorally_verified": 147,
-        "experimental": 63,
-        "implemented": 3360
+        "experimental": 64,
+        "implemented": 3371
       },
       "mcp_tools": 206,
-      "mcp_resources": 3407,
+      "mcp_resources": 3418,
       "http_routes": 212,
       "cli_commands": 120,
-      "modules": 94,
+      "modules": 95,
       "benchmark_required": 181,
-      "benchmark_waived": 39,
+      "benchmark_waived": 40,
       "cached": 55
     },
     "builtin": [
@@ -28810,6 +28810,13 @@
                     "type": "string",
                     "description": "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects."
                   },
+                  "idempotency_key": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The key the client started it under, when it gave one: a second start with the same\nkey and input answers this execution rather than starting another (ADR 0225)."
+                  },
                   "links": {
                     "$ref": "#/$defs/ExecutionLinks",
                     "description": "Where to read more."
@@ -30105,6 +30112,13 @@
                 "type": "string",
                 "description": "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects."
               },
+              "idempotency_key": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The key the client started it under, when it gave one: a second start with the same\nkey and input answers this execution rather than starting another (ADR 0225)."
+              },
               "links": {
                 "$ref": "#/$defs/ExecutionLinks",
                 "description": "Where to read more."
@@ -30758,6 +30772,13 @@
                   "correlation_id": {
                     "type": "string",
                     "description": "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects."
+                  },
+                  "idempotency_key": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The key the client started it under, when it gave one: a second start with the same\nkey and input answers this execution rather than starting another (ADR 0225)."
                   },
                   "links": {
                     "$ref": "#/$defs/ExecutionLinks",
@@ -32061,6 +32082,13 @@
                     "type": "string",
                     "description": "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects."
                   },
+                  "idempotency_key": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The key the client started it under, when it gave one: a second start with the same\nkey and input answers this execution rather than starting another (ADR 0225)."
+                  },
                   "links": {
                     "$ref": "#/$defs/ExecutionLinks",
                     "description": "Where to read more."
@@ -32468,6 +32496,13 @@
               "input": {
                 "description": "Its input, as its own input schema describes it; an empty object when it takes none.",
                 "default": null
+              },
+              "idempotency_key": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "A key that makes the start idempotent (ADR 0225): the same key with the same\ncapability and input answers the execution it already started, and the same key\nwith anything else is refused, naming that execution. 1 to 128 letters, digits and\n`. _ : -`; a client sends a fresh one per click and the same one on a retried request."
               }
             },
             "required": [
@@ -32598,6 +32633,13 @@
               "correlation_id": {
                 "type": "string",
                 "description": "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects."
+              },
+              "idempotency_key": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The key the client started it under, when it gave one: a second start with the same\nkey and input answers this execution rather than starting another (ADR 0225)."
               },
               "links": {
                 "$ref": "#/$defs/ExecutionLinks",
@@ -35358,6 +35400,148 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs"
+      },
+      {
+        "id": "implement.issue",
+        "module": "implement",
+        "kind": "command",
+        "title": "Implement an issue",
+        "description": "Judge the issue's readiness, claim its scope as the execution's lease, create its worktree and hand the work to the first available worker adapter, each a step of one execution (ADR 0225). Started only as an execution, through executions.start.",
+        "input": {
+          "name": "ImplementInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "issue": {
+                "type": "string",
+                "description": "The issue to implement, as the canonical model spells it (`I3983`)."
+              },
+              "deadline_minutes": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "How many minutes the worker may run before its whole process group is stopped."
+              }
+            },
+            "required": [
+              "issue"
+            ],
+            "description": "The input of `implement.issue`: which issue, and how long its worker may run. Nothing\nelse is the caller's to choose — the worktree, the branch, the lease and the adapter\nare derived — so an execution's input names only what a person picked.\n\n```\nuse majordomus_cli::capability::builtin::implement::ImplementInput;\nlet input: ImplementInput = serde_json::from_str(r#\"{\"issue\":\"I3983\"}\"#).unwrap();\nassert_eq!((input.issue.as_str(), input.deadline_minutes), (\"I3983\", None));\nassert!(serde_json::from_str::<ImplementInput>(r#\"{\"issue\":\"I1\",\"worktree\":\"/x\"}\"#).is_err(),\n    \"the worktree is derived, never given\");\n```",
+            "title": "ImplementInput"
+          }
+        },
+        "output": {
+          "name": "ImplementReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "issue": {
+                "type": "string",
+                "description": "The issue."
+              },
+              "branch": {
+                "type": "string",
+                "description": "The branch the work is on."
+              },
+              "worktree": {
+                "type": "string",
+                "description": "The worktree it ran in."
+              },
+              "lease": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The mesh claim that was the lease, when the mesh runs in this process."
+              },
+              "adapter": {
+                "type": "string",
+                "description": "The adapter that ran the worker."
+              },
+              "outcome": {
+                "type": "string",
+                "description": "How the worker ended, in words."
+              },
+              "verified": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Verified"
+                },
+                "description": "Every validation command the issue declares, run in the worktree after the worker,\neach with how it ended: the execution's own evidence (I3986).",
+                "default": []
+              },
+              "state": {
+                "type": "string",
+                "description": "`done`: the worker succeeded and every validation passed. Never `delivered`, which\nis another execution's word (ADR 0225)."
+              }
+            },
+            "required": [
+              "issue",
+              "branch",
+              "worktree",
+              "adapter",
+              "outcome",
+              "state"
+            ],
+            "description": "What an implementation ended with: where it ran, under which lease, by which worker,\nand how the worker ended. Done here means the worker ended successfully, never verified\nand never delivered.\n\n```\nuse majordomus_cli::capability::builtin::implement::ImplementReport;\nlet report = ImplementReport {\n    issue: \"I0001\".into(), branch: \"feature/I0001-x\".into(), worktree: \"/wt\".into(),\n    lease: None, adapter: \"claude-code\".into(), outcome: \"the worker succeeded\".into(),\n    verified: Vec::new(), state: \"done\".into(),\n};\nlet json = serde_json::to_value(&report).unwrap();\nassert!(json.get(\"lease\").is_none(), \"no mesh in the process: no lease is claimed\");\n```",
+            "title": "ImplementReport",
+            "$defs": {
+              "Verified": {
+                "type": "object",
+                "properties": {
+                  "command": {
+                    "type": "string",
+                    "description": "The command, as the issue's `validation` declares it."
+                  },
+                  "ok": {
+                    "type": "boolean",
+                    "description": "Whether it exited 0."
+                  },
+                  "outcome": {
+                    "type": "string",
+                    "description": "How it ended, in words."
+                  }
+                },
+                "required": [
+                  "command",
+                  "ok",
+                  "outcome"
+                ],
+                "description": "One validation command the issue declares, and how it ended in the worktree.\n\n```\nuse majordomus_cli::capability::builtin::implement::Verified;\nlet v = Verified { command: \"true\".into(), ok: true, outcome: \"the worker succeeded\".into() };\nassert!(v.ok);\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::implement"
+        },
+        "exposure": {},
+        "availability": "runtime",
+        "visibility": "internal",
+        "stability": "experimental",
+        "tags": [
+          "issue",
+          "executions",
+          "worker"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "transient_state"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "process_state",
+          "cancellable": true,
+          "concurrency": "serial"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/implement.rs"
       },
       {
         "id": "integration.cleanup",
@@ -90743,7 +90927,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 166,
+        "capabilities": 167,
         "capability_ids": []
       },
       {
@@ -91304,6 +91488,23 @@
         }
       },
       {
+        "id": "implement",
+        "title": "Implement",
+        "description": "One issue implemented by one execution: readiness, lease, worktree, worker.",
+        "stability": "experimental",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "implement.issue"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/implement.rs",
+        "rustdoc": {
+          "surface": "rustdoc",
+          "module": "majordomus_cli::capability::builtin::implement",
+          "path": "majordomus_cli/capability/builtin/implement/index.html"
+        }
+      },
+      {
         "id": "implementation",
         "title": "implementation",
         "description": "Declarative objects of kind 'implementation' from the repository's AI layer.",
@@ -91334,7 +91535,7 @@
         "title": "intent",
         "description": "Declarative objects of kind 'intent' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 43,
+        "capabilities": 44,
         "capability_ids": []
       },
       {
@@ -91383,7 +91584,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1053,
+        "capabilities": 1060,
         "capability_ids": []
       },
       {
@@ -91522,7 +91723,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 111,
+        "capabilities": 112,
         "capability_ids": []
       },
       {
@@ -91981,7 +92182,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 654,
+        "capabilities": 655,
         "capability_ids": []
       },
       {
@@ -92073,7 +92274,7 @@
     ]
   },
   "index": {
-    "fingerprint": "84641565beac2d30a44cdbbb11cb6055de486182af4f4b3015068dd94aa8f6c4",
+    "fingerprint": "6eb14f17f17faf3a8e10bc89304937ae133642bb32febb28ba000b2c6b8db133",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92096,7 +92297,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 166,
+      "adr": 167,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -92112,11 +92313,11 @@
       "feature": 29,
       "gap": 5,
       "implementation": 52,
-      "intent": 43,
-      "issue": 1053,
+      "intent": 44,
+      "issue": 1060,
       "knowledge": 59,
       "mesh-declaration": 1,
-      "milestone": 111,
+      "milestone": 112,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -92127,7 +92328,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 654,
+      "test": 655,
       "use-case": 49,
       "workspace": 1
     },
@@ -94807,6 +95008,22 @@
           "launcher",
           "build",
           "enforcement"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0225",
+        "kind": "adr",
+        "identity": "adr-0225",
+        "title": "An execution started for an issue is durable and idempotent, an interrupted one is recovered as interrupted, and an unknown outcome is never retried",
+        "description": "An execution started for an issue is durable and idempotent, an interrupted one is recovered as interrupted, and an unknown outcome is never retried",
+        "path": ".ai/repo/adrs/0225-an-issue-execution-is-durable-idempotent-and-never-replayed-blind.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6277,
+        "tags": [
+          "execution",
+          "ui",
+          "mesh-runtime"
         ]
       },
       {
@@ -99558,7 +99775,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 1041324
+        "bytes": 1044181
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -103177,6 +103394,17 @@
         "section": "project",
         "source_class": "intent",
         "bytes": 2254
+      },
+      {
+        "uri": "majordomus://intent/an-issue-is-implemented-from-one-click",
+        "kind": "intent",
+        "identity": "an-issue-is-implemented-from-one-click",
+        "title": "From /ui the owner clicks Implement on a ready issue, and a durable execution works it in its own worktree under a scope claim, followed live across a browser close and a server restart, until it ends with a testable result and its evidence",
+        "description": "Running `majordomus serve` and opening /ui/idd, the owner picks a real issue and clicks its one primary move. For a ready issue that move is Implement. It starts a durable, idempotent execution of the shared executor. The execution claims the issue's scope, creates its worktree and hands the work to an available worker adapter. The owner can close the browser and restart the server. On return they see the same execution, either continuing or recovered as interrupted, never re-run blind. It ends with a testable result whose evidence is recorded.",
+        "path": ".ai/repo/project/intents/an-issue-is-implemented-from-one-click.yaml",
+        "section": "project",
+        "source_class": "intent",
+        "bytes": 4506
       },
       {
         "uri": "majordomus://intent/campaigns-are-provenance-the-plan-reads",
@@ -114553,6 +114781,83 @@
         "bytes": 3950
       },
       {
+        "uri": "majordomus://issue/I3980",
+        "kind": "issue",
+        "identity": "I3980",
+        "title": "An execution is journaled to disk and recovered on start: one it was running comes back failed with code interrupted at its cursor, a reported one is re-attached, none is re-run",
+        "description": "Append every execution record and event to a journal under .ai/local/state/executions/ before it is acknowledged, fold it back when the server starts, and recover an execution this server was running when it stopped as Failed with the error code interrupted naming its last sequence (the vocabulary abandon_silent already uses), and one another process reports as reported so that its next report continues it under the same id and cursor; never re-run. The WebSocket cursor (http/events.rs) replays from the journal across the restart.",
+        "path": ".ai/repo/project/issues/I3980.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2683
+      },
+      {
+        "uri": "majordomus://issue/I3981",
+        "kind": "issue",
+        "identity": "I3981",
+        "title": "executions.start takes an idempotency key: the same key and input answer the first execution, the same key with another input is refused",
+        "description": "Add an optional idempotency_key to the input of executions.start (declared in the capability, so every projection carries it after majordomus generate); keep the key on the journaled record (I3980); a repeated start answers the existing execution's view, a conflicting one is refused naming it; share/cockpit/executions.js and moves.js send a key per click.",
+        "path": ".ai/repo/project/issues/I3981.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2040
+      },
+      {
+        "uri": "majordomus://issue/I3982",
+        "kind": "issue",
+        "identity": "I3982",
+        "title": "A worker adapter declared beside its provider runs it headless in the execution's worktree and streams its progress as the execution's events",
+        "description": "Declare a worker adapter per provider in share/providers.yaml (Claude Code headless first, reusing the stream-json driving of economics/runner.rs; Codex and Gemini declared, optional) and a fixture adapter for tests; an adapter is given the execution id, the worktree, the compiled context (devcontext) and the issue's objective, and its output is folded into ExecutionEvent progress and log events through the report path store.rs already has for majordomus run; an execution with no available adapter stays Queued with the reason as an event.",
+        "path": ".ai/repo/project/issues/I3982.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2416
+      },
+      {
+        "uri": "majordomus://issue/I3983",
+        "kind": "issue",
+        "identity": "I3983",
+        "title": "implement.issue judges readiness, claims the issue's scope as the execution's lease, creates its worktree and hands it to a worker, each a step of one execution",
+        "description": "Declare the capability implement.issue (capability! under capability/builtin, then majordomus generate) whose steps are: readiness (devtask.issue readiness; refuse with its reason), lease (an exclusive mesh.claim of the issue's scope held by the execution's session; refuse naming the claim it meets; released at the terminal state, expiring with the heartbeat), worktree (majordomus worktree create for the issue's branch), dispatch (I3982's adapter). Started only as an execution.",
+        "path": ".ai/repo/project/issues/I3983.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2447
+      },
+      {
+        "uri": "majordomus://issue/I3984",
+        "kind": "issue",
+        "identity": "I3984",
+        "title": "/ui/idd offers each issue the one primary move its state admits: Implement, Open execution, Verify, Deliver or View blockers",
+        "description": "Replace the primary button of /ui/idd (ui/idd.rs:519-600, today Start/Verify/Mark done through plan.transition) with the one move the issue's derived state admits: READY starts implement.issue as an execution through the existing move start path (share/cockpit/moves.js, with I3981's key); ACTIVE links its live execution; VERIFY starts the verification; DONE offers Deliver (an execution of the delivery policy, a stub refusing until P2 says otherwise); BLOCKED lists the blockers. The executor's refusal is shown verbatim; the snapshot shows state and a link to the live server, never the control.",
+        "path": ".ai/repo/project/issues/I3984.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2104
+      },
+      {
+        "uri": "majordomus://issue/I3985",
+        "kind": "issue",
+        "identity": "I3985",
+        "title": "A browser case clicks Implement, closes the page, restarts the server and finds the same execution ending with its evidence, and the refusals hold",
+        "description": "Add test/cases/3982_one_click_implement_survives_a_restart.sh on the pattern of 3220 (Playwright, fixture repository): serve; open /ui/idd; click Implement on a ready fixture issue with the fixture worker adapter (never a provider); see the execution live; close the page; restart the server; reopen and find the same execution id continuing, or failed with code interrupted at its cursor; let it end Succeeded with the issue's evidence recorded. Negative: a not-ready issue is refused with its reason; a held scope is refused naming the claim; with no adapter the execution stays queued with its reason; a double click yields one execution.",
+        "path": ".ai/repo/project/issues/I3985.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2024
+      },
+      {
+        "uri": "majordomus://issue/I3986",
+        "kind": "issue",
+        "identity": "I3986",
+        "title": "An implement execution ends by running the issue's validation in its worktree and recording the evidence, so done means verified and never delivered",
+        "description": "Add a final step verify to implement.issue: after the worker exits successfully, run the issue's declared validation commands in the execution's worktree, record the result through majordomus evidence record against the issue's evidence_required, and end Succeeded only when every required piece of evidence is recorded and passing, otherwise Failed naming the missing or failing piece; the execution's view says done (verified) and never delivered.",
+        "path": ".ai/repo/project/issues/I3986.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1955
+      },
+      {
         "uri": "majordomus://issue/I3990",
         "kind": "issue",
         "identity": "I3990",
@@ -116785,6 +117090,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 2133
+      },
+      {
+        "uri": "majordomus://milestone/one-click-implement",
+        "kind": "milestone",
+        "identity": "one-click-implement",
+        "title": "One click on a ready issue starts a durable execution that works it, followed live across a browser close and a server restart",
+        "description": "I3980 to I3986 close the P0 vertical slice, local click-to-execute, under ADR 0225 and the intent an-issue-is-implemented-from-one-click.",
+        "path": ".ai/repo/project/milestones/one-click-implement.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 2824
       },
       {
         "uri": "majordomus://milestone/one-kit-on-every-surface",
@@ -124745,7 +125061,7 @@
         "identity": "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
         "path": "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
         "source_class": "case",
-        "bytes": 20416
+        "bytes": 20428
       },
       {
         "uri": "majordomus://test/test/cases/3221_a_bare_session_start_joins_the_cluster.sh",
@@ -125842,6 +126158,14 @@
         "path": "test/cases/3970_a_pull_request_carries_its_metadata.sh",
         "source_class": "case",
         "bytes": 15911
+      },
+      {
+        "uri": "majordomus://test/test/cases/3982_one_click_implement_survives_a_restart.sh",
+        "kind": "test",
+        "identity": "test/cases/3982_one_click_implement_survives_a_restart.sh",
+        "path": "test/cases/3982_one_click_implement_survives_a_restart.sh",
+        "source_class": "case",
+        "bytes": 17537
       },
       {
         "uri": "majordomus://test/test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
@@ -128411,7 +128735,7 @@
       "identity": [
         "id"
       ],
-      "objects": 166
+      "objects": 167
     },
     {
       "name": "application",
@@ -128564,7 +128888,7 @@
       "identity": [
         "id"
       ],
-      "objects": 43
+      "objects": 44
     },
     {
       "name": "issue",
@@ -128574,7 +128898,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1053
+      "objects": 1060
     },
     {
       "name": "knowledge",
@@ -128604,7 +128928,7 @@
       "identity": [
         "id"
       ],
-      "objects": 111
+      "objects": 112
     },
     {
       "name": "moment",
@@ -128736,7 +129060,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 654
+      "objects": 655
     },
     {
       "name": "use-case",
@@ -178055,6 +178379,14 @@
           "cases": 1
         },
         {
+          "subject": "implement.issue",
+          "module": "implement",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "transient_state"
+        },
+        {
           "subject": "integration.cleanup",
           "module": "integration",
           "transport": "direct",
@@ -181016,10 +181348,10 @@
       ],
       "tallies": {
         "direct": {
-          "required": 220,
+          "required": 221,
           "covered": 181,
           "missing": 0,
-          "waived": 39,
+          "waived": 40,
           "inapplicable": 0
         },
         "http": {
@@ -181044,10 +181376,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 652,
+          "required": 653,
           "covered": 552,
           "missing": 0,
-          "waived": 100,
+          "waived": 101,
           "inapplicable": 0
         }
       }

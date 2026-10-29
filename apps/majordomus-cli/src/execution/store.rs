@@ -20,6 +20,7 @@ use std::time::{Duration, Instant};
 use serde_json::Value;
 
 use super::event::{EventPayload, ExecutionEvent};
+use super::journal::{ExecutionJournal, Line, SeedLine};
 use super::model::{
     Actor, Execution, ExecutionError, ExecutionId, ExecutionState, ProgressView, RepositoryRef,
     StepState, StepView,
@@ -266,10 +267,12 @@ pub struct ExecutionStore {
     limits: Limits,
     inner: Mutex<Inner>,
     next_subscriber: AtomicU64,
+    /// Where every execution is written down, for a store that outlives its process.
+    journal: Option<ExecutionJournal>,
 }
 
 impl ExecutionStore {
-    /// A store with these limits.
+    /// A store with these limits, held in memory only: what a command that runs once uses.
     pub fn new(limits: Limits) -> Self {
         ExecutionStore {
             limits,
@@ -279,7 +282,153 @@ impl ExecutionStore {
                 subscribers: Vec::new(),
             }),
             next_subscriber: AtomicU64::new(1),
+            journal: None,
         }
+    }
+
+    /// A store that writes every execution to `journal` and has folded back what the
+    /// journal already held (ADR 0225): what a server uses, so that its executions outlive it.
+    ///
+    /// An execution this process was running when it stopped is recovered failed with the
+    /// code `interrupted`, at the sequence it had reached, and is never run again. One that
+    /// another process reports here is recovered as reported, so the reporter's next report
+    /// continues it under the same id and cursor.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{Actor, ActorKind, EventPayload, ExecutionId};
+    /// use majordomus_cli::execution::{ExecutionState, ExecutionStore, ExecutionJournal, Limits, RepositoryRef};
+    /// let dir = tempfile::tempdir().unwrap();
+    /// let id = ExecutionId::fresh();
+    /// {
+    ///     let before = ExecutionStore::journaled(Limits::default(), ExecutionJournal::at(dir.path()).unwrap());
+    ///     let repository = RepositoryRef { name: "r".into(), id: "id".into(), branch: None };
+    ///     before.create(id.clone(), "executions.demonstrate", "Demonstrate",
+    ///         serde_json::json!({}), true, Actor::of(ActorKind::Http), repository);
+    ///     before.publish(&id, EventPayload::Started);
+    /// } // the server stops with the execution running
+    /// let after = ExecutionStore::journaled(Limits::default(), ExecutionJournal::at(dir.path()).unwrap());
+    /// let recovered = after.get(&id).unwrap();
+    /// assert_eq!(recovered.state, ExecutionState::Failed);
+    /// assert_eq!(recovered.error.unwrap().code, "interrupted");
+    /// assert_eq!(recovered.last_sequence, 3, "created, started, and the failure it ends in");
+    /// ```
+    pub fn journaled(limits: Limits, journal: ExecutionJournal) -> Self {
+        let mut store = ExecutionStore::new(limits);
+        store.journal = Some(journal);
+        let recovered = store.recover();
+        if recovered > 0 {
+            tracing::info!(recovered, "executions recovered from the journal");
+        }
+        store
+    }
+
+    /// The journal this store writes, when it has one.
+    pub fn journal(&self) -> Option<&ExecutionJournal> {
+        self.journal.as_ref()
+    }
+
+    /// Fold the journal back into the store. Answers how many executions it recovered.
+    fn recover(&self) -> usize {
+        let Some(journal) = &self.journal else {
+            return 0;
+        };
+        let limits = self.limits;
+        let mut published = Vec::new();
+        let mut count = 0usize;
+        {
+            let mut inner = self.lock();
+            let mut interrupted = Vec::new();
+            for recorded in journal.read() {
+                let seed = recorded.seed;
+                let id = seed.id.clone();
+                if inner.records.contains_key(&id) {
+                    continue;
+                }
+                let mut record = Record {
+                    snapshot: fresh_snapshot(
+                        id.clone(),
+                        Seed {
+                            capability: &seed.capability,
+                            title: &seed.title,
+                            input: seed.input.clone(),
+                            cancellable: seed.cancellable,
+                            actor: seed.actor.clone(),
+                            repository: seed.repository.clone(),
+                        },
+                        seed.created_at.clone(),
+                    ),
+                    events: VecDeque::new(),
+                    first_retained: 1,
+                    cancel: Arc::new(AtomicBool::new(false)),
+                    cancel_requested: false,
+                    started: None,
+                    reported: None,
+                };
+                record
+                    .snapshot
+                    .idempotency_key
+                    .clone_from(&seed.idempotency_key);
+                for event in recorded.events {
+                    // a gap means a line was lost: what follows it is not believed
+                    if event.sequence != record.snapshot.last_sequence + 1 {
+                        break;
+                    }
+                    apply(
+                        &mut record,
+                        &event.payload,
+                        event.sequence,
+                        limits,
+                        &event.timestamp,
+                    );
+                    record.events.push_back(Arc::new(event));
+                    while record.events.len() > limits.max_events {
+                        record.events.pop_front();
+                        record.first_retained += 1;
+                        record.snapshot.events_truncated = true;
+                    }
+                }
+                if let Some(snapshot) = recorded.final_snapshot {
+                    record.snapshot = snapshot;
+                }
+                record.cancel_requested = record.snapshot.state == ExecutionState::Cancelling;
+                if record.snapshot.state.is_active() {
+                    match seed.reported_pid {
+                        Some(pid) => {
+                            record.reported = Some(Reported {
+                                through: recorded.through.unwrap_or(1),
+                                // the silence rule starts counting at the restart
+                                heard: Instant::now(),
+                                pid,
+                            })
+                        }
+                        None => interrupted.push((id.clone(), record.snapshot.last_sequence)),
+                    }
+                }
+                inner.records.insert(id.clone(), record);
+                inner.order.push_back(id);
+                count += 1;
+            }
+            for (id, at) in interrupted {
+                let payload = EventPayload::Failed {
+                    error: ExecutionError {
+                        code: "interrupted".into(),
+                        message: format!(
+                            "the server that ran this execution stopped at sequence {at}; what its handler did after that is unknown, and it is not run again"
+                        ),
+                        suggestion: Some(
+                            "start a new execution if the work is still wanted".into(),
+                        ),
+                        correlation_id: id.to_string(),
+                    },
+                };
+                published.extend(self.publish_locked(&mut inner, &id, payload));
+            }
+            self.evict(&mut inner);
+        }
+        for (event, deliveries) in published {
+            traced(&event, deliveries);
+        }
+        count
     }
 
     /// The limits this store was built with.
@@ -309,19 +458,64 @@ impl ExecutionStore {
         actor: Actor,
         repository: RepositoryRef,
     ) -> Arc<AtomicBool> {
-        let created = self.insert(
-            id,
-            Seed {
-                capability,
-                title,
-                input,
-                cancellable,
-                actor,
-                repository,
-            },
-            None,
-        );
+        let seed = Seed {
+            capability,
+            title,
+            input,
+            cancellable,
+            actor,
+            repository,
+        };
+        self.create_keyed(id, seed, None)
+    }
+
+    /// [`Self::create`], under the idempotency key the client started it with, so that
+    /// [`Self::keyed`] finds it and a restart keeps the key (ADR 0225).
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{Actor, ActorKind, ExecutionId, ExecutionStore, Limits, RepositoryRef, Seed};
+    /// let store = ExecutionStore::new(Limits::default());
+    /// let id = ExecutionId::fresh();
+    /// store.create_keyed(id.clone(), Seed {
+    ///     capability: "executions.demonstrate", title: "Demo", input: serde_json::json!({}),
+    ///     cancellable: true, actor: Actor::of(ActorKind::Http),
+    ///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+    /// }, Some("click-1".into()));
+    /// assert_eq!(store.keyed("click-1").map(|e| e.id), Some(id));
+    /// assert!(store.keyed("click-2").is_none());
+    /// ```
+    pub fn create_keyed(
+        &self,
+        id: ExecutionId,
+        seed: Seed<'_>,
+        idempotency_key: Option<String>,
+    ) -> Arc<AtomicBool> {
+        let created = self.insert(id, seed, None, idempotency_key);
         self.publish_created(created)
+    }
+
+    /// The execution this store remembers under an idempotency key. A key is held as long
+    /// as its execution is remembered: one forgotten by the bound no longer answers.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{Actor, ActorKind, ExecutionId, ExecutionStore, Limits, RepositoryRef, Seed};
+    /// let store = ExecutionStore::new(Limits::default());
+    /// assert!(store.keyed("click-1").is_none(), "nothing started under it yet");
+    /// let id = ExecutionId::fresh();
+    /// store.create_keyed(id.clone(), Seed {
+    ///     capability: "executions.demonstrate", title: "Demo", input: serde_json::json!({}),
+    ///     cancellable: true, actor: Actor::of(ActorKind::Http),
+    ///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+    /// }, Some("click-1".into()));
+    /// let found = store.keyed("click-1").unwrap();
+    /// assert_eq!((found.id, found.idempotency_key.as_deref()), (id, Some("click-1")));
+    /// ```
+    pub fn keyed(&self, idempotency_key: &str) -> Option<Execution> {
+        self.lock()
+            .records
+            .values()
+            .find(|r| r.snapshot.idempotency_key.as_deref() == Some(idempotency_key))
+            .map(|r| r.snapshot.clone())
     }
 
     /// Hold an execution another process runs and reports here, so that this process's
@@ -370,6 +564,7 @@ impl ExecutionStore {
                 heard: Instant::now(),
                 pid,
             }),
+            None,
         );
         self.publish_created(created);
         Ok(())
@@ -440,6 +635,9 @@ impl ExecutionStore {
                     applied += 1;
                     published.push(event);
                 }
+            }
+            if let Some(journal) = &self.journal {
+                journal.append(id, &Line::Through { through });
             }
             // the record was found reported above, under this same lock: it is still there
             inner.records.get_mut(id).map(|record| {
@@ -562,40 +760,31 @@ impl ExecutionStore {
         id: ExecutionId,
         seed: Seed<'_>,
         reported: Option<Reported>,
+        idempotency_key: Option<String>,
     ) -> (ExecutionId, Arc<AtomicBool>, EventPayload) {
-        let Seed {
-            capability,
-            title,
-            input,
-            cancellable,
-            actor,
-            repository,
-        } = seed;
+        let (capability, title, input) = (seed.capability, seed.title, seed.input.clone());
         let cancel = Arc::new(AtomicBool::new(false));
         let now = crate::peers::rfc3339(std::time::SystemTime::now());
-        let snapshot = Execution {
-            id: id.clone(),
-            capability: capability.to_string(),
-            title: title.to_string(),
-            state: ExecutionState::Queued,
-            created_at: now,
-            started_at: None,
-            finished_at: None,
-            duration_ms: None,
-            input: input.clone(),
-            output: None,
-            error: None,
-            progress: None,
-            steps: Vec::new(),
-            diagnostics: Vec::new(),
-            last_sequence: 0,
-            event_count: 0,
-            events_truncated: false,
-            cancellable,
-            actor,
-            repository,
-            correlation_id: id.to_string(),
-        };
+        let mut snapshot = fresh_snapshot(id.clone(), seed, now);
+        snapshot.idempotency_key = idempotency_key;
+        if let Some(journal) = &self.journal {
+            // first, before any event of it can be written
+            journal.append(
+                &id,
+                &Line::Seed(SeedLine {
+                    id: id.clone(),
+                    capability: snapshot.capability.clone(),
+                    title: snapshot.title.clone(),
+                    input: snapshot.input.clone(),
+                    cancellable: snapshot.cancellable,
+                    actor: snapshot.actor.clone(),
+                    repository: snapshot.repository.clone(),
+                    created_at: snapshot.created_at.clone(),
+                    reported_pid: reported.as_ref().map(|r| r.pid),
+                    idempotency_key: snapshot.idempotency_key.clone(),
+                }),
+            );
+        }
         {
             let mut inner = self.lock();
             inner.records.insert(
@@ -644,6 +833,9 @@ impl ExecutionStore {
             };
             if let Some(id) = inner.order.remove(position) {
                 inner.records.remove(&id);
+                if let Some(journal) = &self.journal {
+                    journal.archive(&id);
+                }
             }
         }
     }
@@ -688,8 +880,15 @@ impl ExecutionStore {
             }
         }
         let sequence = record.snapshot.last_sequence + 1;
-        apply(record, &payload, sequence, limits);
         let event = Arc::new(ExecutionEvent::new(id.clone(), sequence, payload));
+        apply(record, &event.payload, sequence, limits, &event.timestamp);
+        if let Some(journal) = &self.journal {
+            // under the lock and before any subscriber or caller sees it
+            journal.append(id, &Line::Event((*event).clone()));
+            if record.snapshot.state.is_final() {
+                journal.append(id, &Line::Final(Box::new(record.snapshot.clone())));
+            }
+        }
         record.events.push_back(Arc::clone(&event));
         while record.events.len() > limits.max_events {
             record.events.pop_front();
@@ -922,9 +1121,39 @@ fn traced(event: &ExecutionEvent, deliveries: usize) {
     );
 }
 
-/// Fold one event into a snapshot. The only place a snapshot changes.
-fn apply(record: &mut Record, payload: &EventPayload, sequence: u64, limits: Limits) {
-    let now = crate::peers::rfc3339(std::time::SystemTime::now());
+/// A queued snapshot of a new execution, created at `created_at`.
+fn fresh_snapshot(id: ExecutionId, seed: Seed<'_>, created_at: String) -> Execution {
+    Execution {
+        correlation_id: id.to_string(),
+        id,
+        capability: seed.capability.to_string(),
+        title: seed.title.to_string(),
+        state: ExecutionState::Queued,
+        created_at,
+        started_at: None,
+        finished_at: None,
+        duration_ms: None,
+        input: seed.input,
+        output: None,
+        error: None,
+        progress: None,
+        steps: Vec::new(),
+        diagnostics: Vec::new(),
+        last_sequence: 0,
+        event_count: 0,
+        events_truncated: false,
+        cancellable: seed.cancellable,
+        actor: seed.actor,
+        repository: seed.repository,
+        idempotency_key: None,
+    }
+}
+
+/// Fold one event into a snapshot, at the time the event was produced. The only place a
+/// snapshot changes; a recovery folds the journal through it, so a snapshot read back says
+/// what the snapshot said before the restart.
+fn apply(record: &mut Record, payload: &EventPayload, sequence: u64, limits: Limits, at: &str) {
+    let now = at.to_string();
     let s = &mut record.snapshot;
     s.last_sequence = sequence;
     s.event_count += 1;

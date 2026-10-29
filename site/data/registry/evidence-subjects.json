@@ -459,6 +459,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:implement.issue",
+      "path": "/evidence/capabilities/implement-issue/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:integration.cleanup",
       "path": "/evidence/capabilities/integration-cleanup/"
     },
@@ -4991,6 +4996,16 @@
       "kind": "capability",
       "id": "health.report",
       "page": "/evidence/capabilities/health-report/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:implement.issue": {
+      "kind": "capability",
+      "id": "implement.issue",
+      "page": "/evidence/capabilities/implement-issue/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -29406,6 +29421,8 @@
     "crate:editors",
     "crate:engine",
     "crate:environment",
+    "crate:execution_idempotency",
+    "crate:execution_journal",
     "crate:external_extension",
     "crate:generate_check",
     "crate:generated_documents",
@@ -29425,6 +29442,7 @@
     "crate:integration_refresh_trail",
     "crate:integration_repair",
     "crate:intent_binding",
+    "crate:issue_implement",
     "crate:lease_busy",
     "crate:lease_declared",
     "crate:lease_holder",
@@ -29476,6 +29494,7 @@
     "crate:ui_links",
     "crate:ui_roadmap",
     "crate:ui_shared_scope",
+    "crate:worker_adapter",
     "crate:worktree",
     "suite:09_site_mobile_first",
     "suite:1023_a_branch_cannot_widen_the_mesh_trust",
@@ -29671,6 +29690,7 @@
     "suite:3958_no_entry_path_or_gate_builds",
     "suite:3959_the_shared_build_dir_stays_under_its_bound",
     "suite:3963_a_merge_of_master_derives_in_one_go",
+    "suite:3982_one_click_implement_survives_a_restart",
     "suite:3999_a_fixture_holds_the_skills_the_generator_reads",
     "suite:4007_an_idle_server_leaves_by_itself",
     "suite:402_argv_limit",

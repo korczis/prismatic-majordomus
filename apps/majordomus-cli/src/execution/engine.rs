@@ -50,6 +50,14 @@ pub enum SubmitError {
     /// The engine is stopping and accepts nothing further.
     #[error("unavailable: {0}")]
     Unavailable(String),
+    /// The idempotency key already started an execution of another capability or input.
+    #[error("conflict: the idempotency key '{key}' already started {existing} with a different capability or input")]
+    KeyConflict {
+        /// The key.
+        key: String,
+        /// The execution it started.
+        existing: ExecutionId,
+    },
 }
 
 impl SubmitError {
@@ -60,8 +68,31 @@ impl SubmitError {
             SubmitError::NotExecutable(_) => "action_unavailable",
             SubmitError::InvalidInput(_) => "validation_error",
             SubmitError::Unavailable(_) => "unavailable",
+            SubmitError::KeyConflict { .. } => "conflict",
         }
     }
+}
+
+/// The longest idempotency key accepted.
+pub const MAX_IDEMPOTENCY_KEY: usize = 128;
+
+/// Is this a key a client may start an execution under: 1 to [`MAX_IDEMPOTENCY_KEY`]
+/// characters of letters, digits and `.` `_` `:` `-`, which a UUID, a ULID and a
+/// `<tab>-<counter>` all are, and which no path, query or markup can hide in.
+///
+/// ```
+/// use majordomus_cli::execution::engine::is_idempotency_key;
+/// assert!(is_idempotency_key("3f2b8c1e-5d0a-4c2e-9b7f-1a2b3c4d5e6f"));
+/// assert!(!is_idempotency_key(""));
+/// assert!(!is_idempotency_key("../x"));
+/// assert!(!is_idempotency_key(&"k".repeat(129)));
+/// ```
+pub fn is_idempotency_key(key: &str) -> bool {
+    !key.is_empty()
+        && key.len() <= MAX_IDEMPOTENCY_KEY
+        && key
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | ':' | '-'))
 }
 
 struct Pending {
@@ -104,10 +135,29 @@ impl Default for ExecutionEngine {
 }
 
 impl ExecutionEngine {
-    /// An engine with these limits.
+    /// An engine with these limits, its store in memory only.
     pub fn new(limits: Limits) -> Self {
+        Self::over(ExecutionStore::new(limits))
+    }
+
+    /// An engine whose executions are written to `journal` and recovered from it: a
+    /// server's (ADR 0225). Its store answers every execution the journal held before the
+    /// engine accepts a new one, so nothing a reconnecting client asks about is missing.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{ExecutionEngine, ExecutionJournal, Limits};
+    /// let dir = tempfile::tempdir().unwrap();
+    /// let engine = ExecutionEngine::journaled(Limits::default(), ExecutionJournal::at(dir.path()).unwrap());
+    /// assert!(engine.store().journal().is_some());
+    /// assert!(engine.store().is_empty(), "an empty journal recovers nothing");
+    /// ```
+    pub fn journaled(limits: Limits, journal: crate::execution::ExecutionJournal) -> Self {
+        Self::over(ExecutionStore::journaled(limits, journal))
+    }
+
+    fn over(store: ExecutionStore) -> Self {
         ExecutionEngine {
-            store: Arc::new(ExecutionStore::new(limits)),
+            store: Arc::new(store),
             inner: Mutex::new(Inner {
                 queue: VecDeque::new(),
                 running: 0,
@@ -194,6 +244,41 @@ impl ExecutionEngine {
         input: Value,
         actor: Actor,
     ) -> Result<Execution, SubmitError> {
+        self.submit_keyed(ctx, capability, input, actor, None)
+    }
+
+    /// [`Self::submit`], under an idempotency key (ADR 0225, I3981). A key that already
+    /// started an execution of the same capability with the same input answers that
+    /// execution, as it is now, and starts nothing; the same key with another capability or
+    /// input is refused, naming the execution it started. The look-up and the creation
+    /// happen under the queue lock, so two starts racing with one key yield one execution.
+    ///
+    /// ```no_run
+    /// use majordomus_cli::capability::Context;
+    /// use majordomus_cli::execution::{Actor, ActorKind};
+    /// fn click(ctx: &Context) {
+    ///     let start = |key| ctx.executions.submit_keyed(
+    ///         ctx, "health.report", serde_json::json!({}), Actor::of(ActorKind::Http), Some(key));
+    ///     let first = start("click-7f3a").unwrap();
+    ///     // the same click arriving twice is the same execution, never a second one
+    ///     assert_eq!(start("click-7f3a").unwrap().id, first.id);
+    /// }
+    /// ```
+    pub fn submit_keyed(
+        &self,
+        ctx: &Context,
+        capability: &str,
+        input: Value,
+        actor: Actor,
+        idempotency_key: Option<&str>,
+    ) -> Result<Execution, SubmitError> {
+        if let Some(key) = idempotency_key {
+            if !is_idempotency_key(key) {
+                return Err(SubmitError::InvalidInput(format!(
+                    "idempotency_key: '{key}' is not a key; 1 to {MAX_IDEMPOTENCY_KEY} letters, digits and . _ : -"
+                )));
+            }
+        }
         if self.stopping.load(Ordering::SeqCst) {
             return Err(SubmitError::Unavailable(
                 "this server is shutting down and is accepting no further executions".into(),
@@ -224,29 +309,45 @@ impl ExecutionEngine {
 
         let id = ExecutionId::fresh();
         let stored = redact(&c.input.schema, &input);
-        self.store.create(
-            id.clone(),
-            c.id.as_str(),
-            &c.title,
-            stored,
-            c.execution.cancellable,
-            actor,
-            repository_of(ctx),
-        );
-        let pending = Pending {
-            id: id.clone(),
-            capability: c.id.to_string(),
-            input,
-            ctx: ctx.clone(),
-        };
-        // The queue lock is held across the queued event and the snapshot: a worker
-        // finishing another execution calls `dispatch` too, and it needs this lock to take
-        // the pending, so nothing can start what has not yet been announced as accepted.
-        // The nesting is one way — this is the only place that takes the store's lock while
-        // holding the engine's, the store knows nothing of the engine, and the store's
-        // fan-out never blocks — so it cannot deadlock.
+        // The queue lock is held from the key's look-up through the queued event and the
+        // snapshot: two starts under one key cannot both miss it, and a worker finishing
+        // another execution calls `dispatch` too and needs this lock to take the pending,
+        // so nothing can start what has not yet been announced as accepted. The nesting is
+        // one way — this is the only place that takes the store's lock while holding the
+        // engine's, the store knows nothing of the engine, and the store's fan-out never
+        // blocks — so it cannot deadlock.
         let accepted = {
             let mut inner = self.lock();
+            if let Some(key) = idempotency_key {
+                if let Some(existing) = self.store.keyed(key) {
+                    return if existing.capability == c.id.as_str() && existing.input == stored {
+                        Ok(existing)
+                    } else {
+                        Err(SubmitError::KeyConflict {
+                            key: key.to_string(),
+                            existing: existing.id,
+                        })
+                    };
+                }
+            }
+            self.store.create_keyed(
+                id.clone(),
+                super::store::Seed {
+                    capability: c.id.as_str(),
+                    title: &c.title,
+                    input: stored,
+                    cancellable: c.execution.cancellable,
+                    actor,
+                    repository: repository_of(ctx),
+                },
+                idempotency_key.map(str::to_string),
+            );
+            let pending = Pending {
+                id: id.clone(),
+                capability: c.id.to_string(),
+                input,
+                ctx: ctx.clone(),
+            };
             inner.queue.push_back(pending);
             let ahead = inner.queue.len() - 1;
             self.store.publish(&id, EventPayload::Queued { ahead });

@@ -817,6 +817,15 @@
         "status": "query"
       },
       {
+        "id": "capability:implement.issue",
+        "kind": "capability",
+        "label": "implement.issue",
+        "summary": "Implement an issue",
+        "route": "/cockpit/capabilities/implement.issue",
+        "source": "apps/majordomus-cli/src/capability/builtin/implement.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:integration.cleanup",
         "kind": "capability",
         "label": "integration.cleanup",
@@ -2916,6 +2925,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/economics/runner.rs",
+        "kind": "file",
+        "label": "runner.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/economics/runner.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/economics/usage.rs",
         "kind": "file",
         "label": "usage.rs",
@@ -3025,6 +3042,14 @@
         "label": "mod.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/execution/mod.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/execution/store.rs",
+        "kind": "file",
+        "label": "store.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/execution/store.rs",
         "external": true
       },
       {
@@ -9567,6 +9592,33 @@
             "launcher",
             "build",
             "enforcement"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0225",
+        "kind": "adr",
+        "label": "adr-0225",
+        "summary": "An execution started for an issue is durable and idempotent, an interrupted one is recovered as interrupted, and an unknown outcome is never retried",
+        "route": "/cockpit/objects/adr/adr-0225",
+        "source": ".ai/repo/adrs/0225-an-issue-execution-is-durable-idempotent-and-never-replayed-blind.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-23",
+          "related": [
+            "file:.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
+            "file:.ai/repo/project/intents/an-issue-is-implemented-from-one-click.yaml",
+            "file:.ai/repo/project/milestones/one-click-implement.yaml",
+            "file:apps/majordomus-cli/src/execution/mod.rs",
+            "file:apps/majordomus-cli/src/execution/store.rs",
+            "file:apps/majordomus-cli/src/execution/engine.rs",
+            "file:apps/majordomus-cli/src/http/events.rs",
+            "file:apps/majordomus-cli/src/economics/runner.rs"
+          ],
+          "tags": [
+            "execution",
+            "ui",
+            "mesh-runtime"
           ]
         }
       },
@@ -22342,6 +22394,34 @@
             "Browser-to-browser gossip"
           ],
           "updated_at": "2026-10-18"
+        }
+      },
+      {
+        "id": "majordomus://intent/an-issue-is-implemented-from-one-click",
+        "kind": "intent",
+        "label": "an-issue-is-implemented-from-one-click",
+        "summary": "From /ui the owner clicks Implement on a ready issue, and a durable execution works it in its own worktree under a scope claim, followed live across a browser close and a server restart, until it ends with a testable result and its evidence",
+        "route": "/cockpit/objects/intent/an-issue-is-implemented-from-one-click",
+        "source": ".ai/repo/project/intents/an-issue-is-implemented-from-one-click.yaml",
+        "facts": {
+          "created_at": "2026-10-23",
+          "invariants": [
+            "A click starts an execution of the shared executor; the UI never decides whether work may run (ADR 0135, ADR 0225)",
+            "One execution model: no second scheduler, no parallel orchestrator, no ui_tasks.json",
+            "An unknown outcome of a mutation is never a reason to repeat it",
+            "A worker is an optional adapter; no provider is required",
+            "Done and delivered are different states and no surface shows one as the other"
+          ],
+          "milestones": [
+            "one-click-implement"
+          ],
+          "non_goals": [
+            "Remote execution on another mesh node (P1: mesh click-to-execute)",
+            "Click-to-deliver: PR, CI, merge, release and deploy driven from the UI (P2)",
+            "Running anything from the published site",
+            "A new screen family"
+          ],
+          "updated_at": "2026-10-23"
         }
       },
       {
@@ -69682,6 +69762,337 @@
         }
       },
       {
+        "id": "majordomus://issue/I3980",
+        "kind": "issue",
+        "label": "I3980",
+        "summary": "An execution is journaled to disk and recovered on start: one it was running comes back failed with code interrupted at its cursor, a reported one is re-attached, none is re-run",
+        "route": "/cockpit/objects/issue/i3980",
+        "source": ".ai/repo/project/issues/I3980.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An execution killed with its server is recovered failed with code interrupted naming its last sequence, and is not re-run",
+            "A reporting process alive across the restart is re-attached and its events continue at the next sequence number",
+            "GET /events?execution=<id>&after=<seq> after a restart replays exactly the gap",
+            "The journal is bounded by the existing Limits and a record over them is archived, never deleted",
+            "execution/mod.rs no longer says no execution outlives its process"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "ExecutionStore is in memory (execution/store.rs Limits: 200 executions, 2000 events, 4 running); nothing is recovered on start; adopt/report/abandon_silent exist for majordomus run.",
+          "depends_on": [],
+          "evidence_required": [
+            "apps/majordomus-cli/tests/execution_journal.rs"
+          ],
+          "milestone": "one-click-implement",
+          "non_scope": [
+            "Retrying or resuming an interrupted mutation automatically",
+            "Replicating executions over the mesh (P1)"
+          ],
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/execution",
+            "apps/majordomus-cli/src/http/events.rs",
+            "apps/majordomus-cli/tests/execution_journal.rs"
+          ],
+          "serves": [
+            "an-issue-is-implemented-from-one-click#an-execution-survives-a-restart"
+          ],
+          "slug": "an-execution-survives-a-restart",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test execution_journal",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib execution::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3981",
+        "kind": "issue",
+        "label": "I3981",
+        "summary": "executions.start takes an idempotency key: the same key and input answer the first execution, the same key with another input is refused",
+        "route": "/cockpit/objects/issue/i3981",
+        "source": ".ai/repo/project/issues/I3981.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Same key, same input: the second start answers the first execution's id",
+            "Same key, different input: refused with the first execution's id in the refusal",
+            "The key survives a server restart (it is on the journaled record)",
+            "The UI start path sends a fresh key per click and reuses it on a retried request"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "executions.start (capability/builtin/executions.rs:700) has no key; a double submit from two tabs starts two executions.",
+          "depends_on": [
+            "I3980"
+          ],
+          "desired_state": "Two starts with one key from two tabs yield one execution; the UI's start path always sends a key.",
+          "evidence_required": [
+            "apps/majordomus-cli/tests/execution_idempotency.rs"
+          ],
+          "milestone": "one-click-implement",
+          "non_scope": [
+            "Idempotency of capabilities called directly, outside an execution"
+          ],
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/executions.rs",
+            "apps/majordomus-cli/src/execution",
+            "share/cockpit/executions.js",
+            "share/cockpit/moves.js",
+            "share/cockpit/api.js",
+            "apps/majordomus-cli/tests/execution_idempotency.rs"
+          ],
+          "serves": [
+            "an-issue-is-implemented-from-one-click#a-start-is-idempotent"
+          ],
+          "slug": "a-start-is-idempotent",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test execution_idempotency"
+          ],
+          "why": "ADR 0225 decision 3: every mutating click carries an idempotency key; today the only guard is a disabled button (share/cockpit/executions.js:39)."
+        }
+      },
+      {
+        "id": "majordomus://issue/I3982",
+        "kind": "issue",
+        "label": "I3982",
+        "summary": "A worker adapter declared beside its provider runs it headless in the execution's worktree and streams its progress as the execution's events",
+        "route": "/cockpit/objects/issue/i3982",
+        "source": ".ai/repo/project/issues/I3982.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The fixture adapter's lines arrive as the execution's events in order, with dense sequence numbers",
+            "An adapter whose binary is absent is reported unavailable; with none available the execution stays Queued with that reason",
+            "The adapter runs with the worktree as its working directory and never in the primary checkout",
+            "The Claude Code adapter is declared, not required: tests never call a provider"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Only economics/runner.rs spawns a harness (benchmarks); no adapter declaration; ExecutionStore::report serves majordomus run only.",
+          "depends_on": [
+            "I3980"
+          ],
+          "desired_state": "An adapter is chosen from declarations, its process's progress is the execution's event stream, its exit is the step's outcome, and the absence of any adapter is a visible queued reason.",
+          "evidence_required": [
+            "apps/majordomus-cli/tests/worker_adapter.rs"
+          ],
+          "milestone": "one-click-implement",
+          "non_scope": [
+            "Choosing a worker on another machine (P1)",
+            "Token budgeting policy beyond reporting the cost the adapter reads"
+          ],
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/worker",
+            "apps/majordomus-cli/src/economics/runner.rs",
+            "apps/majordomus-cli/src/execution",
+            "share/providers.yaml",
+            "apps/majordomus-cli/tests/worker_adapter.rs"
+          ],
+          "serves": [
+            "an-issue-is-implemented-from-one-click#a-worker-reports-into-the-execution"
+          ],
+          "slug": "a-worker-reports-into-the-execution",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test worker_adapter"
+          ],
+          "why": "ADR 0225 decision 5: a worker is an adapter, never a requirement; nothing in the execution path spawns a worker today."
+        }
+      },
+      {
+        "id": "majordomus://issue/I3983",
+        "kind": "issue",
+        "label": "I3983",
+        "summary": "implement.issue judges readiness, claims the issue's scope as the execution's lease, creates its worktree and hands it to a worker, each a step of one execution",
+        "route": "/cockpit/objects/issue/i3983",
+        "source": ".ai/repo/project/issues/I3983.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A not-ready issue is refused with devtask's reason and starts no step after readiness",
+            "An issue whose scope another live exclusive claim holds is refused naming that claim",
+            "A ready issue yields one execution whose steps are readiness, lease, worktree, dispatch",
+            "The lease is released when the execution ends and is not left behind by an interrupted one past its heartbeat",
+            "The capability is defined once (capability!) and projected by majordomus generate, never by hand"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "devtask.issue reports readiness read-only; plan.transition is the only move an issue offers; no capability starts work on an issue.",
+          "depends_on": [
+            "I3980",
+            "I3981",
+            "I3982"
+          ],
+          "desired_state": "One capability, one execution, four recorded steps; every refusal is typed and shown verbatim.",
+          "evidence_required": [
+            "apps/majordomus-cli/tests/issue_implement.rs"
+          ],
+          "milestone": "one-click-implement",
+          "non_scope": [
+            "Opening a pull request or merging (P2 Deliver)",
+            "Picking the issue: the owner picks it in the UI"
+          ],
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/devtask",
+            "apps/majordomus-cli/src/worktree",
+            "apps/majordomus-cli/src/execution",
+            "apps/majordomus-cli/tests/issue_implement.rs"
+          ],
+          "serves": [
+            "an-issue-is-implemented-from-one-click#an-issue-is-implemented-by-one-capability"
+          ],
+          "slug": "an-issue-is-implemented-by-one-capability",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test issue_implement",
+            "majordomus generate --check"
+          ],
+          "why": "ADR 0225 decision 4. The pieces exist apart (devtask/readiness.rs, mesh.claim, worktree/*), unconnected, and nothing is called a lease."
+        }
+      },
+      {
+        "id": "majordomus://issue/I3984",
+        "kind": "issue",
+        "label": "I3984",
+        "summary": "/ui/idd offers each issue the one primary move its state admits: Implement, Open execution, Verify, Deliver or View blockers",
+        "route": "/cockpit/objects/issue/i3984",
+        "source": ".ai/repo/project/issues/I3984.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each of the five states renders exactly its one primary move (unit test over the view)",
+            "Implement starts implement.issue as an execution with an idempotency key; a refusal is the executor's text",
+            "The published snapshot of /ui/idd carries no control",
+            "The view fits 390 px with no horizontal scroll"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "The issue view's only move is plan.transition; no Implement.",
+          "depends_on": [
+            "I3983"
+          ],
+          "desired_state": "One primary move per state; the click is an execution; the issue row links the execution that works it.",
+          "evidence_required": [
+            "test/cases/3982_one_click_implement_survives_a_restart.sh"
+          ],
+          "milestone": "one-click-implement",
+          "non_scope": [
+            "The generic capability form on /ui (I3225)",
+            "Delivery itself (P2)"
+          ],
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "apps/majordomus-cli/src/cockpit/plan.rs",
+            "share/cockpit/moves.js",
+            "share/ui",
+            "docs/MAJORDOMUS_UI.md"
+          ],
+          "serves": [
+            "an-issue-is-implemented-from-one-click#the-issue-offers-one-move"
+          ],
+          "slug": "the-issue-offers-one-move",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::idd"
+          ],
+          "why": "Owner's P0 of 2026-10-23, section 6: one contextual primary move instead of three near-synonymous verbs; ADR 0225 consequences."
+        }
+      },
+      {
+        "id": "majordomus://issue/I3985",
+        "kind": "issue",
+        "label": "I3985",
+        "summary": "A browser case clicks Implement, closes the page, restarts the server and finds the same execution ending with its evidence, and the refusals hold",
+        "route": "/cockpit/objects/issue/i3985",
+        "source": ".ai/repo/project/issues/I3985.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The positive path passes across a real server restart (process killed, started again)",
+            "Each of the four negative cases asserts its refusal or queued reason text",
+            "The case is numbered 3982 and runs in the ui job"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "3220 walks the IDD loop with the work written by the test itself and no restart.",
+          "depends_on": [
+            "I3984",
+            "I3986"
+          ],
+          "desired_state": "The DoD is a reproducible browser case in the ui job.",
+          "evidence_required": [
+            "test/cases/3982_one_click_implement_survives_a_restart.sh"
+          ],
+          "milestone": "one-click-implement",
+          "non_scope": [
+            "Remote nodes, TLS rendezvous (P1)"
+          ],
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "test/cases/3982_one_click_implement_survives_a_restart.sh",
+            "test/fixtures",
+            "share/cockpit/executions.js",
+            "apps/majordomus-cli/src/cockpit/pages.rs"
+          ],
+          "serves": [
+            "an-issue-is-implemented-from-one-click#the-loop-is-walked-across-a-restart"
+          ],
+          "slug": "the-loop-is-walked-across-a-restart",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 3982_one_click_implement_survives_a_restart"
+          ],
+          "why": "The owner's P0 Definition of Done of 2026-10-23, verbatim as a test; 3220 covers neither a restart nor a worker."
+        }
+      },
+      {
+        "id": "majordomus://issue/I3986",
+        "kind": "issue",
+        "label": "I3986",
+        "summary": "An implement execution ends by running the issue's validation in its worktree and recording the evidence, so done means verified and never delivered",
+        "route": "/cockpit/objects/issue/i3986",
+        "source": ".ai/repo/project/issues/I3986.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A worker success whose validation fails ends the execution Failed naming the failing command",
+            "Missing required evidence ends it Failed naming the missing piece",
+            "Success records the evidence and the view links it, labelled done, not delivered"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Evidence is recorded by hand or by CI; no execution records it.",
+          "depends_on": [
+            "I3983"
+          ],
+          "desired_state": "The execution that implemented an issue is the one that proves it, in the same worktree, with the evidence linked from its view.",
+          "evidence_required": [
+            "apps/majordomus-cli/tests/issue_implement.rs"
+          ],
+          "milestone": "one-click-implement",
+          "non_scope": [
+            "Pushing, opening a PR, CI, merge or release (P2)"
+          ],
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/evidence",
+            "apps/majordomus-cli/src/execution",
+            "apps/majordomus-cli/tests/issue_implement.rs"
+          ],
+          "serves": [
+            "an-issue-is-implemented-from-one-click#the-loop-is-walked-across-a-restart"
+          ],
+          "slug": "an-implement-execution-ends-with-its-evidence",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test issue_implement"
+          ],
+          "why": "Owner's P0 DoD ends with 'a testable result with evidence'; ADR 0225 decision 6 separates done from delivered."
+        }
+      },
+      {
         "id": "majordomus://issue/I3990",
         "kind": "issue",
         "label": "I3990",
@@ -76493,6 +76904,54 @@
           "updated_at": "2026-10-18",
           "validation": [
             "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/one-click-implement",
+        "kind": "milestone",
+        "label": "one-click-implement",
+        "summary": "One click on a ready issue starts a durable execution that works it, followed live across a browser close and a server restart",
+        "route": "/cockpit/objects/milestone/one-click-implement",
+        "source": ".ai/repo/project/milestones/one-click-implement.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each issue's evidence_required is recorded and its validation passes",
+            "majordomus intent explain an-issue-is-implemented-from-one-click reads every criterion satisfied"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "serve, /ui/idd, executions.start, the event cursor and test 3220 exist; durability, idempotency, implement.issue, a worker adapter, the lease and a restart-surviving browser case do not.",
+          "evidence_required": [],
+          "non_scope": [
+            "Remote execution on another mesh node (P1)",
+            "Click-to-deliver: PR, CI, merge, release, deploy from the UI (P2)",
+            "A second scheduler or orchestrator",
+            "Running anything from the published site"
+          ],
+          "order": 514,
+          "outcome": "I3980 to I3986 close the P0 vertical slice, local click-to-execute, under ADR 0225 and the intent an-issue-is-implemented-from-one-click.",
+          "priority": "p0",
+          "risks": [
+            "I3225 (a capability runs from /ui) is BLOCKED; I3984 reuses the move path that works today (share/cockpit/moves.js) and must not wait for it, and I3225 then folds both onto one shared start path",
+            "A worker run on the owner's machine spends real tokens; the browser case uses a fixture adapter, never a provider",
+            "p12 (repair lane) touches apps/majordomus-cli/src/ui/idd.rs; I3984 rebases on its landing"
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/execution",
+            "apps/majordomus-cli/src/capability/builtin/executions.rs",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/worker",
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "apps/majordomus-cli/src/cockpit/plan.rs",
+            "share/cockpit",
+            "share/ui",
+            "share/providers.yaml",
+            "test/cases"
+          ],
+          "slug": "one-click-implement",
+          "validation": [
+            "majordomus plan validate",
+            "majordomus intent explain an-issue-is-implemented-from-one-click"
           ]
         }
       },
@@ -95202,6 +95661,13 @@
         "source": "test/cases/3970_a_pull_request_carries_its_metadata.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3982_one_click_implement_survives_a_restart.sh",
+        "kind": "test",
+        "label": "test/cases/3982_one_click_implement_survives_a_restart.sh",
+        "route": "/cockpit/objects/test/test-cases-3982-one-click-implement-survives-a-restart-sh",
+        "source": "test/cases/3982_one_click_implement_survives_a_restart.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
         "kind": "test",
         "label": "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
@@ -99169,6 +99635,11 @@
         "label": "health"
       },
       {
+        "id": "module:implement",
+        "kind": "module",
+        "label": "implement"
+      },
+      {
         "id": "module:integration",
         "kind": "module",
         "label": "integration"
@@ -100861,6 +101332,11 @@
       {
         "source": "capability:health.report",
         "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:implement.issue",
+        "target": "projection:cockpit",
         "kind": "projects"
       },
       {
@@ -110829,6 +111305,51 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0225",
+        "target": "file:apps/majordomus-cli/src/economics/runner.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0225",
+        "target": "file:apps/majordomus-cli/src/execution/engine.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0225",
+        "target": "file:apps/majordomus-cli/src/execution/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0225",
+        "target": "file:apps/majordomus-cli/src/execution/store.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0225",
+        "target": "file:apps/majordomus-cli/src/http/events.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0225",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0225",
+        "target": "majordomus://adr/adr-0135",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0225",
+        "target": "majordomus://intent/an-issue-is-implemented-from-one-click",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0225",
+        "target": "majordomus://milestone/one-click-implement",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://adr/adr-0226",
         "target": "kind:adr",
         "kind": "is_a"
@@ -119055,6 +119576,11 @@
       },
       {
         "source": "majordomus://intent/an-authorised-node-connects-from-anywhere",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/an-issue-is-implemented-from-one-click",
         "target": "kind:intent",
         "kind": "is_a"
       },
@@ -133749,6 +134275,121 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3980",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3980",
+        "target": "majordomus://milestone/one-click-implement",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3981",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3981",
+        "target": "majordomus://issue/I3980",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3981",
+        "target": "majordomus://milestone/one-click-implement",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3982",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3982",
+        "target": "majordomus://issue/I3980",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3982",
+        "target": "majordomus://milestone/one-click-implement",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3983",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3983",
+        "target": "majordomus://issue/I3980",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3983",
+        "target": "majordomus://issue/I3981",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3983",
+        "target": "majordomus://issue/I3982",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3983",
+        "target": "majordomus://milestone/one-click-implement",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3984",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3984",
+        "target": "majordomus://issue/I3983",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3984",
+        "target": "majordomus://milestone/one-click-implement",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3985",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3985",
+        "target": "majordomus://issue/I3984",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3985",
+        "target": "majordomus://issue/I3986",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3985",
+        "target": "majordomus://milestone/one-click-implement",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3986",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3986",
+        "target": "majordomus://issue/I3983",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3986",
+        "target": "majordomus://milestone/one-click-implement",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3990",
         "target": "kind:issue",
         "kind": "is_a"
@@ -135177,6 +135818,11 @@
         "source": "majordomus://milestone/mesh-peers-execute-assigned-work",
         "target": "majordomus://milestone/runtime-trust",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/one-click-implement",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/one-kit-on-every-surface",
@@ -140794,6 +141440,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3982_one_click_implement_survives_a_restart.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -145309,6 +145960,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:implement",
+        "target": "capability:implement.issue",
+        "kind": "composes"
+      },
+      {
         "source": "module:integration",
         "target": "capability:integration.cleanup",
         "kind": "composes"
@@ -145995,8 +146651,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4034,
-      "edges": 9314,
+      "nodes": 4049,
+      "edges": 9351,
       "acyclic": false,
       "truncated": false
     }

@@ -12,7 +12,7 @@
 // this module shows that answer as it came, and reads the page again so that every status
 // on it is the server's rather than the one the button promised.
 
-import { api } from './api.js';
+import { api, idempotencyKey, spendKey } from './api.js';
 
 // a wait is bounded: an execution that has not finished in this many reads is reported
 // as still running, with the link to its own page, and the page is not reloaded
@@ -30,13 +30,41 @@ export function install(form) {
   // of capability ids in this file
   const effect = (form.dataset.mjEffect || 'the repository').replace(/_/g, ' ');
   const output = form.querySelector('[data-mj-result]');
-  const buttons = Array.from(form.querySelectorAll('button[data-mj-move]'));
+  const buttons = Array.from(form.querySelectorAll('button[data-mj-move], button[data-mj-implement]'));
   if (!issue || !capability || !start || !follow || buttons.length === 0) return;
 
   form.addEventListener('submit', (event) => event.preventDefault());
   for (const button of buttons) {
     button.disabled = false;
-    button.addEventListener('click', () => move(button.dataset.mjMove));
+    button.addEventListener('click', () =>
+      button.dataset.mjImplement ? implement(button) : move(button.dataset.mjMove),
+    );
+  }
+
+  // Implement (ADR 0225): one long execution of the capability the button names. It is not
+  // waited for here: the execution's own page follows it live and survives a reload, so this
+  // shows that it started, under which id, and links there.
+  async function implement(button) {
+    const what = button.dataset.mjImplement;
+    const implementEffect = (button.dataset.mjImplementEffect || 'process state').replace(/_/g, ' ');
+    if (!window.confirm('Implementing ' + issue + ' starts a worker in its own worktree (' + implementEffect + '). Continue?')) {
+      return;
+    }
+    for (const b of buttons) b.disabled = true; // a double click must not start two
+    show({ pending: 'starting ' + what + ' for ' + issue });
+    const idempotency_key = idempotencyKey(button);
+    const started = await api(start, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ capability: what, input: { issue }, idempotency_key }),
+    });
+    spendKey(button);
+    if (!started.ok || !started.body || !started.body.id) {
+      show({ failed: started });
+      for (const b of buttons) b.disabled = false;
+      return;
+    }
+    show({ running: started.body.id, page: started.body.links && started.body.links.cockpit });
   }
 
   async function move(transition) {
@@ -45,11 +73,14 @@ export function install(form) {
     }
     for (const button of buttons) button.disabled = true; // a double click must not move twice
     show({ pending: 'starting ' + capability + ' (' + transition + ')' });
+    // a lost request leaves the key on the form, so moving again is the same start
+    const idempotency_key = idempotencyKey(form);
     const started = await api(start, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ capability, input: { issue, transition } }),
+      body: JSON.stringify({ capability, input: { issue, transition }, idempotency_key }),
     });
+    spendKey(form);
     if (!started.ok || !started.body || !started.body.id) {
       show({ failed: started });
       for (const button of buttons) button.disabled = false;

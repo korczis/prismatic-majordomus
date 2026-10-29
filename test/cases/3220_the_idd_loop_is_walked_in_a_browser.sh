@@ -8,7 +8,7 @@
 #   pick        the intent is chosen in /ui/idd from the list of intents, and its title is the
 #               page's heading with the screen's name above it (I3001)
 #               and its panels stand in the order a person asks (I2916); it offers one
-#               primary action, the move its next issue's status admits: Start I0001 (I2917)
+#               primary action, the move its next issue's status admits: Implement I0001 (I2917)
 #   read        its issues with their status, and the dependency: I0002 waits for I0001; every
 #               issue id on the screen is a link, and the issues that share a scope (I0001 and
 #               I0003) are one counted line that opens to the pairs (I2900)
@@ -212,7 +212,7 @@ try {
   const primary = a.locator('a.mj-btn--primary');
   if (await primary.count() !== 1) fail(`the workspace offers ${await primary.count()} primary actions, not one`);
   const asks = (await primary.innerText()).trim();
-  if (asks !== 'Start I0001') fail(`the primary action reads "${asks}", not "Start I0001"`);
+  if (asks !== 'Implement I0001') fail(`the primary action reads "${asks}", not "Implement I0001"`);
 
   // read: the issues and the dependency, as the plan derives them
   if (await status(a, 'I0001') !== 'ready') fail(`I0001 reads ${await status(a, 'I0001')}, not ready`);

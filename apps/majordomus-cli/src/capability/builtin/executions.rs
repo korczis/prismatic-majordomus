@@ -134,6 +134,12 @@ pub struct StartInput {
     /// Its input, as its own input schema describes it; an empty object when it takes none.
     #[serde(default)]
     pub input: Option<Value>,
+    /// A key that makes the start idempotent (ADR 0225): the same key with the same
+    /// capability and input answers the execution it already started, and the same key
+    /// with anything else is refused, naming that execution. 1 to 128 letters, digits and
+    /// `. _ : -`; a client sends a fresh one per click and the same one on a retried request.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub idempotency_key: Option<String>,
 }
 
 impl BenchmarkCases for StartInput {
@@ -143,6 +149,7 @@ impl BenchmarkCases for StartInput {
             StartInput {
                 capability: "executions.demonstrate".into(),
                 input: Some(serde_json::json!({ "steps": 1, "delay_ms": 0 })),
+                idempotency_key: None,
             },
         )]
     }
@@ -150,10 +157,13 @@ impl BenchmarkCases for StartInput {
 
 fn executions_start(ctx: &Context, input: StartInput) -> Result<ExecutionView, CapabilityError> {
     let payload = input.input.unwrap_or_else(|| serde_json::json!({}));
-    match ctx
-        .executions
-        .submit(ctx, &input.capability, payload, actor(ctx))
-    {
+    match ctx.executions.submit_keyed(
+        ctx,
+        &input.capability,
+        payload,
+        actor(ctx),
+        input.idempotency_key.as_deref(),
+    ) {
         Ok(execution) => Ok(ExecutionView::of(ctx, execution)),
         Err(SubmitError::UnknownCapability(id)) => Err(CapabilityError::NotFound(format!(
             "no capability '{id}'; the executable ones are listed by capabilities.list"
@@ -161,6 +171,7 @@ fn executions_start(ctx: &Context, input: StartInput) -> Result<ExecutionView, C
         Err(e @ SubmitError::NotExecutable(_)) => Err(CapabilityError::Refused(e.to_string())),
         Err(SubmitError::InvalidInput(m)) => Err(CapabilityError::InvalidInput(m)),
         Err(e @ SubmitError::Unavailable(_)) => Err(CapabilityError::Refused(e.to_string())),
+        Err(e @ SubmitError::KeyConflict { .. }) => Err(CapabilityError::Refused(e.to_string())),
     }
 }
 

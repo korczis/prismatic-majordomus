@@ -753,11 +753,39 @@ pub(crate) fn moves(ctx: &Context, issue: &str, startable: bool) -> El {
         .map(word)
         .collect();
 
-    let buttons: Vec<El> = words
+    // Implement (ADR 0225): a ready issue's primary move, when this executable carries
+    // `implement.issue`; the capability's id and effect travel on the button, so the script
+    // names none, and the capability refuses what it may not do with the reason
+    let implement = describe("implement.issue").filter(|_| startable);
+    let mut buttons: Vec<El> = implement
         .iter()
-        .map(|w| {
+        .map(|c| {
             el("button")
-                .class(if w == "start" && startable {
+                .class("mj-button mj-button--primary")
+                .attr("type", "button")
+                .attr(
+                    "data-mj-implement",
+                    c["id"].as_str().unwrap_or("implement.issue").to_string(),
+                )
+                .attr(
+                    "data-mj-implement-effect",
+                    c.pointer("/execution/effect")
+                        .and_then(serde_json::Value::as_str)
+                        .unwrap_or("process_state")
+                        .to_string(),
+                )
+                .attr(
+                    "title",
+                    format!("Implement {issue}: one execution claims its scope, creates its worktree, hands it to a worker and verifies the result"),
+                )
+                .flag("disabled")
+                .text("implement")
+        })
+        .collect();
+    let primary_start = startable && implement.is_none();
+    buttons.extend(words.iter().map(|w| {
+        el("button")
+            .class(if w == "start" && primary_start {
                     "mj-button mj-button--primary"
                 } else {
                     "mj-button"
@@ -772,8 +800,7 @@ pub(crate) fn moves(ctx: &Context, issue: &str, startable: bool) -> El {
                 // cannot do
                 .flag("disabled")
                 .text(w.clone())
-        })
-        .collect();
+    }));
 
     card_with(
         "Moves",
@@ -1318,6 +1345,40 @@ mod tests {
         let body = page.main.render();
         assert_eq!(page.status, 200, "{body}");
         assert!(body.contains("git was not asked"), "{body}");
+    }
+
+    /// A ready issue's primary move is Implement, named by the capability on the button
+    /// (ADR 0225, I3984); an issue that is not ready is not offered it, and an executable
+    /// without `implement.issue` keeps start as the primary move.
+    #[test]
+    fn a_ready_issue_is_offered_implement_as_its_primary_move() {
+        let repo = SyntheticRepository::planned();
+        let ready = moves(&context(&repo, &[]), "I0001", true).render();
+        assert!(
+            ready.contains(r#"data-mj-implement="implement.issue""#),
+            "{ready}"
+        );
+        let implement_at = ready.find("data-mj-implement=").unwrap();
+        let primary_at = ready.find("mj-button--primary").unwrap();
+        assert!(
+            primary_at < implement_at,
+            "Implement is the primary button: {ready}"
+        );
+        assert_eq!(
+            ready.matches("mj-button--primary").count(),
+            1,
+            "one primary move"
+        );
+
+        let not_ready = moves(&context(&repo, &[]), "I0001", false).render();
+        assert!(!not_ready.contains("data-mj-implement"), "{not_ready}");
+
+        let without = moves(&context(&repo, &["implement.issue"]), "I0001", true).render();
+        assert!(!without.contains("data-mj-implement"), "{without}");
+        assert!(
+            without.contains("mj-button--primary"),
+            "start stays primary: {without}"
+        );
     }
 
     /// The moves are offered only when the executable carries `plan.transition` and can

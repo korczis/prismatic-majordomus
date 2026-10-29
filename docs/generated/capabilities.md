@@ -36,6 +36,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `graph` | Graphs | behaviorally_verified | 2 | [`modules/graph.md`](modules/graph.md) |
 | `guard` | Edit guard | experimental | 1 | [`modules/guard.md`](modules/guard.md) |
 | `health` | Health | behaviorally_verified | 3 | [`modules/health.md`](modules/health.md) |
+| `implement` | Implement | experimental | 1 | [`modules/implement.md`](modules/implement.md) |
 | `integration` | Pull-request integration | experimental | 7 | [`modules/integration.md`](modules/integration.md) |
 | `intent_realization` | Intent realization | behaviorally_verified | 2 | [`modules/intent_realization.md`](modules/intent_realization.md) |
 | `intents` | Intent | behaviorally_verified | 7 | [`modules/intents.md`](modules/intents.md) |
@@ -157,6 +158,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `health.live` | `health` | query | behaviorally_verified | — | — | `GET /api/v1/live` | — | — | required |
 | `health.ready` | `health` | query | behaviorally_verified | — | — | `GET /api/v1/ready` | — | — | required |
 | `health.report` | `health` | query | behaviorally_verified | `majordomus_health` | `majordomus://health` | `GET /api/v1/health` | — | process, 4 entries, 5s | required |
+| `implement.issue` | `implement` | command | experimental | — | — | — | — | — | waived (transient_state) |
 | `integration.cleanup` | `integration` | query | experimental | `majordomus_pull_requests_cleanup` | — | `GET /api/v1/pull-requests/cleanup` | — | — | required |
 | `integration.events` | `integration` | query | experimental | `majordomus_integration_events` | — | `GET /api/v1/pull-requests/events` | `majordomus prs events` | — | required |
 | `integration.explain` | `integration` | query | experimental | `majordomus_pull_request_explain` | — | `GET /api/v1/pull-requests/explain` | `majordomus prs explain` | — | required |

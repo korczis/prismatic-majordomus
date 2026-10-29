@@ -59,6 +59,7 @@ pub mod gates;
 pub(crate) mod graph;
 pub(crate) mod guard;
 pub mod health;
+pub mod implement;
 pub(crate) mod integration;
 pub mod intent_realization;
 pub mod intents;
@@ -234,6 +235,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         web,
         design,
         devtask,
+        implement,
         worktree,
         integration,
         convergence,
