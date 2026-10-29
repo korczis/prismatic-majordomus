@@ -151,7 +151,7 @@ scanner (`verify.mjs`), but it checks only dependencies and whether the rule fil
    licensed distribution itself, such as a directory or a manifest named after a Pro
    product, or a dependency on a Pro package (a name under dependencies, devDependencies,
    peerDependencies or optionalDependencies, never another key of a manifest). Where a tree
-   carries one, the design licence decides it. `licence_state` asks it through its library
+   carries one, the design licence decides it. `licence_answer` asks it through its library
    function (`design::licence::assess_root`, the same judgement as `majordomus design
    licence`) and maps its verdict as agreed with I4336: `active` and `inactive` pass
    through, `refused` stays refused, and `not_judged`, or a question it cannot answer at

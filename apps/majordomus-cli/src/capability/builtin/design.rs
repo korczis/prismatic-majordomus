@@ -172,6 +172,35 @@ impl BenchmarkCases for ExplainTokenInput {
     }
 }
 
+/// The input of `design.kit`: the licence evidence a licensed marker is judged by, or none
+/// to read the policy's.
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct KitInput {
+    /// A kit-evidence/v1 file, as the caller names it (CI points this at the file it decoded
+    /// `MAJORDOMUS_KIT_EVIDENCE_<KIT>` into through the shell's `mj_fleet_design_judge`).
+    /// Absent reads the policy's `ui.evidence` entries under `$HOME`.
+    /// A file whose leading comment `# kit: <id>` names another kit than the profile judges
+    /// nothing.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub evidence: Option<String>,
+}
+
+impl BenchmarkCases for KitInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![
+            NamedCase::new("policy", KitInput { evidence: None }),
+            // a file of the caller's: in a tree that adopts no kit it is never opened
+            NamedCase::new(
+                "evidence",
+                KitInput {
+                    evidence: Some("kit-evidence.tsv".into()),
+                },
+            ),
+        ]
+    }
+}
+
 /// The input of `design.kit.adopt`: which kit profile to declare in the repository.
 #[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -325,10 +354,11 @@ fn kit_share(ctx: &Context, root: &std::path::Path) -> Result<std::path::PathBuf
         })
 }
 
-fn kit_check(ctx: &Context, _: Empty) -> Result<KitReport, CapabilityError> {
+fn kit_check(ctx: &Context, input: KitInput) -> Result<KitReport, CapabilityError> {
     let root = std::path::PathBuf::from(&ctx.index.repository.root);
     let share = kit_share(ctx, &root)?;
-    kit::inspect(&root, &share).map_err(CapabilityError::Internal)
+    let evidence = input.evidence.as_deref().map(std::path::Path::new);
+    kit::inspect(&root, &share, evidence).map_err(CapabilityError::Internal)
 }
 
 fn kit_adopt(ctx: &Context, input: KitAdoptInput) -> Result<AdoptReport, CapabilityError> {
@@ -477,8 +507,8 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "design.kit",
                 title: "Whether the interface is built on the kit",
-                description: "The supervised repository's user interface judged against the kit profile its policy's `ui.kit` names (flowbite-pro when it names none), from markers in the tree and never the kit's own source: S0 whether there is an interface at all and its surfaces (the root's manifest or the one in assets/, every workspace the root manifest or pnpm-workspace.yaml declares, every nested app manifest with markup in its own subtree outside examples, fixtures, tests, vendor, docs, deps and priv; Phoenix LiveView in mix.exs, HEEx or HTML templates, a Next.js root layout; published pages: a root index.html, pages under site/, www/, public/, under a directory a Pages workflow or a deploy or build script publishes, and under docs/ when it is published), any other manifest with UI packages being a notice and never a finding; S1 the kit's package in each surface, its React binding for React and Next.js, and the kit in use in the surface's own files (an attribute the kit's JavaScript drives, a flowbite-react component, a call of the kit's API), because wiring alone passes nothing; S2 the Tailwind plugin and source (Tailwind 4's @plugin and @source, Tailwind 3's config), a Play CDN or a CDN-only kit being a finding; S3 the kit's JavaScript behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute, a script that reads them itself being a re-implementation; S4 no other kit (daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui and Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation, Materialize), Alpine.js reported and not refused; S5 the shell on every root layout: a fixed top navbar, an aside labelled Sidebar that both drawer attributes name, a breadcrumb, and the page, surface and border roles, a published site's layout being judged by a navbar and a footer instead; the layouts, the roles and the marketing layouts are the profile's alone. Each finding names its signal, path, evidence and remedy; each exemption the policy declares under `ui.exempt`, exactly `{path, because}`, moves every finding at its path and names its reason and how many findings it covered. A licensed kit's profile declares its licensed markers (a distribution directory, a manifest named after a Pro product, a dependency on a Pro package), and where the tree carries one the design licence decides it: active passes, while inactive, refused or not judged is a finding no exemption moves, since a variant the judge cannot decide is never a pass. A repository without an interface passes vacuously; a policy that cannot be read is `bad_policy` and judges nothing. Reads the repository's files (in a Git work tree the tracked ones and the untracked ones Git does not ignore; a submodule or a nested repository is named in a notice and judged in its own repository), skipping dependencies and build output and listing vendored directories by path only; no build and no network.",
-                input: Empty,
+                description: "The supervised repository's user interface judged against the kit profile its policy's `ui.kit` names (flowbite-pro when it names none), from markers in the tree and never the kit's own source: S0 whether there is an interface at all and its surfaces (the root's manifest or the one in assets/, every workspace the root manifest or pnpm-workspace.yaml declares, every nested app manifest with markup in its own subtree outside examples, fixtures, tests, vendor, docs, deps and priv; Phoenix LiveView in mix.exs, HEEx or HTML templates, a Next.js root layout; published pages: a root index.html, pages under site/, www/, public/, under a directory a Pages workflow or a deploy or build script publishes, and under docs/ when it is published), any other manifest with UI packages being a notice and never a finding; S1 the kit's package in each surface, its React binding for React and Next.js, and the kit in use in the surface's own files (an attribute the kit's JavaScript drives, a flowbite-react component, a call of the kit's API), because wiring alone passes nothing; S2 the Tailwind plugin and source (Tailwind 4's @plugin and @source, Tailwind 3's config), a Play CDN or a CDN-only kit being a finding; S3 the kit's JavaScript behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute, a script that reads them itself being a re-implementation; S4 no other kit (daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui and Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation, Materialize), Alpine.js reported and not refused; S5 the shell on every root layout: a fixed top navbar, an aside labelled Sidebar that both drawer attributes name, a breadcrumb, and the page, surface and border roles, a published site's layout being judged by a navbar and a footer instead; the layouts, the roles and the marketing layouts are the profile's alone. Each finding names its signal, path, evidence and remedy; each exemption the policy declares under `ui.exempt`, exactly `{path, because}`, moves every finding at its path and names its reason and how many findings it covered. A licensed kit's profile declares its licensed markers (a distribution directory, a manifest named after a Pro product, a dependency on a Pro package), and where the tree carries one the design licence decides it: active passes, while inactive, refused or not judged is a finding no exemption moves, since a variant the judge cannot decide is never a pass. The licence evidence is the kit-evidence/v1 file the input names (in CI the file the shell's `mj_fleet_design_judge` decoded `MAJORDOMUS_KIT_EVIDENCE_<KIT>` into; this capability reads a file and never the environment), else the policy's `~`-relative `ui.evidence` entries; a file whose leading comment `# kit: <id>` names another kit is not judged, and `licence.reason` says why the licence answered as it did, naming a file and a line at most and never what the evidence holds. A repository without an interface passes vacuously; a policy that cannot be read is `bad_policy` and judges nothing; a policy that still carries the retired top-level `design_kit:` block earns a notice naming `ui.kit` as its replacement. Reads the repository's files (in a Git work tree the tracked ones and the untracked ones Git does not ignore; a submodule or a nested repository is named in a notice and judged in its own repository), skipping dependencies and build output and listing vendored directories by path only; no build and no network.",
+                input: KitInput,
                 output: KitReport,
                 stability: Stability::BehaviorallyVerified,
                 exposure: Exposure {
@@ -729,7 +759,7 @@ mod tests {
         let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
         let ctx = context_with_share(&repo);
         // a synthetic repository has no interface: the rule holds vacuously
-        let report = kit_check(&ctx, Empty::default()).expect("a judgement");
+        let report = kit_check(&ctx, KitInput::default()).expect("a judgement");
         assert_eq!(report.verdict, kit::KitVerdict::NoUi, "{report:#?}");
         assert!(!report.ui);
         assert!(report.passes);

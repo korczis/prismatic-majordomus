@@ -44,7 +44,7 @@ fn run_to(args: DesignArgs, w: &mut dyn Write) -> Result<u8> {
     };
     match kit_args.action {
         None => {
-            let value = judged(&args.repo)?;
+            let value = judged(&args.repo, kit_args.evidence.as_deref())?;
             let report: KitReport =
                 serde_json::from_value(value.clone()).map_err(|e| Error::Protocol {
                     reason: format!(
@@ -71,16 +71,24 @@ fn run_to(args: DesignArgs, w: &mut dyn Write) -> Result<u8> {
 }
 
 /// The judgement, from the registry when the repository is supervised and from the same
-/// function the capability calls when it is not.
-fn judged(repo: &RepoArgs) -> Result<Value> {
+/// function the capability calls when it is not. `evidence` is the kit-evidence/v1 file
+/// `--evidence` names, handed over as the caller named it.
+fn judged(repo: &RepoArgs, evidence: Option<&Path>) -> Result<Value> {
     match App::load(repo) {
-        Ok(app) => execute(&app.context, &["design", "kit"], json!({})),
+        Ok(app) => {
+            let input = match evidence {
+                Some(e) => json!({ "evidence": e.to_string_lossy() }),
+                None => json!({}),
+            };
+            execute(&app.context, &["design", "kit"], input)
+        }
         Err(Error::RepositoryNotFound { start }) => {
             let root = toplevel(&start);
             let share = crate::share::Share::locate(repo.share.as_deref(), &root)?;
-            let report = kit::inspect(&root, share.dir()).map_err(|reason| Error::Protocol {
-                reason: format!("design kit: {reason}"),
-            })?;
+            let report =
+                kit::inspect(&root, share.dir(), evidence).map_err(|reason| Error::Protocol {
+                    reason: format!("design kit: {reason}"),
+                })?;
             serde_json::to_value(&report).map_err(|e| Error::Protocol {
                 reason: e.to_string(),
             })
@@ -185,7 +193,7 @@ fn render(report: &KitReport) -> String {
     }
     if let Some(l) = &report.licence {
         out.push(format!(
-            "licence: {:?}, {:?} ({}){}",
+            "licence: {:?}, {:?} ({}){}{}",
             l.variant,
             l.state,
             l.evidence,
@@ -193,7 +201,11 @@ fn render(report: &KitReport) -> String {
                 String::new()
             } else {
                 format!("; licensed markers: {}", l.markers.join("; "))
-            }
+            },
+            l.reason
+                .as_ref()
+                .map(|r| format!("; {r}"))
+                .unwrap_or_default()
         ));
     }
     for s in &report.surfaces {
@@ -335,6 +347,7 @@ mod tests {
             state: kit::LicenceState::NotJudged,
             variant: kit::KitVariant::Undecided,
             markers: vec!["flowbite-pro-x/README.md (a distribution)".into()],
+            reason: Some("no licence evidence here".into()),
         });
         let t = render(&r);
         assert!(t.contains("NOTICE  examples/x/package.json"), "{t}");
@@ -342,7 +355,7 @@ mod tests {
         assert!(
             t.contains(
                 "licence: Undecided, NotJudged (kit-evidence/v1); licensed markers: flowbite-pro-x"
-            ),
+            ) && t.contains("(a distribution); no licence evidence here"),
             "{t}"
         );
         assert!(

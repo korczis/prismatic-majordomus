@@ -26,6 +26,14 @@
 #   ... then check                     clean under its own ui block
 #   a licensed marker once adopted     exit 10, an S1 finding: a public tree with a UI and no
 #                                      evidence is not judged, so the licence is undecided
+#   ... with --evidence                exit 0: the licence is active and the marker licensed;
+#                                      another kit's file is not judged; no line of the
+#                                      evidence reaches any output
+#   ... from the CI secret             mj_fleet_design_judge (lib/fleet.sh) decodes
+#                                      MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO, passes it, removes
+#                                      it; another kit's or an empty one fails closed (10); a
+#                                      malformed one exits 2 naming the variable, not the value
+#   a retired design_kit: block        a notice naming ui.kit
 #   an exemption with its reason       ui.exempt {path, because}: every finding at the path
 #                                      moves to the exempted list, exit 0, doctor accepts it
 #   adopt over a stale rule            the rule is brought up to the template, and its
@@ -226,6 +234,80 @@ out="$(kit)" || true
 printf '%s' "$out" | jq -e '.licence.state == "not_judged" and .licence.variant == "undecided"' >/dev/null \
   || { echo "    the licence is not undecided: $out"; exit 1; }
 expect S1 "$pro" "a licensed marker nobody could judge"
+
+# ---------------------------------------------------------------- the licence evidence
+# The design licence judges a licensed marker by a kit-evidence/v1 file, which the executable
+# reads through --evidence and never from the environment. In CI the secret
+# MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO carries base64(gzip(kit-evidence/v1)), and the shell's
+# seam (mj_fleet_design_judge, lib/fleet.sh) decodes it into a private file and hands that
+# over first. Its one
+# fingerprint is of no file of the tree: the tree is clean, so the licence is active and the
+# licensed marker licensed. No line of the evidence, nor the secret, ever reaches an output.
+command -v gzip >/dev/null 2>&1 && command -v base64 >/dev/null 2>&1 || { echo "    gzip and base64 are needed"; exit 1; }
+EV="$S/evidence.tsv"
+digest="$(printf 'a licensed sidebar\n' | mj_sha256_hex)"
+printf '# kit-evidence/v1\n# kit: flowbite-pro\n%s\t%s\tpro/secret-sidebar.html\n' "$digest" "$digest" > "$EV"
+SECRET="$(gzip -c "$EV" | base64 | tr -d '\n')"
+leaks() { # FILE... -> 0 when any holds a line of the evidence or the secret
+  grep -qF -e "$digest" -e "${digest:0:16}" -e secret-sidebar -e "$SECRET" "$@"
+}
+mkdir -p "$(dirname "$pro")"
+printf 'the distribution\n' > "$pro"
+"$RB" design kit --check --evidence "$EV" --format json >"$S/out" 2>"$S/err" && code=0 || code=$?
+[ "$code" = 0 ] || { echo "    a licensed marker with the evidence held exited $code: $(cat "$S/out" "$S/err")"; exit 1; }
+jq -e '.verdict == "clean" and .licence.state == "active" and .licence.variant == "licensed"' "$S/out" >/dev/null \
+  || { echo "    the evidence did not make the licence active: $(cat "$S/out")"; exit 1; }
+"$RB" design kit --check --evidence "$EV" >"$S/text" 2>&1 || { echo "    the text form refused: $(cat "$S/text")"; exit 1; }
+! leaks "$S/out" "$S/err" "$S/text" || { echo "    the evidence reached the output"; exit 1; }
+
+# without it the licence owes a judgement nobody can give: undecided, exit 10
+"$RB" design kit --check --format json >"$S/out" 2>"$S/err" && code=0 || code=$?
+[ "$code" = 10 ] && jq -e '.licence.state == "not_judged" and .licence.variant == "undecided"' "$S/out" >/dev/null \
+  || { echo    "    without evidence the check is not undecided with exit 10 (exit $code): $(cat "$S/out")"; exit 1; }
+
+# a file whose leading comment names another kit judges nothing
+sed 's/^# kit: flowbite-pro$/# kit: examplekit/' "$EV" > "$S/other.tsv"
+"$RB" design kit --check --evidence "$S/other.tsv" --format json >"$S/out" 2>"$S/err" && code=0 || code=$?
+[ "$code" = 10 ] && jq -e '.licence.state == "not_judged" and (.licence.reason | test("another kit"))' "$S/out" >/dev/null \
+  || { echo "    another kit's evidence was taken for this one's (exit $code): $(cat "$S/out")"; exit 1; }
+
+# through the shell's seam, as a CI step runs it: the secret is decoded, handed over, removed
+mkdir -p "$S/tmpd"
+ci_kit() {
+  TMPDIR="$S/tmpd" MAJORDOMUS_BIN="$RB" MJ_BIN_DIR="$ROOT/bin" MJ_LIB_DIR="$ROOT/lib" \
+    bash -c '. "$MJ_LIB_DIR/common.sh" && . "$MJ_LIB_DIR/fleet.sh" && mj_fleet_design_judge "$@"' \
+    ci_kit kit --check --format json "$@" >"$S/out" 2>"$S/err"
+}
+MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO="$SECRET" ci_kit && code=0 || code=$?
+[ "$code" = 0 ] && jq -e '.licence.state == "active" and .passes' "$S/out" >/dev/null \
+  || { echo "    the launcher did not judge from the secret (exit $code): $(cat "$S/out" "$S/err")"; exit 1; }
+! leaks "$S/out" "$S/err" || { echo "    the secret or the evidence reached the output"; exit 1; }
+[ -z "$(find "$S/tmpd" -name 'mj.kitev.*' 2>/dev/null)" ] || { echo "    the decoded evidence was left behind"; exit 1; }
+# another kit's variable, or an empty one, hands nothing over: it fails closed
+MAJORDOMUS_KIT_EVIDENCE_EXAMPLEKIT="$SECRET" ci_kit && code=0 || code=$?
+[ "$code" = 10 ] || { echo "    another kit's secret judged this kit (exit $code): $(cat "$S/out")"; exit 1; }
+MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO="" ci_kit && code=0 || code=$?
+[ "$code" = 10 ] || { echo "    an empty secret did not fail closed (exit $code): $(cat "$S/out")"; exit 1; }
+# a malformed value is exit 2, naming the variable and never the value
+MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO="not-evidence-0f1e2d3c" ci_kit && code=0 || code=$?
+[ "$code" = 2 ] || { echo "    a malformed secret exited $code, not 2: $(cat "$S/out" "$S/err")"; exit 1; }
+grep -q 'MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO does not hold base64(gzip(kit-evidence/v1))' "$S/err" \
+  || { echo "    the refusal does not name the variable: $(cat "$S/err")"; exit 1; }
+! grep -qF 'not-evidence-0f1e2d3c' "$S/out" "$S/err" || { echo "    the malformed value was printed"; exit 1; }
+# an --evidence the caller gives wins over the secret
+MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO="not-evidence-0f1e2d3c" ci_kit --evidence "$EV" \
+  || { echo "    an explicit --evidence was not the one judged: $(cat "$S/out" "$S/err")"; exit 1; }
+rm -rf design
+
+# ---------------------------------------------------------------- the retired block
+# A policy that still carries the top-level design_kit: block, which ui.kit replaced, is
+# judged under its ui: block and told so in a notice.
+printf 'design_kit:\n  profile: flowbite-pro\n' >> .ai/repo/policy.yaml
+out="$(kit)" && code=0 || code=$?
+[ "$code" = 0 ] || { echo "    the retired block changed the verdict (exit $code): $out"; exit 1; }
+printf '%s' "$out" | jq -e '[.notices[] | select(test("retired design_kit: block") and test("ui.kit"))] | length == 1' >/dev/null \
+  || { echo "    the retired design_kit block is not named in a notice: $out"; exit 1; }
+git checkout -q -- .
 
 # The rule's last section is the repository's: over a stale rule, adoption brings the rest
 # up to the template and keeps that section as the repository wrote it.

@@ -596,6 +596,12 @@ pub enum DesignCommand {
 /// let DesignCommand::Kit(kit) = args.command else { panic!("not design kit") };
 /// let kit: KitArgs = kit;
 /// assert!(!kit.check, "without --check the findings are reported and the exit is 0");
+/// assert!(kit.evidence.is_none(), "without --evidence the policy's ui.evidence is read");
+///
+/// let cli = Cli::try_parse_from(["majordomus", "design", "kit", "--check", "--evidence", "ev.tsv"]).unwrap();
+/// let Command::Design(args) = cli.command else { panic!("not the design command") };
+/// let DesignCommand::Kit(kit) = args.command else { panic!("not design kit") };
+/// assert_eq!(kit.evidence.as_deref(), Some(std::path::Path::new("ev.tsv")));
 /// ```
 pub struct KitArgs {
     #[command(subcommand)]
@@ -605,6 +611,10 @@ pub struct KitArgs {
     /// Exit 10 when a finding stands, so CI and the pre-push hook refuse it
     #[arg(long)]
     pub check: bool,
+
+    /// The kit-evidence/v1 file the design licence judges a licensed marker by (in CI, the file the shell's mj_fleet_design_judge decoded MAJORDOMUS_KIT_EVIDENCE_<KIT> into); absent reads the policy's ui.evidence entries under $HOME
+    #[arg(long, value_name = "FILE")]
+    pub evidence: Option<PathBuf>,
 }
 
 #[derive(Debug, Subcommand)]
@@ -6191,6 +6201,13 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["design", "kit", "--check", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/ui", "/findings", "/exemptions", "/verdict", "/passes"]),
+        }, ExampleDoc {
+            id: "design-kit-evidence",
+            title: "The kit judged with the licence evidence CI decoded",
+            description: "`--evidence` names the kit-evidence/v1 file the design licence judges a licensed marker by, as `design licence --evidence` does; the executable reads that file and never the environment. In CI the shell's `mj_fleet_design_judge` (lib/fleet.sh) decodes `MAJORDOMUS_KIT_EVIDENCE_<KIT>` (the kit `ui.kit` names) into a private temporary file, passes its path and removes it afterwards; a value that is not base64(gzip(kit-evidence/v1)) exits 2 naming the variable, never its value. Without evidence, a public tree that adopts a licensed kit and carries a licensed marker is undecided and exits 10 under `--check`: it fails closed. A file whose leading comment says `# kit: <id>` for another kit judges nothing. `/licence/state` and `/licence/reason` say what the design licence answered and why; this repository adopts no kit, so the licence is `inactive` and the file is never opened.",
+            argv: &["design", "kit", "--check", "--evidence", "kit-evidence.tsv", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/licence/state", "/licence/reason", "/verdict", "/passes"]),
         }],
     },
     CommandExamples {

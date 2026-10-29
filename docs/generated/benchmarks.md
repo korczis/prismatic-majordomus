@@ -52,7 +52,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `deploy.slug` | deploy | command | — | waived | — | — | — |
 | `design.contrast` | design | query | — | covered | covered | covered | `default` |
 | `design.explain` | design | query | — | covered | covered | covered | `role`, `state` |
-| `design.kit` | design | query | — | covered | covered | covered | `default` |
+| `design.kit` | design | query | — | covered | covered | covered | `policy`, `evidence` |
 | `design.kit.adopt` | design | command | — | waived | — | — | — |
 | `design.licence` | design | query | — | covered | covered | — | `policy` |
 | `design.system` | design | query | — | covered | covered | covered | `default` |

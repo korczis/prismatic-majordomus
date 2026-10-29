@@ -329,6 +329,21 @@ its verdict as `active`, `inactive`, `refused` or `not_judged`. Only `active` pa
 UI and no evidence on this machine) is undecided, a finding that no exemption moves. The
 same answer is `GET /api/v1/design/kit` and the MCP tool `majordomus_design_kit`.
 
+The evidence is a kit-evidence/v1 file. `--evidence <file>` names it (the input `evidence`
+over MCP and HTTP). Without it, the judge reads the policy's `~`-relative `ui.evidence`
+entries. The executable reads a file and never the environment. In CI the secret
+`MAJORDOMUS_KIT_EVIDENCE_<KIT>` holds base64(gzip(kit-evidence/v1)). For flowbite-pro the
+name is `MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO`. The shell's `mj_fleet_design_judge`
+(`lib/fleet.sh`) handles it for `design kit` and `design licence`. It decodes the secret of
+the kit `ui.kit` names into a private temporary file, passes that file as `--evidence`, and
+removes it after the run. A value that is not kit-evidence/v1 exits 2 and names the
+variable, never its value. If the secret is unset, empty or for another kit, nothing is
+handed over, and a public tree that owes a judgement fails closed. A file whose leading
+comment `# kit: <id>` names another kit is `not_judged`. `licence.reason` says why the
+licence answered as it did. It names a file and a line at most, never what the evidence
+holds. A policy that still carries the retired top-level `design_kit:` block gets a notice
+naming `ui.kit` as its replacement.
+
 `adopt` writes the rule `project.ui-uses-flowbite-pro` from
 [the template](../share/design/kits/flowbite-pro.rule.md). It sets `ui.kit: flowbite-pro` in
 the `ui:` block of `.ai/repo/policy.yaml`, the block the design licence declares and the

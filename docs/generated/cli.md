@@ -6979,6 +6979,7 @@ majordomus design kit [OPTIONS] [COMMAND]
 | argument | value | default | description |
 |---|---|---|---|
 | `--check` | flag | — | Exit 10 when a finding stands, so CI and the pre-push hook refuse it |
+| `--evidence` | `<FILE>` | — | The kit-evidence/v1 file the design licence judges a licensed marker by (in CI, the file the shell's mj_fleet_design_judge decoded MAJORDOMUS_KIT_EVIDENCE_<KIT> into); absent reads the policy's ui.evidence entries under $HOME |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
@@ -6994,6 +6995,14 @@ Examples:
   ```
 
   Verified: exits 0; prints one JSON document carrying /ui, /findings, /exemptions, /verdict, /passes.
+
+- **The kit judged with the licence evidence CI decoded** — `--evidence` names the kit-evidence/v1 file the design licence judges a licensed marker by, as `design licence --evidence` does; the executable reads that file and never the environment. In CI the shell's `mj_fleet_design_judge` (lib/fleet.sh) decodes `MAJORDOMUS_KIT_EVIDENCE_<KIT>` (the kit `ui.kit` names) into a private temporary file, passes its path and removes it afterwards; a value that is not base64(gzip(kit-evidence/v1)) exits 2 naming the variable, never its value. Without evidence, a public tree that adopts a licensed kit and carries a licensed marker is undecided and exits 10 under `--check`: it fails closed. A file whose leading comment says `# kit: <id>` for another kit judges nothing. `/licence/state` and `/licence/reason` say what the design licence answered and why; this repository adopts no kit, so the licence is `inactive` and the file is never opened.
+
+  ```console
+  $ majordomus design kit --check --evidence kit-evidence.tsv --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /licence/state, /licence/reason, /verdict, /passes.
 
 <a id="majordomus-design-kit-adopt"></a>
 ## `majordomus design kit adopt`

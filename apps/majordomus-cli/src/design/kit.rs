@@ -26,7 +26,7 @@
 //!   repository: it is listed as a notice that names it, and nothing below it is read.
 //! - [`judge`] takes that tree, the profile, the repository's policy and the design
 //!   licence's [`LicenceState`] and returns a [`KitReport`]. It reads nothing else, so every
-//!   signal is unit-tested on a tree built in memory. [`licence_state`] asks the design
+//!   signal is unit-tested on a tree built in memory. [`licence_answer`] asks the design
 //!   licence (I4336) through its library function.
 //!
 //! The signals:
@@ -599,7 +599,7 @@ fn import_pattern(packages: &[String]) -> Result<Option<Regex>, String> {
 // ------------------------------------------------------------------ the licence
 
 /// What the design licence (I4336, [`crate::design::licence`]) says about a repository,
-/// as the judge of a licensed kit's markers reads it. [`licence_state`] maps its verdict.
+/// as the judge of a licensed kit's markers reads it. [`licence_answer`] maps its verdict.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum LicenceState {
@@ -664,17 +664,48 @@ pub fn licence_state_of(verdict: licence::Verdict) -> LicenceState {
     }
 }
 
-/// What the design licence says for `profile` in the repository at `root`, asked through
-/// its library function ([`licence::assess_root`]) with the policy's `ui:` block, the
-/// evidence its `ui.evidence` entries name under `$HOME`, and `MAJORDOMUS_VISIBILITY`. A
-/// free kit's profile owes no answer; an evidence format the design licence does not read,
-/// and a question it cannot answer at all, are `not_judged`, never a pass.
-pub fn licence_state(root: &Path, profile: &Profile) -> LicenceState {
+/// What the design licence says for `profile` in the repository at `root`, and why when it
+/// says, asked through its library function ([`licence::assess_root`]) with the policy's
+/// `ui:` block, the evidence file `evidence` names (the `--evidence` option; in CI the file
+/// the shell decoded `MAJORDOMUS_KIT_EVIDENCE_<KIT>` into) or else the evidence its
+/// `ui.evidence` entries name under `$HOME`, and `MAJORDOMUS_VISIBILITY`. A free kit's
+/// profile owes no answer; an evidence format the design licence does not read, a file that
+/// says it is another kit's, and a question it cannot answer at all, are `not_judged`, never
+/// a pass. The reason is that of an inactive or unjudged licence, or the error that stopped
+/// it; it names a file and a line at most, never what a line of evidence holds.
+pub fn licence_answer(
+    root: &Path,
+    profile: &Profile,
+    evidence: Option<&Path>,
+) -> (LicenceState, Option<String>) {
     let Some(markers) = &profile.licence else {
-        return LicenceState::NotJudged;
+        return (
+            LicenceState::NotJudged,
+            Some(format!("the profile {} declares no licence", profile.id)),
+        );
     };
     if markers.evidence != licence::EVIDENCE_SCHEMA {
-        return LicenceState::NotJudged;
+        return (
+            LicenceState::NotJudged,
+            Some(format!(
+                "the profile names {} evidence, which the design licence does not read",
+                markers.evidence
+            )),
+        );
+    }
+    let named = evidence.map(|p| p.to_string_lossy().into_owned());
+    if let (Some(path), Some(name)) = (evidence, &named) {
+        if let Some(kit) = evidence_kit(path) {
+            if kit != profile.id {
+                return (
+                    LicenceState::NotJudged,
+                    Some(format!(
+                        "{name} is the licence evidence of another kit, not of {}",
+                        profile.id
+                    )),
+                );
+            }
+        }
     }
     let policy = std::fs::read_to_string(root.join(POLICY)).ok();
     let home = std::env::var_os("HOME").map(std::path::PathBuf::from);
@@ -682,13 +713,38 @@ pub fn licence_state(root: &Path, profile: &Profile) -> LicenceState {
     match licence::assess_root(
         root,
         policy.as_deref(),
-        None,
+        named.as_deref(),
         home.as_deref(),
         tightened.as_deref(),
     ) {
-        Ok(report) => licence_state_of(report.verdict),
-        Err(_) => LicenceState::NotJudged,
+        Ok(report) => (licence_state_of(report.verdict), report.reason),
+        Err(e) => (LicenceState::NotJudged, Some(e.to_string())),
     }
+}
+
+/// The line of a kit-evidence/v1 file that says whose evidence it is: a comment
+/// `# kit: <id>` among the comments before its first fingerprint. Comments are free text
+/// to the design licence, so a file without one is anybody's and one with one is that
+/// kit's alone. Only that line is read back, and only to be compared.
+pub const EVIDENCE_KIT_COMMENT: &str = "# kit:";
+
+/// The kit a kit-evidence/v1 file names in its leading comments, when it names one. A file
+/// that cannot be read names none, and the design licence then says why it cannot read it.
+fn evidence_kit(path: &Path) -> Option<String> {
+    let text = std::fs::read_to_string(path).ok()?;
+    for line in text.lines() {
+        let line = line.trim_end_matches('\r');
+        if line.trim().is_empty() {
+            continue;
+        }
+        if !line.starts_with('#') {
+            return None;
+        }
+        if let Some(kit) = line.strip_prefix(EVIDENCE_KIT_COMMENT) {
+            return Some(kit.trim().to_string());
+        }
+    }
+    None
 }
 
 /// How the tree stands against a licensed kit's licence.
@@ -702,6 +758,11 @@ pub struct KitLicence {
     pub variant: KitVariant,
     /// Where each licensed marker was seen, with its name.
     pub markers: Vec<String>,
+    /// Why the design licence answered as it did, when it says: the reason of an inactive
+    /// or unjudged licence, or what stopped it. It names a file and a line at most, never
+    /// what the evidence holds.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
 }
 
 // ------------------------------------------------------------------ the policy
@@ -2532,6 +2593,7 @@ impl Judgement<'_> {
                 state,
                 variant,
                 markers,
+                reason: None,
             },
             findings,
         ))
@@ -2667,15 +2729,20 @@ pub fn judge(
 /// is answered as `bad_policy` with every reason; the error side is for what is never the
 /// repository's fault: the distribution's own profile that cannot be read, a root that
 /// cannot be walked.
-pub fn inspect(root: &Path, share: &Path) -> Result<KitReport, String> {
+pub fn inspect(root: &Path, share: &Path, evidence: Option<&Path>) -> Result<KitReport, String> {
     let policy_text = match std::fs::read_to_string(root.join(POLICY)) {
         Ok(text) => Some(text),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => None,
         Err(e) => return Err(format!("{POLICY}: {e}")),
     };
+    let retired = retired_notice(policy_text.as_deref());
+    let with_notice = |mut report: KitReport| {
+        report.notices.extend(retired.clone());
+        report
+    };
     let policy = match KitPolicy::from_policy_text(policy_text.as_deref()) {
         Ok(policy) => policy,
-        Err(errors) => return Ok(KitReport::bad_policy(DEFAULT_PROFILE, errors)),
+        Err(errors) => return Ok(with_notice(KitReport::bad_policy(DEFAULT_PROFILE, errors))),
     };
     let profile = match Profile::load(share, &policy.profile) {
         Ok(profile) => profile,
@@ -2684,7 +2751,7 @@ pub fn inspect(root: &Path, share: &Path) -> Result<KitReport, String> {
                 "{POLICY_KEY}.kit names {id}, and the distribution ships no {}",
                 profile_source(&id)
             );
-            return Ok(KitReport::bad_policy(&id, vec![reason]));
+            return Ok(with_notice(KitReport::bad_policy(&id, vec![reason])));
         }
         Err(ProfileError::Unknown(id)) => {
             return Err(format!("the distribution ships no {}", profile_source(&id)))
@@ -2692,8 +2759,27 @@ pub fn inspect(root: &Path, share: &Path) -> Result<KitReport, String> {
         Err(ProfileError::Invalid(reason)) => return Err(reason),
     };
     let tree = Tree::read(root, &profile).map_err(|e| format!("{}: {e}", root.display()))?;
-    let licence = licence_state(root, &profile);
-    judge(&tree, &profile, &policy, licence)
+    let (licence, reason) = licence_answer(root, &profile, evidence);
+    let mut report = judge(&tree, &profile, &policy, licence)?;
+    if let Some(l) = &mut report.licence {
+        l.reason = reason;
+    }
+    Ok(with_notice(report))
+}
+
+/// The policy key the kit lived under before the design licence's `ui:` block held it.
+pub const RETIRED_POLICY_KEY: &str = "design_kit";
+
+/// The notice a policy that still carries the retired top-level `design_kit:` block earns:
+/// nothing reads it, and `ui.kit` and `ui.exempt` are where its kit and exemptions belong.
+/// A policy that does not parse earns none here; its reading says why.
+pub fn retired_notice(policy_text: Option<&str>) -> Option<String> {
+    let map = yaml::parse_mapping(policy_text?).ok()?;
+    map.contains_key(RETIRED_POLICY_KEY).then(|| {
+        format!(
+            "{POLICY} still carries the retired {RETIRED_POLICY_KEY}: block, which nothing reads; its replacement is {POLICY_KEY}.kit (and {POLICY_KEY}.exempt for exemptions): move the kit there and remove the block"
+        )
+    })
 }
 
 // ------------------------------------------------------------------ adoption
@@ -3934,7 +4020,7 @@ mod tests {
                 "querySelectorAll('[data-drawer-toggle]')",
             ),
         ]);
-        let r = inspect(dir.path(), &share).unwrap();
+        let r = inspect(dir.path(), &share, None).unwrap();
         assert!(r.passes, "{r:#?}");
         assert!(!r.policy_declared);
 
@@ -3944,7 +4030,7 @@ mod tests {
             "ui:\n  kit: flowbite-pro\n  exempt:\n    - path: index.html\n",
         )
         .unwrap();
-        let r = inspect(dir.path(), &share).unwrap();
+        let r = inspect(dir.path(), &share, None).unwrap();
         assert_eq!(r.verdict, KitVerdict::BadPolicy);
         assert!(!r.passes);
         assert!(r.policy_errors[0].contains("because"));
@@ -3954,21 +4040,21 @@ mod tests {
         );
 
         std::fs::write(dir.path().join(POLICY), "ui:\n  kit: no-such-kit\n").unwrap();
-        let r = inspect(dir.path(), &share).unwrap();
+        let r = inspect(dir.path(), &share, None).unwrap();
         assert_eq!(r.verdict, KitVerdict::BadPolicy);
         assert!(r.policy_errors[0].contains("ui.kit names no-such-kit"));
         assert!(r.policy_errors[0].contains("share/design/kits/no-such-kit.yaml"));
 
         std::fs::write(dir.path().join(POLICY), "ui:\n  kit: flowbite-pro\n").unwrap();
-        let r = inspect(dir.path(), &share).unwrap();
+        let r = inspect(dir.path(), &share, None).unwrap();
         assert!(r.policy_declared && r.passes, "{r:#?}");
 
         std::fs::remove_file(dir.path().join(POLICY)).unwrap();
         let empty = tempfile::tempdir().unwrap();
-        assert!(inspect(dir.path(), empty.path())
+        assert!(inspect(dir.path(), empty.path(), None)
             .unwrap_err()
             .contains("ships no"));
-        assert!(inspect(&dir.path().join("absent"), &share).is_err());
+        assert!(inspect(&dir.path().join("absent"), &share, None).is_err());
     }
 
     const POLICY_TEXT: &str = "version: 1\n\nenforcement:\n  - name: doctor-on-commit\n    path: majordomus\n    args: [doctor]\n    wired_by: git-hook:pre-commit\n\n# the projections\nprojections:\n  - provider: agents\n    target: AGENTS.md\n";
@@ -5154,15 +5240,15 @@ mod tests {
             ("generated/templates/page.html", "<html></html>"),
         ]);
         assert!(
-            inspect(dir.path(), &share).unwrap().ui,
+            inspect(dir.path(), &share, None).unwrap().ui,
             "walked, it is read"
         );
         git(dir.path(), &["init", "-q", "."]);
-        let r = inspect(dir.path(), &share).unwrap();
+        let r = inspect(dir.path(), &share, None).unwrap();
         assert!(!r.ui, "{r:#?}");
         // an untracked page Git does not ignore is the repository's
         std::fs::write(dir.path().join("index.html"), "<p></p>").unwrap();
-        assert!(inspect(dir.path(), &share).unwrap().ui);
+        assert!(inspect(dir.path(), &share, None).unwrap().ui);
         let profile = profile();
         assert!(Tree::read(dir.path(), &profile)
             .unwrap()
@@ -5303,7 +5389,7 @@ mod tests {
             "one below a skipped directory is not named: {tree:?}"
         );
         assert!(!tree.paths.iter().any(|p| p.starts_with("web")), "{tree:?}");
-        let r = inspect(dir.path(), &share).unwrap();
+        let r = inspect(dir.path(), &share, None).unwrap();
         assert!(!r.ui, "{r:#?}");
         let notice = r
             .notices
@@ -5325,7 +5411,7 @@ mod tests {
         );
         let tree = Tree::read(dir.path(), &profile).unwrap();
         assert_eq!(tree.nested, BTreeMap::from([("web".to_string(), true)]));
-        let r = inspect(dir.path(), &share).unwrap();
+        let r = inspect(dir.path(), &share, None).unwrap();
         assert!(
             r.notices
                 .iter()
@@ -5441,13 +5527,19 @@ mod tests {
         ]);
         git(dir.path(), &["init", "-q", "."]);
         git(dir.path(), &["add", "-A"]);
-        assert_eq!(licence_state(dir.path(), &profile), LicenceState::NotJudged);
+        assert_eq!(
+            licence_answer(dir.path(), &profile, None).0,
+            LicenceState::NotJudged
+        );
         // no kit declared: inactive, which leaves licensed markers unlicensed
         std::fs::write(dir.path().join(POLICY), "ui:\n  kit: \"\"\n").unwrap();
-        assert_eq!(licence_state(dir.path(), &profile), LicenceState::Inactive);
+        assert_eq!(
+            licence_answer(dir.path(), &profile, None).0,
+            LicenceState::Inactive
+        );
         // a tree git cannot list cannot be judged
         let bare = repository(&[(POLICY, "ui:\n  kit: flowbite-pro\n")]);
-        let state = licence_state(bare.path(), &profile);
+        let state = licence_answer(bare.path(), &profile, None).0;
         assert!(
             matches!(state, LicenceState::NotJudged | LicenceState::Inactive),
             "{state:?}"
@@ -5503,5 +5595,199 @@ mod tests {
         )
         .unwrap();
         assert_eq!(licence_state_of(report.verdict), LicenceState::NotJudged);
+    }
+
+    /// A public tree that adopts the kit, has a UI and carries a licensed marker, staged so
+    /// that the design licence can list it.
+    fn licensed_marker_tree() -> tempfile::TempDir {
+        let dir = repository(&[
+            (POLICY, "ui:\n  kit: flowbite-pro\n  visibility: public\n"),
+            ("package.json", PACKAGE),
+            ("src/input.css", STYLE),
+            ("src/main.js", SCRIPT),
+            ("index.html", LAYOUT),
+            (
+                "design/flowbite-pro-admin-dashboard-1.2.0/README.md",
+                "the distribution\n",
+            ),
+        ]);
+        for args in [&["init", "-q", "."][..], &["add", "-A"][..]] {
+            let ok = std::process::Command::new("git")
+                .arg("-C")
+                .arg(dir.path())
+                .args(args)
+                .env_remove("GIT_DIR")
+                .env_remove("GIT_WORK_TREE")
+                .env_remove("GIT_INDEX_FILE")
+                .status()
+                .unwrap()
+                .success();
+            assert!(ok, "git {args:?}");
+        }
+        dir
+    }
+
+    /// A kit-evidence/v1 file whose one fingerprint is no file of the tree, with `head` as
+    /// its leading comments.
+    fn evidence_file(dir: &Path, name: &str, head: &str) -> std::path::PathBuf {
+        let path = dir.join(name);
+        std::fs::write(
+            &path,
+            format!("{head}aaaaaaaaaaaaaaaa\tbbbbbbbbbbbbbbbb\tpro/secret-sidebar.html\n"),
+        )
+        .unwrap();
+        path
+    }
+
+    #[test]
+    fn the_evidence_file_decides_the_licence_of_a_licensed_marker() {
+        let share = crate::synthetic::crate_share();
+        let profile = profile();
+        let tree = licensed_marker_tree();
+        let held = tempfile::tempdir().unwrap();
+
+        // the file the CI secret was decoded into: judged, clean, so the licence is active
+        // and the licensed marker passes
+        let ours = evidence_file(
+            held.path(),
+            "ours.tsv",
+            "# kit-evidence/v1\n# kit: flowbite-pro\n",
+        );
+        assert_eq!(
+            licence_answer(tree.path(), &profile, Some(&ours)).0,
+            LicenceState::Active
+        );
+        let r = inspect(tree.path(), &share, Some(&ours)).unwrap();
+        let l = r
+            .licence
+            .as_ref()
+            .expect("a licensed kit's profile answers");
+        assert_eq!(
+            (l.state, l.variant),
+            (LicenceState::Active, KitVariant::Licensed),
+            "{r:#?}"
+        );
+        assert!(r.passes, "{r:#?}");
+        // a file that names no kit is anybody's, and judges as well
+        let anybody = evidence_file(held.path(), "anybody.tsv", "# kit-evidence/v1\n");
+        assert_eq!(
+            licence_answer(tree.path(), &profile, Some(&anybody)).0,
+            LicenceState::Active
+        );
+
+        // a file that says it is another kit's judges nothing: not judged, undecided
+        let other = evidence_file(
+            held.path(),
+            "other.tsv",
+            "# kit-evidence/v1\n# kit: examplekit\n",
+        );
+        let (state, reason) = licence_answer(tree.path(), &profile, Some(&other));
+        assert_eq!(state, LicenceState::NotJudged);
+        let reason = reason.expect("the reason is said");
+        assert!(
+            reason.contains("another kit") && reason.contains("flowbite-pro"),
+            "{reason}"
+        );
+        let r = inspect(tree.path(), &share, Some(&other)).unwrap();
+        let l = r.licence.as_ref().unwrap();
+        assert_eq!(
+            (l.state, l.variant),
+            (LicenceState::NotJudged, KitVariant::Undecided)
+        );
+        assert_eq!(r.verdict, KitVerdict::Findings);
+
+        // no file, and no ui.evidence: a public tree owes a judgement nobody can give
+        let (state, reason) = licence_answer(tree.path(), &profile, None);
+        assert_eq!(state, LicenceState::NotJudged);
+        assert!(
+            reason.unwrap().contains("no licence"),
+            "the reason says what is missing"
+        );
+        let r = inspect(tree.path(), &share, None).unwrap();
+        let l = r.licence.as_ref().unwrap();
+        assert_eq!(l.variant, KitVariant::Undecided, "{r:#?}");
+        assert!(!r.passes);
+
+        // a file that is not kit-evidence/v1 is not judged, and the reason names the file and
+        // the line, never what the line holds
+        let bad = held.path().join("bad.tsv");
+        std::fs::write(&bad, "# kit: flowbite-pro\nsupersecretvalue\n").unwrap();
+        let (state, reason) = licence_answer(tree.path(), &profile, Some(&bad));
+        assert_eq!(state, LicenceState::NotJudged);
+        let reason = reason.unwrap();
+        assert!(
+            reason.contains("bad.tsv") && reason.contains("line 2"),
+            "{reason}"
+        );
+        // and no answer carries a line of the evidence
+        for path in [&ours, &other, &bad] {
+            let text =
+                serde_json::to_string(&inspect(tree.path(), &share, Some(path)).unwrap()).unwrap();
+            for secret in [
+                "aaaaaaaaaaaaaaaa",
+                "bbbbbbbbbbbbbbbb",
+                "secret-sidebar",
+                "supersecretvalue",
+            ] {
+                assert!(
+                    !text.contains(secret),
+                    "{secret} reached the report: {text}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn the_kit_an_evidence_file_names_is_read_from_its_leading_comments() {
+        let held = tempfile::tempdir().unwrap();
+        let named = |text: &str| {
+            let path = held.path().join("e.tsv");
+            std::fs::write(&path, text).unwrap();
+            evidence_kit(&path)
+        };
+        assert_eq!(
+            named("# kit-evidence/v1\n# kit: flowbite-pro\nab\tcd\n").as_deref(),
+            Some("flowbite-pro")
+        );
+        assert_eq!(
+            named("\n#kit-evidence/v1\r\n# kit:  examplekit \r\nab\tcd\n").as_deref(),
+            Some("examplekit")
+        );
+        // a comment after the first fingerprint is no header
+        assert_eq!(named("# kit-evidence/v1\nab\tcd\n# kit: other\n"), None);
+        assert_eq!(named("ab\tcd\n"), None);
+        assert_eq!(evidence_kit(&held.path().join("absent.tsv")), None);
+    }
+
+    #[test]
+    fn a_retired_design_kit_block_is_a_notice_naming_ui_kit() {
+        assert_eq!(retired_notice(None), None);
+        assert_eq!(retired_notice(Some("ui:\n  kit: flowbite-pro\n")), None);
+        let notice = retired_notice(Some(
+            "design_kit:\n  profile: flowbite-pro\nui:\n  kit: \"\"\n",
+        ))
+        .expect("the retired block is named");
+        assert!(
+            notice.contains("design_kit:") && notice.contains("ui.kit"),
+            "{notice}"
+        );
+
+        let share = crate::synthetic::crate_share();
+        let dir = repository(&[(POLICY, "design_kit:\n  profile: flowbite-pro\n")]);
+        let r = inspect(dir.path(), &share, None).unwrap();
+        assert_eq!(r.verdict, KitVerdict::NoUi);
+        assert!(
+            r.notices.iter().any(|n| n.contains("retired design_kit")),
+            "{r:#?}"
+        );
+        // a bad policy carries it too, beside the reason nothing was judged
+        std::fs::write(
+            dir.path().join(POLICY),
+            "design_kit:\n  profile: flowbite-pro\nui:\n  kit: [x]\n",
+        )
+        .unwrap();
+        let r = inspect(dir.path(), &share, None).unwrap();
+        assert_eq!(r.verdict, KitVerdict::BadPolicy);
+        assert!(r.notices.iter().any(|n| n.contains("ui.kit")), "{r:#?}");
     }
 }
