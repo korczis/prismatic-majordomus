@@ -16,16 +16,26 @@
 //!
 //! Four reasons, and nothing else, end a run:
 //!
-//! - [`CancelReason::DuplicateRun`]: a `pull_request` run that waits with no job started
-//!   while an older run of the same pull request, branch and commit is in flight, or passed
-//!   and was created within [`TWIN_WINDOW_SECONDS`] of it, both first attempts. A train opened
+//! - [`CancelReason::DuplicateRun`]: a `pull_request` run that waits in its group with no job
+//!   created while an older run of the same pull request, branch and commit, created within
+//!   [`TWIN_WINDOW_SECONDS`] of it, is in flight and will reach its verdict. A train opened
 //!   with `--label train` is `opened` and `labeled` at once, and both events start validate:
 //!   6 of the 8 trains of 2026-10-28 had such a twin, and train 10b's (40713048283) held its
-//!   group for seven hours. Outside that burst a second run of a judged commit was asked for —
-//!   a reopen tests the head against a master that moved, a head that went A, B, A needs a
-//!   verdict of A again — and a judged failure is never the twin of a later run. A pull request
-//!   labelled [`FULL_LABEL`] asked for the second run, and so did a re-run (`run_attempt` above
-//!   one): both are held ([`HoldReason::FullRunRequested`], [`HoldReason::RerunRequested`]).
+//!   group for seven hours. Three limits keep the rule to that burst:
+//!   - *no job created*. The forge creates a run's jobs when its group admits it, and from then
+//!     on a cancel still runs its `if: always()` jobs: validate's required `ci` then writes a
+//!     newer check that is not a success over the pass of the twin it duplicated (#2678 at
+//!     3a45c8c7, 2026-10-29: run 40811621641, admitted when 40811610939 passed at 05:31:53Z, was
+//!     cancelled at 05:58Z and its `ci` failed, which blocked the pull request). So a twin is
+//!     never cancelled once admitted, and a judged run is never the older half of a pair: its
+//!     twin has been admitted by then.
+//!   - *the older run reaches its verdict*. When the older run is itself to be ended, now or
+//!     within [`TWIN_HORIZON_MINUTES`], by a bound or for being superseded, the twin is held
+//!     ([`HoldReason::EarlierRunEnds`]): cancelling both would leave the commit with no run.
+//!   - *one burst*. A run created later than the window was asked for — a reopen tests the head
+//!     against a master that moved, a label added hours later asks again — and so is a re-run
+//!     (`run_attempt` above one, [`HoldReason::RerunRequested`]) and any second run of a pull
+//!     request labelled [`FULL_LABEL`] ([`HoldReason::FullRunRequested`]).
 //! - [`CancelReason::SupersededBlocksSuccessor`]: a `pull_request` run of a workflow whose
 //!   concurrency group is one per pull request, whose head is no longer its pull request's
 //!   head, while a newer run of the same pull request waits in the same group. Cancelling it
@@ -77,13 +87,18 @@ pub const FULL_LABEL: &str = "ci:full";
 /// The branches of the landing seat's combined tops: never ended for waiting in the queue.
 pub const INTEGRATION_PREFIX: &str = "integration/";
 
-/// How close in time two first-attempt runs of one commit must have been created for the older
-/// one's verdict to make the newer one a duplicate: the `opened` and `labeled` runs of a train
-/// are one second apart. A judged run outside it is not a twin: a second run was asked for.
+/// How close in time two runs of one commit must have been created for the newer one to be the
+/// older one's duplicate: the `opened` and `labeled` runs of a train are one second apart. A
+/// run created later than this was asked for.
 pub const TWIN_WINDOW_SECONDS: u64 = 120;
 
 /// Minutes after which the newest successful supervision is reported as `supervise_stale`.
 pub const STALE_MINUTES: u64 = 30;
+
+/// How far ahead the older run of a twin is judged before the twin is cancelled: the longest a
+/// live supervisor goes between two passes ([`STALE_MINUTES`]). An older run that a bound would
+/// end by then keeps its twin, so that the next pass does not end the only run left.
+pub const TWIN_HORIZON_MINUTES: u64 = STALE_MINUTES;
 
 /// The finding of a supervisor whose newest success is older than [`STALE_MINUTES`].
 pub const SUPERVISE_STALE: &str = "supervise_stale";
@@ -167,13 +182,6 @@ impl RunObservation {
     /// Whether it waits rather than runs: in flight and not `in_progress`.
     pub fn waiting(&self) -> bool {
         self.in_flight() && self.status != "in_progress"
-    }
-
-    /// Whether it has already been judged: completed with a verdict, `success` or `failure`.
-    /// A cancelled or skipped run judged nothing.
-    pub fn judged(&self) -> bool {
-        self.status == "completed"
-            && matches!(self.conclusion.as_deref(), Some("success" | "failure"))
     }
 
     /// Whether `job` is one an earlier attempt left behind: completed, and started before this
@@ -330,15 +338,16 @@ pub fn read_model(root: &std::path::Path) -> Result<SuperviseModel, String> {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum CancelReason {
-    /// A pull request's first-attempt run that waits with no job started while an older run of
-    /// the same pull request, branch and commit is in flight, or passed within
-    /// [`TWIN_WINDOW_SECONDS`] of it, and the pull request is not labelled [`FULL_LABEL`].
+    /// A pull request's first-attempt run that waits with no job created while an older run of
+    /// the same pull request, branch and commit, created within [`TWIN_WINDOW_SECONDS`] of it,
+    /// is in flight and is not itself to be ended, and the pull request is not labelled
+    /// [`FULL_LABEL`].
     DuplicateRun {
         /// The pull request.
         pull_request: u64,
         /// The older run of the same commit.
         earlier: u64,
-        /// What the older run is: its status, or its conclusion once judged.
+        /// The older run's status.
         earlier_state: String,
     },
     /// A pull request's run of a head that is no longer the pull request's, while a newer run
@@ -458,6 +467,17 @@ pub enum HoldReason {
         pull_request: u64,
         /// The older run of the same commit.
         earlier: u64,
+    },
+    /// The twin of an older run of its commit that is itself to be ended, now or within
+    /// [`TWIN_HORIZON_MINUTES`]: cancelling both would leave the commit with no run, so this one
+    /// waits to take the older one's place.
+    EarlierRunEnds {
+        /// The pull request.
+        pull_request: u64,
+        /// The older run of the same commit.
+        earlier: u64,
+        /// Why the older run ends, as a [`CancelReason::word`].
+        ends_for: String,
     },
     /// A re-run (`run_attempt` above one) of a commit with an older run in flight: a person
     /// asked for it again.
@@ -623,39 +643,51 @@ fn successor<'a>(run: &RunObservation, n: u64, s: &Situation<'a>) -> Option<&'a 
         .max_by_key(|o| o.id)
 }
 
-/// Whether `o`, judged, is the twin of `run` from the one burst the duplicate rule exists for:
-/// both first attempts, created within [`TWIN_WINDOW_SECONDS`] of each other, and `o` passed.
-/// A judged failure is never the twin of a later run: a second run of it was asked for.
-fn burst_twin(o: &RunObservation, run: &RunObservation) -> bool {
-    let close = match (seconds(&o.created_at), seconds(&run.created_at)) {
-        (Some(a), Some(b)) => a.abs_diff(b) <= TWIN_WINDOW_SECONDS,
+/// Whether `a` and `b` were created within [`TWIN_WINDOW_SECONDS`] of each other: one burst.
+fn one_burst(a: &RunObservation, b: &RunObservation) -> bool {
+    match (seconds(&a.created_at), seconds(&b.created_at)) {
+        (Some(x), Some(y)) => x.abs_diff(y) <= TWIN_WINDOW_SECONDS,
         _ => false,
-    };
-    o.judged()
-        && o.conclusion.as_deref() == Some("success")
-        && o.run_attempt == 1
-        && run.run_attempt == 1
-        && close
+    }
 }
 
-/// The older run of the same pull request, branch and commit that `run` duplicates: in flight,
-/// or judged in the same burst ([`burst_twin`]); the oldest when there are several. A run of
-/// another branch is in another concurrency group and blocks nothing, whatever pull request
-/// the forge attributed it to.
+/// Whether `o` is a `pull_request` run of `run`'s workflow, branch and commit, other than it,
+/// in flight and of the same burst ([`one_burst`]). A run of another branch is in another
+/// concurrency group and blocks nothing, whatever pull request the forge attributed it to.
+fn same_burst(o: &RunObservation, run: &RunObservation) -> bool {
+    o.id != run.id
+        && o.workflow == run.workflow
+        && o.event == "pull_request"
+        && o.head_branch == run.head_branch
+        && o.head_sha == run.head_sha
+        && o.in_flight()
+        && one_burst(o, run)
+}
+
+/// The older run of pull request `n` that `run` duplicates: in flight and of the same burst
+/// ([`same_burst`]); the oldest when there are several. A judged run is never one: by the time a
+/// run is judged its twin has been admitted, and an admitted twin is never cancelled.
 fn earlier_twin<'a>(run: &RunObservation, n: u64, s: &Situation<'a>) -> Option<&'a RunObservation> {
     s.runs
         .iter()
-        .filter(|o| {
-            o.id != run.id
-                && o.workflow == run.workflow
-                && o.event == "pull_request"
-                && o.pull_request == Some(n)
-                && o.head_branch == run.head_branch
-                && o.head_sha == run.head_sha
-                && (o.in_flight() || burst_twin(o, run))
-                && newer(run, o)
-        })
+        .filter(|o| o.pull_request == Some(n) && same_burst(o, run) && newer(run, o))
         .min_by_key(|o| o.id)
+}
+
+/// Why `earlier` is itself to be ended, now or within [`TWIN_HORIZON_MINUTES`]; `None` when it
+/// reaches its verdict as far as this supervisor can tell. Its own twins are older, so this ends.
+fn ends_for(earlier: &RunObservation, s: &Situation<'_>) -> Option<CancelReason> {
+    if let Verdict::Cancel(reason) = judge(earlier, s) {
+        return Some(reason);
+    }
+    let later = Situation {
+        now: s.now.saturating_add(TWIN_HORIZON_MINUTES * 60),
+        ..*s
+    };
+    match judge(earlier, &later) {
+        Verdict::Cancel(reason) => Some(reason),
+        _ => None,
+    }
 }
 
 /// The verdict on one run.
@@ -669,10 +701,13 @@ pub fn judge(run: &RunObservation, s: &Situation<'_>) -> Verdict {
     let Some(bound) = s.model.bounds.get(&run.workflow) else {
         return Verdict::Fine;
     };
-    // (d) a twin of a commit that already has its run: it would only wait in the group
+    // (d) a twin of a commit whose run is in flight: it would only wait in the group. Only
+    // while it is `pending` there with no job: an admitted run (`queued` from then on, its jobs
+    // created) runs its `if: always()` jobs on a cancel, and validate's `ci` would then write a
+    // failure over its twin's pass
     if bound.superseded == SupersededGroup::PerPullRequest
-        && run.waiting()
-        && !run.any_job_started()
+        && run.status == "pending"
+        && run.jobs.is_empty()
         && protection(run, s.default_branch).is_none()
     {
         if let Some(n) = run.pull_request {
@@ -690,18 +725,32 @@ pub fn judge(run: &RunObservation, s: &Situation<'_>) -> Verdict {
                         earlier: earlier.id,
                     });
                 }
-                return Verdict::Cancel(CancelReason::DuplicateRun {
-                    pull_request: n,
-                    earlier: earlier.id,
-                    earlier_state: if earlier.in_flight() {
-                        earlier.status.clone()
-                    } else {
-                        earlier.conclusion.clone().unwrap_or_default()
-                    },
-                });
+                return match ends_for(earlier, s) {
+                    // it takes the older run's place, and its wait is the older run's time:
+                    // ended for waiting, it would leave the commit with no run either
+                    Some(reason) => Verdict::Hold(HoldReason::EarlierRunEnds {
+                        pull_request: n,
+                        earlier: earlier.id,
+                        ends_for: reason.word().into(),
+                    }),
+                    None => Verdict::Cancel(CancelReason::DuplicateRun {
+                        pull_request: n,
+                        earlier: earlier.id,
+                        earlier_state: earlier.status.clone(),
+                    }),
+                };
             }
         }
     }
+    superseded_or_bounded(run, bound, s)
+}
+
+/// The verdict of rules (a), (b) and (c): superseded, then the two bounds.
+fn superseded_or_bounded(
+    run: &RunObservation,
+    bound: &WorkflowBound,
+    s: &Situation<'_>,
+) -> Verdict {
     // (a) superseded, and something waits behind it
     if bound.superseded == SupersededGroup::PerPullRequest {
         if let Some(n) = run.pull_request {
@@ -800,8 +849,10 @@ fn bounded(run: &RunObservation, bound: &WorkflowBound, s: &Situation<'_>) -> Ve
 /// - a bounded run older than the smaller of its two bounds: every job of it started after it
 ///   was created, and its attempt waits from its creation at the earliest, so a younger run
 ///   can be past neither;
-/// - a pull request's waiting run of a workflow with a per-pull-request group that has an
-///   older run of its branch and commit: the duplicate rule asks whether a job of it started.
+/// - a pull request's run of a workflow with a per-pull-request group that has another run of
+///   its branch and commit in flight from the same burst: the duplicate rule asks whether a job
+///   of the newer one exists, and judges the older one ahead ([`TWIN_HORIZON_MINUTES`]), when
+///   it could be past a bound however young it is now.
 ///
 /// Every other run is judged without its jobs, and the verdict is the same. A creation that
 /// is not a time reads them, and the run is then held as unjudgeable.
@@ -825,14 +876,7 @@ pub fn needs_jobs(
     }
     bound.superseded == SupersededGroup::PerPullRequest
         && run.event == "pull_request"
-        && run.waiting()
-        && runs.iter().any(|o| {
-            o.id != run.id
-                && o.workflow == run.workflow
-                && o.head_branch == run.head_branch
-                && o.head_sha == run.head_sha
-                && newer(run, o)
-        })
+        && runs.iter().any(|o| same_burst(o, run))
 }
 
 /// Every decision over one observation.
@@ -913,26 +957,43 @@ pub struct Liveness {
     /// What the finding means, for a person.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub detail: Option<String>,
+    /// The lane whose supervision this is (`lundra`), when only that lane's job was counted;
+    /// `None` when any lane's was.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lane: Option<String>,
 }
 
 /// The liveness of a supervisor whose newest success ended at `newest_success` (`Ok(None)`:
 /// none found; `Err`: it could not be read), at `now`. Older than [`STALE_MINUTES`], none, or
-/// unread is a finding: a supervisor that stopped is the failure this exists to name.
-pub fn liveness(newest_success: Result<Option<&str>, String>, now: u64) -> Liveness {
+/// unread is a finding: a supervisor that stopped is the failure this exists to name. Of one
+/// `lane`'s supervision (`None`: any lane's), read over the runs of the last `window` minutes
+/// (`None`: every run read). A window of at least [`STALE_MINUTES`] that holds no success is a
+/// stale supervisor, as surely as no success at all.
+pub fn liveness_of(
+    newest_success: Result<Option<&str>, String>,
+    now: u64,
+    lane: Option<&str>,
+    window: Option<u64>,
+) -> Liveness {
+    let by = lane.map(|l| format!(" by {l}")).unwrap_or_default();
     let mut l = Liveness {
         bound_minutes: STALE_MINUTES,
+        lane: lane.map(str::to_string),
         ..Liveness::default()
     };
     match newest_success {
         Err(e) => {
             l.finding = Some(SUPERVISE_UNOBSERVED.into());
             l.detail = Some(format!(
-                "the supervisor's newest success could not be read: {e}"
+                "the newest successful supervision{by} could not be read: {e}"
             ));
         }
         Ok(None) => {
             l.finding = Some(SUPERVISE_STALE.into());
-            l.detail = Some("no successful supervision was found".into());
+            l.detail = Some(match window {
+                Some(w) => format!("no supervision{by} succeeded in the last {w} min"),
+                None => format!("no successful supervision{by} was found"),
+            });
         }
         Ok(Some(at)) => {
             l.newest_success_at = Some(at.to_string());
@@ -947,8 +1008,13 @@ pub fn liveness(newest_success: Result<Option<&str>, String>, now: u64) -> Liven
                     if minutes > STALE_MINUTES {
                         l.finding = Some(SUPERVISE_STALE.into());
                         l.detail = Some(format!(
-                            "the newest successful supervision ended {minutes} min ago; the bound \
-                             is {STALE_MINUTES} min: nothing retires a stuck or duplicate run"
+                            "the newest successful supervision{by} ended {minutes} min ago; the \
+                             bound is {STALE_MINUTES} min{}",
+                            if lane.is_some() {
+                                ""
+                            } else {
+                                ": nothing retires a stuck or duplicate run"
+                            }
                         ));
                     }
                 }
@@ -1390,11 +1456,26 @@ mod tests {
         let mut tag = run(100, "a", None, "in_progress", 76);
         tag.workflow = "release".into();
         assert!(needs_jobs(&tag, &[], &m, NOW));
-        // a waiting run with an older run of its branch and commit: is it a duplicate?
+        // two runs of one branch and commit from one burst: does a job of the newer exist, and
+        // will the older one be ended before the next pass?
         let first = run(100, "a", Some(7), "in_progress", 30);
         let twin = run(101, "a", Some(7), "pending", 29);
         assert!(needs_jobs(&twin, &[first.clone(), twin.clone()], &m, NOW));
-        assert!(!needs_jobs(&first, &[first.clone(), twin.clone()], &m, NOW));
+        assert!(needs_jobs(&first, &[first.clone(), twin.clone()], &m, NOW));
+        // a second run asked for later is no twin, and costs no read
+        let later = run(101, "a", Some(7), "pending", 25);
+        assert!(!needs_jobs(
+            &later,
+            &[first.clone(), later.clone()],
+            &m,
+            NOW
+        ));
+        assert!(!needs_jobs(
+            &first,
+            &[first.clone(), later.clone()],
+            &m,
+            NOW
+        ));
         let mut elsewhere = twin.clone();
         elsewhere.head_branch = "integration/10a".into();
         assert!(!needs_jobs(
@@ -1494,6 +1575,90 @@ mod tests {
             ..s
         };
         assert!(still_holds(&d, Some(&runs[0]), &s2).is_none());
+    }
+
+    #[test]
+    fn a_twin_is_cancelled_only_while_it_has_no_job_and_its_older_run_will_reach_a_verdict() {
+        let m = model();
+        let h = heads(&[(7, "a")]);
+        let over = |runs: &[RunObservation], now: u64| {
+            decide(&Situation {
+                runs,
+                pr_heads: &h,
+                full: &BTreeSet::new(),
+                default_branch: "master",
+                model: &m,
+                now,
+                self_run: None,
+            })
+        };
+        // the burst: the older run in progress, its twin a minute younger waiting with no job
+        let first = run(100, "a", Some(7), "in_progress", 30);
+        let twin = run(101, "a", Some(7), "pending", 29);
+        let s = over(&[first.clone(), twin.clone()], NOW);
+        assert_eq!(s.decisions.len(), 1, "{s:?}");
+        assert_eq!(s.decisions[0].run, 101);
+        assert_eq!(s.decisions[0].reason.word(), "duplicate_run");
+        // admitted, its jobs exist: a cancel would run its always() jobs, never
+        let mut admitted = twin.clone();
+        admitted.status = "queued".into();
+        admitted.jobs = vec![JobObservation {
+            name: "plan".into(),
+            status: "queued".into(),
+            started_at: Some(at(0)),
+            conclusion: None,
+        }];
+        let s = over(&[first.clone(), admitted], NOW);
+        assert!(s.decisions.is_empty(), "{s:?}");
+        // and a passed older run is never the older half: its twin has been admitted
+        let mut passed = first.clone();
+        passed.status = "completed".into();
+        passed.conclusion = Some("success".into());
+        assert!(over(&[passed, twin.clone()], NOW).decisions.is_empty());
+        // the older run's job is past its bound: it is ended, and its twin takes its place
+        let late = NOW + 250 * 60; // rust started 30 minutes before NOW: 280 > 255
+        let s = over(&[first.clone(), twin.clone()], late);
+        assert_eq!(
+            s.decisions.iter().map(|d| d.run).collect::<Vec<_>>(),
+            vec![100],
+            "{s:?}"
+        );
+        assert_eq!(s.decisions[0].reason.word(), "running_past_bound");
+        assert_eq!(
+            s.held[0].reason,
+            HoldReason::EarlierRunEnds {
+                pull_request: 7,
+                earlier: 100,
+                ends_for: "running_past_bound".into()
+            }
+        );
+        // and so when the bound falls before the next pass: 255 - 30 + 1 minutes after its
+        // job started, the older run is not past it, and would be within the horizon
+        let soon = NOW + (255 - 30 - TWIN_HORIZON_MINUTES + 1) * 60;
+        let s = over(&[first.clone(), twin.clone()], soon);
+        assert!(s.decisions.is_empty(), "{s:?}");
+        assert!(matches!(
+            s.held[0].reason,
+            HoldReason::EarlierRunEnds { earlier: 100, .. }
+        ));
+        // a cancel of the older run taken in this pass is seen by the twin's own act
+        let d = over(&[first.clone(), twin.clone()], NOW)
+            .decisions
+            .remove(0);
+        let mut ended = first.clone();
+        ended.status = "completed".into();
+        ended.conclusion = Some("cancelled".into());
+        let after = [ended, twin.clone()];
+        let s = Situation {
+            runs: &after,
+            pr_heads: &h,
+            full: &BTreeSet::new(),
+            default_branch: "master",
+            model: &m,
+            now: NOW,
+            self_run: None,
+        };
+        assert!(still_holds(&d, Some(&twin), &s).is_none());
     }
 
     #[test]

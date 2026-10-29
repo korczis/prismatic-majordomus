@@ -16,16 +16,21 @@ version: 1
 # mattered waited behind it; the owner ordered that CI never stay stuck for hours again.
 #
 # What ends a run, and nothing else:
-#   duplicate_run                a first-attempt pull_request run that waits with no job
-#                                started while an older run of the same pull request, branch
-#                                and commit is in flight, or passed and was created within
-#                                120 s of it as a first attempt. Opening a train with `--label
-#                                train` is `opened` and `labeled` at once and starts validate
-#                                twice (6 of 8 trains on 2026-10-28; 10b's twin 40713048283
-#                                held its group seven hours). Outside that burst a second run
-#                                was asked for (a reopen, a head back at an sha already judged,
-#                                a re-run), and a judged failure is never a twin. A re-run, or a
-#                                pull request labelled `ci:full`, is held.
+#   duplicate_run                a first-attempt pull_request run that waits in its group with
+#                                no job created while an older run of the same pull request,
+#                                branch and commit, created within 120 s of it, is in flight.
+#                                Opening a train with `--label train` is `opened` and `labeled`
+#                                at once and starts validate twice (6 of 8 trains on
+#                                2026-10-28; 10b's twin 40713048283 held its group seven
+#                                hours). Never once the group admitted it and its jobs exist: a
+#                                cancel still runs its `if: always()` jobs, and validate's `ci`
+#                                then writes a failure over the twin's pass (#2678, run
+#                                40811621641, 2026-10-29), so a judged run is never the older
+#                                half. Never while the older run is itself to be ended, now or
+#                                within 30 min (held as earlier_run_ends: it takes that run's
+#                                place). Outside the burst a second run was asked for (a
+#                                reopen, a label added later, a re-run); a re-run, or a pull
+#                                request labelled `ci:full`, is held.
 #   superseded_blocks_successor  a pull_request run of a workflow declared `superseded:
 #                                per_pull_request`, whose head is no longer its pull
 #                                request's, while a newer run of the same pull request waits in
@@ -54,18 +59,23 @@ version: 1
 # cancelled only if the same reason still holds (the drain's observe-twice discipline). The
 # act is recorded first; a trail that cannot be written stops every act. The cancel is the
 # forge's force-cancel: `gh run cancel` on a queued run has returned success and done nothing.
-# Where it runs: lundra ([self-hosted, lundra]), with a GitHub-hosted fallback for a lundra with
-# no runner online; each lane its own concurrency group with cancel-in-progress false, from a
-# downloaded executable that answers `prs supervise --help`, bounded at five minutes. A
-# supervisor queued behind the validate jobs it supervises supervises nothing, and the hosted
-# lane is such a job: it cannot start while the hosted pool is saturated, and it stands aside
-# when lundra's supervision succeeded in the last eight minutes (`--unless-supervised-within 8
-# --supervised-by lundra`; its own stand-aside is a success that must not count). Its
-# liveness is the queue workflow's to report: no successful supervise job for thirty minutes
-# is `supervise_stale` (.ai/repo/ci/queue.yaml).
+# Where it runs: lundra ("self-hosted","lundra", or vars.MJ_SUPERVISE_RUNNER once a runner is
+# registered for it alone) first, then a GitHub-hosted fallback in the same run that `needs` the
+# lundra lane and runs only when it did not supervise (`if: always()`, no `supervised` output):
+# on a tick lundra supervised, no second apply spends the request budget. Each lane is its own
+# concurrency group with cancel-in-progress false, so a lundra job that waits for a runner (none
+# online, or all busy with validate's first wave once vars.MJ_RUNNER sends it there, #2596) is
+# replaced by the next trigger's but one, and the replaced run's hosted lane applies. A hosted
+# lane still stands aside when lundra's supervision succeeded in the last eight minutes in
+# another run (`--unless-supervised-within 8 --supervised-by lundra`; its own stand-aside is a
+# success that must not count). Both lanes run a downloaded executable that answers `prs
+# supervise --help`; each step is bounded on its own (checkout 1, executable 2, supervise 4
+# minutes, under the job's 8), so the job is never killed in the middle of an act. Its liveness
+# is the queue workflow's to report: no successful supervision by lundra for thirty minutes is
+# `supervise_stale` (.ai/repo/ci/queue.yaml).
 runs_on:
   lanes: [lundra, hosted]
-  timeout_minutes: 5
+  timeout_minutes: 8
   cancel_in_progress: false
   stale_minutes: 30
 

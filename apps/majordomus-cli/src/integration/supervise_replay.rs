@@ -21,6 +21,11 @@
 //! 38013111243's attempt 2, 40747313397's attempt 3), the queue clock of a re-run, the
 //! protected runs that wait, and the limits of the duplicate rule: a re-run, a reopen, a head
 //! that goes A, B, A, and a train and its member at one sha.
+//!
+//! Its adversarial review added two pairs. #2678's twin 40811621641 was admitted when
+//! 40811610939 passed, and its cancel ran its `ci` job over the pass: replayed at 05:35Z, no
+//! cancel. #2674's 40801560222, with a job past its bound, is ended while a twin of it is held to
+//! take its place, and its real second run 2.5 hours later is no twin at all.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -28,7 +33,7 @@ use serde_json::Value;
 
 use super::runs::{job_of, run_of};
 use super::supervise::{
-    decide, liveness, CancelReason, HoldReason, JobObservation, RunObservation, Situation,
+    decide, liveness_of, CancelReason, HoldReason, JobObservation, RunObservation, Situation,
     SupersededGroup, SuperviseModel, Supervision, STALE_MINUTES, SUPERVISE_STALE,
 };
 
@@ -218,8 +223,8 @@ fn train_10bs_labelled_twin_replayed_by_15_10z_is_cancelled() {
     // the older of the two is never the duplicate
     let s = replay(&runs[..1], HEAD_B, &[], "2026-10-28T15:10:00Z");
     assert!(s.decisions.is_empty(), "{s:?}");
-    // a twin of a commit judged a second earlier is a duplicate too, when it passed: the
-    // opened+labeled burst; one judged a failure is not, a second run of it may be asked for
+    // once the older run is judged, failed or passed, its twin is never a duplicate: the group
+    // admits the twin then, and a cancel of an admitted run runs its `ci` job over the verdict
     let judged = run(RUN_40713047404_DONE, None);
     assert_eq!(judged.conclusion.as_deref(), Some("failure"));
     let s = replay(
@@ -237,14 +242,7 @@ fn train_10bs_labelled_twin_replayed_by_15_10z_is_cancelled() {
         &[],
         "2026-10-28T19:41:00Z",
     );
-    assert_eq!(
-        s.decisions[0].reason,
-        CancelReason::DuplicateRun {
-            pull_request: PR,
-            earlier: 40713047404,
-            earlier_state: "success".into()
-        }
-    );
+    assert!(s.decisions.is_empty(), "{s:?}");
     // and of one that was cancelled, it is not: a cancelled run judged nothing
     let s = replay(
         &[run(RUN_40713048283_DONE, None), {
@@ -282,28 +280,30 @@ fn a_same_commit_pair_labelled_ci_full_is_held() {
     assert!(s.decisions.is_empty(), "{s:?}");
 }
 
+/// The liveness of any lane's supervision, over every run.
+fn live(newest: Result<Option<&str>, String>, now: u64) -> super::supervise::Liveness {
+    liveness_of(newest, now, None, None)
+}
+
 #[test]
 fn the_newest_supervise_success_31_minutes_old_is_stale_and_9_is_not() {
     let now = t("2026-10-28T23:00:00Z");
-    let l = liveness(Ok(Some("2026-10-28T22:29:00Z")), now);
+    let l = live(Ok(Some("2026-10-28T22:29:00Z")), now);
     assert_eq!(l.minutes, Some(31));
     assert_eq!(l.finding.as_deref(), Some(SUPERVISE_STALE));
     assert_eq!(l.bound_minutes, STALE_MINUTES);
-    let l = liveness(Ok(Some("2026-10-28T22:51:00Z")), now);
+    let l = live(Ok(Some("2026-10-28T22:51:00Z")), now);
     assert_eq!(l.minutes, Some(9));
     assert_eq!(l.finding, None, "{l:?}");
     // none at all, or one that cannot be read, is a finding: silence is not alive
     assert_eq!(
-        liveness(Ok(None), now).finding.as_deref(),
+        live(Ok(None), now).finding.as_deref(),
         Some(SUPERVISE_STALE)
     );
-    assert!(liveness(Err("HTTP 502".into()), now).finding.is_some());
-    assert!(liveness(Ok(Some("yesterday")), now).finding.is_some());
+    assert!(live(Err("HTTP 502".into()), now).finding.is_some());
+    assert!(live(Ok(Some("yesterday")), now).finding.is_some());
     // the bound itself is not past it
-    assert_eq!(
-        liveness(Ok(Some("2026-10-28T22:30:00Z")), now).finding,
-        None
-    );
+    assert_eq!(live(Ok(Some("2026-10-28T22:30:00Z")), now).finding, None);
 }
 
 // ---------------------------------------------------------------- the clocks of real runs
@@ -831,7 +831,7 @@ fn a_reopened_pull_requests_run_of_a_judged_head_is_not_cancelled() {
     ];
     let s = decide_at(&runs, &[(7, "A")], &[], "2026-10-29T15:00:00Z");
     assert!(s.decisions.is_empty(), "{s:?}");
-    // a judged success one second earlier is the opened+labeled burst: a duplicate
+    // nor a judged success one second earlier: the twin of a judged run has been admitted
     let runs = [
         of(pr_run(
             100,
@@ -843,9 +843,162 @@ fn a_reopened_pull_requests_run_of_a_judged_head_is_not_cancelled() {
         of(pr_run(101, "A", "pending", None, "2026-10-29T14:00:01Z")),
     ];
     let s = decide_at(&runs, &[(7, "A")], &[], "2026-10-29T15:00:00Z");
-    assert_eq!(s.decisions.len(), 1, "{s:?}");
-    assert_eq!(s.decisions[0].run, 101);
-    assert_eq!(s.decisions[0].reason.word(), "duplicate_run");
+    assert!(s.decisions.is_empty(), "{s:?}");
+    // and while run 100 is in flight, a second run created two hours later was asked for
+    let runs = [
+        of(pr_run(
+            100,
+            "A",
+            "in_progress",
+            None,
+            "2026-10-29T12:00:00Z",
+        )),
+        of(pr_run(101, "A", "pending", None, "2026-10-29T14:00:00Z")),
+    ];
+    let s = decide_at(&runs, &[(7, "A")], &[], "2026-10-29T14:01:00Z");
+    assert!(s.decisions.is_empty(), "{s:?}");
+}
+
+// ---------------------------------------------------------------- #2678 and #2674, 2026-10-29
+
+/// #2678's run 40811610939 as the forge recorded it: passed, its `ci` job a success at
+/// 05:31:52Z, the run completed at 05:31:53Z.
+const RUN_40811610939: &str = r#"{"id":40811610939,"name":"validate",
+ "path":".github/workflows/validate.yml","event":"pull_request",
+ "head_branch":"fix/the-incidents-issues-serve-their-intents",
+ "head_sha":"3a45c8c73163c6213767048ee8c7888ec641be25","status":"completed",
+ "conclusion":"success","created_at":"2026-10-29T03:20:53Z",
+ "run_started_at":"2026-10-29T03:20:53Z","run_attempt":1,
+ "pull_requests":[{"number":2678,"head":{"ref":"fix/the-incidents-issues-serve-their-intents"}}]}"#;
+
+/// Its twin 40811621641, six seconds younger (the `labeled` run), as it stood at 05:35Z:
+/// admitted when 40811610939 completed, `queued`, its `plan` job created at 05:31:53Z and
+/// waiting for a runner (it started at 05:38:46Z). It was cancelled at 05:58Z, and its
+/// `if: always()` job `ci` then ran and failed at 05:58:37Z, newer than the pass: #2678 read
+/// BLOCKED.
+const RUN_40811621641_AT_0535: &str = r#"{"id":40811621641,"name":"validate",
+ "path":".github/workflows/validate.yml","event":"pull_request",
+ "head_branch":"fix/the-incidents-issues-serve-their-intents",
+ "head_sha":"3a45c8c73163c6213767048ee8c7888ec641be25","status":"queued","conclusion":null,
+ "created_at":"2026-10-29T03:20:59Z","run_started_at":"2026-10-29T03:20:59Z","run_attempt":1,
+ "pull_requests":[{"number":2678,"head":{"ref":"fix/the-incidents-issues-serve-their-intents"}}]}"#;
+
+const JOBS_40811621641_AT_0535: &str = r#"[
+ {"name":"plan","status":"queued","conclusion":null,"started_at":"2026-10-29T05:31:53Z"}
+]"#;
+
+#[test]
+fn the_admitted_twin_of_2678_replayed_at_05_35z_is_not_cancelled() {
+    let head = "3a45c8c73163c6213767048ee8c7888ec641be25";
+    let twin = run(RUN_40811621641_AT_0535, Some(JOBS_40811621641_AT_0535));
+    assert!(!twin.any_job_started(), "its plan job waits for a runner");
+    assert!(
+        !twin.jobs.is_empty(),
+        "but it exists: the group admitted the run"
+    );
+    let runs = [run(RUN_40811610939, None), twin.clone()];
+    let s = decide_at(&runs, &[(2678, head)], &[], "2026-10-29T05:35:00Z");
+    assert!(s.decisions.is_empty(), "{s:?}");
+    // nor on any tick until a runner took its plan job
+    for at in ticks("2026-10-29T05:32:00Z", "2026-10-29T05:38:00Z") {
+        let s = decide_at(&runs, &[(2678, head)], &[], &at);
+        assert!(s.decisions.is_empty(), "{at}: {s:?}");
+    }
+    // and an admitted twin is not cancelled even with its older run in flight
+    let mut older = run(RUN_40811610939, None);
+    older.status = "in_progress".into();
+    older.conclusion = None;
+    let s = decide_at(&[older, twin], &[(2678, head)], &[], "2026-10-29T05:35:00Z");
+    assert!(s.decisions.is_empty(), "{s:?}");
+}
+
+/// #2674's run 40801560222 of f565f564, created 01:37:47Z, with `suite-shard (3)` in progress
+/// from 01:47:58Z: the older run of the pair.
+const RUN_40801560222: &str = r#"{"id":40801560222,"name":"validate",
+ "path":".github/workflows/validate.yml","event":"pull_request",
+ "head_branch":"fix/the-reaper-bounds-an-untagged-build-dir",
+ "head_sha":"f565f56407dbbd91f00225192da439b6f7e37b7d","status":"in_progress",
+ "conclusion":null,"created_at":"2026-10-29T01:37:47Z",
+ "run_started_at":"2026-10-29T01:37:47Z","run_attempt":1,
+ "pull_requests":[{"number":2674,"head":{"ref":"fix/the-reaper-bounds-an-untagged-build-dir"}}]}"#;
+
+const JOBS_40801560222: &str = "\
+ plan|2026-10-29T01:47:36Z|2026-10-29T01:47:58Z|success\n\
+ suite-shard (3)|2026-10-29T01:47:58Z|2026-10-29T23:00:00Z|cancelled\n\
+";
+
+/// Its second run 40816501443, created at 04:13:08Z when the `hold` label was added, pending in
+/// the group with no job.
+const RUN_40816501443: &str = r#"{"id":40816501443,"name":"validate",
+ "path":".github/workflows/validate.yml","event":"pull_request",
+ "head_branch":"fix/the-reaper-bounds-an-untagged-build-dir",
+ "head_sha":"f565f56407dbbd91f00225192da439b6f7e37b7d","status":"pending","conclusion":null,
+ "created_at":"2026-10-29T04:13:08Z","run_started_at":"2026-10-29T04:13:08Z","run_attempt":1,
+ "pull_requests":[{"number":2674,"head":{"ref":"fix/the-reaper-bounds-an-untagged-build-dir"}}]}"#;
+
+#[test]
+fn a_twin_of_2674s_run_past_its_bound_is_never_cancelled_with_it() {
+    let head = "f565f56407dbbd91f00225192da439b6f7e37b7d";
+    let older_at = |at: &str| run_at(RUN_40801560222, JOBS_40801560222, at);
+    // the real pair at 04:14Z: the label two and a half hours later asked for a second run
+    let s = decide_at(
+        &[older_at("2026-10-29T04:14:00Z"), run(RUN_40816501443, None)],
+        &[(2674, head)],
+        &[],
+        "2026-10-29T04:14:00Z",
+    );
+    assert!(s.decisions.is_empty(), "{s:?}");
+    // the same commit's twin from one burst, eight seconds younger, pending with no job
+    let twin = || {
+        let mut r = run(RUN_40816501443, None);
+        r.created_at = "2026-10-29T01:37:55Z".into();
+        r.run_started_at = Some("2026-10-29T01:37:55Z".into());
+        r
+    };
+    // at 02:00Z the older run will reach its verdict: the twin is the duplicate
+    let s = decide_at(
+        &[older_at("2026-10-29T02:00:00Z"), twin()],
+        &[(2674, head)],
+        &[],
+        "2026-10-29T02:00:00Z",
+    );
+    let words: Vec<_> = s
+        .decisions
+        .iter()
+        .map(|d| (d.run, d.reason.word()))
+        .collect();
+    assert_eq!(words, vec![(40816501443, "duplicate_run")], "{s:?}");
+    // at 06:05Z suite-shard (3) has run 257 minutes, past 255: the older run is ended, and the
+    // twin, which would take its place, is held rather than ended with it
+    let s = decide_at(
+        &[older_at("2026-10-29T06:05:00Z"), twin()],
+        &[(2674, head)],
+        &[],
+        "2026-10-29T06:05:00Z",
+    );
+    let words: Vec<_> = s
+        .decisions
+        .iter()
+        .map(|d| (d.run, d.reason.word()))
+        .collect();
+    assert_eq!(words, vec![(40801560222, "running_past_bound")], "{s:?}");
+    assert_eq!(
+        s.held[0].reason,
+        HoldReason::EarlierRunEnds {
+            pull_request: 2674,
+            earlier: 40801560222,
+            ends_for: "running_past_bound".into()
+        }
+    );
+    // and so on every tick within the horizon before the bound: the next pass would end the
+    // older run, so this one does not end its twin
+    for at in ticks("2026-10-29T05:40:00Z", "2026-10-29T06:00:00Z") {
+        let s = decide_at(&[older_at(&at), twin()], &[(2674, head)], &[], &at);
+        assert!(
+            s.decisions.iter().all(|d| d.run != 40816501443),
+            "{at}: {s:?}"
+        );
+    }
 }
 
 #[test]
@@ -987,6 +1140,89 @@ fn concurrency(at: &[u64], takes: u64, cancel_in_progress: bool) -> Vec<(u64, u6
     done
 }
 
+/// The job `name` of a workflow's non-comment lines: from its key to the next job's.
+fn job_of_workflow(code: &str, name: &str) -> String {
+    let mut out = Vec::new();
+    let mut inside = false;
+    for l in code.lines() {
+        let key = l.starts_with("  ") && !l.starts_with("   ") && l.trim_end().ends_with(':');
+        if key {
+            inside = l.trim() == format!("{name}:");
+        } else if !l.is_empty() && !l.starts_with(' ') {
+            inside = false;
+        }
+        if inside {
+            out.push(l);
+        }
+    }
+    assert!(!out.is_empty(), "no job `{name}`");
+    out.join("\n")
+}
+
+/// A job's `timeout-minutes`, and each of its steps' in order.
+fn bounds_of(job: &str) -> (u64, Vec<u64>) {
+    let mut bound = 0;
+    let mut steps = Vec::new();
+    for l in job.lines() {
+        let indent = l.len() - l.trim_start().len();
+        if let Some(n) = l.trim().strip_prefix("timeout-minutes:") {
+            let n: u64 = n.trim().parse().unwrap();
+            if indent == 4 {
+                bound = n;
+            } else {
+                steps.push(n);
+            }
+        }
+    }
+    (bound, steps)
+}
+
+/// The two lanes of supervise.yml as GitHub runs them: each trigger at `at` (seconds) starts a
+/// run whose lundra job enters its lane's group (one runs, one waits, a newer one replaces the
+/// waiting one, which is cancelled), and whose hosted job runs once that lundra job has ended,
+/// unless it supervised. `lundra_takes` is how long a lundra job runs once it has a runner;
+/// `None` is a lundra that takes no job. For each run, whether its hosted lane applied.
+fn sequenced(at: &[u64], lundra_takes: Option<u64>) -> Vec<bool> {
+    let mut hosted = vec![false; at.len()];
+    let mut running: Option<(usize, u64)> = None; // (run, started)
+    let mut pending: Option<usize> = None;
+    for (run, &t) in at.iter().enumerate() {
+        // what ended before this trigger
+        if let (Some((_, started)), Some(takes)) = (running, lundra_takes) {
+            if started + takes <= t {
+                // it supervised: its hosted lane does nothing; the waiting one starts
+                running = pending.take().map(|p| (p, started + takes));
+            }
+        }
+        if running.is_none() {
+            running = Some((run, t));
+        } else if let Some(replaced) = pending.replace(run) {
+            // cancelled in the group: `always()` and no `supervised` output, so it applies
+            hosted[replaced] = true;
+        }
+    }
+    hosted
+}
+
+#[test]
+fn a_lundra_that_takes_no_job_is_covered_by_the_hosted_lane_from_the_third_trigger() {
+    // lundra offline, or every runner busy with validate's first wave (vars.MJ_RUNNER): its
+    // first job waits for a runner and holds the group; the second waits behind it; the third
+    // replaces the second, whose run's hosted lane then applies, and so on with every trigger
+    let ticks: Vec<u64> = (0..6).map(|k| k * 600).collect();
+    assert_eq!(
+        sequenced(&ticks, None),
+        vec![false, true, true, true, true, false]
+    );
+    // a lundra that supervises every tick leaves the hosted lane nothing to do
+    assert!(sequenced(&ticks, Some(60)).iter().all(|h| !h));
+    // the wiring this simulates
+    let c = code(&workflow("supervise.yml"));
+    let hosted = job_of_workflow(&c, "hosted");
+    assert!(hosted.contains("needs: lundra") && hosted.contains("always()"));
+    assert!(job_of_workflow(&c, "lundra").contains("cancel-in-progress: false"));
+}
+
 #[test]
 fn five_validate_requests_within_a_minute_let_a_supervise_apply_complete() {
     let text = workflow("supervise.yml");
@@ -1006,45 +1242,101 @@ fn five_validate_requests_within_a_minute_let_a_supervise_apply_complete() {
     assert!(c.contains("cancel-in-progress: false"), "{c}");
     assert!(!c.contains("cancel-in-progress: true"), "{c}");
     let cancel_in_progress = c.contains("cancel-in-progress: true");
-    // what one apply takes: a downloaded executable and a handful of API calls, bounded
-    let timeouts: Vec<u64> = c
-        .lines()
-        .filter_map(|l| l.trim().strip_prefix("timeout-minutes:"))
-        .map(|n| n.trim().parse().unwrap())
-        .collect();
-    assert!(!timeouts.is_empty(), "no job bound");
-    assert!(timeouts.iter().all(|m| *m <= 5), "{timeouts:?}");
     assert!(
         !c.contains("cargo build"),
         "the supervisor compiles instead of downloading"
     );
-    assert!(c.contains("prs supervise --apply"));
-    // on the pool that cannot be starved by validate, with the hosted pool as the fallback
-    assert!(c.contains("[self-hosted, lundra]"), "not on lundra");
-    assert!(c.contains("ubuntu-latest"), "no hosted fallback");
-    assert!(c.contains("continue-on-error: true"));
-    assert!(c.contains("fail-fast: false"));
-    // each lane its own group, so a lane with no runner never holds the other
-    assert!(c.contains("group: supervise-${{ matrix.lane }}"), "{c}");
-    // an executable is taken only if it has the command: every build before I3903 runs
-    // `--version` and fails `prs supervise`, so both the artifact and the release are asked
-    assert_eq!(
-        c.matches("prs supervise --help >/dev/null").count(),
-        2,
-        "the artifact and the release are each asked whether they have prs supervise"
+    assert!(c.contains("prs supervise \"$@\""));
+    assert!(c.contains("set -- --apply"));
+    // two jobs of one run: lundra first, the hosted fallback after it
+    let lundra = job_of_workflow(&c, "lundra");
+    let hosted = job_of_workflow(&c, "hosted");
+    assert!(
+        lundra.contains(r#"'["self-hosted","lundra"]'"#),
+        "not on lundra: {lundra}"
     );
     assert!(
-        c.contains("exit 12"),
-        "an executable without the command is not a silent pass"
+        lundra.contains("vars.MJ_SUPERVISE_RUNNER"),
+        "no way to name a runner of its own"
     );
-    // the hosted lane covers, and stands aside after a recent success: not a second full apply
+    assert!(
+        hosted.contains("runs-on: ubuntu-latest"),
+        "no hosted fallback"
+    );
+    // the hosted lane sees the lundra lane of its own trigger: it needs it, runs whatever
+    // became of it, and only when it did not supervise
+    assert!(hosted.contains("needs: lundra"), "{hosted}");
+    assert!(
+        hosted.contains("if: ${{ always() && needs.lundra.outputs.supervised != 'true' }}"),
+        "{hosted}"
+    );
+    assert!(
+        lundra.contains("supervised: ${{ steps.supervise.outputs.supervised }}"),
+        "{lundra}"
+    );
+    // `supervised` is written only after the exit was checked: a failed lane never claims it
+    let step = lundra.split("- id: supervise").nth(1).unwrap();
+    let check = step.find("[ \"$rc\" = 0 ] ||").expect("no exit check");
+    let claim = step
+        .find("echo \"supervised=true\" >> \"$GITHUB_OUTPUT\"")
+        .expect("no supervised output");
+    assert!(
+        check < claim,
+        "it claims to have supervised before its exit is known"
+    );
+    // each lane its own group, so a lane with no runner never holds the other
+    assert!(lundra.contains("group: supervise-lundra"), "{lundra}");
+    assert!(hosted.contains("group: supervise-hosted"), "{hosted}");
+    // the hosted lane covers, and stands aside after a recent success in another run
     assert!(c.contains("--unless-supervised-within \"$COVER\""), "{c}");
-    assert!(c.contains("cover: '8'"), "{c}");
+    assert!(hosted.contains("COVER: '8'"), "{hosted}");
+    assert!(
+        lundra.contains("COVER: ''"),
+        "the lundra lane always applies"
+    );
     assert!(
         c.contains("--supervised-by lundra"),
         "a covering lane that counted its own stand-aside would stand aside for ever"
     );
-    assert!(c.contains("cover: ''"), "the lundra lane always applies");
+    // an executable is taken only if it has the command: every build before I3903 runs
+    // `--version` and fails `prs supervise`, so both the artifact and the release are asked,
+    // in each lane
+    for job in [&lundra, &hosted] {
+        assert_eq!(
+            job.matches("prs supervise --help >/dev/null").count(),
+            2,
+            "the artifact and the release are each asked whether they have prs supervise"
+        );
+        assert!(
+            job.contains("exit 12"),
+            "an executable without the command is not a silent pass"
+        );
+    }
+    // every step bounded on its own, the bounds adding up under the job's, and the supervise
+    // step outlasting the executable's forge budget: the job is never killed mid-act
+    let mut timeouts = Vec::new();
+    for job in [&lundra, &hosted] {
+        let (bound, steps) = bounds_of(job);
+        assert_eq!(steps.len(), 3, "a step with no bound of its own: {job}");
+        assert!(
+            steps.iter().sum::<u64>() < bound,
+            "the steps' bounds {steps:?} add up past the job's {bound}"
+        );
+        let supervise_step = *steps.last().unwrap();
+        assert!(
+            supervise_step * 60 > super::runs::BUDGET_SECONDS + super::runs::GH_CALL_SECONDS,
+            "the supervise step ({supervise_step} min) ends before the forge budget"
+        );
+        timeouts.push(bound);
+    }
+    assert!(
+        c.contains("timeout 45 gh run download"),
+        "a download with no bound"
+    );
+    assert!(
+        c.contains("timeout 40 sh"),
+        "the installer's own download is not bounded"
+    );
 
     // five requests in 60 s, each apply taking its whole bound: the first apply completes,
     // and so does the one the last request leaves waiting
@@ -1095,6 +1387,18 @@ fn the_queue_workflow_fails_on_a_stale_supervisor() {
     );
     assert!(alive.contains("prs supervise --help >/dev/null"), "{alive}");
     assert!(alive.contains("--unless-supervised-within 30"), "{alive}");
+    // it names the lane it holds to account: any lane's success hid a lundra that always failed
+    assert!(
+        alive.contains("--unless-supervised-within 30 --supervised-by lundra"),
+        "{alive}"
+    );
+    let (bound, steps) = bounds_of(alive);
+    assert_eq!(
+        steps.len(),
+        3,
+        "a step of the alive job with no bound: {alive}"
+    );
+    assert!(steps.iter().sum::<u64>() < bound, "{steps:?} past {bound}");
     assert!(
         alive.contains("group: queue-alive-${{ matrix.lane }}"),
         "{alive}"

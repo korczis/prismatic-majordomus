@@ -19,14 +19,20 @@
 //! requested validate run would spend it for all of them: a run's jobs are read only when a
 //! rule could act on it ([`super::supervise::needs_jobs`]). Each `gh` call is ended after
 //! [`GH_CALL_SECONDS`], and the whole observation after [`BUDGET_SECONDS`], so a degraded forge
-//! is a failed apply (exit 12) within its job's five minutes, never a job killed mid-act.
+//! is a failed apply (exit 12) within its step's own four minutes, never a job killed mid-act.
 //! A lane that only covers for another passes `--unless-supervised-within`: a supervision
-//! that succeeded that recently is the one that counts, and this one reads one page and stops.
+//! that succeeded that recently is the one that counts, and this one reads it and stops.
 //!
-//! It also reports whether the supervisor itself is alive ([`super::supervise::liveness`]):
+//! It also reports whether the supervisor itself is alive ([`super::supervise::liveness_of`]):
 //! the newest successful job of the supervising workflow, older than thirty minutes, is
 //! `supervise_stale` — the one failure a supervisor cannot report about itself, so the queue
-//! workflow fails on it.
+//! workflow fails on it. With `--supervised-by <lane>` and a window of the whole stale bound it
+//! is that lane's liveness: a lane that always fails is not
+//! hidden by the other lane's successes. The runs are read past those whose every job was
+//! cancelled while waiting ([`SUCCESS_PAGES`], [`SUCCESS_JOB_READS`]).
+//!
+//! Each act re-checks its decision against what this pass has already done: a run it cancelled
+//! is judged as cancelled by every later act, so no decision rests on a run already ended.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
@@ -49,9 +55,9 @@ pub struct RunsObservation {
     pub repository: String,
     /// The default branch.
     pub default_branch: String,
-    /// Every run of [`IN_FLIGHT`], and the completed runs of the commits a waiting pull
-    /// request's run is of: what a duplicate is judged against. Without their jobs, which
-    /// [`supervise`] reads only for the runs a rule could act on.
+    /// Every run of [`IN_FLIGHT`], without its jobs, which [`supervise`] reads only for the
+    /// runs a rule could act on. A duplicate is judged against an older run in flight only, so
+    /// no completed run is read.
     pub runs: Vec<RunObservation>,
     /// Each open pull request's head.
     pub pr_heads: BTreeMap<u64, String>,
@@ -187,9 +193,18 @@ pub fn attach_pull_requests(runs: &mut [RunObservation], branches: &BTreeMap<Str
 /// The longest one `gh` call may take before it is ended as timed out.
 pub const GH_CALL_SECONDS: u64 = 20;
 
-/// The longest the forge may be read for, from [`GhRunForge::connect`]: a supervise job is
-/// bounded at five minutes, and the executable's download comes first.
+/// The longest the forge may be read for, from [`GhRunForge::connect`]: the supervise step is
+/// bounded at four minutes of its own, so that the budget ends first and no act is cut off.
 pub const BUDGET_SECONDS: u64 = 180;
+
+/// How many pages of the supervising workflow's runs, a hundred each, are read for its newest
+/// success: a day of them at a request every few minutes, newest first.
+pub const SUCCESS_PAGES: u32 = 3;
+
+/// How many of those runs' jobs are read for it at most. A burst of requests leaves runs whose
+/// every job was cancelled while it waited, and they are read past; more runs than this inside
+/// the window with no success among them is an answer that could not be read, not a stale one.
+pub const SUCCESS_JOB_READS: usize = 40;
 
 /// The GitHub CLI, run in the repository.
 pub struct GhRunForge<'a> {
@@ -348,24 +363,6 @@ impl RunForge for GhRunForge<'_> {
             }
             pr_heads.insert(n, sha);
         }
-        // the commits a waiting pull request's run is of: their other runs, the judged ones
-        // among them, are what a duplicate is judged against
-        let twins_of: BTreeSet<String> = by_id
-            .values()
-            .filter(|r: &&RunObservation| r.event == "pull_request" && r.waiting())
-            .map(|r| r.head_sha.clone())
-            .collect();
-        for sha in twins_of {
-            let endpoint = format!(
-                "repos/{}/actions/runs?head_sha={sha}&event=pull_request&per_page=100",
-                self.repository
-            );
-            for v in self.paged(&endpoint, ".workflow_runs[]")? {
-                if let Some(run) = run_of(&v) {
-                    by_id.entry(run.id).or_insert(run);
-                }
-            }
-        }
         let mut runs: Vec<RunObservation> = by_id.into_values().collect();
         attach_pull_requests(&mut runs, &branches);
         Ok(RunsObservation {
@@ -441,17 +438,38 @@ impl RunForge for GhRunForge<'_> {
         workflow: &str,
         among: Successes<'_>,
     ) -> Result<Option<String>, ForgeError> {
-        // one page of its newest runs, newest first: a run whose other lane waits for a
-        // runner has not concluded, so the success is its job's, not the run's
-        let endpoint = format!(
-            "repos/{}/actions/workflows/{workflow}.yml/runs?per_page=20&exclude_pull_requests=true",
-            self.repository
-        );
-        let page = self.one(&endpoint)?;
-        for id in runs_updated_since(&page, among.since) {
-            let newest = newest_success_of(&self.jobs_raw(id)?, among.lane);
-            if newest.is_some() {
-                return Ok(newest);
+        // its runs newest first, page by page: a run whose other lane waits for a runner has
+        // not concluded, so the success is its job's, not the run's; and a run whose jobs were
+        // all cancelled while they waited is read past, not taken for the end
+        let mut read = 0;
+        for page in 1..=SUCCESS_PAGES {
+            let endpoint = format!(
+                "repos/{}/actions/workflows/{workflow}.yml/runs?per_page=100&page={page}\
+                 &exclude_pull_requests=true",
+                self.repository
+            );
+            let listed = self.one(&endpoint)?;
+            let ids = runs_updated_since(&listed, among.since);
+            for id in ids {
+                if read == SUCCESS_JOB_READS {
+                    return Err(ForgeError(format!(
+                        "{SUCCESS_JOB_READS} runs of {workflow} were read with no successful \
+                         job{} among them",
+                        among.lane.map(|l| format!(" of {l}")).unwrap_or_default()
+                    )));
+                }
+                read += 1;
+                let newest = newest_success_of(&self.jobs_raw(id)?, among.lane);
+                if newest.is_some() {
+                    return Ok(newest);
+                }
+            }
+            let listed_here = listed
+                .get("workflow_runs")
+                .and_then(Value::as_array)
+                .map_or(0, Vec::len);
+            if listed_here < 100 {
+                break;
             }
         }
         Ok(None)
@@ -638,11 +656,13 @@ pub fn supervise(
                     .map(|_| at.saturating_sub(within.saturating_add(1).saturating_mul(60))),
             },
         );
-        let liveness = supervise::liveness(
+        let liveness = supervise::liveness_of(
             read.as_ref()
                 .map(Option::as_deref)
                 .map_err(ToString::to_string),
             at,
+            lane.as_deref(),
+            lane.as_ref().map(|_| within.saturating_add(1)),
         );
         if let Some(minutes) = liveness.minutes.filter(|m| *m <= within) {
             return Ok(SuperviseReport {
@@ -666,7 +686,10 @@ pub fn supervise(
                 liveness,
             });
         }
-        if lane.is_none() {
+        // a lane's answer is the report's when its window holds the whole stale bound: the
+        // queue's alive job names the lane it holds to account, so that a lane that always fails
+        // is not hidden by the other lane's successes
+        if lane.is_none() || within >= supervise::STALE_MINUTES {
             early = Some(liveness);
         }
     }
@@ -698,6 +721,9 @@ pub fn supervise(
     };
     let decided = supervise::decide(&situation);
     let mut acts = Vec::new();
+    // what this pass has done so far: a run it cancelled is judged as cancelled by every later
+    // act's re-check, so that no decision rests on a run this pass already ended
+    let mut current = obs.runs.clone();
     if apply {
         let mut trail_broken = false;
         for d in &decided.decisions {
@@ -744,7 +770,31 @@ pub fn supervise(
                     }
                 }
             }
+            // a duplicate rests on its older run being in flight: that is read again too, so
+            // that a twin the group admitted a moment ago is not ended as one
+            if let supervise::CancelReason::DuplicateRun { earlier, .. } = &d.reason {
+                match forge.run(*earlier) {
+                    Ok(r) => {
+                        if let Some(slot) = current.iter_mut().find(|c| c.id == r.id) {
+                            *slot = r;
+                        }
+                    }
+                    Err(e) => {
+                        acts.push(Act {
+                            run: d.run,
+                            reason: word,
+                            outcome: ActOutcome::Unobserved,
+                            detail: format!(
+                                "not cancelled: its older run {earlier} could not be read again: \
+                                 {e}"
+                            ),
+                        });
+                        continue;
+                    }
+                }
+            }
             let again = Situation {
+                runs: &current,
                 pr_heads: &heads,
                 now: now(),
                 ..situation
@@ -781,11 +831,17 @@ pub fn supervise(
                 continue;
             }
             let (action, outcome, detail) = match forge.force_cancel(d.run) {
-                Ok(()) => (
-                    IntegrationAction::RunCancelled,
-                    ActOutcome::Cancelled,
-                    format!("force-cancelled {}", subject(&held)),
-                ),
+                Ok(()) => {
+                    if let Some(r) = current.iter_mut().find(|r| r.id == d.run) {
+                        r.status = "completed".into();
+                        r.conclusion = Some("cancelled".into());
+                    }
+                    (
+                        IntegrationAction::RunCancelled,
+                        ActOutcome::Cancelled,
+                        format!("force-cancelled {}", subject(&held)),
+                    )
+                }
                 Err(e) => (
                     IntegrationAction::RunCancelFailed,
                     ActOutcome::Failed,
@@ -808,16 +864,29 @@ pub fn supervise(
         }
     }
     // read last, so that an unreadable answer costs no act
+    // over the runs of the stale bound only: an older success is stale whenever it ended
     let liveness = match early {
         Some(l) => l,
-        None => supervise::liveness(
-            forge
-                .newest_success(&model.supervisor, Successes::default())
-                .as_ref()
-                .map(Option::as_deref)
-                .map_err(ToString::to_string),
-            now(),
-        ),
+        None => {
+            let at = now();
+            let window = supervise::STALE_MINUTES + 1;
+            supervise::liveness_of(
+                forge
+                    .newest_success(
+                        &model.supervisor,
+                        Successes {
+                            lane: None,
+                            since: Some(at.saturating_sub(window * 60)),
+                        },
+                    )
+                    .as_ref()
+                    .map(Option::as_deref)
+                    .map_err(ToString::to_string),
+                at,
+                None,
+                Some(window),
+            )
+        }
     };
     Ok(SuperviseReport {
         liveness,
@@ -1106,6 +1175,24 @@ mod tests {
         let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
         assert_eq!(*f.cancelled.borrow(), vec![200]);
         assert_eq!(r.acts[0].outcome, ActOutcome::Skipped);
+        // a duplicate whose older run passed meanwhile is skipped: the group admits the twin
+        // then, and a cancel would run its `ci` job over the pass
+        let mut f = train();
+        f.obs
+            .as_mut()
+            .unwrap()
+            .runs
+            .push(run(102, "new", 7, "pending", 59));
+        let mut passed = f.obs.as_ref().unwrap().runs[1].clone();
+        assert_eq!(passed.id, 101);
+        passed.status = "completed".into();
+        passed.conclusion = Some("success".into());
+        f.reread.insert(101, passed);
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, true, None).unwrap();
+        assert_eq!(r.decisions[1].reason.word(), "duplicate_run");
+        assert_eq!(r.acts[1].run, 102);
+        assert_eq!(r.acts[1].outcome, ActOutcome::Skipped, "{r:?}");
+        assert!(!f.cancelled.borrow().contains(&102));
     }
 
     #[test]
@@ -1170,12 +1257,14 @@ mod tests {
         assert_eq!(*f.jobs_asked.borrow(), vec![200]);
         assert_eq!(r.jobs_read, 1);
         assert_eq!(r.in_flight, 3);
-        // a waiting twin of its branch and commit is read, whatever its age
+        // a twin of its branch and commit from one burst is read, and so is the older run of
+        // the pair, whatever their age: whether a job of the twin exists, and whether the older
+        // run will be ended before the next pass
         let mut f = train();
         let obs = f.obs.as_mut().unwrap();
         obs.runs.push(run(102, "new", 7, "pending", 59));
         let r = supervise(d.path(), &mut f, &m, &|| NOW, None, false, None).unwrap();
-        assert_eq!(*f.jobs_asked.borrow(), vec![200, 102]);
+        assert_eq!(*f.jobs_asked.borrow(), vec![101, 200, 102]);
         assert_eq!(r.decisions.len(), 3, "{r:?}");
         assert_eq!(r.decisions[1].reason.word(), "duplicate_run");
     }
@@ -1235,6 +1324,51 @@ mod tests {
         assert_eq!(
             *f.success_asked.borrow(),
             vec![Some("lundra".to_string()), None]
+        );
+    }
+
+    #[test]
+    fn the_alive_check_holds_the_lane_it_names_to_account() {
+        let d = repo();
+        let m = model();
+        let by = StandAside {
+            within_minutes: supervise::STALE_MINUTES,
+            lane: Some("lundra".into()),
+        };
+        // lundra's newest success is beyond the stale bound, whatever the hosted lane did: the
+        // report's liveness is lundra's, read once, and it is stale
+        let mut f = train();
+        f.success = Some(Ok(None));
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, false, Some(&by)).unwrap();
+        assert!(r.skipped.is_none());
+        assert_eq!(*f.success_asked.borrow(), vec![Some("lundra".to_string())]);
+        assert_eq!(
+            r.liveness.finding.as_deref(),
+            Some(supervise::SUPERVISE_STALE)
+        );
+        assert_eq!(r.liveness.lane.as_deref(), Some("lundra"));
+        let detail = r.liveness.detail.clone().unwrap();
+        assert!(
+            detail.contains("by lundra") && detail.contains("31 min"),
+            "{detail}"
+        );
+        // within it: alive, by lundra
+        let mut f = Fake {
+            success: Some(Ok(Some(at(12)))),
+            ..Fake::default()
+        };
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, false, Some(&by)).unwrap();
+        assert!(r.skipped.is_some());
+        assert_eq!(r.liveness.finding, None);
+        assert_eq!(r.liveness.lane.as_deref(), Some("lundra"));
+        // without a lane every lane's success counts, over the runs of the stale bound
+        let mut f = train();
+        f.success = Some(Ok(None));
+        let r = supervise(d.path(), &mut f, &m, &|| NOW, None, false, None).unwrap();
+        assert_eq!(r.liveness.lane, None);
+        assert_eq!(
+            r.liveness.finding.as_deref(),
+            Some(supervise::SUPERVISE_STALE)
         );
     }
 

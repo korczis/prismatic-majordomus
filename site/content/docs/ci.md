@@ -454,7 +454,7 @@ dispatch. It judges every queued, waiting and running run of the repository agai
 
 | Reason | When |
 |---|---|
-| `duplicate_run` | a first-attempt `pull_request` run of validate that waits with no job started while an older run of the same pull request, branch and commit is in flight, or passed and was created within 120 s of it as a first attempt; never a re-run, nor when the pull request is labelled `ci:full` |
+| `duplicate_run` | a first-attempt `pull_request` run of validate that waits in its group with no job created while an older run of the same pull request, branch and commit, created within 120 s of it, is in flight and is not itself to be ended within 30 minutes; never a re-run, nor when the pull request is labelled `ci:full` |
 | `superseded_blocks_successor` | a `pull_request` run of validate whose head is no longer its pull request's, while a newer run of the same pull request waits in the same group |
 | `queued_past_bound` | a pull request's run whose attempt has queued longer than its workflow's `queued_minutes` (240 everywhere) with no job of it started, from the later of `created_at` and `run_started_at`; never an `integration/*` top, a push, the schedule, a dispatch or a release |
 | `running_past_bound` | a job of it in progress longer than its workflow's `running_minutes` (its largest job timeout plus 30), from that job's start; never an `integration/*` top |
@@ -465,11 +465,24 @@ dispatch. It judges every queued, waiting and running run of the repository agai
 The duplicate is the `labeled` twin: a train opened with `--label train` is `opened` and
 `labeled` at once, and both start validate, so 6 of the 8 trains of 2026-10-28 had two full runs
 of one head; train 10b's twin, run 40713048283, waited in the group behind the first and then
-ran for hours. Outside that burst a second run of a judged commit was asked for, so it is never
-a duplicate: a reopened pull request tests its head against a master that has moved, a head that
-went A, B and back to A needs a verdict of A again, and a re-run (`run_attempt` above one) is a
-person's request (`rerun_requested`). A judged failure is never the twin of a later run. A pull
-request labelled `ci:full` asked for the second run, and its twin is held. A twin must be of the
+ran for hours. The twin is cancelled only while it is `pending` in the group with no job: the forge
+creates a run's jobs when the group admits it, and a cancel of an admitted run still runs its
+`if: always()` jobs, so validate's required `ci` job then writes a newer check that is not a
+success over the pass of the run it duplicated. That happened on #2678 at 3a45c8c7 on
+2026-10-29: run 40811610939 passed at 05:31:52Z, its twin 40811621641 was admitted at 05:31:53Z
+and cancelled at 05:58Z, its `ci` failed at 05:58:37Z, and the pull request read BLOCKED. So a
+judged run is never the older half of a pair. Nor is a twin cancelled while the older run is
+itself to be ended, now or within 30 minutes (the stale bound, the longest a live supervisor
+goes between passes), by a bound or for being superseded: it is held (`earlier_run_ends`) and
+takes the older run's place, since cancelling both would leave the commit with no run. Outside
+the burst a second run was asked for, so it is never a duplicate: a reopened pull request tests
+its head against a master that has moved, a label added hours later asks again (#2674's run
+40816501443, 2.5 hours after 40801560222), a head that went A, B and back to A needs a verdict
+of A again, and a re-run (`run_attempt` above one) is a person's request (`rerun_requested`). A
+pull request labelled `ci:full` asked for the second run, and its twin is held. Each act
+re-checks its decision against what the same pass has already done, so a run cancelled earlier
+in the pass is judged as cancelled by every act after it, and a duplicate's older run is read
+again with the twin, so a twin admitted a moment ago is not ended as one. A twin must be of the
 same branch as well as the same pull request and commit: the forge lists every open pull
 request whose head matches a run, so a train opened at its last member's tip is listed on the
 member's runs, and a run is attributed to the entry whose head is the branch it ran on.
@@ -501,51 +514,75 @@ that cannot be written stops every act. Without `--apply` the command prints the
 and exits 10 when there are any. The decision is
 `apps/majordomus-cli/src/integration/supervise.rs`, the forge side `integration/runs.rs`, and
 the test `the_declared_bounds_hold_to_every_workflows_real_timeouts` holds the record to every
-workflow's job timeouts; `supervise_replay.rs` replays both runs of 2026-10-28 and the four
-runs of the review of 2026-10-29 from what the forge recorded of them.
+workflow's job timeouts; `supervise_replay.rs` replays both runs of 2026-10-28, the four
+runs of the review of 2026-10-29, and the pairs of #2678 and #2674 from what the forge recorded
+of them.
 
-The supervisor must not be starved by what it supervises. It runs on lundra
-(`[self-hosted, lundra]`, which does not share the account's hosted concurrency), with a
-GitHub-hosted lane as the fallback for a lundra with no runner online. That fallback is only
-that: it queues behind validate's jobs like any hosted job, so it cannot start while the hosted
-pool is saturated, and when it starts it stands aside if lundra's supervision succeeded in the
-last eight minutes (`--unless-supervised-within 8 --supervised-by lundra`). Only lundra's
-success counts: a job that stood aside succeeded too, and a lane that counted its own would
-stand aside behind itself for ever once lundra stopped. Each lane is its own concurrency group with
-`cancel-in-progress: false`, so a burst of requested validate runs never cancels the apply that
-runs (it used to: five requests within a minute cancelled every apply before it acted), and a
-lane with no runner holds only itself. It compiles nothing: it downloads the executable the
-newest master validate run built (`majordomus-exe`), or the published release when none is
-kept, and takes one only if `prs supervise --help` answers, since every build before I3903
-answers `--version` and not the command; when neither has it the lane fails with exit 12 and
-says why. Each lane is bounded at five minutes. Case 3903 holds the wiring.
+The supervisor must not be starved by what it supervises. It runs first on lundra
+(`["self-hosted","lundra"]`, which does not share the account's hosted concurrency), and then,
+in the same run, on a GitHub-hosted lane that `needs` the lundra lane and runs only when it did
+not supervise (`if: always()` and no `supervised` output from lundra's supervise step). Both
+lanes are jobs of one trigger, so a matrix could not let the hosted lane see the lundra job
+beside it: it saw only the previous trigger's, which on a quiet stretch of the ten-minute
+schedule was nine minutes old or more, past its eight-minute window, and both lanes applied on
+the same tick. Sequenced, a tick lundra supervised costs one apply. Each lane is its own
+concurrency group with `cancel-in-progress: false`, so a burst of requested validate runs never
+cancels the apply that runs (it used to: five requests within a minute cancelled every apply
+before it acted). A lundra job that cannot get a runner waits in its group, the next trigger's
+waits behind it, and the trigger after that replaces the waiting one, which is cancelled: that
+run's hosted lane then applies. So a lundra that takes no job is covered from the third trigger
+on. That is also the answer when validate fills lundra: #2596 sends validate's first wave to
+`vars.MJ_RUNNER`, which is `lundra`, while its shards stay GitHub-hosted, so lundra's three
+runners can be busy with validate exactly as the hosted pool was on 2026-10-28. A runner label
+of the supervisor's own would need a runner registered with it on lundra, which no change to
+this tree can do, and until then the lane would never run; so the lane stays on lundra's
+labels, `vars.MJ_SUPERVISE_RUNNER` (a JSON list of labels) names a dedicated runner once one is
+registered, and a busy lundra is covered by the hosted lane, on a pool validate's first wave
+then does not fill. A hosted lane that runs still stands aside if lundra's supervision succeeded
+in the last eight minutes in another run (`--unless-supervised-within 8 --supervised-by
+lundra`). Only lundra's success counts: a job that stood aside succeeded too, and a lane that
+counted its own would stand aside behind itself for ever once lundra stopped. It compiles
+nothing: it downloads the executable the newest master validate run built (`majordomus-exe`), or
+the published release when none is kept, and takes one only if `prs supervise --help` answers,
+since every build before I3903 answers `--version` and not the command; when neither has it the
+lane fails with exit 12 and says why. Each step is bounded on its own and the bounds add up
+under the job's: checkout 1 minute, the executable 2 (each `gh` listing and download ended
+after 20 and 45 seconds, no download started after a minute, the installer, whose own download
+is allowed ten minutes, ended after 40 seconds), the supervise step 4, the job 8. The supervise
+step outlasts the executable's 180-second forge budget, after which it starts no call, so the
+job is never killed between an act's record and its outcome. Case 3903 holds the wiring.
 
 What it costs is bounded. Every workflow of the repository spends one `GITHUB_TOKEN` budget of
 1,000 requests an hour, and a full apply on every requested validate run in two lanes, reading
 every in-flight run's jobs, would spend about 2,000 on a busy day, after which every `gh` call
 of every workflow fails. So a run's jobs are read only where a rule could act on it: a bounded
-run older than the smaller of its two bounds, or a pull request's waiting run with an older run
-of its branch and commit (`needs_jobs`; the report counts them in `jobs_read`). Every other run
-is judged alike without them. Each `gh` call is ended after 20 seconds and the observation after
-180, so a degraded forge fails the apply (exit 12) inside its job's five minutes rather than
-having the job killed in the middle of its acts. `--unless-supervised-within <minutes>` makes a
-lane stand aside when a supervision succeeded that recently: it reads the supervisor's newest
-success, observes nothing and exits 0. With `--supervised-by <lane>` only that lane's job
-counts (one named `supervise (<lane>)`), and only the runs updated within the window are read
-for it, so a lane that stopped long ago costs one page rather than twenty runs' jobs.
+run older than the smaller of its two bounds, or a pull request's run with another run of its
+branch and commit in flight from the same burst (`needs_jobs`; the report counts them in
+`jobs_read`). Every other run is judged alike without them, and no completed run is read at
+all. Each `gh` call is ended after 20 seconds and the observation after 180.
+`--unless-supervised-within <minutes>` makes a lane stand aside when a supervision succeeded
+that recently: it reads the supervisor's newest success, observes nothing and exits 0. With
+`--supervised-by <lane>` only that lane's job counts (one named `supervise (<lane>)`), and only
+the runs updated within the window are read for it. The runs are read newest first, up to three
+pages of a hundred, past those whose every job was cancelled while it waited (a burst leaves
+twenty of them in a minute), and at most forty runs' jobs: more than that with no success among
+them is `supervise_unobserved`, not a stale supervisor.
 
 Its stopping is reported. `prs supervise` reads the newest successful job of the supervise
 workflow and reports `supervise_stale` when it is older than 30 minutes or there is none
 (`supervise_unobserved` when it cannot be read), in its text and in `liveness` of its JSON,
 without changing its exit. The queue workflow's `alive` job runs that dry run every thirty
-minutes, with `--unless-supervised-within 30` so that a live supervisor costs one page of reads,
-and fails on either finding. A hosted stand-aside counts there as a success, so a supervisor
-that stopped right after one is reported at most eight minutes late. It runs in two lanes like the supervisor, its own concurrency
-group each and from the same prebuilt executable: on lundra it reports a supervisor that runs
-there and fails, hosted it reports a lundra with no runner. What no job in Actions can report is
-lundra offline while the hosted pool is saturated, since both lanes then queue; that is read
-from outside Actions, by `majordomus prs supervise --format json` on any machine of the mesh
-(`.liveness.finding`).
+minutes with `--unless-supervised-within 30 --supervised-by lundra`, and fails on either
+finding. It names the lane: counting any lane's success, a lundra lane that failed on every
+tick was hidden by the hosted lane's successes, and nothing said so until the hosted pool
+filled and the fallback stopped too. With a window of the whole stale bound the report's
+`liveness` is that lane's (`liveness.lane`). While lundra is down the hosted lane covers and the
+`alive` job keeps failing, which is the news. It runs in two lanes like the supervisor, its own
+concurrency group each and from the same prebuilt executable: on lundra it reports a lundra lane
+that runs and fails, hosted it reports a lundra that takes no job. What no job in Actions can
+report is lundra taking no job while the hosted pool is saturated, since both lanes then queue;
+that is read from outside Actions, by `majordomus prs supervise --format json` on any machine
+of the mesh (`.liveness.finding`).
 
 The `pages` job judges the site only after the deployment of its own commit (I2711). It starts
 minutes after the push that also starts that commit's deploy, and on 2026-10-14 run

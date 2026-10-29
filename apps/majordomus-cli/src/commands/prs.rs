@@ -487,6 +487,14 @@ fn supervise(
                  with {}",
                 integration::supervise::FULL_LABEL
             ),
+            integration::supervise::HoldReason::EarlierRunEnds {
+                pull_request,
+                earlier,
+                ends_for,
+            } => format!(
+                "a twin of #{pull_request}'s commit whose older run {earlier} is to be ended \
+                 ({ends_for}): it takes that run's place"
+            ),
             integration::supervise::HoldReason::RerunRequested {
                 pull_request,
                 earlier,
@@ -547,7 +555,11 @@ fn supervise(
             l.detail.as_deref().unwrap_or("the supervisor is not alive")
         ),
         (None, Some(at)) => format!(
-            "supervisor alive: its newest success ended {} min ago ({at}), within {} min",
+            "supervisor alive{}: its newest success ended {} min ago ({at}), within {} min",
+            l.lane
+                .as_deref()
+                .map(|lane| format!(" ({lane})"))
+                .unwrap_or_default(),
             l.minutes.unwrap_or(0),
             l.bound_minutes
         ),

@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "ed2093ffd36fa8483c6b690294efea7cac25d0c2f085e15b28eda9841da9cd37",
+    "fingerprint": "83a636c749e609c7e5fc30412c6101eb6c585bbfe91bf5d030d89ab93f49b7ba",
     "summary": {
       "total": 3553,
       "builtin": 220,
@@ -92118,7 +92118,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c39081a524f328a511dc48832b9c1176618cd824e01179b982d11a0e1e3831eb",
+    "fingerprint": "50ad568108b9ae92084dcf25859bf87a0e20cff5847e941f1dc754459380059f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99180,7 +99180,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 53468
+        "bytes": 56822
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -114023,7 +114023,7 @@
         "path": ".ai/repo/project/issues/I3903.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4377
+        "bytes": 5176
       },
       {
         "uri": "majordomus://issue/I3910",
@@ -125520,7 +125520,7 @@
         "identity": "test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh",
         "path": "test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh",
         "source_class": "case",
-        "bytes": 5481
+        "bytes": 8004
       },
       {
         "uri": "majordomus://test/test/cases/390_unresolved_relation_refuses_generation.sh",
@@ -142256,7 +142256,7 @@
             "route": "/docs/cli/prs/supervise/",
             "executable": true,
             "usage": "majordomus prs supervise [OPTIONS]",
-            "about": "Judge every in-flight CI run against the bounds `.ai/repo/ci/supervise.yaml` declares, and name each one to cancel with its reason: a pull request's waiting first-attempt run of a commit that already has a run of its branch in flight, or one that passed within 120 seconds of it (never a re-run, nor when the pull request is labelled ci:full), a pull request's run of a head that moved while a newer run of it waits behind it in the same concurrency group, a pull request's run whose attempt queued past its workflow's bound with no job of it started, or one with a job in progress past its bound from that job's start (an integration/* top is never ended for a bound, nor a queued run of the default branch, a tag, the schedule, a dispatch or a release). A run of the default branch, a tag, the schedule, a dispatch or a release, and every pages or release run, is never cancelled for being superseded; the supervising workflow's own run never at all. It also reports supervise_stale when the supervisor's newest success is older than 30 minutes. A dry run by default, which reaches the forge to read and changes nothing. Exit 0 when nothing needs doing, 10 for decisions a dry run found, 12 when the forge could not be read or an act could not be taken",
+            "about": "Judge every in-flight CI run against the bounds `.ai/repo/ci/supervise.yaml` declares, and name each one to cancel with its reason: a pull request's first-attempt run waiting with no job created while a run of its branch and commit created within 120 seconds of it is in flight and is not itself to be ended within 30 minutes (never a re-run, an admitted run, nor when the pull request is labelled ci:full), a pull request's run of a head that moved while a newer run of it waits behind it in the same concurrency group, a pull request's run whose attempt queued past its workflow's bound with no job of it started, or one with a job in progress past its bound from that job's start (an integration/* top is never ended for a bound, nor a queued run of the default branch, a tag, the schedule, a dispatch or a release). A run of the default branch, a tag, the schedule, a dispatch or a release, and every pages or release run, is never cancelled for being superseded; the supervising workflow's own run never at all. It also reports supervise_stale when the supervisor's newest success (with `--supervised-by` and a window of 30 minutes or more, that lane's) is older than 30 minutes. A dry run by default, which reaches the forge to read and changes nothing. Exit 0 when nothing needs doing, 10 for decisions a dry run found, 12 when the forge could not be read or an act could not be taken",
             "args": [
               {
                 "name": "apply",
@@ -142302,7 +142302,7 @@
                 "name": "supervised_by",
                 "long": "supervised-by",
                 "positional": false,
-                "help": "With `--unless-supervised-within`, count only a supervision by this lane's job (one named `<anything> (<LANE>)`): the lane covered for. A job that stood aside succeeded too, so a lane that counted its own would stand aside behind itself once the lane it covers for stopped",
+                "help": "With `--unless-supervised-within`, count only a supervision by this lane's job (one named `<anything> (<LANE>)`): the lane covered for. A job that stood aside succeeded too, so a lane that counted its own would stand aside behind itself once the lane it covers for stopped. With a window of 30 minutes or more the reported liveness is this lane's, which is how the queue workflow holds the lundra lane to account",
                 "value_name": "LANE",
                 "takes_value": true,
                 "required": false,
