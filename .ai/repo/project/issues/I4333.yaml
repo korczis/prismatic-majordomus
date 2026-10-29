@@ -1,0 +1,45 @@
+id: I4333
+milestone: a-second-adopter-is-served
+title: "Whether a branch has landed is one predicate that also holds after a squash merge, and a repository declares how it lands"
+slug: one-landed-predicate-for-any-landing
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "One function decides whether a branch, or a head commit, has landed on the trunk, and says how it decided. There are three ways. By ancestry, which is today's rule. By the forge: a pull request from this repository whose head is that tip is MERGED and its merge commit is in the trunk. integration/forge.rs merged_branches_of and deploy/observed.rs ObservedMergedPullRequest already read this. Offline: the patch-id (`git patch-id --stable`) of the branch's combined diff from its merge base equals the patch-id of one trunk commit after that merge base. That works only while the clone still holds the branch's commits. After the branch is deleted, the forge is the only rule that can still decide. policy.yaml gains `landing: merge | squash` (policy.v1 schema), with merge as the default. Under merge only ancestry is asked, so nothing changes. Under squash the forge and patch-id rules are asked too. A check that needs the forge and cannot read it answers 'not judged', never 'not landed'. Every reader that decides 'landed' today calls this function: worktree cleanup and topology (worktree/state.rs:514-536 merged_into, which runs `git branch --merged`, read by worktree/service.rs:835-840 cleanup_eligible), convergence (convergence/mod.rs:358, Disposition::Integrated), and the fallback of the release an issue landed in (plan.rs:1454 and lib/project.sh:191, `git log --merges --grep`). integration/relation.rs:139 patches_upstream adds the combined patch-id as a second test beside `git cherry`. The issues that need this predicate depend on it: I4320 (evidence commits), I4324 (finished worktrees) and I4328 (task claims)."
+why: "Observed in OSCILLA (korczis/oscilla) on 2026-10-28 with majordomus 1.0.0-alpha.8. OSCILLA lands most pull requests by squash (`gh pr merge --auto --squash`) and its trains by merge commit. Majordomus decides 'landed' by ancestry, and a squash never satisfies that, because the trunk receives a new commit and never the branch's own commits. For example, PR #199 (branch fix/release-scripts-refuse-unknown-flags, 5 commits, head a5e5044) was MERGED on 2026-10-18T12:15:22Z as b820e04. Ten days later that branch is missing from `git branch --merged origin/main` (84 other branches are in it). `git cherry origin/main <branch>` marks all 5 commits `+`. `git merge-tree --write-tree origin/main <branch>` does not give main's tree, because main changed the same files later. Yet the patch-id of the branch's combined diff equals b820e04's (1b6a837b96a), and the forge reports MERGED with head a5e5044. That day the same assumption produced three faults: evidence commits outside main's history (I4320), finished worktrees that cleanup never offers and whose build output stays on disk (I4324), and a task claim from this same branch that still reads as live overlap (I4328). The assumption comes from ADR 0101 (proposed): its executor merges only with a merge commit, because the derived-file driver resolves merges. That is how this repository lands its work, and nothing says an adopter has to land the same way. The forge facts are already read in two places, for branches left behind after merge (integration/forge.rs:137-190) and for merged pull requests with their mergeCommit (deploy/observed.rs:56-73), but no landed check reads them. released_in looks first for the commit that wrote the issue's completed_at, and a squash keeps that commit. Only its fallback, `git log --merges`, misses a squash."
+current_state: "On master 81ef931a3e1, worktree cleanup, worktree topology and convergence decide 'merged' with `git branch --merged` (worktree/state.rs:520). released_in falls back to the newest merge commit whose message names the issue (plan.rs:1454, lib/project.sh:191). patches_upstream (integration/relation.rs:139) uses `git cherry`, which matches a squash only when the branch has a single commit. policy.v1 has no key that says how a repository lands. Already handled, and not part of this issue: integration/drain.rs:78 landing_method fast-forwards an up-to-date head; ADR 0101:198-199 counts a successor squash-merged as landed when its head or merge commit is on master; delivery/revision.rs:368-381 treats identical content on the trunk as landed; and the primary release lookup (plan.rs:1430-1453, git log -S<completed_at>) works whatever the landing mode, so only its --merges fallback misses a squash. The gaps that remain are worktree cleanup and topology (git branch --merged), a squash of several commits in patches_upstream, the release-lookup fallback and the absence of a declared landing mode (I3910 notes that no record decides it)."
+desired_state: "In a fixture repository with `landing: squash`, a branch of several commits that was squash-merged reads as landed in worktree cleanup, worktree topology, convergence and the release lookup. Offline the decision comes from the patch-id, and with a forge observation from the forge. The proof is named in each case. The same branch before its merge reads as not landed. With `landing: merge`, or with no key, every output is the same as today."
+scope:
+  - "apps/majordomus-cli/src/worktree"
+  - "apps/majordomus-cli/src/convergence"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/integration/relation.rs"
+  - "lib/project.sh"
+  - "lib/common.sh"
+  - "share/schemas/majordomus/policy/policy.v1.schema.json"
+  - "docs/WORKTREES.md"
+  - "docs/INTEGRATION.md"
+  - "test/cases"
+non_scope:
+  - "The executor's own merge method: ADR 0101's executor still lands by merge commit and never by squash"
+  - "A rebase landing: a later value of `landing` once a repository that rebases asks for it"
+  - "Fetching from the forge inside a check: the forge rule reads the observation already made, and without one the check reads 'not judged'"
+  - "The readers' own changes in output (evidence, worktree build output, task claims): I4320, I4324, I4328"
+depends_on: []
+acceptance_criteria:
+  - "In a fixture with `landing: squash`, a three-commit branch squash-merged into the trunk is cleanup-eligible in `majordomus worktree cleanup`, reads Integrated in convergence, and the proof names the patch-id"
+  - "Given a recorded forge observation in which the pull request is MERGED with that head, the proof names the pull request and its merge commit"
+  - "A squash-merged issue whose completed_at commit cannot be found resolves its release through the landing commit and does not read UNRELEASED"
+  - "The same fixture with `landing: merge` gives byte-identical output to the output before the change"
+  - "An unmerged branch reads not landed under both values"
+  - "Before the change the case fails on the cleanup listing, which omits the squash-merged branch"
+validation:
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib worktree::"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::relation::"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "one_landed_predicate_case"
+serves: []
+created_at: 2026-10-28
+updated_at: 2026-10-28

@@ -480,6 +480,29 @@ published (`majordomus served forge` records it). Releases come from the records
 tags: a record names the commit it released and is a file of the tree, while a tag is a ref
 that can appear on any day.
 
+The pointer is read where the deployment published it (I4315, ADR 0227). A Pages deployment
+is a commit `scripts/site-deploy` pushed to `gh-pages`, whose tree is the built site, so the
+pointer authored at `site/static/releases/latest.json` is `releases/latest.json` there; the
+reader tries that path first and the authored path second, for a deployment of a source
+commit, and an unread reason names both. Until I4315 it read only the authored path, which no
+deployment had ever carried, and `deployed` was proved for no issue.
+
+```mermaid
+flowchart LR
+  R["release record<br/>.ai/repo/releases/vX.yaml"] -->|generate| S["site/static/releases/latest.json"]
+  S -->|site build| P["gh-pages commit<br/>releases/latest.json"]
+  P -->|Pages deployment| O["deployment observation<br/>(majordomus served forge)"]
+  O --> D["plan delivery<br/>deployed"]
+  M["merge on the trunk"] --> L["released<br/>(first record containing it)"]
+  L --> D
+```
+
+Deployments are observed only by `majordomus served forge`, not by `prs refresh` (since
+3e8225a4329). A checkout that never ran it reads `publication` unread with that command in the
+reason. The Pages workflow's `ui-snapshot` job runs it and then fails when `plan delivery`
+still reads no publication for any reason other than "no successful deployment", so a reader
+that stops matching the deploy turns that run red instead of publishing `released` forever.
+
 Committed derived data is a function of the commit alone, or every tag, push, pull request
 and deployment would turn `scripts/generate-site-data --check` red on every open branch. So
 `--at <rev>` reads only that commit's merges and the tree's release records: it proves
