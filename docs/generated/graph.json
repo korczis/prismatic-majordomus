@@ -64405,6 +64405,8 @@
             "The adapter never logs, stores or echoes the credential or the prompt body",
             "The advisor's note states that it shares a Claude author's model family"
           ],
+          "completed_at": "2026-10-29T17:56:19Z",
+          "completed_event": "sha256:f6a45ed7cd6ce8a7dd62011fa5b1a926292eaf22d7f910c6501b6a3258079dc5",
           "created_at": "2026-10-20",
           "current_state": "Advisors: chatgpt (openai API), gemini and codex (CLI), ollama and lmstudio (local), mesh peers; no Anthropic API advisor.",
           "depends_on": [],
@@ -64425,11 +64427,15 @@
             "every-model-call-is-paid-from-a-declared-source#anthropic-api-reaches-the-advisors"
           ],
           "slug": "an-anthropic-api-advisor-is-declared",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-29T17:51:06Z",
+          "started_event": "sha256:1be2e6932a5716fe8a72b505699469e864317fd1b807f9b57b852ce385ee1ec9",
+          "updated_at": "2026-10-29T17:56:19Z",
           "validation": [
             "node --test scripts/lib/advisors/contract.test.mjs",
             "env -u MAJORDOMUS_SHARE majordomus reasoning check"
-          ]
+          ],
+          "verified_at": "2026-10-29T17:51:38Z",
+          "verified_event": "sha256:551a2f97eff04dff966768debf67c89c708cd4bc6d0f34fc1273326d8192ed6e"
         }
       },
       {
@@ -66259,6 +66265,8 @@
         "route": "/cockpit/objects/issue/i3820",
         "source": ".ai/repo/project/issues/I3820.yaml",
         "facts": {
+          "completed_at": "2026-10-29T17:59:43Z",
+          "completed_event": "sha256:861edfc13644af15b6fced4e7bfa15f4d3c3b292f8bcf42107dc3bc04cb5e5b3",
           "created_at": "2026-10-21",
           "depends_on": [],
           "evidence_required": [
@@ -66291,12 +66299,16 @@
           ],
           "serves": [],
           "slug": "a-deployment-derives-its-provider-files",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-29T17:57:44Z",
+          "started_event": "sha256:fbf73e5981c23dfffa228c1035d05270010fc5c68fdca21e52fb6aa259b81ff5",
+          "updated_at": "2026-10-29T17:59:43Z",
           "validation": [
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 84_deployment_contract 86_deployment_projections 3820_a_deployment_renders_its_providers_files",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib deploy::",
             "majordomus generate --check"
-          ]
+          ],
+          "verified_at": "2026-10-29T17:58:26Z",
+          "verified_event": "sha256:fef513ca7ca07e85bc55e5d48e55f63965b9a2fbb7faa6e587c639a3896776c7"
         }
       },
       {
@@ -66313,6 +66325,8 @@
             "The workflow runs only after master's ci succeeded, builds at master's commit and pushes with secrets that appear in no file or log",
             "The deployed /api/v1/live answers master's commit"
           ],
+          "completed_at": "2026-10-29T18:02:52Z",
+          "completed_event": "sha256:9c7eceb0d191218db52294806a8f4d6c4806b0492ce68c87c0a03997c4bc6fd8",
           "created_at": "2026-10-21",
           "depends_on": [
             "I3820"
@@ -66335,10 +66349,14 @@
           ],
           "serves": [],
           "slug": "master-publishes-its-provider-deployment",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-29T18:00:36Z",
+          "started_event": "sha256:45cbc407d3c1664cee0cf6b50814da05c1a4c086763560097aeef9d614113d26",
+          "updated_at": "2026-10-29T18:02:52Z",
           "validation": [
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3821_a_providers_tree_is_assembled_from_the_object"
-          ]
+          ],
+          "verified_at": "2026-10-29T18:01:21Z",
+          "verified_event": "sha256:7f4fb4c8b47599b91a8a8b14aca749a6feae835897ec597f5469972a31fa4ecb"
         }
       },
       {
@@ -66354,6 +66372,8 @@
             "A deployment answering master is served, one answering an older commit is stale, one not answering is unreachable",
             "The status is active only while the newest observation is served"
           ],
+          "completed_at": "2026-10-29T18:05:15Z",
+          "completed_event": "sha256:fe88b7f8aa3e68877698625ab872b2e7937d4b992552cc3b57ec3aa5e06888a0",
           "created_at": "2026-10-21",
           "current_state": "served.observe takes --url or falls back to site/config.toml's base_url with identity build.json; /api/v1/live already answers commit and dirty; the object's status is declared.",
           "depends_on": [
@@ -66375,10 +66395,14 @@
           ],
           "serves": [],
           "slug": "a-provider-deployment-is-observed-at-its-url",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-29T18:03:29Z",
+          "started_event": "sha256:aec57f527c4a3c153cf6390e0c90e8ddd3f4cf561a7f0d5b4a46b0f37c4d055b",
+          "updated_at": "2026-10-29T18:05:15Z",
           "validation": [
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3822_a_provider_deployment_is_observed_at_its_url"
-          ]
+          ],
+          "verified_at": "2026-10-29T18:04:03Z",
+          "verified_event": "sha256:f8e78d5a487b75c9555f54972831f62da6cf6435b386ec731fb0ef615719ddb1"
         }
       },
       {
