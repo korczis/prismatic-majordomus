@@ -25,4 +25,16 @@ validation:
 evidence_required:
   - discovered_once_counter
 created_at: 2026-10-21
-updated_at: 2026-10-21
+updated_at: 2026-10-26T03:49:54Z
+started_at: 2026-10-26T03:49:26Z
+started_event: sha256:e943260d4f235fc6e5c6ed16810212faf8766800c52cf0a157c792a73247f5d1
+completed_at: 2026-10-26T03:49:54Z
+completed_event: sha256:c5c6b4e0c89d673396f6a5e473771694a8ac24205f2a76edf88a9a5d764f7aca
+evidence:
+  - covers: discovered_once_counter
+    type: ci
+    command: "cargo test --workspace --all-features (CI rust jobs)"
+    result: "master validate run 40196303175 at 2efeacea031 concluded success; tests/hot_path.rs 2 passed (repository_discoveries in startup_work, asserted 1 after startup), lib tests incl. repository.rs's unreadable-manifest second-open test; perf.rs reports repository_discoveries"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-26T03:49:46Z
