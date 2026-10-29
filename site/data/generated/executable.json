@@ -35,6 +35,23 @@
       "tool": "majordomus_blackboard"
     },
     {
+      "api_anchor": "/docs/api/board/#op-board-snapshot",
+      "claims": [],
+      "cli": "majordomus board snapshot",
+      "id": "board.snapshot",
+      "kind": "query",
+      "module": "board",
+      "module_route": "/registry/modules/board/",
+      "resource": null,
+      "route": "/registry/capabilities/board-snapshot/",
+      "slug": "board-snapshot",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/board.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/board.rs",
+      "tests": [],
+      "title": "The delivery board's documents",
+      "tool": "majordomus_board_snapshot"
+    },
+    {
       "api_anchor": "/docs/api/brief/#op-brief-session",
       "claims": [],
       "cli": "majordomus brief",
@@ -4547,9 +4564,9 @@
     ]
   },
   "counts": {
-    "capabilities": 220,
+    "capabilities": 221,
     "claims": 93,
-    "modules": 60
+    "modules": 61
   },
   "generator": "majordomus-cli 1.0.0-alpha.9",
   "modules": [
@@ -4584,6 +4601,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/blackboard.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/blackboard.rs",
       "title": "The peer blackboard"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "board.snapshot",
+          "route": "/registry/capabilities/board-snapshot/",
+          "slug": "board-snapshot"
+        }
+      ],
+      "claims": [],
+      "id": "board",
+      "route": "/registry/modules/board/",
+      "slug": "board",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/board.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/board.rs",
+      "title": "The delivery board"
     },
     {
       "capabilities": [

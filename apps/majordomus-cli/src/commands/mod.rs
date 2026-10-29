@@ -31,6 +31,7 @@
 
 pub(crate) mod bench;
 pub(crate) mod blackboard;
+pub(crate) mod board;
 pub(crate) mod brief;
 pub(crate) mod capabilities;
 pub(crate) mod command_graph;
@@ -128,6 +129,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Dashboard(args) => dashboard::run(args),
         Command::Brief(args) => brief::run(args),
         Command::Blackboard(args) => blackboard::run(args),
+        Command::Board(args) => board::run(args),
         Command::Skills(args) => skills::run(args),
         Command::Knowledge(args) => knowledge::run(args),
         Command::Continuity(args) => continuity::run(args),
@@ -203,6 +205,9 @@ mod tests {
             }),
             (&["majordomus", "blackboard", "--this-checkout"], |c| {
                 matches!(c, Command::Blackboard(_))
+            }),
+            (&["majordomus", "board", "snapshot"], |c| {
+                matches!(c, Command::Board(_))
             }),
             (
                 &["majordomus", "devcontext", "compile", "--issue", "I1"],

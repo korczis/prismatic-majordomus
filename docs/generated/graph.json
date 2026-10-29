@@ -88,6 +88,15 @@
         "status": "query"
       },
       {
+        "id": "capability:board.snapshot",
+        "kind": "capability",
+        "label": "board.snapshot",
+        "summary": "The delivery board's documents",
+        "route": "/cockpit/capabilities/board.snapshot",
+        "source": "apps/majordomus-cli/src/capability/builtin/board.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:brief.session",
         "kind": "capability",
         "label": "brief.session",
@@ -21006,7 +21015,8 @@
             "plan",
             "devtask",
             "intents",
-            "intent_realization"
+            "intent_realization",
+            "board"
           ],
           "related": [
             "worktrees",
@@ -71701,6 +71711,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I4294",
+        "kind": "issue",
+        "label": "I4294",
+        "summary": "The delivery board's documents are derived by one capability, and every open milestone has a lane",
+        "route": "/cockpit/objects/issue/i4294",
+        "source": ".ai/repo/project/issues/I4294.yaml",
+        "facts": {
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "board_snapshot_tests"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "share/board.yaml",
+            "apps/majordomus-cli/src/board.rs",
+            "apps/majordomus-cli/src/lib.rs",
+            "apps/majordomus-cli/src/capability/builtin/board.rs",
+            "apps/majordomus-cli/src/capability/builtin/mod.rs",
+            "apps/majordomus-cli/src/commands/board.rs",
+            "apps/majordomus-cli/src/commands/mod.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/tests/board_snapshot.rs",
+            ".ai/repo/features/planning.md",
+            "docs/generated",
+            "site",
+            ".ai/repo/project/issues/I4294.yaml"
+          ],
+          "slug": "the-board-is-derived-by-one-capability",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- board",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test board_snapshot",
+            "majordomus generate --check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4296",
         "kind": "issue",
         "label": "I4296",
@@ -101833,6 +101885,11 @@
         "label": "blackboard"
       },
       {
+        "id": "module:board",
+        "kind": "module",
+        "label": "board"
+      },
+      {
         "id": "module:brief",
         "kind": "module",
         "label": "brief"
@@ -102244,6 +102301,26 @@
       },
       {
         "source": "capability:blackboard.snapshot",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:board.snapshot",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:board.snapshot",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:board.snapshot",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:board.snapshot",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -137023,6 +137100,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4294",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4294",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4296",
         "target": "kind:issue",
         "kind": "is_a"
@@ -148418,6 +148505,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:board",
+        "target": "capability:board.snapshot",
+        "kind": "composes"
+      },
+      {
         "source": "module:brief",
         "target": "capability:brief.session",
         "kind": "composes"
@@ -149509,8 +149601,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4097,
-      "edges": 9459,
+      "nodes": 4100,
+      "edges": 9466,
       "acyclic": false,
       "truncated": false
     }

@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 220 | 181 | 0 | 39 |
-| http | 212 | 181 | 0 | 31 |
-| mcp | 206 | 176 | 0 | 30 |
+| direct | 221 | 182 | 0 | 39 |
+| http | 213 | 182 | 0 | 31 |
+| mcp | 207 | 177 | 0 | 30 |
 | system | 14 | 14 | 0 | 0 |
-| total | 652 | 552 | 0 | 100 |
+| total | 655 | 555 | 0 | 100 |
 
 ## Capabilities
 
@@ -21,6 +21,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 |---|---|---|---|---|---|---|---|
 | `artifacts.list` | artifacts | query | process, 8 entries, 5s | covered | covered | covered | `all`, `one-encoding` |
 | `blackboard.snapshot` | blackboard | query | — | covered | covered | covered | `this-checkout`, `addressed` |
+| `board.snapshot` | board | query | — | covered | covered | covered | `default`, `named` |
 | `brief.session` | brief | query | — | covered | covered | covered | `default` |
 | `capabilities.describe` | capabilities | query | process, 512 entries | covered | covered | covered | `repository-info` |
 | `capabilities.list` | capabilities | query | process, 16 entries | covered | covered | covered | `all`, `queries` |

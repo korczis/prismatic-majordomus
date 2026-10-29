@@ -25,6 +25,8 @@ tags:
     description: "What `majordomus generate` writes: every document with the encodings it is committed in — JSON for a program, YAML beside it, Markdown for a reader — each with its schema, its source and its hash, reconciled with the working tree. The declaration is the generator's own manifest; nothing here keeps a list."
   - name: blackboard
     description: "Who works on what in this repository, as one projection of the records that already know it: every checkout's board, the mesh journal's sessions, claims, reviews and handovers on every linked machine, and the monitor's newest signals, joined once so that no surface joins them again (ADR 0176). A board peer and a mesh session are one worker only when an explicit identifier joins them; a source that could not be read makes the answer incomplete and says why."
+  - name: board
+    description: "The documents the delivery board reads, derived from the plan, the roadmap, the intents, the recorded pull request queue and the release currency, with the lanes share/board.yaml declares once. Every open milestone is in a lane or the snapshot refuses, naming it."
   - name: brief
     description: "What surrounds one working session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, each section asked of its owner once and saying whether it could be read. The answer a session reports on itself from without being asked, and the one a provider mod shows as its status line (ADR 0136). Writes nothing."
   - name: capabilities
@@ -312,6 +314,68 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_blackboard
       x-majordomus-cli: blackboard
+  "/api/v1/board/snapshot":
+    get:
+      operationId: board.snapshot
+      summary: "The delivery board's documents"
+      description: "Every document of the delivery board by id: meta (the commit, the lanes, the issue counts, the release), milestones in roadmap order, intents, the pull request queue from the last recorded observation, and the open issues of each lane as issues-<lane>, split into issues-<lane>-2 and onwards so that no document serializes past 250000 bytes. The digest is a SHA-256 over the canonical JSON of the documents with meta.syncedAt and meta.syncedBy left out, so equal state is an equal digest. A milestone that is not DONE and is in no lane of share/board.yaml is refused by name, never filed under other. An unobserved queue is said in prs.unavailable and the diagnostics, never refused. Mesh seats, live work, CI runners and blockers are the sync step's and are not here. Reads only; nothing is cached."
+      tags:
+        - board
+      parameters:
+        - name: by
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Who takes the snapshot, as `meta.syncedBy` names it; `board.snapshot` when absent.\nLeft out of the digest."
+          examples:
+            named:
+              value: a mesh session
+      responses:
+        "200":
+          description: "The delivery board's documents: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BoardSnapshot"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: board.snapshot
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::board
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_board_snapshot
+      x-majordomus-cli: board snapshot
   "/api/v1/brief":
     get:
       operationId: brief.session
@@ -15898,6 +15962,51 @@ components:
           const: cycle
           description: "A dependency cycle this task is in or downstream of, so it can never become ready."
       description: "What kind of thing is holding a task back. The five are the five the canonical model can\nactually produce; there is no `other`."
+    BoardSnapshot:
+      type: object
+      properties:
+        digest:
+          type: string
+          description: "`sha256:<hex>` over the canonical JSON of the documents, `meta.syncedAt` and\n`meta.syncedBy` left out: equal state, equal digest."
+        master_sha:
+          type: string
+          description: "The commit described, empty when the checkout has none."
+        master_committed_at:
+          type: string
+          description: "Its committer time, RFC 3339."
+        master_ref:
+          type: string
+          description: "The ref it was read from: `refs/remotes/origin/master`, else `HEAD`."
+        document_limit:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "The bound every document is under, in bytes of compact JSON."
+        sizes:
+          type: object
+          additionalProperties:
+            type: integer
+            format: uint
+            minimum: 0
+          description: "Each document's compact size, in bytes, by id."
+        documents:
+          type: object
+          additionalProperties: true
+          description: "The documents, by id: `meta`, `milestones`, `intents`, `prs`, and `issues-<lane>`\n(then `issues-<lane>-2`, ...) for each lane with open work."
+        diagnostics:
+          type: array
+          items:
+            type: string
+          description: "What could not be read, in words: an unobserved pull request queue, a lane naming a\nmilestone the plan lacks. Empty is the ordinary case."
+      required:
+        - digest
+        - master_sha
+        - master_committed_at
+        - master_ref
+        - document_limit
+        - sizes
+        - documents
+      description: "The answer of `board.snapshot`: every document of the board by id, and the digest that\nsays whether two snapshots describe the same state."
     BoardView:
       type: object
       properties:
