@@ -28,6 +28,8 @@
 #      exit 12 with no file, the step says the ::warning and ends 0, so the deploy goes on;
 #      and a reading that outlives the line's own `timeout` is exit 124, the same warning,
 #      and the same 0 (I4380)
+#   9  a call the forge answers with a 5xx or a rate limit is asked once more inside its own
+#      bound, and the reading is the same bytes; a refusal is the answer, asked once (I4380)
 . "$ROOT/test/lib.sh"
 
 command -v python3 >/dev/null 2>&1 || skip "no python3 to write the fixture artifact"
@@ -97,6 +99,10 @@ while [ \$# -gt 0 ]; do case "\$1" in
   *) url="\$1"; shift ;;
 esac; done
 [ -f "$F/down" ] && exit 1
+[ -f "$F/denied" ] && { echo "HTTP 401: Bad credentials (https://api.github.com/x)" >&2; exit 1; }
+if [ -f "$F/flaky" ]; then
+  rm -f "$F/flaky"; echo "HTTP \$(cat "$F/flaky-answer" 2>/dev/null || echo 502): the forge is busy" >&2; exit 1
+fi
 [ -f "$F/never" ] && exec sleep 60
 case "\$url" in *"/jobs?"*) [ -f "$F/hang" ] && exec sleep 60 ;; esac
 case "\$url" in
@@ -240,5 +246,21 @@ if command -v timeout >/dev/null 2>&1; then
 else
   echo "    (no timeout(1) here: the trends step's bounds are not exercised)"
 fi
+
+# ---------------------------------------------------------------- 9. an outage is asked again once
+for answer in 502 "403: API rate limit exceeded for installation"; do
+  printf '%s\n' "$answer" > "$F/flaky-answer"; : > "$F/flaky"; : > "$F/calls.log"
+  PATH="$T/bin:$PATH" GITHUB_REPOSITORY=example/repo MJ_TRENDS_PARALLEL=1 expect_exit 0 \
+    "$ROOT/scripts/pages" trends --out "$T/retried.json" --runs 2
+  [ "$(grep -c 'actions/workflows/validate.yml/runs' "$F/calls.log")" = 2 ] \
+    || { echo "    the listing answered HTTP $answer was not asked again exactly once"; cat "$F/calls.log"; exit 1; }
+  cmp -s "$T/one.json" "$T/retried.json" || { echo "    a retried listing ($answer) reads other bytes"; exit 1; }
+done
+rm -f "$F/flaky" "$F/flaky-answer"
+: > "$F/denied"; : > "$F/calls.log"
+PATH="$T/bin:$PATH" GITHUB_REPOSITORY=example/repo expect_exit 12 \
+  "$ROOT/scripts/pages" trends --out "$T/denied.json" --runs 2
+[ "$(grep -c . "$F/calls.log")" = 1 ] || { echo "    a refusal was asked again"; cat "$F/calls.log"; exit 1; }
+rm -f "$F/denied"
 
 echo "    the series is master's runs oldest first, each with its own jobs' cost and its own measurement's totals, null where the forge no longer keeps one"

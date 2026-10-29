@@ -443,6 +443,26 @@ pub fn gateway_timed_out(message: &str) -> bool {
         || m.contains("may be the result of a timeout")
 }
 
+/// Whether the answer to `gh pr list`'s hundred-a-page read is one a smaller page answers: the
+/// forge giving up on the query ([`gateway_timed_out`]), or a body cut off on its way, which
+/// `gh` reports as "unexpected end of JSON input". An overloaded page of a hundred with their
+/// whole rollups came back cut off on pages runs 120850143313, 120870713946, 120881119536 and
+/// 120966409314 (2026-10-24), and that page was asked four times and never read in smaller
+/// ones; it is now read again in pages of [`OPEN_PAGE`] (I4380). Every other read keeps a
+/// cut-off body an outage and asks the same question again (I4222).
+///
+/// ```text
+/// list_needs_smaller_pages("unexpected end of JSON input") == true
+/// list_needs_smaller_pages("HTTP 504: 504 Gateway Timeout") == true
+/// list_needs_smaller_pages("HTTP 502: Bad Gateway") == false
+/// ```
+pub fn list_needs_smaller_pages(message: &str) -> bool {
+    gateway_timed_out(message)
+        || message
+            .to_ascii_lowercase()
+            .contains("unexpected end of json input")
+}
+
 /// The merge methods a repository's settings allow, from `GET repos/{repository}`, in the
 /// forge's words; `None` when the answer carries none of `allow_merge_commit`,
 /// `allow_squash_merge` and `allow_rebase_merge`. The forge leaves them out for a token that
@@ -1727,10 +1747,11 @@ impl Forge for GhForge<'_> {
             "number,title,author,headRefName,headRefOid,baseRefName,isDraft,labels,createdAt,updatedAt,body,statusCheckRollup,reviewDecision,latestReviews,reviewRequests,autoMergeRequest,isCrossRepository",
         ];
         // `gh pr list` in its pages of a hundred, the one read every scripted forge answers;
-        // a page the forge's gateway times out is read again in pages of OPEN_PAGE, each
-        // asked again on an outage as every read is, rather than the same page four times
-        let listed = gh_retrying_unless(root, &list_args, gateway_timed_out)?;
-        let list = if !listed.0 && gateway_timed_out(&listed.2) {
+        // a page the forge times out, or whose body is cut off on its way, is read again in
+        // pages of OPEN_PAGE, each asked again on an outage as every read is, rather than the
+        // same page four times
+        let listed = gh_retrying_unless(root, &list_args, list_needs_smaller_pages)?;
+        let list = if !listed.0 && list_needs_smaller_pages(&listed.2) {
             let size = format!("n={OPEN_PAGE}");
             Value::Array(open_pull_requests(OPEN_LIMIT, |after| {
                 ask(OPEN_QUERY, &size, after)
@@ -3765,6 +3786,36 @@ mod tests {
             "HTTP 401: Bad credentials",
         ] {
             assert!(!gateway_timed_out(other), "{other}");
+        }
+    }
+
+    #[test]
+    fn a_cut_off_list_is_answered_with_smaller_pages() {
+        // the cut-off body of an overloaded page of a hundred (pages runs of 2026-10-24) is read
+        // again in smaller pages, as a timeout is; the retry still reads it as an outage, so
+        // every other read asks the same question again
+        let cut = "unexpected end of JSON input";
+        assert!(
+            super::super::retry::transient(cut),
+            "the retry reads it as an outage"
+        );
+        assert!(!gateway_timed_out(cut), "it is not the forge giving up");
+        assert!(list_needs_smaller_pages(cut));
+        assert!(list_needs_smaller_pages("Unexpected end of JSON input"));
+        assert!(list_needs_smaller_pages(
+            "HTTP 504: 504 Gateway Timeout (https://api.github.com/graphql)"
+        ));
+        assert!(list_needs_smaller_pages(
+            "GraphQL: Something went wrong while executing your query. This may be the result \
+             of a timeout, or it could be a GitHub bug."
+        ));
+        for other in [
+            "HTTP 502: Bad Gateway (https://api.github.com/graphql)",
+            "HTTP 503: Service Unavailable",
+            "HTTP 401: Bad credentials",
+            "invalid character 'x' looking for beginning of value",
+        ] {
+            assert!(!list_needs_smaller_pages(other), "{other}");
         }
     }
 

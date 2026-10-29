@@ -1904,9 +1904,25 @@ cmd_trends() {
   trends_fail() { echo "pages trends: $1" >&2; rm -rf "$tmp"; return 12; }
   # Every call to the forge is bounded (MJ_TRENDS_CALL_SECONDS, 30), the listing first: a gh
   # that never answers is a forge that could not be read (exit 12, no file), within seconds,
-  # and not a reading that waits out pages.yml's own bound on the step (I4380).
+  # and not a reading that waits out pages.yml's own bound on the step (I4380). A call the
+  # forge answers with a 5xx or a rate limit is asked once more, a second later, inside what
+  # is left of that same bound; a refusal, a call stopped at its bound and anything else is
+  # the answer. The answer is held until the call is done, so a retried --paginate is never
+  # read twice.
+  trends_gh_once() {
+    if command -v timeout >/dev/null 2>&1; then timeout --kill-after=5 "$1" gh "${@:2}"; else gh "${@:2}"; fi
+  }
   trends_gh() {
-    if command -v timeout >/dev/null 2>&1; then timeout --kill-after=5 "$call" gh "$@"; else gh "$@"; fi
+    local t0="$SECONDS" o e rc=0 left
+    o="$(mktemp "$tmp/gh.XXXXXX")"; e="$(mktemp "$tmp/gh.XXXXXX")"
+    trends_gh_once "$call" "$@" > "$o" 2> "$e" || rc=$?
+    left=$(( call - (SECONDS - t0) - 1 ))
+    if [ "$rc" != 0 ] && [ "$rc" != 124 ] && [ "$rc" != 137 ] && [ "$left" -ge 1 ] \
+      && grep -Eqi 'HTTP 5[0-9][0-9]|HTTP 429|rate limit' "$e"; then
+      sleep 1; rc=0; trends_gh_once "$left" "$@" > "$o" 2> "$e" || rc=$?
+    fi
+    cat "$o"; cat "$e" >&2; rm -f "$o" "$e"
+    return "$rc"
   }
   trends_gh api "repos/$slug/actions/workflows/validate.yml/runs?branch=master&status=completed&per_page=$runs" \
     < /dev/null > "$tmp/runs.json" 2>/dev/null || { trends_fail "the validate runs of $slug could not be listed"; return 12; }

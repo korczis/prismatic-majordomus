@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "63be6dbfc55139ed1c8ec91e273912e3ea21b05c5edd93189b45d18a12f0f59d",
+    "fingerprint": "e41d1f33059c89a9002c860cd3e3a6098cab0e22dcc6f69531f2ce54b2d12870",
     "summary": {
       "total": 3572,
       "builtin": 220,
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "e166174141494b618a5614fc432e70796eff7cbd033b36a5973731e155b22028",
+    "fingerprint": "6f233c087b50c8323967a442d3c918794faa951670a495dbd174c3f4cad5f8e1",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -115074,11 +115074,11 @@
         "kind": "issue",
         "identity": "I4380",
         "title": "An optional step of the Pages publication never stops the deploy",
-        "description": "A step of pages.yml that is written to degrade (`|| echo \\\"::warning ...\\\"`) degrades when it runs out of time instead of being killed: its command is bounded inside the step's own timeout-minutes, and scripts/ci/step-bound-check refuses one that is not. The trends reading reads its runs eight at a time with every forge call bounded, and `majordomus prs refresh` reads the open pull requests in GraphQL pages of 25 when the forge times out `gh pr list`'s page of a hundred (a gateway 504, or GraphQL's own \\\"may be the result of a timeout\\\"). The ui-snapshot's forge observation is two degrading steps, each bounded from measured runs: a healthy forge is always observed, and a forge that cannot be asked leaves the PR Drain and Deployments screens saying the forge was not observed, and the site is still published.",
+        "description": "A step of pages.yml that is written to degrade (`|| echo \\\"::warning ...\\\"`) degrades when it runs out of time instead of being killed: its command is bounded inside the step's own timeout-minutes, and scripts/ci/step-bound-check refuses one that is not. The trends reading reads its runs eight at a time with every forge call bounded, and `majordomus prs refresh` reads the open pull requests in GraphQL pages of 25 when the forge times out `gh pr list`'s page of a hundred (a gateway 504, GraphQL's own \\\"may be the result of a timeout\\\", or a body cut off on its way, \\\"unexpected end of JSON input\\\"). The ui-snapshot's forge observation is two degrading steps, each bounded from measured runs: a healthy forge is always observed, and a forge that cannot be asked leaves the PR Drain and Deployments screens saying the forge was not observed, and the site is still published.",
         "path": ".ai/repo/project/issues/I4380.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 8069
+        "bytes": 9234
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -125716,7 +125716,7 @@
         "identity": "test/cases/3933_the_trends_are_read_from_the_runs_themselves.sh",
         "path": "test/cases/3933_the_trends_are_read_from_the_runs_themselves.sh",
         "source_class": "case",
-        "bytes": 15456
+        "bytes": 16939
       },
       {
         "uri": "majordomus://test/test/cases/3939_the_executable_is_built_once_per_run.sh",
@@ -126892,7 +126892,7 @@
         "identity": "test/cases/742_only_an_outage_is_asked_again.sh",
         "path": "test/cases/742_only_an_outage_is_asked_again.sh",
         "source_class": "case",
-        "bytes": 11281
+        "bytes": 12162
       },
       {
         "uri": "majordomus://test/test/cases/743_release_version_answers_with_the_contract.sh",

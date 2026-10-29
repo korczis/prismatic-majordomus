@@ -11,8 +11,9 @@
 #      observation, and the drain says the forge refused it. An outage ends the drain: the
 #      next one, or the next cycle, decides again (ADR 0101 §10)
 #   4. an outage that does not end is given up on after four attempts, and says so
-#   5. a reply cut off on its way (`gh` says "unexpected end of JSON input") is an outage, not
-#      an answer: the list is asked again and the observation is recorded (I4222)
+#   5. a reply cut off on its way (`gh` says "unexpected end of JSON input") to any read but
+#      the open list is an outage, not an answer: the repository is asked again exactly once
+#      and the observation is recorded (I4222)
 #   6. a list the forge's gateway times out (HTTP 504, master's pages runs 40796031540,
 #      40803295553 and 40823254353) is not the same page asked four times: it is read again in
 #      pages of 25 through GraphQL, and the observation records the pull request with its
@@ -20,6 +21,10 @@
 #   7. GraphQL's own timeout, an HTTP 200 whose error says "This may be the result of a
 #      timeout", is the same answer as the gateway's 504: one page of 25 is asked, never the
 #      same hundred four times (I4380)
+#   8. the open list's hundred-a-page body cut off on its way (pages runs 120850143313,
+#      120870713946, 120881119536 and 120966409314 of 2026-10-24) is the same answer as a
+#      timeout: it is asked once and read again in one page of 25, never the same hundred four
+#      times (I4380)
 . "$ROOT/test/lib.sh"
 RB="$(rust_bin)" || rust_bin_exit $?
 
@@ -45,6 +50,8 @@ printf '{"data":{"repository":{"pullRequests":{"pageInfo":{"hasNextPage":false,"
 #   denied  — `repo view` is refused with a 401, always
 #   down    — `repo view` fails with a 503, always
 #   mergebad — everything answers, the fast-forward of master (I3910) fails with a 502
+#   cut     — `repo view` answers with a body cut off on its way once, then answers
+#   cutlist — `pr list` answers with a body cut off on its way, always; the paged read answers
 #   gateway — `pr list` times out at the gateway (504), always; the paged read answers
 #   graphql — `pr list` times out inside GraphQL (its error, not a 504), always; the paged
 #             read answers
@@ -58,6 +65,7 @@ case "\$1 \$2" in
       flaky) if [ ! -f "$STATE/flaked" ]; then touch "$STATE/flaked"; echo "HTTP 502: Bad Gateway (https://api.github.com/graphql)" >&2; exit 1; fi ;;
       denied) echo "HTTP 401: Bad credentials (https://api.github.com/graphql)" >&2; exit 1 ;;
       down) echo "HTTP 503: Service Unavailable" >&2; exit 1 ;;
+      cut) if [ ! -f "$STATE/cut" ]; then touch "$STATE/cut"; echo "unexpected end of JSON input" >&2; exit 1; fi ;;
     esac
     echo '{"nameWithOwner":"o/r","defaultBranchRef":{"name":"master"}}' ;;
   "api repos/o/r") echo '{"allow_merge_commit":true}' ;;
@@ -65,8 +73,8 @@ case "\$1 \$2" in
   "api repos/o/r/branches/master/protection") echo '{"required_status_checks":{"contexts":["ci"]}}' ;;
   "api repos/o/r/rules/branches/master") echo '[]' ;;
   "pr list")
-    if [ "\$mode" = cut ] && [ ! -f "$STATE/cut" ]; then touch "$STATE/cut"; echo "unexpected end of JSON input" >&2; exit 1; fi
     # the stand-in's own declarations read lists through here too, and is not the forge's list
+    if [ "\$mode" = cutlist ] && [ -z "\${DECLARATIONS:-}" ]; then echo "unexpected end of JSON input" >&2; exit 1; fi
     if [ "\$mode" = gateway ] && [ -z "\${DECLARATIONS:-}" ]; then echo "HTTP 504: 504 Gateway Timeout (https://api.github.com/graphql)" >&2; exit 1; fi
     if [ "\$mode" = graphql ] && [ -z "\${DECLARATIONS:-}" ]; then echo "GraphQL: Something went wrong while executing your query. This may be the result of a timeout, or it could be a GitHub bug. Please include C0DE:1234:5678:9ABC:DEF0 when reporting this issue." >&2; exit 1; fi
     cat "$STATE/prs.json" ;;
@@ -130,14 +138,16 @@ case "$out" in *"(after 4 attempts)"*) ;; *) echo "    the failure does not say 
 # ---------------------------------------------------------------- 5. a reply cut off on its way
 echo cut > "$STATE/mode"; : > "$STATE/log"; rm -f "$STATE/cut" "$W/.ai/local/state/integration/observation.json"
 prs refresh >/dev/null || { echo "    a reply cut off once failed the refresh"; cat "$STATE/log"; exit 1; }
-[ "$(asked 'pr list')" = 2 ] || { echo "    the cut-off list was not asked again exactly once: $(asked 'pr list') call(s)"; exit 1; }
+[ "$(asked 'repo view')" = 2 ] || { echo "    the cut-off reply was not asked again exactly once: $(asked 'repo view') call(s)"; exit 1; }
+[ "$(asked 'pr list')" = 1 ] || { echo "    the list was asked $(asked 'pr list') times after a cut-off reply to another read, not once"; exit 1; }
 [ -f "$W/.ai/local/state/integration/observation.json" ] || { echo "    no observation was recorded after the cut-off reply"; exit 1; }
-# ---------------------------------------------------------------- 6 and 7. a list the forge times out
+# ---------------------------------------------------------------- 6, 7 and 8. a list the forge
+# times out, or whose body is cut off on its way, is read in smaller pages
 OBS="$W/.ai/local/state/integration/observation.json"
-for mode in gateway graphql; do
+for mode in gateway graphql cutlist; do
   echo "$mode" > "$STATE/mode"; : > "$STATE/log"; rm -f "$OBS"
-  prs refresh >/dev/null || { echo "    a list the forge timed out ($mode) failed the refresh"; cat "$STATE/log"; exit 1; }
-  [ "$(asked 'pr list')" = 1 ] || { echo "    the timed-out page ($mode) was asked $(asked 'pr list') times, not once"; exit 1; }
+  prs refresh >/dev/null || { echo "    a list the forge did not answer whole ($mode) failed the refresh"; cat "$STATE/log"; exit 1; }
+  [ "$(asked 'pr list')" = 1 ] || { echo "    the unanswered page ($mode) was asked $(asked 'pr list') times, not once"; exit 1; }
   paged="$(grep -c 'reviewRequests(first:100).* n=25' "$STATE/log" || true)"
   [ "$paged" = 1 ] || { echo "    the open list ($mode) was not read in one page of 25: $paged paged read(s)"; cat "$STATE/log"; exit 1; }
   [ -f "$OBS" ] || { echo "    no observation was recorded after the paged read ($mode)"; exit 1; }
