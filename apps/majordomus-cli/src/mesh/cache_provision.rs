@@ -232,7 +232,7 @@ fn runner_units(policy: &Policy, observed: &BTreeMap<String, Observed>) -> Vec<S
             (UNIT_DIRS.contains(&dir) && policy.is_runner_unit(name)).then(|| name.to_string())
         })
         .collect();
-    units.sort();
+    crate::order::canonical(&mut units);
     units.dedup();
     units
 }
