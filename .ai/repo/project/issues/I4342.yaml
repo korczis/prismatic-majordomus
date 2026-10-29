@@ -1,0 +1,41 @@
+id: I4342
+milestone: test-evidence
+title: "A release's record lands without a person within two hours of its tag"
+slug: a-release-record-lands-within-its-bound
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "The record pull request a release opens gets its own pull_request run started without a person: the publish job opens it, or the drain closes and reopens it, with a GitHub App or fine-grained token the owner supplies, whose events start workflows, so that run posts `ci` on the record's head and branch protection counts it. release-check reports an unlanded record's age, and the release seat's check fails once a record has waited more than two hours, naming the pull request; that bound holds today, with or without the credential."
+why: "Incident 7 of 2026-10-28: v1.0.0-alpha.9 was tagged and its record pull request #2626 opened, but its only run sat action_required, so no `ci` reached it and nothing landed it; master validate 40676150754 went red on case 103 in the meantime, and every job turns red about 2026-10-29 12:47Z if #2626 has not landed. I2282 (completed 2026-10-20) already showed that a dispatched validate cannot be the remedy: branch protection reads no check suite a dispatch created, so #866 (dispatched run 38015081212, `ci` success, merge refused 'base branch policy prohibits') and #1273 (dispatched run 38865302829 green, refused; merged only after a person approved pull_request run 38865305333) waited for a person with a green dispatched `ci`. release.yml already dispatches validate on the record branch and says it is not the merge's verdict, and docs/DISTRIBUTION.md says the same. I2282 closed by its documented alternative and left the credential as the owner's decision; nothing since bounds how long a record may wait, and nothing tells the release seat it is waiting."
+current_state: "At 81ef931a3e1 .github/workflows/release.yml proposes the record with GH_TOKEN: github.token (step 'propose the record and the metadata it publishes'), whose events start no workflow, and then dispatches validate on the record branch as an early reading (lines 363-381); docs/DISTRIBUTION.md ('Who starts the record's verdict') names the person's step; no check reads the age of an unlanded record."
+desired_state: "A release's record pull request reads mergeStateStatus CLEAN on its own pull_request run's `ci`, with no person approving, closing, reopening or admin-merging it; release-check prints the record's age; the release seat's check exits non-zero past two hours, naming the pull request. Enforced by the forge's own branch protection on a real record, case 4342 for the age bound, and case 996 for what docs/DISTRIBUTION.md claims."
+scope:
+  - ".ai/repo/project/issues/I4342.yaml"
+  - ".github/workflows/release.yml"
+  - "scripts/ci/release-check"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "test/cases/4342_a_release_record_lands_within_its_bound.sh"
+  - "test/cases/996_the_record_pull_request_gets_its_verdict.sh"
+  - "docs/DISTRIBUTION.md"
+  - "docs/RELEASE.md"
+non_scope:
+  - "Creating a GitHub App or a personal token: the owner provides any credential, and no secret value enters the repository"
+  - "A dispatched validate as the record's verdict: I2282 showed branch protection does not count it"
+  - "The excuse release-check gives a tag inside its grace (I4341)"
+acceptance_criteria:
+  - "On a real release, `gh pr view <record> --json mergeStateStatus` reads CLEAN once the record's own pull_request run concludes `ci` success, with no person having approved the run, closed, reopened or admin-merged the pull request (the evidence names the run, the pull request and the token's kind, never its value)"
+  - "Case 4342: an unlanded record 2 hours and 1 minute old fails the release seat's check, naming the pull request and its age; one 119 minutes old passes"
+  - "Case 996 asserts that docs/DISTRIBUTION.md names the credential as the owner's, with how it is rotated, and still never calls the dispatch the record's verdict"
+  - "actionlint passes on .github/workflows/release.yml"
+validation:
+  - "bash test/run.sh 4342_a_release_record_lands_within_its_bound 996_the_record_pull_request_gets_its_verdict"
+  - "actionlint .github/workflows/release.yml"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+  - "record_pull_request_mergeable_without_reopen"
+depends_on:
+  - "I4341"
+serves: []
+created_at: 2026-10-29
+updated_at: 2026-10-29
