@@ -367,6 +367,24 @@
         "status": "query"
       },
       {
+        "id": "capability:design.kit",
+        "kind": "capability",
+        "label": "design.kit",
+        "summary": "Whether the interface is built on the kit",
+        "route": "/cockpit/capabilities/design.kit",
+        "source": "apps/majordomus-cli/src/capability/builtin/design.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:design.kit.adopt",
+        "kind": "capability",
+        "label": "design.kit.adopt",
+        "summary": "Declare the kit in the repository",
+        "route": "/cockpit/capabilities/design.kit.adopt",
+        "source": "apps/majordomus-cli/src/capability/builtin/design.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:design.licence",
         "kind": "capability",
         "label": "design.licence",
@@ -2896,6 +2914,22 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/design/kit.rs",
+        "kind": "file",
+        "label": "kit.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/design/kit.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/design/licence.rs",
+        "kind": "file",
+        "label": "licence.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/design/licence.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/design/mod.rs",
         "kind": "file",
         "label": "mod.rs",
@@ -4445,6 +4479,22 @@
         "label": "figure.css",
         "summary": "named by the layer; not an object of this index",
         "source": "share/design/figure.css",
+        "external": true
+      },
+      {
+        "id": "file:share/design/kits/flowbite-pro.rule.md",
+        "kind": "file",
+        "label": "flowbite-pro.rule.md",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/design/kits/flowbite-pro.rule.md",
+        "external": true
+      },
+      {
+        "id": "file:share/design/kits/flowbite-pro.yaml",
+        "kind": "file",
+        "label": "flowbite-pro.yaml",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/design/kits/flowbite-pro.yaml",
         "external": true
       },
       {
@@ -9645,6 +9695,32 @@
             "delivery",
             "pages",
             "plan"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0230",
+        "kind": "adr",
+        "label": "adr-0230",
+        "summary": "Flowbite Pro is adapted onto Tailwind 4 and Flowbite 4, a brand's colour is the primary scale, and one capability judges every repository's interface against it",
+        "route": "/cockpit/objects/adr/adr-0230",
+        "source": ".ai/repo/adrs/0230-flowbite-pro-is-adapted-onto-tailwind-4.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-28",
+          "related": [
+            "file:share/design/kits/flowbite-pro.yaml",
+            "file:share/design/kits/flowbite-pro.rule.md",
+            "file:apps/majordomus-cli/src/design/kit.rs",
+            "file:apps/majordomus-cli/src/design/licence.rs",
+            "file:.ai/repo/project/issues/I4334.yaml",
+            "file:.ai/repo/project/issues/I4336.yaml",
+            "test:test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh"
+          ],
+          "tags": [
+            "design",
+            "ui",
+            "enforcement"
           ]
         }
       },
@@ -73574,6 +73650,51 @@
         }
       },
       {
+        "id": "majordomus://issue/I4334",
+        "kind": "issue",
+        "label": "I4334",
+        "summary": "The UI kit is checked by one capability: design kit judges a repository's interface against the Flowbite Pro profile, and design kit adopt declares it",
+        "route": "/cockpit/objects/issue/i4334",
+        "source": ".ai/repo/project/issues/I4334.yaml",
+        "facts": {
+          "created_at": "2026-10-28",
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "one-kit-on-every-surface",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/design/kit.rs",
+            "apps/majordomus-cli/src/design/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/design.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/design.rs",
+            "apps/majordomus-cli/src/commands/mod.rs",
+            "share/design/kits",
+            ".ai/repo/adrs/0230-flowbite-pro-is-adapted-onto-tailwind-4.md",
+            ".ai/repo/project/issues/I4334.yaml",
+            "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
+            "docs/DESIGN_SYSTEM.md",
+            ".ai/repo/features/interfaces.md",
+            "apps/majordomus-cli/src/capability/builtin/mod.rs",
+            "apps/majordomus-cli/src/design/licence.rs",
+            "apps/majordomus-cli/src/commands/design_licence.rs",
+            "bin/majordomus"
+          ],
+          "slug": "the-ui-kit-is-checked-by-one-capability",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --lib design::kit",
+            "cargo test --test cli_examples --test cli_docs",
+            "test/run 4334",
+            "cargo test --lib design::licence",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4336",
         "kind": "issue",
         "label": "I4336",
@@ -75395,6 +75516,69 @@
           "serves": [],
           "slug": "a-pages-deploy-is-not-stopped-by-an-optional-step",
           "updated_at": "2026-10-29"
+        }
+      },
+      {
+        "id": "majordomus://issue/I4381",
+        "kind": "issue",
+        "label": "I4381",
+        "summary": "The structure job fits in half its bound: shellcheck stops re-reading lib/rust_bin.sh for every case, and the network gates run in a second job",
+        "route": "/cockpit/objects/issue/i4381",
+        "source": ".ai/repo/project/issues/I4381.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "test",
+            "rust",
+            "ci"
+          ],
+          "milestone": "a-change-is-judged-in-minutes",
+          "non_scope": [
+            "Dropping, sampling or weakening any gate, or lowering shellcheck's severity (`-S warning` stays)",
+            "Linting only changed files: master and the trains run the full plan, so it saves nothing where the time is spent, and it misses a case whose behaviour changes with test/lib.sh or lib/rust_bin.sh",
+            "More shellcheck parallelism: the step already uses `xargs -P $(nproc)` and saturates the 4 vCPUs of ubuntu-latest",
+            "Sharding shell-lint into a matrix: it needs more runners from a loaded pool, and the directive removes the repeated work instead",
+            "The per-job budget of the pull-request critical path (I3242) and the checkout budget (I4349): this issue budgets the structure job's wall time against its own bound",
+            "Raising `timeout-minutes` of structure to follow runner load"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4381.yaml",
+            "test/lib.sh",
+            "test/lib/rust_bin.functions.sh",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/ci/structure-durations.tsv",
+            ".github/workflows/validate.yml",
+            "scripts/ci-baseline",
+            "scripts/ci/step-bound-check",
+            "scripts/ci/shell-lint",
+            "scripts/ci/run-plan",
+            "apps/majordomus-cli/src/gates/model.rs",
+            "apps/majordomus-cli/src/integration/job_budget.rs",
+            "apps/majordomus-cli/src/integration/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/integration.rs",
+            "test/cases/94_ci_plan.sh",
+            "test/cases/4381_the_structure_job_fits_in_half_its_bound.sh",
+            "docs/CI.md",
+            ".just/ci.just",
+            ".ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md"
+          ],
+          "serves": [
+            "a-change-is-judged-in-minutes#a-regression-fails-its-budget"
+          ],
+          "slug": "the-structure-lane-is-planned-to-fit-its-bound",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "bash test/run.sh 94_ci_plan 4381_the_structure_job_fits_in_half_its_bound 3943_a_second_gate_list_is_found 2999_delivery_is_expedited_only_where_the_rule_says",
+            "scripts/ci/shell-lint",
+            "scripts/ci/step-bound-check",
+            "actionlint .github/workflows/validate.yml",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib gates::model",
+            "bin/majordomus plan validate"
+          ]
         }
       },
       {
@@ -99785,6 +99969,13 @@
         "source": "test/cases/431_economics_claims_gated.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
+        "kind": "test",
+        "label": "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
+        "route": "/cockpit/objects/test/test-cases-4334-the-ui-kit-is-checked-by-one-capability-sh",
+        "source": "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/4337_a_changed_skill_raises_its_version.sh",
         "kind": "test",
         "label": "test/cases/4337_a_changed_skill_raises_its_version.sh",
@@ -99797,6 +99988,13 @@
         "label": "test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
         "route": "/cockpit/objects/test/test-cases-4380-an-optional-step-is-bounded-inside-its-own-bound-sh",
         "source": "test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4381_the_structure_job_fits_in_half_its_bound.sh",
+        "kind": "test",
+        "label": "test/cases/4381_the_structure_job_fits_in_half_its_bound.sh",
+        "route": "/cockpit/objects/test/test-cases-4381-the-structure-job-fits-in-half-its-bound-sh",
+        "source": "test/cases/4381_the_structure_job_fits_in_half_its_bound.sh"
       },
       {
         "id": "majordomus://test/test/cases/43_plan_command.sh",
@@ -104440,6 +104638,31 @@
       {
         "source": "capability:design.explain",
         "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.kit",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.kit",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.kit",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.kit.adopt",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.kit.adopt",
+        "target": "projection:cockpit",
         "kind": "projects"
       },
       {
@@ -115371,6 +115594,46 @@
         "source": "majordomus://adr/adr-0227",
         "target": "kind:adr",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0230",
+        "target": "file:apps/majordomus-cli/src/design/kit.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0230",
+        "target": "file:apps/majordomus-cli/src/design/licence.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0230",
+        "target": "file:share/design/kits/flowbite-pro.rule.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0230",
+        "target": "file:share/design/kits/flowbite-pro.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0230",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0230",
+        "target": "majordomus://issue/I4334",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0230",
+        "target": "majordomus://issue/I4336",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0230",
+        "target": "majordomus://test/test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
+        "kind": "put_in_force"
       },
       {
         "source": "majordomus://application/ci-gated-project",
@@ -139273,6 +139536,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4334",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4334",
+        "target": "majordomus://milestone/one-kit-on-every-surface",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4336",
         "target": "kind:issue",
         "kind": "is_a"
@@ -139845,6 +140118,16 @@
       {
         "source": "majordomus://issue/I4380",
         "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4381",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4381",
+        "target": "majordomus://milestone/a-change-is-judged-in-minutes",
         "kind": "belongs_to"
       },
       {
@@ -146618,12 +146901,22 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/4337_a_changed_skill_raises_its_version.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
       {
         "source": "majordomus://test/test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4381_the_structure_job_fits_in_half_its_bound.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -150774,6 +151067,16 @@
       },
       {
         "source": "module:design",
+        "target": "capability:design.kit",
+        "kind": "composes"
+      },
+      {
+        "source": "module:design",
+        "target": "capability:design.kit.adopt",
+        "kind": "composes"
+      },
+      {
+        "source": "module:design",
         "target": "capability:design.licence",
         "kind": "composes"
       },
@@ -151729,8 +152032,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4158,
-      "edges": 9574,
+      "nodes": 4169,
+      "edges": 9595,
       "acyclic": false,
       "truncated": false
     }

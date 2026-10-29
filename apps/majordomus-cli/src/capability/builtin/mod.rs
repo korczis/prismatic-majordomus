@@ -337,6 +337,8 @@ mod tests {
                 "continuity.publish",
                 "continuity.resume",
                 "continuity.sync",
+                // writes the kit's rule and policy block into a repository (I4334)
+                "design.kit.adopt",
                 // runs any executable capability, writers included (ADR 0126)
                 "executions.start",
                 // writes one new intent record, never a stage (ADR 0144)

@@ -555,8 +555,10 @@ gates:
     runs: scripts/ci/design-check
     summary: no source carries a design decision of its own — every colour, size, status word, brand copy and theme key comes from share/design/tokens.yaml through its projections
 
+  # structure-b, not structure (I4381): it costs p50 156 / p90 179 s, and beside shell-lint and
+  # core-check it took the one job past its 55-minute bound with every gate green.
   - id: worktree-topology
-    job: structure
+    job: structure-b
     lane: proof
     runs: scripts/ci/worktree-check
     summary: the branch-to-worktree rule has one constant in the crate, the pre-commit hook asks the guard and the policy declares it, every document and template names the same container, and the behavioural case passes through the built executable
@@ -657,8 +659,10 @@ gates:
   # network: true marks a gate that reaches beyond this machine (GitHub's API, the live
   # site, the published installer). It is true or absent. scripts/ci/run-plan --before-push
   # never runs such a gate before a push and says so (project.a-push-runs-what-ci-would-find-first).
+  # structure-b, not structure (I4381): network-bound, p50 389 / p90 589 s, and it waits on
+  # GitHub's API rather than on the CPU the structure gates share.
   - id: github-projection
-    job: structure
+    job: structure-b
     lane: proof
     runs: scripts/ci/github-check
     network: true

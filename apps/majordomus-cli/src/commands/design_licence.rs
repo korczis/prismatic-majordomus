@@ -32,7 +32,11 @@ pub fn run(args: DesignArgs) -> Result<u8> {
 
 /// Run `majordomus design`, printing to `out`.
 fn run_to(args: DesignArgs, out: &mut dyn Write) -> Result<u8> {
-    let DesignCommand::Licence(licence) = args.command;
+    let DesignCommand::Licence(licence) = args.command else {
+        return Err(Error::Protocol {
+            reason: "design licence was handed another design subcommand".to_string(),
+        });
+    };
     let app = App::load(&args.repo)?;
     let input = match &licence.evidence {
         Some(path) => json!({ "evidence": path.to_string_lossy() }),

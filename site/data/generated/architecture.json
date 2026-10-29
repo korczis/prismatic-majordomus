@@ -30,6 +30,16 @@
       "external": false
     },
     {
+      "id": "lib/fleet.sh",
+      "kind": "module",
+      "label": "fleet",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/adr.sh",
       "kind": "module",
       "label": "adr",
@@ -553,16 +563,6 @@
       "id": ".ai/local/state/completed",
       "kind": "artifact",
       "label": "local/state/completed",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
-      "id": "lib/fleet.sh",
-      "kind": "module",
-      "label": "fleet",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -1214,6 +1214,11 @@
     {
       "source": "bin/majordomus",
       "target": "lib/finish.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/fleet.sh",
       "kind": "sources"
     },
     {

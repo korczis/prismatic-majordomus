@@ -209,6 +209,16 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:design.kit.adopt",
+      "path": "/evidence/capabilities/design-kit-adopt/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:design.kit",
+      "path": "/evidence/capabilities/design-kit/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:design.licence",
       "path": "/evidence/capabilities/design-licence/"
     },
@@ -2634,6 +2644,16 @@
     },
     {
       "kind": "command",
+      "subject": "command:design kit adopt",
+      "path": "/evidence/commands/design-kit-adopt/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:design kit",
+      "path": "/evidence/commands/design-kit/"
+    },
+    {
+      "kind": "command",
       "subject": "command:design licence",
       "path": "/evidence/commands/design-licence/"
     },
@@ -4444,6 +4464,30 @@
       "page": "/evidence/capabilities/design-explain/",
       "programs": [],
       "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:design.kit": {
+      "kind": "capability",
+      "id": "design.kit",
+      "page": "/evidence/capabilities/design-kit/",
+      "programs": [],
+      "members": [
+        "command:design kit"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:design.kit.adopt": {
+      "kind": "capability",
+      "id": "design.kit.adopt",
+      "page": "/evidence/capabilities/design-kit-adopt/",
+      "programs": [],
+      "members": [
+        "command:design kit adopt"
+      ],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -13911,6 +13955,44 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:design kit": {
+      "kind": "command",
+      "id": "design kit",
+      "page": "/evidence/commands/design-kit/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:design kit adopt": {
+      "kind": "command",
+      "id": "design kit adopt",
+      "page": "/evidence/commands/design-kit-adopt/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:design licence": {
       "kind": "command",
       "id": "design licence",
@@ -21022,6 +21104,18 @@
       "programs": [],
       "members": [
         "capability:design.explain"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_design_kit": {
+      "kind": "mcp",
+      "id": "majordomus_design_kit",
+      "alias_of": "capability:design.kit",
+      "programs": [],
+      "members": [
+        "capability:design.kit"
       ],
       "routes": [],
       "mechanisms": [],
@@ -30058,7 +30152,9 @@
     "suite:4224_a_licensed_source_never_reaches_a_public_tree",
     "suite:4232_a_core_build_keeps_its_own_rlib",
     "suite:4318_the_homepage_rule_figure_agrees_with_its_link",
+    "suite:4334_the_ui_kit_is_checked_by_one_capability",
     "suite:4380_an_optional_step_is_bounded_inside_its_own_bound",
+    "suite:4381_the_structure_job_fits_in_half_its_bound",
     "suite:46_cross_surface",
     "suite:47_mutation",
     "suite:48_roadmap_graph",

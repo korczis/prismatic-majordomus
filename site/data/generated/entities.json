@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 167,
+      "count": 168,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -38,7 +38,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 167
+      "count": 168
     },
     {
       "kind": "application",
@@ -174,7 +174,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 1122
+      "count": 1124
     },
     {
       "kind": "knowledge",
@@ -286,7 +286,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 667
+      "count": 669
     },
     {
       "kind": "use-case",
@@ -14724,6 +14724,73 @@
       ],
       "source": ".ai/repo/adrs/0227-the-deployed-stage-reads-the-pointer-where-pages-published-i.md",
       "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0230",
+      "identity": "adr-0230",
+      "slug": "adr-0230",
+      "cockpit": "/cockpit/objects/adr/adr-0230",
+      "title": "Flowbite Pro is adapted onto Tailwind 4 and Flowbite 4, a brand's colour is the primary scale, and one capability judges every repository's interface against it",
+      "status": "proposed",
+      "tags": [
+        "design",
+        "ui",
+        "enforcement"
+      ],
+      "source": ".ai/repo/adrs/0230-flowbite-pro-is-adapted-onto-tailwind-4.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/design/kit.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/design/licence.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/design/kits/flowbite-pro.rule.md",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/design/kits/flowbite-pro.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "I4334",
+          "kind": "issue",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "I4336",
+          "kind": "issue",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
       "referenced_by": []
     },
     {

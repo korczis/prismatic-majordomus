@@ -236,6 +236,37 @@ mj_fleet_evidence_materialise() {
   chmod 600 "$f"; printf '%s' "$f"
 }
 
+# mj_fleet_design_judge ARGS... -> `majordomus-cli design ARGS...` (`kit` or `licence`) with
+# the evidence the CI secret carries handed over as --evidence, exiting as it exits (I4334).
+# The executable reads a kit-evidence/v1 file and never the environment, so the variable of
+# the kit the policy's ui.kit names is decoded here first, into a 0600 file removed after
+# the run. An --evidence the caller gave is passed on untouched; no kit declared, or the
+# variable unset or empty, hands nothing over, and a public tree that owes a judgement then
+# fails closed (undecided, exit 10 under --check); a malformed value is exit 2, naming the
+# variable and never its value, and nothing is judged. The policy read is the one the kit
+# judge reads: .ai/repo/policy.yaml at the git toplevel of --repo, else of the cwd.
+# bin/majordomus calls it for `design kit` and `design licence` when a
+# MAJORDOMUS_KIT_EVIDENCE_<KIT> variable is exported, and execs the executable otherwise.
+mj_fleet_design_judge() {
+  local a prev="" repo="" root kit="" evf="" rc=0
+  for a in "$@"; do
+    case "$a" in --evidence|--evidence=*) rc=0; "$MJ_BIN_DIR/majordomus-cli" design "$@" || rc=$?; return "$rc" ;; esac
+    [ "$prev" = --repo ] && repo="$a"
+    case "$a" in --repo=*) repo="${a#--repo=}" ;; esac
+    prev="$a"
+  done
+  root="$(git -C "${repo:-.}" rev-parse --show-toplevel 2>/dev/null)" || root="${repo:-.}"
+  MJ_POLICY_FILE="$root/.ai/repo/policy.yaml"
+  if [ -f "$MJ_POLICY_FILE" ] && mj_load_policy 2>/dev/null; then kit="$(mj_pol ui.kit)"; fi
+  if [ -n "$kit" ]; then
+    evf="$(mj_fleet_evidence_materialise "$kit")" || rc=$?
+    case "$rc" in 0|1) rc=0 ;; *) return "$MJ_EX_USAGE" ;; esac
+  fi
+  "$MJ_BIN_DIR/majordomus-cli" design "$@" ${evf:+--evidence "$evf"} || rc=$?
+  [ -z "$evf" ] || rm -f "$evf"
+  return "$rc"
+}
+
 # the declared ~-relative evidence files that exist, one path per line; never absolute
 mj_fleet_evidence_declared() {
   local e
