@@ -148,6 +148,41 @@ fn observe_deployment(f: &Fixture, sha: &str, state: &str) {
     );
 }
 
+/// Publish the way `scripts/site-deploy` does (I4315): a gh-pages commit outside the trunk's
+/// history whose tree is the built site, the pointer at `releases/latest.json`, its root.
+fn publish_gh_pages(f: &Fixture, latest_json: &str) -> String {
+    let git = |args: &[&str], stdin: Option<&str>| -> String {
+        let mut child = std::process::Command::new("git")
+            .arg("-C")
+            .arg(f.root())
+            .args(args)
+            .env("GIT_INDEX_FILE", f.root().join(".git/gh-pages-index"))
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()
+            .expect("git runs");
+        child
+            .stdin
+            .take()
+            .unwrap()
+            .write_all(stdin.unwrap_or_default().as_bytes())
+            .unwrap();
+        let out = child.wait_with_output().unwrap();
+        assert!(out.status.success(), "git {args:?}");
+        String::from_utf8_lossy(&out.stdout).trim().to_string()
+    };
+    let blob = git(&["hash-object", "-w", "--stdin"], Some(latest_json));
+    let info = format!("100644 {blob}\treleases/latest.json\n");
+    git(&["update-index", "--add", "--index-info"], Some(&info));
+    let tree = git(&["write-tree"], None);
+    let sha = git(
+        &["commit-tree", &tree, "-m", "deploy: site from the trunk"],
+        None,
+    );
+    git(&["update-ref", "refs/heads/gh-pages", &sha], None);
+    sha
+}
+
 #[test]
 fn plan_delivery_reads_each_stage_with_the_object_that_proved_it() {
     let (f, merge) = fixture();
@@ -229,11 +264,37 @@ fn plan_delivery_reads_each_stage_with_the_object_that_proved_it() {
         .unwrap()
         .contains("served forge"));
 
-    // ---- a Pages deployment observed: its commit's latest.json names 0.2.0, so v0.1.0 is out
-    f.write(
-        "site/static/releases/latest.json",
-        "{\"schema\":\"release/v1\",\"version\":\"0.2.0\",\"tag\":\"v0.2.0\"}\n",
+    // ---- a Pages deployment of a gh-pages commit, the built site, as scripts/site-deploy
+    // pushes it: its releases/latest.json names 0.2.0, so v0.1.0 is out (I4315)
+    let pointer = "{\"schema\":\"release/v1\",\"version\":\"0.2.0\",\"tag\":\"v0.2.0\"}\n";
+    let pages = publish_gh_pages(&f, pointer);
+    observe_deployment(&f, &pages, "success");
+    let (_, v, _) = cli(&f, &["I0001"]);
+    assert_eq!(source(&v, "publication")["state"], "read", "{v}");
+    let i1 = by_id(&v, "I0001");
+    assert_eq!(i1["stage"], "deployed", "{i1}");
+    assert_eq!(i1["deployed"]["version"], "0.2.0");
+    assert_eq!(
+        i1["deployed"]["latest_json"],
+        format!("{pages}:releases/latest.json").as_str()
     );
+
+    // ---- a deployed commit that carries neither path names both
+    let trunk = f.git(&["rev-parse", "HEAD"]).trim().to_string();
+    observe_deployment(&f, &trunk, "success");
+    let (_, v, _) = cli(&f, &["I0001"]);
+    assert_eq!(by_id(&v, "I0001")["stage"], "released");
+    let why = source(&v, "publication")["detail"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    assert!(
+        why.contains("releases/latest.json") && why.contains("site/static/releases/latest.json"),
+        "{why}"
+    );
+
+    // ---- a Pages deployment of a source commit still reads at the source path
+    f.write("site/static/releases/latest.json", pointer);
     f.commit("release: publish the pointer");
     let deployed = f.git(&["rev-parse", "HEAD"]).trim().to_string();
     observe_deployment(&f, &deployed, "success");
@@ -343,6 +404,75 @@ fn plan_delivery_at_a_commit_reads_the_history_and_nothing_live() {
     let (code, _, err) = cli(&f, &["--at", "no-such-rev"]);
     assert_ne!(code, 0);
     assert!(err.contains("no-such-rev"), "{err}");
+}
+
+/// I2749: a commit or merge that names an issue while changing only plan records and the
+/// projections `.gitattributes` marks `merge=derived` planned it and delivered nothing; the
+/// first commit that changes anything else is its merge.
+#[test]
+fn a_commit_that_only_plans_an_issue_is_not_its_delivery() {
+    let (f, _) = fixture();
+    f.write(".gitattributes", "docs/PLAN_STATUS.md merge=derived\n");
+    f.commit("chore: the plan status is derived");
+    let trunk = f
+        .git(&["rev-parse", "--abbrev-ref", "HEAD"])
+        .trim()
+        .to_string();
+    // a record of the issue, then a projection of the plan: both only plan
+    f.write(
+        ".ai/repo/project/issues/I0004.yaml",
+        &format!("{}# rescoped\n", issue("I0004", "an-untouched-piece")),
+    );
+    f.commit("docs(plan): I0004 is rescoped (I0004)");
+    f.write("docs/PLAN_STATUS.md", "I0004 READY\n");
+    f.commit("chore(plan): the plan status names I0004");
+    // a pull request whose whole change is a record, merged by its title
+    f.git(&["checkout", "-q", "-b", "chore/the-record"]);
+    f.write(
+        ".ai/repo/project/issues/I0004.yaml",
+        &format!("{}# recorded\n", issue("I0004", "an-untouched-piece")),
+    );
+    f.commit("chore: a record");
+    f.git(&["checkout", "-q", &trunk]);
+    f.git(&[
+        "merge",
+        "-q",
+        "--no-ff",
+        "chore/the-record",
+        "-m",
+        "Merge pull request #7 from someone/chore/the-record",
+        "-m",
+        "chore(plan): I0004 is recorded (I0004)",
+    ]);
+    let record_merge = f.git(&["rev-parse", "HEAD"]).trim().to_string();
+
+    let (code, v, err) = cli(&f, &[]);
+    assert_eq!(code, 0, "{err}");
+    let i4 = by_id(&v, "I0004");
+    assert_eq!(i4["stage"], "none", "planning is not delivery: {i4}");
+    assert!(i4.get("merged").is_none(), "{i4}");
+    assert_eq!(
+        (&i4["planned"]["commit"], &i4["planned"]["merges"]),
+        (&json!(record_merge), &json!(3)),
+        "the newest planning commit is named, with how many were passed over: {i4}"
+    );
+    assert_eq!(source(&v, "planning")["state"], "read");
+    // the delivered issue is untouched by the rule
+    assert_eq!(by_id(&v, "I0001")["stage"], "merged");
+
+    // one commit that changes anything else is the delivery, and the planning stays named
+    f.write("lib/untouched.sh", "echo touched\n");
+    f.write("docs/PLAN_STATUS.md", "I0004 DONE\n");
+    f.commit("feat: the untouched piece is touched (I0004)");
+    let delivered = f.git(&["rev-parse", "HEAD"]).trim().to_string();
+    let (_, v, _) = cli(&f, &["--at", &delivered]);
+    let i4 = by_id(&v, "I0004");
+    assert_eq!(i4["stage"], "merged", "{i4}");
+    assert_eq!(
+        (&i4["merged"]["commit"], &i4["merged"]["merges"]),
+        (&json!(delivered), &json!(1))
+    );
+    assert_eq!(i4["planned"]["commit"], record_merge.as_str());
 }
 
 fn mcp_tool(f: &Fixture, name: &str, arguments: Value) -> Value {
