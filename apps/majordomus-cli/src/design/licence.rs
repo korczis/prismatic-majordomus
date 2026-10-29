@@ -54,7 +54,7 @@
 //! fingerprints only, and the capability's description says so.
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
-use std::io::{BufRead, BufReader, Read, Write};
+use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
@@ -1007,6 +1007,7 @@ fn git_paths(root: &Path, args: &[&str]) -> Result<Vec<String>, LicenceError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io::Read;
 
     const LICENSED: &[u8] = b"<div class=\"examplekit-shell\">\n  <nav>pro</nav>\n</div>\n";
 
