@@ -522,6 +522,12 @@ impl Executable {
         self
     }
 
+    /// Declare that this command's handler changes other machines (ADR 0132).
+    pub fn changes_other_machines(mut self) -> Self {
+        self.capability.execution = self.capability.execution.changes_other_machines();
+        self
+    }
+
     /// Declare the short name a person invokes this by from an agent's prompt, and the
     /// input field the text typed after it fills. See [`crate::capability::SkillExposure`];
     /// the registry refuses a name that is malformed, reserved or taken, and an argument

@@ -41,6 +41,7 @@ pub mod episodes;
 pub(crate) mod error;
 pub mod evidence;
 pub mod execution;
+pub mod fleet;
 pub mod gates;
 pub mod generate;
 pub mod generation;
