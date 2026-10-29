@@ -1,4 +1,4 @@
-id: I4366
+id: I4373
 milestone: ci-critical-path
 title: "The economics runner starts a freshly written harness once it is free, and a harness that cannot start has no version"
 slug: a-freshly-written-harness-is-started-once-it-is-free
@@ -10,7 +10,7 @@ why: "Train 10a's validate run 40798671348 (job 123214165485, lane rust (2)) fai
 current_state: "Measured at 5370ee63d19: spawn_group calls cmd.spawn() and run_quiet cmd.output() without retrying_busy; harness_version maps any start failure to `unknown`; the first section of the failing test ignores run()'s failed list."
 desired_state: "Every start in the runner waits out a program still open for writing; a harness that cannot start fails the run with the start error; a test that loses a record says why. Enforced on Linux by unit tests that hold the harness open for writing while it is started, which fail without the retry."
 scope:
-  - ".ai/repo/project/issues/I4366.yaml"
+  - ".ai/repo/project/issues/I4373.yaml"
   - "apps/majordomus-cli/src/economics/runner.rs"
 non_scope:
   - "The session timeout: a timed-out session is already recorded, ended `timeout`"

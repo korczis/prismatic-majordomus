@@ -817,7 +817,8 @@ fn run_job(
     // it started from, and the end of the run is checked against it.
     let repository = super::revision(&opts.root)?;
     let inputs_at_start = inputs_digest(&opts.root, &suite.freshness_inputs)?;
-    // A dry run starts no harness, so only a run that will start one needs it to answer.
+    // A dry run still starts the harness to ask its version, but runs no session and ignores
+    // a failure to answer: only a run that goes on to start sessions is refused by it.
     let harness_at_start = harness_version(&opts.harness);
     let task_dir = opts.root.join(DIR).join("tasks").join(&job.task.id);
     let mut extra: Vec<PathBuf> = vec![task_dir.join("task.yaml")];
