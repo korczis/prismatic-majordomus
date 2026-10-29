@@ -16,8 +16,9 @@
 //! this tool's own design (I4334, ADR 0230): the first judges the repository's user
 //! interface against a kit profile the distribution ships (`share/design/kits/`), signal by
 //! signal, and the second declares that profile in the repository — its rule, the
-//! `design_kit` policy block and the enforcement entries that run the check in CI and
-//! before every push. The judgement is [`crate::design::kit`]'s; these declare it once.
+//! enforcement entries that run the check in CI and before every push, and the
+//! `design_kit` policy block once the policy schema declares it. The judgement is
+//! [`crate::design::kit`]'s; these declare it once.
 //!
 //! `design.contrast` is the exception, and reads only the distribution's own share
 //! directory: the pair a ratio is computed for is stated by the primitives that consume the
@@ -419,7 +420,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "design.kit",
                 title: "Whether the interface is built on the kit",
-                description: "The supervised repository's user interface judged against the kit profile its policy's `design_kit` block names (flowbite-pro when it names none), from markers in the tree and never the kit's own source: S0 whether there is an interface at all and its surfaces (the root's manifest or the one in assets/, every workspace the root manifest or pnpm-workspace.yaml declares, every nested app manifest with markup in its own subtree outside examples, fixtures, tests, vendor, docs, deps and priv; Phoenix LiveView in mix.exs, HEEx or HTML templates, a Next.js root layout; published pages: a root index.html, pages under site/, www/, public/, under a directory a Pages workflow or a deploy or build script publishes, and under docs/ when it is published), any other manifest with UI packages being a notice and never a finding; S1 the kit's package in each surface, its React binding for React and Next.js, and the kit in use in the surface's own files (an attribute the kit's JavaScript drives, a flowbite-react component, a call of the kit's API), because wiring alone passes nothing; S2 the Tailwind plugin and source (Tailwind 4's @plugin and @source, Tailwind 3's config), a Play CDN or a CDN-only kit being a finding; S3 the kit's JavaScript behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute, a script that reads them itself being a re-implementation; S4 no other kit (daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui and Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation, Materialize), Alpine.js reported and not refused; S5 the shell on every root layout: a fixed top navbar, an aside labelled Sidebar that both drawer attributes name, a breadcrumb, and the page, surface and border roles. Each finding names its signal, path, evidence and remedy; each exemption the policy declares names its reason and how many findings it covered. A licensed kit's profile declares its licensed markers, and where the tree carries one the licence evidence decides it: active passes, while inactive, refused or not judged (nothing judges the evidence until the design licence lands) is a finding no exemption moves, since a variant the judge cannot decide is never a pass. A repository without an interface passes vacuously; a policy that cannot be read is `bad_policy` and judges nothing. Reads the tree below the root, skipping dependencies and build output; no build and no network.",
+                description: "The supervised repository's user interface judged against the kit profile its policy's `design_kit` block names (flowbite-pro when it names none), from markers in the tree and never the kit's own source: S0 whether there is an interface at all and its surfaces (the root's manifest or the one in assets/, every workspace the root manifest or pnpm-workspace.yaml declares, every nested app manifest with markup in its own subtree outside examples, fixtures, tests, vendor, docs, deps and priv; Phoenix LiveView in mix.exs, HEEx or HTML templates, a Next.js root layout; published pages: a root index.html, pages under site/, www/, public/, under a directory a Pages workflow or a deploy or build script publishes, and under docs/ when it is published), any other manifest with UI packages being a notice and never a finding; S1 the kit's package in each surface, its React binding for React and Next.js, and the kit in use in the surface's own files (an attribute the kit's JavaScript drives, a flowbite-react component, a call of the kit's API), because wiring alone passes nothing; S2 the Tailwind plugin and source (Tailwind 4's @plugin and @source, Tailwind 3's config), a Play CDN or a CDN-only kit being a finding; S3 the kit's JavaScript behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute, a script that reads them itself being a re-implementation; S4 no other kit (daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui and Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation, Materialize), Alpine.js reported and not refused; S5 the shell on every root layout: a fixed top navbar, an aside labelled Sidebar that both drawer attributes name, a breadcrumb, and the page, surface and border roles. Each finding names its signal, path, evidence and remedy; each exemption the policy declares names its reason and how many findings it covered. A licensed kit's profile declares its licensed markers, and where the tree carries one the licence evidence decides it: active passes, while inactive, refused or not judged (nothing judges the evidence until the design licence lands) is a finding no exemption moves, since a variant the judge cannot decide is never a pass. A repository without an interface passes vacuously; a policy that cannot be read is `bad_policy` and judges nothing. Reads the repository's files (in a Git work tree the tracked ones and the untracked ones Git does not ignore), skipping dependencies and build output and listing vendored directories by path only; no build and no network.",
                 input: Empty,
                 output: KitReport,
                 stability: Stability::BehaviorallyVerified,
@@ -435,7 +436,7 @@ pub fn module() -> ModuleDescriptor {
                 id: "design.kit.adopt",
                 kind: CapabilityKind::Command,
                 title: "Declare the kit in the repository",
-                description: "Writes what makes `design.kit` the repository's gate, and nothing that is there already: the profile's rule (project.ui-uses-flowbite-pro for flowbite-pro) into .ai/repo/rules/project/ from the distribution's template, the `design_kit` block naming the profile in .ai/repo/policy.yaml, and two enforcement entries running `majordomus design kit --check`, design-kit-on-push wired by the pre-push hook and design-kit wired by the repository's CI workflow when it has one. Idempotent: a second adoption reports every file unchanged. The rule's last section, 'In this repository', is the repository's own: a later adoption brings the rest of the rule up to the template and never overwrites that section, and a rule that differs from the template and has no such section is kept and named, a block naming another profile is refused, and a policy that would not read back is never written. `dry_run` reports the same and writes nothing. Wiring the hook and the workflow step is left to the repository, and `majordomus doctor` names each entry until it is wired.",
+                description: "Writes what makes `design.kit` the repository's gate, and nothing that is there already: the profile's rule (project.ui-uses-flowbite-pro for flowbite-pro) into .ai/repo/rules/project/ from the distribution's template, the `design_kit` block naming the profile in .ai/repo/policy.yaml once the distribution's policy schema declares it (until then flowbite-pro, the default profile, is adopted without it and a note says why, and another profile is refused), and two enforcement entries running `majordomus design kit --check`, design-kit-on-push wired by the pre-push hook and design-kit wired by the repository's CI workflow when it has one. Idempotent: a second adoption reports every file unchanged. The rule's last section, 'In this repository', is the repository's own: a later adoption brings the rest of the rule up to the template and never overwrites that section, and a rule that differs from the template and has no such section is kept and named, a block naming another profile is refused, and a policy that would not read back is never written. `dry_run` reports the same and writes nothing. Wiring the hook and the workflow step is left to the repository, and `majordomus doctor` names each entry until it is wired.",
                 input: KitAdoptInput,
                 output: AdoptReport,
                 stability: Stability::Experimental,
@@ -622,21 +623,32 @@ mod tests {
         assert_eq!(ok.kind, TokenKind::Status);
     }
 
+    /// A context over `repo` whose index carries the distribution's share, as a real
+    /// invocation's does, so that the kit's capabilities judge rather than refuse.
+    fn context_with_share(repo: &crate::synthetic::SyntheticRepository) -> std::sync::Arc<Context> {
+        let mut index = repo.index().expect("an index");
+        index.share = Some(crate::synthetic::crate_share());
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_modules(crate::capability::builtin::modules())
+            .with_index(&index)
+            .build()
+            .expect("a registry");
+        std::sync::Arc::new(Context::new(
+            std::sync::Arc::new(index),
+            std::sync::Arc::new(registry),
+        ))
+    }
+
     #[test]
     fn the_kit_is_judged_in_the_repository_the_context_reads() {
         let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
-        let ctx = repo.context().expect("a context");
-        // a synthetic repository has no interface: the rule holds vacuously, or the
-        // distribution is not found and that is said rather than passed
-        match kit_check(&ctx, Empty::default()) {
-            Ok(report) => {
-                assert!(!report.ui);
-                assert!(report.passes);
-                assert_eq!(report.profile, kit::DEFAULT_PROFILE);
-            }
-            Err(CapabilityError::Internal(message)) => assert!(message.contains("share")),
-            Err(other) => panic!("unexpected refusal: {other:?}"),
-        }
+        let ctx = context_with_share(&repo);
+        // a synthetic repository has no interface: the rule holds vacuously
+        let report = kit_check(&ctx, Empty::default()).expect("a judgement");
+        assert_eq!(report.verdict, kit::KitVerdict::NoUi, "{report:#?}");
+        assert!(!report.ui);
+        assert!(report.passes);
+        assert_eq!(report.profile, kit::DEFAULT_PROFILE);
         let refused = kit_adopt(
             &ctx,
             KitAdoptInput {
@@ -655,7 +667,7 @@ mod tests {
     #[test]
     fn adoption_maps_each_refusal_to_its_category() {
         let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
-        let ctx = repo.context().expect("a context");
+        let ctx = context_with_share(&repo);
         let unknown = kit_adopt(
             &ctx,
             KitAdoptInput {
@@ -664,31 +676,40 @@ mod tests {
             },
         );
         assert!(
-            matches!(
-                unknown,
-                Err(CapabilityError::NotFound(_)) | Err(CapabilityError::Internal(_))
-            ),
+            matches!(&unknown, Err(CapabilityError::NotFound(m)) if m.contains("no-such-kit")),
             "{unknown:?}"
         );
-        let dry = kit_adopt(
+        // the synthetic layer carries .ai/repo/policy.yaml, so a dry run plans and writes nothing
+        let policy = repo.root().join(kit::POLICY);
+        let before = std::fs::read_to_string(&policy).expect("the synthetic policy");
+        let report = kit_adopt(
+            &ctx,
+            KitAdoptInput {
+                profile: kit::DEFAULT_PROFILE.into(),
+                dry_run: true,
+            },
+        )
+        .expect("a dry run adoption");
+        assert!(report.dry_run);
+        assert_eq!(report.profile, kit::DEFAULT_PROFILE);
+        assert!(!report.writes.is_empty());
+        assert!(!repo
+            .root()
+            .join(".ai/repo/rules/project/ui-uses-flowbite-pro.v1.md")
+            .exists());
+        assert_eq!(std::fs::read_to_string(&policy).unwrap(), before);
+        // a policy that does not read is the repository's to fix: refused
+        std::fs::write(&policy, "a:\n\tb: 1\n").unwrap();
+        let broken = kit_adopt(
             &ctx,
             KitAdoptInput {
                 profile: kit::DEFAULT_PROFILE.into(),
                 dry_run: true,
             },
         );
-        match dry {
-            Ok(report) => {
-                assert!(report.dry_run);
-                assert!(!repo
-                    .root()
-                    .join(".ai/repo/rules/project/ui-uses-flowbite-pro.v1.md")
-                    .exists());
-            }
-            Err(CapabilityError::Internal(m)) | Err(CapabilityError::Refused(m)) => {
-                assert!(!m.is_empty())
-            }
-            Err(other) => panic!("unexpected: {other:?}"),
-        }
+        assert!(
+            matches!(broken, Err(CapabilityError::Refused(_))),
+            "{broken:?}"
+        );
     }
 }

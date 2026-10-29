@@ -114,11 +114,16 @@ scanner (`verify.mjs`), but it checks only dependencies and whether the rule fil
 4. **A repository adopts it with one command.** `majordomus design kit adopt flowbite-pro`
    writes three things and nothing that is already there:
    - the rule `project.ui-uses-flowbite-pro`, from the distribution's template;
-   - the `design_kit` block;
+   - the `design_kit` block, once the distribution's policy schema declares it;
    - the enforcement entries `design-kit-on-push` (pre-push) and `design-kit` (the CI
      workflow).
 
-   `majordomus doctor` names each entry until the hook and the workflow invoke it.
+   `majordomus doctor` names each entry until the hook and the workflow invoke it. Doctor
+   also refuses a policy key the schema does not declare, so until the policy keys of the
+   design licence (I4336) carry the block, adoption writes none and says so: flowbite-pro is
+   the profile judged when the policy names none. Those keys and this block's shape
+   (`layouts`, `roles`, an exemption's `signals` and `shell`) are agreed before the block
+   moves under them.
 5. **Licence: markers only.** The profile names attributes, class lists, package names and
    file shapes. No Pro template, block, stylesheet or script is copied into this
    repository, the distribution or a published page.

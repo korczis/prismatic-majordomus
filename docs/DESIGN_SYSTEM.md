@@ -329,7 +329,10 @@ answer is `GET /api/v1/design/kit` and the MCP tool `majordomus_design_kit`.
 
 `adopt` writes the rule `project.ui-uses-flowbite-pro` from
 [the template](../share/design/kits/flowbite-pro.rule.md). It adds the `design_kit` block
-to `.ai/repo/policy.yaml`, and two enforcement entries that run `design kit --check`:
+to `.ai/repo/policy.yaml` once the distribution's policy schema declares it (until the
+design licence's policy keys, I4336, it writes none and says why, because doctor refuses a
+key the schema does not declare, and flowbite-pro is the profile judged when the policy
+names none), and two enforcement entries that run `design kit --check`:
 `design-kit-on-push` (the pre-push hook) and `design-kit` (the CI workflow, when there is
 one). It writes nothing that is already there, so a second run changes nothing. The rule ends
 with a section `In this repository` that is the repository's own: a later adoption brings

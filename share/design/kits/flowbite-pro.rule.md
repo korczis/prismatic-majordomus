@@ -11,7 +11,7 @@ depends_on: []
 tags: [ui, flowbite, design-system]
 
 x-majordomus:
-  enforced_by: [majordomus design kit --check]
+  reviewed_because: the decision is the distribution's command majordomus design kit --check, which CI and the pre-push hook run; no validator of the doctrine dispatches it and no case of the adopting repository holds it
 ---
 
 # Rationale
@@ -49,7 +49,8 @@ to follow it. This rule is therefore judged by a command, from markers in the tr
   `border-gray-200`/`dark:border-gray-700`, or the role aliases a token rule declares). A
   brand's colour is Tailwind's `primary` scale on the Pro structure (ADR 0230).
 - **Exemptions are declared, never silent.** `.ai/repo/policy.yaml` carries
-  `design_kit: {profile: flowbite-pro, exempt: [{path, because}]}`. An exemption with
+  `design_kit: {profile: flowbite-pro, exempt: [{path, because}]}`, once the policy schema
+  declares that block (adoption writes it then, I4336). An exemption with
   `shell: marketing` judges a landing or marketing page by the Pro marketing blocks instead:
   a navbar and a footer.
 - **Licence.** Pro markup is adapted into the owner's products. Pro source files (templates,

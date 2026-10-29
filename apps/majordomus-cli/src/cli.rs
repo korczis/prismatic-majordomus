@@ -611,7 +611,7 @@ pub struct KitArgs {
 /// assert!(matches!(kit.action, Some(KitAction::Adopt { profile: KitProfileArg::FlowbitePro, dry_run: false })));
 /// ```
 pub enum KitAction {
-    /// Declare a kit profile in this repository: its rule under .ai/repo/rules/project/, the design_kit policy block, and the enforcement entries that run `design kit --check` in CI and before every push; idempotent, and --dry-run writes nothing
+    /// Declare a kit profile in this repository: its rule under .ai/repo/rules/project/, the enforcement entries that run `design kit --check` in CI and before every push, and the design_kit policy block once the policy schema declares it; idempotent, and --dry-run writes nothing
     Adopt {
         /// The kit profile, from share/design/kits/
         #[arg(value_enum)]
@@ -6165,7 +6165,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
         examples: &[ExampleDoc {
             id: "design-kit-adopt-dry-run",
             title: "What adopting Flowbite Pro would write, before anything is written",
-            description: "Every file adoption touches with what it would do to it: the rule .ai/repo/rules/project/ui-uses-flowbite-pro.v1.md created from the distribution's template, and .ai/repo/policy.yaml updated with the `design_kit` block and the `design-kit-on-push` enforcement entry (this repository has no CI workflow, so the note says the `design-kit` entry waits for one). `--dry-run` writes nothing; without it the same plan is written, and a second adoption reports every file unchanged.",
+            description: "Every file adoption touches with what it would do to it: the rule .ai/repo/rules/project/ui-uses-flowbite-pro.v1.md created from the distribution's template, and .ai/repo/policy.yaml updated with the `design-kit-on-push` enforcement entry (this repository has no CI workflow, so the note says the `design-kit` entry waits for one). The `design_kit` block is written once the policy schema declares it; until then a note says why it is not, and flowbite-pro is the profile judged when the policy names none. `--dry-run` writes nothing; without it the same plan is written, and a second adoption reports every file unchanged.",
             argv: &["design", "kit", "adopt", "flowbite-pro", "--dry-run", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/writes", "/notes", "/dry_run"]),

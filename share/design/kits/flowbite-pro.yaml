@@ -11,8 +11,9 @@
 # Every regular expression below is the `regex` crate's syntax, written in single quotes so
 # that the YAML subset passes its backslashes through untouched. A repository adopts the
 # profile with `majordomus design kit adopt flowbite-pro`, which writes the rule from
-# flowbite-pro.rule.md beside this file, the `design_kit` policy block and the two
-# enforcement entries; it narrows nothing here.
+# flowbite-pro.rule.md beside this file and the two enforcement entries, and the
+# `design_kit` policy block once the distribution's policy schema admits it (I4336); it
+# narrows nothing here.
 schema: 1
 id: flowbite-pro
 title: Flowbite Pro on Tailwind 4 and Flowbite 4
@@ -20,17 +21,31 @@ rule: project.ui-uses-flowbite-pro
 rule_file: ui-uses-flowbite-pro.v1.md
 rule_template: design/kits/flowbite-pro.rule.md
 
+# The files the signals read are the repository's: in a Git work tree, the tracked files and
+# the untracked ones Git does not ignore, so a local virtualenv or an ignored build is never
+# judged; elsewhere, every file below the root.
+#
 # Directories no signal reads: dependencies, build output, vendored sources (the licensed
 # Pro distribution itself among them) and the layer. A bare name matches a directory of
 # that name at any depth; a name with a slash matches a directory whose path ends with it.
 # A minified script (`*.min.js`) is build output wherever it lies.
-skip_dirs: [.git, node_modules, _build, deps, target, dist, build, out, .next, .nuxt, .svelte-kit, .turbo, .cache, coverage, vendor, tmp, .ai, priv/static]
+skip_dirs: [.git, node_modules, _build, deps, target, dist, build, out, .next, .nuxt, .svelte-kit, .turbo, .cache, coverage, vendor, tmp, .ai, priv/static, .venv, venv, __pycache__, .elixir_ls, .docusaurus, _site]
+
+# Of skip_dirs, the vendored ones: no signal reads a file in them, and their paths are still
+# listed, because a vendored copy of a kit is a path (the licensed markers, S4's vendored
+# files) whatever imports it.
+vendored: [vendor]
 
 # Files larger than this are build output, not something a person wrote.
 max_file_bytes: 1048576
 
 # The files whose text the markup signals (S3, S4 imports, S5) read, by extension.
-markup: [html, htm, heex, eex, leex, tsx, jsx, vue, svelte, astro, erb, hbs, njk, liquid, twig]
+markup: [html, htm, heex, eex, leex, tsx, jsx, vue, svelte, astro, erb, hbs, njk, liquid, twig, ex]
+# Of those, the source files whose markup is embedded: one is read only when it carries the
+# sigil (Phoenix keeps components, LiveViews and, since 1.8, the app layout in ~H).
+embedded_markup:
+  - extension: ex
+    sigil: '~H'
 scripts: [js, mjs, cjs, ts, tsx, jsx, vue, svelte]
 styles: [css, pcss, postcss, scss]
 
@@ -48,7 +63,7 @@ styles: [css, pcss, postcss, scss]
 # Published pages are an interface whatever builds them: a page at the root, and a page
 # under `published.dirs`, under a directory an upload-pages-artifact step or a deploy, build,
 # publish or release script names, and under docs/ when docs/ is published (a CNAME or a
-# .nojekyll there, or a workflow whose path is docs).
+# .nojekyll there, or a Pages artifact or publish_dir step whose path is docs).
 ui:
   package_manifests: [package.json, assets/package.json]
   manifest: package.json
@@ -78,14 +93,16 @@ wiring:
   plugin:
     # Tailwind 4: CSS-first configuration.
     v4_entry: '@import\s+["'']tailwindcss["'']'
-    v4_plugin: '@plugin\s+["'']flowbite(-react)?/plugin(\.js)?["'']'
+    v4_plugin: '@plugin\s+["'']flowbite(-react)?/plugin(/tailwindcss|\.js)?["'']'
     v4_source: '@source\s+["''][^"'']*flowbite[^"'']*["'']'
     # Tailwind 3: tailwind.config.* with the plugin and a content glob over Flowbite. The
-    # paths are relative to the surface's directory.
-    v3_entry: '@tailwind\s+(base|components|utilities)'
+    # paths are relative to the surface's directory and to each of its manifests'. The entry
+    # is the directive or its postcss-import form; flowbite-react 0.10 configures both
+    # through flowbite-react/tailwind.
+    v3_entry: '(@tailwind\s+(base|components|utilities)|@import\s+["'']tailwindcss/(base|components|utilities)["''])'
     v3_configs: [tailwind.config.js, tailwind.config.cjs, tailwind.config.mjs, tailwind.config.ts, assets/tailwind.config.js, assets/tailwind.config.cjs, assets/tailwind.config.mjs, assets/tailwind.config.ts]
-    v3_plugin: '(require\(\s*["'']flowbite(-react)?/plugin["'']\s*\)|from\s+["'']flowbite(-react)?/plugin["''])'
-    v3_content: '["''][^"'']*flowbite[^"'']*\*[^"'']*["'']'
+    v3_plugin: '(?s)(require\(\s*["'']flowbite(-react)?/plugin["'']\s*\)|from\s+["'']flowbite(-react)?/plugin["'']|(require\(\s*["'']flowbite-react/tailwind["'']\s*\)|from\s+["'']flowbite-react/tailwind["'']).*\.plugin\(\s*\))'
+    v3_content: '(?s)(["''][^"'']*flowbite[^"'']*\*[^"'']*["'']|(require\(\s*["'']flowbite-react/tailwind["'']\s*\)|from\s+["'']flowbite-react/tailwind["'']).*\.content\(\s*(\{[^}]*\})?\s*\))'
     # Tailwind compiled in the browser is not a build.
     play_cdn: '(cdn\.tailwindcss\.com|@tailwindcss/browser)'
     # Flowbite fetched from a CDN, with no package behind it.
@@ -118,13 +135,19 @@ licence:
       path: '(^|/)(flowbite-pro-[a-z0-9.-]+|flowbite-react-blocks-[a-z0-9.-]+|publisher-ui-blocks-[a-z0-9.-]+)(/|$)'
     - name: a manifest named after a Flowbite Pro product
       text: '"name"\s*:\s*"(flowbite-pro-[a-z0-9.-]+|flowbite-react-blocks[a-z0-9.-]*)"'
+    - name: a dependency on a Flowbite Pro package
+      text: '"(flowbite-pro-[a-z0-9.-]+|flowbite-react-blocks[a-z0-9.-]*)"\s*:\s*"'
 
 # S4: the kits that must not also be used. A name ending in `/` is an npm scope: every
-# package under it is that kit. `mix` names Hex packages read from mix.exs, `files` the
-# configuration a kit's installer leaves behind.
+# package under it is that kit. An import names the package, or a path through a vendor/ or
+# node_modules/ directory that ends in it (`@plugin "../vendor/daisyui"`, as Phoenix 1.8
+# vendors daisyUI). `mix` names Hex packages read from every mix.exs, `files` the
+# configuration a kit's installer leaves behind, and `vendored` the kit's own files by path
+# wherever they lie, vendored directories included.
 forbidden:
   - kit: daisyUI
     packages: [daisyui]
+    vendored: '(^|/)daisyui(-theme)?\.m?js$'
   - kit: Bootstrap
     packages: [bootstrap, react-bootstrap, bootstrap-vue]
   - kit: Preline
@@ -157,9 +180,12 @@ reported:
 
 # S5: the Pro shell on each root layout. A policy's `design_kit.layouts` replaces the
 # globs; a `*.html.heex` layout is judged together with the `root.html.heex` beside it,
-# because Phoenix splits the document from the shell.
+# because Phoenix splits the document from the shell. Phoenix 1.8 draws the app layout in
+# `layouts.ex` (`Layouts.app/1`): that file is a layout when it carries ~H, and it is judged
+# together with every `*.html.heex` of its `layouts/` directory, which are then no layouts
+# of their own.
 shell:
-  layouts: ['app/layout.tsx', 'src/app/layout.tsx', '**/components/layouts/app.html.heex', '**/templates/layout/app.html.heex', 'index.html', 'src/index.html', 'templates/base.html', '**/templates/base.html']
+  layouts: ['app/layout.tsx', 'src/app/layout.tsx', '**/components/layouts.ex', '**/components/layouts/app.html.heex', '**/templates/layout/app.html.heex', 'index.html', 'src/index.html', 'templates/base.html', '**/templates/base.html']
   companion: root.html.heex
   fixed_nav: '<nav\b[^>]*\bclass(Name)?=["''{][^"''}]*\bfixed\b'
   sidebar: '<aside\b[^>]*\baria-label=["'']Sidebar["'']'

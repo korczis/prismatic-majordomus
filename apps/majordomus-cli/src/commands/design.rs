@@ -531,19 +531,18 @@ mod tests {
             "--discovery",
             "filesystem",
         ]);
+        // the synthetic layer carries .ai/repo/policy.yaml: the dry run plans and writes nothing
+        let policy = repo.root().join(crate::design::kit::POLICY);
+        let before = std::fs::read_to_string(&policy).unwrap();
         let mut out = Vec::new();
-        match run_to(a, &mut out) {
-            Ok(code) => {
-                assert_eq!(code, 0);
-                let t = String::from_utf8(out).unwrap();
-                assert!(t.contains("dry run: nothing written"), "{t}");
-            }
-            // a synthetic layer without a policy file is refused, and says so
-            Err(Error::Refused { code, reason }) => {
-                assert_eq!(code, 15);
-                assert!(reason.contains("policy"), "{reason}");
-            }
-            Err(other) => panic!("unexpected: {other}"),
-        }
+        assert_eq!(run_to(a, &mut out).unwrap(), 0);
+        let t = String::from_utf8(out).unwrap();
+        assert!(t.contains("dry run: nothing written"), "{t}");
+        assert!(!repo
+            .root()
+            .join(crate::design::kit::RULES_DIR)
+            .join("ui-uses-flowbite-pro.v1.md")
+            .exists());
+        assert_eq!(std::fs::read_to_string(&policy).unwrap(), before);
     }
 }

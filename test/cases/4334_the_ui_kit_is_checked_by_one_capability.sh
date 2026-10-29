@@ -19,12 +19,15 @@
 #   a licensed marker nobody judged    exit 10, an S1 finding, licence undecided
 #   without --check                    the same findings, exit 0
 #   adopt --dry-run                    writes nothing
-#   adopt, then adopt again            the rule, the block and the entries once; the second
-#                                      run changes nothing
+#   adopt, then adopt again            the rule and the entries once, and no design_kit block
+#                                      while the policy schema declares none (I4336), so
+#                                      doctor accepts the adopted policy; the second run
+#                                      changes nothing
 #   an exemption with its reason       the finding moves to the exempted list, exit 0
 #   adopt over a stale rule            the rule is brought up to the template, and its
 #                                      section 'In this repository' is kept
-#   an exemption without a reason      exit 2, nothing judged
+#   an exemption without a reason      exit 2, nothing judged: no finding, no exemption, no
+#                                      surface
 #   ... and over a licensed marker     the finding stands, exit 10
 #   a published page                   an interface; a stray manifest is a notice
 #   a repository nobody supervises     judged through --repo by the same function
@@ -181,7 +184,15 @@ expect_exit 0 "$RB" design kit adopt flowbite-pro --format json || exit 1
 rule=.ai/repo/rules/project/ui-uses-flowbite-pro.v1.md
 expect_file "$rule" || exit 1
 cmp -s "$rule" "$ROOT/share/design/kits/flowbite-pro.rule.md" || { echo "    the rule is not the template"; exit 1; }
-grep -q '^design_kit:$' .ai/repo/policy.yaml || { echo "    the policy has no design_kit block"; exit 1; }
+# The policy schema declares no design_kit block until the design licence's keys (I4336), and
+# doctor refuses a key the schema does not declare: adoption writes none, says why, and the
+# adopted policy is one doctor reads.
+! grep -q '^design_kit:' .ai/repo/policy.yaml || { echo "    adoption wrote a block the policy schema does not declare"; exit 1; }
+"$RB" design kit adopt flowbite-pro --dry-run --format json 2>"$S/err" | jq -e '[.notes[] | select(test("I4336"))] | length == 1' >/dev/null \
+  || { echo "    adoption does not say why it wrote no block: $(cat "$S/err")"; exit 1; }
+"$MJ" doctor >"$S/doctor" 2>&1 || true
+grep -q 'parsed, version 1' "$S/doctor" || { echo "    doctor did not read the adopted policy: $(cat "$S/doctor")"; exit 1; }
+! grep -q 'unknown keys' "$S/doctor" || { echo "    doctor refuses the adopted policy: $(grep 'unknown keys' "$S/doctor")"; exit 1; }
 grep -q 'name: design-kit-on-push' .ai/repo/policy.yaml || { echo "    the pre-push entry is missing"; exit 1; }
 grep -q 'args: \[design, kit, --check\]' .ai/repo/policy.yaml || { echo "    the entry does not run design kit --check"; exit 1; }
 git add -A >/dev/null && git commit -qm adopt
@@ -193,7 +204,7 @@ printf '%s' "$out" | jq -e '[.writes[] | select(.action != "unchanged")] | lengt
 [ -z "$(git status --porcelain)" ] || { echo "    a second adoption wrote: $(git status --porcelain)"; exit 1; }
 
 out="$(kit)" && code=0 || code=$?
-[ "$code" = 0 ] && [ "$(printf '%s' "$out" | jq -r '.policy_declared')" = true ] || {
+[ "$code" = 0 ] && [ "$(printf '%s' "$out" | verdict)" = clean ] || {
   echo "    the adopted repository is not clean under its own policy (exit $code): $out"; exit 1; }
 
 # The rule's last section is the repository's: over a stale rule, adoption brings the rest
@@ -214,8 +225,13 @@ printf '%s' "$out" | jq -e '[.writes[] | select(.action != "unchanged")] | lengt
 git checkout -q -- .
 
 # ---------------------------------------------------------------- exemptions
+# The block is written by hand here: the judge reads it, and doctor will accept it once the
+# policy schema declares it (I4336).
 edit index.html '{ sub(/ aria-label="Breadcrumb"/, ""); print }'
+printf '\ndesign_kit:\n  profile: flowbite-pro\n' >> .ai/repo/policy.yaml
 edit .ai/repo/policy.yaml '{ print } /^  profile: flowbite-pro$/ { print "  exempt:"; print "    - path: index.html"; print "      because: the breadcrumb lives in the pages the shell frames"; print "      signals: [S5]" }'
+out="$(kit)" && code=0 || code=$?
+[ "$(printf '%s' "$out" | jq -r '.policy_declared')" = true ] || { echo "    the block is not read: $out"; exit 1; }
 out="$(kit)" && code=0 || code=$?
 [ "$code" = 0 ] || { echo "    an exempted finding still refuses (exit $code): $out"; exit 1; }
 printf '%s' "$out" | jq -e '(.exempted | length) == 1 and .exempted[0].because != "" and .exemptions[0].matched == 1' >/dev/null \
@@ -237,6 +253,8 @@ out="$(kit)" && code=0 || code=$?
 [ "$(printf '%s' "$out" | verdict)" = bad_policy ] || { echo "    the verdict is not bad_policy: $out"; exit 1; }
 printf '%s' "$out" | jq -e '.policy_errors[0] | test("because")' >/dev/null \
   || { echo "    the reason does not name the missing because: $out"; exit 1; }
+printf '%s' "$out" | jq -e '(.findings|length)==0 and (.exempted|length)==0 and (.surfaces|length)==0 and (.ui|not)' >/dev/null \
+  || { echo "    a bad policy judged something: $out"; exit 1; }
 git checkout -q -- .
 
 # ---------------------------------------------------------------- a repository nobody supervises
