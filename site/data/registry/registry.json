@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "9c6f281cc8bc3de01bb402fe9daa5544bdf5b35b6ed12b2a1cfe2e07e43bcdfc",
+    "fingerprint": "a218bb59f23257e40dcb78e40cfd439ce3f049c38e4d846e9a5bb60a63c4800e",
     "summary": {
-      "total": 3639,
+      "total": 3642,
       "builtin": 220,
-      "declarative": 3419,
+      "declarative": 3422,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3419
+        "resource": 3422
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3429
+        "implemented": 3432
       },
       "mcp_tools": 206,
-      "mcp_resources": 3476,
+      "mcp_resources": 3479,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91383,7 +91383,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1108,
+        "capabilities": 1111,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "15cb5bda97adfb11d9a4e733b2dc9fbae7f747d1022d6b720dd0d6d09395d902",
+    "fingerprint": "0cf968db9ad0364099f9c9584a939207c295715aa910f1455a605d9c0b79214d",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92113,7 +92113,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 44,
-      "issue": 1108,
+      "issue": 1111,
       "knowledge": 60,
       "mesh-declaration": 1,
       "milestone": 113,
@@ -99585,7 +99585,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 1006421
+        "bytes": 1030110
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -113136,7 +113136,7 @@
         "path": ".ai/repo/project/issues/I3448.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2483
+        "bytes": 4009
       },
       {
         "uri": "majordomus://issue/I3449",
@@ -115669,6 +115669,17 @@
         "bytes": 6192
       },
       {
+        "uri": "majordomus://issue/I4413",
+        "kind": "issue",
+        "identity": "I4413",
+        "title": "A failed verification is run again over the trunk commit the work is built on, and its refusal says which failures were already there, so one red test of the trunk does not read as every task's defect",
+        "description": "Two changes to mj_validate_verification in lib/finish.sh, none of which changes a repository that declares nothing. First, a policy key verification.failure_pattern (an extended regular expression with one group, absent: none): when it is declared, the verify command's output is written to a temporary file instead of /dev/null, the group's text on every matching line is a failure id, and the sorted, unique ids (at most 50, with their count) go into the refusal line and into a verify object that task.refused now carries (verify.failures); the output file is removed afterwards. Second, a policy key verification.base_rerun (boolean, absent: false), overridable per invocation by `finish --no-base-rerun`: when the verify command failed, finish exports the base commit with `git archive` into a temporary directory (never a linked worktree, so no worktree is registered and no hook runs), runs verification.base_prepare there when declared (for example `npm ci`), runs the same verify command there with the same environment, and removes the directory on every exit path. The base is the merge base of HEAD and the trunk's remote-tracking branch (mj_git_trunk_ref, lib/common.sh:540-549), and the task's start head (mj_cur head) when no trunk is known; the record says which (base_source: trunk or start). The verification is classified in the vocabulary I3313 defines for session records: introduced when the base run passes, or when a failure id of this run is absent from the base run's ids (only those ids are listed as introduced); pre-existing only when the base run fails, a failure_pattern is declared and every failure id of this run is among the base run's; unknown when the base run fails with no failure_pattern declared, or the base could not be exported, prepared or resolved (a shallow clone, a missing object), with the reason. unknown is never shown as pre-existing. The classification never accepts the task: a red verification stays a refusal whatever its class, as majordomus.verification-integrity requires. A pre-existing refusal reads `npm test — exit 1, 412s; pre-existing at 3e89654 (trunk): 1 of 1 failure fails there too: studio perf budget`, and its remedy names re-running finish once the trunk's failure is fixed and `finish --outcome blocked` with that reason, instead of a re-run of the same command over the same tree. task.refused records verify.origin with base, base_source, base_exit, base_seconds, class, failures, base_failures and, for unknown, reason. The rule majordomus.verification-integrity states that the base run classifies a refusal and never turns it into a pass.",
+        "path": ".ai/repo/project/issues/I4413.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 9887
+      },
+      {
         "uri": "majordomus://issue/I4414",
         "kind": "issue",
         "identity": "I4414",
@@ -115691,6 +115702,17 @@
         "bytes": 7625
       },
       {
+        "uri": "majordomus://issue/I4416",
+        "kind": "issue",
+        "identity": "I4416",
+        "title": "The session briefing says how old the task is and never calls a finished one active, an abandoned task is closed as interrupted only by `recover tasks`, and doctor's stranded-episode FAIL names `recover episodes --check`",
+        "description": "Three changes, none of which closes anything a person did not ask to close. First, the task line of the session briefing (mj_derive_briefing_body, lib/derive.sh:548-552) states the record as it is. A task whose outcome is active reads `Active task <id> (active, profile <p>, started <age> ago, checkpoint <age> ago): <task>`. A task whose outcome is anything else (completed, partial, blocked, no_match, failed, handed_over, interrupted) reads `Last task <id> (<outcome>, closed <age> ago, profile <p>): <task>`, and the word Active is never printed for it. An active task whose checkpoint_at is older than the policy's session.stranded_after gains `stale: no checkpoint for <age>, over the <threshold> session.stranded_after; review it: majordomus recover tasks --check`. Ages come from mj_age_minutes and mj_age_human, as `majordomus context` already renders them (lib/context.sh:190-200), and the threshold is read with mj_pol_req as lib/recover.sh:94 reads it, with no default invented. Second, a new subject `majordomus recover tasks [--check] [--older-than <duration>]` in lib/recover.sh, beside episodes, records and orphans, and included in `recover status` and `recover all`. It reads only this checkout's current.yaml and refuses a foreign one (mj_task_is_foreign) with the worktree it belongs to. An active task whose checkpoint_at is older than the threshold is a candidate; --check prints the task id, its started and checkpoint ages, the threshold and `close with outcome interrupted`, and writes nothing. Without --check, the candidate's current.yaml gets outcome: interrupted and a task.interrupted ledger line carrying task_id, checkpoint_at, age, threshold and source recover; nothing else is rewritten. A task inside the threshold, or one already closed, is named with why it is not a candidate and left byte-for-byte unchanged. The outcome interrupted is admitted by the current.v1 schema and its generated allow-list, and finish answers it as it answers any closed outcome (`already interrupted; run majordomus start for new work`). Third, the remedy column of doctor's lifecycle rows (mj_validate_lifecycle, lib/doctor.sh:1028): the episodes FAIL (lib/doctor.sh:1106-1109) names `majordomus recover episodes --check` instead of `majordomus session list`, and the checkpoints and handovers FAILs (lib/doctor.sh:1056-1075) name it too when the same run counted stranded episodes, because an episode nobody closed is the one that never wrote its handover; with no stranded episode they keep `majordomus <record> --list`.",
+        "path": ".ai/repo/project/issues/I4416.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 10107
+      },
+      {
         "uri": "majordomus://issue/I4417",
         "kind": "issue",
         "identity": "I4417",
@@ -115700,6 +115722,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 9212
+      },
+      {
+        "uri": "majordomus://issue/I4418",
+        "kind": "issue",
+        "identity": "I4418",
+        "title": "serve ensure fast-forwards a clean trunk checkout that is strictly behind its remote trunk, or offers to, and majordomus init declares checkout.trunk_distance, so a shared server does not answer from an old tree unjudged",
+        "description": "Two changes. Neither moves a checkout that holds anything to lose, and neither supplies a threshold that no policy wrote. First, `majordomus serve ensure` (and through it the start event's mj_capture_ensure_server, lib/capture.sh:1679-1699) measures the trunk distance (worktree::trunk::measure) before it converges, and decides whether the checkout can be fast-forwarded. It can only when all of the following hold: HEAD is the trunk branch; the checkout is strictly behind the remote-tracking trunk as last fetched (behind > 0, ahead 0); no tracked file is staged or modified; no merge, rebase, cherry-pick, revert or bisect is in progress; and no index.lock exists. A new policy key checkout.fast_forward (off | offer | apply, absent: offer) decides what happens to an eligible checkout. With offer, the ensure answer (the human line and the JSON EnsureReport, which today carries no trunk field) gains `trunk` with standing, behind, eligible and the command `majordomus serve ensure --fast-forward`; the remedy in the MCP initialize trunk sentence names the same command. With apply, and with `--fast-forward` on any policy but off, ensure runs `git merge --ff-only <remote trunk>` in the checkout before it converges, never fetches, and reports the old and new heads as trunk.fast_forwarded {from, to}. A checkout that is not eligible is never moved. The answer says which condition failed (not the trunk branch, ahead of the remote trunk, uncommitted tracked changes, an operation in progress, or no remote trunk) and keeps today's remedy with its rescue step. A `git merge --ff-only` that refuses, for example over an untracked file it would overwrite, is reported with git's message and the checkout is left unchanged. The server's standing and its exit code are decided exactly as today. Second, share/skeleton/policy.yaml declares a checkout: block, trunk_distance with warn_behind 20 and fail_behind 200, plus fast_forward: offer, each commented, so a repository made by `majordomus init` judges its distance with numbers written in its own policy. Doctor's unjudged INFO (lib/doctor.sh:760) names the block to add, taken from the skeleton, instead of only `majordomus worktree trunk`. The reader still supplies no default threshold: a policy without trunk_distance stays unjudged, as project.a-checkout-serves-the-current-trunk requires.",
+        "path": ".ai/repo/project/issues/I4418.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 11070
       },
       {
         "uri": "majordomus://issue/I4419",
@@ -129331,7 +129364,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1108
+      "objects": 1111
     },
     {
       "name": "knowledge",

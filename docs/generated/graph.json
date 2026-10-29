@@ -63977,11 +63977,6 @@
         "route": "/cockpit/objects/issue/i3448",
         "source": ".ai/repo/project/issues/I3448.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "A fixture gh-pages carrying releases/v9.9.9-alpha.1.json and a build without it: after an ordinary deploy the file is still there, byte-identical, and the deploy names it as kept",
-            "Negative: a releases/<tag>.json the build itself holds is replaced by the build's copy, not kept from gh-pages",
-            "latest.json behaves as before: kept when it names a newer stable release than the build, replaced otherwise"
-          ],
           "depends_on": [],
           "evidence_required": [
             "test_a_deploy_keeps_every_pre_release_it_serves"
@@ -63989,14 +63984,19 @@
           "milestone": "M004",
           "non_scope": [
             "Which release latest.json names, which stays the newest stable release",
-            "Publishing a pre-release's metadata from master before its record lands"
+            "Publishing a pre-release's metadata from master before its record lands",
+            "Making ui-snapshot degrade (I4380, #2687) and the deploy that downloads an artifact that was not uploaded (I3761)"
           ],
           "parallel_safe": true,
-          "priority": "p1",
+          "priority": "p0",
           "profile": "implementation",
           "scope": [
             "scripts/site-deploy",
-            "docs/RELEASE.md"
+            "docs/RELEASE.md",
+            "scripts/pages",
+            "test/cases/3721_a_deploy_keeps_every_pre_release_it_serves.sh",
+            "test/cases/1087_*",
+            ".ai/repo/project/issues/I3448.yaml"
           ],
           "slug": "a-deploy-keeps-every-pre-release-it-serves",
           "validation": [
@@ -74478,6 +74478,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I4413",
+        "kind": "issue",
+        "label": "I4413",
+        "summary": "A failed verification is run again over the trunk commit the work is built on, and its refusal says which failures were already there, so one red test of the trunk does not read as every task's defect",
+        "route": "/cockpit/objects/issue/i4413",
+        "source": ".ai/repo/project/issues/I4413.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "failed_verification_origin_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4413.yaml",
+            "lib/finish.sh",
+            "lib/common.sh",
+            "share/allow/policy.txt",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/events.yaml",
+            "share/standard/majordomus/rules/verification-integrity.v1.md",
+            ".ai/repo/rules/vendor/majordomus/rules/verification-integrity.v1.md",
+            "docs/CLI.md",
+            "docs/SCHEMAS.md",
+            "test/cases/06_finish.sh",
+            "test/cases/4413_a_failed_verification_says_whether_the_trunk_fails_too.sh"
+          ],
+          "serves": [],
+          "slug": "a-failed-verification-says-whether-the-trunk-fails-too",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "MJ_TEST_JOBS=4 bash test/run.sh 4413_a_failed_verification_says_whether_the_trunk_fails_too 06_finish 572_verification_records_the_tree_it_proved",
+            "bin/majordomus shell check",
+            "bin/majordomus doctor",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4414",
         "kind": "issue",
         "label": "I4414",
@@ -74576,6 +74618,57 @@
         }
       },
       {
+        "id": "majordomus://issue/I4416",
+        "kind": "issue",
+        "label": "I4416",
+        "summary": "The session briefing says how old the task is and never calls a finished one active, an abandoned task is closed as interrupted only by `recover tasks`, and doctor's stranded-episode FAIL names `recover episodes --check`",
+        "route": "/cockpit/objects/issue/i4416",
+        "source": ".ai/repo/project/issues/I4416.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "stale_task_briefing_and_recovery_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Closing stranded episodes: `majordomus recover episodes`, unchanged",
+            "Another worktree's stale task claim in the overlap report of start and check: I4328, whose landed predicate is I4333",
+            "Closing, finishing or rewriting any task without a person running `recover tasks`: the briefing, doctor and the hooks only report",
+            "A task held in another checkout: `recover tasks` refuses it and names that checkout; I4328 qualifies it",
+            "The open episodes of refused tasks and the origin of a failed verification: I4413",
+            "Changing session.stranded_after or giving it a default"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4416.yaml",
+            "lib/derive.sh",
+            "lib/recover.sh",
+            "lib/doctor.sh",
+            "lib/finish.sh",
+            "lib/common.sh",
+            "share/schemas/majordomus/current/current.v1.schema.json",
+            "share/allow/current.txt",
+            "share/events.yaml",
+            "apps/majordomus-cli/src/cockpit/pages.rs",
+            "docs/CLI.md",
+            "test/cases/130_lifecycle_survives_a_stale_task.sh",
+            "test/cases/4416_a_stale_task_reads_as_stale_and_is_recovered_on_purpose.sh"
+          ],
+          "serves": [],
+          "slug": "a-stale-task-reads-as-stale-and-is-recovered-on-purpose",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "MJ_TEST_JOBS=4 bash test/run.sh 4416_a_stale_task_reads_as_stale_and_is_recovered_on_purpose 130_lifecycle_survives_a_stale_task 60_session_lifecycle 135_session_store_recovery",
+            "bin/majordomus shell check",
+            "bin/majordomus doctor",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4417",
         "kind": "issue",
         "label": "I4417",
@@ -74627,6 +74720,55 @@
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib graph::",
             "bash test/run.sh 4417_a_generated_knowledge_class_declares_its_generator",
             "bin/majordomus shell check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4418",
+        "kind": "issue",
+        "label": "I4418",
+        "summary": "serve ensure fast-forwards a clean trunk checkout that is strictly behind its remote trunk, or offers to, and majordomus init declares checkout.trunk_distance, so a shared server does not answer from an old tree unjudged",
+        "route": "/cockpit/objects/issue/i4418",
+        "source": ".ai/repo/project/issues/I4418.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "clean_trunk_fast_forward_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4418.yaml",
+            "apps/majordomus-cli/src/commands/serve.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/worktree/trunk.rs",
+            "apps/majordomus-cli/src/mcp/protocol.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/allow/policy.txt",
+            "lib/doctor.sh",
+            ".ai/repo/policy.yaml",
+            ".ai/repo/rules/project/a-checkout-serves-the-current-trunk.v1.md",
+            "docs/WORKTREES.md",
+            "docs/generated/cli.md",
+            "docs/generated/cli.json",
+            "docs/generated/cli.yaml",
+            "test/cases/3176_a_checkout_serves_the_current_trunk.sh",
+            "test/cases/4418_a_clean_trunk_checkout_is_fast_forwarded_by_serve_ensure.sh"
+          ],
+          "serves": [],
+          "slug": "a-clean-trunk-checkout-is-fast-forwarded-by-serve-ensure",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "MJ_TEST_JOBS=4 bash test/run.sh 4418_a_clean_trunk_checkout_is_fast_forwarded_by_serve_ensure 3176_a_checkout_serves_the_current_trunk",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- worktree::trunk commands::serve mcp::protocol policy",
+            "bin/majordomus shell check",
+            "bin/majordomus doctor",
             "bin/majordomus plan validate"
           ]
         }
@@ -138122,6 +138264,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4413",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4413",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4414",
         "target": "kind:issue",
         "kind": "is_a"
@@ -138147,12 +138299,32 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4416",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4416",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4417",
         "target": "kind:issue",
         "kind": "is_a"
       },
       {
         "source": "majordomus://issue/I4417",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4418",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4418",
         "target": "majordomus://milestone/a-second-adopter-is-served",
         "kind": "belongs_to"
       },
@@ -149863,8 +150035,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4103,
-      "edges": 9474,
+      "nodes": 4106,
+      "edges": 9480,
       "acyclic": false,
       "truncated": false
     }
