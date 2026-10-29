@@ -1,0 +1,41 @@
+id: I4355
+milestone: ci-critical-path
+title: "A machine announces its own disk emergency on the mesh and names who holds the build lock"
+slug: a-machine-announces-its-disk-emergency
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "A watcher, `scripts/reap-orphans --watch`, run every 60 s by a launchd agent or systemd user timer the mesh enrolment installs, publishes an advisory claim machine/<id>/disk while free space is below 35 GiB and withdraws it at 40 GiB or more; below 10 GiB it lists the holders of debug/.cargo-build-lock (pid, worktree, age) and lib/rust_bin.sh refuses admission with reason disk_emergency. The watcher deletes nothing. Clause 7 of the cooperation rule stops saying the limit is owed and names the cases that hold it."
+why: "Incident 5 of 2026-10-28: the 641b Mac fell to 0-3 GiB free twice (17:32Z and 21:34Z) while several sessions kept building, and none of them learnt the machine was in trouble until its own build failed; the board carried nothing about the disk. The cooperation rule's clause 7 sets 35 GiB as a seat's operating number and says that holding it in code is owed (I3825)."
+current_state: "Measured at 81ef931a3e1: .ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md line 163 says holding 35 GiB and five builders in code is owed (I3825); scripts/reap-orphans has no watch mode; no mesh claim is ever published for a machine's disk."
+desired_state: "A machine below 35 GiB carries machine/<id>/disk on the mesh, withdrawn at 40 GiB; below 10 GiB the claim names the lock's holders and new builds are refused with disk_emergency; the mesh doctor reports a missing watcher where the mesh is enabled. Enforced by case 4355, the doctor check and the rule's text cases 3824 and 3150."
+scope:
+  - ".ai/repo/project/issues/I4355.yaml"
+  - "scripts/reap-orphans"
+  - "lib/rust_bin.sh"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/src/commands/mesh.rs"
+  - "test/cases/4355_a_machine_announces_its_disk_emergency.sh"
+  - "test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh"
+  - "test/cases/3150_the_cooperation_model_is_one_record.sh"
+  - ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
+  - "docs/WORKTREES.md"
+non_scope:
+  - "Deleting anything: reclaim stays with I4354 and I4346"
+  - "The five-builder limit (I3825)"
+acceptance_criteria:
+  - "Case 4355 with stubbed df and lsof: free space at 34 GiB publishes machine/<id>/disk, 40 GiB withdraws it, 9 GiB lists each holder of debug/.cargo-build-lock with pid, worktree and age, and nothing is deleted"
+  - "Case 4355: below 10 GiB a build through lib/rust_bin.sh is refused with reason disk_emergency"
+  - "The mesh doctor reports a missing watcher where the mesh is enabled (unit test in commands::mesh)"
+  - "Clause 7 no longer says 'owed (I3825)' and names cases 3824 and 3150; both cases pass"
+validation:
+  - "bash test/run.sh 4355_a_machine_announces_its_disk_emergency 3824_the_bootstrap_says_what_the_cooperation_rule_says 3150_the_cooperation_model_is_one_record"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib commands::mesh"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+depends_on:
+  - "I3825"
+serves: []
+created_at: 2026-10-29
+updated_at: 2026-10-29
