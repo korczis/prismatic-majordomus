@@ -1,0 +1,28 @@
+id: I4350
+milestone: merging-and-referencing-are-enforced
+title: "plan validate refuses a scope that names a directory holding a file another issue plans, so its warnings never publish a path nobody has written"
+slug: a-directory-scope-over-a-planned-file-is-refused
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "When a runnable issue's scope entry is a directory and another runnable issue of the same wave plans a file under it that does not exist yet, plan validate reports an error naming both issues and the directory, instead of the scope_conflict warning that names the planned file."
+why: "A scope of test/cases, docs or .ai/repo/rules made the scope_conflict warnings (apps/majordomus-cli/src/plan.rs, 'shares {x} with {id}') name case files and documents other issues plan and nobody had written; docs/PLAN_STATUS.md publishes those warnings and scripts/ci/reference-check refuses a missing path, so case 59 failed in pre-push on branches that touched none of them. Met three times on 2026-10-28, each repaired by hand by narrowing a scope: commits cb2aa8187e6 (I0703, I4291, I4292), 5014fa07b4a (I4306) and cbcb3465f94 (I4290). The rule is written in .ai/repo/project/issues/README.md; nothing decides it."
+current_state: "Measured at 81ef931a3e1 on 2026-10-28: the scope-conflict pass in plan.rs warns for every overlapping pair in one wave and prints the entry of the first issue, which may be a file only planned; nothing checks that a scope entry is a file or an exact new path."
+desired_state: "plan validate fails with a finding of its own code when a directory scope entry encloses a path another runnable issue plans that is not in the tree; a scope_conflict finding between existing paths is unchanged; the unit tests next to overlapping_scope_in_one_wave_is_a_warning hold both."
+scope:
+  - "apps/majordomus-cli/src/plan.rs"
+  - ".ai/repo/project/issues/I4350.yaml"
+non_scope:
+  - "scripts/ci/reference-check and case 59, which stay as strict as they are"
+  - "The overlap rule itself (overlap and overlap_normal)"
+depends_on: []
+acceptance_criteria:
+  - "A plan where one issue scopes test/cases and another plans test/cases/<new>.sh in the same wave fails plan validate, naming both issues and the directory"
+  - "Two issues sharing an existing file still produce only the scope_conflict warning"
+  - "Every issue on master passes plan validate after the change, or the change narrows the scopes that fail"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - test
+serves: []
+created_at: 2026-10-28

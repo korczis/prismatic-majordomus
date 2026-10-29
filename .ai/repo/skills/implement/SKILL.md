@@ -78,6 +78,17 @@ abstraction exists, whether the code is transitional, whether an earlier fix add
 the same defect, whether a suspicious pattern is deliberate. Do not read history for
 ceremony; read it where it changes what you would do.
 
+Read it one path at a time (`git log -- <path>`, `git log -L`) on the branch you work
+from. What other branches hold is asked of their tips, never of all their history:
+whether one already carries a path is `scripts/collision-check --new <path>`, one pass
+over every branch tip, and whether an issue id is taken is the tip check and the
+date-bounded message search in `.ai/repo/project/issues/README.md`. A content search
+across every ref — `git log --all -S` or `-G`, `git grep` over every remote branch — has
+no bound on a repository with two thousand refs, and the machine is shared: on 2026-10-28
+three of them from one session's workflow agents held it at load 92 and the shared server
+stopped answering until they were stopped. When no bounded form answers the question,
+bound the search by `--since` and by the refs that matter before running it.
+
 ## 4. Name the canonical truth
 
 For every artifact the change touches, say which it is: canonical, a generated

@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "c4e82b08dbf8ba59af4aeba8370515a59d4c528865638585fd02a13e05984388",
+    "fingerprint": "ff0a090f5f970981c397f941b589d3517084c291f03b1e7619437d16d2a7a94a",
     "summary": {
-      "total": 3576,
+      "total": 3582,
       "builtin": 220,
-      "declarative": 3356,
+      "declarative": 3362,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3356
+        "resource": 3362
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3366
+        "implemented": 3372
       },
       "mcp_tools": 206,
-      "mcp_resources": 3413,
+      "mcp_resources": 3419,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91383,7 +91383,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1055,
+        "capabilities": 1056,
         "capability_ids": []
       },
       {
@@ -91391,7 +91391,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 63,
+        "capabilities": 68,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "686dd05fddddf907e7a0c3f0c972654ea3b7fce3e439efb86c3185ac51a0073a",
+    "fingerprint": "054f2803c810d84595b73c56b750c25be94a821e1560c8b108655d5988e15329",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92113,8 +92113,8 @@
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1055,
-      "knowledge": 63,
+      "issue": 1056,
+      "knowledge": 68,
       "mesh-declaration": 1,
       "milestone": 111,
       "moment": 38,
@@ -98228,7 +98228,7 @@
         "path": ".ai/repo/project/issues/README.md",
         "section": "project",
         "source_class": "context",
-        "bytes": 1352
+        "bytes": 3928
       },
       {
         "uri": "majordomus://context/ai.repo.project.milestones",
@@ -98983,7 +98983,7 @@
         "path": ".ai/repo/workflows/task-lifecycle.md",
         "section": "workflows",
         "source_class": "workflow",
-        "bytes": 8014
+        "bytes": 8623
       },
       {
         "uri": "majordomus://document/.ai/repo/workflows/use-cases.md",
@@ -99596,7 +99596,7 @@
         "title": "Reasoning",
         "path": "docs/REASONING.md",
         "source_class": "document",
-        "bytes": 14104
+        "bytes": 14281
       },
       {
         "uri": "majordomus://document/docs/RELEASE.md",
@@ -114975,6 +114975,17 @@
         "bytes": 3594
       },
       {
+        "uri": "majordomus://issue/I4350",
+        "kind": "issue",
+        "identity": "I4350",
+        "title": "plan validate refuses a scope that names a directory holding a file another issue plans, so its warnings never publish a path nobody has written",
+        "description": "When a runnable issue's scope entry is a directory and another runnable issue of the same wave plans a file under it that does not exist yet, plan validate reports an error naming both issues and the directory, instead of the scope_conflict warning that names the planned file.",
+        "path": ".ai/repo/project/issues/I4350.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2558
+      },
+      {
         "uri": "majordomus://issue/I4351",
         "kind": "issue",
         "identity": "I4351",
@@ -115217,7 +115228,7 @@
         "path": ".ai/repo/knowledge/curated/a-plan-on-an-unlanded-branch-is-planned-again.md",
         "section": "knowledge",
         "source_class": "curated",
-        "bytes": 1512,
+        "bytes": 1665,
         "tags": [
           "derive-performance",
           "chatgpt-project"
@@ -115777,7 +115788,7 @@
         "path": ".ai/repo/knowledge/candidates/s-20261019205653-344d-8a56a0a79628.md",
         "section": "knowledge",
         "source_class": "candidates",
-        "bytes": 1704,
+        "bytes": 2071,
         "tags": [
           "derived",
           "observation"
@@ -115853,6 +115864,81 @@
         "section": "knowledge",
         "source_class": "curated",
         "bytes": 1914,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261028215542-dcf9-0aec4acf4c97",
+        "kind": "knowledge",
+        "identity": "s-20261028215542-dcf9-0aec4acf4c97",
+        "title": "an issue scope that names a directory (test/cases, docs, .ai/repo/rules) makes plan validate's scope_conflict warnings name files other issues plan and nobody wrote; docs/PLAN_STATUS.md publishes them and reference-check fails case 59; met three times on 2026-10-28 (I0703/I4291/I4292, I4306, I4290), each fixed by narrowing the scope to file paths",
+        "description": "Observed as repetition about .ai/repo/project/issues/README.md in episode s-20261028215542-dcf9.",
+        "path": ".ai/repo/knowledge/curated/s-20261028215542-dcf9-0aec4acf4c97.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 3010,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261028215542-dcf9-30333fac611c",
+        "kind": "knowledge",
+        "identity": "s-20261028215542-dcf9-30333fac611c",
+        "title": "On 2026-10-28 ~22:30Z the shared Mac reached load 92 and the shared MCP server stopped answering (brief: Resource temporarily unavailable, os error 35) because one session's workflow agents asked whether any branch carried a path or an id with unbounded history scans: git grep -l over refs/remotes/origin/* (~1200 branches, 276% CPU, 5 min), git log --all -SI4338 (7.5 min) and git log --all -S<text>; stopping the three pids took load to 68 and the server answered in 2.4 s. scripts/collision-check answers the path question from branch tips in one cat-file pass, and a tip check plus a date-bounded --grep answers the id question in about 3 s.",
+        "description": "Observed as defect about rule:project.work-is-claimed-before-it-is-built in episode s-20261028215542-dcf9.",
+        "path": ".ai/repo/knowledge/curated/s-20261028215542-dcf9-30333fac611c.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 4330,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261028215542-dcf9-50e730b63c1e",
+        "kind": "knowledge",
+        "identity": "s-20261028215542-dcf9-50e730b63c1e",
+        "title": "two issue ids were taken twice within two days despite the rule: I4251 by a capture-mod fix at 13:03 and a brief status-line fix at 14:57 on 10-27, and I4296 on 10-28 by #2633's commit at 18:37Z while another session had held an exclusive mesh claim on I4296.yaml since 18:16Z; ids are allocated from the refs alone, and the allocator and gate that would decide it are owed by I3974",
+        "description": "Observed as repetition about rule:project.work-is-claimed-before-it-is-built in episode s-20261028215542-dcf9.",
+        "path": ".ai/repo/knowledge/curated/s-20261028215542-dcf9-50e730b63c1e.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 3709,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261028215542-dcf9-6180b2b50b3f",
+        "kind": "knowledge",
+        "identity": "s-20261028215542-dcf9-6180b2b50b3f",
+        "title": "a majordomus task started in a train worktree (integration/train-10b-20261028) only to hold a reasoning record bound every push of that checkout to the pre-push finish --check for two hours, until it was closed as no_match; the session reported the check refusing the train's push on scope and mesh",
+        "description": "Observed as friction about .ai/repo/workflows/task-lifecycle.md in episode s-20261028215542-dcf9.",
+        "path": ".ai/repo/knowledge/curated/s-20261028215542-dcf9-6180b2b50b3f.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2567,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261028215542-dcf9-f7cf4b4595b9",
+        "kind": "knowledge",
+        "identity": "s-20261028215542-dcf9-f7cf4b4595b9",
+        "title": "an HTTP 429 whose body says the account's quota or credit is exhausted (insufficient_quota, credit_balance_exhausted) is typed rate_limited, which recovers after its retry-after, and a CLI client that exits with IneligibleTierError is typed error, so the plan keeps selecting advisors that cannot answer (gemini selected three runs in a row on assessment-20261028T185442897Z-849b27)",
+        "description": "Observed as defect about scripts/lib/advisors/contract.mjs in episode s-20261028215542-dcf9.",
+        "path": ".ai/repo/knowledge/curated/s-20261028215542-dcf9-f7cf4b4595b9.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 3061,
         "tags": [
           "derived",
           "observation"
@@ -122521,7 +122607,7 @@
         "path": ".ai/repo/skills/implement/SKILL.md",
         "section": "skills",
         "source_class": "skill",
-        "bytes": 13676,
+        "bytes": 14535,
         "tags": [
           "implementation",
           "evidence",
@@ -128660,7 +128746,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1055
+      "objects": 1056
     },
     {
       "name": "knowledge",
@@ -128670,7 +128756,7 @@
       "identity": [
         "id"
       ],
-      "objects": 63
+      "objects": 68
     },
     {
       "name": "mesh-declaration",
