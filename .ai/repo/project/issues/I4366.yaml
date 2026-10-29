@@ -1,0 +1,33 @@
+id: I4366
+milestone: ci-critical-path
+title: "The economics runner starts a freshly written harness once it is free, and a harness that cannot start has no version"
+slug: a-freshly-written-harness-is-started-once-it-is-free
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "apps/majordomus-cli/src/economics/runner.rs starts the harness and the treatment's majordomus through crate::process::retrying_busy (spawn_group, harness_version, run_quiet), and harness_version returns the start error instead of the version `unknown`, so a transient ETXTBSY neither drops a run nor reads as the harness changing under it."
+why: "Train 10a's validate run 40798671348 (job 123214165485, lane rust (2)) failed economics::runner::tests::a_session_that_failed_or_timed_out_is_not_a_completed_run at runner.rs:1492 (NotFound in the test's record()). Its first section writes a stand-in harness and runs it at once; a child another libtest thread forked meanwhile held the file open for writing, Linux refused the exec (ETXTBSY), harness_version turned that into `unknown`, the end-of-run version read 1.2.3, and run_job refused to record the run. The section discarded run()'s failed list, so the reason was lost. process.rs documents the same window (I2827, CI run 39049547899); runner.rs was the one starter left without the retry."
+current_state: "Measured at 5370ee63d19: spawn_group calls cmd.spawn() and run_quiet cmd.output() without retrying_busy; harness_version maps any start failure to `unknown`; the first section of the failing test ignores run()'s failed list."
+desired_state: "Every start in the runner waits out a program still open for writing; a harness that cannot start fails the run with the start error; a test that loses a record says why. Enforced on Linux by unit tests that hold the harness open for writing while it is started, which fail without the retry."
+scope:
+  - ".ai/repo/project/issues/I4366.yaml"
+  - "apps/majordomus-cli/src/economics/runner.rs"
+non_scope:
+  - "The session timeout: a timed-out session is already recorded, ended `timeout`"
+  - "Other modules' starters, already on retrying_busy (I2827)"
+acceptance_criteria:
+  - "economics::runner::tests::every_start_waits_for_a_program_still_open_for_writing: spawn_group, harness_version and run_quiet each start a harness held open for writing for 300 ms"
+  - "economics::runner::tests::a_run_whose_harness_was_just_written_is_recorded: a run whose harness is held for 500 ms is recorded with version 1.2.3"
+  - "economics::runner::tests::a_harness_that_cannot_start_has_no_version: a missing harness is an error naming it"
+  - "The first section of a_session_that_failed_or_timed_out_is_not_a_completed_run asserts run()'s failed list is empty before reading the record"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib economics"
+  - "cargo clippy --manifest-path apps/majordomus-cli/Cargo.toml --all-targets -- -D warnings"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+  - "rust"
+depends_on: []
+serves: []
+created_at: 2026-10-29
+updated_at: 2026-10-29

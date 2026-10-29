@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "bfe498ecbbafb51ab21c50cc4dc9185b76a3fcf7249658d9b88dd39da2371a64",
+    "fingerprint": "5dd0716addc8b697e608c650efc1d4163a12a8288c91e6f587b21213fcaac53d",
     "summary": {
-      "total": 3570,
+      "total": 3571,
       "builtin": 220,
-      "declarative": 3350,
+      "declarative": 3351,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3350
+        "resource": 3351
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3360
+        "implemented": 3361
       },
       "mcp_tools": 206,
-      "mcp_resources": 3407,
+      "mcp_resources": 3408,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91383,7 +91383,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1053,
+        "capabilities": 1054,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "84641565beac2d30a44cdbbb11cb6055de486182af4f4b3015068dd94aa8f6c4",
+    "fingerprint": "e9de7bb9e3b17f2917557b9c7d6660b86d05866d2a363ba9b96142797b7c9dd7",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92113,7 +92113,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1053,
+      "issue": 1054,
       "knowledge": 59,
       "mesh-declaration": 1,
       "milestone": 111,
@@ -99558,7 +99558,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 1041324
+        "bytes": 1044328
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -115070,6 +115070,17 @@
         "bytes": 5693
       },
       {
+        "uri": "majordomus://issue/I4366",
+        "kind": "issue",
+        "identity": "I4366",
+        "title": "The economics runner starts a freshly written harness once it is free, and a harness that cannot start has no version",
+        "description": "apps/majordomus-cli/src/economics/runner.rs starts the harness and the treatment's majordomus through crate::process::retrying_busy (spawn_group, harness_version, run_quiet), and harness_version returns the start error instead of the version `unknown`, so a transient ETXTBSY neither drops a run nor reads as the harness changing under it.",
+        "path": ".ai/repo/project/issues/I4366.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3106
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -128574,7 +128585,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1053
+      "objects": 1054
     },
     {
       "name": "knowledge",

@@ -71821,6 +71821,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I4366",
+        "kind": "issue",
+        "label": "I4366",
+        "summary": "The economics runner starts a freshly written harness once it is free, and a harness that cannot start has no version",
+        "route": "/cockpit/objects/issue/i4366",
+        "source": ".ai/repo/project/issues/I4366.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "economics::runner::tests::every_start_waits_for_a_program_still_open_for_writing: spawn_group, harness_version and run_quiet each start a harness held open for writing for 300 ms",
+            "economics::runner::tests::a_run_whose_harness_was_just_written_is_recorded: a run whose harness is held for 500 ms is recorded with version 1.2.3",
+            "economics::runner::tests::a_harness_that_cannot_start_has_no_version: a missing harness is an error naming it",
+            "The first section of a_session_that_failed_or_timed_out_is_not_a_completed_run asserts run()'s failed list is empty before reading the record"
+          ],
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "test",
+            "rust"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "The session timeout: a timed-out session is already recorded, ended `timeout`",
+            "Other modules' starters, already on retrying_busy (I2827)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4366.yaml",
+            "apps/majordomus-cli/src/economics/runner.rs"
+          ],
+          "serves": [],
+          "slug": "a-freshly-written-harness-is-started-once-it-is-free",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib economics",
+            "cargo clippy --manifest-path apps/majordomus-cli/Cargo.toml --all-targets -- -D warnings",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -134364,6 +134406,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4366",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4366",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -145995,8 +146047,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4034,
-      "edges": 9314,
+      "nodes": 4035,
+      "edges": 9316,
       "acyclic": false,
       "truncated": false
     }
