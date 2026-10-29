@@ -17397,6 +17397,14 @@
         "source": "docs/PLANNING.md"
       },
       {
+        "id": "majordomus://document/docs/PLAN_STATUS.md",
+        "kind": "document",
+        "label": "docs/PLAN_STATUS.md",
+        "summary": "Plan status",
+        "route": "/cockpit/objects/document/docs-plan-status-md",
+        "source": "docs/PLAN_STATUS.md"
+      },
+      {
         "id": "majordomus://document/docs/PREFLIGHT.md",
         "kind": "document",
         "label": "docs/PREFLIGHT.md",
@@ -73067,11 +73075,11 @@
             "apps/majordomus-cli/src/discovery/mod.rs",
             "apps/majordomus-cli/src/intent.rs",
             "docs/PLANNING.md",
-            "test/cases"
+            "test/cases/4322_one_discovery_rule_for_the_project_model.sh"
           ],
           "serves": [],
           "slug": "one-discovery-rule-for-the-project-model",
-          "updated_at": "2026-10-28",
+          "updated_at": "2026-10-29",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib discovery::",
@@ -73108,11 +73116,11 @@
             "lib/rules.sh",
             "lib/common.sh",
             "docs/MCP.md",
-            "test/cases"
+            "test/cases/4323_a_full_disk_is_one_finding.sh"
           ],
           "serves": [],
           "slug": "a-full-disk-is-one-finding",
-          "updated_at": "2026-10-28",
+          "updated_at": "2026-10-29",
           "validation": [
             "bin/majordomus doctor",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -73197,11 +73205,11 @@
             "apps/majordomus-cli/src/intent.rs",
             "apps/majordomus-cli/src/intent_realization.rs",
             "docs/EVIDENCE.md",
-            "test/cases"
+            "test/cases/4325_node_test_and_playwright_are_runners.sh"
           ],
           "serves": [],
           "slug": "node-test-and-playwright-are-runners",
-          "updated_at": "2026-10-28",
+          "updated_at": "2026-10-29",
           "validation": [
             "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib evidence::",
             "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib intent_realization::",
@@ -73375,11 +73383,11 @@
             "apps/majordomus-cli/src/plan.rs",
             "apps/majordomus-cli/src/capability/builtin/plan.rs",
             "docs/CLI.md",
-            "test/cases"
+            "test/cases/4329_one_issue_shape_and_a_findable_run.sh"
           ],
           "serves": [],
           "slug": "one-issue-shape-and-a-findable-run",
-          "updated_at": "2026-10-28",
+          "updated_at": "2026-10-29",
           "validation": [
             "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -73464,11 +73472,11 @@
             "apps/majordomus-cli/src/pack/mod.rs",
             "apps/majordomus-cli/src/cli/local.rs",
             "docs/ADOPTION.md",
-            "test/cases"
+            "test/cases/4331_pack_build_output_is_ignored_or_refused.sh"
           ],
           "serves": [],
           "slug": "pack-build-output-is-ignored-or-refused",
-          "updated_at": "2026-10-28",
+          "updated_at": "2026-10-29",
           "validation": [
             "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib pack::",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -73552,11 +73560,11 @@
             "share/schemas/majordomus/policy/policy.v1.schema.json",
             "docs/WORKTREES.md",
             "docs/INTEGRATION.md",
-            "test/cases"
+            "test/cases/4333_one_landed_predicate_for_any_landing.sh"
           ],
           "serves": [],
           "slug": "one-landed-predicate-for-any-landing",
-          "updated_at": "2026-10-28",
+          "updated_at": "2026-10-29",
           "validation": [
             "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib worktree::",
             "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::relation::",
@@ -121640,6 +121648,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/PLAN_STATUS.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/PREFLIGHT.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -151661,8 +151674,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4155,
-      "edges": 9570,
+      "nodes": 4156,
+      "edges": 9571,
       "acyclic": false,
       "truncated": false
     }
