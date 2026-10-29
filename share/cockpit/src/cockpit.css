@@ -372,12 +372,20 @@
   .mj-graph,
   .mj-topology,
   .mj-activity {
-    @apply w-full rounded-md;
+    @apply w-full rounded-lg;
     background: var(--mj-sunken);
     border: 1px solid var(--mj-line);
   }
+  /* The drawing's own overlays (the hover card, the "nothing matches" note) are placed
+     against the frame; geometry only. */
   .mj-graph {
+    position: relative;
     height: min(70vh, 640px);
+  }
+  /* The focus ring is the global one, drawn inside the frame so the rounded edge keeps it. */
+  .mj-graph:focus-visible,
+  .mj-topology:focus-visible {
+    outline-offset: -2px;
   }
   .mj-topology {
     height: min(70vh, 620px);
@@ -391,38 +399,181 @@
   .mj-graph-controls .mj-input {
     @apply w-40 sm:w-56;
   }
-  /* The legend the drawing builds for itself, which is also the filter: one entry per node
-     kind, the swatch carrying the colour the drawing gave that kind, and a click that takes
+  /* Zoom out, zoom in and Fit as one segmented group: the shared buttons, joined, so the
+     three read as one control over the drawing. A hovered or focused member is raised so its
+     whole border shows over its neighbour's. */
+  .mj-graph-zoom {
+    @apply inline-flex items-stretch;
+  }
+  .mj-graph-zoom > .mj-button {
+    @apply rounded-none;
+  }
+  .mj-graph-zoom > .mj-button + .mj-button {
+    @apply -ml-px;
+  }
+  .mj-graph-zoom > .mj-button:first-child {
+    @apply rounded-s-md;
+  }
+  .mj-graph-zoom > .mj-button:last-child {
+    @apply rounded-e-md;
+  }
+  .mj-graph-zoom > .mj-button:hover,
+  .mj-graph-zoom > .mj-button:focus-visible {
+    @apply relative z-10;
+  }
+  /* The box a drawing builds around its frame when it has overlays of its own (the hover
+     card, the map), so they are placed against the drawing; geometry only. */
+  .mj-graph-stage {
+    @apply relative w-full min-w-0;
+  }
+  /* Inside a stage the frame clips the canvas to its own rounded edge, and the drawing fades
+     in once, on its first paint; a restyle or a refresh never replays it. */
+  .mj-graph-stage > .mj-graph {
+    @apply overflow-hidden;
+  }
+  .mj-graph-stage > .mj-graph > div {
+    animation: mj-graph-in calc(var(--mj-motion-fast) * 2) ease-out;
+  }
+  @keyframes mj-graph-in {
+    from {
+      opacity: 0;
+    }
+  }
+  /* How many nodes a search lit, out of how many there are: read out politely, and set in
+     tabular figures so the count does not shuffle the toolbar as it changes. Empty, it is
+     taken out of the layout but kept in the accessibility tree: a live region that appears
+     in the same mutation as its first words is often not announced. */
+  .mj-graph-count {
+    @apply whitespace-nowrap text-meta tabular-nums;
+    color: var(--mj-muted);
+  }
+  .mj-graph-count:empty {
+    @apply sr-only;
+  }
+  /* The legend the drawing builds for itself, which is also the filter: one chip per node
+     kind, the swatch carrying the colour the drawing gave that kind, and a press that takes
      the kind out of the picture. It wraps rather than scrolls, because the composed graph
-     has 34 kinds and a reader who cannot see the whole vocabulary cannot use it. */
+     has 34 kinds and a reader who cannot see the whole vocabulary cannot use it.
+
+     A chip taken out of the picture (`aria-pressed="true"`, or the older `.is-hidden`) says
+     so three ways and never by colour alone: a hollow swatch, the name struck through and
+     the chip faded. The hollow is drawn over whatever colour the drawing gave the swatch,
+     with the chip's own ground, so it holds whichever way the drawing set that colour. */
   .mj-graph-legend {
-    @apply mt-2 flex flex-wrap items-center gap-1;
+    @apply mt-2 flex flex-wrap items-center gap-1.5;
   }
   .mj-graph-legend-entry {
-    @apply inline-flex items-center gap-1 rounded-sm px-1 py-0.5 text-meta;
+    --chip-ground: var(--mj-raised);
+    @apply inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-label;
     color: var(--mj-body);
-    border: 1px solid transparent;
+    background: var(--chip-ground);
+    border: 1px solid var(--mj-line);
     cursor: pointer;
+    transition: opacity var(--mj-motion-fast), background-color var(--mj-motion-fast);
   }
   .mj-graph-legend-entry:hover {
-    border-color: var(--mj-line);
-    background: var(--mj-sunken);
+    --chip-ground: var(--mj-sunken);
   }
+  .mj-graph-legend-entry[aria-pressed="true"],
   .mj-graph-legend-entry.is-hidden {
-    opacity: 0.4;
+    opacity: 0.5;
+  }
+  .mj-graph-legend-entry[aria-pressed="true"] .mj-graph-legend-name,
+  .mj-graph-legend-entry.is-hidden .mj-graph-legend-name {
     text-decoration: line-through;
+  }
+  .mj-graph-legend-entry[aria-pressed="true"] .mj-graph-swatch::after,
+  .mj-graph-legend-entry.is-hidden .mj-graph-swatch::after {
+    content: "";
+    @apply absolute inset-0.5;
+    /* concentric with the swatch: its radius less the inset, both steps of the scale
+       (Flowbite's `rounded-xs` is as round as `rounded-sm`, a circle in a 6px hollow) */
+    border-radius: calc(var(--radius-sm) - var(--spacing) * 0.5);
+    background: var(--chip-ground);
   }
   .mj-graph-legend-name {
     @apply font-mono;
   }
   .mj-graph-legend-count {
+    @apply tabular-nums;
     color: var(--mj-muted);
   }
   .mj-graph-swatch {
-    @apply inline-block rounded-sm;
-    width: 0.6rem;
-    height: 0.6rem;
+    @apply relative inline-block size-2.5 shrink-0 rounded-sm;
+  }
+  /* The hover card: one per frame, beside the node under the pointer, confined to the frame
+     and never in the pointer's way. The drawing writes what it says; this says how it looks.
+     It repeats what the panel and the tables hold, so it is hidden from assistive technology
+     and never shown on a touch screen. */
+  .mj-graph-tip {
+    @apply pointer-events-none absolute left-0 top-0 z-10 max-w-72 rounded-md px-3 py-2 text-small;
+    font-family: var(--font-sans);
+    color: var(--mj-body);
+    background: var(--mj-raised);
     border: 1px solid var(--mj-line);
+    animation: mj-graph-tip-in var(--mj-motion-fast) ease-out;
+  }
+  /* What floats over a drawing is lifted off it by one elevation, composed from the ink so
+     it holds in both themes; the declaration has no shadow of its own to name. */
+  .mj-graph-tip,
+  .mj-graph-mapbox {
+    box-shadow:
+      0 1px 2px color-mix(in oklch, var(--mj-fg) 8%, transparent),
+      0 8px 24px -8px color-mix(in oklch, var(--mj-fg) 22%, transparent);
+  }
+  .mj-graph-tip-title {
+    @apply block font-medium;
+    color: var(--mj-fg);
+  }
+  .mj-graph-tip-row {
+    @apply mt-1.5 flex items-center justify-between gap-3;
+  }
+  .mj-graph-tip-value {
+    @apply tabular-nums;
+    color: var(--mj-fg);
+  }
+  .mj-graph-tip-meta {
+    @apply mt-1 block text-label tabular-nums;
+    color: var(--mj-muted);
+  }
+  .mj-graph-tip-hint {
+    @apply mt-2 block pt-1.5 text-meta;
+    color: var(--mj-muted);
+    border-top: 1px solid var(--mj-line);
+  }
+  @keyframes mj-graph-tip-in {
+    from {
+      opacity: 0;
+    }
+  }
+  /* The map of a large drawing, at the frame's corner: the whole picture, small, with the
+     part in view outlined in the accent. A click on it pans there. Its ground is the
+     frame's, the one the picture is taken on, so a margin the picture leaves is not a
+     second colour. */
+  .mj-graph-mapbox {
+    @apply absolute bottom-2 right-2 z-10 overflow-hidden rounded-md max-sm:hidden;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-graph-map {
+    @apply block cursor-pointer;
+  }
+  .mj-graph-map-view {
+    @apply pointer-events-none absolute left-0 top-0 rounded-sm;
+    border: 2px solid var(--mj-accent);
+    background: color-mix(in oklch, var(--mj-accent) 10%, transparent);
+  }
+  /* A screen without hover has no pointer to rest on a node and no room for a map. */
+  @media (pointer: coarse) {
+    .mj-graph-tip,
+    .mj-graph-mapbox {
+      display: none;
+    }
+  }
+  /* What a frame says when a filter leaves nothing to draw, in place of an empty canvas. */
+  .mj-graph-empty {
+    @apply pointer-events-none absolute inset-0 z-10 grid place-items-center p-4 text-center text-small;
+    color: var(--mj-muted);
   }
   /* Until a drawing library fills it, the frame says why it is empty rather than sitting
      there as a grey rectangle. */

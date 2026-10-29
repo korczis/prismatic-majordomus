@@ -71821,6 +71821,62 @@
         }
       },
       {
+        "id": "majordomus://issue/I4377",
+        "kind": "issue",
+        "label": "I4377",
+        "summary": "Every graph and chart reads at a glance and answers the hand, in one visual and interaction language",
+        "route": "/cockpit/objects/issue/i4377",
+        "source": ".ai/repo/project/issues/I4377.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "scripts/ci/design-check passes: no colour outside share/design/tokens.yaml in the five components or their styles",
+            "scripts/interaction-probe --spec graph passes on every graph and chart page with no console error, driving search, zoom, fit, legend filter, focus and reset",
+            "Cases 190, 3723, 12c, 107 and 1072 pass",
+            "scripts/cockpit-assets --check passes: the built stylesheets match their sources"
+          ],
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "ci"
+          ],
+          "milestone": "one-kit-on-every-surface",
+          "non_scope": [
+            "New libraries or extensions: nothing is vendored beyond the pinned ECharts and Cytoscape",
+            "New design tokens: every value derives from declared ones",
+            "The Cytoscape deprecation warnings already on master (custom wheelSensitivity, 'label' node sizes in site/graph.js)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "A reader used to wheel-zooming the site's relation graphs now zooms with Ctrl/Cmd+wheel or the + and - buttons; the keys note under each graph says so.",
+          "scope": [
+            ".ai/repo/project/issues/I4377.yaml",
+            "site/charts.js",
+            "site/graph.js",
+            "site/templates/partials/graph.html",
+            "share/cockpit/graph.js",
+            "share/cockpit/trains.js",
+            "share/cockpit/src/cockpit.css",
+            "share/cockpit/cockpit.css",
+            "share/ui/ui.js",
+            "share/ui/src/ui.css",
+            "share/ui/ui.css",
+            "share/design/figure.css",
+            "scripts/lib/interaction-specs/graph.mjs",
+            "docs/DIAGRAMS.md",
+            "docs/UI.md"
+          ],
+          "slug": "the-graphs-read-at-a-glance-and-answer-a-hand",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "scripts/ci/design-check",
+            "scripts/interaction-probe --spec graph",
+            "bash test/run.sh 190_graph_drawing 3723_the_graph_text_reads_each_edge_its_way 12c_graph_data 107_design_tokens 1072_the_train_is_seen",
+            "scripts/cockpit-assets --check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -134364,6 +134420,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4377",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4377",
+        "target": "majordomus://milestone/one-kit-on-every-surface",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -145995,8 +146061,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4034,
-      "edges": 9314,
+      "nodes": 4035,
+      "edges": 9316,
       "acyclic": false,
       "truncated": false
     }

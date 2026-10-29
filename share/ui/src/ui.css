@@ -582,16 +582,107 @@
     overflow-wrap: anywhere;
   }
 
-  /* a relationship graph: the canvas once the script has drawn it, the table before */
+  /* a relationship graph: the canvas once the script has drawn it, the table before. The
+     script adds the view's buttons (top right), the card that names the node pointed at and
+     the keys note; the canvas fades in once, and a graph the minute's refresh draws again
+     (`--again`) does not fade again */
+  .mj-ui-graph {
+    @apply relative;
+  }
   .mj-ui-graph-canvas {
-    @apply h-96 w-full rounded-xl;
+    @apply h-96 w-full rounded-lg;
     background:
       radial-gradient(70% 70% at 50% 40%, var(--mj-accent-soft), transparent 75%),
       var(--mj-sunken);
     border: 1px solid var(--mj-line);
   }
+  .mj-ui-graph-canvas:focus-visible {
+    outline-offset: -2px;
+  }
+  .mj-ui-graph--drawn .mj-ui-graph-canvas {
+    animation: mj-ui-graph-in calc(var(--mj-motion-fast) * 2) ease-out;
+  }
+  .mj-ui-graph--again .mj-ui-graph-canvas {
+    animation: none;
+  }
+  @keyframes mj-ui-graph-in {
+    from {
+      opacity: 0;
+    }
+  }
   .mj-ui-graph--drawn .mj-ui-graph-fallback {
     @apply mt-4;
+  }
+  /* zoom out, zoom in, fit: one segmented group of the kit's buttons */
+  .mj-ui-graph-tools {
+    @apply absolute right-2 top-2 z-10 inline-flex overflow-hidden rounded-md;
+    background: var(--mj-raised);
+    border: 1px solid var(--mj-line);
+    box-shadow: 0 1px 2px color-mix(in oklch, var(--mj-fg) 8%, transparent);
+  }
+  .mj-ui-graph-tools .mj-button {
+    @apply min-w-8 cursor-pointer rounded-none border-0 px-2.5 py-1 text-center tabular-nums;
+    background: var(--mj-raised);
+    color: var(--mj-body);
+    transition: background-color var(--mj-motion-fast), color var(--mj-motion-fast);
+  }
+  .mj-ui-graph-tools .mj-button + .mj-button {
+    border-left: 1px solid var(--mj-line);
+  }
+  .mj-ui-graph-tools .mj-button:hover {
+    background: var(--mj-accent-soft);
+    color: var(--mj-accent-strong);
+  }
+  .mj-ui-graph-tools .mj-button:focus-visible {
+    outline-offset: -2px;
+  }
+  /* the card that names the node pointed at or chosen: the same card as the site's and the
+     Cockpit's (share/design/figure.css), value for value; what is the UI's own is that it
+     stands over the frame's tools, and that a touch screen, where there is no pointing, has none */
+  .mj-graph-tip {
+    @apply pointer-events-none absolute left-0 top-0 z-20 rounded-md font-sans text-small;
+    max-width: 18rem;
+    padding: 0.375rem 0.625rem;
+    background: var(--mj-raised);
+    border: 1px solid var(--mj-line);
+    color: var(--mj-body);
+    box-shadow:
+      0 1px 2px color-mix(in oklch, var(--mj-fg) 8%, transparent),
+      0 8px 24px -8px color-mix(in oklch, var(--mj-fg) 22%, transparent);
+  }
+  .mj-graph-tip[hidden] {
+    display: none;
+  }
+  .mj-graph-tip-title {
+    @apply m-0 font-mono font-medium;
+    overflow-wrap: anywhere;
+    color: var(--mj-fg);
+  }
+  .mj-graph-tip-row {
+    @apply flex flex-wrap items-center;
+    gap: 0.375rem;
+    margin: 0.25rem 0 0;
+  }
+  .mj-graph-tip-name {
+    color: var(--mj-body);
+  }
+  .mj-graph-tip-value {
+    @apply tabular-nums;
+    margin-inline-start: auto;
+    padding-inline-start: 0.5rem;
+    color: var(--mj-fg);
+  }
+  .mj-graph-tip-foot {
+    @apply text-label;
+    margin: 0.375rem 0 0;
+    padding-top: 0.375rem;
+    border-top: 1px solid var(--mj-line);
+    color: var(--mj-muted);
+  }
+  @media (pointer: coarse) {
+    .mj-graph-tip {
+      display: none;
+    }
   }
 
   /* tabs: links to the same route with the filter a capability declares */

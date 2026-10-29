@@ -346,4 +346,22 @@ Plain links are the link check's. Disabled elements are not controls, and a cont
 claims is listed as `UNCLAIMED`. Either it is an instance of a behaviour a spec already asserts, and that spec's
 `claims()` should include it, or it is new. A new behaviour needs a new spec: `claims(el)` is a pure function of
 the element's tag and attributes, and `exercise(ctx)` drives each claimed control and returns how many it drove.
+
+**A graph on a `majordomus ui` screen.** A graph binding there (`data-graph`, drawn by `share/ui/ui.js`) is one
+control with a keyboard map. No spec under `scripts/lib/interaction-specs/` claims it yet (`graph.mjs` drives
+the site's `figure[data-graph]`), and the UI's screens are outside the site's interaction check, so what follows
+is held by the script, not by a probe:
+- The drawn canvas is one tab stop (`role="application"`, `aria-roledescription="graph"`, the server's
+  `aria-label` kept, `aria-describedby` naming the keys). The arrows choose the nearest node that way, Enter
+  opens the chosen node's link (as a click does), `+`/`=` and `-`/`_` zoom, `0` fits, Shift+arrows pan, Home
+  and End reach the first and last node, and Escape clears. `/` and Ctrl/Cmd+K stay the bar's search.
+- A plain wheel scrolls the page; Ctrl/Cmd+wheel or a pinch zooms, between 0.2 and 3. The frame's own `−`,
+  `+` and Fit buttons (`.mj-ui-graph-tools`) do the same by pointer.
+- Pointing at a node lights it and its neighbours and shows a card (`.mj-graph-tip`, the shared card, never on
+  a touch screen) with its name and how many links it has; a chosen node outranks the pointer. Under
+  `prefers-reduced-motion` nothing animates.
+- The minute's refresh is silent: a graph drawn again keeps its nodes' positions, its zoom, its pan, its chosen
+  node and the keyboard, if it was in the drawing. A node it has not seen is placed beside the nodes it touches,
+  clear of the others, and what touches nothing already drawn is laid out below the rest. Nothing fades in or
+  animates again.
 {% endraw %}
