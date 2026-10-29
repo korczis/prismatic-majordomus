@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.8 -->
+     Generator: majordomus-cli 1.0.0-alpha.9 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 219 | 181 | 0 | 38 |
-| http | 211 | 181 | 0 | 30 |
-| mcp | 205 | 176 | 0 | 29 |
+| direct | 220 | 181 | 0 | 39 |
+| http | 212 | 181 | 0 | 31 |
+| mcp | 206 | 176 | 0 | 30 |
 | system | 14 | 14 | 0 | 0 |
-| total | 649 | 552 | 0 | 97 |
+| total | 652 | 552 | 0 | 100 |
 
 ## Capabilities
 
@@ -128,6 +128,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `lifecycle.recovery` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `lifecycle.runtime` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `mcp.projection` | mcp | query | — | covered | covered | covered | `every-tool`, `writers` |
+| `mesh.beat` | mesh | command | — | waived | waived | waived | — |
 | `mesh.build_cache.ensure` | mesh | command | — | waived | — | — | — |
 | `mesh.build_cache.env` | mesh | query | — | waived | waived | waived | — |
 | `mesh.build_cache.key` | mesh | query | — | waived | waived | waived | — |
