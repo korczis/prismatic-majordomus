@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "bfe498ecbbafb51ab21c50cc4dc9185b76a3fcf7249658d9b88dd39da2371a64",
+    "fingerprint": "6858d3c8ab633366061fa4438b208d23ffb6f03f7ffac7158ca823a8c3f512c4",
     "summary": {
-      "total": 3570,
+      "total": 3575,
       "builtin": 220,
-      "declarative": 3350,
+      "declarative": 3355,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3350
+        "resource": 3355
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3360
+        "implemented": 3365
       },
       "mcp_tools": 206,
-      "mcp_resources": 3407,
+      "mcp_resources": 3412,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91391,7 +91391,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 59,
+        "capabilities": 63,
         "capability_ids": []
       },
       {
@@ -91908,7 +91908,7 @@
         "title": "session",
         "description": "Declarative objects of kind 'session' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 91,
+        "capabilities": 92,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "84641565beac2d30a44cdbbb11cb6055de486182af4f4b3015068dd94aa8f6c4",
+    "fingerprint": "92bc516e549461e4baae4b527a848080783f1cf3aa72e8117f7f09416e85063e",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92114,7 +92114,7 @@
       "implementation": 52,
       "intent": 43,
       "issue": 1053,
-      "knowledge": 59,
+      "knowledge": 63,
       "mesh-declaration": 1,
       "milestone": 111,
       "moment": 38,
@@ -92124,7 +92124,7 @@
       "release-record": 37,
       "rule": 191,
       "scope": 1,
-      "session": 91,
+      "session": 92,
       "skill": 8,
       "taxonomy": 10,
       "test": 654,
@@ -98981,7 +98981,7 @@
         "path": ".ai/repo/workflows/task-lifecycle.md",
         "section": "workflows",
         "source_class": "workflow",
-        "bytes": 7747
+        "bytes": 8014
       },
       {
         "uri": "majordomus://document/.ai/repo/workflows/use-cases.md",
@@ -115762,7 +115762,7 @@
         "path": ".ai/repo/knowledge/candidates/s-20261019205653-344d-8a56a0a79628.md",
         "section": "knowledge",
         "source_class": "candidates",
-        "bytes": 1310,
+        "bytes": 1704,
         "tags": [
           "derived",
           "observation"
@@ -115838,6 +115838,66 @@
         "section": "knowledge",
         "source_class": "curated",
         "bytes": 1914,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261029014908-3ca1-303247a52e23",
+        "kind": "knowledge",
+        "identity": "s-20261029014908-3ca1-303247a52e23",
+        "title": "an active task's scope cannot be widened: start refuses while a task is active, so a scope that missed one case the change pins (case 3959 on I4340) cost a finish --outcome partial with a note and a second start; every test case the change edits is named in --scope before the first edit",
+        "description": "Observed as friction about command:start in episode s-20261029014908-3ca1.",
+        "path": ".ai/repo/knowledge/curated/s-20261029014908-3ca1-303247a52e23.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 1998,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261029014908-3ca1-38815adc8960",
+        "kind": "knowledge",
+        "identity": "s-20261029014908-3ca1-38815adc8960",
+        "title": "a hand session start inside Claude Code opens hand.yaml while knowledge observe looks for the provider session's file (CLAUDE_CODE_SESSION_ID), so evolve's step 1 is refused with no episode open for this caller; met again on 2026-10-29 after 10-27, fixed by #2646 (train 11); until it lands, start with --provider-session \\\"$CLAUDE_CODE_SESSION_ID\\\"",
+        "description": "Observed as repetition about command:knowledge in episode s-20261029014908-3ca1.",
+        "path": ".ai/repo/knowledge/curated/s-20261029014908-3ca1-38815adc8960.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2267,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261029014908-3ca1-58aff37c4433",
+        "kind": "knowledge",
+        "identity": "s-20261029014908-3ca1-58aff37c4433",
+        "title": "mj_cargo_build_dir answers nothing for a relative crate directory, because mj_cargo_metadata_dir cds into it and then passes the same relative --manifest-path; every caller passes an absolute path, and a hand run of mj_rust_bound_build_dir must too",
+        "description": "Observed as friction about lib/rust_bin.sh in episode s-20261029014908-3ca1.",
+        "path": ".ai/repo/knowledge/curated/s-20261029014908-3ca1-58aff37c4433.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 1669,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261029014908-3ca1-cd2e93f4f1ef",
+        "kind": "knowledge",
+        "identity": "s-20261029014908-3ca1-cd2e93f4f1ef",
+        "title": "cargo writes CACHEDIR.TAG into a target-dir and never into a build-dir apart from it, so the reaper skipped the shared build dir before asking its size; on 2026-10-29 it held 43.4GB against its 6144MB bound with 40GB idle 100-212 min and the volume fell to 21GiB; a fail-closed check written for removing a whole directory also blocked the per-unit eviction (I4340, #2674)",
+        "description": "Observed as defect about scripts/reap-orphans in episode s-20261029014908-3ca1.",
+        "path": ".ai/repo/knowledge/curated/s-20261029014908-3ca1-cd2e93f4f1ef.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2337,
         "tags": [
           "derived",
           "observation"
@@ -122377,6 +122437,17 @@
         "bytes": 2485
       },
       {
+        "uri": "majordomus://session/s-20261029014409-5302",
+        "kind": "session",
+        "identity": "s-20261029014409-5302",
+        "title": "Session s-20261029014409-5302 on chore/evolve-20261029",
+        "description": "Session s-20261029014409-5302 on chore/evolve-20261029",
+        "path": ".ai/repo/sessions/20261029T014908Z--s-20261029014409-5302--chore-evolve-20261029--5370ee6--5149b688ad54482d.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1951
+      },
+      {
         "uri": "majordomus://skill/assess-before-deleting",
         "kind": "skill",
         "identity": "assess-before-deleting",
@@ -128584,7 +128655,7 @@
       "identity": [
         "id"
       ],
-      "objects": 59
+      "objects": 63
     },
     {
       "name": "mesh-declaration",
@@ -128689,7 +128760,7 @@
       "identity": [
         "session_id"
       ],
-      "objects": 91
+      "objects": 92
     },
     {
       "name": "session-context",

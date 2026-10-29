@@ -72650,7 +72650,7 @@
         "summary": "a translated copy doubled the pages a browser sweep drives (2545 to 5090), and interaction-probe hit its 3300 s bound at page 2250 on run 39285861377; a copy shares its English page's template and controls, so it is driven only when its set of (spec, control signature) differs from every copy of its language driven before it (57 of 2136 copies)",
         "route": "/cockpit/objects/knowledge/s-20261019205653-344d-8a56a0a79628",
         "source": ".ai/repo/knowledge/candidates/s-20261019205653-344d-8a56a0a79628.md",
-        "status": "candidate",
+        "status": "superseded",
         "facts": {
           "about": "gate:interaction-probe",
           "class": "lesson",
@@ -72755,6 +72755,86 @@
           "about": "apps/majordomus-cli/src/lease.rs",
           "class": "lesson",
           "date": "2026-10-20",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261029014908-3ca1-303247a52e23",
+        "kind": "knowledge",
+        "label": "s-20261029014908-3ca1-303247a52e23",
+        "summary": "an active task's scope cannot be widened: start refuses while a task is active, so a scope that missed one case the change pins (case 3959 on I4340) cost a finish --outcome partial with a note and a second start; every test case the change edits is named in --scope before the first edit",
+        "route": "/cockpit/objects/knowledge/s-20261029014908-3ca1-303247a52e23",
+        "source": ".ai/repo/knowledge/curated/s-20261029014908-3ca1-303247a52e23.md",
+        "status": "verified",
+        "facts": {
+          "about": "command:start",
+          "class": "lesson",
+          "date": "2026-10-29",
+          "epistemics": "observed",
+          "route": "platform",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261029014908-3ca1-38815adc8960",
+        "kind": "knowledge",
+        "label": "s-20261029014908-3ca1-38815adc8960",
+        "summary": "a hand session start inside Claude Code opens hand.yaml while knowledge observe looks for the provider session's file (CLAUDE_CODE_SESSION_ID), so evolve's step 1 is refused with no episode open for this caller; met again on 2026-10-29 after 10-27, fixed by #2646 (train 11); until it lands, start with --provider-session \\\"$CLAUDE_CODE_SESSION_ID\\\"",
+        "route": "/cockpit/objects/knowledge/s-20261029014908-3ca1-38815adc8960",
+        "source": ".ai/repo/knowledge/curated/s-20261029014908-3ca1-38815adc8960.md",
+        "status": "verified",
+        "facts": {
+          "about": "command:knowledge",
+          "class": "lesson",
+          "date": "2026-10-29",
+          "epistemics": "observed",
+          "route": "platform",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261029014908-3ca1-58aff37c4433",
+        "kind": "knowledge",
+        "label": "s-20261029014908-3ca1-58aff37c4433",
+        "summary": "mj_cargo_build_dir answers nothing for a relative crate directory, because mj_cargo_metadata_dir cds into it and then passes the same relative --manifest-path; every caller passes an absolute path, and a hand run of mj_rust_bound_build_dir must too",
+        "route": "/cockpit/objects/knowledge/s-20261029014908-3ca1-58aff37c4433",
+        "source": ".ai/repo/knowledge/curated/s-20261029014908-3ca1-58aff37c4433.md",
+        "status": "verified",
+        "facts": {
+          "about": "lib/rust_bin.sh",
+          "class": "lesson",
+          "date": "2026-10-29",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261029014908-3ca1-cd2e93f4f1ef",
+        "kind": "knowledge",
+        "label": "s-20261029014908-3ca1-cd2e93f4f1ef",
+        "summary": "cargo writes CACHEDIR.TAG into a target-dir and never into a build-dir apart from it, so the reaper skipped the shared build dir before asking its size; on 2026-10-29 it held 43.4GB against its 6144MB bound with 40GB idle 100-212 min and the volume fell to 21GiB; a fail-closed check written for removing a whole directory also blocked the per-unit eviction (I4340, #2674)",
+        "route": "/cockpit/objects/knowledge/s-20261029014908-3ca1-cd2e93f4f1ef",
+        "source": ".ai/repo/knowledge/curated/s-20261029014908-3ca1-cd2e93f4f1ef.md",
+        "status": "verified",
+        "facts": {
+          "about": "scripts/reap-orphans",
+          "class": "lesson",
+          "date": "2026-10-29",
           "epistemics": "observed",
           "route": "project",
           "tags": [
@@ -92026,6 +92106,42 @@
           ],
           "working_tree": "dirty",
           "worktree_id": "30e434191b0f1c31"
+        }
+      },
+      {
+        "id": "majordomus://session/s-20261029014409-5302",
+        "kind": "session",
+        "label": "s-20261029014409-5302",
+        "summary": "Session s-20261029014409-5302 on chore/evolve-20261029",
+        "route": "/cockpit/objects/session/s-20261029014409-5302",
+        "source": ".ai/repo/sessions/20261029T014908Z--s-20261029014409-5302--chore-evolve-20261029--5370ee6--5149b688ad54482d.md",
+        "facts": {
+          "branch": "chore/evolve-20261029",
+          "changed_files": [
+            ".ai/repo/knowledge/candidates/s-20261019205653-344d-8a56a0a79628.md"
+          ],
+          "checkpoints": [],
+          "closed_at": "2026-10-29T01:49:06Z",
+          "commits": [],
+          "created_at": "2026-10-29T01:49:06Z",
+          "decisions": [],
+          "evidence": [],
+          "handovers": [],
+          "head": "5370ee63d19b71b16e9431bb2edd86236338ca42",
+          "issues": [],
+          "milestones": [],
+          "outcome": "closed",
+          "profile": "implementation",
+          "questions": [],
+          "repository_id": "git@github.com:korczis/prismatic-majordomus.git",
+          "session_id": "s-20261029014409-5302",
+          "start_head": "5370ee63d19b71b16e9431bb2edd86236338ca42",
+          "start_working_tree": "clean",
+          "started_at": "2026-10-29T01:44:09Z",
+          "task_id": "t-20261029014426-6072",
+          "tasks": [],
+          "working_tree": "dirty",
+          "worktree_id": "8629e773f036bb96"
         }
       },
       {
@@ -134619,6 +134735,26 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://knowledge/s-20261029014908-3ca1-303247a52e23",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261029014908-3ca1-38815adc8960",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261029014908-3ca1-58aff37c4433",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261029014908-3ca1-cd2e93f4f1ef",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -138615,6 +138751,11 @@
       },
       {
         "source": "majordomus://session/s-20261020233257-5779",
+        "target": "kind:session",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://session/s-20261029014409-5302",
         "target": "kind:session",
         "kind": "is_a"
       },
@@ -145995,8 +146136,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4034,
-      "edges": 9314,
+      "nodes": 4039,
+      "edges": 9319,
       "acyclic": false,
       "truncated": false
     }
