@@ -71821,6 +71821,54 @@
         }
       },
       {
+        "id": "majordomus://issue/I4365",
+        "kind": "issue",
+        "label": "I4365",
+        "summary": "A promoted record cites no local episode or task: knowledge promote rewrites its provenance to what resolves in a clean clone, or refuses",
+        "route": "/cockpit/objects/issue/i4365",
+        "source": ".ai/repo/project/issues/I4365.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "knowledge promote writes a curated record whose provenance.derived_from names no session: or task: reference, and names the observation's subject and evidence references instead",
+            "knowledge promote exits 10 and writes nothing when, after the local references are removed, derived_from would name nothing that resolves",
+            "With .ai/local moved aside, knowledge check and doctor pass on a record promoted in the case (the clean-clone condition the landing seat found on train 11)",
+            "A candidate still carries its session: reference, and the deriver still groups it with its episode"
+          ],
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I3415"
+          ],
+          "desired_state": "A record under .ai/repo/knowledge/curated/ resolves in a clean clone the moment it is promoted, without anyone editing its provenance by hand; a candidate keeps its session: reference for grouping.",
+          "evidence_required": [
+            "case_a_promoted_record_cites_no_local_episode"
+          ],
+          "milestone": "knowledge-is-reconciled-before-it-is-reviewed",
+          "non_scope": [
+            "Changing how a candidate is grouped with its episode while it is a candidate",
+            "Rewriting curated records that were already promoted before this lands (they were fixed by hand on #2646, #2650 and #2656)",
+            "Automatic promotion; promotion stays a person's act (ADR 0091)"
+          ],
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/knowledge.sh",
+            "test/cases/709_knowledge_promotion_is_an_act.sh",
+            "docs/KNOWLEDGE.md",
+            "site/content/docs/knowledge.md"
+          ],
+          "serves": [
+            "a-change-reconciles-what-it-affects#promotion-cites-resolvable-evidence"
+          ],
+          "slug": "a-promoted-record-cites-no-local-episode",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "bash test/run.sh 709_knowledge_promotion_is_an_act 980_a_session_records_what_it_observed 981_an_observation_becomes_a_grouped_candidate",
+            "majordomus plan validate",
+            "majordomus knowledge check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -134364,6 +134412,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4365",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4365",
+        "target": "majordomus://issue/I3415",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4365",
+        "target": "majordomus://milestone/knowledge-is-reconciled-before-it-is-reviewed",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -145995,8 +146058,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4034,
-      "edges": 9314,
+      "nodes": 4035,
+      "edges": 9317,
       "acyclic": false,
       "truncated": false
     }
