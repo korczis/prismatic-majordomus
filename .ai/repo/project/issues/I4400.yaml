@@ -1,0 +1,43 @@
+id: I4400
+milestone: surfaces-never-disagree
+title: "A chart on the site is read by pointing at it: one crosshair, an exact tooltip, series a reader can hide, a range a reader can zoom, drawn from the design's tokens"
+slug: the-charts-are-modern-and-interactive
+priority: p2
+profile: implementation
+objective: "Make the one chart component (site/charts.js, ADR 0152) a chart a reader works with rather than only looks at. It keeps the same declaration (<figure data-chart> over the table it draws) and adds: a crosshair with one tooltip that lists every series at the pointed category, in its unit; a legend whose entries hide and show their series without repainting the others; a zoomable and pannable range on a line chart that has more categories than fit (slider, wheel, pinch, keyboard), with a reset; an emphasised last value; line charts drawn with a light area fill under each series and bars with rounded data ends; marks that focus the hovered series and fade the rest; and motion that is turned off under prefers-reduced-motion. Every colour is still a token of the page, so light and dark are both designed by the stylesheet."
+why: "Owner order of 2026-10-29: the charts are to be really modern and interactive ('udelej grafy fakt sexy, moderni, interaktivni'), on every surface. The site's charts (trends coverage and cost, the context history on /economics/, the milestones on the plan) draw the table they sit on, which is the right shape (ADR 0152), but a reader can do nothing with them beyond a tooltip on one mark: a long series is squeezed into the width, a series cannot be set aside to read another, and the drawing is ECharts' defaults with the design's colours."
+current_state: "site/charts.js on master 5370ee63d19 reads each <figure data-chart> table, draws a bar or line chart with ECharts (vendored at build, fetched when a chart nears the viewport), takes its colours from the page's --mj-series-* and status tokens, shows a per-item tooltip, and links a mark whose row links. It has no crosshair, no legend interaction, no zoom, no emphasis, no area fill and no reduced-motion handling."
+desired_state: "Every <figure data-chart> on the site has the crosshair tooltip, the toggling legend, the emphasis on hover and the reduced-motion rule; a line chart with more categories than its width holds has the zoom range and its reset; the declaration and the table are unchanged, a page without the script still shows the table, and docs/DESIGN_SYSTEM.md says what the chart component does."
+scope:
+  - "site/charts.js"
+  - "site/templates/partials/charts.html"
+  - "site/tailwind.css"
+  - "share/design"
+  - "scripts/lib/interaction-specs"
+  - "test/cases/4406_a_chart_is_read_by_pointing_at_it.sh"
+  - "docs/DESIGN_SYSTEM.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "docs/generated"
+  - "site"
+  - ".ai/repo/project/issues/I4400.yaml"
+non_scope:
+  - "A second chart library or a CDN: ECharts stays the one vendored engine (ADR 0152)"
+  - "New chart types, or charts of data the page does not already show as a table"
+  - "The Cockpit and majordomus ui charts, which render their own (I2656)"
+  - "Mermaid diagrams (site/diagrams.js), which are already one interactive viewer (I2653)"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "On each chart of trends, economics and the plan, pointing at a category shows one tooltip naming every visible series at it, in the figure's unit"
+  - "Hiding a series from the legend leaves every other series in its colour and its scale honest"
+  - "A line chart with more categories than fit offers a zoom range, and a reset brings back the whole range"
+  - "With prefers-reduced-motion, a chart draws and updates without animation"
+  - "Without the script, every figure is still its table"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4406_a_chart_is_read_by_pointing_at_it"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "case_a_chart_is_read_by_pointing_at_it"
+created_at: 2026-10-29
+updated_at: 2026-10-29
