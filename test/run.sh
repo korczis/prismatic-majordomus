@@ -81,14 +81,15 @@ unset mj_git_local
 # and fails what it measures about the default (case 85). A case that wants another
 # interface states it itself.
 unset MAJORDOMUS_HTTP_HOST
-# Nor does a case inherit the provider session the runner happens to run inside. This
-# repository is developed inside one, and `session start` keys a hand-opened episode by it,
-# so a case that asserts the hand-opened episode passed in CI, where no provider runs, and
-# failed on every local run and pre-push of a worker inside Claude Code (case 60). The
-# variables are the lifecycle adapters' own column, read from the table that declares them;
-# a case that drives a provider session sets one itself, as case 111 does.
-for mj_provider_var in MAJORDOMUS_PROVIDER_SESSION $(sed -n "s/^MJ_CAPTURE_LIFECYCLE='\(.*\)'\$/\1/p" "$ROOT/lib/capture.sh" \
-    | awk '$13 != "" && $13 != "-" { print $13 }'); do
+# Nor is the provider session the suite runs under a case's. A suite started from inside an
+# agent inherits that agent's session id, and ADR 0164 reads it as an identity the caller
+# supplied: with no episode keyed by it in the fixture, every ledger line a case writes is
+# stamped with no session, and case 61's closed episode named no task. The names are the
+# lifecycle adapters' own column (lib/capture.sh), so a provider added there is dropped here
+# too. A case that needs a provider session sets one itself, as cases 111 and 3049 do.
+# shellcheck source=../lib/capture.sh
+for mj_provider_var in MAJORDOMUS_PROVIDER_SESSION MJ_SESSION_KEY \
+    $( (. "$ROOT/lib/capture.sh" && mj_lifecycle_session_vars) 2>/dev/null); do
   unset "$mj_provider_var"
 done
 unset mj_provider_var

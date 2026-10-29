@@ -7,7 +7,7 @@ profile: debugging
 parallel_safe: false
 objective: "Implement whatever I0702 decided across every command that writes a durable record, and turn the characterisation case into one that asserts the new behaviour."
 why: "A defect is fixed when the case that reproduced it goes from describing the gap to describing the guarantee. Anything less leaves the next worker unable to tell which of the two the code is in."
-current_state: "The choice is recorded as ADR 0164, status proposed, so it carries no authority until the owner accepts it; implementation waits on that (3e and a3, 2026-10-21). Nothing of it is on master or on any branch. The writers are decision add (lib/decision.sh), question add and resolve (lib/question.sh), checkpoint (lib/checkpoint.sh), check --checkpoint (lib/check.sh), handover (lib/handover.sh) and knowledge observe (lib/knowledge.sh). All of them resolve the task from the checkout through mj_load_current, and all attribute through the envelope: mj_ledger_append calls mj_open_session_id, which falls back to the session pointer, which is the guess ADR 0164 forbids. Case 3049 opens no episode, so its workers cannot be told apart; it must open one episode per worker (session start --provider-session). Case 111:86-91 asserts the pointer fallback that ADR 0164 condition 2 removes. share/doctrines.yaml no longer exists (rules carry x-majordomus validators), and ADR 0164 refuses nothing, so the refusal and doctrine criteria have nothing to cover. Planned implementation: (1) one mj_record_session in lib/common.sh, used by mj_ledger_append: MJ_SESSION_KEY, else a provider session with an open episode, else the pointer only when at most one episode is open, else empty; (2) mj_record_task, which names the active task only when its task.started session equals the caller's; (3) every writer above uses it, and a foreign task leaves current.yaml untouched. Proposed answers awaiting the owner: with no episode anywhere the task is the caller's; a supplied identity with no open episode records no session; question add against a foreign task writes task_id none instead of failing; decision keeps Task: none; every writer is in scope."
+current_state: "Implemented and on master. ADR 0164 was accepted on 2026-10-22 with the amendment that a task is related unless another episode that is still open opened it, and the implementation landed through train 5 (b0e33db797d, fixed in d078fb2309e) and is carried by master 2efeacea031. lib/common.sh prepares attribution once in mj_record_attribution: mj_open_session_id names the caller's own episode, an explicit identity with no open episode names none, and with no identity it names the one open episode or none, never the pointer's guess; mj_task_opening_session and mj_session_is_open relate the active task unless a different live episode opened it. Every writer uses it and passes the prepared session to mj_ledger_append: decision add (lib/decision.sh), question add and resolve (lib/question.sh), checkpoint (lib/checkpoint.sh), check --checkpoint (lib/check.sh), handover (lib/handover.sh), knowledge observe (lib/knowledge.sh) and derive (lib/derive.sh). Case 3049 asserts the guarantee: I0701's zero-episode example, two real episodes under one $USER, the caller's own task, an unknown explicit identity and anonymous calls; cases 111, 61 and 388 prove the per-provider episode and a task carried across episodes and providers. ADR 0164 refuses nothing and share/doctrines.yaml no longer exists (rules carry x-majordomus validators), so the refusal and doctrine criteria have nothing to cover. Running the suite from inside an agent exposed one defect left over: case 61 failed because test/run.sh let the host's CLAUDE_CODE_SESSION_ID through, which ADR 0164 reads as a supplied identity with no episode; test/run.sh now drops the provider session variables the lifecycle adapters declare."
 desired_state: "Every command that writes a durable record follows the decision, the case asserts the new behaviour, and a refusal — if that is what was chosen — names the rule that refused and what to run instead."
 scope:
   - lib
@@ -30,4 +30,23 @@ evidence_required:
   - doctor
 risk: "Three commands share this resolution path; fixing one and not the others leaves a defect that looks fixed, which is worse than one that looks broken."
 created_at: 2026-09-04
-updated_at: 2026-10-21
+updated_at: 2026-10-26T03:03:26Z
+started_at: 2026-10-25T20:39:51Z
+started_event: sha256:b1981b4fe87da0141dea895c73c3b01134092403660c1cb3e28bc97cae321ec5
+verified_at: 2026-10-26T03:03:01Z
+verified_event: sha256:2591b93f407e84cc6badb438ed68670a47fcf5f6f590a2680b4c7dc8b032342e
+completed_at: 2026-10-26T03:03:26Z
+completed_event: sha256:d5712bb877b9ce5151309c35b495fd635f9bb1b90da614da632df72d7498823e
+evidence:
+  - covers: doctor
+    type: test
+    command: "bin/majordomus doctor"
+    result: "doctor: 0 failure(s) at 2efeacea031 + 4f0be73a002 (fix/a-record-names-the-session-that-wrote-it), MAJORDOMUS_SHARE set to the worktree's share"
+    commit: 4f0be73a0023eb44d9a9d21b79fb44cf5c282a5a
+    recorded_at: 2026-10-25T20:40:10Z
+  - covers: suite
+    type: ci
+    command: "bash test/run.sh (CI validate run 40234277961: suite + suite-shard 1-4)"
+    result: "validate run 40234277961 on 25db80a2f05 (PR #2575) succeeded: suite and suite-shards 1-4 green, 40 checks passed, 0 failed; https://github.com/korczis/prismatic-majordomus/actions/runs/40234277961"
+    commit: 25db80a2f05e10ade49e76b1913ffb39d4f5c0da
+    recorded_at: 2026-10-26T03:02:31Z
