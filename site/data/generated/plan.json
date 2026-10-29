@@ -67911,6 +67911,7 @@
         "apps/majordomus-cli/src/cockpit/pages.rs",
         "apps/majordomus-cli/tests/brief.rs",
         "share/mods/claude-code/majordomus-brief/",
+        ".claude/skills/majordomus-brief/",
         "share/design/tokens.yaml",
         "share/schemas/majordomus/policy/policy.v1.schema.json",
         "share/allow/policy.txt",
@@ -67920,6 +67921,7 @@
         "docs/README.md",
         ".ai/repo/adrs/0136-every-session-briefs-itself-on-an-interval.md",
         "test/cases/1065_a_session_briefs_itself.sh",
+        "test/cases/3470_the_release_follows_the_work.sh",
         "test/cases/4401_the_report_contract_is_declared_once.sh",
         "test/cases/4402_brief_words_are_status_words.sh",
         "test/cases/4403_a_stale_source_is_never_shown_as_current.sh",
@@ -67939,7 +67941,8 @@
       "acceptance_criteria": [
         "The unit tests of brief/report.rs, brief/machine.rs, brief/ci.rs, brief/work.rs, brief/refs.rs and brief/mod.rs pass, among them the_compiled_contract_is_the_share_file, every_attention_row_has_a_condition_and_every_condition_a_row, the_prompt_carries_every_attention_entry_verbatim_and_no_category_list, an_observation_past_its_bound_is_stale, peers_lines_are_never_clipped and a_section_over_budget_is_unread_not_late",
         "Cases 4401 to 4405, 1065 and 501 pass",
-        "The mod's test proves report.prompt is submitted byte for byte and that only a changed section fingerprint triggers a report"
+        "The mod's test proves report.prompt is submitted byte for byte and that only a changed section fingerprint triggers a report",
+        "This repository's policy switches session.brief_on_interval on, so capture install writes the mod to .claude/skills/majordomus-brief and the tracked copy is byte for byte share/mods/claude-code/majordomus-brief without its test: on 2026-10-29 the switch was on and nothing was installed, so sessions here were never briefed"
       ],
       "validation": [
         "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- capability::builtin::brief commands::brief",

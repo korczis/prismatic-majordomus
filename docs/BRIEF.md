@@ -72,9 +72,11 @@ alone; a brief composed anywhere else says `unread: not the leaseholder` and nam
 ### The one line
 
 At most 160 columns: the caller and the session's task or episode and branch, the worst
-attention entry, then one token per section (the CI pool, the queue with its age, the machine,
-the mesh, the peers, the release, the derive lock). Tokens that do not fit are dropped from the
-right and counted as `+N`; the one line is the only form in which anything is ever shortened.
+attention entry led by its section (`release owed 1 landed commit(s) past v0.1.0`), then one
+token per section in a fixed order (the CI pool, the queue with its age, the machine, the mesh,
+the peers, the release, the derive lock). Tokens that do not fit are dropped from the right and
+counted as `+N`, so the worst entry is said even when its section's own token is dropped; the
+one line is the only form in which anything is ever shortened.
 
 ## Who answers
 
@@ -82,7 +84,9 @@ The board and the mesh live in the memory of the server that holds the checkout'
 command-line process has an empty board of its own and no mesh, so a brief composed there
 would say "nobody is here" when the truth is "I did not ask". The command line therefore asks
 the leaseholder over the HTTP route the registry declares, with `local=true` so that the server
-never asks back, and composes the brief itself only when no server answers. The answer says
+never asks back, and composes the brief itself only when no server answers. It waits 10 s for
+that answer: a leaseholder of this generation answers inside its 6 s deadline, and only an older
+one, whose brief has no budgets, takes longer. The answer says
 which process composed it (`answered_by`: `leaseholder`, `superseded` or `this_process`), why
 when it is not the leaseholder, and in how long. An older leaseholder's answer, which carries
 no report, is finished by the command line: its attention and report are composed here from its

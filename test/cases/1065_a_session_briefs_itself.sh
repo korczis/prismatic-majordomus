@@ -99,3 +99,18 @@ expect_grep '"interval_minutes": 7'
 expect_grep '"contract": "brief-report/v1"'
 printf '%s' "$LAST_OUT" | jq -e '(.attention | type) == "array" and (.report.prompt | startswith("Majordomus report owed")) and (.fingerprints | length) == 9' >/dev/null \
   || fail 'the JSON brief carries no attention array, no report.prompt or not nine section fingerprints'
+
+# ---------------------------------------------------------------- installed where it is switched on
+# This repository switches the brief on, so its own tracked copy is the distribution's, file for
+# file (I4390): on 2026-10-29 the switch was on and nothing was installed, and no session here
+# was ever briefed. A changed mod is reinstalled with `majordomus capture install`.
+if grep -q '^  brief_on_interval: true' "$ROOT/.ai/repo/policy.yaml"; then
+  SRC="$ROOT/share/mods/claude-code/majordomus-brief"
+  [ -d "$ROOT/$MOD" ] || fail "the repository switches the brief on and $MOD is not installed; run majordomus capture install"
+  for f in $(cd "$SRC" && find . -type f ! -name '*.test.ts' | sed 's|^\./||' | sort); do
+    cmp -s "$SRC/$f" "$ROOT/$MOD/$f" \
+      || fail "$MOD/$f is not the distribution's $f; run majordomus capture install"
+  done
+  [ -z "$(git -C "$ROOT" ls-files --others --exclude-standard -- "$MOD")" ] \
+    || fail "$MOD is installed but not tracked"
+fi

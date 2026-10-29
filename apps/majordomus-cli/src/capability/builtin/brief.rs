@@ -76,10 +76,13 @@ use super::{get, mcp};
 pub(crate) const DEFAULT_INTERVAL_MINUTES: u64 = 20;
 /// How many peers the multi-line brief names before it says how many it left out.
 const PEERS_NAMED: usize = 8;
-/// How long the command line waits for the leaseholder's brief: its gather probes every
-/// checkout's server, measured at about 3 s over 118 checkouts, and its own sections are
-/// bounded by [`OVERALL_DEADLINE`].
-const FORWARD_TIMEOUT: Duration = Duration::from_secs(20);
+/// How long the command line waits for the leaseholder's brief. A leaseholder of this
+/// generation answers inside [`OVERALL_DEADLINE`] (its gather of every checkout's board,
+/// measured at about 3 s over 118 checkouts, is the peers section, inside its budget), so
+/// four seconds past the deadline is slack for a loaded server. Waiting longer waits only on
+/// a leaseholder older than the budgets: on 2026-10-29 one took the old 20 s to fail, and
+/// the composition that followed it brought the command to 24 s, past half the mod's 30 s.
+const FORWARD_TIMEOUT: Duration = Duration::from_secs(10);
 /// The longest a composition waits for any section: past the longest budget, under
 /// [`FORWARD_TIMEOUT`] and under the mod's own 30 s.
 pub(crate) const OVERALL_DEADLINE: Duration = Duration::from_secs(6);
@@ -1081,11 +1084,17 @@ fn brief(ctx: &Context, input: BriefInput) -> Result<SessionBrief, CapabilityErr
     // the leaseholder, which holds the board and the mesh. An MCP session of a superseded
     // server is that server's own, and is answered there.
     let mut note = None;
+    // the leaseholder that did not answer the brief: it still holds this checkout's board,
+    // which this process's own is not
+    let mut unanswered = None;
     if !own && !input.local && ctx.caller.is_none() {
         if let (true, Some(url)) = (answering, url.as_deref()) {
             match forward(ctx, url, &input) {
                 Ok(b) => return Ok(finish_forwarded(b, &input)),
-                Err(why) => note = Some(why),
+                Err(why) => {
+                    note = Some(why);
+                    unanswered = Some(url.to_string());
+                }
             }
         } else {
             note = Some(format!(
@@ -1130,6 +1139,7 @@ fn brief(ctx: &Context, input: BriefInput) -> Result<SessionBrief, CapabilityErr
         &input,
         own,
         superseded.then_some(url).flatten(),
+        unanswered,
     );
     let interval_minutes = interval_minutes(&root);
     // master's run is read with the CI pool, inside its budget, and said with integration
@@ -1414,7 +1424,9 @@ section_impl!(BriefDeriveSection, |observed, summary| BriefDeriveSection {
 /// One section running in its own thread, with the instant it was started at.
 struct Pending<T> {
     name: &'static str,
-    rx: mpsc::Receiver<T>,
+    /// The section and what composing it took, measured in its own thread: the sections are
+    /// collected one after another, so the time a section is collected at says nothing of it.
+    rx: mpsc::Receiver<(T, Duration)>,
     started: Instant,
 }
 
@@ -1426,7 +1438,8 @@ fn spawn<T: Send + 'static>(name: &'static str, work: impl FnOnce() -> T + Send 
     let spawned = std::thread::Builder::new()
         .name(format!("brief-{name}"))
         .spawn(move || {
-            let _ = tx.send(work());
+            let section = work();
+            let _ = tx.send((section, started.elapsed()));
         });
     if spawned.is_err() {
         // no thread to run it in: the receiver reads a closed channel, which is unread
@@ -1441,9 +1454,9 @@ impl<T: Section> Pending<T> {
         let deadline = self.started + budget.min(OVERALL_DEADLINE);
         let left = deadline.saturating_duration_since(Instant::now());
         match self.rx.recv_timeout(left) {
-            Ok(mut s) => {
+            Ok((mut s, took)) => {
                 let o = s.observed_mut();
-                o.elapsed_ms = self.started.elapsed().as_millis() as u64;
+                o.elapsed_ms = took.as_millis() as u64;
                 o.budget_ms = budget.as_millis() as u64;
                 s
             }
@@ -1459,6 +1472,7 @@ fn run_sections(
     input: &BriefInput,
     leaseholder: bool,
     superseded_by: Option<String>,
+    unanswered: Option<String>,
 ) -> Sections {
     // the caller's provider session: asked for, else the calling board peer's
     let caller_peer = ctx
@@ -1505,12 +1519,15 @@ fn run_sections(
         })
     };
     let peers = {
-        let (ctx, checkouts, psid) = (ctx.clone(), input.checkouts, psid.clone());
-        spawn("peers", move || peers_section(&ctx, checkouts, superseded_by, psid.as_deref()))
+        let (ctx, checkouts, psid, unanswered) =
+            (ctx.clone(), input.checkouts, psid.clone(), unanswered.clone());
+        spawn("peers", move || {
+            peers_section(&ctx, checkouts, superseded_by, unanswered, psid.as_deref())
+        })
     };
     let mesh = {
-        let ctx = ctx.clone();
-        spawn("mesh", move || mesh_section(&ctx))
+        let (ctx, unanswered) = (ctx.clone(), unanswered.clone());
+        spawn("mesh", move || mesh_section(&ctx, unanswered.as_deref()))
     };
     let integration = {
         let root = root.to_path_buf();
@@ -1542,8 +1559,8 @@ fn run_sections(
     let ci_budget = budget_of("ci");
     let ci_left = (ci_started + ci_budget).saturating_duration_since(Instant::now());
     let (ci, master_run) = match ci.rx.recv_timeout(ci_left) {
-        Ok((mut pool, master)) => {
-            pool.observed.elapsed_ms = ci_started.elapsed().as_millis() as u64;
+        Ok(((mut pool, master), took)) => {
+            pool.observed.elapsed_ms = took.as_millis() as u64;
             pool.observed.budget_ms = ci_budget.as_millis() as u64;
             (pool, master)
         }
@@ -1552,10 +1569,13 @@ fn run_sections(
             None,
         ),
     };
+    let mut session: BriefSessionSection = session.take();
+    let peers: BriefPeersSection = peers.take();
+    name_the_caller(&mut session, &peers, psid.as_deref());
     Sections {
-        session: session.take(),
+        session,
         work: work.take(),
-        peers: peers.take(),
+        peers,
         mesh: mesh.take(),
         integration: integration.take(),
         ci,
@@ -1651,12 +1671,7 @@ fn session_section(
     } else {
         BriefSectionState::Partial
     };
-    let mut s = match (&caller, provider_session) {
-        (Some(c), Some(p)) => format!("{c} = {} (provider session)", short_session(p)),
-        (Some(c), None) => format!("{c} (no provider session named)"),
-        (None, Some(p)) => format!("provider session {p} (not on this board)"),
-        (None, None) => "no provider session named and no board peer".into(),
-    };
+    let mut s = caller_words(caller.as_deref(), provider_session, true);
     match (&episode, resolved_by.as_deref()) {
         (Some(ep), Some("provider_session")) => s.push_str(&format!(
             "; episode {ep}{}",
@@ -1714,6 +1729,42 @@ fn session_section(
     }
 }
 
+/// How the session section names its caller: `p2 = 07a5ffde (provider session)`. A caller
+/// that is not on the board is said so only when the board was read (`board_read`).
+fn caller_words(caller: Option<&str>, provider_session: Option<&str>, board_read: bool) -> String {
+    match (caller, provider_session) {
+        (Some(c), Some(p)) => format!("{c} = {} (provider session)", short_session(p)),
+        (Some(c), None) => format!("{c} (no provider session named)"),
+        (None, Some(p)) if board_read => format!("provider session {p} (not on this board)"),
+        (None, Some(p)) => format!("provider session {p} (this checkout's board unread)"),
+        (None, None) => "no provider session named and no board peer".into(),
+    }
+}
+
+/// The caller, named from the peers section when the session section could not: a command
+/// line composes the brief with an empty board of its own, and this checkout's board is the
+/// leaseholder's, which the peers section asks for (I4390). Says when that board was unread.
+fn name_the_caller(session: &mut BriefSessionSection, peers: &BriefPeersSection, psid: Option<&str>) {
+    if session.caller.is_some() || psid.is_none() {
+        return;
+    }
+    let before = caller_words(None, psid, true);
+    let after = match peers.people.iter().find(|p| p.you) {
+        Some(you) => {
+            session.caller = Some(you.id.clone());
+            caller_words(Some(&you.id), psid, true)
+        }
+        None if peers.unread.iter().any(|u| u.starts_with(THIS_BOARD_UNREAD)) => {
+            caller_words(None, psid, false)
+        }
+        None => return,
+    };
+    session.summary = session.summary.replacen(&before, &after, 1);
+}
+
+/// How an unread board of this checkout is named among the peers section's unread boards.
+const THIS_BOARD_UNREAD: &str = "this checkout's board";
+
 /// The first eight characters of a provider session id.
 fn short_session(s: &str) -> String {
     s.chars().take(8).collect()
@@ -1745,8 +1796,20 @@ fn peers_section(
     ctx: &Context,
     checkouts: Checkouts,
     leaseholder: Option<String>,
+    unanswered: Option<String>,
     psid: Option<&str>,
 ) -> BriefPeersSection {
+    // A command line whose leaseholder did not answer the brief composes it here, and this
+    // process's own board is empty: this checkout's board is the leaseholder's. It is asked
+    // for that board alone, under the lease's probe timeout, beside the repository's gather
+    // rather than after it, so the section's budget pays for the slower of the two; when it
+    // fails too, the board is unread, never "nobody is here" (I4390).
+    let leaseholders_board = unanswered.map(|url| {
+        let ctx = ctx.clone();
+        std::thread::Builder::new()
+            .name("brief-board".into())
+            .spawn(move || super::peers::board_of(&ctx, &url))
+    });
     let list: PeerList = match ctx
         .execute(
             "peers.list",
@@ -1798,6 +1861,26 @@ fn peers_section(
                 }))
             }
             Err(e) => unread.push(format!("the leaseholder's board: {e}")),
+        }
+    }
+    if let Some(asked) = leaseholders_board {
+        let stamp = list
+            .boards
+            .iter()
+            .find(|b| b.checkout.this_checkout)
+            .map(|b| b.checkout.clone());
+        let answer = match asked {
+            Ok(reader) => reader
+                .join()
+                .unwrap_or_else(|_| Err("its reader stopped before it answered".into())),
+            Err(e) => Err(format!("no thread to ask it in ({e})")),
+        };
+        match answer {
+            Ok(theirs) => peers.extend(theirs.into_iter().map(|mut p| {
+                p.checkout = stamp.clone();
+                p
+            })),
+            Err(e) => unread.push(format!("{THIS_BOARD_UNREAD}, held by the leaseholder: {e}")),
         }
     }
     let attached: Vec<&Peer> = peers.iter().filter(|p| p.attached).collect();
@@ -1940,7 +2023,7 @@ fn task_is_running(outcome: &str) -> bool {
 
 // ---------------------------------------------------------------- mesh
 
-fn mesh_section(ctx: &Context) -> BriefMeshSection {
+fn mesh_section(ctx: &Context, unanswered: Option<&str>) -> BriefMeshSection {
     use crate::mesh::cooperation::LinkState;
     use crate::mesh::state::{ClaimState, ReviewState};
     let status = ctx.mesh.cooperation_status();
@@ -1964,13 +2047,22 @@ fn mesh_section(ctx: &Context) -> BriefMeshSection {
         summary: String::new(),
     };
     let Some(cooperation) = ctx.mesh.cooperation() else {
-        section.summary = format!(
-            "not active here: {}",
-            status
-                .reason
-                .as_deref()
-                .unwrap_or("cooperation is not running in this process")
-        );
+        // the mesh runs in the leaseholder: a command line whose leaseholder did not answer
+        // did not read it, which is not the same as a mesh that is off (I4390)
+        if let Some(url) = unanswered {
+            section.state = BriefSectionState::Unread;
+            section.observed = BriefObservation::read(
+                "the mesh journal (the leaseholder's memory)",
+                BriefSectionState::Unread,
+                "majordomus mesh state",
+            );
+            section.summary = format!("unread: the mesh runs in the leaseholder at {url}, which did not answer");
+            return section;
+        }
+        let reason = status.reason.as_deref().unwrap_or("cooperation is not running in this process");
+        // the cooperation status words its own reason "not active: ..."; said once
+        let reason = reason.strip_prefix("not active: ").unwrap_or(reason);
+        section.summary = format!("not active here: {reason}");
         return section;
     };
     section.state = BriefSectionState::Read;
@@ -2475,6 +2567,38 @@ fn wrapped(label: &str, text: &str) -> Vec<String> {
     out
 }
 
+/// A section's summary led by its status word, as every section's line is
+/// (`[owed] 2 landed commit(s) ...`): an owner whose own sentence carries no word (the release
+/// currency, the derive lock, the mesh) gets the section's. A summary that already leads with
+/// a bracketed word, or with `unread`, is left as it is.
+fn worded(word: &str, summary: &str) -> String {
+    if summary.starts_with('[') || summary.starts_with("unread") {
+        summary.to_string()
+    } else {
+        format!("[{word}] {summary}")
+    }
+}
+
+/// The release's status word: its stance (`current`, `owed`, `overdue`), `unread` otherwise.
+fn release_word(r: &BriefReleaseSection) -> &'static str {
+    use crate::release::currency::Stance;
+    match (r.state, r.stance) {
+        (BriefSectionState::Read, Some(Stance::Owed)) => "owed",
+        (BriefSectionState::Read, Some(Stance::Overdue)) => "overdue",
+        (BriefSectionState::Read, _) => "current",
+        _ => "unread",
+    }
+}
+
+/// The queue's status word: its observation's, except that a checkout that never observed
+/// the forge has the queue `unread` rather than undeclared, since `prs refresh` reads it.
+fn integration_word(i: &BriefIntegrationSection) -> &'static str {
+    match i.state {
+        BriefSectionState::Undeclared => "unread",
+        _ => i.observed.verdict.as_str(),
+    }
+}
+
 /// The multi-line brief: the attention block, then every section in the contract's order,
 /// wrapped and never clipped.
 fn brief_lines(s: &Sections, attention: &[BriefAttention], origin: &BriefOrigin) -> Vec<String> {
@@ -2490,8 +2614,8 @@ fn brief_lines(s: &Sections, attention: &[BriefAttention], origin: &BriefOrigin)
             lines.extend(wrapped(if i == 0 { "attention" } else { "" }, &text));
         }
     }
-    lines.extend(wrapped("session", &s.session.summary));
-    lines.extend(wrapped("work", &s.work.summary));
+    lines.extend(wrapped("session", &worded(s.session.observed.verdict.as_str(), &s.session.summary)));
+    lines.extend(wrapped("work", &worded(s.work.observed.verdict.as_str(), &s.work.summary)));
     for item in &s.work.items {
         lines.extend(wrapped("", &work_item_words(item)));
     }
@@ -2530,22 +2654,22 @@ fn brief_lines(s: &Sections, attention: &[BriefAttention], origin: &BriefOrigin)
             ),
         ));
     }
-    lines.extend(wrapped("peers", &s.peers.summary));
+    lines.extend(wrapped("peers", &worded(s.peers.observed.verdict.as_str(), &s.peers.summary)));
     for n in &s.peers.named {
         lines.extend(wrapped("", n));
     }
-    lines.extend(wrapped("mesh", &s.mesh.summary));
-    lines.extend(wrapped("integration", &s.integration.summary));
+    lines.extend(wrapped("mesh", &worded(s.mesh.observed.verdict.as_str(), &s.mesh.summary)));
+    lines.extend(wrapped("integration", &worded(integration_word(&s.integration), &s.integration.summary)));
     for t in &s.work.trains {
         lines.extend(wrapped(
             "",
             &format!("train {} carries #{} (from {})", t.branch, t.pr, t.source),
         ));
     }
-    lines.extend(wrapped("ci", &s.ci.summary));
-    lines.extend(wrapped("machine", &s.machine.summary));
-    lines.extend(wrapped("release", &s.release.summary));
-    lines.extend(wrapped("derive", &s.derive.summary));
+    lines.extend(wrapped("ci", &worded(s.ci.observed.verdict.as_str(), &s.ci.summary)));
+    lines.extend(wrapped("machine", &worded(s.machine.observed.verdict.as_str(), &s.machine.summary)));
+    lines.extend(wrapped("release", &worded(release_word(&s.release), &s.release.summary)));
+    lines.extend(wrapped("derive", &worded(s.derive.observed.verdict.as_str(), &s.derive.summary)));
     let mut answered = format!("{} ", origin.process);
     if let Some(u) = &origin.url {
         answered.push_str(&format!("{u} "));
@@ -2641,8 +2765,16 @@ fn one_line(s: &Sections, attention: &[BriefAttention]) -> String {
         )
     };
     let mut tokens = vec![first];
+    // the worst entry names its section, as `release owed 1 landed commit(s) past ...`: the
+    // section's own token keeps its place further right, and is the first a full line drops,
+    // so the lead must say on its own what it is about
     if let Some(worst) = attention.iter().find(|a| a.id != "session.no_task") {
-        tokens.push(format!("{} {}", worst.word, clip(&worst.fact, 48)));
+        // a fact that already starts with its section ("peers took > 4000 ms") says it once
+        let fact = worst
+            .fact
+            .strip_prefix(&format!("{} ", worst.section))
+            .unwrap_or(&worst.fact);
+        tokens.push(format!("{} {} {}", worst.section, worst.word, clip(fact, 48)));
     }
     // the work's facts are in the attention entries and the first token; the line says it
     // only when it could not be read
@@ -3221,7 +3353,8 @@ mod tests {
         // the worst entry that is not the absent task follows the caller
         let worst = b.attention.iter().find(|a| a.id != "session.no_task").unwrap();
         let second = b.line.split(" | ").nth(1).unwrap_or_default();
-        assert!(second.starts_with(&worst.word), "{} / {}", b.line, worst.word);
+        let lead = format!("{} {} ", worst.section, worst.word);
+        assert!(second.starts_with(&lead), "{} / {lead}", b.line);
         let tokens: Vec<String> = (0..30).map(|i| format!("token-{i:02}-xxxxxxxx")).collect();
         let fitted = fit(tokens, LINE_WIDTH);
         assert!(fitted.chars().count() <= LINE_WIDTH, "{fitted}");
@@ -3348,6 +3481,11 @@ mod tests {
         assert!(late_one.observed.elapsed_ms > late_one.observed.budget_ms);
         let read: BriefMachineSection = fast.take();
         assert_eq!(read.state, BriefSectionState::Read, "the other sections are read");
+        assert!(
+            read.observed.elapsed_ms < budget_of("machine").as_millis() as u64,
+            "a section collected after a slow one says what it took itself: {} ms",
+            read.observed.elapsed_ms
+        );
         let mut s = calm();
         s.derive = late_one;
         let b = brief_of(s);
@@ -3356,6 +3494,9 @@ mod tests {
             "{:?}",
             b.attention
         );
+        // the line leads with it, naming its section once
+        assert!(b.line.contains(" | derive unread took > 100 ms"), "{}", b.line);
+        assert!(!b.line.contains("derive unread derive"), "{}", b.line);
     }
 
     #[test]
@@ -3794,7 +3935,7 @@ mod tests {
         let repo = SyntheticRepository::small().expect("a repository");
         let ctx = canned_context(&repo);
         can("peers.list", list);
-        let s = peers_section(&ctx, Checkouts::Repository, None, None);
+        let s = peers_section(&ctx, Checkouts::Repository, None, None, None);
         assert_eq!(s.state, BriefSectionState::Partial);
         assert_eq!((s.attached, s.boards, s.overlaps), (9, 2, 1));
         assert_eq!(
@@ -3814,11 +3955,90 @@ mod tests {
     fn a_board_nobody_answers_for_is_unread() {
         let repo = SyntheticRepository::small().expect("a repository");
         let bare = bare_context(&repo);
-        let s = peers_section(&bare, Checkouts::This, None, None);
+        let s = peers_section(&bare, Checkouts::This, None, None, None);
         assert_eq!(s.state, BriefSectionState::Unread);
         assert_eq!(s.observed.verdict, BriefVerdict::Unread);
         assert_eq!(s.observed.remedy.as_deref(), Some("majordomus peers"));
         assert!(s.summary.starts_with("unread: peers.list did not answer ("));
+    }
+
+    // ------------------------------------------------ a leaseholder that did not answer
+
+    #[test]
+    fn a_command_line_whose_leaseholder_did_not_answer_reads_its_board_or_says_it_is_unread() {
+        // measured 2026-10-29: the primary's leaseholder did not answer the brief, and the
+        // command line said "0 attached on 649 board(s)" while five workers were on its board
+        let leaseholder = {
+            let repo = SyntheticRepository::small().expect("a repository");
+            let ctx = repo.context().expect("a context");
+            let p = ctx.peers.attach(Transport::Http);
+            ctx.peers.announce(&p, "the leaseholder's worker", vec!["lib".into()]);
+            serde_json::to_value(ctx.peers.list()).expect("its board")
+        };
+        let board = json!({ "peers": leaseholder }).to_string();
+        let url = serve(move |path| {
+            if path.starts_with("/api/v1/peers") {
+                (200, board.clone())
+            } else {
+                (404, "{}".into())
+            }
+        });
+        let repo = SyntheticRepository::small().expect("a repository");
+        let ctx = canned_context(&repo);
+        let mut own = nine_on_a_board();
+        own["peers"] = json!([]);
+        own["overlaps"] = json!([]);
+        can("peers.list", own);
+
+        let s = peers_section(&ctx, Checkouts::This, None, Some(url), None);
+        assert_eq!(s.state, BriefSectionState::Read, "{}", s.summary);
+        assert_eq!(s.attached, 1, "the leaseholder's worker is on this checkout's board");
+        assert!(s.named.iter().any(|n| n.contains("the leaseholder's worker")), "{:?}", s.named);
+
+        let s = peers_section(&ctx, Checkouts::This, None, Some(dead_url()), None);
+        assert_eq!(s.state, BriefSectionState::Partial, "{}", s.summary);
+        assert_eq!(s.unread.len(), 1, "{:?}", s.unread);
+        assert!(s.unread[0].starts_with("this checkout's board, held by the leaseholder: "));
+        assert!(s.summary.starts_with("[partial] 0 attached"), "{}", s.summary);
+    }
+
+    #[test]
+    fn the_caller_is_named_from_the_board_the_peers_section_read() {
+        let psid = "07a5ffde-74b3-4ca6-ab0d-1ad2c9e56d9e";
+        let unnamed = || {
+            let mut s = BriefSessionSection::over_budget("session", Duration::ZERO, Duration::ZERO);
+            s.summary = format!("[current] provider session {psid} (not on this board); episode e1");
+            s
+        };
+        let none = || BriefPeersSection::over_budget("peers", Duration::ZERO, Duration::ZERO);
+        let mut found = none();
+        found.people.push(BriefPeer {
+            id: "p2".into(),
+            client: "claude-code".into(),
+            pid: None,
+            host: None,
+            socket: None,
+            branch: None,
+            worktree: None,
+            branch_source: "server".into(),
+            intent: None,
+            you: true,
+        });
+        let mut s = unnamed();
+        name_the_caller(&mut s, &found, Some(psid));
+        assert_eq!(s.caller.as_deref(), Some("p2"));
+        assert_eq!(s.summary, "[current] p2 = 07a5ffde (provider session); episode e1");
+
+        let mut unread = none();
+        unread.unread.push("this checkout's board, held by the leaseholder: x did not answer".into());
+        let mut s = unnamed();
+        name_the_caller(&mut s, &unread, Some(psid));
+        assert_eq!(s.caller, None);
+        assert!(s.summary.contains("(this checkout's board unread)"), "{}", s.summary);
+
+        let mut s = unnamed();
+        name_the_caller(&mut s, &none(), Some(psid));
+        assert!(s.summary.contains("(not on this board)"), "a board that was read and lacks it");
     }
 
     // ------------------------------------------------ a superseded server
@@ -3936,9 +4156,13 @@ mod tests {
         assert_eq!(release_token(&BriefReleaseSection::default()), "release unread");
         let current = brief_of(Sections { release: release(Stance::Current, 0), ..calm() }).line;
         assert!(current.contains("release current"), "{current}");
-        // a release that needs attention leads the line as its worst entry
+        // a release that needs attention leads the line as its worst entry, named by its
+        // section, so the line says it even when the release token is dropped at the right
         let overdue = brief_of(Sections { release: release(Stance::Overdue, 4), ..calm() }).line;
-        assert!(overdue.split(" | ").nth(1).is_some_and(|t| t.starts_with("overdue 4 landed")), "{overdue}");
+        assert!(
+            overdue.split(" | ").nth(1).is_some_and(|t| t.starts_with("release overdue 4 landed")),
+            "{overdue}"
+        );
     }
 
     // ------------------------------------------------ asking the leaseholder
@@ -4051,7 +4275,7 @@ mod tests {
         let repo = SyntheticRepository::small().expect("a repository");
         let ctx = repo.context().expect("a context");
         ctx.mesh.attach_cooperation(std::sync::Arc::clone(&a));
-        let fresh = mesh_section(&ctx);
+        let fresh = mesh_section(&ctx, None);
         assert_eq!(fresh.state, BriefSectionState::Read);
         assert_eq!((fresh.links, fresh.connected, fresh.failing), (1, 1, 0));
         assert_eq!((fresh.claims_held, fresh.own_claims), (2, 2));
@@ -4065,7 +4289,7 @@ mod tests {
              for this runtime: 1 review(s), 0 handover(s) waiting, 0 overlap(s)"
         );
         std::thread::sleep(Duration::from_millis(3500));
-        let stale = mesh_section(&ctx);
+        let stale = mesh_section(&ctx, None);
         assert_eq!((stale.connected, stale.failing), (0, 1));
         for r in [a, b] {
             r.stop();
@@ -4096,11 +4320,11 @@ mod tests {
         let repo = SyntheticRepository::small().expect("a repository");
         let ctx = repo.context().expect("a context");
         ctx.mesh.attach_cooperation(std::sync::Arc::clone(&a));
-        let own = mesh_section(&ctx);
+        let own = mesh_section(&ctx, None);
         assert_eq!(own.overlaps_for_you, 0, "{}", own.summary);
         claim(&b, "s9", "apps/majordomus-cli/src");
         sync();
-        assert_eq!(mesh_section(&ctx).overlaps_for_you, 2);
+        assert_eq!(mesh_section(&ctx, None).overlaps_for_you, 2);
         for r in [a, b] {
             r.stop();
         }
@@ -4111,9 +4335,51 @@ mod tests {
         let repo = SyntheticRepository::small().expect("a repository");
         let ctx = repo.context().expect("a context");
         ctx.mesh.decline_cooperation("no endpoint to be dialed at");
-        let off = mesh_section(&ctx);
+        let off = mesh_section(&ctx, None);
         assert_eq!(off.state, BriefSectionState::Undeclared);
         assert_eq!(off.summary, "not active here: no endpoint to be dialed at");
+        // the cooperation status words its reason "not active: ..."; the section says it once
+        let repo = SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        ctx.mesh.decline_cooperation("not active: no shared server activated the mesh in this process");
+        let once = mesh_section(&ctx, None);
+        assert_eq!(once.summary, "not active here: no shared server activated the mesh in this process");
+        // a command line whose leaseholder did not answer did not read the mesh: unread, not off
+        let unread = mesh_section(&ctx, Some("http://0.0.0.0:62328"));
+        assert_eq!(unread.state, BriefSectionState::Unread);
+        assert_eq!(unread.observed.verdict, BriefVerdict::Unread);
+        assert!(unread.summary.starts_with("unread: the mesh runs in the leaseholder at http://0.0.0.0:62328"));
+        let line = brief_of(Sections { mesh: unread, ..calm() }).line;
+        assert!(line.contains("mesh unread"), "{line}");
+    }
+
+    #[test]
+    fn every_section_line_leads_with_its_status_word() {
+        assert_eq!(worded("current", "lock free"), "[current] lock free");
+        assert_eq!(worded("current", "[stale] queue observed 2 h ago"), "[stale] queue observed 2 h ago");
+        assert_eq!(worded("unread", "unread: not the leaseholder"), "unread: not the leaseholder");
+        assert_eq!(release_word(&release(Stance::Owed, 2)), "owed");
+        assert_eq!(release_word(&release(Stance::Overdue, 2)), "overdue");
+        assert_eq!(release_word(&BriefReleaseSection::default()), "unread");
+        let b = brief_of(Sections { release: release(Stance::Owed, 2), ..calm() });
+        let release_line = b.lines.iter().find(|l| l.starts_with("release ")).expect("a release line");
+        assert!(release_line.starts_with("release      [owed] "), "{release_line}");
+        let derive_line = b.lines.iter().find(|l| l.starts_with("derive ")).expect("a derive line");
+        assert!(derive_line.contains("] "), "{derive_line}");
+        // every section's first line leads with a status word, bracketed or `unread`
+        for name in ["session", "work", "peers", "mesh", "integration", "ci", "machine", "release", "derive"] {
+            let line = b.lines.iter().find(|l| l.starts_with(&format!("{name} "))).expect("a section line");
+            let text = line[LABEL_WIDTH..].trim_start();
+            assert!(text.starts_with('[') || text.starts_with("unread"), "{line}");
+        }
+        // a checkout that never observed the forge has its queue unread, not undeclared
+        let repo = SyntheticRepository::small().expect("a repository");
+        let root = PathBuf::from(&repo.context().expect("a context").index.repository.root);
+        let never = integration_section(&root);
+        assert_eq!(never.state, BriefSectionState::Undeclared);
+        assert_eq!(integration_word(&never), "unread");
+        let line = worded(integration_word(&never), &never.summary);
+        assert_eq!(line, "[unread] this checkout never observed the forge: majordomus prs refresh");
     }
 
     // ------------------------------------------------ integration

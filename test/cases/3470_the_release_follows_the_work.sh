@@ -129,7 +129,7 @@ w="$(field "$c" .waited_seconds)"
 [ "$w" -ge 3500 ] && [ "$w" -lt 4000 ] || { echo "    the wait is not an hour: $c"; exit 1; }
 b="$("$RB" brief --format json 2>/dev/null)"
 [ "$(field "$b" .release.stance)" = owed ] || { echo "    the brief's release section is not owed: $(field "$b" .release)"; exit 1; }
-field "$b" '.lines[]' | grep -q '^release      1 landed commit(s) in 1 landing(s) wait past v0.1.0 on origin/master' \
+field "$b" '.lines[]' | grep -q '^release      \[owed\] 1 landed commit(s) in 1 landing(s) wait past v0.1.0 on origin/master' \
   || { echo "    the brief has no release line:"; field "$b" '.lines[]' | sed 's/^/    | /'; exit 1; }
 field "$b" .line | grep -qF 'release owed 1' || { echo "    the brief's one line does not name it: $(field "$b" .line)"; exit 1; }
 echo "    a fix landed an hour ago is owed, with its count and its wait, in the brief too"

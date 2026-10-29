@@ -597,9 +597,17 @@ pub fn derive_attention(m: &Measured<'_>) -> Vec<BriefAttention> {
         );
     }
 
-    let person = |a: &BriefAttention| u8::from(a.actor != "person");
-    out.sort_by_key(|a| (person(a), severity(&a.word)));
+    crate::order::canonical(&mut out);
     out
+}
+
+/// The canonical order of attention entries: those a person must act on first, then worst
+/// first, then by id.
+impl crate::order::Ordered for BriefAttention {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        let rank = i64::from(u8::from(self.actor != "person")) * 10 + i64::from(severity(&self.word));
+        crate::order::OrderKey::plain(&self.id, &self.id).ranked(rank)
+    }
 }
 
 /// The attention ids by section, for the mod's per-section fingerprint and the Cockpit.

@@ -71,6 +71,11 @@ pub(crate) fn section(i: &Inputs<'_>) -> BriefWorkSection {
 
     // --- (a) claims and (g) the client process, from the mesh's memory
     let (claims, client_pid, session_branches) = own_claims(i);
+    // a process the mesh is not active in holds no journal: its zero claims were not counted
+    let claims_read = i.ctx.mesh.cooperation().is_some();
+    if !claims_read {
+        partial.push("claims unread: the mesh is not active in this process".into());
+    }
     let mut branches: BTreeSet<String> = BTreeSet::new();
     for c in &claims {
         for s in &c.scope {
@@ -150,18 +155,21 @@ pub(crate) fn section(i: &Inputs<'_>) -> BriefWorkSection {
             item.train = item.pr.and_then(|n| trains.get(&n).cloned());
         }
         // the latest run of each own branch and of each train carrying an own PR, in parallel
-        let mut asked: Vec<String> = items.iter().map(|it| it.branch.clone()).collect();
-        asked.extend(trains.values().cloned());
-        asked.sort();
-        asked.dedup();
+        let asked: Vec<String> = items
+            .iter()
+            .map(|it| it.branch.clone())
+            .chain(trains.values().cloned())
+            .collect::<BTreeSet<String>>()
+            .into_iter()
+            .collect();
         let runs = latest_runs(i.root, &asked);
-        let mut wanted_jobs: Vec<u64> = Vec::new();
+        let mut wanted_jobs: BTreeSet<u64> = BTreeSet::new();
         for item in items.iter_mut() {
             let on = item.train.clone().unwrap_or_else(|| item.branch.clone());
             match runs.get(&on) {
                 Some(Ok(Some(r))) => {
                     if r.wants_jobs() {
-                        wanted_jobs.push(r.id);
+                        wanted_jobs.insert(r.id);
                     }
                     item.run = Some(r.clone());
                 }
@@ -170,9 +178,7 @@ pub(crate) fn section(i: &Inputs<'_>) -> BriefWorkSection {
                 None => {}
             }
         }
-        wanted_jobs.sort_unstable();
-        wanted_jobs.dedup();
-        wanted_jobs.truncate(JOB_READS);
+        let wanted_jobs: Vec<u64> = wanted_jobs.into_iter().take(JOB_READS).collect();
         let jobs = jobs_of(i.root, &wanted_jobs);
         for item in items.iter_mut() {
             if let Some(r) = item.run.as_mut() {
@@ -230,8 +236,14 @@ pub(crate) fn section(i: &Inputs<'_>) -> BriefWorkSection {
         BriefSectionState::Partial => BriefVerdict::Partial,
         _ => BriefVerdict::Unread,
     };
+    // unread claims are not counted: the partial note below says why, once
+    let claims_words = if claims_read {
+        format!("{held} claim(s) held, {conflicted} conflicted, {suspended} suspended; ")
+    } else {
+        String::new()
+    };
     let mut summary = format!(
-        "[{}] {held} claim(s) held, {conflicted} conflicted, {suspended} suspended; {} branch(es), {prs} PR(s)",
+        "[{}] {claims_words}{} branch(es), {prs} PR(s)",
         verdict.as_str(),
         items.len()
     );
@@ -646,6 +658,31 @@ mod tests {
             .collect();
         assert_eq!(under.len(), 2, "cargo and its rustc, not another session's cargo");
         assert!(under.contains(&12) && under.contains(&13));
+    }
+
+    #[test]
+    fn claims_a_process_without_the_mesh_cannot_count_are_unread_not_zero() {
+        // measured 2026-10-29: a command line composing the brief said "0 claim(s) held" for a
+        // session holding nine, because the journal it would count lives in the leaseholder
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        assert!(ctx.mesh.cooperation().is_none(), "the fixture runs no mesh");
+        let root = PathBuf::from(&ctx.index.repository.root);
+        let procs: Result<Vec<Proc>, String> = Ok(Vec::new());
+        let s = section(&Inputs {
+            ctx: &ctx,
+            root: &root,
+            psid: Some("07a5ffde-74b3-4ca6-ab0d-1ad2c9e56d9e"),
+            board_ids: &[],
+            leaseholder: false,
+            since: None,
+            background: &[],
+            procs: &procs,
+        });
+        assert_eq!(s.state, BriefSectionState::Partial, "{}", s.summary);
+        assert!(!s.summary.contains("claim(s) held"), "{}", s.summary);
+        assert_eq!(s.summary.matches("claims unread").count(), 1, "{}", s.summary);
+        assert!(s.summary.contains("claims unread: the mesh is not active in this process"), "{}", s.summary);
     }
 
     #[test]

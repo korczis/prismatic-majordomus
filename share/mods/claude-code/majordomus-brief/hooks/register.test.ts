@@ -32,7 +32,7 @@ const make = (f: Facts = {}): Brief => {
   ];
   return {
     at,
-    line: f.line ?? 'p2 I4334 @main | stale queue observed 17 h ago | prs stale 17h',
+    line: f.line ?? 'p2 I4334 @main | integration stale queue observed 17 h ago | prs stale 17h',
     lines,
     interval_minutes: f.interval ?? 5,
     attention: [
