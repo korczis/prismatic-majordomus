@@ -71,6 +71,7 @@ and the UI still read a plain `ok: true` with a `remediation`. Nobody else appli
 The owner runs it as root, from a checkout, with an executable that carries this change, after
 a dry run of the guard over the rendered homes:
 
+<!-- majordomus:unrun it plans and applies against the build host's own /etc and systemd as root; case 3956 runs the plan and the apply, twice, against a staging root -->
 ```sh
 majordomus mesh build-cache provision          # the plan: what the host still owes
 printf "HOMES=('/home/korczis')\nRUNNER_HOMES=('/home/ghrunner' '/home/gitlab-runner')\n" \
