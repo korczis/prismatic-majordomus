@@ -1967,6 +1967,57 @@
       "tool": "majordomus_lifecycle_runtime"
     },
     {
+      "api_anchor": "/docs/api/machine/#op-machine-slot-acquire",
+      "claims": [],
+      "cli": "majordomus machine slot acquire",
+      "id": "machine.slot.acquire",
+      "kind": "command",
+      "module": "machine",
+      "module_route": "/registry/modules/machine/",
+      "resource": null,
+      "route": "/registry/capabilities/machine-slot-acquire/",
+      "slug": "machine-slot-acquire",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/machine_slot.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/machine_slot.rs",
+      "tests": [],
+      "title": "Take a machine slot for heavy work",
+      "tool": "majordomus_machine_slot_acquire"
+    },
+    {
+      "api_anchor": "/docs/api/machine/#op-machine-slot-release",
+      "claims": [],
+      "cli": "majordomus machine slot release",
+      "id": "machine.slot.release",
+      "kind": "command",
+      "module": "machine",
+      "module_route": "/registry/modules/machine/",
+      "resource": null,
+      "route": "/registry/capabilities/machine-slot-release/",
+      "slug": "machine-slot-release",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/machine_slot.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/machine_slot.rs",
+      "tests": [],
+      "title": "Give a machine slot back",
+      "tool": "majordomus_machine_slot_release"
+    },
+    {
+      "api_anchor": "/docs/api/machine/#op-machine-slot-status",
+      "claims": [],
+      "cli": "majordomus machine slot status",
+      "id": "machine.slot.status",
+      "kind": "query",
+      "module": "machine",
+      "module_route": "/registry/modules/machine/",
+      "resource": null,
+      "route": "/registry/capabilities/machine-slot-status/",
+      "slug": "machine-slot-status",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/machine_slot.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/machine_slot.rs",
+      "tests": [],
+      "title": "Who holds the machine's slots, and who waits",
+      "tool": "majordomus_machine_slot_status"
+    },
+    {
       "api_anchor": "/docs/api/mcp/#op-mcp-projection",
       "claims": [],
       "cli": null,
@@ -4547,9 +4598,9 @@
     ]
   },
   "counts": {
-    "capabilities": 220,
+    "capabilities": 223,
     "claims": 93,
-    "modules": 60
+    "modules": 61
   },
   "generator": "majordomus-cli 1.0.0-alpha.9",
   "modules": [
@@ -5479,6 +5530,32 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
       "title": "Session lifecycle"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "machine.slot.acquire",
+          "route": "/registry/capabilities/machine-slot-acquire/",
+          "slug": "machine-slot-acquire"
+        },
+        {
+          "id": "machine.slot.release",
+          "route": "/registry/capabilities/machine-slot-release/",
+          "slug": "machine-slot-release"
+        },
+        {
+          "id": "machine.slot.status",
+          "route": "/registry/capabilities/machine-slot-status/",
+          "slug": "machine-slot-status"
+        }
+      ],
+      "claims": [],
+      "id": "machine",
+      "route": "/registry/modules/machine/",
+      "slug": "machine",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/machine_slot.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/machine_slot.rs",
+      "title": "Machine"
     },
     {
       "capabilities": [
