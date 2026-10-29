@@ -31,4 +31,22 @@ evidence_required:
 depends_on: []
 serves: []
 created_at: 2026-10-24
-updated_at: 2026-10-24
+updated_at: 2026-10-25T18:47:57Z
+started_at: 2026-10-25T18:47:20Z
+started_event: sha256:dd8db5979724b7a2f7ca98f6f6ae0f93bdeb6415306b8182dbf4203e32b828ad
+completed_at: 2026-10-25T18:47:57Z
+completed_event: sha256:80bab1d2e8a3a5ba6518a59efefc60be45fed8ed21a0df1281372637c53e9c1c
+evidence:
+  - covers: compiling_cases_run_alone_or_capped
+    type: test
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4199_a_case_that_compiles_never_starves_its_neighbours"
+    result: "ok locally at 2efeacea031 (1 passed); ok on master's validate https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175/job/121182964674"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-25T18:46:55Z
+  - covers: case_431_within_its_bound
+    type: ci
+    command: "bash test/run.sh 431_economics_claims_gated"
+    result: "ok in 233 s against its 600 s bound on master 2efeacea031, run alone as # majordomus-exclusive"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175/job/121182964713"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-25T18:47:07Z
