@@ -4,8 +4,10 @@
 //! store for compiler output: the protocol, the provider, how far its endpoint is meant to
 //! be reached, a non-secret endpoint, a bucket, a priority, the headroom it has and how its
 //! own probe judges it. Nothing here names a machine as special, and the type has no field
-//! a credential could live in: a client key is provisioned onto a node and read from a file
-//! outside the repository, never from an offer, the canonical state, an answer or a page.
+//! a credential could live in, nor an endpoint one could ride in: an endpoint is written and
+//! read only as an address alone, with no user information, path, query or fragment. A
+//! client key is provisioned onto a node and read from a file outside the repository, never
+//! from an offer, the canonical state, an answer or a page.
 //!
 //! **Selection is a pure function.** [`select`] ranks the offers a client may use and
 //! returns the choice *and why*, including every offer it passed over and the rule that
@@ -113,6 +115,9 @@ impl Health {
 /// };
 /// assert_eq!(offer.node, "n1");
 /// assert!(!serde_json::to_string(&offer).unwrap().contains("secret"));
+/// // an endpoint with a place for a credential is neither written nor read
+/// let keyed = Offer { endpoint: "http://k:s3cr3t@192.168.100.30:9000".into(), ..offer };
+/// assert!(!serde_json::to_string(&keyed).unwrap_err().to_string().contains("s3cr3t"));
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "BuildCacheNodeOffer")]
@@ -126,6 +131,9 @@ pub struct Offer {
     /// How far the endpoint is meant to be reached.
     pub scope: Scope,
     /// The non-secret address a client connects to.
+    // an address alone, written and read only as one: see `is_an_address_alone`
+    #[serde(serialize_with = "address_out", deserialize_with = "address_in")]
+    #[schemars(length(max = ENDPOINT_MAX), regex(pattern = ADDRESS_PATTERN))]
     pub endpoint: String,
     /// The bucket the cache lives in.
     pub bucket: String,
@@ -141,6 +149,90 @@ pub struct Offer {
     /// A measured round trip from the asking node, in milliseconds, when one was.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub rtt_ms: Option<u32>,
+}
+
+/// The longest endpoint an offer or a node file names, its scheme included.
+const ENDPOINT_MAX: usize = 256;
+
+/// What [`is_an_address_alone`] accepts without a scheme required, as the JSON Schema of an
+/// endpoint states it.
+const ADDRESS_PATTERN: &str = r"^(https?://)?[A-Za-z0-9.:\[\]-]+$";
+
+/// Why an endpoint is refused. It names the rule and never the value, which may be the secret.
+const NOT_AN_ADDRESS: &str = "its endpoint is not an address alone: http:// or https:// and a \
+     host and port, with no user information, path, query or fragment, where a credential \
+     would ride";
+
+/// Whether `endpoint` is an address alone: `http://` or `https://`, then a host and a port of
+/// `[A-Za-z0-9.-:[]]` and nothing more, at most [`ENDPOINT_MAX`] bytes. User information, a
+/// path, a query and a fragment each need a byte outside that set, so none of the places a
+/// credential rides in a URL is left, whatever a parser makes of the rest. `schemed` asks for
+/// the scheme, which a signed record carries and a node file may leave off. It is the one
+/// definition of an endpoint without a credential: the signed record
+/// ([`BuildCacheOffer::validate`](super::journal::BuildCacheOffer::validate)) asks it too.
+pub(crate) fn is_an_address_alone(endpoint: &str, schemed: bool) -> bool {
+    let address = match endpoint
+        .strip_prefix("http://")
+        .or_else(|| endpoint.strip_prefix("https://"))
+    {
+        Some(address) => address,
+        None if schemed => return false,
+        None => endpoint,
+    };
+    endpoint.len() <= ENDPOINT_MAX
+        && !address.is_empty()
+        && address
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b".-:[]".contains(&b))
+}
+
+/// Write an endpoint only when it is an address alone.
+fn address_out<S: serde::Serializer>(endpoint: &str, serializer: S) -> Result<S::Ok, S::Error> {
+    if !is_an_address_alone(endpoint, false) {
+        return Err(serde::ser::Error::custom(NOT_AN_ADDRESS));
+    }
+    serializer.serialize_str(endpoint)
+}
+
+/// Read an endpoint only when it is an address alone.
+fn address_in<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<String, D::Error> {
+    let endpoint = String::deserialize(deserializer)?;
+    if !is_an_address_alone(&endpoint, false) {
+        return Err(serde::de::Error::custom(NOT_AN_ADDRESS));
+    }
+    Ok(endpoint)
+}
+
+impl Offer {
+    /// Check that the offer's endpoint is an address alone, the one form it is written and
+    /// read in. A refusal names the offer's node and the rule, never the endpoint: the value
+    /// refused may be a secret.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::build_cache::{Health, Offer, Scope};
+    /// let offer = Offer {
+    ///     node: "n1".into(), protocol: "s3".into(), provider: "minio".into(),
+    ///     scope: Scope::Lan, endpoint: "http://192.168.100.30:9000".into(),
+    ///     bucket: "b".into(), priority: 0, headroom_gib: None,
+    ///     health: Health::Healthy, age_seconds: 3, rtt_ms: None,
+    /// };
+    /// assert!(offer.validate().is_ok());
+    /// let keyed = Offer { endpoint: "http://k:s3cr3t@192.168.100.30:9000".into(), ..offer };
+    /// let why = keyed.validate().unwrap_err();
+    /// assert!(why.contains("n1") && why.contains("user information") && !why.contains("s3cr3t"));
+    /// ```
+    pub fn validate(&self) -> Result<(), String> {
+        if is_an_address_alone(&self.endpoint, false) {
+            Ok(())
+        } else {
+            Err(format!(
+                "the offer of node {} is refused: {NOT_AN_ADDRESS}",
+                self.node
+            ))
+        }
+    }
 }
 
 /// What a client accepts. Read from policy, never hard-coded at a call site.
@@ -393,6 +485,9 @@ pub struct LocalProvider {
     pub scope: Scope,
     /// The address clients connect to: an IP literal and a port, so that no probe can
     /// reach DNS.
+    // an address alone, written and read only as one: see `is_an_address_alone`
+    #[serde(serialize_with = "address_out", deserialize_with = "address_in")]
+    #[schemars(length(max = ENDPOINT_MAX), regex(pattern = ADDRESS_PATTERN))]
     pub endpoint: String,
     /// The bucket.
     pub bucket: String,
@@ -589,7 +684,9 @@ pub enum FileError {
 }
 
 /// Read the node file at `path`. An absent file is [`FileError::Absent`], and the caller
-/// treats it as an empty [`NodeFile`].
+/// treats it as an empty [`NodeFile`]. A file that declares an endpoint other than an address
+/// alone is [`FileError::Invalid`], as a file with a key it does not know is: the refusal
+/// says where in the file, never the endpoint.
 ///
 /// # Example
 ///
@@ -1187,5 +1284,175 @@ mod tests {
             .find(|p| p.node == "a")
             .expect("a is listed");
         assert!(a.why.contains("garage"), "{}", a.why);
+    }
+
+    /// An offer of node `n1` at `endpoint`, as JSON.
+    fn offer_json(endpoint: &str) -> String {
+        format!(
+            r#"{{"node":"n1","protocol":"s3","provider":"minio","scope":"lan",
+            "endpoint":"{endpoint}","bucket":"b","priority":0,"health":"healthy",
+            "age_seconds":1}}"#
+        )
+    }
+
+    /// Endpoints with a place a credential rides in, each carrying `hunter2` there. The ones
+    /// without `://` are the edges of a parser: WHATWG reads `http:/u:p@h` as
+    /// `http://u:p@h/`, and `//u:p@h` is a scheme-relative URL.
+    const KEYED: [&str; 10] = [
+        "https://akia:hunter2@192.0.2.1:9000",
+        "http://hunter2@192.0.2.1:9000",
+        "akia:hunter2@192.0.2.1:9000",
+        "//akia:hunter2@192.0.2.1:9000",
+        "http:/akia:hunter2@192.0.2.1:9000",
+        "http://192.0.2.1:9000/?token=hunter2",
+        "http://192.0.2.1:9000?X-Amz-Credential=hunter2",
+        "https://192.0.2.1:9000/#hunter2",
+        "http://192.0.2.1:9000/AKIA/hunter2",
+        "http://192.0.2.1:9000/;token=hunter2",
+    ];
+
+    /// Endpoints that are an address alone: a scheme and a host and port, an IPv6 literal, a
+    /// name, and the scheme-less form a node file may write.
+    const PLAIN: [&str; 4] = [
+        "http://192.0.2.1:9000",
+        "https://[2001:db8::1]:9000",
+        "http://n1:9000",
+        "127.0.0.1:9000",
+    ];
+
+    fn keeps_the_secret(told: &str) {
+        for secret in ["hunter2", "akia", "AKIA", "token=", "Credential="] {
+            assert!(
+                !told.contains(secret),
+                "the refusal repeats the value: {told}"
+            );
+        }
+    }
+
+    #[test]
+    fn an_endpoint_with_a_place_for_a_credential_is_neither_written_nor_read() {
+        for endpoint in KEYED {
+            let built = Offer {
+                endpoint: endpoint.into(),
+                ..offer("n1")
+            };
+            let why = built.validate().expect_err(endpoint);
+            assert!(
+                why.contains("n1") && why.contains("not an address alone"),
+                "{why}"
+            );
+            // the serialized form is refused at the writer, not only at the reader
+            let written = serde_json::to_string(&built)
+                .expect_err(endpoint)
+                .to_string();
+            assert!(written.contains("not an address alone"), "{written}");
+            let read = serde_json::from_str::<Offer>(&offer_json(endpoint))
+                .expect_err(endpoint)
+                .to_string();
+            assert!(read.contains("not an address alone"), "{read}");
+            for told in [why, written, read] {
+                keeps_the_secret(&told);
+            }
+        }
+        // a path, even an empty one, is not an address alone, nor is a bare scheme
+        for endpoint in ["http://192.0.2.1:9000/", "http://", "ftp://192.0.2.1:21"] {
+            assert!(!is_an_address_alone(endpoint, false), "{endpoint}");
+        }
+    }
+
+    #[test]
+    fn an_address_alone_is_written_and_read_back_unchanged() {
+        for endpoint in PLAIN {
+            let built = Offer {
+                endpoint: endpoint.into(),
+                ..offer("n1")
+            };
+            assert_eq!(built.validate(), Ok(()), "{endpoint}");
+            let read: Offer = serde_json::from_str(&offer_json(endpoint)).expect(endpoint);
+            assert_eq!(read.endpoint, endpoint);
+            let again: Offer =
+                serde_json::from_str(&serde_json::to_string(&built).expect("serialises"))
+                    .expect("reads back");
+            assert_eq!(again, built);
+        }
+    }
+
+    #[test]
+    fn an_offer_and_its_signed_record_judge_an_endpoint_by_one_rule() {
+        // publication signs what a node file declares, given `http://` when it has no
+        // scheme (`offer::current`): an endpoint read here is one the signed record accepts,
+        // and one refused here is refused there, so the two never disagree about a file
+        for endpoint in KEYED.iter().chain(PLAIN.iter()) {
+            let published = if endpoint.contains("://") {
+                endpoint.to_string()
+            } else {
+                format!("http://{endpoint}")
+            };
+            let record = crate::mesh::journal::BuildCacheOffer {
+                protocol: "s3".into(),
+                provider: "minio".into(),
+                scope: Scope::Lan,
+                endpoint: published,
+                bucket: "build-cache".into(),
+                priority: 0,
+                headroom_gib: None,
+                lifetime_seconds: 1,
+            };
+            assert_eq!(
+                record.validate().is_ok(),
+                is_an_address_alone(endpoint, false),
+                "{endpoint}"
+            );
+        }
+    }
+
+    #[test]
+    fn the_published_schema_of_an_endpoint_admits_only_an_address_alone() {
+        let schema = serde_json::to_value(schemars::schema_for!(Offer)).expect("schema");
+        let endpoint = &schema["properties"]["endpoint"];
+        assert_eq!(endpoint["maxLength"], ENDPOINT_MAX);
+        let pattern = endpoint["pattern"].as_str().expect("a pattern");
+        let re = regex::Regex::new(pattern).expect("the pattern compiles");
+        for e in KEYED {
+            assert!(!re.is_match(e), "the schema admits {e}");
+        }
+        for e in PLAIN {
+            assert!(re.is_match(e), "the schema refuses {e}");
+        }
+    }
+
+    #[test]
+    fn a_node_file_whose_endpoint_carries_a_credential_is_refused_without_it() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("build-cache.json");
+        let provider = |e: &str| {
+            format!(
+                r#"{{"provider":{{"provider":"minio","scope":"lan","endpoint":"{e}","bucket":"b"}}}}"#
+            )
+        };
+        let known = |e: &str| {
+            format!(
+                r#"{{"known":[{{"node":"jetson","offer":{{"provider":"minio","scope":"lan",
+                "endpoint":"{e}","bucket":"b"}}}}]}}"#
+            )
+        };
+        for endpoint in KEYED {
+            for file in [provider(endpoint), known(endpoint)] {
+                std::fs::write(&path, &file).expect("writes");
+                match read_node_file(&path) {
+                    Err(FileError::Invalid(why)) => {
+                        assert!(why.contains("not an address alone"), "{why}");
+                        keeps_the_secret(&why);
+                    }
+                    other => panic!("{file}: expected Invalid, got {other:?}"),
+                }
+            }
+        }
+        for endpoint in PLAIN {
+            for file in [provider(endpoint), known(endpoint)] {
+                std::fs::write(&path, &file).expect("writes");
+                assert!(read_node_file(&path).is_ok(), "{file}");
+            }
+        }
     }
 }

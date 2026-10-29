@@ -1,0 +1,36 @@
+id: I4326
+milestone: the-runtime-supervises-itself
+title: "The monitor sees queued workflow runs, and a forge that has stopped starting jobs is one signal that integration waits name"
+slug: forge-starvation-is-a-signal
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Three steps, each useful alone. (1) The monitor's GitHub source keeps queued and in-progress workflow runs, not only completed ones. Today workflow_run (apps/majordomus-cli/src/monitor/github.rs:307-310) returns None for every run whose status is not completed. With this step the monitor reports each repository's queue depth: runs queued, runs in progress, and the age of the oldest queued run. (2) From those reads across the repositories of the checkouts this host serves, plus any the policy lists, the monitor derives one forge_starved signal: queued > 0 and in progress == 0 in every one of them for longer than a bound stated beside the signal. The signal carries its start and the queued count per repository. It is kept separate from slot contention between this repository's own workflows (I2710, I2662) and from the wait before a run starts (I3202). Health reads it as a degraded dimension. (3) A blocked integration train, and a wait Majordomus itself manages on a workflow run, name the signal as their cause while it holds. I3903's planned cancellation of runs queued past their bound must not cancel a run while the signal holds. If I3903 lands first, this issue adds that exception there."
+why: "Observed on 2026-10-28 between about 16:05 and 17:10 UTC, with majordomus 1.0.0-alpha.8. GitHub Actions started no job anywhere on the account. OSCILLA (korczis/oscilla) had 4-7 runs queued and 0 in progress, prismatic-majordomus had 21 queued, and kuzu had 1, while githubstatus.com reported all systems operational. PR trains stalled, and OSCILLA's release publish waited out its own bound and failed. The session found the cause by hand, running gh api against every repository. No Majordomus surface reported it: not the monitor, the deploy check or the mesh state. On master 81ef931a3e1 the monitor's GitHub source cannot see a queue at all, because it drops every run that is not completed (monitor/github.rs:308) and describes itself as reading 'finished workflow runs' (monitor/mod.rs:47). Nothing in integration/timings.rs, integration/forge.rs or I3182's planned supervision compares queued runs with runs in progress across repositories. The release publish that failed is OSCILLA's own script, and it can read the signal once one exists; the Majordomus side is the monitor signal and the waits Majordomus itself runs."
+current_state: "On master 81ef931a3e1, queued and in-progress runs never reach the monitor, so even one repository's queue depth is invisible, and no surface notices that a whole account starts no job."
+desired_state: "The monitor shows each served repository's queued and in-progress runs. While the account starts no job, the monitor, health and the brief say `forge starved since <time>: <repo> <n> queued, ...; 0 in progress`. A blocked train or a managed wait names that signal as its cause, and no bound-based cancellation acts on the starved runs. The signal clears at the first run in progress."
+scope:
+  - "apps/majordomus-cli/src/monitor"
+  - "apps/majordomus-cli/src/integration"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "docs/MONITOR.md"
+non_scope:
+  - "An adopter's own release or deploy script and its bound: such a script may read the signal, and this issue does not change it"
+  - "Job-slot contention between this repository's own workflows (I2710, I2662)"
+  - "Cancelling or re-running anything because of the signal"
+depends_on: []
+acceptance_criteria:
+  - "Given a recorded run listing with queued, in-progress and completed runs, the GitHub source reports the queue depth per repository, and completed runs give the same signals as before"
+  - "Given recorded listings of three repositories, all with queued runs and none in progress for longer than the bound, the monitor emits one forge_starved signal naming its start and the queued count per repository"
+  - "One run in progress in any listed repository, or queued runs younger than the bound, emits no forge_starved"
+  - "An integration train blocked while the signal holds states forge starvation as its cause"
+  - "Before the change the first unit test fails, because no queued run reaches the source"
+validation:
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib monitor::"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::"
+evidence_required:
+  - "forge_starvation_unit_tests"
+serves:
+  - "nothing-in-the-mesh-waits-on-something-dead#states-are-classified"
+created_at: 2026-10-28
+updated_at: 2026-10-28

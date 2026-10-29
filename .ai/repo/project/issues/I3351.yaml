@@ -35,4 +35,25 @@ evidence_required:
   - "test_proof_plan_validated"
   - "test_protocol_digest_is_per_test"
 created_at: 2026-10-19
-updated_at: 2026-10-19
+updated_at: 2026-10-28T17:05:56Z
+started_at: 2026-10-28T17:04:39Z
+started_event: sha256:9cdae82a022b8d1266eaa15430b6273ff596b77be6c6a8d90b5b2647560be9fb
+verified_at: 2026-10-28T17:05:11Z
+verified_event: sha256:6ef806d05b309509c30d19961baf874af586ab3e0c1f2d26c109b498cfefae7d
+completed_at: 2026-10-28T17:05:56Z
+completed_event: sha256:a076d31cd8686f9ca921f34637eb8370ef787fc85e347b8ee6a82048ff1138af
+evidence:
+  - covers: test_proof_plan_validated
+    type: ci
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics (CI validate job rust (3); doctests of economics::proof in job rust (1))"
+    result: "'test proof_plan::test_proof_plan_validated ... ok' (rust (3) job 122655182619, log line 1636, economics.rs suite 'test result: ok. 36 passed; 0 failed'). The 23 doctests of src/economics/proof.rs are ok in rust (1) job 122655217738, lines 2285-2307. Run https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939, conclusion success."
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939/job/122655182619 (commit 6c79dcf68cf)"
+    commit: 81ef931a3e156907f1784c64c509884f565c17f0
+    recorded_at: 2026-10-28T17:05:34Z
+  - covers: test_protocol_digest_is_per_test
+    type: ci
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics (CI validate job rust (3))"
+    result: "'test proof_plan::test_protocol_digest_is_per_test ... ok' (rust (3) job 122655182619, log line 1632, economics.rs suite 'test result: ok. 36 passed; 0 failed'). The same job ran cargo fmt --check (line 1177) and concluded success. Run https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939, conclusion success."
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939/job/122655182619 (commit 6c79dcf68cf)"
+    commit: 81ef931a3e156907f1784c64c509884f565c17f0
+    recorded_at: 2026-10-28T17:05:44Z

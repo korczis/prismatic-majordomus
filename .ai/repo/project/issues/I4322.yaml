@@ -1,0 +1,38 @@
+id: I4322
+milestone: surfaces-never-disagree
+title: "plan validate and intent validate read the project through one discovery rule, and a record left untracked is named"
+slug: one-discovery-rule-for-the-project-model
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "The shell plan model enumerates .ai/repo/project the way the executable's Index does: through `git ls-files` when the policy declares discovery vcs, and through the work tree otherwise. Today lib/project.sh:50-56 always uses `ls -1` of the work tree. After the change, `majordomus plan validate|status|list` and the plan.validate capability count the same records on every projection (CLI, MCP majordomus_plan_validate, HTTP /api/v1/plan/validate). Under vcs discovery, a file under .ai/repo that matches a class pathspec but is not tracked yields one diagnostic, untracked_record. plan validate, intent validate and doctor print it as `INFO untracked_record <path> — skipped until tracked (git add <path>)`."
+why: "Observed in OSCILLA (korczis/oscilla) on 2026-10-28 with majordomus 1.0.0-alpha.8, discovery vcs. `majordomus plan validate` counted the new, untracked issues U001-U008 (308 issues). `majordomus intent validate` kept reporting 12 intents and ignored the new, untracked intent ui-current.yaml until it was `git add`ed. Nothing said that an untracked file existed, so the author first thought the intent was not registered anywhere. On master 81ef931a3e1, the shell engine lists with `ls` (lib/project.sh:50-56, read by mj_plan_validate at lib/plan.sh:190). The executable's vcs discovery lists only tracked paths (apps/majordomus-cli/src/discovery/mod.rs:183-245), and so does Intents::build through the Index (intent.rs:1260). Nothing reports what one engine saw and the other skipped. The same split separates the shell from the projections: `majordomus plan validate` is the shell engine, while the plan.validate capability (MCP majordomus_plan_validate, HTTP GET /api/v1/plan/validate, apps/majordomus-cli/src/capability/builtin/plan.rs:635-643) reads the vcs Index. So an agent asking over MCP and a person at the shell get different counts for the same checkout. It also hides an invalid record. An untracked critique that fails its schema gets no diagnostic at all: the index never reads the file, so neither the stderr ERROR nor the critique_invalid of I4321 can appear until someone runs `git add`. What worked: the shell plan validate counted the untracked issues correctly, and that is the behaviour this issue extends to the other surfaces as a named finding."
+current_state: "On master 81ef931a3e1, an untracked issue counts in shell plan validate but not in the plan.validate capability over MCP or HTTP. An untracked intent, critique or gap is invisible to intent validate, with no output."
+desired_state: "Shell and executable enumerate one set for the discovery the policy declares. Every untracked record file that vcs discovery skips is named once, with the git add remedy, by plan validate, intent validate and doctor. Under filesystem discovery, output is unchanged."
+scope:
+  - "lib/project.sh"
+  - "lib/plan.sh"
+  - "apps/majordomus-cli/src/discovery/mod.rs"
+  - "apps/majordomus-cli/src/intent.rs"
+  - "docs/PLANNING.md"
+  - "test/cases"
+non_scope:
+  - "Changing the default discovery mode"
+  - "Files outside .ai/repo, and files a class pathspec does not match"
+  - "A critique or gap that is tracked but fails its schema: I4321"
+depends_on: []
+acceptance_criteria:
+  - "In a vcs-discovery fixture with one tracked and one untracked issue, `majordomus plan validate`, `majordomus run plan.validate --format json` and GET /api/v1/plan/validate report the same issue count"
+  - "An untracked critique that fails its schema prints untracked_record naming it, and after `git add` untracked_record is gone and the file's schema error is reported (the index's ERROR today, or I4321's critique_invalid once that has landed)"
+  - "An untracked intent file makes intent validate and plan validate print untracked_record naming the file with the git add remedy; after `git add` the line is gone and the intent is counted"
+  - "Under filesystem discovery the counts are unchanged and untracked_record never prints"
+  - "Before the change the case fails on the differing counts"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib discovery::"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "one_discovery_rule_case"
+serves: []
+created_at: 2026-10-28
+updated_at: 2026-10-28
