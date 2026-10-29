@@ -2,9 +2,9 @@
 
 Keeps a Claude Code session in a Majordomus-supervised repository briefed on what surrounds it,
 without anyone asking (ADR 0136). The mod is a relay: it submits `SessionBrief.report.prompt`
-and appends `SessionBrief.report.reminder` verbatim, and what the report contains is
-[`share/brief/report.yaml`](../../../brief/report.yaml), composed by `brief.session`. The brief
-itself is [`docs/BRIEF.md`](../../../../docs/BRIEF.md).
+and appends `SessionBrief.report.reminder` verbatim. What the report contains is declared once,
+in `share/brief/report.yaml` of the Majordomus distribution, and composed by `brief.session`; the
+brief itself is [the session brief](https://majordomus.dev/docs/brief/).
 
 ## What it does
 

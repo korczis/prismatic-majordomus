@@ -25,4 +25,15 @@ evidence_required:
 depends_on: []
 serves: []
 created_at: 2026-10-22
-updated_at: 2026-10-22
+updated_at: 2026-10-25T18:45:51Z
+started_at: 2026-10-25T18:45:02Z
+started_event: sha256:efa216f027295d3f0a75e2a6df6ac5d6ce56a7bdb90ce85202afb5d174b1c087
+completed_at: 2026-10-25T18:45:51Z
+completed_event: sha256:d0f6d76eb9db71f93530138d640df8ef1e2723b967b931817d7129b430ef2cce
+evidence:
+  - covers: raw_strings_stay_in_test_module
+    type: test
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 132_coverage_differential"
+    result: "ok locally at 2efeacea031 (1 passed); ok on master's validate https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175/job/121182964650; section 9 tells the pre-fix scanner ([1..6]) from the fixed one ([1..9])"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-25T18:44:40Z
