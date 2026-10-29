@@ -55705,41 +55705,51 @@
         "id": "majordomus://issue/I3241",
         "kind": "issue",
         "label": "I3241",
-        "summary": "Only a job that reads history fetches all of it",
+        "summary": "Every checkout fetches only what its gates read, blobless by default, and no checkout takes more than 120 s",
         "route": "/cockpit/objects/issue/i3241",
         "source": ".ai/repo/project/issues/I3241.yaml",
         "facts": {
           "acceptance_criteria": [
-            "Each fetch-depth 0 is justified by a declared history gate (case)",
-            "No history-reading gate fails for want of history"
+            "Case 3749: step-bound-check fails on a `fetch-depth: 0` checkout without `filter: blob:none` in a job whose gates declare no history_reads entry, and passes once the job declares one",
+            "Case 3749: step-bound-check fails on a fetch of `refs/heads/*` in a job with no gate that reads other branches, and passes on a job that has one",
+            "Case 96_site_deploy passes from a partial clone (`git clone --filter=blob:none`)",
+            "No history-reading gate fails for want of history: adr-collision, collision-check, the pages walk and version-matches-surface pass in the validate run carrying the change",
+            "A validate run carrying the change has no checkout step over 120 s, read from its timings.tsv"
           ],
           "created_at": "2026-10-18",
-          "current_state": "Measured on master 707a04c, 2026-10-18: nine validate.yml jobs check out with fetch-depth 0 (structure, suite-shard, rust, coverage, evidence, site, macos, install, pages); the plan job uses 2.",
-          "depends_on": [
-            "I3242"
-          ],
-          "desired_state": "fetch-depth follows the gate model, and a case refuses a full fetch no gate needs.",
+          "depends_on": [],
           "evidence_required": [
-            "fetch_depth_follows_gates_case"
+            "fetch_depth_follows_gates_case",
+            "no_checkout_over_120_s"
           ],
           "milestone": "a-change-is-judged-in-minutes",
-          "objective": "Declare in gates.yaml which gates read history, and give fetch-depth 0 only to the jobs that run one of them.",
-          "priority": "p3",
+          "non_scope": [
+            "A budget on checkout time and repository size (I4349)",
+            "Shrinking the derived files that make the history large (I4351)"
+          ],
+          "priority": "p0",
           "profile": "implementation",
           "scope": [
             ".github/workflows/validate.yml",
             ".ai/repo/ci/gates.yaml",
-            "scripts/ci-plan"
+            "scripts/ci-plan",
+            "scripts/ci/step-bound-check",
+            "test/cases/3749_a_full_history_checkout_is_bounded.sh",
+            "test/cases/96_site_deploy.sh",
+            ".ai/repo/project/issues/I3241.yaml",
+            "docs/CI.md"
           ],
           "serves": [
             "a-change-is-judged-in-minutes#pr-verdict-within-five-minutes"
           ],
           "slug": "only-history-gates-fetch-history",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-10-29",
           "validation": [
-            "scripts/ci-plan --check"
-          ],
-          "why": "c228#3: a full fetch costs 10-60 s per job on a repository of about 1 GB. It extends milestone ci-critical-path. Sources: chatgpt-majordomus:c228#3, chatgpt-majordomus:c025#3."
+            "scripts/ci-plan --check",
+            "bash test/run.sh 3749_a_full_history_checkout_is_bounded 96_site_deploy",
+            "actionlint .github/workflows/validate.yml",
+            "bin/majordomus plan validate"
+          ]
         }
       },
       {
@@ -66343,7 +66353,7 @@
           ],
           "serves": [],
           "slug": "a-build-is-bounded-by-the-machine",
-          "updated_at": "2026-10-21",
+          "updated_at": "2026-10-29",
           "validation": [
             "bash test/run.sh"
           ]
@@ -70958,6 +70968,498 @@
         }
       },
       {
+        "id": "majordomus://issue/I4341",
+        "kind": "issue",
+        "label": "I4341",
+        "summary": "release-check excuses a tag without a record until its grace ends, whatever the job fetched and whenever the release run concluded",
+        "route": "/cockpit/objects/issue/i4341",
+        "source": ".ai/repo/project/issues/I4341.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 3029 drives every ordering of {fetch before, fetch after the record branch's push} x {release run in_progress, success, cancelled} within the grace and reads pending with exit 0 in each",
+            "Case 3029: the same tag past the grace without a record is a finding with a non-zero exit",
+            "Case 3029: with origin unreachable the finding stands and its note names the remote",
+            "Case 3021 passes unchanged"
+          ],
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Landing #2626, the owner's act due before 2026-10-29 12:47Z",
+            "Case 103 reading the checkout's own tags instead of its fixture (the review's N24, not filed in this block)",
+            "The age bound on an unlanded record (I4342)"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4341.yaml",
+            "scripts/ci/release-check",
+            "test/cases/3029_a_tag_in_flight_is_pending.sh",
+            "test/cases/3021_a_tag_does_not_freeze_the_queue.sh",
+            "docs/RELEASE.md"
+          ],
+          "serves": [],
+          "slug": "a-tag-is-excused-until-its-grace-ends",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "bash test/run.sh 3029_a_tag_in_flight_is_pending 3021_a_tag_does_not_freeze_the_queue",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4342",
+        "kind": "issue",
+        "label": "I4342",
+        "summary": "A release's record lands without a person within two hours of its tag",
+        "route": "/cockpit/objects/issue/i4342",
+        "source": ".ai/repo/project/issues/I4342.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I4341"
+          ],
+          "evidence_required": [
+            "test",
+            "record_pull_request_mergeable_without_reopen"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "Creating a GitHub App or a personal token: the owner provides any credential, and no secret value enters the repository",
+            "A dispatched validate as the record's verdict: I2282 showed branch protection does not count it",
+            "The excuse release-check gives a tag inside its grace (I4341)"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4342.yaml",
+            ".github/workflows/release.yml",
+            "scripts/ci/release-check",
+            "apps/majordomus-cli/src/integration/drain.rs",
+            "test/cases/4342_a_release_record_lands_within_its_bound.sh",
+            "test/cases/996_the_record_pull_request_gets_its_verdict.sh",
+            "docs/DISTRIBUTION.md",
+            "docs/RELEASE.md"
+          ],
+          "serves": [],
+          "slug": "a-release-record-lands-within-its-bound",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "bash test/run.sh 4342_a_release_record_lands_within_its_bound 996_the_record_pull_request_gets_its_verdict",
+            "actionlint .github/workflows/release.yml",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4343",
+        "kind": "issue",
+        "label": "I4343",
+        "summary": "A build host's disk guard is observed live every five minutes, and the observation fails while it is not",
+        "route": "/cockpit/objects/issue/i4343",
+        "source": ".ai/repo/project/issues/I4343.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "rust",
+            "build_host_guard_observed_on_lundra"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Rendering disk-guard's homes and the runner drop-ins from the policy (I4352)",
+            "Adding runner units to critical_services: critical.conf's OOMScoreAdjust=-900 would be inherited by the CI compilers",
+            "I2674's S3 criteria: the store's authentication, credentials and the provider's server",
+            "Refusing CI on a failing observation (I4359)"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4343.yaml",
+            "apps/majordomus-cli/src/mesh/cache_provision.rs",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/assets/mesh-cache-provider/policy.json",
+            "apps/majordomus-cli/assets/mesh-cache-provider/build-host-observe.service",
+            "apps/majordomus-cli/assets/mesh-cache-provider/build-host-observe.timer",
+            "docs/MESH.md",
+            "docs/BUILD_CACHE.md"
+          ],
+          "serves": [],
+          "slug": "a-build-hosts-disk-guard-is-observed-live",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::",
+            "bin/majordomus mesh doctor --build-host (on lundra, exit 0 after the apply)",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4344",
+        "kind": "issue",
+        "label": "I4344",
+        "summary": "A CI runner's home stays under its cap during a job, not only between jobs",
+        "route": "/cockpit/objects/issue/i4344",
+        "source": ".ai/repo/project/issues/I4344.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I4343"
+          ],
+          "evidence_required": [
+            "test",
+            "rust",
+            "runner_home_peak_under_cap_during_two_coverage_runs"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "disk-guard's runner homes and the runner units' drop-ins (I4352)",
+            "Reclaiming outside cargo's lock on a developer machine (I4354)"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4344.yaml",
+            ".github/actions/setup-rust/action.yml",
+            "scripts/rust-coverage",
+            "lib/rust_bin.sh",
+            "apps/majordomus-cli/src/mesh/cache_provision.rs",
+            "apps/majordomus-cli/assets/mesh-cache-provider/policy.json",
+            "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh",
+            "test/cases/4344_a_runner_home_stays_under_its_cap.sh",
+            "docs/CI.md",
+            "docs/BUILD_CACHE.md"
+          ],
+          "serves": [],
+          "slug": "a-runner-home-stays-under-its-cap-during-a-job",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "bash test/run.sh 4344_a_runner_home_stays_under_its_cap 3959_the_shared_build_dir_stays_under_its_bound",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::cache_provision",
+            "actionlint .github/workflows/validate.yml",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4345",
+        "kind": "issue",
+        "label": "I4345",
+        "summary": "A CI runner that systemd shows active while its listener crash-loops is recovered within five minutes",
+        "route": "/cockpit/objects/issue/i4345",
+        "source": ".ai/repo/project/issues/I4345.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "current_state": "Measured at 81ef931a3e1: apps/majordomus-cli/assets/mesh-cache-provider holds disk-guard with its service and timer and no watchdog; nothing on lundra reads the runner listener's journal.",
+          "depends_on": [
+            "I4343",
+            "I4346"
+          ],
+          "evidence_required": [
+            "test",
+            "rust"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Adding runner units to critical_services: critical.conf's OOMScoreAdjust=-900 would be inherited by the CI compilers",
+            "Restart= settings of the runner units (I4352)"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4345.yaml",
+            "apps/majordomus-cli/assets/mesh-cache-provider/runner-watchdog",
+            "apps/majordomus-cli/assets/mesh-cache-provider/runner-watchdog.service",
+            "apps/majordomus-cli/assets/mesh-cache-provider/runner-watchdog.timer",
+            "apps/majordomus-cli/src/mesh/cache_provision.rs",
+            ".ai/repo/automation/inventory.jsonl",
+            "test/cases/4345_a_crash_looping_runner_is_recovered.sh",
+            "docs/MESH.md"
+          ],
+          "serves": [],
+          "slug": "a-crash-looping-runner-is-recovered",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "bash test/run.sh 4345_a_crash_looping_runner_is_recovered",
+            "bin/majordomus shell check",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::cache_provision",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4346",
+        "kind": "issue",
+        "label": "I4346",
+        "summary": "Every sweep that deletes asks one liveness predicate, and it fails closed",
+        "route": "/cockpit/objects/issue/i4346",
+        "source": ".ai/repo/project/issues/I4346.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "test",
+            "rust"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Keeping an executable of a reclaimed worktree's generation (the review's N22, not filed in this block)",
+            "Which homes disk-guard sweeps (I4352)"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4346.yaml",
+            "apps/majordomus-cli/src/worktree/liveness.rs",
+            "apps/majordomus-cli/src/worktree/mod.rs",
+            "apps/majordomus-cli/src/worktree/service.rs",
+            "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+            "apps/majordomus-cli/src/commands/worktree.rs",
+            "apps/majordomus-cli/assets/mesh-cache-provider/disk-guard",
+            "apps/majordomus-cli/assets/mesh-cache-provider/disk-guard.service",
+            "apps/majordomus-cli/src/mesh/cache_provision.rs",
+            "scripts/reap-orphans",
+            "test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh",
+            "test/cases/276_disk_is_bounded.sh",
+            "docs/WORKTREES.md",
+            ".ai/repo/rules/project/reclaim-only-what-you-own.v1.md",
+            ".ai/repo/rules/project/reclaim-only-what-you-own.v2.md"
+          ],
+          "serves": [],
+          "slug": "every-deleting-sweep-asks-one-liveness-predicate",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib worktree::liveness",
+            "bash test/run.sh 611_the_reclaim_refuses_what_it_cannot_prove 276_disk_is_bounded",
+            "bin/majordomus shell check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4347",
+        "kind": "issue",
+        "label": "I4347",
+        "summary": "A labeled event starts a gate job only for ci:full, so opening a train with its label runs its head once",
+        "route": "/cockpit/objects/issue/i4347",
+        "source": ".ai/repo/project/issues/I4347.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 26: a labeled event with the label train requests no gate job and writes no `ci` conclusion",
+            "Case 26: a labeled event with ci:full reaches the full plan",
+            "Case 26: opened, synchronize and reopened plan exactly as before (case 94 passes unchanged)",
+            "Case 26 replays the events of #2631, #2630, #2593, #2592, #2591 and #2501 and plans one gate-running run per head",
+            "actionlint passes on .github/workflows/validate.yml"
+          ],
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Cancelling superseded or stuck runs (I3903, #2645)",
+            "Yielding a held member's run (I4338)"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4347.yaml",
+            ".github/workflows/validate.yml",
+            "scripts/ci-plan",
+            "test/cases/26_ci_wiring.sh",
+            "docs/CI.md"
+          ],
+          "serves": [],
+          "slug": "a-labeled-event-starts-gates-only-for-ci-full",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "bash test/run.sh 26_ci_wiring 94_ci_plan",
+            "actionlint .github/workflows/validate.yml",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4348",
+        "kind": "issue",
+        "label": "I4348",
+        "summary": "Rule: a superseded or duplicate run never holds a pull request's validate group",
+        "route": "/cockpit/objects/issue/i4348",
+        "source": ".ai/repo/project/issues/I4348.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 4348 fails on a planted validate.yml with a per-PR group, cancel-in-progress: false and no supervising workflow",
+            "Case 4348 fails on a planted `labeled` trigger with no label filter, and on a group expression not keyed on pull_request.number",
+            "Case 4348 passes on the tree after I4347 and I3903 land",
+            "`majordomus rule proves project.a-superseded-run-never-holds-a-validate-group` resolves the rule to case 4348",
+            "docs/CI.md lists the five dated occurrences"
+          ],
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I4347",
+            "I3903"
+          ],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "the-runtime-supervises-itself",
+          "non_scope": [
+            "The supervising workflow itself (I3903, #2645)",
+            "The label filter (I4347)"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4348.yaml",
+            ".ai/repo/rules/project/a-superseded-run-never-holds-a-validate-group.v1.md",
+            "test/cases/4348_a_superseded_run_never_holds_a_validate_group.sh",
+            ".ai/repo/ci/gates.yaml",
+            "docs/CI.md"
+          ],
+          "serves": [],
+          "slug": "a-superseded-run-never-holds-a-validate-group",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "bash test/run.sh 4348_a_superseded_run_never_holds_a_validate_group",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4349",
+        "kind": "issue",
+        "label": "I4349",
+        "summary": "Checkout time and repository size have a budget, and a run past it is red",
+        "route": "/cockpit/objects/issue/i4349",
+        "source": ".ai/repo/project/issues/I4349.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 4349: a fixture timings.tsv yields both facts",
+            "Case 4349: a p90 checkout at 49% of its bound passes and at 51% fails, naming the job and step",
+            "Case 4349: a repository size over its budget fails, naming the bytes and the budget",
+            "Case 4349: a re-run of a job that died at its checkout bound is flagged",
+            "Unit test of integration::checkout_budget: the p90 is nearest rank over the concurrent samples, and a missing timings.tsv is a failure, never a pass",
+            "`majordomus shell check` passes and reports no new shell unit"
+          ],
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "test",
+            "rust"
+          ],
+          "milestone": "a-change-is-judged-in-minutes",
+          "non_scope": [
+            "Narrowing each fetch to what its gates read (I3241, raised to p0 with blob:none in the same change)",
+            "Shrinking the history (I4351)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4349.yaml",
+            "apps/majordomus-cli/src/integration/checkout_budget.rs",
+            "apps/majordomus-cli/src/integration/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/integration.rs",
+            "apps/majordomus-cli/src/commands/prs.rs",
+            "scripts/ci/summary",
+            "scripts/ci-baseline",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/policy.yaml",
+            ".github/workflows/validate.yml",
+            "test/cases/4349_checkout_time_and_repository_size_have_a_budget.sh",
+            "docs/CI.md"
+          ],
+          "serves": [],
+          "slug": "checkout-time-and-repository-size-have-a-budget",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::checkout_budget",
+            "bash test/run.sh 4349_checkout_time_and_repository_size_have_a_budget",
+            "actionlint .github/workflows/validate.yml",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4351",
+        "kind": "issue",
+        "label": "I4351",
+        "summary": "A tracked derived file over 1 MB is declared with a delta budget, written to delta well, or built rather than committed",
+        "route": "/cockpit/objects/issue/i4351",
+        "source": ".ai/repo/project/issues/I4351.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The ADR naming each file's road is accepted before the derive changes, and this scope names it",
+            "Case 4351: an undeclared 2 MB staged derived file is refused by derive-check, naming its path and size",
+            "Case 4351: a one-record change keeps each declared file's diff under its max_delta_bytes",
+            "Case 4351: for each file that leaves git, the site build and deploy readers find it after its producer runs in a clean checkout, and `git ls-files` no longer lists it",
+            "Packed growth over 50 commits of the change's branch stays under the policy's budget, measured with git count-objects"
+          ],
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I4349"
+          ],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "a-change-is-judged-in-minutes",
+          "non_scope": [
+            "Rewriting existing history",
+            "Campaign reference images, which are sources, not derived output"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4351.yaml",
+            "scripts/derive",
+            "scripts/derive-check",
+            "scripts/generate-site-data",
+            "apps/majordomus-cli/src/commands/generate.rs",
+            "scripts/site-build",
+            "scripts/site-deploy",
+            "scripts/pages",
+            "scripts/ci/homepage-check",
+            ".gitattributes",
+            ".gitignore",
+            "site/data/registry/registry.json",
+            "docs/generated/graph.json",
+            "site/data/generated/plan.json",
+            "docs/generated/registry.json",
+            "docs/generated/registry.yaml",
+            "site/data/generated/openapi.json",
+            "docs/generated/openapi.json",
+            "docs/generated/openapi.yaml",
+            ".ai/repo/policy.yaml",
+            "test/cases/4351_a_large_derived_file_is_declared.sh",
+            "docs/CI.md"
+          ],
+          "serves": [],
+          "slug": "a-large-derived-file-is-declared",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "bash test/run.sh 4351_a_large_derived_file_is_declared",
+            "scripts/derive-check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4352",
         "kind": "issue",
         "label": "I4352",
@@ -70996,6 +71498,367 @@
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::cache_provision",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib commands::mesh::tests::a_check_that_holds_with_a_remedy_is_a_warning",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4353",
+        "kind": "issue",
+        "label": "I4353",
+        "summary": "A train's top goes first on the runner pool, and resume never re-runs a held member",
+        "route": "/cockpit/objects/issue/i4353",
+        "source": ".ai/repo/project/issues/I4353.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 3027: a fix/y run yields to a queued integration/* run, and the top's run is not cancelled",
+            "Case 3027: preempt cancels only queued pull_request runs that are not a top, never a push, schedule or dispatch run",
+            "Case 3027: resume with a top in flight re-runs nothing",
+            "Case 3027: a run of a pull request labelled hold is not re-run, and its ci:yielded label is removed",
+            "A classify.rs unit test keeps release-path's hold set equal to LABEL_POLICY's hold labels"
+          ],
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I4347"
+          ],
+          "evidence_required": [
+            "test",
+            "rust"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "The hold label's own yield (I4338)",
+            "Cancelling superseded runs (I3903)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4353.yaml",
+            "scripts/ci/release-path",
+            ".ai/repo/ci/release-path.yaml",
+            ".github/workflows/validate.yml",
+            ".github/workflows/release-path.yml",
+            "apps/majordomus-cli/src/integration/classify.rs",
+            "test/cases/3027_the_release_path_goes_first.sh",
+            "docs/CI.md"
+          ],
+          "serves": [],
+          "slug": "a-train-top-goes-first-on-the-pool",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "bash test/run.sh 3027_the_release_path_goes_first",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::classify",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4354",
+        "kind": "issue",
+        "label": "I4354",
+        "summary": "Under disk pressure the shared build directory is reclaimed without cargo's lock, and a build is admitted before cargo takes it",
+        "route": "/cockpit/objects/issue/i4354",
+        "source": ".ai/repo/project/issues/I4354.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I3959",
+            "I4006",
+            "I3825"
+          ],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "A rustc-workspace-wrapper: it runs inside cargo's lock and would lengthen the hold",
+            "CI runner homes (I4344)",
+            "Changing clause 7's 35 GiB or five builders: the owner's word"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4354.yaml",
+            "lib/rust_bin.sh",
+            "share/libexec/cargo-shim/cargo",
+            ".ai/repo/automation/inventory.jsonl",
+            "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh",
+            "test/cases/276_disk_is_bounded.sh",
+            "docs/WORKTREES.md",
+            "docs/OFFLOAD.md"
+          ],
+          "serves": [],
+          "slug": "reclaim-without-cargos-lock-and-admit-before-it",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "bash test/run.sh 3959_the_shared_build_dir_stays_under_its_bound 276_disk_is_bounded",
+            "bin/majordomus shell check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4355",
+        "kind": "issue",
+        "label": "I4355",
+        "summary": "A machine announces its own disk emergency on the mesh and names who holds the build lock",
+        "route": "/cockpit/objects/issue/i4355",
+        "source": ".ai/repo/project/issues/I4355.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I3825"
+          ],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Deleting anything: reclaim stays with I4354 and I4346",
+            "The five-builder limit (I3825)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4355.yaml",
+            "scripts/reap-orphans",
+            "lib/rust_bin.sh",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "test/cases/4355_a_machine_announces_its_disk_emergency.sh",
+            "test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh",
+            "test/cases/3150_the_cooperation_model_is_one_record.sh",
+            ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md",
+            "docs/WORKTREES.md"
+          ],
+          "serves": [],
+          "slug": "a-machine-announces-its-disk-emergency",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "bash test/run.sh 4355_a_machine_announces_its_disk_emergency 3824_the_bootstrap_says_what_the_cooperation_rule_says 3150_the_cooperation_model_is_one_record",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib commands::mesh",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4356",
+        "kind": "issue",
+        "label": "I4356",
+        "summary": "An exclusive claim is bound to a known session and its holder's process, and a claim is answered Written only when it is Held",
+        "route": "/cockpit/objects/issue/i4356",
+        "source": ".ai/repo/project/issues/I4356.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Rust test: an exclusive claim naming an unopened session is refused with session_unknown",
+            "Rust test: a claim whose folded state is not Held makes claim() return an error carrying the state, not Written",
+            "Rust test: with s1 live on runtime A and a closed s1 record on runtime B, a claim through B does not answer Written",
+            "Rust test: the same issue claimed exclusively under two different scopes is refused, naming the holder",
+            "Rust test: a CLI claim whose client process has ended reads Expired; one whose process is alive is not suspended after the TTL",
+            "Case 3990: `majordomus start --issue` on an exclusively claimed issue exits non-zero"
+          ],
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I3810"
+          ],
+          "evidence_required": [
+            "rust",
+            "test"
+          ],
+          "milestone": "mcp-transports-are-reliable",
+          "non_scope": [
+            "Releasing c-56b837289bb0, the owner's act on the hub (:8791 /api/v1/mesh/claims/release)",
+            "Seats taken through the task lifecycle (I4358)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4356.yaml",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/mesh/state.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "lib/common.sh",
+            "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
+            "docs/MESH.md",
+            ".ai/repo/rules/project/an-exclusive-claim-lives-by-its-holders-progress.v1.md",
+            ".ai/repo/rules/project/an-exclusive-claim-lives-by-its-holders-progress.v2.md"
+          ],
+          "serves": [],
+          "slug": "an-exclusive-claim-is-bound-to-its-holder",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::cooperation",
+            "bash test/run.sh 3990_a_claim_lapses_when_its_session_stops_progressing",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4357",
+        "kind": "issue",
+        "label": "I4357",
+        "summary": "Issue, ADR and case numbers are reserved atomically at origin and checked at landing",
+        "route": "/cockpit/objects/issue/i4357",
+        "source": ".ai/repo/project/issues/I4357.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 4357 against a stub forge answering 201 once and 422 after: two concurrent reservations of n give one success and one n+1",
+            "Case 4357: a reservation runs no hook work: no `finish --check`, case-numbers or run-plan is invoked, and a push of only refs/ids/* through .githooks/pre-push exits 0 without them",
+            "Case 4357: a replay of #2605 (a second I4251.yaml) exits 11 from the identifier job, with no build job run",
+            "Case 566: the identifier job's needs are a subset of {plan} and it carries no first-red self-cancel",
+            "Case 560 passes, and the rule's identifier half is class blocking",
+            "I3974 records that its survey approach is superseded by this reservation"
+          ],
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "merging-and-referencing-are-enforced",
+          "non_scope": [
+            "Renumbering ids that already collided"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4357.yaml",
+            "lib/adr.sh",
+            "scripts/case-numbers",
+            "scripts/ci/collision-gate",
+            ".github/workflows/validate.yml",
+            ".githooks/pre-push",
+            ".ai/repo/ci/gates.yaml",
+            "test/cases/560_a_case_number_names_one_case.sh",
+            "test/cases/566_the_collision_guard_has_a_caller.sh",
+            "test/cases/4357_a_number_is_reserved_at_origin.sh",
+            ".ai/repo/project/issues/I3974.yaml",
+            ".ai/repo/rules/project/work-is-claimed-before-it-is-built.v1.md"
+          ],
+          "serves": [],
+          "slug": "numbers-are-reserved-atomically-at-origin",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "bash test/run.sh 4357_a_number_is_reserved_at_origin 560_a_case_number_names_one_case 566_the_collision_guard_has_a_caller",
+            "actionlint .github/workflows/validate.yml",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4358",
+        "kind": "issue",
+        "label": "I4358",
+        "summary": "A seat is taken by `start --seat` under its provider session, kept between that session's tasks and lost with it, and an unbound seat is named by the doctor",
+        "route": "/cockpit/objects/issue/i4358",
+        "source": ".ai/repo/project/issues/I4358.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I3072",
+            "I4356",
+            "I4355"
+          ],
+          "evidence_required": [
+            "test",
+            "rust"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Binding a claim to its holder's process (I4356)",
+            "Recording and replicating the provider_session digest, and refusing the seat's finish while a release is overdue (I3072)",
+            "A beat-only TTL, which would suspend a 4.5-hour release mid-cut"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4358.yaml",
+            "lib/start.sh",
+            "lib/finish.sh",
+            "lib/common.sh",
+            "scripts/release-record",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/ui/mesh.rs",
+            "test/cases/4358_a_seat_is_taken_by_start_and_given_back_by_finish.sh",
+            "test/cases/3150_the_cooperation_model_is_one_record.sh",
+            "test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh",
+            ".ai/repo/providers/claude-code.tmpl",
+            ".ai/repo/providers/agents.tmpl",
+            ".ai/repo/providers/gemini.tmpl",
+            "CLAUDE.md",
+            "AGENTS.md",
+            "GEMINI.md",
+            "docs/MESH.md",
+            "docs/RELEASE.md",
+            ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md",
+            ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v3.md"
+          ],
+          "serves": [],
+          "slug": "a-seat-is-taken-by-start-and-given-back-by-finish",
+          "updated_at": "2026-10-29"
+        }
+      },
+      {
+        "id": "majordomus://issue/I4359",
+        "kind": "issue",
+        "label": "I4359",
+        "summary": "Rule: no CI runs on a host whose runner layer is undeclared or whose guard is not observed live, and the runner layer is documented",
+        "route": "/cockpit/objects/issue/i4359",
+        "source": ".ai/repo/project/issues/I4359.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I4343",
+            "I4344",
+            "I4345"
+          ],
+          "evidence_required": [
+            "test",
+            "rust",
+            "stale_observation_refuses_a_job_on_lundra"
+          ],
+          "milestone": "a-change-is-judged-in-minutes",
+          "non_scope": [
+            "Choosing the runner of a job (I4242, #2596)",
+            "Provisioning the runner units and rendering their drop-in (I4352)",
+            "Writing and publishing the observation (I4343)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4359.yaml",
+            ".ai/repo/rules/project/no-ci-routes-to-an-undeclared-runner-host.v1.md",
+            "apps/majordomus-cli/src/mesh/runner_routing.rs",
+            "apps/majordomus-cli/src/mesh/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "apps/majordomus-cli/src/mesh/cache_provision.rs",
+            "apps/majordomus-cli/assets/mesh-cache-provider/runner-job-started",
+            "apps/majordomus-cli/assets/mesh-cache-provider/policy.json",
+            ".ai/repo/automation/inventory.jsonl",
+            ".ai/repo/ci/gates.yaml",
+            "test/cases/4359_no_ci_routes_to_an_undeclared_runner_host.sh",
+            ".github/workflows/validate.yml",
+            "docs/CI.md",
+            "docs/MESH.md"
+          ],
+          "serves": [],
+          "slug": "no-ci-routes-to-an-undeclared-runner-host",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::",
+            "bash test/run.sh 4359_no_ci_routes_to_an_undeclared_runner_host",
+            "bin/majordomus mesh runner-routing",
+            "bin/majordomus shell check",
             "bin/majordomus plan validate"
           ]
         }
@@ -71632,6 +72495,28 @@
           "tags": [
             "providers-economics",
             "chatgpt-project"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/none-of-the-failures-of-2026-10-28-was-prevented",
+        "kind": "knowledge",
+        "label": "none-of-the-failures-of-2026-10-28-was-prevented",
+        "summary": "Eleven failures of 2026-10-28, and why none of them was prevented",
+        "route": "/cockpit/objects/knowledge/none-of-the-failures-of-2026-10-28-was-prevented",
+        "source": ".ai/repo/knowledge/curated/none-of-the-failures-of-2026-10-28-was-prevented.md",
+        "status": "verified",
+        "facts": {
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "tags": [
+            "post-mortem",
+            "ci",
+            "runners",
+            "disk",
+            "mesh",
+            "release"
           ]
         }
       },
@@ -128328,11 +129213,6 @@
       },
       {
         "source": "majordomus://issue/I3241",
-        "target": "majordomus://issue/I3242",
-        "kind": "depends_on"
-      },
-      {
-        "source": "majordomus://issue/I3241",
         "target": "majordomus://milestone/a-change-is-judged-in-minutes",
         "kind": "belongs_to"
       },
@@ -133262,6 +134142,141 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4341",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4341",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4342",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4342",
+        "target": "majordomus://issue/I4341",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4342",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4343",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4343",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4344",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4344",
+        "target": "majordomus://issue/I4343",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4344",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4345",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4345",
+        "target": "majordomus://issue/I4343",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4345",
+        "target": "majordomus://issue/I4346",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4345",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4346",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4346",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4347",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4347",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4348",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4348",
+        "target": "majordomus://issue/I3903",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4348",
+        "target": "majordomus://issue/I4347",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4348",
+        "target": "majordomus://milestone/the-runtime-supervises-itself",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4349",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4349",
+        "target": "majordomus://milestone/a-change-is-judged-in-minutes",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4351",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4351",
+        "target": "majordomus://issue/I4349",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4351",
+        "target": "majordomus://milestone/a-change-is-judged-in-minutes",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4352",
         "target": "kind:issue",
         "kind": "is_a"
@@ -133269,6 +134284,136 @@
       {
         "source": "majordomus://issue/I4352",
         "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4353",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4353",
+        "target": "majordomus://issue/I4347",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4353",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4354",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4354",
+        "target": "majordomus://issue/I3825",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4354",
+        "target": "majordomus://issue/I3959",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4354",
+        "target": "majordomus://issue/I4006",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4354",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4355",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4355",
+        "target": "majordomus://issue/I3825",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4355",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4356",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4356",
+        "target": "majordomus://issue/I3810",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4356",
+        "target": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4357",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4357",
+        "target": "majordomus://milestone/merging-and-referencing-are-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4358",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4358",
+        "target": "majordomus://issue/I3072",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4358",
+        "target": "majordomus://issue/I4355",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4358",
+        "target": "majordomus://issue/I4356",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4358",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4359",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4359",
+        "target": "majordomus://issue/I4343",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4359",
+        "target": "majordomus://issue/I4344",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4359",
+        "target": "majordomus://issue/I4345",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4359",
+        "target": "majordomus://milestone/a-change-is-judged-in-minutes",
         "kind": "belongs_to"
       },
       {
@@ -133443,6 +134588,11 @@
       },
       {
         "source": "majordomus://knowledge/no-vendor-api-reads-a-chatgpt-project",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/none-of-the-failures-of-2026-10-28-was-prevented",
         "target": "kind:knowledge",
         "kind": "is_a"
       },
@@ -144898,8 +146048,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4017,
-      "edges": 9263,
+      "nodes": 4035,
+      "edges": 9316,
       "acyclic": false,
       "truncated": false
     }
