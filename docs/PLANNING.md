@@ -489,7 +489,7 @@ deployment had ever carried, and `deployed` was proved for no issue.
 
 ```mermaid
 flowchart LR
-  R["release record<br/>.ai/repo/releases/vX.yaml"] -->|generate| S["site/static/releases/latest.json"]
+  R["release record<br/>one per version under .ai/repo/releases/"] -->|generate| S["site/static/releases/latest.json"]
   S -->|site build| P["gh-pages commit<br/>releases/latest.json"]
   P -->|Pages deployment| O["deployment observation<br/>(majordomus served forge)"]
   O --> D["plan delivery<br/>deployed"]
