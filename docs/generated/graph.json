@@ -367,6 +367,24 @@
         "status": "query"
       },
       {
+        "id": "capability:design.kit",
+        "kind": "capability",
+        "label": "design.kit",
+        "summary": "Whether the interface is built on the kit",
+        "route": "/cockpit/capabilities/design.kit",
+        "source": "apps/majordomus-cli/src/capability/builtin/design.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:design.kit.adopt",
+        "kind": "capability",
+        "label": "design.kit.adopt",
+        "summary": "Declare the kit in the repository",
+        "route": "/cockpit/capabilities/design.kit.adopt",
+        "source": "apps/majordomus-cli/src/capability/builtin/design.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:design.system",
         "kind": "capability",
         "label": "design.system",
@@ -2860,6 +2878,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/design/kit.rs",
+        "kind": "file",
+        "label": "kit.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/design/kit.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/design/mod.rs",
         "kind": "file",
         "label": "mod.rs",
@@ -4409,6 +4435,22 @@
         "label": "figure.css",
         "summary": "named by the layer; not an object of this index",
         "source": "share/design/figure.css",
+        "external": true
+      },
+      {
+        "id": "file:share/design/kits/flowbite-pro.rule.md",
+        "kind": "file",
+        "label": "flowbite-pro.rule.md",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/design/kits/flowbite-pro.rule.md",
+        "external": true
+      },
+      {
+        "id": "file:share/design/kits/flowbite-pro.yaml",
+        "kind": "file",
+        "label": "flowbite-pro.yaml",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/design/kits/flowbite-pro.yaml",
         "external": true
       },
       {
@@ -9591,6 +9633,30 @@
             "coordination",
             "mesh",
             "governance",
+            "enforcement"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0229",
+        "kind": "adr",
+        "label": "adr-0229",
+        "summary": "Flowbite Pro is adapted onto Tailwind 4 and Flowbite 4, a brand's colour is the primary scale, and one capability judges every repository's interface against it",
+        "route": "/cockpit/objects/adr/adr-0229",
+        "source": ".ai/repo/adrs/0229-flowbite-pro-is-adapted-onto-tailwind-4.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-28",
+          "related": [
+            "file:share/design/kits/flowbite-pro.yaml",
+            "file:share/design/kits/flowbite-pro.rule.md",
+            "file:apps/majordomus-cli/src/design/kit.rs",
+            "file:.ai/repo/project/issues/I4334.yaml",
+            "test:test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh"
+          ],
+          "tags": [
+            "design",
+            "ui",
             "enforcement"
           ]
         }
@@ -70958,6 +71024,52 @@
         }
       },
       {
+        "id": "majordomus://issue/I4334",
+        "kind": "issue",
+        "label": "I4334",
+        "summary": "The UI kit is checked by one capability: design kit judges a repository's interface against the Flowbite Pro profile, and design kit adopt declares it",
+        "route": "/cockpit/objects/issue/i4334",
+        "source": ".ai/repo/project/issues/I4334.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "majordomus design kit --check exits 0 in a repository without a UI and in a conformant one, 10 when any one signal's marker is removed, and 2 for an exemption without a because",
+            "Every finding carries signal, path, evidence and remedy, and every exemption is listed with its reason and how many findings it covered",
+            "majordomus design kit adopt flowbite-pro writes the rule, the design_kit block and both enforcement entries, and a second run reports every file unchanged",
+            "The profile and the rule template carry no Pro source file"
+          ],
+          "created_at": "2026-10-28",
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "one-kit-on-every-surface",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/design/kit.rs",
+            "apps/majordomus-cli/src/design/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/design.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/design.rs",
+            "apps/majordomus-cli/src/commands/mod.rs",
+            "share/design/kits",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            ".ai/repo/adrs/0229-flowbite-pro-is-adapted-onto-tailwind-4.md",
+            ".ai/repo/project/issues/I4334.yaml",
+            "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
+            "docs"
+          ],
+          "slug": "the-ui-kit-is-checked-by-one-capability",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "cargo test --lib design::kit",
+            "cargo test --test cli_examples --test cli_docs",
+            "test/run 4334",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -94485,6 +94597,13 @@
         "source": "test/cases/431_economics_claims_gated.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
+        "kind": "test",
+        "label": "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
+        "route": "/cockpit/objects/test/test-cases-4334-the-ui-kit-is-checked-by-one-capability-sh",
+        "source": "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/43_plan_command.sh",
         "kind": "test",
         "label": "test/cases/43_plan_command.sh",
@@ -99121,6 +99240,36 @@
       {
         "source": "capability:design.explain",
         "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.kit",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.kit",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.kit",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.kit",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.kit.adopt",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.kit.adopt",
+        "target": "projection:cockpit",
         "kind": "projects"
       },
       {
@@ -109971,6 +110120,36 @@
       {
         "source": "majordomus://adr/adr-0226",
         "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0229",
+        "target": "file:apps/majordomus-cli/src/design/kit.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0229",
+        "target": "file:share/design/kits/flowbite-pro.rule.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0229",
+        "target": "file:share/design/kits/flowbite-pro.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0229",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0229",
+        "target": "majordomus://issue/I4334",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0229",
+        "target": "majordomus://test/test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
         "kind": "put_in_force"
       },
       {
@@ -133219,6 +133398,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4334",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4334",
+        "target": "majordomus://milestone/one-kit-on-every-surface",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -139764,6 +139953,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/43_plan_command.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -143910,6 +144104,16 @@
       },
       {
         "source": "module:design",
+        "target": "capability:design.kit",
+        "kind": "composes"
+      },
+      {
+        "source": "module:design",
+        "target": "capability:design.kit.adopt",
+        "kind": "composes"
+      },
+      {
+        "source": "module:design",
         "target": "capability:design.system",
         "kind": "composes"
       },
@@ -144845,8 +145049,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4016,
-      "edges": 9261,
+      "nodes": 4024,
+      "edges": 9278,
       "acyclic": false,
       "truncated": false
     }

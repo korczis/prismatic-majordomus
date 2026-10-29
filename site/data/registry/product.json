@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.9"
   },
-  "fingerprint": "35d2fa6c5a615e887d9900632ca6c633dece057930713c7d0dcdd36fdd816a8b",
+  "fingerprint": "16799dafb32b4c150d9b2c7bb3899a9861f212a7bdea36ccabc870779abdbdf3",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 149,
+        "capabilities": 151,
         "moments": 38
       },
       "evidence": {
@@ -7518,7 +7518,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 166
+          "objects": 167
         },
         {
           "name": "knowledge",
@@ -7799,11 +7799,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 580,
+        "mcp_resources": 581,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 577,
+        "objects": 578,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -12084,6 +12084,22 @@
               "route": "GET /api/v1/design/explain"
             },
             {
+              "id": "design.kit",
+              "title": "Whether the interface is built on the kit",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_design_kit",
+              "route": "GET /api/v1/design/kit",
+              "cli": "majordomus design kit"
+            },
+            {
+              "id": "design.kit.adopt",
+              "title": "Declare the kit in the repository",
+              "kind": "command",
+              "stability": "experimental",
+              "cli": "majordomus design kit adopt"
+            },
+            {
               "id": "design.system",
               "title": "The design system",
               "kind": "query",
@@ -12301,11 +12317,11 @@
         "ui"
       ],
       "counts": {
-        "capabilities": 8,
-        "mcp_tools": 6,
+        "capabilities": 10,
+        "mcp_tools": 7,
         "mcp_resources": 2,
-        "http_routes": 8,
-        "cli_paths": 1,
+        "http_routes": 9,
+        "cli_paths": 3,
         "commands": 0,
         "objects": 0,
         "rules": 1,
@@ -13485,7 +13501,7 @@
         },
         {
           "name": "issue",
-          "objects": 1036
+          "objects": 1037
         },
         {
           "name": "intent",
@@ -13695,11 +13711,11 @@
       "counts": {
         "capabilities": 26,
         "mcp_tools": 26,
-        "mcp_resources": 1235,
+        "mcp_resources": 1236,
         "http_routes": 26,
         "cli_paths": 13,
         "commands": 1,
-        "objects": 1232,
+        "objects": 1233,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -17527,7 +17543,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (166)",
+        "title": "adr (167)",
         "features": [
           "knowledge"
         ]
@@ -17632,7 +17648,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (1036)",
+        "title": "issue (1037)",
         "features": [
           "planning"
         ]
@@ -18692,19 +18708,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3552,
-    "builtin": 220,
-    "declarative": 3332,
+    "capabilities": 3557,
+    "builtin": 222,
+    "declarative": 3335,
     "modules": 60,
-    "mcp_tools": 206,
-    "mcp_resources": 3389,
-    "http_routes": 212,
-    "cli_commands": 220,
+    "mcp_tools": 207,
+    "mcp_resources": 3392,
+    "http_routes": 213,
+    "cli_commands": 222,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3332,
+    "objects": 3335,
     "by_kind": {
-      "adr": 166,
+      "adr": 167,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -18721,7 +18737,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1036,
+      "issue": 1037,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 111,
@@ -18735,7 +18751,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 654,
+      "test": 655,
       "use-case": 49,
       "workspace": 1
     },

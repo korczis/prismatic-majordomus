@@ -5,7 +5,7 @@
 
 The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, what any one of them means, and whether the colours it pairs are readable on one another. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with.
 
-Stability: behaviorally_verified. Capabilities: 4.
+Stability: behaviorally_verified. Capabilities: 6.
 
 ## `design.contrast` — Whether the declared colours can be read
 
@@ -47,6 +47,47 @@ One token by name or by the custom property it becomes: what it is for, what it 
 palette entry (`gray-600`), or the custom property any of them becomes (`--mj-fg`). |
 
 Output: `Token`.
+
+## `design.kit` — Whether the interface is built on the kit
+
+The supervised repository's user interface judged against the kit profile its policy's `design_kit` block names (flowbite-pro when it names none), from markers in the tree and never the kit's own source: S0 whether there is an interface at all (a package manifest with Tailwind, React, Next.js, Vue, Svelte or Flowbite, Phoenix LiveView in mix.exs, HEEx or HTML templates, a Next.js root layout); S1 the kit's package, its React binding for React and Next.js; S2 the Tailwind plugin and source (Tailwind 4's @plugin and @source, Tailwind 3's config), a Play CDN or a CDN-only kit being a finding; S3 the kit's JavaScript behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute, a script that reads them itself being a re-implementation; S4 no other kit (daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui and Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation, Materialize), Alpine.js reported and not refused; S5 the shell on every root layout: a fixed top navbar, an aside labelled Sidebar that both drawer attributes name, a breadcrumb, and the page, surface and border roles. Each finding names its signal, path, evidence and remedy; each exemption the policy declares names its reason and how many findings it covered. A repository without an interface passes vacuously; a policy that cannot be read is `bad_policy` and judges nothing. Reads the tree below the root, skipping dependencies and build output; no build and no network.
+
+| | |
+|---|---|
+| kind | query |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_design_kit` |
+| HTTP | `GET /api/v1/design/kit` |
+| CLI | `majordomus design kit` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::design |
+| tags | design, ui, governance |
+
+Input: none.
+
+Output: `KitReport`.
+
+## `design.kit.adopt` — Declare the kit in the repository
+
+Writes what makes `design.kit` the repository's gate, and nothing that is there already: the profile's rule (project.ui-uses-flowbite-pro for flowbite-pro) into .ai/repo/rules/project/ from the distribution's template, the `design_kit` block naming the profile in .ai/repo/policy.yaml, and two enforcement entries running `majordomus design kit --check`, design-kit-on-push wired by the pre-push hook and design-kit wired by the repository's CI workflow when it has one. Idempotent: a second adoption reports every file unchanged. A rule that differs from the template is kept and named, a block naming another profile is refused, and a policy that would not read back is never written. `dry_run` reports the same and writes nothing. Wiring the hook and the workflow step is left to the repository, and `majordomus doctor` names each entry until it is wired.
+
+| | |
+|---|---|
+| kind | command |
+| stability | experimental |
+| CLI | `majordomus design kit adopt` |
+| cache | — |
+| benchmark | waived (destructive) |
+| provenance | builtin majordomus_cli::capability::builtin::design |
+| tags | design, ui, governance |
+
+| input | type | required | description |
+|---|---|---|---|
+| `profile` | string | yes | A kit profile of the distribution, `share/design/kits/<profile>.yaml`. |
+| `dry_run` | boolean | no | Report what would be written, and write nothing. |
+
+Output: `AdoptReport`.
 
 ## `design.system` — The design system
 

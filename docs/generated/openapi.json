@@ -3550,6 +3550,87 @@
         }
       }
     },
+    "/api/v1/design/kit": {
+      "get": {
+        "operationId": "design.kit",
+        "summary": "Whether the interface is built on the kit",
+        "description": "The supervised repository's user interface judged against the kit profile its policy's `design_kit` block names (flowbite-pro when it names none), from markers in the tree and never the kit's own source: S0 whether there is an interface at all (a package manifest with Tailwind, React, Next.js, Vue, Svelte or Flowbite, Phoenix LiveView in mix.exs, HEEx or HTML templates, a Next.js root layout); S1 the kit's package, its React binding for React and Next.js; S2 the Tailwind plugin and source (Tailwind 4's @plugin and @source, Tailwind 3's config), a Play CDN or a CDN-only kit being a finding; S3 the kit's JavaScript behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute, a script that reads them itself being a re-implementation; S4 no other kit (daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui and Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation, Materialize), Alpine.js reported and not refused; S5 the shell on every root layout: a fixed top navbar, an aside labelled Sidebar that both drawer attributes name, a breadcrumb, and the page, surface and border roles. Each finding names its signal, path, evidence and remedy; each exemption the policy declares names its reason and how many findings it covered. A repository without an interface passes vacuously; a policy that cannot be read is `bad_policy` and judges nothing. Reads the tree below the root, skipping dependencies and build output; no build and no network.",
+        "tags": [
+          "design"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Whether the interface is built on the kit: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KitReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "design.kit",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::design"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_design_kit"
+        },
+        "x-majordomus-cli": "design kit"
+      }
+    },
     "/api/v1/design/tokens": {
       "get": {
         "operationId": "design.tokens",
@@ -44503,6 +44584,268 @@
           "objects"
         ],
         "description": "One object kind the feature names, with how many objects of it the layer holds."
+      },
+      "KitExempted": {
+        "type": "object",
+        "properties": {
+          "finding": {
+            "$ref": "#/components/schemas/KitFinding",
+            "description": "The finding."
+          },
+          "exemption": {
+            "type": "string",
+            "description": "The exemption's path."
+          },
+          "because": {
+            "type": "string",
+            "description": "The exemption's reason."
+          }
+        },
+        "required": [
+          "finding",
+          "exemption",
+          "because"
+        ],
+        "description": "A finding a policy exemption covers, with the reason."
+      },
+      "KitExemption": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The path or glob a finding's path matches."
+          },
+          "because": {
+            "type": "string",
+            "description": "Why the path does not owe it."
+          },
+          "signals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KitSignal"
+            },
+            "description": "Only these signals; empty is every signal."
+          },
+          "shell": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`marketing`: S5 judges a navbar and a footer instead of the application shell."
+          },
+          "matched": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many findings it moved to the exempted list.",
+            "default": 0
+          }
+        },
+        "required": [
+          "path",
+          "because"
+        ],
+        "description": "One exemption of the policy."
+      },
+      "KitFinding": {
+        "type": "object",
+        "properties": {
+          "signal": {
+            "$ref": "#/components/schemas/KitSignal",
+            "description": "The signal."
+          },
+          "path": {
+            "type": "string",
+            "description": "The path, repository-relative; empty for the repository as a whole."
+          },
+          "evidence": {
+            "type": "string",
+            "description": "What was seen, with the line where there is one."
+          },
+          "remedy": {
+            "type": "string",
+            "description": "What to do."
+          }
+        },
+        "required": [
+          "signal",
+          "path",
+          "evidence",
+          "remedy"
+        ],
+        "description": "One finding: the signal, the path it is about, what was seen and what to do."
+      },
+      "KitReport": {
+        "type": "object",
+        "properties": {
+          "profile": {
+            "type": "string",
+            "description": "The profile judged."
+          },
+          "title": {
+            "type": "string",
+            "description": "What the profile is, for a person."
+          },
+          "profile_source": {
+            "type": "string",
+            "description": "Where the profile lives in the distribution."
+          },
+          "rule": {
+            "type": "string",
+            "description": "The rule the profile enforces."
+          },
+          "policy_declared": {
+            "type": "boolean",
+            "description": "Whether the repository's policy declares the `design_kit` block."
+          },
+          "policy_errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Why the policy cannot be read; non-empty only for `bad_policy`."
+          },
+          "ui": {
+            "type": "boolean",
+            "description": "Whether the repository has a user interface (S0)."
+          },
+          "ui_evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What showed it."
+          },
+          "stacks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The stacks recognised: `tailwind-4`, `tailwind-3`, `react`, `phoenix`."
+          },
+          "layouts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The root layouts S5 judged."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KitFinding"
+            },
+            "description": "Every finding that stands."
+          },
+          "exempted": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KitExempted"
+            },
+            "description": "Every finding an exemption covers."
+          },
+          "reported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What is reported and never refused, such as Alpine.js."
+          },
+          "exemptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KitExemption"
+            },
+            "description": "The policy's exemptions, each with how many findings it covered."
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/KitVerdict",
+            "description": "The verdict."
+          },
+          "passes": {
+            "type": "boolean",
+            "description": "Whether the rule holds: `no_ui` or `clean`."
+          }
+        },
+        "required": [
+          "profile",
+          "title",
+          "profile_source",
+          "rule",
+          "policy_declared",
+          "policy_errors",
+          "ui",
+          "ui_evidence",
+          "stacks",
+          "layouts",
+          "findings",
+          "exempted",
+          "reported",
+          "exemptions",
+          "verdict",
+          "passes"
+        ],
+        "description": "What `design.kit` answers."
+      },
+      "KitSignal": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "S0",
+            "description": "The user interface exists."
+          },
+          {
+            "type": "string",
+            "const": "S1",
+            "description": "The dependency."
+          },
+          {
+            "type": "string",
+            "const": "S2",
+            "description": "The plugin and the source."
+          },
+          {
+            "type": "string",
+            "const": "S3",
+            "description": "The kit's JavaScript."
+          },
+          {
+            "type": "string",
+            "const": "S4",
+            "description": "No other kit."
+          },
+          {
+            "type": "string",
+            "const": "S5",
+            "description": "The shell on each root layout."
+          }
+        ],
+        "description": "A signal of the profile."
+      },
+      "KitVerdict": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "no_ui",
+            "description": "No user interface: the rule holds vacuously."
+          },
+          {
+            "type": "string",
+            "const": "clean",
+            "description": "A user interface, and no finding stands."
+          },
+          {
+            "type": "string",
+            "const": "findings",
+            "description": "At least one finding stands."
+          },
+          {
+            "type": "string",
+            "const": "bad_policy",
+            "description": "The policy cannot be read; nothing was judged."
+          }
+        ],
+        "description": "How the tree stands against the profile."
       },
       "KnowledgeCandidate": {
         "type": "object",

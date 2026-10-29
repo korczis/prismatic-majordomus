@@ -97,7 +97,7 @@
       "description": "The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, what any one of them means, and whether the colours it pairs are readable on one another. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with.",
       "stability": "behaviorally_verified",
       "source": "builtin",
-      "capabilities": 4
+      "capabilities": 6
     },
     {
       "id": "devcontext",
@@ -14814,6 +14814,493 @@
         "effect": "read",
         "cancellable": false,
         "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs"
+    },
+    {
+      "id": "design.kit",
+      "module": "design",
+      "kind": "query",
+      "title": "Whether the interface is built on the kit",
+      "description": "The supervised repository's user interface judged against the kit profile its policy's `design_kit` block names (flowbite-pro when it names none), from markers in the tree and never the kit's own source: S0 whether there is an interface at all (a package manifest with Tailwind, React, Next.js, Vue, Svelte or Flowbite, Phoenix LiveView in mix.exs, HEEx or HTML templates, a Next.js root layout); S1 the kit's package, its React binding for React and Next.js; S2 the Tailwind plugin and source (Tailwind 4's @plugin and @source, Tailwind 3's config), a Play CDN or a CDN-only kit being a finding; S3 the kit's JavaScript behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute, a script that reads them itself being a re-implementation; S4 no other kit (daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui and Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation, Materialize), Alpine.js reported and not refused; S5 the shell on every root layout: a fixed top navbar, an aside labelled Sidebar that both drawer attributes name, a breadcrumb, and the page, surface and border roles. Each finding names its signal, path, evidence and remedy; each exemption the policy declares names its reason and how many findings it covered. A repository without an interface passes vacuously; a policy that cannot be read is `bad_policy` and judges nothing. Reads the tree below the root, skipping dependencies and build output; no build and no network.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "KitReport",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "profile": {
+              "type": "string",
+              "description": "The profile judged."
+            },
+            "title": {
+              "type": "string",
+              "description": "What the profile is, for a person."
+            },
+            "profile_source": {
+              "type": "string",
+              "description": "Where the profile lives in the distribution."
+            },
+            "rule": {
+              "type": "string",
+              "description": "The rule the profile enforces."
+            },
+            "policy_declared": {
+              "type": "boolean",
+              "description": "Whether the repository's policy declares the `design_kit` block."
+            },
+            "policy_errors": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Why the policy cannot be read; non-empty only for `bad_policy`."
+            },
+            "ui": {
+              "type": "boolean",
+              "description": "Whether the repository has a user interface (S0)."
+            },
+            "ui_evidence": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "What showed it."
+            },
+            "stacks": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The stacks recognised: `tailwind-4`, `tailwind-3`, `react`, `phoenix`."
+            },
+            "layouts": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The root layouts S5 judged."
+            },
+            "findings": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/KitFinding"
+              },
+              "description": "Every finding that stands."
+            },
+            "exempted": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/KitExempted"
+              },
+              "description": "Every finding an exemption covers."
+            },
+            "reported": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "What is reported and never refused, such as Alpine.js."
+            },
+            "exemptions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/KitExemption"
+              },
+              "description": "The policy's exemptions, each with how many findings it covered."
+            },
+            "verdict": {
+              "$ref": "#/$defs/KitVerdict",
+              "description": "The verdict."
+            },
+            "passes": {
+              "type": "boolean",
+              "description": "Whether the rule holds: `no_ui` or `clean`."
+            }
+          },
+          "required": [
+            "profile",
+            "title",
+            "profile_source",
+            "rule",
+            "policy_declared",
+            "policy_errors",
+            "ui",
+            "ui_evidence",
+            "stacks",
+            "layouts",
+            "findings",
+            "exempted",
+            "reported",
+            "exemptions",
+            "verdict",
+            "passes"
+          ],
+          "description": "What `design.kit` answers.",
+          "title": "KitReport",
+          "$defs": {
+            "KitFinding": {
+              "type": "object",
+              "properties": {
+                "signal": {
+                  "$ref": "#/$defs/KitSignal",
+                  "description": "The signal."
+                },
+                "path": {
+                  "type": "string",
+                  "description": "The path, repository-relative; empty for the repository as a whole."
+                },
+                "evidence": {
+                  "type": "string",
+                  "description": "What was seen, with the line where there is one."
+                },
+                "remedy": {
+                  "type": "string",
+                  "description": "What to do."
+                }
+              },
+              "required": [
+                "signal",
+                "path",
+                "evidence",
+                "remedy"
+              ],
+              "description": "One finding: the signal, the path it is about, what was seen and what to do."
+            },
+            "KitSignal": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "S0",
+                  "description": "The user interface exists."
+                },
+                {
+                  "type": "string",
+                  "const": "S1",
+                  "description": "The dependency."
+                },
+                {
+                  "type": "string",
+                  "const": "S2",
+                  "description": "The plugin and the source."
+                },
+                {
+                  "type": "string",
+                  "const": "S3",
+                  "description": "The kit's JavaScript."
+                },
+                {
+                  "type": "string",
+                  "const": "S4",
+                  "description": "No other kit."
+                },
+                {
+                  "type": "string",
+                  "const": "S5",
+                  "description": "The shell on each root layout."
+                }
+              ],
+              "description": "A signal of the profile."
+            },
+            "KitExempted": {
+              "type": "object",
+              "properties": {
+                "finding": {
+                  "$ref": "#/$defs/KitFinding",
+                  "description": "The finding."
+                },
+                "exemption": {
+                  "type": "string",
+                  "description": "The exemption's path."
+                },
+                "because": {
+                  "type": "string",
+                  "description": "The exemption's reason."
+                }
+              },
+              "required": [
+                "finding",
+                "exemption",
+                "because"
+              ],
+              "description": "A finding a policy exemption covers, with the reason."
+            },
+            "KitExemption": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "The path or glob a finding's path matches."
+                },
+                "because": {
+                  "type": "string",
+                  "description": "Why the path does not owe it."
+                },
+                "signals": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/KitSignal"
+                  },
+                  "description": "Only these signals; empty is every signal."
+                },
+                "shell": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "`marketing`: S5 judges a navbar and a footer instead of the application shell."
+                },
+                "matched": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many findings it moved to the exempted list.",
+                  "default": 0
+                }
+              },
+              "required": [
+                "path",
+                "because"
+              ],
+              "description": "One exemption of the policy."
+            },
+            "KitVerdict": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "no_ui",
+                  "description": "No user interface: the rule holds vacuously."
+                },
+                {
+                  "type": "string",
+                  "const": "clean",
+                  "description": "A user interface, and no finding stands."
+                },
+                {
+                  "type": "string",
+                  "const": "findings",
+                  "description": "At least one finding stands."
+                },
+                {
+                  "type": "string",
+                  "const": "bad_policy",
+                  "description": "The policy cannot be read; nothing was judged."
+                }
+              ],
+              "description": "How the tree stands against the profile."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::design"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_design_kit"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/design/kit"
+        },
+        "cli": {
+          "path": [
+            "design",
+            "kit"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "design",
+        "ui",
+        "governance"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs"
+    },
+    {
+      "id": "design.kit.adopt",
+      "module": "design",
+      "kind": "command",
+      "title": "Declare the kit in the repository",
+      "description": "Writes what makes `design.kit` the repository's gate, and nothing that is there already: the profile's rule (project.ui-uses-flowbite-pro for flowbite-pro) into .ai/repo/rules/project/ from the distribution's template, the `design_kit` block naming the profile in .ai/repo/policy.yaml, and two enforcement entries running `majordomus design kit --check`, design-kit-on-push wired by the pre-push hook and design-kit wired by the repository's CI workflow when it has one. Idempotent: a second adoption reports every file unchanged. A rule that differs from the template is kept and named, a block naming another profile is refused, and a policy that would not read back is never written. `dry_run` reports the same and writes nothing. Wiring the hook and the workflow step is left to the repository, and `majordomus doctor` names each entry until it is wired.",
+      "input": {
+        "name": "KitAdoptInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "profile": {
+              "type": "string",
+              "description": "A kit profile of the distribution, `share/design/kits/<profile>.yaml`."
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Report what would be written, and write nothing.",
+              "default": false
+            }
+          },
+          "required": [
+            "profile"
+          ],
+          "description": "The input of `design.kit.adopt`: which kit profile to declare in the repository.",
+          "title": "KitAdoptInput"
+        }
+      },
+      "output": {
+        "name": "AdoptReport",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "profile": {
+              "type": "string",
+              "description": "The profile adopted."
+            },
+            "rule": {
+              "type": "string",
+              "description": "The rule it enforces."
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Whether nothing was written."
+            },
+            "writes": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/AdoptWrite"
+              },
+              "description": "Every file adoption touches, in the order they are written."
+            },
+            "ci_workflow": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The CI workflow the `design-kit` entry names, when the repository has one."
+            },
+            "notes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "What is left for a person: the hook and workflow steps doctor will ask for."
+            }
+          },
+          "required": [
+            "profile",
+            "rule",
+            "dry_run",
+            "writes",
+            "notes"
+          ],
+          "description": "What `design.kit.adopt` answers.",
+          "title": "AdoptReport",
+          "$defs": {
+            "AdoptWrite": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Repository-relative."
+                },
+                "action": {
+                  "$ref": "#/$defs/AdoptAction",
+                  "description": "What happened to it."
+                },
+                "detail": {
+                  "type": "string",
+                  "description": "What was written or found."
+                }
+              },
+              "required": [
+                "path",
+                "action",
+                "detail"
+              ],
+              "description": "One file adoption touches."
+            },
+            "AdoptAction": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "created",
+                  "description": "The file did not exist and is written."
+                },
+                {
+                  "type": "string",
+                  "const": "updated",
+                  "description": "The file is changed."
+                },
+                {
+                  "type": "string",
+                  "const": "unchanged",
+                  "description": "The file already says what adoption would write."
+                },
+                {
+                  "type": "string",
+                  "const": "kept",
+                  "description": "The file differs from what adoption would write and is left as it is."
+                }
+              ],
+              "description": "What adoption did, or would do, to one file."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::design"
+      },
+      "exposure": {
+        "cli": {
+          "path": [
+            "design",
+            "kit",
+            "adopt"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "developer",
+      "stability": "experimental",
+      "tags": [
+        "design",
+        "ui",
+        "governance"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "destructive"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "repository_mutation",
+        "cancellable": false,
+        "concurrency": "serial"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs"
     },

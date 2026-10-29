@@ -12,6 +12,13 @@
 //! same fingerprint is a question for the page (`--mj-design` against
 //! `design.system.design`), which the Cockpit asks on every load.
 //!
+//! `design.kit` and `design.kit.adopt` are about the supervised repository rather than
+//! this tool's own design (I4334, ADR 0229): the first judges the repository's user
+//! interface against a kit profile the distribution ships (`share/design/kits/`), signal by
+//! signal, and the second declares that profile in the repository — its rule, the
+//! `design_kit` policy block and the enforcement entries that run the check in CI and
+//! before every push. The judgement is [`crate::design::kit`]'s; these declare it once.
+//!
 //! `design.contrast` is the exception, and reads only the distribution's own share
 //! directory: the pair a ratio is computed for is stated by the primitives that consume the
 //! declaration, and those stylesheets ship beside `kinds.yaml` and the obligation
@@ -23,9 +30,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{Exposure, McpExposure, McpResource, Stability};
+use crate::capability::model::{
+    BenchmarkPolicy, CapabilityKind, CliExposure, Exposure, McpExposure, McpResource, Stability,
+    WaiverReason,
+};
 use crate::capability::module::ModuleDescriptor;
+use crate::capability::CachePolicy;
 use crate::design::contrast::{self, ContrastReport};
+use crate::design::kit::{self, AdoptError, AdoptReport, KitReport};
 use crate::design::{render, DesignSystem, Fonts, Identity, Token, TokenKind, SOURCE};
 use crate::{capability, module};
 
@@ -153,6 +165,29 @@ impl BenchmarkCases for ExplainTokenInput {
     }
 }
 
+/// The input of `design.kit.adopt`: which kit profile to declare in the repository.
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct KitAdoptInput {
+    /// A kit profile of the distribution, `share/design/kits/<profile>.yaml`.
+    pub profile: String,
+    /// Report what would be written, and write nothing.
+    #[serde(default)]
+    pub dry_run: bool,
+}
+
+impl BenchmarkCases for KitAdoptInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![NamedCase::new(
+            "dry-run",
+            KitAdoptInput {
+                profile: kit::DEFAULT_PROFILE.into(),
+                dry_run: true,
+            },
+        )]
+    }
+}
+
 fn compiled() -> Result<&'static DesignSystem, CapabilityError> {
     DesignSystem::compiled().map_err(|reason| {
         CapabilityError::Internal(format!(
@@ -273,6 +308,37 @@ fn consumers(root: &std::path::Path) -> Result<Vec<(String, String)>, Capability
     Ok(out)
 }
 
+fn kit_share(ctx: &Context, root: &std::path::Path) -> Result<std::path::PathBuf, CapabilityError> {
+    crate::share::Share::locate(ctx.index.share.as_deref(), root)
+        .map(|s| s.dir().to_path_buf())
+        .map_err(|e| {
+            CapabilityError::Internal(format!(
+                "the distribution's share directory, which holds the kit profiles, was not found: {e}"
+            ))
+        })
+}
+
+fn kit_check(ctx: &Context, _: Empty) -> Result<KitReport, CapabilityError> {
+    let root = std::path::PathBuf::from(&ctx.index.repository.root);
+    let share = kit_share(ctx, &root)?;
+    kit::inspect(&root, &share).map_err(CapabilityError::Internal)
+}
+
+fn kit_adopt(ctx: &Context, input: KitAdoptInput) -> Result<AdoptReport, CapabilityError> {
+    if input.profile.trim().is_empty() {
+        return Err(CapabilityError::InvalidInput(
+            "name a kit profile of share/design/kits/, such as flowbite-pro".into(),
+        ));
+    }
+    let root = std::path::PathBuf::from(&ctx.index.repository.root);
+    let share = kit_share(ctx, &root)?;
+    kit::adopt(&root, &share, input.profile.trim(), input.dry_run).map_err(|e| match e {
+        AdoptError::NotFound(m) => CapabilityError::NotFound(m),
+        AdoptError::Refused(m) => CapabilityError::Refused(m),
+        AdoptError::Internal(m) => CapabilityError::Internal(m),
+    })
+}
+
 fn readable(ctx: &Context, _: Empty) -> Result<ContrastReport, CapabilityError> {
     let design = compiled()?;
     let root = std::path::PathBuf::from(&ctx.index.repository.root);
@@ -350,6 +416,40 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["design", "ui", "accessibility", "introspection"],
                 handler: readable,
             },
+            capability! {
+                id: "design.kit",
+                title: "Whether the interface is built on the kit",
+                description: "The supervised repository's user interface judged against the kit profile its policy's `design_kit` block names (flowbite-pro when it names none), from markers in the tree and never the kit's own source: S0 whether there is an interface at all (a package manifest with Tailwind, React, Next.js, Vue, Svelte or Flowbite, Phoenix LiveView in mix.exs, HEEx or HTML templates, a Next.js root layout); S1 the kit's package, its React binding for React and Next.js; S2 the Tailwind plugin and source (Tailwind 4's @plugin and @source, Tailwind 3's config), a Play CDN or a CDN-only kit being a finding; S3 the kit's JavaScript behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute, a script that reads them itself being a re-implementation; S4 no other kit (daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui and Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation, Materialize), Alpine.js reported and not refused; S5 the shell on every root layout: a fixed top navbar, an aside labelled Sidebar that both drawer attributes name, a breadcrumb, and the page, surface and border roles. Each finding names its signal, path, evidence and remedy; each exemption the policy declares names its reason and how many findings it covered. A repository without an interface passes vacuously; a policy that cannot be read is `bad_policy` and judges nothing. Reads the tree below the root, skipping dependencies and build output; no build and no network.",
+                input: Empty,
+                output: KitReport,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_design_kit"),
+                    http: get("/api/v1/design/kit"),
+                    cli: Some(CliExposure { path: vec!["design".into(), "kit".into()] }),
+                },
+                tags: ["design", "ui", "governance"],
+                handler: kit_check,
+            },
+            capability! {
+                id: "design.kit.adopt",
+                kind: CapabilityKind::Command,
+                title: "Declare the kit in the repository",
+                description: "Writes what makes `design.kit` the repository's gate, and nothing that is there already: the profile's rule (project.ui-uses-flowbite-pro for flowbite-pro) into .ai/repo/rules/project/ from the distribution's template, the `design_kit` block naming the profile in .ai/repo/policy.yaml, and two enforcement entries running `majordomus design kit --check`, design-kit-on-push wired by the pre-push hook and design-kit wired by the repository's CI workflow when it has one. Idempotent: a second adoption reports every file unchanged. A rule that differs from the template is kept and named, a block naming another profile is refused, and a policy that would not read back is never written. `dry_run` reports the same and writes nothing. Wiring the hook and the workflow step is left to the repository, and `majordomus doctor` names each entry until it is wired.",
+                input: KitAdoptInput,
+                output: AdoptReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: None,
+                    http: None,
+                    cli: Some(CliExposure { path: vec!["design".into(), "kit".into(), "adopt".into()] }),
+                },
+                tags: ["design", "ui", "governance"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::Destructive },
+                handler: kit_adopt,
+            }
+            .writes_repository(),
         ],
     }
 }
@@ -379,14 +479,40 @@ mod tests {
                 "majordomus_design_contrast",
                 "/api/v1/design/contrast",
             ),
+            ("design.kit", "majordomus_design_kit", "/api/v1/design/kit"),
         ];
         let ids: Vec<&str> = m
             .capabilities
             .iter()
             .map(|e| e.capability.id.as_str())
             .collect();
-        let want: Vec<&str> = expected.iter().map(|(id, _, _)| *id).collect();
+        let mut want: Vec<&str> = expected.iter().map(|(id, _, _)| *id).collect();
+        want.push("design.kit.adopt");
         assert_eq!(ids, want);
+        let adopt = &m.capabilities[5].capability;
+        assert_eq!(adopt.kind, CapabilityKind::Command);
+        assert_eq!(
+            adopt.execution.effect,
+            crate::capability::Effect::RepositoryMutation
+        );
+        assert!(
+            adopt.exposure.mcp.is_none() && adopt.exposure.http.is_none(),
+            "writing the repository is the command line's alone"
+        );
+        assert_eq!(
+            adopt.exposure.cli.as_ref().unwrap().path,
+            ["design", "kit", "adopt"]
+        );
+        assert_eq!(
+            m.capabilities[4]
+                .capability
+                .exposure
+                .cli
+                .as_ref()
+                .unwrap()
+                .path,
+            ["design", "kit"]
+        );
         for (executable, (id, tool, path)) in m.capabilities.iter().zip(expected) {
             let exposure = &executable.capability.exposure;
             assert_eq!(
@@ -494,5 +620,75 @@ mod tests {
         )
         .expect("a status colour is a token");
         assert_eq!(ok.kind, TokenKind::Status);
+    }
+
+    #[test]
+    fn the_kit_is_judged_in_the_repository_the_context_reads() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        // a synthetic repository has no interface: the rule holds vacuously, or the
+        // distribution is not found and that is said rather than passed
+        match kit_check(&ctx, Empty::default()) {
+            Ok(report) => {
+                assert!(!report.ui);
+                assert!(report.passes);
+                assert_eq!(report.profile, kit::DEFAULT_PROFILE);
+            }
+            Err(CapabilityError::Internal(message)) => assert!(message.contains("share")),
+            Err(other) => panic!("unexpected refusal: {other:?}"),
+        }
+        let refused = kit_adopt(
+            &ctx,
+            KitAdoptInput {
+                profile: " ".into(),
+                dry_run: true,
+            },
+        );
+        assert!(matches!(refused, Err(CapabilityError::InvalidInput(_))));
+        let cases = KitAdoptInput::benchmark_cases(&CaseContext { index: &ctx.index });
+        assert!(
+            cases.iter().all(|c| c.input.dry_run),
+            "a benchmark never writes"
+        );
+    }
+
+    #[test]
+    fn adoption_maps_each_refusal_to_its_category() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        let unknown = kit_adopt(
+            &ctx,
+            KitAdoptInput {
+                profile: "no-such-kit".into(),
+                dry_run: true,
+            },
+        );
+        assert!(
+            matches!(
+                unknown,
+                Err(CapabilityError::NotFound(_)) | Err(CapabilityError::Internal(_))
+            ),
+            "{unknown:?}"
+        );
+        let dry = kit_adopt(
+            &ctx,
+            KitAdoptInput {
+                profile: kit::DEFAULT_PROFILE.into(),
+                dry_run: true,
+            },
+        );
+        match dry {
+            Ok(report) => {
+                assert!(report.dry_run);
+                assert!(!repo
+                    .root()
+                    .join(".ai/repo/rules/project/ui-uses-flowbite-pro.v1.md")
+                    .exists());
+            }
+            Err(CapabilityError::Internal(m)) | Err(CapabilityError::Refused(m)) => {
+                assert!(!m.is_empty())
+            }
+            Err(other) => panic!("unexpected: {other:?}"),
+        }
     }
 }

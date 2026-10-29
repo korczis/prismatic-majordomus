@@ -1,0 +1,132 @@
+# The Flowbite Pro kit profile: what `majordomus design kit` judges a repository's user
+# interface against (I4334, ADR 0229).
+#
+# Markers only. This file names the attributes, class lists, package names and file
+# shapes by which a tree shows that it is built on Flowbite Pro on Tailwind, and the
+# packages of the kits it must not also use. It holds no Pro source: no template, no
+# block, no stylesheet, no script of the licensed distribution is copied here or anywhere
+# in this repository (rule project.ui-uses-flowbite-pro, "Licence"). The licensed sources
+# live outside every repository, on the owner's machine.
+#
+# Every regular expression below is the `regex` crate's syntax, written in single quotes so
+# that the YAML subset passes its backslashes through untouched. A repository adopts the
+# profile with `majordomus design kit adopt flowbite-pro`, which writes the rule from
+# flowbite-pro.rule.md beside this file, the `design_kit` policy block and the two
+# enforcement entries; it narrows nothing here.
+schema: 1
+id: flowbite-pro
+title: Flowbite Pro on Tailwind 4 and Flowbite 4
+rule: project.ui-uses-flowbite-pro
+rule_file: ui-uses-flowbite-pro.v1.md
+rule_template: design/kits/flowbite-pro.rule.md
+
+# Directories no signal reads: dependencies, build output, vendored sources (the licensed
+# Pro distribution itself among them) and the layer. A bare name matches a directory of
+# that name at any depth; a name with a slash matches a directory whose path ends with it.
+# A minified script (`*.min.js`) is build output wherever it lies.
+skip_dirs: [.git, node_modules, _build, deps, target, dist, build, out, .next, .nuxt, .svelte-kit, .turbo, .cache, coverage, vendor, tmp, .ai, priv/static]
+
+# Files larger than this are build output, not something a person wrote.
+max_file_bytes: 1048576
+
+# The files whose text the markup signals (S3, S4 imports, S5) read, by extension.
+markup: [html, htm, heex, eex, leex, tsx, jsx, vue, svelte, astro, erb, hbs, njk, liquid, twig]
+scripts: [js, mjs, cjs, ts, tsx, jsx, vue, svelte]
+styles: [css, pcss, postcss, scss]
+
+# S0: whether the repository has a user interface at all. A repository without one
+# passes vacuously. A page at the root (`index.html`) is a site, whatever builds it.
+ui:
+  package_manifests: [package.json, assets/package.json]
+  packages: [tailwindcss, '@tailwindcss/vite', '@tailwindcss/postcss', '@tailwindcss/cli', react, next, vue, svelte, flowbite, flowbite-react]
+  mix_file: mix.exs
+  mix_deps: [phoenix_live_view]
+  files: ['**/*.heex', '**/templates/*.html', 'app/layout.tsx', 'src/app/layout.tsx', index.html, src/index.html]
+
+# S1: the dependency. React and Next take the framework binding.
+dependency:
+  package: flowbite
+  react_package: flowbite-react
+  react_when: [react, next]
+
+# S2: the Tailwind plugin and the source Tailwind scans for Flowbite's classes.
+plugin:
+  # Tailwind 4: CSS-first configuration.
+  v4_entry: '@import\s+["'']tailwindcss["'']'
+  v4_plugin: '@plugin\s+["'']flowbite(-react)?/plugin(\.js)?["'']'
+  v4_source: '@source\s+["''][^"'']*flowbite[^"'']*["'']'
+  # Tailwind 3: tailwind.config.* with the plugin and a content glob over Flowbite.
+  v3_entry: '@tailwind\s+(base|components|utilities)'
+  v3_configs: [tailwind.config.js, tailwind.config.cjs, tailwind.config.mjs, tailwind.config.ts, assets/tailwind.config.js, assets/tailwind.config.cjs, assets/tailwind.config.mjs, assets/tailwind.config.ts]
+  v3_plugin: '(require\(\s*["'']flowbite(-react)?/plugin["'']\s*\)|from\s+["'']flowbite(-react)?/plugin["''])'
+  v3_content: '["''][^"'']*flowbite[^"'']*\*[^"'']*["'']'
+  # Tailwind compiled in the browser is not a build.
+  play_cdn: '(cdn\.tailwindcss\.com|@tailwindcss/browser)'
+  # Flowbite fetched from a CDN, with no package behind it.
+  cdn_flowbite: '(src|href)=["'']https?://[^"'']*(cdn|unpkg|jsdelivr|cdnjs)[^"'']*flowbite[^"'']*["'']'
+
+# S3: the attributes Flowbite's JavaScript reads, and what proves it is loaded.
+interactive:
+  attributes: '\bdata-(drawer|dropdown|modal|tabs|collapse|tooltip)-[a-z-]+'
+  loaded: '((import|from)\s+["'']flowbite(/[^"'']*)?["'']|require\(\s*["'']flowbite(/[^"'']*)?["'']\s*\)|<script\b[^>]*\bsrc=["''][^"'']*flowbite[^"'']*\.js[^"'']*["'']|from\s+["'']flowbite-react["''])'
+  # A script that reads those attributes itself re-implements Flowbite.
+  reimplemented: '(querySelector(All)?\(\s*["''][^"'']*\[data-(drawer|dropdown|modal|tabs|collapse|tooltip)-|getAttribute\(\s*["'']data-(drawer|dropdown|modal|tabs|collapse|tooltip)-|dataset\.(drawer|dropdown|modal|tabs|collapse|tooltip)[A-Z])'
+
+# S4: the kits that must not also be used. A name ending in `/` is an npm scope: every
+# package under it is that kit. `mix` names Hex packages read from mix.exs, `files` the
+# configuration a kit's installer leaves behind.
+forbidden:
+  - kit: daisyUI
+    packages: [daisyui]
+  - kit: Bootstrap
+    packages: [bootstrap, react-bootstrap, bootstrap-vue]
+  - kit: Preline
+    packages: [preline]
+  - kit: TW Elements
+    packages: [tw-elements, tw-elements-react]
+  - kit: shadcn/ui and Radix
+    packages: [shadcn, shadcn-ui, '@radix-ui/']
+    files: [components.json]
+  - kit: Petal Components
+    mix: [petal_components]
+  - kit: Material UI
+    packages: ['@mui/', '@material-ui/']
+  - kit: Ant Design
+    packages: [antd]
+  - kit: Bulma
+    packages: [bulma]
+  - kit: Chakra UI
+    packages: ['@chakra-ui/']
+  - kit: Foundation
+    packages: [foundation-sites]
+  - kit: Materialize
+    packages: [materialize-css, '@materializecss/materialize']
+
+# Reported, never refused: a runtime that is not a kit.
+reported:
+  - kit: Alpine.js
+    packages: [alpinejs]
+    markup: '\bx-data\s*='
+
+# S5: the Pro shell on each root layout. A policy's `design_kit.layouts` replaces the
+# globs; a `*.html.heex` layout is judged together with the `root.html.heex` beside it,
+# because Phoenix splits the document from the shell.
+shell:
+  layouts: ['app/layout.tsx', 'src/app/layout.tsx', '**/components/layouts/app.html.heex', '**/templates/layout/app.html.heex', 'index.html', 'src/index.html', 'templates/base.html', '**/templates/base.html']
+  companion: root.html.heex
+  fixed_nav: '<nav\b[^>]*\bclass(Name)?=["''{][^"''}]*\bfixed\b'
+  sidebar: '<aside\b[^>]*\baria-label=["'']Sidebar["'']'
+  # flowbite-react draws the sidebar and the breadcrumb as components.
+  react_sidebar: '<Sidebar\b[^>]*\baria-label='
+  breadcrumb: '<nav\b[^>]*\baria-label=["'']Breadcrumb["'']'
+  react_breadcrumb: '<Breadcrumb\b'
+  # The marketing shell an exemption with `shell: marketing` judges instead.
+  marketing_nav: '<nav\b'
+  marketing_footer: '<footer\b'
+  # Each role is met by every class of one alternative (a space-separated class list): the
+  # raw Pro utilities first, then the role aliases a token rule declares. A policy adds its
+  # own alternatives under design_kit.roles.
+  roles:
+    page: ['bg-gray-50 dark:bg-gray-900', bg-page]
+    surface: ['bg-white dark:bg-gray-800', bg-surface]
+    border: ['border-gray-200 dark:border-gray-700', border-default]

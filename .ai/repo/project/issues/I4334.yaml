@@ -1,0 +1,39 @@
+id: I4334
+milestone: one-kit-on-every-surface
+title: "The UI kit is checked by one capability: design kit judges a repository's interface against the Flowbite Pro profile, and design kit adopt declares it"
+slug: the-ui-kit-is-checked-by-one-capability
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "A typed, read-only capability design.kit (CLI majordomus design kit [--check] [--repo PATH], MCP majordomus_design_kit, HTTP GET /api/v1/design/kit) judges a repository's tree against the kit profile share/design/kits/flowbite-pro.yaml, which holds markers only and no Pro source: S0 has a UI, S1 the flowbite (or flowbite-react) dependency, S2 the Tailwind 4 @plugin and @source or the Tailwind 3 config with no Play CDN or CDN-only Flowbite, S3 Flowbite JS behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute with no re-implementation, S4 no other kit with Alpine reported, S5 the Pro shell on every root layout. Each finding is {signal, path, evidence, remedy}, exemptions are {path, because} in the design_kit policy block, and the exit is 0 when clean or without a UI, 10 for a finding under --check and 2 for a bad policy. design kit adopt flowbite-pro writes the rule project.ui-uses-flowbite-pro from share/design/kits/flowbite-pro.rule.md, the design_kit block and the design-kit and design-kit-on-push enforcement entries, idempotently."
+why: "On 2026-10-28 the owner ordered that every project with a user interface is built on their licensed Flowbite Pro, documented, enforced, back-propagated and verified. The audit that day found free Flowbite with hand-rolled shells, the Tailwind Play CDN, daisyUI, Preline, TW Elements and shadcn/Radix mixed in, and drawers wired by hand (this repository's own site/nav.js), and the only check was a scanner on one machine that a CI or a pre-push hook cannot require. ADR 0229 records that Pro is adapted onto Tailwind 4 and Flowbite 4 and that a brand's colour is the primary scale."
+current_state: "On 81ef931a3e1 the design module answers only for this tool's own design (design.system, design.tokens, design.explain, design.contrast); no capability judges a repository's UI kit; no project rule names Flowbite Pro; the policy schema has no design_kit block; the owner's skill carries verify.mjs, which checks dependencies and the rule file only."
+desired_state: "crate::design::kit is a pure judge over a tree with a unit test for every signal, the vacuous pass, exemptions and the marketing shell; design.kit and design.kit.adopt are declared once in capability/builtin/design.rs and projected by majordomus generate; share/design/kits/ holds the profile and the rule template; the policy schema declares design_kit; ADR 0229 is proposed; case 4334 proves each signal by mutation in a disposable repository. This repository does not adopt the rule in this issue: its site would fail S3 and S5 today, and adoption here is a later slice."
+scope:
+  - "apps/majordomus-cli/src/design/kit.rs"
+  - "apps/majordomus-cli/src/design/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/design.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/commands/design.rs"
+  - "apps/majordomus-cli/src/commands/mod.rs"
+  - "share/design/kits"
+  - "share/schemas/majordomus/policy/policy.v1.schema.json"
+  - ".ai/repo/adrs/0229-flowbite-pro-is-adapted-onto-tailwind-4.md"
+  - ".ai/repo/project/issues/I4334.yaml"
+  - "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh"
+  - "docs"
+acceptance_criteria:
+  - "majordomus design kit --check exits 0 in a repository without a UI and in a conformant one, 10 when any one signal's marker is removed, and 2 for an exemption without a because"
+  - "Every finding carries signal, path, evidence and remedy, and every exemption is listed with its reason and how many findings it covered"
+  - "majordomus design kit adopt flowbite-pro writes the rule, the design_kit block and both enforcement entries, and a second run reports every file unchanged"
+  - "The profile and the rule template carry no Pro source file"
+validation:
+  - "cargo test --lib design::kit"
+  - "cargo test --test cli_examples --test cli_docs"
+  - "test/run 4334"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - suite
+risk: "The signals read markers in text, not a rendered page: a shell assembled at run time from components the profile does not name reads as missing. The remedy is declaring the layout under design_kit.layouts or an exemption with its reason, which keeps every exception visible; a profile that grows too many alternatives would stop meaning anything, so additions go through the profile and its tests."
+created_at: 2026-10-28
+updated_at: 2026-10-28

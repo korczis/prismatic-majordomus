@@ -269,9 +269,9 @@ always shows the word beside it.
 
 | surface | how |
 |---|---|
-| MCP | `majordomus_design`, `majordomus_design_tokens`, `majordomus_design_explain`, `majordomus_design_contrast`; resource `majordomus://design` |
-| HTTP | `GET /api/v1/design`, `/api/v1/design/tokens?kind=role`, `/api/v1/design/explain?token=fg`, `/api/v1/design/contrast` |
-| OpenAPI, Swagger | the same four operations, from the registry |
+| MCP | `majordomus_design`, `majordomus_design_tokens`, `majordomus_design_explain`, `majordomus_design_contrast`, `majordomus_design_kit`; resource `majordomus://design` |
+| HTTP | `GET /api/v1/design`, `/api/v1/design/tokens?kind=role`, `/api/v1/design/explain?token=fg`, `/api/v1/design/contrast`, `/api/v1/design/kit` |
+| OpenAPI, Swagger | the same five operations, from the registry |
 | Cockpit | `/cockpit/design`: every role with both themes' swatches, every status with its words as badges, the type scale at its own sizes, the projections — and the badge that says whether the stylesheet the page loaded agrees with the executable |
 | reference | `docs/generated/design.md`, and the JSON and YAML beside it |
 
@@ -286,6 +286,66 @@ majordomus_design_explain {"token": "--mj-ok"}
   aliases: --color-fg-success-strong --color-success-soft --color-success-subtle,
   projections: share/design/theme.css share/design/surface.css …
 ```
+
+## The UI kit of a supervised repository
+
+Everything above is this tool's own design. `majordomus design kit` asks a different
+question, about the repository Majordomus supervises: is its user interface built on the
+kit the owner licenses? The answer comes from a kit profile the distribution ships,
+[`share/design/kits/flowbite-pro.yaml`](../share/design/kits/flowbite-pro.yaml). The
+profile holds markers only: attributes, class lists, package names and file shapes. It
+never holds a line of Flowbite Pro itself. The decision is
+[ADR 0229](../.ai/repo/adrs/0229-flowbite-pro-is-adapted-onto-tailwind-4.md): Pro's
+structure is adapted onto Tailwind 4 and Flowbite 4, and a brand's colour is declared as
+Tailwind's `primary` scale.
+
+| signal | holds when |
+|---|---|
+| S0 | there is no user interface at all, and the rule then holds vacuously. Otherwise an interface was found: a package manifest with Tailwind, React, Next.js, Vue, Svelte or Flowbite, Phoenix LiveView in `mix.exs`, `*.heex`, `templates/*.html`, a root `index.html`, or a Next.js `app/layout.tsx` |
+| S1 | `flowbite` is a dependency, or `flowbite-react` for React and Next.js |
+| S2 | under Tailwind 4, `@plugin "flowbite/plugin"` and an `@source` over Flowbite; under Tailwind 3, `require('flowbite/plugin')` and a content glob. A Play CDN or a CDN-only Flowbite is a finding |
+| S3 | every `data-drawer-*`, `data-dropdown-*`, `data-modal-*`, `data-tabs-*`, `data-collapse-*` and `data-tooltip-*` attribute is driven by Flowbite's JavaScript, and no script reads those attributes itself |
+| S4 | no daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui or Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation or Materialize. Alpine.js is reported, not refused |
+| S5 | every root layout carries a fixed top navbar, an `aside[aria-label="Sidebar"]` that both `data-drawer-target` and `data-drawer-toggle` name, a breadcrumb, and the page, surface and border roles |
+
+```console
+majordomus design kit                    # findings with their remedies; exit 0
+majordomus design kit --check            # exit 10 on a finding (CI, pre-push)
+majordomus design kit --repo ../other    # any tree, supervised or not
+majordomus design kit adopt flowbite-pro [--dry-run]
+```
+
+Each finding names its signal, path, evidence and remedy. Exit 0 means clean or no
+interface, 10 a finding under `--check`, and 2 a policy that cannot be read. The same
+answer is `GET /api/v1/design/kit` and the MCP tool `majordomus_design_kit`.
+
+`adopt` writes the rule `project.ui-uses-flowbite-pro` from
+[the template](../share/design/kits/flowbite-pro.rule.md). It adds the `design_kit` block
+to `.ai/repo/policy.yaml`, and two enforcement entries that run `design kit --check`:
+`design-kit-on-push` (the pre-push hook) and `design-kit` (the CI workflow, when there is
+one). It writes nothing that is already there, so a second run changes nothing.
+`majordomus doctor` names each entry until the hook and the workflow invoke it.
+
+An exemption is declared in the block with its reason and is never silent. Every answer
+lists it, with the number of findings it covered:
+
+```yaml
+design_kit:
+  profile: flowbite-pro
+  layouts: [lib/app_web/components/layouts/app.html.heex]   # instead of the profile's
+  roles:
+    page: [bg-page]                 # a token rule's alias for bg-gray-50 dark:bg-gray-900
+  exempt:
+    - path: reel.html
+      because: a render canvas, captured headless and never navigated
+    - path: index.html
+      because: the landing page
+      shell: marketing              # S5 judges the Pro marketing navbar and footer instead
+```
+
+This repository has not adopted the rule yet. Its site's navigation is `site/nav.js`, a
+hand-written drawer that S3 refuses, and the site, the Cockpit and `/ui` move onto the Pro
+shell in a later slice (ADR 0229, Consequences).
 
 ## Troubleshooting
 
