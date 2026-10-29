@@ -51,7 +51,9 @@
 //!   its `if: always()` `ci` would write a failure). A run with no job of its attempt is pending
 //!   in its group and is never ended for waiting. Only a pull request's run is ended this way,
 //!   since a run that waits in a queue holds no runner and frees nothing for anyone but a
-//!   newer run of its own pull request: an
+//!   newer run of its own pull request; and at its pull request's current head only while
+//!   another run of that head is left to reach a verdict ([`HoldReason::LastRunOfHead`], "A
+//!   head keeps its run" below): an
 //!   `integration/*` top waits for a runner and its verdict is the one a landing needs
 //!   ([`HoldReason::IntegrationTopWaits`]), and a run of the trunk, a tag, the schedule, a
 //!   dispatch or a release is in a group of its own ([`HoldReason::ProtectedRunWaits`]).
@@ -65,11 +67,47 @@
 //!   time either, so the jobs a re-run carries over from an earlier attempt, listed with their
 //!   first start, never count (38013111243's attempt 2, 40747313397's attempt 3). An
 //!   `integration/*` top whose job runs past it is held ([`HoldReason::IntegrationTopRuns`]).
+//!   The last run of a pull request's head ended this way is re-run once it has ended
+//!   ([`Decision::rerun`]).
 //!
 //! What is never cancelled for being superseded is fixed here, not declared: a push to the
 //! default branch, any other push (a tag push among them), the schedule, a dispatch, a
 //! release, and every run of the pages or release workflows ([`Protection`]). The supervising
 //! workflow's own runs are never cancelled for any reason.
+//!
+//! # A head keeps its run
+//!
+//! The four reasons judge one run each, and a run judged alone can be the last one its pull
+//! request's head has. The review of #2645 at eed0b4f8ff4 found two ways to end it: a run at the
+//! head queued past its bound with nothing behind it, and a twin cancelled as a duplicate while
+//! its older run was young, whose older run a bound ended hours later. A force-cancel skips the
+//! `if: always()` jobs, so validate's required `ci` is then never written and the pull request
+//! waits for a check that will not come, with nothing asking for a run again. So [`decide`] holds
+//! every pass to one invariant, and [`still_holds`] holds every act to it again over its fresh
+//! reading:
+//!
+//! > an open pull request's current head that has a run on its way to a verdict
+//! > ([`RunObservation::toward_verdict`]), or a verdict among the runs observed, still has one
+//! > once the pass has acted.
+//!
+//! A cancel that would end the last such run ([`head_keeps_a_run`]) is settled by what the run
+//! holds. A run that waits holds no runner, so ending it frees nothing: a `queued_past_bound` or
+//! `duplicate_run` cancel is not made, and the run is held ([`HoldReason::LastRunOfHead`]). A run
+//! with a job past its bound holds a runner that its own timeout did not free, and freeing it is
+//! the bound's purpose: the `running_past_bound` cancel is made, paired with a re-run of the same
+//! run once it has ended ([`Decision::rerun`]), as the release path's `resume` re-runs a run that
+//! yielded; the re-run is on the trail with the cancel. A `superseded_blocks_successor` cancel
+//! never meets the rule: its run is not at the head, and its successor is.
+//!
+//! That keeps the incidents I3903 was opened for fixed. The runs of 2026-10-28 that waited for
+//! hours waited behind runs of heads nobody would merge (10a's, 10b's 40764355688) or behind a
+//! same-commit twin whose older run was in flight (10b's 40713048283): neither cancel ends a
+//! head's last run, and both are made as before. Holding a twin until its older run has a
+//! verdict, and cancelling it only on a success, was weighed and refused: the group admits the
+//! twin the moment its older run completes, an admitted twin is never cancelled (#2678 above),
+//! so that rule would never cancel a twin at all and would bring back 10b's seven-hour twin.
+//! Cancelling a twin early is safe instead because a later bound can no longer end its older
+//! run without leaving the head a run.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -103,7 +141,10 @@ pub const STALE_MINUTES: u64 = 30;
 
 /// How far ahead the older run of a twin is judged before the twin is cancelled: the longest a
 /// live supervisor goes between two passes ([`STALE_MINUTES`]). An older run that a bound would
-/// end by then keeps its twin, so that the next pass does not end the only run left.
+/// end by then keeps its twin, which takes its place, and no re-run is needed. A live
+/// supervisor judges a twin within minutes of its creation, when its older run is far from
+/// either bound, so this rarely holds one; what keeps the head a run when the bound comes later
+/// is the invariant of [`decide`] (a head keeps its run), not this horizon.
 pub const TWIN_HORIZON_MINUTES: u64 = STALE_MINUTES;
 
 /// The finding of a supervisor whose newest success is older than [`STALE_MINUTES`].
@@ -206,6 +247,33 @@ impl RunObservation {
     /// Whether any job of its current attempt was taken by a runner.
     pub fn any_job_started(&self) -> bool {
         self.jobs.iter().any(|j| j.started() && !self.carried(j))
+    }
+
+    /// Whether a cancel has reached its current attempt: the run, or a job of the attempt,
+    /// concluded `cancelled`. Such a run can still be listed in flight while its `if: always()`
+    /// jobs run, with a verdict nobody reads.
+    pub fn cancelled_already(&self) -> bool {
+        self.conclusion.as_deref() == Some("cancelled")
+            || self
+                .jobs
+                .iter()
+                .any(|j| j.conclusion.as_deref() == Some("cancelled") && !self.carried(j))
+    }
+
+    /// Whether it is on its way to a verdict: in flight, and no cancel has reached it.
+    pub fn toward_verdict(&self) -> bool {
+        self.in_flight() && !self.cancelled_already()
+    }
+
+    /// Whether it has completed with a verdict: `success`, `failure` or `timed_out`. A
+    /// cancelled or skipped run decided nothing. The supervisor observes only the runs in
+    /// flight, so it sees one only where it is handed it.
+    pub fn verdict_written(&self) -> bool {
+        self.status == "completed"
+            && matches!(
+                self.conclusion.as_deref(),
+                Some("success" | "failure" | "timed_out")
+            )
     }
 
     /// Since when its current attempt has waited for a runner, in seconds since the epoch: when
@@ -551,6 +619,17 @@ pub enum HoldReason {
         /// The declared bound.
         bound: u64,
     },
+    /// The last run of its pull request's current head on its way to a verdict, which a rule
+    /// would end while it waits: as a duplicate, or queued past its bound. Ending it would
+    /// leave the head with no run and nothing to ask for one (a force-cancel skips the
+    /// `if: always()` `ci`, so the required check would stay expected), while a run that waits
+    /// holds no runner and ending it frees nothing: it waits on.
+    LastRunOfHead {
+        /// The pull request.
+        pull_request: u64,
+        /// What it would have been ended for, as a [`CancelReason::word`].
+        would_end_for: String,
+    },
     /// A time it would be judged by could not be read.
     Unjudgeable {
         /// Which.
@@ -578,6 +657,13 @@ pub struct Decision {
     pub status: String,
     /// Why.
     pub reason: CancelReason,
+    /// Whether the cancel is paired with a re-run of the same run once it has ended: it is the
+    /// last run of its pull request's current head on its way to a verdict, ended because a
+    /// job of it runs past its bound, so its runner is freed and the head is tested again
+    /// rather than left with no run (the release path's `resume` re-runs a run that yielded
+    /// the same way). Only a `running_past_bound` cancel is ever paired.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub rerun: bool,
 }
 
 /// One run left alone, and why.
@@ -726,11 +812,7 @@ const ENDS_CANCELLED: &str = "cancelled";
 fn ends_for(earlier: &RunObservation, s: &Situation<'_>) -> Option<String> {
     // cancelled, by an earlier pass or by hand: its `ci` still waits for a runner (one waited
     // eleven minutes on 2026-10-29), and the twin is the commit's only run from then on
-    if earlier
-        .jobs
-        .iter()
-        .any(|j| j.conclusion.as_deref() == Some("cancelled") && !earlier.carried(j))
-    {
+    if earlier.cancelled_already() {
         return Some(ENDS_CANCELLED.into());
     }
     if let Verdict::Cancel(reason) = judge(earlier, s) {
@@ -936,43 +1018,100 @@ pub fn needs_jobs(
         && runs.iter().any(|o| same_burst(o, run))
 }
 
-/// Every decision over one observation.
+/// Whether ending `run` leaves its pull request's current head a run: always, unless `run` is a
+/// pull request's run at that head on its way to a verdict
+/// ([`RunObservation::toward_verdict`]); then another run of the same workflow, pull request
+/// and head must be on its way to one, or have written one, and not be among `ended`, the runs
+/// this pass ends before it. A run already cancelled decides nothing, so ending it takes
+/// nothing from the head. The supervisor observes only the runs in flight, so a verdict the
+/// head already has is seen only where it is handed in: the rule errs towards keeping a run.
+pub fn head_keeps_a_run(run: &RunObservation, s: &Situation<'_>, ended: &BTreeSet<u64>) -> bool {
+    let Some(n) = run.pull_request.filter(|_| run.event == "pull_request") else {
+        return true;
+    };
+    if s.pr_heads.get(&n) != Some(&run.head_sha) || !run.toward_verdict() {
+        return true;
+    }
+    s.runs.iter().any(|o| {
+        o.id != run.id
+            && !ended.contains(&o.id)
+            && o.workflow == run.workflow
+            && o.event == "pull_request"
+            && o.pull_request == Some(n)
+            && o.head_sha == run.head_sha
+            && (o.toward_verdict() || o.verdict_written())
+    })
+}
+
+/// [`judge`]'s verdict on `run`, held to the invariant of every pass: a cancel that would leave
+/// its pull request's head with no run ([`head_keeps_a_run`], over the runs `ended` before it)
+/// is a hold when the run waits ([`HoldReason::LastRunOfHead`]), and is paired with a re-run
+/// when a job of it runs past its bound (the `bool`). See the module's "A head keeps its run".
+fn settle(run: &RunObservation, s: &Situation<'_>, ended: &BTreeSet<u64>) -> (Verdict, bool) {
+    match judge(run, s) {
+        Verdict::Cancel(reason) if !head_keeps_a_run(run, s, ended) => match reason {
+            // its runner is held by a job its own timeout did not end: freed, and asked again
+            CancelReason::RunningPastBound { .. } => (Verdict::Cancel(reason), true),
+            // it waits, holding no runner: ending it frees nothing and leaves the head bare
+            other => (
+                Verdict::Hold(HoldReason::LastRunOfHead {
+                    pull_request: run.pull_request.unwrap_or_default(),
+                    would_end_for: other.word().into(),
+                }),
+                false,
+            ),
+        },
+        v => (v, false),
+    }
+}
+
+/// Every decision over one observation, in run order. Each cancel is settled against the ones
+/// before it ([`settle`]), so no pass ends the last run of an open pull request's head without
+/// asking for it again.
 pub fn decide(s: &Situation<'_>) -> Supervision {
     // in run order, each run once: the map is the order
     let runs: BTreeMap<u64, &RunObservation> = s.runs.iter().map(|r| (r.id, r)).collect();
     let mut out = Supervision::default();
+    let mut ended = BTreeSet::new();
     for run in runs.into_values() {
-        match judge(run, s) {
-            Verdict::Cancel(reason) => out.decisions.push(Decision {
+        match settle(run, s, &ended) {
+            (Verdict::Cancel(reason), rerun) => {
+                ended.insert(run.id);
+                out.decisions.push(Decision {
+                    run: run.id,
+                    workflow: run.workflow.clone(),
+                    event: run.event.clone(),
+                    head_branch: run.head_branch.clone(),
+                    head_sha: run.head_sha.clone(),
+                    pull_request: run.pull_request,
+                    status: run.status.clone(),
+                    reason,
+                    rerun,
+                })
+            }
+            (Verdict::Hold(reason), _) => out.held.push(Hold {
                 run: run.id,
                 workflow: run.workflow.clone(),
                 event: run.event.clone(),
-                head_branch: run.head_branch.clone(),
-                head_sha: run.head_sha.clone(),
-                pull_request: run.pull_request,
-                status: run.status.clone(),
                 reason,
             }),
-            Verdict::Hold(reason) => out.held.push(Hold {
-                run: run.id,
-                workflow: run.workflow.clone(),
-                event: run.event.clone(),
-                reason,
-            }),
-            Verdict::Fine => {}
+            (Verdict::Fine, _) => {}
         }
     }
     out
 }
 
 /// Whether `decision` still holds over a fresh reading of its run (`fresh`, `None` when the
-/// forge no longer lists it) and of its pull request's head, the other runs as first
-/// observed: the reason of the same kind, or `None` and the act is skipped.
+/// forge no longer lists it) and of its pull request's head, the other runs as this pass has
+/// left them (a run it cancelled reads cancelled): the decision as it stands now, its reason of
+/// the same kind and whether it is paired with a re-run settled again ([`settle`]), or `None`
+/// and the act is skipped. A head whose other run ended meanwhile turns a plain cancel into a
+/// paired one, or into no act.
 pub fn still_holds(
     decision: &Decision,
     fresh: Option<&RunObservation>,
     s: &Situation<'_>,
-) -> Option<CancelReason> {
+) -> Option<Decision> {
     let mut fresh = fresh?.clone();
     // a run the forge names no pull request for keeps the one it was decided under
     if fresh.pull_request.is_none() && fresh.event == "pull_request" {
@@ -987,11 +1126,16 @@ pub fn still_holds(
         .collect();
     runs.push(fresh.clone());
     let again = Situation { runs: &runs, ..*s };
-    match judge(fresh, &again) {
-        Verdict::Cancel(reason)
+    match settle(fresh, &again, &BTreeSet::new()) {
+        (Verdict::Cancel(reason), rerun)
             if std::mem::discriminant(&reason) == std::mem::discriminant(&decision.reason) =>
         {
-            Some(reason)
+            Some(Decision {
+                reason,
+                rerun,
+                status: fresh.status.clone(),
+                ..decision.clone()
+            })
         }
         _ => None,
     }
@@ -1156,9 +1300,21 @@ mod tests {
         pairs.iter().map(|(n, s)| (*n, s.to_string())).collect()
     }
 
+    /// [`decide`], with the invariant of every pass asserted over what it decided: no open pull
+    /// request's head that had a run is left without one (supervise_property.rs).
+    fn decided(s: &Situation<'_>) -> Supervision {
+        let out = decide(s);
+        let left = crate::integration::supervise_property::heads_left_without_a_run(s, &out);
+        assert!(
+            left.is_empty(),
+            "heads left without a run: {left:?}: {out:?}"
+        );
+        out
+    }
+
     fn decide_over(runs: &[RunObservation], h: &BTreeMap<u64, String>) -> Supervision {
         let m = model();
-        decide(&Situation {
+        decided(&Situation {
             runs,
             pr_heads: h,
             full: &BTreeSet::new(),
@@ -1286,7 +1442,7 @@ mod tests {
             },
         );
         let h = heads(&[(7, "new")]);
-        let s = decide(&Situation {
+        let s = decided(&Situation {
             runs: &runs,
             pr_heads: &h,
             full: &BTreeSet::new(),
@@ -1338,7 +1494,7 @@ mod tests {
             // a model that tried to declare it is refused (model_of), so force it here
             m.bounds.get_mut(*workflow).unwrap().superseded = SupersededGroup::PerPullRequest;
             let h = heads(&[(7, "new")]);
-            let s = decide(&Situation {
+            let s = decided(&Situation {
                 runs: &runs,
                 pr_heads: &h,
                 full: &BTreeSet::new(),
@@ -1359,8 +1515,11 @@ mod tests {
 
     #[test]
     fn a_run_queued_past_its_bound_with_no_job_started_is_cancelled() {
+        // its pull request's head moved, and nothing waits behind it: the bound ends it (at the
+        // head and alone, it would be held: a_head_keeps_its_last_run)
+        let moved = heads(&[(7, "b")]);
         let runs = vec![run(100, "a", Some(7), "queued", 241)];
-        let s = decide_over(&runs, &heads(&[(7, "a")]));
+        let s = decide_over(&runs, &moved);
         assert_eq!(
             s.decisions[0].reason,
             CancelReason::QueuedPastBound {
@@ -1368,6 +1527,7 @@ mod tests {
                 bound: 240
             }
         );
+        assert!(!s.decisions[0].rerun);
         // at the bound it is not past it
         let runs = vec![run(100, "a", Some(7), "queued", 240)];
         assert!(decide_over(&runs, &heads(&[(7, "a")])).decisions.is_empty());
@@ -1400,9 +1560,7 @@ mod tests {
             },
         ];
         assert_eq!(
-            decide_over(&runs, &heads(&[(7, "a")])).decisions[0]
-                .reason
-                .word(),
+            decide_over(&runs, &moved).decisions[0].reason.word(),
             "queued_past_bound"
         );
         // an integration/* top waits for a runner and is never ended for it
@@ -1438,7 +1596,7 @@ mod tests {
         assert!(decide_over(&runs, &heads(&[(7, "a")])).decisions.is_empty());
         runs[0].run_started_at = Some(at(241));
         assert_eq!(
-            decide_over(&runs, &heads(&[(7, "a")])).decisions[0].reason,
+            decide_over(&runs, &moved).decisions[0].reason,
             CancelReason::QueuedPastBound {
                 minutes: 241,
                 bound: 240
@@ -1458,9 +1616,7 @@ mod tests {
         assert!(runs[0].carried(&runs[0].jobs[0]));
         assert!(!runs[0].any_job_started());
         assert_eq!(
-            decide_over(&runs, &heads(&[(7, "a")])).decisions[0]
-                .reason
-                .word(),
+            decide_over(&runs, &moved).decisions[0].reason.word(),
             "queued_past_bound"
         );
     }
@@ -1477,6 +1633,8 @@ mod tests {
                 bound: 255
             }
         );
+        // the last run of its head: its runner is freed, and it is run again once ended
+        assert!(s.decisions[0].rerun, "{s:?}");
         let runs = vec![run(100, "a", Some(7), "in_progress", 255)];
         assert!(decide_over(&runs, &heads(&[(7, "a")])).decisions.is_empty());
         // measured from the running job's start, not the run's creation nor its first job: a
@@ -1543,6 +1701,88 @@ mod tests {
                 .word(),
             "running_past_bound"
         );
+    }
+
+    #[test]
+    fn a_head_keeps_its_last_run() {
+        let at_head = heads(&[(7, "a")]);
+        // queued past its bound at its head, with nothing else there: held, since a run that
+        // waits holds no runner and ending it would leave the head with no run
+        let alone = vec![run(100, "a", Some(7), "queued", 241)];
+        let s = decide_over(&alone, &at_head);
+        assert!(s.decisions.is_empty(), "{s:?}");
+        assert_eq!(
+            s.held,
+            vec![Hold {
+                run: 100,
+                workflow: "validate".into(),
+                event: "pull_request".into(),
+                reason: HoldReason::LastRunOfHead {
+                    pull_request: 7,
+                    would_end_for: "queued_past_bound".into()
+                }
+            }]
+        );
+        // a newer run of the head waiting behind it takes its place: ended as before
+        let mut behind = alone.clone();
+        behind.push(run(101, "a", Some(7), "pending", 30));
+        let s = decide_over(&behind, &at_head);
+        assert_eq!(s.decisions.len(), 1, "{s:?}");
+        assert_eq!(s.decisions[0].run, 100);
+        assert!(!s.decisions[0].rerun);
+        // and so a verdict the head already has, where it is handed in
+        let mut judged = alone.clone();
+        let mut passed = run(90, "a", Some(7), "completed", 300);
+        passed.conclusion = Some("success".into());
+        judged.push(passed.clone());
+        assert_eq!(decide_over(&judged, &at_head).decisions.len(), 1);
+        // a cancelled run is no verdict, nor is one a cancel reached that still runs its ci
+        let mut gone = passed.clone();
+        gone.conclusion = Some("cancelled".into());
+        let mut ending = run(101, "a", Some(7), "in_progress", 30);
+        ending.jobs[0].status = "completed".into();
+        ending.jobs[0].conclusion = Some("cancelled".into());
+        assert!(ending.in_flight() && !ending.toward_verdict());
+        let s = decide_over(&[alone[0].clone(), gone, ending], &at_head);
+        assert!(s.decisions.is_empty(), "{s:?}");
+        // a run of another pull request, branch or workflow at the same commit is not this
+        // head's run
+        let mut other = run(101, "a", Some(8), "pending", 30);
+        other.head_branch = "fix/y".into();
+        let s = decide_over(&[alone[0].clone(), other], &heads(&[(7, "a"), (8, "a")]));
+        assert!(s.decisions.is_empty(), "{s:?}");
+        // a job past its bound holds a runner: the last run is ended and run again once ended,
+        // and with another run of the head left it is ended alone
+        let hung = vec![run(100, "a", Some(7), "in_progress", 300)];
+        let s = decide_over(&hung, &at_head);
+        assert_eq!(s.decisions[0].reason.word(), "running_past_bound");
+        assert!(s.decisions[0].rerun);
+        let mut hung_behind = hung.clone();
+        hung_behind.push(run(101, "a", Some(7), "pending", 30));
+        let s = decide_over(&hung_behind, &at_head);
+        assert_eq!(s.decisions.len(), 1, "{s:?}");
+        assert!(!s.decisions[0].rerun, "{s:?}");
+        // two runs of one head both past a bound in one pass: the first ends alone, and the
+        // second, then the last, is held or paired
+        let mut both = vec![
+            run(100, "a", Some(7), "queued", 300),
+            run(101, "a", Some(7), "queued", 241),
+        ];
+        both[1].created_at = at(250);
+        let s = decide_over(&both, &at_head);
+        assert_eq!(
+            s.decisions.iter().map(|d| d.run).collect::<Vec<_>>(),
+            vec![100],
+            "{s:?}"
+        );
+        assert!(matches!(s.held[0].reason, HoldReason::LastRunOfHead { .. }));
+        // a superseded run is never its head's: ended by its bound with no re-run
+        let s = decide_over(&hung, &heads(&[(7, "b")]));
+        assert_eq!(s.decisions[0].reason.word(), "running_past_bound");
+        assert!(!s.decisions[0].rerun);
+        // nor is a run of a pull request that is not open
+        let s = decide_over(&alone, &heads(&[]));
+        assert_eq!(s.decisions[0].reason.word(), "queued_past_bound");
     }
 
     #[test]
@@ -1635,7 +1875,7 @@ mod tests {
         let runs = vec![run(100, "a", None, "in_progress", 10_000)];
         let m = model();
         let h = heads(&[]);
-        let s = decide(&Situation {
+        let s = decided(&Situation {
             runs: &runs,
             pr_heads: &h,
             full: &BTreeSet::new(),
@@ -1695,7 +1935,7 @@ mod tests {
             now: NOW,
             self_run: None,
         };
-        let d = decide(&s).decisions.remove(0);
+        let d = decided(&s).decisions.remove(0);
         assert!(still_holds(&d, Some(&runs[0]), &s).is_some());
         // it completed meanwhile
         let mut done = runs[0].clone();
@@ -1717,7 +1957,7 @@ mod tests {
         let m = model();
         let h = heads(&[(7, "a")]);
         let over = |runs: &[RunObservation], now: u64| {
-            decide(&Situation {
+            decided(&Situation {
                 runs,
                 pr_heads: &h,
                 full: &BTreeSet::new(),

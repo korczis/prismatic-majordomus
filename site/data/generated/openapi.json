@@ -28655,7 +28655,7 @@
       "is_enum": true,
       "name": "IntegrationAction",
       "properties": [],
-      "type": "\"lease_acquired\" | \"lease_released\" | \"continuous_started\" | \"continuous_stopped\" | \"observed\" | \"became_actionable\" | \"left_actionable\" | \"selected\" | \"refresh_selected\" | \"stale_decision\" | \"merge_attempted\" | \"merge_succeeded\" | \"merge_failed\" | \"verification_failed\" | \"failure_acknowledged\" | \"refresh_attempted\" | \"refreshed\" | \"refresh_failed\" | \"close_attempted\" | \"closed_redundant\" | \"closed_superseded\" | \"close_failed\" | \"reopen_attempted\" | \"reopened\" | \"reopen_failed\" | \"repair_selected\" | \"repair_attempted\" | \"repaired\" | \"repair_refused\" | \"idle\" | \"observe_failed\" | \"run_cancel_attempted\" | \"run_cancelled\" | \"run_cancel_failed\" | \"run_already_ended\"",
+      "type": "\"lease_acquired\" | \"lease_released\" | \"continuous_started\" | \"continuous_stopped\" | \"observed\" | \"became_actionable\" | \"left_actionable\" | \"selected\" | \"refresh_selected\" | \"stale_decision\" | \"merge_attempted\" | \"merge_succeeded\" | \"merge_failed\" | \"verification_failed\" | \"failure_acknowledged\" | \"refresh_attempted\" | \"refreshed\" | \"refresh_failed\" | \"close_attempted\" | \"closed_redundant\" | \"closed_superseded\" | \"close_failed\" | \"reopen_attempted\" | \"reopened\" | \"reopen_failed\" | \"repair_selected\" | \"repair_attempted\" | \"repaired\" | \"repair_refused\" | \"idle\" | \"observe_failed\" | \"run_cancel_attempted\" | \"run_cancelled\" | \"run_cancel_failed\" | \"run_already_ended\" | \"run_rerun_requested\" | \"run_rerun_failed\"",
       "used_by": [],
       "used_by_schemas": [
         "IntegrationEvent",
@@ -28801,6 +28801,14 @@
         {
           "description": "The run had ended before the cancel reached it: another supervision, in a lane that\napplied in the same minute, cancelled it, or it completed on its own. Nothing was left\nto do, and nothing failed.",
           "value": "run_already_ended"
+        },
+        {
+          "description": "The run just force-cancelled was asked to run again: it was the last run of its pull\nrequest's head on its way to a verdict, ended because a job of it ran past its bound\n(`super::supervise::Decision::rerun`).",
+          "value": "run_rerun_requested"
+        },
+        {
+          "description": "The re-run of the run just force-cancelled could not be asked: its pull request's head\nhas no run until somebody re-runs it.",
+          "value": "run_rerun_failed"
         }
       ],
       "variants": []

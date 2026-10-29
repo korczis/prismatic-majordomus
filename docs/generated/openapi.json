@@ -41681,6 +41681,16 @@
             "type": "string",
             "const": "run_already_ended",
             "description": "The run had ended before the cancel reached it: another supervision, in a lane that\napplied in the same minute, cancelled it, or it completed on its own. Nothing was left\nto do, and nothing failed."
+          },
+          {
+            "type": "string",
+            "const": "run_rerun_requested",
+            "description": "The run just force-cancelled was asked to run again: it was the last run of its pull\nrequest's head on its way to a verdict, ended because a job of it ran past its bound\n(`super::supervise::Decision::rerun`)."
+          },
+          {
+            "type": "string",
+            "const": "run_rerun_failed",
+            "description": "The re-run of the run just force-cancelled could not be asked: its pull request's head\nhas no run until somebody re-runs it."
           }
         ],
         "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."

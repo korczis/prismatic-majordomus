@@ -55,8 +55,9 @@ it is described as real.
   `prs cleanup`, `prs repair --apply` and `prs supervise` run the GitHub CLI (`gh`), `git fetch` and
   `git ls-remote` against this repository's own `origin`, with the person's own `gh` credentials. Nothing else does.
   `prs supervise` reads the repository's in-flight Actions runs and open pull requests, and
-  with `--apply` force-cancels a run past its declared bound, recording each act on the
-  integration trail before it is taken (I3903).
+  with `--apply` force-cancels a run past its declared bound, and re-runs the one it ended when
+  that was the last run of its pull request's head, recording each act on the integration
+  trail before it is taken (I3903).
   `prs status`, `plan`, `explain`, `events`, `repair` without `--apply`, the HTTP routes
   under `/api/v1/pull-requests`, the MCP tools and the Cockpit render the observation last
   recorded under `.ai/local/state/integration/`, with its moment, and never reach the

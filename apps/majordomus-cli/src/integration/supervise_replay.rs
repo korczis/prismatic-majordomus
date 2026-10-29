@@ -32,6 +32,14 @@
 //! clock starts at its admission (40811621641: created 03:20:59Z, admitted 05:31:53Z); and the
 //! twin of #2674's ended run is held while that run runs only its `ci`, then waits for a runner,
 //! and is cancelled on no tick from 06:06Z to 06:50Z.
+//!
+//! The review of that verification (eed0b4f8ff4) found a head left with no run, two ways: the
+//! last run of a head queued past its bound, and a twin ended early whose older run a bound ended
+//! hours later. #2687's pair at b689fdb1 is replayed on: its twin ended at 09:16Z, its older run
+//! then held at its bound when it waits and run again when it hangs; #2674's twin is ended on the
+//! first tick a live supervisor has, and its older run is re-run at 06:05Z; #2349's `ci:full`
+//! re-run whose macOS job waits is held. Every replay here asserts that no head is left without
+//! a run ([`decided`]).
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -136,11 +144,25 @@ fn model() -> SuperviseModel {
     m
 }
 
+/// [`decide`] over a replayed moment, with the invariant of every pass asserted over what it
+/// decided: no open pull request's head that had a run is left without one. Every replay below
+/// goes through here, at every tick it replays (supervise_property.rs).
+fn decided(s: &Situation<'_>) -> Supervision {
+    let out = decide(s);
+    let left = super::supervise_property::heads_left_without_a_run(s, &out);
+    assert!(
+        left.is_empty(),
+        "at {}: heads left without a run: {left:?}: {out:?}",
+        s.now
+    );
+    out
+}
+
 fn replay(runs: &[RunObservation], head: &str, full: &[u64], at: &str) -> Supervision {
     let m = model();
     let heads: BTreeMap<u64, String> = [(PR, head.to_string())].into_iter().collect();
     let full: BTreeSet<u64> = full.iter().copied().collect();
-    decide(&Situation {
+    decided(&Situation {
         runs,
         pr_heads: &heads,
         full: &full,
@@ -577,7 +599,7 @@ fn decide_at(
     let m = model();
     let heads: BTreeMap<u64, String> = heads.iter().map(|(n, s)| (*n, s.to_string())).collect();
     let full: BTreeSet<u64> = full.iter().copied().collect();
-    decide(&Situation {
+    decided(&Situation {
         runs,
         pr_heads: &heads,
         full: &full,
@@ -737,8 +759,14 @@ fn a_re_run_created_six_hours_earlier_and_queued_two_minutes_is_not_cancelled() 
         "2026-10-29T14:02:00Z",
     );
     assert!(s.decisions.is_empty(), "{s:?}");
-    // the attempt is held to the bound from its admission, its plan job's creation at 14:00:01Z
-    let s = decide_at(&[r], &[(7, "aaaa")], &[], "2026-10-29T18:01:01Z");
+    // the attempt is held to the bound from its admission, its plan job's creation at 14:00:01Z:
+    // past it, with its pull request's head moved on and nothing behind it, it is ended
+    let s = decide_at(
+        std::slice::from_ref(&r),
+        &[(7, "bbbb")],
+        &[],
+        "2026-10-29T18:01:01Z",
+    );
     assert_eq!(s.decisions.len(), 1, "{s:?}");
     assert_eq!(
         s.decisions[0].reason,
@@ -747,6 +775,10 @@ fn a_re_run_created_six_hours_earlier_and_queued_two_minutes_is_not_cancelled() 
             bound: 240
         }
     );
+    // at its head it is the head's last run, and a run that waits holds no runner: held
+    let s = decide_at(&[r], &[(7, "aaaa")], &[], "2026-10-29T18:01:01Z");
+    assert!(s.decisions.is_empty(), "{s:?}");
+    assert_eq!(kind(&s.held[0].reason), "last_run_of_head", "{s:?}");
 }
 
 /// Validate's push of master 40796031054, queued since 00:44:35Z on a starved pool: its
@@ -1066,7 +1098,8 @@ fn a_twin_of_2674s_run_past_its_bound_is_never_cancelled_with_it() {
         }
     );
     // and so on every tick within the horizon before the bound: the next pass would end the
-    // older run, so this one does not end its twin
+    // older run, so this one does not end its twin. Both holds are reached only by a supervisor
+    // that was down from the burst until then: a live one judges the twin within minutes
     for at in ticks("2026-10-29T05:40:00Z", "2026-10-29T06:00:00Z") {
         let s = decide_at(&[older_at(&at), twin()], &[(2674, head)], &[], &at);
         assert!(
@@ -1074,6 +1107,35 @@ fn a_twin_of_2674s_run_past_its_bound_is_never_cancelled_with_it() {
             "{at}: {s:?}"
         );
     }
+    // what a live supervisor does (the review of eed0b4f8ff4): the twin is ended as a duplicate
+    // on the first tick after the burst, while its older run is young ...
+    let s = decide_at(
+        &[older_at("2026-10-29T01:40:00Z"), twin()],
+        &[(2674, head)],
+        &[],
+        "2026-10-29T01:40:00Z",
+    );
+    assert_eq!(s.decisions[0].reason.word(), "duplicate_run", "{s:?}");
+    // ... and hours later the bound ends the older run, now the head's last: it is run again once
+    // ended, so #2674's head is never left with no run
+    for at in ticks("2026-10-29T02:00:00Z", "2026-10-29T06:00:00Z") {
+        let s = decide_at(&[older_at(&at)], &[(2674, head)], &[], &at);
+        assert!(s.decisions.is_empty(), "{at}: {s:?}");
+    }
+    let s = decide_at(
+        &[older_at("2026-10-29T06:05:00Z")],
+        &[(2674, head)],
+        &[],
+        "2026-10-29T06:05:00Z",
+    );
+    assert_eq!(
+        s.decisions
+            .iter()
+            .map(|d| (d.run, d.reason.word(), d.rerun))
+            .collect::<Vec<_>>(),
+        vec![(40801560222, "running_past_bound", true)],
+        "{s:?}"
+    );
 }
 
 /// 40801560222's jobs, carried on from the replay above: ended at 06:05:30Z for running past its
@@ -1252,6 +1314,149 @@ fn a_train_and_its_member_at_one_sha_are_two_pull_requests() {
         "2026-10-29T10:31:00Z",
     );
     assert!(s.decisions.is_empty(), "{s:?}");
+}
+
+// ---------------------------------------------------------------- a head keeps its run
+
+/// #2687's pair at b689fdb1, from opening it with a label, as the forge recorded them at 09:16Z:
+/// 40848127747 (`opened`) queued, its plan job created at 09:14:50Z and waiting for a runner
+/// (it started at 09:20:37Z) ...
+const RUN_40848127747: &str = r#"{"id":40848127747,"name":"validate",
+ "path":".github/workflows/validate.yml","event":"pull_request",
+ "head_branch":"fix/a-pages-deploy-is-not-stopped-by-an-optional-step",
+ "head_sha":"b689fdb1fefc50902c97f6c6ab2727d15a9f60b6","status":"queued","conclusion":null,
+ "created_at":"2026-10-29T09:14:49Z","run_started_at":"2026-10-29T09:14:49Z","run_attempt":1,
+ "pull_requests":[{"number":2687,
+ "head":{"ref":"fix/a-pages-deploy-is-not-stopped-by-an-optional-step"}}]}"#;
+
+const JOBS_40848127747_AT_0916: &str = r#"[
+ {"name":"plan","status":"queued","conclusion":null,"started_at":"2026-10-29T09:14:50Z",
+  "created_at":"2026-10-29T09:14:50Z"}
+]"#;
+
+/// ... and its twin 40848130386 (`labeled`), two seconds younger, pending with no job.
+const RUN_40848130386: &str = r#"{"id":40848130386,"name":"validate",
+ "path":".github/workflows/validate.yml","event":"pull_request",
+ "head_branch":"fix/a-pages-deploy-is-not-stopped-by-an-optional-step",
+ "head_sha":"b689fdb1fefc50902c97f6c6ab2727d15a9f60b6","status":"pending","conclusion":null,
+ "created_at":"2026-10-29T09:14:51Z","run_started_at":"2026-10-29T09:14:51Z","run_attempt":1,
+ "pull_requests":[{"number":2687,
+ "head":{"ref":"fix/a-pages-deploy-is-not-stopped-by-an-optional-step"}}]}"#;
+
+const HEAD_2687: &str = "b689fdb1fefc50902c97f6c6ab2727d15a9f60b6";
+
+#[test]
+fn the_twin_of_2687_is_ended_and_its_older_run_keeps_the_head_whatever_its_bounds_say() {
+    let older = run(RUN_40848127747, Some(JOBS_40848127747_AT_0916));
+    let twin = run(RUN_40848130386, None);
+    // the supervision the twin's own `requested` event starts: the twin is the duplicate
+    let s = decide_at(
+        &[older.clone(), twin.clone()],
+        &[(2687, HEAD_2687)],
+        &[],
+        "2026-10-29T09:16:00Z",
+    );
+    assert_eq!(
+        s.decisions
+            .iter()
+            .map(|d| (d.run, d.reason.word()))
+            .collect::<Vec<_>>(),
+        vec![(40848130386, "duplicate_run")],
+        "{s:?}"
+    );
+    // had its plan job got no hosted runner for four hours (the review's case), the older run
+    // is the head's last from then on: past its bound at 13:15:50Z it waits on, held, on every
+    // tick, since ending a run that holds no runner would leave #2687 with no run
+    for at in ticks("2026-10-29T09:20:00Z", "2026-10-29T17:20:00Z") {
+        let s = decide_at(std::slice::from_ref(&older), &[(2687, HEAD_2687)], &[], &at);
+        assert!(s.decisions.is_empty(), "{at}: {s:?}");
+        if t(&at) > t("2026-10-29T13:15:50Z") {
+            assert_eq!(
+                s.held[0].reason,
+                HoldReason::LastRunOfHead {
+                    pull_request: 2687,
+                    would_end_for: "queued_past_bound".into()
+                },
+                "{at}"
+            );
+        }
+    }
+    // had its plan hung once a runner took it at 09:20:37Z, the bound ends it at 13:36:37Z and
+    // asks for it again, so the head is tested again rather than left bare
+    let mut hung = older.clone();
+    hung.status = "in_progress".into();
+    hung.jobs[0].status = "in_progress".into();
+    hung.jobs[0].started_at = Some("2026-10-29T09:20:37Z".into());
+    let s = decide_at(
+        std::slice::from_ref(&hung),
+        &[(2687, HEAD_2687)],
+        &[],
+        "2026-10-29T13:37:00Z",
+    );
+    assert_eq!(
+        s.decisions
+            .iter()
+            .map(|d| (d.run, d.reason.word(), d.rerun))
+            .collect::<Vec<_>>(),
+        vec![(40848127747, "running_past_bound", true)],
+        "{s:?}"
+    );
+    // and with the twin still there (a supervisor down since the burst), the older run is ended
+    // alone and the twin, held, takes its place: no re-run is needed
+    let s = decide_at(
+        &[hung, twin],
+        &[(2687, HEAD_2687)],
+        &[],
+        "2026-10-29T13:37:00Z",
+    );
+    assert_eq!(
+        s.decisions
+            .iter()
+            .map(|d| (d.run, d.rerun))
+            .collect::<Vec<_>>(),
+        vec![(40848127747, false)],
+        "{s:?}"
+    );
+    assert_eq!(kind(&s.held[0].reason), "earlier_run_ends", "{s:?}");
+}
+
+#[test]
+fn a_ci_full_re_run_whose_macos_job_waits_past_its_bound_is_held_at_its_head() {
+    // the review's first case: #2349 labelled ci:full, its failed `macos` re-run at 22:30:09Z
+    // (attempt 3 of 40747313397), every other job carried from attempt 1, and the macOS pool
+    // queueing for hours: the re-created job waits from 22:30:20Z
+    let head = "d560cbc10417177f017a29414d2d0830d81b96e1";
+    let mut r = run(RUN_40747313397, None);
+    r.status = "queued".into();
+    r.jobs = vec![
+        JobObservation {
+            name: "plan".into(),
+            status: "completed".into(),
+            started_at: Some("2026-10-28T20:54:39Z".into()),
+            created_at: Some("2026-10-28T20:54:30Z".into()),
+            conclusion: Some("success".into()),
+        },
+        JobObservation {
+            name: "macos".into(),
+            status: "queued".into(),
+            started_at: Some("2026-10-28T22:30:20Z".into()),
+            created_at: Some("2026-10-28T22:30:20Z".into()),
+            conclusion: None,
+        },
+    ];
+    assert!(!r.any_job_started(), "the plan is attempt 1's");
+    assert_eq!(r.queued_since(), Ok(Some(t("2026-10-28T22:30:20Z"))));
+    // 241 minutes on, the bound is passed and nothing waits behind it: held, not ended
+    for full in [&[][..], &[2349][..]] {
+        let s = decide_at(
+            std::slice::from_ref(&r),
+            &[(2349, head)],
+            full,
+            "2026-10-29T02:31:21Z",
+        );
+        assert!(s.decisions.is_empty(), "{s:?}");
+        assert_eq!(kind(&s.held[0].reason), "last_run_of_head", "{s:?}");
+    }
 }
 
 // ---------------------------------------------------------------- the workflow's wiring

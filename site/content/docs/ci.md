@@ -454,13 +454,37 @@ dispatch. It judges every queued, waiting and running run of the repository agai
 
 | Reason | When |
 |---|---|
-| `duplicate_run` | a first-attempt `pull_request` run of validate that waits in its group with no job created while an older run of the same pull request, branch and commit, created within 120 s of it, is in flight and is not itself to be ended within 30 minutes; never a re-run, nor when the pull request is labelled `ci:full` |
+| `duplicate_run` | a first-attempt `pull_request` run of validate that waits in its group with no job created while an older run of the same pull request, branch and commit, created within 120 s of it, is in flight and is not itself to be ended now or within 30 minutes; never a re-run, nor when the pull request is labelled `ci:full`; a bound that ends the older run later re-runs it if it is then the head's last |
 | `superseded_blocks_successor` | a `pull_request` run of validate whose head is no longer its pull request's, while a newer run of the same pull request at its current head waits in the same group (a newer run of the old commit, its twin, is not one) |
-| `queued_past_bound` | a pull request's run whose attempt has queued longer than its workflow's `queued_minutes` (240 everywhere) with no job of it started, from its admission by its group (the creation of the attempt's first job); a run with no job is pending in its group and never ends for waiting; never an `integration/*` top, a push, the schedule, a dispatch or a release |
-| `running_past_bound` | a job of it in progress longer than its workflow's `running_minutes` (its largest job timeout plus 30), from that job's start; never an `integration/*` top |
+| `queued_past_bound` | a pull request's run whose attempt has queued longer than its workflow's `queued_minutes` (240 everywhere) with no job of it started, from its admission by its group (the creation of the attempt's first job); a run with no job is pending in its group and never ends for waiting; never an `integration/*` top, a push, the schedule, a dispatch or a release; never the last run of its pull request's head (`last_run_of_head`) |
+| `running_past_bound` | a job of it in progress longer than its workflow's `running_minutes` (its largest job timeout plus 30), from that job's start; never an `integration/*` top; the last run of its pull request's head is run again once ended |
 
 </div>
 
+
+Whatever the reason, a pass never leaves an open pull request's head without a run. A run judged
+alone can be the last its head has, and the review of #2645 at eed0b4f8ff4 found two ways to end
+it: a run at the head queued past its bound with nothing behind it, and a twin cancelled as a
+duplicate while its older run was young, whose older run a bound ended hours later. A
+force-cancel skips the `if: always()` jobs, so the required `ci` would never be written and the
+pull request would wait for a check that does not come, with nothing asking for a run. So every
+cancel is settled against the others of the pass, and again at its act over a fresh reading of
+the head's other runs: when it would end the last run of an open pull request's current head
+that is on its way to a verdict (in flight, no cancel reached it) and no verdict of the head is
+among the runs observed, a run that waits (`queued_past_bound`, `duplicate_run`) is held as
+`last_run_of_head`, since it holds no runner and ending it frees nothing, and a run with a job
+past its bound is ended, since that job holds a runner its own timeout did not free, and run
+again once it has ended (`rerun` on the decision; `run_rerun_requested` on the trail, or
+`run_rerun_failed` and exit 12), as the release path's `resume` re-runs a run that yielded. A
+superseded run's cancel never meets the rule: its head is not the pull request's, and its
+successor is. The incidents of 2026-10-28 stay fixed: their runs waited behind runs of heads
+nobody would merge, or behind a twin whose older run was in flight, and neither cancel ends a
+head's last run. Holding a twin until its older run had a verdict and cancelling it only on a
+success was weighed and refused: the group admits the twin the moment its older run completes,
+an admitted twin is never cancelled (below), so that rule would never cancel one and would bring
+back 10b's seven-hour twin. `supervise_property.rs` holds the rule as a property, over every
+replay and unit scenario and over generated worlds of moving heads, twins, admissions, re-runs,
+passing bounds and a supervisor down for hours, through the command's own apply.
 
 The duplicate is the `labeled` twin: a train opened with `--label train` is `opened` and
 `labeled` at once, and both start validate, so 6 of the 8 trains of 2026-10-28 had two full runs
@@ -476,7 +500,10 @@ itself to be ended, now or within 30 minutes (the stale bound, the longest a liv
 goes between passes), by a bound or for being superseded, nor once a job of the older run was
 cancelled and it runs only its `if: always()` jobs: it is held (`earlier_run_ends`, `ends_for`
 the bound, or `cancelled`) and takes the older run's place, since cancelling both would leave
-the commit with no run. Outside
+the commit with no run. A live supervisor judges a twin within minutes of the burst, while its
+older run is far from either bound, so that hold is mostly a dead supervisor's; when a bound ends
+the older run hours after its twin was cancelled, the older run is then its head's last, and the
+rule above holds it or re-runs it. Outside
 the burst a second run was asked for, so it is never a duplicate: a reopened pull request tests
 its head against a master that has moved, a label added hours later asks again (#2674's run
 40816501443, 2.5 hours after 40801560222), a head that went A, B and back to A needs a verdict
@@ -517,7 +544,8 @@ push (a tag among them), the schedule, a dispatch, a release, and every pages or
 never cancelled for being superseded; the supervisor's own run is never cancelled at all. Each
 run decided on is read again, with its pull request's head, immediately before the act, and
 cancelled only if the same reason still holds; the act is written to the integration audit
-trail first (`run_cancel_attempted`, then `run_cancelled` or `run_cancel_failed`), and a trail
+trail first (`run_cancel_attempted`, then `run_cancelled` or `run_cancel_failed`, and for a paired
+cancel `run_rerun_requested` or `run_rerun_failed`), and a trail
 that cannot be written stops every act. A cancel the forge refuses because the run has ended
 (a 409, or the run read again has completed) is `run_already_ended` and a skipped act, not a
 failure: two lanes that applied in the same minute decide the same cancels, and the second
@@ -526,8 +554,8 @@ and exits 10 when there are any. The decision is
 `apps/majordomus-cli/src/integration/supervise.rs`, the forge side `integration/runs.rs`, and
 the test `the_declared_bounds_hold_to_every_workflows_real_timeouts` holds the record to every
 workflow's job timeouts; `supervise_replay.rs` replays both runs of 2026-10-28, the four
-runs of the review of 2026-10-29, and the pairs of #2678 and #2674 from what the forge recorded
-of them.
+runs of the review of 2026-10-29, and the pairs of #2678, #2674 and #2687 from what the forge
+recorded of them.
 
 The supervisor must not be starved by what it supervises. It runs first on lundra
 (`["self-hosted","lundra"]`, which does not share the account's hosted concurrency), and then,

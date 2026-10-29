@@ -463,8 +463,14 @@ fn supervise(
             trunc(&d.workflow, 12),
             trunc(&d.event, 18),
             d.reason.word(),
-            d.reason.explain()
+            d.reason.explain(),
         ));
+        if d.rerun {
+            lines.push(format!(
+                "        run {:<12} its pull request's head has no other run: run again once ended",
+                d.run
+            ));
+        }
     }
     for h in &report.held {
         let why = match &h.reason {
@@ -526,6 +532,13 @@ fn supervise(
                     .ok()
                     .and_then(|v| v.as_str().map(str::to_string))
                     .unwrap_or_default()
+            ),
+            integration::supervise::HoldReason::LastRunOfHead {
+                pull_request,
+                would_end_for,
+            } => format!(
+                "the last run of #{pull_request}'s head, which {would_end_for} would end: it \
+                 waits, holding no runner, and ending it would leave the head with no run"
             ),
             integration::supervise::HoldReason::Unjudgeable { detail } => {
                 format!("not judged: {detail}")

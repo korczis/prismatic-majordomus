@@ -1,0 +1,46 @@
+id: I4349
+milestone: a-change-is-judged-in-minutes
+title: "Checkout time and repository size have a budget, and a run past it is red"
+slug: checkout-time-and-repository-size-have-a-budget
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Every validate run records a per-step checkout-seconds fact and a `repository kb` fact, with a baseline in scripts/ci-baseline; a new typed capability, integration.checkout_budget (`majordomus prs checkout-budget`, implemented in apps/majordomus-cli/src/integration/checkout_budget.rs), run as a gate in structure, fails when the p90 checkout time measured under concurrency passes 50% of its step bound or when the repository size passes its budget in .ai/repo/policy.yaml, and flags a re-run of a job that died at its checkout bound."
+why: "Incident 2 of 2026-10-28: hosted validate checkouts timed out at 600 s six times across runs 40708407384 and 40733537887 (both attempts). Every `fetch-depth: 0` checkout fetched 2.85 GiB (549 heads, every tag and every blob; registry.json alone is 1.76 GB packed), and many concurrent full clones met a fixed 600 s bound. Nothing budgets checkout time or repository size, and re-running a failed checkout changes nothing. #2633 (I4296) narrows the structure job's fetch and raises its bound to 20 minutes, a mitigation; I3241 (fetch only what the gates read) is raised to p0 in the same change as this issue. The budget is a capability, not a script, under ADR 0069."
+current_state: "Measured at 81ef931a3e1: .github/workflows/validate.yml carries seven `fetch-depth: 0` checkouts; scripts/ci/summary records no checkout time and no repository size; .ai/repo/policy.yaml declares no repository size budget."
+desired_state: "Both facts are in every run's summary; the gate fails at 51% of the bound and passes at 49%, naming the job and step, and fails a size over budget naming the bytes. Enforced by the checkout-budget gate in structure, a unit test of the capability and case 4349."
+scope:
+  - ".ai/repo/project/issues/I4349.yaml"
+  - "apps/majordomus-cli/src/integration/checkout_budget.rs"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "scripts/ci/summary"
+  - "scripts/ci-baseline"
+  - ".ai/repo/ci/gates.yaml"
+  - ".ai/repo/policy.yaml"
+  - ".github/workflows/validate.yml"
+  - "test/cases/4349_checkout_time_and_repository_size_have_a_budget.sh"
+  - "docs/CI.md"
+non_scope:
+  - "Narrowing each fetch to what its gates read (I3241, raised to p0 with blob:none in the same change)"
+  - "Shrinking the history (I4351)"
+acceptance_criteria:
+  - "Case 4349: a fixture timings.tsv yields both facts"
+  - "Case 4349: a p90 checkout at 49% of its bound passes and at 51% fails, naming the job and step"
+  - "Case 4349: a repository size over its budget fails, naming the bytes and the budget"
+  - "Case 4349: a re-run of a job that died at its checkout bound is flagged"
+  - "Unit test of integration::checkout_budget: the p90 is nearest rank over the concurrent samples, and a missing timings.tsv is a failure, never a pass"
+  - "`majordomus shell check` passes and reports no new shell unit"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::checkout_budget"
+  - "bash test/run.sh 4349_checkout_time_and_repository_size_have_a_budget"
+  - "actionlint .github/workflows/validate.yml"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+  - "rust"
+depends_on: []
+serves: []
+created_at: 2026-10-29
+updated_at: 2026-10-29

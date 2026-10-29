@@ -56,6 +56,8 @@ pub mod retry;
 pub mod runs;
 pub mod supervise;
 #[cfg(test)]
+mod supervise_property;
+#[cfg(test)]
 mod supervise_replay;
 #[cfg(test)]
 mod tests;

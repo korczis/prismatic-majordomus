@@ -51,9 +51,9 @@ on:
     types: [requested]
   workflow_dispatch:
 
-# Cancelling a run is Actions write, which also reads the artifact. Reading the open pull
-# requests' heads and labels is pull-requests read; nothing here writes the tree, a pull request
-# or an issue.
+# Cancelling a run, and re-running the last run of a head it ended, is Actions write, which also
+# reads the artifact. Reading the open pull requests' heads and labels is pull-requests read;
+# nothing here writes the tree, a pull request or an issue.
 permissions:
   actions: write
   contents: read

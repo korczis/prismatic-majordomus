@@ -633,6 +633,13 @@ pub enum IntegrationAction {
     /// applied in the same minute, cancelled it, or it completed on its own. Nothing was left
     /// to do, and nothing failed.
     RunAlreadyEnded,
+    /// The run just force-cancelled was asked to run again: it was the last run of its pull
+    /// request's head on its way to a verdict, ended because a job of it ran past its bound
+    /// ([`super::supervise::Decision::rerun`]).
+    RunRerunRequested,
+    /// The re-run of the run just force-cancelled could not be asked: its pull request's head
+    /// has no run until somebody re-runs it.
+    RunRerunFailed,
 }
 
 impl IntegrationAction {
@@ -674,6 +681,8 @@ impl IntegrationAction {
             IntegrationAction::RunCancelled => "run_cancelled",
             IntegrationAction::RunCancelFailed => "run_cancel_failed",
             IntegrationAction::RunAlreadyEnded => "run_already_ended",
+            IntegrationAction::RunRerunRequested => "run_rerun_requested",
+            IntegrationAction::RunRerunFailed => "run_rerun_failed",
         }
     }
 }
@@ -870,7 +879,8 @@ pub fn record(root: &Path, mut event: IntegrationEvent) -> Result<IntegrationEve
             // a reopen is refused in the forge's words, as a merge is
             IntegrationAction::MergeFailed
             | IntegrationAction::ReopenFailed
-            | IntegrationAction::RunCancelFailed => {
+            | IntegrationAction::RunCancelFailed
+            | IntegrationAction::RunRerunFailed => {
                 Some(FailureClass::of_merge_refusal(&event.detail))
             }
             IntegrationAction::RefreshFailed | IntegrationAction::RepairRefused => {
