@@ -17332,14 +17332,6 @@
         "source": "docs/PLANNING.md"
       },
       {
-        "id": "majordomus://document/docs/PLAN_STATUS.md",
-        "kind": "document",
-        "label": "docs/PLAN_STATUS.md",
-        "summary": "Plan status",
-        "route": "/cockpit/objects/document/docs-plan-status-md",
-        "source": "docs/PLAN_STATUS.md"
-      },
-      {
         "id": "majordomus://document/docs/PREFLIGHT.md",
         "kind": "document",
         "label": "docs/PREFLIGHT.md",
@@ -71821,6 +71813,58 @@
         }
       },
       {
+        "id": "majordomus://issue/I4400",
+        "kind": "issue",
+        "label": "I4400",
+        "summary": "A chart on the site is read by pointing at it: one crosshair, an exact tooltip, series a reader can hide, a range a reader can zoom, drawn from the design's tokens",
+        "route": "/cockpit/objects/issue/i4400",
+        "source": ".ai/repo/project/issues/I4400.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "On each chart of trends, economics and the plan, pointing at a category shows one tooltip naming every visible series at it, in the figure's unit",
+            "Hiding a series from the legend leaves every other series in its colour and its scale honest",
+            "A line chart with more categories than fit offers a zoom range, and a reset brings back the whole range",
+            "With prefers-reduced-motion, a chart draws and updates without animation",
+            "Without the script, every figure is still its table"
+          ],
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "case_a_chart_is_read_by_pointing_at_it"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "A second chart library or a CDN: ECharts stays the one vendored engine (ADR 0152)",
+            "New chart types, or charts of data the page does not already show as a table",
+            "The Cockpit and majordomus ui charts, which render their own (I2656)",
+            "Mermaid diagrams (site/diagrams.js), which are already one interactive viewer (I2653)"
+          ],
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "site/charts.js",
+            "site/templates/partials/charts.html",
+            "site/tailwind.css",
+            "share/design",
+            "scripts/lib/interaction-specs",
+            "test/cases/4406_a_chart_is_read_by_pointing_at_it.sh",
+            "docs/DESIGN_SYSTEM.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            "docs/generated",
+            "site",
+            ".ai/repo/project/issues/I4400.yaml"
+          ],
+          "serves": [],
+          "slug": "the-charts-are-modern-and-interactive",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4406_a_chart_is_read_by_pointing_at_it",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -95377,6 +95421,13 @@
         "source": "test/cases/43_plan_command.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4406_a_chart_is_read_by_pointing_at_it.sh",
+        "kind": "test",
+        "label": "test/cases/4406_a_chart_is_read_by_pointing_at_it.sh",
+        "route": "/cockpit/objects/test/test-cases-4406-a-chart-is-read-by-pointing-at-it-sh",
+        "source": "test/cases/4406_a_chart_is_read_by_pointing_at_it.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/44_model_doctrine.sh",
         "kind": "test",
         "label": "test/cases/44_model_doctrine.sh",
@@ -117169,11 +117220,6 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://document/docs/PLAN_STATUS.md",
-        "target": "kind:document",
-        "kind": "is_a"
-      },
-      {
         "source": "majordomus://document/docs/PREFLIGHT.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -134364,6 +134410,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4400",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4400",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -140919,6 +140975,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4406_a_chart_is_read_by_pointing_at_it.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/44_model_doctrine.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -145995,8 +146056,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4034,
-      "edges": 9314,
+      "nodes": 4035,
+      "edges": 9316,
       "acyclic": false,
       "truncated": false
     }

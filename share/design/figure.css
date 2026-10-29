@@ -216,9 +216,112 @@ pre.mj-diagram-canvas.is-addressed {
   border: 1px solid var(--mj-line);
   border-radius: 0.5rem;
   background: var(--mj-bg);
+  /* how strongly a line's area is filled under it, at the line; the fill fades to nothing at
+     the axis. A share of the series colour, never a colour of its own. */
+  --chart-area-opacity: 0.16;
 }
 .mj-chart[hidden] {
   display: none;
+}
+/* the frame takes focus (the arrow keys move along the categories); the ring is the base
+   sheet's, drawn inside so the figure's edge does not clip it */
+.mj-chart:focus-visible {
+  outline-offset: -2px;
+}
+/* a zoomable plot is panned by a mouse drag, which must not select the page's text */
+.mj-chart {
+  -webkit-user-select: none;
+  user-select: none;
+}
+/* Under a zoomable line chart: the window it shows and the button that gives the whole range
+   back. The button is the shared `.mj-button`. */
+.mj-chart-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin: -0.25rem 0 0.75rem;
+  font-size: var(--text-small);
+  line-height: var(--text-small--line-height);
+  color: var(--mj-muted);
+}
+.mj-chart-tools[hidden] {
+  display: none;
+}
+.mj-chart-range {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+/* The legend: one toggle button per series, under the frame. It wraps onto as many rows as
+   the width needs, so no key is ever paged out of sight, and each button is at least 28px
+   tall (above the 24px target size). A hidden series is said three ways: aria-pressed, a
+   struck-through name and a hollow key, so its state is never a colour alone. The key's
+   colour is the series', set by charts.js as `--chart-key`; the text is the page's. */
+.mj-chart-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+  margin: -0.25rem 0 0.75rem;
+}
+.mj-chart-keys[hidden] {
+  display: none;
+}
+.mj-chart-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 1.75rem;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--mj-body);
+  font: inherit;
+  font-size: var(--text-small);
+  line-height: var(--text-small--line-height);
+  cursor: pointer;
+}
+.mj-chart-key:hover {
+  background: var(--mj-sunken);
+  border-color: var(--mj-line);
+}
+.mj-chart-key-mark {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 0.625rem;
+  height: 0.625rem;
+  border: 1px solid var(--chart-key, var(--mj-muted));
+  border-radius: 0.1875rem;
+  background: var(--chart-key, var(--mj-muted));
+}
+/* a line's key is a stroke, as its mark is */
+.mj-chart-keys--line .mj-chart-key-mark {
+  width: 0.875rem;
+  height: 0.25rem;
+  border-radius: 1px;
+}
+.mj-chart-key[aria-pressed="false"] {
+  color: var(--mj-faint);
+}
+.mj-chart-key[aria-pressed="false"] .mj-chart-key-name {
+  text-decoration: line-through;
+}
+.mj-chart-key[aria-pressed="false"] .mj-chart-key-mark {
+  background: transparent;
+}
+/* what the tooltip says, for a reader who hears the page; not drawn */
+.mj-chart-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 figure[data-chart]:target .mj-chart,
 figure[data-chart].is-addressed .mj-chart {

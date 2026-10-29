@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "bfe498ecbbafb51ab21c50cc4dc9185b76a3fcf7249658d9b88dd39da2371a64",
+    "fingerprint": "edf2d6f361ff8c3e234c93e3eceba719433cd7ab08da09b093009825bc38f969",
     "summary": {
-      "total": 3570,
+      "total": 3571,
       "builtin": 220,
-      "declarative": 3350,
+      "declarative": 3351,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3350
+        "resource": 3351
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3360
+        "implemented": 3361
       },
       "mcp_tools": 206,
-      "mcp_resources": 3407,
+      "mcp_resources": 3408,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91083,7 +91083,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 353,
+        "capabilities": 352,
         "capability_ids": []
       },
       {
@@ -91383,7 +91383,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1053,
+        "capabilities": 1054,
         "capability_ids": []
       },
       {
@@ -91981,7 +91981,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 654,
+        "capabilities": 655,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "84641565beac2d30a44cdbbb11cb6055de486182af4f4b3015068dd94aa8f6c4",
+    "fingerprint": "f202d6c31f9ceade38acde5fc5458e051435dcca6d1bc36069d0c56cd91a3368",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92107,13 +92107,13 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 353,
+      "document": 352,
       "domain": 6,
       "feature": 29,
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1053,
+      "issue": 1054,
       "knowledge": 59,
       "mesh-declaration": 1,
       "milestone": 111,
@@ -92127,11 +92127,13 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 654,
+      "test": 655,
       "use-case": 49,
       "workspace": 1
     },
-    "diagnostics": {},
+    "diagnostics": {
+      "warning": 1
+    },
     "objects": [
       {
         "uri": "majordomus://adr/adr-0001",
@@ -99243,7 +99245,7 @@
         "title": "The design system — one declaration, every surface",
         "path": "docs/DESIGN_SYSTEM.md",
         "source_class": "document",
-        "bytes": 22626
+        "bytes": 24816
       },
       {
         "uri": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
@@ -99550,15 +99552,6 @@
         "path": "docs/PLANNING.md",
         "source_class": "document",
         "bytes": 44972
-      },
-      {
-        "uri": "majordomus://document/docs/PLAN_STATUS.md",
-        "kind": "document",
-        "identity": "docs/PLAN_STATUS.md",
-        "title": "Plan status",
-        "path": "docs/PLAN_STATUS.md",
-        "source_class": "document",
-        "bytes": 1041324
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -115070,6 +115063,17 @@
         "bytes": 5693
       },
       {
+        "uri": "majordomus://issue/I4400",
+        "kind": "issue",
+        "identity": "I4400",
+        "title": "A chart on the site is read by pointing at it: one crosshair, an exact tooltip, series a reader can hide, a range a reader can zoom, drawn from the design's tokens",
+        "description": "Make the one chart component (site/charts.js, ADR 0152) a chart a reader works with rather than only looks at. It keeps the same declaration (<figure data-chart> over the table it draws) and adds: a crosshair with one tooltip that lists every series at the pointed category, in its unit; a legend whose entries hide and show their series without repainting the others; a zoomable and pannable range on a line chart that has more categories than fit (slider, wheel, pinch, keyboard), with a reset; an emphasised last value; line charts drawn with a light area fill under each series and bars with rounded data ends; marks that focus the hovered series and fade the rest; and motion that is turned off under prefers-reduced-motion. Every colour is still a token of the page, so light and dark are both designed by the stylesheet.",
+        "path": ".ai/repo/project/issues/I4400.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4040
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -126044,6 +126048,14 @@
         "bytes": 4717
       },
       {
+        "uri": "majordomus://test/test/cases/4406_a_chart_is_read_by_pointing_at_it.sh",
+        "kind": "test",
+        "identity": "test/cases/4406_a_chart_is_read_by_pointing_at_it.sh",
+        "path": "test/cases/4406_a_chart_is_read_by_pointing_at_it.sh",
+        "source_class": "case",
+        "bytes": 32353
+      },
+      {
         "uri": "majordomus://test/test/cases/44_model_doctrine.sh",
         "kind": "test",
         "identity": "test/cases/44_model_doctrine.sh",
@@ -128517,7 +128529,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 353
+      "objects": 352
     },
     {
       "name": "domain",
@@ -128574,7 +128586,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1053
+      "objects": 1054
     },
     {
       "name": "knowledge",
@@ -128736,7 +128748,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 654
+      "objects": 655
     },
     {
       "name": "use-case",
