@@ -5,7 +5,7 @@ version: 1
 # repository against the bounds below and force-cancels the ones past them, or superseded while
 # something waits behind them, each with its reason on the integration audit trail
 # (`run_cancel_attempted`, then `run_cancelled` or `run_cancel_failed`, and for a cancel paired
-# with a re-run `run_rerun_requested` or `run_rerun_failed`). The decision is
+# with a re-run `run_rerun_attempted`, then `run_rerun_requested` or `run_rerun_failed`). The decision is
 # apps/majordomus-cli/src/integration/supervise.rs, pure and unit-tested; the forge side is
 # integration/runs.rs; .github/workflows/supervise.yml only runs the command.
 #
@@ -67,7 +67,14 @@ version: 1
 # running_past_bound (its job holds a runner its own timeout did not free). A force-cancel skips
 # the if: always() jobs, so without this the required `ci` would never be written and nothing
 # would ask for a run again. superseded_blocks_successor never meets it: its run is not at the
-# head. The property test is apps/majordomus-cli/src/integration/supervise_property.rs.
+# head. The re-run is asked whenever the run reads completed without passing after the act,
+# whatever the forge answered the cancel (a `gh` that timed out or got a 502 while the cancel
+# landed), and nothing when it passed on its own. A head a pass still left bare (its re-run
+# refused, or its cancel landing after the forge reported it failed) is found by every later
+# pass from the trail and its newest run, one this supervisor cancelled, asked again: at most
+# three asks in all (RERUN_ATTEMPTS in integration/runs.rs, each `run_rerun_attempted`), then
+# exit 12 naming the pull request. The property test is
+# apps/majordomus-cli/src/integration/supervise_property.rs.
 #
 # What is never cancelled for being superseded is fixed in the code, not declared here: a push
 # to the default branch, any other push (a tag push among them), the schedule, a dispatch, a

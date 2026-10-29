@@ -449,8 +449,22 @@ that is on its way to a verdict (in flight, no cancel reached it) and no verdict
 among the runs observed, a run that waits (`queued_past_bound`, `duplicate_run`) is held as
 `last_run_of_head`, since it holds no runner and ending it frees nothing, and a run with a job
 past its bound is ended, since that job holds a runner its own timeout did not free, and run
-again once it has ended (`rerun` on the decision; `run_rerun_requested` on the trail, or
-`run_rerun_failed` and exit 12), as the release path's `resume` re-runs a run that yielded. A
+again once it has ended (`rerun` on the decision; `run_rerun_attempted` then
+`run_rerun_requested` on the trail, or `run_rerun_failed` and exit 12), as the release path's
+`resume` re-runs a run that yielded. The re-run is asked whenever the run reads completed without
+passing after the act, whatever the forge answered the cancel: the review of #2645 at
+e54560c6d31 found a force-cancel that reaches GitHub while `gh` reports an error (its 20 s ran
+out, or a 502 while the cancel applied), filed as `run_already_ended` with nothing asked, and
+the head bare with exit 0. A run that passed on its own is not asked. A pass can still leave a
+head bare, when the re-run is refused or a cancel the forge reported failed lands a minute
+later, and the observation lists only runs in flight, so no later pass would see it. So every
+pass also reads the trail for the runs it cancelled that may have left their head without a run,
+reads such a head's commit whole (`repos/<repo>/actions/runs?head_sha=`), and when no run of
+the head is in flight or has a verdict and the newest is one this supervisor cancelled, asks it
+again: at most three asks per cancel in all, each `run_rerun_attempted` first, after which the
+pass exits 12 naming the pull request (`exhausted`); a head whose runs cannot be read is exit
+12 too (`unobserved`). The trail is the checkout's, so the lane that acted is the one that
+recovers. A
 superseded run's cancel never meets the rule: its head is not the pull request's, and its
 successor is. The incidents of 2026-10-28 stay fixed: their runs waited behind runs of heads
 nobody would merge, or behind a twin whose older run was in flight, and neither cancel ends a
@@ -459,7 +473,10 @@ success was weighed and refused: the group admits the twin the moment its older 
 an admitted twin is never cancelled (below), so that rule would never cancel one and would bring
 back 10b's seven-hour twin. `supervise_property.rs` holds the rule as a property, over every
 replay and unit scenario and over generated worlds of moving heads, twins, admissions, re-runs,
-passing bounds and a supervisor down for hours, through the command's own apply.
+passing bounds and a supervisor down for hours, through the command's own apply; its forge also
+half-fails (a cancel that lands while `gh` reports an error, at once or a minute later, and
+re-runs refused up to twice in a row), and a head so bared must have its run back within three
+passes, each bare pass exiting 12 and naming the pull request.
 
 The duplicate is the `labeled` twin: a train opened with `--label train` is `opened` and
 `labeled` at once, and both start validate, so 6 of the 8 trains of 2026-10-28 had two full runs
@@ -520,8 +537,8 @@ never cancelled for being superseded; the supervisor's own run is never cancelle
 run decided on is read again, with its pull request's head, immediately before the act, and
 cancelled only if the same reason still holds; the act is written to the integration audit
 trail first (`run_cancel_attempted`, then `run_cancelled` or `run_cancel_failed`, and for a paired
-cancel `run_rerun_requested` or `run_rerun_failed`), and a trail
-that cannot be written stops every act. A cancel the forge refuses because the run has ended
+cancel `run_rerun_attempted`, then `run_rerun_requested` or `run_rerun_failed`), and a trail
+that cannot be written stops every act and every re-run. A cancel the forge refuses because the run has ended
 (a 409, or the run read again has completed) is `run_already_ended` and a skipped act, not a
 failure: two lanes that applied in the same minute decide the same cancels, and the second
 finds them done. Without `--apply` the command prints the same decisions

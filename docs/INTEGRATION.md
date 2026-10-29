@@ -837,10 +837,12 @@ json` stays the list of pull requests to close.
   | `run_cancel_attempted` | `prs supervise --apply` is about to force-cancel a CI run; the detail names the run and its reason, read again just now |
   | `run_cancelled`, `run_cancel_failed` (with its class) | after it |
   | `run_already_ended` | after it, when the forge refused the cancel because the run had ended (a 409, or the run read again completed): another lane's cancel of the same burst landed first; a skipped act, not a failure |
-  | `run_rerun_requested`, `run_rerun_failed` (with its class) | after `run_cancelled`, when the run cancelled was the last of its pull request's head on its way to a verdict and a job of it ran past its bound: the run is asked to run again once it has ended, so the head keeps a run; a re-run that could not be asked fails the act |
+  | `run_rerun_attempted` | before a run this supervisor ended is asked to run again: after a paired cancel that left the run ended without a pass (`run_cancelled`, or `run_already_ended` when `gh` reported an error while the cancel landed), or on a later pass whose head still has no run and no verdict; at most three of them per cancel |
+  | `run_rerun_requested`, `run_rerun_failed` (with its class) | after it: the run was asked to run again once it had ended, so the head keeps a run, or it could not be, which fails the act and names the pull request |
 
   An event may also carry `evidence` (the assessment's, on the acts named above as carrying it),
-  `class` (why it failed, once classified) and `merge_commit`. Each is left out when empty,
+  `class` (why it failed, once classified), `merge_commit` and, on the `run_*` events, `run`
+  (the CI run acted on). Each is left out when empty,
   and a line written before they existed reads with them empty.
 - A checkout that kept its own trail under `.ai/local/state/integration/events.jsonl` has
   it appended to the repository's trail the first time the trail is read while the

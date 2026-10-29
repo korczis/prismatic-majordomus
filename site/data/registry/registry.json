@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "3f9e5cf8251369843ed5edad14631db410dcd19d709be0df6901a71a11323a58",
+    "fingerprint": "e0741c181b36d7bda510ad93d3cad4e871b89a9da6c8973bb469e37e2b959b4f",
     "summary": {
       "total": 3571,
       "builtin": 220,
@@ -35799,6 +35799,15 @@
                       "null"
                     ],
                     "description": "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward."
+                  },
+                  "run": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "On the `run_*` events of `prs supervise`: the CI run acted on."
                   }
                 },
                 "required": [
@@ -35986,6 +35995,11 @@
                     "type": "string",
                     "const": "run_already_ended",
                     "description": "The run had ended before the cancel reached it: another supervision, in a lane that\napplied in the same minute, cancelled it, or it completed on its own. Nothing was left\nto do, and nothing failed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_rerun_attempted",
+                    "description": "A run this supervision ended, the last of its pull request's head, is about to be asked\nto run again: paired with its cancel, or on a later pass because the head still has no\nrun (`super::runs`). Each one counts against `super::runs::RERUN_ATTEMPTS`."
                   },
                   {
                     "type": "string",
@@ -37517,6 +37531,11 @@
                     "type": "string",
                     "const": "run_already_ended",
                     "description": "The run had ended before the cancel reached it: another supervision, in a lane that\napplied in the same minute, cancelled it, or it completed on its own. Nothing was left\nto do, and nothing failed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_rerun_attempted",
+                    "description": "A run this supervision ended, the last of its pull request's head, is about to be asked\nto run again: paired with its cancel, or on a later pass because the head still has no\nrun (`super::runs`). Each one counts against `super::runs::RERUN_ATTEMPTS`."
                   },
                   {
                     "type": "string",
@@ -39414,6 +39433,11 @@
                   },
                   {
                     "type": "string",
+                    "const": "run_rerun_attempted",
+                    "description": "A run this supervision ended, the last of its pull request's head, is about to be asked\nto run again: paired with its cancel, or on a later pass because the head still has no\nrun (`super::runs`). Each one counts against `super::runs::RERUN_ATTEMPTS`."
+                  },
+                  {
+                    "type": "string",
                     "const": "run_rerun_requested",
                     "description": "The run just force-cancelled was asked to run again: it was the last run of its pull\nrequest's head on its way to a verdict, ended because a job of it ran past its bound\n(`super::supervise::Decision::rerun`)."
                   },
@@ -39714,6 +39738,15 @@
                       "null"
                     ],
                     "description": "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward."
+                  },
+                  "run": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "On the `run_*` events of `prs supervise`: the CI run acted on."
                   }
                 },
                 "required": [
@@ -92163,7 +92196,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7dda0841d4a817afa49fbd3e015876ce3933b307984801982e37a0b62f9967a6",
+    "fingerprint": "19685a80b2cdc384688e3fb03cf678de050e139fb7f5c6249e6d2d776b2711f5",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99225,7 +99258,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 60953
+        "bytes": 62482
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -99522,7 +99555,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 76259
+        "bytes": 76539
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
@@ -114068,7 +114101,7 @@
         "path": ".ai/repo/project/issues/I3903.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 5599
+        "bytes": 6288
       },
       {
         "uri": "majordomus://issue/I3910",

@@ -16,12 +16,21 @@
 //! over the world's whole truth, completed runs included, and [`super::supervise::decide`] over
 //! the same moment is asserted to keep it too.
 //!
+//! The forge of the world also half-fails, as GitHub's does: a force-cancel that lands while
+//! `gh` reports an error, at once or a minute later (the run still reads in flight when it is
+//! read again), and a re-run that is refused. Then a pass can leave a head with no run, and the
+//! property is that the supervision gives it one back within [`super::runs::RERUN_ATTEMPTS`]
+//! passes: each world's forge refuses one run's re-run at most one time fewer than that in a
+//! row, so a supervisor that asks once a pass, and counts its attempts, always recovers.
+//!
 //! The generator is a xorshift seeded per world, so a failure names the seed that reproduces it.
 
 use std::collections::{BTreeMap, BTreeSet};
 
 use super::forge::ForgeError;
-use super::runs::{self, ActOutcome, RunForge, RunsObservation, Successes};
+use super::runs::{
+    self, ActOutcome, RecoveryOutcome, Rerun, RunForge, RunsObservation, Successes, RERUN_ATTEMPTS,
+};
 use super::supervise::{
     self, JobObservation, RunObservation, Situation, SupersededGroup, SuperviseModel, Supervision,
     WorkflowBound, IN_FLIGHT,
@@ -184,6 +193,12 @@ struct World {
     full: BTreeSet<u64>,
     /// Whether a run was requested this minute: the supervisor's `workflow_run` trigger.
     requested: bool,
+    /// Cancels the forge refused that land in the next minute all the same.
+    late_cancels: Vec<u64>,
+    /// How many times in a row each run's re-run was refused.
+    refused_reruns: BTreeMap<u64, u32>,
+    /// How often each half-failure was injected.
+    injected: BTreeMap<&'static str, u64>,
 }
 
 impl World {
@@ -197,6 +212,9 @@ impl World {
             pushes: BTreeMap::new(),
             full: BTreeSet::new(),
             requested: false,
+            late_cancels: Vec::new(),
+            refused_reruns: BTreeMap::new(),
+            injected: BTreeMap::new(),
         };
         for pr in 1..=prs {
             w.heads.insert(pr, format!("p{pr}-h0"));
@@ -295,6 +313,16 @@ impl World {
     fn minute(&mut self) {
         self.now += 60;
         self.requested = false;
+        // a cancel `gh` reported failed, landing now
+        for id in std::mem::take(&mut self.late_cancels) {
+            let r = self.runs.iter_mut().find(|r| r.id == id).unwrap();
+            if r.status != "completed" {
+                r.status = "completed";
+                r.conclusion = Some("cancelled");
+                let pr = r.pr;
+                self.admit(pr);
+            }
+        }
         let now = self.now;
         for r in self.runs.iter_mut() {
             match r.status {
@@ -412,24 +440,62 @@ impl RunForge for SimForge<'_> {
     }
     fn force_cancel(&mut self, id: u64) -> Result<(), ForgeError> {
         let pr = self.world.run(id).pr;
-        let r = self.world.runs.iter_mut().find(|r| r.id == id).unwrap();
-        if r.status == "completed" {
+        if self.world.run(id).status == "completed" {
             return Err(ForgeError(
                 "gh: Cannot cancel a workflow run that is completed. (HTTP 409)".into(),
             ));
         }
+        let half = self.world.rng.draw() % 100;
+        if half < 12 {
+            // it lands a minute later, while `gh` gave up: read again now, it is in flight
+            self.world.late_cancels.push(id);
+            *self.world.injected.entry("late_cancel").or_default() += 1;
+            return Err(ForgeError("gh: Server Error (HTTP 502)".into()));
+        }
         // at once, its `if: always()` jobs skipped; the group admits the run behind it
+        let r = self.world.runs.iter_mut().find(|r| r.id == id).unwrap();
         r.status = "completed";
         r.conclusion = Some("cancelled");
         self.world.admit(pr);
+        if half < 24 {
+            // it landed, and `gh` reported an error all the same
+            *self
+                .world
+                .injected
+                .entry("landed_cancel_error")
+                .or_default() += 1;
+            return Err(ForgeError(
+                "gh api -X POST .../force-cancel timed out after 20 s".into(),
+            ));
+        }
         Ok(())
     }
-    fn rerun(&mut self, id: u64) -> Result<(), ForgeError> {
-        if self.world.run(id).status != "completed" {
+    fn rerun(&mut self, id: u64) -> Result<Rerun, ForgeError> {
+        let r = self.world.run(id);
+        if r.status != "completed" {
             return Err(ForgeError(format!("run {id} has not ended")));
         }
+        if r.conclusion == Some("success") {
+            return Ok(Rerun::Passed);
+        }
+        let refused = self.world.refused_reruns.get(&id).copied().unwrap_or(0);
+        if refused + 1 < RERUN_ATTEMPTS && self.world.rng.chance(300) {
+            self.world.refused_reruns.insert(id, refused + 1);
+            *self.world.injected.entry("rerun_refused").or_default() += 1;
+            return Err(ForgeError("gh: Server Error (HTTP 502)".into()));
+        }
+        self.world.refused_reruns.remove(&id);
         self.world.rerun(id);
-        Ok(())
+        Ok(Rerun::Asked)
+    }
+    fn runs_at(&self, sha: &str) -> Result<Vec<RunObservation>, ForgeError> {
+        Ok(self
+            .world
+            .runs
+            .iter()
+            .filter(|r| r.sha == sha)
+            .map(|r| r.observed(false))
+            .collect())
     }
     fn newest_success(
         &self,
@@ -478,9 +544,33 @@ const WORLDS: u64 = 200;
 const PRS: u64 = 3;
 const HOURS: u64 = 14;
 
+/// A repository of its own for each world: the trail is what a later pass recovers from, and
+/// two worlds share run and pull request numbers.
+fn repository() -> tempfile::TempDir {
+    let root = tempfile::tempdir().unwrap();
+    let ok = std::process::Command::new("git")
+        .args(["init", "-q"])
+        .current_dir(root.path())
+        .status()
+        .unwrap()
+        .success();
+    assert!(ok);
+    root
+}
+
 /// One world of `seed`, every supervision of it asserted.
-fn live(seed: u64, root: &std::path::Path, m: &SuperviseModel, seen: &mut Seen) {
+fn live(seed: u64, m: &SuperviseModel, seen: &mut Seen) {
+    let repo = repository();
+    let root = repo.path();
     let mut w = World::new(seed, PRS);
+    // each pull request's head that had a run, and for how many passes in a row it has had
+    // none since
+    let mut covered: BTreeMap<u64, String> = BTreeMap::new();
+    let mut bare: BTreeMap<u64, u32> = BTreeMap::new();
+    // how many half-failures the forge had injected when the previous pass began: a head is
+    // bared only by one, in that pass or in this one
+    let injected = |w: &World| w.injected.values().sum::<u64>();
+    let mut injected_before_last = 0;
     // a supervisor that is down for a stretch, in two worlds of five
     let (down_from, down_to) = if w.rng.chance(400) {
         // half of them from the opening burst on, while its twins wait
@@ -501,6 +591,7 @@ fn live(seed: u64, root: &std::path::Path, m: &SuperviseModel, seen: &mut Seen) 
         if !tick || (down_from..down_to).contains(&w.now) {
             continue;
         }
+        let injected_at_start = injected(&w);
         let before: BTreeMap<u64, bool> = w
             .heads
             .keys()
@@ -551,42 +642,100 @@ fn live(seed: u64, root: &std::path::Path, m: &SuperviseModel, seen: &mut Seen) 
             assert!(
                 matches!(
                     a.outcome,
-                    ActOutcome::Cancelled | ActOutcome::CancelledAndRerun | ActOutcome::Skipped
+                    ActOutcome::Cancelled
+                        | ActOutcome::CancelledAndRerun
+                        | ActOutcome::Skipped
+                        | ActOutcome::Failed
+                        | ActOutcome::RerunFailed
                 ),
-                "seed {seed} at {}: an act the world refused: {a:?}",
+                "seed {seed} at {}: an act the world cannot explain: {a:?}",
                 stamp(now)
             );
-            if a.outcome == ActOutcome::CancelledAndRerun {
-                seen.saw("cancelled_and_rerun");
+            match a.outcome {
+                ActOutcome::CancelledAndRerun => seen.saw("cancelled_and_rerun"),
+                ActOutcome::RerunFailed => seen.saw("act_rerun_failed"),
+                ActOutcome::Failed => seen.saw("act_failed"),
+                _ => {}
+            }
+            if a.outcome == ActOutcome::CancelledAndRerun && a.detail.contains("not cancelled") {
+                seen.saw("rerun_after_a_refused_cancel");
             }
         }
-        for (pr, had) in before {
+        for r in &report.recovered {
             assert!(
-                !had || w.head_covered(pr),
-                "seed {seed} at {}: #{pr}'s head {} had a run and has none after the pass\n\
+                matches!(
+                    r.outcome,
+                    RecoveryOutcome::Rerun | RecoveryOutcome::RerunFailed
+                ),
+                "seed {seed} at {}: a recovery the world cannot explain: {r:?}\n{report:#?}",
+                stamp(now)
+            );
+            seen.saw(match r.outcome {
+                RecoveryOutcome::Rerun => "recovered",
+                _ => "recovery_refused",
+            });
+        }
+        // a head the world's own forge could not bare stays covered through the pass; one its
+        // half-failures bared gets its run back within RERUN_ATTEMPTS passes, and the exit says
+        // so while it has none
+        for (pr, had) in before {
+            if had {
+                covered.insert(pr, w.heads[&pr].clone());
+            }
+            let head = &w.heads[&pr];
+            if covered.get(&pr) != Some(head) || w.head_covered(pr) {
+                bare.remove(&pr);
+                continue;
+            }
+            let passes = bare.entry(pr).or_default();
+            *passes += 1;
+            assert!(
+                *passes > 1 || injected(&w) > injected_before_last,
+                "seed {seed} at {}: #{pr}'s head {head} lost its run with nothing half-failing\n\
                  report: {report:#?}\nbefore: {snapshot:#?}\nafter: {:#?}",
                 stamp(now),
-                w.heads[&pr],
                 w.runs
             );
+            assert!(
+                *passes < RERUN_ATTEMPTS,
+                "seed {seed} at {}: #{pr}'s head {head} has had no run for {passes} passes\n\
+                 report: {report:#?}\nbefore: {snapshot:#?}\nafter: {:#?}",
+                stamp(now),
+                w.runs
+            );
+            assert_eq!(
+                report.exit_code(),
+                12,
+                "seed {seed} at {}: #{pr}'s head {head} has no run and the pass exits 0\n\
+                 {report:#?}",
+                stamp(now)
+            );
+            assert!(
+                report
+                    .acts
+                    .iter()
+                    .map(|a| &a.detail)
+                    .chain(report.recovered.iter().map(|r| &r.detail))
+                    .any(|d| d.contains(&format!("#{pr}"))),
+                "seed {seed} at {}: #{pr}'s head {head} has no run and nothing names it\n\
+                 {report:#?}",
+                stamp(now)
+            );
+            seen.saw("bare_for_a_pass");
         }
+        injected_before_last = injected_at_start;
+    }
+    for (what, n) in &w.injected {
+        *seen.words.entry((*what).to_string()).or_default() += n;
     }
 }
 
 #[test]
 fn no_supervision_leaves_a_pull_requests_head_without_a_run() {
-    let root = tempfile::tempdir().unwrap();
-    let ok = std::process::Command::new("git")
-        .args(["init", "-q"])
-        .current_dir(root.path())
-        .status()
-        .unwrap()
-        .success();
-    assert!(ok);
     let m = model();
     let mut seen = Seen::default();
     for seed in 0..WORLDS {
-        live(seed, root.path(), &m, &mut seen);
+        live(seed, &m, &mut seen);
     }
     // the worlds reach every rule, and every way the invariant is kept
     for word in [
@@ -599,6 +748,16 @@ fn no_supervision_leaves_a_pull_requests_head_without_a_run() {
         "last_run_of_head",
         "earlier_run_ends",
         "superseded_without_successor",
+        // and every half-failure, and the way back from each
+        "late_cancel",
+        "landed_cancel_error",
+        "rerun_refused",
+        "act_failed",
+        "act_rerun_failed",
+        "rerun_after_a_refused_cancel",
+        "recovered",
+        "recovery_refused",
+        "bare_for_a_pass",
     ] {
         assert!(seen.count(word) > 0, "no world reached {word}: {seen:?}");
     }

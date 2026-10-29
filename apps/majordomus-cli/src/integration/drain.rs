@@ -633,6 +633,10 @@ pub enum IntegrationAction {
     /// applied in the same minute, cancelled it, or it completed on its own. Nothing was left
     /// to do, and nothing failed.
     RunAlreadyEnded,
+    /// A run this supervision ended, the last of its pull request's head, is about to be asked
+    /// to run again: paired with its cancel, or on a later pass because the head still has no
+    /// run ([`super::runs`]). Each one counts against [`super::runs::RERUN_ATTEMPTS`].
+    RunRerunAttempted,
     /// The run just force-cancelled was asked to run again: it was the last run of its pull
     /// request's head on its way to a verdict, ended because a job of it ran past its bound
     /// ([`super::supervise::Decision::rerun`]).
@@ -681,6 +685,7 @@ impl IntegrationAction {
             IntegrationAction::RunCancelled => "run_cancelled",
             IntegrationAction::RunCancelFailed => "run_cancel_failed",
             IntegrationAction::RunAlreadyEnded => "run_already_ended",
+            IntegrationAction::RunRerunAttempted => "run_rerun_attempted",
             IntegrationAction::RunRerunRequested => "run_rerun_requested",
             IntegrationAction::RunRerunFailed => "run_rerun_failed",
         }
@@ -817,6 +822,9 @@ pub struct IntegrationEvent {
     /// fast-forward.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub merge_commit: Option<String>,
+    /// On the `run_*` events of `prs supervise`: the CI run acted on.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub run: Option<u64>,
 }
 
 impl IntegrationEvent {
@@ -837,6 +845,7 @@ impl IntegrationEvent {
             evidence: Vec::new(),
             class: None,
             merge_commit: None,
+            run: None,
         }
     }
 

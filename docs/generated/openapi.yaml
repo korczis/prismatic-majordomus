@@ -28333,6 +28333,9 @@ components:
           const: run_already_ended
           description: "The run had ended before the cancel reached it: another supervision, in a lane that\napplied in the same minute, cancelled it, or it completed on its own. Nothing was left\nto do, and nothing failed."
         - type: string
+          const: run_rerun_attempted
+          description: "A run this supervision ended, the last of its pull request's head, is about to be asked\nto run again: paired with its cancel, or on a later pass because the head still has no\nrun (`super::runs`). Each one counts against `super::runs::RERUN_ATTEMPTS`."
+        - type: string
           const: run_rerun_requested
           description: "The run just force-cancelled was asked to run again: it was the last run of its pull\nrequest's head on its way to a verdict, ended because a job of it ran past its bound\n(`super::supervise::Decision::rerun`)."
         - type: string
@@ -28446,6 +28449,13 @@ components:
             - string
             - "null"
           description: "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward."
+        run:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "On the `run_*` events of `prs supervise`: the CI run acted on."
       required:
         - at
         - actor

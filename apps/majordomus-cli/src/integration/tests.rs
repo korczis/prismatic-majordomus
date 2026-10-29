@@ -3258,7 +3258,7 @@ fn a_continuous_drain_is_recorded_when_it_starts_and_stops() {
 }
 
 /// Every action, in the order an executor's run meets them.
-const ALL_ACTIONS: [drain::IntegrationAction; 37] = [
+const ALL_ACTIONS: [drain::IntegrationAction; 38] = [
     drain::IntegrationAction::LeaseAcquired,
     drain::IntegrationAction::LeaseReleased,
     drain::IntegrationAction::ContinuousStarted,
@@ -3294,6 +3294,7 @@ const ALL_ACTIONS: [drain::IntegrationAction; 37] = [
     drain::IntegrationAction::RunCancelled,
     drain::IntegrationAction::RunCancelFailed,
     drain::IntegrationAction::RunAlreadyEnded,
+    drain::IntegrationAction::RunRerunAttempted,
     drain::IntegrationAction::RunRerunRequested,
     drain::IntegrationAction::RunRerunFailed,
 ];
@@ -3338,6 +3339,7 @@ fn every_action_is_listed(a: drain::IntegrationAction) {
         | A::RunCancelled
         | A::RunCancelFailed
         | A::RunAlreadyEnded
+        | A::RunRerunAttempted
         | A::RunRerunRequested
         | A::RunRerunFailed => (),
     }

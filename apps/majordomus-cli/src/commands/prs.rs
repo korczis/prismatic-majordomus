@@ -442,8 +442,19 @@ fn supervise(
         json(out, &report)?;
         return Ok(report.exit_code());
     }
+    render_supervise(&report, out)?;
+    Ok(report.exit_code())
+}
+
+/// `prs supervise`'s text: what was judged, decided, held and done, and whether the supervisor
+/// is alive.
+pub(crate) fn render_supervise(
+    report: &integration::runs::SuperviseReport,
+    out: &mut impl Write,
+) -> Result<()> {
+    let apply = report.applied;
     if let Some(why) = &report.skipped {
-        return w(out, format!("stood aside: {why}")).map(|()| report.exit_code());
+        return w(out, format!("stood aside: {why}"));
     }
     let mut lines = vec![format!(
         "{} in-flight run(s) of {} judged at {}{}",
@@ -558,6 +569,16 @@ fn supervise(
             .unwrap_or_default();
         lines.push(format!("{word:<11} run {:<12} {}", a.run, a.detail));
     }
+    for r in &report.recovered {
+        let word = serde_json::to_value(r.outcome)
+            .ok()
+            .and_then(|v| v.as_str().map(str::to_string))
+            .unwrap_or_default();
+        lines.push(format!(
+            "{word:<11} run {:<12} #{} at {}: {}",
+            r.run, r.pull_request, r.head_sha, r.detail
+        ));
+    }
     if report.decisions.is_empty() {
         lines.push("nothing to cancel".into());
     }
@@ -578,8 +599,7 @@ fn supervise(
         ),
         (None, None) => "supervisor alive".into(),
     });
-    w(out, lines.join("\n"))?;
-    Ok(report.exit_code())
+    w(out, lines.join("\n"))
 }
 
 /// Run `majordomus prs`.
