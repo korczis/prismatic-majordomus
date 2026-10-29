@@ -970,17 +970,17 @@ fn recover(
     trail_broken: &mut bool,
 ) -> Vec<Recovery> {
     let stories = stories(&drain::events(root));
-    let mut triggers: Vec<(&u64, &Story)> = stories
+    // newest first: keyed by where on the trail each story's newest word is
+    let triggers: BTreeMap<std::cmp::Reverse<usize>, (&u64, &Story)> = stories
         .iter()
         .filter(|(_, s)| heads.get(&s.pr) == Some(&s.head_sha))
         .filter(|(_, s)| s.may_have_left_its_head_bare())
+        .map(|t| (std::cmp::Reverse(t.1.order), t))
         .collect();
-    // newest first
-    triggers.sort_by_key(|t| std::cmp::Reverse(t.1.order));
     let mut out = Vec::new();
     let mut read: BTreeMap<String, Result<Vec<RunObservation>, String>> = BTreeMap::new();
     let mut handled = BTreeSet::new();
-    for (&trigger, story) in triggers {
+    for (&trigger, story) in triggers.into_values() {
         if acted.contains(&trigger) || current.iter().any(|c| c.id == trigger && c.in_flight()) {
             continue;
         }
