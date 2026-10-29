@@ -204,27 +204,59 @@ pre.mj-diagram-canvas.is-addressed {
 
 /* ------------------------------------------------------------------ the chart */
 
-/* A chart is drawn above the table it reads. The table stays: it is the data, and it is
-   what a reader without the script, a screen reader and a printout get. */
+/* A chart is drawn above the table it reads, in a card: the site's card (`--mj-raised`, the
+   frame's line, the large radius), a header row and the plot. The table stays: it is the
+   data, and it is what a reader without the script, a screen reader and a printout get. */
+.mj-chart-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  box-sizing: border-box;
+  min-width: 0;
+  margin: 0 0 0.75rem;
+  padding: 0.75rem 0.75rem 0.375rem;
+  border: 1px solid var(--mj-line);
+  border-radius: var(--radius-lg, 0.5rem);
+  background: var(--mj-raised);
+  color: var(--mj-fg);
+  /* the header is laid out by the card's width, not the viewport's: a chart in a narrow
+     column is as compact as one on a phone */
+  container-type: inline-size;
+}
+.mj-chart-card[hidden] {
+  display: none;
+}
 .mj-chart {
   display: block;
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
   height: 20rem;
-  margin: 0 0 0.75rem;
-  border: 1px solid var(--mj-line);
-  border-radius: 0.5rem;
-  background: var(--mj-bg);
+  margin: 0;
+  border-radius: var(--radius-md, 0.375rem);
+  background: transparent;
   /* how strongly a line's area is filled under it, at the line; the fill fades to nothing at
-     the axis. A share of the series colour, never a colour of its own. */
+     the axis. A share of the series colour, never a colour of its own. Only a lone series,
+     or the one pointed at, is filled. */
   --chart-area-opacity: 0.16;
+  /* the same under a line focused among others, lighter: its gaps are gaps in a tint the rest
+     of the plot does not carry */
+  --chart-focus-area-opacity: 0.1;
+  /* the dark card swallows a tint, so the dark theme's fills are stronger: a lone line's half
+     as strong again, and a focused one's more, since it lies under the other lines' strokes */
+  --chart-area-opacity-dark: 0.24;
+  --chart-focus-area-opacity-dark: 0.22;
 }
 .mj-chart[hidden] {
   display: none;
 }
+/* the plot's text is drawn in SVG and takes the page's figures: every number in a column of
+   ticks is as wide as the next (ECharts writes only the font's size and family inline) */
+.mj-chart svg text {
+  font-variant-numeric: tabular-nums;
+}
 /* the frame takes focus (the arrow keys move along the categories); the ring is the base
-   sheet's, drawn inside so the figure's edge does not clip it */
+   sheet's, drawn inside so the card's edge does not clip it */
 .mj-chart:focus-visible {
   outline-offset: -2px;
 }
@@ -233,20 +265,36 @@ pre.mj-diagram-canvas.is-addressed {
   -webkit-user-select: none;
   user-select: none;
 }
-/* Under a zoomable line chart: the window it shows and the button that gives the whole range
-   back. The button is the shared `.mj-button`. */
+/* The header: the legend at the left, the zoomed range and Reset at the right, wrapping onto
+   a second row on a phone with the range kept at the right. */
+.mj-chart-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  min-width: 0;
+}
+.mj-chart-head[hidden] {
+  display: none;
+}
+/* The window a zoomable line chart shows and the button that gives the whole range back.
+   The button is the shared `.mj-button`, shown only while the chart is zoomed: at the whole
+   range there is nothing to reset, and a greyed button would spend room saying so. On a
+   phone the same slot is the tooltip's dock: the category pointed at, said in full. */
 .mj-chart-tools {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: 0.5rem;
-  margin: -0.25rem 0 0.75rem;
+  margin: 0 0 0 auto;
   font-size: var(--text-small);
   line-height: var(--text-small--line-height);
   color: var(--mj-muted);
 }
-.mj-chart-tools[hidden] {
+.mj-chart-tools[hidden],
+.mj-chart-tools [hidden] {
   display: none;
 }
 .mj-chart-range {
@@ -254,16 +302,24 @@ pre.mj-diagram-canvas.is-addressed {
   overflow-wrap: anywhere;
   font-variant-numeric: tabular-nums;
 }
-/* The legend: one toggle button per series, under the frame. It wraps onto as many rows as
-   the width needs, so no key is ever paged out of sight, and each button is at least 28px
-   tall (above the 24px target size). A hidden series is said three ways: aria-pressed, a
-   struck-through name and a hollow key, so its state is never a colour alone. The key's
-   colour is the series', set by charts.js as `--chart-key`; the text is the page's. */
+/* docked, the range says what a tooltip would: in the ink, not the muted range */
+.mj-chart-range[data-chart-pointing] {
+  color: var(--mj-fg);
+  font-weight: 500;
+}
+/* The legend: one toggle button per series. It wraps onto as many rows as the width needs,
+   so no key is ever paged out of sight, and each button is at least 28px tall (above the
+   24px target size). A hidden series is said three ways: aria-pressed, a struck-through name
+   and a hollow key, so its state is never a colour alone. The key's colour is the series',
+   set by charts.js as `--chart-key`; the text is the page's. Beside the name stands the
+   series' value: the latest, or the one at the category pointed at. */
 .mj-chart-keys {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem 0.5rem;
-  margin: -0.25rem 0 0.75rem;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+  margin: 0 0 0 -0.375rem;
 }
 .mj-chart-keys[hidden] {
   display: none;
@@ -271,11 +327,11 @@ pre.mj-diagram-canvas.is-addressed {
 .mj-chart-key {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
   min-height: 1.75rem;
-  padding: 0.125rem 0.5rem;
+  padding: 0.125rem 0.5rem 0.125rem 0.375rem;
   border: 1px solid transparent;
-  border-radius: 0.375rem;
+  border-radius: var(--radius-md, 0.375rem);
   background: transparent;
   color: var(--mj-body);
   font: inherit;
@@ -283,9 +339,13 @@ pre.mj-diagram-canvas.is-addressed {
   line-height: var(--text-small--line-height);
   cursor: pointer;
 }
-.mj-chart-key:hover {
+button.mj-chart-key:hover {
   background: var(--mj-sunken);
   border-color: var(--mj-line);
+}
+/* one series: its key and value stand as a readout, not a control */
+.mj-chart-key--static {
+  cursor: default;
 }
 .mj-chart-key-mark {
   flex-shrink: 0;
@@ -296,11 +356,24 @@ pre.mj-diagram-canvas.is-addressed {
   border-radius: 0.1875rem;
   background: var(--chart-key, var(--mj-muted));
 }
+/* a hatched series (the second state of no coloured meaning) is hatched in its key too */
+.mj-chart-key[data-chart-hatch] .mj-chart-key-mark {
+  background: repeating-linear-gradient(-45deg, var(--chart-key, var(--mj-muted)) 0 2px,
+    transparent 2px 4px);
+}
 /* a line's key is a stroke, as its mark is */
 .mj-chart-keys--line .mj-chart-key-mark {
   width: 0.875rem;
-  height: 0.25rem;
+  height: 0.1875rem;
   border-radius: 1px;
+}
+.mj-chart-key-value {
+  color: var(--mj-fg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.mj-chart-key-value:empty {
+  display: none;
 }
 .mj-chart-key[aria-pressed="false"] {
   color: var(--mj-faint);
@@ -310,6 +383,67 @@ pre.mj-diagram-canvas.is-addressed {
 }
 .mj-chart-key[aria-pressed="false"] .mj-chart-key-mark {
   background: transparent;
+}
+/* On a narrow card the header is compact: keys closer together (each still 24px tall, the
+   target size), the not-recorded key wrapping beside them, and the range and Reset on one
+   line across the card. */
+@container (max-width: 30rem) {
+  .mj-chart-head {
+    gap: 0.25rem 0.5rem;
+  }
+  .mj-chart-keys {
+    gap: 0 0.125rem;
+  }
+  .mj-chart-key,
+  .mj-chart-gap {
+    min-height: 1.5rem;
+    gap: 0.3125rem;
+    padding-inline: 0.3125rem 0.375rem;
+  }
+  .mj-chart-tools {
+    flex: 1 1 100%;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    min-height: 1.75rem;
+    margin: 0;
+  }
+}
+/* What a line's dashed bridge is: it crosses a gap and is not data. */
+.mj-chart-gap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 1.75rem;
+  font-size: var(--text-small);
+  line-height: var(--text-small--line-height);
+  color: var(--mj-faint);
+}
+.mj-chart-gap[hidden] {
+  display: none;
+}
+.mj-chart-gap-mark {
+  flex-shrink: 0;
+  width: 0.875rem;
+  border-top: 2px dashed var(--mj-faint);
+}
+/* The colour a status column is drawn in. A status's ink is a text colour (the 900 step on
+   its tint in light, the 300 on its ground in dark), and a filled mark needs the family's
+   middle: the ink mixed with the status's own border (its 200 step in light, its 900 in
+   dark) lands at a lightness of 0.56-0.59 in light and 0.6-0.7 in dark, so every state stands
+   at least 3:1 on the card in both themes, and its hue, mixed between two steps of one
+   family, is within a few degrees in both themes. The mix halves the chroma of a light ink
+   (the 900 step is a dark, quiet colour), so a state is then given back at least the chroma
+   its dark mix has (0.14, the family's middle steps): the same hue and lightness, as vivid
+   in light as in dark, and never a brown where the dark theme draws an orange. Where relative
+   colour is not understood the mix stands alone. charts.js reads it from the column's badge. */
+figure[data-chart] thead :is(.mj-badge, .mj-status) {
+  --chart-status: color-mix(in oklch, var(--mj-status-fg) 64%, var(--mj-status-line));
+}
+@supports (color: oklch(from red l c h)) {
+  figure[data-chart] thead :is(.mj-badge, .mj-status) {
+    --chart-status: oklch(from color-mix(in oklch, var(--mj-status-fg) 64%,
+      var(--mj-status-line)) l max(c, 0.14) h);
+  }
 }
 /* what the tooltip says, for a reader who hears the page; not drawn */
 .mj-chart-live {
@@ -323,8 +457,8 @@ pre.mj-diagram-canvas.is-addressed {
   white-space: nowrap;
   border: 0;
 }
-figure[data-chart]:target .mj-chart,
-figure[data-chart].is-addressed .mj-chart {
+figure[data-chart]:target .mj-chart-card,
+figure[data-chart].is-addressed .mj-chart-card {
   box-shadow: inset 0 0 0 2px var(--mj-accent);
 }
 .mj-chart-note {
@@ -335,14 +469,26 @@ figure[data-chart].is-addressed .mj-chart {
 }
 /* The table a chart is drawn from, on a narrow screen: it scrolls sideways inside its region, and
    the first column (what a row is: a milestone, a run) stays in place while the numbers move, so a
-   reader never loses which row a number belongs to. Below the `sm` width only; a wide screen shows
-   the whole table and needs no anchor. */
+   reader never loses which row a number belongs to. A cell keeps to one line, so a date is never
+   broken over three and two headings never run together, and the region's right edge is shaded
+   while more of the table lies past it (the shade is covered once the end is scrolled to). Below
+   the `sm` width only; a wide screen shows the whole table and needs no anchor. */
 @media (max-width: 639.98px) {
+  figure[data-chart] table :is(th, td) {
+    white-space: nowrap;
+  }
   figure[data-chart] table :is(th, td):first-child {
     position: sticky;
     left: 0;
     z-index: 1;
     background: var(--mj-bg);
     box-shadow: inset -1px 0 0 var(--mj-line);
+  }
+  figure[data-chart] > [role="region"] {
+    background:
+      linear-gradient(to left, var(--mj-bg) 40%, color-mix(in oklab, var(--mj-bg) 0%,
+        transparent)) right / 2.5rem 100% no-repeat local,
+      radial-gradient(farthest-side at 100% 50%, color-mix(in oklab, var(--mj-fg) 18%,
+        transparent), transparent) right / 0.875rem 100% no-repeat scroll;
   }
 }

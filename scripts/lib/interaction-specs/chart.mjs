@@ -2,8 +2,8 @@
 // pointing at it. Its frame takes focus and the arrow keys move along the categories with one tooltip that names
 // every visible series there; a key held with ctrl or meta is left to the browser; pressing a legend button hides
 // its series, says so with aria-pressed, and leaves every other series in its colour; a plain wheel over a chart
-// scrolls the page; a line chart with more categories than fit is zoomable, and the Reset control gives the whole
-// range back. The two controls are the templates the build wrote in site/templates/partials/charts.html (the
+// scrolls the page; a line chart with more categories than fit is zoomable, and the Reset control, shown while it is
+// zoomed, gives the whole range back. The two controls are the templates the build wrote in site/templates/partials/charts.html (the
 // legend's button and the Reset button, the elements this spec claims); the state is read through
 // window.mjCharts, which the component publishes for exactly this.
 export default {
@@ -38,8 +38,27 @@ export default {
       const expected = Math.min(before.window[0] + 1, before.categories.length - 1);
       if (pointed.cursor !== expected) fail(`ArrowRight after Home left chart ${id} at category ${pointed.cursor}, not ${expected}`);
       for (const s of before.series) if (!pointed.tip.includes(s.name)) fail(`the tooltip of chart ${id} does not name series ${s.name}: "${pointed.tip.slice(0, 160)}"`);
-      const shown = await page.locator(`[id="${id}"] .mj-chart-tip`).first().isVisible().catch(() => false);
-      if (!shown) fail(`pointing at a category of chart ${id} from the keyboard opened no tooltip`);
+      // the tooltip floats beside the rule (or over the header band), or, on a phone, is docked in
+      // the card's header: then the header must say what the tooltip would, the category pointed at
+      // in its range slot and each visible series' value there in its key
+      const floating = await page.locator(`[id="${id}"] .mj-chart-tip`).first().isVisible().catch(() => false);
+      const dock = page.locator(`[id="${id}"] .mj-chart-range[data-chart-pointing]`).first();
+      const docked = !floating && await dock.isVisible().catch(() => false);
+      if (!floating && !docked) fail(`pointing at a category of chart ${id} from the keyboard opened no tooltip`);
+      if (docked) {
+        const at = pointed.cursor, said = (await dock.textContent()) || '';
+        const category = before.categories[at] || '';
+        // a dated category is said briefly with its place among the records; any other by its name
+        const named = said.includes(category) || said.includes(`${at + 1} of ${before.categories.length}`);
+        if (!named) fail(`the docked header of chart ${id} says "${said}", not category ${at} ("${category}")`);
+        const keys = await page.locator(`[id="${id}"] .mj-chart-key-value`).allTextContents();
+        before.series.forEach((s, k) => {
+          const v = s.data[at], text = (keys[k] || '').trim();
+          const shownValue = Number(text.replace(/[,%]/g, ''));
+          const right = v == null ? text === '–' : Number.isFinite(shownValue) && Math.abs(shownValue - v) <= 0.051;
+          if (!right) fail(`the docked key of ${s.name} on chart ${id} says "${text}" at category ${at}, where the table says ${v == null ? 'nothing' : v}`);
+        });
+      }
       await page.keyboard.press('Escape');
       // a key held with ctrl or meta is the browser's (page zoom, Back), and the chart leaves it alone
       const kept = await frame.evaluate((el) => ['ctrlKey', 'metaKey', 'altKey'].map((m) => {
@@ -81,17 +100,21 @@ export default {
       }
       // the zoom: a crowded line chart narrows, and its Reset brings back the whole range
       if (!before.zoomable) continue;
+      // Reset takes no room at the whole range, where there is nothing to reset, and is shown
+      // and enabled once the chart is zoomed
       const reset = page.locator(`[data-chart-action="reset"][data-chart-for="${id}"]`);
-      if (!(await reset.isVisible())) { fail(`zoomable chart ${id} shows no Reset control`); continue; }
-      if (!(await reset.isDisabled())) fail(`Reset of chart ${id} is enabled while the whole range is shown`);
+      if ((await reset.count()) !== 1) { fail(`zoomable chart ${id} has no Reset control`); continue; }
+      if ((await reset.isVisible()) || !(await reset.isDisabled())) fail(`Reset of chart ${id} is shown or enabled while the whole range is shown`);
       const last = before.categories.length - 1;
       await page.evaluate(([i, a, b]) => window.mjCharts.zoom(i, a, b), [id, Math.max(0, last - 5), last]);
       const zoomed = await view(id);
       if (zoomed.whole) { fail(`zooming chart ${id} left it showing the whole range`); continue; }
+      if (!(await reset.isVisible())) { fail(`zoomable chart ${id} shows no Reset control once it is zoomed`); continue; }
       if (await reset.isDisabled()) { fail(`Reset of chart ${id} stays disabled once it is zoomed`); continue; }
       await reset.click();
       const back = await view(id);
       if (!back.whole || back.window[0] !== 0 || back.window[1] !== last) fail(`Reset left chart ${id} at categories ${back.window.join('-')}, not 0-${last}`);
+      if (await reset.isVisible()) fail(`Reset of chart ${id} is still shown once the whole range is back`);
     }
     return controls.length + conditional;
   },
