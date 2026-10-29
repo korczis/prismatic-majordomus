@@ -1,0 +1,40 @@
+id: I4310
+milestone: a-finding-is-tracked-to-its-issue
+title: "A site issue page links its GitHub projection, and the GitHub issue body links back to the record, the site and the evidence commit"
+slug: an-issue-and-its-github-projection-link-both-ways
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "On each site issue and milestone page, link the GitHub projection through a search for the record marker github-sync writes (issues?q=\"majordomus:record I####\"), which needs no number and no network; teach link-check that form; and extend the issue body renderer so the GitHub body links the canonical record as a blob pinned to the landing commit, links the record's page on majordomus.dev, links each dependency row to its site page, and keeps the evidence table's commit column as a commit link. No closing keyword is written anywhere."
+why: "No site issue or milestone page, and no /ui or Cockpit screen, links to the GitHub projection, and the GitHub body has no clickable link: mj_plan_body_issue prints the canonical file as a backticked path (lib/plan.sh:395) and the evidence table drops the commit column (lib/plan.sh:451-463). github-sync already finds an issue by the marker it writes into the body (scripts/github-sync:686, documented at :28-33), so a marker search is a link that never stores a GitHub number. This extends I3970 (pull request metadata, Refs links), I3975 (issues only through github-sync) and I3976 (a commit names its issue), and does not repeat them."
+current_state: "On 81ef931a3e1 site/templates/issue.html and site/templates/milestone.html carry no GitHub link; lib/plan.sh renders the body with no link; scripts/ci/link-check has no forge-issues form."
+desired_state: "Every site issue and milestone page links its marker search; the GitHub body links the pinned record, the site page, each dependency's site page and each evidence commit; link-check decides the marker-search and site-page forms offline; scripts/ci/github-check passes and no closing keyword appears."
+scope:
+  - ".ai/repo/project/issues/I4310.yaml"
+  - "site/templates/issue.html"
+  - "site/templates/milestone.html"
+  - "lib/plan.sh"
+  - "scripts/ci/link-check"
+non_scope:
+  - "Storing or reading a GitHub issue number (scripts/github-sync:28-33)"
+  - "Creating a GitHub issue outside github-sync --apply at landing (I3975)"
+  - "The milestone loop of scripts/github-sync, which #2622 edits"
+  - "A second phase that reads github-sync --plan into an uncommitted observation for a direct link; it waits for this phase to land"
+depends_on:
+  - "I4298"
+serves:
+  - "a-review-is-seen-at-its-commit#a-finding-becomes-a-tracked-issue"
+acceptance_criteria:
+  - "The built page of a fixture issue links the marker search for its id"
+  - "The rendered GitHub body of a fixture issue links the pinned record, its site page, each dependency's site page and each evidence commit"
+  - "No rendered body or page contains Close, Closes, Fix, Fixes, Resolve or Resolves followed by an issue reference"
+  - "scripts/ci/github-check passes"
+validation:
+  - "scripts/ci/github-check"
+  - "scripts/ci/link-check --sources"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "issue_and_projection_link_both_ways"
+risk: "Medium. #2622 edits lib/plan.sh and scripts/github-sync:969-997; this issue rebases after #2622 lands and stays out of the milestone loop."
+created_at: 2026-10-28
+updated_at: 2026-10-28
