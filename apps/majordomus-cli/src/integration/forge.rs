@@ -420,19 +420,27 @@ fn gh_retrying_unless(
     .map_err(ForgeError)
 }
 
-/// Whether a failure is the forge's gateway giving up on a query before it was answered
-/// (HTTP 504): the answer a page too large to compute in time gets, again, on every attempt.
-/// `gh pr list` asks a hundred pull requests a page with their whole rollups, and on master's
-/// pages runs 40796031540, 40803295553 and 40823254353 all four attempts at that page were 504
-/// (I4380); a smaller page is asked instead of the same page four times.
+/// Whether a failure is the forge giving up on a query before it was answered: the answer a
+/// page too large to compute in time gets, again, on every attempt. It comes in two forms. The
+/// gateway's HTTP 504; and GraphQL's own, an HTTP 200 whose error `gh` prints as "GraphQL:
+/// Something went wrong while executing your query. This may be the result of a timeout, or
+/// it could be a GitHub bug." `gh pr list` asks a hundred pull requests a page with their
+/// whole rollups, and on master's pages runs 40796031540, 40803295553 and 40823254353 all
+/// four attempts at that page were 504 (I4380); a smaller page is asked instead of the same
+/// page four times. [`super::retry::transient`] reads both as an outage (by "timeout"), so
+/// without this every one of them was the same question asked four times.
 ///
 /// ```text
 /// gateway_timed_out("HTTP 504: 504 Gateway Timeout (https://api.github.com/graphql)") == true
+/// gateway_timed_out("GraphQL: Something went wrong while executing your query. \
+///     This may be the result of a timeout, or it could be a GitHub bug.") == true
 /// gateway_timed_out("HTTP 502: Bad Gateway") == false
 /// ```
 pub fn gateway_timed_out(message: &str) -> bool {
     let m = message.to_ascii_lowercase();
-    m.contains("http 504") || m.contains("504 gateway time")
+    m.contains("http 504")
+        || m.contains("504 gateway time")
+        || m.contains("may be the result of a timeout")
 }
 
 /// The merge methods a repository's settings allow, from `GET repos/{repository}`, in the
@@ -3739,6 +3747,16 @@ mod tests {
             "HTTP 504: 504 Gateway Timeout (https://api.github.com/graphql)"
         ));
         assert!(gateway_timed_out("504 Gateway Time-out"));
+        // GraphQL's own timeout, an HTTP 200 with an error, is the same answer: a smaller page
+        // is asked, never the same page four times
+        let graphql = "GraphQL: Something went wrong while executing your query. This may be \
+            the result of a timeout, or it could be a GitHub bug. Please include \
+            `C0DE:1234:5678:9ABC:DEF0` when reporting this issue.";
+        assert!(
+            super::super::retry::transient(graphql),
+            "the retry reads it as an outage"
+        );
+        assert!(gateway_timed_out(graphql));
         // every other outage is the same question asked again, and a refusal is the answer
         for other in [
             "HTTP 502: Bad Gateway (https://api.github.com/graphql)",

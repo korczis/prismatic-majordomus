@@ -23,6 +23,11 @@
 #   6  the runs are read several at a time (I4380), and one at a time gives the same bytes
 #   7  a call that does not return is stopped at its own bound and is a forge that could not
 #      be read (exit 12, no file), not a reading that waits out the step
+#   8  a forge that never answers anything, through the trends step's own line of pages.yml
+#      run as GitHub runs it (bash -e): the listing is stopped at its bound, the reading is
+#      exit 12 with no file, the step says the ::warning and ends 0, so the deploy goes on;
+#      and a reading that outlives the line's own `timeout` is exit 124, the same warning,
+#      and the same 0 (I4380)
 . "$ROOT/test/lib.sh"
 
 command -v python3 >/dev/null 2>&1 || skip "no python3 to write the fixture artifact"
@@ -92,6 +97,7 @@ while [ \$# -gt 0 ]; do case "\$1" in
   *) url="\$1"; shift ;;
 esac; done
 [ -f "$F/down" ] && exit 1
+[ -f "$F/never" ] && exec sleep 60
 case "\$url" in *"/jobs?"*) [ -f "$F/hang" ] && exec sleep 60 ;; esac
 case "\$url" in
   *"/actions/workflows/validate.yml/runs?branch=master&status=completed&per_page="*) f=runs.json ;;
@@ -194,6 +200,45 @@ if command -v timeout >/dev/null 2>&1; then
   rm -f "$F/hang"
 else
   echo "    (no timeout(1) here: the per-call bound is not exercised)"
+fi
+
+# ---------------------------------------------------------------- 8. a forge that never answers
+if command -v timeout >/dev/null 2>&1; then
+  step="$(awk '/- name: trends$/ { f = 1 } f && /^        run: / { sub(/^        run: /, ""); print; exit }' "$ROOT/.github/workflows/pages.yml")"
+  case "$step" in
+    'timeout --kill-after=10 200 scripts/pages trends || echo "::warning title=No trends::'*) ;;
+    *) echo "    the trends step of pages.yml is not the bounded, degrading line this runs: $step"; exit 1 ;;
+  esac
+  # the step's own line, with the series written to the scratch dir instead of the tree
+  line="${step/scripts\/pages trends/scripts/pages trends --out $T/never.json}"
+  run_step() {
+    (cd "$ROOT" && PATH="$T/bin:$PATH" GITHUB_REPOSITORY=example/repo bash -e -c "$1") > "$T/step.out" 2>&1
+  }
+  : > "$F/never"; : > "$F/calls.log"
+  t0="$(date +%s)"
+  MJ_TRENDS_CALL_SECONDS=2 run_step "$line" \
+    || { echo "    the trends step did not end 0 when the forge never answered: the deploy would stop"; cat "$T/step.out"; exit 1; }
+  took=$(( $(date +%s) - t0 ))
+  expect_grep 'pages trends: the validate runs of example/repo could not be listed' "$T/step.out"
+  expect_grep '^::warning title=No trends::.*\(exit 12\)' "$T/step.out"
+  [ ! -e "$T/never.json" ] || { echo "    a forge that never answered left a trends.json"; exit 1; }
+  [ "$took" -lt 30 ] || { echo "    the listing was not stopped at its 2 s bound: the step took $took s"; exit 1; }
+  [ "$(grep -c . "$F/calls.log")" = 1 ] || { echo "    more was asked of a forge whose listing never answered"; cat "$F/calls.log"; exit 1; }
+  # the line's own bound, 3 s here for the 200 of pages.yml, outlived by calls bounded at 8:
+  # a call's own timeout(1) is a process group of its own, which the line's bound does not
+  # reach, so the stand-in's sleep is left to that 8 s and not to the stand-in's 60
+  short="${line/timeout --kill-after=10 200 /timeout --kill-after=2 3 }"
+  [ "$short" != "$line" ] || { echo "    the step's own bound could not be shortened for the test"; exit 1; }
+  t0="$(date +%s)"
+  MJ_TRENDS_CALL_SECONDS=8 run_step "$short" \
+    || { echo "    the trends step did not end 0 when its own bound stopped the reading"; cat "$T/step.out"; exit 1; }
+  took=$(( $(date +%s) - t0 ))
+  expect_grep '^::warning title=No trends::.*\(exit 124\)' "$T/step.out"
+  [ ! -e "$T/never.json" ] || { echo "    a reading stopped at the step's bound left a trends.json"; exit 1; }
+  [ "$took" -lt 30 ] || { echo "    the step's own 3 s bound did not stop the reading: it took $took s"; exit 1; }
+  rm -f "$F/never"
+else
+  echo "    (no timeout(1) here: the trends step's bounds are not exercised)"
 fi
 
 echo "    the series is master's runs oldest first, each with its own jobs' cost and its own measurement's totals, null where the forge no longer keeps one"

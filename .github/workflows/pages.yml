@@ -329,27 +329,39 @@ jobs:
       # The forge, observed with its own tool before the UI is read: the pull requests the PR
       # Drain draws and the deployments and releases the Deployments screen draws are read
       # from this record and from nothing else. A runner has no observation of its own, so
-      # without this step both screens are published empty — which is what they were. Every
-      # read is asked again on an outage (four attempts), and a list the forge's gateway times
-      # out is read again in smaller pages (I4380). A forge that still cannot be asked degrades
-      # the two screens and not the site: each screen then says the forge was not observed,
-      # the warning names which, and the publication goes on. Until I4380 this step was
-      # blocking, and on 2026-10-29 one 504 from the forge (exit 12, run 40823254353) failed
-      # this job and with it the deploy of every page — a whole site held back for two screens
-      # that know how to say "not observed". Each command is bounded inside the step's own
-      # bound (2 x (135 + 10) s < 5 m), so a hang is the warning and never the step's kill,
-      # which `||` cannot catch (scripts/ci/step-bound-check holds that).
-      - name: the forge, observed
-        timeout-minutes: 5
+      # without these steps both screens are published empty — which is what they were. Every
+      # read is asked again on an outage (four attempts), and a list the forge times out (a
+      # gateway 504, or GraphQL's own "may be the result of a timeout") is read again in
+      # smaller pages (I4380). A forge that still cannot be asked degrades the two screens and
+      # not the site: each screen then says the forge was not observed, the warning names
+      # which, and the publication goes on. Until I4380 this was one blocking step, and on
+      # 2026-10-29 one 504 from the forge (exit 12, run 40823254353) failed this job and with
+      # it the deploy of every page — a whole site held back for two screens that know how to
+      # say "not observed".
+      #
+      # Two questions, two steps, each bounded inside its own minutes, so that a hang is the
+      # warning and never the step's kill, which `||` cannot catch (scripts/ci/step-bound-check
+      # holds that). The bounds are measured, not guessed. `prs refresh` observes and then
+      # fetches every pull request's head in one `git fetch`: 128 s with 77 open (run
+      # 40573560897: observed 22 s, fetched 106 s), 174 s with 84 (40652175281: 85 s, 89 s),
+      # 163 s with 87 (40696771044: 59 s, 104 s), so about 1.2 s a head plus up to 85 s of
+      # reads; 124 open is about 235 s, and a paged list adds a page per 25. 420 s holds a
+      # healthy forge to about 250 open pull requests; a hung one is the warning after 7 min.
+      # `served forge` took 11-12 s on each of those runs.
+      - name: the pull requests, observed
+        timeout-minutes: 8
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # two questions, each its own command: the pull requests, then what was deployed
-          # and released
-          timeout --kill-after=10 135 apps/majordomus-cli/target/debug/majordomus prs refresh \
-            || echo "::warning title=Forge not observed::majordomus prs refresh could not read the pull requests (exit $?); the PR Drain is published saying the forge was not observed"
+          timeout --kill-after=10 420 apps/majordomus-cli/target/debug/majordomus prs refresh \
+            || echo "::warning title=Forge not observed::majordomus prs refresh could not read the pull requests in time (exit $?); the PR Drain is published saying the forge was not observed"
+      - name: the deployments and releases, observed
+        timeout-minutes: 3
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
           timeout --kill-after=10 135 apps/majordomus-cli/target/debug/majordomus served forge \
-            || echo "::warning title=Forge not observed::majordomus served forge could not read the deployments and releases (exit $?); the Deployments screen is published without them"
+            || echo "::warning title=Forge not observed::majordomus served forge could not read the deployments and releases in time (exit $?); the Deployments screen is published without them"
       # Every page the screens link to, not the first few: the default budget is sized for a
       # person waiting at a terminal and left most inspectors out of the published snapshot.
       # What was still left out is in snapshot.json, and `scripts/pages verify-ui` reports it.

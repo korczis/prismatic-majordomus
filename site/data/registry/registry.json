@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "a345b591d7c0ec1da45d3864b97a28b947789d8eef23f0995898a242603aa4e4",
+    "fingerprint": "63be6dbfc55139ed1c8ec91e273912e3ea21b05c5edd93189b45d18a12f0f59d",
     "summary": {
       "total": 3572,
       "builtin": 220,
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "385238ec9ce62828b6fd98e198fc0c427d07d0b87a2a064eb0924847622744cc",
+    "fingerprint": "e166174141494b618a5614fc432e70796eff7cbd033b36a5973731e155b22028",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -115074,11 +115074,11 @@
         "kind": "issue",
         "identity": "I4380",
         "title": "An optional step of the Pages publication never stops the deploy",
-        "description": "A step of pages.yml that is written to degrade (`|| echo \\\"::warning ...\\\"`) degrades when it runs out of time instead of being killed: its command is bounded inside the step's own timeout-minutes, and scripts/ci/step-bound-check refuses one that is not. The trends reading reads its runs eight at a time with every forge call bounded, and `majordomus prs refresh` reads the open pull requests in GraphQL pages of 25 when the forge's gateway times out `gh pr list`'s page of a hundred. The ui-snapshot's forge observation degrades: a forge that cannot be asked leaves the PR Drain and Deployments screens saying the forge was not observed, and the site is still published.",
+        "description": "A step of pages.yml that is written to degrade (`|| echo \\\"::warning ...\\\"`) degrades when it runs out of time instead of being killed: its command is bounded inside the step's own timeout-minutes, and scripts/ci/step-bound-check refuses one that is not. The trends reading reads its runs eight at a time with every forge call bounded, and `majordomus prs refresh` reads the open pull requests in GraphQL pages of 25 when the forge times out `gh pr list`'s page of a hundred (a gateway 504, or GraphQL's own \\\"may be the result of a timeout\\\"). The ui-snapshot's forge observation is two degrading steps, each bounded from measured runs: a healthy forge is always observed, and a forge that cannot be asked leaves the PR Drain and Deployments screens saying the forge was not observed, and the site is still published.",
         "path": ".ai/repo/project/issues/I4380.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 5481
+        "bytes": 8069
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -125716,7 +125716,7 @@
         "identity": "test/cases/3933_the_trends_are_read_from_the_runs_themselves.sh",
         "path": "test/cases/3933_the_trends_are_read_from_the_runs_themselves.sh",
         "source_class": "case",
-        "bytes": 12342
+        "bytes": 15456
       },
       {
         "uri": "majordomus://test/test/cases/3939_the_executable_is_built_once_per_run.sh",
@@ -126052,7 +126052,7 @@
         "identity": "test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
         "path": "test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
         "source_class": "case",
-        "bytes": 4465
+        "bytes": 8012
       },
       {
         "uri": "majordomus://test/test/cases/43_plan_command.sh",
@@ -126892,7 +126892,7 @@
         "identity": "test/cases/742_only_an_outage_is_asked_again.sh",
         "path": "test/cases/742_only_an_outage_is_asked_again.sh",
         "source_class": "case",
-        "bytes": 10606
+        "bytes": 11281
       },
       {
         "uri": "majordomus://test/test/cases/743_release_version_answers_with_the_contract.sh",

@@ -17,6 +17,9 @@
 #      40803295553 and 40823254353) is not the same page asked four times: it is read again in
 #      pages of 25 through GraphQL, and the observation records the pull request with its
 #      check (I4380)
+#   7. GraphQL's own timeout, an HTTP 200 whose error says "This may be the result of a
+#      timeout", is the same answer as the gateway's 504: one page of 25 is asked, never the
+#      same hundred four times (I4380)
 . "$ROOT/test/lib.sh"
 RB="$(rust_bin)" || rust_bin_exit $?
 
@@ -43,6 +46,8 @@ printf '{"data":{"repository":{"pullRequests":{"pageInfo":{"hasNextPage":false,"
 #   down    — `repo view` fails with a 503, always
 #   mergebad — everything answers, the fast-forward of master (I3910) fails with a 502
 #   gateway — `pr list` times out at the gateway (504), always; the paged read answers
+#   graphql — `pr list` times out inside GraphQL (its error, not a 504), always; the paged
+#             read answers
 cat > "$BIN/gh" <<EOF
 #!/bin/sh
 [ -n "\${DECLARATIONS:-}" ] || echo "\$*" >> "$STATE/log"
@@ -63,6 +68,7 @@ case "\$1 \$2" in
     if [ "\$mode" = cut ] && [ ! -f "$STATE/cut" ]; then touch "$STATE/cut"; echo "unexpected end of JSON input" >&2; exit 1; fi
     # the stand-in's own declarations read lists through here too, and is not the forge's list
     if [ "\$mode" = gateway ] && [ -z "\${DECLARATIONS:-}" ]; then echo "HTTP 504: 504 Gateway Timeout (https://api.github.com/graphql)" >&2; exit 1; fi
+    if [ "\$mode" = graphql ] && [ -z "\${DECLARATIONS:-}" ]; then echo "GraphQL: Something went wrong while executing your query. This may be the result of a timeout, or it could be a GitHub bug. Please include C0DE:1234:5678:9ABC:DEF0 when reporting this issue." >&2; exit 1; fi
     cat "$STATE/prs.json" ;;
   "pr merge"|"api -X") echo "HTTP 502: Bad Gateway" >&2; exit 1 ;;
   "pr view") echo OPEN ;;
@@ -126,15 +132,17 @@ echo cut > "$STATE/mode"; : > "$STATE/log"; rm -f "$STATE/cut" "$W/.ai/local/sta
 prs refresh >/dev/null || { echo "    a reply cut off once failed the refresh"; cat "$STATE/log"; exit 1; }
 [ "$(asked 'pr list')" = 2 ] || { echo "    the cut-off list was not asked again exactly once: $(asked 'pr list') call(s)"; exit 1; }
 [ -f "$W/.ai/local/state/integration/observation.json" ] || { echo "    no observation was recorded after the cut-off reply"; exit 1; }
-# ---------------------------------------------------------------- 6. a list the gateway times out
-echo gateway > "$STATE/mode"; : > "$STATE/log"; rm -f "$W/.ai/local/state/integration/observation.json"
-prs refresh >/dev/null || { echo "    a list the gateway timed out failed the refresh"; cat "$STATE/log"; exit 1; }
-[ "$(asked 'pr list')" = 1 ] || { echo "    the timed-out page was asked $(asked 'pr list') times, not once"; exit 1; }
-paged="$(grep -c 'reviewRequests(first:100).* n=25' "$STATE/log" || true)"
-[ "$paged" = 1 ] || { echo "    the open list was not read in one page of 25: $paged paged read(s)"; cat "$STATE/log"; exit 1; }
+# ---------------------------------------------------------------- 6 and 7. a list the forge times out
 OBS="$W/.ai/local/state/integration/observation.json"
-[ -f "$OBS" ] || { echo "    no observation was recorded after the paged read"; exit 1; }
-jq -e --arg h "$H1" '[.pull_requests[] | select(.number == 1 and .head_sha == $h)
-  | .checks[] | select(.name == "ci" and .state == "passed")] | length == 1' "$OBS" >/dev/null \
-  || { echo "    the paged read did not record #1 with its passing check"; jq '.pull_requests' "$OBS"; exit 1; }
+for mode in gateway graphql; do
+  echo "$mode" > "$STATE/mode"; : > "$STATE/log"; rm -f "$OBS"
+  prs refresh >/dev/null || { echo "    a list the forge timed out ($mode) failed the refresh"; cat "$STATE/log"; exit 1; }
+  [ "$(asked 'pr list')" = 1 ] || { echo "    the timed-out page ($mode) was asked $(asked 'pr list') times, not once"; exit 1; }
+  paged="$(grep -c 'reviewRequests(first:100).* n=25' "$STATE/log" || true)"
+  [ "$paged" = 1 ] || { echo "    the open list ($mode) was not read in one page of 25: $paged paged read(s)"; cat "$STATE/log"; exit 1; }
+  [ -f "$OBS" ] || { echo "    no observation was recorded after the paged read ($mode)"; exit 1; }
+  jq -e --arg h "$H1" '[.pull_requests[] | select(.number == 1 and .head_sha == $h)
+    | .checks[] | select(.name == "ci" and .state == "passed")] | length == 1' "$OBS" >/dev/null \
+    || { echo "    the paged read ($mode) did not record #1 with its passing check"; jq '.pull_requests' "$OBS"; exit 1; }
+done
 exit 0

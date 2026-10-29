@@ -1902,8 +1902,14 @@ cmd_trends() {
   [ -n "$slug" ] || { echo "pages trends: no repository slug (no GITHUB_REPOSITORY, no origin)" >&2; return 12; }
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj-trends.XXXXXX")"
   trends_fail() { echo "pages trends: $1" >&2; rm -rf "$tmp"; return 12; }
-  gh api "repos/$slug/actions/workflows/validate.yml/runs?branch=master&status=completed&per_page=$runs" \
-    > "$tmp/runs.json" 2>/dev/null || { trends_fail "the validate runs of $slug could not be listed"; return 12; }
+  # Every call to the forge is bounded (MJ_TRENDS_CALL_SECONDS, 30), the listing first: a gh
+  # that never answers is a forge that could not be read (exit 12, no file), within seconds,
+  # and not a reading that waits out pages.yml's own bound on the step (I4380).
+  trends_gh() {
+    if command -v timeout >/dev/null 2>&1; then timeout --kill-after=5 "$call" gh "$@"; else gh "$@"; fi
+  }
+  trends_gh api "repos/$slug/actions/workflows/validate.yml/runs?branch=master&status=completed&per_page=$runs" \
+    < /dev/null > "$tmp/runs.json" 2>/dev/null || { trends_fail "the validate runs of $slug could not be listed"; return 12; }
   # oldest first, the run id breaking a tie, so the order is the forge's facts and not its paging
   jq -ce '.workflow_runs | arrays | sort_by(.run_started_at // .created_at, .id) | .[]' "$tmp/runs.json" > "$tmp/runs.jsonl" \
     || { trends_fail "the forge's answer for the validate runs is not a run listing"; return 12; }
@@ -1912,9 +1918,6 @@ cmd_trends() {
   # call at a time over sixty runs took more than the four minutes pages.yml allows the step,
   # and a call that never returns would have waited out any bound (I4380). The series is then
   # put together in the listing's order, so how the reads interleaved changes no byte of it.
-  trends_gh() {
-    if command -v timeout >/dev/null 2>&1; then timeout --kill-after=5 "$call" gh "$@"; else gh "$@"; fi
-  }
   # One run's reads into $tmp/r/<id>/: its jobs, its coverage (null when the forge no longer
   # keeps the artifact) and `kept` or `gone`, or `failed` with what could not be read.
   trends_read_run() {
