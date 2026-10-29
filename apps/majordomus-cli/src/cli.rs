@@ -612,7 +612,7 @@ pub struct KitArgs {
     #[arg(long)]
     pub check: bool,
 
-    /// The kit-evidence/v1 file the design licence judges a licensed marker by (in CI the launcher decodes an exported MAJORDOMUS_KIT_EVIDENCE_<KIT> into a private file and passes it here); absent reads the policy's ui.evidence entries under $HOME
+    /// The kit-evidence/v1 file the design licence judges a licensed marker by (in CI the launcher decodes an exported `MAJORDOMUS_KIT_EVIDENCE_<KIT>` into a private file and passes it here); absent reads the policy's ui.evidence entries under $HOME
     #[arg(long, value_name = "FILE")]
     pub evidence: Option<PathBuf>,
 }
