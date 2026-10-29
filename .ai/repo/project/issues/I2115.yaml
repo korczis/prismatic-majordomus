@@ -30,4 +30,25 @@ validation:
 evidence_required:
   - the_slowest_case_is_cut
 created_at: 2026-10-09
-updated_at: 2026-10-20
+updated_at: 2026-10-29T19:13:29Z
+started_at: 2026-10-29T17:52:55Z
+started_event: sha256:804a467ce76e96658aa0611e8f4108ec2abb67a05c0cf51e17f82c0ae7546769
+verified_at: 2026-10-29T17:54:17Z
+verified_event: sha256:7e4750e2a6b6d89c79b124d37c4b7284a8fbc62984acbec81621e4a030c0df12
+completed_at: 2026-10-29T19:13:29Z
+completed_event: sha256:29c4830f5e4a016d38c08823e8380e7dfd8b7364707b467ba4633ecf0eceafe2
+evidence:
+  - covers: the_slowest_case_is_cut
+    type: ci
+    command: "bash test/run.sh 95_executable_reference (validate suite shards); scripts/ci/suite-budget (validate suite)"
+    result: "C1: case 95 ok in master validate 40573560939 at 6c79dcf68cf (every suite shard and the suite job green); test/cases/95_executable_reference.sh is unchanged from #1754's head 2937c955d2c (an ancestor of master) to master 51b38035a71, and #1754 recorded each relation's mutant killed against it (an added capability with no page, an unknown module accepted, a source path unchecked, a merging publish). C2: case cost in each run's ci-suite-durations artifact: 471 s in 40573560939, 299 s in 40676150754, 517 s in 40796031054, each under half of slowest_case_seconds 5130 (2565 s). C3: slowest_case_seconds last changed in 9a5a9b77520 (2026-10-20, before #1754 merged on 2026-10-23) and is 5130 on master, unchanged since; suite-budget in 40573560939 job 122692225002: slowest 77_rust_evidence at 3154 s against 5130 s. test/cases/95_executable_reference.sh, scripts/generate-site-data and .ai/repo/ci/suite.yaml are unchanged from 6c79dcf68cf to master 51b38035a71. Landed by #1754 (train 6, 7ca56514648)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939/job/122692225002"
+    commit: 51b38035a7162332304aef58fed25b98761f412b
+    recorded_at: 2026-10-29T17:54:48Z
+  - covers: the_slowest_case_is_cut
+    type: test
+    command: "MJ_TEST_JOBS=1 bash test/run.sh 95_executable_reference, in clones of master 51b38035a71 with MAJORDOMUS_BIN built from that crate (offload derive d6677b33f5), unmutated and with one mutant of scripts/generate-site-data each"
+    result: "C1 by mutation at master 51b38035a71: unmutated ok; every mutant fails the case: schema check neutered (line 81) expected exit 10, got 0; source-path check neutered (86) expected exit 10, got 0; module check neutered (96) expected exit 10, got 0; capability stubs not written (2418) 'no stub for artifacts.list'; registry.json dropped from the inputs (147) 'the input hash did not move with the manifest'; content subtree merged instead of replaced (2744-2745) 'a removed capability kept its stub'"
+    artifact: "test/cases/95_executable_reference.sh"
+    commit: 51b38035a7162332304aef58fed25b98761f412b
+    recorded_at: 2026-10-29T19:12:52Z
