@@ -1,0 +1,45 @@
+id: I4356
+milestone: mcp-transports-are-reliable
+title: "An exclusive claim is bound to a known session and its holder's process, and a claim is answered Written only when it is Held"
+slug: an-exclusive-claim-is-bound-to-its-holder
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "An exclusive claim for a session nobody opened is refused with session_unknown, naming `mesh session open --client-pid auto`, instead of opening the session implicitly; `mesh claim` sends client_pid and client_started, accepted only when the serving runtime is on the caller's machine; claim() reads the fold back and returns an error carrying the state when the claim is not Held; a claim sent to a runtime that holds only a closed record of a session live elsewhere is refused or forwarded; an exclusive claim also excludes by its issue field; mj_mesh_task_claim stops ignoring the answer. No beat-only suspension is introduced until CLI holders have an automatic beat source."
+why: "Incidents 6 and 9 of 2026-10-28. The exclusive release/seat claim c-56b837289bb0 stayed live for more than 14 hours on the launchd hub: claim() silently opened an unknown session name (a hand-shortened id, run from another repository), so the session had no client_pid and the I3810 reaper never saw it, and the hub never dies (KeepAlive, --idle 0); I3990 applies only to board sessions, and I3810, I3174, #2410 and #2380 do not cover it. In the id collisions (I4251, #2601 against #2605), a claim made through a stale runtime's closed session returned Written and expired at once. A beat-only TTL would suspend a 4.5-hour release mid-cut, so the remedy is binding, not a shorter lease."
+current_state: "Measured at 81ef931a3e1: claim() in apps/majordomus-cli/src/mesh/cooperation.rs (line 4184) opens an unknown session on demand; lib/common.sh's mj_mesh_task_claim (line 2063) runs the claim and does not read its answer; rule project.an-exclusive-claim-lives-by-its-holders-progress is v1."
+desired_state: "No exclusive claim exists without a known session bound to a live process on its runtime's machine, and a caller is never told Written for a claim that is not Held. Enforced by the admission refusals, the Rust tests, case 3990 and the rule at v2."
+scope:
+  - ".ai/repo/project/issues/I4356.yaml"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/mesh/state.rs"
+  - "apps/majordomus-cli/src/commands/mesh.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "lib/common.sh"
+  - "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh"
+  - "docs/MESH.md"
+  - ".ai/repo/rules/project/an-exclusive-claim-lives-by-its-holders-progress.v1.md"
+  - ".ai/repo/rules/project/an-exclusive-claim-lives-by-its-holders-progress.v2.md"
+non_scope:
+  - "Releasing c-56b837289bb0, the owner's act on the hub (:8791 /api/v1/mesh/claims/release)"
+  - "Seats taken through the task lifecycle (I4358)"
+acceptance_criteria:
+  - "Rust test: an exclusive claim naming an unopened session is refused with session_unknown"
+  - "Rust test: a claim whose folded state is not Held makes claim() return an error carrying the state, not Written"
+  - "Rust test: with s1 live on runtime A and a closed s1 record on runtime B, a claim through B does not answer Written"
+  - "Rust test: the same issue claimed exclusively under two different scopes is refused, naming the holder"
+  - "Rust test: a CLI claim whose client process has ended reads Expired; one whose process is alive is not suspended after the TTL"
+  - "Case 3990: `majordomus start --issue` on an exclusively claimed issue exits non-zero"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::cooperation"
+  - "bash test/run.sh 3990_a_claim_lapses_when_its_session_stops_progressing"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "rust"
+  - "test"
+depends_on:
+  - "I3810"
+serves: []
+created_at: 2026-10-29
+updated_at: 2026-10-29
