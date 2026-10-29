@@ -1310,6 +1310,24 @@ pub fn open_pull_requests(
     Ok(listed)
 }
 
+/// The open pull requests from what `gh pr list` answered (`listed`, as [`gh`] returns it): its
+/// list when it listed them, and when the forge timed the page out or cut its body off
+/// ([`list_needs_smaller_pages`]) the same list read again [`OPEN_PAGE`] at a time through
+/// `ask` ([`OPEN_QUERY`], the page size, the cursor). Every other failure is the error `gh`
+/// said, as [`json_of`] says it.
+fn open_list(
+    list_args: &[&str],
+    listed: (bool, String, String),
+    ask: &dyn Fn(&str, &str, Option<&str>) -> Result<Value, ForgeError>,
+) -> Result<Value, ForgeError> {
+    if listed.0 || !list_needs_smaller_pages(&listed.2) {
+        return json_of(list_args, listed);
+    }
+    let size = format!("n={OPEN_PAGE}");
+    let paged = open_pull_requests(OPEN_LIMIT, |after| ask(OPEN_QUERY, &size, after))?;
+    Ok(Value::Array(paged))
+}
+
 /// The GraphQL read of who may declare and what was declared: the open pull requests, newest
 /// first as `gh pr list` lists them, each with its author's association, whether its head
 /// lives in a fork, and the first hundred cross-references to it. The source of a
@@ -1751,14 +1769,7 @@ impl Forge for GhForge<'_> {
         // pages of OPEN_PAGE, each asked again on an outage as every read is, rather than the
         // same page four times
         let listed = gh_retrying_unless(root, &list_args, list_needs_smaller_pages)?;
-        let list = if !listed.0 && list_needs_smaller_pages(&listed.2) {
-            let size = format!("n={OPEN_PAGE}");
-            Value::Array(open_pull_requests(OPEN_LIMIT, |after| {
-                ask(OPEN_QUERY, &size, after)
-            })?)
-        } else {
-            json_of(&list_args, listed)?
-        };
+        let list = open_list(&list_args, listed, &ask)?;
         // keyed by number, so the observation is in number order whatever the forge listed
         let mut pull_requests: Vec<PullRequestObservation> = list
             .as_array()
@@ -3817,6 +3828,66 @@ mod tests {
         ] {
             assert!(!list_needs_smaller_pages(other), "{other}");
         }
+    }
+
+    #[test]
+    fn a_list_the_forge_gave_up_on_is_read_again_in_smaller_pages() {
+        let args = ["pr", "list"];
+        let asked = std::cell::RefCell::new(Vec::new());
+        let ask = |query: &str, size: &str, after: Option<&str>| -> Result<Value, ForgeError> {
+            asked.borrow_mut().push((
+                query == OPEN_QUERY,
+                size.to_string(),
+                after.map(str::to_string),
+            ));
+            Ok(match after {
+                None => open_page(vec![listed_and_paged(2).1], Some("c1")),
+                Some(_) => open_page(vec![listed_and_paged(1).1], None),
+            })
+        };
+        // listed: the list as `gh pr list` answered it, and no page is asked
+        let listed = (true, r#"[{"number": 5}]"#.to_string(), String::new());
+        assert_eq!(
+            open_list(&args, listed, &ask).unwrap(),
+            json!([{"number": 5}])
+        );
+        assert!(asked.borrow().is_empty());
+        // timed out, or cut off: the open query, a page of OPEN_PAGE, the cursor followed
+        for given_up in [
+            "HTTP 504: 504 Gateway Timeout",
+            "unexpected end of JSON input",
+        ] {
+            asked.borrow_mut().clear();
+            let list = open_list(&args, (false, String::new(), given_up.into()), &ask).unwrap();
+            let numbers: Vec<u64> = list
+                .as_array()
+                .unwrap()
+                .iter()
+                .filter_map(|v| v["number"].as_u64())
+                .collect();
+            assert_eq!(numbers, [2, 1], "{given_up}");
+            let size = format!("n={OPEN_PAGE}");
+            assert_eq!(
+                *asked.borrow(),
+                [
+                    (true, size.clone(), None),
+                    (true, size, Some("c1".to_string()))
+                ]
+            );
+        }
+        // any other failure is the error gh said, and no page is asked
+        asked.borrow_mut().clear();
+        let refused = (
+            false,
+            String::new(),
+            "HTTP 401: Bad credentials".to_string(),
+        );
+        let err = open_list(&args, refused, &ask).unwrap_err();
+        assert!(
+            err.0.contains("gh pr list failed") && err.0.contains("401"),
+            "{err}"
+        );
+        assert!(asked.borrow().is_empty());
     }
 
     #[test]
