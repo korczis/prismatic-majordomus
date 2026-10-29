@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "eb028cd931abe7d4d4884513330f25d4201925f851ca989a8dfdd81cbdbd312c",
+    "fingerprint": "c4e82b08dbf8ba59af4aeba8370515a59d4c528865638585fd02a13e05984388",
     "summary": {
-      "total": 3575,
+      "total": 3576,
       "builtin": 220,
-      "declarative": 3355,
+      "declarative": 3356,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3355
+        "resource": 3356
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3365
+        "implemented": 3366
       },
       "mcp_tools": 206,
-      "mcp_resources": 3412,
+      "mcp_resources": 3413,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91083,7 +91083,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 353,
+        "capabilities": 352,
         "capability_ids": []
       },
       {
@@ -91383,7 +91383,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1053,
+        "capabilities": 1055,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c45e368d528326e434e9d047d2ac99edf406840cab1c19006dcdc22f2c98173c",
+    "fingerprint": "686dd05fddddf907e7a0c3f0c972654ea3b7fce3e439efb86c3185ac51a0073a",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92107,13 +92107,13 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 353,
+      "document": 352,
       "domain": 6,
       "feature": 29,
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1053,
+      "issue": 1055,
       "knowledge": 63,
       "mesh-declaration": 1,
       "milestone": 111,
@@ -92131,7 +92131,9 @@
       "use-case": 49,
       "workspace": 1
     },
-    "diagnostics": {},
+    "diagnostics": {
+      "warning": 1
+    },
     "objects": [
       {
         "uri": "majordomus://adr/adr-0001",
@@ -99550,15 +99552,6 @@
         "path": "docs/PLANNING.md",
         "source_class": "document",
         "bytes": 44972
-      },
-      {
-        "uri": "majordomus://document/docs/PLAN_STATUS.md",
-        "kind": "document",
-        "identity": "docs/PLAN_STATUS.md",
-        "title": "Plan status",
-        "path": "docs/PLAN_STATUS.md",
-        "source_class": "document",
-        "bytes": 1041324
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -115070,6 +115063,28 @@
         "bytes": 5693
       },
       {
+        "uri": "majordomus://issue/I4364",
+        "kind": "issue",
+        "identity": "I4364",
+        "title": "A promoted knowledge note cites only references a clean clone resolves",
+        "description": "knowledge derive and knowledge promote write into a candidate's and a curated note's provenance.derived_from only references every clone of the repository resolves: the commit, file, rule, test or capability the evidence names, never a session or task identity whose record lives in .ai/local or in an episode that has not been closed and committed; a note that still carries one is refused by knowledge check with the reference named.",
+        "path": ".ai/repo/project/issues/I4364.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2850
+      },
+      {
+        "uri": "majordomus://issue/I4365",
+        "kind": "issue",
+        "identity": "I4365",
+        "title": "A commit that changes the plan's records reports intent validate before it leaves the machine",
+        "description": ".githooks/pre-commit runs `bin/majordomus intent validate` when the staged change touches .ai/repo/project/, reports its failures in the hook's report mode, and names them in the commit's output, so a records change whose issues serve no criterion is seen at the commit and not first by master's CI.",
+        "path": ".ai/repo/project/issues/I4365.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2186
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -128588,7 +128603,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 353
+      "objects": 352
     },
     {
       "name": "domain",
@@ -128645,7 +128660,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1053
+      "objects": 1055
     },
     {
       "name": "knowledge",

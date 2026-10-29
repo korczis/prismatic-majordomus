@@ -1,0 +1,29 @@
+id: I4365
+milestone: development-runtime
+title: "A commit that changes the plan's records reports intent validate before it leaves the machine"
+slug: a-records-commit-reports-intent-validate
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: ".githooks/pre-commit runs `bin/majordomus intent validate` when the staged change touches .ai/repo/project/, reports its failures in the hook's report mode, and names them in the commit's output, so a records change whose issues serve no criterion is seen at the commit and not first by master's CI."
+why: "On 2026-10-29 #2653 landed I4348, I4349, I4351, I4357 and I4359 with serves: [] under milestones that realise intents; master's intent-check then failed with five issue_without_purpose errors and turned 10a's rust (3) red. The commit hook ran doctor and plan validate, which only warn, and never intent validate (8 s here); the pull request was merged by hand before its own validate ran, so nothing between the author and master read the intents."
+current_state: "On master 5370ee63d19 .githooks/pre-commit reports doctor and checks derived data; intent validate runs only as CI's intent-check gate in the rust job."
+desired_state: "A commit whose staged paths include .ai/repo/project/ prints intent validate's failures in the hook's report, with the gate's name and the reproduce line; a commit that touches nothing there pays nothing for it."
+scope:
+  - ".ai/repo/project/issues/I4365.yaml"
+  - ".githooks/pre-commit"
+  - "test/cases/4365_a_records_commit_reports_intent_validate.sh"
+non_scope:
+  - "Refusing the commit: CI holds the verdict (I3830); the hook reports"
+  - "Who may merge a pull request before its validate has run"
+depends_on: []
+acceptance_criteria:
+  - "A fixture commit that adds an issue with serves: [] under a milestone an intent realises prints issue_without_purpose from the hook"
+  - "A commit that touches no file under .ai/repo/project/ does not run intent validate"
+validation:
+  - "bash test/run.sh 4365_a_records_commit_reports_intent_validate"
+evidence_required:
+  - ci
+risk: "Eight seconds more on a records commit; none on any other."
+created_at: 2026-10-29
+updated_at: 2026-10-29

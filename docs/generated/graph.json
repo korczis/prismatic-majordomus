@@ -17332,14 +17332,6 @@
         "source": "docs/PLANNING.md"
       },
       {
-        "id": "majordomus://document/docs/PLAN_STATUS.md",
-        "kind": "document",
-        "label": "docs/PLAN_STATUS.md",
-        "summary": "Plan status",
-        "route": "/cockpit/objects/document/docs-plan-status-md",
-        "source": "docs/PLAN_STATUS.md"
-      },
-      {
         "id": "majordomus://document/docs/PREFLIGHT.md",
         "kind": "document",
         "label": "docs/PREFLIGHT.md",
@@ -71821,6 +71813,85 @@
         }
       },
       {
+        "id": "majordomus://issue/I4364",
+        "kind": "issue",
+        "label": "I4364",
+        "summary": "A promoted knowledge note cites only references a clean clone resolves",
+        "route": "/cockpit/objects/issue/i4364",
+        "source": ".ai/repo/project/issues/I4364.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "knowledge derive writes no session: or task: reference into a candidate whose episode has no committed record",
+            "knowledge check refuses a curated note citing a session or task with no committed record, naming the note and the reference, in a checkout with no .ai/local",
+            "A case plants such a note in a fresh clone of a fixture repository and watches knowledge check refuse it, and passes once the note cites the commit"
+          ],
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "ci"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Closing and committing episodes automatically at promotion"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "Notes already curated with session references keep them; the check names each, and the fix is to cite the commit that added the note.",
+          "scope": [
+            ".ai/repo/project/issues/I4364.yaml",
+            "lib/knowledge.sh",
+            "lib/knowledge.awk",
+            "test/cases/4364_a_promoted_note_cites_what_a_clone_resolves.sh"
+          ],
+          "slug": "a-promoted-note-cites-what-a-clone-resolves",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "bash test/run.sh 4364_a_promoted_note_cites_what_a_clone_resolves",
+            "majordomus knowledge check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4365",
+        "kind": "issue",
+        "label": "I4365",
+        "summary": "A commit that changes the plan's records reports intent validate before it leaves the machine",
+        "route": "/cockpit/objects/issue/i4365",
+        "source": ".ai/repo/project/issues/I4365.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fixture commit that adds an issue with serves: [] under a milestone an intent realises prints issue_without_purpose from the hook",
+            "A commit that touches no file under .ai/repo/project/ does not run intent validate"
+          ],
+          "created_at": "2026-10-29",
+          "current_state": "On master 5370ee63d19 .githooks/pre-commit reports doctor and checks derived data; intent validate runs only as CI's intent-check gate in the rust job.",
+          "depends_on": [],
+          "evidence_required": [
+            "ci"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Refusing the commit: CI holds the verdict (I3830); the hook reports",
+            "Who may merge a pull request before its validate has run"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "Eight seconds more on a records commit; none on any other.",
+          "scope": [
+            ".ai/repo/project/issues/I4365.yaml",
+            ".githooks/pre-commit",
+            "test/cases/4365_a_records_commit_reports_intent_validate.sh"
+          ],
+          "slug": "a-records-commit-reports-intent-validate",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "bash test/run.sh 4365_a_records_commit_reports_intent_validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -117285,11 +117356,6 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://document/docs/PLAN_STATUS.md",
-        "target": "kind:document",
-        "kind": "is_a"
-      },
-      {
         "source": "majordomus://document/docs/PREFLIGHT.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -134480,6 +134546,26 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4364",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4364",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4365",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4365",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -146136,8 +146222,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4039,
-      "edges": 9319,
+      "nodes": 4040,
+      "edges": 9322,
       "acyclic": false,
       "truncated": false
     }
