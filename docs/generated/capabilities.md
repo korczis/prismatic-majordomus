@@ -20,7 +20,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `dashboard` | Dashboards | behaviorally_verified | 1 | [`modules/dashboard.md`](modules/dashboard.md) |
 | `delivery` | Delivery | experimental | 3 | [`modules/delivery.md`](modules/delivery.md) |
 | `deploy` | Deployment | behaviorally_verified | 5 | [`modules/deploy.md`](modules/deploy.md) |
-| `design` | Design system | behaviorally_verified | 4 | [`modules/design.md`](modules/design.md) |
+| `design` | Design system | behaviorally_verified | 5 | [`modules/design.md`](modules/design.md) |
 | `devcontext` | Development context | behaviorally_verified | 3 | [`modules/devcontext.md`](modules/devcontext.md) |
 | `devtask` | Executable development scopes | behaviorally_verified | 2 | [`modules/devtask.md`](modules/devtask.md) |
 | `directories` | Directory contracts | behaviorally_verified | 1 | [`modules/directories.md`](modules/directories.md) |
@@ -42,6 +42,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `knowledge_base` | Knowledge base | behaviorally_verified | 3 | [`modules/knowledge_base.md`](modules/knowledge_base.md) |
 | `layout` | Layer layout | behaviorally_verified | 1 | [`modules/layout.md`](modules/layout.md) |
 | `lifecycle` | Session lifecycle | behaviorally_verified | 5 | [`modules/lifecycle.md`](modules/lifecycle.md) |
+| `machine` | Machine | experimental | 3 | [`modules/machine.md`](modules/machine.md) |
 | `mcp` | MCP projection | experimental | 1 | [`modules/mcp.md`](modules/mcp.md) |
 | `mesh` | Mesh | experimental | 30 | [`modules/mesh.md`](modules/mesh.md) |
 | `models` | Models | experimental | 2 | [`modules/models.md`](modules/models.md) |
@@ -107,6 +108,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `deploy.slug` | `deploy` | command | behaviorally_verified | — | — | — | `majordomus deploy slug` | — | waived (destructive) |
 | `design.contrast` | `design` | query | behaviorally_verified | `majordomus_design_contrast` | — | `GET /api/v1/design/contrast` | — | — | required |
 | `design.explain` | `design` | query | behaviorally_verified | `majordomus_design_explain` | — | `GET /api/v1/design/explain` | — | — | required |
+| `design.licence` | `design` | query | behaviorally_verified | `majordomus_design_licence` | — | — | `majordomus design licence` | — | required |
 | `design.system` | `design` | query | behaviorally_verified | `majordomus_design` | `majordomus://design` | `GET /api/v1/design` | — | — | required |
 | `design.tokens` | `design` | query | behaviorally_verified | `majordomus_design_tokens` | — | `GET /api/v1/design/tokens` | — | — | required |
 | `devcontext.compile` | `devcontext` | query | behaviorally_verified | `majordomus_devcontext` | — | `GET /api/v1/devcontext` | `majordomus devcontext compile` | process, 16 entries | required |
@@ -182,6 +184,9 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `lifecycle.providers` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_providers` | — | `GET /api/v1/lifecycle/providers` | — | process, 2 entries | required |
 | `lifecycle.recovery` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_recovery` | `majordomus://lifecycle/recovery` | `GET /api/v1/lifecycle/recovery` | — | process, 2 entries, 2s | required |
 | `lifecycle.runtime` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_runtime` | — | `GET /api/v1/lifecycle/runtime` | — | process, 2 entries, 2s | required |
+| `machine.slot.acquire` | `machine` | command | experimental | `majordomus_machine_slot_acquire` | — | `POST /api/v1/machine/slot/acquire` | `majordomus machine slot acquire` | — | waived (destructive) |
+| `machine.slot.release` | `machine` | command | experimental | `majordomus_machine_slot_release` | — | `POST /api/v1/machine/slot/release` | `majordomus machine slot release` | — | waived (destructive) |
+| `machine.slot.status` | `machine` | query | experimental | `majordomus_machine_slot_status` | — | `GET /api/v1/machine/slot/status` | `majordomus machine slot status` | — | required |
 | `mcp.projection` | `mcp` | query | experimental | `majordomus_mcp` | `majordomus://mcp` | `GET /api/v1/mcp` | — | — | required |
 | `mesh.beat` | `mesh` | command | experimental | `majordomus_mesh_beat` | — | `POST /api/v1/mesh/beats` | — | — | waived (transient_state) |
 | `mesh.build_cache.ensure` | `mesh` | command | experimental | — | — | — | `majordomus mesh build-cache ensure` | — | waived (destructive) |

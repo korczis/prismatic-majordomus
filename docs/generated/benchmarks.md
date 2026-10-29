@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 220 | 181 | 0 | 39 |
-| http | 212 | 181 | 0 | 31 |
-| mcp | 206 | 176 | 0 | 30 |
+| direct | 224 | 183 | 0 | 41 |
+| http | 215 | 182 | 0 | 33 |
+| mcp | 210 | 178 | 0 | 32 |
 | system | 14 | 14 | 0 | 0 |
-| total | 652 | 552 | 0 | 100 |
+| total | 663 | 557 | 0 | 106 |
 
 ## Capabilities
 
@@ -52,6 +52,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `deploy.slug` | deploy | command | — | waived | — | — | — |
 | `design.contrast` | design | query | — | covered | covered | covered | `default` |
 | `design.explain` | design | query | — | covered | covered | covered | `role`, `state` |
+| `design.licence` | design | query | — | covered | covered | — | `policy` |
 | `design.system` | design | query | — | covered | covered | covered | `default` |
 | `design.tokens` | design | query | — | covered | covered | covered | `all`, `roles` |
 | `devcontext.compile` | devcontext | query | process, 16 entries | covered | covered | covered | `no-seed`, `issue`, `milestone`, `intent`, `source-ranges` |
@@ -127,6 +128,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `lifecycle.providers` | lifecycle | query | process, 2 entries | covered | covered | covered | `default` |
 | `lifecycle.recovery` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `lifecycle.runtime` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `machine.slot.acquire` | machine | command | — | waived | waived | waived | — |
+| `machine.slot.release` | machine | command | — | waived | waived | waived | — |
+| `machine.slot.status` | machine | query | — | covered | covered | covered | `the-machine`, `a-build-directory` |
 | `mcp.projection` | mcp | query | — | covered | covered | covered | `every-tool`, `writers` |
 | `mesh.beat` | mesh | command | — | waived | waived | waived | — |
 | `mesh.build_cache.ensure` | mesh | command | — | waived | — | — | — |

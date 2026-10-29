@@ -252,6 +252,12 @@
           "route": "/docs/cli/layout/"
         },
         {
+          "about": "The licensed kit the repository's interface may adapt and never publish: whether a public tree holds a licensed file's bytes, judged from kit-evidence/v1 fingerprints",
+          "command": "majordomus design",
+          "name": "design",
+          "route": "/docs/cli/design/"
+        },
+        {
           "about": "The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output",
           "command": "majordomus pack",
           "name": "pack",
@@ -292,6 +298,12 @@
           "command": "majordomus continuity",
           "name": "continuity",
           "route": "/docs/cli/continuity/"
+        },
+        {
+          "about": "What one machine admits at once: a counting slot for heavy work, held to the machine limits of rule project.the-cooperation-model-is-the-owners-word (the policy's machine.heavy_work) — take one for a process, give it back, and see who holds and who waits",
+          "command": "majordomus machine",
+          "name": "machine",
+          "route": "/docs/cli/machine/"
         }
       ],
       "command": "majordomus",
@@ -36644,6 +36656,280 @@
       "usage": "majordomus layout check [OPTIONS]"
     },
     {
+      "about": "The licensed kit the repository's interface may adapt and never publish: whether a public tree holds a licensed file's bytes, judged from kit-evidence/v1 fingerprints",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "Whether a public tree holds a licensed kit's files: active, inactive, not_judged or refused, each match with its file, licensed source and kind; exit 0 for active and inactive, 10 when refused, 12 when not judged (no evidence here, or a ui: block that cannot be used), 2 for evidence that cannot be read, 13 when the tree cannot be listed",
+          "command": "majordomus design licence",
+          "name": "licence",
+          "route": "/docs/cli/design/licence/"
+        }
+      ],
+      "command": "majordomus design",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "design",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "design"
+      ],
+      "route": "/docs/cli/design/",
+      "usage": "majordomus design [OPTIONS] <COMMAND>"
+    },
+    {
+      "about": "Whether a public tree holds a licensed kit's files: active, inactive, not_judged or refused, each match with its file, licensed source and kind; exit 0 for active and inactive, 10 when refused, 12 when not judged (no evidence here, or a ui: block that cannot be used), 2 for evidence that cannot be read, 13 when the tree cannot be listed",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus design",
+          "name": "design",
+          "route": "/docs/cli/design/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A kit-evidence/v1 file; absent reads the policy's ui.evidence entries under $HOME",
+          "long": "evidence",
+          "name": "evidence",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FILE"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "The same as --format json",
+          "long": "json",
+          "name": "json",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "JSON"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus design licence",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "design",
+            "licence",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus design licence --format json",
+          "description": "The same answer the MCP tool `majordomus_design_licence` returns: `/verdict` (`active`, `inactive`, `not_judged` or `refused`), `/fails`, the declared `/kit` and `/visibility`, why under `/reason`, and every file that holds a licensed file's bytes under `/matches`. This repository's policy declares no kit (`ui.kit` is empty), so the gate is skipped: the verdict is `inactive` and the exit is 0. A refusal exits 10, a public tree with a declared kit and no evidence exits 12, and an evidence file that cannot be read exits 2 naming the file and the line, never its content.",
+          "expectation": "exits 0; prints one JSON document carrying /verdict, /fails, /kit, /visibility, /matches",
+          "id": "design-licence-json",
+          "setup": [],
+          "title": "Whether a public tree holds a licensed kit's files"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "licence",
+      "parent_route": "/docs/cli/design/",
+      "path": [
+        "majordomus",
+        "design",
+        "licence"
+      ],
+      "route": "/docs/cli/design/licence/",
+      "usage": "majordomus design licence [OPTIONS]"
+    },
+    {
       "about": "The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output",
       "ancestors": [
         {
@@ -40035,13 +40321,760 @@
       ],
       "route": "/docs/cli/continuity/resume/",
       "usage": "majordomus continuity resume [OPTIONS]"
+    },
+    {
+      "about": "What one machine admits at once: a counting slot for heavy work, held to the machine limits of rule project.the-cooperation-model-is-the-owners-word (the policy's machine.heavy_work) — take one for a process, give it back, and see who holds and who waits",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "The machine's counting slot for heavy work: acquire, release, status",
+          "command": "majordomus machine slot",
+          "name": "slot",
+          "route": "/docs/cli/machine/slot/"
+        }
+      ],
+      "command": "majordomus machine",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "machine",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "machine"
+      ],
+      "route": "/docs/cli/machine/",
+      "usage": "majordomus machine [OPTIONS] <COMMAND>"
+    },
+    {
+      "about": "The machine's counting slot for heavy work: acquire, release, status",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus machine",
+          "name": "machine",
+          "route": "/docs/cli/machine/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "Who holds the machine's slots and who waits: pid, purpose, age, liveness, the limits and the free disk",
+          "command": "majordomus machine slot status",
+          "name": "status",
+          "route": "/docs/cli/machine/slot/status/"
+        },
+        {
+          "about": "Take a slot for a running process, waiting in turn up to the bound; exit 75 with every holder named when refused (slots full past the wait, or below the disk floor)",
+          "command": "majordomus machine slot acquire",
+          "name": "acquire",
+          "route": "/docs/cli/machine/slot/acquire/"
+        },
+        {
+          "about": "Give back the slot a process holds, and withdraw it from the queue",
+          "command": "majordomus machine slot release",
+          "name": "release",
+          "route": "/docs/cli/machine/slot/release/"
+        }
+      ],
+      "command": "majordomus machine slot",
+      "depth": 2,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "slot",
+      "parent_route": "/docs/cli/machine/",
+      "path": [
+        "majordomus",
+        "machine",
+        "slot"
+      ],
+      "route": "/docs/cli/machine/slot/",
+      "usage": "majordomus machine slot [OPTIONS] <COMMAND>"
+    },
+    {
+      "about": "Who holds the machine's slots and who waits: pid, purpose, age, liveness, the limits and the free disk",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus machine",
+          "name": "machine",
+          "route": "/docs/cli/machine/"
+        },
+        {
+          "command": "majordomus machine slot",
+          "name": "slot",
+          "route": "/docs/cli/machine/slot/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A path the work writes to, whose volume's free space is measured (default: the slot directory's)",
+          "long": "volume",
+          "name": "volume",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus machine slot status",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "machine",
+            "slot",
+            "status"
+          ],
+          "command": "majordomus machine slot status",
+          "description": "The limits and where they are declared, the free disk, every holder with its pid, age, liveness and purpose, and every waiter with what it waits on. This repository's policy declares no `machine.heavy_work`, so the answer says that no limit and no floor are declared rather than inventing one.",
+          "expectation": "exits 0; prints machine slots:, no limit declared, no floor declared",
+          "id": "machine-slot-status",
+          "setup": [],
+          "title": "Who holds the machine's slots, and who waits"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "status",
+      "parent_route": "/docs/cli/machine/slot/",
+      "path": [
+        "majordomus",
+        "machine",
+        "slot",
+        "status"
+      ],
+      "route": "/docs/cli/machine/slot/status/",
+      "usage": "majordomus machine slot status [OPTIONS]"
+    },
+    {
+      "about": "Take a slot for a running process, waiting in turn up to the bound; exit 75 with every holder named when refused (slots full past the wait, or below the disk floor)",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus machine",
+          "name": "machine",
+          "route": "/docs/cli/machine/"
+        },
+        {
+          "command": "majordomus machine slot",
+          "name": "slot",
+          "route": "/docs/cli/machine/slot/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "What the holder is about to do; every waiter and every refusal names it",
+          "long": "purpose",
+          "name": "purpose",
+          "positional": false,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "PURPOSE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The process that holds the slot (default: this command's parent, the shell that runs it)",
+          "long": "pid",
+          "name": "pid",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PID"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Seconds to wait for a slot (default: the policy's machine.heavy_work.wait_seconds, else none)",
+          "long": "wait",
+          "name": "wait",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SECONDS"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A path the work writes to, whose volume the disk floor is judged on (default: the slot directory's)",
+          "long": "volume",
+          "name": "volume",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus machine slot acquire",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "machine",
+            "slot",
+            "acquire",
+            "--purpose",
+            "cargo build",
+            "--wait",
+            "0"
+          ],
+          "command": "majordomus machine slot acquire --purpose 'cargo build' --wait 0",
+          "description": "Without `--pid` the holder is this command's parent, the shell that is about to do the work, so the slot is freed when that shell ends even if nobody releases it. The first word is the verdict a shell caller reads: `admitted`, `already_held`, or `refused` with exit 75 and every holder named. With no limit declared the caller is admitted at once.",
+          "expectation": "exits 0; prints admitted: pid",
+          "id": "machine-slot-acquire",
+          "setup": [],
+          "title": "Take a slot for the shell that runs the build"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "acquire",
+      "parent_route": "/docs/cli/machine/slot/",
+      "path": [
+        "majordomus",
+        "machine",
+        "slot",
+        "acquire"
+      ],
+      "route": "/docs/cli/machine/slot/acquire/",
+      "usage": "majordomus machine slot acquire [OPTIONS]"
+    },
+    {
+      "about": "Give back the slot a process holds, and withdraw it from the queue",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus machine",
+          "name": "machine",
+          "route": "/docs/cli/machine/"
+        },
+        {
+          "command": "majordomus machine slot",
+          "name": "slot",
+          "route": "/docs/cli/machine/slot/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The process whose slot is given back (default: this command's parent)",
+          "long": "pid",
+          "name": "pid",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PID"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus machine slot release",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "machine",
+            "slot",
+            "release"
+          ],
+          "command": "majordomus machine slot release",
+          "description": "The slot taken by the setup step for the same parent process is given back, and the next waiter is admitted on its next look. Releasing a slot nobody holds says `not held` and changes nothing.",
+          "expectation": "exits 0; prints released: pid",
+          "id": "machine-slot-release",
+          "setup": [
+            {
+              "argv": [
+                "machine",
+                "slot",
+                "acquire",
+                "--purpose",
+                "cargo build"
+              ],
+              "command": "majordomus machine slot acquire --purpose 'cargo build'"
+            }
+          ],
+          "title": "Give the slot back when the work is done"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "release",
+      "parent_route": "/docs/cli/machine/slot/",
+      "path": [
+        "majordomus",
+        "machine",
+        "slot",
+        "release"
+      ],
+      "route": "/docs/cli/machine/slot/release/",
+      "usage": "majordomus machine slot release [OPTIONS]"
     }
   ],
   "counts": {
-    "arguments": 1735,
-    "commands": 252,
-    "examples": 253,
-    "runnable": 220
+    "arguments": 1778,
+    "commands": 259,
+    "examples": 257,
+    "runnable": 224
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "1.0.0-alpha.9",

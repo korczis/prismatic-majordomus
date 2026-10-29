@@ -35,10 +35,36 @@ export class AdvisorFailure extends Error {
   }
 }
 
-/** Classify an HTTP status the way every HTTP adapter must. */
-export function httpFailure(status, headers) {
+// The error types and codes an API answers when the account itself cannot pay for an answer.
+// Some APIs say it with HTTP 429, the status of a rate limit, but a rate limit passes with
+// its retry-after and an exhausted quota does not: typed `rate_limited`, the advisor was
+// selected again after its retry-after and failed again, every consultation. It is typed
+// `auth_failed` instead, the failure the circuit keeps out longest, because like a refused
+// credential it is fixed by a person and never by asking again.
+const EXHAUSTED = /^(insufficient_quota|credit_balance_exhausted|billing_hard_limit_reached|billing_not_active)$/;
+// An API that says it only in words: a spent Anthropic balance is HTTP 400 with the generic
+// type invalid_request_error and the message "Your credit balance is too low ...".
+const EXHAUSTED_MESSAGE = /credit balance is too low/i;
+
+/** Does a parsed error body say the account's quota or credit is exhausted? */
+export function quotaExhausted(body) {
+  const e = body && typeof body === 'object' ? (body.error ?? body) : undefined;
+  if (!e || typeof e !== 'object') return false;
+  return [e.type, e.code].some((v) => typeof v === 'string' && EXHAUSTED.test(v))
+    || (typeof e.message === 'string' && EXHAUSTED_MESSAGE.test(e.message));
+}
+
+/**
+ * Classify an HTTP status the way every HTTP adapter must. `body` is the parsed error body
+ * when the adapter could read one; nothing but an exhausted quota is read from it.
+ */
+export function httpFailure(status, headers, body) {
   if (status === 401 || status === 403) {
     return new AdvisorFailure('auth_failed', `the credential was refused (HTTP ${status})`);
+  }
+  if (quotaExhausted(body)) {
+    return new AdvisorFailure('auth_failed',
+      `the account's quota or credit is exhausted (HTTP ${status}); asking again does not refill it`);
   }
   if (status === 429) {
     const retry = Number(headers?.get?.('retry-after'));

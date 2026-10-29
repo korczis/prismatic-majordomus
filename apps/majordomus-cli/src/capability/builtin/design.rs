@@ -17,15 +17,21 @@
 //! declaration, and those stylesheets ship beside `kinds.yaml` and the obligation
 //! vocabulary. It is located the way every other reader locates it
 //! ([`crate::share::Share`]), never discovered in the supervised repository.
+//!
+//! `design.licence` is the one that reads the supervised repository, and the one file
+//! beyond it the caller names: whether a public tree holds a licensed kit's bytes, judged
+//! from kit-evidence/v1 fingerprints ([`crate::design::licence`]). It has no HTTP route: it
+//! opens a file by the path its input gives, and that is a local caller's act.
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{Exposure, McpExposure, McpResource, Stability};
+use crate::capability::model::{CliExposure, Exposure, McpExposure, McpResource, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::design::contrast::{self, ContrastReport};
+use crate::design::licence::{self, LicenceError, LicenceReport};
 use crate::design::{render, DesignSystem, Fonts, Identity, Token, TokenKind, SOURCE};
 use crate::{capability, module};
 
@@ -279,6 +285,42 @@ fn readable(ctx: &Context, _: Empty) -> Result<ContrastReport, CapabilityError> 
     Ok(contrast::measure(design, &consumers(&root)?))
 }
 
+/// The input of `design.licence`: the evidence file, or none to read the policy's.
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct LicenceInput {
+    /// A kit-evidence/v1 file, as the caller names it (CI points this at the file it decoded
+    /// `MAJORDOMUS_KIT_EVIDENCE_<KIT>` into). Absent reads the policy's `ui.evidence`
+    /// entries under `$HOME`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub evidence: Option<String>,
+}
+
+impl BenchmarkCases for LicenceInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![NamedCase::new("policy", LicenceInput { evidence: None })]
+    }
+}
+
+fn licensed(ctx: &Context, input: LicenceInput) -> Result<LicenceReport, CapabilityError> {
+    let repository = ctx.repository().map_err(|e| {
+        CapabilityError::Internal(format!("the repository could not be re-read: {e}"))
+    })?;
+    let home = std::env::var_os("HOME").map(std::path::PathBuf::from);
+    let tightened = std::env::var(licence::VISIBILITY_ENV).ok();
+    licence::assess(
+        &repository,
+        input.evidence.as_deref(),
+        home.as_deref(),
+        tightened.as_deref(),
+    )
+    .map_err(|e| match e {
+        LicenceError::Evidence(m) => CapabilityError::InvalidInput(m),
+        LicenceError::Policy(m) => CapabilityError::Refused(m),
+        LicenceError::Tree(m) => CapabilityError::Internal(m),
+    })
+}
+
 /// The module.
 pub fn module() -> ModuleDescriptor {
     module! {
@@ -350,6 +392,21 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["design", "ui", "accessibility", "introspection"],
                 handler: readable,
             },
+            capability! {
+                id: "design.licence",
+                title: "Whether a public tree holds a licensed kit's files",
+                description: "The never-publish gate: the raw bytes of every tracked file, committed bundles included (staged, committed where that differs, and the working copy where it differs), and of every untracked file under each `ui.publish` directory, read through symbolic links and into nested repositories as a deploy archives it, compared whole, exactly and with every run of whitespace made one space, against the kit-evidence/v1 fingerprints of the declared kit's licensed files. `refused` names each file and, where the evidence says, the licensed source; `not_judged` is a public tree that declares a kit, tracks a UI file and has no evidence here, and fails like `refused`; a `ui:` block that cannot be used as written (an absolute `ui.publish` or `ui.evidence` entry) is `not_judged` too, naming the entry; `inactive` is no kit declared, a private tree without evidence, or no UI file; `active` is judged and clean, or private. The evidence is the file the input names, else the policy's `~`-relative `ui.evidence` entries; an error names the file and the line, never its content. Near-copies and fragments inlined in a larger file are not judged: the evidence holds whole-file fingerprints only.",
+                input: LicenceInput,
+                output: LicenceReport,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_design_licence"),
+                    http: None,
+                    cli: Some(CliExposure { path: vec!["design".into(), "licence".into()] }),
+                },
+                tags: ["design", "ui", "licence", "governance"],
+                handler: licensed,
+            },
         ],
     }
 }
@@ -362,23 +419,25 @@ mod tests {
     fn the_declaration_yields_the_projections_it_claims() {
         let m = module();
         assert_eq!(m.id.as_str(), "design");
-        let expected: &[(&str, &str, &str)] = &[
-            ("design.system", "majordomus_design", "/api/v1/design"),
+        let expected: &[(&str, &str, Option<&str>)] = &[
+            ("design.system", "majordomus_design", Some("/api/v1/design")),
             (
                 "design.tokens",
                 "majordomus_design_tokens",
-                "/api/v1/design/tokens",
+                Some("/api/v1/design/tokens"),
             ),
             (
                 "design.explain",
                 "majordomus_design_explain",
-                "/api/v1/design/explain",
+                Some("/api/v1/design/explain"),
             ),
             (
                 "design.contrast",
                 "majordomus_design_contrast",
-                "/api/v1/design/contrast",
+                Some("/api/v1/design/contrast"),
             ),
+            // it opens the file its input names, so it is a local caller's: no route
+            ("design.licence", "majordomus_design_licence", None),
         ];
         let ids: Vec<&str> = m
             .capabilities
@@ -396,7 +455,7 @@ mod tests {
             );
             assert_eq!(
                 exposure.http.as_ref().map(|h| h.path.as_str()),
-                Some(*path),
+                *path,
                 "{id} lost its HTTP route"
             );
         }
@@ -448,6 +507,28 @@ mod tests {
             }
             Err(other) => panic!("unexpected refusal: {other:?}"),
         }
+    }
+
+    #[test]
+    fn the_licence_gate_is_reached_as_design_licence_and_skips_a_tree_without_a_kit() {
+        let m = module();
+        let gate = m
+            .capabilities
+            .iter()
+            .map(|e| &e.capability)
+            .find(|c| c.id.as_str() == "design.licence")
+            .expect("the licence gate is declared");
+        assert_eq!(
+            gate.exposure.cli.as_ref().unwrap().path,
+            ["design", "licence"]
+        );
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        // the synthetic policy has no ui: block, which declares no kit
+        let report = licensed(&ctx, LicenceInput::default()).expect("an answer");
+        assert_eq!(report.verdict, licence::Verdict::Inactive);
+        assert!(!report.fails);
+        assert!(report.kit.is_empty());
     }
 
     #[test]

@@ -209,6 +209,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:design.licence",
+      "path": "/evidence/capabilities/design-licence/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:design.system",
       "path": "/evidence/capabilities/design-system/"
     },
@@ -581,6 +586,21 @@
       "kind": "capability",
       "subject": "capability:lifecycle.runtime",
       "path": "/evidence/capabilities/lifecycle-runtime/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:machine.slot.acquire",
+      "path": "/evidence/capabilities/machine-slot-acquire/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:machine.slot.release",
+      "path": "/evidence/capabilities/machine-slot-release/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:machine.slot.status",
+      "path": "/evidence/capabilities/machine-slot-status/"
     },
     {
       "kind": "capability",
@@ -2614,6 +2634,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:design licence",
+      "path": "/evidence/commands/design-licence/"
+    },
+    {
+      "kind": "command",
       "subject": "command:devcontext compile",
       "path": "/evidence/commands/devcontext-compile/"
     },
@@ -2941,6 +2966,21 @@
       "kind": "command",
       "subject": "command:layout check",
       "path": "/evidence/commands/layout-check/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:machine slot acquire",
+      "path": "/evidence/commands/machine-slot-acquire/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:machine slot release",
+      "path": "/evidence/commands/machine-slot-release/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:machine slot status",
+      "path": "/evidence/commands/machine-slot-status/"
     },
     {
       "kind": "command",
@@ -4408,6 +4448,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "capability:design.licence": {
+      "kind": "capability",
+      "id": "design.licence",
+      "page": "/evidence/capabilities/design-licence/",
+      "programs": [],
+      "members": [
+        "command:design licence"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "capability:design.system": {
       "kind": "capability",
       "id": "design.system",
@@ -5293,6 +5345,63 @@
         "claim:session-observability"
       ],
       "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:machine.slot.acquire": {
+      "kind": "capability",
+      "id": "machine.slot.acquire",
+      "page": "/evidence/capabilities/machine-slot-acquire/",
+      "programs": [],
+      "members": [
+        "command:machine slot acquire"
+      ],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:4006_heavy_work_shares_the_machine",
+          "path": "test/cases/4006_heavy_work_shares_the_machine.sh",
+          "category": "e2e"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:machine.slot.release": {
+      "kind": "capability",
+      "id": "machine.slot.release",
+      "page": "/evidence/capabilities/machine-slot-release/",
+      "programs": [],
+      "members": [
+        "command:machine slot release"
+      ],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:4006_heavy_work_shares_the_machine",
+          "path": "test/cases/4006_heavy_work_shares_the_machine.sh",
+          "category": "e2e"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:machine.slot.status": {
+      "kind": "capability",
+      "id": "machine.slot.status",
+      "page": "/evidence/capabilities/machine-slot-status/",
+      "programs": [],
+      "members": [
+        "command:machine slot status"
+      ],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:4006_heavy_work_shares_the_machine",
+          "path": "test/cases/4006_heavy_work_shares_the_machine.sh",
+          "category": "e2e"
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -13802,6 +13911,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:design licence": {
+      "kind": "command",
+      "id": "design licence",
+      "page": "/evidence/commands/design-licence/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:devcontext compile": {
       "kind": "command",
       "id": "devcontext compile",
@@ -14200,6 +14328,18 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:4225_the_fleet_pack_installs_only_what_it_lists",
+          "path": "test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:4226_ci_judges_from_the_kit_evidence_secret",
+          "path": "test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:4265_the_adopter_hook_runs_doctor_in_commit_context",
           "path": "test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh",
           "category": "e2e"
@@ -14382,6 +14522,24 @@
           "via": "negative",
           "test": "suite:391_skills_are_proven_capabilities",
           "path": "test/cases/391_skills_are_proven_capabilities.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:4225_the_fleet_pack_installs_only_what_it_lists",
+          "path": "test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:4226_ci_judges_from_the_kit_evidence_secret",
+          "path": "test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:4227_a_fleet_skill_is_proved_by_its_pack",
+          "path": "test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh",
           "category": "e2e"
         },
         {
@@ -15550,6 +15708,18 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:4225_the_fleet_pack_installs_only_what_it_lists",
+          "path": "test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:4226_ci_judges_from_the_kit_evidence_secret",
+          "path": "test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:4258_documents_below_docs_are_discovered",
           "path": "test/cases/4258_documents_below_docs_are_discovered.sh",
           "category": "e2e"
@@ -15570,6 +15740,12 @@
           "via": "negative",
           "test": "suite:2979_a_personal_layer_changes_nothing_shared",
           "path": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:4226_ci_judges_from_the_kit_evidence_secret",
+          "path": "test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh",
           "category": "e2e"
         }
       ],
@@ -16025,6 +16201,63 @@
       "kind": "command",
       "id": "layout check",
       "page": "/evidence/commands/layout-check/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:machine slot acquire": {
+      "kind": "command",
+      "id": "machine slot acquire",
+      "page": "/evidence/commands/machine-slot-acquire/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:machine slot release": {
+      "kind": "command",
+      "id": "machine slot release",
+      "page": "/evidence/commands/machine-slot-release/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:machine slot status": {
+      "kind": "command",
+      "id": "machine slot status",
+      "page": "/evidence/commands/machine-slot-status/",
       "programs": [
         "native"
       ],
@@ -17741,6 +17974,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:4225_the_fleet_pack_installs_only_what_it_lists",
+          "path": "test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:67_rule_dag",
           "path": "test/cases/67_rule_dag.sh",
           "category": "e2e"
@@ -17803,6 +18042,12 @@
           "via": "negative",
           "test": "suite:403_published_translation",
           "path": "test/cases/403_published_translation.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:4225_the_fleet_pack_installs_only_what_it_lists",
+          "path": "test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
           "category": "e2e"
         },
         {
@@ -18351,6 +18596,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:4227_a_fleet_skill_is_proved_by_its_pack",
+          "path": "test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:4253_every_skill_remedy_runs",
           "path": "test/cases/4253_every_skill_remedy_runs.sh",
           "category": "e2e"
@@ -18365,6 +18616,12 @@
           "via": "negative",
           "test": "suite:391_skills_are_proven_capabilities",
           "path": "test/cases/391_skills_are_proven_capabilities.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:4227_a_fleet_skill_is_proved_by_its_pack",
+          "path": "test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh",
           "category": "e2e"
         },
         {
@@ -18641,6 +18898,12 @@
           "via": "behaviour",
           "test": "suite:3405_a_misplaced_artifact_is_refused",
           "path": "test/cases/3405_a_misplaced_artifact_is_refused.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:4225_the_fleet_pack_installs_only_what_it_lists",
+          "path": "test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
           "category": "e2e"
         },
         {
@@ -20758,6 +21021,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_design_licence": {
+      "kind": "mcp",
+      "id": "majordomus_design_licence",
+      "alias_of": "capability:design.licence",
+      "programs": [],
+      "members": [
+        "capability:design.licence"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_design_tokens": {
       "kind": "mcp",
       "id": "majordomus_design_tokens",
@@ -21449,6 +21724,42 @@
       "programs": [],
       "members": [
         "capability:objects.list"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_machine_slot_acquire": {
+      "kind": "mcp",
+      "id": "majordomus_machine_slot_acquire",
+      "alias_of": "capability:machine.slot.acquire",
+      "programs": [],
+      "members": [
+        "capability:machine.slot.acquire"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_machine_slot_release": {
+      "kind": "mcp",
+      "id": "majordomus_machine_slot_release",
+      "alias_of": "capability:machine.slot.release",
+      "programs": [],
+      "members": [
+        "capability:machine.slot.release"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_machine_slot_status": {
+      "kind": "mcp",
+      "id": "majordomus_machine_slot_status",
+      "alias_of": "capability:machine.slot.status",
+      "programs": [],
+      "members": [
+        "capability:machine.slot.status"
       ],
       "routes": [],
       "mechanisms": [],
@@ -27338,6 +27649,16 @@
         },
         {
           "via": "rule",
+          "test": "suite:4006_heavy_work_shares_the_machine",
+          "path": "test/cases/4006_heavy_work_shares_the_machine.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/4006_heavy_work_shares_the_machine.sh",
+            ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
           "test": "suite:720_integration_follows_the_current_master",
           "path": "test/cases/720_integration_follows_the_current_master.sh",
           "category": "e2e",
@@ -29728,6 +30049,7 @@
     "suite:417_the_suite_finishes_inside_its_bound",
     "suite:4199_a_case_that_compiles_never_starves_its_neighbours",
     "suite:4223_a_failed_cases_reason_reaches_the_artifact",
+    "suite:4224_a_licensed_source_never_reaches_a_public_tree",
     "suite:4232_a_core_build_keeps_its_own_rlib",
     "suite:4318_the_homepage_rule_figure_agrees_with_its_link",
     "suite:46_cross_surface",

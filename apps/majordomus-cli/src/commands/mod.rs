@@ -41,6 +41,7 @@ pub(crate) mod convergence;
 pub(crate) mod dashboard;
 pub(crate) mod delivery;
 pub(crate) mod deploy;
+pub(crate) mod design_licence;
 pub(crate) mod devcontext;
 pub(crate) mod devtask;
 pub(crate) mod distribution;
@@ -54,6 +55,7 @@ pub(crate) mod guard;
 pub(crate) mod intent;
 pub(crate) mod knowledge;
 mod layout;
+pub(crate) mod machine_slot;
 pub(crate) mod mcp;
 pub(crate) mod mesh;
 pub(crate) mod models;
@@ -124,6 +126,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Entity(args) => entity::run(args),
         Command::Shell(args) => shell::run(args),
         Command::Layout(args) => layout::run(args),
+        Command::Design(args) => design_licence::run(args),
         Command::Pack(args) => pack::run(args),
         Command::Dashboard(args) => dashboard::run(args),
         Command::Brief(args) => brief::run(args),
@@ -131,6 +134,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Skills(args) => skills::run(args),
         Command::Knowledge(args) => knowledge::run(args),
         Command::Continuity(args) => continuity::run(args),
+        Command::Machine(args) => machine_slot::run(args),
     }
 }
 

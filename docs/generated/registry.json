@@ -97,7 +97,7 @@
       "description": "The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, what any one of them means, and whether the colours it pairs are readable on one another. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with.",
       "stability": "behaviorally_verified",
       "source": "builtin",
-      "capabilities": 4
+      "capabilities": 5
     },
     {
       "id": "devcontext",
@@ -266,6 +266,14 @@
       "stability": "behaviorally_verified",
       "source": "builtin",
       "capabilities": 5
+    },
+    {
+      "id": "machine",
+      "title": "Machine",
+      "description": "What one machine admits at once: a counting slot for heavy work (a build, a test run), kept beside the derive lock where every checkout of the machine agrees on it, and held to rule project.the-cooperation-model-is-the-owners-word clause 7 — at most the declared number of holders, and none admitted below the declared free disk — with the numbers read from the policy's machine.heavy_work.",
+      "stability": "experimental",
+      "source": "builtin",
+      "capabilities": 3
     },
     {
       "id": "mcp",
@@ -14803,6 +14811,223 @@
         "ui",
         "provenance",
         "introspection"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs"
+    },
+    {
+      "id": "design.licence",
+      "module": "design",
+      "kind": "query",
+      "title": "Whether a public tree holds a licensed kit's files",
+      "description": "The never-publish gate: the raw bytes of every tracked file, committed bundles included (staged, committed where that differs, and the working copy where it differs), and of every untracked file under each `ui.publish` directory, read through symbolic links and into nested repositories as a deploy archives it, compared whole, exactly and with every run of whitespace made one space, against the kit-evidence/v1 fingerprints of the declared kit's licensed files. `refused` names each file and, where the evidence says, the licensed source; `not_judged` is a public tree that declares a kit, tracks a UI file and has no evidence here, and fails like `refused`; a `ui:` block that cannot be used as written (an absolute `ui.publish` or `ui.evidence` entry) is `not_judged` too, naming the entry; `inactive` is no kit declared, a private tree without evidence, or no UI file; `active` is judged and clean, or private. The evidence is the file the input names, else the policy's `~`-relative `ui.evidence` entries; an error names the file and the line, never its content. Near-copies and fragments inlined in a larger file are not judged: the evidence holds whole-file fingerprints only.",
+      "input": {
+        "name": "LicenceInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "evidence": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "A kit-evidence/v1 file, as the caller names it (CI points this at the file it decoded\n`MAJORDOMUS_KIT_EVIDENCE_<KIT>` into). Absent reads the policy's `ui.evidence`\nentries under `$HOME`."
+            }
+          },
+          "description": "The input of `design.licence`: the evidence file, or none to read the policy's.",
+          "title": "LicenceInput"
+        }
+      },
+      "output": {
+        "name": "LicenceReport",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "verdict": {
+              "$ref": "#/$defs/Verdict",
+              "description": "`active`, `inactive`, `not_judged` or `refused`."
+            },
+            "fails": {
+              "type": "boolean",
+              "description": "Whether the verdict fails the gate (`refused`, `not_judged`)."
+            },
+            "kit": {
+              "type": "string",
+              "description": "The declared kit id; empty when none is."
+            },
+            "visibility": {
+              "$ref": "#/$defs/Visibility",
+              "description": "The visibility judged, after `MAJORDOMUS_VISIBILITY` tightened it."
+            },
+            "has_ui": {
+              "type": "boolean",
+              "description": "Whether the tree tracks a UI file."
+            },
+            "reason": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Why the verdict is inactive or not judged."
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Where the evidence was read from, as it was named: the `--evidence` file, or each\n`ui.evidence` entry found on this machine. Empty when none was."
+            },
+            "fingerprints": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many distinct licensed contents the evidence names."
+            },
+            "files": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many contents were compared: staged, committed, working and published bytes,\neach distinct one of a path once."
+            },
+            "matches": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Match"
+              },
+              "description": "Every file that holds a licensed file's bytes."
+            }
+          },
+          "required": [
+            "verdict",
+            "fails",
+            "kit",
+            "visibility",
+            "has_ui",
+            "evidence",
+            "fingerprints",
+            "files",
+            "matches"
+          ],
+          "description": "The answer as every projection carries it.",
+          "title": "LicenceReport",
+          "$defs": {
+            "Verdict": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "active",
+                  "description": "Judged, and nothing licensed is where it may not be."
+                },
+                {
+                  "type": "string",
+                  "const": "inactive",
+                  "description": "Not judged, and nothing needs to be."
+                },
+                {
+                  "type": "string",
+                  "const": "not_judged",
+                  "description": "Owed a judgement and not given one: a failure."
+                },
+                {
+                  "type": "string",
+                  "const": "refused",
+                  "description": "A licensed file is in a public tree: a failure."
+                }
+              ],
+              "description": "The answer's word."
+            },
+            "Visibility": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "public",
+                  "description": "Anyone may read it: no licensed byte may be in it."
+                },
+                {
+                  "type": "string",
+                  "const": "private",
+                  "description": "Only the owner reads it: it may hold the licensed sources."
+                }
+              ],
+              "description": "Whether a tree may be published. Declared by the policy (`ui.visibility`), never read\nfrom a forge; `MAJORDOMUS_VISIBILITY` may tighten it and never loosen it."
+            },
+            "Match": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Repository-relative path of the file."
+                },
+                "source": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The licensed source it is a copy of, when the evidence names one; the CI form never\ndoes."
+                },
+                "kind": {
+                  "$ref": "#/$defs/MatchKind",
+                  "description": "Whether the copy is exact or reformatted."
+                }
+              },
+              "required": [
+                "path",
+                "kind"
+              ],
+              "description": "One judged file that holds a licensed file's bytes."
+            },
+            "MatchKind": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "exact",
+                  "description": "The same bytes."
+                },
+                {
+                  "type": "string",
+                  "const": "normalised",
+                  "description": "The same bytes once every run of whitespace is one space: a reformatted copy."
+                }
+              ],
+              "description": "How a file matched a licensed one."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::design"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_design_licence"
+        },
+        "cli": {
+          "path": [
+            "design",
+            "licence"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "design",
+        "ui",
+        "licence",
+        "governance"
       ],
       "benchmark": {
         "policy": "required"
@@ -48120,6 +48345,833 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs"
     },
     {
+      "id": "machine.slot.acquire",
+      "module": "machine",
+      "kind": "command",
+      "title": "Take a machine slot for heavy work",
+      "description": "Take one of the machine's slots for a running process, named by its pid, with a purpose a person reads. Holders whose process is proven gone — the pid no longer runs, or runs with another start time — are reclaimed first and named. Below the declared free disk it refuses at once; with every slot held it waits in arrival order, listed as a waiter, up to the bound (the input's, else the policy's), and then refuses. A refusal is an answer, not an error: it names the limit, the measured value, every holder with its pid, purpose and age, and what to do instead. A process that already holds a slot is told so and holds one, not two.",
+      "input": {
+        "name": "SlotAcquireInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "pid": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0,
+              "description": "The process that will hold the slot: the build's own shell, not the caller of this\ncapability. It must be running; the slot is reclaimed when it stops."
+            },
+            "purpose": {
+              "type": "string",
+              "description": "What the holder is about to do, in a person's words: it is what every waiter and\nevery refusal names."
+            },
+            "wait_seconds": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0,
+              "description": "How long to wait for a slot, in seconds; the policy's `machine.heavy_work.wait_seconds`\nwhen absent, and no wait when that is absent too."
+            },
+            "volume": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "A path the work writes to, whose volume the disk floor is judged on; the slot\ndirectory's own volume when absent."
+            }
+          },
+          "required": [
+            "pid",
+            "purpose"
+          ],
+          "description": "What to ask of `machine.slot.acquire`.",
+          "title": "SlotAcquireInput"
+        }
+      },
+      "output": {
+        "name": "SlotAnswer",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "verdict": {
+              "$ref": "#/$defs/SlotVerdict",
+              "description": "Admitted, already held, or refused."
+            },
+            "refusal": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SlotRefusal"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Present when refused."
+            },
+            "waited_seconds": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "description": "Seconds the caller waited in the queue."
+            },
+            "reclaimed": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/SlotHolder"
+              },
+              "description": "Holders reclaimed on the way, because their process was proven gone."
+            },
+            "status": {
+              "$ref": "#/$defs/SlotStatus",
+              "description": "The slot directory as it stood when the answer was given."
+            }
+          },
+          "required": [
+            "verdict",
+            "waited_seconds",
+            "reclaimed",
+            "status"
+          ],
+          "description": "The answer to an acquisition.",
+          "title": "SlotAnswer",
+          "$defs": {
+            "SlotVerdict": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "admitted",
+                  "description": "A slot was taken for the caller's process."
+                },
+                {
+                  "type": "string",
+                  "const": "already_held",
+                  "description": "The caller's process already held one; nothing was taken."
+                },
+                {
+                  "type": "string",
+                  "const": "refused",
+                  "description": "Refused; the refusal says why and who holds the slots."
+                }
+              ],
+              "description": "What an acquisition came to."
+            },
+            "SlotRefusal": {
+              "type": "object",
+              "properties": {
+                "reason": {
+                  "$ref": "#/$defs/SlotRefusalReason",
+                  "description": "Which limit refused."
+                },
+                "detail": {
+                  "type": "string",
+                  "description": "The measured values and every holder, in a sentence."
+                },
+                "remedy": {
+                  "type": "string",
+                  "description": "What the caller can do instead."
+                }
+              },
+              "required": [
+                "reason",
+                "detail",
+                "remedy"
+              ],
+              "description": "A refusal, with what it measured and what to do."
+            },
+            "SlotRefusalReason": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "slots_full",
+                  "description": "Every slot stayed held for the whole wait."
+                },
+                {
+                  "type": "string",
+                  "const": "disk_floor",
+                  "description": "Less than the floor is free on the volume the work writes to."
+                }
+              ],
+              "description": "Why an acquisition was refused."
+            },
+            "SlotHolder": {
+              "type": "object",
+              "properties": {
+                "pid": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "The process that holds the slot."
+                },
+                "purpose": {
+                  "type": "string",
+                  "description": "What it said it is doing."
+                },
+                "since": {
+                  "type": "string",
+                  "description": "When it was admitted (RFC 3339, UTC)."
+                },
+                "age_seconds": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Seconds since then."
+                },
+                "liveness": {
+                  "$ref": "#/$defs/SlotLiveness",
+                  "description": "Whether that process still runs."
+                }
+              },
+              "required": [
+                "pid",
+                "purpose",
+                "since",
+                "age_seconds",
+                "liveness"
+              ],
+              "description": "One holder of a slot, as a reader sees it."
+            },
+            "SlotLiveness": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "alive",
+                  "description": "The pid runs, with the start time the record names."
+                },
+                {
+                  "type": "string",
+                  "const": "unverified",
+                  "description": "The pid runs, and its start time could not be read: kept, never reclaimed."
+                },
+                {
+                  "type": "string",
+                  "const": "dead",
+                  "description": "The pid no longer runs, or runs with another start time: the slot is reclaimable."
+                }
+              ],
+              "description": "Whether a holder's process is still the one that took the slot."
+            },
+            "SlotStatus": {
+              "type": "object",
+              "properties": {
+                "directory": {
+                  "type": "string",
+                  "description": "The directory the slots are kept in."
+                },
+                "limits": {
+                  "$ref": "#/$defs/SlotLimits",
+                  "description": "The limits, and where they were read."
+                },
+                "free_mib": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "MiB free on the volume measured; absent when it could not be measured."
+                },
+                "volume": {
+                  "type": "string",
+                  "description": "The volume measured: the work's own path, or the slot directory."
+                },
+                "held": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many holders whose process is not proven gone."
+                },
+                "holders": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/SlotHolder"
+                  },
+                  "description": "Every holder, oldest first."
+                },
+                "waiters": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/SlotWaiter"
+                  },
+                  "description": "Every waiter, in the order they will be admitted."
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "One line: held of slots, free against the floor, the waiters."
+                }
+              },
+              "required": [
+                "directory",
+                "limits",
+                "volume",
+                "held",
+                "holders",
+                "waiters",
+                "summary"
+              ],
+              "description": "The slot directory as it stands."
+            },
+            "SlotLimits": {
+              "type": "object",
+              "properties": {
+                "slots": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "How many holders the machine admits at once; absent admits every caller."
+                },
+                "min_free_gib": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "GiB that must be free; absent refuses nobody for disk."
+                },
+                "wait_seconds": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "How long a caller that names no bound waits, in seconds; absent waits not at all."
+                },
+                "rule": {
+                  "type": "string",
+                  "description": "The rule whose numbers these are."
+                },
+                "declared_in": {
+                  "type": "string",
+                  "description": "Where they are declared: the policy file and the key."
+                }
+              },
+              "required": [
+                "rule",
+                "declared_in"
+              ],
+              "description": "The limits an admission is judged by, and where they were read."
+            },
+            "SlotWaiter": {
+              "type": "object",
+              "properties": {
+                "pid": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "The process that waits."
+                },
+                "purpose": {
+                  "type": "string",
+                  "description": "What it will do once admitted."
+                },
+                "since": {
+                  "type": "string",
+                  "description": "When it started waiting (RFC 3339, UTC)."
+                },
+                "waiting_seconds": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Seconds it has waited."
+                },
+                "waiting_on": {
+                  "type": "string",
+                  "description": "What it waits on, in the words a progress report carries: `machine.slot: 5 of 5 held`."
+                }
+              },
+              "required": [
+                "pid",
+                "purpose",
+                "since",
+                "waiting_seconds",
+                "waiting_on"
+              ],
+              "description": "One waiter for a slot, as a reader sees it: the progress a waiting session reports."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::machine_slot"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_machine_slot_acquire"
+        },
+        "http": {
+          "method": "POST",
+          "path": "/api/v1/machine/slot/acquire"
+        },
+        "cli": {
+          "path": [
+            "machine",
+            "slot",
+            "acquire"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "machine",
+        "build",
+        "coordination"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "destructive"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "process_state",
+        "cancellable": false,
+        "concurrency": "serial"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/machine_slot.rs"
+    },
+    {
+      "id": "machine.slot.release",
+      "module": "machine",
+      "kind": "command",
+      "title": "Give a machine slot back",
+      "description": "Give back the slot a process holds, and withdraw it from the queue if it waits; the next waiter is admitted on its next look. Releasing a slot nobody holds answers `released: false` and changes nothing.",
+      "input": {
+        "name": "SlotReleaseInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "pid": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0,
+              "description": "The process whose slot is given back."
+            }
+          },
+          "required": [
+            "pid"
+          ],
+          "description": "What to ask of `machine.slot.release`.",
+          "title": "SlotReleaseInput"
+        }
+      },
+      "output": {
+        "name": "SlotRelease",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "released": {
+              "type": "boolean",
+              "description": "Whether the process held a slot that is now free."
+            },
+            "holder": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SlotHolder"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The record that was removed."
+            },
+            "withdrew_waiter": {
+              "type": "boolean",
+              "description": "Whether a waiter record of the process was withdrawn as well."
+            }
+          },
+          "required": [
+            "released",
+            "withdrew_waiter"
+          ],
+          "description": "The answer to a release.",
+          "title": "SlotRelease",
+          "$defs": {
+            "SlotHolder": {
+              "type": "object",
+              "properties": {
+                "pid": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "The process that holds the slot."
+                },
+                "purpose": {
+                  "type": "string",
+                  "description": "What it said it is doing."
+                },
+                "since": {
+                  "type": "string",
+                  "description": "When it was admitted (RFC 3339, UTC)."
+                },
+                "age_seconds": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Seconds since then."
+                },
+                "liveness": {
+                  "$ref": "#/$defs/SlotLiveness",
+                  "description": "Whether that process still runs."
+                }
+              },
+              "required": [
+                "pid",
+                "purpose",
+                "since",
+                "age_seconds",
+                "liveness"
+              ],
+              "description": "One holder of a slot, as a reader sees it."
+            },
+            "SlotLiveness": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "alive",
+                  "description": "The pid runs, with the start time the record names."
+                },
+                {
+                  "type": "string",
+                  "const": "unverified",
+                  "description": "The pid runs, and its start time could not be read: kept, never reclaimed."
+                },
+                {
+                  "type": "string",
+                  "const": "dead",
+                  "description": "The pid no longer runs, or runs with another start time: the slot is reclaimable."
+                }
+              ],
+              "description": "Whether a holder's process is still the one that took the slot."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::machine_slot"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_machine_slot_release"
+        },
+        "http": {
+          "method": "POST",
+          "path": "/api/v1/machine/slot/release"
+        },
+        "cli": {
+          "path": [
+            "machine",
+            "slot",
+            "release"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "machine",
+        "build",
+        "coordination"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "destructive"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "process_state",
+        "cancellable": false,
+        "concurrency": "serial"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/machine_slot.rs"
+    },
+    {
+      "id": "machine.slot.status",
+      "module": "machine",
+      "kind": "query",
+      "title": "Who holds the machine's slots, and who waits",
+      "description": "The slot directory as it stands: the limits and where they are declared, the free space on the volume measured, every holder with its pid, purpose, age and whether its process still runs (a pid that runs with another start time is a reused pid, and dead), and every waiter with how long it has waited and what it waits on (`machine.slot: 5 of 5 held`) — the progress a waiting session reports. Reads only: a dead holder is reported here and reclaimed by the next acquisition.",
+      "input": {
+        "name": "SlotStatusInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "volume": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "A path the work writes to, whose volume's free space is measured; the slot\ndirectory's own volume when absent."
+            }
+          },
+          "description": "What to ask of `machine.slot.status`.",
+          "title": "SlotStatusInput"
+        }
+      },
+      "output": {
+        "name": "SlotStatus",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "directory": {
+              "type": "string",
+              "description": "The directory the slots are kept in."
+            },
+            "limits": {
+              "$ref": "#/$defs/SlotLimits",
+              "description": "The limits, and where they were read."
+            },
+            "free_mib": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0,
+              "description": "MiB free on the volume measured; absent when it could not be measured."
+            },
+            "volume": {
+              "type": "string",
+              "description": "The volume measured: the work's own path, or the slot directory."
+            },
+            "held": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many holders whose process is not proven gone."
+            },
+            "holders": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/SlotHolder"
+              },
+              "description": "Every holder, oldest first."
+            },
+            "waiters": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/SlotWaiter"
+              },
+              "description": "Every waiter, in the order they will be admitted."
+            },
+            "summary": {
+              "type": "string",
+              "description": "One line: held of slots, free against the floor, the waiters."
+            }
+          },
+          "required": [
+            "directory",
+            "limits",
+            "volume",
+            "held",
+            "holders",
+            "waiters",
+            "summary"
+          ],
+          "description": "The slot directory as it stands.",
+          "title": "SlotStatus",
+          "$defs": {
+            "SlotLimits": {
+              "type": "object",
+              "properties": {
+                "slots": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "How many holders the machine admits at once; absent admits every caller."
+                },
+                "min_free_gib": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "GiB that must be free; absent refuses nobody for disk."
+                },
+                "wait_seconds": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "How long a caller that names no bound waits, in seconds; absent waits not at all."
+                },
+                "rule": {
+                  "type": "string",
+                  "description": "The rule whose numbers these are."
+                },
+                "declared_in": {
+                  "type": "string",
+                  "description": "Where they are declared: the policy file and the key."
+                }
+              },
+              "required": [
+                "rule",
+                "declared_in"
+              ],
+              "description": "The limits an admission is judged by, and where they were read."
+            },
+            "SlotHolder": {
+              "type": "object",
+              "properties": {
+                "pid": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "The process that holds the slot."
+                },
+                "purpose": {
+                  "type": "string",
+                  "description": "What it said it is doing."
+                },
+                "since": {
+                  "type": "string",
+                  "description": "When it was admitted (RFC 3339, UTC)."
+                },
+                "age_seconds": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Seconds since then."
+                },
+                "liveness": {
+                  "$ref": "#/$defs/SlotLiveness",
+                  "description": "Whether that process still runs."
+                }
+              },
+              "required": [
+                "pid",
+                "purpose",
+                "since",
+                "age_seconds",
+                "liveness"
+              ],
+              "description": "One holder of a slot, as a reader sees it."
+            },
+            "SlotLiveness": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "alive",
+                  "description": "The pid runs, with the start time the record names."
+                },
+                {
+                  "type": "string",
+                  "const": "unverified",
+                  "description": "The pid runs, and its start time could not be read: kept, never reclaimed."
+                },
+                {
+                  "type": "string",
+                  "const": "dead",
+                  "description": "The pid no longer runs, or runs with another start time: the slot is reclaimable."
+                }
+              ],
+              "description": "Whether a holder's process is still the one that took the slot."
+            },
+            "SlotWaiter": {
+              "type": "object",
+              "properties": {
+                "pid": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "The process that waits."
+                },
+                "purpose": {
+                  "type": "string",
+                  "description": "What it will do once admitted."
+                },
+                "since": {
+                  "type": "string",
+                  "description": "When it started waiting (RFC 3339, UTC)."
+                },
+                "waiting_seconds": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Seconds it has waited."
+                },
+                "waiting_on": {
+                  "type": "string",
+                  "description": "What it waits on, in the words a progress report carries: `machine.slot: 5 of 5 held`."
+                }
+              },
+              "required": [
+                "pid",
+                "purpose",
+                "since",
+                "waiting_seconds",
+                "waiting_on"
+              ],
+              "description": "One waiter for a slot, as a reader sees it: the progress a waiting session reports."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::machine_slot"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_machine_slot_status"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/machine/slot/status"
+        },
+        "cli": {
+          "path": [
+            "machine",
+            "slot",
+            "status"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "machine",
+        "build",
+        "coordination"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted",
+        "local_only": true
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/machine_slot.rs"
+    },
+    {
       "id": "mcp.projection",
       "module": "mcp",
       "kind": "query",
@@ -49639,6 +50691,20 @@
                     "type": "string"
                   },
                   "description": "The services that restart always and are the last the OOM killer takes."
+                },
+                "runner_homes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The homes of the CI runners' users: the disk guard reclaims the cargo build output\nanywhere under them, with the same safety as under `home`."
+                },
+                "runner_units": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The CI runner services, as unit name patterns (`*` matches any run of characters):\nevery observed unit that matches one restarts always, without a start limit."
                 }
               },
               "required": [
@@ -49656,7 +50722,9 @@
                 "policy_name",
                 "local_node",
                 "nodes",
-                "critical_services"
+                "critical_services",
+                "runner_homes",
+                "runner_units"
               ],
               "description": "What the provisioning declares: who runs the builds, which store, how bounded, which\nnodes receive an identity."
             },
@@ -49684,6 +50752,13 @@
                   },
                   "description": "The commands, in the order they run."
                 },
+                "runners": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The CI runner units observed on the host, each owed its drop-in and started."
+                },
                 "changes": {
                   "type": "integer",
                   "format": "uint",
@@ -49701,6 +50776,7 @@
                 "files",
                 "edits",
                 "steps",
+                "runners",
                 "changes",
                 "unobservable"
               ],

@@ -31,6 +31,9 @@ MJ_RULES_PROJECT_NS="project"     # the namespace the skeleton gives a project's
 MJ_RULE_ID_CHARS='A-Za-z0-9._-'
 
 mj_rules_vendor_dir()  { printf '%s' "$MJ_RULES_DIR/vendor/$MJ_RULES_VENDOR_NS"; }
+# the fleet pack is the second vendored source: its stamp lists the rules it installed
+# shellcheck source=fleet.sh
+. "$MJ_LIB_DIR/fleet.sh"
 mj_rules_project_dir() { printf '%s' "$MJ_RULES_DIR/project"; }
 
 # ---------------------------------------------------------------- one rule file
@@ -129,11 +132,12 @@ mj_rule_scan() {
 }
 
 # ---------------------------------------------------------------- the effective set
-# Sources, in this order: the vendored package in its manifest order, then project rules
-# in file-name order. Each file is validated, then the graph is resolved.
+# Sources, in this order: the vendored package in its manifest order, then the fleet pack's
+# rules in its stamp's order, then project rules in file-name order. Each file is validated,
+# then the graph is resolved.
 mj_rules_sources() {
-  local vend proj f
-  vend="$MJ_RULES_DIR/vendor/$MJ_RULES_VENDOR_NS"; proj="$MJ_RULES_DIR/project"
+  local vend proj f stamp
+  vend="$MJ_RULES_DIR/vendor/$MJ_RULES_VENDOR_NS"; proj="$MJ_RULES_DIR/project"; stamp="$(mj_fleet_stamp)"
   if [ -f "$vend/manifest.yaml" ]; then
     mj_yaml_flatten "$vend/manifest.yaml" 2>/dev/null \
       | awk -v v="vendor:$MJ_RULES_VENDOR_NS" -v d="$vend" '
@@ -141,6 +145,10 @@ mj_rules_sources() {
             eq = index($0, "="); k = substr($0, 1, eq - 1)
             if (k ~ /^rules\.[0-9]+\.file$/) { f = substr($0, eq + 1); if (f == "") exit; print v "\t" d "/" f }
           }'
+  fi
+  # only the stamp rows that name a fleet rule's place: a row is data, never a path to trust
+  if [ -f "$stamp" ]; then
+    mj_fleet_rows "$stamp" | awk -F'\t' -v v="vendor:$MJ_FLEET_NS" -v r="$MJ_ROOT" '$3 == "rule" { print v "\t" r "/" $2 }'
   fi
   if [ -d "$proj" ]; then
     for f in $(ls -1 "$proj"/*.md 2>/dev/null | LC_ALL=C sort); do
@@ -163,7 +171,7 @@ mj_rules_load() {
     [ -f "$f" ] || { MJ_RULES_ERROR="${f#"$MJ_ROOT/"}: listed by the vendor manifest but absent"; rm -rf "$tmp"; return 1; }
     if ! mj_rule_scan "$f" "$prov" "$n" "$tmp"; then MJ_RULES_ERROR="${f#"$MJ_ROOT/"}: $MJ_RULE_REASON"; rm -rf "$tmp"; return 1; fi
     case "$seen" in *" $MJ_RULE_KEY "*) MJ_RULES_ERROR="$MJ_RULE_KEY is claimed twice (${f#"$MJ_ROOT/"} and an earlier file)"; rm -rf "$tmp"; return 1 ;; esac
-    if [ "$prov" = project ]; then
+    if [ "$prov" = project ] || [ "$prov" = "vendor:$MJ_FLEET_NS" ]; then
       case "$MJ_RULE_KEY" in "$MJ_RULES_VENDOR_NS".*) MJ_RULES_ERROR="${f#"$MJ_ROOT/"}: a project rule may not claim the $MJ_RULES_VENDOR_NS namespace (${MJ_RULE_KEY%@*}); there is no override"; rm -rf "$tmp"; return 1 ;; esac
     fi
     seen="$seen$MJ_RULE_KEY "
@@ -463,7 +471,8 @@ usage: majordomus rules list [--json]           the effective set in resolved or
        majordomus rules show <id>               one rule, front matter and body          (read-only)
        majordomus rules vendor status           the vendored baseline against the tool's (read-only)
        majordomus rules vendor diff             what an update would change              (read-only)
-       majordomus rules vendor update [--force] replace the vendored baseline with the tool's package
+       majordomus rules vendor update [--force] replace the vendored baseline with the tool's package,
+                                                then install or refresh the fleet pack when one applies
 
   The effective set is every active rule vendored under rules/vendor/ plus every active
   rule under rules/project/, resolved as a dependency graph. A missing dependency, a cycle
@@ -471,6 +480,14 @@ usage: majordomus rules list [--json]           the effective set in resolved or
   vendor update is the only way the baseline changes: a newer executable reports it,
   never applies it. It refuses over a hand-edited vendor directory unless --force, and
   it never touches rules/project/.
+  The fleet pack (\$MAJORDOMUS_FLEET_PACK, else \$XDG_CONFIG_HOME/majordomus/fleet, else
+  ~/.config/majordomus/fleet) is the owner's own: its manifest lists the rules, skills and kit
+  profiles it delivers and the repositories it applies to. Only the listed files are copied,
+  into rules/vendor/fleet/ and skills/fleet-<id>/, stamped in rules/vendor/fleet/MANIFEST;
+  into a public tree a private entry is skipped, and a file naming a home or absolute path or
+  matching the kit's licence evidence refuses the install, as does a kit with no evidence.
+  The evidence holds whole-file fingerprints only: a near-copy, or a licensed fragment
+  inlined in a larger file, is not detected.
 
   This command answers what the rules ARE. What PROVES each one — whether the case it
   names is in the tree, whether a runner drives it, whether anything ever ran it, and
@@ -525,7 +542,12 @@ mj_rules_vendor() {
       fi
       mj_rules_vendor_install "$dist" "$vend"
       mj_ledger_append rules.vendored "\"package\":\"$(mj_json_esc "$(mj_rules_manifest_rev "$vend")")\""
-      printf 'vendored %s into %s\n' "$(mj_rules_manifest_rev "$vend")" "$(mj_rel "$vend")" ;;
+      printf 'vendored %s into %s\n' "$(mj_rules_manifest_rev "$vend")" "$(mj_rel "$vend")"
+      local frc=0 before; before="$(mj_fleet_installed_version)"
+      mj_fleet_install rules "$([ "$force" = 1 ] && printf -- --force)" || frc=$?
+      [ "$frc" = 0 ] || exit "$frc"
+      [ "$(mj_fleet_installed_version)" = "$before" ] \
+        || mj_ledger_append rules.vendored "\"package\":\"fleet v$(mj_fleet_installed_version)\"" ;;
     *) mj_die "$MJ_EX_USAGE" "rules vendor: unknown subcommand '$sub' (status|diff|update)" ;;
   esac
 }

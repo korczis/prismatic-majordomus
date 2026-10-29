@@ -119,6 +119,8 @@ pub enum Command {
     Shell(ShellArgs),
     /// The boundary between the layer's tracked and local halves, checked against the layouts their contracts declare: every path a contract excludes, named with the contract
     Layout(LayoutArgs),
+    /// The licensed kit the repository's interface may adapt and never publish: whether a public tree holds a licensed file's bytes, judged from kit-evidence/v1 fingerprints
+    Design(DesignArgs),
     /// The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output
     Pack(PackArgs),
     /// The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it
@@ -133,6 +135,8 @@ pub enum Command {
     Knowledge(KnowledgeArgs),
     /// Continue work on another machine: publish this checkout's newest handover as a signed record in refs/majordomus/continuity, exchange records with a git remote, and plan and resume a handover another device published — with its source compatibility, lineage and trust decided before anything is written
     Continuity(ContinuityArgs),
+    /// What one machine admits at once: a counting slot for heavy work, held to the machine limits of rule project.the-cooperation-model-is-the-owners-word (the policy's machine.heavy_work) — take one for a process, give it back, and see who holds and who waits
+    Machine(MachineArgs),
 }
 
 #[derive(Debug, Args)]
@@ -520,6 +524,67 @@ pub struct LayoutArgs {
 pub enum LayoutCommand {
     /// Refuse every path a declared layout excludes, naming the contract; exit 10 on a finding, 12 when the halves cannot be read
     Check,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus design`. The output shape is global, so it reads where a person writes it.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, DesignArgs, DesignCommand, OutputFormat};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "design", "licence", "--format", "json"]).unwrap();
+/// let Command::Design(args) = cli.command else { panic!("not the design command") };
+/// let args: DesignArgs = args;
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// let DesignCommand::Licence(licence) = args.command;
+/// assert!(licence.evidence.is_none() && !licence.json);
+/// // the group runs nothing of its own
+/// assert!(Cli::try_parse_from(["majordomus", "design"]).is_err());
+/// ```
+pub struct DesignArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `licence`. Required: the group runs nothing of its own.
+    pub command: DesignCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus design`: `licence` judges whether a public tree holds a
+/// licensed kit's files.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, DesignCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "design", "licence", "--evidence", "ev.tsv", "--json"]).unwrap();
+/// let Command::Design(args) = cli.command else { panic!("not the design command") };
+/// let DesignCommand::Licence(licence) = args.command;
+/// assert_eq!(licence.evidence.as_deref(), Some(std::path::Path::new("ev.tsv")));
+/// assert!(licence.json);
+/// ```
+pub enum DesignCommand {
+    /// Whether a public tree holds a licensed kit's files: active, inactive, not_judged or refused, each match with its file, licensed source and kind; exit 0 for active and inactive, 10 when refused, 12 when not judged (no evidence here, or a ui: block that cannot be used), 2 for evidence that cannot be read, 13 when the tree cannot be listed
+    Licence(LicenceArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus design licence`: the never-publish gate.
+pub struct LicenceArgs {
+    /// A kit-evidence/v1 file; absent reads the policy's ui.evidence entries under $HOME
+    #[arg(long, value_name = "FILE")]
+    pub evidence: Option<PathBuf>,
+
+    /// The same as --format json
+    #[arg(long)]
+    pub json: bool,
 }
 
 #[derive(Debug, Args)]
@@ -3539,6 +3604,117 @@ pub enum KnowledgeCommand {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus machine`. The output shape is global, and the group runs nothing of its own.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, MachineArgs, MachineCommand, OutputFormat, SlotCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "machine", "slot", "acquire", "--purpose", "cargo build", "--wait", "60",
+/// ])
+/// .unwrap();
+/// let Command::Machine(args) = cli.command else { panic!("not the machine command") };
+/// let args: MachineArgs = args;
+/// assert!(matches!(args.format, OutputFormat::Text), "lines for a person unless asked");
+/// let MachineCommand::Slot(slot) = args.command;
+/// let SlotCommand::Acquire { pid, purpose, wait, .. } = slot.command else { panic!("acquire") };
+/// assert_eq!((pid, purpose.as_str(), wait), (None, "cargo build", Some(60)));
+/// assert!(Cli::try_parse_from(["majordomus", "machine"]).is_err(), "a subcommand is required");
+/// ```
+pub struct MachineArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `slot`.
+    pub command: MachineCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus machine`: what this one machine admits at once. Today that
+/// is the counting slot for heavy work; the group runs nothing of its own.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, MachineCommand, SlotCommand};
+/// use clap::Parser;
+/// let cli = Cli::parse_from(["majordomus", "machine", "slot", "status"]);
+/// let Command::Machine(args) = cli.command else { panic!("machine") };
+/// let MachineCommand::Slot(slot) = args.command;
+/// assert!(matches!(slot.command, SlotCommand::Status { volume: None }));
+/// ```
+pub enum MachineCommand {
+    /// The machine's counting slot for heavy work: acquire, release, status
+    Slot(SlotArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus machine slot`: the counting slot itself, taken, given back and listed through
+/// the capabilities `machine.slot.acquire`, `machine.slot.release` and `machine.slot.status`.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, MachineCommand, SlotArgs, SlotCommand};
+/// use clap::Parser;
+/// let cli = Cli::parse_from(["majordomus", "machine", "slot", "release", "--pid", "42"]);
+/// let Command::Machine(args) = cli.command else { panic!("machine") };
+/// let MachineCommand::Slot(slot) = args.command;
+/// let slot: SlotArgs = slot;
+/// assert!(matches!(slot.command, SlotCommand::Release { pid: Some(42) }));
+/// ```
+pub struct SlotArgs {
+    #[command(subcommand)]
+    /// `status`, `acquire` or `release`.
+    pub command: SlotCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// The command line of `machine.slot.status`, `machine.slot.acquire` and
+/// `machine.slot.release`. A pid left out is this command's parent: the shell that runs it,
+/// which is the process that does the work.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, MachineCommand, SlotCommand};
+/// use clap::Parser;
+/// let cli = Cli::parse_from(["majordomus", "machine", "slot", "acquire", "--purpose", "x", "--pid", "7"]);
+/// let Command::Machine(args) = cli.command else { panic!("machine") };
+/// let MachineCommand::Slot(slot) = args.command;
+/// assert!(matches!(slot.command, SlotCommand::Acquire { pid: Some(7), .. }));
+/// ```
+pub enum SlotCommand {
+    /// Who holds the machine's slots and who waits: pid, purpose, age, liveness, the limits and the free disk
+    Status {
+        /// A path the work writes to, whose volume's free space is measured (default: the slot directory's)
+        #[arg(long, value_name = "PATH")]
+        volume: Option<PathBuf>,
+    },
+    /// Take a slot for a running process, waiting in turn up to the bound; exit 75 with every holder named when refused (slots full past the wait, or below the disk floor)
+    Acquire {
+        /// What the holder is about to do; every waiter and every refusal names it
+        #[arg(long)]
+        purpose: String,
+        /// The process that holds the slot (default: this command's parent, the shell that runs it)
+        #[arg(long)]
+        pid: Option<u32>,
+        /// Seconds to wait for a slot (default: the policy's machine.heavy_work.wait_seconds, else none)
+        #[arg(long, value_name = "SECONDS")]
+        wait: Option<u64>,
+        /// A path the work writes to, whose volume the disk floor is judged on (default: the slot directory's)
+        #[arg(long, value_name = "PATH")]
+        volume: Option<PathBuf>,
+    },
+    /// Give back the slot a process holds, and withdraw it from the queue
+    Release {
+        /// The process whose slot is given back (default: this command's parent)
+        #[arg(long)]
+        pid: Option<u32>,
+    },
+}
+
+#[derive(Debug, Args)]
 /// `majordomus continuity`. The output shape is global, so it reads where a person writes
 /// it, and the group runs nothing of its own.
 ///
@@ -6016,6 +6192,50 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["layout", "check", "--format", "json"],
             setup: &[],
             expect: Expect::StdoutContains(&["\"checked\"", "\"findings\"", "\"passes\""]),
+        }],
+    },
+    CommandExamples {
+        command: "design licence",
+        examples: &[ExampleDoc {
+            id: "design-licence-json",
+            title: "Whether a public tree holds a licensed kit's files",
+            description: "The same answer the MCP tool `majordomus_design_licence` returns: `/verdict` (`active`, `inactive`, `not_judged` or `refused`), `/fails`, the declared `/kit` and `/visibility`, why under `/reason`, and every file that holds a licensed file's bytes under `/matches`. This repository's policy declares no kit (`ui.kit` is empty), so the gate is skipped: the verdict is `inactive` and the exit is 0. A refusal exits 10, a public tree with a declared kit and no evidence exits 12, and an evidence file that cannot be read exits 2 naming the file and the line, never its content.",
+            argv: &["design", "licence", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/verdict", "/fails", "/kit", "/visibility", "/matches"]),
+        }],
+    },
+    CommandExamples {
+        command: "machine slot status",
+        examples: &[ExampleDoc {
+            id: "machine-slot-status",
+            title: "Who holds the machine's slots, and who waits",
+            description: "The limits and where they are declared, the free disk, every holder with its pid, age, liveness and purpose, and every waiter with what it waits on. This repository's policy declares no `machine.heavy_work`, so the answer says that no limit and no floor are declared rather than inventing one.",
+            argv: &["machine", "slot", "status"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["machine slots:", "no limit declared", "no floor declared"]),
+        }],
+    },
+    CommandExamples {
+        command: "machine slot acquire",
+        examples: &[ExampleDoc {
+            id: "machine-slot-acquire",
+            title: "Take a slot for the shell that runs the build",
+            description: "Without `--pid` the holder is this command's parent, the shell that is about to do the work, so the slot is freed when that shell ends even if nobody releases it. The first word is the verdict a shell caller reads: `admitted`, `already_held`, or `refused` with exit 75 and every holder named. With no limit declared the caller is admitted at once.",
+            argv: &["machine", "slot", "acquire", "--purpose", "cargo build", "--wait", "0"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["admitted: pid"]),
+        }],
+    },
+    CommandExamples {
+        command: "machine slot release",
+        examples: &[ExampleDoc {
+            id: "machine-slot-release",
+            title: "Give the slot back when the work is done",
+            description: "The slot taken by the setup step for the same parent process is given back, and the next waiter is admitted on its next look. Releasing a slot nobody holds says `not held` and changes nothing.",
+            argv: &["machine", "slot", "release"],
+            setup: &[&["machine", "slot", "acquire", "--purpose", "cargo build"]],
+            expect: Expect::StdoutContains(&["released: pid"]),
         }],
     },
     CommandExamples {

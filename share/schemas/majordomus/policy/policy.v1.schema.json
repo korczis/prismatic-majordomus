@@ -559,6 +559,35 @@
         }
       }
     },
+    "machine": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "What one machine admits at once (rule project.the-cooperation-model-is-the-owners-word clause 7). Read by machine.slot on every acquisition; absent declares no limit, and an acquisition then says so.",
+      "properties": {
+        "heavy_work": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "The counting slot for heavy work — a build, a test run — kept beside the derive lock where every checkout of the machine agrees on it.",
+          "properties": {
+            "slots": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "How many holders the machine admits at once; the next waits in turn."
+            },
+            "min_free_gib": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "GiB that must be free on the volume the work writes to; below it an acquisition is refused at once, naming the measurement and the holders."
+            },
+            "wait_seconds": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "How long an acquisition that names no bound waits for a slot before it is refused, naming every holder."
+            }
+          }
+        }
+      }
+    },
     "build_cache": {
       "type": "object",
       "additionalProperties": false,
@@ -605,6 +634,46 @@
           "type": "integer",
           "minimum": 1,
           "description": "How long a server started for a checkout no client owns — by `serve ensure` or by a shell entering the checkout — outlives its last peer before it stops by itself. Absent means 900. `--idle` on the command line overrides it."
+        }
+      }
+    },
+    "ui": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "The user interface and the design kit it is built on (I4336): which kit the UI declares, whether the tree is public, what a deploy publishes and where the owner's licence evidence is. Read by the licence gate (`majordomus-cli design licence`) and by the fleet pack's install. An absent block declares no kit, and a tree that does not declare itself private is judged public.",
+      "properties": {
+        "kit": {
+          "type": "string",
+          "pattern": "^([a-z0-9][a-z0-9_-]*)?$",
+          "description": "The declared kit's id; the empty string declares none, and the licence gate is then skipped."
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["public", "private"],
+          "description": "Declared, never fetched. A public tree never carries a licensed file of the kit, and a public tree that declares a kit and has a UI fails closed when nothing could judge it. MAJORDOMUS_VISIBILITY=public tightens a private declaration; nothing loosens one."
+        },
+        "publish": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Repository-relative directories a deploy publishes (the upload-pages-artifact path); the licence gate hashes their untracked files as well as every tracked file."
+        },
+        "evidence": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^~/\\S" },
+          "description": "kit-evidence/v1 files on the owner's machine, each `~/`-relative and never absolute. CI reads MAJORDOMUS_KIT_EVIDENCE_<KIT>, base64 of the gzipped text, instead."
+        },
+        "exempt": {
+          "type": "array",
+          "description": "Surfaces the kit-use judge does not hold to the declared kit, each with the reason it is exempt. Declared here, read by the design kit judge; the never-publish gate exempts nothing.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "because"],
+            "properties": {
+              "path": { "type": "string", "minLength": 1, "description": "A repository-relative path or glob." },
+              "because": { "type": "string", "minLength": 1, "description": "Why the surface is not built on the kit." }
+            }
+          }
         }
       }
     }
