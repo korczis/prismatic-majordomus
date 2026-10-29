@@ -71,7 +71,7 @@ Reported in this order, in the lines, in the JSON and in the report, and never l
 | `integration` | `.ai/local/state/integration/observation.json` and the queue's `summary.json` (files), `origin/master` and `FETCH_HEAD` | 1 h | 300 ms | the queue's observation, its age and the master it saw against `origin/master` now (and by how many commits it moved), the required run on master, the last merge on master's first-parent line and the executor's own last merge | `majordomus prs refresh`, with `git fetch origin master` past 15 min unfetched |
 | `ci` | the forge via the monitor cache, leaseholder only | 30 s (runners 60 s) | 5 s | hosted runs in progress and queued, self-hosted runners online, busy and offline by name | `gh api repos/<owner>/<repo>/actions/runners` |
 | `machine` | statvfs, `vm.swapusage` or `/proc/meminfo`, one `ps` | read now | 1 s | free disk against `machine.heavy_work.min_free_gib`, swap, builders against `machine.heavy_work.slots` | `df -g / ; sysctl vm.swapusage` |
-| `release` | `release.currency` | read now | 1 s | current, owed with the count, overdue, or unread with why (I3070) | `majordomus release next` |
+| `release` | `release.currency` | read now | 2 s | current, owed with the count, overdue, or unread with why (I3070) | `majordomus release next` |
 | `derive` | the derive lock (files) | read now | 100 ms | its holder, whether that process runs, how long it has held the lock, the priority marker | `majordomus doctor` |
 | `answered by` | — | — | 6 s overall | which process composed the brief, how long it took, and every section that ran past its budget | `majordomus brief --format json` |
 
@@ -123,7 +123,7 @@ entries verbatim: `keep_awake` (what a session is told at its start), `report.pr
 wakes it on the interval) and `report.reminder` (what rides on a prompt the person sends).
 Every carrier relays those texts verbatim; none of them, and not this document, restates the
 contract. `majordomus brief --report` prints the report owed now, and
-the reader page renders the declaration, attention rows included.
+[the reader page](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/docs/generated/brief-report.md) renders the declaration, attention rows included.
 
 ## Keeping a session awake
 

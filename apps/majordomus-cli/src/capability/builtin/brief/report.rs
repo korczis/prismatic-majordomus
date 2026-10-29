@@ -4,7 +4,7 @@
 //! # Why the wording is data
 //!
 //! On 2026-10-29 the owner read the interval prompt and called it a placeholder: it asked for
-//! "two to four lines" and named categories ("a board that could not be read, a superseded
+//! a fixed number of lines and named categories ("a board that could not be read, a superseded
 //! server, ...") rather than anything measured, and the same contract was worded four
 //! different ways — here, in the Claude Code mod, in docs/BRIEF.md and in ADR 0136. The
 //! contract is now declared once, in a file people and adopters read, and this module holds

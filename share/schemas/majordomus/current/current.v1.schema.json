@@ -114,6 +114,10 @@
     "mesh_claim": {
       "type": "string",
       "description": "The key of the advisory claim `start` took on the mesh for this task's scope, as the mesh session task-<id>, when the checkout's shared server answered (I2288). Absent when no server answered; `finish` closes the session."
+    },
+    "provider_session": {
+      "type": "string",
+      "description": "The provider session that started the task, as the shell lifecycle resolves it (MAJORDOMUS_PROVIDER_SESSION, then the provider's own variable), so that the brief can tell this session's task from the checkout's last one (I4390). Absent when no provider session was in the environment."
     }
   }
 }

@@ -17,6 +17,7 @@
 RB="$(rust_bin)" || rust_bin_exit $?
 command -v jq >/dev/null 2>&1 || skip "no jq"
 command -v curl >/dev/null 2>&1 || skip "curl not installed"
+command -v python3 >/dev/null 2>&1 || skip "no python3"
 export MAJORDOMUS_SHARE="$ROOT/share"
 fail() { printf '    %s\n' "$*"; exit 1; }
 
@@ -38,7 +39,7 @@ i=0; until ready; do i=$((i + 1)); [ "$i" -lt 200 ] || { cat "$T/serve.log"; exi
 url="$(jq -r '.url' "$R/.ai/local/state/mcp/server.json")"
 
 # twelve workers, each announcing an intent of 400 bytes that ends in a word of its own
-intent() { printf 'worker %02d ' "$1"; i=0; while [ "$i" -lt 38 ]; do printf 'measured '; i=$((i + 1)); done; printf 'end%02d' "$1"; }
+intent() { printf 'worker %02d ' "$1"; i=0; while [ "$i" -lt 44 ]; do printf 'measured '; i=$((i + 1)); done; printf 'end%02d' "$1"; }
 n=1
 while [ "$n" -le 12 ]; do
   H="$T/h.$n"
@@ -73,12 +74,15 @@ case "$text" in *'+4 more: majordomus peers'*) ;; *) fail "the lines do not coun
 
 # ---------------------------------------------------------------- 3  nothing clipped, nothing wide
 case "$text" in *'…'*) fail "something in the lines is cut with an ellipsis" ;; esac
-wide="$(printf '%s\n' "$text" | sed 1d | awk 'length($0) > 100' | head -n 1)"
+# counted in characters, not bytes: an em dash is one column
+wide="$(printf '%s\n' "$text" | sed 1d | python3 -c 'import sys
+for l in sys.stdin.read().splitlines():
+    if len(l) > 100: print(l); break')"
 [ -z "$wide" ] || fail "a line is wider than 100 columns: $wide"
 
 # ---------------------------------------------------------------- 4  the one line
 line="$(cd "$R" && PATH="$T/bin:$PATH" "$RB" brief --this-checkout --line 2>/dev/null)"
-[ "$(printf '%s' "$line" | wc -m | tr -d ' ')" -le 160 ] || fail "the line is wider than 160 columns: $line"
+[ "$(printf '%s' "$line" | python3 -c 'import sys; print(len(sys.stdin.read()))')" -le 160 ] || fail "the line is wider than 160 columns: $line"
 tokens="$(printf '%s' "$line" | awk -F' [|] ' '{ print NF }')"
 case "$line" in
   *' | +'[0-9]*) ;;

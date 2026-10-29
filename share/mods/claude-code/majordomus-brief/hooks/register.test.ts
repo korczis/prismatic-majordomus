@@ -68,10 +68,10 @@ const make = (f: Facts = {}): Brief => {
 const json = (f: Facts = {}) => JSON.stringify(make(f));
 
 // An executable older than the report contract: no report, no fingerprints.
-const legacy = (head = '1a2b3c4d5e', at = '2026-10-26T15:33:26Z'): Brief => ({
+const legacy = (head = '1a2b3c4d5e', at = '2026-10-26T15:33:26Z', age = '4 min'): Brief => ({
   at,
   line: 'I1 @main',
-  lines: [`session      episode s-1 on main at ${head}; observed 4 min ago (${at})`],
+  lines: [`session      episode s-1 on main at ${head}; observed ${age} ago (${at})`],
   interval_minutes: 5,
 });
 
@@ -160,7 +160,7 @@ test('a change in a section fingerprint, and only that, is a change', () => {
 });
 
 test('an older executable is compared by its lines with the clock taken out', () => {
-  expect(changedSections(legacy(), legacy('1a2b3c4d5e', '2026-10-26T16:01:02Z'))).toEqual([]);
+  expect(changedSections(legacy(), legacy('1a2b3c4d5e', '2026-10-26T16:01:02Z', '31 min'))).toEqual([]);
   expect(changedSections(legacy(), legacy('9f8e7d6c5b'))).toEqual(['brief']);
 });
 

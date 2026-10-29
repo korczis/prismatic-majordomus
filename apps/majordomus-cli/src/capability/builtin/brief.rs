@@ -105,7 +105,9 @@ pub(crate) const BUDGETS: &[(&str, Duration)] = &[
     ("integration", Duration::from_millis(300)),
     ("ci", Duration::from_secs(5)),
     ("machine", Duration::from_secs(1)),
-    ("release", Duration::from_secs(1)),
+    // release.currency reads tags and the trunk's history: measured at about 1 s in a
+    // server under load, so its budget is twice that
+    ("release", Duration::from_secs(2)),
     ("derive", Duration::from_millis(100)),
 ];
 
