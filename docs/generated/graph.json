@@ -71821,6 +71821,44 @@
         }
       },
       {
+        "id": "majordomus://issue/I4380",
+        "kind": "issue",
+        "label": "I4380",
+        "summary": "An optional step of the Pages publication never stops the deploy",
+        "route": "/cockpit/objects/issue/i4380",
+        "source": ".ai/repo/project/issues/I4380.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Replacing `gh pr list` as the first read: thirty-five cases and six integration tests script a forge that answers it, and the paged read is asked only when the gateway times its page out",
+            "Making the publication itself, the build or the check degrade: those still fail the deploy",
+            "A longer trends series or caching it between publications: it stays stateless (I3933)"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4380.yaml",
+            ".github/workflows/pages.yml",
+            "scripts/pages",
+            "scripts/ci/step-bound-check",
+            "apps/majordomus-cli/src/integration/forge.rs",
+            "test/cases/742_only_an_outage_is_asked_again.sh",
+            "test/cases/3933_the_trends_are_read_from_the_runs_themselves.sh",
+            "test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
+            "site/content/plan/I4380.md"
+          ],
+          "serves": [],
+          "slug": "a-pages-deploy-is-not-stopped-by-an-optional-step",
+          "updated_at": "2026-10-29"
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -95368,6 +95406,13 @@
         "label": "test/cases/431_economics_claims_gated.sh",
         "route": "/cockpit/objects/test/test-cases-431-economics-claims-gated-sh",
         "source": "test/cases/431_economics_claims_gated.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
+        "kind": "test",
+        "label": "test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
+        "route": "/cockpit/objects/test/test-cases-4380-an-optional-step-is-bounded-inside-its-own-bound-sh",
+        "source": "test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh"
       },
       {
         "id": "majordomus://test/test/cases/43_plan_command.sh",
@@ -134364,6 +134409,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4380",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4380",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -140914,6 +140969,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/43_plan_command.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -145995,8 +146055,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4034,
-      "edges": 9314,
+      "nodes": 4036,
+      "edges": 9317,
       "acyclic": false,
       "truncated": false
     }

@@ -1,0 +1,42 @@
+id: I4380
+milestone: ci-critical-path
+title: An optional step of the Pages publication never stops the deploy
+slug: a-pages-deploy-is-not-stopped-by-an-optional-step
+priority: p0
+profile: implementation
+parallel_safe: true
+serves: []
+objective: "A step of pages.yml that is written to degrade (`|| echo \"::warning ...\"`) degrades when it runs out of time instead of being killed: its command is bounded inside the step's own timeout-minutes, and scripts/ci/step-bound-check refuses one that is not. The trends reading reads its runs eight at a time with every forge call bounded, and `majordomus prs refresh` reads the open pull requests in GraphQL pages of 25 when the forge's gateway times out `gh pr list`'s page of a hundred. The ui-snapshot's forge observation degrades: a forge that cannot be asked leaves the PR Drain and Deployments screens saying the forge was not observed, and the site is still published."
+why: "The Pages workflow had not published master since about 22:29Z on 2026-10-28. On runs 40796031540, 40803295553 and 40823254353 the deploy job's `trends` step, `scripts/pages trends || echo \"::warning title=No trends::...\"` under `timeout-minutes: 4`, read sixty validate runs one call at a time for longer than four minutes; GitHub killed the step (\"The action 'trends' has timed out after 4 minutes\"), a step killed by its own bound is a failed step that `||` never sees, and publication said \"this run ended (publish: skipped) without pushing gh-pages\". In the same runs the ui-snapshot step 'the forge, observed' failed with exit 12: `gh pr list --state open --limit 500 --json ...statusCheckRollup,...` answered HTTP 504 Gateway Timeout on all four attempts with 124 pull requests open, and the deploy job needs that job's artifact."
+current_state: "Measured at 5370ee63d19: the trends step is bounded only by its timeout-minutes; cmd_trends makes about 180 forge calls in sequence with no per-call bound; GhForge::observe asks `gh pr list` four times for the same page of a hundred on a 504; 'the forge, observed' is blocking, so a forge outage fails ui-snapshot and with it the deploy of every page; step-bound-check does not look at degrading steps."
+desired_state: "The trends step runs `timeout --kill-after=10 200 scripts/pages trends` inside its four minutes, and the reading takes about 50 s over sixty runs (measured locally: 48 s). A 504 on the open list is answered at once by OPEN_QUERY pages of OPEN_PAGE (25), each retried on an outage as every read is; any other outage of `gh pr list` is still asked again four times. Each of the forge observation's two reads runs under `timeout --kill-after=10 135` and degrades with a 'Forge not observed' warning. step-bound-check section 5 refuses a degrading step with its own minutes whose commands are unbounded or whose bounds add up to the step's minutes or more, unless it is continue-on-error."
+scope:
+  - ".ai/repo/project/issues/I4380.yaml"
+  - ".github/workflows/pages.yml"
+  - "scripts/pages"
+  - "scripts/ci/step-bound-check"
+  - "apps/majordomus-cli/src/integration/forge.rs"
+  - "test/cases/742_only_an_outage_is_asked_again.sh"
+  - "test/cases/3933_the_trends_are_read_from_the_runs_themselves.sh"
+  - "test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh"
+  - "site/content/plan/I4380.md"
+non_scope:
+  - "Replacing `gh pr list` as the first read: thirty-five cases and six integration tests script a forge that answers it, and the paged read is asked only when the gateway times its page out"
+  - "Making the publication itself, the build or the check degrade: those still fail the deploy"
+  - "A longer trends series or caching it between publications: it stays stateless (I3933)"
+depends_on: []
+acceptance_criteria:
+  - "step-bound-check: the pages.yml of 5370ee63d19 is refused at the trends step (exit 10); this branch's pages.yml and validate.yml pass; case 4380 holds the refused and accepted shapes (unbounded, bounds that add up past the step, a continuation line, timeout in seconds or minutes, scripts/ci/timed, continue-on-error)"
+  - "Case 3933: the runs are read in parallel and one at a time with identical bytes, and a jobs call that hangs is stopped at MJ_TRENDS_CALL_SECONDS and is exit 12 with no file left"
+  - "Unit tests in integration::forge: a paged node is observed exactly as `gh pr list` lists the same pull request; the cursor is followed until the forge has no more or the limit is reached; a failing or empty page fails the whole list; only a 504 is answered with smaller pages; OPEN_QUERY is pinned"
+  - "Case 742 section 6: a `pr list` that always answers 504 is asked once, the open list is read in one GraphQL page of 25, and the observation records #1 with its passing check"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::forge"
+  - "bash test/run.sh 4380_an_optional_step_is_bounded_inside_its_own_bound 3933_the_trends_are_read_from_the_runs_themselves 742_only_an_outage_is_asked_again 3749_a_full_history_checkout_is_bounded 3748_a_pages_step_bound_follows_its_budget"
+  - "scripts/ci/step-bound-check"
+  - "actionlint .github/workflows/pages.yml"
+evidence_required:
+  - suite
+risk: "A forge that times out every page of 25 too now costs the observation one failed `gh pr list` plus four attempts per page before it degrades; both reads are bounded at 135 s inside the step, so the cost is a warning and never the publication."
+created_at: 2026-10-29
+updated_at: 2026-10-29

@@ -20,6 +20,9 @@
 #   4  a forge that cannot be read is exit 12 and leaves no file behind
 #   5  the workflow hands rust-coverage its summary file through the variable rust-coverage
 #      itself reads, so the artifact this reads is the measurement's own output
+#   6  the runs are read several at a time (I4380), and one at a time gives the same bytes
+#   7  a call that does not return is stopped at its own bound and is a forge that could not
+#      be read (exit 12, no file), not a reading that waits out the step
 . "$ROOT/test/lib.sh"
 
 command -v python3 >/dev/null 2>&1 || skip "no python3 to write the fixture artifact"
@@ -89,6 +92,7 @@ while [ \$# -gt 0 ]; do case "\$1" in
   *) url="\$1"; shift ;;
 esac; done
 [ -f "$F/down" ] && exit 1
+case "\$url" in *"/jobs?"*) [ -f "$F/hang" ] && exec sleep 60 ;; esac
 case "\$url" in
   *"/actions/workflows/validate.yml/runs?branch=master&status=completed&per_page="*) f=runs.json ;;
   *"/actions/runs/101/jobs?"*) f=jobs-101.json ;;
@@ -171,5 +175,25 @@ grep -q 'SUMMARY_JSON: \${{ github.workspace }}/coverage-summary.json' "$T/cover
   || { echo "    the coverage job does not keep rust-coverage's summary as the coverage-summary artifact"; exit 1; }
 grep -q 'scripts/pages trends' "$ROOT/.github/workflows/pages.yml" \
   || { echo "    the pages publication does not read the series"; exit 1; }
+
+# ---------------------------------------------------------------- 6. read in parallel, same bytes
+PATH="$T/bin:$PATH" GITHUB_REPOSITORY=example/repo MJ_TRENDS_PARALLEL=1 expect_exit 0 \
+  "$ROOT/scripts/pages" trends --out "$T/serial.json" --runs 2
+cmp -s "$T/one.json" "$T/serial.json" || { echo "    one run at a time reads other bytes than several"; diff "$T/one.json" "$T/serial.json" | head -20; exit 1; }
+MJ_TRENDS_PARALLEL=0 expect_exit 2 "$ROOT/scripts/pages" trends --runs 2
+
+# ---------------------------------------------------------------- 7. a call that hangs is bounded
+if command -v timeout >/dev/null 2>&1; then
+  : > "$F/hang"; t0="$(date +%s)"
+  PATH="$T/bin:$PATH" GITHUB_REPOSITORY=example/repo MJ_TRENDS_CALL_SECONDS=2 expect_exit 12 \
+    "$ROOT/scripts/pages" trends --out "$T/hung.json" --runs 2
+  took=$(( $(date +%s) - t0 ))
+  expect_grep 'the jobs of run 10[12] could not be read'
+  [ ! -e "$T/hung.json" ] || { echo "    a reading stopped at its bound left a file behind"; exit 1; }
+  [ "$took" -lt 30 ] || { echo "    a hanging call was not stopped at its 2 s bound: the reading took $took s"; exit 1; }
+  rm -f "$F/hang"
+else
+  echo "    (no timeout(1) here: the per-call bound is not exercised)"
+fi
 
 echo "    the series is master's runs oldest first, each with its own jobs' cost and its own measurement's totals, null where the forge no longer keeps one"

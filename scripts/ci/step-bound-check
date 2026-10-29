@@ -44,6 +44,16 @@
 #    doubled its pages, the step was killed at 192 s (run 39392245576), publish was skipped and
 #    the site stayed old. Nothing had tied the bound to what the row was measured at.
 #
+# 5. AN OPTIONAL STEP. A step that degrades — its command `|| echo "::warning ..."`, so that a
+#    failure is reported and the job goes on — and declares its own `timeout-minutes` bounds
+#    each degrading command inside that bound (`timeout [--kill-after=K] N` or
+#    `scripts/ci/timed --bound N`, the bounds and their grace adding up to less than the step's
+#    minutes), or is `continue-on-error`. A step killed by its own timeout-minutes is a failed
+#    step, and `||` never runs: on 2026-10-29 the `trends` step of pages.yml, bounded at 4
+#    minutes, read the forge for longer, was killed ("The action 'trends' has timed out after 4
+#    minutes"), and publish was skipped on runs 40796031540, 40803295553 and 40823254353 — an
+#    optional page holding back the whole site (I4380).
+#
 # It does NOT hold the sum: several steps can still add up past their job's bound and be
 # killed together, and nothing here sees that. The job bound remains the backstop it always
 # was; what changes is that one runaway step can no longer hide inside it.
@@ -99,6 +109,16 @@ awk '
   pass == 1 && /^    timeout-minutes: [0-9]+[ \t]*$/ { b = $0; sub(/.*: /, "", b); jb[job] = b + 0; next }
   pass == 1 { next }
   /^      - / { close_step(); instep = 1; start = FNR }
+  instep && /^        continue-on-error: true[ \t]*(#.*)?$/ { coe = 1 }
+  instep && /\|\|[ \t]*\{?[ \t]*echo[^#]*::warning/ {
+    # the command that degrades: what precedes `||` on the line, or the line before it when
+    # `||` opens a continuation line
+    cmd = $0; sub(/\|\|.*$/, "", cmd)
+    if (cmd ~ /^[ \t]*$/) cmd = prev
+    b = inner_bound(cmd); ndeg++
+    if (b < 0) { unbounded[ndeg] = FNR; nunb++ } else inner += b
+  }
+  { prev = $0 }
   instep && /^(      - |        )uses: actions\/checkout@/ { checkout = 1 }
   instep && /^          fetch-depth: ["\047]?0["\047]?[ \t]*(#.*)?$/ { full = 1 }
   instep && /^        timeout-minutes: [0-9]+[ \t]*$/ { t = $0; sub(/.*: /, "", t); sto = t + 0 }
@@ -115,7 +135,39 @@ awk '
       printf "%d\t%s\tthe step bound %ss is not smaller than the job bound %dm; the job would kill it first\n", FNR, job, s, bound
     }
   }
-  function close_step(   bound) {
+  # seconds, from a duration as timeout(1) takes it: 200, 200s, 4m
+  function seconds(d,   n) {
+    n = d + 0
+    if (d ~ /m$/) n *= 60
+    else if (d ~ /h$/) n *= 3600
+    return n
+  }
+  # The bound a command runs under, with its grace: `timeout [opts] N` (plus --kill-after) or
+  # `scripts/ci/timed --bound N` (plus the 30 s its timeout(1) is given to stop); -1 for none.
+  function inner_bound(cmd,   t, n, i, j, kill) {
+    n = split(cmd, t, /[ \t]+/)
+    for (i = 1; i <= n; i++) {
+      if (t[i] ~ /(^|\/)timed$/ && t[i + 1] == "--bound" && t[i + 2] ~ /^[0-9]+$/) return t[i + 2] + 30
+      if (t[i] !~ /(^|\/)timeout$/) continue
+      kill = 0
+      for (j = i + 1; j <= n; j++) {
+        if (t[j] ~ /^--kill-after=/) { kill = seconds(substr(t[j], 14)); continue }
+        if (t[j] == "--kill-after" || t[j] == "-k") { kill = seconds(t[j + 1]); j++; continue }
+        if (t[j] == "--signal" || t[j] == "-s") { j++; continue }
+        if (t[j] ~ /^-/) continue
+        if (t[j] ~ /^[0-9]+[smh]?$/) return seconds(t[j]) + kill
+        break
+      }
+    }
+    return -1
+  }
+  function close_step(   bound, k) {
+    if (instep && ndeg > 0 && sto > 0 && !coe) {
+      for (k = 1; k <= ndeg; k++) if (k in unbounded)
+        printf "%d\t%s\tthe step degrades with || ::warning, but the command it degrades is not bounded inside the step'"'"'s own %dm (timeout N, or scripts/ci/timed --bound N); a step killed by its timeout-minutes is a failed step, and || never runs\n", unbounded[k], job, sto
+      if (nunb == 0 && inner >= sto * 60)
+        printf "%d\t%s\tthe step degrades with || ::warning, and the bounds inside it add up to %ds, not under the step'"'"'s own %dm (%ds); the step'"'"'s kill would come first, and || never runs\n", start, job, inner, sto, sto * 60
+    }
     if (instep && checkout && full) {
       bound = jb[job] + 0
       if (bound == 0)
@@ -125,7 +177,8 @@ awk '
       else if (sto >= bound)
         printf "%d\t%s\tthe full-history checkout'"'"'s bound %dm is not smaller than the job bound %dm; the job would kill it first\n", start, job, sto, bound
     }
-    instep = 0; checkout = 0; full = 0; sto = 0
+    instep = 0; checkout = 0; full = 0; sto = 0; coe = 0; ndeg = 0; inner = 0; nunb = 0
+    split("", unbounded)
   }
   END { close_step() }
 ' "$wf" "$wf" >> "$found"
@@ -237,7 +290,7 @@ fi
 
 n="$(grep -c . "$found" || true)"
 if [ "${n:-0}" = 0 ]; then
-  printf 'step-bound-check: every timed step is bounded under its job, as is every full-history checkout'
+  printf 'step-bound-check: every timed step is bounded under its job, as is every full-history checkout and every optional step'
   [ -z "$gates" ] || printf '; every gate of %s leaves a receipt' "$(basename "$gates")"
   [ -z "$budgets" ] || printf '; every budgeted row of %s is bounded from its budget' "$(basename "$budgets")"
   printf ' (%s)\n' "$(basename "$wf")"

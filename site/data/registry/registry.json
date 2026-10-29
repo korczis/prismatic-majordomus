@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "bfe498ecbbafb51ab21c50cc4dc9185b76a3fcf7249658d9b88dd39da2371a64",
+    "fingerprint": "a345b591d7c0ec1da45d3864b97a28b947789d8eef23f0995898a242603aa4e4",
     "summary": {
-      "total": 3570,
+      "total": 3572,
       "builtin": 220,
-      "declarative": 3350,
+      "declarative": 3352,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3350
+        "resource": 3352
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3360
+        "implemented": 3362
       },
       "mcp_tools": 206,
-      "mcp_resources": 3407,
+      "mcp_resources": 3409,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91383,7 +91383,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1053,
+        "capabilities": 1054,
         "capability_ids": []
       },
       {
@@ -91981,7 +91981,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 654,
+        "capabilities": 655,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "84641565beac2d30a44cdbbb11cb6055de486182af4f4b3015068dd94aa8f6c4",
+    "fingerprint": "385238ec9ce62828b6fd98e198fc0c427d07d0b87a2a064eb0924847622744cc",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92113,7 +92113,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1053,
+      "issue": 1054,
       "knowledge": 59,
       "mesh-declaration": 1,
       "milestone": 111,
@@ -92127,7 +92127,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 654,
+      "test": 655,
       "use-case": 49,
       "workspace": 1
     },
@@ -99558,7 +99558,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 1041324
+        "bytes": 1047199
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -115070,6 +115070,17 @@
         "bytes": 5693
       },
       {
+        "uri": "majordomus://issue/I4380",
+        "kind": "issue",
+        "identity": "I4380",
+        "title": "An optional step of the Pages publication never stops the deploy",
+        "description": "A step of pages.yml that is written to degrade (`|| echo \\\"::warning ...\\\"`) degrades when it runs out of time instead of being killed: its command is bounded inside the step's own timeout-minutes, and scripts/ci/step-bound-check refuses one that is not. The trends reading reads its runs eight at a time with every forge call bounded, and `majordomus prs refresh` reads the open pull requests in GraphQL pages of 25 when the forge's gateway times out `gh pr list`'s page of a hundred. The ui-snapshot's forge observation degrades: a forge that cannot be asked leaves the PR Drain and Deployments screens saying the forge was not observed, and the site is still published.",
+        "path": ".ai/repo/project/issues/I4380.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5481
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -125705,7 +125716,7 @@
         "identity": "test/cases/3933_the_trends_are_read_from_the_runs_themselves.sh",
         "path": "test/cases/3933_the_trends_are_read_from_the_runs_themselves.sh",
         "source_class": "case",
-        "bytes": 10783
+        "bytes": 12342
       },
       {
         "uri": "majordomus://test/test/cases/3939_the_executable_is_built_once_per_run.sh",
@@ -126034,6 +126045,14 @@
         "path": "test/cases/431_economics_claims_gated.sh",
         "source_class": "case",
         "bytes": 7105
+      },
+      {
+        "uri": "majordomus://test/test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
+        "kind": "test",
+        "identity": "test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
+        "path": "test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
+        "source_class": "case",
+        "bytes": 4465
       },
       {
         "uri": "majordomus://test/test/cases/43_plan_command.sh",
@@ -126873,7 +126892,7 @@
         "identity": "test/cases/742_only_an_outage_is_asked_again.sh",
         "path": "test/cases/742_only_an_outage_is_asked_again.sh",
         "source_class": "case",
-        "bytes": 7985
+        "bytes": 10606
       },
       {
         "uri": "majordomus://test/test/cases/743_release_version_answers_with_the_contract.sh",
@@ -128574,7 +128593,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1053
+      "objects": 1054
     },
     {
       "name": "knowledge",
@@ -128736,7 +128755,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 654
+      "objects": 655
     },
     {
       "name": "use-case",

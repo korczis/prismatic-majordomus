@@ -1890,6 +1890,10 @@ cmd_trends() {
   case "$runs" in ''|*[!0-9]*) echo "pages trends: --runs takes a whole number" >&2; exit 2 ;; esac
   # one page of the forge's listing; a longer series would be paginated for little reader value
   [ "$runs" -ge 1 ] && [ "$runs" -le 100 ] || { echo "pages trends: --runs takes 1 to 100" >&2; exit 2; }
+  # how many runs are read at once, and how long one call to the forge may take (below)
+  local parallel="${MJ_TRENDS_PARALLEL:-8}" call="${MJ_TRENDS_CALL_SECONDS:-30}" d why ids=""
+  case "$parallel" in ''|0|*[!0-9]*) echo "pages trends: MJ_TRENDS_PARALLEL takes a whole number of at least 1" >&2; exit 2 ;; esac
+  case "$call" in ''|0|*[!0-9]*) echo "pages trends: MJ_TRENDS_CALL_SECONDS takes a whole number of at least 1" >&2; exit 2 ;; esac
   rm -f "$out"
   command -v gh >/dev/null 2>&1 || { echo "pages trends: gh is not installed, so the runs were not read" >&2; return 12; }
   command -v unzip >/dev/null 2>&1 || { echo "pages trends: unzip is required to read a run's artifact" >&2; return 12; }
@@ -1903,34 +1907,58 @@ cmd_trends() {
   # oldest first, the run id breaking a tie, so the order is the forge's facts and not its paging
   jq -ce '.workflow_runs | arrays | sort_by(.run_started_at // .created_at, .id) | .[]' "$tmp/runs.json" > "$tmp/runs.jsonl" \
     || { trends_fail "the forge's answer for the validate runs is not a run listing"; return 12; }
-  : > "$tmp/series.jsonl"
+  # Each run's three reads are independent of every other run's, so they are made eight runs
+  # at a time (MJ_TRENDS_PARALLEL), and each call is bounded (MJ_TRENDS_CALL_SECONDS, 30): one
+  # call at a time over sixty runs took more than the four minutes pages.yml allows the step,
+  # and a call that never returns would have waited out any bound (I4380). The series is then
+  # put together in the listing's order, so how the reads interleaved changes no byte of it.
+  trends_gh() {
+    if command -v timeout >/dev/null 2>&1; then timeout --kill-after=5 "$call" gh "$@"; else gh "$@"; fi
+  }
+  # One run's reads into $tmp/r/<id>/: its jobs, its coverage (null when the forge no longer
+  # keeps the artifact) and `kept` or `gone`, or `failed` with what could not be read.
+  trends_read_run() {
+    local id="$1" d="$tmp/r/$1" aid
+    trends_gh api --paginate "repos/$slug/actions/runs/$id/jobs?per_page=100" --jq '.jobs[]' < /dev/null > "$d/jobs.jsonl" 2>/dev/null \
+      || { echo "the jobs of run $id could not be read" > "$d/failed"; return 0; }
+    aid="$(trends_gh api "repos/$slug/actions/runs/$id/artifacts?name=coverage-summary" \
+      --jq '[.artifacts[] | select(.expired | not)] | first | .id // empty' < /dev/null 2>/dev/null)" \
+      || { echo "the artifacts of run $id could not be listed" > "$d/failed"; return 0; }
+    echo null > "$d/coverage.json"
+    if [ -z "$aid" ]; then : > "$d/gone"; return 0; fi
+    mkdir -p "$d/a"
+    trends_gh api "repos/$slug/actions/artifacts/$aid/zip" < /dev/null > "$d/a.zip" 2>/dev/null \
+      && unzip -qo "$d/a.zip" -d "$d/a" >/dev/null 2>&1 \
+      || { echo "the coverage-summary artifact $aid of run $id is kept but could not be read" > "$d/failed"; return 0; }
+    # only rust-coverage's own summary is a measurement; anything else is not read as one
+    jq -ce 'select(.schema == 1 and .measurement == "scripts/rust-coverage")
+      | .crate | {lines: {covered: .lines.covered, total: .lines.total},
+                  functions: {covered: .functions.covered, total: .functions.total},
+                  regions: {covered: .regions.covered, total: .regions.total}}' \
+      "$d/a/coverage-summary.json" > "$d/coverage.json" 2>/dev/null \
+      || { echo "run $id's coverage-summary artifact holds no summary scripts/rust-coverage wrote" > "$d/failed"; return 0; }
+    : > "$d/kept"
+  }
+  mkdir -p "$tmp/r"
   while IFS= read -r run; do
     [ -n "$run" ] || continue
-    id="$(printf '%s' "$run" | jq -r .id)"; n=$((n + 1))
-    printf '%s\n' "$run" > "$tmp/run.json"
-    gh api --paginate "repos/$slug/actions/runs/$id/jobs?per_page=100" --jq '.jobs[]' < /dev/null > "$tmp/jobs.jsonl" 2>/dev/null \
-      || { trends_fail "the jobs of run $id could not be read"; return 12; }
-    aid="$(gh api "repos/$slug/actions/runs/$id/artifacts?name=coverage-summary" \
-      --jq '[.artifacts[] | select(.expired | not)] | first | .id // empty' < /dev/null 2>/dev/null)" \
-      || { trends_fail "the artifacts of run $id could not be listed"; return 12; }
-    echo null > "$tmp/coverage.json"
-    if [ -n "$aid" ]; then
-      rm -rf "$tmp/a"; mkdir -p "$tmp/a"
-      gh api "repos/$slug/actions/artifacts/$aid/zip" < /dev/null > "$tmp/a.zip" 2>/dev/null \
-        && unzip -qo "$tmp/a.zip" -d "$tmp/a" >/dev/null 2>&1 \
-        || { trends_fail "the coverage-summary artifact $aid of run $id is kept but could not be read"; return 12; }
-      # only rust-coverage's own summary is a measurement; anything else is not read as one
-      jq -ce 'select(.schema == 1 and .measurement == "scripts/rust-coverage")
-        | .crate | {lines: {covered: .lines.covered, total: .lines.total},
-                    functions: {covered: .functions.covered, total: .functions.total},
-                    regions: {covered: .regions.covered, total: .regions.total}}' \
-        "$tmp/a/coverage-summary.json" > "$tmp/coverage.json" 2>/dev/null \
-        || { trends_fail "run $id's coverage-summary artifact holds no summary scripts/rust-coverage wrote"; return 12; }
-      kept=$((kept + 1))
-    else
-      gone=$((gone + 1))
-    fi
-    jq -cn --slurpfile r "$tmp/run.json" --slurpfile jobs "$tmp/jobs.jsonl" --slurpfile cov "$tmp/coverage.json" '
+    id="$(printf '%s' "$run" | jq -r .id)"
+    case "$id" in ''|*[!0-9]*) wait; trends_fail "the forge listed a run with no id"; return 12 ;; esac
+    mkdir -p "$tmp/r/$id"; printf '%s\n' "$run" > "$tmp/r/$id/run.json"
+    ids="$ids $id"; n=$((n + 1))
+    trends_read_run "$id" &
+    # a batch at a time: portable to every bash this runs under, which `wait -n` is not
+    [ $((n % parallel)) != 0 ] || wait
+  done < "$tmp/runs.jsonl"
+  wait
+  : > "$tmp/series.jsonl"
+  for id in $ids; do
+    d="$tmp/r/$id"
+    if [ -f "$d/failed" ]; then why="$(cat "$d/failed")"; trends_fail "$why"; return 12; fi
+    if [ -f "$d/kept" ]; then kept=$((kept + 1))
+    elif [ -f "$d/gone" ]; then gone=$((gone + 1))
+    else trends_fail "run $id was not read"; return 12; fi
+    jq -cn --slurpfile r "$d/run.json" --slurpfile jobs "$d/jobs.jsonl" --slurpfile cov "$d/coverage.json" '
       def t: if type == "string" then sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601 else null end;
       def span(a; b): if (a | t) != null and (b | t) != null then [((b | t) - (a | t)), 0] | max else null end;
       $r[0] as $run
@@ -1945,7 +1973,7 @@ cmd_trends() {
          jobs: $js,
          coverage: $cov[0]}' >> "$tmp/series.jsonl" \
       || { trends_fail "run $id could not be read into the series"; return 12; }
-  done < "$tmp/runs.jsonl"
+  done
   # Each job's median over the runs it ran in (a skipped job did not run), slowest first: the
   # one figure of the series a template cannot compute, since the site's Tera has no way to
   # gather a value across runs. The template formats; it computes nothing.

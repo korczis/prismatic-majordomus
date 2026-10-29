@@ -329,9 +329,16 @@ jobs:
       # The forge, observed with its own tool before the UI is read: the pull requests the PR
       # Drain draws and the deployments and releases the Deployments screen draws are read
       # from this record and from nothing else. A runner has no observation of its own, so
-      # without this step both screens are published empty — which is what they were. It is
-      # blocking: a snapshot that says "not observed" about a forge that could have been asked
-      # is the stale page nobody sees.
+      # without this step both screens are published empty — which is what they were. Every
+      # read is asked again on an outage (four attempts), and a list the forge's gateway times
+      # out is read again in smaller pages (I4380). A forge that still cannot be asked degrades
+      # the two screens and not the site: each screen then says the forge was not observed,
+      # the warning names which, and the publication goes on. Until I4380 this step was
+      # blocking, and on 2026-10-29 one 504 from the forge (exit 12, run 40823254353) failed
+      # this job and with it the deploy of every page — a whole site held back for two screens
+      # that know how to say "not observed". Each command is bounded inside the step's own
+      # bound (2 x (135 + 10) s < 5 m), so a hang is the warning and never the step's kill,
+      # which `||` cannot catch (scripts/ci/step-bound-check holds that).
       - name: the forge, observed
         timeout-minutes: 5
         env:
@@ -339,8 +346,10 @@ jobs:
         run: |
           # two questions, each its own command: the pull requests, then what was deployed
           # and released
-          apps/majordomus-cli/target/debug/majordomus prs refresh
-          apps/majordomus-cli/target/debug/majordomus served forge
+          timeout --kill-after=10 135 apps/majordomus-cli/target/debug/majordomus prs refresh \
+            || echo "::warning title=Forge not observed::majordomus prs refresh could not read the pull requests (exit $?); the PR Drain is published saying the forge was not observed"
+          timeout --kill-after=10 135 apps/majordomus-cli/target/debug/majordomus served forge \
+            || echo "::warning title=Forge not observed::majordomus served forge could not read the deployments and releases (exit $?); the Deployments screen is published without them"
       # Every page the screens link to, not the first few: the default budget is sized for a
       # person waiting at a terminal and left most inspectors out of the published snapshot.
       # What was still left out is in snapshot.json, and `scripts/pages verify-ui` reports it.
@@ -501,13 +510,19 @@ jobs:
       # tree, so no branch could derive it. Never a gate, and not a step that fails softly
       # either (the publication measurement is the one of those): a forge that cannot be read
       # is exit 12 with no file left, said here as a warning, and the page then says no series
-      # reached the build. The bound: one listing, then two API reads and at most one small
-      # download per run.
+      # reached the build. The cost: one listing, then two API reads and at most one small
+      # download per run, read eight runs at a time with each call bounded (I4380).
+      # The command is bounded inside the step (200 + 10 s < 4 m), because a step killed by its
+      # own timeout-minutes is a failed step that `||` never sees: on 2026-10-29 the sixty runs
+      # read one call at a time took over four minutes, the step was killed ("The action
+      # 'trends' has timed out after 4 minutes"), publish was skipped and the site stayed old,
+      # on runs 40796031540, 40803295553 and 40823254353. A reading that runs out of time is now
+      # the same warning as a forge that cannot be read (timeout's exit 124).
       - name: trends
         timeout-minutes: 4
         env:
           GH_TOKEN: ${{ github.token }}
-        run: scripts/pages trends || echo "::warning title=No trends::scripts/pages trends could not read the forge (exit $?); /trends/ is published without a series"
+        run: timeout --kill-after=10 200 scripts/pages trends || echo "::warning title=No trends::scripts/pages trends could not read the forge in time (exit $?); /trends/ is published without a series"
 
       # the committed derived data proved current by hash, then rendered; no generation. The
       # bound follows the `build` row of .ai/repo/ci/pages.yaml (budget.bound.percent of it):
