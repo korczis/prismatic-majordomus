@@ -553,7 +553,7 @@ deployment had ever carried, and `deployed` was proved for no issue.
 
 <pre class="mermaid">
 flowchart LR
-  R["release record&lt;br/&gt;.ai/repo/releases/vX.yaml"] --&gt;|generate| S["site/static/releases/latest.json"]
+  R["release record&lt;br/&gt;one per version under .ai/repo/releases/"] --&gt;|generate| S["site/static/releases/latest.json"]
   S --&gt;|site build| P["gh-pages commit&lt;br/&gt;releases/latest.json"]
   P --&gt;|Pages deployment| O["deployment observation&lt;br/&gt;(majordomus served forge)"]
   O --&gt; D["plan delivery&lt;br/&gt;deployed"]
