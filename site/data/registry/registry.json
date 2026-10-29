@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "4168d495e78d5d047e36a5edf612cdbec76d7f0537cef0d8867ddaba85f68890",
+    "fingerprint": "904cb48cf87935d1d48ba1a74f3e02202fbd29c9d53b5194952f78bc44a76036",
     "summary": {
-      "total": 3555,
+      "total": 3556,
       "builtin": 220,
-      "declarative": 3335,
+      "declarative": 3336,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3335
+        "resource": 3336
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3345
+        "implemented": 3346
       },
       "mcp_tools": 206,
-      "mcp_resources": 3392,
+      "mcp_resources": 3393,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91391,7 +91391,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 60,
+        "capabilities": 61,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "5a332be5044dd9ef262bbe395ad4ce8e600e3da659762fffd3a3815c218ff2e9",
+    "fingerprint": "004d3647ebeb432abcf3debfcd416ca4c6e7db55acf1550c8ffeb4f6865ae2d6",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92114,7 +92114,7 @@
       "implementation": 52,
       "intent": 43,
       "issue": 1036,
-      "knowledge": 60,
+      "knowledge": 61,
       "mesh-declaration": 1,
       "milestone": 111,
       "moment": 38,
@@ -115638,6 +115638,21 @@
         ]
       },
       {
+        "uri": "majordomus://knowledge/s-20261028220703-a55b-172d1046d887",
+        "kind": "knowledge",
+        "identity": "s-20261028220703-a55b-172d1046d887",
+        "title": "mj_provider_session_env sources lib/capture.sh lazily, and it is called inside a command substitution, so a function capture.sh defines is still undefined in the caller afterwards; a caller that then calls one dies with command not found under set -e and no message, as mj_session_start did with mj_provider_of_session_env until it sourced capture.sh itself",
+        "description": "Observed as defect about lib/common.sh in episode s-20261028220703-a55b.",
+        "path": ".ai/repo/knowledge/curated/s-20261028220703-a55b-172d1046d887.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2310,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
         "uri": "majordomus://knowledge/s-20261028220703-a55b-88cb8a942917",
         "kind": "knowledge",
         "identity": "s-20261028220703-a55b-88cb8a942917",
@@ -128419,7 +128434,7 @@
       "identity": [
         "id"
       ],
-      "objects": 60
+      "objects": 61
     },
     {
       "name": "mesh-declaration",

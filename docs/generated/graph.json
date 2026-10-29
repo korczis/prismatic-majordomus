@@ -71879,6 +71879,26 @@
         }
       },
       {
+        "id": "majordomus://knowledge/s-20261028220703-a55b-172d1046d887",
+        "kind": "knowledge",
+        "label": "s-20261028220703-a55b-172d1046d887",
+        "summary": "mj_provider_session_env sources lib/capture.sh lazily, and it is called inside a command substitution, so a function capture.sh defines is still undefined in the caller afterwards; a caller that then calls one dies with command not found under set -e and no message, as mj_session_start did with mj_provider_of_session_env until it sourced capture.sh itself",
+        "route": "/cockpit/objects/knowledge/s-20261028220703-a55b-172d1046d887",
+        "source": ".ai/repo/knowledge/curated/s-20261028220703-a55b-172d1046d887.md",
+        "status": "verified",
+        "facts": {
+          "about": "lib/common.sh",
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/s-20261028220703-a55b-88cb8a942917",
         "kind": "knowledge",
         "label": "s-20261028220703-a55b-88cb8a942917",
@@ -133546,6 +133566,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://knowledge/s-20261028220703-a55b-172d1046d887",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://knowledge/s-20261028220703-a55b-88cb8a942917",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -144937,8 +144962,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4019,
-      "edges": 9264,
+      "nodes": 4020,
+      "edges": 9265,
       "acyclic": false,
       "truncated": false
     }
