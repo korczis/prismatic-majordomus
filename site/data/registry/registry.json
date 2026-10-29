@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "bfe498ecbbafb51ab21c50cc4dc9185b76a3fcf7249658d9b88dd39da2371a64",
+    "fingerprint": "91634695a8918c3f83b6a16047f59b898421472eb25f70373c8ad3b5c51fede8",
     "summary": {
-      "total": 3570,
+      "total": 3571,
       "builtin": 220,
-      "declarative": 3350,
+      "declarative": 3351,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3350
+        "resource": 3351
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3360
+        "implemented": 3361
       },
       "mcp_tools": 206,
-      "mcp_resources": 3407,
+      "mcp_resources": 3408,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91383,7 +91383,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1053,
+        "capabilities": 1054,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "84641565beac2d30a44cdbbb11cb6055de486182af4f4b3015068dd94aa8f6c4",
+    "fingerprint": "3889507006441c654ae52d702e3e5a7f37ee1f5682d4c3f0583f14b185b50abe",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92113,7 +92113,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1053,
+      "issue": 1054,
       "knowledge": 59,
       "mesh-declaration": 1,
       "milestone": 111,
@@ -99558,7 +99558,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 1041324
+        "bytes": 1043905
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -115070,6 +115070,17 @@
         "bytes": 5693
       },
       {
+        "uri": "majordomus://issue/I4375",
+        "kind": "issue",
+        "identity": "I4375",
+        "title": "An offload's fetch into the host's checkout waits its turn instead of failing the derive",
+        "description": "The host's prepare step of `majordomus offload derive` (apps/majordomus-cli/src/offload/run.rs PREPARE) asks a refused fetch again, bounded by MJ_OFFLOAD_FETCH_TRIES (default 5) with MJ_OFFLOAD_FETCH_BACKOFF seconds times the attempt between tries (default 3), so two offloads that reach one host together both prepare their worktrees, and one that never wins still fails with git's refusal in its reason.",
+        "path": ".ai/repo/project/issues/I4375.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2796
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -128574,7 +128585,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1053
+      "objects": 1054
     },
     {
       "name": "knowledge",

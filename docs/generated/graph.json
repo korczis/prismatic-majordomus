@@ -71821,6 +71821,44 @@
         }
       },
       {
+        "id": "majordomus://issue/I4375",
+        "kind": "issue",
+        "label": "I4375",
+        "summary": "An offload's fetch into the host's checkout waits its turn instead of failing the derive",
+        "route": "/cockpit/objects/issue/i4375",
+        "source": ".ai/repo/project/issues/I4375.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "PREPARE run against a git whose fetch is refused twice prepares the worktree and fetches exactly three times",
+            "PREPARE run against a git whose fetch is always refused fails after exactly MJ_OFFLOAD_FETCH_TRIES fetches, with git's refusal on stderr"
+          ],
+          "created_at": "2026-10-29",
+          "current_state": "On master 5370ee63d19 PREPARE fetches origin, and the uploaded bundle, once each under set -e; a refused fetch fails the prepare and the offload with exit 12.",
+          "depends_on": [],
+          "evidence_required": [
+            "ci"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Taking the queue's lock before the fetch: the lock serialises derives, which take minutes, and the fetch must not wait behind them",
+            "The exit code of an unprepared host, which stays 12 (EXIT_UNAVAILABLE)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "A host whose fetch fails for another reason (network, credentials) now fails after the tries and their backoff, about 30 s at the defaults, instead of at once.",
+          "scope": [
+            ".ai/repo/project/issues/I4375.yaml",
+            "apps/majordomus-cli/src/offload/run.rs"
+          ],
+          "slug": "an-offload-fetch-waits-its-turn",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib offload::run"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -134364,6 +134402,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4375",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4375",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -145995,8 +146043,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4034,
-      "edges": 9314,
+      "nodes": 4035,
+      "edges": 9316,
       "acyclic": false,
       "truncated": false
     }
