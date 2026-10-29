@@ -695,7 +695,12 @@ pub fn licence_answer(
     }
     let named = evidence.map(|p| p.to_string_lossy().into_owned());
     if let (Some(path), Some(name)) = (evidence, &named) {
-        if let Some(kit) = evidence_kit(path) {
+        // the design licence's own reading of the header; a file it cannot read or parse
+        // names no kit here, and the design licence then says why it cannot judge it
+        let parsed = std::fs::read_to_string(path)
+            .ok()
+            .and_then(|text| licence::Evidence::parse(&text).ok());
+        if let Some(kit) = parsed.as_ref().and_then(licence::Evidence::kit) {
             if kit != profile.id {
                 return (
                     LicenceState::NotJudged,
@@ -720,31 +725,6 @@ pub fn licence_answer(
         Ok(report) => (licence_state_of(report.verdict), report.reason),
         Err(e) => (LicenceState::NotJudged, Some(e.to_string())),
     }
-}
-
-/// The line of a kit-evidence/v1 file that says whose evidence it is: a comment
-/// `# kit: <id>` among the comments before its first fingerprint. Comments are free text
-/// to the design licence, so a file without one is anybody's and one with one is that
-/// kit's alone. Only that line is read back, and only to be compared.
-pub const EVIDENCE_KIT_COMMENT: &str = "# kit:";
-
-/// The kit a kit-evidence/v1 file names in its leading comments, when it names one. A file
-/// that cannot be read names none, and the design licence then says why it cannot read it.
-fn evidence_kit(path: &Path) -> Option<String> {
-    let text = std::fs::read_to_string(path).ok()?;
-    for line in text.lines() {
-        let line = line.trim_end_matches('\r');
-        if line.trim().is_empty() {
-            continue;
-        }
-        if !line.starts_with('#') {
-            return None;
-        }
-        if let Some(kit) = line.strip_prefix(EVIDENCE_KIT_COMMENT) {
-            return Some(kit.trim().to_string());
-        }
-    }
-    None
 }
 
 /// How the tree stands against a licensed kit's licence.
@@ -5628,7 +5608,7 @@ mod tests {
     }
 
     /// A kit-evidence/v1 file whose one fingerprint is no file of the tree, with `head` as
-    /// its leading comments.
+    /// its leading lines.
     fn evidence_file(dir: &Path, name: &str, head: &str) -> std::path::PathBuf {
         let path = dir.join(name);
         std::fs::write(
@@ -5651,7 +5631,7 @@ mod tests {
         let ours = evidence_file(
             held.path(),
             "ours.tsv",
-            "# kit-evidence/v1\n# kit: flowbite-pro\n",
+            "# kit: flowbite-pro\n# kit-evidence/v1\n",
         );
         assert_eq!(
             licence_answer(tree.path(), &profile, Some(&ours)).0,
@@ -5679,7 +5659,7 @@ mod tests {
         let other = evidence_file(
             held.path(),
             "other.tsv",
-            "# kit-evidence/v1\n# kit: examplekit\n",
+            "# kit: examplekit\n# kit-evidence/v1\n",
         );
         let (state, reason) = licence_answer(tree.path(), &profile, Some(&other));
         assert_eq!(state, LicenceState::NotJudged);
@@ -5738,25 +5718,28 @@ mod tests {
     }
 
     #[test]
-    fn the_kit_an_evidence_file_names_is_read_from_its_leading_comments() {
+    fn only_a_first_line_header_makes_evidence_another_kits() {
+        let profile = profile();
+        let tree = licensed_marker_tree();
         let held = tempfile::tempdir().unwrap();
-        let named = |text: &str| {
-            let path = held.path().join("e.tsv");
-            std::fs::write(&path, text).unwrap();
-            evidence_kit(&path)
+        let state = |name: &str, head: &str| {
+            let path = evidence_file(held.path(), name, head);
+            licence_answer(tree.path(), &profile, Some(&path))
         };
+        // the header first: this kit's judges, another kit's judges nothing
         assert_eq!(
-            named("# kit-evidence/v1\n# kit: flowbite-pro\nab\tcd\n").as_deref(),
-            Some("flowbite-pro")
+            state("ours.tsv", "\n# kit: flowbite-pro\n").0,
+            LicenceState::Active
         );
+        let (s, reason) = state("other.tsv", "# kit: examplekit \n");
+        assert_eq!(s, LicenceState::NotJudged);
+        assert!(reason.unwrap().contains("another kit"));
+        // no header, or a `# kit:` comment that is not the first line: anybody's evidence
+        assert_eq!(state("none.tsv", "").0, LicenceState::Active);
         assert_eq!(
-            named("\n#kit-evidence/v1\r\n# kit:  examplekit \r\nab\tcd\n").as_deref(),
-            Some("examplekit")
+            state("late.tsv", "# kit-evidence/v1\n# kit: examplekit\n").0,
+            LicenceState::Active
         );
-        // a comment after the first fingerprint is no header
-        assert_eq!(named("# kit-evidence/v1\nab\tcd\n# kit: other\n"), None);
-        assert_eq!(named("ab\tcd\n"), None);
-        assert_eq!(evidence_kit(&held.path().join("absent.tsv")), None);
     }
 
     #[test]

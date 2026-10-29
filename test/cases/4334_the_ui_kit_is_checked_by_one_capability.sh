@@ -249,7 +249,7 @@ expect S1 "$pro" "a licensed marker nobody could judge"
 command -v gzip >/dev/null 2>&1 && command -v base64 >/dev/null 2>&1 || { echo "    gzip and base64 are needed"; exit 1; }
 EV="$S/evidence.tsv"
 digest="$(printf 'a licensed sidebar\n' | mj_sha256_hex)"
-printf '# kit-evidence/v1\n# kit: flowbite-pro\n%s\t%s\tpro/secret-sidebar.html\n' "$digest" "$digest" > "$EV"
+printf '# kit: flowbite-pro\n# kit-evidence/v1\n%s\t%s\tpro/secret-sidebar.html\n' "$digest" "$digest" > "$EV"
 SECRET="$(gzip -c "$EV" | base64 | tr -d '\n')"
 leaks() { # FILE... -> 0 when any holds a line of the evidence or the secret
   grep -qF -e "$digest" -e "${digest:0:16}" -e secret-sidebar -e "$SECRET" "$@"
@@ -268,7 +268,7 @@ jq -e '.verdict == "clean" and .licence.state == "active" and .licence.variant =
 [ "$code" = 10 ] && jq -e '.licence.state == "not_judged" and .licence.variant == "undecided"' "$S/out" >/dev/null \
   || { echo    "    without evidence the check is not undecided with exit 10 (exit $code): $(cat "$S/out")"; exit 1; }
 
-# a file whose leading comment names another kit judges nothing
+# a file whose first line names another kit judges nothing
 sed 's/^# kit: flowbite-pro$/# kit: examplekit/' "$EV" > "$S/other.tsv"
 "$RB" design kit --check --evidence "$S/other.tsv" --format json >"$S/out" 2>"$S/err" && code=0 || code=$?
 [ "$code" = 10 ] && jq -e '.licence.state == "not_judged" and (.licence.reason | test("another kit"))' "$S/out" >/dev/null \

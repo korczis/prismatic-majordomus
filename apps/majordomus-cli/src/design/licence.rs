@@ -15,6 +15,11 @@
 //! answers for either. The full form names the licensed source a match came from; the CI
 //! form names none, by construction: a secret carries no path.
 //!
+//! A file may say whose evidence it is with an optional header, `# kit: <id>`, as its first
+//! non-empty line ([`EVIDENCE_KIT_HEADER`], read by [`Evidence::kit`]). A file without one
+//! belongs to any kit. The header is a comment like any other to the fingerprints: it is
+//! read back only to be compared with the kit a caller judges for.
+//!
 //! The evidence is never in a repository. It is found through `--evidence`, which the CI
 //! runner points at the file it decoded `MAJORDOMUS_KIT_EVIDENCE_<KIT>` into, or through the
 //! policy's `ui.evidence` entries, each `~`-relative and expanded against `$HOME` on the
@@ -174,11 +179,16 @@ pub enum Verdict {
     Refused,
 }
 
+/// The optional header of a kit-evidence/v1 file: its first non-empty line, when that line
+/// starts with this, names the kit the evidence is of.
+pub const EVIDENCE_KIT_HEADER: &str = "# kit:";
+
 /// The fingerprints of a licensed set, keyed by the first 64 bits of each digest.
 #[derive(Debug, Default)]
 pub struct Evidence {
     exact: HashMap<u64, Option<String>>,
     normalised: HashMap<u64, Option<String>>,
+    kit: Option<String>,
 }
 
 /// Why an evidence text could not be read: the line and the reason, never the value. A
@@ -192,9 +202,13 @@ pub struct EvidenceError {
 }
 
 impl Evidence {
-    /// Parse kit-evidence/v1, either form; `#` lines and blank lines are skipped.
+    /// Parse kit-evidence/v1, either form; `#` lines and blank lines are skipped, and the
+    /// first non-empty line, when it is the header `# kit: <id>`, sets [`Evidence::kit`].
     pub fn parse(text: &str) -> Result<Evidence, EvidenceError> {
-        let mut ev = Evidence::default();
+        let mut ev = Evidence {
+            kit: kit_header(text),
+            ..Evidence::default()
+        };
         for (i, line) in text.lines().enumerate() {
             let line = line.trim_end_matches('\r');
             if line.is_empty() || line.starts_with('#') {
@@ -226,7 +240,14 @@ impl Evidence {
         Ok(ev)
     }
 
+    /// The kit the evidence names in its header, trimmed; `None` when it has no header and
+    /// so belongs to any kit. An empty id names no kit, and so is no kit's.
+    pub fn kit(&self) -> Option<&str> {
+        self.kit.as_deref()
+    }
+
     /// Fold another evidence file into this one: two `ui.evidence` entries answer together.
+    /// The fingerprints are folded; the kit stays this evidence's.
     pub fn merge(&mut self, other: Evidence) {
         self.exact.extend(other.exact);
         self.normalised.extend(other.normalised);
@@ -255,6 +276,15 @@ impl Evidence {
             .get(norm)
             .map(|s| (MatchKind::Normalised, s.clone()))
     }
+}
+
+/// The kit the header of an evidence text names: its first non-empty line, whitespace
+/// trimmed, when that starts with [`EVIDENCE_KIT_HEADER`]; the id after it, trimmed.
+fn kit_header(text: &str) -> Option<String> {
+    let first = text.lines().map(str::trim).find(|l| !l.is_empty())?;
+    first
+        .strip_prefix(EVIDENCE_KIT_HEADER)
+        .map(|kit| kit.trim().to_owned())
 }
 
 /// Every maximal run of space, tab, carriage return and line feed becomes one space: what
@@ -1151,6 +1181,33 @@ mod tests {
             panic!("the CI form must refuse the same file");
         };
         assert_eq!(matches[0].source, None);
+    }
+
+    #[test]
+    fn the_kit_is_the_header_on_the_first_non_empty_line() {
+        const FP: &str = "aaaaaaaaaaaaaaaa\tbbbbbbbbbbbbbbbb";
+        let kit = |text: &str| {
+            let text = text.replace("{FP}", FP);
+            Evidence::parse(&text).unwrap().kit().map(str::to_owned)
+        };
+        // present, with its whitespace trimmed and a blank line and a CR before it
+        assert_eq!(
+            kit("# kit: flowbite-pro\n{FP}\n").as_deref(),
+            Some("flowbite-pro")
+        );
+        assert_eq!(
+            kit("\n\r\n# kit:  examplekit \r\n{FP}\n").as_deref(),
+            Some("examplekit")
+        );
+        // absent: any kit's, as a secret written before the header was is
+        assert_eq!(kit("{FP}\n"), None);
+        assert_eq!(kit("# kit-evidence/v1\n{FP}\n"), None);
+        // a header that is not the first non-empty line is a comment, and names no kit
+        assert_eq!(kit("# kit-evidence/v1\n# kit: flowbite-pro\n{FP}\n"), None);
+        assert_eq!(kit("{FP}\n# kit: other\n"), None);
+        // the header changes no fingerprint
+        let ev = Evidence::parse(&format!("# kit: x\n{FP}\n")).unwrap();
+        assert_eq!(ev.len(), 1);
     }
 
     #[test]

@@ -343,8 +343,8 @@ executable's, unchanged. The seam decodes the secret of
 the kit `ui.kit` names into a private temporary file, passes that file as `--evidence`, and
 removes it after the run. A value that is not kit-evidence/v1 exits 2 and names the
 variable, never its value. If the secret is unset, empty or for another kit, nothing is
-handed over, and a public tree that owes a judgement fails closed. A file whose leading
-comment `# kit: <id>` names another kit is `not_judged`. `licence.reason` says why the
+handed over, and a public tree that owes a judgement fails closed. A file whose first
+line `# kit: <id>` names another kit is `not_judged`. `licence.reason` says why the
 licence answered as it did. It names a file and a line at most, never what the evidence
 holds. A policy that still carries the retired top-level `design_kit:` block gets a notice
 naming `ui.kit` as its replacement.
