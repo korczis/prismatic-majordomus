@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "94d253e6829b8786f6ebaaa99eef2ad528ac1f6fe638dee58bf27f44c7a308af",
+    "fingerprint": "5a838eb167e83d0f7235959c9863932f6761a2bfd4f434ab85a99a3a01641448",
     "summary": {
-      "total": 3552,
+      "total": 3553,
       "builtin": 220,
-      "declarative": 3332,
+      "declarative": 3333,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3332
+        "resource": 3333
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3342
+        "implemented": 3343
       },
       "mcp_tools": 206,
-      "mcp_resources": 3389,
+      "mcp_resources": 3390,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -49185,6 +49185,20 @@
                       "type": "string"
                     },
                     "description": "The services that restart always and are the last the OOM killer takes."
+                  },
+                  "runner_homes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The homes of the CI runners' users: the disk guard reclaims the cargo build output\nanywhere under them, with the same safety as under `home`."
+                  },
+                  "runner_units": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The CI runner services, as unit name patterns (`*` matches any run of characters):\nevery observed unit that matches one restarts always, without a start limit."
                   }
                 },
                 "required": [
@@ -49202,7 +49216,9 @@
                   "policy_name",
                   "local_node",
                   "nodes",
-                  "critical_services"
+                  "critical_services",
+                  "runner_homes",
+                  "runner_units"
                 ],
                 "description": "What the provisioning declares: who runs the builds, which store, how bounded, which\nnodes receive an identity."
               },
@@ -49230,6 +49246,13 @@
                     },
                     "description": "The commands, in the order they run."
                   },
+                  "runners": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The CI runner units observed on the host, each owed its drop-in and started."
+                  },
                   "changes": {
                     "type": "integer",
                     "format": "uint",
@@ -49247,6 +49270,7 @@
                   "files",
                   "edits",
                   "steps",
+                  "runners",
                   "changes",
                   "unobservable"
                 ],
@@ -91383,7 +91407,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1036,
+        "capabilities": 1037,
         "capability_ids": []
       },
       {
@@ -92073,7 +92097,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7a5e4d82929a4b571150fbd3f203942610b1332bfc49a8609a6fc989532ed7b3",
+    "fingerprint": "a0850f5245c030fbc8a78533a4c31f3b712da4f6a9aa27ded4a05c890e1fa310",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92113,7 +92137,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1036,
+      "issue": 1037,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 111,
@@ -99108,7 +99132,7 @@
         "title": "The build cache, as a person sees it",
         "path": "docs/BUILD_CACHE.md",
         "source_class": "document",
-        "bytes": 2265
+        "bytes": 6419
       },
       {
         "uri": "majordomus://document/docs/CAPABILITIES.md",
@@ -99558,7 +99582,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 993556
+        "bytes": 1000362
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -114883,6 +114907,17 @@
         "bytes": 3014
       },
       {
+        "uri": "majordomus://issue/I4352",
+        "kind": "issue",
+        "identity": "I4352",
+        "title": "The build host provisions its CI runners, and its disk guard covers the runners' homes",
+        "description": "The build host provisions its CI runners (restart always, start limit off) and its disk guard covers the runner homes; a host that owes provisioning is reported. The declared policy names the runner homes and the runner unit patterns; `mesh build-cache provision` renders the disk guard's homes from it, installs a drop-in for every observed runner unit and starts the runners, and `mesh doctor` on the build host warns with the number of owed changes and the command to run. A runner home is written by CI jobs, so under it the root guard renames and deletes only as the home's owner and never takes a home, a directory directly in one, a directory reached through a symlink, or one holding a runner installation or a source tree; an aside that came into use after the idle check is given back, never deleted.",
+        "path": ".ai/repo/project/issues/I4352.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5564
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -128368,7 +128403,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1036
+      "objects": 1037
     },
     {
       "name": "knowledge",

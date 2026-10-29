@@ -70958,6 +70958,49 @@
         }
       },
       {
+        "id": "majordomus://issue/I4352",
+        "kind": "issue",
+        "label": "I4352",
+        "summary": "The build host provisions its CI runners, and its disk guard covers the runners' homes",
+        "route": "/cockpit/objects/issue/i4352",
+        "source": ".ai/repo/project/issues/I4352.yaml",
+        "facts": {
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "suite",
+            "runner_host_apply_is_idempotent"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Applying the provisioning on lundra: the owner runs the apply as root",
+            "A new surface or script: the change extends the declared policy, the existing capability and the existing doctor",
+            "Bounding the runners' cargo registries and toolchains, which the guard never touches"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4352.yaml",
+            "apps/majordomus-cli/assets/mesh-cache-provider/",
+            "apps/majordomus-cli/src/mesh/cache_provision.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "docs/BUILD_CACHE.md",
+            "docs/generated/",
+            "site/data/registry/"
+          ],
+          "serves": [],
+          "slug": "the-build-host-provisions-its-ci-runners",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::cache_provision",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib commands::mesh::tests::a_check_that_holds_with_a_remedy_is_a_warning",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -133219,6 +133262,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4352",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4352",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -144845,8 +144898,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4016,
-      "edges": 9261,
+      "nodes": 4017,
+      "edges": 9263,
       "acyclic": false,
       "truncated": false
     }
