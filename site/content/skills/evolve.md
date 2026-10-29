@@ -111,6 +111,12 @@ that makes the statement true, not a restatement of it. A candidate that duplica
 curated note or a rule is rejected with the identity of what already says it. A candidate
 you cannot judge stays a candidate; say so in the report instead of guessing.
 
+A promoted record is tracked, so its provenance must resolve in a clean clone. `promote`
+keeps the candidate's `session:` and `task:` ids, which live only in this machine's
+`.ai/local`; a fresh checkout's doctor fails them as unresolved references, and the
+structure gate fails the train. Replace them with the issue the work serves and the files,
+tests or commits the lesson rests on before committing, until `promote` does it itself.
+
 Before deciding, look for the lesson already in flight: the board's claims, the open pull
 requests (`gh pr list`), the issues that name its subject (`majordomus plan list`, then
 `majordomus plan show <id>`) and the branches that carry its paths (`scripts/collision-check
