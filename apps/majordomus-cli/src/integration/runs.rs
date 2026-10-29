@@ -93,24 +93,46 @@ pub fn job_of(v: &Value) -> Option<JobObservation> {
     })
 }
 
+/// The pull request a run belongs to, among the forge's `pull_requests` of it: the one whose
+/// head is the branch the run ran on, from the repository it ran from. The forge lists every
+/// open pull request whose head matches the run's sha or branch, so a train opened at its last
+/// member's tip lists the member too, and the first entry is not the run's own; `None` when no
+/// entry is, and [`attach_pull_requests`] then reads the branch.
+fn pull_request_of(v: &Value, branch: &str) -> Option<u64> {
+    let repo = v.pointer("/head_repository/id").and_then(Value::as_u64);
+    v.get("pull_requests")
+        .and_then(Value::as_array)?
+        .iter()
+        .find(|p| {
+            p.pointer("/head/ref").and_then(Value::as_str) == Some(branch)
+                && match (repo, p.pointer("/head/repo/id").and_then(Value::as_u64)) {
+                    (Some(a), Some(b)) => a == b,
+                    _ => true,
+                }
+        })
+        .and_then(|p| p.get("number"))
+        .and_then(Value::as_u64)
+}
+
 /// One run, from the forge's `workflow_runs[]` entry; its jobs are read separately.
 pub fn run_of(v: &Value) -> Option<RunObservation> {
+    let head_branch = text(v, "head_branch").unwrap_or_default();
     Some(RunObservation {
         id: v.get("id").and_then(Value::as_u64)?,
         workflow: workflow_of(&text(v, "path").or_else(|| text(v, "name"))?),
         event: text(v, "event")?,
-        head_branch: text(v, "head_branch").unwrap_or_default(),
+        pull_request: pull_request_of(v, &head_branch),
+        head_branch,
         head_sha: text(v, "head_sha")?,
-        pull_request: v
-            .get("pull_requests")
-            .and_then(Value::as_array)
-            .and_then(|a| a.first())
-            .and_then(|p| p.get("number"))
-            .and_then(Value::as_u64),
         status: text(v, "status")?,
         conclusion: text(v, "conclusion"),
         created_at: text(v, "created_at")?,
         run_started_at: text(v, "run_started_at"),
+        run_attempt: v
+            .get("run_attempt")
+            .and_then(Value::as_u64)
+            .filter(|n| *n > 0)
+            .unwrap_or(1),
         jobs: Vec::new(),
     })
 }
@@ -655,6 +677,7 @@ mod tests {
             conclusion: None,
             created_at: at(minutes_ago),
             run_started_at: Some(at(minutes_ago)),
+            run_attempt: 1,
             jobs: Vec::new(),
         }
     }
@@ -927,12 +950,33 @@ mod tests {
             "event": "pull_request", "head_branch": "integration/10a", "head_sha": "abc",
             "status": "pending", "created_at": "2026-10-28T13:00:00Z",
             "run_started_at": "2026-10-28T13:00:00Z",
-            "pull_requests": [{"number": 2631, "head": {"sha": "abc"}}]
+            "head_repository": {"id": 1},
+            "pull_requests": [{"number": 2631,
+                "head": {"sha": "abc", "ref": "integration/10a", "repo": {"id": 1}}}]
         });
         let r = run_of(&v).unwrap();
         assert_eq!(r.workflow, "validate");
         assert_eq!(r.pull_request, Some(2631));
         assert_eq!(r.status, "pending");
+        assert_eq!(
+            r.run_attempt, 1,
+            "a run the forge gives no attempt is its first"
+        );
+        // of every pull request the forge lists, the one whose head is the run's branch
+        let mut both = v.clone();
+        both["pull_requests"] = json!([
+            {"number": 2600, "head": {"ref": "fix/x", "repo": {"id": 1}}},
+            {"number": 2631, "head": {"ref": "integration/10a", "repo": {"id": 1}}}
+        ]);
+        both["run_attempt"] = json!(3);
+        let b = run_of(&both).unwrap();
+        assert_eq!(b.pull_request, Some(2631));
+        assert_eq!(b.run_attempt, 3);
+        // a fork's pull request of the same branch name is not this run's
+        both["pull_requests"] = json!([
+            {"number": 2632, "head": {"ref": "integration/10a", "repo": {"id": 9}}}
+        ]);
+        assert_eq!(run_of(&both).unwrap().pull_request, None);
         assert!(run_of(&json!({"id": 1})).is_none());
         assert_eq!(
             workflow_of("dynamic/pages/pages-build-deployment"),

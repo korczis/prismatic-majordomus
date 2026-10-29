@@ -17,27 +17,38 @@
 //! Four reasons, and nothing else, end a run:
 //!
 //! - [`CancelReason::DuplicateRun`]: a `pull_request` run that waits with no job started
-//!   while an older run of the same pull request and the same commit is in flight or has
-//!   already been judged. A train opened with `--label train` is `opened` and `labeled` at
-//!   once, and both events start validate: 6 of the 8 trains of 2026-10-28 had such a twin,
-//!   and train 10b's (40713048283) held its group for seven hours. A pull request labelled
-//!   [`FULL_LABEL`] asked for the second run, and its twin is held
-//!   ([`HoldReason::FullRunRequested`]).
+//!   while an older run of the same pull request, branch and commit is in flight, or passed
+//!   and was created within [`TWIN_WINDOW_SECONDS`] of it, both first attempts. A train opened
+//!   with `--label train` is `opened` and `labeled` at once, and both events start validate:
+//!   6 of the 8 trains of 2026-10-28 had such a twin, and train 10b's (40713048283) held its
+//!   group for seven hours. Outside that burst a second run of a judged commit was asked for —
+//!   a reopen tests the head against a master that moved, a head that went A, B, A needs a
+//!   verdict of A again — and a judged failure is never the twin of a later run. A pull request
+//!   labelled [`FULL_LABEL`] asked for the second run, and so did a re-run (`run_attempt` above
+//!   one): both are held ([`HoldReason::FullRunRequested`], [`HoldReason::RerunRequested`]).
 //! - [`CancelReason::SupersededBlocksSuccessor`]: a `pull_request` run of a workflow whose
 //!   concurrency group is one per pull request, whose head is no longer its pull request's
 //!   head, while a newer run of the same pull request waits in the same group. Cancelling it
 //!   is what lets the verdict that matters start. With no successor waiting it is left alone
 //!   ([`HoldReason::SupersededWithoutSuccessor`]): that is the concurrency rationale.
-//! - [`CancelReason::QueuedPastBound`]: queued longer than its workflow's declared bound with
-//!   no job started. An `integration/*` top is never ended this way
-//!   ([`HoldReason::IntegrationTopWaits`]): it waits for a runner, and its verdict is the one a
-//!   landing needs.
-//! - [`CancelReason::RunningPastBound`]: running longer than its workflow's declared bound,
-//!   measured from its first job's start ([`RunObservation::first_job_start`]). Not from
-//!   `run_started_at`: the forge sets that at creation, so a run that waited two hours in its
-//!   concurrency group would read as running for those two hours too — the old clock would
-//!   have cancelled train 10b's legitimate run 40764355688 at about 00:48Z, two hours into its
-//!   real work. A run with no started job is never running past its bound.
+//! - [`CancelReason::QueuedPastBound`]: its attempt queued longer than its workflow's declared
+//!   bound with no job of it started, measured from [`RunObservation::queued_since`]: the
+//!   later of its creation and `run_started_at`, which a re-run resets and its creation it
+//!   does not. Only a pull request's run is ended this way, since a run that waits in a queue
+//!   holds no runner and frees nothing for anyone but a newer run of its own pull request: an
+//!   `integration/*` top waits for a runner and its verdict is the one a landing needs
+//!   ([`HoldReason::IntegrationTopWaits`]), and a run of the trunk, a tag, the schedule, a
+//!   dispatch or a release is in a group of its own ([`HoldReason::ProtectedRunWaits`]).
+//! - [`CancelReason::RunningPastBound`]: a job of it in progress longer than its workflow's
+//!   declared bound, which is the workflow's largest job timeout plus thirty minutes: a job
+//!   past it should have been ended by its own timeout and was not. It is each running job
+//!   that is judged ([`RunObservation::longest_running_job`]), never the run: validate's jobs
+//!   run in a chain of `needs` with the runner queue between the stages, and of 59 recent
+//!   validate runs at least 8 ran past 255 minutes from first job to last while every job was
+//!   within its own (40576851731 took 579 minutes and succeeded). A completed job is no job's
+//!   time either, so the jobs a re-run carries over from an earlier attempt, listed with their
+//!   first start, never count (38013111243's attempt 2, 40747313397's attempt 3). An
+//!   `integration/*` top whose job runs past it is held ([`HoldReason::IntegrationTopRuns`]).
 //!
 //! What is never cancelled for being superseded is fixed here, not declared: a push to the
 //! default branch, any other push (a tag push among them), the schedule, a dispatch, a
@@ -65,6 +76,11 @@ pub const FULL_LABEL: &str = "ci:full";
 
 /// The branches of the landing seat's combined tops: never ended for waiting in the queue.
 pub const INTEGRATION_PREFIX: &str = "integration/";
+
+/// How close in time two first-attempt runs of one commit must have been created for the older
+/// one's verdict to make the newer one a duplicate: the `opened` and `labeled` runs of a train
+/// are one second apart. A judged run outside it is not a twin: a second run was asked for.
+pub const TWIN_WINDOW_SECONDS: u64 = 120;
 
 /// Minutes after which the newest successful supervision is reported as `supervise_stale`.
 pub const STALE_MINUTES: u64 = 30;
@@ -126,13 +142,20 @@ pub struct RunObservation {
     pub conclusion: Option<String>,
     /// When it was created, RFC 3339.
     pub created_at: String,
-    /// When it started, RFC 3339; the forge sets it at creation and again on a re-run, so it
-    /// is not when it started to run: [`RunObservation::first_job_start`] is.
+    /// When its current attempt started, RFC 3339; the forge sets it at creation and again on
+    /// a re-run, so it is not when a job of it started to run.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub run_started_at: Option<String>,
+    /// Which attempt it is: 1, or more once re-run. A re-run keeps its id and `created_at`.
+    #[serde(default = "first_attempt")]
+    pub run_attempt: u64,
     /// Its jobs.
     #[serde(default)]
     pub jobs: Vec<JobObservation>,
+}
+
+fn first_attempt() -> u64 {
+    1
 }
 
 impl RunObservation {
@@ -153,24 +176,47 @@ impl RunObservation {
             && matches!(self.conclusion.as_deref(), Some("success" | "failure"))
     }
 
-    /// Whether any of its jobs was taken by a runner.
-    pub fn any_job_started(&self) -> bool {
-        self.jobs.iter().any(JobObservation::started)
+    /// Whether `job` is one an earlier attempt left behind: completed, and started before this
+    /// attempt did. On a re-run of the failed jobs the forge lists the jobs it reuses with their
+    /// first start.
+    pub fn carried(&self, job: &JobObservation) -> bool {
+        let attempt = self.run_started_at.as_deref().and_then(seconds);
+        let started = job.started_at.as_deref().and_then(seconds);
+        job.status == "completed" && matches!((started, attempt), (Some(j), Some(a)) if j < a)
     }
 
-    /// When it started to run: the earliest `started_at` of its started jobs, in seconds
-    /// since the epoch; `Ok(None)` when no job has started. Err names a started job whose
-    /// start is not a time.
-    pub fn first_job_start(&self) -> Result<Option<u64>, String> {
-        let mut first: Option<u64> = None;
-        for j in self.jobs.iter().filter(|j| j.started()) {
+    /// Whether any job of its current attempt was taken by a runner.
+    pub fn any_job_started(&self) -> bool {
+        self.jobs.iter().any(|j| j.started() && !self.carried(j))
+    }
+
+    /// Since when its current attempt has waited, in seconds since the epoch: the later of its
+    /// creation and its `run_started_at`. A re-run keeps `created_at`; a first attempt that
+    /// waited in its group has `run_started_at` at its creation. `None` when its creation is
+    /// not a time.
+    pub fn queued_since(&self) -> Option<u64> {
+        let created = seconds(&self.created_at)?;
+        let attempt = self.run_started_at.as_deref().and_then(seconds);
+        Some(attempt.map_or(created, |a| a.max(created)))
+    }
+
+    /// The job of it that has been in progress longest at `now`, with its minutes;
+    /// `Ok(None)` when no job is in progress. Only a running job is held to a bound: a
+    /// completed one, a carried one among them, has ended, and a queued one has not begun.
+    /// Err names a running job whose start is not a time.
+    pub fn longest_running_job(&self, now: u64) -> Result<Option<(&JobObservation, u64)>, String> {
+        let mut longest: Option<(&JobObservation, u64)> = None;
+        for j in self.jobs.iter().filter(|j| j.status == "in_progress") {
             let stamp = j.started_at.as_deref().unwrap_or("");
             let t = seconds(stamp).ok_or_else(|| {
                 format!("job `{}` started at `{stamp}`, which is not a time", j.name)
             })?;
-            first = Some(first.map_or(t, |f| f.min(t)));
+            let minutes = now.saturating_sub(t) / 60;
+            if longest.is_none_or(|(_, m)| minutes > m) {
+                longest = Some((j, minutes));
+            }
         }
-        Ok(first)
+        Ok(longest)
     }
 }
 
@@ -189,9 +235,9 @@ pub enum SupersededGroup {
 /// What one workflow's runs are held to.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct WorkflowBound {
-    /// Minutes a run may stay queued with no job started.
+    /// Minutes a pull request's run may stay queued with no job of its attempt started.
     pub queued_minutes: u64,
-    /// Minutes a run may stay in progress, from its start.
+    /// Minutes one job may stay in progress: the workflow's largest job timeout plus thirty.
     pub running_minutes: u64,
     /// How its concurrency group is keyed.
     #[serde(default)]
@@ -284,9 +330,9 @@ pub fn read_model(root: &std::path::Path) -> Result<SuperviseModel, String> {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum CancelReason {
-    /// A pull request's run that waits with no job started while an older run of the same
-    /// pull request and commit is in flight or judged, and the pull request is not labelled
-    /// [`FULL_LABEL`].
+    /// A pull request's first-attempt run that waits with no job started while an older run of
+    /// the same pull request, branch and commit is in flight, or passed within
+    /// [`TWIN_WINDOW_SECONDS`] of it, and the pull request is not labelled [`FULL_LABEL`].
     DuplicateRun {
         /// The pull request.
         pull_request: u64,
@@ -305,16 +351,19 @@ pub enum CancelReason {
         /// The newer run that waits.
         successor: u64,
     },
-    /// Queued past its workflow's bound with no job started.
+    /// A pull request's run whose attempt queued past its workflow's bound with no job of it
+    /// started.
     QueuedPastBound {
-        /// Minutes since it was created.
+        /// Minutes since its attempt began to wait ([`RunObservation::queued_since`]).
         minutes: u64,
         /// The declared bound.
         bound: u64,
     },
-    /// Running past its workflow's bound, from its first job's start.
+    /// A job of it in progress past its workflow's bound.
     RunningPastBound {
-        /// Minutes since its first job started.
+        /// The job.
+        job: String,
+        /// Minutes since that job started.
         minutes: u64,
         /// The declared bound.
         bound: u64,
@@ -354,10 +403,12 @@ impl CancelReason {
             CancelReason::QueuedPastBound { minutes, bound } => {
                 format!("queued {minutes} min with no job started; the bound is {bound} min")
             }
-            CancelReason::RunningPastBound { minutes, bound } => {
-                format!(
-                    "running {minutes} min since its first job started; the bound is {bound} min"
-                )
+            CancelReason::RunningPastBound {
+                job,
+                minutes,
+                bound,
+            } => {
+                format!("job `{job}` has run {minutes} min; the bound is {bound} min")
             }
         }
     }
@@ -408,10 +459,41 @@ pub enum HoldReason {
         /// The older run of the same commit.
         earlier: u64,
     },
+    /// A re-run (`run_attempt` above one) of a commit with an older run in flight: a person
+    /// asked for it again.
+    RerunRequested {
+        /// The pull request.
+        pull_request: u64,
+        /// The older run of the same commit.
+        earlier: u64,
+        /// Its attempt.
+        attempt: u64,
+    },
     /// An `integration/*` top queued past its bound: it waits for a runner and is never
     /// cancelled for that.
     IntegrationTopWaits {
-        /// Minutes since it was created.
+        /// Minutes since its attempt began to wait.
+        minutes: u64,
+        /// The declared bound.
+        bound: u64,
+    },
+    /// An `integration/*` top with a job in progress past its bound: its verdict is the one a
+    /// landing needs, and it is never cancelled for that.
+    IntegrationTopRuns {
+        /// The job.
+        job: String,
+        /// Minutes since that job started.
+        minutes: u64,
+        /// The declared bound.
+        bound: u64,
+    },
+    /// A run of the trunk, a tag, the schedule, a dispatch or a release queued past its bound:
+    /// its concurrency group is its own, so ending it frees nothing, and its verdict is the
+    /// only one of what it runs.
+    ProtectedRunWaits {
+        /// Why it is protected.
+        protection: Protection,
+        /// Minutes since its attempt began to wait.
         minutes: u64,
         /// The declared bound.
         bound: u64,
@@ -541,8 +623,25 @@ fn successor<'a>(run: &RunObservation, n: u64, s: &Situation<'a>) -> Option<&'a 
         .max_by_key(|o| o.id)
 }
 
-/// The older run of the same pull request and the same commit that `run` duplicates: in
-/// flight, or already judged; the oldest when there are several.
+/// Whether `o`, judged, is the twin of `run` from the one burst the duplicate rule exists for:
+/// both first attempts, created within [`TWIN_WINDOW_SECONDS`] of each other, and `o` passed.
+/// A judged failure is never the twin of a later run: a second run of it was asked for.
+fn burst_twin(o: &RunObservation, run: &RunObservation) -> bool {
+    let close = match (seconds(&o.created_at), seconds(&run.created_at)) {
+        (Some(a), Some(b)) => a.abs_diff(b) <= TWIN_WINDOW_SECONDS,
+        _ => false,
+    };
+    o.judged()
+        && o.conclusion.as_deref() == Some("success")
+        && o.run_attempt == 1
+        && run.run_attempt == 1
+        && close
+}
+
+/// The older run of the same pull request, branch and commit that `run` duplicates: in flight,
+/// or judged in the same burst ([`burst_twin`]); the oldest when there are several. A run of
+/// another branch is in another concurrency group and blocks nothing, whatever pull request
+/// the forge attributed it to.
 fn earlier_twin<'a>(run: &RunObservation, n: u64, s: &Situation<'a>) -> Option<&'a RunObservation> {
     s.runs
         .iter()
@@ -551,8 +650,9 @@ fn earlier_twin<'a>(run: &RunObservation, n: u64, s: &Situation<'a>) -> Option<&
                 && o.workflow == run.workflow
                 && o.event == "pull_request"
                 && o.pull_request == Some(n)
+                && o.head_branch == run.head_branch
                 && o.head_sha == run.head_sha
-                && (o.in_flight() || o.judged())
+                && (o.in_flight() || burst_twin(o, run))
                 && newer(run, o)
         })
         .min_by_key(|o| o.id)
@@ -577,6 +677,13 @@ pub fn judge(run: &RunObservation, s: &Situation<'_>) -> Verdict {
     {
         if let Some(n) = run.pull_request {
             if let Some(earlier) = earlier_twin(run, n, s) {
+                if run.run_attempt > 1 {
+                    return Verdict::Hold(HoldReason::RerunRequested {
+                        pull_request: n,
+                        earlier: earlier.id,
+                        attempt: run.run_attempt,
+                    });
+                }
                 if s.full.contains(&n) {
                     return Verdict::Hold(HoldReason::FullRunRequested {
                         pull_request: n,
@@ -615,7 +722,7 @@ pub fn judge(run: &RunObservation, s: &Situation<'_>) -> Verdict {
                     // a run that holds nothing up reaches its verdict; only the bounds below
                     // can end it
                     None if protection(run, s.default_branch).is_none() => {
-                        if let v @ Verdict::Cancel(_) = bounded(run, bound, s.now) {
+                        if let v @ Verdict::Cancel(_) = bounded(run, bound, s) {
                             return v;
                         }
                         return Verdict::Hold(HoldReason::SupersededWithoutSuccessor {
@@ -627,48 +734,63 @@ pub fn judge(run: &RunObservation, s: &Situation<'_>) -> Verdict {
             }
         }
     }
-    bounded(run, bound, s.now)
+    bounded(run, bound, s)
 }
 
 /// The verdict of the two bounds alone.
-fn bounded(run: &RunObservation, bound: &WorkflowBound, now: u64) -> Verdict {
-    match run.first_job_start() {
-        Err(detail) => Verdict::Hold(HoldReason::Unjudgeable { detail }),
-        // (c) running past its bound, from its first job's start: never from
-        // `run_started_at`, which is its creation while it waited in its group
-        Ok(Some(start)) => {
-            let minutes = now.saturating_sub(start) / 60;
-            if minutes > bound.running_minutes {
-                return Verdict::Cancel(CancelReason::RunningPastBound {
+fn bounded(run: &RunObservation, bound: &WorkflowBound, s: &Situation<'_>) -> Verdict {
+    let top = run.head_branch.starts_with(INTEGRATION_PREFIX);
+    // (c) a job running past its bound: each running job on its own clock, never the run's,
+    // whose stages wait for runners between them and whose re-run carries finished jobs
+    match run.longest_running_job(s.now) {
+        Err(detail) => return Verdict::Hold(HoldReason::Unjudgeable { detail }),
+        Ok(Some((job, minutes))) if minutes > bound.running_minutes => {
+            let job = job.name.clone();
+            if top {
+                return Verdict::Hold(HoldReason::IntegrationTopRuns {
+                    job,
                     minutes,
                     bound: bound.running_minutes,
                 });
             }
-            Verdict::Fine
-        }
-        // (b) queued past its bound, nothing started
-        Ok(None) => {
-            let Some(created) = seconds(&run.created_at) else {
-                return Verdict::Hold(HoldReason::Unjudgeable {
-                    detail: format!("its creation `{}` is not a time", run.created_at),
-                });
-            };
-            let minutes = now.saturating_sub(created) / 60;
-            if minutes <= bound.queued_minutes {
-                return Verdict::Fine;
-            }
-            if run.head_branch.starts_with(INTEGRATION_PREFIX) {
-                return Verdict::Hold(HoldReason::IntegrationTopWaits {
-                    minutes,
-                    bound: bound.queued_minutes,
-                });
-            }
-            Verdict::Cancel(CancelReason::QueuedPastBound {
+            return Verdict::Cancel(CancelReason::RunningPastBound {
+                job,
                 minutes,
-                bound: bound.queued_minutes,
-            })
+                bound: bound.running_minutes,
+            });
         }
+        Ok(_) => {}
     }
+    if run.any_job_started() {
+        return Verdict::Fine;
+    }
+    // (b) its attempt queued past its bound, nothing of it started
+    let Some(since) = run.queued_since() else {
+        return Verdict::Hold(HoldReason::Unjudgeable {
+            detail: format!("its creation `{}` is not a time", run.created_at),
+        });
+    };
+    let minutes = s.now.saturating_sub(since) / 60;
+    if minutes <= bound.queued_minutes {
+        return Verdict::Fine;
+    }
+    if top {
+        return Verdict::Hold(HoldReason::IntegrationTopWaits {
+            minutes,
+            bound: bound.queued_minutes,
+        });
+    }
+    if let Some(protection) = protection(run, s.default_branch) {
+        return Verdict::Hold(HoldReason::ProtectedRunWaits {
+            protection,
+            minutes,
+            bound: bound.queued_minutes,
+        });
+    }
+    Verdict::Cancel(CancelReason::QueuedPastBound {
+        minutes,
+        bound: bound.queued_minutes,
+    })
 }
 
 /// Every decision over one observation.
@@ -840,12 +962,13 @@ mod tests {
             conclusion: None,
             created_at: at(minutes_ago),
             run_started_at: Some(at(minutes_ago)),
+            run_attempt: 1,
             jobs: if status == "in_progress" {
                 vec![JobObservation {
-                    name: "plan".into(),
-                    status: "completed".into(),
+                    name: "rust".into(),
+                    status: "in_progress".into(),
                     started_at: Some(at(minutes_ago)),
-                    conclusion: Some("success".into()),
+                    conclusion: None,
                 }]
             } else {
                 Vec::new()
@@ -1078,12 +1201,46 @@ mod tests {
                 bound: 240
             }
         );
-        // the bound applies to the trunk's runs too: only superseding is protected
+        // a run of the trunk waits in a group of its own and holds no runner: held
         let mut runs = vec![run(100, "a", None, "pending", 300)];
         runs[0].event = "push".into();
         runs[0].head_branch = "master".into();
+        let s = decide_over(&runs, &heads(&[]));
+        assert!(s.decisions.is_empty(), "{s:?}");
         assert_eq!(
-            decide_over(&runs, &heads(&[])).decisions[0].reason.word(),
+            s.held[0].reason,
+            HoldReason::ProtectedRunWaits {
+                protection: Protection::DefaultBranchPush,
+                minutes: 300,
+                bound: 240
+            }
+        );
+        // a re-run is held to the bound from its attempt's start, not its creation
+        let mut runs = vec![run(100, "a", Some(7), "queued", 360)];
+        runs[0].run_attempt = 2;
+        runs[0].run_started_at = Some(at(2));
+        assert!(decide_over(&runs, &heads(&[(7, "a")])).decisions.is_empty());
+        runs[0].run_started_at = Some(at(241));
+        assert_eq!(
+            decide_over(&runs, &heads(&[(7, "a")])).decisions[0].reason,
+            CancelReason::QueuedPastBound {
+                minutes: 241,
+                bound: 240
+            }
+        );
+        // a job an earlier attempt left behind is not a start of this one
+        runs[0].jobs.push(JobObservation {
+            name: "plan".into(),
+            status: "completed".into(),
+            started_at: Some(at(300)),
+            conclusion: Some("success".into()),
+        });
+        assert!(runs[0].carried(&runs[0].jobs[0]));
+        assert!(!runs[0].any_job_started());
+        assert_eq!(
+            decide_over(&runs, &heads(&[(7, "a")])).decisions[0]
+                .reason
+                .word(),
             "queued_past_bound"
         );
     }
@@ -1095,22 +1252,61 @@ mod tests {
         assert_eq!(
             s.decisions[0].reason,
             CancelReason::RunningPastBound {
+                job: "rust".into(),
                 minutes: 256,
                 bound: 255
             }
         );
         let runs = vec![run(100, "a", Some(7), "in_progress", 255)];
         assert!(decide_over(&runs, &heads(&[(7, "a")])).decisions.is_empty());
-        // measured from its first job's start, not its creation nor `run_started_at`: a run
-        // that waited in its group, or a re-run (whose jobs are the new attempt's), starts then
+        // measured from the running job's start, not the run's creation nor its first job: a
+        // run that waited in its group, or between its stages, ran no job in the meantime
         let mut runs = vec![run(100, "a", Some(7), "in_progress", 600)];
         runs[0].jobs[0].started_at = Some(at(10));
+        runs[0].jobs.push(JobObservation {
+            name: "plan".into(),
+            status: "completed".into(),
+            started_at: Some(at(590)),
+            conclusion: Some("success".into()),
+        });
         assert!(decide_over(&runs, &heads(&[(7, "a")])).decisions.is_empty());
-        // an in-progress run with no job started is never running past its bound
+        // the longest running job is the one named
+        runs[0].jobs.push(JobObservation {
+            name: "suite".into(),
+            status: "in_progress".into(),
+            started_at: Some(at(300)),
+            conclusion: None,
+        });
+        assert_eq!(
+            decide_over(&runs, &heads(&[(7, "a")])).decisions[0].reason,
+            CancelReason::RunningPastBound {
+                job: "suite".into(),
+                minutes: 300,
+                bound: 255
+            }
+        );
+        // a run with no job in progress is never running past its bound, however old
+        let mut runs = vec![run(100, "a", Some(7), "in_progress", 600)];
+        runs[0].jobs[0].status = "completed".into();
+        runs[0].jobs[0].conclusion = Some("success".into());
+        assert!(decide_over(&runs, &heads(&[(7, "a")])).decisions.is_empty());
         let mut runs = vec![run(100, "a", Some(7), "in_progress", 239)];
         runs[0].jobs.clear();
         assert!(decide_over(&runs, &heads(&[(7, "a")])).decisions.is_empty());
-        // a started job whose start is not a time holds rather than cancels
+        // an integration/* top's job past its bound is held, never ended
+        let mut runs = vec![run(100, "a", Some(7), "in_progress", 300)];
+        runs[0].head_branch = "integration/train-10b-20261028".into();
+        let s = decide_over(&runs, &heads(&[(7, "a")]));
+        assert!(s.decisions.is_empty(), "{s:?}");
+        assert_eq!(
+            s.held[0].reason,
+            HoldReason::IntegrationTopRuns {
+                job: "rust".into(),
+                minutes: 300,
+                bound: 255
+            }
+        );
+        // a running job whose start is not a time holds rather than cancels
         let mut runs = vec![run(100, "a", Some(7), "in_progress", 600)];
         runs[0].jobs[0].started_at = None;
         assert!(matches!(

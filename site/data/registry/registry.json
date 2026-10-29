@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "1bfd16c7e8bf005afd616ccf3d28b9a8344620ec6701dc37503fc2d404728cb3",
+    "fingerprint": "bffe5fa8e6cc96e4dbcf05c2304243034b892a98644c721ddc92d5a18b9edfbe",
     "summary": {
       "total": 3553,
       "builtin": 220,
@@ -92118,7 +92118,7 @@
     ]
   },
   "index": {
-    "fingerprint": "94d1f222f749f8a4292ab444b86d39702a857456e362414db8f0aa398c98033c",
+    "fingerprint": "93030d4f7d16b34de47c588c8977830c950f32ef6af21bc835b726c896ad54ac",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99180,7 +99180,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 49143
+        "bytes": 50918
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -114023,7 +114023,7 @@
         "path": ".ai/repo/project/issues/I3903.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3573
+        "bytes": 4102
       },
       {
         "uri": "majordomus://issue/I3910",
@@ -142256,7 +142256,7 @@
             "route": "/docs/cli/prs/supervise/",
             "executable": true,
             "usage": "majordomus prs supervise [OPTIONS]",
-            "about": "Judge every in-flight CI run against the bounds `.ai/repo/ci/supervise.yaml` declares, and name each one to cancel with its reason: a pull request's waiting run of a commit that already has a run in flight or judged (unless the pull request is labelled ci:full), a pull request's run of a head that moved while a newer run of it waits behind it in the same concurrency group, a run queued past its workflow's bound with no job started (never an integration/* top), or one running past its bound from its first job's start. A run of the default branch, a tag, the schedule, a dispatch or a release, and every pages or release run, is never cancelled for being superseded; the supervising workflow's own run never at all. It also reports supervise_stale when the supervisor's newest success is older than 30 minutes. A dry run by default, which reaches the forge to read and changes nothing. Exit 0 when nothing needs doing, 10 for decisions a dry run found, 12 when the forge could not be read or an act could not be taken",
+            "about": "Judge every in-flight CI run against the bounds `.ai/repo/ci/supervise.yaml` declares, and name each one to cancel with its reason: a pull request's waiting first-attempt run of a commit that already has a run of its branch in flight, or one that passed within 120 seconds of it (never a re-run, nor when the pull request is labelled ci:full), a pull request's run of a head that moved while a newer run of it waits behind it in the same concurrency group, a pull request's run whose attempt queued past its workflow's bound with no job of it started, or one with a job in progress past its bound from that job's start (an integration/* top is never ended for a bound, nor a queued run of the default branch, a tag, the schedule, a dispatch or a release). A run of the default branch, a tag, the schedule, a dispatch or a release, and every pages or release run, is never cancelled for being superseded; the supervising workflow's own run never at all. It also reports supervise_stale when the supervisor's newest success is older than 30 minutes. A dry run by default, which reaches the forge to read and changes nothing. Exit 0 when nothing needs doing, 10 for decisions a dry run found, 12 when the forge could not be read or an act could not be taken",
             "args": [
               {
                 "name": "apply",

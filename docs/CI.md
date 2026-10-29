@@ -432,21 +432,38 @@ dispatch. It judges every queued, waiting and running run of the repository agai
 
 | Reason | When |
 |---|---|
-| `duplicate_run` | a `pull_request` run of validate that waits with no job started while an older run of the same pull request and the same commit is in flight or judged (success or failure), and the pull request is not labelled `ci:full` |
+| `duplicate_run` | a first-attempt `pull_request` run of validate that waits with no job started while an older run of the same pull request, branch and commit is in flight, or passed and was created within 120 s of it as a first attempt; never a re-run, nor when the pull request is labelled `ci:full` |
 | `superseded_blocks_successor` | a `pull_request` run of validate whose head is no longer its pull request's, while a newer run of the same pull request waits in the same group |
-| `queued_past_bound` | queued longer than its workflow's `queued_minutes` (240 everywhere) with no job started; never an `integration/*` top |
-| `running_past_bound` | running longer than its workflow's `running_minutes` (its largest job timeout plus 30), from its first job's start |
+| `queued_past_bound` | a pull request's run whose attempt has queued longer than its workflow's `queued_minutes` (240 everywhere) with no job of it started, from the later of `created_at` and `run_started_at`; never an `integration/*` top, a push, the schedule, a dispatch or a release |
+| `running_past_bound` | a job of it in progress longer than its workflow's `running_minutes` (its largest job timeout plus 30), from that job's start; never an `integration/*` top |
 
 The duplicate is the `labeled` twin: a train opened with `--label train` is `opened` and
 `labeled` at once, and both start validate, so 6 of the 8 trains of 2026-10-28 had two full runs
 of one head; train 10b's twin, run 40713048283, waited in the group behind the first and then
-ran for hours. A pull request labelled `ci:full` asked for the second run, and its twin is held.
-A run's age is measured from its first job's start, never from `run_started_at`: the forge sets
-that at creation, so a run that waited two hours in its group would read as running for them,
-and that clock would have cancelled train 10b's legitimate run 40764355688 at about 00:48Z. A
-run with no started job is never running past its bound, and an `integration/*` top queued
-past its bound is held (`integration_top_waits`): it waits for a runner, and its verdict is the
-one a landing needs.
+ran for hours. Outside that burst a second run of a judged commit was asked for, so it is never
+a duplicate: a reopened pull request tests its head against a master that has moved, a head that
+went A, B and back to A needs a verdict of A again, and a re-run (`run_attempt` above one) is a
+person's request (`rerun_requested`). A judged failure is never the twin of a later run. A pull
+request labelled `ci:full` asked for the second run, and its twin is held. A twin must be of the
+same branch as well as the same pull request and commit: the forge lists every open pull
+request whose head matches a run, so a train opened at its last member's tip is listed on the
+member's runs, and a run is attributed to the entry whose head is the branch it ran on.
+
+A bound is one job's timeout plus thirty minutes, so it is a running job that is held to it,
+from that job's own start. Never the run: validate's jobs run in a chain of `needs` with the
+runner queue between the stages, and of 59 recent validate runs at least 8 ran longer than 255
+minutes from first job to last while every job stayed within its own timeout (40576851731 took
+579 minutes and succeeded; 40680986818's last stage started at minute 257). Never from
+`run_started_at` either, which is a waiting run's creation. A completed job ended, so the jobs a
+re-run carries over from an earlier attempt, which the forge lists with their first start, are
+no job's time: release 38013111243's attempt 2 would otherwise have been cancelled at 07:20Z
+against attempt 1's plan, and validate 40747313397's attempt 3 at 01:11Z. The queue is measured
+from the attempt, the later of `created_at` and `run_started_at`, since a re-run keeps its
+creation. A queued run holds no runner, so ending one frees nothing but its group: a run of the
+trunk, a tag, the schedule, a dispatch or a release, each in a group of its own, is held
+(`protected_run_waits`), and an `integration/*` top is held both queued
+(`integration_top_waits`) and with a job past its bound (`integration_top_runs`): its verdict is
+the one a landing needs.
 
 A superseded run with nothing waiting behind it is left alone: a started run reaches its
 verdict, which is the reason the group never cancels in progress. A push to master, any other
@@ -459,8 +476,8 @@ that cannot be written stops every act. Without `--apply` the command prints the
 and exits 10 when there are any. The decision is
 `apps/majordomus-cli/src/integration/supervise.rs`, the forge side `integration/runs.rs`, and
 the test `the_declared_bounds_hold_to_every_workflows_real_timeouts` holds the record to every
-workflow's job timeouts; `supervise_replay.rs` replays both runs of 2026-10-28 from what the
-forge recorded of them.
+workflow's job timeouts; `supervise_replay.rs` replays both runs of 2026-10-28 and the four
+runs of the review of 2026-10-29 from what the forge recorded of them.
 
 The supervisor must not be starved by what it supervises. It runs in two lanes at once, lundra
 (`[self-hosted, lundra]`, which does not share the account's hosted concurrency) and

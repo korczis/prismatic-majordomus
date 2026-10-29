@@ -28,9 +28,10 @@ acceptance_criteria:
   - "A queued or in-progress run past its declared bound is cancelled once, with its reason recorded"
   - "A pull-request run whose head moved is cancelled; a run of master, a release, a tag or a deploy never is for that reason"
   - "A dry run decides without acting, and the decision is the same"
-  - "A run's running bound is measured from its first job's start, so a replay of run 40764355688 at 00:50Z gives no cancel; a run with no started job is never running past its bound"
-  - "A waiting pull-request run of a commit that already has a run in flight or judged is cancelled as a duplicate (a replay of 40713048283 by 15:10Z), and held when the pull request carries ci:full"
-  - "An integration/* run is never cancelled through queued_past_bound"
+  - "The running bound holds each job in progress from that job's start, never the run: replays of 40764355688 at 00:50Z, 40576851731 at 01:10Z, 40680986818 at 15:58Z, release 38013111243's attempt 2 at 07:20Z and 40747313397's attempt 3 at 01:11Z give no cancel; jobs a re-run carries over never count"
+  - "The queue bound runs from the later of created_at and run_started_at, so a re-run of a run created six hours earlier and queued two minutes is not cancelled"
+  - "A waiting first-attempt pull-request run of a commit that has a run of the same branch in flight, or one that passed within 120 s of it, is cancelled as a duplicate (a replay of 40713048283 by 15:10Z); a re-run, a reopen, a head back at a judged sha, a judged failure and a train sharing a member's sha are not, and ci:full holds it"
+  - "An integration/* run is never cancelled through queued_past_bound or running_past_bound, and a queued run of the trunk, a tag, the schedule, a dispatch or a release is held"
   - "supervise.yml runs on lundra with a hosted fallback, from a prebuilt executable, bounded at five minutes, with cancel-in-progress false, so five validate requests within 60 s let an apply complete"
   - "A newest supervise success older than 30 minutes is reported as supervise_stale, and queue.yml fails on it"
 validation:
@@ -41,4 +42,4 @@ evidence_required:
 serves:
   - "nothing-in-the-mesh-waits-on-something-dead#states-are-classified"
 created_at: 2026-10-22
-updated_at: 2026-10-28
+updated_at: 2026-10-29

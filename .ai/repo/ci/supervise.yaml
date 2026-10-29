@@ -16,27 +16,34 @@ version: 1
 # mattered waited behind it; the owner ordered that CI never stay stuck for hours again.
 #
 # What ends a run, and nothing else:
-#   duplicate_run                a pull_request run that waits with no job started while an
-#                                older run of the same pull request and the same commit is in
-#                                flight or judged (success or failure). Opening a train with
-#                                `--label train` is `opened` and `labeled` at once and starts
-#                                validate twice (6 of 8 trains on 2026-10-28; 10b's twin
-#                                40713048283 held its group seven hours). A pull request
-#                                labelled `ci:full` asked for the second run: it is held.
+#   duplicate_run                a first-attempt pull_request run that waits with no job
+#                                started while an older run of the same pull request, branch
+#                                and commit is in flight, or passed and was created within
+#                                120 s of it as a first attempt. Opening a train with `--label
+#                                train` is `opened` and `labeled` at once and starts validate
+#                                twice (6 of 8 trains on 2026-10-28; 10b's twin 40713048283
+#                                held its group seven hours). Outside that burst a second run
+#                                was asked for (a reopen, a head back at an sha already judged,
+#                                a re-run), and a judged failure is never a twin. A re-run, or a
+#                                pull request labelled `ci:full`, is held.
 #   superseded_blocks_successor  a pull_request run of a workflow declared `superseded:
 #                                per_pull_request`, whose head is no longer its pull
 #                                request's, while a newer run of the same pull request waits in
 #                                the same group. With nothing waiting it is left alone: the
 #                                concurrency rationale stands.
-#   queued_past_bound            queued longer than `queued_minutes` with no job started; an
-#                                integration/* top never (it waits for a runner, and its
-#                                verdict is the one a landing needs).
-#   running_past_bound           running longer than `running_minutes`, from its first job's
-#                                start. Not from `run_started_at`, which is the creation time
-#                                of a run that waited in its group: that clock would have
-#                                cancelled train 10b's legitimate run 40764355688 at about
-#                                00:48Z, two hours into its real work. A run with no started
-#                                job is never running past its bound.
+#   queued_past_bound            a pull request's run whose attempt queued longer than
+#                                `queued_minutes` with no job of it started, from the later of
+#                                created_at and run_started_at (a re-run keeps its creation).
+#                                Never an integration/* top (it waits for a runner, and its
+#                                verdict is the one a landing needs), nor a push, the schedule,
+#                                a dispatch or a release: each waits in a group of its own, so
+#                                ending it frees nothing.
+#   running_past_bound           a job in progress longer than `running_minutes`, from that
+#                                job's start. Each running job, never the run: validate's jobs
+#                                run in a chain with the runner queue between the stages, and
+#                                healthy runs took 579 minutes first job to last (40576851731).
+#                                A completed job, a re-run's carried one among them, is no
+#                                job's time. Never an integration/* top.
 #
 # What is never cancelled for being superseded is fixed in the code, not declared here: a push
 # to the default branch, any other push (a tag push among them), the schedule, a dispatch, a
@@ -78,8 +85,8 @@ report:
 # ---------------------------------------------------------------- the bounds
 # Generous on purpose: a bound turns a hang into an end, and must never cut a healthy run.
 # `queued_minutes` is at least 240 everywhere. `running_minutes` is the workflow's largest job
-# `timeout-minutes` plus 30, so a run is ended only after its longest job would already have
-# been killed by its own bound; raise a job's timeout and the test
+# `timeout-minutes` plus 30, and it bounds one running job, so a job is ended only after its own
+# timeout should already have ended it; raise a job's timeout and the test
 # `the_declared_bounds_hold_to_every_workflows_real_timeouts` asks for this number to follow.
 bounds:
   docker-image:

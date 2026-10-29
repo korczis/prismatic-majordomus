@@ -475,9 +475,37 @@ fn supervise(
                  with {}",
                 integration::supervise::FULL_LABEL
             ),
+            integration::supervise::HoldReason::RerunRequested {
+                pull_request,
+                earlier,
+                attempt,
+            } => format!(
+                "attempt {attempt} of #{pull_request}'s commit while run {earlier} of it is in \
+                 flight: a re-run was asked for"
+            ),
             integration::supervise::HoldReason::IntegrationTopWaits { minutes, bound } => format!(
                 "an integration top queued {minutes} min (bound {bound}): it waits for a runner \
                  and is never cancelled for it"
+            ),
+            integration::supervise::HoldReason::IntegrationTopRuns {
+                job,
+                minutes,
+                bound,
+            } => format!(
+                "an integration top whose job `{job}` has run {minutes} min (bound {bound}): \
+                 never cancelled for it"
+            ),
+            integration::supervise::HoldReason::ProtectedRunWaits {
+                protection,
+                minutes,
+                bound,
+            } => format!(
+                "queued {minutes} min (bound {bound}), but in a group of its own ({}): ending \
+                 it frees nothing",
+                serde_json::to_value(protection)
+                    .ok()
+                    .and_then(|v| v.as_str().map(str::to_string))
+                    .unwrap_or_default()
             ),
             integration::supervise::HoldReason::Unjudgeable { detail } => {
                 format!("not judged: {detail}")
