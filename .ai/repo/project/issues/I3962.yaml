@@ -30,4 +30,18 @@ validation:
 evidence_required:
   - "advisor_transport_contract"
 created_at: 2026-10-22
-updated_at: 2026-10-22
+updated_at: 2026-10-29T00:49:46Z
+started_at: 2026-10-29T00:47:32Z
+started_event: sha256:5168ccddad7e4e93975f79b7a7636ca4f11bfe00d1c2ec271fc160d7635a9cf7
+verified_at: 2026-10-29T00:47:50Z
+verified_event: sha256:141217a6352a004b42b689104397141089f6a33760b11d55a9f4b6a6fffdb669
+completed_at: 2026-10-29T00:49:46Z
+completed_event: sha256:38d0ef8b85cfbbd7b683c2619e0f60d6ef5be7af4ff65cf2de5b7a959627d3c9
+evidence:
+  - covers: advisor_transport_contract
+    type: ci
+    command: "bash test/run.sh 731_advisor_transport_contract (runs node --test scripts/lib/advisors/contract.test.mjs; required on CI)"
+    result: "ok in master validate suite-shard (4): 731_advisor_transport_contract ok; the case runs the contract suite (output schema equal to ANSWER_SCHEMA, an exit 0 without the -o file is empty, a non-answer final message is malformed, a refused --output-schema names the client's error line) and fails on CI when node is absent. Landed by #2351. validate 40676150754 ran at 81ef931a3e1; master 5370ee63d19 differs from it only in plan records (#2653), no code. The run is red only on 103_release_projection (alpha.9 release record, #2626) and pages, neither this issue's"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40676150754/job/122783064771"
+    commit: 5370ee63d19b71b16e9431bb2edd86236338ca42
+    recorded_at: 2026-10-29T00:48:26Z
