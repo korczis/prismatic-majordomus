@@ -539,11 +539,15 @@ fn host_name() -> Option<String> {
     // SAFETY: the buffer is valid for writes of its whole length, which is the length passed;
     // gethostname writes at most that many bytes and the result is read up to its first NUL.
     let rc = unsafe { libc::gethostname(buf.as_mut_ptr().cast(), buf.len()) };
-    if rc != 0 {
-        return None;
-    }
-    let end = buf.iter().position(|b| *b == 0).unwrap_or(buf.len());
-    let name = String::from_utf8_lossy(&buf[..end]);
+    short_host_name((rc == 0).then_some(&buf[..]))
+}
+
+/// The name in `raw`, the buffer gethostname filled (`None` when it failed), read up to its
+/// first NUL and then up to its first dot; `None` when nothing is left.
+fn short_host_name(raw: Option<&[u8]>) -> Option<String> {
+    let raw = raw?;
+    let end = raw.iter().position(|b| *b == 0).unwrap_or(raw.len());
+    let name = String::from_utf8_lossy(&raw[..end]);
     let short = name.split('.').next().unwrap_or("").trim().to_string();
     (!short.is_empty()).then_some(short)
 }
@@ -552,14 +556,18 @@ fn host_name() -> Option<String> {
 /// (the installer's launcher when this process was started through it), because `sudo`
 /// does not search a user's PATH.
 fn apply_command() -> String {
-    let exe = std::env::var("MAJORDOMUS_LAUNCHER")
-        .ok()
+    apply_command_for(
+        std::env::var("MAJORDOMUS_LAUNCHER").ok(),
+        std::env::current_exe().ok(),
+    )
+}
+
+/// [`apply_command`] for a given launcher variable and executable path: a non-empty launcher
+/// first, then the executable, and the bare name only when neither is known.
+fn apply_command_for(launcher: Option<String>, exe: Option<PathBuf>) -> String {
+    let exe = launcher
         .filter(|l| !l.is_empty())
-        .or_else(|| {
-            std::env::current_exe()
-                .ok()
-                .map(|p| p.display().to_string())
-        })
+        .or_else(|| exe.map(|p| p.display().to_string()))
         .unwrap_or_else(|| "majordomus".into());
     format!(
         "sudo {} mesh build-cache provision --apply",
@@ -648,12 +656,18 @@ pub(crate) fn doctor_check(
 
 /// [`doctor_check`] for this host, read under `/`.
 pub(crate) fn this_host_check() -> Option<DoctorCheck> {
+    host_check(host_name(), Path::new("/"))
+}
+
+/// [`doctor_check`] for the host named `host` (`None` when it could not be told), read under
+/// `root`. A host other than the policy's local node is never observed.
+fn host_check(host: Option<String>, root: &Path) -> Option<DoctorCheck> {
     let policy = Policy::declared();
-    let host = host_name()?;
+    let host = host?;
     if host != policy.local_node {
         return None;
     }
-    let planned = plan(&policy, &observe(&policy, Path::new("/")));
+    let planned = plan(&policy, &observe(&policy, root));
     doctor_check(&host, &policy, &planned, &apply_command())
 }
 
@@ -2305,5 +2319,154 @@ mod tests {
             .iter()
             .any(|s| s.starts_with(&p.cargo_config())));
         assert!(report.written.is_empty());
+    }
+
+    /// I4352: a runner is a unit file that exists under a unit directory. A name observed
+    /// without a directory, a unit under a directory systemd is not read from here, an absent
+    /// file and a directory named like a unit are none, and a pattern's middle must match.
+    #[test]
+    fn only_a_unit_file_under_a_unit_directory_is_a_runner() {
+        let p = Policy::declared();
+        let mut seen = BTreeMap::new();
+        unit(&mut seen, "gitlab-runner.service");
+        unit(
+            &mut seen,
+            "/run/systemd/system/actions.runner.r.lundra-5.service",
+        );
+        seen.insert(
+            "/etc/systemd/system/actions.runner.r.lundra-6.service".into(),
+            Observed::default(),
+        );
+        let planned = plan(&p, &seen);
+        assert!(planned.runners.is_empty(), "{:?}", planned.runners);
+        assert!(!planned.steps.iter().any(|s| s.id == "runners-start"));
+        assert!(!planned
+            .files
+            .iter()
+            .any(|f| f.path.ends_with(RUNNER_DROP_IN)));
+        assert!(wildcard("a*b*c*d", "a-b-c-d"));
+        assert!(!wildcard("a*x*d", "a-b-c-d") && !wildcard("a*b*x*d", "a-b-c-d"));
+        // on disk: a directory with a runner's name is not a unit, the file beside it is
+        let root = scratch("unit-dirs");
+        let units = physical(&root, "/etc/systemd/system");
+        std::fs::create_dir_all(units.join("gitlab-runner.service")).unwrap();
+        let four = "actions.runner.r.lundra-4.service";
+        std::fs::write(units.join(four), "[Service]\n").unwrap();
+        let found = observe_units(&p, &root);
+        assert_eq!(
+            found.keys().cloned().collect::<Vec<_>>(),
+            vec![format!("/etc/systemd/system/{four}")]
+        );
+        assert_eq!(
+            plan(&p, &observe(&p, &root)).runners,
+            vec![four.to_string()]
+        );
+    }
+
+    /// I4352: the host's name is the buffer up to its first NUL and its first dot, and a
+    /// failed call or an empty name is no name, so `mesh doctor` asks no host.
+    #[test]
+    fn a_host_name_is_read_up_to_its_first_nul_and_its_first_dot() {
+        assert_eq!(short_host_name(None), None);
+        assert_eq!(
+            short_host_name(Some(b"lundra.tail1234.ts.net\0mbp.local")).as_deref(),
+            Some("lundra")
+        );
+        assert_eq!(short_host_name(Some(b"mb2")).as_deref(), Some("mb2"));
+        assert_eq!(short_host_name(Some(b"\0lundra")), None);
+        assert_eq!(short_host_name(Some(b" .lundra\0")), None);
+        let here = host_name();
+        assert!(here
+            .as_deref()
+            .is_none_or(|h| !h.is_empty() && !h.contains('.')));
+    }
+
+    /// I4352: the remediation names a non-empty launcher before the executable, the bare name
+    /// only when neither is known, and each as one shell word.
+    #[test]
+    fn the_apply_command_names_the_launcher_then_the_executable() {
+        let exe = Some(PathBuf::from("/opt/it's/majordomus"));
+        assert_eq!(
+            apply_command_for(Some("/home/u/.local/bin/majordomus".into()), exe.clone()),
+            "sudo '/home/u/.local/bin/majordomus' mesh build-cache provision --apply"
+        );
+        assert_eq!(
+            apply_command_for(Some(String::new()), exe),
+            "sudo '/opt/it'\\''s/majordomus' mesh build-cache provision --apply"
+        );
+        assert_eq!(
+            apply_command_for(None, None),
+            "sudo 'majordomus' mesh build-cache provision --apply"
+        );
+    }
+
+    /// I4352: on the build host, a plan owing a file and the cargo edit names both and no
+    /// more, says no runner was observed, and counts what this process could not read.
+    #[test]
+    fn the_doctor_names_every_owed_change_and_what_it_could_not_read() {
+        let (root, p) = staged("doctor-few");
+        let mut seen = observe(&p, &root);
+        assert_eq!(plan(&p, &seen).changes, 0, "a staged root owes nothing");
+        let cfg = p.cargo_config();
+        seen.insert(
+            cfg.clone(),
+            Observed {
+                exists: true,
+                mode: Some(0o644),
+                text: Some(format!("[build]\n{}\n", p.old_wrapper())),
+                ..Observed::default()
+            },
+        );
+        seen.get_mut(GUARD_HOMES).unwrap().text = Some("HOMES=()\n".into());
+        seen.insert(
+            format!("{NODE_DIR}/lundra/credentials"),
+            Observed {
+                unreadable: true,
+                ..Observed::default()
+            },
+        );
+        let planned = plan(&p, &seen);
+        assert_eq!((planned.changes, planned.unobservable), (2, 1));
+        let warn = doctor_check(&p.local_node, &p, &planned, "cmd").unwrap();
+        assert_eq!(
+            warn.detail,
+            format!(
+                "{} owes 2 provisioning change(s): {GUARD_HOMES}, {cfg}; no CI runner unit \
+                 observed; 1 file(s) this process may not read, judged by an apply as root",
+                p.local_node
+            )
+        );
+        assert!(warn.ok && warn.impact.is_some());
+        assert_eq!(
+            warn.remediation.as_deref(),
+            Some("run `cmd` in a checkout of this repository (without --apply it only plans)")
+        );
+    }
+
+    /// I4352: the host check observes only the policy's build host, or none when the name is
+    /// unknown; there it passes on a provisioned root and warns on a bare one.
+    #[test]
+    fn the_host_check_asks_only_the_build_host() {
+        let (root, p) = staged("host-check");
+        assert!(host_check(None, &root).is_none());
+        assert!(host_check(Some("mbp".into()), &root).is_none());
+        let pass = host_check(Some(p.local_node.clone()), &root).unwrap();
+        assert!(pass.ok && pass.remediation.is_none(), "{pass:?}");
+        assert!(
+            pass.detail.starts_with(&format!(
+                "{} holds the build host's provisioning",
+                p.local_node
+            )),
+            "{}",
+            pass.detail
+        );
+        let bare = scratch("host-check-bare");
+        let warn = host_check(Some(p.local_node.clone()), &bare).unwrap();
+        assert!(
+            warn.remediation
+                .as_deref()
+                .is_some_and(|r| r.contains("mesh build-cache provision --apply")),
+            "{warn:?}"
+        );
     }
 }
