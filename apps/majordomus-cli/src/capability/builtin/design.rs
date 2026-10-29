@@ -377,11 +377,16 @@ fn kit_adopt(ctx: &Context, input: KitAdoptInput) -> Result<AdoptReport, Capabil
     }
     let root = std::path::PathBuf::from(&ctx.index.repository.root);
     let share = kit_share(ctx, &root)?;
-    kit::adopt(&root, &share, input.profile.trim(), input.dry_run).map_err(|e| match e {
+    kit::adopt(&root, &share, input.profile.trim(), input.dry_run).map_err(adopt_error)
+}
+
+/// An adoption's error in the capability's categories, one for one.
+fn adopt_error(e: AdoptError) -> CapabilityError {
+    match e {
         AdoptError::NotFound(m) => CapabilityError::NotFound(m),
         AdoptError::Refused(m) => CapabilityError::Refused(m),
         AdoptError::Internal(m) => CapabilityError::Internal(m),
-    })
+    }
 }
 
 fn readable(ctx: &Context, _: Empty) -> Result<ContrastReport, CapabilityError> {
@@ -419,11 +424,18 @@ fn licensed(ctx: &Context, input: LicenceInput) -> Result<LicenceReport, Capabil
         home.as_deref(),
         tightened.as_deref(),
     )
-    .map_err(|e| match e {
+    .map_err(licence_error)
+}
+
+/// A licence assessment's error in the capability's categories: evidence that cannot be
+/// read is the caller's input, a policy that cannot be used is a refusal, and a tree that
+/// cannot be listed is the handler's own failure.
+fn licence_error(e: LicenceError) -> CapabilityError {
+    match e {
         LicenceError::Evidence(m) => CapabilityError::InvalidInput(m),
         LicenceError::Policy(m) => CapabilityError::Refused(m),
         LicenceError::Tree(m) => CapabilityError::Internal(m),
-    })
+    }
 }
 
 /// The module.
@@ -787,8 +799,16 @@ mod tests {
     /// A context over `repo` whose index carries the distribution's share, as a real
     /// invocation's does, so that the kit's capabilities judge rather than refuse.
     fn context_with_share(repo: &crate::synthetic::SyntheticRepository) -> std::sync::Arc<Context> {
+        context_over(repo, crate::synthetic::crate_share())
+    }
+
+    /// A context over `repo` whose index names `share` as the distribution's share.
+    fn context_over(
+        repo: &crate::synthetic::SyntheticRepository,
+        share: std::path::PathBuf,
+    ) -> std::sync::Arc<Context> {
         let mut index = repo.index().expect("an index");
-        index.share = Some(crate::synthetic::crate_share());
+        index.share = Some(share);
         let registry = crate::capability::CapabilityRegistry::builder()
             .with_modules(crate::capability::builtin::modules())
             .with_index(&index)
@@ -872,5 +892,65 @@ mod tests {
             matches!(broken, Err(CapabilityError::Refused(_))),
             "{broken:?}"
         );
+    }
+
+    #[test]
+    fn a_missing_share_or_a_tree_that_cannot_be_re_read_is_the_handler_s_failure() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        // a share that is not there holds no kit profile: neither judge nor adoption runs
+        let absent = repo.root().join("no-such-share");
+        let ctx = context_over(&repo, absent);
+        let judged = kit_check(&ctx, KitInput::default());
+        assert!(
+            matches!(&judged, Err(CapabilityError::Internal(m)) if m.contains("holds the kit profiles")),
+            "{judged:?}"
+        );
+        let adopted = kit_adopt(
+            &ctx,
+            KitAdoptInput {
+                profile: kit::DEFAULT_PROFILE.into(),
+                dry_run: true,
+            },
+        );
+        assert!(
+            matches!(adopted, Err(CapabilityError::Internal(_))),
+            "{adopted:?}"
+        );
+        // the licence re-reads the repository; one that is no longer there is not judged
+        let ctx = context_with_share(&repo);
+        std::fs::remove_file(repo.root().join(".ai/manifest.yaml")).unwrap();
+        let licence = licensed(&ctx, LicenceInput::default());
+        assert!(
+            matches!(&licence, Err(CapabilityError::Internal(m)) if m.contains("could not be re-read")),
+            "{licence:?}"
+        );
+    }
+
+    #[test]
+    fn each_adoption_and_licence_error_keeps_its_category() {
+        assert!(matches!(
+            adopt_error(AdoptError::NotFound("n".into())),
+            CapabilityError::NotFound(m) if m == "n"
+        ));
+        assert!(matches!(
+            adopt_error(AdoptError::Refused("r".into())),
+            CapabilityError::Refused(m) if m == "r"
+        ));
+        assert!(matches!(
+            adopt_error(AdoptError::Internal("i".into())),
+            CapabilityError::Internal(m) if m == "i"
+        ));
+        assert!(matches!(
+            licence_error(LicenceError::Evidence("e".into())),
+            CapabilityError::InvalidInput(m) if m == "e"
+        ));
+        assert!(matches!(
+            licence_error(LicenceError::Policy("p".into())),
+            CapabilityError::Refused(m) if m == "p"
+        ));
+        assert!(matches!(
+            licence_error(LicenceError::Tree("t".into())),
+            CapabilityError::Internal(m) if m == "t"
+        ));
     }
 }

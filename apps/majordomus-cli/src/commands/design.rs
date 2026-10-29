@@ -45,12 +45,7 @@ fn run_to(args: DesignArgs, w: &mut dyn Write) -> Result<u8> {
     match kit_args.action {
         None => {
             let value = judged(&args.repo, kit_args.evidence.as_deref())?;
-            let report: KitReport =
-                serde_json::from_value(value.clone()).map_err(|e| Error::Protocol {
-                    reason: format!(
-                        "design.kit answered with something this command cannot read: {e}"
-                    ),
-                })?;
+            let report: KitReport = answer("design.kit", &value)?;
             emit(w, args.format, &value, || render(&report))?;
             Ok(exit_code(&report, kit_args.check))
         }
@@ -58,12 +53,7 @@ fn run_to(args: DesignArgs, w: &mut dyn Write) -> Result<u8> {
             let app = App::load(&args.repo)?;
             let input = json!({ "profile": profile.name(), "dry_run": dry_run });
             let value = execute(&app.context, &["design", "kit", "adopt"], input)?;
-            let report: AdoptReport =
-                serde_json::from_value(value.clone()).map_err(|e| Error::Protocol {
-                    reason: format!(
-                        "design.kit.adopt answered with something this command cannot read: {e}"
-                    ),
-                })?;
+            let report: AdoptReport = answer("design.kit.adopt", &value)?;
             emit(w, args.format, &value, || render_adoption(&report))?;
             Ok(0)
         }
@@ -89,9 +79,7 @@ fn judged(repo: &RepoArgs, evidence: Option<&Path>) -> Result<Value> {
                 kit::inspect(&root, share.dir(), evidence).map_err(|reason| Error::Protocol {
                     reason: format!("design kit: {reason}"),
                 })?;
-            serde_json::to_value(&report).map_err(|e| Error::Protocol {
-                reason: e.to_string(),
-            })
+            serde_json::to_value(&report).map_err(protocol)
         }
         Err(other) => Err(other),
     }
@@ -119,14 +107,34 @@ fn execute(ctx: &crate::capability::Context, words: &[&str], input: Value) -> Re
                 words.join(" ")
             ),
         })?;
-    ctx.execute(id, input).map_err(|e| match e {
+    ctx.execute(id, input).map_err(refusal)
+}
+
+/// A capability's error as this command's: each refusal keeps its exit code, and anything
+/// else is a protocol error carrying the capability's words.
+fn refusal(e: CapabilityError) -> Error {
+    match e {
         CapabilityError::Refused(reason) => Error::Refused { code: 15, reason },
         CapabilityError::NotFound(reason) => Error::Refused { code: 12, reason },
         CapabilityError::InvalidInput(reason) => Error::Refused { code: 2, reason },
-        other => Error::Protocol {
-            reason: other.to_string(),
-        },
+        other => protocol(other),
+    }
+}
+
+/// A capability's answer as the report this command renders, or a protocol error naming
+/// the capability whose answer it cannot read.
+fn answer<T: serde::de::DeserializeOwned>(capability: &str, value: &Value) -> Result<T> {
+    serde_json::from_value(value.clone()).map_err(|e| {
+        protocol(format!(
+            "{capability} answered with something this command cannot read: {e}"
+        ))
     })
+}
+
+fn protocol(reason: impl std::fmt::Display) -> Error {
+    Error::Protocol {
+        reason: reason.to_string(),
+    }
 }
 
 fn emit(
@@ -336,12 +344,20 @@ mod tests {
         }];
         r.reported = vec!["Alpine.js".into()];
         r.notices = vec!["examples/x/package.json declares react and is no surface".into()];
-        r.surfaces = vec![kit::KitSurface {
-            dir: String::new(),
-            kind: kit::KitSurfaceKind::Root,
-            manifests: vec!["package.json".into()],
-            usage: Vec::new(),
-        }];
+        r.surfaces = vec![
+            kit::KitSurface {
+                dir: String::new(),
+                kind: kit::KitSurfaceKind::Root,
+                manifests: vec!["package.json".into()],
+                usage: Vec::new(),
+            },
+            kit::KitSurface {
+                dir: "apps/web".into(),
+                kind: kit::KitSurfaceKind::App,
+                manifests: vec!["apps/web/package.json".into()],
+                usage: vec!["import 'flowbite'".into(), "flowbite/plugin".into()],
+            },
+        ];
         r.licence = Some(kit::KitLicence {
             evidence: "kit-evidence/v1".into(),
             state: kit::LicenceState::NotJudged,
@@ -352,6 +368,11 @@ mod tests {
         let t = render(&r);
         assert!(t.contains("NOTICE  examples/x/package.json"), "{t}");
         assert!(t.contains("surface . (Root): no usage marker"), "{t}");
+        // a surface below the root is named by its directory, with every usage marker found
+        assert!(
+            t.contains("surface apps/web (App): import 'flowbite'; flowbite/plugin"),
+            "{t}"
+        );
         assert!(
             t.contains(
                 "licence: Undecided, NotJudged (kit-evidence/v1); licensed markers: flowbite-pro-x"
@@ -564,5 +585,106 @@ mod tests {
             .join("ui-uses-flowbite-pro.v1.md")
             .exists());
         assert_eq!(std::fs::read_to_string(&policy).unwrap(), before);
+    }
+
+    /// A share directory that is one (it carries kinds.yaml) and ships no kit profile.
+    fn share_without_kits() -> tempfile::TempDir {
+        let share = tempfile::tempdir().unwrap();
+        std::fs::copy(
+            crate::synthetic::crate_share().join("kinds.yaml"),
+            share.path().join("kinds.yaml"),
+        )
+        .unwrap();
+        share
+    }
+
+    #[test]
+    fn what_the_command_cannot_read_is_a_protocol_error_and_each_refusal_keeps_its_code() {
+        // `design licence` is dispatched before `run_to`; handed to it, it is refused
+        let a = args(&["majordomus", "design", "licence"]);
+        let err = run_to(a, &mut Vec::new()).unwrap_err();
+        assert!(
+            matches!(&err, Error::Protocol { reason } if reason.contains("another design subcommand")),
+            "{err:?}"
+        );
+        // an answer that is not the capability's report names the capability
+        for capability in ["design.kit", "design.kit.adopt"] {
+            let err = answer::<KitReport>(capability, &json!({ "verdict": 3 })).unwrap_err();
+            assert!(
+                matches!(&err, Error::Protocol { reason }
+                    if reason.starts_with(&format!("{capability} answered with something"))),
+                "{err:?}"
+            );
+        }
+        // each refusal keeps its exit code; anything else is the capability's own words
+        for (e, code) in [
+            (CapabilityError::Refused("r".into()), 15),
+            (CapabilityError::NotFound("n".into()), 12),
+            (CapabilityError::InvalidInput("i".into()), 2),
+        ] {
+            assert!(
+                matches!(refusal(e), Error::Refused { code: c, .. } if c == code),
+                "{code}"
+            );
+        }
+        assert!(matches!(
+            refusal(CapabilityError::Internal("broke".into())),
+            Error::Protocol { reason } if reason == "internal: broke"
+        ));
+        // words no capability is exposed as are refused before anything runs
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let err = execute(&ctx, &["design", "nothing"], json!({})).unwrap_err();
+        assert!(
+            matches!(&err, Error::Protocol { reason }
+                if reason == "no capability is exposed as `majordomus design nothing`"),
+            "{err:?}"
+        );
+    }
+
+    #[test]
+    fn a_share_without_the_profile_or_without_kinds_is_an_error_not_a_verdict() {
+        // unsupervised: the judgement itself fails, and says so under `design kit:`
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(dir.path().join(".git")).unwrap();
+        let share = share_without_kits();
+        let root = dir.path().to_string_lossy().to_string();
+        let share_arg = share.path().to_string_lossy().to_string();
+        let mut a = args(&[
+            "majordomus",
+            "design",
+            "kit",
+            "--repo",
+            &root,
+            "--share",
+            &share_arg,
+        ]);
+        a.repo.discovery = DiscoveryMode::Filesystem;
+        let err = run_to(a, &mut Vec::new()).unwrap_err();
+        assert!(
+            matches!(&err, Error::Protocol { reason }
+                if reason.starts_with("design kit: the distribution ships no")),
+            "{err:?}"
+        );
+        // supervised: a share that is no share fails loading the layer, and that error stands
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let empty = tempfile::tempdir().unwrap();
+        let root = repo.root().to_string_lossy().to_string();
+        let empty_arg = empty.path().to_string_lossy().to_string();
+        let a = args(&[
+            "majordomus",
+            "design",
+            "kit",
+            "--repo",
+            &root,
+            "--share",
+            &empty_arg,
+            "--discovery",
+            "filesystem",
+        ]);
+        assert!(matches!(
+            run_to(a, &mut Vec::new()),
+            Err(Error::ShareNotFound { .. })
+        ));
     }
 }

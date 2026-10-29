@@ -1049,15 +1049,16 @@ fn walked_files(root: &Path, profile: &Profile) -> std::io::Result<BTreeSet<Stri
             Err(e) if rel.is_empty() => return Err(e),
             Err(_) => continue,
         };
-        for entry in entries.flatten() {
+        // an entry whose type cannot be read is neither a directory nor a file
+        let typed = entries
+            .flatten()
+            .filter_map(|entry| entry.file_type().ok().map(|kind| (entry, kind)));
+        for (entry, kind) in typed {
             let name = entry.file_name().to_string_lossy().to_string();
             let path = if rel.is_empty() {
                 name.clone()
             } else {
                 format!("{rel}/{name}")
-            };
-            let Ok(kind) = entry.file_type() else {
-                continue;
             };
             if kind.is_dir() {
                 let pruned =
@@ -2132,10 +2133,12 @@ impl Judgement<'_> {
     fn bound_helper_calls(&self, text: &str) -> (bool, bool) {
         let mut plugin = false;
         let mut content = false;
-        for c in self.re.v3_binding.captures_iter(text) {
-            let Some(name) = c.get(1).or_else(|| c.get(2)) else {
-                continue;
-            };
+        let names = self
+            .re
+            .v3_binding
+            .captures_iter(text)
+            .filter_map(|c| c.get(1).or_else(|| c.get(2)));
+        for name in names {
             let name = regex::escape(name.as_str());
             let call = |method: &str, args: &str| {
                 Regex::new(&format!(
@@ -3191,32 +3194,7 @@ pub fn plan_adoption(
         )),
     }
     let (with_entries, entry_actions) = policy_with_enforcement(&with_block, &entries);
-    // what is written must read back: the block, the entries, and a policy the judge accepts
-    let parsed = yaml::parse_mapping(&with_entries).map_err(|e| {
-        AdoptError::Refused(format!(
-            "{POLICY} would not parse after adoption ({e}); add ui.kit and the enforcement entries by hand"
-        ))
-    })?;
-    KitPolicy::from_policy_text(Some(&with_entries))
-        .map_err(|errors| AdoptError::Refused(format!("{POLICY}: {}", errors.join("; "))))?;
-    let declared: BTreeSet<&str> = parsed
-        .get("enforcement")
-        .and_then(Value::as_array)
-        .map(|items| {
-            items
-                .iter()
-                .filter_map(|i| i.get("name").and_then(Value::as_str))
-                .collect()
-        })
-        .unwrap_or_default();
-    for e in &entries {
-        if !declared.contains(e.name) {
-            return Err(AdoptError::Refused(format!(
-                "{POLICY}'s enforcement block could not be extended with {}; add it by hand",
-                e.name
-            )));
-        }
-    }
+    reads_back(&with_entries, &entries)?;
     let changed = with_entries != policy;
     let mut detail = vec![block_detail];
     for (name, action) in &entry_actions {
@@ -3255,6 +3233,37 @@ pub fn plan_adoption(
     ))
 }
 
+/// What adoption would write must read back: a policy that parses, that the judge accepts,
+/// and whose enforcement block declares every one of `entries`.
+fn reads_back(with_entries: &str, entries: &[Entry]) -> Result<(), AdoptError> {
+    let parsed = yaml::parse_mapping(with_entries).map_err(|e| {
+        AdoptError::Refused(format!(
+            "{POLICY} would not parse after adoption ({e}); add ui.kit and the enforcement entries by hand"
+        ))
+    })?;
+    KitPolicy::from_policy_text(Some(with_entries))
+        .map_err(|errors| AdoptError::Refused(format!("{POLICY}: {}", errors.join("; "))))?;
+    let declared: BTreeSet<&str> = parsed
+        .get("enforcement")
+        .and_then(Value::as_array)
+        .map(|items| {
+            items
+                .iter()
+                .filter_map(|i| i.get("name").and_then(Value::as_str))
+                .collect()
+        })
+        .unwrap_or_default();
+    for e in entries {
+        if !declared.contains(e.name) {
+            return Err(AdoptError::Refused(format!(
+                "{POLICY}'s enforcement block could not be extended with {}; add it by hand",
+                e.name
+            )));
+        }
+    }
+    Ok(())
+}
+
 /// Adopt `profile_id` in the repository at `root`: plan, then write unless `dry_run`.
 /// Idempotent: a second adoption writes nothing and reports every file unchanged.
 pub fn adopt(
@@ -3268,10 +3277,10 @@ pub fn adopt(
     if !dry_run {
         for (path, text) in files {
             let target = root.join(&path);
-            if let Some(dir) = target.parent() {
-                std::fs::create_dir_all(dir)
-                    .map_err(|e| AdoptError::Internal(format!("{}: {e}", dir.display())))?;
-            }
+            // a path joined onto the root always has a parent
+            let dir = target.parent().unwrap_or(root);
+            std::fs::create_dir_all(dir)
+                .map_err(|e| AdoptError::Internal(format!("{}: {e}", dir.display())))?;
             std::fs::write(&target, text)
                 .map_err(|e| AdoptError::Internal(format!("{path}: {e}")))?;
         }
@@ -5772,5 +5781,363 @@ mod tests {
         let r = inspect(dir.path(), &share, None).unwrap();
         assert_eq!(r.verdict, KitVerdict::BadPolicy);
         assert!(r.notices.iter().any(|n| n.contains("ui.kit")), "{r:#?}");
+    }
+
+    /// Run git in `dir` with nothing of the calling repository's environment.
+    fn git_in(dir: &Path, args: &[&str]) {
+        let ok = std::process::Command::new("git")
+            .arg("-C")
+            .arg(dir)
+            .args(args)
+            .env_remove("GIT_DIR")
+            .env_remove("GIT_WORK_TREE")
+            .env_remove("GIT_INDEX_FILE")
+            .output()
+            .unwrap()
+            .status
+            .success();
+        assert!(ok, "git {args:?}");
+    }
+
+    /// The shipped profile's text with its `licence:` block taken out.
+    fn profile_text_without_licence() -> String {
+        let text = std::fs::read_to_string(
+            crate::synthetic::crate_share().join("design/kits/flowbite-pro.yaml"),
+        )
+        .unwrap();
+        let mut out = String::new();
+        let mut inside = false;
+        for line in text.split_inclusive('\n') {
+            if line.trim_end() == "licence:" {
+                inside = true;
+                continue;
+            }
+            if inside && (line.trim().is_empty() || line.starts_with(' ')) {
+                continue;
+            }
+            inside = false;
+            out.push_str(line);
+        }
+        out
+    }
+
+    #[test]
+    fn a_profile_or_a_policy_that_cannot_be_read_is_an_error_naming_the_file() {
+        // a profile that is a directory is invalid, not unknown, and names its path
+        let share = repository(&[("README.md", "x")]);
+        std::fs::create_dir_all(share.path().join("design/kits/odd.yaml")).unwrap();
+        let err = Profile::load(share.path(), "odd").unwrap_err();
+        assert!(
+            matches!(&err, ProfileError::Invalid(m) if m.contains("design/kits/odd.yaml")),
+            "{err:?}"
+        );
+        // a profile that does not parse stops the judgement and the adoption alike
+        let broken = repository(&[("design/kits/flowbite-pro.yaml", "id: [unclosed\n")]);
+        let dir = repository(&[(POLICY, POLICY_TEXT), ("index.html", "<p></p>")]);
+        let err = inspect(dir.path(), broken.path(), None).unwrap_err();
+        assert!(err.contains("flowbite-pro.yaml"), "{err}");
+        assert!(matches!(
+            adopt(dir.path(), broken.path(), DEFAULT_PROFILE, true),
+            Err(AdoptError::Internal(_))
+        ));
+        // a policy path that cannot be read is an error, where an absent one is no policy
+        let odd = repository(&[("index.html", "<p></p>")]);
+        std::fs::create_dir_all(odd.path().join(POLICY)).unwrap();
+        let err = inspect(odd.path(), &crate::synthetic::crate_share(), None).unwrap_err();
+        assert!(err.starts_with(POLICY), "{err}");
+    }
+
+    #[test]
+    fn a_profile_that_declares_no_readable_licence_judges_none_and_says_why() {
+        let dir = repository(&[("index.html", "<p></p>")]);
+        let mut p = profile();
+        p.licence.as_mut().unwrap().evidence = "other-evidence/v9".into();
+        let (state, reason) = licence_answer(dir.path(), &p, None);
+        assert_eq!(state, LicenceState::NotJudged);
+        assert!(reason.unwrap().contains("names other-evidence/v9 evidence"));
+        p.licence = None;
+        let (state, reason) = licence_answer(dir.path(), &p, None);
+        assert_eq!(state, LicenceState::NotJudged);
+        assert!(reason.unwrap().contains("declares no licence"));
+        // inspected under such a profile, the report carries no licence at all
+        let share = repository(&[(
+            "design/kits/flowbite-pro.yaml",
+            &profile_text_without_licence(),
+        )]);
+        let r = inspect(dir.path(), share.path(), None).unwrap();
+        assert!(r.ui && r.licence.is_none(), "{r:#?}");
+    }
+
+    #[test]
+    fn a_reported_runtime_without_markup_is_reported_by_its_package_alone() {
+        let mut p = profile();
+        for r in &mut p.reported {
+            r.markup = None;
+        }
+        let mut files = conformant();
+        files.insert(
+            "package.json",
+            r#"{"devDependencies": {"tailwindcss": "^4.1.0", "flowbite": "^4.0.1", "alpinejs": "3"}}"#
+                .into(),
+        );
+        files.insert("about.html", "<div x-data=\"{}\"></div>".into());
+        let r = judge(
+            &tree(&files),
+            &p,
+            &KitPolicy::absent(),
+            LicenceState::NotJudged,
+        )
+        .unwrap();
+        assert!(
+            r.reported.iter().any(|n| n.contains("declares alpinejs")),
+            "{r:#?}"
+        );
+        assert!(
+            !r.reported.iter().any(|n| n.contains("markup file(s)")),
+            "no markup expression, no markup count: {r:#?}"
+        );
+    }
+
+    #[test]
+    fn a_git_tree_is_listed_only_from_its_top_and_only_its_readable_files_are_read() {
+        let dir = repository(&[
+            ("index.html", "<p></p>"),
+            ("src/app.min.js", "x"),
+            ("src/main.js", "import 'flowbite';\n"),
+            ("gone.html", "<p></p>"),
+        ]);
+        std::fs::write(dir.path().join("binary.html"), [0xff_u8, 0xfe, 0x00]).unwrap();
+        git_in(dir.path(), &["init", "-q", "."]);
+        git_in(dir.path(), &["add", "-A"]);
+        // a file Git still lists that is gone from the work tree is not there
+        std::fs::remove_file(dir.path().join("gone.html")).unwrap();
+        // a link Git lists is no file of the tree
+        std::os::unix::fs::symlink("index.html", dir.path().join("link.html")).unwrap();
+        let tree = Tree::read(dir.path(), &profile()).unwrap();
+        assert!(tree.paths.contains("index.html") && tree.paths.contains("src/main.js"));
+        for absent in ["src/app.min.js", "gone.html", "link.html"] {
+            assert!(!tree.paths.contains(absent), "{absent}: {tree:?}");
+        }
+        // a file that is no UTF-8 is listed, and its text is not read
+        assert!(tree.paths.contains("binary.html") && !tree.texts.contains_key("binary.html"));
+        // below the top of the work tree Git's listing is not used
+        assert!(git_files(dir.path()).is_some());
+        assert!(git_files(&dir.path().join("src")).is_none());
+        // nor where Git cannot list the index
+        std::fs::write(dir.path().join(".git/index"), "not an index").unwrap();
+        assert!(git_files(dir.path()).is_none());
+    }
+
+    #[test]
+    fn a_walk_fails_only_at_its_root_and_lists_only_files_within_the_size_limit() {
+        let mut p = profile();
+        assert!(walked_files(&std::env::temp_dir().join("no-such-tree-of-the-kit"), &p).is_err());
+        let dir = repository(&[("index.html", "<p></p>"), ("locked/a.html", "<p></p>")]);
+        std::os::unix::fs::symlink("index.html", dir.path().join("link.html")).unwrap();
+        let locked = dir.path().join("locked");
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o000)).unwrap();
+        let walked = walked_files(dir.path(), &p);
+        std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o755)).unwrap();
+        // a directory below the root that cannot be read is passed over, and a link is no file
+        let walked = walked.unwrap();
+        assert!(walked.contains("index.html") && !walked.contains("link.html"));
+        // a file over the profile's limit is not listed
+        p.max_file_bytes = 1;
+        assert!(!Tree::read(dir.path(), &p)
+            .unwrap()
+            .paths
+            .contains("index.html"));
+    }
+
+    #[test]
+    fn s0_nested_manifests_count_by_their_packages_and_share_a_surface_by_directory() {
+        let r = with(|f| {
+            f.insert(
+                "package.json",
+                r#"{"workspaces": {"packages": ["packages/*"]}, "devDependencies": {"tailwindcss": "^4.1.0", "flowbite": "^4.0.1"}}"#
+                    .into(),
+            );
+            f.insert(
+                "packages/ui/package.json",
+                r#"{"dependencies": {"flowbite": "^4.0.1"}}"#.into(),
+            );
+            // a manifest declaring none of the packages is neither a surface nor a notice
+            f.insert(
+                "tools/package.json",
+                r#"{"dependencies": {"lodash": "4"}}"#.into(),
+            );
+            f.insert("tools/index.html", "<p></p>".into());
+            // a Mix project not on LiveView is no app
+            f.insert(
+                "tools/mix.exs",
+                "defp deps, do: [{:jason, \"~> 1.4\"}]\n".into(),
+            );
+            // a bundle manifest with no Mix project above it is its own directory's
+            f.insert(
+                "apps/a/assets/package.json",
+                r#"{"dependencies": {"tailwindcss": "^4.1.0"}}"#.into(),
+            );
+            f.insert("apps/a/assets/index.html", "<p></p>".into());
+            // a Phoenix app's two manifests are one surface
+            f.insert(
+                "apps/web/mix.exs",
+                "{:phoenix_live_view, \"~> 1.0\"}\n".into(),
+            );
+            f.insert(
+                "apps/web/assets/package.json",
+                r#"{"dependencies": {"tailwindcss": "^4.1.0"}}"#.into(),
+            );
+            f.insert(
+                "apps/web/package.json",
+                r#"{"dependencies": {"flowbite": "^4.0.1"}}"#.into(),
+            );
+            f.insert("apps/web/lib/page.html.heex", "<p></p>".into());
+            // what a deploy script copies out of node_modules is no published site
+            f.insert("deploy.sh", "rsync -a node_modules/ host:/srv\n".into());
+        });
+        let surface = |dir: &str| r.surfaces.iter().find(|s| s.dir == dir);
+        assert_eq!(
+            surface("packages/ui").map(|s| s.kind),
+            Some(KitSurfaceKind::Workspace),
+            "{r:#?}"
+        );
+        assert!(surface("tools").is_none(), "{r:#?}");
+        assert!(!r.notices.iter().any(|n| n.contains("tools/")), "{r:#?}");
+        assert!(surface("apps/a/assets").is_some(), "{r:#?}");
+        let web = surface("apps/web").expect("the Phoenix app");
+        assert_eq!(
+            web.manifests,
+            ["apps/web/assets/package.json", "apps/web/package.json"],
+            "{r:#?}"
+        );
+        assert!(
+            !r.ui_evidence.iter().any(|e| e.contains("node_modules")),
+            "{r:#?}"
+        );
+    }
+
+    #[test]
+    fn s2_a_tailwind_neither_3_nor_4_is_a_finding() {
+        let r = with(|f| {
+            f.insert(
+                "package.json",
+                r#"{"devDependencies": {"tailwindcss": "^2.2.0", "flowbite": "^4.0.1"}}"#.into(),
+            );
+        });
+        assert!(
+            r.findings.iter().any(|f| f.signal == KitSignal::S2
+                && f.evidence == "tailwindcss 2 is neither Tailwind 3 nor Tailwind 4"),
+            "{r:#?}"
+        );
+    }
+
+    #[test]
+    fn s5_a_heex_layout_is_judged_with_its_companion_only_when_that_is_another_file() {
+        for layout in ["app.html.heex", "root.html.heex"] {
+            let mut p = profile();
+            p.shell.layouts.push(layout.to_string());
+            let mut files = conformant();
+            files.remove("index.html");
+            files.insert(layout, "<main></main>".into());
+            let r = judge(
+                &tree(&files),
+                &p,
+                &KitPolicy::absent(),
+                LicenceState::NotJudged,
+            )
+            .unwrap();
+            assert!(
+                r.layouts.iter().any(|l| l == layout)
+                    && signals(&r).contains(&(KitSignal::S5, layout.to_string())),
+                "{layout}: {r:#?}"
+            );
+        }
+    }
+
+    #[test]
+    fn s5_a_marketing_layout_owes_a_navbar() {
+        let r = with(|f| {
+            f.insert(
+                "site/templates/base.html",
+                "<html><body><p>x</p></body></html>".into(),
+            );
+        });
+        assert!(
+            r.findings.iter().any(|f| f.signal == KitSignal::S5
+                && f.path == "site/templates/base.html"
+                && f.evidence.contains("is a marketing layout with no navbar")),
+            "{r:#?}"
+        );
+    }
+
+    #[test]
+    fn every_licensed_marker_is_named_and_the_first_one_found_is_where_the_finding_is() {
+        let mut p = profile();
+        let l = p.licence.as_mut().unwrap();
+        let again = l.markers.clone();
+        l.markers.extend(again);
+        let mut files = conformant();
+        files.insert(
+            "package.json",
+            r#"{"name": "flowbite-pro-site", "devDependencies": {"tailwindcss": "^4.1.0", "flowbite": "^4.0.1", "flowbite-pro-blocks": "1"}}"#
+                .into(),
+        );
+        files.insert("lib/flowbite-pro-2.3.0/app.js", "x".into());
+        let r = judge(
+            &tree(&files),
+            &p,
+            &KitPolicy::absent(),
+            LicenceState::NotJudged,
+        )
+        .unwrap();
+        let licence = r.licence.expect("a licence");
+        assert_eq!(licence.markers.len(), 6, "{licence:#?}");
+        assert!(
+            r.findings
+                .iter()
+                .any(|f| f.path == "lib/flowbite-pro-2.3.0/app.js"),
+            "{:#?}",
+            r.findings
+        );
+    }
+
+    #[test]
+    fn small_readers_pass_over_what_they_cannot_read() {
+        let tree = Tree::from_files([("bad/package.json", "not json")]);
+        let manifests = vec![
+            "absent/package.json".to_string(),
+            "bad/package.json".to_string(),
+        ];
+        assert!(manifest_deps(&tree, &manifests).is_empty());
+        // a ui: block that is no mapping cannot be extended with the kit
+        let err = policy_with_kit("ui:\n  - a\n", DEFAULT_PROFILE).unwrap_err();
+        assert!(err.contains("not written as a block mapping"), "{err}");
+        // what adoption would write must read back
+        let entries = [Entry {
+            name: ON_PUSH,
+            wired_by: "git-hook:pre-push".into(),
+        }];
+        let err = reads_back("a:\n\tb: 1\n", &entries).unwrap_err();
+        assert!(
+            matches!(&err, AdoptError::Refused(m) if m.contains("would not parse after adoption")),
+            "{err:?}"
+        );
+        let err = reads_back("version: 1\n", &entries).unwrap_err();
+        assert!(
+            matches!(&err, AdoptError::Refused(m) if m.contains("could not be extended with design-kit-on-push")),
+            "{err:?}"
+        );
+    }
+
+    #[test]
+    fn adoption_declares_a_gitlab_pipeline_as_the_ci_workflow() {
+        let share = shipped_share();
+        let dir = repository(&[
+            (POLICY, POLICY_TEXT),
+            (".gitlab-ci.yml", "stages: [test]\n"),
+        ]);
+        let r = adopt(dir.path(), share.path(), DEFAULT_PROFILE, true).unwrap();
+        assert_eq!(r.ci_workflow.as_deref(), Some(".gitlab-ci.yml"), "{r:#?}");
     }
 }
