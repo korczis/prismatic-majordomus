@@ -2005,6 +2005,7 @@ impl Cooperation {
             .spawn(move || {
                 tracing::info!(runtime_id = %me.own_key, repository_id = %me.repository.id, "mesh cooperation started");
                 let mut tick: u64 = 0;
+                let mut refused_seen: u64 = 0;
                 while !me.stop.load(Ordering::SeqCst) {
                     // probed before the beat: a beat is then also the word that the store
                     // this runtime offers answered (I2671)
@@ -2017,7 +2018,11 @@ impl Cooperation {
                     if tick % 12 == 11 {
                         me.close_ended_clients();
                     }
-                    if tick % 60 == 59 {
+                    // on schedule, and at once when a peer's events were refused for capacity
+                    // since the last beat: a full quota refuses a release too (I2825)
+                    let refused = me.journal.capacity_refusals();
+                    if tick % 60 == 59 || refused > refused_seen {
+                        refused_seen = refused;
                         me.journal
                             .compact(me.expiry(), PEER_RETENTION, HANDOVER_RETENTION, false);
                     }
