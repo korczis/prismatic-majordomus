@@ -55,6 +55,7 @@ The schema is `share/schemas/majordomus/fleet-declaration/fleet-declaration.v1.s
 
 ## The operation
 
+<!-- majordomus:unrun they reach the machines the fleet declares over ssh; case 1003 runs plan, status and rollout against stub hosts -->
 ```sh
 majordomus fleet plan                    # what a rollout would do; reaches nothing
 majordomus fleet status                  # what every machine runs; changes nothing; exits 10 if one is unreachable
