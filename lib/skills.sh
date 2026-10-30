@@ -28,8 +28,17 @@ mj_cmd_skills() {
     list) mj_skills_list "$@" ;;
     show) [ $# -ge 1 ] || mj_die "$MJ_EX_USAGE" "skills show: a skill id is required"; mj_skills_show "$@" ;;
     check) mj_skills_check "$@" ;;
+    # The standing of a skill (tested, documented, enforced, used) is the executable's
+    # derivation, and doctor's remedies name these commands (I4253): handed over with their
+    # arguments unchanged, and with the global options this launcher took.
+    status|explain|verify)
+      local -a fwd=()
+      [ -z "${MJ_REPO:-}" ] || fwd+=(--repo "$MJ_REPO")
+      [ -x "$MJ_BIN_DIR/majordomus-cli" ] \
+        || mj_die "$MJ_EX_MISSING" "skills $sub: the executable is not installed beside this tool ($MJ_BIN_DIR/majordomus-cli)"
+      exec "$MJ_BIN_DIR/majordomus-cli" skills "$sub" "${fwd[@]+"${fwd[@]}"}" "$@" ;;
     --help|-h|"") mj_skills_usage; [ "$sub" = "" ] && return "$MJ_EX_USAGE"; return 0 ;;
-    *) mj_die "$MJ_EX_USAGE" "skills: unknown subcommand '$sub' (list|show|check)" ;;
+    *) mj_die "$MJ_EX_USAGE" "skills: unknown subcommand '$sub' (list|show|check|status|explain|verify)" ;;
   esac
 }
 
@@ -38,6 +47,9 @@ mj_skills_usage() {
 usage: majordomus skills list [--json]          every skill: id, status, version, description
        majordomus skills show <id> [--json]     one skill: its path, then the file as written
        majordomus skills check [--json]         validate every skill and every reference it makes
+       majordomus skills status|explain <id>|verify
+                                                the executable's standing of each skill: tested,
+                                                documented, enforced, used; the remedies doctor names
   a skill is $(mj_rel "$MJ_SKILLS_DIR")/<id>/$MJ_SKILL_FILE: front matter (schema: $MJ_SKILL_SCHEMA, id = directory,
   version, title, description, status: $(printf '%s' "$MJ_SKILL_STATUSES" | sed 's/ /|/g'); optional tags, related, inputs, outputs)
   over a body with the sections $(printf '%s' "$MJ_SKILL_SECTIONS" | sed -e 's/ /, # /g' -e 's/^/# /'); examples live in <id>/examples/*.md
