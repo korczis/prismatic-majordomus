@@ -6963,7 +6963,7 @@
         "summary": "Knowledge is derived at the episode boundary, from the ledger and git, and a person promotes it",
         "route": "/cockpit/objects/adr/adr-0091",
         "source": ".ai/repo/adrs/0091-knowledge-is-derived-at-the-episode-boundary-and-a-person-promotes-it.md",
-        "status": "proposed",
+        "status": "accepted",
         "facts": {
           "date": "2026-09-12",
           "related": [
@@ -17359,14 +17359,6 @@
         "summary": "Planning — milestones, issues, and the graph between them",
         "route": "/cockpit/objects/document/docs-planning-md",
         "source": "docs/PLANNING.md"
-      },
-      {
-        "id": "majordomus://document/docs/PLAN_STATUS.md",
-        "kind": "document",
-        "label": "docs/PLAN_STATUS.md",
-        "summary": "Plan status",
-        "route": "/cockpit/objects/document/docs-plan-status-md",
-        "source": "docs/PLAN_STATUS.md"
       },
       {
         "id": "majordomus://document/docs/PREFLIGHT.md",
@@ -50645,12 +50637,6 @@
             "readme_claims_bound"
           ],
           "milestone": "a-claim-stands-only-on-its-evidence",
-          "non_scope": [
-            "Marketing rewrite",
-            "README.md:7 'lightweight', the product sentence and every page title (I3134)",
-            "The 'portable shell ... no server' clause of README.md:20 and site/content/getting-started.md (I2971, in flight on another branch)",
-            "A ratchet-baseline count in README (I3116's table is the projection)"
-          ],
           "priority": "p1",
           "profile": "verification",
           "scope": [
@@ -50663,7 +50649,7 @@
             "a-claim-stands-only-on-its-evidence#public-text-true"
           ],
           "slug": "readme-states-what-master-does",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-10-30",
           "validation": [
             "scripts/ci/claim-proof-check",
             "scripts/ci/english-only-check"
@@ -52796,7 +52782,8 @@
           "non_scope": [
             "Rewriting notes automatically",
             "Lowering devcontext selector confidence for a stale note",
-            "Failing knowledge validate because a cited file moved"
+            "Failing knowledge validate because a cited file moved",
+            "Blocking on needs-review, until promoted: the owner decided on 2026-10-30 (P00 question Q-H1) that needs-review starts advisory, and promoting it to blocking is a later, separate decision"
           ],
           "objective": "Have knowledge validate and the context compiler compare each cited provenance.derived_from file with the blob recorded at the note's last review and mark the note needs-review when it differs.",
           "priority": "p2",
@@ -52816,7 +52803,7 @@
             "the-layer-evolves-when-it-is-due#a-moved-source-is-flagged"
           ],
           "slug": "a-note-whose-source-moved-is-flagged",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-10-30",
           "validation": [
             "bash test/run.sh 3075_knowledge_validate_judges_the_graph"
           ]
@@ -74615,7 +74602,7 @@
         "id": "majordomus://issue/I4465",
         "kind": "issue",
         "label": "I4465",
-        "summary": "doctrine show prints the principle a rule rests on, derived from its depends_on, and doctrine status names the enforced rules that rest on none",
+        "summary": "Every enforced rule names the principle it rests on, doctrine show prints it, doctrine status counts the rules that name none, and a rule's class is called its binding level",
         "route": "/cockpit/objects/issue/i4465",
         "source": ".ai/repo/project/issues/I4465.yaml",
         "facts": {
@@ -74626,8 +74613,10 @@
           ],
           "milestone": "a-bounded-task-is-carried-to-accepted-work",
           "non_scope": [
-            "Giving the 13 rules a principle, enforcing the README claim, or narrowing it: the owner's question Q-principle of the P00 report",
-            "A binding field on rules or renaming class: the owner's question Q-H5",
+            "Narrowing the README claim instead of fixing the rules: decided against by the owner on 2026-10-30 (P00 question Q-principle)",
+            "A binding field on rules, renaming class, or any change to the class of rule.v1 (share/schemas/majordomus/rule, share/allow/rule.txt): decided against by the owner on 2026-10-30 (P00 question Q-H5)",
+            "A new version of any of the 13 rules: naming the principle a rule already rests on changes neither its statement nor what its validator decides",
+            "Making `doctrine status` refuse: the count is reported; the claim is held by case 4465",
             "Rule-to-validator and rule-to-test edges in the composed graph, and one traversal of the whole chain: I1003 and the P00 slices R2 and R3",
             "The Rust `rules show` projection"
           ],
@@ -74638,6 +74627,23 @@
             ".ai/repo/project/issues/I4465.yaml",
             "lib/doctrine.sh",
             "docs/CLI.md",
+            "docs/DOCTRINE.md",
+            "apps/majordomus-cli/src/graph.rs",
+            "share/standard/majordomus/rules/candidates-reviewed.v1.md",
+            "share/standard/majordomus/rules/completion-gates.v1.md",
+            "share/standard/majordomus/rules/deployment-contract.v2.md",
+            "share/standard/majordomus/rules/knowledge-graph.v1.md",
+            "share/standard/majordomus/rules/knowledge-integrity.v1.md",
+            "share/standard/majordomus/rules/knowledge-observed.v1.md",
+            "share/standard/majordomus/rules/lifecycle-observed.v1.md",
+            "share/standard/majordomus/rules/obligation-closure.v1.md",
+            "share/standard/majordomus/rules/prompt-continuity.v1.md",
+            "share/standard/majordomus/rules/publication-currency.v1.md",
+            "share/standard/majordomus/rules/record-changed-files.v1.md",
+            "share/standard/majordomus/rules/task-on-the-mesh.v1.md",
+            "share/standard/majordomus/rules/use-case-coverage.v1.md",
+            "share/standard/majordomus/manifest.yaml",
+            ".ai/repo/rules/vendor/majordomus",
             "test/cases/18_doctrine_wiring.sh",
             "test/cases/4465_doctrine_show_names_the_principle.sh"
           ],
@@ -74646,6 +74652,8 @@
           "updated_at": "2026-10-30",
           "validation": [
             "MJ_TEST_JOBS=4 bash test/run.sh 4465_doctrine_show_names_the_principle 18_doctrine_wiring 36_command_doctrines 44_model_doctrine",
+            "scripts/rules-package check",
+            "bin/majordomus rules vendor status",
             "bin/majordomus shell check",
             "bin/majordomus doctor",
             "bin/majordomus plan validate"
@@ -74737,6 +74745,134 @@
           "updated_at": "2026-10-30",
           "validation": [
             "MJ_TEST_JOBS=4 bash test/run.sh 4467_a_handover_names_the_work_it_delegated 05_handover 25_continuity_lifecycle",
+            "bin/majordomus shell check",
+            "bin/majordomus doctor",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4468",
+        "kind": "issue",
+        "label": "I4468",
+        "summary": "Every exemption is written in one grammar (scope, rule, reason, approver, an expiry or a removal condition, shrink-only) that generate inlines into each existing shape, and the README describes declared exemptions instead of denying them",
+        "route": "/cockpit/objects/issue/i4468",
+        "source": ".ai/repo/project/issues/I4468.yaml",
+        "facts": {
+          "created_at": "2026-10-30",
+          "depends_on": [],
+          "evidence_required": [
+            "exemption_grammar_case"
+          ],
+          "milestone": "a-bounded-task-is-carried-to-accepted-work",
+          "non_scope": [
+            "One exemption store or index the shapes are moved into: option C, decided against by the owner on 2026-10-30 (P00 question Q-H6)",
+            "Paying down any exemption or baseline",
+            "The derived table of the ratchet baselines with their trend: I3116, which reads these fields once they exist",
+            "The model-invocation and expedited-landing sentences of README.md and docs/LAUNCH.md: I3117",
+            "Rust lint `allow` attributes and shellcheck directives inside source files, which the rust-quality and shell baselines already cover as scope"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4468.yaml",
+            "share/schemas/majordomus/exemption",
+            "share/schemas/majordomus/rule",
+            "share/schemas/majordomus/context",
+            "share/schemas/majordomus/policy",
+            "share/allow",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/capability/model.rs",
+            "apps/majordomus-cli/src/commands/generate.rs",
+            "apps/majordomus-cli/src/automation",
+            "apps/majordomus-cli/src/release/version.rs",
+            "apps/majordomus-cli/src/rules",
+            "lib",
+            "scripts/ci",
+            ".ai/repo/policy.yaml",
+            ".ai/repo/rules/README.md",
+            ".ai/repo/automation/inventory.jsonl",
+            ".ai/repo/version-label-history.txt",
+            ".ai/repo/ci",
+            ".ai/repo/evidence/published-not-run.txt",
+            ".ai/repo/claim-proof-baseline.txt",
+            ".ai/repo/commit-policy-baseline.txt",
+            ".ai/repo/development-semantics-baseline.txt",
+            ".ai/repo/diagram-baseline.txt",
+            ".ai/repo/doc-command-baseline.txt",
+            ".ai/repo/evidence-baseline.txt",
+            ".ai/repo/lease-reader-baseline.txt",
+            ".ai/repo/liveness-baseline.txt",
+            ".ai/repo/mcp-tool-run-baseline.txt",
+            ".ai/repo/order-baseline.txt",
+            ".ai/repo/pipefail-baseline.txt",
+            ".ai/repo/release-record-baseline.txt",
+            ".ai/repo/rule-proof-baseline.txt",
+            ".ai/repo/rust-quality-baseline.txt",
+            ".ai/repo/source-pin-baseline.txt",
+            ".ai/repo/ui-integrity-baseline.txt",
+            "README.md",
+            "docs/DOCTRINE.md",
+            "docs/CLAIMS.yaml",
+            "test/cases/4468_every_exemption_names_its_approver_and_its_end.sh"
+          ],
+          "serves": [],
+          "slug": "every-exemption-names-its-approver-and-its-end",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "MJ_TEST_JOBS=4 bash test/run.sh 4468_every_exemption_names_its_approver_and_its_end",
+            "bin/majordomus-cli generate --check",
+            "scripts/ci/claim-proof-check",
+            "bin/majordomus shell check",
+            "bin/majordomus doctor",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4469",
+        "kind": "issue",
+        "label": "I4469",
+        "summary": "A knowledge record may say where it holds, in an optional typed holds_for (subsystem, version, environment), and a task's context matches it against the task's scope",
+        "route": "/cockpit/objects/issue/i4469",
+        "source": ".ai/repo/project/issues/I4469.yaml",
+        "facts": {
+          "created_at": "2026-10-30",
+          "depends_on": [
+            "I3318"
+          ],
+          "evidence_required": [
+            "holds_for_matched_case"
+          ],
+          "milestone": "a-bounded-task-is-carried-to-accepted-work",
+          "non_scope": [
+            "Making holds_for required, or backfilling it on the existing curated notes",
+            "Deriving holds_for from git history or from `about`: the writer of a note declares it",
+            "Knowledge references as edges of the composed graph and their backlinks: I3318",
+            "Flagging a note whose cited sources moved: I3166"
+          ],
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4469.yaml",
+            "share/schemas/majordomus/knowledge/knowledge.v1.proto",
+            "share/schemas/majordomus/knowledge/knowledge.v1.schema.json",
+            "share/allow/knowledge.txt",
+            "lib/knowledge.sh",
+            "lib/context.sh",
+            "apps/majordomus-cli/src/devcontext",
+            "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+            "docs/KNOWLEDGE.md",
+            "test/cases/4469_a_note_says_where_it_holds.sh"
+          ],
+          "serves": [],
+          "slug": "a-note-says-where-it-holds",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "MJ_TEST_JOBS=4 bash test/run.sh 4469_a_note_says_where_it_holds 3075_knowledge_validate_judges_the_graph",
+            "majordomus generate --check",
             "bin/majordomus shell check",
             "bin/majordomus doctor",
             "bin/majordomus plan validate"
@@ -120340,11 +120476,6 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://document/docs/PLAN_STATUS.md",
-        "target": "kind:document",
-        "kind": "is_a"
-      },
-      {
         "source": "majordomus://document/docs/PREFLIGHT.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -138275,6 +138406,31 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4468",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4468",
+        "target": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4469",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4469",
+        "target": "majordomus://issue/I3318",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4469",
+        "target": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -149966,8 +150122,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4106,
-      "edges": 9476,
+      "nodes": 4107,
+      "edges": 9480,
       "acyclic": false,
       "truncated": false
     }
