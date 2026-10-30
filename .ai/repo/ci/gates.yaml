@@ -105,6 +105,7 @@ gates:
   # which no path class would be sure to name.
   - id: visualisation-check
     job: structure
+    lane: feedback
     always: true
     runs: scripts/ci/visualisation-check
     summary: every served script that draws binds a way from its marks to the records they stand for, and the drawings that still do not are a named debt that may not grow
