@@ -100,6 +100,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus worktree cleanup`](#majordomus-worktree-cleanup) | `/docs/cli/worktree/cleanup/` | The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing without --remove |
 | [`majordomus worktree uncommitted`](#majordomus-worktree-uncommitted) | `/docs/cli/worktree/uncommitted/` | Every linked worktree holding uncommitted work: how many paths, how old the oldest change, what holds it (an active task, an open episode, a process inside) and whether it is abandoned, with the command that would put it on a remote ref. Reads every worktree and writes none |
 | [`majordomus worktree trunk`](#majordomus-worktree-trunk) | `/docs/cli/worktree/trunk/` | How far this checkout and the local trunk are from the remote trunk, as of the last fetch, judged against the policy's checkout.trunk_distance: current, lagging, stale, unjudged or unmeasured, with the commands that bring it current. Fetches nothing; exit 10 when stale |
+| [`majordomus worktree reconcile`](#majordomus-worktree-reconcile) | `/docs/cli/worktree/reconcile/` | What becomes of every branch and every worktree: one state each (active, dirty, unreadable, unpublished, orphaned, unstarted, merged, equivalent, conflicted, stale, ready) decided from git and the kernel, never from an age, with the readings that decided it, the one step it permits and the command that takes it. With a selector, that one subject and why. Changes nothing without --apply |
 | [`majordomus worktree branches`](#majordomus-worktree-branches) | `/docs/cli/worktree/branches/` | Every local branch, one per line, for a shell completion that wants the live set |
 | [`majordomus prs`](#majordomus-prs) | `/docs/cli/prs/` | Pull-request integration: every open pull request classified against the current master with its evidence, the ranked plan, and the executor that merges the next provably safe one — one at a time, re-planning after each (ADR 0101) |
 | [`majordomus prs status`](#majordomus-prs-status) | `/docs/cli/prs/status/` | Every open pull request with its disposition, risk and reason, in rank order, from the last recorded observation; exit 10 when the observation is stale or absent |
@@ -2381,7 +2382,7 @@ Examples:
 
 The branch-to-worktree topology: where every linked worktree belongs (`<repo>-wt/<branch>`), where each one is, and the lifecycle — create, migrate, repair, guard
 
-Subcommands: [`majordomus worktree status`](#majordomus-worktree-status), [`majordomus worktree list`](#majordomus-worktree-list), [`majordomus worktree topology`](#majordomus-worktree-topology), [`majordomus worktree root`](#majordomus-worktree-root), [`majordomus worktree path`](#majordomus-worktree-path), [`majordomus worktree inspect`](#majordomus-worktree-inspect), [`majordomus worktree create`](#majordomus-worktree-create), [`majordomus worktree ensure`](#majordomus-worktree-ensure), [`majordomus worktree migrate`](#majordomus-worktree-migrate), [`majordomus worktree validate`](#majordomus-worktree-validate), [`majordomus worktree doctor`](#majordomus-worktree-doctor), [`majordomus worktree guard`](#majordomus-worktree-guard), [`majordomus worktree repair`](#majordomus-worktree-repair), [`majordomus worktree remove`](#majordomus-worktree-remove), [`majordomus worktree cleanup`](#majordomus-worktree-cleanup), [`majordomus worktree uncommitted`](#majordomus-worktree-uncommitted), [`majordomus worktree trunk`](#majordomus-worktree-trunk), [`majordomus worktree branches`](#majordomus-worktree-branches).
+Subcommands: [`majordomus worktree status`](#majordomus-worktree-status), [`majordomus worktree list`](#majordomus-worktree-list), [`majordomus worktree topology`](#majordomus-worktree-topology), [`majordomus worktree root`](#majordomus-worktree-root), [`majordomus worktree path`](#majordomus-worktree-path), [`majordomus worktree inspect`](#majordomus-worktree-inspect), [`majordomus worktree create`](#majordomus-worktree-create), [`majordomus worktree ensure`](#majordomus-worktree-ensure), [`majordomus worktree migrate`](#majordomus-worktree-migrate), [`majordomus worktree validate`](#majordomus-worktree-validate), [`majordomus worktree doctor`](#majordomus-worktree-doctor), [`majordomus worktree guard`](#majordomus-worktree-guard), [`majordomus worktree repair`](#majordomus-worktree-repair), [`majordomus worktree remove`](#majordomus-worktree-remove), [`majordomus worktree cleanup`](#majordomus-worktree-cleanup), [`majordomus worktree uncommitted`](#majordomus-worktree-uncommitted), [`majordomus worktree trunk`](#majordomus-worktree-trunk), [`majordomus worktree reconcile`](#majordomus-worktree-reconcile), [`majordomus worktree branches`](#majordomus-worktree-branches).
 
 ```text
 majordomus worktree [OPTIONS] [COMMAND]
@@ -2884,6 +2885,55 @@ Examples:
   ```
 
   Verified: exits 0; prints unmeasured, no remote-tracking branch.
+
+<a id="majordomus-worktree-reconcile"></a>
+## `majordomus worktree reconcile`
+
+What becomes of every branch and every worktree: one state each (active, dirty, unreadable, unpublished, orphaned, unstarted, merged, equivalent, conflicted, stale, ready) decided from git and the kernel, never from an age, with the readings that decided it, the one step it permits and the command that takes it. With a selector, that one subject and why. Changes nothing without --apply
+
+```text
+majordomus worktree reconcile [OPTIONS] [SELECTOR]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<SELECTOR>` | `<SELECTOR>` | — | One branch, or the path of one detached worktree: print its state and every reason |
+| `--apply` | flag | — | Take the steps whose proof is complete, each subject measured again first: remove the clean worktree of a branch the trunk contains, and delete a branch whose every commit a remote holds and whose merge would change nothing. Uncommitted work, a worktree a process works in and an unpublished commit are never touched |
+| `--include-scratch` | flag | — | With --apply, also remove scratch checkouts and detached worktrees whose proof is complete. Without it they are listed and left to whoever made them |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What becomes of every branch and worktree** — Every non-trunk branch and every detached worktree with the one state git supports for it and the one step that state permits. A branch cut from the trunk and never published is `unstarted` and kept: it reads exactly like one that landed, and only having been published tells them apart. The reading removes nothing.
+
+  ```console
+  $ majordomus worktree create feature/improve-cli
+  $ majordomus worktree reconcile
+  ```
+
+  Verified: exits 0; prints unstarted, feature/improve-cli, nothing to reconcile.
+
+- **Why is this worktree still here?** — With a selector the answer is one subject: its state, its step, and every reading that decided it, one per line.
+
+  ```console
+  $ majordomus worktree create feature/improve-cli
+  $ majordomus worktree reconcile feature/improve-cli
+  ```
+
+  Verified: exits 0; prints unstarted, the trunk reaches the branch.
+
+- **Carry out what is proven, and nothing else** — `--apply` takes only the steps whose proof is complete, each subject measured again immediately before it goes. Here nothing is removable on proof, so it removes nothing; run twice, the second run reads the same.
+
+  ```console
+  $ majordomus worktree create feature/improve-cli
+  $ majordomus worktree reconcile --apply
+  ```
+
+  Verified: exits 0; prints 0 worktree(s) removed, 0 branch(es) deleted, 0 refused.
 
 <a id="majordomus-worktree-branches"></a>
 ## `majordomus worktree branches`
