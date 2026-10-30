@@ -1,0 +1,65 @@
+id: I4371
+milestone: adopter-upgrades
+title: "An adopter's pull-request and trunk projection workflows are rendered from the tool by `majordomus update`, pinned to a release digest written into the workflow, with a read-only derive job apart from the writing one"
+slug: an-adopters-projection-workflows-are-generated
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "A new projection kind, a workflow, is declared in the adopter's .ai/repo/policy.yaml `projections` list beside the provider bootstraps (for example `- workflow: github-pr-meta` with `target: .github/workflows/pr-meta.yml`); the policy schema and its generated allow-list admit the key, and an entry carries exactly one of provider and workflow. Its templates ship in the tool under share/ci/github/{pr-meta,projection}.yml.tmpl, which the release archive already carries because scripts/release-package copies share/ whole. `majordomus update` renders them from the adopter's .ai/repo/ci/pr-meta.yaml and .ai/repo/ci/github.yaml (trigger, concurrency, actor bound, default branch) and stamps them with a `#` comment, since the provider stamp is an HTML comment that is not YAML, so that `majordomus doctor` reports a hand edit, and a rendering that differs from what the current template and models produce, as drift. A rendered workflow installs the release that pr-meta.yaml `install.version` names, for the runner target `install.target`. The archive's sha256, a 64-hex digest, is written into the workflow text by `majordomus update`. It is taken from a declaration (pr-meta.yaml `install.sha256`, the line of that release's SHA256SUMS for the runner's archive), never fetched at run time, and update renders no workflow while the version or the digest is missing or the digest is not 64 hex. The install step downloads with `curl --fail --retry <n> --connect-timeout <s>`, runs `sha256sum -c` against the pinned digest in the same step before the binary runs, checks that the installed version is the pinned one, carries `timeout-minutes`, and never pipes a download to a shell or substitutes one into a command. The pull-request workflow runs on pull_request_target with the default branch checked out; it fetches the head and reads it as data with git, and never executes it. Its workflow-level permissions are empty, and it has two jobs, whose permissions the pr-meta.yaml model declares per job (`jobs.derive.permissions` and `jobs.project.permissions`; `actor.job` stays project). `derive` (permissions contents: read, pull-requests: read, issues: read, the issue read being what finds each record's GitHub number) runs the forge command's read-only verb, `majordomus forge render --prs --pr <n> --out <file>`, including any declared `facts:` command, and uploads that majordomus.forge-plan/v1 file of facts and owed writes as an artifact (I4370's hand-off). `project` (permissions contents: read, pull-requests: write, issues: read) needs derive, downloads that artifact and runs `majordomus forge apply --from <file>` on it, which derives nothing and executes no `facts:` command. The trunk workflow runs on push to the default branch with contents: read and issues: write, and its phases are github.yaml's owed, apply and prove, where prove is `majordomus forge check`, never scripts/ci/github-check, which is not shipped. Every job and every network step carries its own timeout and a bounded retry, and no step uses continue-on-error."
+why: "Without this each adopter hand-writes the two workflows the projection needs, the half of the projection that holds a write token, and every Majordomus upgrade leaves them stale. OSCILLA already hand-writes the pinned install once: its knowledge job pins MJ_VERSION 1.0.0-alpha.1 and MJ_SHA256 in job env and checks the archive with `sha256sum -c` (korczis/oscilla .github/workflows/ci.yml:336-358), and that pin is bumped by hand under its project.majordomus-layer-current. OSCILLA plans to commit exactly these files (its planned issue that adopts the forge command and these workflows). Its CI is judged by its own scripts/ci-workflow-rules.mjs under project.ci-bounded, which raises download-digest unless the step's run contains `sha256sum -c` and a pinned 64-hex digest appears in the step, its env or the job or workflow env (ci-workflow-rules.mjs:236-242, scope at :274), curl-flags for a curl without --retry <n> and --connect-timeout (:203-219), pipe-to-shell for a download piped into an interpreter or substituted into a command (:220-231), and job-timeout and step-timeout for an unbounded job or download step (:313-338). A digest read from release metadata at run time fails that rule, so the rendered output must already satisfy it. The provider templates are the wrong vehicle: .ai/repo/providers renders AI provider bootstraps under a line budget and carries no rule corpus (.ai/repo/providers/README.md), its renderer substitutes only upper-case policy tokens (lib/update.sh:190-207), and the policy schema requires `provider` on every projection (policy.v1.schema.json:420-444)."
+current_state: "Measured at 5370ee63d19: .ai/repo/policy.yaml:430-439 projections lists agents, claude-code, gemini and bb, each a provider template rendered to a bootstrap file; the policy schema requires provider and target and admits only always_loaded and mode beside them (share/schemas/majordomus/policy/policy.v1.schema.json:420-444, share/allow/policy.txt:61-64); lib/update.sh:57 resolves a template per provider through mj_provider_template (lib/common.sh:277-281), from .ai/repo/providers or share/providers; the stamp is an HTML comment (mj_stamp_line, lib/common.sh:1085-1088), and doctor's projection check compares a target only with its own stamp (mj_projection_status, lib/common.sh:1147-1162; lib/doctor.sh:313-342), so it reports a hand edit but not a template that changed since the render; .github/workflows/pr-meta.yml is hand-written for this repository (single job project, timeout-minutes 40, actions/checkout@v4 with a 5-minute step bound, workflow-level permissions pull-requests write, issues read, contents read); case 1097 section 11 refuses any job-level permissions in pr-meta.yml and requires those exact workflow-level ones (test/cases/1097_the_projection_is_applied_at_landing.sh:207-235), and case 3970 compares the workflow-level permissions with .ai/repo/ci/pr-meta.yaml (test/cases/3970_a_pull_request_carries_its_metadata.sh:244-245), whose actor is job project; nothing in share/ is a workflow template, and nothing in the tool reads .ai/repo/ci/pr-meta.yaml (only scripts and cases do); share/distribution.yaml:33-38 declares archive checksum sha256 in a SHA256SUMS file per release, archive name {binary}-{tag}-{target}.{extension}; .ai/repo/ci/github.yaml's phases are owed, apply and prove, and prove runs scripts/ci/github-check (github.yaml:91-94, github.yml:152), which scripts/release-package:86-95 does not ship. OSCILLA at origin/main 94192a19: its policy names no Majordomus version and projects AGENTS.md, CLAUDE.md in region mode and GEMINI.md (policy.yaml:189-197); .ai/repo/ci holds only README.md and gates.yaml, so pr-meta.yaml and github.yaml are OSCILLA's planned files; scripts/ci-workflow-rules.mjs (last changed at 2a5eef99845) imports only node built-ins and ./yaml-subset.mjs, which imports nothing, and its checkRepository reads <root>/package.json (:444)."
+desired_state: "An adopter declares the workflow projections, the pinned version and the pinned digest, runs `majordomus update`, and commits two workflows that are the tool's, pinned, bounded and split by permission; doctor fails while either differs from what the template and models render. Enforced by case 4371, which runs OSCILLA's own workflow rules over the rendered files, case 1097 section 11 extended to the rendered pull-request workflow, case 3970, and doctor's stamp check."
+scope:
+  - ".ai/repo/project/issues/I4371.yaml"
+  - "lib/update.sh"
+  - "lib/common.sh"
+  - "lib/doctor.sh"
+  - "share/ci/github"
+  - "share/schemas/majordomus/policy/policy.v1.schema.json"
+  - "share/schemas/majordomus"
+  - "share/allow/policy.txt"
+  - ".ai/repo/policy.yaml"
+  - ".ai/repo/ci/pr-meta.yaml"
+  - ".ai/repo/ci/github.yaml"
+  - ".github/workflows/pr-meta.yml"
+  - ".github/workflows/github.yml"
+  - "test/fixtures/oscilla-ci-workflow-rules"
+  - "test/cases/1097_the_projection_is_applied_at_landing.sh"
+  - "test/cases/3970_a_pull_request_carries_its_metadata.sh"
+  - "test/cases/4371_an_adopters_projection_workflows_are_generated.sh"
+  - "docs/ADOPTION.md"
+  - "docs/CI.md"
+non_scope:
+  - "The forge command itself (I4370)"
+  - "An adopter's other workflows, or merging any rendered workflow into an adopter (the adopter commits it)"
+  - "Provider bootstraps, whose mechanism stays as it is"
+  - "Fetching a digest from the network during `majordomus update`"
+acceptance_criteria:
+  - "Case 4371 renders both workflows into a fixture adopter whose .ai/repo/ci/pr-meta.yaml and github.yaml are shaped as OSCILLA's planned ones (repository korczis/oscilla, default branch main, install.version, install.target and install.sha256 declared). The pull-request workflow has empty workflow-level permissions and jobs derive and project; derive's permissions are exactly contents: read, pull-requests: read and issues: read; project's are exactly contents: read, pull-requests: write and issues: read; project needs derive; only derive runs a `facts:` command"
+  - "Case 4371 runs OSCILLA's scripts/ci-workflow-rules.mjs and yaml-subset.mjs, vendored at korczis/oscilla 2a5eef99845 under test/fixtures/oscilla-ci-workflow-rules/ with that commit named in a README beside them, with node and `--root` on a fixture tree holding the rendered files under .github/workflows/ and a minimal package.json, and they raise no finding; the case fails rather than skips when node is absent"
+  - "Mutations of the template each fail case 4371 through the vendored rules with the named finding: the install step without `sha256sum -c` or without the pinned 64-hex digest (download-digest), a curl without --retry or --connect-timeout (curl-flags), a `curl ... | sh` (pipe-to-shell), a job without timeout-minutes (job-timeout), a step with continue-on-error (non-fatal)"
+  - "Every rendered workflow parses as YAML, its stamp is a `#` comment, and `actionlint` reports nothing on it"
+  - "`majordomus update` with no `install.version` or `install.sha256` declared, or a digest that is not 64 hex, renders no workflow, names the missing or malformed key and exits non-zero; it makes no network request (case 08's scan holds)"
+  - "Case 1097 section 11 judges the rendered pull-request workflow as well as this repository's pr-meta.yml, and refuses one that checks out the head, executes anything from it, writes issues, or gives any job a permission the model does not declare"
+  - "Case 1097's section 11 compares each job's permissions in the pull-request workflow, this repository's and the rendered one, with pr-meta.yaml's `jobs.<job>.permissions`, and requires the workflow-level permissions to be empty when the jobs declare their own; a job whose permissions differ from the model, and a non-empty workflow-level block beside job-level ones, each fail it"
+  - "The derive job uploads the file `forge render --prs --pr <n> --out <file>` wrote and the project job applies it with `forge apply --from <file>`; the rendered project job contains no `forge render` and no `facts:` command"
+  - "The rendered trunk workflow's phases are owed, apply and prove, its prove phase runs `majordomus forge check`, and it names no scripts/ path"
+  - "`majordomus doctor` reports drift naming the file when a rendered workflow is edited by hand and when the shipped template or the model it was rendered from changes, and passes after `majordomus update`"
+  - "An adopter whose policy declares no workflow projection gets no workflow and no finding, and a projection entry carrying both provider and workflow is refused by the policy schema"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4371_an_adopters_projection_workflows_are_generated"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 1097_the_projection_is_applied_at_landing"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3970_a_pull_request_carries_its_metadata"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 08_no_forbidden_constructs"
+  - "bin/majordomus generate --check"
+  - "bin/majordomus doctor"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+  - "rendered_workflows_pass_the_adopters_rules"
+depends_on:
+  - "I3970"
+  - "I4370"
+serves: []
+created_at: 2026-10-29
+updated_at: 2026-10-29

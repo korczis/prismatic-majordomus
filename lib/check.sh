@@ -2,8 +2,10 @@
 # shellcheck disable=SC2034  # MJ_LABEL, MJ_TOUCHED_IN, MJ_BLOCKED are read by finish.sh and watch.sh
 # sourced by several commands; guard against re-sourcing
 [ -n "${MJ_LIB_check:-}" ] && return 0 || MJ_LIB_check=1
-# check — is the current task consistent with policy, scope, and state? Read-only,
-# except --checkpoint which updates checkpoint_at (the one documented write).
+# check — is the current task consistent with policy, scope, and state? Read-only, with
+# two documented writes: --checkpoint updates checkpoint_at, and on a repository whose mesh
+# is enabled an active task whose scope was never claimed on it is claimed when a server
+# answers (mesh_claim, the key `start` would have written; I2288).
 #
 # check runs no validator by name. It asks the doctrine dispatcher for everything the
 # effective rule set declares for this command, so a rule added to the package is
@@ -45,12 +47,17 @@ H
   fi
   if [ "$overlap" = 1 ]; then mj_report_overlap_from_current; return 0; fi
 
+  mj_mesh_task_repair_claim
   if [ -n "$only" ]; then mj_doctrine_one "$only" check; else mj_run_task_checks; fi
   if [ "$checkpoint" = 1 ]; then
-    local now; now="$(mj_now)"
-    sed "s/^checkpoint_at: .*/checkpoint_at: $now/" "$MJ_CUR" > "$MJ_CUR.mj-tmp" && mv "$MJ_CUR.mj-tmp" "$MJ_CUR"
-    mj_ledger_append task.checkpoint "\"task_id\":\"$id\""
-    mj_info checkpoint "$id" "recorded at $now"
+    local now fields=""; now="$(mj_now)"
+    mj_record_attribution
+    if [ -n "$MJ_RECORD_TASK" ]; then
+      sed "s/^checkpoint_at: .*/checkpoint_at: $now/" "$MJ_CUR" > "$MJ_CUR.mj-tmp" && mv "$MJ_CUR.mj-tmp" "$MJ_CUR"
+      fields="\"task_id\":\"$MJ_RECORD_TASK\""
+    fi
+    mj_ledger_append task.checkpoint "$fields" "$MJ_RECORD_SESSION"
+    mj_info checkpoint "${MJ_RECORD_TASK:-(no task)}" "recorded at $now"
   fi
   [ "$MJ_JSON" = 1 ] || printf 'check: %s finding(s), %s failing\n' "$MJ_FINDINGS" "$MJ_FAILS"
   [ "$MJ_FAILS" = 0 ] && exit "$MJ_EX_OK" || exit "$MJ_EX_CONTRACT"
@@ -81,6 +88,22 @@ mj_task_is_foreign() {
   local w; w="$(mj_cur worktree)"
   [ -n "$w" ] || return 1
   [ "$w" = "$MJ_ROOT" ] && return 1
+  return 0
+}
+
+# The repair of a task that started off the mesh (I2288): `start` could not claim — no
+# server came up, the runtime was switched off, the executable was stale — and a server that
+# answers now is all the task was missing, so `check` claims what `start` would have, with no
+# finish --outcome partial and second start. Only this checkout's active task, only on an
+# enabled mesh, only when the record carries no claim; silent when no server answers, because
+# the mesh doctrine reports exactly that. `finish --check` stays a question and claims nothing.
+mj_mesh_task_repair_claim() {
+  [ "$(mj_cur outcome)" = active ] || return 0
+  grep -q '^mesh_claim: ' "$MJ_CUR" 2>/dev/null && return 0
+  mj_task_is_foreign && return 0
+  mj_mesh_declared_enabled || return 0
+  mj_mesh_task_claim "$(mj_cur id)" "$(mj_ylist "$MJ_CUR_FLAT" scope | tr '\n' ' ')" "$(mj_cur task)" "$(mj_cur issue)"
+  [ "$MJ_MESH_CLAIMED" = 1 ] && { mj_load_current || true; }
   return 0
 }
 

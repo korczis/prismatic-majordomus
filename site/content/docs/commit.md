@@ -1,7 +1,7 @@
 +++
 title = "The commit"
 description = "the commit as a value: the one grammar the changelog and the judge share, the policy declared as data with its subject width measured from this history, the scope vocabulary learned from the log rather than kept in a table, the plan fingerprinted against repository, worktree, HEAD and change set, and where each of the three moments enforces it"
-weight = 28
+weight = 29
 [extra]
 source = "docs/COMMIT.md"
 +++
@@ -172,6 +172,12 @@ decision, and a decision is worth reading back.
 
 Every one is a `Diagnostic` — the same severity, code and message the rest of this executable
 reports with, so a finding reaches a terminal, a JSON consumer and an MCP client the same way.
+
+`commit.unresolved_reference` reads the layer of the tree being committed. An issue another
+open pull request introduces is not held there until that pull request lands, so a message
+that depends on it names the pull request (`#2642`) and leaves the id to the commit that
+follows the landing. An id that only a peer's announcement or a draft mentions is no more held:
+it stops the commit the same way.
 
 ## The scope vocabulary, learned rather than declared
 

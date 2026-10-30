@@ -1,0 +1,22 @@
+id: what-a-workspace-decides-reaches-the-repository-with-its-source
+title: "What the owner decides in a vendor workspace reaches the repository, and every promoted record opens the message it came from"
+slug: what-a-workspace-decides-reaches-the-repository-with-its-source
+order: 193
+priority: p1
+problem: "The owner thinks aloud in the ChatGPT project. What the owner decides there is read into this checkout's own store, promoted by a person into intents, ADRs, milestones, issues and knowledge, and every promoted record names the conversation and message it came from, so that from the UI one click opens that message for the operator who holds the store, while the public repository and site carry only the reference. Proposed in ADR 0212 (A workspace is read in the operator's own signed-in browser or from the vendor's export, never through a launched automation profile or another tool's credential) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c239#0, chatgpt-majordomus:c239#9, chatgpt-majordomus:c267#0."
+outcome: "The owner thinks aloud in the ChatGPT project. What the owner decides there is read into this checkout's own store, promoted by a person into intents, ADRs, milestones, issues and knowledge, and every promoted record names the conversation and message it came from, so that from the UI one click opens that message for the operator who holds the store, while the public repository and site carry only the reference."
+current_state: "Its issues extend existing milestones; see each issue's why."
+desired_state: "Every criterion of the intent is carried by an issue here and proven by its test."
+acceptance_criteria:
+  - "majordomus workspaces reports chatgpt-majordomus as synced, with the checkpoint age, conversation and message counts and support level, from .ai/local/workspaces/chatgpt-majordomus/"
+  - "A plan, ADR or knowledge record whose provenance names workspace:<id>/<conversation>#<message> validates in a clone with no store, and an unknown workspace id is refused"
+  - "On /ui a promoted record's workspace reference opens the cited message for a loopback caller when the store holds it, reads 'not held in this checkout' when it does not, and a caller beyond loopback never receives message text"
+  - "The published snapshot and the site build contain no message text or title from the store, and a gate fails when one does"
+  - "No record promoted by the 2026-10-18 import still cites a positional message index, in typed provenance or in prose"
+  - "A vendor caller, authenticated as an ADR amending ADR 0126 defines, reads plan records through a listener of its own and is refused every repository_mutation capability and all workspace message text"
+  - "An intent proposed from a workspace lands as a proposed intent whose provenance is its workspace reference, and nothing is recorded as accepted until a person accepts it"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+created_at: 2026-10-18
+updated_at: 2026-10-18

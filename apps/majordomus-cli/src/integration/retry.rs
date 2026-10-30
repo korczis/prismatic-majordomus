@@ -70,6 +70,9 @@ pub fn transient(message: &str) -> bool {
         "unexpected eof",
         "the remote end hung up unexpectedly",
         "early eof",
+        // a reply cut off on its way: `gh` read the first part of a JSON answer and the
+        // connection ended (I4222, master's pages runs 40086406838 and 40093453442)
+        "unexpected end of json input",
     ];
     WORDS.iter().any(|w| m.contains(w))
 }
@@ -170,6 +173,7 @@ mod tests {
             "You have exceeded a secondary rate limit",
             "fatal: the remote end hung up unexpectedly",
             "HTTP 503",
+            "gh pr list --state open --limit 500 failed: unexpected end of JSON input",
         ] {
             assert!(transient(t), "{t}");
         }

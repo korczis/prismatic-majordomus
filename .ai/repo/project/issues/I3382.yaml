@@ -1,0 +1,33 @@
+id: I3382
+milestone: delivery-economics-are-measured-over-declared-windows
+title: "Every recorded benchmark run answers the same delivery-economics shape as a task"
+slug: a-corpus-run-states-the-same-economics
+priority: p1
+profile: implementation
+objective: "Add economics tasks --runs: per recorded benchmark run, wall time from started_at to finished_at and per session (duration_ms), scripted follow-up prompts apart from interventions (none by construction of the headless harness), ci_reruns not_applicable, spend as observed tokens with the projected cost labelled as a projection, and accepted as the hidden acceptance_tests check. Add an aggregate per suite and variant with medians beside their denominators, published nowhere until ADR 0082's rule is met."
+why: "T3 of the owner's report of 2026-10-19 asks for the same figures on corpus runs, and T2 and T4 compare arms in this shape, so real work and benchmark runs are read alike."
+current_state: "apps/majordomus-cli/src/economics/model.rs:687 records duration_ms per session and :701 reported_cost_microusd; no reading combines them per run."
+desired_state: "economics tasks --runs returns one record per committed run in the task shape."
+scope:
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "docs/ECONOMICS.md"
+non_scope:
+  - "Comparing arms (I3371)"
+  - "Publishing an aggregate"
+depends_on:
+  - "I3376"
+serves:
+  - "the-product-proves-it-pays#a-corpus-run-states-the-same-economics"
+acceptance_criteria:
+  - "Every committed run under .ai/repo/benchmarks/economics/runs answers the shape"
+  - "Interventions read none by construction, ci_reruns not_applicable"
+  - "The projected cost is labelled as a projection"
+  - "The aggregate states its denominator"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "majordomus economics check"
+evidence_required:
+  - "test_run_records_answer_the_task_shape"
+created_at: 2026-10-19
+updated_at: 2026-10-19

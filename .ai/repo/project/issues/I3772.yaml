@@ -1,0 +1,37 @@
+id: "I3772"
+milestone: "mesh-journal-converges"
+title: "Every mesh link counts its failed sync rounds, and a link whose rounds fail does not read plainly connected"
+slug: "mesh-link-sync-failures-are-counted-and-shown"
+priority: "p2"
+profile: "implementation"
+parallel_safe: true
+objective: "Count sync failures per link and say them where a link is read: each PeerView carries cumulative rounds attempted and failed as the dialer, with the last error, beside the consecutive count it has today; the runtime-wide line states attempted and failed rounds so neither reads as a subset of the other; mesh doctor names a link whose recent outbound rounds mostly fail while it reads connected. This records the churn so it can be diagnosed; it does not diagnose or fix its cause."
+why: "Found on 2026-10-20 by the mesh audit: over 27 hours the primary checkout's lease-holding server reported 153,632 completed outbound sync rounds and 153,372 failed ones, the older server 179,202 and 101,869, while every link read connected and the digests agreed. Half the rounds failing is either harmless retry noise or a link losing events and recovering through relays; today nothing lets a reader tell which link fails, how often, or since when. The milestone promises a journal that converges under any delivery order, and convergence cannot be judged on links whose failures are invisible."
+current_state: "Verified on origin/master 91c0b5d5658. apps/majordomus-cli/src/mesh/cooperation.rs:320-336 keeps runtime-wide counters only; syncs_out is incremented at :2686 only after a successful round, and syncs_failed at :2621 inside the failure path, so the two are disjoint (documented at :542-545). Per peer, :2620-2627 increments failures and stores last_error, and a single successful round at :2679-2683 resets both to zero, so PeerView.failures (:416-417, 'Consecutive failed rounds') never shows an alternating link. state_of at :2866-2880 derives connected from the age of last_exchange alone, which inbound exchanges also refresh (:2053, :2195), so a link whose every outbound round fails can still read connected. apps/majordomus-cli/src/cockpit/pages.rs:3514-3519 prints '<out> out (<failed> failed)', which reads failed as part of out, and the link row at :3589-3598 shows handshakes, reconnects and the last error but no failure count. apps/majordomus-cli/src/mesh/doctor.rs:223 doctor_at has no check over link failures."
+desired_state: "PeerLink and PeerView gain rounds_out and rounds_failed (cumulative for the link's life, kept across a reset of the consecutive count) and the time of the last failure; CooperationCounters says attempted as syncs_out plus syncs_failed, and the Cockpit line reads '<attempted> attempted, <failed> failed, <answered> answered'. A connected link whose failed share of outbound rounds over the last window exceeds a bound declared once in the cooperation config is reported by mesh doctor as a warning naming the peer, the share and the last error; the link state itself keeps its meaning. docs/MESH.md states the counters and the bound."
+scope:
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/mesh/doctor.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/tests/mesh_cooperation.rs"
+  - "docs/MESH.md"
+  - "test/cases/3745_mesh_link_sync_failures_are_counted.sh"
+  - ".ai/repo/project/issues/I3772.yaml"
+non_scope:
+  - "Finding and fixing why rounds fail, which is a follow-up once the counters have run"
+  - "Changing the link state machine or the backoff"
+  - "The /ui mesh screen, which reads the same status and follows in a later issue"
+acceptance_criteria:
+  - "Two fixture runtimes with a transport that fails every second outbound round: the dialer's PeerView shows rounds_out and rounds_failed in that ratio after ten rounds, while failures (consecutive) is at most one"
+  - "mesh doctor over that fixture warns, naming the peer, the failed share and the last error"
+  - "Negative: a fixture link with no failed round shows rounds_failed 0 and mesh doctor raises no link warning"
+  - "Negative: a link that failed once and then succeeded for the whole window raises no warning, so one blip is not churn"
+  - "The Cockpit line states attempted, failed and answered rounds, and its test fails on the old wording"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_cooperation"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::doctor"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3745_mesh_link_sync_failures_are_counted 130_mesh"
+  - "majordomus plan validate"
+evidence_required:
+  - "test_mesh_link_sync_failures_are_counted_and_shown"
+depends_on: []

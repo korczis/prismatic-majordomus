@@ -1,0 +1,35 @@
+id: I3826
+milestone: an-authorised-node-connects-from-anywhere
+title: "A hosted hub keeps one key from a secret, advertises its URL, and shows the mesh only to those it trusts"
+slug: a-hosted-hub-is-trusted-and-closed-to-strangers
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "A server started with a deployment that names a provider reads its node seed from one secret environment variable and refuses to open its mesh without it, advertises provider.url instead of its interface addresses, answers the mesh's read capabilities to a remote caller only on a request signed by a key in trust.allow, and answers mesh.register from an untrusted caller with its own envelope only. ADR 0220 decisions 2 to 5."
+why: "The owner decided on 2026-10-21 that the hub's key may be a platform secret and that anonymous callers read the repository but not the mesh; without this a hosted hub mints a new untrusted key per boot, advertises unreachable pod addresses and publishes every node's sessions and claims to anyone."
+current_state: "identity.rs loads or creates node.json under XDG_STATE_HOME; address.rs advertises interface addresses; ADR 0126 admits every read capability to a remote caller; registration returns trusted candidates to any validly signed caller."
+desired_state: "Cases 3826 prove: the seed variable yields the same node id across restarts and its absence keeps the mesh closed with a named reason; the advertised endpoint is provider.url; a remote unsigned read of mesh.state is refused while liveness answers; an untrusted registration receives no trusted candidate; the seed appears in no log or answer."
+scope:
+  - "apps/majordomus-cli/src/mesh"
+  - "apps/majordomus-cli/src/http/router.rs"
+  - "apps/majordomus-cli/src/shared.rs"
+  - "test/cases/3826_a_hosted_hub_is_trusted_and_closed_to_strangers.sh"
+  - "docs/MESH.md"
+  - ".ai/repo/project/issues/I3826.yaml"
+acceptance_criteria:
+  - "One seed variable gives one node id across restarts; without it the mesh stays closed and says why"
+  - "The hub advertises its provider url"
+  - "A remote caller without a trusted signature reads liveness but no mesh capability"
+  - "An untrusted registration learns no trusted node"
+  - "The seed is never logged or answered"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3826_a_hosted_hub_is_trusted_and_closed_to_strangers"
+evidence_required:
+  - "seed_from_secret"
+  - "mesh_reads_gated"
+depends_on:
+  - "I3820"
+serves:
+  - "an-authorised-node-connects-from-anywhere#relay-when-no-direct-path"
+created_at: 2026-10-21
+updated_at: 2026-10-21

@@ -77,6 +77,11 @@ A milestone's status follows from its issues and its own evidence:
 A milestone is never `DONE` because a count of closed issues reached its total. The last step
 is the milestone's own acceptance, and it is evidence-gated like every other step.
 
+A milestone has no version either. Which release carried it is inferred, never typed: its
+`released_in` is the first release record whose commit contains the merge of its last
+accepted issue, and `unreleased` while it is open ([`ROADMAP.md`](ROADMAP.md), ADR 0166). A record that carries
+`version` is refused.
+
 The **active milestone** is derived the same way: the lowest-ordered milestone that is
 `ACTIVE`, or failing that the lowest-ordered one that is not finished. Nothing declares it.
 
@@ -108,6 +113,15 @@ Sharing a wave is necessary for two issues to run concurrently. It is not suffic
 their declared `scope` paths overlap — one equal to, inside, or containing another — the
 overlap is reported and they serialise. The direction is deliberate: a false serialisation
 costs time, a false parallel costs a conflict discovered after the work is done.
+
+A scope names the files the record plans to add or change, never a bare shared directory.
+`test/cases` holds every other issue's planned case, so a scope entry of `test/cases`
+contains all of them: the record serialises against every issue that plans a case,
+`docs/PLAN_STATUS.md` lists `scope_conflict` warnings naming case files that do not exist
+yet, and case 59 (`test/cases/59_reference_integrity.sh`) refuses the push over those names.
+Name the case file instead, `test/cases/<number>_<slug>.sh`, with its number taken from
+`scripts/case-numbers next` or from the block the seat announced. `plan validate` does not
+warn on a bare shared directory yet, so the record's author is the check.
 
 ## Evidence
 
@@ -340,6 +354,13 @@ verdict is `satisfied` while the stage is `planned` or `executing`) and
 `closed_work_not_satisfied` (every milestone DONE, the verdict `unsatisfied` or `unknown`, with
 the criteria holding it back).
 
+A unit of work no intent links is classified by the facts it records (ADR 0075, amendment of
+2026-10-15), and only the last class is work serving no intent: `empty` (a session record that
+lists no issue, no commit and no changed path), `before_intents` (finished work that started
+before the first intent record), `orphan` (anything else). The text summary reads
+`N serving no intent (E empty records, B before the first intent)`, each unlinked line names its
+class, and the JSON answer carries `orphans`, `empty` and `before_intents`.
+
 In the Cockpit, `/cockpit/intents` lists every intent with its stage and the work realising it,
 and `/cockpit/intents/<id>` shows one: each criterion with its evidence state, linked to the test
 object it names and to the issues serving it, and each unit of work with the provenance of its
@@ -427,6 +448,142 @@ implementation. `MJ_GH_FIXTURE_PULLS` reads the pull requests from a file in the
 live read produces, so the join is provable with no network and no token — the same seam
 `scripts/github-sync` uses, and what `test/cases/98_traceability.sh` exercises.
 
+## Delivery: how far the work travelled
+
+An issue's status is a stamp; its delivery is a fact about the objects that realised it.
+`majordomus plan delivery [<id>] [--at <rev>] [--json]` answers, for every issue, the
+furthest stage proved, each with the object that proved it and when it was observed
+(ADR 0166). Nothing is stored, and nothing writes a stamp from it: a merge is not acceptance.
+
+| stage | proved by |
+|---|---|
+| `none` | nothing that was read names the issue |
+| `branch` | a branch whose path component is the issue id (the I1405 rule) or the issue's `slug` |
+| `pr_open` | an open pull request in the recorded forge observation whose title or head branch names it |
+| `merged` | the newest commit in the trunk's history that names it: a merge by its pull-request title or branch, or a commit by its subject (`type(scope): description (I2740)`); never a body, which mentions neighbouring issues as readily |
+| `released` | the first release record (`.ai/repo/releases/v*.yaml`) whose `commit` contains that merge |
+| `deployed` | the published `latest.json` names that release or a later one |
+
+Planning is not delivery (I2749). A commit or merge that names an issue while changing only
+the plan's records (`.ai/repo/project/`) and the projections `.gitattributes` marks
+`merge=derived` planned, rescoped or recorded the issue; it is never its `merged` proof. Each
+naming commit is read against its first parent (for a merge, the whole pull request), the
+newest one passed over is reported as `planned` with how many there were, and the `planning`
+source says how many commits were set aside. A pull request found only by its head commit,
+and any commit whose parent is unknown, is never called planning, so a failed read can only
+leave the answer as it was before the rule.
+
+The live answer reads the trunk this clone knows (the remote-tracking trunk unless the local
+one is ahead), every branch, the forge observation `majordomus prs refresh` recorded, the
+release records, and the `latest.json` of the commit the last successful Pages deployment
+published (`majordomus served forge` records it). Releases come from the records, never from
+tags: a record names the commit it released and is a file of the tree, while a tag is a ref
+that can appear on any day.
+
+The pointer is read where the deployment published it (I4315, ADR 0227). A Pages deployment
+is a commit `scripts/site-deploy` pushed to `gh-pages`, whose tree is the built site, so the
+pointer authored at `site/static/releases/latest.json` is `releases/latest.json` there; the
+reader tries that path first and the authored path second, for a deployment of a source
+commit, and an unread reason names both. Until I4315 it read only the authored path, which no
+deployment had ever carried, and `deployed` was proved for no issue.
+
+```mermaid
+flowchart LR
+  R["release record<br/>one per version under .ai/repo/releases/"] -->|generate| S["site/static/releases/latest.json"]
+  S -->|site build| P["gh-pages commit<br/>releases/latest.json"]
+  P -->|Pages deployment| O["deployment observation<br/>(majordomus served forge)"]
+  O --> D["plan delivery<br/>deployed"]
+  M["merge on the trunk"] --> L["released<br/>(first record containing it)"]
+  L --> D
+```
+
+Deployments are observed only by `majordomus served forge`, not by `prs refresh` (since
+3e8225a4329). A checkout that never ran it reads `publication` unread with that command in the
+reason. The Pages workflow's `ui-snapshot` job runs it and then fails when `plan delivery`
+still reads no publication for any reason other than "no successful deployment", so a reader
+that stops matching the deploy turns that run red instead of publishing `released` forever.
+The red is for a forge that answered: when `served forge` itself could not read the
+deployments in time (an outage, I4380), the step reports the deployed stage unknown with a
+warning and the publication goes on, because an outage says nothing about the reader.
+
+Committed derived data is a function of the commit alone, or every tag, push, pull request
+and deployment would turn `scripts/generate-site-data --check` red on every open branch. So
+`--at <rev>` reads only that commit's merges and the tree's release records: it proves
+`merged` and `released`, and reports branches, the forge and the publication unread.
+`scripts/generate-site-data` writes that answer to `site/data/generated/delivery.json` at
+`HEAD` and reproduces it under `--check` at the commit the file names. The live stages
+(`branch`, `pr_open`, `deployed`) reach the CLI, HTTP, MCP and the UI; bringing them to the
+published site at Pages build time, as the UI snapshot is, is left to the plan surfaces
+(I2743, I2744).
+
+A source that was not read is reported unread with its reason, never as none. An issue an
+unread source could have moved further is not `settled` and names that source in `unread`.
+The same answer is `GET /api/v1/plan/delivery` and the MCP tool `majordomus_plan_delivery`.
+
+A pull request merged inside a combined top reaches the trunk through an octopus merge that
+names it only in prose, and its title is the forge's, not git's. `majordomus served forge`
+therefore also records the newest merged pull requests (up to 1000, a page of 100 at a time)
+in the deployment observation, and the live answer counts a merged pull request's title when
+its merge commit or head is in the history read (`via: forge_title`). That is how #1097 is
+seen to have realised I2653, which its commits name only in a body. The source is
+`merged_titles`; at a commit it is unread, so the committed data stays a function of the
+commit's history.
+
+### Where the work is now
+
+`plan.roadmap`'s `now` is the first open milestone in the plan's order, whether or not anybody
+is working on it. `plan.flight` (`GET /api/v1/plan/flight`, MCP `majordomus_plan_flight`)
+answers where the work is instead, live on every call (ADR 0166, decision 4):
+
+- **now** is every open milestone holding an open issue with work in flight: an open pull
+  request that names it (`pr_open`), a live mesh claim made for it, or a declared `ACTIVE`
+  status. Each comes with those issues, why they are in flight, their declared status beside
+  their inferred stage, and the objects that prove it, linked on the forge where it has them;
+- **next** is the first open milestone in the plan's order that is not now and whose
+  unfinished prerequisites are all now;
+- **the latest release** is the highest stable version among the release records, the `v*`
+  tags of the clone and the published `latest.json`. Each is reported read or unread, and
+  `executable_tagged` says whether the answering executable's own version is tagged. A record
+  that merges after its tag no longer makes a screen show an older release than the
+  executable that drew it.
+
+`/ui/roadmap` reads it, and `?milestone=<id>` asks it for every issue of that milestone. The
+mesh runs in a server; anywhere else its claims are reported unread.
+
+## Drift: where the stamps contradict the work
+
+Inference never writes a stamp, so the two can disagree. `majordomus plan drift [<id>]
+[--at <rev>] [--gate head|trunk] [--json]` names every disagreement with the objects that
+prove it (ADR 0166, decision 2):
+
+| class | declared | delivered |
+|---|---|---|
+| `merged_not_recorded` | READY, BLOCKED or ACTIVE | a merge names it (pull request, merge commit, release), and no open pull request names it |
+| `active_without_work` | ACTIVE, started before the window | no branch, pull request, merge or live mesh claim names it |
+| `done_without_trace` | DONE | no merge names it; advisory, because record-only issues exist |
+
+Each finding carries its age, whether that is past the window, the sources that were not
+read and could have dissolved it (`unread`; a finding with the forge unread is still a
+finding, and is not `settled`), and the command that settles it:
+`majordomus plan verify|done <id>`.
+
+`.ai/repo/ci/plan.yaml` declares `drift.window` (seconds) and `drift.enforcement`
+(`advisory` or `blocking`). The gate `plan-drift` (`scripts/ci/plan-drift-check`, every
+plan) asks `plan drift --gate trunk` on a push to the default branch and `--gate head`
+everywhere else:
+
+- on a head, every `merged_not_recorded` is PENDING;
+- on the trunk, one merged longer than the window ago is REFUSED, naming the settling
+  command, and a younger one is PENDING;
+- `active_without_work` is a NOTE and `done_without_trace` ADVISORY: neither refuses;
+- a missing or unreadable window refuses (exit 12);
+- refusals fail the gate (exit 10) under `blocking`, and are reported with exit 0 under
+  `advisory`. The gate lands advisory, so that it does not turn the trunk red on drift it
+  predates; I2748 settles that drift and makes it blocking.
+
+The same answer is `GET /api/v1/plan/drift` and the MCP tool `majordomus_plan_drift`.
+`test/cases/3101_merged_work_unrecorded_is_drift.sh` proves the classes, the window and the gate, with six code mutations failing it.
+
 ## Projections
 
 The canonical files are the only source. Everything else is generated from them by one
@@ -466,9 +623,17 @@ person rewritten the region since it was posted, and has the canonical record mo
 and, of a remote record rather than a canonical one, `unmanaged`: an issue claiming a
 canonical id this repository does not have.
 
+A title GitHub would refuse is refused before it merges. GitHub caps a milestone title at
+255 characters and an issue title at 256, and the projected title is `<id> — <title>`.
+`scripts/github-sync --plan`, `--render` and `--apply` count each projected title in
+characters and exit 14 naming every record over its limit, and `scripts/ci/core-check` runs
+`--plan` in the structure job. Before this, a 282-character milestone title passed every
+offline step, the landing's apply got 422, the milestone never existed, and every pull
+request's structure job was red on it until an admin landing broke the deadlock.
+
 Applying is a consequence of landing; agreement is a gate. Every push to the default branch
 starts `.github/workflows/github.yml`, which runs `--check`, then `--apply` when something is
-owed, then the gate (`project.the-projection-is-applied-at-landing@1`); a person's `--apply`
+owed, then the gate (`project.the-projection-is-applied-at-landing@2`); a person's `--apply`
 from the trunk is the fallback when that run fails. `scripts/ci/github-check` reads the
 remote on every change that can move either side, refuses the first six states outright,
 and ratchets `missing` and `adopt` against `.ai/repo/ci/github-drift-baseline.txt`, which
@@ -489,6 +654,56 @@ issue that waited for it. Drift on a record the head did not change is refused a
 The network calls live in `scripts/github-sync`, outside the tool. `bin/`, `lib/`, `share/`
 and `test/` contain no network client, and `test/cases/08_no_forbidden_constructs.sh` proves
 it.
+
+### Pull requests
+
+A pull request carries the metadata its records imply, projected by the same adapter
+(`scripts/github-sync --prs`, I3970) and kept current by GitHub itself:
+`.github/workflows/pr-meta.yml` applies it to a pull request whenever it is opened, edited,
+synchronized or labeled (on `pull_request_target`, from the default branch's checkout, never
+the head's code), and to every open one on a daily sweep, which carries what reached GitHub
+after a pull request's last event (`.ai/repo/ci/pr-meta.yaml`).
+
+What a pull request serves is derived, never typed twice: the issue ids (`I<digits>`) in its
+title and in the subject line of each of its commits, then the issue records its head
+changes. The metadata is projected from the trunk's records: an id whose record exists only
+in the head is named by its id and lends no priority and no milestone, and an id no record
+carries is reported and ignored. From the trunk's records:
+
+| field | projected | owned by the projection |
+|---|---|---|
+| labels | `type:<t>` from the conventional title (`feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `chore`, `ci`, `style`, `build`); `priority:<p>`, the highest of the issues served; `train` on an `integration/train-*` head; `records` when nothing outside `.ai/repo/project/` changes but its derived projections | those four families; every other label (`hold`, `collision:accepted`, `ci:yielded`) is a person's |
+| milestone | the GitHub milestone of the first served issue's canonical milestone | when one is derived |
+| assignee | the pull request's author | only when nobody is assigned |
+| body | a region `<!-- majordomus:pr-meta begin <hash> -->` … `<!-- majordomus:pr-meta end -->` with one `Refs #<n> (<id> — <title>)` per served issue and the canonical milestone | the region; the text around it is the author's |
+
+The region follows the issue bodies' rule: its begin marker carries the hash of what was
+written, so a region a person rewrote is reported `edited` and left alone (`--force`
+overrides), and one the records moved past is `behind` and rewritten. A pull request that
+serves no recorded issue gets its type label and nothing else.
+
+A link is `Refs #<n>`, never a closing keyword. GitHub closes the issue that a merged
+`Closes`, `Fixes` or `Resolves` names, which moves the projection ahead of its source: on
+2026-10-03 one such commit closed a canonically open issue and reddened every structure job.
+An issue closes through its record (`majordomus plan done`) and the issue projection carries
+that to GitHub. So the adapter refuses to write a region that would carry a closing keyword,
+writes a `#<digit>` inside a title as `# <digit>`, and reports one a person or a commit wrote.
+
+```
+scripts/github-sync --prs                  this branch as the pull request it would open, offline
+scripts/github-sync --prs --check          every open pull request against GitHub; exit 11 on drift
+scripts/github-sync --prs --apply          write what is owed (paced by MJ_GH_PACE)
+scripts/github-sync --prs --pr <n> --apply one pull request, as the workflow runs it
+scripts/github-sync --prs --fields milestone,assignee,body --apply
+```
+
+Labels are the workflow's to write. `validate.yml` starts a run on every `labeled` event, and
+a label added with a person's token is one; a write with the workflow's own token starts no
+workflow. So a backfill from a clone passes `--fields` without `labels`, and the sweep adds
+them.
+
+Reviewers and project boards are not projected: a review request from the workflow's token is
+one nobody chose, and a user-owned project cannot be written with it.
 
 ## Working through the model
 

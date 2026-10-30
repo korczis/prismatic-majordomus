@@ -1,0 +1,38 @@
+id: peer-blackboard
+title: The peer blackboard is one projection, pushed live to every surface
+slug: peer-blackboard
+order: 343
+priority: p1
+problem: "Who is working on what is already recorded — the board of every checkout (peers.list, gathered per ADR 0044), the mesh journal (sessions, claims, reviews, handovers per ADR 0067) and the monitor's folded signals (ADR 0133) — but no surface shows it as one picture and none shows it live. /cockpit/peers renders peers.list once and never changes; /ui has no peers screen; /cockpit/monitor polls the whole monitor every five seconds; the only WebSocket, /events, carries executions and nothing else; and nothing between the board, the journal and the socket says that anything changed. The unmerged ADR 0162 draft proposed a board channel for the kiosk alone and was never implemented."
+outcome: "One capability computes the blackboard from the records that exist; a change of the board or the journal is pushed over one WebSocket to every page that follows it, with the monitor's cursor for resume; /ui, /cockpit and the home page read the same frames; the published site carries a public-safe snapshot labelled as one."
+current_state: "peers.list, mesh.state and monitor.stream answer separately; /cockpit/peers is static; /cockpit/monitor polls; socket.js follows executions only."
+desired_state: "blackboard.snapshot answers on every interface; a board or journal change reaches a connected page in under a second on this machine; every surface that shows peers reads that one projection."
+scope:
+  - apps/majordomus-cli/src/commands/blackboard.rs
+  - apps/majordomus-cli/src/capability/builtin/blackboard.rs
+  - apps/majordomus-cli/src/http
+  - apps/majordomus-cli/src/ui
+  - apps/majordomus-cli/src/cockpit
+  - share/cockpit
+  - share/ui
+  - docs/BLACKBOARD.md
+  - test/cases
+non_scope:
+  - A second peer registry, a message store or a broker; a peer message kind is added to the journal only when reviews and handovers are shown not to carry what peers send each other
+  - A public WebSocket into a private mesh, or credentials in a published bundle
+  - Presence for a provider (OpenAI Dots included) that exposes no supported, authenticated event source
+acceptance_criteria:
+  - "blackboard.snapshot answers the same projection over the command line, HTTP and MCP, with completeness, sources, workers, conflicts, reviews, handovers, typed relations and signals"
+  - "A board or journal change is pushed to a connected page over one WebSocket that resumes from the monitor's cursor and resynchronises when the cursor cannot be served"
+  - "/ui/peers, the /ui home panel, /cockpit/peers and the home page read the same frames, and say live, reconnecting, offline or snapshot truthfully"
+  - "The published site shows a public-safe snapshot of the blackboard with its revision, and no private path, message body or scope"
+validation:
+  - majordomus plan validate
+  - bash test/run.sh 3380_the_blackboard_is_one_projection
+evidence_required: []
+depends_on: []
+risks:
+  - "The monitor rereads the whole journal on every page; pushing it on every change multiplies that cost by the subscribers unless one computation is shared by all of them."
+  - "A worker's board session and its own mesh session are two records; joining them by anything weaker than an identifier invents a person."
+created_at: 2026-10-18
+updated_at: 2026-10-18

@@ -1,0 +1,36 @@
+id: I3201
+milestone: a-release-is-proven-end-to-end
+title: "A publication never replaces the site with a build of an older commit than the one gh-pages serves"
+slug: the-site-never-goes-back-a-commit
+priority: p1
+profile: implementation
+objective: "Make scripts/site-deploy refuse to push a build whose source commit is a strict ancestor of the commit gh-pages:build.json records (the served build, the source pages.yml already reads), the way it already refuses an older release, so a delayed run or a manual deploy from a stale checkout cannot overwrite a newer site; --release-metadata stays exempt because it leaves build.json unchanged."
+why: "The 2026-10-17 release pack asked that a stale Pages build never overwrite a newer snapshot (c291#2). The site-deploy guard compares releases and that HEAD is on origin/master, but two masters can both be on origin/master and the older one can publish last. Sources: chatgpt-majordomus:c291#2."
+current_state: "scripts/site-deploy refuses a HEAD not on origin/master and a build whose release is older than the served one (ADR 0131). A build commit's message records 'source: <sha>', but --release-metadata commits 'source: <release job's HEAD> with the record of <tag>' onto gh-pages without rebuilding, so the head commit's source line can name an older commit than the build it serves. pages.yml reads the served commit from origin/gh-pages:build.json and serialises runs per ref with cancel-in-progress: false. No check compares the served build's commit with HEAD."
+desired_state: "site-deploy reads the served commit from gh-pages:build.json and refuses a build when HEAD is its strict ancestor, with --any-ref the only override; --release-metadata keeps only its release-version guard; scripts/pages reports the publication's freshness with the same predicate."
+scope:
+  - "scripts/site-deploy"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
+  - "scripts/pages"
+  - "test/cases/1041_a_release_publishes_its_metadata.sh"
+non_scope:
+  - "Changing pages.yml concurrency"
+  - "A second deploy path"
+  - "Applying the commit guard to the --release-metadata path"
+serves:
+  - "finished-work-reaches-a-verified-release#the-site-never-goes-back"
+acceptance_criteria:
+  - "Deploying commit A after gh-pages already records its descendant B is refused with both commits named"
+  - "Deploying B over A, and redeploying the commit gh-pages already records, both proceed"
+  - "A gh-pages head that records no source commit is unknown and is reported, not treated as older"
+  - "The served source commit is read from gh-pages:build.json's commit, the source pages.yml already reads, never from the gh-pages head commit's 'source:' line"
+  - "--release-metadata is exempt from the commit guard and says so: it leaves build.json unchanged (I2303, ADR 0131), and only its release-version guard applies"
+  - "A case publishes build A, then a metadata commit naming an older HEAD, then attempts an older build: the older build is refused against A, a descendant build proceeds, and the metadata publication itself is never refused by the commit guard"
+  - "After a deploy lands, scripts/pages reports the served build.json commit with the same predicate, so the publication is observed rather than assumed"
+validation:
+  - "bash test/run.sh 1041_a_release_publishes_its_metadata"
+  - "scripts/site-deploy --dry-run"
+evidence_required:
+  - "case_the_site_never_goes_back_a_commit"
+created_at: 2026-10-18
+updated_at: 2026-10-18

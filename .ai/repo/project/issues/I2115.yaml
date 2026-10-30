@@ -1,0 +1,33 @@
+id: I2115
+milestone: ci-critical-path
+title: The slowest case costs a fraction of its budget, and its budget is never raised to follow runner load again
+slug: the-slowest-case-is-cut-not-budgeted
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Cut case 95_executable_reference to a fraction of its cost instead of raising the slowest-case budget again. Measure first where its time goes: it runs scripts/generate-site-data eight times over a full fixture copied by fixture_repo. Then reduce what each run regenerates or how many runs the case needs, keeping every assertion it makes, so the case proves the same things in a fraction of the time."
+why: "The case has cost 2069, 2895, 3115, 3168, 3305, 3352 and, on 2026-10-09, 3468 s, moving with runner load; the slowest-case budget was re-derived from it twice, and when it went 18 s over 3450 s it failed the verdict of #831, a pull request that does not touch what it tests. A budget that sits within runner jitter of its case fails unrelated work."
+current_state: "test/cases/95_executable_reference.sh calls scripts/generate-site-data on eight lines over a fixture_repo copy of the tree; .ai/repo/ci/suite-durations.tsv records 2068 s for it; .ai/repo/ci/suite.yaml budgets the slowest case at 3450 s."
+desired_state: "The case proves every relation it proves today, costs well under half its budget on a loaded runner, and the slowest-case budget is lowered toward the new worst rather than raised. Amended on 2026-10-18 by the derive-performance plan: the change generalises from case 95 to every case: no case on the feedback lane exceeds its declared p95 (proposed 30 s unit, 120 s integration, 5 min acceptance), a longer one is decomposed or moves to the proof lane, and the budgets are derived from .ai/repo/ci/suite-durations.tsv (I2716), never pinned. Moved on 2026-10-20, by the landing seat's ruling: that generalisation (per-case p95 budgets on the feedback lane, derived from suite-durations.tsv) is I2350's, which introduces the lanes it is stated in; its two criteria are carried there verbatim, and this issue keeps case 95 and the slowest-case budget."
+scope:
+  - test/cases/95_executable_reference.sh
+  - test/lib.sh
+  - scripts/generate-site-data
+  - .ai/repo/ci/suite.yaml
+  - .ai/repo/ci/suite-durations.tsv
+  - test/cases
+  - .ai/repo/ci/gates.yaml
+non_scope:
+  - "Per-case p95 budgets on the feedback lane and budgets derived from suite-durations.tsv: moved to I2350 on 2026-10-20 with their two criteria, verbatim"
+depends_on: []
+acceptance_criteria:
+  - Every assertion of case 95 holds after the change, and a mutation of each relation it proves still fails it
+  - The case's cost on three GitHub runs, named, is under half of the slowest-case budget
+  - The slowest-case budget is lowered or unchanged, never raised
+validation:
+  - bash test/run.sh 95_executable_reference
+  - scripts/ci/suite-budget
+evidence_required:
+  - the_slowest_case_is_cut
+created_at: 2026-10-09
+updated_at: 2026-10-20

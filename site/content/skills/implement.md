@@ -5,7 +5,7 @@ weight = 4
 [extra]
 id = "implement"
 status = "active"
-version = 1
+version = 2
 source = ".ai/repo/skills/implement/SKILL.md"
 +++
 {% raw %}
@@ -53,6 +53,20 @@ and do not widen them silently; if the request can be met without a new subsyste
 it without one. If the requested behaviour already exists, verify it instead of building
 it again.
 
+Four refusals came back more than once in one session on 2026-10-28. Each costs a round
+trip at its gate and nothing here, so meet them before the first edit:
+
+- A command-line change edits `apps/majordomus-cli/src/cli.rs`, the definitions and their
+  `EXAMPLES` table alike, so name that file in the scope; a scope without it is refused at
+  `check` and at `finish`.
+- A new command owes its `EXAMPLES` entry in the same change; the derive refuses a command
+  without one.
+- In a linked worktree, run the tool as `env -u MAJORDOMUS_SHARE majordomus ...`: a
+  `MAJORDOMUS_SHARE` inherited from the primary checkout's environment reads that
+  checkout's `share/`, and the commit hook then refuses the artifacts as stale.
+- A commit subject is at most 100 characters (phase 17); `commit.validate` refuses a longer
+  one in the commit-msg hook.
+
 ### 2. Load the applicable context
 
 Read what applies to the paths in scope and no more: the root instructions, the rules in
@@ -69,6 +83,17 @@ diagnostics. Read the history of the files where it changes a decision: why the
 abstraction exists, whether the code is transitional, whether an earlier fix addressed
 the same defect, whether a suspicious pattern is deliberate. Do not read history for
 ceremony; read it where it changes what you would do.
+
+Read it one path at a time (`git log -- <path>`, `git log -L`) on the branch you work
+from. What other branches hold is asked of their tips, never of all their history:
+whether one already carries a path is `scripts/collision-check --new <path>`, one pass
+over every branch tip, and whether an issue id is taken is the tip check and the
+date-bounded message search in `.ai/repo/project/issues/README.md`. A content search
+across every ref — `git log --all -S` or `-G`, `git grep` over every remote branch — has
+no bound on a repository with two thousand refs, and the machine is shared: on 2026-10-28
+three of them from one session's workflow agents held it at load 92 and the shared server
+stopped answering until they were stopped. When no bounded form answers the question,
+bound the search by `--since` and by the refs that matter before running it.
 
 ### 4. Name the canonical truth
 
@@ -114,6 +139,11 @@ configuration, CI, benchmarks, provider adapters, examples, decisions — and ma
 ones it actually touches. Modify those and only those; the list exists so that no
 derived state is forgotten, not to manufacture work.
 
+A message a command or a check prints is a surface too: a case that asserts it pins its
+wording. Before rewording one, `grep -rlF '<the old sentence>' test/cases` and run every
+case it names; on 2026-10-19 a reworded refusal of `scripts/ci/english-only-check` reached
+CI with case 2984 still asserting the old sentence, because nothing local ran it.
+
 ### 9. Decide the evidence before the mechanism
 
 Choose how the behaviour will be proved: black-box behavioural first, then integration,
@@ -150,6 +180,22 @@ After a canonical change, run the repository's generation and then its drift che
 them. Generation is deterministic, owns its output, and must never be replaced by a
 hand-synchronised copy.
 
+In this repository the generation is `scripts/derive`, and two refusals fix the order of the
+last steps. The derive refuses a tree that holds an untracked file, because it projects only
+what git tracks (`project.a-derive-sees-what-the-commit-will`); the commit hook refuses
+derived data that is stale for the tree (`scripts/pages current`). So: `git add` every new
+file, run `scripts/derive`, `git add` what it regenerated, then commit. Do not get past the
+first refusal with `MAJORDOMUS_DERIVE_ALLOW_UNTRACKED=1`: the projections would leave the
+new file out, and the commit that adds it would be refused.
+
+A change that touches nothing under `apps/majordomus-cli` needs no build to derive. When an
+executable built at commit `<sha>` is at hand and
+`git diff --quiet <sha> -- apps/majordomus-cli` exits 0, its crate is the one being derived:
+pass it to `scripts/derive` as `MAJORDOMUS_BIN`. Compare with the working tree, not with
+`origin/master`, because a branch can be behind the trunk. `generate` refuses an executable
+of another crate tree (`REFUSED`, 15); the remedy is a build, never a hand-run
+`majordomus generate` (`docs/CAPABILITIES.md`).
+
 ### 13. Update the diagnostics
 
 Where the change adds or alters operational behaviour, give `doctor`, `check` or `watch`
@@ -182,7 +228,8 @@ abstraction, and scope that crept. Fix what is substantive before continuing.
 ### 17. Commit coherent work
 
 One commit per independently understandable, verified change, in the repository's
-message convention; neither one commit for everything nor a commit per keystroke. Before
+message convention, with a subject of at most 100 characters; neither one commit for
+everything nor a commit per keystroke. Before
 each commit the relevant tests pass, the formatter and linter pass, generated
 projections are reconciled and no unexplained file is present.
 

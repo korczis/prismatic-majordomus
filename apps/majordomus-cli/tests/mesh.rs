@@ -36,14 +36,14 @@ mod common;
 use common::{run_in, Fixture, Served};
 use serde_json::{json, Value};
 
-use majordomus_cli::mesh::config::{MeshConfig, MulticastConfig};
+use majordomus_cli::mesh::config::{MeshConfig, MulticastConfig, TailscaleConfig};
 use majordomus_cli::mesh::identity::NodeIdentity;
 use majordomus_cli::mesh::protocol::advertise;
 use majordomus_cli::mesh::MeshRuntime;
 
 /// An enabled declaration with every socket-opening transport off: activation, identity
 /// and registration under test, and not one datagram anywhere.
-const ENABLED_QUIET: &str = "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntrust:\n  policy: tofu\n";
+const ENABLED_QUIET: &str = "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: tofu\n";
 
 const DISABLED: &str = "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: false\n";
 
@@ -296,6 +296,11 @@ fn two_runtimes_discover_each_other_through_the_rendezvous_handshake() {
         },
         broadcast: Default::default(),
         rendezvous: Default::default(),
+        // this test is about the rendezvous: the tailnet stays quiet
+        tailscale: TailscaleConfig {
+            enabled: false,
+            ..TailscaleConfig::default()
+        },
         trust: majordomus_cli::mesh::config::TrustConfig {
             allow: vec![own.to_string()],
             ..Default::default()
@@ -567,12 +572,13 @@ fn a_registration_learns_only_the_trusted_nodes_of_its_own_repository() {
     let key = |name: &str| {
         NodeIdentity::load_or_create(&dir.path().join(format!("{name}.json"))).unwrap()
     };
-    let (hub_id, trusted_id, stranger_id, caller_id, other_id) = (
+    let (hub_id, trusted_id, stranger_id, caller_id, other_id, untrusted_id) = (
         key("hub"),
         key("trusted"),
         key("stranger"),
         key("caller"),
         key("other"),
+        key("untrusted"),
     );
     let mut config = MeshConfig {
         schema: "mesh/v1".into(),
@@ -585,15 +591,24 @@ fn a_registration_learns_only_the_trusted_nodes_of_its_own_repository() {
         },
         broadcast: Default::default(),
         rendezvous: Default::default(),
+        // the hub is reached by its address here: the tailnet stays quiet
+        tailscale: TailscaleConfig {
+            enabled: false,
+            ..TailscaleConfig::default()
+        },
         trust: Default::default(),
         cooperation: Default::default(),
     };
-    // the hub lists its own key beside the trusted node's: a machine its trust list does not
-    // name keeps its mesh closed and admits nobody
+    // the hub lists its own key beside the trusted nodes': a machine its trust list does not
+    // name keeps its mesh closed and admits nobody. The two callers are trusted too; what an
+    // untrusted caller learns is asked of `untrusted` below (ADR 0220 decision 5, I3826)
     config.trust.allow = vec![
         hub_id.public.public_key.clone(),
         trusted_id.public.public_key.clone(),
+        caller_id.public.public_key.clone(),
+        other_id.public.public_key.clone(),
     ];
+    let hub_id_pk = hub_id.public.public_key.clone();
     let hub = MeshRuntime::new();
     hub.activate(&config, hub_id, vec!["127.0.0.1:1".into()], vec![], "test")
         .unwrap();
@@ -624,18 +639,53 @@ fn a_registration_learns_only_the_trusted_nodes_of_its_own_repository() {
     assert!(!refused.accepted);
     assert!(refused.candidates.is_empty(), "{:?}", refused.candidates);
 
-    // a caller of r1 learns the hub and the trusted node, not the stranger
+    // the keys an answer names, in a stable order
+    let learned = |candidates: &[majordomus_cli::mesh::protocol::Envelope]| {
+        let mut keys: Vec<String> = candidates.iter().map(|c| c.adv.pk.clone()).collect();
+        keys.sort();
+        keys
+    };
+    let sorted = |keys: &[&String]| {
+        let mut keys: Vec<String> = keys.iter().map(|k| (*k).clone()).collect();
+        keys.sort();
+        keys
+    };
+
+    // a trusted caller of r1 learns the hub and the trusted nodes of r1, itself among them,
+    // and never the stranger
     let same = hub.register(&envelope(&caller_id, &["r1"], 4), "test");
     assert!(same.accepted);
-    let keys: Vec<String> = same.candidates.iter().map(|c| c.adv.pk.clone()).collect();
-    assert_eq!(keys.len(), 2, "{keys:?}");
-    assert!(keys.contains(&trusted_id.public.public_key));
-    assert!(!keys.contains(&stranger_id.public.public_key));
+    assert_eq!(
+        learned(&same.candidates),
+        sorted(&[
+            &hub_id_pk,
+            &trusted_id.public.public_key,
+            &caller_id.public.public_key
+        ]),
+    );
 
-    // a caller of another repository learns the hub alone
+    // a trusted caller of another repository learns the hub and itself, no node of r1
     let other = hub.register(&envelope(&other_id, &["r2"], 5), "test");
     assert!(other.accepted);
-    assert_eq!(other.candidates.len(), 1, "{:?}", other.candidates);
+    assert_eq!(
+        learned(&other.candidates),
+        sorted(&[&hub_id_pk, &other_id.public.public_key]),
+    );
+
+    // a caller of r1 whose key nobody trusts is answered, and learns the hub alone: who
+    // trusts whom is told only to those trusted (ADR 0220 decision 5, I3826)
+    let unknown = hub.register(&envelope(&untrusted_id, &["r1"], 6), "test");
+    assert!(unknown.accepted);
+    let keys: Vec<String> = unknown
+        .candidates
+        .iter()
+        .map(|c| c.adv.pk.clone())
+        .collect();
+    assert_eq!(
+        keys,
+        vec![hub_id_pk.clone()],
+        "an untrusted caller learned {keys:?}"
+    );
     hub.stop();
 }
 
@@ -965,4 +1015,177 @@ fn reply_bound_test() {
         "cut at the whole-reply deadline, not at the idle one: {:?}",
         started.elapsed()
     );
+}
+
+#[test]
+fn enrolment_lists_this_machines_key_once_and_opens_the_mesh_here() {
+    let f = Fixture::new();
+    // the declaration `majordomus init` ships: enabled, deny_unknown, nobody listed
+    let seeded = std::fs::read_to_string(
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../share/skeleton/ai/repo/mesh/mesh.yaml"),
+    )
+    .unwrap();
+    f.write(".ai/repo/mesh/mesh.yaml", &seeded);
+    let state = f.root().join("xdg-state");
+    let mj = |args: &[&str]| {
+        let out = std::process::Command::new(common::BIN)
+            .args(args)
+            .args(["--discovery", "filesystem"])
+            .current_dir(f.root())
+            .env("XDG_STATE_HOME", &state)
+            .env("MAJORDOMUS_SHARE", common::dist_share())
+            .output()
+            .unwrap();
+        (
+            out.status.code().unwrap_or(-1),
+            String::from_utf8_lossy(&out.stdout).to_string(),
+        )
+    };
+
+    // closed before: the doctor's trust check names this machine as unlisted
+    let (_, doctor) = mj(&["mesh", "doctor", "--format", "json"]);
+    let trust = |report: &str| -> Value {
+        serde_json::from_str::<Value>(report).unwrap()["checks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|c| c["check"] == json!("trust"))
+            .cloned()
+            .unwrap_or(Value::Null)
+    };
+    // no identity yet: nothing to check against, so no trust verdict either way
+    assert_ne!(trust(&doctor)["ok"], json!(true), "{doctor}");
+
+    let (code, out) = mj(&["mesh", "enrol", "--format", "json"]);
+    assert_eq!(code, 0, "{out}");
+    let enrolled: Value = serde_json::from_str(&out).unwrap();
+    assert_eq!(enrolled["added"], json!(true), "{enrolled}");
+    let key = enrolled["key"].as_str().unwrap().to_string();
+    assert_eq!(key.len(), 64);
+    assert!(
+        state.join("majordomus").join("node.json").is_file(),
+        "enrolment created this machine's identity under its state directory"
+    );
+    let written = std::fs::read_to_string(f.path(".ai/repo/mesh/mesh.yaml")).unwrap();
+    assert!(written.contains(&format!("    - \"{key}\"")), "{written}");
+    assert!(
+        written.starts_with("# The mesh of this repository"),
+        "the comments stay"
+    );
+
+    // once: a second enrolment changes nothing
+    let (code, out) = mj(&["mesh", "enrol", "--format", "json"]);
+    assert_eq!(code, 0, "{out}");
+    assert_eq!(
+        serde_json::from_str::<Value>(&out).unwrap()["added"],
+        json!(false)
+    );
+    assert_eq!(
+        std::fs::read_to_string(f.path(".ai/repo/mesh/mesh.yaml")).unwrap(),
+        written
+    );
+
+    // and the machine is listed: the trust check passes
+    let (_, doctor) = mj(&["mesh", "doctor", "--format", "json"]);
+    assert_eq!(trust(&doctor)["ok"], json!(true), "{doctor}");
+}
+
+/// `mesh enrol` in `f` under `env` (a `None` removes the variable): the exit code, stdout
+/// and stderr.
+fn enrol_in(f: &Fixture, env: &[(&str, Option<&std::path::Path>)]) -> (i32, String, String) {
+    let mut command = common::majordomus();
+    command
+        .args([
+            "mesh",
+            "enrol",
+            "--format",
+            "json",
+            "--discovery",
+            "filesystem",
+        ])
+        .current_dir(f.root())
+        .env("MAJORDOMUS_SHARE", common::dist_share());
+    for (name, value) in env {
+        match value {
+            Some(value) => command.env(name, value),
+            None => command.env_remove(name),
+        };
+    }
+    let out = command.output().unwrap();
+    (
+        out.status.code().unwrap_or(-1),
+        String::from_utf8_lossy(&out.stdout).to_string(),
+        String::from_utf8_lossy(&out.stderr).to_string(),
+    )
+}
+
+const SEEDED: &str = "schema: mesh/v1\nkind: mesh-declaration\nid: mesh\nenabled: true\ntrust:\n  policy: deny_unknown\n  allow: []\n";
+
+/// With nowhere to keep this machine's identity, or a state directory that cannot hold
+/// one, enrolment is refused with the reason and the declaration is left as it was.
+#[test]
+fn enrolment_without_a_place_for_the_identity_is_refused_and_writes_nothing() {
+    let f = Fixture::new();
+    f.write(".ai/repo/mesh/mesh.yaml", SEEDED);
+
+    let (code, out, err) = enrol_in(&f, &[("HOME", None), ("XDG_STATE_HOME", None)]);
+    assert_ne!(code, 0, "{out}");
+    assert!(
+        err.contains("no HOME and no XDG_STATE_HOME: nowhere to keep this machine's node identity"),
+        "{err}"
+    );
+
+    // a state directory that is a file: the identity cannot be created under it
+    let blocker = f.root().join("blocker");
+    std::fs::write(&blocker, "a file, not a directory").unwrap();
+    let (code, out, err) = enrol_in(&f, &[("XDG_STATE_HOME", Some(&blocker))]);
+    assert_ne!(code, 0, "{out}");
+    assert!(err.contains("refused"), "{err}");
+
+    assert_eq!(
+        std::fs::read_to_string(f.path(".ai/repo/mesh/mesh.yaml")).unwrap(),
+        SEEDED
+    );
+}
+
+/// A machine whose host name cannot be read is still enrolled: its allowlist entry is
+/// named "this machine" beside its node id and platform.
+#[test]
+fn enrolment_names_a_machine_without_a_readable_host_name_this_machine() {
+    let f = Fixture::new();
+    f.write(".ai/repo/mesh/mesh.yaml", SEEDED);
+    let state = f.root().join("xdg-state");
+    // no `hostname` on an empty PATH
+    let empty = f.root().join("empty-path");
+    std::fs::create_dir_all(&empty).unwrap();
+    let (code, out, err) = enrol_in(
+        &f,
+        &[("XDG_STATE_HOME", Some(&state)), ("PATH", Some(&empty))],
+    );
+    assert_eq!(code, 0, "{out}\n{err}");
+    let written = std::fs::read_to_string(f.path(".ai/repo/mesh/mesh.yaml")).unwrap();
+    let label = format!(
+        " — this machine ({} {})\n",
+        std::env::consts::OS,
+        std::env::consts::ARCH
+    );
+    assert!(written.contains(&label), "{written}");
+}
+
+/// A declaration that cannot be written is an internal error naming it, and the file
+/// keeps what it held.
+#[cfg(unix)]
+#[test]
+fn a_declaration_that_cannot_be_written_is_an_error_and_stays_as_it_was() {
+    use std::os::unix::fs::PermissionsExt;
+    let f = Fixture::new();
+    f.write(".ai/repo/mesh/mesh.yaml", SEEDED);
+    let declaration = f.path(".ai/repo/mesh/mesh.yaml");
+    std::fs::set_permissions(&declaration, std::fs::Permissions::from_mode(0o444)).unwrap();
+    let state = f.root().join("xdg-state");
+    let (code, out, err) = enrol_in(&f, &[("XDG_STATE_HOME", Some(&state))]);
+    assert_ne!(code, 0, "{out}");
+    assert!(err.contains("internal: .ai/repo/mesh/mesh.yaml"), "{err}");
+    assert_eq!(std::fs::read_to_string(&declaration).unwrap(), SEEDED);
 }

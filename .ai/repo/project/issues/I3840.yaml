@@ -1,0 +1,50 @@
+id: I3840
+milestone: idd-reads-at-a-glance
+title: "The intent workspace answers within its 100 ms budget: its shared-scope fold holds the first pairs, not every pair"
+slug: the-intent-workspace-answers-within-its-budget
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Bring /ui/idd back under the warm p95 budget of .ai/repo/benchmarks/rust/policy.yaml without touching the budget. The 'What can run together?' panel's shared-scope fold draws its first SHARED_SCOPE_SHOWN pairs and links to /ui/panels/shared-scope, a panel route that lists every pair; the screen borrows the plan's lists (view::items) instead of cloning them on every request."
+why: "validate failed on master twice in a row, 91c0b5d5658 and 573df967bb5 (runs 39501132905-era and 39504455062): gate ui-audit, job ui, bench --check over budget, system.http.ui.idd warm p95 105.8 ms and system.http.live.ui.idd warm p95 106.5 ms against 100 ms. The screen of the-owner-directs-work-from-the-ui was 401 876 bytes, 296 216 of them the 'What can run together?' panel: its folded details drew all 1058 shared-scope pairs, each message run through prose::inline, although I2900 says the pairs are one click away and never outweigh the waves they qualify. I3018 (9129c669709, landed in parallel) made the screen borrow the plan and brought master back green; the fold is what remains, and it keeps the screen's size from growing with the plan."
+current_state: "The fold renders every entry of plan.waves serialised_by_scope whose subject serves the intent; render clones plan.waves (1.6 MB) and plan.issues (1 MB) as Vec<Value> on each request."
+desired_state: "The fold renders at most SHARED_SCOPE_SHOWN pairs and, past that, a link to /ui/panels/shared-scope?intent=<id> naming the total; the panel route lists them all; the screen reads the plan's arrays borrowed. bench system.http.ui.idd and system.http.live.ui.idd pass their budget on the CI runner."
+scope:
+  - ".ai/repo/project/issues/I3840.yaml"
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+depends_on: []
+acceptance_criteria:
+  - "The shared-scope fold draws at most SHARED_SCOPE_SHOWN pairs and links to the panel listing all of them, stating the total"
+  - "/ui/panels/shared-scope lists every pair of the named intent's issues and is a panel the UI dispatcher answers"
+  - "bench --check passes system.http.ui.idd and system.http.live.ui.idd within the 100 ms warm p95 budget, which is unchanged"
+validation:
+  - "cargo test --lib -- ui::"
+  - "majordomus bench system.http.ui.idd --transport system --profile ci --no-write"
+evidence_required:
+  - "shared_scope_fold_test"
+serves:
+  - "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
+created_at: 2026-10-21
+updated_at: 2026-10-28T12:28:19Z
+started_at: 2026-10-21T02:39:44Z
+started_event: sha256:c67e196625e0d794f73188cba8e30e31848c7fdb816a56a535591dc55740a270
+verified_at: 2026-10-21T02:51:16Z
+verified_event: sha256:c5b9fd9de749f2f8b4036aae9d870388be2dffc6acde167d24c76a221b98eb7a
+completed_at: 2026-10-28T12:28:19Z
+completed_event: sha256:f5ec69372b0464837e979f4e3381f3f0d32ca07cf2714e50ce1f538fd98e14f6
+evidence:
+  - covers: shared_scope_fold_test
+    type: test
+    command: "cargo test --lib -- ui::idd::tests::the_shared_scope_fold_draws_the_first_pairs_and_links_to_the_rest"
+    result: "ok on d621aee642b (aarch64-darwin): the fold of 32 pairs draws 25, names the total and links to /ui/panels/shared-scope; lib ui:: 203 passed, 0 failed; clippy --lib --tests -D warnings clean. Local bench, debug, ci profile, load 39: system.http.ui.idd warm p95 8.2 ms (20.5 before), system.http.live.ui.idd 7.4 ms (25.0 before)"
+    artifact: "apps/majordomus-cli/src/ui/idd.rs"
+    commit: d621aee642b6ef77b304b411f6795ce6180fb6f6
+    recorded_at: 2026-10-21T02:50:55Z
+  - covers: shared_scope_fold_test
+    type: manual
+    command: "curl http://127.0.0.1:62328/ui/idd?intent=a-change-is-judged-in-minutes and /ui/panels/shared-scope?intent=a-change-is-judged-in-minutes (shared server of the primary checkout at 6c79dcf68cf, 1.0.0-alpha.9)"
+    result: "the workspace states 'Shared scope: 37 pair(s)', draws 25 (SHARED_SCOPE_SHOWN) and links 'Open all 37 pairs' to the panel; the panel, answered by the UI dispatcher (ui/mod.rs SHARED_SCOPE_PANEL route), lists all 37 pairs; ui::idd::tests::the_shared_scope_fold_draws_the_first_pairs_and_links_to_the_rest ok in master validate https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939 (rust (2)); bench --check ui.idd warm p95 38.9 ms within the unchanged 100 ms budget in attempt 1 of run 40447094163 (ui-checks 122006729898); landed via #1841"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40447094163/job/122006729898"
+    commit: 81ef931a3e156907f1784c64c509884f565c17f0
+    recorded_at: 2026-10-28T12:28:11Z

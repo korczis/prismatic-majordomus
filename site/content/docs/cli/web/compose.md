@@ -1,7 +1,7 @@
 +++
 title = "majordomus web compose"
 description = "Compose every published surface into one publishable tree"
-weight = 30
+weight = 31
 [extra]
 route = "/docs/cli/web/compose/"
 command = "majordomus web compose"

@@ -23,7 +23,7 @@ mkdir -p "$R"
   "$MJ" update >/dev/null
   mkdir -p .ai/repo/mesh
   printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n' > .ai/repo/mesh/majordomus.yaml
-  printf 'multicast:\n  enabled: false\ntrust:\n  policy: tofu\n' >> .ai/repo/mesh/majordomus.yaml
+  printf 'multicast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: tofu\n' >> .ai/repo/mesh/majordomus.yaml
   printf 'cooperation:\n  heartbeat_seconds: 1\n  expiry_seconds: 30\n  repository: case-3066\n' >> .ai/repo/mesh/majordomus.yaml
   git add -A && git commit -qm base
 )
@@ -37,9 +37,25 @@ ready() { [ -n "$(jq -r '.url // empty' "$R/.ai/local/state/mcp/server.json" 2>/
 i=0; until ready; do i=$((i + 1)); [ "$i" -lt 200 ] || { cat "$T/serve.log"; exit 1; }; sleep 0.2; done
 cd "$R" || exit
 
+# The mesh's full state, asked again while the server is too busy to answer: an empty answer
+# is a failed read, not an absent session. On #1290's run 38895521925 step 3 read nothing and
+# said "did not close" of a session it never saw; a read that keeps failing now says so, with
+# what `mesh state` printed.
+state() {
+  local i=0 out
+  while :; do
+    out="$("$RB" mesh state --full --format json 2>"$T/state.err")" && [ -n "$out" ] \
+      && { printf '%s' "$out"; return 0; }
+    i=$((i + 1))
+    [ "$i" -lt 25 ] || { echo "    mesh state did not answer in 25 tries:" >&2; cat "$T/state.err" >&2; return 1; }
+    sleep 0.2
+  done
+}
 # The session `id` as the mesh's full state holds it, as one compact JSON object.
 session() {
-  "$RB" mesh state --full --format json 2>/dev/null \
+  local s
+  s="$(state)" || return 1
+  printf '%s' "$s" \
     | jq -c --arg id "$1" '[.. | objects | select((.key? // "") | type == "string" and endswith("/" + $id))][0] // empty'
 }
 # The case runs under `bash -eu`: a capture that fails would end it without a word (master
@@ -75,9 +91,16 @@ jq -e --arg t "$TASK" '.info.task == $t and .info.intent == "case 3066 work"' <<
 printf '{"session_id":"cc-3066","reason":"prompt_input_exit"}' \
   | "$MJ" capture session --provider claude-code --event end >/dev/null 2>"$T/err" \
   || { echo "    the end event exited $?"; cat "$T/err"; exit 1; }
-S="$(session claude-code-cc-3066)"
-jq -e '.state == "closed"' <<<"$S" >/dev/null \
-  || { echo "    the end event did not close the mesh session: $S"; exit 1; }
+# the close is the server's, applied before the end event returns; a few reads cover a state
+# folded a beat late, and an absent session is told apart from an open one
+closed=0
+for _ in $(seq 1 25); do
+  S="$(session claude-code-cc-3066)"
+  jq -e '.state == "closed"' <<<"$S" >/dev/null 2>&1 && { closed=1; break; }
+  sleep 0.2
+done
+[ "$closed" = 1 ] \
+  || { echo "    the end event did not close the mesh session: ${S:-absent from a state that answered}"; exit 1; }
 
 # ---------------------------------------------------------------- 4. no server, no mesh session, still an episode
 kill $PIDS 2>/dev/null || { echo "    the server had exited before the case stopped it"; cat "$T/serve.log"; exit 1; }

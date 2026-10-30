@@ -1,0 +1,39 @@
+# rehomed from NM1 (campaign.md put it there because the intent one-bar-and-one-language-on-every-surface has no milestone): a new milestone would derive PLANNED, so O1 refuses it; surfaces-never-disagree is ACTIVE and is the milestone whose outcome is that every surface projects the same state, which a switch that leads a UI reader somewhere else breaks
+# the case number of 3740_the_ui_language_switch_keeps_the_page is allocated with the id
+id: "I3767"
+milestone: "surfaces-never-disagree"
+title: "The language switch of a UI or Cockpit page keeps the reader on that page, and says so when the surface has no copy in the language chosen"
+slug: "the-ui-language-switch-keeps-the-page"
+priority: "p2"
+profile: "implementation"
+parallel_safe: true
+objective: "navbar::render is given the route of the page it draws the bar for, and each entry of the language switch leads to that route's copy in its language when the surface serves one, and otherwise stays on the route itself, marked as not translated with a note that the surface reads in English only; scripts/ui navbar names the switch's targets among what may differ from the site's bar, and no UI or Cockpit page, live or in the published snapshot, links a language entry to the site's front page."
+why: "The roadmap audit of 2026-10-20 found that choosing Czech in the bar of /ui/roadmap/ drops the reader on the Czech homepage, and that /cs/ui/roadmap/ does not exist; the reader loses the page they were reading and is not told why. The intent one-bar-and-one-language-on-every-surface wants the switch on every surface to lead to that surface's own copy in each language, and the multilingual intent says the switch leads to every other language; until the UI has a Czech copy, the honest answer is to stay on the page and say so. surfaces-never-disagree owns what every surface shows the same reader, and holds the Cockpit beside the UI."
+current_state: "On origin/master scripts/lib/ui-navbar.mjs:61-65 rewrites every data-i18n-lang link of the bar cut from the site's 404 page to the site's front page in that language, with the comment that a UI page has no copy in another language yet; the compiled result at apps/majordomus-cli/src/ui/navbar.html:40-41 leads en to https://majordomus.dev/ and cs to https://majordomus.dev/cs/. apps/majordomus-cli/src/ui/navbar.rs:39-41 render takes only the version and the live surfaces, not the page's route, and is called so at apps/majordomus-cli/src/ui/shell.rs:133 and apps/majordomus-cli/src/cockpit/view.rs:114. scripts/site-build:397-408 derives the language copies before it composes the UI and Cockpit snapshots, so no /cs/ui/ page is built, and ui-navbar.mjs:20-23 lists what may differ between the two bars without the switch's targets."
+desired_state: "render takes the page's route; for the source language its switch entry leads to that route and is current, and for each other language it leads to that route's copy when the surface declares one and otherwise to the route itself with aria-disabled, no aria-current, and a short note, translatable on the site, that the surface is in English only; scripts/ui navbar --write keeps the language entries as slots the executable fills, ui-navbar.mjs:20-23 names the switch's targets as an allowed difference, the rule the-ui-wears-the-sites-navbar.v1.md says the same, and case 3740_the_ui_language_switch_keeps_the_page holds both the live UI and the Cockpit."
+scope:
+  - "apps/majordomus-cli/src/ui/navbar.rs"
+  - "apps/majordomus-cli/src/ui/navbar.html"
+  - "apps/majordomus-cli/src/ui/shell.rs"
+  - "apps/majordomus-cli/src/cockpit/view.rs"
+  - "scripts/lib/ui-navbar.mjs"
+  - ".ai/repo/rules/project/the-ui-wears-the-sites-navbar.v1.md"
+  - "test/cases/3740_the_ui_language_switch_keeps_the_page.sh"
+  - ".ai/repo/project/issues/I3767.yaml"
+non_scope:
+  - "A Czech copy of the UI or the Cockpit; that is the larger promise of the intent one-bar-and-one-language-on-every-surface"
+  - "The switch on site pages, which site-i18n.mjs switchLanguage already points at each page's copy"
+  - "Any change to the bar's look; scripts/ui navbar still refuses a box or computed style that differs from the site's"
+acceptance_criteria:
+  - "Negative: on /ui/roadmap/ of a running server, the cs entry of the switch does not lead to the site's front page in Czech, nor to any /cs/ route the server or the site does not serve"
+  - "With no Czech copy declared, the cs entry's target is the same route, it carries aria-disabled and the English-only note, and the en entry is current"
+  - "A fixture that declares a Czech copy of one UI route makes the cs entry of that route lead to the copy, and of every other route stay in place"
+  - "A Cockpit page follows the same rules as a UI page"
+  - "scripts/ui navbar passes, and still fails when a style of the bar differs from the site's"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3740_the_ui_language_switch_keeps_the_page"
+  - "cargo test -p majordomus-cli navbar"
+  - "scripts/ui navbar"
+evidence_required:
+  - "the_ui_language_switch_keeps_the_page"
+depends_on: []

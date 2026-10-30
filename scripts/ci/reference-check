@@ -57,6 +57,7 @@ is_exempt() {
     site/content/plan/*|site/content/sessions/*|site/content/adrs/*) return 0 ;;
     examples/*/WALKTHROUGH.md) return 0 ;;    # a transcript of a run, regenerated whole
     campaigns/*) return 0 ;;                  # a brief, true of the day it was written
+    site/i18n/*) return 0 ;;                  # the translation memory quotes the pages it translates (ADR 0218)
   esac
   return 1
 }
@@ -141,7 +142,7 @@ fi
 git grep -h -I -o -E '(^|[^A-Za-z0-9_$./-])share/schemas/[A-Za-z0-9._/-]+' -- \
     ':!.ai/repo/sessions' ':!.ai/repo/adrs' ':!.ai/repo/project' \
     ':!docs/generated' ':!site/data/generated' ':!site/data/registry' \
-    ':!site/content/plan' ':!site/content/sessions' ':!site/content/adrs' ':!test' ':!campaigns' 2>/dev/null \
+    ':!site/content/plan' ':!site/content/sessions' ':!site/content/adrs' ':!site/i18n' ':!test' ':!campaigns' 2>/dev/null \
   | sed -E 's/^[^s]*//; s/[.,;:)]+$//' | LC_ALL=C sort -u > "$TMP/schemapaths" || true
 : > "$TMP/badschema"
 while IFS= read -r sp; do

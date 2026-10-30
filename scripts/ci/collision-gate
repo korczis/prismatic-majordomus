@@ -86,7 +86,7 @@ status=0
 "$CHECK" "${args[@]}" || status=$?
 [ "$status" = 11 ] || exit "$status"
 
-if printf '%s\n' "$labels" | grep -qxF "$ACCEPT"; then
+if grep -qxF -e "$ACCEPT" <<<"$labels"; then
   printf '\ncollision-gate: ACCEPTED  the collision above is accepted by the label %s on this pull request; reported, not refused\n' "$ACCEPT"
   exit 0
 fi

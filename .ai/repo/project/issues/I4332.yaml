@@ -1,0 +1,39 @@
+id: I4332
+milestone: a-version-follows-the-work
+title: "A release left half-published is named with its finishing step: tagged with no forge Release, or released with no successful deployment"
+slug: an-interrupted-publish-is-named
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "release.currency compares the newest v* tag the trunk contains with the forge releases that deploy.observed records (apps/majordomus-cli/src/deploy/observed.rs:120-152, ObservedRelease). A tag with no forge release gets a new stance, interrupted, beside current, owed and overdue. The brief and doctor print `WARN release <tag> tagged <age> ago with no forge Release — the publish stopped after its tag (finish: create the Release for <tag>, then its record)`. The second half-state is a tag that has a forge Release while the deployment of that release's commit failed or never happened. That means no ObservedDeployment (observed.rs:84-118) to the environment the release path declares (github-pages for a Pages site) at the tag's commit, or a newer one, has state success. That tag reads `WARN release <tag> released <age> ago, not deployed — <environment> at <sha>: <state>|none (finish: redeploy <tag>, then verify it)`. When no observation exists (no token, offline, never observed), the line carries the qualifier 'forge not observed' and never one of these stances. This is release.currency, which every adopter reads through the brief and doctor. It is separate from I2712, which concerns this repository's own scripts/ci/release-check."
+why: "Observed in OSCILLA (korczis/oscilla) on 2026-10-28 with majordomus 1.0.0-alpha.8. OSCILLA's release:publish pushed tag v3.13.0, then waited out its bound for a Pages run that the stalled forge never started (I4326), and exited without creating the GitHub Release. A re-run refused because the tag existed. The repository was left tagged without a Release, and only doctor's release currency line (OVERDUE) hinted at it, without naming the half-published state. OSCILLA fixed its own script (R021, a resumable publish). On master 81ef931a3e1, release.currency has one qualifier, tagged with no record (apps/majordomus-cli/src/release/currency.rs:532-536), and never reads the forge releases already observed (capability/builtin/deploy.rs:318-326). The tag-versus-forge pending or missing distinction exists only in this repository's scripts/ci/release-check (I2712), not as a release state an adopter can read. The second half-state is the other way OSCILLA's publish can stop: a Release created while Pages or the script's verify-deploy step failed. deploy.observed already records that deployment and its state, and nothing compares it with the release."
+current_state: "On master 81ef931a3e1, a trunk tag with no forge Release, and a Release whose deployment failed, both read as current, owed or overdue, the same as a fully published release."
+desired_state: "A tag the forge has no Release for reads interrupted, and the brief and doctor name the finishing step. A Release whose deployment failed or is missing reads not deployed, with the redeploy step. A tag with a forge Release, a successful deployment and no record keeps today's qualifier. An unobserved forge never produces either stance."
+scope:
+  - "apps/majordomus-cli/src/release/currency.rs"
+  - "apps/majordomus-cli/src/release/compat.rs"
+  - "apps/majordomus-cli/src/deploy/observed.rs"
+  - "apps/majordomus-cli/src/capability/builtin/deploy.rs"
+  - "docs/RELEASE.md"
+  - "test/cases/3470_the_release_follows_the_work.sh"
+non_scope:
+  - "Creating the missing Release: Majordomus names the step, and the repository's publish takes it"
+  - "OSCILLA's release:publish script"
+  - "This repository's scripts/ci/release-check and its pending tag (I2712)"
+depends_on:
+  - "I3070"
+acceptance_criteria:
+  - "Given a trunk tag v1.2.0 and observed forge releases up to v1.1.0, release.currency answers interrupted with the tag and its finishing step, and the brief and doctor print it"
+  - "Given a forge Release for v1.2.0, a successful deployment of its commit and no release record, the answer is today's 'tagged, its record not landed yet'"
+  - "Given a forge Release for v1.2.0 and an observed github-pages deployment of its commit with state failure, and none newer, release.currency answers not deployed naming the environment, the commit and the state"
+  - "With no forge observation, neither stance is answered and the line says the forge was not observed"
+  - "Before the change the first test fails, because the stance reads current"
+validation:
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib release::currency::"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 3470_the_release_follows_the_work"
+evidence_required:
+  - "interrupted_publish_is_named"
+serves:
+  - "a-version-follows-every-session#measured"
+created_at: 2026-10-28
+updated_at: 2026-10-28

@@ -10,6 +10,7 @@
 #   share/standard/majordomus/         ->  principles (the rules tagged principle, in package order)
 #   share/skeleton/ai/repo/workflows/  ->  lifecycle steps and the worker sequence
 #   docs/*.md                          ->  docs index
+#   git history + release records      ->  delivery.json (majordomus plan delivery --at HEAD)
 #   share/schemas/**                   ->  schemas.json (every schema file, linked to its source)
 #   git                                ->  source.json (commit, input hash, generator version)
 #
@@ -67,6 +68,32 @@ PJ="$(mj_rel "$MJ_PROJECT_DIR")"; AI="$(mj_rel "$MJ_AI_DIR")"; LOCAL="$(mj_rel "
 trap 'rm -rf "$STAGE" "${RULES_TMP:-}" "${LINK_TRACKED:-}" "${LINK_DOCS:-}"; mj_cleanup' EXIT
 command -v jq >/dev/null || { echo "generate-site-data: jq is required" >&2; exit 12; }
 GEN_VERSION=1
+
+# ---------------------------------------------------------------- the manifest, checked before anything is derived
+# The executable's manifest (docs/generated/registry.json) is refused here, before the first
+# read through the tool, rather than where its routes are projected near the end: a manifest
+# of another schema, one naming a source file the tree does not have, or one whose capability
+# names a module it does not hold is a finding about the repository whatever the rest of the
+# data says, and a generation that will be refused has nothing to gain from deriving the other
+# 30-odd files first. Checked at the projection, each refusal cost 94% of a full generation
+# (243 of 259 s, measured 2026-10-20), and test/cases/95_executable_reference.sh pays three.
+REG="$ROOT/docs/generated/registry.json"
+[ "$(jq -r '.schema' "$REG")" = "majordomus/capability-registry/v1" ] || { echo "generate-site-data: docs/generated/registry.json is not a majordomus/capability-registry/v1 manifest (regenerate: apps/majordomus-cli/target/debug/majordomus generate)" >&2; exit 10; }
+[ "$(jq '.capabilities | length' "$REG")" -gt 0 ] || { echo "generate-site-data: docs/generated/registry.json lists no capability" >&2; exit 10; }
+# every source path the manifest names is a file of this tree; the rule that turns a Rust
+# module path into a file lives in the executable, and this is where it is held to the tree
+jq -r '[.capabilities[].source_path] | unique[]' "$REG" | while read -r sp; do
+  [ -f "$ROOT/$sp" ] || { echo "generate-site-data: docs/generated/registry.json names $sp as a capability's source and no such file exists (Provenance::source_path and the crate's layout disagree)" >&2; exit 10; }
+done
+# the modules are read once and asked about together; the first one, in byte order, that is
+# not a builtin module of the manifest is the one named, as it was when each was asked alone
+jq -r '.capabilities[].module' "$REG" | LC_ALL=C sort -u > "$STAGE/capability-modules.txt"
+REG_MISSING="$(jq -r --rawfile ms "$STAGE/capability-modules.txt" '
+  [.modules[] | select(.source == "builtin") | .id] as $builtin
+  | first($ms | split("\n") | .[:-1][] | sub("^[ \t]+"; "") | sub("[ \t]+$"; "")
+          | select(. as $m | $builtin | index([$m]) | not) | "missing " + .) // empty' "$REG")" \
+  || { echo "generate-site-data: reading the modules of docs/generated/registry.json failed" >&2; exit 13; }
+[ -z "$REG_MISSING" ] || { echo "generate-site-data: docs/generated/registry.json: capability module ${REG_MISSING#missing } is not a builtin module of the manifest" >&2; exit 10; }
 
 # ---------------------------------------------------------------- reading the repository through the tool
 # Every JSON the generator asks the tool for is a part of its subject, and the subject is
@@ -132,6 +159,7 @@ apps/majordomus-cli/README.md
 site/config.toml
 site/data/nav.toml
 site/data/challenge.toml
+site/data/marketing.toml
 README.md
 LICENSE"
 # LC_ALL=C so the globs below expand in byte order rather than in the collation order of
@@ -145,14 +173,23 @@ LICENSE"
 LC_ALL=C; export LC_ALL
 
 # test cases are inputs because each one declares which commands it covers, and that
-# metadata is the evidence the command pages render
+# metadata is the evidence the command pages render. The programs this script sources or
+# runs (lib/, scripts/lib/, itself) and every file it reads by a literal "$ROOT/..." path are
+# inputs too: a projection, a hand-written page or the Pages model edited without moving
+# this fingerprint would leave the site data reading as current while it is stale (I2847).
+# Case 3246 refuses a literal read this list does not cover.
 for f in "$ROOT"/share/skeleton/profiles/*.yaml "$ROOT"/share/standard/majordomus/rules/*.md "$ROOT"/docs/*.md "$ROOT"/docs/claims/*.md \
          "$ROOT/$AI"/repo/skills/*/SKILL.md "$ROOT/$AI"/repo/skills/*/examples/*.md "$ROOT/$AI"/repo/knowledge/sources.yaml "$ROOT"/share/allow/skill.txt \
          "$ROOT"/test/cases/*.sh \
          "$ROOT"/test/fixtures/commands/*.json "$ROOT"/test/fixtures/commands/setup/*.sh \
          "$ROOT"/test/fixtures/commands/stdin/* \
          "$ROOT"/.ai/repo/use-cases/*.md "$ROOT"/.ai/repo/use-cases/taxonomy.yaml "$ROOT"/.ai/repo/applications/*.md \
-         "$ROOT"/lib/usecase.sh \
+         "$ROOT"/scripts/generate-site-data "$ROOT"/scripts/pages "$ROOT"/lib/*.sh "$ROOT"/lib/*.awk \
+         "$ROOT"/share/skeleton/ai/repo/workflows/*.md \
+         "$ROOT"/scripts/lib/*.jq "$ROOT"/scripts/lib/*.awk \
+         "$ROOT"/AGENTS.md "$ROOT"/.ai/repo/ci/pages.yaml \
+         "$ROOT"/site/data/registry/distribution.json \
+         "$ROOT"/site/content-src/*.md "$ROOT"/site/content-src/*/*.md \
          "$ROOT"/share/schemas/*/*.proto "$ROOT"/share/schemas/*/*.schema.json \
          "$ROOT"/share/schemas/*/*/*.proto "$ROOT"/share/schemas/*/*/*.schema.json \
          "$ROOT/$PJ"/project.yaml "$ROOT/$PJ"/milestones/*.yaml \
@@ -164,6 +201,22 @@ ${f#"$ROOT"/}"; done
 # generator's inputs derives them from here rather than keeping a second list that goes
 # stale the moment a new canonical input is added — which is how it went stale before.
 if [ "${1:-}" = --inputs ]; then printf '%s\n' $INPUTS | sed '/^$/d'; exit 0; fi
+# The commit a generation observes for delivery.json. An offloaded derive runs on a
+# throwaway input commit (a stash snapshot, or a merge in progress written by commit-tree)
+# that never reaches origin, and observing it made every offloaded branch red in CI's
+# --check (#1759, I3836). The offload names the worktree's HEAD in MJ_DERIVE_OBSERVE, and a
+# generation observes that commit when it is an ancestor of the tree it runs in; anything
+# else observes HEAD as before. --delivery-at prints it and exits, which is how case 3846
+# reads it without a generation.
+delivery_observe() {
+  if [ -n "${MJ_DERIVE_OBSERVE:-}" ] \
+    && git -C "$ROOT" merge-base --is-ancestor "$MJ_DERIVE_OBSERVE" HEAD 2>/dev/null; then
+    git -C "$ROOT" rev-parse "$MJ_DERIVE_OBSERVE^{commit}"
+  else
+    git -C "$ROOT" rev-parse HEAD
+  fi
+}
+if [ "${1:-}" = --delivery-at ]; then delivery_observe; exit 0; fi
 for f in $INPUTS; do [ -f "$ROOT/$f" ] || { echo "generate-site-data: canonical input missing: $f" >&2; exit 12; }; done
 # The fingerprint of the canonical inputs: one line "<path> <hash>" per input in the list's
 # own order, hashed. One hashing process for the whole list rather than one per file — the
@@ -314,7 +367,13 @@ VERSION="${VERSION#majordomus }"
 # (`release`) and read by every page from there (project.the-site-offers-the-release-it-published).
 # Until 2026-10-12 this file carried a `release` read from the records alone, and the homepage
 # offered the previous release for hours after every publication.
-TAGLINE="$(grep -m1 -E '^\*\*A lightweight' "$ROOT/README.md" | sed 's/\*\*//g')"
+# The product sentence is declared once, as the homepage hero's title and subtitle in
+# site/data/marketing.toml (I3134, the owner's choice of 2026-10-20). Every page title and
+# og:description read this tagline; README.md's bold line is held to it by homepage-check.
+TAGLINE="$(awk -F' = ' '/^\[/ { s = $0 } s == "[hero]" && ($1 == "title" || $1 == "subtitle") {
+  v = $2; sub(/^"/, "", v); sub(/"$/, "", v); printf "%s%s", (n++ ? " " : ""), v }' "$ROOT/site/data/marketing.toml")"
+[ -n "$TAGLINE" ] || {
+  echo "generate-site-data: site/data/marketing.toml [hero] declares no title and subtitle" >&2; exit 12; }
 LICENSE_NAME="$(head -1 "$ROOT/LICENSE" | sed 's/ License$//')"
 COMMANDS="$(sed -n '/^usage: majordomus <command>/,/^global options:/p' "$ROOT/bin/majordomus" \
   | grep -E '^  [a-z]' | sed -E 's/^  ([a-z]+)( <[a-z]+>)? +(.*)$/\1|\3/' \
@@ -735,7 +794,7 @@ done
 # exits the generator instead of a subshell of it
 while IFS= read -r t; do
   [ -n "$t" ] || continue
-  printf '%s\n' "$RESP_KEYS" | grep -qxF "$t" \
+  grep -qxF -e "$t" <<<"$RESP_KEYS" \
     || { echo "generate-site-data: README row '$t' has no entry in docs/RESPONSIBILITIES.yaml" >&2; exit 10; }
 done <<EOF
 $README_TITLES
@@ -1296,7 +1355,14 @@ jq -S --slurpfile lc "$OUT/lifecycle.json" '
                 walkthrough: ([ $order[] | . as $cmd | $lifesteps | map(select(.argv[0] == $cmd and .result == "pass")) | length | select(. > 0) ] | length),
                 refusals: ( $lifesteps | map(select(.exit != 0)) | group_by([.command, .exit, .output]) | length ),
                 executions: ($steps | length),
-                scenarios: ([ $steps[].use_case ] | unique | length) } }' \
+                scenarios: ([ $steps[].use_case ] | unique | length) } }
+  # The choices of the hero (I3223): every use case the refusals name, once, in the order of the
+  # refusals, each with the recorded command it refused and the verdict line its run printed.
+  # Derived from the refusals above, so a scenario is offered only while a recorded run refuses.
+  | .scenarios = ( .refusals | reduce .[] as $r ([];
+      if any(.[]; .use_case == $r.use_case) then .
+      else . + [{ use_case: $r.use_case, title: $r.use_case_title, route: $r.route,
+                  command: $r.command, verdict: $r.what }] end) )' \
   "$OUT/catalogue.json" > "$OUT/terminal.json"
 TERM_W="$(jq -r '.counts.walkthrough' "$OUT/terminal.json")"; TERM_L="$(jq -r '.counts.lifecycle' "$OUT/terminal.json")"
 # The two refusals hold the page to what the tool did, so they apply where the scenarios
@@ -1825,11 +1891,25 @@ if mj_project_load; then
   # on and appears only on a Linux runner, as a red deploy rather than a red test. The issues
   # array crossed the limit as the plan grew and milestones was next. --slurpfile has no
   # ceiling at all rather than a larger one, so growth cannot bring this back.
+  # findings_by_code is what the plan page shows: one entry per (level, code) with its count
+  # and three examples. `plan validate` reports scope_conflict once per pair of issues sharing
+  # a path, so the findings grow with roughly the square of the backlog; printed one row each
+  # they were half of /plan/ (2,797 rows, 932 KB on 2026-10-21) and timed the UI audit out
+  # (I3838). The whole list stays in `findings`, beside it.
+  # milestone_edges and milestone_mermaid are the graph the plan pages draw: one node per
+  # milestone, an arrow wherever an issue of one depends on an issue of another, counted. The
+  # graph of every issue (`mermaid`, 824 nodes and 82,663 characters on 2026-10-21) kept
+  # /plan/dag/ from answering the site probe within 90 s (I3841); each milestone's page draws
+  # its own issues and the edges between them; an edge that crosses milestones is listed, by
+  # its issues, under the milestone edge it is counted in. The whole list stays in `edges`.
   for pair in "milestones:$MS" "issues:$IS" "waves:$WV" "edges:$EG" "findings:$FD"; do
     printf '%s' "${pair#*:}" > "$STAGE/plan-${pair%%:*}.json"
   done
+  # The complete graph grows with the plan too. Preserve command substitution's
+  # trailing-newline handling, but carry its bytes through a file instead of argv.
+  printf '%s' "$(mj_project_mermaid)" > "$STAGE/plan-mermaid.txt"
   jq -n --arg name "$(mj_pj_project_name)" --arg repo "$(mj_pj_repository)" --arg branch "$(mj_pj_default_branch)" \
-    --arg active "$(mj_pj_active)" --arg next "$(mj_pj_next_ready)" --arg mermaid "$(mj_project_mermaid)" \
+    --arg active "$(mj_pj_active)" --arg next "$(mj_pj_next_ready)" --rawfile mermaid "$STAGE/plan-mermaid.txt" \
     --argjson statuses "$ST" --argjson worker_sequence "$WS" \
     --slurpfile milestones "$STAGE/plan-milestones.json" --slurpfile issues "$STAGE/plan-issues.json" \
     --slurpfile waves "$STAGE/plan-waves.json" --slurpfile edges "$STAGE/plan-edges.json" \
@@ -1838,7 +1918,25 @@ if mj_project_load; then
       active_milestone:$active, next_ready:$next, mermaid:$mermaid, statuses:$statuses,
       worker_sequence:$worker_sequence,
       milestones:$milestones[0], issues:$issues[0], waves:$waves[0], edges:$edges[0],
-      findings:$findings[0]}' > "$OUT/plan.json"
+      findings:$findings[0],
+      findings_by_code:($findings[0] | group_by([.level, .code])
+        | map({level: .[0].level, code: .[0].code, count: length, examples: .[:3]})
+        | sort_by([(if .level == "FAIL" then 0 elif .level == "WARN" then 1 else 2 end), -.count, .code]))}
+    | (.issues | map({key: .id, value: .milestone}) | from_entries) as $of
+    | ([.edges[] | {from: $of[.from], to: $of[.to], issue_from: .from, issue_to: .to}
+        | select(.from != null and .to != null and .from != .to)]
+        | group_by([.from, .to])
+        | map({from: .[0].from, to: .[0].to, count: length,
+               issues: map({from: .issue_from, to: .issue_to})})) as $medges
+    | def node: "M_" + gsub("[^A-Za-z0-9]"; "_");
+      . + {milestone_edges: $medges,
+           milestone_mermaid: ("flowchart LR\n"
+             + ([.milestones | sort_by(.order)[]
+                 | "    \(.id | node)[\"\(.id)<br/>\(.counts.by_status.DONE // 0) of \(.counts.required) done\"]:::\(.status | ascii_downcase)"]
+                | join("\n"))
+             + "\n" + ([$medges[] | "    \(.from | node) -->|\(.count)| \(.to | node)"] | join("\n"))
+             + "\n" + ($mermaid | split("\n") | map(select(test("^ *classDef "))) | join("\n")))}' \
+    > "$OUT/plan.json"
 # Refuse an invalid model rather than project it. A cycle makes every milestone BLOCKED with
 # no rank, and without this the generator published that roadmap and exited 0 — a page saying
 # nothing is reachable, with no reason given. The engine has already said so by this point:
@@ -1857,12 +1955,12 @@ if mj_project_load; then
   # /map/ and /evidence/ already use rather than adding a third picture of a dependency graph.
   jq '{schema: 1,
        source: ".ai/repo/project/milestones/",
-       edge_kinds: {requires: "the target cannot begin until the source is accepted"},
+       edge_kinds: {unblocks: "the source unblocks the target: the target cannot begin until the source is accepted"},
        nodes: [.milestones[] | {id: .id, kind: "milestone",
-                                label: (if .version == "" then .id else .version + "  " + .id end),
+                                label: (if .released_in == "unreleased" then .id else .released_in + "  " + .id end),
                                 status: .status, route: ("/plan/" + (.id | ascii_downcase) + "/"),
                                 external: false, summary: .title}],
-       edges: [.milestones[] | . as $m | $m.depends_on[] | {source: ., target: $m.id, kind: "requires"}]}' \
+       edges: [.milestones[] | . as $m | $m.depends_on[] | {source: ., target: $m.id, kind: "unblocks"}]}' \
     "$OUT/roadmap.json" > "$OUT/roadmap-graph.json"
   [ -s "$OUT/roadmap.json" ] || { echo "generate-site-data: the roadmap projection produced nothing" >&2; exit 13; }
   # The gate the engine enforces: a milestone whose dependencies are not all DONE is BLOCKED,
@@ -1889,6 +1987,42 @@ else
 fi
 
 mj_phase_end "gen:plan.json_the_execution_mode" "$GEN_T0"
+# ---------------------------------------------------------------- delivery.json (how far each issue's work travelled)
+GEN_T0="$(mj_phase_begin "gen:delivery.json")"
+# Inferred by the executable (`plan.delivery`, ADR 0166) and never here: this asks it and
+# pretty-prints the answer. It is asked `--at` a commit, which reads that commit's merges and
+# the tree's release records and nothing live — no branch, no forge, no deployment, no clock —
+# so the file carries only `merged` and `released` and is a function of the commit alone:
+# a tag, a push, a pull request or a deployment elsewhere cannot make --check red. The live
+# stages (branch, pr_open, deployed) are the capability's live answer, for the CLI, HTTP, MCP
+# and the UI; bringing them to the published site at Pages build time is the plan surfaces'
+# work (I2743, I2744).
+#
+# Which commit. A derived file cannot name the commit it lands in (case 51), so a generation
+# observes HEAD as it stands, the commit before. --check reproduces the commit the committed
+# file names rather than HEAD: a merge that lands later does not make a committed answer
+# wrong, it makes the next generation newer. And a generation whose issues read exactly as the
+# committed file's keeps the committed file, observation and all, so regenerating a clean tree
+# moves nothing unless an issue moved.
+DELIVERY_COMMITTED="$DEST_DATA/delivery.json"
+DELIVERY_AT=""
+if [ "$CHECK" = 1 ] && [ -f "$DELIVERY_COMMITTED" ]; then
+  DELIVERY_AT="$(jq -r '.observed.commit // empty' "$DELIVERY_COMMITTED" 2>/dev/null || true)"
+  if [ -n "$DELIVERY_AT" ] && ! git -C "$ROOT" cat-file -e "$DELIVERY_AT^{commit}" 2>/dev/null; then
+    DELIVERY_AT=""
+  fi
+fi
+# Otherwise the commit delivery_observe names (the worktree's HEAD for an offloaded derive).
+[ -n "$DELIVERY_AT" ] || DELIVERY_AT="$(delivery_observe)"
+mj_tool_read "$STAGE/delivery.raw.json" "the issues' delivery" --json plan delivery --at "$DELIVERY_AT"
+jq . "$STAGE/delivery.raw.json" > "$OUT/delivery.json"
+if [ "$CHECK" = 0 ] && [ -f "$DELIVERY_COMMITTED" ]; then
+  delivery_facts() { jq -S '.issues | walk(if type == "object" then del(.observed_at) else . end)' "$1" 2>/dev/null; }
+  if [ "$(delivery_facts "$OUT/delivery.json")" = "$(delivery_facts "$DELIVERY_COMMITTED")" ]; then
+    cp "$DELIVERY_COMMITTED" "$OUT/delivery.json"
+  fi
+fi
+mj_phase_end "gen:delivery.json" "$GEN_T0"
 # ---------------------------------------------------------------- source.json
 GEN_T0="$(mj_phase_begin "gen:source.json")"
 HASH="$(mj_site_inputs_hash)"
@@ -1898,7 +2032,11 @@ HASH="$(mj_site_inputs_hash)"
 # tree. The commit a page was built from is a fact of the build, not of the derivation:
 # scripts/site-build writes it into site/data/build.json (for the templates) and
 # site/static/build.json (served at /build.json), neither of them committed.
-jq -n --arg v "$VERSION" --arg h "$HASH" --argjson g "$GEN_VERSION" --arg inputs "$INPUTS" \
+# The input list travels in a file, not on argv: it grows with every input the generator
+# reads, and at 101495 bytes on train 4 it was within a quarter of Linux's 131072-byte cap on
+# one argument (I3945, found by case 10's measurement). --rawfile reads the bytes --arg passed.
+printf '%s' "$INPUTS" > "$STAGE/source-inputs.txt"
+jq -n --arg v "$VERSION" --arg h "$HASH" --argjson g "$GEN_VERSION" --rawfile inputs "$STAGE/source-inputs.txt" \
   '{schema:1, source_version:$v, source_hash:$h, generator_version:$g, input_files: ($inputs | split("\n"))}' > "$OUT/source.json"
 
 mj_phase_end "gen:source.json" "$GEN_T0"
@@ -1916,7 +2054,7 @@ mk_section profiles "Execution profiles" "Capability class, reasoning effort, ou
 i=0; for slug in $(jq -r '.profiles[].slug' "$OUT/profiles.json"); do i=$((i+1))
   jstr_to L1 "$slug profile"; jstr_to L2 "$slug"
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nslug = %s\nsource = "share/skeleton/profiles/%s.yaml"\n+++\n' "$L1" "$(jq -r --arg s "$slug" '.profiles[] | select(.slug==$s) | .description' "$OUT/profiles.json" | jline)" "$i" "$L2" "$slug" > "$CONTENT_ROOT/profiles/$slug.md"; done
-mk_section guarantees "Guaranteed, advisory, planned" "What Majordomus actually does today, row by row, with the file that implements it and the test that proves it." guarantees.html claim.html 40
+mk_section guarantees "Guaranteed, advisory, planned" "What Majordomus does today, row by row, with the file that implements it, the test that is to prove it, and what that test's recorded run says." guarantees.html claim.html 40
 i=0; for st in $(jq -r '.statuses | keys_unsorted[]' "$OUT/capabilities.json"); do i=$((i+1))
   jstr_to L1 "$st"
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\ntemplate = "status.html"\n[extra]\nstatus = %s\n+++\n' "$(jstr "$(printf '%s' "$st" | awk '{print toupper(substr($0,1,1)) substr($0,2)}') capabilities")" "$(jq -r --arg s "$st" '.statuses[$s]' "$OUT/capabilities.json" | jline)" "$i" "$L1" > "$CONTENT_ROOT/guarantees/$st.md"; done
@@ -1945,7 +2083,7 @@ i=0; jq -r '.doctrines[] | [.id, .slug, .title, .summary] | @tsv' "$OUT/doctrine
   jstr_to L1 "$title"; jstr_to L2 "$id"; jstr_to L3 "$summary"
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = %s\n+++\n' "$L1" "$L3" "$i" "$L2" "$(jq -r --arg id "$id" '.doctrines[] | select(.id==$id) | .source' "$OUT/doctrines.json" | jline)" > "$CONTENT_ROOT/doctrines/$slug.md"; done
 mk_section plan "The plan" "Milestones as executable outcome specifications, issues as execution contracts, and the dependency graph that decides what may be executed next. Every figure is derived from .ai/repo/project." plan-section.html issue.html 21
-printf -- '+++\ntitle = "Dependency graph"\ndescription = "Every issue, every dependency, and the execution waves the graph implies — drawn from the canonical edges, never by hand."\nweight = 1\ntemplate = "dag.html"\n+++\n' > "$CONTENT_ROOT/plan/dag.md"
+printf -- '+++\ntitle = "Dependency graph"\ndescription = "Every milestone and the dependencies between them, counted from the issues that cross them — drawn from the canonical edges, never by hand."\nweight = 1\ntemplate = "dag.html"\n+++\n' > "$CONTENT_ROOT/plan/dag.md"
 # the milestones in their order, then every issue: one row per page, each id a word as the
 # shell split it, its title every value the id selects and its description the first line
 lit_rows "$STAGE/plan-pages.tsv" '
@@ -2203,23 +2341,6 @@ GEN_T0="$(mj_phase_begin "gen:executable_routes")"
 # the source on GitHub, and the claims that speak about each surface, attached by the path of
 # their implementation (scripts/lib/executable-site.jq). A capability added to the registry gets
 # its page, its index entries and its links from this pass alone; nothing here names one.
-REG="$ROOT/docs/generated/registry.json"
-[ "$(jq -r '.schema' "$REG")" = "majordomus/capability-registry/v1" ] || { echo "generate-site-data: docs/generated/registry.json is not a majordomus/capability-registry/v1 manifest (regenerate: apps/majordomus-cli/target/debug/majordomus generate)" >&2; exit 10; }
-[ "$(jq '.capabilities | length' "$REG")" -gt 0 ] || { echo "generate-site-data: docs/generated/registry.json lists no capability" >&2; exit 10; }
-# every source path the manifest names is a file of this tree; the rule that turns a Rust
-# module path into a file lives in the executable, and this is where it is held to the tree
-jq -r '[.capabilities[].source_path] | unique[]' "$REG" | while read -r sp; do
-  [ -f "$ROOT/$sp" ] || { echo "generate-site-data: docs/generated/registry.json names $sp as a capability's source and no such file exists (Provenance::source_path and the crate's layout disagree)" >&2; exit 10; }
-done
-# the modules are read once and asked about together; the first one, in byte order, that is
-# not a builtin module of the manifest is the one named, as it was when each was asked alone
-jq -r '.capabilities[].module' "$REG" | LC_ALL=C sort -u > "$STAGE/capability-modules.txt"
-REG_MISSING="$(jq -r --rawfile ms "$STAGE/capability-modules.txt" '
-  [.modules[] | select(.source == "builtin") | .id] as $builtin
-  | first($ms | split("\n") | .[:-1][] | sub("^[ \t]+"; "") | sub("[ \t]+$"; "")
-          | select(. as $m | $builtin | index([$m]) | not) | "missing " + .) // empty' "$REG")" \
-  || { echo "generate-site-data: reading the modules of docs/generated/registry.json failed" >&2; exit 13; }
-[ -z "$REG_MISSING" ] || { echo "generate-site-data: docs/generated/registry.json: capability module ${REG_MISSING#missing } is not a builtin module of the manifest" >&2; exit 10; }
 # The claims matrix is slurped from its file, never passed on argv: Linux caps a single
 # argument at MAX_ARG_STRLEN (32 pages, 131072 bytes) whatever ARG_MAX says, and the array
 # crossed it — 129593 bytes on master, 131363 with two claims more. macOS has no such
@@ -2367,7 +2488,7 @@ mj_phase_end "gen:cli_routes" "$GEN_T0"
 GEN_T0="$(mj_phase_begin "gen:docs_SITE_CLAIMS.md_derived")"
 SC="$STAGE/SITE_CLAIMS.md"
 {
-  printf '# Site claims\n\nGenerated by `scripts/generate-site-data` from `docs/CLAIMS.yaml`. Do not edit; edit the YAML.\nEvery substantive public claim the website makes, with its status, the file that defines it,\nthe file that implements it, and the test that proves it. The website renders the same data.\n\n'
+  printf '# Site claims\n\nGenerated by `scripts/generate-site-data` from `docs/CLAIMS.yaml`. Do not edit; edit the YAML.\nEvery substantive public claim the website makes, with its status, the file that defines it,\nthe file that implements it, and the test that is to prove it. The website renders the same data,\nwith what each test'\''s recorded run says.\n\n'
   for st in $(jq -r '.statuses | keys_unsorted[]' "$OUT/capabilities.json"); do
     printf '## %s\n\n%s\n\n| claim | source | implementation | test |\n|---|---|---|---|\n' "$st" "$(jq -r --arg s "$st" '.statuses[$s]' "$OUT/capabilities.json")"
     jq -r --arg s "$st" --arg base "$SITE_BASE" '.claims[] | select(.status==$s) | "| [\(.claim)](\($base)/guarantees/\(.id)/) | `\(.source)` | \(if .implementation then "`\(.implementation)`" else "—" end) | \(if .test then "`\(.test)`" else "—" end) |"' "$OUT/capabilities.json"

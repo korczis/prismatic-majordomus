@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/providers/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.28.0",
+  "generator": "majordomus-cli 1.0.0-alpha.9",
   "scratch_roots": [
     "$TMPDIR",
     "/tmp",
@@ -28,7 +28,13 @@
         "episode": "none",
         "episode_evidence": "not a product but a class of tools defined by the file they read (agents.md). A convention has no process and no events; the concrete tool's own entry in this file is what says what it can do.",
         "prompts": "none",
-        "prompts_evidence": "as above: a convention hands nothing to anything."
+        "prompts_evidence": "as above: a convention hands nothing to anything.",
+        "browser": "none",
+        "browser_evidence": "as above: a convention drives nothing; the concrete tool reading AGENTS.md has its own row, and that row says whether it drives a browser.",
+        "usage": [
+          "none"
+        ],
+        "usage_evidence": "as above: a convention runs no model and reports no usage; the concrete tool reading AGENTS.md has its own row, and that row says how it reports usage."
       }
     },
     {
@@ -49,7 +55,13 @@
         "episode": "none",
         "episode_evidence": "no conversation-lifecycle hook is published. Searched 2026-09-11: getbb.app; github.com/get-bb/bb docs/ (25 files), plugins/ (31 plugins), README.md; docs/configuration.md ('Repository worktree hooks') and docs/cli-guide-and-skill.md document only .bb-env-setup.sh / .bb-env-teardown.sh, which fire on environment provisioning and removal. docs/provider-plugin-api.md names an internal system/interaction/lifecycle event stream with no external-command contract. The @get-bb/plugin-sdk surface is rendered in-app and not published, so this is an absence of documentation, not a documented absence. ADR 0024 reached the same conclusion: the agent bb runs keeps the hook.",
         "prompts": "none",
-        "prompts_evidence": "same search, same date, same caveat: nothing published hands a prompt to an external command before the model runs. Because bb runs Claude Code and Codex as child processes, each child's own prompt hook fires underneath it — the coverage is the agent's, never bb's."
+        "prompts_evidence": "same search, same date, same caveat: nothing published hands a prompt to an external command before the model runs. Because bb runs Claude Code and Codex as child processes, each child's own prompt hook fires underneath it — the coverage is the agent's, never bb's.",
+        "browser": "none",
+        "browser_evidence": "bb itself ships no browser bridge (searched 2026-10-21: the same docs/ and plugins/ as above name none). The agent bb runs keeps its own: Claude Code under bb has its bridge when the person enabled it, and that is the agent's row, never bb's.",
+        "usage": [
+          "none"
+        ],
+        "usage_evidence": "bb runs Claude Code and Codex as child processes and publishes no usage stream of its own (searched 2026-10-22: getbb.app and the github.com/get-bb/bb docs/ and plugins/ named above document no usage, token or telemetry export). Each child reports through its own row's seam; the usage is the agent's, never bb's."
       }
     },
     {
@@ -74,7 +86,16 @@
         "episode": "hooks",
         "episode_evidence": "https://code.claude.com/docs/en/hooks — SessionStart (source: startup, resume, clear, compact, fork), SessionEnd (reason: clear, resume, logout, prompt_input_exit, other), PreCompact and PostCompact (trigger: manual, auto). Verified 2026-09-11. This repository's shims are .claude/hooks/majordomus-session-{start,end,compact}.",
         "prompts": "hook",
-        "prompts_evidence": "https://code.claude.com/docs/en/hooks — UserPromptSubmit, 'When you submit a prompt, before Claude processes it'; the raw text arrives as prompt_text. Verified 2026-09-11. The shim is .claude/hooks/majordomus-capture."
+        "prompts_evidence": "https://code.claude.com/docs/en/hooks — UserPromptSubmit, 'When you submit a prompt, before Claude processes it'; the raw text arrives as prompt_text. Verified 2026-09-11. The shim is .claude/hooks/majordomus-capture.",
+        "browser": "bridge",
+        "browser_evidence": "https://code.claude.com/docs/en/chrome — Claude Code connects to the Claude in Chrome extension with `claude --chrome` or `/chrome`, and the browser tools arrive in the same session as mcp__claude-in-chrome__* beside this repository's server from .mcp.json; `/chrome` → Enabled by default makes it the default, and a project cannot turn it on (CLAUDE_CODE_ENABLE_CFC in a project's settings is ignored). The first enable writes the native messaging host com.anthropic.claude_code_browser_extension. Verified 2026-10-21; docs/MCP.md, Claude in the browser.",
+        "browser_host": "com.anthropic.claude_code_browser_extension",
+        "browser_setup": "in Claude Code: /chrome, choose Enabled by default, sign the extension in to the organization /status names, then restart Chrome",
+        "usage": [
+          "otel",
+          "stream-json"
+        ],
+        "usage_evidence": "https://code.claude.com/docs/en/monitoring-usage — opt-in with CLAUDE_CODE_ENABLE_TELEMETRY=1 and OTEL_LOGS_EXPORTER/OTEL_METRICS_EXPORTER; the event claude_code.api_request is 'Logged for each API request to Claude' with model, cost_usd ('Estimated cost in USD'), input_tokens ('excluding tokens read from or written to the prompt cache'), output_tokens, cache_read_tokens and cache_creation_tokens, and the metric claude_code.token.usage carries type input, output, cacheRead, cacheCreation. https://code.claude.com/docs/en/headless — with --output-format json or stream-json the run reports usage and total_cost_usd in its final result message, and the docs call both figures 'client-side estimates' that 'can differ from your actual bill'. Verified 2026-10-22. Cost is an estimate on both seams, never a bill."
       }
     },
     {
@@ -88,7 +109,13 @@
         "episode": "hooks",
         "episode_evidence": "https://learn.chatgpt.com/docs/hooks (canonical; developers.openai.com/codex/hooks 308-redirects to it) — SessionStart (source: startup, resume, clear, compact), SessionEnd, PreCompact and PostCompact; PreCompact can block with continue:false. Configured in ~/.codex/hooks.json or an inline [hooks] table in .codex/config.toml. Verified 2026-09-11. The `notify` key is NOT this: https://learn.chatgpt.com/docs/config-file/config-advanced says it fires 'whenever Codex emits supported events (currently only agent-turn-complete)' — after a turn, never at a session boundary.",
         "prompts": "hook",
-        "prompts_evidence": "https://learn.chatgpt.com/docs/hooks — UserPromptSubmit, 'Runs when a user submits a prompt, before model invocation, and can block the prompt'; the raw text arrives as `prompt` (not `prompt_text`, as Claude Code sends it). Verified 2026-09-11."
+        "prompts_evidence": "https://learn.chatgpt.com/docs/hooks — UserPromptSubmit, 'Runs when a user submits a prompt, before model invocation, and can block the prompt'; the raw text arrives as `prompt` (not `prompt_text`, as Claude Code sends it). Verified 2026-09-11.",
+        "browser": "none",
+        "browser_evidence": "not verified either way, and declared none until it is: on 2026-10-21 OpenAI's ChatGPT for Chrome extension registered a native messaging host on the owner's machine (com.openai.codexextension), but no vendor page was read saying its tools arrive in a Codex CLI session beside a project MCP server. Searching learn.chatgpt.com for that is the open re-verification.",
+        "usage": [
+          "app-server"
+        ],
+        "usage_evidence": "github.com/openai/codex at 9a8a85bc5393 (2026-10-22), codex-rs/app-server-protocol/schema/json/ServerNotification.json — the notification thread/tokenUsage/updated carries ThreadTokenUsage {total, last, modelContextWindow}, each a TokenUsageBreakdown of inputTokens, cachedInputTokens, cacheWriteInputTokens, outputTokens, reasoningOutputTokens and totalTokens: `total` is cumulative, so it is never summed with `last`. Verified 2026-10-22. Codex's own OpenTelemetry export is NOT declared and stays unadapted: https://learn.chatgpt.com/docs/config-file/config-advanced says it is 'Disabled by default; opt in via [otel]' and puts token counts only on codex.sse_event's response.completed, but says nothing on whether it covers interactive sessions the person starts or only codex exec, so no seam is claimed until that is read."
       }
     },
     {
@@ -108,7 +135,13 @@
         "episode": "hooks",
         "episode_evidence": "https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md and https://geminicli.com/docs/hooks/ — SessionStart (source: startup, resume, clear), SessionEnd (reason: exit, clear, logout, prompt_input_exit, other), PreCompress (trigger: auto, manual). Configured as a hooks block in settings.json. Tracker github.com/google-gemini/gemini-cli/issues/9070 'Comprehensive Hooking System' is closed, 34 of 34. Verified 2026-09-11. Two caveats an adapter must carry: the CLI does not wait for SessionEnd, and PreCompress is advisory and cannot block.",
         "prompts": "hook",
-        "prompts_evidence": "https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md — BeforeAgent, 'Fires after a user submits a prompt, but before the agent begins planning'; the raw text arrives as `prompt`. BeforeModel fires later, on the assembled request. Verified 2026-09-11."
+        "prompts_evidence": "https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md — BeforeAgent, 'Fires after a user submits a prompt, but before the agent begins planning'; the raw text arrives as `prompt`. BeforeModel fires later, on the assembled request. Verified 2026-09-11.",
+        "browser": "none",
+        "browser_evidence": "not searched: no Gemini CLI browser bridge was looked for on 2026-10-21, when this axis was added for Claude Code. Declared none so that no surface implies one; the search is the open re-verification.",
+        "usage": [
+          "otel"
+        ],
+        "usage_evidence": "https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/telemetry.md — telemetry is enabled in .gemini/settings.json (or its environment variable); the log event gemini_cli.api_response carries input_token_count, output_token_count, cached_content_token_count, thoughts_token_count, tool_token_count and total_token_count, and the metric gemini_cli.token.usage the same by type. Verified 2026-10-22."
       }
     },
     {
@@ -121,7 +154,13 @@
         "episode": "connection",
         "episode_evidence": "ADR 0103 and this repository's own implementation: the episode is opened by episodes.attach over the shared MCP server, kept alive by the client's own traffic, and closed on disconnect or after the idle timeout. Proven end to end over the real transport by test/cases/200_generic_mcp_episode.sh.",
         "prompts": "none",
-        "prompts_evidence": "no vendor documentation is involved: a worker with no convention of its own exposes no event, and the MCP connection cannot stand in. An MCP server receives initialize, tool calls and notifications; the person's prompt is never among them, in any version of the protocol (modelcontextprotocol.io/specification). Declared none rather than left blank so that no surface can imply otherwise."
+        "prompts_evidence": "no vendor documentation is involved: a worker with no convention of its own exposes no event, and the MCP connection cannot stand in. An MCP server receives initialize, tool calls and notifications; the person's prompt is never among them, in any version of the protocol (modelcontextprotocol.io/specification). Declared none rather than left blank so that no surface can imply otherwise.",
+        "browser": "none",
+        "browser_evidence": "no vendor documentation is involved: a worker with no convention of its own is known only through the MCP connection, and an MCP server cannot drive the client's browser (modelcontextprotocol.io/specification: a server is handed tool calls, it makes none on the client's behalf). Declared none rather than left blank.",
+        "usage": [
+          "none"
+        ],
+        "usage_evidence": "no vendor documentation is involved: a worker with no convention of its own is known only through the MCP connection, and MCP carries no usage report (modelcontextprotocol.io/specification: a server receives initialize, tool calls and notifications, never the client's token counts). Declared none rather than left blank, so its sessions read not observed with this reason."
       }
     }
   ]

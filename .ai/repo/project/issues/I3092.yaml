@@ -1,0 +1,43 @@
+id: I3092
+milestone: public-proof
+title: "A translation-memory edit says which pages each changed key reaches, and refuses one that reaches none"
+slug: a-memory-edit-reaches-a-page
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Have the i18n pass write target/site-i18n/reach.json, every segment key of the English pages with the pages it occurs on, and give scripts/site-translate a `reach` command that lists, for every memory entry changed against a revision, the pages its key reaches and refuses (exit 10) one that reaches none; `import` refuses an entry whose key reaches no page."
+why: "On 2026-10-20 a hand edit put the Czech for the site bar's toggle on the key of the plain sentence 'How it works' instead of the toggle's 'How it works<t1/>'. The memory took it, the bar stayed English, and only a peer reading the live page saw it. A key that no page carries is a translation nobody will ever read, and nothing said so."
+current_state: "The pass lists only what the memory does not know (missing.json); an entry whose key no page carries is kept silently, and site-translate import admits any key with a matching English."
+desired_state: "reach.json is written beside missing.json; `site-translate reach` names, for each changed key, its pages or that it reaches none, and fails on the latter; import refuses an unreachable key."
+scope:
+  - "scripts/lib/site-i18n.mjs"
+  - "scripts/site-translate"
+  - "test/cases/3590_the_site_is_derived_in_every_language.sh"
+  - ".ai/repo/project/issues/I3092.yaml"
+non_scope:
+  - "Garbage-collecting unreachable entries already in the memory (they are listed, not removed)"
+depends_on: []
+acceptance_criteria:
+  - "reach.json lists every segment key of the English pages with its page count"
+  - "A changed memory entry whose key no page carries is named and refused; one whose key a page carries is listed with its pages"
+  - "import refuses an entry whose key reaches no page"
+validation:
+  - "env -u MAJORDOMUS_SHARE bash test/run.sh 3590_the_site_is_derived_in_every_language"
+evidence_required:
+  - "unreached_key_is_refused"
+created_at: 2026-10-21
+updated_at: 2026-10-22T04:42:16Z
+started_at: 2026-10-21T01:47:57Z
+started_event: sha256:e63ef61de8465fb4c85e5c16ee82cd6257c2414738f3cf57ca551638362fca0e
+verified_at: 2026-10-21T01:51:20Z
+verified_event: sha256:2566475d4cc4f88895d41fb6d413d584591f2073f8d8465f48d62776c217cf6a
+completed_at: 2026-10-22T04:42:16Z
+completed_event: sha256:c45d649a3ce9a706ba7dc6513f3dffafa4b8a863c334285045f23be6992396d3
+evidence:
+  - covers: unreached_key_is_refused
+    type: ci
+    command: "bash test/run.sh 3590_the_site_is_derived_in_every_language"
+    result: "passed in train 3a validate 39712017896 (76c57859663, landed on master 2026-10-22)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39712017896"
+    commit: 76c578596631b290f9291691b388f359fbce97ae
+    recorded_at: 2026-10-22T04:37:58Z

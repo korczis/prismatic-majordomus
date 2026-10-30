@@ -26,9 +26,14 @@ convenience.
 
 When a tracked declaration under `.ai/repo/mesh/` says `enabled: true`, an active task's
 record carries `mesh_claim:` — the key of its scope's advisory claim as the mesh session
-`task-<id>`. `start` writes it when the checkout's shared server answers. `finish` claims the
-scope again when the record has none, before the contract is judged, so a server that came up
-after the task started is all a task needs.
+`task-<id>`. `start` writes it: it first ensures the checkout's shared server — the same
+bounded `serve ensure` the provider's start event runs, under the same switches
+(`session.ensure_server_on_start`, `MAJORDOMUS_RUNTIME=off`), said on stderr — because a fresh
+linked worktree has no server until something brings one up. A start that still could not
+claim says so as a WARN finding naming why and the repair. `check` claims the scope of the
+running task when the record has none and a server answers, and `finish` does the same before
+the contract is judged, so a server that came up after the task started is all a task needs;
+`finish --check` is a question and claims nothing.
 
 ## Failure behaviour
 

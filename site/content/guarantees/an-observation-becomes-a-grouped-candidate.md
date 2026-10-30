@@ -1,7 +1,7 @@
 +++
 title = "Each observation an episode recorded becomes, at that episode's end and with no model, a candidate of its own that says what it is about, and knowledge candidates groups the records about one subject with the episodes behind them; an episode that observed nothing records that it found nothing"
 description = "When an episode ends, every observation it recorded with knowledge observe becomes a knowledge candidate — an observed lesson awaiting review — that says what it is about, without a model and without anyone asking. knowledge candidates groups the records about one subject, so the same defect seen by three sessions reads as one group with three episodes behind it. An episode that observed nothing writes no candidate and still records knowledge.derived with written: 0: it was evaluated and nothing was found."
-weight = 239
+weight = 242
 [extra]
 claim_id = "an-observation-becomes-a-grouped-candidate"
 status = "guaranteed"
