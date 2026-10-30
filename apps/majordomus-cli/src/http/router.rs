@@ -633,6 +633,9 @@ impl Router {
         if let Some(refusal) = Self::local_only_page(req) {
             return refusal;
         }
+        // the share this process serves, fingerprinted on this thread at most once a second:
+        // a share that moved under the server is seen by this request (ADR 0163)
+        let _ = crate::share_watch::observe();
         if req.method != "GET" && req.method != "HEAD" {
             if let Some(refusal) = self.foreign_origin(req) {
                 return refusal;

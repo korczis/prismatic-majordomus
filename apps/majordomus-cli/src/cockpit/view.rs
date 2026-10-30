@@ -54,6 +54,9 @@ pub struct Shell<'a> {
     pub vendor: String,
     /// Whether the distribution has an asset directory at all.
     pub assets_present: bool,
+    /// Why the share this server serves is not its own, when it is not
+    /// ([`crate::share_watch::skew`]): drawn over every page (ADR 0163).
+    pub skew: Option<String>,
     /// The executable's version, shown in the footer.
     pub version: &'a str,
 }
@@ -121,7 +124,15 @@ pub fn page(shell: &Shell<'_>, main: El) -> String {
                 el("main")
                     .attr("id", "main")
                     .class("mj-main")
-                    .when(!shell.assets_present, |m| m.child(alert("warn", NO_ASSETS)))
+                    .node(match &shell.skew {
+                        Some(reason) => {
+                            Node::Element(alert("warn", crate::share_watch::banner(reason)))
+                        }
+                        None => empty(),
+                    })
+                    .when(!shell.assets_present && shell.skew.is_none(), |m| {
+                        m.child(alert("warn", NO_ASSETS))
+                    })
                     .child(breadcrumbs(&shell.breadcrumbs))
                     .child(
                         el("header")
@@ -802,6 +813,41 @@ fn css_word(word: &str) -> String {
 mod tests {
     use super::*;
 
+    /// A Cockpit over a share that is not its server's own says so over every page, with
+    /// the reason and the remedy, in place of the line about a missing directory (ADR 0163).
+    #[test]
+    fn a_skewed_share_says_so_over_every_cockpit_page() {
+        use crate::synthetic::SyntheticRepository;
+        let repo = SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let navigation = super::super::nav::build(&ctx, "/cockpit");
+        let shell = |skew: Option<&str>| Shell {
+            title: "Overview",
+            subtitle: None,
+            area: Area::Overview,
+            breadcrumbs: Vec::new(),
+            navigation: &navigation,
+            stylesheet: "/cockpit/assets/cockpit.css".into(),
+            favicon: "/cockpit/assets/favicon.svg".into(),
+            scripts: Vec::new(),
+            bar_scripts: Vec::new(),
+            vendor: "{}".into(),
+            assets_present: false,
+            skew: skew.map(str::to_string),
+            version: "0.0.0",
+        };
+        let skewed = page(&shell(Some("the share at /s holds no cockpit/")), el("p"));
+        assert!(skewed.contains("holds no cockpit/"), "{skewed}");
+        assert!(skewed.contains("majordomus serve ensure"), "{skewed}");
+        assert!(
+            !skewed.contains("serving unstyled markup"),
+            "one line, not two"
+        );
+        let plain = page(&shell(None), el("p"));
+        assert!(!plain.contains("not its own"));
+        assert!(plain.contains("serving unstyled markup"));
+    }
+
     /// Every page wears the site's bar above the Cockpit's own tool bar
     /// (`project.the-ui-wears-the-sites-navbar`): the site's landmark and theme toggle, the
     /// executable's version, the product entry leading to the live UI, the site's two scripts,
@@ -827,6 +873,7 @@ mod tests {
             bar_scripts: bar_scripts.clone(),
             vendor: "{}".into(),
             assets_present: true,
+            skew: None,
             version: "0.0.0",
         };
         let html = page(&shell, el("p"));

@@ -443,6 +443,7 @@ impl Ui {
                     moves_lib: self.cockpit_assets.url(MOVES_LIB),
                     socket_lib: self.cockpit_assets.url(SOCKET_LIB),
                     assets_present: self.assets.present(),
+                    skew: crate::share_watch::skew(),
                     version: self.version,
                 },
                 screen,

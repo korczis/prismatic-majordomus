@@ -197,6 +197,7 @@ impl Cockpit {
             bar_scripts: BAR_SCRIPTS.iter().map(|s| self.assets.url(s)).collect(),
             vendor: self.vendor_urls(),
             assets_present: self.assets.present(),
+            skew: crate::share_watch::skew(),
             version: self.version,
         };
         let body = view::page(&shell, page.main);

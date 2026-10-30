@@ -231,6 +231,88 @@ pub fn declare_timings(policy: &crate::policy::ServerPolicy) {
     let _ = TIMINGS.set(Timings::from_policy(policy));
 }
 
+static SHARE: OnceLock<crate::share::ShareLocation> = OnceLock::new();
+
+/// Declare the share directory this process serves, for every lease it writes from now on.
+/// The first call decides, as with [`declare_timings`]: a process serves one share for its
+/// whole life, and a lease that named another one halfway through would describe neither.
+///
+/// ```
+/// use majordomus_cli::lease::{declare_share, declared_share};
+/// use majordomus_cli::share::ShareLocation;
+/// let first = ShareLocation { path: "/a/share".into(), origin: "installation".into() };
+/// declare_share(first.clone());
+/// declare_share(ShareLocation { path: "/b/share".into(), origin: "repository".into() });
+/// assert_eq!(declared_share(), Some(&first));
+/// ```
+pub fn declare_share(location: crate::share::ShareLocation) {
+    let _ = SHARE.set(location);
+}
+
+/// The share directory this process declared, when it has located one: what every lease
+/// it writes names as `share`.
+///
+/// ```
+/// use majordomus_cli::lease::{declare_share, declared_share};
+/// use majordomus_cli::share::ShareLocation;
+/// declare_share(ShareLocation { path: "/opt/share".into(), origin: "--share".into() });
+/// let declared = declared_share().expect("declared above");
+/// assert_eq!(declared.origin, "--share");
+/// ```
+pub fn declared_share() -> Option<&'static crate::share::ShareLocation> {
+    SHARE.get()
+}
+
+/// Does a server that answers at this executable's own version give its lease up to this
+/// process because of the share it serves? It does when the share its lease names is skewed
+/// for `version`, measured now, and `mine` — the share this process located — is not: then
+/// this process serves the same code over the share that belongs to it, which the running
+/// server cannot (ADR 0163, point 4). The answer is the reason, for the log.
+///
+/// Nothing else is replaced on this ground: a lease that names no share (a server from
+/// before leases carried one), a process that located none, and a process whose own share
+/// is skewed too — replacing one skewed server with another repairs nothing, and `serve
+/// ensure` reports that case with its remedy instead.
+///
+/// ```
+/// use majordomus_cli::lease::share_supersedes;
+/// use majordomus_cli::share::ShareLocation;
+/// let at = |dir: &std::path::Path| ShareLocation { path: dir.into(), origin: "--share".into() };
+/// let old = tempfile::tempdir().unwrap();
+/// std::fs::write(old.path().join("version.txt"), "version=0.21.0\n").unwrap();
+/// let own = tempfile::tempdir().unwrap();
+/// std::fs::write(own.path().join("version.txt"), "version=0.26.0\n").unwrap();
+/// for dir in ["ui", "cockpit"] {
+///     std::fs::create_dir(old.path().join(dir)).unwrap();
+///     std::fs::create_dir(own.path().join(dir)).unwrap();
+/// }
+/// let why = share_supersedes(Some(&at(old.path())), Some(&at(own.path())), "0.26.0").unwrap();
+/// assert!(why.contains("states version 0.21.0"), "{why}");
+/// assert_eq!(share_supersedes(Some(&at(own.path())), Some(&at(old.path())), "0.26.0"), None);
+/// assert_eq!(share_supersedes(None, Some(&at(own.path())), "0.26.0"), None);
+/// ```
+pub fn share_supersedes(
+    theirs: Option<&crate::share::ShareLocation>,
+    mine: Option<&crate::share::ShareLocation>,
+    version: &str,
+) -> Option<String> {
+    use crate::share::{ServedShare, ShareStanding};
+    let theirs = ServedShare::inspect(&theirs?.path, Some(&theirs?.origin), version);
+    let mine = mine?;
+    if theirs.standing != ShareStanding::Skewed {
+        return None;
+    }
+    let own = ServedShare::inspect(&mine.path, Some(&mine.origin), version);
+    (own.standing == ShareStanding::Current).then(|| {
+        format!(
+            "serves a share that is not its own ({}), and the share of this executable at {} ({}) is its own",
+            theirs.reason.as_deref().unwrap_or("skewed"),
+            mine.path.display(),
+            mine.origin
+        )
+    })
+}
+
 /// The environment variable a server is started with when the process that started it had
 /// already waited on the lease it found and judged it stale; its value is that lease's
 /// token. The new server's election then takes exactly that lease over without spending the
@@ -340,6 +422,14 @@ pub struct LeaseDocument {
     /// which is itself a fact: that server is older than any executable that reads this.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub version: Option<String>,
+    /// The share directory the server serves and how it was found, so that a reader can
+    /// measure it against `version` ([`crate::share::ServedShare`]). Absent in a lease
+    /// written before this field existed, and while the server has not located one yet.
+    ///
+    /// Boxed: the lease document is the largest variant of [`LeaseFile`], and a location
+    /// held inline would make every reading of an absent or empty file carry its size.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub share: Option<Box<crate::share::ShareLocation>>,
 }
 
 /// What a lease file holds, read once. Every state of the file is a variant, so that a
@@ -415,6 +505,7 @@ impl LeaseFile {
     /// let doc = LeaseDocument {
     ///     schema: SCHEMA.into(), pid: 7, token: "t".into(), root: "/r".into(), url: None,
     ///     started_at: "2026-09-10T00:00:00Z".into(), executable: None, version: None,
+    ///     share: None,
     /// };
     /// assert_eq!(LeaseFile::Document(doc.clone()).document(), Some(&doc));
     /// assert_eq!(LeaseFile::Corrupt("not JSON".into()).document(), None);
@@ -885,6 +976,20 @@ fn inspect(path: &Path, root: &Path) -> (Found, LeaseFile) {
                     doc.version.as_deref().unwrap_or_default(),
                     crate::VERSION
                 ))
+            }
+            // the same release over a share that is not its own is replaced like an older one,
+            // when this process located a share that is (ADR 0163): `serve ensure` starts this
+            // process for exactly that, and its election is what hands the lease over
+            Answer::Ours(_)
+                if version_verdict(doc.version.as_deref(), crate::VERSION)
+                    == VersionVerdict::Same =>
+            {
+                match share_supersedes(doc.share.as_deref(), declared_share(), crate::VERSION) {
+                    Some(why) => {
+                        Found::Stale(format!("superseded lease: the server at {url} {why}"))
+                    }
+                    None => Found::Live(url.to_string()),
+                }
             }
             Answer::Ours(_) => Found::Live(url.to_string()),
             // a live owner that is silent is busy and waited on — unless the process that
@@ -1521,6 +1626,7 @@ impl Lease {
             started_at: self.started_at.clone(),
             executable: executable_identity(),
             version: Some(crate::VERSION.into()),
+            share: declared_share().cloned().map(Box::new),
         }
     }
 
@@ -1796,6 +1902,7 @@ mod tests {
             started_at: "2026-10-20T22:25:31Z".into(),
             executable: Some(exe.clone()),
             version: Some(version.into()),
+            share: None,
         }
     }
 
@@ -1868,6 +1975,7 @@ mod tests {
             started_at: "2026-10-09T00:00:00Z".into(),
             executable: None,
             version: None,
+            share: None,
         })
         .unwrap()
     }
@@ -2642,6 +2750,46 @@ mod tests {
             LeaseFile::Absent,
             "the lease was released on the way out"
         );
+    }
+
+    /// A server of this version gives its lease up for its share only to a process whose
+    /// own share is the executable's: not when its own share is current, not when the
+    /// process's share is skewed as well, and not when either names none.
+    #[test]
+    fn a_skewed_share_is_superseded_only_by_a_current_one() {
+        use crate::share::ShareLocation;
+        let share = |version: &str| {
+            let dir = tempfile::tempdir().unwrap();
+            std::fs::write(
+                dir.path().join("version.txt"),
+                format!("version={version}\n"),
+            )
+            .unwrap();
+            for surface in ["ui", "cockpit"] {
+                std::fs::create_dir(dir.path().join(surface)).unwrap();
+            }
+            dir
+        };
+        let at = |dir: &tempfile::TempDir| ShareLocation {
+            path: dir.path().into(),
+            origin: "MAJORDOMUS_SHARE".into(),
+        };
+        let (stale, other_stale, own) = (share("0.21.0"), share("0.22.0"), share("0.26.0"));
+        let why = share_supersedes(Some(&at(&stale)), Some(&at(&own)), "0.26.0")
+            .expect("a current share supersedes a skewed one");
+        assert!(why.contains("states version 0.21.0"), "{why}");
+        assert!(why.contains(&own.path().display().to_string()), "{why}");
+        assert_eq!(
+            share_supersedes(Some(&at(&stale)), Some(&at(&other_stale)), "0.26.0"),
+            None,
+            "a skewed share does not replace a skewed one"
+        );
+        assert_eq!(
+            share_supersedes(Some(&at(&own)), Some(&at(&own)), "0.26.0"),
+            None
+        );
+        assert_eq!(share_supersedes(Some(&at(&stale)), None, "0.26.0"), None);
+        assert_eq!(share_supersedes(None, Some(&at(&own)), "0.26.0"), None);
     }
 
     /// A profile directory holding the build output `majordomus` (recorded in a lease as it

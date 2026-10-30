@@ -255,6 +255,8 @@ mod tests {
             started: false,
             timed_out: false,
             log: std::path::PathBuf::from("server.log"),
+            replaced: None,
+            unreplaced: None,
         }
     }
 

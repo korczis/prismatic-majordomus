@@ -54,6 +54,7 @@ use crate::error::{Error, Result};
 use crate::http::server::stdin_is_a_pipe;
 use crate::lease::{self, LeaseDocument, LeaseFile, Role};
 use crate::repository::Repository;
+use crate::share::{ServedShare, Share, ShareLocation, ShareStanding};
 use crate::shared::SharedServer;
 
 use super::executions::{ask_server, cli_capability, map};
@@ -104,6 +105,13 @@ pub fn run(args: ServeArgs) -> Result<u8> {
 fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
     // the declared lease timings, read before the election reads them (I2129)
     let _ = crate::policy::LoadedPolicy::load(repo);
+    // the share this process will serve, located before the election rather than by the
+    // layer's load after it: a server of this version over a share that is not its own is
+    // taken over only by a process whose own share is (ADR 0163), and the election must
+    // know which this one is. `App::load` locates the same share and declares nothing new.
+    if let Ok(share) = Share::locate(args.repo.share.as_deref(), repo.root()) {
+        lease::declare_share(ShareLocation::of(&share));
+    }
     let elected = lease::elect(repo);
     // Whatever the election decided, the process `ensure` started to hold it has now
     // decided: the claim it was started under is spent, and the next `ensure` reads the
@@ -391,8 +399,40 @@ fn render_status(out: &mut impl Write, s: &Value, checkouts: Checkouts) -> Resul
         if let Some(r) = v["reason"].as_str() {
             w(out, format!("            {r}"))?;
         }
+        if let Some(line) = share_line(&v["lease"]["share"]) {
+            w(out, line)?;
+        }
     }
     Ok(())
+}
+
+/// The line that says which share a server serves and whether it is that server's own: its
+/// standing, version, whether it holds `ui/` and `cockpit/`, the directory and how it was
+/// found, then the reason on a line of its own when it is skewed. Nothing when the lease
+/// names no share.
+fn share_line(share: &Value) -> Option<String> {
+    let path = share["path"].as_str()?;
+    let held = |key: &str| {
+        if share[key] == true {
+            "present"
+        } else {
+            "absent"
+        }
+    };
+    let mut line = format!(
+        "            share {}  version {}  ui {}  cockpit {}  {path}",
+        share["standing"].as_str().unwrap_or("?"),
+        share["version"].as_str().unwrap_or("none"),
+        held("ui_present"),
+        held("cockpit_present"),
+    );
+    if let Some(origin) = share["origin"].as_str() {
+        line.push_str(&format!(" ({origin})"));
+    }
+    if let Some(reason) = share["reason"].as_str() {
+        line.push_str(&format!("\n              {reason}"));
+    }
+    Some(line)
 }
 
 fn pretty(v: &Value) -> String {
@@ -416,6 +456,10 @@ struct EnsureReport {
     version: Option<String>,
     /// Whether this call started the server that now answers.
     started: bool,
+    /// Why this call replaced the server it found, when it did: it served a share that is
+    /// not its own, and this executable's share is (ADR 0163).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    replaced: Option<String>,
     /// Why the standing is not `ready`, when it is not.
     #[serde(skip_serializing_if = "Option::is_none")]
     reason: Option<String>,
@@ -584,6 +628,13 @@ pub struct Convergence {
     pub timed_out: bool,
     /// Where a server this call started writes its log.
     pub log: PathBuf,
+    /// Why this call replaced the server it found, when it did: that server answered at this
+    /// executable's version over a share that is not its own, and this executable located
+    /// one that is (ADR 0163).
+    pub replaced: Option<String>,
+    /// Why a server that answered over a share not its own was left in place: the share
+    /// this executable locates is skewed as well, or none is located (ADR 0163).
+    pub unreplaced: Option<String>,
 }
 
 impl Convergence {
@@ -602,7 +653,10 @@ impl Convergence {
 /// that process takes a stale lease over itself; `outdated` starts one only when the
 /// election would take the lease over — the same executable, replaced on disk — and is
 /// otherwise reported with the remedy, because a server of another build that answers is
-/// not this command's to end. The whole call is bounded by `wait`
+/// not this command's to end. `skewed` — this version, over a share that is not its own —
+/// is replaced the same way when this executable locates a share that is its own
+/// ([`own_share`]), and is reported with the remedy when it does not, because a second
+/// server over the same share would be skewed too (ADR 0163). The whole call is bounded by `wait`
 /// (`project.every-wait-is-bounded`).
 ///
 /// `wait` of zero is a real value and not a degenerate one: it means *start what must be
@@ -624,6 +678,23 @@ pub fn converge_with(
     idle: u64,
     wait: Duration,
     layer: &[OsString],
+) -> Result<Convergence> {
+    let mut replaced = None;
+    let mut c = converge_rounds(repo, port, idle, wait, layer, &mut replaced)?;
+    c.replaced = replaced;
+    Ok(c)
+}
+
+/// The rounds of [`converge_with`], with `replaced` filled in when a round replaces a
+/// skewed server: the rounds settle from closures that cannot see a value assigned after
+/// them, so the reason travels beside the result rather than in it.
+fn converge_rounds(
+    repo: &Repository,
+    port: u16,
+    idle: u64,
+    wait: Duration,
+    layer: &[OsString],
+    replaced: &mut Option<String>,
 ) -> Result<Convergence> {
     let path = lease::lease_path(repo);
     let log = server_log(repo);
@@ -662,9 +733,44 @@ pub fn converge_with(
             started,
             timed_out,
             log: log.clone(),
+            replaced: None,
+            unreplaced: None,
         };
         match standing {
             ServerStanding::Ready => return Ok(settle(started, false)),
+            // It answers, at this version, over a share that is not its own: replaced like an
+            // outdated server when this executable locates a share that is (ADR 0163). The
+            // started process's election takes the lease over (`lease::share_supersedes`);
+            // the replaced server keeps the sessions it has and ends with them. When this
+            // executable's own share is skewed too, a second server over it would be another
+            // skewed one, so the standing is reported with its remedy instead — also when the
+            // skewed server is the one this call started over that share.
+            ServerStanding::Skewed => match own_share(repo, layer) {
+                Some(own) if own.standing == ShareStanding::Current => {
+                    // once started, the new server's election is taking the lease over
+                    if !started {
+                        tracing::info!(
+                            share = %own.path.display(),
+                            "replacing the server that serves a share not its own: {}",
+                            reason.as_deref().unwrap_or("skewed")
+                        );
+                        spawn_server(repo, port, idle, &log, None, layer)?;
+                        started = true;
+                        *replaced = Some(format!(
+                            "{}; this executable's share at {} is its own",
+                            reason.as_deref().unwrap_or("the server's share is skewed"),
+                            own.path.display()
+                        ));
+                    }
+                }
+                own => {
+                    let mut c = settle(started, false);
+                    c.unreplaced = Some(own.and_then(|s| s.reason).unwrap_or_else(|| {
+                        "this executable locates no share directory".into()
+                    }));
+                    return Ok(c);
+                }
+            },
             ServerStanding::Starting => {}
             ServerStanding::Absent | ServerStanding::Stale if !started => {
                 // A stale verdict reached after the whole of the busy grace is a judgement the
@@ -742,7 +848,14 @@ fn ensure(
 ) -> Result<u8> {
     let c = converge_with(repo, port, idle, wait, layer)?;
     let reason = not_ready(&c, wait);
-    report(c.standing, c.document, reason, c.started, &c.log, format)
+    report(
+        c.standing,
+        c.document,
+        reason,
+        (c.started, c.replaced),
+        &c.log,
+        format,
+    )
 }
 
 /// Why a convergence did not reach a ready server, in the words `serve ensure` prints:
@@ -760,6 +873,16 @@ pub(crate) fn not_ready(c: &Convergence, wait: Duration) -> Option<String> {
             wait.as_secs(),
             c.log.display()
         ))
+    } else if c.standing == ServerStanding::Skewed {
+        // not replaced: this executable has no share of its own to start a server over
+        let own = c
+            .unreplaced
+            .clone()
+            .unwrap_or_else(|| "this executable locates no share directory".into());
+        Some(format!(
+            "{}; it answers, and its pages may have no assets. It is not replaced: the share this executable locates is not its own either ({own}). Name the share of this executable's version, and `ensure` replaces it: `majordomus serve --share <that share> ensure`, or `MAJORDOMUS_SHARE=<that share> majordomus serve ensure`",
+            c.reason.clone().unwrap_or_default()
+        ))
     } else if c.standing == ServerStanding::Outdated {
         Some(format!(
             "{}; `majordomus serve stop` ends it, and `serve ensure` then starts one from this executable",
@@ -770,17 +893,37 @@ pub(crate) fn not_ready(c: &Convergence, wait: Duration) -> Option<String> {
     }
 }
 
+/// The share a server this call starts would serve, measured against this executable: the
+/// `--share` this call forwards ([`layer_args`]), else the one [`Share::locate`] finds from
+/// here — the same search the started server runs, from the same environment. `None` when no
+/// share directory can be located at all.
+fn own_share(repo: &Repository, layer: &[OsString]) -> Option<ServedShare> {
+    let given = layer
+        .iter()
+        .position(|a| a == "--share")
+        .and_then(|i| layer.get(i + 1))
+        .map(PathBuf::from);
+    let share = Share::locate(given.as_deref(), repo.root()).ok()?;
+    let at = ShareLocation::of(&share);
+    Some(ServedShare::inspect(
+        &at.path,
+        Some(&at.origin),
+        crate::VERSION,
+    ))
+}
+
 /// Print the report and decide the exit code: 0 for a ready server, 10 for anything else,
 /// which is the code for a contract unmet everywhere in this executable.
 fn report(
     standing: ServerStanding,
     doc: Option<LeaseDocument>,
     reason: Option<String>,
-    started: bool,
+    (started, replaced): (bool, Option<String>),
     log: &Path,
     format: OutputFormat,
 ) -> Result<u8> {
     let r = EnsureReport {
+        replaced,
         standing,
         url: doc.as_ref().and_then(|d| d.url.clone()),
         pid: doc.as_ref().map(|d| d.pid),
@@ -809,8 +952,12 @@ fn report(
             if let Some(v) = &r.version {
                 line.push_str(&format!(" version {v}"));
             }
-            if r.started {
-                line.push_str(" (started by this call)");
+            match (&r.replaced, r.started) {
+                (Some(why), _) => line.push_str(&format!(
+                    " (started by this call, replacing the server it found: {why})"
+                )),
+                (None, true) => line.push_str(" (started by this call)"),
+                (None, false) => {}
             }
             if let Some(why) = &r.reason {
                 line.push_str(&format!(": {why}"));
@@ -1439,6 +1586,31 @@ mod tests {
         assert!(matches!(args.command, Some(ServeCommand::Ensure { .. })));
         let layer = layer_args(&args.repo).unwrap();
         assert_eq!(layer, [OsString::from("--share"), OsString::from("/s")]);
+    }
+
+    /// `serve status` names the share a server serves, says when it is skewed and why, and
+    /// says nothing about a share a lease does not name.
+    #[test]
+    fn a_status_line_names_the_share_and_its_skew() {
+        assert_eq!(share_line(&Value::Null), None);
+        let skewed = share_line(&json!({
+            "path": "/s", "origin": "repository", "version": "0.21.0", "ui_present": false,
+            "cockpit_present": true, "standing": "skewed", "reason": "the share at /s is old",
+        }))
+        .unwrap();
+        assert!(skewed
+            .contains("share skewed  version 0.21.0  ui absent  cockpit present  /s (repository)"));
+        assert!(
+            skewed.ends_with("\n              the share at /s is old"),
+            "{skewed}"
+        );
+        let own = share_line(&json!({
+            "path": "/s", "version": "0.26.0", "ui_present": true, "cockpit_present": true,
+            "standing": "current",
+        }))
+        .unwrap();
+        assert!(own.contains("share current  version 0.26.0  ui present  cockpit present  /s"));
+        assert!(!own.contains('\n'), "a current share takes one line");
     }
 
     #[test]

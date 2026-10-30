@@ -285,6 +285,7 @@ mod tests {
             started_at: "2026-10-18T00:00:00Z".into(),
             executable: None,
             version: Some(crate::VERSION.into()),
+            share: None,
         };
         std::fs::write(&lease, serde_json::to_string(&doc).unwrap()).unwrap();
         let answer = answer(&app, &wanted).unwrap();
