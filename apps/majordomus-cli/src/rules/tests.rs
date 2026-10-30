@@ -709,6 +709,25 @@ fn review_enforcement_is_the_reason_or_it_is_not_declared() {
     assert_eq!(both.mode, Mode::Gated);
 }
 
+/// A project's rule names the policy entry that checks it, and that is a mode of its own.
+///
+/// It ranks beside the validator: both say what runs, so a rule naming an entry is not
+/// demoted to the cases it also names, and a reason for review never outranks it.
+#[test]
+fn a_policy_entry_is_the_mode_of_a_rule_the_project_checks() {
+    let entry = enforcement_of(&json!({"x-majordomus": {"enforcement": "links-on-commit"}}));
+    assert_eq!(entry.mode, Mode::Entry);
+    assert_eq!(entry.entry.as_deref(), Some("links-on-commit"));
+    assert_eq!(Mode::Entry.label(), "entry");
+
+    let with_case = enforcement_of(&json!({"x-majordomus": {
+        "enforcement": "links-on-commit", "tests": ["test/cases/07_scope.sh"],
+        "reviewed_because": "r"
+    }}));
+    assert_eq!(with_case.mode, Mode::Entry);
+    assert_eq!(with_case.tests.len(), 1, "the cases are still read");
+}
+
 /// A blocking rule that declares review is not a finding — and is not counted as proven
 /// either. The number that must be visible is how many rules only a reader enforces, and
 /// it is counted apart from every executable mode so that a summary cannot fold it into a

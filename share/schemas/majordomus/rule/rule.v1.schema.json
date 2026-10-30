@@ -131,6 +131,10 @@
         "reviewed_because": {
           "description": "Why nothing executable can express this rule, for a rule where nothing can.  Its presence is the declaration: a rule carrying it and naming neither a validator nor a test is review-enforced, which is reported on every run and counted apart from every rule that has a gate. There is no matching boolean, because a flag can be set and a reason cannot be set without writing one — and an exemption nobody had to justify is the debt this field replaces. An executable proof always wins: a rule that acquires a case is proven by the case whether or not this is still here.",
           "type": "string"
+        },
+        "enforcement": {
+          "description": "The name of an entry under the policy's `enforcement:` that checks this rule: the repository's own command, with its arguments and the hook or CI job that runs it.  A project's rule can name no mj_validate_* function, because those are this tool's source; it can name the command the project already runs. doctor refuses a name the policy does not declare and verifies the entry's wiring as it verifies every entry, so the rule is enforced by something that exists and is invoked, not by its own say-so.",
+          "type": "string"
         }
       }
     },
