@@ -190,6 +190,14 @@ scripts/release-version --check --tag v0.3.0
 scripts/ci/release-verdict --commit HEAD
 ```
 
+The verdict is the newest `ci` check-run GitHub attaches to that commit, whichever event
+started it, and `release.yml` asks the same question again with `--wait 300`. A commit that
+reached master unchanged from a pull request's head carries that pull request's run too, so a
+red or unfinished run there is the verdict until master's own push run on the commit concludes
+and is the newer one. Tag only after that push run is green: a tag pushed earlier is refused
+by the release workflow, at once on a red run and after five minutes on one still running,
+and is released by dispatching `release.yml` with the tag once the verdict is green.
+
 ```bash
 # 4. tag the merge on the default branch, and push the tag
 git tag v0.3.0 && git push origin v0.3.0
@@ -197,8 +205,10 @@ git tag v0.3.0 && git push origin v0.3.0
 # 5. the pipeline publishes, puts releases/v0.3.0.json and releases/latest.json on the
 #    site at once (ADR 0131), then proposes the record as release/record-v0.3.0; confirm
 #    with curl -fsSL https://majordomus.dev/releases/latest.json
-# 6. merge the record's pull request once its ci is green; Pages then deploys master with
-#    the record, and scripts/pages verify --commit <merge sha> confirms it
+# 6. start the record pull request's own run, which the pipeline cannot: approve its
+#    waiting validate run, or close and reopen it (majordomus prs drain reopens it)
+# 7. merge the record's pull request once that run's ci is green; Pages then deploys master
+#    with the record, and scripts/pages verify --commit <merge sha> confirms it
 ```
 
 **The tag comes first and the record second, and the window between them is pending, not
@@ -220,6 +230,18 @@ and refuses as before. A tag with no record and no branch proposing one, the v0.
 refused at once on every head. Proposing the record before the tag was the other choice, and
 it was not taken: the record would describe artifacts nobody had built yet.
 `test/cases/3021_a_tag_does_not_freeze_the_queue.sh` holds every state.
+
+The window before the record branch exists is pending too (I2712). Between the tag push and the
+publish job's push of `release/record-<tag>` there is no record and no branch, and nothing is
+published yet either: on 2026-10-14 the structure job of #1146 went red on v0.26.0 while its
+release run was still waiting for a macOS build. Only the forge can see that state, so for a
+tag with neither record nor proposal the gate asks `gh` for the tag's runs of `release.yml`: a
+run queued or running makes the tag `pending`, naming the run; no run listed and no GitHub
+release yet, inside the same grace, is pending too. A concluded run, a GitHub release that
+exists, a forge that cannot be read and a repository it cannot name (`MJ_RELEASE_CHECK_REPO`,
+else the `origin` remote on github.com) leave the refusal standing, with a note saying which —
+offline, the gate is as strict as before. `test/cases/3029_a_tag_in_flight_is_pending.sh`
+holds those states.
 
 The pipeline is [`.github/workflows/release.yml`](../.github/workflows/release.yml), an
 adapter over [`.ai/repo/ci/release.yaml`](../.ai/repo/ci/release.yaml) and the generated
@@ -269,6 +291,28 @@ a tag that has no release behind it is the other, and only before anyone can hav
 Until one of those happens the advertised install command is broken for everyone, and
 `installer-live` below is what says so.
 
+### A pre-release is never the stable release
+
+A tag with a pre-release part (`v1.0.0-alpha.1`) is published as a GitHub prerelease and never
+as its "latest" (`--prerelease --latest=false` in the publish step of `release.yml`), and
+`scripts/release-record` records it on `channel: prerelease`: the channel is derived from the
+tag unless `--channel` is given, and `--channel stable` on a suffixed tag exits 2. The version
+decides as well as the record: `Release::is_stable_candidate` is false for any version with a
+pre-release part, so even a record that was mislabelled can never become `releases/latest.json`,
+and `Release::findings` reports the mislabel. A pre-release is installed by naming it
+(`install.sh --version 1.0.0-alpha.1`); an unpinned installer and a node that follows `stable`
+keep resolving the highest stable release. Versions order by semantic-version precedence
+(`alpha.2` before `alpha.10`, a pre-release before its own final, build metadata ignored).
+That order is `release::version::Version`'s, the crate's one reading of a version: the stable
+pointer, the release writer and the compatibility gate share it, so they cannot rank a pair
+of versions differently, and a record whose version is not a semantic version at all is never
+the stable pointer either. `release bump --exact 1.0.0-alpha.1` writes a pre-release, and the
+gate accepts a tree that declares one; `docs/RELEASE.md` says how a pre-release meets the floor.
+The crate's `distribution::tests` and `release::version` tests prove the resolution and the
+order; `test/cases/3179_a_prerelease_is_never_published_as_stable.sh` proves the two
+shell-side writers, and `test/cases/3212_a_prerelease_version_is_bumped_and_ordered.sh` the
+writer, the gate and the order against a real repository.
+
 ### When a release fails partway
 
 A release changes things the world can see, and it can fail after some of them have changed.
@@ -295,37 +339,53 @@ Stage by stage:
 | `publish`, after the release exists | yes — the release and its assets | yes; the rerun adopts those assets | none |
 | `publish`, after the metadata commit | yes — the record is on the default branch | yes; the commit step finds nothing to add | none |
 | `pages` | yes — the record is committed but not served | `gh workflow run pages.yml --ref master` | none |
-| `smoke`, while the record is a proposal | yes — the release, not its metadata | merge the record pull request the error names once its `ci` is green (`majordomus prs drain` reopens it so that its own run starts; by hand, `gh pr close <n>` then `gh pr reopen <n>`), then rerun `smoke` | none |
+| `smoke`, while the record is a proposal | yes — the release, not its metadata | start the record pull request's own run — `majordomus prs drain` closes and reopens it; by hand, approve its waiting `validate` run, or `gh pr close <n>` then `gh pr reopen <n>` — merge it once that run's `ci` is green, then rerun `smoke`; the dispatched run's `ci` does not let it merge | none |
 | `smoke` | yes — everything is published | fix the cause, then rerun | none; the release stands or is withdrawn below |
 
-#### Why the release asks for the verdict of its record
+#### Who starts the record's verdict
 
 The record is proposed as a pull request, and that pull request is opened with
-`GITHUB_TOKEN`. GitHub starts no workflow from an event that token caused: the run its
-`pull_request` event records concludes failure with no job in it, the required `ci` check
-never reports, and the proposal cannot merge. After `v0.15.0` and after `v0.16.0` it sat so,
-with an empty check rollup, until somebody closed and reopened it, and `smoke` failed by
-design for as long as that took.
+`GITHUB_TOKEN`. GitHub runs no workflow for an event that token caused, so the record's
+pull request has no run of its own until a person starts one. The run its `pull_request`
+event records took two shapes: through `v0.26.0` (2026-10-14) it concluded failure with no
+job in it; on `v0.27.0` (2026-10-16, run 38865305333) it was created `action_required`,
+waiting for approval. In both the required `ci` check never reports and the proposal cannot
+merge. After `v0.15.0` and after `v0.16.0` it sat so, with an empty check rollup, until
+somebody closed and reopened it, and `smoke` failed by design for as long as that took.
 
-A dispatch is the one event that token may cause. So after proposing the record the
-pipeline dispatches `validate` on the record's branch with the input `plan=change`, and
-`validate` plans that run as the pull request's own run would have been planned: the gates
-of the head commit's change, without the on-demand runners a dispatch otherwise asks for.
-The check-runs attach to the branch's head commit, which is what the pull request and its
-required check read. A dispatch that cannot be started is a warning naming the remedy and
-does not fail the job, because the release is published either way and `smoke` must still
-run to say so. `test/cases/996_the_record_pull_request_gets_its_verdict.sh` holds both
-workflows to this.
-
-That dispatch has not, by itself, made a record mergeable. On `v0.19.1` its `ci` passed at
-the record's head and the merge was still refused; the record landed only after a person
-closed and reopened the pull request, 3.4 hours after it was proposed, with every open head
-red meanwhile (I2282). So the integration executor does that part: `majordomus prs drain`
-closes and reopens a `release/record-<tag>` pull request that the workflow's token opened
-and that has no check of its own, once per head, and the run its reopening starts is the one
-the merge waits for ([INTEGRATION.md](INTEGRATION.md), "The record pull request it reopens";
+The pipeline cannot start that run, and does not claim to. What starts it is a person, in
+one of two ways: approving its waiting `validate` run, or closing and reopening the pull
+request. The integration executor does the second: `majordomus prs drain` closes and
+reopens a `release/record-<tag>` pull request that the workflow's token opened and that has
+no check of its own, once per head, and the run its reopening starts is the one the merge
+waits for ([INTEGRATION.md](INTEGRATION.md), "The record pull request it reopens";
 `test/cases/1036_the_executor_reopens_a_record_pull_request.sh`). Without a drain running,
-the remedy is the same two commands by hand: `gh pr close <n>` and `gh pr reopen <n>`.
+either is done by hand: approve the run on its page, or `gh pr close <n>` then
+`gh pr reopen <n>`. The record then merges on that run's `ci`, with no admin merge.
+
+After proposing the record the pipeline also dispatches `validate` on the record's branch
+with the input `plan=change`, and `validate` plans that run as the pull request's own run
+will be planned: the gates of the head commit's change, without the on-demand runners a
+dispatch otherwise asks for. **That run is not the record's verdict.** Its check-runs land on
+the record's head commit, but branch protection and the pull request's check rollup read no
+check suite a dispatch created. `v0.19.1` (#866) and `v0.27.0` (#1273) were refused with
+`base branch policy prohibits` while a dispatched `ci` stood green at their heads, and the
+rollups of `v0.25.0` (#1142) and `v0.26.0` (#1147) list no check at all although their
+dispatched `ci` passed (I2282). What the dispatch gives is an early reading of the record's
+tree: a red record is known before anybody starts the run that counts, and the release path
+holds the runners for it ([CI.md](CI.md)). A dispatch that cannot be started is a warning
+naming the remedy and does not fail the job, because the release is published either way and
+`smoke` must still run to say so. `test/cases/996_the_record_pull_request_gets_its_verdict.sh`
+holds both workflows to this, and the workflow and this section to calling the dispatch
+nothing more.
+
+Two remedies would remove the person's step, and neither is taken. A status or check the
+dispatched run posted under the name `ci` would satisfy the required context without the
+pull request's own run having produced it, which is a forged verdict, not a remedy. Opening
+the pull request, or closing and reopening it, with a GitHub App or fine-grained token whose
+events start workflows would make its own run start at once; that needs a credential only the
+repository's owner can create and hold, and is the owner's decision. Until it is made, every
+release costs one person's act between publication and its record reaching master.
 
 #### The site serves a release before its record lands
 
@@ -508,8 +568,16 @@ commit and target it came from.
 
 ## Self-update
 
-There is no `majordomus self update`, and when there is one it will not be a second update
-protocol. Everything it needs already exists and is typed:
+The owner decided on 2026-10-14 that a node of this repository's mesh follows the published
+release by itself (ADR 0161). Until I2720-I2722 land, the session that holds the release seat
+upgrades every enrolled node by hand once `releases/latest.json` names the new version, and
+reads each node's version back. What follows is the design those issues build.
+
+**One implementation of the risky part.** `majordomus self update` re-runs the published
+installer with `--version <tag>` and the installation's own prefix; it does not reimplement
+download, verification or swap. `--check` reports the running version, the version the stable
+pointer names and whether an upgrade applies; `--apply` installs it and reads the version back
+from the new launcher. Everything it resolves comes from what is already typed:
 
 ```rust
 Model::load(share)          // this installation's own model, shipped in share/
@@ -519,24 +587,46 @@ Release::artifact(target)   // the artifact, its digest and its size
 crate::TARGET               // the triple this build was made for, compiled in
 ```
 
-An installed copy carries `share/distribution.yaml`, so `majordomus distribution show` and
-`majordomus distribution build` answer from an installation exactly as they answer from a
-checkout — which is the property a self-update would be built on. The remaining work is the
-download, the verification and the swap, and the installer already does all three; the
-open design question is whether to reimplement them in Rust or to have the command re-run
-the published installer with `--version`, which would keep one implementation of the risky
-part rather than two.
+**Who follows.** Every machine the mesh declaration enrolls, hubs included, with `follow:
+stable` (the default for an enrolled node of the owner's mesh), `follow: pinned <version>` or
+`follow: off`. A repository that adopts Majordomus without enrolling machines in this mesh is
+not affected, and nothing fetches anything on entering a repository.
 
-`test/cases/85_installer.sh` covers that risky part today, and whichever way the command is
-built it will resolve releases through the same records and the same stable pointer as the
-installer does.
+**What a node trusts.** Only `releases/latest.json` and `releases/<tag>.json` on the site, and
+only an archive whose digest and size match them. A mesh announcement of a release means
+"check now" and nothing more. A node with no route to the site may take the archive
+from a peer, and verifies it against metadata it can check before unpacking (I2724).
+
+**Forward only, stable only.** No downgrade, no pre-release, no version the metadata does not
+list. A pinned node stays pinned. Going back is an operator's `install.sh --version`.
+
+**Install beside, activate in order, roll back by itself.** The new release goes into its own
+versioned tree while the old server serves. A hub restarts onto it under its service manager
+when no session is attached or after a bounded grace (I2722). A checkout's shared server
+hands its sessions on and ends (I2127, I2163), and until then is replaced at its next idle end.
+The health check is the readiness route plus a live `mesh verify` round. If it fails, the
+launcher is renamed back, the previous version keeps serving, and the board names the node,
+the version and the failed check.
+
+**When it checks.** At server start, every 15 minutes with jitter, and on a mesh release
+announcement: one HTTPS request for `releases/latest.json`, never in the path of a request.
+
+**Where it shows.** Each runtime reports its version and follow setting on the mesh;
+`majordomus mesh peers` prints them and `mesh doctor` names a node more than one release
+behind (I2723). A release is rolled out when every enrolled, following node reports it.
+
+`test/cases/85_installer.sh` covers the risky part today, and `self update` resolves releases
+through the same records and the same stable pointer as the installer does, once it exists:
+`self update` is the design above and is not implemented yet.
 
 ## Package managers
 
 The release model is the primary contract and it is package-manager neutral: an archive per
-target with a digest, and a machine-readable index. A Homebrew formula, an APT repository,
-a Nix derivation or a container image would each read that index rather than replacing it,
-and none of them is implemented. Nothing in the model prevents one.
+target with a digest, and a machine-readable index. A Homebrew formula, an APT repository
+or a Nix derivation would each read that index rather than replacing it, and none of them is
+implemented. Nothing in the model prevents one. The container image is the one consumer that
+exists: the release workflow's `image` job builds it from the release's own Linux archives
+and pushes it to the GitHub container registry under the release's tag.
 
 Windows is representable — the schema carries `zip`, a `binary_suffix` and a `windows`
 operating system — and is declared `unavailable` with its reason: the command a person runs

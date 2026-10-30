@@ -1,0 +1,34 @@
+id: delivery-economics-are-measured-over-declared-windows
+title: "Delivery economics are measured on corpus runs and on real work over a window registered before it opens, and published with their denominators and losses"
+slug: delivery-economics-are-measured-over-declared-windows
+order: 206
+priority: p1
+problem: "An instrument without a measurement does not answer T3 of the owner's report of 2026-10-19: real figures must be read over work chosen before it happened, beside denominators, with the work that was not accepted listed and the ledgers that could not be read named. Benchmark runs record session durations and hidden-test checks in a shape no task record shares."
+outcome: "Corpus runs answer the economics.tasks shape; a delivery window registered in the proof plan before it opens is measured at its close into a committed T3 record that the scorecard reads."
+current_state: "apps/majordomus-cli/src/economics/model.rs:687 records duration_ms per session and :701 reported_cost_microusd; no reading combines them per run. No window is declared anywhere. git ls-files .ai/repo/sessions counts 91 tracked session records, which can cross-check a window's task count."
+desired_state: "economics tasks --runs answers the run shape; the T3 protocol is registered; the T3 record of the first window is committed and its row reads a computed status."
+scope:
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - ".ai/repo/benchmarks"
+  - "docs/ECONOMICS.md"
+  - "docs/generated/economics.json"
+  - "docs/generated/economics.md"
+  - "docs/generated/economics.yaml"
+  - "site/data/generated/economics.json"
+non_scope:
+  - "Comparing arms (T2, T4)"
+  - "Changing what start, finish or capture write"
+  - "A money figure before I3292's separate estimate and billed fields exist"
+acceptance_criteria:
+  - "Every committed benchmark run answers the economics.tasks shape"
+  - "The T3 window is registered before it opens and its record is committed at its close"
+  - "The T3 row names the unread checkouts and every field's not-observed share"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+risks:
+  - "If I3202 and I3293 have not landed when the window closes, ci_reruns and spend read not observed and the row fails its coverage bound, which is published as such"
+  - "A window that admits only bound work may miss maintenance tasks; the protocol states what it admits"
+created_at: 2026-10-19
+updated_at: 2026-10-19

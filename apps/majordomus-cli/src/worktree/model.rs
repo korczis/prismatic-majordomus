@@ -475,6 +475,9 @@ pub struct StatusReport {
     pub canonical: bool,
     /// How many error-level diagnostics the whole topology carries.
     pub repository_errors: usize,
+    /// How far this work tree and the local trunk are from the remote trunk, judged against
+    /// the policy's `checkout.trunk_distance`: what it would serve, and how old that is.
+    pub trunk_distance: super::trunk::TrunkDistance,
 }
 
 /// What the guard decided, for a hook or a mutation that must not proceed out of place.
@@ -526,6 +529,12 @@ pub struct RepairReport {
     pub pruned: Vec<String>,
     /// What `git worktree repair` reported.
     pub repaired: Vec<String>,
+    /// Which hooks each existing linked worktree runs once repaired, by its path: a
+    /// worktree moved by hand keeps a per-worktree `core.hooksPath` naming its old path,
+    /// and one made by plain `git worktree add` may run the primary checkout's (I2718).
+    /// Empty on a dry run.
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub hooks: std::collections::BTreeMap<String, super::hooks::HooksPath>,
     /// Whether anything was changed.
     pub applied: bool,
 }

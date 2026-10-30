@@ -1,3 +1,4 @@
+# majordomus-exclusive: economics measure walks and prices the whole repository copy with every core it can take; beside the suite's heaviest cases on CI's four-core runner it missed its 600 s bound (430 at 604 s, 431 at 608 s; alone it takes about a minute) (I4199)
 # majordomus-covers: none
 # claims: economics-claims-gated
 # majordomus-timeout: 600

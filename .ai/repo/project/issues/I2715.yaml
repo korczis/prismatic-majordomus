@@ -1,0 +1,38 @@
+id: I2715
+milestone: development-runtime
+title: "New public Rust code meets rust-quality before the structure job does"
+slug: rust-quality-runs-before-the-structure-job
+priority: p1
+profile: implementation
+parallel_safe: true
+depends_on: []
+objective: "Put the rust-quality verdict (examples, behavioural tests and prose for every exported item) where an author meets it while writing — the fast local checks and the change's own proofs — instead of first in the 15-30 minute structure job."
+why: "2026-10-14: two implementations (I1501, I1995) passed their own crate tests, clippy, rustdoc and cases, and then failed the structure job's rust-quality gate: seven and thirteen exported items with no executable example, no behavioural test or two-word docs. Each cost a further 20-40 minute round (fix, derive, structure job again). The gate's command was known; nothing asked for it before the structure job."
+current_state: "rust-quality runs only as a structure gate (`cargo run -- quality report --summary`). scripts/rust-check, the pre-commit hook and the documented proof list for a Rust change do not include it."
+desired_state: "scripts/rust-check runs the quality report over the changed crate by default (or a documented `--quality` that the documented proof list and the agent brief name), it finishes in under a minute on a warm build, and a change that adds an exported item without an example is refused there with the same finding the structure job would give."
+scope:
+  - scripts/rust-check
+  - docs/RUST.md
+  - docs/INTEGRATION.md
+  - .ai/repo/workflows
+  - test/cases
+acceptance_criteria:
+  - "A new exported item without an example is refused by the local rust check with the structure job's finding"
+  - "The documented proof list for a Rust change names it"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "local_rust_check_runs_quality_case"
+created_at: 2026-10-14
+updated_at: 2026-10-14T22:50:02Z
+started_at: 2026-10-14T22:49:53Z
+started_event: sha256:3bac226950a500e295ca7d9019f83b2d8b18c94f22c3da7aaa14779129bb87d5
+completed_at: 2026-10-14T22:50:02Z
+completed_event: sha256:9cbb60871b07f0689be8adea16a27217e6b796562ebb4308438ff4a7b6a97678
+evidence:
+  - covers: local_rust_check_runs_quality_case
+    type: test
+    command: "bash test/run.sh 3032_the_quality_verdict_comes_first 3033_a_release_record_case_is_listed_by_a_structure_gate"
+    result: "tests: 2 passed, 0 failed, 0 skipped; case 3032: scripts/rust-check runs the gate's own quality report FIRST in its default mode and in --quality, stops on a red verdict, and a new pub fn without an example fails it with RUST_PUBLIC_MISSING_EXAMPLE before fmt/clippy/test; the rust-quality gate no longer hides findings behind --summary; CONTRIBUTING.md item 4 names it (run 2026-10-15 on 97c4521f91a8e096d84eb9e552c9590b512309a5 plus this change)"
+    commit: 97c4521f91a8e096d84eb9e552c9590b512309a5
+    recorded_at: 2026-10-14T22:49:59Z

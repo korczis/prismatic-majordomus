@@ -46,11 +46,17 @@ echo "    the Cockpit has a peers area, and its navigation leads there"
 # what is decided is agreement, whatever the number happens to be — including zero, which is
 # the reading most likely to be rendered as silence.
 count="$(jq -r '.count' "$S/api.json")"
-boards="$(jq -r '.boards | length' "$S/api.json")"
+# every checkout covered, listed in `boards` or counted in `omitted` (I3961)
+boards="$(jq -r '.covered' "$S/api.json")"
 grep -q ">$count<" "$S/page.html" \
   || { echo "    the page does not show the peer count the API reports ($count)"; exit 1; }
 grep -q ">$boards<" "$S/page.html" \
   || { echo "    the page does not show the checkout count the API reports ($boards)"; exit 1; }
+omitted="$(jq -r '[.omitted // {} | .[]] | add // 0' "$S/api.json")"
+if [ "$omitted" != 0 ]; then
+  grep -q "$omitted more checkout(s) hold no board" "$S/page.html" \
+    || { echo "    the API counts $omitted checkout(s) it does not list and the page does not say so"; exit 1; }
+fi
 for id in $(jq -r '.peers[].id' "$S/api.json"); do
   grep -qF "$id" "$S/page.html" || { echo "    peer $id is on the board and not on the page"; exit 1; }
 done

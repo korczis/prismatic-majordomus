@@ -1,0 +1,29 @@
+id: I2655
+milestone: surfaces-never-disagree
+title: "The homepage decides whether it carries a derived figure, within its declared story and budget"
+slug: the-homepage-decides-about-a-figure
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "Decide, as a reviewed change to site/data/homepage.toml, whether one section of the homepage shows a derived diagram or chart through the shared viewer, and what that costs in the declared byte budget; if the answer is no, link the diagrams page from the section that argues for derivation."
+why: "The owner asked for the capability to be shown on the landing page. The homepage carries no diagram by decision (site/templates/index.html says so, and rule project.homepage-tells-a-declared-story budgets what every visitor downloads), and index.html was being rewritten on another branch when I2653 was built, so I2653 did not touch it."
+current_state: "The homepage loads neither the Mermaid nor the ECharts build and links docs/DIAGRAMS.md from nowhere."
+desired_state: "Either a declared section renders one figure with the viewer or the component, with the budget raised by the measured amount and scripts/ci/homepage-check passing, or the decision not to is recorded and the homepage links /docs/diagrams/."
+scope:
+  - "site/templates/index.html"
+  - "site/data/homepage.toml"
+  - "site/data/marketing.toml"
+  - "scripts/ci/homepage-check"
+  - ".ai/repo/project/issues/I2655.yaml"
+non_scope:
+  - "Loading a diagram or chart library on the homepage without a figure that uses it"
+depends_on: ["I2653"]
+acceptance_criteria:
+  - "scripts/ci/homepage-check passes with the section order and the budget as declared"
+  - "The homepage reaches the diagrams page in one click"
+validation:
+  - "scripts/site-build && scripts/ci/homepage-check"
+evidence_required:
+  - "homepage_check_passes"
+created_at: 2026-10-13
+updated_at: 2026-10-13

@@ -1,0 +1,36 @@
+#!/bin/sh
+# The PreToolUse hook for the tools that write a file (Edit, Write, MultiEdit, NotebookEdit):
+# it hands the payload to `majordomus-cli guard hook --provider claude-code`, which judges
+# whether a claim covers the path — the active task's scope, or a live mesh claim of this
+# session — in the checkout the file belongs to (I2735, session.edits_require_claim).
+#
+# The executable is asked through the launcher, which never builds (ADR 0224): a missing or
+# stale executable is answered by the installed release of this tree's generation, or not at
+# all (exit 12). Exactly one code is passed on — 2, the refusal, whose stderr the provider shows
+# the model. Every other outcome lets the tool run, because refusing every edit while the
+# executable is stale would forbid the edit that fixes it; but an edit that was not judged is
+# never let through in silence: it is said on stderr and recorded, one line per skip, in
+# .ai/local/state/guard/skipped.log (time, exit code, why), which `tail` reads.
+# majordomus-on-stale-executable: fallback, else skip
+root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd) || exit 0
+log="$root/.ai/local/state/guard/skipped.log"
+skip() {
+  printf 'majordomus-edit-guard: the edit was not judged (exit %s): %s\n' "$1" "$2" >&2
+  mkdir -p "$(dirname "$log")" 2>/dev/null \
+    && printf '%s\texit %s\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$1" "$2" >> "$log" 2>/dev/null
+  exit 0
+}
+[ -x "$root/bin/majordomus-cli" ] || skip 127 "$root/bin/majordomus-cli is not an executable"
+err=$(mktemp "${TMPDIR:-/tmp}/mj-edit-guard.XXXXXX") || skip 1 "no temporary file for the guard's stderr"
+rc=0
+"$root/bin/majordomus-cli" guard hook --provider claude-code 2>"$err" || rc=$?
+case "$rc" in
+  0) cat "$err" >&2; rm -f "$err"; exit 0 ;;
+  2) cat "$err" >&2; rm -f "$err"; exit 2 ;;
+esac
+why=$(grep -v '^ *$' "$err" | head -n 1)
+cat "$err" >&2; rm -f "$err"
+case "$rc" in
+  12) skip 12 "${why:-the executable is missing or stale and no release of the same generation stands in; run: just build}" ;;
+  *) skip "$rc" "${why:-the guard exited $rc}" ;;
+esac

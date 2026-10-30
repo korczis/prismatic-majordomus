@@ -100,6 +100,51 @@ export function commonPrefix(paths) {
 }
 
 /**
+ * A language's copy of the site (ADR 0218) is the English build with its text translated:
+ * the same templates, laid out at the same widths, which the audit measures on every English
+ * page. Each copy is audited at its root and the first page of each top-level section, so a
+ * layout the translation broke is still met, and the sweep does not double with every
+ * language the site declares. site/i18n/languages.json names the copies; a site that
+ * declares none keeps every route. A copy is met where it is mounted as well as at the root:
+ * the documentation's Czech copy is `/docs/cs/...`, whose first segment is the mount, and
+ * missing it kept all of that copy's pages, so the alpha.1 top's audit ran into its 5400 s
+ * bound on 254 Czech guarantee pages before it reached /ui (validate 39317142394).
+ */
+export function languageSample(publicDir) {
+  // the declaration is the repository's, not the audited directory's: the served
+  // documentation is built into target/web/docs, which has no site/i18n beside it, and a
+  // sampler that looked beside the directory kept every page of every copy there
+  const declared = [
+    join(publicDir, '..', 'i18n', 'languages.json'),
+    join(dirname(new URL(import.meta.url).pathname), '..', '..', 'site', 'i18n', 'languages.json'),
+  ];
+  let langs = [];
+  for (const path of declared) {
+    try {
+      const l = JSON.parse(readFileSync(path, 'utf8'));
+      langs = l.languages.filter((x) => x !== l.source);
+      break;
+    } catch {
+      langs = [];
+    }
+  }
+  const seen = new Set();
+  return (route) => {
+    const parts = route.split('/').filter(Boolean);
+    // the copy's segment: first at the root (/cs/...), second under a mount (/docs/cs/...)
+    const at = langs.includes(parts[0]) ? 0 : langs.includes(parts[1]) ? 1 : -1;
+    if (at < 0) return true;
+    // one page per section at each depth: a section's index and its first record page are
+    // different templates, and a defect of the record template (a translated breadcrumb that
+    // wraps) shows only on the record
+    const key = `${parts.slice(0, at + 2).join('/')}#${parts.length}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  };
+}
+
+/**
  * The audit's target set: every route either mechanism found, sorted, with where it came
  * from. A route only the sitemap knows is a rendering failure; a route only the filesystem
  * knows is an orphan. Both are reported rather than silently dropped.
@@ -107,7 +152,7 @@ export function commonPrefix(paths) {
 export function discoverPages(publicDir, composed = []) {
   const fromFiles = routesFromFilesystem(publicDir, composed);
   const fromSitemap = routesFromSitemap(publicDir);
-  const all = [...new Set([...fromFiles, ...fromSitemap])].sort();
+  const all = [...new Set([...fromFiles, ...fromSitemap])].sort().filter(languageSample(publicDir));
   return all.map((route) => ({
     route,
     rendered: fromFiles.has(route),

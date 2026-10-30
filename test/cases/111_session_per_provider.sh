@@ -76,13 +76,23 @@ MAJORDOMUS_PROVIDER_SESSION=win-a "$MJ" decision add "Attributed to the worker t
 tail -n 1 .ai/local/state/ledger.jsonl | grep -qF "\"session\":\"$a\"" \
   || { echo "    the ledger line was stamped with the wrong episode:"; tail -n 1 .ai/local/state/ledger.jsonl | sed 's/^/    | /'; exit 1; }
 
-# A worker whose provider session has no episode here falls through to the pointer rather
-# than losing its attribution: sessions opened by hand still stamp the commands of the
-# worker sitting in that checkout.
-MAJORDOMUS_PROVIDER_SESSION=win-nothing "$MJ" decision add "Falls through to the pointer" \
-  --why "an unopened provider session must not cost a worker its attribution" >/dev/null
-tail -n 1 .ai/local/state/ledger.jsonl | grep -qF "\"session\":\"$b\"" \
-  || { echo "    an unknown provider session did not fall through to the pointer"; tail -n 1 .ai/local/state/ledger.jsonl | sed 's/^/    | /'; exit 1; }
+# An explicit missing episode and an anonymous caller both remain unattributed here.
+# The pointer still answers status, but is no evidence of which of two workers wrote.
+no_session_stamp() {
+  if tail -n 1 .ai/local/state/ledger.jsonl | grep -q '"session":'; then
+    echo "    an unknown caller borrowed the checkout's session pointer"
+    tail -n 1 .ai/local/state/ledger.jsonl
+    return 1
+  fi
+}
+MAJORDOMUS_PROVIDER_SESSION=win-nothing "$MJ" decision add "No episode for this caller" \
+  --why "an explicit unknown provider session must not borrow another worker" >/dev/null
+no_session_stamp
+"$MJ" decision add "Two episodes do not identify an anonymous caller" \
+  --why "the record must not turn a status pointer into authorship" >/dev/null
+no_session_stamp
+expect_exit 0 "$MJ" session status
+expect_grep "Session: +$b"
 
 # ---------------------------------------------------------------- the end event
 # It closes its own episode and no other. Before this, the second window to be shut ended
@@ -127,6 +137,14 @@ expect_grep 'is open here since'
 expect_exit 0 "$MJ" session status
 expect_grep "Session: +$h"
 expect_no_grep 'Provider:'
+
+# The unambiguous hand-opened episode remains the ordinary terminal's attribution.
+"$MJ" decision add "The sole local episode is usable" --why "one local episode is unambiguous" >/dev/null
+tail -n 1 .ai/local/state/ledger.jsonl | grep -qF "\"session\":\"$h\"" \
+  || { echo "    the sole hand-opened episode lost its attribution"; exit 1; }
+MAJORDOMUS_PROVIDER_SESSION=win-nothing "$MJ" decision add "A missing key stays missing" \
+  --why "even a sole episode is not the explicitly named missing episode" >/dev/null
+no_session_stamp
 
 # A provider session opening one beside a person's does not disturb it...
 start_event win-c startup >/dev/null 2>&1

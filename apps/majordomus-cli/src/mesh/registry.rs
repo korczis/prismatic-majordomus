@@ -57,6 +57,8 @@ pub enum MeshSource {
     UdpBroadcast,
     /// A rendezvous answer or registration.
     Rendezvous,
+    /// A tailnet peer asked as a rendezvous.
+    Tailscale,
     /// A synthetic provider (tests, self-check).
     Synthetic,
 }
@@ -68,6 +70,7 @@ impl MeshSource {
             MeshSource::UdpMulticast => "udp_multicast",
             MeshSource::UdpBroadcast => "udp_broadcast",
             MeshSource::Rendezvous => "rendezvous",
+            MeshSource::Tailscale => "tailscale",
             MeshSource::Synthetic => "synthetic",
         }
     }
@@ -577,5 +580,24 @@ mod tests {
         assert_eq!(ids, sorted, "the registry lists in one deterministic order");
         ids.dedup();
         assert_eq!(ids.len(), listed.len());
+    }
+
+    /// A source's wire word is the word its serialised form carries, so a sighting listed
+    /// by `as_str` and one read back from JSON name the same source, the tailnet included.
+    #[test]
+    fn every_source_word_is_its_serialised_name() {
+        for source in [
+            MeshSource::UdpMulticast,
+            MeshSource::UdpBroadcast,
+            MeshSource::Rendezvous,
+            MeshSource::Tailscale,
+            MeshSource::Synthetic,
+        ] {
+            assert_eq!(
+                serde_json::to_value(source).unwrap(),
+                serde_json::json!(source.as_str())
+            );
+        }
+        assert_eq!(MeshSource::Tailscale.as_str(), "tailscale");
     }
 }

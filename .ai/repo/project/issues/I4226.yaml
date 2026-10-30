@@ -1,0 +1,30 @@
+id: I4226
+milestone: ci-critical-path
+title: "Case 1096 matches a page from a here-string, so a match is never read as a miss"
+slug: case-1096-matches-without-a-pipe
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Case 1096_no_screen_waits_for_a_source matches every page it reads with grep from a here-string instead of piping printf into grep -q, so the outcome of each check is grep's answer alone."
+why: "#2502 run 40129944290, suite-shard (2), job 120990902847, failed case 1096 with 'printf: write error: Broken pipe' logged at lines 64 and 75. Under set -o pipefail, grep -q exits on its first match, printf then writes into a closed pipe and the pipeline returns 141, so a page that does carry the text reads as one that does not. At line 75 the miss ends the catching-up loop early. The same race failed case 547 on 10-18. Given to 39 by 641b at ~11:48Z on 2026-10-25."
+current_state: "Measured at origin/master 71857dbb609 on 2026-10-25: test/cases/1096_no_screen_waits_for_a_source.sh pipes printf '%s' \"$page\" into grep -q or grep -qE at eight places (lines 53, 54, 58, 64, 68, 75, 80, 82)."
+desired_state: "Each of those checks is grep -q or grep -qE with the page as a here-string. What the case asserts, its patterns and its messages are unchanged."
+scope:
+  - "test/cases/1096_no_screen_waits_for_a_source.sh"
+  - ".ai/repo/project/issues/I4226.yaml"
+non_scope:
+  - "what case 1096 asserts, or the UI behaviour it covers (I2486)"
+  - "other cases with the same pipe form"
+depends_on:
+  - I2486
+acceptance_criteria:
+  - "test/cases/1096_no_screen_waits_for_a_source.sh has no printf piped into grep"
+  - "Case 1096 passes, with the same checks and messages as before"
+validation:
+  - "MJ_TEST_JOBS=2 bash test/run.sh 1096_no_screen_waits_for_a_source"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - suite
+serves: []
+created_at: 2026-10-25
+updated_at: 2026-10-25

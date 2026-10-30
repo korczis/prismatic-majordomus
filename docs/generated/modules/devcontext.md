@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `devcontext` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.26.0 -->
+     Generator: majordomus-cli 1.0.0-alpha.9 -->
 # Module `devcontext` — Development context
 
 The context a development session should be given, derived from the repository rather than composed by hand: given an issue, a milestone, an intent or a set of paths, the canonical objects that bear on the work, why each one is in the answer, what was left out and why, what collapsed into what, and the whole cost against a budget. The selection is structured — every entry keeps its identifier, its provenance, the selector that reached it and its confidence — because rendering a prompt is a projection of the selection and not the selection itself.
@@ -40,6 +40,12 @@ when absent. |
 | `all_blocking_rules` | boolean or null | no | Every blocking rule of the layer, not only the ones the work reaches. Honest and
 usually over budget: the answer then says `over_budget` rather than dropping what it
 may not drop. |
+| `source_ranges` | boolean or null | no | Outline the Rust source under the work's paths into ranges, one candidate per
+definition, spent by the same budget beside the layer's objects (`source`).
+
+Off unless asked for: it reads files the index does not hold, and an answer every
+existing caller already depends on — `economics measure` counts the files a context
+names — does not change under it. |
 
 Output: `CompiledContext`.
 
@@ -77,6 +83,12 @@ when absent. |
 | `all_blocking_rules` | boolean or null | no | Every blocking rule of the layer, not only the ones the work reaches. Honest and
 usually over budget: the answer then says `over_budget` rather than dropping what it
 may not drop. |
+| `source_ranges` | boolean or null | no | Outline the Rust source under the work's paths into ranges, one candidate per
+definition, spent by the same budget beside the layer's objects (`source`).
+
+Off unless asked for: it reads files the index does not hold, and an answer every
+existing caller already depends on — `economics measure` counts the files a context
+names — does not change under it. |
 
 Output: `Explanation`.
 

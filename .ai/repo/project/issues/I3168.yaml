@@ -1,0 +1,33 @@
+id: I3168
+milestone: campaigns-are-read-as-provenance
+title: "An intent, milestone or issue cites the campaign that drove it, and a campaign answers which records cite it"
+slug: records-cite-their-campaign
+priority: p2
+profile: implementation
+objective: "Accept a campaign:<id>[/<path>] reference in the one provenance.derived_from of intent, milestone and issue records (ADR 0211), refuse a dangling one with the same finding in both plan engines, and derive the reverse relation on the campaign object."
+why: "Owner, 2026-10-13: intent <=> prompt pack <=> milestones/issues reflected everywhere; ADR 0124: a derived item links back to the revision and section that justified it. Proposed in ADR 0180 (A prompt pack is a campaign: kept as received, indexed as a kind, and cited by the records it drove) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c245#9."
+current_state: "No reference type; packs and records are joined by nobody; plan validate dispatches to the shell engine and case 99_plan_capabilities compares both engines' findings."
+desired_state: "Citations validated both ways."
+scope:
+  - "share/schemas/majordomus/intent"
+  - "share/schemas/majordomus/milestone"
+  - "share/schemas/majordomus/issue"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/graph.rs"
+non_scope:
+  - "The drag-and-drop upload view (ui-surfaces)"
+depends_on:
+  - "I3167"
+serves:
+  - "campaigns-are-provenance-the-plan-reads#records-cite-campaigns"
+acceptance_criteria:
+  - "A dangling citation is refused"
+  - "The campaign lists citing records"
+  - "Each new case named here takes its number from `scripts/case-numbers next` and is announced on the board before the file is written (ADR 0053); a case number written in this record before that is provisional"
+validation:
+  - "majordomus plan validate"
+  - "bash test/run.sh 99_plan_capabilities"
+evidence_required:
+  - "case_record_cites_campaign"
+created_at: 2026-10-18
+updated_at: 2026-10-18

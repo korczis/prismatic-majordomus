@@ -1,0 +1,84 @@
+intent: an-authorised-node-connects-from-anywhere
+reviewed_at: 707a04c7ce8
+reviewed_by: "claude-code subagent (read-only, fresh context, Plan type, same model family as the author) dispatched by session 82f2734c over the staged records of branch docs/the-chatgpt-project-is-promoted and the ChatGPT-conversation sources they were promoted from; resolved by a second fresh subagent acting as the plan author. Read only: nothing was run. Disposition: Accept with required changes: 5 of 5 blocking findings are planned (I3176, I3187, I3188 and I3189, two of them on I3189). 3 of the 4 non-blocking ones are planned. Milestone priority and owner acceptance stay open for the owner."
+findings:
+  - id: criteria-can-never-be-settled
+    class: delivery_verification
+    subject: "an-authorised-node-connects-from-anywhere#path-is-explained"
+    finding: "All three criteria in the worktree intent (.ai/repo/project/intents/an-authorised-node-connects-from-anywhere.yaml) are `evidence: command` with `ref: majordomus intent explain an-authorised-node-connects-from-anywhere`. That ref points back at the intent itself and proves nothing about the mesh. Worse, apps/majordomus-cli/src/intent.rs:301-303 (`ledger_settles`) settles only `test` and `claim`. A `command` criterion is NotDerivable, so the verdict stays Unknown forever, even after every issue is done (see the doctest at intent.rs:319-320). Every intent on master points at a concrete test file (intent-bound-work.yaml:15-31, a-session-leaves-what-it-observed.yaml:16-28). The 'planned proof' names also disagree with the issues: path-is-explained names `cargo test --lib mesh::connectivity`, but I3187 validates `cargo test --lib mesh::link` / test_a_link_names_its_path and creates no connectivity module. bootstrap-is-signed names `test/cases/<n>_...` with no number allocated. Fix: `evidence: test`, refs to the real test paths, with numbers allocated and landing with the records."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3187
+      because: "Confirmed: ledger_settles (intent.rs:302-304) admits only test/claim, and the doctest at intent.rs:318-320 shows a command criterion pins the verdict at Unknown. Each criterion's planned proof now names the integration test file its issue writes, which needs no case number: path-is-explained -> apps/majordomus-cli/tests/mesh_connectivity.rs (I3187), relay-when-no-direct-path -> apps/majordomus-cli/tests/mesh_relay.rs (I3189, with the lab scenario relayed_link added by I3190 as the network-level proof), bootstrap-is-signed -> apps/majordomus-cli/tests/mesh_bootstrap_manifest.rs (I3188). No stub test was written with these records, and a test ref to a missing file would not resolve, so each criterion stays `evidence: command` until its file exists. Each of I3187, I3188 and I3189 has an acceptance criterion to write its file and flip its criterion to `evidence: test` with that ref in the same change."
+  - id: relay-and-manifest-cross-the-internet-unencrypted
+    class: unproven_assumption
+    subject: "I3189"
+    finding: "The plan's only safety argument is that relayed frames 'stay end-to-end authenticated by the existing link signatures'. Signatures give authenticity, not confidentiality. test/cases/491_the_mesh_is_on_here.sh:75-79 states the actual invariant: 'Nothing is encrypted, so a hub is on the owner's private network or tailnet or it is not declared ... never a public address', and refuses any public hub endpoint. Two nodes that share neither a LAN nor a tailnet (the case this intent exists for) can only meet at a publicly reachable hub. I3188 also publishes 'public reachability hints' of hubs on Pages. So claims, handovers and journal events would cross the internet in cleartext, and case 491 would fail. No issue adds transport confidentiality (TLS or a Noise channel over the link keys), amends case 491, or records the decision in an ADR. The milestone's risk text only mentions trust and bandwidth."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3189
+      because: "Confirmed against doctrine: docs/MESH.md:189 says 'Authenticity is the protocol's; confidentiality is the network's', ADR 0032 (lines 53, 104) keeps TLS out of the crate, and case 491:75-79 refuses a public hub. The plan follows those rules and does not work around them. A relay hub is held to case 491 unchanged: it is a private or overlay endpoint, or it is reached through an encrypted ingress the deployment provides (ADR 0204: tailnet first, then a tunnel), and never a plain-http public address. The bootstrap manifest of I3188 publishes hub node ids and hints only under that same rule. In-crate confidentiality (Noise over the link keys, or TLS) would amend ADR 0032/0067 and MESH.md:189. It is recorded as non_scope and is the owner's decision. Until the owner decides, the 'neither' leg of the statement is met only by nodes that each reach a hub over the tailnet or a deployment-provided encrypted ingress. The I3189 and I3188 amendments carry this, and the intent gains the invariant that no mesh frame crosses a public network in cleartext."
+  - id: relay-needs-a-reverse-channel-the-protocol-lacks
+    class: insufficient_work
+    subject: "I3189"
+    finding: "The link is dialer-initiated HTTP request-answer: Hello at HELLO_PATH and Sync at SYNC_PATH (apps/majordomus-cli/src/mesh/link.rs:7-21, 56-59). link.rs:19-21 already says 'a link works even when only one side can reach the other', so a relay only matters when neither side can be dialled. In that case the hub cannot POST to the answerer at all: the answerer must hold an outbound poll or stream to the hub, and the hub must queue frames per target runtime. That design is a mailbox or long-poll, plus new capability routes in apps/majordomus-cli/src/capability/builtin/mesh.rs (where the register, hello and sync exposures are declared at 1419, 1619 and 1633), OpenAPI and MCP. None of this is designed, and that file is not in I3189's scope (rendezvous.rs, link.rs, docs/MESH.md). The Hello's skew window (link.rs:642) and single-use nonce also have to survive polling latency. I3189's validation, `cargo test --lib mesh::rendezvous`, cannot show that 'neither can dial'. And 'carries claims and handovers both ways' assumes replication that the board reports is broken (I2825: a released claim never reached other runtimes, 0 peers converged), while the milestone does not depend on mesh-journal-converges."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3189
+      because: "I3189 (now profile deep-work) has to design the reverse channel: each answerer polls the hub through an outbound mailbox, the hub queues frames per target runtime with a bound, and the new routes are declared once as capabilities in capability/builtin/mesh.rs, then `majordomus generate` (ADR 0004). Without that declaration there is no OpenAPI or MCP route. Scope, the skew and nonce requirement and an in-process-transport proof where neither side accepts inbound (ADR 0067 point 4) are added. I2825 has no record on this branch or on master; it is on docs/a-released-claim-reaches-every-runtime. So the dependency is recorded in why and as a criterion (relayed claim release must reach the other runtime), not as depends_on, which needs an existing id. Whoever plans next adds depends_on I2825 once its record lands."
+  - id: hubs-by-node-id-break-firewall-and-trust-root
+    class: regression_risk
+    subject: "I3176"
+    finding: "Hub endpoints are read as IP addresses in places outside I3176's scope. apps/majordomus-cli/src/mesh/firewall.rs:281-288 derives the admitted source networks from the IPs of rendezvous endpoints. firewall.rs:340-346 decides that this machine is a hub by matching an endpoint IP against local addresses. With node-id endpoints, `parse_endpoint` yields nothing: no TCP 8791 rule is planned, `mesh firewall apply` admits nothing, and the 10-08 lundra outage (ufw dropping every registration) comes back. mesh/root.rs:12-16 narrows a working-tree declaration to 'every address the trunk's copy also lists', so addresses resolved at runtime need their own rule. doctor.rs:245-250 prints `rendezvous endpoints=N`, which case 491:59 matches exactly. firewall.rs, root.rs and doctor.rs are all outside I3176's scope. Separately, I3176 depends on I2410, which is still one commit (febf0533225) on fix/the-tailnet-is-a-discovery-provider, branched from an old master. Removing the tailnet addresses before it lands cuts the MacBooks off from every hub."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3176
+      because: "Confirmed at firewall.rs:281-288 and 340-346, where both parse_endpoint calls take IPs. I3176's scope grows to mesh/firewall.rs, mesh/root.rs, mesh/doctor.rs and cases 495 and 1023. The new criteria require firewall rules, hub self-detection, root narrowing and the doctor count to work from node-id endpoints resolved at runtime. depends_on I2410 is already there. A criterion now also forbids removing any tailnet or LAN address until I2410 is on master and every declared hub has been measured as linked through discovery."
+  - id: bootstrap-key-custody-and-sequence-undefined
+    class: unproven_assumption
+    subject: "I3188"
+    finding: "'Signed by a key the trust root names' has nothing to refer to. The trust root (mesh/root.rs) is the trunk copy of the mesh declaration, and it names only node keys (trust.allow). No manifest-signing key, manifest URL or manifest field exists, and share/schemas/majordomus/mesh-declaration is not in I3188's scope. Pages is built in GitHub Actions (.github/workflows/pages.yml, `scripts/pages build`), so key custody needs a decision first: a CI secret means anyone who can edit a workflow can sign the mesh's hints, while offline signing means a committed artifact. A 'monotonic sequence' is undefined across stateless Pages rebuilds. Refusing a rolled-back manifest also needs a persisted last-seen sequence in node state, which no file in scope holds. This needs an ADR before any code."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3188
+      because: "I3188 now starts with a decision: an amendment to ADR 0203 (which is proposed) that names the manifest signing key in the mesh declaration, its custody (offline-signed committed artifact or CI secret, with the workflow-edit exposure stated), how the sequence is derived so it stays monotonic across stateless Pages rebuilds (for example from the signed artifact itself rather than from build count), and where the node persists its last-seen sequence. It is proposed to the owner before any code, and accepting it is the owner's act. The scope adds the schema, the declaration, ADR 0203 and the mesh state module."
+  - id: private-addresses-outside-i3176-scope
+    class: insufficient_work
+    subject: "I3176"
+    finding: "The acceptance criterion 'No RFC 1918 or CGNAT address in any tracked mesh file or published page' cannot pass with the declared scope. The same addresses are also in .ai/repo/project/issues/I2123.yaml, which is published through site/data/generated/plan.json. They also appear in .ai/repo/offload/derive.yaml:37 (a login at lundra's tailnet address), apps/majordomus-cli/src/offload/declaration.rs:344, http/router.rs:181-182, mesh/root.rs:246 and mesh/firewall.rs:1470. site/content/docs/mesh.md:618-634 and 783-791 is generated from docs/MESH.md by scripts/generate-site-data:1554, so it needs a regeneration. Either widen the scope (and the check in case 491) or narrow the criterion."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3176
+      because: "I widened the scope rather than narrowing the criterion. Confirmed: root.rs:246 and firewall.rs:1470 carry the fleet's real addresses (lundra's tailnet address) as fixtures. Every listed file is added except I2123.yaml: another issue's record is amended by that issue, so I3176's criterion is narrowed to .ai/repo/mesh, the files in its scope and the published mesh page, and I2123's quoted addresses are left to an amendment of I2123. A criterion now requires doc-test and unit-test fixtures to use RFC 5737 documentation addresses, and site/content/docs/mesh.md to be regenerated through scripts/generate-site-data rather than edited."
+  - id: path-record-must-stay-out-of-replicated-state
+    class: regression_risk
+    subject: "I3187"
+    finding: "Per-link candidates and choices are local observations; each node sees different ones. mesh.peers promises 'equal digests, equal state' (capability/builtin/mesh.rs:376-378), and the lab's three_node_convergence scenario compares state digests across nodes (test/mesh-lab/run:101-102, 213-216). If the connectivity block enters the journal or the folded state, the digests diverge and convergence fails. Nothing in the issue says the block stays local. The scope also misses the PeerTree output type (capability/builtin/mesh.rs:358, so JSON, HTTP and MCP) and the text renderer of `majordomus mesh peers` (commands/mesh.rs:1085, 1360). Without those two, the criterion 'mesh peers names' is not met. ui/mesh.rs is also being changed by I2943, in flight for 0.30.0."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3187
+      because: "The path record is a local observation held beside the link table. It is never a journal event and never folded into state. A criterion holds the state digest unchanged and the three_node_convergence scenario green. The scope adds the PeerTree capability output and the text renderer, and the why records the I2943 overlap on ui/mesh.rs (sequence after it lands)."
+  - id: every-surface-has-no-cockpit-or-docs-issue
+    class: surface_missing
+    subject: "an-authorised-node-connects-from-anywhere#path-is-explained"
+    finding: "The statement promises that 'every surface shows the path in use and why'. Only /ui/mesh is in scope (I3187). share/cockpit has no mesh view, and /cockpit/peers is I2983 (5a, after the alpha), which this plan does not reference or depend on. docs/MESH.md (and through it the generated site/content/docs/mesh.md) is in scope only for I3176 and I3189. I3187 (the path record) and I3188 (the bootstrap manifest, its offline policy and how a cold node is configured) do not update the docs, and no issue covers the site, the README or the getting-started path for 'connect from anywhere'."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3187
+      because: "I3187 now covers every surface derived from the mesh.peers capability (CLI text, JSON, HTTP, MCP and /ui/mesh) plus docs/MESH.md and the regenerated site page. I3188 documents the manifest, the offline policy and cold-node configuration in docs/MESH.md and docs/GUIDE.md. I2983 (/cockpit/peers) has no record on this branch or on master and cannot be named in depends_on. The why says the cockpit view takes the connectivity block from mesh.peers when I2983 lands, so no second derivation is written."
+  - id: intent-milestone-holds-no-criterion-work
+    class: missed_requirement
+    subject: "an-authorised-node-connects-from-anywhere"
+    finding: "The intent's own milestone is p1 but holds only I3176 (p2). I3176 claims to serve path-is-explained, but it delivers no candidates, choice or reason; it is really a prerequisite of bootstrap-is-signed. Every issue that makes a criterion true (I3187-I3190) is p3 in mesh-connectivity, which Operation Convergence defers past v1.0.0-alpha.1, and the p1 milestone has an empty depends_on. So the plan reports a p1 intent whose criteria cannot move before the alpha. Also, owner_acceptance c237#5 is the owner's open request ('chci discovery as robust as possible ... navrhni plan'), not acceptance of these three criteria or of the no-ICE invariant."
+    blocking: false
+    resolution:
+      state: open
+      because: "Partly resolved in the plan: I3176 now serves bootstrap-is-signed, of which it is a prerequisite (I3188 depends on it), and no longer claims path-is-explained. What remains is the owner's. Whether this intent is p1 against Operation Convergence's no-new-scope order before v1.0.0-alpha.1 is the owner's call. So is acceptance: c237#5 is a request, and acceptance is the owner's act (ADR 0202 and 0203 say 'The owner has not accepted it'). The owner_acceptance field should be read as a source, not as acceptance, until the owner accepts."

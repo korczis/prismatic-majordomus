@@ -1,0 +1,29 @@
+id: I3825
+milestone: ci-critical-path
+title: "A build refuses to start beside five others or below 35 GiB free"
+slug: a-build-is-bounded-by-the-machine
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "The build guard holds the two machine limits of rule project.the-cooperation-model-is-the-owners-word clause 7: no build starts while five builders already run on the machine or while less than 35 GiB is free, each refusal naming the limit, the measured value and the override, so the limits stop being numbers a session has to remember. The order of the admission floors in lib/rust_bin.sh is stated in I4354 and this issue follows it: disk_emergency below 10 GiB (I4355) first, then this 35 GiB floor, then the builder count, then the machine slot (I4006)."
+why: "Version 2 of the rule replaced the landing seat's slot order with two machine limits, but lib/rust_bin.sh still refuses only below its own 5 GiB default and counts no concurrent builders; a limit stated in a rule and decided by nothing is the gap the repository refuses elsewhere."
+current_state: "lib/rust_bin.sh refuses a build below MAJORDOMUS_MIN_FREE_MB, default 5120 MiB, and has no count of concurrent builders. CI runners have far less than 35 GiB free, so the local floor cannot simply become the default everywhere."
+desired_state: "A local build counts the cargo builders already running on the machine and the free disk, refuses at five builders or below 35 GiB with the measured values and the override, and CI keeps its own floor; a case proves both refusals with stubbed measurements."
+scope:
+  - "lib/rust_bin.sh"
+  - "test/cases"
+  - ".ai/repo/project/issues/I3825.yaml"
+acceptance_criteria:
+  - "A local build with five builders running refuses, naming the count and the override"
+  - "A local build below 35 GiB free refuses, naming the free space and the override"
+  - "A CI build keeps the CI floor and is not refused by the local limits"
+validation:
+  - "bash test/run.sh"
+evidence_required:
+  - "builder_cap_refuses"
+  - "disk_floor_refuses"
+depends_on:
+  - "I3824"
+serves: []
+created_at: 2026-10-21
+updated_at: 2026-10-29

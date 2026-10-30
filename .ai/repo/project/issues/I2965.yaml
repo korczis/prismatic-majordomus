@@ -1,0 +1,40 @@
+id: I2965
+milestone: "development-runtime"
+title: "The site says a test proves a guarantee only as far as recorded evidence supports it"
+slug: a-proof-word-is-earned
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Qualify every site sentence that says a test proves a guarantee, or that work ends proven, to what the recorded evidence supports, and declare the proof words as homepage promises so the existing homepage check refuses them in the hand-written copy unless a supported claim permits them."
+why: "Truth sweep 2026-10-18 (f6, S9 and S20, verified): the guarantees index (scripts/generate-site-data:1919) said 'What Majordomus actually does today, row by row, with the file that implements it and the test that proves it', docs/SITE_CLAIMS.md (generate-site-data:2370) 'the test that proves it', site/data/challenge.toml:28 'the test that proves the guarantee', and the homepage section title (site/data/marketing.toml:34) 'From first prompt to proven done', while site/data/registry/product.json records evidence declared 229, supported 0. homepage.toml [promises] holds capability words to supported claims and did not name the proof words."
+current_state: "Corrected in this change: the guarantees index and SITE_CLAIMS say the test that is to prove a claim and what its recorded run says; the challenge page says the test meant to prove it; the homepage title is 'From first prompt to a checked finish'; [promises] declares proven and proves; the claim evidence-navigates-both-ways names the test meant to settle it rather than the test that proves it."
+desired_state: "No site sentence says a test proves a claim while the evidence supports fewer claims than are declared, and case 3366 refuses one; the homepage check refuses proven or proves in the hand-written copy until a guaranteed, supported claim permits it."
+scope:
+  - "scripts/generate-site-data"
+  - "site/data/challenge.toml"
+  - "site/data/marketing.toml"
+  - "site/data/homepage.toml"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims/evidence-navigates-both-ways.md"
+  - "test/cases/3366_a_proof_word_is_earned.sh"
+depends_on: []
+acceptance_criteria:
+  - "The guarantees index, SITE_CLAIMS and the site's data say a test is to prove a claim while not every claim is supported"
+  - "homepage.toml [promises] declares proven and proves, and the homepage copy uses neither"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_a_proof_word_is_earned"
+created_at: 2026-10-18
+updated_at: 2026-10-19T13:59:33Z
+started_at: 2026-10-19T13:59:08Z
+started_event: sha256:1208a527e5184577ecae28d6be3ad698bc36f36cbbcc7ff19f3733fdf4becbb7
+completed_at: 2026-10-19T13:59:33Z
+completed_event: sha256:d4dfa3a9930b53296756fe0af4c990911d20b942a27009cbc0b38cc01e82dbc4
+evidence:
+  - covers: case_a_proof_word_is_earned
+    type: test
+    command: "bash test/run.sh 3366_a_proof_word_is_earned"
+    result: "14 passed, 0 failed, 0 skipped on master dd4c0a87cba"
+    commit: dd4c0a87cba408222033c89f002ab2d63f48574c
+    recorded_at: 2026-10-19T13:59:25Z

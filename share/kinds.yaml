@@ -43,6 +43,11 @@
 #   members         for a yaml kind: the list in the file that holds the objects, one per
 #                   item; identity, title and description are read from each item, and
 #                   schema_version still applies to the file
+#   lifecycle       canonical | derived | generated | cache | runtime | accidental — how an
+#                   object of the kind comes to exist (docs/TWO_FOLDER_CONSOLIDATION.md,
+#                   Classes). Absent means canonical: an authored object. The layout check
+#                   (`majordomus layout check`, I2871) reads it to tell a copy of authored
+#                   knowledge in the local half from the half's own runtime state.
 #
 # declared: markdown kinds a file may declare for itself through its front matter `kind:`
 # whatever class discovered it. A README inside the rules tree that says `kind: context`
@@ -197,12 +202,28 @@ kinds:
     front_matter: required
     without_front_matter: document
     schema: majordomus.session-context/v1
+    lifecycle: runtime
     identity: [session_id]
     title: title
     description: title
     schema_version:
       field: schema
       supported: ["session-context/v1"]
+
+  # What a provider reported about the execution of one task, under the checkout-local half
+  # of the layer (.ai/local/state/telemetry/). Declared for the same reason session-context
+  # is: so the kind a record names is one this distribution knows and its contract can be
+  # found. No source class discovers it — the numbers belong to one machine's work and are
+  # never tracked. The contract is the whole point of the kind: every fact names who reported
+  # it, and a fact nobody reported is a value with a reason, never a missing key or a zero.
+  telemetry:
+    format: yaml
+    # the identity fixes the path: share/schemas/majordomus/telemetry/telemetry.v1.schema.json
+    schema: majordomus.telemetry/v1
+    identity: [task_id]
+    schema_version:
+      field: schema
+      supported: [telemetry/v1]
 
   adr:
     format: markdown

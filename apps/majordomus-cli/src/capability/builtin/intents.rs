@@ -377,8 +377,7 @@ fn intent_preflight(
 /// read: no exemption class is then declared, so none can be given, which is the refusal an
 /// unreadable policy owes rather than a class invented for it.
 fn intent_policy(ctx: &Context) -> crate::policy::IntentPolicy {
-    let root = std::path::PathBuf::from(&ctx.index.repository.root);
-    crate::repository::Repository::open(&root)
+    ctx.repository()
         .ok()
         .and_then(|repo| crate::policy::LoadedPolicy::load(&repo).ok())
         .map(|loaded| loaded.policy.intent)

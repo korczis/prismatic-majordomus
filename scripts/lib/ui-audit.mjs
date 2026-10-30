@@ -14,7 +14,6 @@
 
 import { readFileSync } from 'node:fs';
 import { availableParallelism } from 'node:os';
-import { chromium } from 'playwright';
 
 const AXE = new URL('../../node_modules/axe-core/axe.min.js', import.meta.url);
 
@@ -148,15 +147,26 @@ export async function auditPage(page, origin, route, width, { reducedMotion = fa
   // A page that never loads is a finding about that page, not the end of the run. An audit
   // that aborts on the first slow navigation reports nothing about the 1600 visits after
   // it, which is how a whole sweep is lost to one asset that hung.
+  // A navigation that times out is tried once more before it is a finding: the first load of a
+  // surface on a loaded runner can pay for building what the next load reuses, and /docs/ @320
+  // was reported unreachable on master that way while every later visit of it loaded. A page
+  // that never loads still fails both attempts and is still reported.
   let response;
-  try {
-    response = await page.goto(`${origin}${route}`, { waitUntil: 'load', timeout: 20000 });
-  } catch (error) {
-    findings.push({
-      rule: 'page.unreachable',
-      detail: `the page did not load: ${String(error?.message ?? error).split('\n')[0]}`,
-    });
-    return { route, width, status: 0, findings, console_errors, failed_requests };
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      response = await page.goto(`${origin}${route}`, { waitUntil: 'load', timeout: 20000 });
+      break;
+    } catch (error) {
+      // A refused connection is not this page's and is not loaded again: it goes to the run,
+      // which stops on it (`audit`) rather than recording every later page as unreachable.
+      if (String(error?.message ?? error).includes('ERR_CONNECTION_REFUSED')) throw error;
+      if (attempt < 2) continue;
+      findings.push({
+        rule: 'page.unreachable',
+        detail: `the page did not load in ${attempt} attempt(s): ${String(error?.message ?? error).split('\n')[0]}`,
+      });
+      return { route, width, status: 0, findings, console_errors, failed_requests };
+    }
   }
   const status = response?.status() ?? 0;
   if (status >= 400) {
@@ -373,18 +383,31 @@ export function jobs() {
 }
 
 /**
+ * The browser the repository already drives for the cockpit probe: the system Chrome, so a CI
+ * runner and a laptop use one browser and neither downloads another. Playwright is loaded
+ * here rather than with the module, so the module's tests run where it is not installed and
+ * hand `audit` a browser of their own.
+ */
+async function launchChrome() {
+  const { chromium } = await import('playwright');
+  return chromium.launch({ channel: 'chrome' });
+}
+
+/**
  * Audit every page of a plan against a running origin.
  *
  * The visits are spread over a pool of tabs, and the results are put back in plan order
  * whatever order they finished in: a results document that changed with the scheduler would
  * make every diff of a run unreadable.
  */
-export async function audit(origin, pages, { onVisit, concurrency = jobs() } = {}) {
-  // the browser the repository already drives for the cockpit probe: the system Chrome,
-  // so a CI runner and a laptop use one browser and neither downloads another
+export async function audit(
+  origin,
+  pages,
+  { onVisit, concurrency = jobs(), launch = launchChrome } = {},
+) {
   let browser;
   try {
-    browser = await chromium.launch({ channel: 'chrome' });
+    browser = await launch();
   } catch (error) {
     // no browser is not a clean site: the caller reports SKIP and exits 13, and nothing this
     // run would have measured — the reduced-motion pass included — is counted as passed
@@ -395,10 +418,12 @@ export async function audit(origin, pages, { onVisit, concurrency = jobs() } = {
   // the whole target set, flattened, so the workers share one queue rather than a page each:
   // a page with twelve widths would otherwise hold a worker while the others idled. Each
   // page's narrowest width — the reflow floor, which every tier visits — is the visit made
-  // with reduced motion emulated: one per page, and no visit added for it.
+  // with reduced motion emulated: one per page, and no visit added for it. A page cut out of a
+  // shard carries the narrowest width of the whole plan (ui-run.mjs), because the narrowest of
+  // the widths one shard holds is not the page's.
   const targets = [];
   for (const target of pages) {
-    const narrowest = Math.min(...target.widths);
+    const narrowest = target.narrowest ?? Math.min(...target.widths);
     for (const width of target.widths) {
       targets.push({ route: target.route, width, tier: target.tier, reducedMotion: width === narrowest });
     }
@@ -467,8 +492,18 @@ export async function audit(origin, pages, { onVisit, concurrency = jobs() } = {
     // once — long enough, on a loaded machine, to exceed a per-visit timeout and report the
     // first page of the run as unreachable. Warming it costs one page load and removes a
     // whole class of finding that says more about the machine than about the site.
+    // Every surface is warmed, not only the root: a mounted surface (the documentation at its
+    // mount) is served from a tree of its own, and its first page was still the cold one. The
+    // surfaces are the plan's own first path segments, so nothing here names a mount; each is
+    // warmed through the first of its pages the plan visits.
+    const segment = (route) => route.split(/[/?#]/)[1] || '';
+    const firsts = new Map();
+    for (const t of targets) if (segment(t.route) && !firsts.has(segment(t.route))) firsts.set(segment(t.route), t.route);
     const warm = await context.newPage();
     await warm.goto(origin, { waitUntil: 'networkidle', timeout: 120000 }).catch(() => {});
+    for (const route of firsts.values()) {
+      await warm.goto(`${origin}${route}`, { waitUntil: 'load', timeout: 120000 }).catch(() => {});
+    }
     await warm.close().catch(() => {});
 
     await Promise.all(Array.from({ length: Math.max(1, concurrency) }, () => worker()));

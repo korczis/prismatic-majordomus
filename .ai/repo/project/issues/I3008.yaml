@@ -1,0 +1,34 @@
+id: I3008
+milestone: surfaces-never-disagree
+title: "A homepage link with a fragment resolves to an element its page carries"
+slug: a-hero-link-with-a-fragment-resolves-to-its-id
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Hold the homepage navigation rule (site-check 13d) on a fixture: a hero or navigation link with a #fragment resolves when its page exists and carries that id, fails naming the element when the page lacks it, and a link to an absent page fails as unresolved. The rule becomes one function, run by the full site-check and alone through `site-check --nav PUBLIC_DIR CONFIG_TOML`."
+why: "On 2026-10-18 the 0.30.0 top's site job and suite shards 1 and 3 failed on /roadmap/#delivery: the rule looked for the file site/public/roadmap/#delivery/index.html although /roadmap/ carried id=\"delivery\". The fix that split the fragment off landed with the top, without a test."
+current_state: "Rule 13d splits the fragment and requires the id, inline in the full site-check, held by no case."
+desired_state: "The rule is a function a case runs on a fixture, and case 3401 fails if the fragment split or the id check is removed."
+scope:
+  - "scripts/site-check"
+  - "test/cases/3401_a_hero_link_with_a_fragment_resolves_to_its_id.sh"
+  - ".ai/repo/project"
+  - "docs"
+  - "site"
+non_scope:
+  - "Any other site-check rule"
+depends_on: []
+acceptance_criteria:
+  - "A hero link to /roadmap/#delivery passes when /roadmap/ carries id=\"delivery\", and fails naming the element when it does not"
+  - "A hero link to an absent page fails as unresolved"
+  - "Removing the fragment split or the id check each turns case 3401 red"
+validation:
+  - "majordomus plan validate"
+  - "bash test/run.sh 3401_a_hero_link_with_a_fragment_resolves_to_its_id"
+evidence_required: []
+created_at: 2026-10-18
+updated_at: 2026-10-20T16:31:39Z
+started_at: 2026-10-20T16:17:02Z
+started_event: sha256:3879f10c3ee0f649d98c5625b162f16bde5d97599a6d5ea32b7b9b4497234166
+completed_at: 2026-10-20T16:31:39Z
+completed_event: sha256:01aecb8029d22407e9b26b7fe7fbf6b4d1849fb2f970c1bd3782588a390626fb

@@ -1,0 +1,30 @@
+id: I3836
+milestone: development-runtime
+title: "An offload derive observes the bundle's base commit, not its throwaway snapshot, so what it derives passes CI's check"
+slug: an-offload-derive-observes-its-base-commit
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make `majordomus offload derive` hand the host derive the commit the worktree's HEAD names (the snapshot's first parent) as the commit every derived file may observe, so site/data/generated/delivery.json names a commit that exists on the branch and origin, never the `git stash create` snapshot or the `commit-tree` merge input apps/majordomus-cli/src/offload/run.rs writes; scripts/generate-site-data takes that commit through one declared input instead of `git rev-parse HEAD`."
+why: "PR #1759 (head 34ca69681f3) went red in CI's site job on 2026-10-21, run 39535247244: `STALE site/data/generated/delivery.json` because its observed.commit was d1485feb7793, the snapshot macbook-2 derived, which never reached origin. generate-site-data --check cannot find that commit, falls back to its own HEAD and calls the file stale, and the site job's fail-fast then cancels ten other jobs, which reads as a cancelled run. Every branch derived by offload is red the same way, and a local derive with MERGE_HEAD present (#1753) fails for the same reason. Filed by dev-03 at a3's ruling."
+current_state: "offload/run.rs sends HEAD when the worktree is clean, a `git stash create` snapshot when it is not, and a `commit-tree` merge commit during a merge; scripts/generate-site-data writes delivery.json --at `git rev-parse HEAD` (lines 1904-1919) and its --check re-reads the commit the committed file names."
+desired_state: "A derive, local or offloaded, writes delivery.json at a commit that is an ancestor of the commit the derived files land in, and CI's --check of an offload-derived branch is green."
+scope:
+  - "apps/majordomus-cli/src/offload"
+  - "scripts/generate-site-data"
+  - "docs/WORKTREES.md"
+non_scope:
+  - "Changing what delivery.json observes for a clean tree derived locally"
+depends_on: []
+acceptance_criteria:
+  - "An offload derive of a dirty worktree writes delivery.json whose observed.commit is the worktree's HEAD, and generate-site-data --check of the committed result is clean in a fresh clone that never saw the snapshot"
+  - "An offload derive during a merge observes HEAD as well, never the merge input commit"
+  - "A local derive with a dirty tree is unchanged"
+  - "Case 3846 proves both with a fixture host, and fails against the offload of master 573df967bb5"
+validation:
+  - "bash test/run.sh 3846_an_offload_derive_observes_its_base_commit"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "an_offload_derive_observes_its_base_commit_test"
+created_at: 2026-10-21
+updated_at: 2026-10-21
