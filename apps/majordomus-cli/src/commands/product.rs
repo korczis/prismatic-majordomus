@@ -559,11 +559,8 @@ mod tests {
         ]});
         let text = providers_text(&v);
         let lines: Vec<&str> = text.lines().collect();
-        assert!(
-            lines[0].contains("  PROMPTS  BROWSER  BOOTSTRAPS  "),
-            "{}",
-            lines[0]
-        );
+        let (header, columns) = (lines[0], "  PROMPTS  BROWSER  BOOTSTRAPS  ");
+        assert!(header.contains(columns), "{header}");
         assert_eq!(
             lines[1],
             format!(

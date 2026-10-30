@@ -1983,16 +1983,14 @@ mod tests {
         std::fs::write(&file, &text).unwrap();
         let guard = dir.join("disk-guard");
         std::fs::write(&guard, GUARD).unwrap();
-        let Ok(out) = Command::new("bash")
+        let out = Command::new("bash")
             .arg("-c")
             .arg(r#"bash -n "$2" || exit 9; . "$1"; printf '%s|' "${HOMES[@]}" "${RUNNER_HOMES[@]}""#)
             .arg("bash")
             .arg(&file)
             .arg(&guard)
             .output()
-        else {
-            return; // no bash on this host: the text assertions above stand
-        };
+            .expect("bash reads the homes file the guard sources");
         assert!(out.status.success(), "{out:?}");
         assert_eq!(
             String::from_utf8_lossy(&out.stdout),
@@ -2004,8 +2002,9 @@ mod tests {
     /// followed by `script` with `$1` the guard and `$2..` `args`. Every tree under `$2` is
     /// aged past every idle window first. Shims stand in for what a host may lack: GNU's
     /// `rm --one-file-system` (BSD), `timeout` (macOS) and lsof. As root, the privilege drop
-    /// is no part of these tests, so it is a pass-through. `None` when the host has no bash.
-    fn run_guard(dir: &Path, script: &str, args: &[&Path]) -> Option<std::process::Output> {
+    /// is no part of these tests, so it is a pass-through. Every host the tests run on has
+    /// bash, so a missing one fails the test rather than skipping it.
+    fn run_guard(dir: &Path, script: &str, args: &[&Path]) -> std::process::Output {
         let guard = dir.join("disk-guard");
         std::fs::write(&guard, GUARD).unwrap();
         let preamble = r#"
@@ -2026,7 +2025,7 @@ mod tests {
         for a in args {
             cmd.arg(a);
         }
-        cmd.output().ok()
+        cmd.output().expect("bash runs the disk guard")
     }
 
     /// The names left in `dir`, sorted.
@@ -2059,9 +2058,7 @@ mod tests {
             reap "$3"
         "#;
         // the whole directory is aged, the stale aside with it
-        let Some(out) = run_guard(&dir, script, &[&dir, &target]) else {
-            return; // no bash on this host
-        };
+        let out = run_guard(&dir, script, &[&dir, &target]);
         assert!(out.status.success(), "{out:?}");
         assert!(
             String::from_utf8_lossy(&out.stdout).contains("renamed"),
@@ -2088,9 +2085,7 @@ mod tests {
             reap "$3" && exit 7
             printf '%s\n' "${actions[@]}"
         "#;
-        let Some(out) = run_guard(&dir, script, &[&target, &target]) else {
-            return;
-        };
+        let out = run_guard(&dir, script, &[&target, &target]);
         assert!(out.status.success(), "{out:?}");
         assert!(
             String::from_utf8_lossy(&out.stdout).contains("gave back"),
@@ -2153,9 +2148,7 @@ mod tests {
             reclaim_cargo 0
             printf '%s\n' "${actions[@]}"
         "#;
-        let Some(out) = run_guard(&dir, script, &[&dir, &home]) else {
-            return;
-        };
+        let out = run_guard(&dir, script, &[&dir, &home]);
         assert!(out.status.success(), "{out:?}");
         let said = String::from_utf8_lossy(&out.stdout);
         // each removal is one journal line (and its echo in the run's actions)
