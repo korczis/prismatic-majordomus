@@ -9,7 +9,10 @@
 //!
 //! A run that succeeded is news only on the trunk (master's checks, a deploy, a release);
 //! a pull request's green run is the expected and is counted as suppressed. A failed run is
-//! always news.
+//! always news, and so is a cancelled one: a person or a newer push stopped it, and nobody
+//! learns which by its silence. A failed deploy workflow is asked for its jobs, because a
+//! Pages run fails when its publisher asks for help even after the deploy job went out:
+//! that is `deploy_needs_help`, not `deploy_failed`.
 
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -110,25 +113,51 @@ fn fetch_now(program: &str, root: &Path) -> Fetch {
             "databaseId,workflowName,displayTitle,status,conclusion,event,headBranch,updatedAt,url",
         ],
     )?;
-    Ok(Fetched { prs, runs })
+    Ok(Fetched {
+        prs,
+        runs: with_deploy_jobs(program, root, runs),
+    })
+}
+
+/// `runs` with the jobs of every failed deploy run attached under `jobs`, each asked within
+/// [`BUDGET`]; a run whose jobs could not be read keeps its plain verdict.
+fn with_deploy_jobs(program: &str, root: &Path, mut runs: Value) -> Value {
+    for item in runs.as_array_mut().into_iter().flatten() {
+        let failed_deploy = text(item, "status") == "completed"
+            && verdict(&text(item, "conclusion")) == Verdict::Failed
+            && family(&text(item, "workflowName")) == "deploy";
+        let Some(id) = item["databaseId"].as_u64().filter(|_| failed_deploy) else {
+            continue;
+        };
+        if let Ok(view) = run(
+            program,
+            root,
+            &["run", "view", &id.to_string(), "--json", "jobs"],
+        ) {
+            item["jobs"] = view["jobs"].clone();
+        }
+    }
+    runs
 }
 
 /// One call of `program`, bounded by [`BUDGET`], its stdout parsed as JSON; every failure is
 /// reported as `gh`'s, because `gh` is the only program asked in earnest.
 fn run(program: &str, root: &Path, args: &[&str]) -> Result<Value, (MonitorSourceHealth, String)> {
-    let mut child = Command::new(program)
-        .args(args)
-        .current_dir(root)
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| {
-            (
-                MonitorSourceHealth::Absent,
-                format!("gh could not be started: {e}"),
-            )
-        })?;
+    let mut child = crate::process::retrying_busy(|| {
+        Command::new(program)
+            .args(args)
+            .current_dir(root)
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+    })
+    .map_err(|e| {
+        (
+            MonitorSourceHealth::Absent,
+            format!("gh could not be started: {e}"),
+        )
+    })?;
     let deadline = Instant::now() + BUDGET;
     let status = loop {
         match child.try_wait() {
@@ -283,40 +312,87 @@ fn workflow_run(run: &Value, reader: &Reader) -> Option<(u64, Option<MonitorSign
     let conclusion = text(run, "conclusion");
     let workflow = text(run, "workflowName");
     let branch = text(run, "headBranch");
-    let failed = !matches!(
-        conclusion.as_str(),
-        "success" | "skipped" | "neutral" | "cancelled"
-    );
-    if !failed && branch != TRUNK {
+    let trunk = branch == TRUNK;
+    let verdict = verdict(&conclusion);
+    if verdict == Verdict::Succeeded && !trunk {
         return Some((at, None));
     }
-    let lower = workflow.to_lowercase();
-    let family = if lower.contains("release") {
-        "release"
-    } else if lower.contains("pages") || lower.contains("deploy") {
-        "deploy"
-    } else {
-        "run"
+    let family = family(&workflow);
+    let failed_jobs = failed_jobs(run);
+    let deployed = family == "deploy" && verdict == Verdict::Failed && job_succeeded(run, "deploy");
+    let (outcome, severity) = match verdict {
+        Verdict::Failed if deployed => ("needs_help", MonitorSeverity::Attention),
+        Verdict::Failed => ("failed", MonitorSeverity::Attention),
+        Verdict::Cancelled if trunk => ("cancelled", MonitorSeverity::Attention),
+        Verdict::Cancelled => ("cancelled", MonitorSeverity::Info),
+        Verdict::Succeeded => ("succeeded", MonitorSeverity::Info),
     };
-    let kind = format!("{family}_{}", if failed { "failed" } else { "succeeded" });
+    let detail = if deployed {
+        format!(" (deployed; {} failed)", failed_jobs.join(", "))
+    } else {
+        String::new()
+    };
     let mut s = MonitorSignal::new(
         at,
         MonitorSource::Github,
-        &kind,
-        if failed {
-            MonitorSeverity::Attention
-        } else {
-            MonitorSeverity::Info
-        },
+        &format!("{family}_{outcome}"),
+        severity,
         &format!(
-            "{workflow} {conclusion} on {branch}: {}",
+            "{workflow} {conclusion} on {branch}{detail}: {}",
             text(run, "displayTitle")
         ),
     );
     s.branch = Some(branch.clone()).filter(|b| !b.is_empty());
     s.link = Some(text(run, "url")).filter(|u| !u.is_empty());
-    s.for_you = failed && reader.named_in(&branch);
+    s.for_you = verdict != Verdict::Succeeded && reader.named_in(&branch);
     Some((at, Some(s)))
+}
+
+/// What a finished run's conclusion says about it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Verdict {
+    Succeeded,
+    Cancelled,
+    Failed,
+}
+
+fn verdict(conclusion: &str) -> Verdict {
+    match conclusion {
+        "success" | "skipped" | "neutral" => Verdict::Succeeded,
+        "cancelled" => Verdict::Cancelled,
+        _ => Verdict::Failed,
+    }
+}
+
+/// The family a workflow's signals are named by: `release`, `deploy` or `run`.
+fn family(workflow: &str) -> &'static str {
+    let lower = workflow.to_lowercase();
+    if lower.contains("release") {
+        "release"
+    } else if lower.contains("pages") || lower.contains("deploy") {
+        "deploy"
+    } else {
+        "run"
+    }
+}
+
+/// The names of a run's jobs that failed, when its jobs were read.
+fn failed_jobs(run: &Value) -> Vec<String> {
+    run["jobs"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter(|j| verdict(j["conclusion"].as_str().unwrap_or("failure")) == Verdict::Failed)
+        .map(|j| text(j, "name"))
+        .collect()
+}
+
+fn job_succeeded(run: &Value, name: &str) -> bool {
+    run["jobs"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .any(|j| text(j, "name") == name && j["conclusion"].as_str() == Some("success"))
 }
 
 #[cfg(test)]
@@ -378,6 +454,59 @@ mod tests {
             Some("https://github.com/o/r/pull/868")
         );
         assert_eq!(read.high, parse_rfc3339("2026-10-10T20:45:00Z"));
+    }
+
+    #[test]
+    fn a_cancelled_run_is_news_and_a_deployed_pages_run_needs_help_rather_than_failed() {
+        let fetched = Fetched {
+            prs: json!([]),
+            runs: json!([
+                {"status": "completed", "conclusion": "cancelled", "workflowName": "ci",
+                 "headBranch": "fix/1b-lane", "updatedAt": "2026-10-11T09:53:00Z",
+                 "displayTitle": "lane"},
+                {"status": "completed", "conclusion": "cancelled", "workflowName": "pages",
+                 "headBranch": "master", "updatedAt": "2026-10-11T09:54:00Z",
+                 "displayTitle": "schedule"},
+                {"status": "completed", "conclusion": "failure", "workflowName": "pages",
+                 "headBranch": "master", "updatedAt": "2026-10-11T13:33:34Z",
+                 "displayTitle": "schedule",
+                 "jobs": [{"name": "owed", "conclusion": "success"},
+                          {"name": "deploy", "conclusion": "success"},
+                          {"name": "intervention", "conclusion": "failure"}]},
+                {"status": "completed", "conclusion": "failure", "workflowName": "pages",
+                 "headBranch": "master", "updatedAt": "2026-10-11T14:00:00Z",
+                 "displayTitle": "schedule",
+                 "jobs": [{"name": "deploy", "conclusion": "failure"}]},
+                {"status": "completed", "conclusion": "failure", "workflowName": "pages",
+                 "headBranch": "master", "updatedAt": "2026-10-11T14:30:00Z",
+                 "displayTitle": "jobs unread"}
+            ]),
+        };
+        let read = fold(&fetched, Some(0), 0, &Reader::named(Some("1b")));
+        let seen: Vec<(&str, MonitorSeverity, bool)> = read
+            .signals
+            .iter()
+            .map(|(_, s)| (s.kind.as_str(), s.severity, s.for_you))
+            .collect();
+        assert_eq!(
+            seen,
+            vec![
+                ("run_cancelled", MonitorSeverity::Info, true),
+                ("deploy_cancelled", MonitorSeverity::Attention, false),
+                ("deploy_needs_help", MonitorSeverity::Attention, false),
+                ("deploy_failed", MonitorSeverity::Attention, false),
+                ("deploy_failed", MonitorSeverity::Attention, false),
+            ]
+        );
+        assert_eq!(read.suppressed, 0, "nothing that stopped is folded away");
+        assert!(
+            read.signals[2]
+                .1
+                .summary
+                .contains("(deployed; intervention failed)"),
+            "{}",
+            read.signals[2].1.summary
+        );
     }
 
     #[test]
@@ -476,6 +605,76 @@ mod tests {
         CACHE.clear_poison();
         let (state, _) = fetched.expect_err("no such binary");
         assert_eq!(state, MonitorSourceHealth::Absent);
+    }
+
+    /// A program standing in for `gh run view <id> --json jobs`: it records each id it is
+    /// asked for in `asked`, answers run 77 with two jobs and fails for any other.
+    #[cfg(unix)]
+    fn fake_gh_jobs(dir: &Path) -> PathBuf {
+        let program = dir.join("fake-gh-jobs");
+        std::fs::write(
+            &program,
+            concat!(
+                "#!/bin/sh\n",
+                "echo \"$3\" >> \"$(dirname \"$0\")/asked\"\n",
+                "[ \"$1 $2 $3\" = \"run view 77\" ] || { echo 'gh: no such run' >&2; exit 1; }\n",
+                "echo '{\"jobs\": [{\"name\": \"deploy\", \"conclusion\": \"success\"}, ",
+                "{\"name\": \"owed\", \"conclusion\": \"failure\"}]}'\n"
+            ),
+        )
+        .unwrap();
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&program, std::fs::Permissions::from_mode(0o755)).unwrap();
+        program
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn only_a_failed_deploy_run_is_asked_for_its_jobs_and_one_that_cannot_be_read_keeps_its_verdict(
+    ) {
+        let dir = tempfile::tempdir().unwrap();
+        let program = fake_gh_jobs(dir.path());
+        let program = program.to_str().unwrap();
+        let runs = json!([
+            {"databaseId": 77, "status": "completed", "conclusion": "failure",
+             "workflowName": "Deploy Pages"},
+            {"databaseId": 78, "status": "completed", "conclusion": "failure",
+             "workflowName": "pages"},
+            {"databaseId": 79, "status": "completed", "conclusion": "failure",
+             "workflowName": "ci"},
+            {"databaseId": 80, "status": "completed", "conclusion": "success",
+             "workflowName": "Deploy Pages"},
+            {"databaseId": 81, "status": "in_progress", "conclusion": "",
+             "workflowName": "Deploy Pages"},
+            {"status": "completed", "conclusion": "failure", "workflowName": "Deploy Pages"}
+        ]);
+        let read = with_deploy_jobs(program, dir.path(), runs);
+        assert_eq!(
+            read[0]["jobs"],
+            json!([{"name": "deploy", "conclusion": "success"},
+                   {"name": "owed", "conclusion": "failure"}]),
+            "the failed deploy run carries its jobs"
+        );
+        assert_eq!(failed_jobs(&read[0]), ["owed"]);
+        assert!(
+            read[1].get("jobs").is_none(),
+            "a run whose jobs failed to read"
+        );
+        for (i, why) in [
+            (2, "not a deploy"),
+            (3, "succeeded"),
+            (4, "not completed"),
+            (5, "no id"),
+        ] {
+            assert!(read[i].get("jobs").is_none(), "{why}");
+        }
+        let asked = std::fs::read_to_string(dir.path().join("asked")).unwrap();
+        assert_eq!(asked.lines().collect::<Vec<_>>(), ["77", "78"]);
+        assert_eq!(
+            with_deploy_jobs(program, dir.path(), json!(null)),
+            json!(null),
+            "an answer that is no list is passed through"
+        );
     }
 
     #[test]

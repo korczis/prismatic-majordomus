@@ -129,6 +129,13 @@ knowledge:
   candidate_max_age_minutes: 20160       # 14d: a candidate this old was not reviewed, it was
                                          # ignored; doctor names it
 
+# Rebuildable caches under .ai/local/cache/, which no commit carries. Each parsed YAML file
+# is kept under cache/flat/ and served only to a file with exactly the bytes it was parsed
+# from, so a command on unchanged files reads them instead of parsing them again. Past the
+# cap the oldest written go first; 0 is no cache.
+cache:
+  flatten_max_entries: 2000
+
 # `majordomus bench` samples every public command this many times after the warm-up runs;
 # `bench --check` refuses a regression larger than these fractions of the baseline's
 # p50, p95 and p99; doctor and watch report their own wall time against these budgets

@@ -40,9 +40,9 @@ for c in $COMMANDS; do help_is_only_usage "$c" "after init" || exit 1; done
 # version needs no installation, and it is the version authored in the crate manifest: the
 # tool prints its projection, and the one shell reader of the manifest says what it must be
 expect_exit 0 "$MJ" version
-expect_grep '^majordomus [0-9]+\.[0-9]+\.[0-9]+$'
+expect_grep '^majordomus [0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?$'
 expect_exit 0 "$MJ" --version
-expect_grep '^majordomus [0-9]+\.[0-9]+\.[0-9]+$'
+expect_grep '^majordomus [0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?$'
 ver="$("$ROOT/scripts/release-version")"
 expect_grep "^majordomus $ver$"
 # version is dispatched ahead of the option parser, which is exactly how a command comes to

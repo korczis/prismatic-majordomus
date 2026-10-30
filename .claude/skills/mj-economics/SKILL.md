@@ -1,11 +1,11 @@
 ---
 name: mj-economics
-description: "Majordomus economics: Refuse unsupported economics claims; Explain one economics metric; Recorded benchmark runs; Token economics summary."
+description: "Majordomus economics: Refuse unsupported economics claims; Explain one economics metric; Recorded benchmark runs; Token economics summary; Each task's delivery economics."
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: module:economics; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.28.0 -->
+     Generator: majordomus-cli 1.0.0-alpha.9 -->
 
 # Majordomus `economics`
 
@@ -19,6 +19,7 @@ $ARGUMENTS
 | `economics.explain` | Explain one economics metric | `majordomus_economics_explain` | `majordomus economics explain` | reads |
 | `economics.runs` | Recorded benchmark runs | `majordomus_economics_runs` | `majordomus economics runs` | reads |
 | `economics.summary` | Token economics summary | `majordomus_economics` | `majordomus economics summary` | reads |
+| `economics.tasks` | Each task's delivery economics | `majordomus_economics_tasks` | `majordomus economics tasks` | reads |
 
 A capability that *changes* something runs only when the person asked for that change: call it once, and if it is refused or its outcome is not known, report that as it is and do not try again by another way. One that *reads* may be called whenever the request needs it.
 

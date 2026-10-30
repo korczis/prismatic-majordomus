@@ -1,0 +1,41 @@
+id: I3946
+milestone: ci-critical-path
+title: "Every gate of the CI model declares its lane, and both readers refuse a lane they cannot read"
+slug: every-gate-declares-its-lane
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give every gate of .ai/repo/ci/gates.yaml a lane (feedback, proof or release) and the model a top-level tiers map (local and pull-request run feedback, integration adds proof, release runs all three), as ADR 0186 decides, and make both readers of the model, scripts/ci-plan --check and the executable's GateModel (apps/majordomus-cli/src/gates/model.rs), refuse in the same words a gate without a lane once tiers are declared, a lane that is none of the three, and a tier naming a lane that does not exist. ci-plan's plan carries gates[].lane; the executable gains GateDecl.lane and GateModel.tiers. Slice S2 of I2350: lanes are declared and validated, and select nothing."
+why: "ADR 0186, accepted by the owner on 2026-10-23, makes a pull request's required verdict the feedback lane and has the proof lane judge the combined top before it lands. Nothing can select by lane (slice S4) until every gate declares one and a lane that no reader can interpret is refused. The model is read by two readers that I3944 holds to one reason per gate, so a field one of them ignores, or reads differently, would be the same defect again."
+current_state: "On origin/master 355a0cee79a no gate of gates.yaml declares a lane and the model has no tiers. Neither reader knows the words; the executable would ignore a lane field and ci-plan would carry it nowhere."
+desired_state: "Every gate of the model declares a lane: the structure gates measured at about a minute or less in structure-durations.tsv, or described as seconds of file reads, are feedback, and the heavy gates (the suite, the crate's lanes, coverage, the site and browser probes, the UI audit, mesh-lab, macOS, the installer, and the structure gates that cost more, reach the network or were never measured) are proof. The header states lanes and tiers and cites ADR 0186. Both readers refuse the three defects with the same text, the executable before it types the document so that the words are not serde's. A model without tiers and lanes is read and planned exactly as before, and the plan of this repository's model is byte-identical with and without its lanes."
+scope:
+  - ".ai/repo/ci/gates.yaml"
+  - "scripts/ci-plan"
+  - "apps/majordomus-cli/src/gates/model.rs"
+  - "apps/majordomus-cli/src/gates/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/gates.rs"
+  - "test/cases/3946_every_gate_declares_its_lane.sh"
+  - "test/cases/94_ci_plan.sh"
+  - "test/cases/131_completion_gates.sh"
+  - ".ai/repo/project/issues/I3946.yaml"
+non_scope:
+  - "Selecting gates by tier or lane: slice S4 of I2350; no plan of this repository's model changes because of this issue"
+  - "Reusing a gate whose inputs did not change as inputs_unchanged (ADR 0186's other half)"
+  - "Moving a gate between jobs, or splitting a gate whose cost puts it in proof (shell-lint, core-check) into a cheap and a heavy half"
+acceptance_criteria:
+  - "Every gate of .ai/repo/ci/gates.yaml declares a lane, the model declares the four tiers, and the header documents both and cites ADR 0186"
+  - "On a copy of the model, a deleted lane, lane: fast and a tier naming lane-x are each refused by scripts/ci-plan --check (exit 10) and by the executable's gates.model, with the same text"
+  - "The repository's own model passes both readers, and both readers report the same lane for every gate"
+  - "The plan of the model without tiers and lanes equals the plan with them for every change set the cases ask; cases 94 and 131 pass with only new assertions added"
+  - "Unit tests in model.rs pin the parse and each of the three refusals"
+validation:
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib gates"
+  - "env -u MAJORDOMUS_SHARE bash test/run.sh 3946_every_gate_declares_its_lane 131_completion_gates 94_ci_plan 26_ci_wiring 3943_a_second_gate_list_is_found"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "every_gate_declares_its_lane_test"
+depends_on:
+  - I3944
+created_at: 2026-10-23
+updated_at: 2026-10-23

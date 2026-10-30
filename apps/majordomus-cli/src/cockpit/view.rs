@@ -46,6 +46,9 @@ pub struct Shell<'a> {
     pub favicon: String,
     /// The Cockpit's own script modules, in load order, with their digests.
     pub scripts: Vec<String>,
+    /// The site's own scripts the bar at the top behaves by — its menus, then its theme
+    /// toggle — served from the Cockpit's files, with their digests.
+    pub bar_scripts: Vec<String>,
     /// The vendored libraries' digested URLs, a JSON object by file name, published on the
     /// body for `vendor()` to read.
     pub vendor: String,
@@ -76,12 +79,27 @@ pub fn page(shell: &Shell<'_>, main: El) -> String {
             .attr("src", src.clone())
             .flag("defer")
     }))
+    .chain(
+        shell
+            .bar_scripts
+            .iter()
+            .map(|src| el("script").attr("src", src.clone()).flag("defer")),
+    )
     .collect();
 
     // the theme contract and the design fingerprint, from the declaration compiled into
     // this executable: the script reads the key and the class here rather than naming
     // them, and compares the fingerprint with the one the stylesheet carries
     let design = DesignSystem::compiled().ok();
+    // the theme contract on the root too, where the site's theme script reads it
+    let root: Vec<(&str, String)> = design
+        .map(|d| {
+            vec![
+                ("data-theme-key", d.theme.storage_key.clone()),
+                ("data-theme-class", d.theme.class.clone()),
+            ]
+        })
+        .unwrap_or_default();
     let body = el("body")
         .class("mj-body")
         .attr("x-data", "cockpit")
@@ -93,6 +111,10 @@ pub fn page(shell: &Shell<'_>, main: El) -> String {
         .attr_if("data-design", design.map(|d| d.short_fingerprint()))
         .attr("data-vendor", shell.vendor.clone())
         .child(skip_link())
+        .raw(crate::ui::navbar::render(
+            shell.version,
+            &[(crate::ui::SURFACE, crate::ui::PREFIX)],
+        ))
         .child(header(shell))
         .child(
             el("div").class("mj-layout").child(sidebar(shell)).child(
@@ -116,7 +138,12 @@ pub fn page(shell: &Shell<'_>, main: El) -> String {
         .child(palette())
         .child(footer(shell));
 
-    super::html::document(&format!("{} · Majordomus Cockpit", shell.title), head, body)
+    super::html::document_on(
+        &format!("{} · Majordomus Cockpit", shell.title),
+        &root,
+        head,
+        body,
+    )
 }
 
 /// Read the stored theme before the page paints: the one statement the design declaration
@@ -133,11 +160,6 @@ pub fn theme_bootstrap() -> &'static str {
     BOOTSTRAP.as_str()
 }
 
-/// The canonical mark, compiled in from its generated copy of `share/design/brand/`, so
-/// the brand in the top bar is the same file the favicon, the site and the social card
-/// are cut from. It draws in `currentColor`.
-const MARK: &str = include_str!("logo-mark.svg");
-
 fn skip_link() -> El {
     el("a")
         .class("mj-skip")
@@ -145,6 +167,9 @@ fn skip_link() -> El {
         .text("Skip to content")
 }
 
+/// The Cockpit's tool bar, beneath the site's bar (`project.the-ui-wears-the-sites-navbar`):
+/// the Cockpit's name, its palette, its API links and the version. The brand and the theme
+/// toggle are the site's, in the bar above.
 fn header(shell: &Shell<'_>) -> El {
     el("header")
         .class("mj-topbar")
@@ -152,14 +177,7 @@ fn header(shell: &Shell<'_>) -> El {
             el("a")
                 .class("mj-brand")
                 .attr("href", "/cockpit")
-                .child(
-                    el("span")
-                        .class("mj-brand-mark")
-                        .attr("aria-hidden", "true")
-                        .raw(MARK),
-                )
-                .child(el("span").class("mj-brand-name").text("Majordomus"))
-                .child(el("span").class("mj-brand-suffix").text("Cockpit")),
+                .child(el("span").class("mj-brand-name").text("Cockpit")),
         )
         .child(
             el("button")
@@ -175,16 +193,7 @@ fn header(shell: &Shell<'_>) -> El {
                 .class("mj-topbar-links")
                 .attr("aria-label", "External surfaces")
                 .child(link(crate::http::swagger::SWAGGER_PATH, "Swagger"))
-                .child(link("/openapi.json", "OpenAPI"))
-                .child(
-                    el("button")
-                        .class("mj-theme-toggle")
-                        .attr("type", "button")
-                        .attr("x-on:click", "toggleTheme")
-                        .attr("aria-label", "Switch between light and dark")
-                        .attr("title", "Switch between light and dark")
-                        .text("Theme"),
-                ),
+                .child(link("/openapi.json", "OpenAPI")),
         )
         .child(el("span").class("mj-version").text(shell.version))
 }
@@ -792,6 +801,52 @@ fn css_word(word: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Every page wears the site's bar above the Cockpit's own tool bar
+    /// (`project.the-ui-wears-the-sites-navbar`): the site's landmark and theme toggle, the
+    /// executable's version, the product entry leading to the live UI, the site's two scripts,
+    /// and the theme contract on the root. The Cockpit draws no theme toggle of its own.
+    #[test]
+    fn every_page_wears_the_sites_bar_above_its_own() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let navigation = super::super::nav::build(&ctx, "/cockpit");
+        let bar_scripts = vec![
+            "/cockpit/assets/nav.js?v=1".to_string(),
+            "/cockpit/assets/theme.js?v=1".to_string(),
+        ];
+        let shell = Shell {
+            title: "Overview",
+            subtitle: None,
+            area: Area::Overview,
+            breadcrumbs: Vec::new(),
+            navigation: &navigation,
+            stylesheet: "/cockpit/assets/cockpit.css?v=1".into(),
+            favicon: "/cockpit/assets/favicon.svg?v=1".into(),
+            scripts: Vec::new(),
+            bar_scripts: bar_scripts.clone(),
+            vendor: "{}".into(),
+            assets_present: true,
+            version: "0.0.0",
+        };
+        let html = page(&shell, el("p"));
+        assert_eq!(html.matches("aria-label=\"Main\"").count(), 1, "{html}");
+        assert!(html.find("aria-label=\"Main\"") < html.find("mj-topbar"));
+        assert!(html.contains("id=\"theme-toggle\""));
+        assert!(html.contains(">v0.0.0<"), "the badge names the executable");
+        assert!(
+            html.contains("href=\"/ui\" data-nav-primary=\"ui\""),
+            "{html}"
+        );
+        assert!(!html.contains("toggleTheme"), "a second theme toggle");
+        assert!(
+            html.contains("<html lang=\"en\" data-theme-key=\""),
+            "{html}"
+        );
+        for s in &bar_scripts {
+            assert!(html.contains(&format!("<script src=\"{s}\" defer>")), "{s}");
+        }
+    }
 
     #[test]
     fn a_status_word_cannot_build_a_class_it_is_not() {

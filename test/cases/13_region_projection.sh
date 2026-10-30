@@ -107,3 +107,62 @@ sed 's/^  always_loaded_budget_lines: .*/  always_loaded_budget_lines: 5/' .ai/r
 expect_exit 10 "$MJ" update
 expect_grep 'FAIL budget +CLAUDE.md — would be [0-9]+ lines, budget 5; nothing written'
 expect_no_grep 'majordomus:begin' CLAUDE.md
+
+# the bootstrap doctrine judges what Majordomus generated, and in region mode that is the
+# region. A host document that predates the layer has rule bullets, a rules heading and a
+# profile table of its own, and they are the repository's: no policy edit could remove them,
+# so doctor must not fail them. A whole-file projection stands beside it to hold the other
+# half: there the whole file is generated, and the same text is still refused.
+reset_policy
+awk '/^projections:/{exit} {print}' .ai/repo/policy.yaml > policy.new
+cat >> policy.new <<'YAML'
+projections:
+  - provider: agents
+    target: AGENTS.md
+    always_loaded: true
+  - provider: claude-code
+    target: CLAUDE.md
+    mode: region
+YAML
+mv policy.new .ai/repo/policy.yaml
+cat > CLAUDE.md <<'MD'
+# CLAUDE.md
+
+Hand-written governance that predates Majordomus.
+
+### Rules
+
+- **English only** in code.
+- **Company-scoped entities** everywhere.
+
+| profile | effort |
+|---|---|
+| routine | low |
+MD
+expect_exit 0 "$MJ" update --force
+"$MJ" doctor > doctor.out 2>&1 || true
+expect_no_grep 'FAIL bootstrap' doctor.out
+expect_grep 'OK +bootstrap +2 projection\(s\) — each points at .ai/README.md' doctor.out
+
+# the same text inside the markers is a generated file that grew a rule corpus, and is refused
+awk '{print} /^<!-- majordomus:begin/{print "### Rules"; print ""; print "- **English only** in code."}' CLAUDE.md > c.tmp && mv c.tmp CLAUDE.md
+"$MJ" doctor > doctor.out 2>&1 || true
+expect_grep 'FAIL bootstrap +CLAUDE.md — carries a rule corpus of its own' doctor.out
+expect_exit 0 "$MJ" update --force
+expect_grep 'Company-scoped entities' CLAUDE.md
+
+# the pointer at the layer is the region's to carry: the host naming .ai/README.md in its
+# own prose does not stand in for a region that lost it
+printf '\nThe layer is described in .ai/README.md, the team says.\n' >> CLAUDE.md
+awk '/^<!-- majordomus:begin/{inside=1} /^<!-- majordomus:end/{inside=0} inside && /\.ai\/README\.md/{next} {print}' CLAUDE.md > c.tmp && mv c.tmp CLAUDE.md
+"$MJ" doctor > doctor.out 2>&1 || true
+expect_grep 'FAIL bootstrap +CLAUDE.md — does not point at .ai/README.md' doctor.out
+expect_exit 0 "$MJ" update --force
+"$MJ" doctor > doctor.out 2>&1 || true
+expect_no_grep 'FAIL bootstrap' doctor.out
+
+# a whole-file target is judged whole, as before
+printf '\n### Rules\n\n- **English only** in code.\n' >> AGENTS.md
+"$MJ" doctor > doctor.out 2>&1 || true
+expect_grep 'FAIL bootstrap +AGENTS.md — carries a rule corpus of its own' doctor.out
+expect_no_grep 'FAIL bootstrap +CLAUDE.md' doctor.out

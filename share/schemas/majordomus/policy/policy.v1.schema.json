@@ -248,6 +248,18 @@
         }
       }
     },
+    "cache": {
+      "type": "object",
+      "description": "Rebuildable caches under the local section's cache/ directory, which no commit carries. Deleting one costs only the work it saved.",
+      "additionalProperties": false,
+      "properties": {
+        "flatten_max_entries": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many parsed YAML files the shell tool keeps under cache/flat/, each served only to a file with exactly the bytes it was parsed from. Past this the oldest written are removed first; 0, or no key, is no cache."
+        }
+      }
+    },
     "enforcement": {
       "type": "array",
       "items": {
@@ -520,6 +532,42 @@
               ]
             }
           }
+        }
+      }
+    },
+    "checkout": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "What a checkout is held to against the remote trunk (project.a-checkout-serves-the-current-trunk). A checkout far behind the trunk serves a tree that no longer exists \u2014 its shared server answers every session from it, and a branch made from its local trunk starts there. Doctor, worktree status, server.status and the MCP initialize instructions report the distance and judge it against these numbers.",
+      "properties": {
+        "trunk_distance": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Commits behind the remote-tracking trunk, counted for the checkout's HEAD and for the local trunk branch, the larger judged. Absent declares nothing, and a distance is then reported as unjudged.",
+          "properties": {
+            "warn_behind": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "At or past this many commits behind, the checkout is lagging: doctor warns."
+            },
+            "fail_behind": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "At or past this many commits behind, the checkout is stale: doctor fails, and with it the commit hook that runs doctor."
+            }
+          }
+        }
+      }
+    },
+    "build_cache": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "The machine-wide local archive level of `mesh build-cache ensure` (ADR 0157, I3952): every checkout of a machine restores npm, mix and cargo build-directory archives from it and saves to it. Absent keeps the executable's default bound of 20 GiB.",
+      "properties": {
+        "local_max_gib": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The local level is held under this many GiB, oldest archives first, whenever an archive is added; scripts/reap-orphans measures it and reduces it to the same bound."
         }
       }
     },

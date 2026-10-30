@@ -105,6 +105,20 @@ fn render(out: &mut impl Write, v: &Value, asked: usize) -> std::io::Result<()> 
             " — incomplete: a board could not be read"
         }
     )?;
+    // the capability's default summary counts the checkouts that hold no board instead of
+    // listing them: say how many, so a short listing is not read as the whole repository
+    if let Some(omitted) = v["omitted"].as_object().filter(|o| !o.is_empty()) {
+        let by_standing: Vec<String> = omitted
+            .iter()
+            .map(|(standing, n)| format!("{standing} {}", n.as_u64().unwrap_or(0)))
+            .collect();
+        writeln!(
+            out,
+            "omitted    {} checkout(s) with no server and nobody attached ({})",
+            omitted.values().filter_map(Value::as_u64).sum::<u64>(),
+            by_standing.join(", "),
+        )?;
+    }
     for b in boards {
         let worktree = b["worktree"].as_str().unwrap_or("?");
         writeln!(
@@ -292,6 +306,30 @@ mod tests {
             "a claim without paths prints none: {s}"
         );
         assert!(!s.contains("overlaps"), "no overlap, no line: {s}");
+        assert!(!s.contains("omitted"), "nothing omitted, no line: {s}");
+    }
+
+    /// The checkouts the summary counts rather than lists are said, by standing, under the
+    /// header: a short listing is never the whole repository.
+    #[test]
+    fn the_text_counts_the_checkouts_the_summary_omits() {
+        let v = json!({
+            "count": 0, "complete": true, "covered": 4, "peers": [],
+            "boards": [{ "worktree": "/r", "standing": "absent", "this_checkout": true, "attached": 0 }],
+            "omitted": { "absent": 2, "stale": 1 },
+        });
+        let mut out = Vec::new();
+        render(&mut out, &v, 0).unwrap();
+        let s = String::from_utf8(out).unwrap();
+        assert!(
+            s.contains(
+                "board(s) asked\nomitted    3 checkout(s) with no server and nobody attached \
+                 (absent 2, stale 1)\n"
+            ),
+            "{s}"
+        );
+        // an omitted checkout holds no board, so it never makes a board asked
+        assert_eq!(boards_asked(&v, false), 0);
     }
 
     /// A writer that keeps its first `n` writes and refuses the rest: a reader that went

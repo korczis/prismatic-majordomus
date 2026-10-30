@@ -1,7 +1,7 @@
 +++
 title = "Distribution"
 description = "how the tool is packaged, published and installed: the one canonical model, what derives from it, the trust path, adding a platform, releasing, and recovering from a bad release"
-weight = 27
+weight = 28
 [extra]
 source = "docs/DISTRIBUTION.md"
 +++
@@ -203,6 +203,14 @@ scripts/release-version --check --tag v0.3.0
 scripts/ci/release-verdict --commit HEAD
 ```
 
+The verdict is the newest `ci` check-run GitHub attaches to that commit, whichever event
+started it, and `release.yml` asks the same question again with `--wait 300`. A commit that
+reached master unchanged from a pull request's head carries that pull request's run too, so a
+red or unfinished run there is the verdict until master's own push run on the commit concludes
+and is the newer one. Tag only after that push run is green: a tag pushed earlier is refused
+by the release workflow, at once on a red run and after five minutes on one still running,
+and is released by dispatching `release.yml` with the tag once the verdict is green.
+
 ```bash
 # 4. tag the merge on the default branch, and push the tag
 git tag v0.3.0 && git push origin v0.3.0
@@ -295,6 +303,28 @@ the tag. Finish the release — a new version, bumped and tagged, is the ordinar
 a tag that has no release behind it is the other, and only before anyone can have pinned it.
 Until one of those happens the advertised install command is broken for everyone, and
 `installer-live` below is what says so.
+
+### A pre-release is never the stable release
+
+A tag with a pre-release part (`v1.0.0-alpha.1`) is published as a GitHub prerelease and never
+as its "latest" (`--prerelease --latest=false` in the publish step of `release.yml`), and
+`scripts/release-record` records it on `channel: prerelease`: the channel is derived from the
+tag unless `--channel` is given, and `--channel stable` on a suffixed tag exits 2. The version
+decides as well as the record: `Release::is_stable_candidate` is false for any version with a
+pre-release part, so even a record that was mislabelled can never become `releases/latest.json`,
+and `Release::findings` reports the mislabel. A pre-release is installed by naming it
+(`install.sh --version 1.0.0-alpha.1`); an unpinned installer and a node that follows `stable`
+keep resolving the highest stable release. Versions order by semantic-version precedence
+(`alpha.2` before `alpha.10`, a pre-release before its own final, build metadata ignored).
+That order is `release::version::Version`'s, the crate's one reading of a version: the stable
+pointer, the release writer and the compatibility gate share it, so they cannot rank a pair
+of versions differently, and a record whose version is not a semantic version at all is never
+the stable pointer either. `release bump --exact 1.0.0-alpha.1` writes a pre-release, and the
+gate accepts a tree that declares one; `docs/RELEASE.md` says how a pre-release meets the floor.
+The crate's `distribution::tests` and `release::version` tests prove the resolution and the
+order; `test/cases/3179_a_prerelease_is_never_published_as_stable.sh` proves the two
+shell-side writers, and `test/cases/3212_a_prerelease_version_is_bumped_and_ordered.sh` the
+writer, the gate and the order against a real repository.
 
 ### When a release fails partway
 
@@ -582,7 +612,7 @@ not affected, and nothing fetches anything on entering a repository.
 
 **What a node trusts.** Only `releases/latest.json` and `releases/<tag>.json` on the site, and
 only an archive whose digest and size match them. A mesh announcement of a release means
-"check now" and nothing more. A node with no route to the site (jetson) may take the archive
+"check now" and nothing more. A node with no route to the site may take the archive
 from a peer, and verifies it against metadata it can check before unpacking (I2724).
 
 **Forward only, stable only.** No downgrade, no pre-release, no version the metadata does not
@@ -604,14 +634,17 @@ announcement: one HTTPS request for `releases/latest.json`, never in the path of
 behind (I2723). A release is rolled out when every enrolled, following node reports it.
 
 `test/cases/85_installer.sh` covers the risky part today, and `self update` resolves releases
-through the same records and the same stable pointer as the installer does.
+through the same records and the same stable pointer as the installer does, once it exists:
+`self update` is the design above and is not implemented yet.
 
 ## Package managers
 
 The release model is the primary contract and it is package-manager neutral: an archive per
-target with a digest, and a machine-readable index. A Homebrew formula, an APT repository,
-a Nix derivation or a container image would each read that index rather than replacing it,
-and none of them is implemented. Nothing in the model prevents one.
+target with a digest, and a machine-readable index. A Homebrew formula, an APT repository
+or a Nix derivation would each read that index rather than replacing it, and none of them is
+implemented. Nothing in the model prevents one. The container image is the one consumer that
+exists: the release workflow's `image` job builds it from the release's own Linux archives
+and pushes it to the GitHub container registry under the release's tag.
 
 Windows is representable — the schema carries `zip`, a `binary_suffix` and a `windows`
 operating system — and is declared `unavailable` with its reason: the command a person runs

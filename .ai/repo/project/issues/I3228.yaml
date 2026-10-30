@@ -1,0 +1,42 @@
+id: I3228
+milestone: the-ui-runs-and-explains
+title: "The UI's search finds any entity the registry addresses and offers the moves its status admits"
+slug: search-finds-entities-and-their-moves
+priority: p3
+profile: implementation
+objective: "Give /ui a search of its own (Ctrl/Cmd+K), answered on /ui from objects.search over every addressable kind, each result naming why it matched from SearchHit's new additive `matched` field and, for an issue, the moves its status admits (imported from I2902's status-to-move table), leading to the entity's page or the move's form."
+why: "Asked as a command palette on 2026-09-10, 2026-10-04 and 2026-10-11 (entity search plus actions instead of an 80-item menu); the Cockpit already has a palette over capabilities, graphs and objects. I2902 (2b) is only on branch docs/the-idd-workspace-reads-at-a-glance, not on master or in this tree, so plan validate cannot accept it as a depends_on id; the start gate is an acceptance criterion instead. scripts/lib/cockpit-probe.mjs never visits /ui. Sources: chatgpt-majordomus:c102#5, chatgpt-majordomus:c186#5, chatgpt-majordomus:c227#2, chatgpt-majordomus:c172#2."
+current_state: "The UI's search form submits to /cockpit/search (ui/shell.rs), so /ui has no search of its own; share/ui/ui.js wires '/', Ctrl/Cmd+K to that field; objects.search returns SearchHit {object, snippet?} in URI order with no matched field; share/cockpit/palette.js reads /api/v1/capabilities, /graphs, /objects; scripts/lib/cockpit-probe.mjs never visits /ui."
+desired_state: "One search projection serves both surfaces; no list of entries is kept by a script."
+scope:
+  - "share/ui/ui.js"
+  - "apps/majordomus-cli/src/ui/shell.rs"
+  - "share/cockpit/palette.js"
+  - "apps/majordomus-cli/src/capability/builtin/objects.rs"
+  - "scripts/ui"
+  - "docs/MAJORDOMUS_UI.md"
+  - ".ai/repo/project/intents"
+non_scope:
+  - "A semantic or LLM search"
+depends_on:
+  - "I2902"
+serves:
+  - "the-ui-runs-and-explains-the-work#search-reaches-every-entity"
+acceptance_criteria:
+  - "A new issue appears in the search with no edit"
+  - "Each result shows its match reason"
+  - "docs/MAJORDOMUS_UI.md describes the /ui search, its match reasons and what it does on the published snapshot"
+  - "SearchHit gains an additive `matched` field (identity, title, description or content) through its canonical declaration and `majordomus generate`, and the release analysis records it as a minor output change"
+  - "The /ui search answers on /ui itself instead of submitting to /cockpit/search"
+  - "The keyboard walk (open, query, choose, reach the entity's page) is a browser case under test/cases in the ui job, numbered by scripts/case-numbers next; the PR rewrites criterion search-reaches-every-entity to `evidence: test` with that path"
+  - "On the published snapshot the search is disabled or links to the live server and says why; it never shows an empty answer as 'no results'"
+  - "The search overlay fits 390 px with no horizontal scroll"
+  - "An issue's moves are imported from I2902's status-to-move table; this issue does not start until .ai/repo/project/issues/I2902.yaml is on origin/master"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::shell"
+  - "majordomus generate --check"
+  - "scripts/ui audit"
+evidence_required:
+  - "browser case under test/cases walking the /ui search keyboard-only"
+created_at: 2026-10-18
+updated_at: 2026-10-18

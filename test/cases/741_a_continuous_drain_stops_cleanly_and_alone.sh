@@ -47,6 +47,14 @@ case "\$1 \$2" in
       git fetch -q origin "refs/pull/1/head" &&
       git -c user.email=f@example.com -c user.name=forge merge -q --no-ff FETCH_HEAD -m "Merge pull request #1" &&
       git push -q origin HEAD:master && touch "$STATE/merged-1" ;;
+  # the fast-forward (I3910): master moved to the head, never forced, and refused as the
+  # forge refuses it (HTTP 422) unless master is the head's ancestor
+  "api -X")
+    sha="\${6#sha=}"; old="\$(git -C "$ORIGIN" rev-parse master)"
+    git -C "$ORIGIN" merge-base --is-ancestor "\$old" "\$sha" || { echo 'gh: Update is not a fast forward (HTTP 422)' >&2; exit 1; }
+    git -C "$ORIGIN" update-ref refs/heads/master "\$sha" "\$old" || exit 1
+    n="\$(git -C "$ORIGIN" for-each-ref --format='%(objectname) %(refname)' 'refs/pull/*/head' | awk -v s="\$sha" '\$1 == s { split(\$2, p, "/"); print p[3]; exit }')"
+    touch "$STATE/merged-\$n" ;;
   "pr view") if [ -f "$STATE/merged-1" ]; then echo MERGED; else echo OPEN; fi ;;
   # the declarations read (ADR 0101 §6, D4): every open pull request is an owner's, a branch of
   # this repository, and no pull request mentions it. The list is this forge's own, unlogged
@@ -67,7 +75,7 @@ LOCK="$(git rev-parse --path-format=absolute --git-common-dir)/majordomus/locks/
 expect_exit 2 "$RB" prs --repo "$W" drain --continuous --dry-run
 expect_exit 2 "$RB" prs --repo "$W" drain --continuous --interval 5
 expect_exit 10 "$RB" prs --repo "$W" drain --continuous --interval 30
-grep -q '^pr merge' "$STATE/log" && { echo "    a refused invocation merged"; exit 1; }
+grep -q '^pr merge\|^api -X' "$STATE/log" && { echo "    a refused invocation landed"; exit 1; }
 [ -e "$LOCK" ] && { echo "    the rollout refusal took the lease"; exit 1; }
 # the record that unlocks it: five merges earlier bounded drains made and proved, in the words
 # the executor writes to the repository's one trail
@@ -109,7 +117,7 @@ rc=0; wait "$PID" || rc=$?; PID=""
 grep -q 'stopped after 1 cycle(s), 1 merge(s): asked to stop' "$STATE/run.out" \
   || { echo "    the drain does not say why it stopped:"; tail -3 "$STATE/run.out"; exit 1; }
 [ ! -e "$LOCK" ] || { echo "    the lease was left behind: $(cat "$LOCK")"; exit 1; }
-[ "$(grep -c '^pr merge' "$STATE/log")" = 1 ] || { echo "    merged more than once"; exit 1; }
+[ "$(grep -c '^pr merge\|^api -X' "$STATE/log")" = 1 ] || { echo "    landed more than once"; exit 1; }
 
 # ---------------------------------------------------------------- 5. a crash
 "$RB" prs --repo "$W" drain --continuous --interval 30 > "$STATE/crash.out" 2> "$STATE/crash.err" & PID=$!
@@ -124,5 +132,5 @@ kill -9 "$PID"; wait "$PID" 2>/dev/null || :; PID=""
 rc=0; out="$(prs drain --max 1 2>&1)" || rc=$?
 [ "$rc" = 0 ] || { echo "    the lease of a killed drain was not taken at once (exit $rc): $out"; exit 1; }
 [ ! -e "$LOCK" ] || { echo "    the executor that took over left the lease behind"; exit 1; }
-[ "$(grep -c '^pr merge' "$STATE/log")" = 1 ] || { echo "    merged more than once"; exit 1; }
+[ "$(grep -c '^pr merge\|^api -X' "$STATE/log")" = 1 ] || { echo "    landed more than once"; exit 1; }
 exit 0

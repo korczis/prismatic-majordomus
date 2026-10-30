@@ -1,0 +1,32 @@
+id: I3357
+milestone: the-proof-scorecard-is-published
+title: "/ui/evidence shows the proof scorecard beside the claims it settles, read from economics.proof, with each row linking its records"
+slug: ui-evidence-shows-the-scorecard
+priority: p2
+profile: implementation
+objective: "Add a panel to apps/majordomus-cli/src/ui/evidence.rs that reads Source::of(\"economics.proof\") beside evidence.report: six rows with status, reason, counted sample against minimum, effect with interval and a losses count that opens the listed losses and record links. Each row links its claim through the existing claim inspector. An unanswered source renders as unanswered, never as an empty pass."
+why: "The owner's report of 2026-10-19 asks for the verdicts to be visible where the product's claims are judged; /ui/evidence already answers which claims hold (ui/evidence.rs:1-2). The renderer computes nothing."
+current_state: "ui/evidence.rs:15 sets ROUTE /ui/evidence and :17 reads only evidence.report; panels are built at :98-110; ui/mod.rs:212 registers the route; the screen test at ui/mod.rs:804-807 renders it."
+desired_state: "/ui/evidence carries the panel with per-status counts summing to six and failed rows drawn like passed ones."
+scope:
+  - "apps/majordomus-cli/src/ui/evidence.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+non_scope:
+  - "A new route or navbar entry"
+  - "Computing a figure in the renderer"
+  - "The cockpit"
+depends_on:
+  - "I3355"
+serves:
+  - "the-product-proves-it-pays#scorecard-is-published"
+acceptance_criteria:
+  - "The screen test renders one row per test from a fixture repository with a plan"
+  - "An unanswered economics.proof renders the unanswered state"
+  - "Every emitted class is one the stylesheet defines"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::"
+  - "cargo fmt --manifest-path apps/majordomus-cli/Cargo.toml --check"
+evidence_required:
+  - "test_ui_evidence_scorecard_panel"
+created_at: 2026-10-19
+updated_at: 2026-10-19

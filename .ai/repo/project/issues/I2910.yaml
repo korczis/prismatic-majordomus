@@ -1,0 +1,28 @@
+id: I2910
+milestone: idd-reads-at-a-glance
+title: "A move on the published workspace reads \"live only\""
+slug: a-published-move-reads-live-only
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "On the snapshot, render each move control disabled and labelled \"live only\", with a link to the live route, instead of a control that looks actionable and is not."
+why: "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: in the snapshot the only action looks clickable and does nothing."
+serves:
+  - the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance
+current_state: "An inert control that looks live."
+desired_state: "A disabled control that says why and where it works."
+scope:
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - "apps/majordomus-cli/src/web/report/snapshot.rs"
+  - ".ai/repo/project"
+  - "docs"
+  - "site"
+depends_on: []
+acceptance_criteria:
+  - "Every move on a published /ui/idd page is disabled and says \"live only\""
+validation:
+  - "majordomus plan validate"
+  - "cargo test --test ui_idd"
+evidence_required: []
+created_at: 2026-10-18
+updated_at: 2026-10-18

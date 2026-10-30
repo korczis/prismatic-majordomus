@@ -57,6 +57,7 @@ pub(crate) mod service;
 pub mod state;
 pub(crate) mod topology;
 pub(crate) mod trace;
+pub mod trunk;
 pub mod uncommitted;
 
 pub use direnv::EnvrcApproval;
@@ -73,12 +74,13 @@ pub use model::{
     SCHEMA,
 };
 pub use path::{container_root, detached_label, expected_path, BranchName, CONTAINER_SUFFIX};
-pub use service::{CreateReport, CreateRequest, Detail, RemoveReport, WorktreeService};
+pub use service::{CreateReport, CreateRequest, Detail, RemoveReport, StartPoint, WorktreeService};
 pub use topology::{parse_porcelain, parse_porcelain_nul, WorktreeRecord};
 pub use trace::{
     first_merge, parse_commit, parse_issue_refs, Attribution, BranchTrace, CommitAttribution,
     CommitRef, Integration, IssueTrace, TraceReport, TraceTallies, Tracer,
 };
+pub use trunk::{Distance, TrunkDistance, TrunkStanding, TrunkThresholds};
 pub use uncommitted::{
     OpenEpisode, Threshold, UncommittedReport, UncommittedTallies, UncommittedWorktree,
     WorkStanding,

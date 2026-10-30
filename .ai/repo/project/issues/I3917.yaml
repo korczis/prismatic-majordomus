@@ -1,0 +1,46 @@
+id: I3917
+milestone: truthful-plan-surfaces
+title: "The plan's status counts leave the homepage hero and stay on the roadmap"
+slug: the-plan-counts-leave-the-hero
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "The homepage hero no longer shows the plan's issue counts by status (ready, blocked, active and the rest, index.html:154-158); the counts stay on /roadmap and /ui, where a reader comes for them. Rule homepage-tells-a-declared-story moves to version 2 without the clause that the hero's product view counts the plan, and homepage-check's product check follows it. The owner decided this on 2026-10-22."
+why: "On 2026-10-22 an outside reviewer read 384 blocked against 228 ready and 5 active on the front page as a sign of scope out of control rather than discipline. The owner chose to take the backlog off the hero."
+current_state: "index.html:154-158 counts plan.issues by plan.statuses.issue from site/data/generated/plan.json; rule homepage-tells-a-declared-story v1:57-62 requires the counts in the hero's product view; homepage-check product (:904-916) fails when they differ from the plan."
+desired_state: "The hero shows no plan counts; /roadmap shows them; rule v2 and homepage-check agree, and a case refuses plan counts back on the hero."
+scope:
+  - ".ai/repo/rules/project/homepage-tells-a-declared-story.v2.md"
+  - "site/templates/index.html"
+  - "site/templates/roadmap.html"
+  - "scripts/ci/homepage-check"
+  - "test/cases/333_homepage_narrative.sh"
+  - "test/cases/3105_the_homepage_states_no_present_it_does_not_read.sh"
+  - ".ai/repo/project/issues/I3917.yaml"
+acceptance_criteria:
+  - "The built homepage hero carries no data-issues count"
+  - "/roadmap still shows every status count from the plan"
+  - "Rule v2 and homepage-check agree, and a case fails when plan counts return to the hero"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci/homepage-check"
+evidence_required:
+  - "hero_carries_no_plan_counts"
+depends_on: []
+serves: []
+created_at: 2026-10-22
+updated_at: 2026-10-28T12:22:22Z
+started_at: 2026-10-28T12:21:23Z
+started_event: sha256:94078e305d1c5255a6fc783d35a6308b4abf2de6112307c16e507527278e4244
+verified_at: 2026-10-28T12:21:48Z
+verified_event: sha256:981e7ec0a023d6c6ac16079b68e007d183709953233c56023814d6f263381714
+completed_at: 2026-10-28T12:22:22Z
+completed_event: sha256:43c2fb3e68d16e3ef7339822aa7ee8dcbdcaa007531f34adf368cc6f5e75f691
+evidence:
+  - covers: hero_carries_no_plan_counts
+    type: ci
+    command: "scripts/site-check (scripts/ci/homepage-check, job site) and bash test/run.sh 333_homepage_narrative (suite-shard 4)"
+    result: "master validate https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939 at 6c79dcf68cf: job site 122655183451 printed 'OK product ... and no count of the plan's issues' (homepage-check fails on any hero data-issues block); case 333 ok in suite-shard (4) 122655181829 with its negative cases (plan counts, a linked count, an empty block on the hero) each refused with exit 10; /roadmap emits data-roadmap-issue-status per status; rule homepage-tells-a-declared-story.v2 replaces v1; landed via 3071f0f8ce7"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939/job/122655183451"
+    commit: 81ef931a3e156907f1784c64c509884f565c17f0
+    recorded_at: 2026-10-28T12:22:12Z

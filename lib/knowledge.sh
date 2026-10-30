@@ -193,11 +193,14 @@ EOF_EV
   mj_require_installed
   # The deriver selects an observation by its episode stamp, and the ledger stamps a line only
   # while an episode is open: an observation without one would be written and never derived.
-  [ -n "$(mj_open_session_id)" ] \
-    || mj_die "$MJ_EX_CONTRACT" "knowledge observe: no episode is open in this checkout, so the observation would never be derived; open one first: majordomus session start"
-  mj_load_current 2>/dev/null && [ "$(mj_cur outcome)" = active ] && task_id="$(mj_cur id)"
+  # Its task is the caller's or none (ADR 0164), never the checkout's active one by proximity.
+  mj_record_attribution
+  [ -n "$MJ_RECORD_SESSION" ] \
+    || mj_die "$MJ_EX_CONTRACT" "knowledge observe: no episode is open in this checkout for this caller, so the observation would never be derived; open one first: majordomus session start"
+  [ -n "$MJ_RECORD_TASK" ] && [ "$(mj_cur outcome)" = active ] && task_id="$MJ_RECORD_TASK"
   mj_ledger_append observation.recorded \
-    "\"task_id\":\"$task_id\",\"kind\":\"$kind\",\"subject\":\"$(mj_json_esc "$subject")\",\"statement\":\"$(mj_json_esc "$statement")\",\"evidence\":[$ev_json]"
+    "\"task_id\":\"$task_id\",\"kind\":\"$kind\",\"subject\":\"$(mj_json_esc "$subject")\",\"statement\":\"$(mj_json_esc "$statement")\",\"evidence\":[$ev_json]" \
+    "$MJ_RECORD_SESSION"
   printf 'observed: %s %s — %s\n' "$kind" "$subject" "$statement"
 }
 
@@ -606,7 +609,7 @@ mj_knowledge_nodes() {
     elif [ "$rc" = 3 ]; then
       printf 'X\tINFO\tschema_unasked\t.\tthe schema check was not asked for (MAJORDOMUS_KNOWLEDGE_SCHEMA=unasked), so no file was checked against the schema of its kind\n'
     else
-      printf 'X\tWARN\tschema_unchecked\t.\tthe index could not be asked (no executable built, or no jq), so no file was checked against the schema of its kind; run bin/majordomus-cli once to build it\n'
+      printf 'X\tWARN\tschema_unchecked\t.\tthe index could not be asked (no executable built, or no jq), so no file was checked against the schema of its kind; build it: just build\n'
     fi
     # A source git tracks and the working tree no longer holds is a deletion in progress:
     # reported, never a failure, because work in progress is reported and not blocked.
@@ -1042,7 +1045,12 @@ mj_knowledge_episode_resolve() {
 # One pass over the ledger, selecting the lines the episode stamped and turning each
 # derivable one into a tab-separated evidence row:
 #
-#   kind  task_id  ts  canon  title  description  class  epistemics  tag  outcome
+#   kind  task_id  ts  canon  title  description  class  epistemics  tag  outcome  evidence  head
+#
+# Every row has all twelve columns, an absent one written `-`: the columns are split on a
+# tab, which the shell's read treats as whitespace and collapses, so an empty column would
+# shift every column after it. `head` is the commit the ledger line was written at, which is
+# what the candidate cites as its own (I1985), never the whole episode's commits.
 #
 # Free text is unescaped here, once, from the JSON the writer produced: `\"` becomes `"`,
 # `\\` becomes `\`, and a `\n` becomes a space, because a record's title is one line.
@@ -1087,24 +1095,25 @@ mj_knowledge_evidence() {
     {
       e = jstr($0, "event"); ts = jstr($0, "ts"); task = jstr($0, "task_id")
       if (task == "") task = "none"       # a row never carries an empty column
+      head = jstr($0, "head"); if (head == "" || head == "NONE") head = "-"
       if (e == "decision.recorded") {
         d = jstr($0, "decision"); if (d == "") next
         if (task == "" || task == "none") desc = "Recorded as a decision outside a task in episode " sid "."
         else desc = "Recorded as a decision under task " task " in episode " sid "."
-        print "decision", task, ts, "decision.recorded" US d, d, desc, "convention", "decided", "decision", ""
+        print "decision", task, ts, "decision.recorded" US d, d, desc, "convention", "decided", "decision", "-", "-", head
       } else if (e == "question.resolved") {
         q = jstr($0, "question"); a = jstr($0, "answer"); if (a == "") next
         print "question", task, ts, "question.resolved" US q US a, a, \
-          "Answers the question \"" q "\" resolved under task " task " in episode " sid ".", "fact", "observed", "question", ""
+          "Answers the question \"" q "\" resolved under task " task " in episode " sid ".", "fact", "observed", "question", "-", "-", head
       } else if (e == "task.finished") {
         o = jstr($0, "outcome")
         if (o == "blocked" || o == "failed" || o == "no_match")
           print "task", task, ts, "task.finished" US task US o, "Task " task " ended " o, \
-            "The task reached the outcome " o " in episode " sid ".", "lesson", "inferred", "task", o
+            "The task reached the outcome " o " in episode " sid ".", "lesson", "inferred", "task", o, "-", head
         else if (o == "completed" && index($0, "\"verify\":{") > 0)
           print "task", task, ts, "task.finished" US task US o, \
             "Task " task " completed; verified by: " jstr($0, "command") " (exit " jraw($0, "exit") ")", \
-            "The verification command passed when the task finished in episode " sid ".", "fact", "observed", "task", o
+            "The verification command passed when the task finished in episode " sid ".", "fact", "observed", "task", o, "-", head
       } else if (e == "observation.recorded") {
         # ADR 0118: what a worker met. The subject and the evidence travel in the last two
         # columns; the canonical evidence is the kind, the subject and the statement, so the
@@ -1117,7 +1126,7 @@ mj_knowledge_evidence() {
         }
         if (ev == "") ev = "-"
         print "observation", task, ts, "observation.recorded" US k US subj US st, st, \
-          "Observed as " k " about " subj " in episode " sid ".", "lesson", "observed", "observation", subj, ev
+          "Observed as " k " about " subj " in episode " sid ".", "lesson", "observed", "observation", subj, ev, head
       }
     }' "$led"
 }
@@ -1170,31 +1179,32 @@ mj_knowledge_episode_commits() {
   return 0
 }
 
-# The commit rows reduced to what a record carries: one `commit:<sha>` per commit, in
-# order, and one `file:<path>` per distinct path the tree still tracks, sorted under the
-# C collation. Computed once per derivation, not once per record.
-mj_knowledge_episode_refs() {
-  local commits="$1" p
-  [ -s "$commits" ] || return 0
-  cut -f1 "$commits" | awk '!seen[$0]++ { print "commit:" $0 }'
-  cut -f2 "$commits" | LC_ALL=C sort -u | while IFS= read -r p; do
-    [ -n "$p" ] || continue
-    mj_git ls-files --error-unmatch -- "$p" >/dev/null 2>&1 && printf 'file:%s\n' "$p"
-  done
-  return 0
-}
-
 # YAML double-quoted scalar content: backslash and double quote escaped, once.
 mj_knowledge_yq() { printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'; }
 
-# One record, composed to OUT from one evidence row and the episode's reference list, in
-# the exact key order the section's README documents. Prints the record id.
+# One record, composed to OUT from one evidence row and the episode's commit rows, in the
+# exact key order the section's README documents. Prints the record id.
+#
+# A record cites what it is about (I1985): the commit its own ledger line was written at,
+# and the rules and decision files that commit changed, never every commit and file of the
+# episode. An episode that recorded two decisions at two commits used to give both records
+# both commits and the union of their files, so a decision cited work done after it.
 mj_knowledge_compose() {
-  local sid="$1" row="$2" refs="$3" out="$4"
-  local kind task ts canon title desc class epi tag rest evrefs id about="" route="" ref
-  IFS="$MJ_TAB" read -r kind task ts canon title desc class epi tag rest evrefs <<EOF
+  local sid="$1" row="$2" commits="$3" out="$4"
+  local kind task ts canon title desc class epi tag rest evrefs head id about="" route="" ref
+  local own="" files="" p
+  IFS="$MJ_TAB" read -r kind task ts canon title desc class epi tag rest evrefs head <<EOF
 $row
 EOF
+  # its own commit, when git still knows it (a rebase can have taken it away)
+  if [ "${head:--}" != - ] && mj_git cat-file -e "$head^{commit}" 2>/dev/null; then own="$head"; fi
+  # the rules and decision files that commit changed, and the tree still tracks
+  if [ -n "$own" ] && [ -s "$commits" ]; then
+    files="$(awk -F'\t' -v h="$own" '$1 == h && NF > 1 { print $2 }' "$commits" | LC_ALL=C sort -u \
+      | while IFS= read -r p; do
+          [ -n "$p" ] && mj_git ls-files --error-unmatch -- "$p" >/dev/null 2>&1 && printf '%s\n' "$p"
+        done)"
+  fi
   # The tenth column is a task's outcome, which belongs to the derive loop; for an
   # observation it is the subject, and the eleventh its evidence references (ADR 0118).
   if [ "$kind" = observation ]; then about="$rest"; route="$(mj_knowledge_route "$about")"; fi
@@ -1216,21 +1226,24 @@ EOF
     if [ -n "$task" ] && [ "$task" != none ]; then
       case "$kind" in decision) printf '    - decision:%s\n' "$task" ;; *) printf '    - task:%s\n' "$task" ;; esac
     fi
-    [ -s "$refs" ] && sed -n 's/^commit:/    - commit:/p' "$refs"
+    [ -n "$own" ] && printf '    - commit:%s\n' "$own"
     # An observation's own evidence, where it resolves now: a commit git knows, a file or a
     # test the tree tracks. The rest — an issue, a claim, a path since removed — stays on
     # the ledger line and in the body, where nothing has to resolve it.
     if [ "$kind" = observation ] && [ "${evrefs:--}" != - ]; then
       for ref in $evrefs; do
         case "$ref" in
-          commit:*) mj_git cat-file -e "${ref#commit:}^{commit}" 2>/dev/null && printf '    - %s\n' "$ref" ;;
+          commit:*)
+            # its own commit is cited once, above
+            [ -n "$own" ] && [ "${ref#commit:}" = "$own" ] && continue
+            mj_git cat-file -e "${ref#commit:}^{commit}" 2>/dev/null && printf '    - %s\n' "$ref" ;;
           file:*|test:*) mj_git ls-files --error-unmatch -- "${ref#*:}" >/dev/null 2>&1 && printf '    - %s\n' "$ref" ;;
         esac
       done
     fi
-    if [ -s "$refs" ] && grep -q '^file:' "$refs"; then
+    if [ -n "$files" ]; then
       printf 'relations:\n'
-      grep '^file:' "$refs" | while IFS= read -r p; do printf '  - type: relates_to\n    target: %s\n' "$p"; done
+      printf '%s\n' "$files" | while IFS= read -r p; do printf '  - type: relates_to\n    target: file:%s\n' "$p"; done
     fi
     printf -- '---\n\n# %s\n\n%s\n' "$title" "$desc"
     if [ "$kind" = observation ] && [ "${evrefs:--}" != - ]; then
@@ -1301,7 +1314,9 @@ mj_knowledge_derive_cmd() {
   wdir="$cdir"; mj_on_trunk && wdir="$(mj_knowledge_outbox_dir)"
   mj_knowledge_evidence "$sid" > "$tmp/rows"
   mj_knowledge_episode_commits "$sid" > "$tmp/commits"
-  mj_knowledge_episode_refs "$tmp/commits" > "$tmp/refs"
+  # the decisions a later decision replaced, by title: they yield no candidate (I1985)
+  [ -n "${MJ_LIB_decision:-}" ] || . "$MJ_LIB_DIR/decision.sh"
+  mj_decision_superseded_titles "$(mj_decision_file)" > "$tmp/superseded"
 
   local row id rel w=0 u=0 s=0 W="" U="" S="" paths="" verb kind task ts canon title desc rest
   while IFS= read -r row <&3; do
@@ -1309,13 +1324,16 @@ mj_knowledge_derive_cmd() {
     IFS="$MJ_TAB" read -r kind task ts canon title desc rest <<EOF
 $row
 EOF
-    id="$(mj_knowledge_compose "$sid" "$row" "$tmp/refs" "$tmp/rec")"
+    id="$(mj_knowledge_compose "$sid" "$row" "$tmp/commits" "$tmp/rec")"
     rel="$(mj_rel "$wdir")/$id.md"
     mj_count knowledge_evidence
     # Refused at derive time rather than written for the validator to fail: a title or a
     # description that opens like a turn of a conversation is not an assertion.
     if printf '%s\n%s\n' "$title" "$desc" | grep -Eq "$MJ_KNOWLEDGE_TRANSCRIPT"; then
       verb="skipped (transcript)"; s=$((s + 1)); S="$S$rel"$'\n'
+    elif [ "$kind" = decision ] && grep -Fxq -- "$title" "$tmp/superseded"; then
+      # a later decision replaced it: the standing decision is the candidate, not both
+      verb="skipped (decision superseded)"; s=$((s + 1)); S="$S$rel"$'\n'
     elif [ -f "$kdir/$id.md" ]; then
       verb="skipped (promoted)"; s=$((s + 1)); S="$S$rel"$'\n'
     elif [ -f "$cdir/$id.md" ] && [ "$(mj_knowledge_record_status "$cdir/$id.md")" != candidate ]; then

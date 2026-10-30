@@ -1,0 +1,32 @@
+id: I3174
+milestone: mesh-journal-converges
+title: "An exclusive claim carries a fencing epoch, and a holder returning under an old epoch is refused"
+slug: an-exclusive-claim-is-fenced
+priority: p1
+profile: deep-work
+objective: "Give every exclusive mesh claim a monotonically increasing epoch issued by the runtime that admits it, carry it on every write the holder makes under the claim, and refuse a write or a completion whose epoch is lower than the current one, so a worker that reappears after its claim expired and was retaken cannot finish under its old right."
+why: "Mesh claims converge but are not linearisable across a partition (docs/MESH.md 'Not guaranteed'); the 10-09 and 10-18 designs both required fencing before any orchestrator treats a claim as exclusive. f6's I2976 (/proceed; in flight on f6's branch, with no issue record or ADR on master yet) states it acts on 'local admission plus deterministic naming of the winner until mesh-journal-converges adds fencing'. It waits on I2825 (a released claim reaches every runtime), which is in flight on branch docs/a-released-claim-reaches-every-runtime with no record yet; depends_on I2825 is added once that record lands. Sources: chatgpt-majordomus:c294#2, chatgpt-majordomus:c203#2, chatgpt-majordomus:c210#1."
+current_state: "Verified: no 'fencing' anywhere in apps/majordomus-cli/src; claims and seats are journal events with expiry (mesh/cooperation.rs, ADR 0167); I2825 (released claim reaches every runtime) is in flight on branch docs/a-released-claim-reaches-every-runtime, with no record on master."
+desired_state: "Claim events carry epoch; mesh claim prints it; a stale-epoch completion is refused with the current holder named; the mesh lab proves it across a partition."
+scope:
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/mesh/protocol.rs"
+  - "test/mesh-lab/run"
+  - "docs/MESH.md"
+non_scope:
+  - "A distributed lock or consensus"
+  - "Seat semantics (ADR 0167) beyond carrying the epoch"
+acceptance_criteria:
+  - "Two runtimes racing one exclusive claim end with one holder at epoch n+1"
+  - "A holder whose claim expired and was retaken is refused when it writes under epoch n"
+  - "After a partition heals, the lower epoch never wins, whatever the delivery order"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --lib mesh::cooperation"
+  - "bash test/mesh-lab/run"
+evidence_required:
+  - "case_a_stale_epoch_is_refused"
+  - "mesh_lab_fenced_claim"
+created_at: 2026-10-18
+updated_at: 2026-10-18

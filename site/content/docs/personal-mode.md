@@ -1,7 +1,7 @@
 +++
 title = "Personal mode: Majordomus as one person's instrument"
 description = "personal mode, the tool as one person's instrument with nothing left in git: who it is for, why it is ordinary practice, the measured way from personal to shared, the per-clone exclude file, a private policy with one projection and one enforcement, filesystem discovery for the server, how each part of the tool fits, and what was and was not measured"
-weight = 34
+weight = 35
 [extra]
 source = "docs/PERSONAL_MODE.md"
 +++
@@ -310,7 +310,7 @@ the one edited source file as inside the scope, `finish --check` in the hook pas
 | instruction files are projections of the policy, and a projection's target is one line | [`lib/update.sh`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/lib/update.sh), [`claims/projection-generation.md`](@/guarantees/projection-generation.md), [`claims/region-projection.md`](@/guarantees/region-projection.md) |
 | a touched file outside the scope is a failure, and `finish` evaluates its contract line by line | [`claims/scope-enforcement.md`](@/guarantees/scope-enforcement.md), [`claims/finish-contract.md`](@/guarantees/finish-contract.md) |
 | a verification command that does nothing is refused | [`verification-integrity`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/vendor/majordomus/rules/verification-integrity.v1.md) |
-| nothing performs a network call | [`claims/no-network.md`](@/guarantees/no-network.md), [`no-network-no-eval`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/no-network-no-eval.v1.md) |
+| the shell tool performs no network call | [`claims/no-network.md`](@/guarantees/no-network.md), [`no-network-no-eval`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/no-network-no-eval.v1.md) |
 | a personal layer changes nothing shared, and the command that says so checks it | [`lib/common.sh`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/lib/common.sh), [`test/cases/2979_a_personal_layer_changes_nothing_shared.sh`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/test/cases/2979_a_personal_layer_changes_nothing_shared.sh), [`claims/personal-layer-changes-nothing-shared.md`](@/guarantees/personal-layer-changes-nothing-shared.md) |
 | discovery can walk the work tree instead of asking the index | [`apps/majordomus-cli/src/cli.rs`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/apps/majordomus-cli/src/cli.rs), [`MCP.md`](@/docs/mcp.md), [`the-server-sees-the-current-tree`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/the-server-sees-the-current-tree.v1.md) |
 | what a worker never reads is declared once | [`claims/scope-declared.md`](@/guarantees/scope-declared.md), [`SCOPE.md`](@/docs/scope.md) |
@@ -388,7 +388,7 @@ decided somewhere that can be read.
 |---|---|---|
 | a colleague | my tasks, their scope and my handovers are in a local directory git ignores; nothing of it is in the repository | `git status --short --ignored` in my clone |
 | a team lead | the repository, its review and its CI are exactly what they were; if it proves useful I will propose it as a pull request | [From personal to shared](#from-personal-to-shared) |
-| security | the tool performs no network call and calls no model; the AI client I use is the one the organisation already allows, under the same data policy | [`claims/no-network.md`](@/guarantees/no-network.md), [`no-network-no-eval`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/no-network-no-eval.v1.md) |
+| security | the tool calls no model and sends no telemetry, and its network use is the server, mesh and forge reads you start; the AI client I use is the one the organisation already allows, under the same data policy | [`claims/no-network.md`](@/guarantees/no-network.md), [`no-network-no-eval`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/no-network-no-eval.v1.md) |
 | an architect | the same lifecycle the committed adoption runs, with a private policy; no rule of the team's is restated or overridden | [`ADOPTION.md`](@/docs/adoption.md) |
 | whoever owns tooling policy | it is a local tool in the category of an editor configuration, and it stays subject to the policy on which tools may read this code | the organisation's policy, which this does not change |
 

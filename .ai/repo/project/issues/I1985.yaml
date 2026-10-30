@@ -11,6 +11,7 @@ current_state: "lib/knowledge.sh relates each candidate to the episode's whole f
 desired_state: "Each candidate cites what it is about. Superseded decisions and pure ledger echoes produce no candidate."
 scope:
   - "lib/knowledge.sh"
+  - "lib/decision.sh"
   - "test/cases"
 depends_on:
   - "I1984"
@@ -23,4 +24,16 @@ validation:
 evidence_required:
   - "candidate_provenance_case"
 created_at: 2026-10-04
-updated_at: 2026-10-04
+updated_at: 2026-10-20T21:53:17Z
+started_at: 2026-10-17T10:00:20Z
+started_event: sha256:883b3d3cfd32b9a1df5dfd53a9109f951e6452ac37fe80b0fef12ca1188e69ab
+completed_at: 2026-10-20T21:53:17Z
+completed_event: sha256:91a0120f9a00078db8ce7917663650e183d7e0f6dc508c4a91d75b703daee195
+evidence:
+  - covers: candidate_provenance_case
+    type: ci
+    command: "gh run view --job 118758854505 --log (validate run 39438896504, suite-shard (3), runs bash test/run.sh 3210_a_candidate_cites_its_own_commit)"
+    result: "ok 3210_a_candidate_cites_its_own_commit 15s in suite-shard (3) of validate run 39438896504 on master 9a5a9b77520 (carries merge 2d3ee66dacf; case blob 10cdb3dfd0c identical on origin/master). The case proves both criteria: D1 cites only commit A and alpha.md, D3 only B and beta.md; superseded D2 yields no candidate ('2 written, 0 unchanged, 1 skipped'), knowledge check passes and a re-derive writes nothing"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39438896504/job/118758854505"
+    commit: 91c0b5d5658c0bcddcd724582068bfa1f51074d1
+    recorded_at: 2026-10-20T21:52:59Z

@@ -33,7 +33,8 @@ printf '%s\n' "$*" >> "$GH_LOG"
 case "$*" in
   "auth status"*) exit 0 ;;
   "api --paginate repos/example/fixture/milestones?"*) cat "$FX_M" ;;
-  "api --paginate repos/example/fixture/issues?"*) cat "$FX_I" ;;
+  "issue list --repo example/fixture "*) cat "$FX_I" ;;
+  "api graphql "*) wc -l < "$FX_I" | tr -d ' ' ;;
   *) printf 'UNEXPECTED %s\n' "$*" >> "$GH_LOG"; echo "scripted gh: unexpected call: $*" >&2; exit 1 ;;
 esac
 GH
@@ -277,8 +278,9 @@ expect_grep 'NOTE github-check  what this tree changed could not be measured: or
 expect_no_grep 'PENDING'
 
 # ---------------------------------------------------------------- the forge was only read
-grep -q '^api --paginate repos/example/fixture/issues' "$GH_LOG" || fail 'the scripted gh was never asked for the issues: the gate read something else'
+grep -q '^issue list --repo example/fixture' "$GH_LOG" || fail 'the scripted gh was never asked for the issues: the gate read something else'
 expect_no_grep 'UNEXPECTED' "$GH_LOG"
-if grep -vE '^(auth status|api --paginate repos/example/fixture/(milestones|issues)\?)' "$GH_LOG" | grep -q .; then
-  fail "the gate made a call that is not a read: $(grep -vE '^(auth status|api --paginate)' "$GH_LOG" | head -1)"
+reads='^(auth status|api --paginate repos/example/fixture/milestones\?|issue list --repo example/fixture |api graphql )'
+if grep -vE "$reads" "$GH_LOG" | grep -q .; then
+  fail "the gate made a call that is not a read: $(grep -vE "$reads" "$GH_LOG" | head -1)"
 fi
