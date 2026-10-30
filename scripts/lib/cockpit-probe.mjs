@@ -283,10 +283,11 @@ async function interactions(context) {
     }
   }
 
-  // --- the theme toggle flips the root class and survives a reload
+  // --- the theme toggle — the site's, in the site's bar (project.the-ui-wears-the-sites-navbar),
+  // run by the site's own theme.js — flips the root class and survives a reload
   await page.goto(BASE + '/cockpit', { waitUntil: 'networkidle' });
   const before = await page.evaluate(() => document.documentElement.classList.contains(document.body.dataset.themeClass));
-  await page.click('.mj-theme-toggle');
+  await page.click('#theme-toggle');
   const after = await page.evaluate(() => document.documentElement.classList.contains(document.body.dataset.themeClass));
   if (before === after) {
     fail('theme', 'the toggle did not change the theme');

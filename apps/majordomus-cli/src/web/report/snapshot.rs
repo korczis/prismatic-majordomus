@@ -19,6 +19,9 @@
 //! - **the script** is told it is in a snapshot (`data-snapshot` on the body), so it reads
 //!   nothing again and fetches no panel: a static page that refreshed itself would replace
 //!   what was read with whatever the host answers for a query it ignores;
+//! - **a slow panel** a screen defers to its script is read by the UI before the page is
+//!   written, because every page is asked with [`crate::ui::SNAPSHOT_HEADER`]: the published
+//!   screen shows what the live one shows once its script has run, not a link to it;
 //! - **every page says what it is**: read at which commit, when, and by which executable,
 //!   and how to see it live.
 //!
@@ -226,7 +229,12 @@ pub fn render(
             continue;
         };
         let asked = std::time::Instant::now();
-        let response = handle(&Request::parse_target("GET", &target, Vec::new()));
+        // asked as a snapshot: a screen answers with its slow panels already in place
+        let mut request = Request::parse_target("GET", &target, Vec::new());
+        request
+            .headers
+            .push((crate::ui::SNAPSHOT_HEADER.to_string(), "1".to_string()));
+        let response = handle(&request);
         tracing::debug!(target = %target, ms = asked.elapsed().as_millis() as u64, status = response.status, "snapshot page");
         if response.status != 200 {
             continue;

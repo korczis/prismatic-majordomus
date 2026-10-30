@@ -1,0 +1,32 @@
+id: idd-reads-at-a-glance
+title: The intent workspace reads at a glance and leads everywhere it names
+slug: idd-reads-at-a-glance
+order: 152
+priority: p1
+problem: "On 2026-10-18 the owner read the published /ui/idd three times and called it unergonomic: one tall column of panels, a source footer under every one, ids that lead nowhere, headline numbers that count the whole plan rather than the intent on the screen, two badge styles, full panels for empty answers, raw markdown and internal names, no primary action, and a move on the snapshot that looks clickable and is not. Under the surface the screen restates rules the plan owns: the issue id grammar, which status admits which move, the stage names."
+outcome: "The workspace reads in the order a person asks (what the intent is, what is missing, what to do next, the work, the evidence), every id on it is a link, its numbers are the intent's, its texts render through the UI's one prose renderer, it offers one primary action, and audit rules keep bare ids and raw markdown off every /ui page from now on."
+current_state: "/ui/idd composes the plan's capabilities correctly (milestone idd-workspace) but presents them as a stacked list of panels in capability order, with the gaps the owner named."
+desired_state: "Each gap is closed by its own issue (I2901-I2919, I3000-I3005), each held by case 3220, the ui audit of /ui/idd at every width, or a rule that holds every /ui page."
+scope:
+  - apps/majordomus-cli/src/ui
+  - share/ui
+  - scripts/lib
+  - test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh
+  - .ai/repo/project
+non_scope:
+  - A second plan engine, status vocabulary or markdown implementation
+  - Mutation from the published site
+acceptance_criteria:
+  - "scripts/ui audit --only /ui/idd finds nothing at any width, with the bare-issue-id and raw-markdown rules on"
+  - "Case 3220 walks the loop through the new labels, order and primary action"
+validation:
+  - majordomus plan validate
+  - majordomus intent validate
+  - scripts/ui audit --only /ui/idd
+evidence_required: []
+depends_on:
+  - idd-workspace
+risks:
+  - "Every issue edits apps/majordomus-cli/src/ui/idd.rs; they land one at a time in the order recorded, each rebased on the last."
+created_at: 2026-10-18
+updated_at: 2026-10-18

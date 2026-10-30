@@ -280,12 +280,14 @@ jobs:
     # seconds; the bound is behind the reading's own budget below, not instead of it.
     timeout-minutes: 45
     # This job reads and publishes nothing: the forge is asked what it holds (the open pull
-    # requests, every deployment, every release) so that the snapshot shows them, and no
+    # requests, every deployment, every release, and the evidence artifact the validation of
+    # this commit or its nearest ancestor recorded) so that the snapshot shows them, and no
     # token here can write.
     permissions:
       contents: read
       pull-requests: read
       deployments: read
+      actions: read
     steps:
       # the UI reads the history too (what changed since, what was released), as the deploy does
       - uses: actions/checkout@v4
@@ -322,8 +324,28 @@ jobs:
       # Every page the screens link to, not the first few: the default budget is sized for a
       # person waiting at a terminal and left most inspectors out of the published snapshot.
       # What was still left out is in snapshot.json, and `scripts/pages verify-ui` reports it.
+      # The evidence the screens show is the evidence CI recorded (I2786): the ledger of the
+      # validation of this commit, or of its nearest validated ancestor while that run is
+      # still going (its evidence job dispatches this workflow again when it finishes), put in
+      # place before the UI is read. The tracked ledger alone holds a handful of local runs,
+      # and every test without a row there was published as "not run". Then the screens'
+      # own capability is asked, and a UI that would still show more claims not run than the
+      # baseline declares is not published.
+      - name: the evidence CI recorded, before the UI is read
+        timeout-minutes: 8
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          scripts/pages evidence --commit "$GITHUB_SHA" --out "$RUNNER_TEMP/snapshot-evidence.json" --ledger-out .ai/repo/evidence/ledger.json
+          scripts/pages published-evidence --bin apps/majordomus-cli/target/debug/majordomus
+      # A page that asks the forge while it is read (the monitor, the integration queue, the
+      # pull requests) asks through gh, and gh in a workflow answers only with a token. Without
+      # one, the monitor was published as "Nothing happened in the last six hours" beside its
+      # own "set the GH_TOKEN environment variable" (I2964): every read step carries it.
       - name: the UI, read once at this commit
         timeout-minutes: 22
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: apps/majordomus-cli/target/debug/majordomus web report ui-snapshot --limit 4000 --budget-seconds 1200
       # The Cockpit by the same exporter (ADR 0147), after the UI: it reads first the pages the
       # UI's snapshot links to, and then leads the UI's links to the pages it wrote, so the
@@ -332,6 +354,8 @@ jobs:
       # publication holds the routes and what the UI cites, not the whole registry.
       - name: the Cockpit, read once at this commit
         timeout-minutes: 9
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: apps/majordomus-cli/target/debug/majordomus web report cockpit-snapshot --limit 1500 --budget-seconds 360
       - uses: actions/upload-artifact@v4
         with:
@@ -649,24 +673,12 @@ jobs:
         env:
           PUBLISH: ${{ steps.publish.outcome }}
           SERVED: ${{ steps.public.outcome }}
-        run: |
-          if [ "$PUBLISH" = success ]; then
-            echo "::notice title=Published::gh-pages was pushed with $GITHUB_SHA before this run ended"
-            printf '\nPublication: **pushed** — gh-pages carries %s.\n' "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
-            # The public probe's verdict, stated rather than left as a grey icon inside a
-            # green run. The probe stays continue-on-error (see its step for why), so without
-            # this line a site still serving an older commit after ten minutes looked, from
-            # the run page, exactly like a site that served this one.
-            if [ "$SERVED" = success ]; then
-              printf 'Public site: **serves** %s.\n' "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
-            else
-              echo "::warning title=Public site not verified::after the probe's window the public site did not serve $GITHUB_SHA (probe: ${SERVED:-not run}); pages-live will refuse if it still does not"
-              printf 'Public site: **not verified** (probe: %s) — it did not serve %s within the window.\n' "${SERVED:-not run}" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
-            fi
-          else
-            echo "::error title=Not published::this run ended (publish: $PUBLISH) without pushing gh-pages; the site still serves an older commit"
-            printf '\nPublication: **not pushed** (publish step: %s). The site still serves an older\ncommit; if no newer run of this workflow follows, the pages-live gate will refuse.\n' "$PUBLISH" >> "$GITHUB_STEP_SUMMARY"
-          fi
+          GH_TOKEN: ${{ github.token }}
+        # Stated by the tool and not here, so a person and this run say the same thing and a
+        # case can break the wait and read the three signals (I2661): the summary line, the
+        # annotation, and a `not served` row in the timing table naming what production does
+        # serve and, when GitHub's own build is still waiting, since when.
+        run: scripts/pages publication --commit "$GITHUB_SHA" --published "$PUBLISH" --served "$SERVED" --timings "$MJ_PAGES_TIMINGS"
 
       # The measurement of a deployment that has already happened — and therefore a report,
       # for the same reason the publication probe above is `continue-on-error`.

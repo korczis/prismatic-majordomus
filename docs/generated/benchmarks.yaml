@@ -1,25 +1,25 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.28.0
+# Generator: majordomus-cli 0.30.2
 schema: majordomus/benchmark-matrix/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.28.0
+generator: majordomus-cli 0.30.2
 coverage:
   - scope: direct
-    required: 202
-    covered: 171
+    required: 206
+    covered: 175
     missing: 0
     waived: 31
     inapplicable: 0
   - scope: http
-    required: 197
-    covered: 171
+    required: 201
+    covered: 175
     missing: 0
     waived: 26
     inapplicable: 0
   - scope: mcp
-    required: 192
-    covered: 167
+    required: 196
+    covered: 171
     missing: 0
     waived: 25
     inapplicable: 0
@@ -30,8 +30,8 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 605
-    covered: 523
+    required: 617
+    covered: 535
     missing: 0
     waived: 82
     inapplicable: 0
@@ -1341,6 +1341,36 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: plan.delivery
+    module: plan
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - every-issue
+      - one-issue-at-head
+  - id: plan.drift
+    module: plan
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - every-issue
+      - one-issue-at-head-as-trunk-gate
+  - id: plan.flight
+    module: plan
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - where-the-work-is
+      - one-milestone-inspected
   - id: plan.issues
     module: plan
     kind: query
@@ -1884,6 +1914,16 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: worktree.trunk
+    module: worktree
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+      - primary-checkout
   - id: worktree.uncommitted
     module: worktree
     kind: query
@@ -1944,6 +1984,10 @@ pages:
     deferred: false
   - key: system.http.ui.command
     route: /ui/command
+    view: pinned
+    deferred: false
+  - key: system.http.ui.idd
+    route: /ui/idd
     view: pinned
     deferred: false
   - key: system.http.ui.roadmap
@@ -2008,6 +2052,10 @@ pages:
     deferred: false
   - key: system.http.live.ui.command
     route: /ui/command
+    view: live
+    deferred: false
+  - key: system.http.live.ui.idd
+    route: /ui/idd
     view: live
     deferred: false
   - key: system.http.live.ui.roadmap
@@ -2076,5 +2124,9 @@ pages:
     deferred: true
   - key: system.http.ui.panels.drain
     route: /ui/panels/drain
+    view: pinned
+    deferred: true
+  - key: system.http.ui.panels.standing
+    route: /ui/panels/standing
     view: pinned
     deferred: true

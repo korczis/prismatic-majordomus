@@ -554,6 +554,17 @@ gates:
     network: true
     summary: the GitHub projection still agrees with the canonical model — no record behind, edited, in conflict or unmanaged, and the backlog of unprojected records no larger than its baseline
 
+  # ADR 0166, decision 2: merged work the plan has not recorded is drift. The executable judges
+  # it (`majordomus plan drift --gate head|trunk`, capability plan.drift) against the window
+  # .ai/repo/ci/plan.yaml declares; the script only says which tree the runner is. Every plan
+  # runs it because a stamp, a merge and a clock each move the verdict, and none of them is a
+  # changed path. Advisory under `drift.enforcement: advisory` until I2748 settles today's drift.
+  - id: plan-drift
+    job: structure
+    always: true
+    runs: scripts/ci/plan-drift-check
+    summary: merged work the plan has not recorded is pending on a head and inside the window declared in .ai/repo/ci/plan.yaml, and refused on the trunk past it with `majordomus plan verify|done <id>` named; active_without_work and done_without_trace are reported and never refuse; a missing or unreadable window refuses
+
   - id: providers-data
     job: structure
     runs: scripts/ci/providers-check
@@ -604,8 +615,8 @@ gates:
   - id: ui-audit
     job: ui
     requires: [site-build]
-    runs: scripts/rust-check --doc && cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- bench system.http. --transport system --profile ci --no-write --check && scripts/ui audit --report
-    summary: every warm screen of the UI within the latency budget the benchmark policy declares, measured over a real socket; then every discovered page of every surface the executable serves — built directories and the routes it renders itself — at every width the theme implies, in a browser, against the responsive, semantic, component and WCAG invariants; the report is rendered at /tests/ui
+    runs: scripts/rust-check --doc && cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- bench system.http. --transport system --profile ci --no-write --check && scripts/ui audit --report && bash test/run.sh --no-skips --runs-in ui
+    summary: "every warm screen of the UI within the latency budget the benchmark policy declares, measured over a real socket; then every discovered page of every surface the executable serves — built directories and the routes it renders itself — at every width the theme implies, in a browser, against the responsive, semantic, component and WCAG invariants; the report is rendered at /tests/ui; then the cases that drive the UI in a browser (majordomus-skip-runs-in: ui), with no skip excused"
 
   # The one gate that measures the published site rather than this tree: the advertised
   # install command, run as it is written, against what GitHub Pages and GitHub Releases
@@ -786,8 +797,8 @@ gates:
   - id: release-record-cases
     job: rust
     requires: [rust-integration]
-    runs: MJ_TEST_JOBS=4 bash test/run.sh --no-skips 84_distribution_model 87_release_pipeline 97_install_gate 103_release_projection 112_version_matches_surface 139_release_record_schema 352_the_version_the_site_shows_is_one_you_can_get 620_mcp_tools_are_invoked_and_answer 743_release_version_answers_with_the_contract 763_a_tag_older_than_the_record_practice_is_a_note 1041_a_release_publishes_its_metadata 1060_the_version_is_allocated_at_landing 1087_the_site_offers_the_release_it_published 3021_a_tag_does_not_freeze_the_queue 3029_a_tag_in_flight_is_pending 3055_a_derivation_needs_no_history 996_the_record_pull_request_gets_its_verdict
-    summary: the cases about the committed release record and what is offered from it — the distribution model, the release pipeline and projection, the record's schema, the version the site shows, the install gate, the stable channel the MCP tools resolve — pass against this tree
+    runs: MJ_TEST_JOBS=4 bash test/run.sh --no-skips 49_roadmap_doctrine 84_distribution_model 87_release_pipeline 97_install_gate 103_release_projection 112_version_matches_surface 139_release_record_schema 352_the_version_the_site_shows_is_one_you_can_get 620_mcp_tools_are_invoked_and_answer 743_release_version_answers_with_the_contract 763_a_tag_older_than_the_record_practice_is_a_note 1041_a_release_publishes_its_metadata 1060_the_version_is_allocated_at_landing 1087_the_site_offers_the_release_it_published 3021_a_tag_does_not_freeze_the_queue 3029_a_tag_in_flight_is_pending 3102_a_milestone_version_is_inferred 3100_an_issue_delivery_is_inferred 3104_the_ui_roadmap_reads_delivery 3055_a_derivation_needs_no_history 3179_a_prerelease_is_never_published_as_stable 3212_a_prerelease_version_is_bumped_and_ordered 3222_an_alpha_publishes_beside_the_latest_release 3224_a_published_alpha_owes_its_record 3225_the_installer_takes_an_alpha_only_by_name 3342_a_dry_run_initialises_nothing 996_the_record_pull_request_gets_its_verdict 3385_doctor_fits_its_budget_in_the_commit_hook
+    summary: the cases about the committed release record and what is offered from it — the distribution model, the release pipeline and projection, the record's schema, the version the site shows, the install gate, the stable channel the MCP tools resolve, the release the roadmap infers each milestone shipped in — pass against this tree
 
   # The behavioural cases whose subject is the plan: its issue and milestone records, the
   # commands that read and write them, the projections of them (docs/PLAN_STATUS.md, the plan
@@ -799,7 +810,7 @@ gates:
   - id: plan-record-cases
     job: rust
     requires: [rust-integration]
-    runs: MJ_TEST_JOBS=4 bash test/run.sh --no-skips 26_ci_wiring 40_project_model 41_project_status 42_dag_waves 43_plan_command 44_model_doctrine 45_github_projection 46_cross_surface 47_mutation 48_roadmap_graph 49_roadmap_doctrine 51_derived_artifacts_committed 53_status_vocabulary 57_derived_merge_driver 58_home_path_gate 74_knowledge_edges 75_knowledge_mutation 97_github_gate 98_traceability 99_plan_capabilities 99_work_graph_chain 103_release_projection 129_executable_issues 131_completion_gates 133_plan_transition 194_audit_rows_are_planned 274_commit_policy 367_an_intent_is_satisfied_only_by_evidence 386_a_plan_is_held_to_its_intent 388_an_intent_is_realised_across_providers_and_held_to_reality 400_derivation_is_one_graph 581_no_plan_stamp_without_its_event 582_the_done_guard_holds_in_both_engines 602_a_spliced_body_is_recognised_as_its_own 620_mcp_tools_are_invoked_and_answer 890_an_intent_criterion_is_met_only_by_current_evidence 892_what_is_said_of_intents_is_what_the_claims_matrix_says 893_preflight_follows_what_an_issue_serves 894_github_sync_applies_only_the_trunk 895_a_finished_task_does_not_satisfy_an_intent 960_a_task_starts_bound_to_what_it_serves 961_a_resumed_task_is_told_its_intent_moved 962_plan_start_asks_the_binding_in_both_engines 1038_a_head_is_judged_against_what_it_changes 1076_the_roadmap_opens_a_milestone 1081_an_intent_opens_what_serves_it 3048_a_derivation_survives_an_unrelated_merge 3053_a_repository_of_n_records_costs_n 3073_context_knowledge_slice 3075_knowledge_validate_judges_the_graph
+    runs: MJ_TEST_JOBS=4 bash test/run.sh --no-skips 26_ci_wiring 40_project_model 41_project_status 42_dag_waves 43_plan_command 44_model_doctrine 45_github_projection 46_cross_surface 47_mutation 48_roadmap_graph 49_roadmap_doctrine 51_derived_artifacts_committed 53_status_vocabulary 57_derived_merge_driver 58_home_path_gate 74_knowledge_edges 75_knowledge_mutation 97_github_gate 98_traceability 99_plan_capabilities 99_work_graph_chain 103_release_projection 129_executable_issues 131_completion_gates 133_plan_transition 194_audit_rows_are_planned 274_commit_policy 367_an_intent_is_satisfied_only_by_evidence 386_a_plan_is_held_to_its_intent 388_an_intent_is_realised_across_providers_and_held_to_reality 400_derivation_is_one_graph 581_no_plan_stamp_without_its_event 582_the_done_guard_holds_in_both_engines 602_a_spliced_body_is_recognised_as_its_own 620_mcp_tools_are_invoked_and_answer 890_an_intent_criterion_is_met_only_by_current_evidence 892_what_is_said_of_intents_is_what_the_claims_matrix_says 893_preflight_follows_what_an_issue_serves 894_github_sync_applies_only_the_trunk 895_a_finished_task_does_not_satisfy_an_intent 960_a_task_starts_bound_to_what_it_serves 961_a_resumed_task_is_told_its_intent_moved 962_plan_start_asks_the_binding_in_both_engines 1038_a_head_is_judged_against_what_it_changes 1076_the_roadmap_opens_a_milestone 1081_an_intent_opens_what_serves_it 3048_a_derivation_survives_an_unrelated_merge 3053_a_repository_of_n_records_costs_n 3073_context_knowledge_slice 3075_knowledge_validate_judges_the_graph 3100_an_issue_delivery_is_inferred 3101_merged_work_unrecorded_is_drift 3102_a_milestone_version_is_inferred 3103_the_roadmap_draws_every_milestone 3104_the_ui_roadmap_reads_delivery 3220_the_idd_loop_is_walked_in_a_browser 3385_doctor_fits_its_budget_in_the_commit_hook 3400_a_recorded_commit_link_names_the_history
     summary: the cases about the plan's records and what reads them — the project model, the plan command and its transitions, the DAG and roadmap, the GitHub projection, the intents bound to issues, the completion gates — pass against this tree
 
 # Shapes: changes whose plan is narrower than the union of their classes (the header's last

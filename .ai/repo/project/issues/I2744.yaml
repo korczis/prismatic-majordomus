@@ -26,4 +26,11 @@ validation:
 evidence_required:
   - "ui_roadmap_case"
 created_at: 2026-10-16
-updated_at: 2026-10-16
+updated_at: 2026-10-16T15:46:53Z
+evidence:
+  - covers: ui_roadmap_case
+    type: test
+    command: "bash test/run.sh 3104_the_ui_roadmap_reads_delivery; cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_roadmap"
+    result: "case 3104 ok and ui_roadmap 1 passed at c3f6618cf6d; four code mutations each failed case 3104"
+    commit: c3f6618cf6d8c0b648652205204d71af1276789d
+    recorded_at: 2026-10-16T15:46:53Z

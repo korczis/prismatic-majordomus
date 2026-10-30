@@ -1,0 +1,41 @@
+id: I2943
+milestone: surfaces-never-disagree
+title: "A mesh this process is not on is said as not observed, never as zero or no"
+slug: an-unobserved-mesh-is-not-zero
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "When mesh.peers answers that cooperation does not run in this process, /ui/mesh and the dashboard's mesh tile and panel say the mesh was not observed, with the runtime's own reason, and draw no machine count, refused-link count, journal clock or 'Mesh active: no'; the kit gains one not-observed KPI and one not-observed panel body that every screen can use."
+why: "Owner order (2026-10-18, via a3): the published https://majordomus.dev/ui/mesh/ said 'Mesh active: no, Machines: 0, Journal clock: 0'. The snapshot is read on a Pages runner that is on no mesh, so that was the runner's absence presented as a measured empty mesh (the class of f6's S2 and S3). mesh.peers already answers active=false with a reason; the kit's shown() turns false into 'no' and kpi_count() an empty list into 0 (ui/mesh.rs, ui/dashboard.rs)."
+current_state: "An unobserved mesh is drawn as 'Mesh active: no', 'Machines: 0' and 'Journal clock: 0' on /ui/mesh, and as 'Mesh active: no' on the dashboard."
+desired_state: "Both say 'not observed: this runtime is not on the mesh (<reason>)' and draw no figure; a running mesh is drawn as before."
+scope:
+  - "apps/majordomus-cli/src/ui/view.rs"
+  - "apps/majordomus-cli/src/ui/mesh.rs"
+  - "apps/majordomus-cli/src/ui/dashboard.rs"
+  - "test/cases/3343_an_unobserved_mesh_is_never_zero.sh"
+depends_on: []
+acceptance_criteria:
+  - "A served /ui/mesh of a repository whose mesh is off says 'not observed' with the reason, and contains no 'Mesh active', 'Journal clock', machine count or empty-mesh sentence"
+  - "The dashboard of the same repository says the mesh was not observed and draws no 'Mesh machines' count"
+  - "A running mesh is drawn with its counts as before"
+validation:
+  - "cargo test --lib ui::"
+  - "bash test/run.sh 3343_an_unobserved_mesh_is_never_zero 1089_the_work_and_mesh_screens_answer"
+evidence_required:
+  - "unobserved_mesh_case"
+created_at: 2026-10-18
+updated_at: 2026-10-18T03:06:33Z
+started_at: 2026-10-18T03:06:03Z
+started_event: sha256:b35e4f02772d6e846b0d002fa98ffeca76c1bc5954b0b863344f8b13cf03a20f
+verified_at: 2026-10-18T03:06:15Z
+verified_event: sha256:cf606ebda2187c40692073402a9c9ae4d39f1cc74b4b77cf63494bbe6a28a471
+completed_at: 2026-10-18T03:06:33Z
+completed_event: sha256:f38df2552aa16d2bea2191dc61c3ee3fe03792ee36f48dbb38f886a93da345cf
+evidence:
+  - covers: unobserved_mesh_case
+    type: test
+    command: "bash test/run.sh 3343_an_unobserved_mesh_is_never_zero 1089_the_work_and_mesh_screens_answer; cargo test --lib ui::"
+    result: "tests: 2 passed, 0 failed; ui:: 182 passed, 0 failed (2026-10-18 ~02:40Z at a636d944881). Mutation: unobserved() forced to None fails 3343 ('/ui/mesh does not say the mesh was not observed'). scripts/ui audit --only /ui/mesh and /ui/ on this commit's binary: finding sets identical to master 707a04c's (26 and 153, environmental 404s from an unbuilt site/public)"
+    commit: a636d9448819260066eca1f257241ece406a2ab5
+    recorded_at: 2026-10-18T03:06:27Z

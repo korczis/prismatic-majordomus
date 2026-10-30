@@ -234,3 +234,10 @@ budget:
   # above the worst, 4161 x 1.1 = 4577, so 4580, still under the 5300 case bound as case 417
   # requires.
   slowest_case_seconds: 4580
+  # The margin inside which scripts/ci/suite-budget names a case as NEAR its budget (I2068):
+  # a case costing at least slowest_case_seconds less this share of it, in this run or as
+  # recorded in suite-durations.tsv, and the suite at least cases_seconds less this share. On
+  # 2026-10-08 95_executable_reference cost 3465 s against a 3450 s budget and failed a suite
+  # whose every case passed, after days within a few percent of it with nothing saying so.
+  # A NEAR line is a warning and never the exit status; it raises no budget and no bound.
+  near_percent: 5

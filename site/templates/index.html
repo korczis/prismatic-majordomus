@@ -32,6 +32,9 @@
     prose: the copy beside them names where they were read, never how the work stands. -#}
 {%- set plan = load_data(path="data/generated/plan.json") -%}
 {%- set log = load_data(path="data/generated/changelog.json") -%}
+{#- how far each issue's work travelled, inferred from the history (plan.delivery, ADR 0166):
+    absent until that projection is generated, and then the card says so -#}
+{%- set delivery = load_data(path="data/generated/delivery.json", required=false) -%}
 {#- the build's provenance is a fact of the build, written by scripts/site-build and never
     committed; a plain `zola serve` has none, and the trust strip then says so -#}
 {%- set build = load_data(path="data/build.json", required=false) -%}
@@ -124,10 +127,21 @@
       <div class="px-5 py-4">
         <p class="font-mono text-xs uppercase tracking-widest text-body-subtle">{{ m.hero.product_kicker }}</p>
         <p class="mt-2 text-base font-semibold leading-snug text-heading">{{ m.hero.product_title }}</p>
+        {%- set roadmap_href = get_url(path="/roadmap/", trailing_slash=true) %}
+        {#- what the history proves first, then what the records say: a declared status is a stamp,
+            and the stage beside it is the delivery the commits, merges and releases show -#}
+        {%- if delivery %}
+        <p class="mt-4 text-xs text-body-subtle">Delivery the history proves, inferred at <a href="{{ project.repository_url }}/commit/{{ delivery.observed.commit }}" class="font-mono hover:underline" data-product-delivery-commit="{{ delivery.observed.commit }}">{{ delivery.observed.commit | truncate(length=7, end="") }}</a></p>
+        <dl class="mt-2 flex flex-wrap gap-2" data-product-delivery>
+          {%- for stage in delivery.stages %}{% set n = delivery.tallies[stage] | default(value=0) %}{% if n > 0 and stage != "none" %}
+          <div class="min-w-14 flex-1 rounded-base border border-default bg-neutral-primary px-2 py-2 sm:min-w-16 sm:px-3"><dt class="text-xs text-body">{{ stage | replace(from="_", to=" ") }}</dt><dd class="mt-0.5 font-mono text-xl font-bold tracking-tight text-heading" data-delivery="{{ stage }}"><a href="{{ roadmap_href }}#delivery" class="hover:underline">{{ n }}</a></dd></div>
+          {%- endif %}{% endfor %}
+        </dl>
+        {%- endif %}
         <p class="mt-4 text-xs text-body-subtle">Issues of the plan, by the status their records declare</p>
         <dl class="mt-2 flex flex-wrap gap-2" data-product-issues>
           {%- for st in plan.statuses.issue %}{% set n = [i for i in plan.issues if i.status == st] | length %}{% if n > 0 %}
-          <div class="min-w-14 flex-1 rounded-base border border-default bg-neutral-primary px-2 py-2 sm:min-w-16 sm:px-3"><dt class="text-xs text-body">{{ st | lower }}</dt><dd class="mt-0.5 font-mono text-xl font-bold tracking-tight text-heading" data-issues="{{ st }}">{{ n }}</dd></div>
+          <div class="min-w-14 flex-1 rounded-base border border-default bg-neutral-primary px-2 py-2 sm:min-w-16 sm:px-3"><dt class="text-xs text-body">{{ st | lower }}</dt><dd class="mt-0.5 font-mono text-xl font-bold tracking-tight text-heading" data-issues="{{ st }}"><a href="{{ roadmap_href }}" class="hover:underline">{{ n }}</a></dd></div>
           {%- endif %}{% endfor %}
         </dl>
         {%- if released | length %}{% set rel = released[0] %}

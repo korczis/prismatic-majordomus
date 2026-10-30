@@ -107,14 +107,15 @@ impl BenchmarkCases for AnalysisInput {
 /// use majordomus_cli::capability::builtin::release::NextInput;
 /// // nothing named is the landing the executor performs: this branch onto the trunk
 /// let input = NextInput::default();
-/// assert_eq!((input.base(), input.head()), ("origin/master", "HEAD"));
+/// assert_eq!((input.base.as_deref(), input.head()), (None, "HEAD"));
 /// ```
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 #[schemars(rename = "ReleaseNextInput")]
 pub struct NextInput {
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    /// The trunk the landing raises from; `origin/master` when absent.
+    /// The trunk the landing raises from; when absent, the remote-tracking ref of the trunk
+    /// this repository names (its remote's default branch, else its own trunk).
     pub base: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     /// What lands; `HEAD` when absent.
@@ -122,15 +123,23 @@ pub struct NextInput {
 }
 
 impl NextInput {
-    /// The trunk the landing raises from: the ref named, or `origin/master`, which is the
-    /// trunk the integration executor lands on.
+    /// The trunk the landing raises from: the ref named, or the remote-tracking ref of the
+    /// trunk the repository at `root` names — the one rule the delivery report already
+    /// measures features against, never a branch name written here. A repository whose
+    /// trunk cannot be told is refused by name rather than measured against a guess.
     ///
     /// ```
     /// use majordomus_cli::capability::builtin::release::NextInput;
-    /// assert_eq!(NextInput { base: Some("main".into()), head: None }.base(), "main");
+    /// let here = std::path::Path::new(".");
+    /// assert_eq!(NextInput { base: Some("main".into()), head: None }.base(here), Ok("main".into()));
+    /// let nowhere = std::env::temp_dir().join("majordomus-doc-no-repository");
+    /// assert!(NextInput::default().base(&nowhere).is_err());
     /// ```
-    pub fn base(&self) -> &str {
-        self.base.as_deref().unwrap_or("origin/master")
+    pub fn base(&self, root: &std::path::Path) -> Result<String, String> {
+        match self.base.as_deref() {
+            Some(named) => Ok(named.to_string()),
+            None => crate::delivery::revision::trunk_ref(root),
+        }
     }
 
     /// What lands: the ref named, or `HEAD`, which is the branch this checkout is on.
@@ -372,7 +381,12 @@ fn next(
         .map_err(|e| CapabilityError::NotFound(format!("the policy could not be read: {e}")))?
         .policy
         .release;
-    release::landing::next_for(root, input.base(), input.head(), &policy)
+    let base = input.base(root).map_err(|e| {
+        CapabilityError::NotFound(format!(
+            "the trunk this landing raises from could not be told: {e}; name it with --base"
+        ))
+    })?;
+    release::landing::next_for(root, &base, input.head(), &policy)
         .map_err(|e| CapabilityError::NotFound(e.to_string()))
 }
 
@@ -389,6 +403,80 @@ mod tests {
         match next(&ctx, NextInput::default()) {
             Err(CapabilityError::NotFound(m)) => {
                 assert!(m.contains("could not be opened"), "{m}")
+            }
+            other => panic!("not refused as not found: {other:?}"),
+        }
+    }
+
+    /// A clone whose remote names `main` as its default branch, and nothing named `master`.
+    fn clone_of_a_main_trunk() -> (tempfile::TempDir, std::path::PathBuf) {
+        let dir = tempfile::tempdir().expect("a temp dir");
+        let git = |cwd: &std::path::Path, args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .current_dir(cwd)
+                .args([
+                    "-c",
+                    "user.name=t",
+                    "-c",
+                    "user.email=t@t",
+                    "-c",
+                    "init.defaultBranch=main",
+                ])
+                .args(args)
+                .output()
+                .expect("git runs");
+            assert!(
+                out.status.success(),
+                "git {args:?}: {}",
+                String::from_utf8_lossy(&out.stderr)
+            );
+        };
+        let origin = dir.path().join("origin.git");
+        let work = dir.path().join("work");
+        std::fs::create_dir_all(&work).expect("the work tree");
+        git(dir.path(), &["init", "-q", "--bare", "origin.git"]);
+        git(&work, &["init", "-q"]);
+        std::fs::write(work.join("a"), "a").expect("a file");
+        git(&work, &["add", "a"]);
+        git(&work, &["commit", "-qm", "a"]);
+        git(
+            &work,
+            &["remote", "add", "origin", origin.to_str().expect("utf-8")],
+        );
+        git(&work, &["push", "-q", "-u", "origin", "main"]);
+        git(&work, &["remote", "set-head", "origin", "main"]);
+        (dir, work)
+    }
+
+    /// No base named: the landing raises from the trunk the repository names. The base was a
+    /// literal `origin/master`, which a repository whose trunk is `main` does not have.
+    #[test]
+    fn an_unnamed_base_is_the_trunk_the_repository_names() {
+        let (_dir, work) = clone_of_a_main_trunk();
+        assert_eq!(NextInput::default().base(&work), Ok("origin/main".into()));
+        let named = NextInput {
+            base: Some("origin/elsewhere".into()),
+            head: None,
+        };
+        assert_eq!(
+            named.base(&work),
+            Ok("origin/elsewhere".into()),
+            "a named base is taken as named"
+        );
+    }
+
+    /// A repository whose trunk cannot be told is refused by name and told how to say it,
+    /// never measured against a branch name that is usually right.
+    #[test]
+    fn a_landing_whose_trunk_cannot_be_told_is_refused() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        match next(&ctx, NextInput::default()) {
+            Err(CapabilityError::NotFound(m)) => {
+                assert!(
+                    m.contains("could not be told") && m.contains("--base"),
+                    "{m}"
+                )
             }
             other => panic!("not refused as not found: {other:?}"),
         }

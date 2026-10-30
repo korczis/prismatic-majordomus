@@ -192,7 +192,7 @@ pub fn inspector(ctx: &Context, answer: &Answer, id: &str) -> El {
                 nothing("Nothing it names has changed since its proof.")
             } else {
                 el("ul")
-                    .class("mj-ui-list")
+                    .class("mj-ui-prose-list")
                     .children(changed.into_iter().map(|p| el("li").child(mono(p))))
             })
             .child(
