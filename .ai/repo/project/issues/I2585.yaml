@@ -1,0 +1,33 @@
+id: I2585
+milestone: a-second-adopter-is-served
+title: "An untracked layer is read the same by both programs, and says that it is untracked"
+slug: an-untracked-layer-says-so
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the shell tool read an untracked layer the way the executable does since ADR 0145, and make both say once that the layer is on disk and not in the index."
+why: "Observed on 2026-10-13 adopting 0.21.0 and 0.22.0 in a pnpm/TypeScript repository (docs/ADOPTION_SECOND_RUN.md, G01); read again on master e506c041a4. After `init` with .ai/ excluded from the index, `adr list` printed `(none)` while `adr check` counted 53 identities, and every surface read as an empty repository with no hint why."
+current_state: "apps/majordomus-cli/src/app.rs:84 falls back to a work-tree walk when discovery::layer_is_untracked; lib/knowledge.sh mj_kdisc_vcs is index-only, so lib/adr.sh mj_adr_files sees nothing. The fallback is a tracing::info line. layer_is_untracked tests the manifest alone."
+desired_state: "mj_kdisc_vcs applies the executable's rule; both programs emit one finding naming the untracked layer; a layer whose manifest alone is tracked is reported instead of read as empty."
+scope:
+  - "lib/knowledge.sh"
+  - "lib/adr.sh"
+  - "lib/common.sh"
+  - "apps/majordomus-cli/src/discovery"
+  - "apps/majordomus-cli/src/app.rs"
+  - "docs/PERSONAL_MODE.md"
+  - "docs/ADOPTION.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "In a fixture repository whose layer is untracked, `adr list`, `rules list` and the executable's object listing name the same records"
+  - "Both programs print one line saying the layer is read from the work tree because it is not in the index"
+  - "A layer with only its manifest tracked is reported as partly tracked, with the count of files the index lacks"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "untracked_layer_parity_case"
+  - "partly_tracked_layer_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13

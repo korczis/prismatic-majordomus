@@ -1,0 +1,27 @@
+id: I2606
+milestone: a-second-adopter-is-served
+title: "A gate model without classes is a model"
+slug: a-gate-model-without-classes-is-a-model
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Read a gates.yaml that declares gates and no classes instead of reporting that it does not parse."
+why: "Observed on 2026-10-13 adopting 0.21.0 and 0.22.0 in a pnpm/TypeScript repository (docs/ADOPTION_SECOND_RUN.md, G22); read again on master e506c041a4. The adopter's first gate model listed nine gates; the report said 'does not parse: missing field classes' and counted zero gates."
+current_state: "apps/majordomus-cli/src/gates/model.rs:157-165 has no default for `classes`."
+desired_state: "An absent `classes` is empty: a plan then selects the gates marked always, and every other changed path is unclassified."
+scope:
+  - "apps/majordomus-cli/src/gates"
+  - "lib/gates.sh"
+  - "docs/CI.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "A model with gates and no classes loads and its gates are counted"
+  - "Both programs agree on which gates a change selects under it"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "gate_model_without_classes_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13

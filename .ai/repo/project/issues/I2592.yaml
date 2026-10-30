@@ -1,0 +1,29 @@
+id: I2592
+milestone: a-second-adopter-is-served
+title: "Every directory a command writes under the layer carries its contract"
+slug: every-layer-directory-carries-its-contract
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Stop doctor from failing a repository for a missing context document in a directory the tool created or told it to create."
+why: "Observed on 2026-10-13 adopting 0.21.0 and 0.22.0 in a pnpm/TypeScript repository (docs/ADOPTION_SECOND_RUN.md, G08); read again on master e506c041a4. doctor failed for .ai/repo/ci, .ai/repo/features/domains, .ai/repo/providers and .ai/repo/evidence; the last is created by `evidence record` itself."
+current_state: "The skeleton ships no README for those directories (nor for releases, benchmarks, mesh, offload, automation, workspaces); apps/majordomus-cli/src/evidence/ledger.rs:408 creates its directory bare; lib/context_docs.sh:414 fails every directory without a contract."
+desired_state: "The skeleton holds a contract for every directory name a command reads or writes under .ai/repo, `init --extend` seeds them, and a writer that creates a layer directory seeds its contract in the same act."
+scope:
+  - "share/skeleton/ai/repo"
+  - "lib/init.sh"
+  - "apps/majordomus-cli/src/evidence/ledger.rs"
+  - "lib/context_docs.sh"
+  - "docs/CONTEXT.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "init, then `evidence record`, then doctor in a fixture shows no missing-contract finding"
+  - "A structural case holds every directory name the code writes under .ai/repo against the skeleton's contracts"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "tool_owned_directories_have_contracts_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13

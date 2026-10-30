@@ -1,0 +1,25 @@
+id: I2586
+milestone: a-second-adopter-is-served
+title: "doctor counts every failure it prints"
+slug: doctor-counts-every-failure-it-prints
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the number `doctor` reports, and the exit code it returns, account for every FAIL line it prints."
+why: "Observed on 2026-10-13 adopting 0.21.0 and 0.22.0 in a pnpm/TypeScript repository (docs/ADOPTION_SECOND_RUN.md, G02); read again on master e506c041a4. doctor printed 10 FAIL lines and `doctor: 8 failure(s)`; with only reasoning findings left it would print FAIL lines and exit 0."
+current_state: "lib/doctor.sh:443-446 pipes jq into `while read … mj_fail reasoning`, so the increment of MJ_FAILS happens in a pipeline subshell and is lost; mj_finish_doctor reads the parent's count."
+desired_state: "The loop runs in the calling shell (process substitution, as the rest of the file does), and a case holds the printed count equal to the summary for a doctor run that has reasoning findings."
+scope:
+  - "lib/doctor.sh"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "A doctor run whose only failures are reasoning findings exits 10 and its summary equals `grep -c '^FAIL'`"
+  - "No other reporter in lib/ calls mj_fail from a pipeline subshell, held by a structural check"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "doctor_count_equals_lines_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13

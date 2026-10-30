@@ -16929,6 +16929,14 @@
         "source": "docs/ADOPTION_FIRST_RUN.md"
       },
       {
+        "id": "majordomus://document/docs/ADOPTION_SECOND_RUN.md",
+        "kind": "document",
+        "label": "docs/ADOPTION_SECOND_RUN.md",
+        "summary": "Second adoption in a foreign repository — findings",
+        "route": "/cockpit/objects/document/docs-adoption-second-run-md",
+        "source": "docs/ADOPTION_SECOND_RUN.md"
+      },
+      {
         "id": "majordomus://document/docs/ARCHIVE.md",
         "kind": "document",
         "label": "docs/ARCHIVE.md",
@@ -17359,14 +17367,6 @@
         "summary": "Planning — milestones, issues, and the graph between them",
         "route": "/cockpit/objects/document/docs-planning-md",
         "source": "docs/PLANNING.md"
-      },
-      {
-        "id": "majordomus://document/docs/PLAN_STATUS.md",
-        "kind": "document",
-        "label": "docs/PLAN_STATUS.md",
-        "summary": "Plan status",
-        "route": "/cockpit/objects/document/docs-plan-status-md",
-        "source": "docs/PLAN_STATUS.md"
       },
       {
         "id": "majordomus://document/docs/PREFLIGHT.md",
@@ -41046,6 +41046,126 @@
         }
       },
       {
+        "id": "majordomus://issue/I2585",
+        "kind": "issue",
+        "label": "I2585",
+        "summary": "An untracked layer is read the same by both programs, and says that it is untracked",
+        "route": "/cockpit/objects/issue/i2585",
+        "source": ".ai/repo/project/issues/I2585.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "In a fixture repository whose layer is untracked, `adr list`, `rules list` and the executable's object listing name the same records",
+            "Both programs print one line saying the layer is read from the work tree because it is not in the index",
+            "A layer with only its manifest tracked is reported as partly tracked, with the count of files the index lacks"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [],
+          "desired_state": "mj_kdisc_vcs applies the executable's rule; both programs emit one finding naming the untracked layer; a layer whose manifest alone is tracked is reported instead of read as empty.",
+          "evidence_required": [
+            "untracked_layer_parity_case",
+            "partly_tracked_layer_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Make the shell tool read an untracked layer the way the executable does since ADR 0145, and make both say once that the layer is on disk and not in the index.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/knowledge.sh",
+            "lib/adr.sh",
+            "lib/common.sh",
+            "apps/majordomus-cli/src/discovery",
+            "apps/majordomus-cli/src/app.rs",
+            "docs/PERSONAL_MODE.md",
+            "docs/ADOPTION.md",
+            "test/cases"
+          ],
+          "slug": "an-untracked-layer-says-so",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2586",
+        "kind": "issue",
+        "label": "I2586",
+        "summary": "doctor counts every failure it prints",
+        "route": "/cockpit/objects/issue/i2586",
+        "source": ".ai/repo/project/issues/I2586.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A doctor run whose only failures are reasoning findings exits 10 and its summary equals `grep -c '^FAIL'`",
+            "No other reporter in lib/ calls mj_fail from a pipeline subshell, held by a structural check"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "lib/doctor.sh:443-446 pipes jq into `while read … mj_fail reasoning`, so the increment of MJ_FAILS happens in a pipeline subshell and is lost; mj_finish_doctor reads the parent's count.",
+          "depends_on": [],
+          "desired_state": "The loop runs in the calling shell (process substitution, as the rest of the file does), and a case holds the printed count equal to the summary for a doctor run that has reasoning findings.",
+          "evidence_required": [
+            "doctor_count_equals_lines_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Make the number `doctor` reports, and the exit code it returns, account for every FAIL line it prints.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/doctor.sh",
+            "test/cases"
+          ],
+          "slug": "doctor-counts-every-failure-it-prints",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2587",
+        "kind": "issue",
+        "label": "I2587",
+        "summary": "The reasoning check judges a gate, not every workflow that names a credential",
+        "route": "/cockpit/objects/issue/i2587",
+        "source": ".ai/repo/project/issues/I2587.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A workflow that names a model credential only in a comment produces no finding",
+            "A workflow outside the declared gate set that names a credential is reported as INFO and does not fail doctor",
+            "A declared gate that names a credential is still refused, in this repository and in a fixture adopter"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "apps/majordomus-cli/src/reasoning/check.rs:269-296 reads every workflow file and tests `text.contains(credential)`; nothing strips comments and nothing knows which workflow is a gate.",
+          "depends_on": [],
+          "desired_state": "The check reads YAML comments as comments, judges the workflows the CI model or the policy names as gates, and reports a credential in any other workflow as information.",
+          "evidence_required": [
+            "comment_only_credential_case",
+            "non_gate_workflow_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Stop `reasoning check` from failing a repository on a model credential named in a comment or in a workflow that gates nothing, and let a repository say which workflows are gates.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/reasoning",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy",
+            "docs/REASONING.md",
+            "test/cases"
+          ],
+          "slug": "the-reasoning-check-judges-a-gate",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2588",
         "kind": "issue",
         "label": "I2588",
@@ -41087,6 +41207,491 @@
           ],
           "verified_at": "2026-10-13T18:08:39Z",
           "verified_event": "sha256:2cd596e1ab969ded4db025f444e5e45ed1ac355cd98b1f270b00ee60792b9b81"
+        }
+      },
+      {
+        "id": "majordomus://issue/I2589",
+        "kind": "issue",
+        "label": "I2589",
+        "summary": "init projects into a region where a hand-written target already exists, and update says append",
+        "route": "/cockpit/objects/issue/i2589",
+        "source": ".ai/repo/project/issues/I2589.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "init in a repository with an existing CLAUDE.md writes a policy whose projection for it is `mode: region` and says so",
+            "`update --dry-run` prints `append-region` for a file that exists and has no region",
+            "After update the bytes outside the markers are unchanged"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "lib/init.sh:82 copies share/skeleton/policy.yaml verbatim; lib/update.sh:101 prints `create` whenever no region is present; the REFUSE text of file mode never mentions region mode.",
+          "depends_on": [],
+          "desired_state": "init writes `mode: region` for an existing unstamped target and lists those targets; update plans `append-region <target>`; the refusal of a whole-file overwrite names region mode.",
+          "evidence_required": [
+            "init_region_for_existing_target_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Have `init` choose region mode for every projection target that already exists without a stamp, say so, and have `update` name what it will do to such a file.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/init.sh",
+            "lib/update.sh",
+            "share/skeleton/policy.yaml",
+            "docs/ADOPTION.md",
+            "docs/CLI.md",
+            "test/cases"
+          ],
+          "slug": "init-projects-into-a-region-over-a-hand-written-target",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2590",
+        "kind": "issue",
+        "label": "I2590",
+        "summary": "The bootstrap states a worktree layout only where the policy enforces it",
+        "route": "/cockpit/objects/issue/i2590",
+        "source": ".ai/repo/project/issues/I2590.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A policy that does not enforce the worktree guard renders no `-wt/` text in any projection target",
+            "This repository's own projections are byte-identical after the change"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "share/providers/*.tmpl carry the paragraph as literal text; lib/update.sh substitutes three variables and whole-line fragments; no policy key mentions worktrees.",
+          "depends_on": [],
+          "desired_state": "The paragraph is a fragment rendered only when the policy's enforcement invokes the worktree guard, and absent otherwise.",
+          "evidence_required": [
+            "worktree_paragraph_is_policy_driven_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Move the worktree-topology paragraph of the provider templates behind the policy, so an adopter with its own worktree rule is not told a layout it does not use.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "share/providers",
+            "lib/update.sh",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy",
+            "docs/WORKTREES.md",
+            "docs/ADOPTION.md",
+            "test/cases"
+          ],
+          "slug": "the-bootstrap-states-a-worktree-layout-only-when-enforced",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2591",
+        "kind": "issue",
+        "label": "I2591",
+        "summary": "A projection target the policy declares is in scope without being listed twice",
+        "route": "/cockpit/objects/issue/i2591",
+        "source": ".ai/repo/project/issues/I2591.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "init then update in an empty repository yields no out_of_scope diagnostic from any command",
+            "A root document the scope does not name and no projection declares is still reported"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "share/skeleton/ai/repo/scope.yaml and share/skeleton/ai/repo/knowledge/sources.yaml disagree; apps/majordomus-cli/src/index.rs:231-245 warns for each root *.md the scope does not name.",
+          "depends_on": [],
+          "desired_state": "Every `projections[].target` of the policy is in scope by derivation, and the skeleton's scope and source classes agree about root documents.",
+          "evidence_required": [
+            "fresh_repository_has_no_out_of_scope_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Make a freshly initialised repository free of out-of-scope warnings about files the tool itself generates.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "share/skeleton/ai/repo/scope.yaml",
+            "share/skeleton/ai/repo/knowledge/sources.yaml",
+            "apps/majordomus-cli/src/scope.rs",
+            "lib/init.sh",
+            "docs/SCOPE.md",
+            "test/cases"
+          ],
+          "slug": "a-projection-target-is-in-scope",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2592",
+        "kind": "issue",
+        "label": "I2592",
+        "summary": "Every directory a command writes under the layer carries its contract",
+        "route": "/cockpit/objects/issue/i2592",
+        "source": ".ai/repo/project/issues/I2592.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "init, then `evidence record`, then doctor in a fixture shows no missing-contract finding",
+            "A structural case holds every directory name the code writes under .ai/repo against the skeleton's contracts"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [],
+          "evidence_required": [
+            "tool_owned_directories_have_contracts_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Stop doctor from failing a repository for a missing context document in a directory the tool created or told it to create.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "share/skeleton/ai/repo",
+            "lib/init.sh",
+            "apps/majordomus-cli/src/evidence/ledger.rs",
+            "lib/context_docs.sh",
+            "docs/CONTEXT.md",
+            "test/cases"
+          ],
+          "slug": "every-layer-directory-carries-its-contract",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2593",
+        "kind": "issue",
+        "label": "I2593",
+        "summary": "A deployment declares what runs where without inventing a cargo package",
+        "route": "/cockpit/objects/issue/i2593",
+        "source": ".ai/repo/project/issues/I2593.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A deployment object with an application, a listen address, a health route and two targets validates with no build block",
+            "This repository's own deployment object validates unchanged",
+            "The Deployments screen lists the adopter-shaped object"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "apps/majordomus-cli/src/deploy/mod.rs requires build, resources, machines and region for every deployment.",
+          "depends_on": [],
+          "desired_state": "Those groups are validated only when present, and a deployment can name its targets by a free kind with a health URL. This is a design change and carries a proposed ADR.",
+          "evidence_required": [
+            "adopter_shaped_deployment_case",
+            "adr_proposed"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Let a repository whose product is not one cargo binary on one machine pool declare its deployments truthfully.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/deploy",
+            "lib/deployment.sh",
+            "share/skeleton/ai/repo/deployments",
+            "docs/SCHEMAS.md",
+            "docs/DELIVERY.md",
+            "test/cases"
+          ],
+          "slug": "a-deployment-declares-what-runs-where",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2594",
+        "kind": "issue",
+        "label": "I2594",
+        "summary": "The declared version is read from where the repository declares it",
+        "route": "/cockpit/objects/issue/i2594",
+        "source": ".ai/repo/project/issues/I2594.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With `release.version.source` naming a package.json, release.version reports its version",
+            "With no source and no release record the report says not declared and proposes no bump",
+            "This repository's report is unchanged"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "apps/majordomus-cli/src/release/version.rs:43 fixes MANIFEST to apps/majordomus-cli/Cargo.toml; report() classifies every commit of HEAD when no release record exists.",
+          "depends_on": [],
+          "desired_state": "A policy key names the version source and its reader (cargo manifest, package.json, plain file); with nothing declared the report says `not declared` and infers nothing.",
+          "evidence_required": [
+            "declared_version_source_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Let a repository say where its version is authored, and stop guessing a next version where nothing is declared.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/release",
+            "apps/majordomus-cli/src/ui/delivery.rs",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy",
+            "docs/RELEASE.md",
+            "test/cases"
+          ],
+          "slug": "the-declared-version-is-read-where-it-is-declared",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2595",
+        "kind": "issue",
+        "label": "I2595",
+        "summary": "A repository declares its test runners, and a declared runner's tests are runnable",
+        "route": "/cockpit/objects/issue/i2595",
+        "source": ".ai/repo/project/issues/I2595.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A claim naming a path of a declared runner is `not_run`, not `unrunnable`",
+            "A TSV report for that runner recorded with a stamp moves the claim to a verdict",
+            "With no declaration the two shipped runners behave exactly as today"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [],
+          "evidence_required": [
+            "declared_runner_is_runnable_case",
+            "adr_proposed"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Make evidence recordable for tests that are neither a shell case of this repository nor a crate test, through a declaration and a generic report.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/evidence",
+            "apps/majordomus-cli/src/rules",
+            "apps/majordomus-cli/src/environment",
+            "share/schemas/majordomus",
+            "docs/EVIDENCE.md",
+            "test/cases"
+          ],
+          "slug": "a-repository-declares-its-test-runners",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2596",
+        "kind": "issue",
+        "label": "I2596",
+        "summary": "An intent criterion's test reference resolves through the declared runners",
+        "route": "/cockpit/objects/issue/i2596",
+        "source": ".ai/repo/project/issues/I2596.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An intent criterion naming a declared runner's path validates",
+            "The refusal names the declared runners, not two fixed directories"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "apps/majordomus-cli/src/intent.rs:1093-1099 resolves through TestId::of and prints this repository's two directories.",
+          "depends_on": [
+            "I2595"
+          ],
+          "desired_state": "The reference resolves through the runners of I2595 and the message lists the declared runners.",
+          "evidence_required": [
+            "intent_reference_through_declared_runner_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Let an intent criterion with `evidence: test` name any test a declared runner drives.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent.rs",
+            "docs/PLANNING.md",
+            "test/cases"
+          ],
+          "slug": "an-intent-test-reference-resolves-through-declared-runners",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2597",
+        "kind": "issue",
+        "label": "I2597",
+        "summary": "A plan derived from history is sealed at the times it happened",
+        "route": "/cockpit/objects/issue/i2597",
+        "source": ".ai/repo/project/issues/I2597.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An issue file with stamps after the cutoff and no events validates after the backfill, with its times unchanged",
+            "Both engines agree on the result",
+            "A backfilled seal is distinguishable from a transition seal in the record and in the ledger"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "SEALED_FROM is one constant in lib/project.awk:45 and apps/majordomus-cli/src/plan.rs:126; every transition stamps the current time; lib/plan.sh has no import verb.",
+          "depends_on": [],
+          "evidence_required": [
+            "backfill_keeps_times_case",
+            "engine_parity_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Give a repository a verb that seals lifecycle stamps over their original times, so that a plan imported from history is not stamped with the day of the import.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/plan.sh",
+            "lib/project.sh",
+            "lib/project.awk",
+            "apps/majordomus-cli/src/plan.rs",
+            "share/schemas/majordomus/issue",
+            "docs/PLANNING.md",
+            "test/cases"
+          ],
+          "slug": "a-derived-plan-is-sealed-at-the-times-it-happened",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2598",
+        "kind": "issue",
+        "label": "I2598",
+        "summary": "plan answers in time linear in its issues and names a scope conflict once",
+        "route": "/cockpit/objects/issue/i2598",
+        "source": ".ai/repo/project/issues/I2598.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With 400 generated issues sharing one scope path, the number of scope_conflict findings is at most the number of issues",
+            "`plan done A B C` moves three issues and loads the model once",
+            "Both engines print the same findings"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [],
+          "desired_state": "A scope conflict is one finding per issue listing its peers, in both engines; list is one pass; start, verify and done accept several ids with one load.",
+          "evidence_required": [
+            "conflict_findings_are_bounded_case",
+            "bulk_transition_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Make the plan commands usable at several hundred issues: bounded time, bounded output, and one call for several transitions.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/plan.sh",
+            "lib/project.sh",
+            "lib/project.awk",
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "apps/majordomus-cli/src/devtask/graph.rs",
+            "docs/PLANNING.md",
+            "test/cases"
+          ],
+          "slug": "plan-is-linear-and-names-a-conflict-once",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2599",
+        "kind": "issue",
+        "label": "I2599",
+        "summary": "plan status reports the project header",
+        "route": "/cockpit/objects/issue/i2599",
+        "source": ".ai/repo/project/issues/I2599.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "plan.status in a freshly initialised fixture with a project.yaml reports its three fields",
+            "A layer without the class reports the header as unknown and names the missing class"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [],
+          "desired_state": "The skeleton and this repository declare the class, an existing layer is told to add it, and an unreadable header is reported as unknown with its reason.",
+          "evidence_required": [
+            "plan_status_header_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Make the executable's plan report carry the name, repository and default branch that project.yaml declares.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "share/skeleton/ai/repo/knowledge/sources.yaml",
+            ".ai/repo/knowledge/sources.yaml",
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "docs/SCHEMAS.md",
+            "test/cases"
+          ],
+          "slug": "plan-status-reports-the-project-header",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2600",
+        "kind": "issue",
+        "label": "I2600",
+        "summary": "A commit reference has one grammar for every writer and every checker",
+        "route": "/cockpit/objects/issue/i2600",
+        "source": ".ai/repo/project/issues/I2600.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "`adr propose --from commit:<abbreviation>` writes the full name",
+            "A reference that resolves to no commit is refused by the writer",
+            "A record already carrying an unambiguous abbreviation passes both checkers"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [],
+          "desired_state": "Writers resolve an abbreviation to the full name and refuse one that is ambiguous or absent; both checkers resolve the same way.",
+          "evidence_required": [
+            "commit_reference_grammar_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Make an abbreviated commit reference either written as the full name or refused at writing, and accepted alike by both checkers.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/knowledge.sh",
+            "lib/adr.sh",
+            "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+            "docs/KNOWLEDGE.md",
+            "test/cases"
+          ],
+          "slug": "a-commit-reference-has-one-grammar",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
         }
       },
       {
@@ -41134,6 +41739,291 @@
           ],
           "verified_at": "2026-10-13T17:54:58Z",
           "verified_event": "sha256:49a8e6426351f50e05d4fe095ed08a09530cdb99b24c4347eda656cfc4ba3d54"
+        }
+      },
+      {
+        "id": "majordomus://issue/I2602",
+        "kind": "issue",
+        "label": "I2602",
+        "summary": "A document with a front matter of its own is indexed, and a block scalar is read",
+        "route": "/cockpit/objects/issue/i2602",
+        "source": ".ai/repo/project/issues/I2602.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A document with keys the schema does not define is an object, and the diagnostic is one line per class",
+            "A front matter value written as a folded or literal scalar is read identically by both programs",
+            "A layer record with an unknown key is still refused"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "share/schemas/majordomus/document/document.v1.schema.json closes the key set; apps/majordomus-cli/src/metadata/yaml.rs:113-117 refuses values opening with | or >.",
+          "depends_on": [],
+          "evidence_required": [
+            "foreign_front_matter_case",
+            "block_scalar_parity_case",
+            "adr_proposed"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Let a repository index its own Markdown as documents when that Markdown carries front matter the tool does not define, without an error per file per command.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/metadata",
+            "apps/majordomus-cli/src/index.rs",
+            "lib/common.sh",
+            "share/kinds.yaml",
+            "share/schemas/majordomus/document",
+            "docs/SCHEMAS.md",
+            "test/cases"
+          ],
+          "slug": "a-foreign-front-matter-is-indexed",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2603",
+        "kind": "issue",
+        "label": "I2603",
+        "summary": "A document the index refused is named as refused, not as unknown",
+        "route": "/cockpit/objects/issue/i2603",
+        "source": ".ai/repo/project/issues/I2603.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each of the three cases produces its own message, and the refused case carries the index's diagnostic"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "apps/majordomus-cli/src/product.rs:1652-1661 reports any miss as unknown.",
+          "depends_on": [],
+          "desired_state": "The finding tells apart a file the index refused, a file no source class names, and a file that does not exist.",
+          "evidence_required": [
+            "refused_document_reference_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Make a feature's `docs:` reference to a tracked file say why it does not resolve.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/product.rs",
+            "docs/PRODUCT.md",
+            "test/cases"
+          ],
+          "slug": "a-refused-document-is-named-as-refused",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2604",
+        "kind": "issue",
+        "label": "I2604",
+        "summary": "The pull-request lane integrates on the branch the repository declares",
+        "route": "/cockpit/objects/issue/i2604",
+        "source": ".ai/repo/project/issues/I2604.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With a declared base `develop`, a pull request into develop is classified on its merits",
+            "An omitted merge-method field reads as could not be read, never as not allowed",
+            "The executor still never squashes or rebases"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "apps/majordomus-cli/src/integration/forge.rs:1452-1479 takes the forge's default branch as the base and reads an omitted merge setting as false.",
+          "depends_on": [],
+          "desired_state": "A policy key names the integration base, defaulting to the forge's default branch; an unread merge setting or ruleset is reported as unread with the call that failed.",
+          "evidence_required": [
+            "declared_integration_base_case",
+            "unread_setting_is_not_a_negative_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Let a repository whose pull requests target an integration branch other than the default one use the lane, and stop reporting an unread setting as a negative.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/integration",
+            "apps/majordomus-cli/src/policy.rs",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy",
+            "docs/INTEGRATION.md",
+            "test/cases"
+          ],
+          "slug": "the-lane-integrates-on-the-declared-branch",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2605",
+        "kind": "issue",
+        "label": "I2605",
+        "summary": "Every record with a Markdown body has a rendered page in the UI, with its diagrams",
+        "route": "/cockpit/objects/issue/i2605",
+        "source": ".ai/repo/project/issues/I2605.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An ADR and a knowledge record of a foreign fixture repository each have a UI page whose body is rendered Markdown",
+            "A fenced diagram in a body is drawn by the vendored script and stays readable source without it",
+            "Every screen that shows a body calls the one renderer, held by the rendered-once case",
+            "The snapshot contains those pages"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [],
+          "evidence_required": [
+            "record_pages_render_markdown_case",
+            "every_body_goes_through_the_renderer_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Give every indexed kind that carries a Markdown body a list and a page in the UI, rendered by the one renderer, with diagrams drawn, and hold it with a case.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui",
+            "apps/majordomus-cli/src/markdown.rs",
+            "apps/majordomus-cli/src/web/report",
+            "share/ui",
+            "docs/MAJORDOMUS_UI.md",
+            "test/cases",
+            "apps/majordomus-cli/tests"
+          ],
+          "slug": "every-record-body-is-a-rendered-page",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2606",
+        "kind": "issue",
+        "label": "I2606",
+        "summary": "A gate model without classes is a model",
+        "route": "/cockpit/objects/issue/i2606",
+        "source": ".ai/repo/project/issues/I2606.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A model with gates and no classes loads and its gates are counted",
+            "Both programs agree on which gates a change selects under it"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "apps/majordomus-cli/src/gates/model.rs:157-165 has no default for `classes`.",
+          "depends_on": [],
+          "desired_state": "An absent `classes` is empty: a plan then selects the gates marked always, and every other changed path is unclassified.",
+          "evidence_required": [
+            "gate_model_without_classes_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Read a gates.yaml that declares gates and no classes instead of reporting that it does not parse.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/gates",
+            "lib/gates.sh",
+            "docs/CI.md",
+            "test/cases"
+          ],
+          "slug": "a-gate-model-without-classes-is-a-model",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2607",
+        "kind": "issue",
+        "label": "I2607",
+        "summary": "product validate measures an adopter against what the adopter owns",
+        "route": "/cockpit/objects/issue/i2607",
+        "source": ".ai/repo/project/issues/I2607.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "In a foreign fixture `product validate` reports no uncovered module, command or tool kind",
+            "In this repository the floors are unchanged"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "apps/majordomus-cli/src/product.rs:1173-1244 measures the executable's capability registry and share/kinds.yaml against the repository's features.",
+          "depends_on": [],
+          "desired_state": "Module and command coverage is asked only where the repository holds the registry's sources; an adopter is measured on the kinds it declares, and the rest is reported as not applicable.",
+          "evidence_required": [
+            "adopter_product_coverage_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Stop `product validate` from warning an adopter about the tool's own modules, commands and kinds.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/product.rs",
+            "apps/majordomus-cli/src/capability/builtin/product.rs",
+            "docs/PRODUCT.md",
+            "test/cases",
+            "apps/majordomus-cli/tests"
+          ],
+          "slug": "product-validate-measures-what-the-adopter-owns",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2608",
+        "kind": "issue",
+        "label": "I2608",
+        "summary": "A plan is derived from what a repository already has, with provenance",
+        "route": "/cockpit/objects/issue/i2608",
+        "source": ".ai/repo/project/issues/I2608.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A proposed ADR states whether a derived record is owned once written or regenerated",
+            "On a fixture with a changelog and a recorded forge answer, the dry run lists the records and the write is idempotent",
+            "Every written record names the pull request, commit or heading it came from"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "No capability derives plan records; apps/majordomus-cli/src/integration/forge.rs already reads pull requests; scripts/github-sync goes the other way and is not shipped.",
+          "depends_on": [
+            "I2597"
+          ],
+          "desired_state": "A capability writes milestone and issue records from a forge and a changelog, each naming what it was derived from, sealed through I2597, idempotent on a second run. Gates and claims are later slices.",
+          "evidence_required": [
+            "adr_proposed",
+            "derive_plan_fixture_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Decide, in a proposed ADR and a first slice, how milestones and issues are derived from a forge and a changelog so that an adopted repository's plan pages are not empty on its first day.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/integration",
+            "share/schemas/majordomus",
+            "docs/ADOPTION.md",
+            "docs/PLANNING.md",
+            "test/cases",
+            "apps/majordomus-cli/tests"
+          ],
+          "slug": "a-plan-is-derived-from-what-a-repository-has",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
         }
       },
       {
@@ -119698,6 +120588,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/ADOPTION_SECOND_RUN.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/ARCHIVE.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -119964,11 +120859,6 @@
       },
       {
         "source": "majordomus://document/docs/PLANNING.md",
-        "target": "kind:document",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://document/docs/PLAN_STATUS.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -127663,6 +128553,36 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2585",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2585",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2586",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2586",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2587",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2587",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2588",
         "target": "kind:issue",
         "kind": "is_a"
@@ -127673,12 +128593,212 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2589",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2589",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2590",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2590",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2591",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2591",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2592",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2592",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2593",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2593",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2594",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2594",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2595",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2595",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2596",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2596",
+        "target": "majordomus://issue/I2595",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2596",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2597",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2597",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2598",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2598",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2599",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2599",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2600",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2600",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2601",
         "target": "kind:issue",
         "kind": "is_a"
       },
       {
         "source": "majordomus://issue/I2601",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2602",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2602",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2603",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2603",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2604",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2604",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2605",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2605",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2606",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2606",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2607",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2607",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2608",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2608",
+        "target": "majordomus://issue/I2597",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2608",
         "target": "majordomus://milestone/a-second-adopter-is-served",
         "kind": "belongs_to"
       },
@@ -149509,8 +150629,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4097,
-      "edges": 9459,
+      "nodes": 4119,
+      "edges": 9505,
       "acyclic": false,
       "truncated": false
     }

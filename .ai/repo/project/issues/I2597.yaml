@@ -1,0 +1,32 @@
+id: I2597
+milestone: a-second-adopter-is-served
+title: "A plan derived from history is sealed at the times it happened"
+slug: a-derived-plan-is-sealed-at-the-times-it-happened
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give a repository a verb that seals lifecycle stamps over their original times, so that a plan imported from history is not stamped with the day of the import."
+why: "Observed on 2026-10-13 adopting 0.21.0 and 0.22.0 in a pnpm/TypeScript repository (docs/ADOPTION_SECOND_RUN.md, G13); read again on master e506c041a4. The adopter derived 541 issues from merged pull requests. Every stamp on or after the global seal date failed validation, and 145 issues had to be moved with three commands each, recording today's time for work finished days earlier. I1982 plans a re-seal for stamps an older tool wrote and is chained behind I1980; the import case needs neither."
+current_state: "SEALED_FROM is one constant in lib/project.awk:45 and apps/majordomus-cli/src/plan.rs:126; every transition stamps the current time; lib/plan.sh has no import verb."
+desired_state: "One verb writes, for each unsealed stamp, a seal over the stamp's own time with a provenance of the backfill and one ledger event; the cutoff is per repository. A backfilled seal is told apart from a transition seal."
+scope:
+  - "lib/plan.sh"
+  - "lib/project.sh"
+  - "lib/project.awk"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "share/schemas/majordomus/issue"
+  - "docs/PLANNING.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "An issue file with stamps after the cutoff and no events validates after the backfill, with its times unchanged"
+  - "Both engines agree on the result"
+  - "A backfilled seal is distinguishable from a transition seal in the record and in the ledger"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "backfill_keeps_times_case"
+  - "engine_parity_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13

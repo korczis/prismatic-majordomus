@@ -1,0 +1,26 @@
+id: I2596
+milestone: a-second-adopter-is-served
+title: "An intent criterion's test reference resolves through the declared runners"
+slug: an-intent-test-reference-resolves-through-declared-runners
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Let an intent criterion with `evidence: test` name any test a declared runner drives."
+why: "Observed on 2026-10-13 adopting 0.21.0 and 0.22.0 in a pnpm/TypeScript repository (docs/ADOPTION_SECOND_RUN.md, G11); read again on master e506c041a4. `intent validate` refused the adopter's test paths: 'give a path under test/cases/ or apps/majordomus-cli/tests/'. The criteria had to be rewritten as claims."
+current_state: "apps/majordomus-cli/src/intent.rs:1093-1099 resolves through TestId::of and prints this repository's two directories."
+desired_state: "The reference resolves through the runners of I2595 and the message lists the declared runners."
+scope:
+  - "apps/majordomus-cli/src/intent.rs"
+  - "docs/PLANNING.md"
+  - "test/cases"
+depends_on: [I2595]
+acceptance_criteria:
+  - "An intent criterion naming a declared runner's path validates"
+  - "The refusal names the declared runners, not two fixed directories"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "intent_reference_through_declared_runner_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13
