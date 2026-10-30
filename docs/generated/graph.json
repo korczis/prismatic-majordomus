@@ -71492,6 +71492,43 @@
         }
       },
       {
+        "id": "majordomus://issue/I4257",
+        "kind": "issue",
+        "label": "I4257",
+        "summary": "init projects into an existing CLAUDE.md or AGENTS.md as a region",
+        "route": "/cockpit/objects/issue/i4257",
+        "source": ".ai/repo/project/issues/I4257.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "init in a repository with a CLAUDE.md writes mode region for it",
+            "update then appends the region and leaves the rest byte for byte"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "init writes the same projection modes whatever the repository holds.",
+          "depends_on": [],
+          "desired_state": "For each projection target that already exists and carries no stamp, init writes mode region and says so.",
+          "evidence_required": [
+            "case_init_keeps_a_hand_written_provider_file"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "For each projection target that already exists and carries no stamp, init writes mode region and says so.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4257.yaml",
+            "lib/init.sh",
+            "share/skeleton/ai/repo/policy.yaml",
+            "test/cases/4257_init_keeps_a_hand_written_provider_file.sh"
+          ],
+          "slug": "init-keeps-a-hand-written-provider-file",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4257_init_keeps_a_hand_written_provider_file"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4258",
         "kind": "issue",
         "label": "I4258",
@@ -98115,6 +98152,13 @@
         "label": "test/cases/4253_every_skill_remedy_runs.sh",
         "route": "/cockpit/objects/test/test-cases-4253-every-skill-remedy-runs-sh",
         "source": "test/cases/4253_every_skill_remedy_runs.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4257_init_keeps_a_hand_written_provider_file.sh",
+        "kind": "test",
+        "label": "test/cases/4257_init_keeps_a_hand_written_provider_file.sh",
+        "route": "/cockpit/objects/test/test-cases-4257-init-keeps-a-hand-written-provider-file-sh",
+        "source": "test/cases/4257_init_keeps_a_hand_written_provider_file.sh"
       },
       {
         "id": "majordomus://test/test/cases/4258_documents_below_docs_are_discovered.sh",
@@ -136973,6 +137017,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4257",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4257",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4258",
         "target": "kind:issue",
         "kind": "is_a"
@@ -144398,6 +144452,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4257_init_keeps_a_hand_written_provider_file.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/4258_documents_below_docs_are_discovered.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -149509,8 +149568,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4097,
-      "edges": 9459,
+      "nodes": 4099,
+      "edges": 9462,
       "acyclic": false,
       "truncated": false
     }
