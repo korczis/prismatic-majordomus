@@ -6,27 +6,27 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "da31b40589f677a60c83f92eedaa4d77ca560c96663b428da48f11686010cce8",
+    "fingerprint": "06059d2bb5dc2a7bb5c084fb65f6135dc1c8a60f8bd23377a20394f9ddc8a19b",
     "summary": {
-      "total": 3633,
-      "builtin": 220,
-      "declarative": 3413,
+      "total": 3640,
+      "builtin": 221,
+      "declarative": 3419,
       "by_kind": {
         "command": 36,
-        "query": 184,
-        "resource": 3413
+        "query": 185,
+        "resource": 3419
       },
       "by_stability": {
-        "behaviorally_verified": 147,
+        "behaviorally_verified": 148,
         "experimental": 63,
-        "implemented": 3423
+        "implemented": 3429
       },
-      "mcp_tools": 206,
-      "mcp_resources": 3470,
+      "mcp_tools": 207,
+      "mcp_resources": 3476,
       "http_routes": 212,
-      "cli_commands": 120,
+      "cli_commands": 121,
       "modules": 94,
-      "benchmark_required": 181,
+      "benchmark_required": 182,
       "benchmark_waived": 39,
       "cached": 55
     },
@@ -14349,6 +14349,223 @@
           "ui",
           "provenance",
           "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs"
+      },
+      {
+        "id": "design.licence",
+        "module": "design",
+        "kind": "query",
+        "title": "Whether a public tree holds a licensed kit's files",
+        "description": "The never-publish gate: the raw bytes of every tracked file, committed bundles included (staged, committed where that differs, and the working copy where it differs), and of every untracked file under each `ui.publish` directory, read through symbolic links and into nested repositories as a deploy archives it, compared whole, exactly and with every run of whitespace made one space, against the kit-evidence/v1 fingerprints of the declared kit's licensed files. `refused` names each file and, where the evidence says, the licensed source; `not_judged` is a public tree that declares a kit, tracks a UI file and has no evidence here, and fails like `refused`; a `ui:` block that cannot be used as written (an absolute `ui.publish` or `ui.evidence` entry) is `not_judged` too, naming the entry; `inactive` is no kit declared, a private tree without evidence, or no UI file; `active` is judged and clean, or private. The evidence is the file the input names, else the policy's `~`-relative `ui.evidence` entries; an error names the file and the line, never its content. Near-copies and fragments inlined in a larger file are not judged: the evidence holds whole-file fingerprints only.",
+        "input": {
+          "name": "LicenceInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "evidence": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "A kit-evidence/v1 file, as the caller names it (CI points this at the file it decoded\n`MAJORDOMUS_KIT_EVIDENCE_<KIT>` into). Absent reads the policy's `ui.evidence`\nentries under `$HOME`."
+              }
+            },
+            "description": "The input of `design.licence`: the evidence file, or none to read the policy's.",
+            "title": "LicenceInput"
+          }
+        },
+        "output": {
+          "name": "LicenceReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "verdict": {
+                "$ref": "#/$defs/Verdict",
+                "description": "`active`, `inactive`, `not_judged` or `refused`."
+              },
+              "fails": {
+                "type": "boolean",
+                "description": "Whether the verdict fails the gate (`refused`, `not_judged`)."
+              },
+              "kit": {
+                "type": "string",
+                "description": "The declared kit id; empty when none is."
+              },
+              "visibility": {
+                "$ref": "#/$defs/Visibility",
+                "description": "The visibility judged, after `MAJORDOMUS_VISIBILITY` tightened it."
+              },
+              "has_ui": {
+                "type": "boolean",
+                "description": "Whether the tree tracks a UI file."
+              },
+              "reason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why the verdict is inactive or not judged."
+              },
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Where the evidence was read from, as it was named: the `--evidence` file, or each\n`ui.evidence` entry found on this machine. Empty when none was."
+              },
+              "fingerprints": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many distinct licensed contents the evidence names."
+              },
+              "files": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many contents were compared: staged, committed, working and published bytes,\neach distinct one of a path once."
+              },
+              "matches": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Match"
+                },
+                "description": "Every file that holds a licensed file's bytes."
+              }
+            },
+            "required": [
+              "verdict",
+              "fails",
+              "kit",
+              "visibility",
+              "has_ui",
+              "evidence",
+              "fingerprints",
+              "files",
+              "matches"
+            ],
+            "description": "The answer as every projection carries it.",
+            "title": "LicenceReport",
+            "$defs": {
+              "Verdict": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "active",
+                    "description": "Judged, and nothing licensed is where it may not be."
+                  },
+                  {
+                    "type": "string",
+                    "const": "inactive",
+                    "description": "Not judged, and nothing needs to be."
+                  },
+                  {
+                    "type": "string",
+                    "const": "not_judged",
+                    "description": "Owed a judgement and not given one: a failure."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "A licensed file is in a public tree: a failure."
+                  }
+                ],
+                "description": "The answer's word."
+              },
+              "Visibility": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "public",
+                    "description": "Anyone may read it: no licensed byte may be in it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "private",
+                    "description": "Only the owner reads it: it may hold the licensed sources."
+                  }
+                ],
+                "description": "Whether a tree may be published. Declared by the policy (`ui.visibility`), never read\nfrom a forge; `MAJORDOMUS_VISIBILITY` may tighten it and never loosen it."
+              },
+              "Match": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Repository-relative path of the file."
+                  },
+                  "source": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The licensed source it is a copy of, when the evidence names one; the CI form never\ndoes."
+                  },
+                  "kind": {
+                    "$ref": "#/$defs/MatchKind",
+                    "description": "Whether the copy is exact or reformatted."
+                  }
+                },
+                "required": [
+                  "path",
+                  "kind"
+                ],
+                "description": "One judged file that holds a licensed file's bytes."
+              },
+              "MatchKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "exact",
+                    "description": "The same bytes."
+                  },
+                  {
+                    "type": "string",
+                    "const": "normalised",
+                    "description": "The same bytes once every run of whitespace is one space: a reformatted copy."
+                  }
+                ],
+                "description": "How a file matched a licensed one."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::design"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_design_licence"
+          },
+          "cli": {
+            "path": [
+              "design",
+              "licence"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "design",
+          "ui",
+          "licence",
+          "governance"
         ],
         "benchmark": {
           "policy": "required"
@@ -91001,10 +91218,11 @@
         "description": "The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, what any one of them means, and whether the colours it pairs are readable on one another. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 4,
+        "capabilities": 5,
         "capability_ids": [
           "design.contrast",
           "design.explain",
+          "design.licence",
           "design.system",
           "design.tokens"
         ],
@@ -91308,7 +91526,7 @@
         "title": "implementation",
         "description": "Declarative objects of kind 'implementation' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 52,
+        "capabilities": 53,
         "capability_ids": []
       },
       {
@@ -91383,7 +91601,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1102,
+        "capabilities": 1103,
         "capability_ids": []
       },
       {
@@ -91981,7 +92199,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 660,
+        "capabilities": 664,
         "capability_ids": []
       },
       {
@@ -92073,7 +92291,7 @@
     ]
   },
   "index": {
-    "fingerprint": "1b1c1dbd708b0f93cdad0785ca9f66c5d1ce7915fa55817e723dcd6354675f6f",
+    "fingerprint": "eaa0660f17e9deac87cb6014021a1f894e08a6972646779a337208e976536a2c",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92111,9 +92329,9 @@
       "domain": 6,
       "feature": 29,
       "gap": 5,
-      "implementation": 52,
+      "implementation": 53,
       "intent": 44,
-      "issue": 1102,
+      "issue": 1103,
       "knowledge": 60,
       "mesh-declaration": 1,
       "milestone": 113,
@@ -92127,7 +92345,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 660,
+      "test": 664,
       "use-case": 49,
       "workspace": 1
     },
@@ -99585,7 +99803,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 982448
+        "bytes": 987512
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -102774,7 +102992,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 109248
+        "bytes": 109482
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -102799,6 +103017,14 @@
         "path": "lib/finish.sh",
         "source_class": "library",
         "bytes": 16230
+      },
+      {
+        "uri": "majordomus://implementation/lib/fleet.sh",
+        "kind": "implementation",
+        "identity": "lib/fleet.sh",
+        "path": "lib/fleet.sh",
+        "source_class": "library",
+        "bytes": 30571
       },
       {
         "uri": "majordomus://implementation/lib/gates.sh",
@@ -102830,7 +103056,7 @@
         "identity": "lib/init.sh",
         "path": "lib/init.sh",
         "source_class": "library",
-        "bytes": 23480
+        "bytes": 23833
       },
       {
         "uri": "majordomus://implementation/lib/intent_binding.sh",
@@ -102894,7 +103120,7 @@
         "identity": "lib/migrate.sh",
         "path": "lib/migrate.sh",
         "source_class": "library",
-        "bytes": 17647
+        "bytes": 17915
       },
       {
         "uri": "majordomus://implementation/lib/plan.sh",
@@ -102958,7 +103184,7 @@
         "identity": "lib/rules.sh",
         "path": "lib/rules.sh",
         "source_class": "library",
-        "bytes": 32201
+        "bytes": 33842
       },
       {
         "uri": "majordomus://implementation/lib/rust_bin.sh",
@@ -103006,7 +103232,7 @@
         "identity": "lib/skills.sh",
         "path": "lib/skills.sh",
         "source_class": "library",
-        "bytes": 24136
+        "bytes": 27959
       },
       {
         "uri": "majordomus://implementation/lib/start.sh",
@@ -103022,7 +103248,7 @@
         "identity": "lib/update.sh",
         "path": "lib/update.sh",
         "source_class": "library",
-        "bytes": 13581
+        "bytes": 14547
       },
       {
         "uri": "majordomus://implementation/lib/usecase.sh",
@@ -115449,6 +115675,17 @@
         "bytes": 7434
       },
       {
+        "uri": "majordomus://issue/I4336",
+        "kind": "issue",
+        "identity": "I4336",
+        "title": "Every adopter the owner's fleet pack applies to receives its kit, rules and skills, and no licensed source reaches a public tree",
+        "description": "Where the owner holds a kit licence, every repository Majordomus supervises that the owner's fleet pack applies to receives the pack's kit profile, rules and skills through init, migrate, rules vendor update and update, kept current; a never-publish gate refuses a licensed source file in a public tree or a committed bundle; public CI judges both never-publish and kit use from a licence-evidence secret and fails closed without it. The product names no real kit.",
+        "path": ".ai/repo/project/issues/I4336.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6421
+      },
+      {
         "uri": "majordomus://issue/I4338",
         "kind": "issue",
         "identity": "I4338",
@@ -126655,6 +126892,38 @@
         "bytes": 3613
       },
       {
+        "uri": "majordomus://test/test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh",
+        "kind": "test",
+        "identity": "test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh",
+        "path": "test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh",
+        "source_class": "case",
+        "bytes": 13119
+      },
+      {
+        "uri": "majordomus://test/test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
+        "kind": "test",
+        "identity": "test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
+        "path": "test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
+        "source_class": "case",
+        "bytes": 11632
+      },
+      {
+        "uri": "majordomus://test/test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh",
+        "kind": "test",
+        "identity": "test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh",
+        "path": "test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh",
+        "source_class": "case",
+        "bytes": 10097
+      },
+      {
+        "uri": "majordomus://test/test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh",
+        "kind": "test",
+        "identity": "test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh",
+        "path": "test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh",
+        "source_class": "case",
+        "bytes": 10082
+      },
+      {
         "uri": "majordomus://test/test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
         "kind": "test",
         "identity": "test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
@@ -129245,7 +129514,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 52
+      "objects": 53
     },
     {
       "name": "intent",
@@ -129265,7 +129534,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1102
+      "objects": 1103
     },
     {
       "name": "knowledge",
@@ -129427,7 +129696,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 660
+      "objects": 664
     },
     {
       "name": "use-case",
@@ -160973,6 +161242,245 @@
       {
         "path": [
           "majordomus",
+          "design"
+        ],
+        "route": "/docs/cli/design/",
+        "executable": false,
+        "usage": "majordomus design [OPTIONS] <COMMAND>",
+        "about": "The licensed kit the repository's interface may adapt and never publish: whether a public tree holds a licensed file's bytes, judged from kit-evidence/v1 fingerprints",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "design",
+              "licence"
+            ],
+            "route": "/docs/cli/design/licence/",
+            "executable": true,
+            "usage": "majordomus design licence [OPTIONS]",
+            "about": "Whether a public tree holds a licensed kit's files: active, inactive, not_judged or refused, each match with its file, licensed source and kind; exit 0 for active and inactive, 10 when refused, 12 when not judged (no evidence here, or a ui: block that cannot be used), 2 for evidence that cannot be read, 13 when the tree cannot be listed",
+            "args": [
+              {
+                "name": "evidence",
+                "long": "evidence",
+                "positional": false,
+                "help": "A kit-evidence/v1 file; absent reads the policy's ui.evidence entries under $HOME",
+                "value_name": "FILE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "json",
+                "long": "json",
+                "positional": false,
+                "help": "The same as --format json",
+                "value_name": "JSON",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "design-licence-json",
+                "title": "Whether a public tree holds a licensed kit's files",
+                "description": "The same answer the MCP tool `majordomus_design_licence` returns: `/verdict` (`active`, `inactive`, `not_judged` or `refused`), `/fails`, the declared `/kit` and `/visibility`, why under `/reason`, and every file that holds a licensed file's bytes under `/matches`. This repository's policy declares no kit (`ui.kit` is empty), so the gate is skipped: the verdict is `inactive` and the exit is 0. A refusal exits 10, a public tree with a declared kit and no evidence exits 12, and an evidence file that cannot be read exits 2 naming the file and the line, never its content.",
+                "argv": [
+                  "design",
+                  "licence",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus design licence --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /verdict, /fails, /kit, /visibility, /matches"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
+      },
+      {
+        "path": [
+          "majordomus",
           "pack"
         ],
         "route": "/docs/cli/pack/",
@@ -164424,6 +164932,23 @@
         },
         "input": "ExplainTokenInput",
         "output": "Token"
+      },
+      {
+        "name": "majordomus_design_licence",
+        "id": "design.licence",
+        "title": "Whether a public tree holds a licensed kit's files",
+        "description": "The never-publish gate: the raw bytes of every tracked file, committed bundles included (staged, committed where that differs, and the working copy where it differs), and of every untracked file under each `ui.publish` directory, read through symbolic links and into nested repositories as a deploy archives it, compared whole, exactly and with every run of whitespace made one space, against the kit-evidence/v1 fingerprints of the declared kit's licensed files. `refused` names each file and, where the evidence says, the licensed source; `not_judged` is a public tree that declares a kit, tracks a UI file and has no evidence here, and fails like `refused`; a `ui:` block that cannot be used as written (an absolute `ui.publish` or `ui.evidence` entry) is `not_judged` too, naming the entry; `inactive` is no kit declared, a private tree without evidence, or no UI file; `active` is judged and clean, or private. The evidence is the file the input names, else the policy's `~`-relative `ui.evidence` entries; an error names the file and the line, never its content. Near-copies and fragments inlined in a larger file are not judged: the evidence holds whole-file fingerprints only.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "LicenceInput",
+        "output": "LicenceReport"
       },
       {
         "name": "majordomus_design",
@@ -170166,6 +170691,25 @@
         "case": "state",
         "cached": false,
         "route": "GET /api/v1/design/explain"
+      },
+      {
+        "key": "design.licence|direct|policy",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "design.licence",
+        "module": "design",
+        "case": "policy",
+        "cached": false
+      },
+      {
+        "key": "design.licence|mcp|policy",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "design.licence",
+        "module": "design",
+        "case": "policy",
+        "cached": false,
+        "tool": "majordomus_design_licence"
       },
       {
         "key": "design.system|direct|default",
@@ -177732,6 +178276,20 @@
           "cases": 2
         },
         {
+          "subject": "design.licence",
+          "module": "design",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "design.licence",
+          "module": "design",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "design.system",
           "module": "design",
           "transport": "direct",
@@ -181707,8 +182265,8 @@
       ],
       "tallies": {
         "direct": {
-          "required": 220,
-          "covered": 181,
+          "required": 221,
+          "covered": 182,
           "missing": 0,
           "waived": 39,
           "inapplicable": 0
@@ -181721,8 +182279,8 @@
           "inapplicable": 0
         },
         "mcp": {
-          "required": 206,
-          "covered": 176,
+          "required": 207,
+          "covered": 177,
           "missing": 0,
           "waived": 30,
           "inapplicable": 0
@@ -181735,8 +182293,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 652,
-          "covered": 552,
+          "required": 654,
+          "covered": 554,
           "missing": 0,
           "waived": 100,
           "inapplicable": 0

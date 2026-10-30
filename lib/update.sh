@@ -8,6 +8,13 @@
 # both in its begin marker. doctor and watch compare a target with its own stamp, so a hand
 # edit is detected on a fresh clone with nothing else tracked, and there is no fingerprint
 # file that could disagree with the targets it describes.
+#
+# The one input outside the repository is the fleet pack (lib/fleet.sh), and only when one
+# exists: update then refreshes it as `rules vendor update` does. Without a pack nothing
+# outside the repository is read beyond the resolver's own lookup, and the tree update
+# leaves is byte for byte the one it left before the pack existed.
+# shellcheck source=fleet.sh
+. "$MJ_LIB_DIR/fleet.sh"
 mj_cmd_update() {
   local dry=0 force=0 diff_target=""
   while [ $# -gt 0 ]; do case "$1" in
@@ -24,6 +31,10 @@ usage: majordomus update [--dry-run] [--diff <target>] [--force]
   --dry-run   print what would change, write nothing
   --diff T    show the diff between the current file T and its regenerated form
   --force     overwrite a target whose content matches neither its own stamp nor the new output
+  fleet       when a fleet pack exists (\$MAJORDOMUS_FLEET_PACK, else \$XDG_CONFIG_HOME/majordomus/fleet,
+              else ~/.config/majordomus/fleet) and applies here, its listed files are refreshed
+              as \`rules vendor update\` does, after the projections; with no pack, update reads
+              nothing else and writes exactly what it wrote before packs existed
 H
       return 0 ;;
     *) mj_die "$MJ_EX_USAGE" "update: unknown option $1" ;;
@@ -153,6 +164,10 @@ H
   mj_ledger_append projections.updated "\"policy_sha256\":\"$psha\",\"targets\":$i"
   rm -rf "$tmp"
   printf 'generated %s target(s) from policy %s; each carries its own stamp\n' "$i" "${psha:0:12}"
+  # the fleet pack, only where one exists: a refusal leaves the installed copy as it was
+  local frc=0
+  mj_fleet_present && { mj_fleet_install update || frc=$?; }
+  [ "$frc" = 0 ] || exit "$frc"
 }
 
 # builds multi-line fragment files in $1: PROFILE_TABLE, FINISH_CONTRACT, REQUIRED_SECTIONS.

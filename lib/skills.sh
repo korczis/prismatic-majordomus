@@ -134,6 +134,59 @@ mj_skill_validate_loaded() {
   return $rc
 }
 
+# mj_skills_check_file FILE [DIRNAME] — the one-file half of `skills check`, for a SKILL.md
+# that is not in the catalogue yet: a fleet pack's skill staged before it is installed. The
+# contract is judged as if the file stood in a directory named DIRNAME (default: the one it
+# is in), so a pack's `skills/<id>/SKILL.md` is checked as the `fleet-<id>` it will become and
+# its id has to say so. Every reason on its own line on stdout; exit 1 when any. What needs
+# the whole catalogue (a duplicate id or description, a related id) is `skills check`'s, after
+# the install.
+mj_skills_check_file() {
+  local f="$1" dir="${2:-}" rc=0
+  [ -f "$f" ] || { printf 'no file to check\n'; return 1; }
+  [ -f "$MJ_ALLOW_DIR/skill.txt" ] || { printf 'allow-list missing: %s (run: majordomus generate allow)\n' "$MJ_ALLOW_DIR/skill.txt"; return 1; }
+  [ -n "$dir" ] || { dir="$(dirname "$f")"; dir="${dir##*/}"; }
+  mj_skill_validate "$f" "$dir" || rc=1
+  [ -n "$MJ_SKILL_FLAT" ] && rm -f "$MJ_SKILL_FLAT"; MJ_SKILL_FLAT=""
+  return $rc
+}
+
+# ---------------------------------------------------------------- fleet provenance
+# A skill the owner's fleet pack installed is `<skills>/fleet-<id>/SKILL.md`, and the test that
+# names it and the surface that invokes it are the pack's, not the adopter's: the adopter holds
+# a copy, never the proof. The install writes a stamp (mj_fleet_stamp, lib/fleet.sh), an
+# ai-fleet-stamp/v1 header over one line per installed file, `<sha256><TAB><repository-relative
+# path><TAB><kind><TAB><pack path>`. A fleet-<id> skill the stamp lists as a skill, installed
+# from the pack's skills/<id>/SKILL.md, with the sha256 of the bytes in the tree, is proved by
+# the pack. A fleet- skill the stamp does not list so, or whose bytes have changed since the
+# install, is the adopter's own and owes its proof like any other; a hand edit to an installed
+# copy is the fleet check's FAIL, never an exemption here. The prefix is defined here, and the
+# stamp's path and format in lib/fleet.sh, each once; each file reads the other's.
+MJ_SKILLS_FLEET_PREFIX="fleet-"
+
+# mj_skills_fleet_proved PATH — exit 0 when the skill at repository-relative PATH is a stamped
+# fleet copy with its bytes as installed
+mj_skills_fleet_proved() {
+  local path="$1" stamp dir sha
+  # loaded in this shell, not in a substitution, so that mj_fleet_stamp stays defined after
+  # shellcheck source=fleet.sh
+  . "$MJ_LIB_DIR/fleet.sh"
+  stamp="$(mj_fleet_stamp)"
+  [ -f "$stamp" ] || return 1
+  [ "$(head -n 1 "$stamp")" = "# $MJ_FLEET_STAMP_FORMAT" ] || return 1
+  dir="${path%/"$MJ_SKILL_FILE"}"; dir="${dir##*/}"
+  case "$dir" in "$MJ_SKILLS_FLEET_PREFIX"?*) ;; *) return 1 ;; esac
+  [ "$path" = "$(mj_rel "$MJ_SKILLS_DIR")/$dir/$MJ_SKILL_FILE" ] || return 1
+  [ -f "$MJ_ROOT/$path" ] || return 1
+  sha="$(mj_sha256_hex "$MJ_ROOT/$path")" || return 1
+  [ -n "$sha" ] || return 1
+  # through the environment, not -v: a path is data, and awk expands escapes in a -v value
+  p="$path" s="$sha" k="skills/${dir#"$MJ_SKILLS_FLEET_PREFIX"}/$MJ_SKILL_FILE" awk -F'\t' '
+    /^#/ { next }
+    $1 == ENVIRON["s"] && $2 == ENVIRON["p"] && $3 == "skill" && $4 == ENVIRON["k"] { hit = 1; exit }
+    END { exit hit ? 0 : 1 }' "$stamp"
+}
+
 # ---------------------------------------------------------------- the catalogue
 # One row per discovered skill, in discovery order, the fields separated by the unit
 # separator (\037, so that an empty field survives `read`, which collapses runs of tabs):
@@ -366,7 +419,7 @@ mj_skills_shadow_doctrine() {
 # through the doctrine channel, a failure as a failure and a warning as a warning. When the
 # executable or jq is not there the half is skipped and says so: unknown, never a pass.
 mj_skills_proof_doctrine() {
-  local bin share out rc=0 n=0 fails=0 level code subject message reproduce
+  local bin share out rc=0 n=0 fails=0 level code subject message reproduce fleet=""
   # shellcheck source=rust_bin.sh
   . "$MJ_LIB_DIR/rust_bin.sh"
   bin="$(mj_rust_bin "$MJ_HOME")"
@@ -389,10 +442,22 @@ mj_skills_proof_doctrine() {
   fi
   while IFS=$'\037' read -r level code subject message reproduce; do
     [ -n "$code" ] || continue
+    # no test here names a stamped fleet skill and nothing here need invoke it: the pack
+    # proves both (fleet provenance, above). A contract finding is never the pack's to waive.
+    case "$code" in
+      untested|unused|unevidenced)
+        if mj_skills_fleet_proved "$subject"; then
+          case " $fleet " in *" $subject "*) ;; *) fleet="$fleet $subject" ;; esac
+          continue
+        fi ;;
+    esac
     n=$((n + 1))
     if [ "$level" = fail ]; then fails=$((fails + 1)); mj_doctrine_fail skill "$subject" "$code: $message" "$reproduce"
     else mj_warn skill "$subject" "$code: $message" "$reproduce"; fi
   done < <(printf '%s' "$out" | jq -r '.findings[] | [.level, .code, .subject, .message, .reproduce] | join("\u001f")')
+  for subject in $fleet; do
+    mj_doctrine_ok skill "$subject" "proved by the fleet pack: $(mj_rel "$(mj_fleet_stamp)") lists it with these bytes" "majordomus skills status"
+  done
   [ "$fails" = 0 ] && mj_doctrine_ok skill "proof of $(printf '%s' "$out" | jq -r '.skills') skill(s)" "no orphan and no binding to nothing; $((n - fails)) debt(s) reported" "majordomus skills status"
   return 0
 }
