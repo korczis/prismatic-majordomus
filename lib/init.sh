@@ -213,6 +213,9 @@ hooks are not installed by init; add these two lines yourself, doctor verifies t
   pre-commit: MAJORDOMUS_DOCTOR_CONTEXT=commit $rel doctor || exit \$?
   pre-push:   $rel finish --check || exit \$?
 OUT
+    printf '  and, for the commit policy of %s (doctor does not require it):\n' "$(mj_rel "$MJ_POLICY_FILE")"
+    # shellcheck disable=SC2016  # the hook's own $1 and $?, printed for the hook to expand
+    printf '  commit-msg: %s commit validate "$1" || exit $?\n' "$rel"
     return 0
   fi
   printf "hooks are not installed by init, and this repository's hooks are the project's (%s/ is tracked):\n" "$hookrel"
@@ -226,6 +229,8 @@ OUT
       printf "  %s: %s/%s is tracked and runs no %s.d/, so there is no place of your own for: %s\n" "$h" "$hookrel" "$h" "$h" "$line"
     fi
   done
+  # shellcheck disable=SC2016  # the hook's own $1 and $?, printed for the hook to expand
+  printf '  commit-msg (the commit policy, not required by doctor): %s commit validate "$1" || exit $?\n' "$rel"
   printf '  doctor verifies whichever you add; an entry you cannot wire is yours to remove from %s\n' "$(mj_rel "$MJ_POLICY_FILE")"
 }
 

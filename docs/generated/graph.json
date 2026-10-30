@@ -71528,6 +71528,47 @@
         }
       },
       {
+        "id": "majordomus://issue/I4262",
+        "kind": "issue",
+        "label": "I4262",
+        "summary": "An adopter gets the commit-message guard the projection's rules assume",
+        "route": "/cockpit/objects/issue/i4262",
+        "source": ".ai/repo/project/issues/I4262.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A subject without an issue id is refused when the policy requires one",
+            "A closing keyword is refused"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "commit.validate judges this repository's own policy.",
+          "depends_on": [],
+          "desired_state": "init offers a commit-msg line whose policy (issue id required, tracker key pattern, closing keywords refused, branch naming) is declared in the adopter's policy.",
+          "evidence_required": [
+            "case_a_commit_message_guard_ships_for_adopter"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "init offers a commit-msg line whose policy (issue id required, tracker key pattern, closing keywords refused, branch naming) is declared in the adopter's policy.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4262.yaml",
+            "lib/init.sh",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/allow/policy.txt",
+            "apps/majordomus-cli/src/commit",
+            "docs/COMMIT.md",
+            "test/cases/4262_an_adopter_commit_is_judged.sh"
+          ],
+          "slug": "a-commit-message-guard-ships-for-adopters",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4262_an_adopter_commit_is_judged"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4265",
         "kind": "issue",
         "label": "I4265",
@@ -98122,6 +98163,13 @@
         "label": "test/cases/4258_documents_below_docs_are_discovered.sh",
         "route": "/cockpit/objects/test/test-cases-4258-documents-below-docs-are-discovered-sh",
         "source": "test/cases/4258_documents_below_docs_are_discovered.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4262_an_adopter_commit_is_judged.sh",
+        "kind": "test",
+        "label": "test/cases/4262_an_adopter_commit_is_judged.sh",
+        "route": "/cockpit/objects/test/test-cases-4262-an-adopter-commit-is-judged-sh",
+        "source": "test/cases/4262_an_adopter_commit_is_judged.sh"
       },
       {
         "id": "majordomus://test/test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh",
@@ -136983,6 +137031,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4262",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4262",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4265",
         "target": "kind:issue",
         "kind": "is_a"
@@ -144403,6 +144461,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4262_an_adopter_commit_is_judged.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -149509,8 +149572,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4097,
-      "edges": 9459,
+      "nodes": 4099,
+      "edges": 9462,
       "acyclic": false,
       "truncated": false
     }
