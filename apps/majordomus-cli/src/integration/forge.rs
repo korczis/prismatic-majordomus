@@ -3879,6 +3879,17 @@ mod tests {
                 ]
             );
         }
+        // a page the forge fails while the list is read again fails the list, as gh said it
+        let failing = |_: &str, _: &str, _: Option<&str>| -> Result<Value, ForgeError> {
+            Err(ForgeError("HTTP 502: Bad Gateway".into()))
+        };
+        let given_up = (
+            false,
+            String::new(),
+            "HTTP 504: 504 Gateway Timeout".to_string(),
+        );
+        let err = open_list(&args, given_up, &failing).unwrap_err();
+        assert!(err.0.contains("502"), "{err}");
         // any other failure is the error gh said, and no page is asked
         asked.borrow_mut().clear();
         let refused = (
