@@ -71,13 +71,13 @@ expect_grep 'scripts/github-sync --check'
 expect_exit 0 gate
 pj_issue I0003 M000
 expect_exit 10 gate
-expect_grep 'FAIL github-check +1 record\(s\) missing, over the baseline of 0'
+expect_grep 'FAIL github-check +1 record\(s\) never-created, over the baseline of 0'
 expect_grep 'scripts/github-sync --apply'
 
 # --- the baseline may be lowered, and lowering it is what a backfill leaves behind
 printf 'missing 1\nadopt 0\n' > "$BASE"
 expect_exit 0 gate
-expect_grep '1 record\(s\) missing, at the baseline'
+expect_grep '1 record\(s\) never-created, at the baseline'
 printf 'missing 5\nadopt 0\n' > "$BASE"
 expect_exit 0 gate
 expect_grep 'under the baseline of 5'
