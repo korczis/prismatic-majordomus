@@ -45,6 +45,12 @@ pub struct IntegrationPolicy {
     /// `None` every pull request the relation to master does not already decide is held
     /// (`merge_commit_not_allowed`), never merged otherwise.
     pub merge_method: Option<String>,
+    /// Whether the repository's merge settings went unread (the forge's answer carried none
+    /// of them): `merge_method` is then `None` because nothing is known, not because a merge
+    /// commit is refused, and a held pull request says `merge_settings_unread` (I2966). Absent
+    /// in a policy recorded before it was read, which read them.
+    #[serde(default)]
+    pub merge_settings_unread: bool,
     /// Whether the base requires a branch to be up to date before it merges (the
     /// protection's `required_status_checks.strict`, or a ruleset's): the forge-side half of
     /// the guard against a merge onto a master nobody tested with the change. The executor's
@@ -1294,7 +1300,15 @@ pub fn classify(
             &forge,
         ));
     }
-    if policy.merge_method.is_none() {
+    if policy.merge_method.is_none() && policy.merge_settings_unread {
+        evidence.push(ev(
+            EvidenceKind::RepositorySettings,
+            "merge_settings_unread",
+            "the repository's merge settings could not be read: whether it allows a merge commit \
+             is unknown, and the executor merges only with one",
+            &forge,
+        ));
+    } else if policy.merge_method.is_none() {
         evidence.push(ev(
             EvidenceKind::RepositorySettings,
             "merge_commit_not_allowed",
@@ -1434,7 +1448,13 @@ pub fn classify(
         ),
         (
             IntegrationGate::MergeMethod,
-            if policy.merge_method.is_none() {
+            if policy.merge_method.is_none() && policy.merge_settings_unread {
+                fails(
+                    PullRequestDisposition::Unknown,
+                    vec![ReasonCode::MergeSettingsUnread],
+                    Some("majordomus prs refresh, with a token that can read the repository's settings".into()),
+                )
+            } else if policy.merge_method.is_none() {
                 fails(
                     PullRequestDisposition::Blocked,
                     vec![ReasonCode::MergeCommitNotAllowed],
@@ -1872,6 +1892,7 @@ mod decision_branches {
             skipped_permitted: skipped.iter().map(|s| s.to_string()).collect(),
             labels: LABEL_POLICY.to_vec(),
             merge_method: Some("merge".into()),
+            merge_settings_unread: false,
             up_to_date_required: None,
         }
     }
@@ -2475,6 +2496,7 @@ mod dependency_resolution {
             skipped_permitted: Vec::new(),
             labels: LABEL_POLICY.to_vec(),
             merge_method: Some("merge".into()),
+            merge_settings_unread: false,
             up_to_date_required: None,
         }
     }

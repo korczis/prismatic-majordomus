@@ -39,8 +39,44 @@ chk 'rm[[:space:]]+-[a-zA-Z]*r[a-zA-Z]*f?[[:space:]]+"?\$MJ_ROOT'  'recursive de
 chk 'rm[[:space:]]+-[a-zA-Z]*r[a-zA-Z]*f?[[:space:]]+"?\$MJ_(AI_DIR|AI_REPO_DIR|AI_LOCAL_DIR|STATE_DIR|HOME|SHARE_DIR)'   'recursive delete of the AI layer or the distribution'
 chk 'rm[[:space:]]+-rf[[:space:]]+/[^t]'                    'recursive delete of an absolute path outside tmp'
 [ "$bad" = 0 ]
-# every rm -rf that does exist targets a mktemp path
-grep -nE 'rm -rf' $files | grep -vE 'mktemp|\$tmp\b|\$TMP\b|"\$tmp"|"\$T"|\$MJ_CTX_TMP\b|\$MJ_PJ\b|\$MJ_ARCHIVE_TMPD\b|\$MJ_TMP_ROOT\b|"\$stale"' | grep -vE '^[^:]+:[0-9]+:\s*#' && exit 1
+# every rm -rf that does exist targets a mktemp path, with one exception that is declared
+# rather than tolerated: two sweeps of lib/rust_bin.sh remove what cargo's build directories
+# accumulate on purpose, and no mktemp is involved. Each is held to the shape that makes it
+# fail closed (project.destructive-sweeps-fail-closed):
+#   - the idle incremental-session sweep (mj_rust_prune_incremental_of; case 3080): one
+#     removal of a session only the find listing named, asked again of that path alone the
+#     moment before, and believed only when the path is gone;
+#   - the idle private build directory sweep (mj_rust_reclaim_private; case 3197): one
+#     removal of a directory the same function has just renamed out of cargo's reach, after
+#     its age, lock and process predicates were asked twice.
+rmrf="$(grep -nE 'rm -rf' $files | grep -vE 'mktemp|\$tmp\b|\$TMP\b|"\$tmp"|"\$T"|\$MJ_CTX_TMP\b|\$MJ_PJ\b|\$MJ_ARCHIVE_TMPD\b|\$MJ_TMP_ROOT\b|"\$stale"' | grep -vE '^[^:]+:[0-9]+:\s*#' || true)"
+while IFS= read -r line; do
+  [ -n "$line" ] || continue
+  case "$line" in
+    "$ROOT/lib/rust_bin.sh:"*'      if rm -rf "$mj_pi_s" 2>/dev/null && [ ! -e "$mj_pi_s" ]; then') ;;  # the declared sweep
+    "$ROOT/lib/rust_bin.sh:"*'      rm -rf "$mj_rp_gone" 2>/dev/null || true   # renamed out of cargo'"'"'s reach a line above') ;;  # the second
+    *) printf '%s\n    rm -rf of a path the scan cannot see came from mktemp\n' "$line"; exit 1 ;;
+  esac
+done <<EOF
+$rmrf
+EOF
+sweep="$ROOT/lib/rust_bin.sh"
+[ "$(grep -cF 'rm -rf "$mj_pi_s"' "$sweep")" = 1 ] \
+  || { printf '    the declared sweep is not one removal in lib/rust_bin.sh\n'; exit 1; }
+awk '/^mj_rust_prune_incremental_of\(\) \{/ { f = 1 } f && /^}/ { f = 0 }
+     f && index($0, "rm -rf \"$mj_pi_s\"") { found = 1 } END { exit !found }' "$sweep" \
+  || { printf '    the declared removal is not inside mj_rust_prune_incremental_of\n'; exit 1; }
+[ "$(grep -cF 'rm -rf "$mj_rp_gone"' "$sweep")" = 1 ] \
+  || { printf '    the private build directory sweep is not one removal in lib/rust_bin.sh\n'; exit 1; }
+awk '/^mj_rust_reclaim_private\(\) \{/ { f = 1 } f && /^}/ { f = 0 }
+     f && index($0, "mv \"$mj_rp_d\" \"$mj_rp_gone\"") { moved = 1 }
+     f && moved && index($0, "rm -rf \"$mj_rp_gone\"") { found = 1 } END { exit !found }' "$sweep" \
+  || { printf '    the private build directory removal is not inside mj_rust_reclaim_private, after its rename\n'; exit 1; }
+grep -qF "\"\$mj_pi_find\" \"\$mj_pi_s\" -maxdepth 0 -type d -name 's-*' ! -name '*-working'" "$sweep" \
+  || { printf '    the declared sweep no longer asks the predicate again before it removes\n'; exit 1; }
+if grep -nE '(^|[;{[:space:]])(local )?mj_pi_s=' "$sweep"; then
+  printf '    mj_pi_s is assigned from something other than the find listing\n'; exit 1
+fi
 # ... and every variable the scan trusts by name is only ever assigned from mktemp
 for v in MJ_CTX_TMP MJ_PJ MJ_BENCH_ARGV MJ_ARCHIVE_TMPD MJ_REC_TMP MJ_TMP_ROOT; do
   if grep -nE "(^|[;{][[:space:]]*)(local )?$v=" $files | grep -vE 'mktemp|'"$v"'=""'; then

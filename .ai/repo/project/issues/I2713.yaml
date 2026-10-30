@@ -27,4 +27,15 @@ validation:
 evidence_required:
   - "idle_sessions_are_pruned_case"
 created_at: 2026-10-14
-updated_at: 2026-10-14
+updated_at: 2026-10-17T09:23:35Z
+started_at: 2026-10-17T09:23:02Z
+started_event: sha256:1a4e365de0c9130feaed2da04eff06eca8d9a04224d08f7c1d56e080dd07bec3
+verified_at: 2026-10-17T09:23:19Z
+verified_event: sha256:2fd71e9839232a02785977863f0178c5d5248850b34b5c415a512e51178d6c23
+evidence:
+  - covers: idle_sessions_are_pruned_case
+    type: test
+    command: "bash test/run.sh 3080_idle_incremental_sessions_are_pruned 3196_stale_crate_artifacts_are_pruned_under_cargos_lock"
+    result: "ok 3080, ok 3196 (2 passed); 3196 fails with the lock or the process check removed"
+    commit: ed7a00045e6d114cb86b6813bb368d414a1c48ce
+    recorded_at: 2026-10-17T09:23:35Z

@@ -254,7 +254,7 @@ pub fn browser(issues: &Answer, roadmap: &Answer, pick: &Pick) -> El {
             .attr("action", ROUTE)
             .child(
                 el("label")
-                    .class("mj-ui-sr-only")
+                    .class("mj-sr-only")
                     .attr("for", "mj-ui-issues-q")
                     .text("Search issues"),
             )

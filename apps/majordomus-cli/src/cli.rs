@@ -105,6 +105,8 @@ pub enum Command {
     Intent(IntentArgs),
     /// Whether each product feature exists: on master, deployed, publicly verified, tested, its evidence published and linked — every dimension computed, unknown never a pass
     Delivery(DeliveryArgs),
+    /// How far each issue's work has travelled: none, branch, pr_open, merged, released or deployed, each with the object that proved it; the plan's records are read and moved by the shell tool's `plan`
+    Plan(PlanArgs),
     /// Token economics, measured: matched runs with and without Majordomus, every metric with its measurement class and sample size, the statement the evidence allows, and the check that refuses an unsupported savings claim
     Economics(EconomicsArgs),
     /// Every object of the layer as an addressable node: the kinds and their routes, and one entity with its references, its backlinks, the surfaces that answer for it and the state of what it names
@@ -1884,9 +1886,10 @@ pub enum ReleaseCommand {
     },
     /// The version a landing of HEAD onto the trunk allocates, and why: the trunk's version, the measured movement, the policy floor and any exemption (ADR 0134)
     Next {
-        /// The trunk the landing raises from
-        #[arg(long, value_name = "REF", default_value = "origin/master")]
-        base: String,
+        /// The trunk the landing raises from; when absent, the remote-tracking ref of the trunk
+        /// this repository names
+        #[arg(long, value_name = "REF")]
+        base: Option<String>,
         /// What lands
         #[arg(long, value_name = "REF", default_value = "HEAD")]
         head: String,
@@ -2746,6 +2749,104 @@ pub enum DeliveryCommand {
         #[arg(long)]
         check: bool,
     },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus plan`, the executable's half: the inferences over the plan that need git and
+/// the forge cache. The records themselves are read and moved by the shell tool's `plan`,
+/// which hands `plan delivery` to this one.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, PlanArgs, PlanCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "plan", "delivery", "I2740", "--at", "HEAD", "--format", "json"])
+///     .unwrap();
+/// let args: PlanArgs = match cli.command {
+///     Command::Plan(args) => args,
+///     other => panic!("expected `plan`, parsed {other:?}"),
+/// };
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// assert!(matches!(
+///     args.command,
+///     PlanCommand::Delivery { issue: Some(ref i), at: Some(ref at) } if i == "I2740" && at == "HEAD"
+/// ));
+/// // the group runs nothing of its own
+/// assert!(Cli::try_parse_from(["majordomus", "plan"]).is_err());
+/// ```
+pub struct PlanArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `delivery`. Required: the group runs nothing of its own.
+    pub command: PlanCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus plan` this executable answers: the command line of
+/// `plan.delivery`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, PlanCommand};
+///
+/// fn parse(args: &[&str]) -> PlanCommand {
+///     let Command::Plan(args) = Cli::try_parse_from(args.iter().copied()).unwrap().command
+///     else { panic!("plan") };
+///     args.command
+/// }
+/// assert!(matches!(parse(&["majordomus", "plan", "delivery"]), PlanCommand::Delivery { issue: None, at: None }));
+/// assert!(matches!(
+///     parse(&["majordomus", "plan", "drift", "--gate", "trunk"]),
+///     PlanCommand::Drift { issue: None, at: None, gate: Some(majordomus_cli::cli::DriftGateArg::Trunk) }
+/// ));
+/// assert!(matches!(
+///     parse(&["majordomus", "plan", "delivery", "I0001"]),
+///     PlanCommand::Delivery { issue: Some(ref i), at: None } if i == "I0001"
+/// ));
+/// ```
+pub enum PlanCommand {
+    /// Every issue's furthest delivery stage, with the object that proved it and its declared status beside it
+    Delivery {
+        /// One issue; default every issue of the plan
+        issue: Option<String>,
+        /// Observe as of this commit: its history and the tree's release records, nothing live (no branch, forge, deployment or clock)
+        #[arg(long, value_name = "REV")]
+        at: Option<String>,
+    },
+    /// Every contradiction between an issue's declared status and its delivery — merged_not_recorded, active_without_work, done_without_trace — each with its proof; with --gate, judged against the window .ai/repo/ci/plan.yaml declares
+    Drift {
+        /// One issue; default every issue of the plan
+        issue: Option<String>,
+        /// Observe as of this commit, as `plan delivery --at` does
+        #[arg(long, value_name = "REV")]
+        at: Option<String>,
+        /// Judge as a gate: on a `head` merged work is pending, on the `trunk` past the window it is refused (exit 10 under blocking enforcement); a missing window exits 12
+        #[arg(long, value_enum, value_name = "TREE")]
+        gate: Option<DriftGateArg>,
+    },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+/// The tree `majordomus plan drift --gate` judges.
+///
+/// ```
+/// use clap::ValueEnum;
+/// use majordomus_cli::cli::DriftGateArg;
+/// assert_eq!(DriftGateArg::from_str("trunk", false), Ok(DriftGateArg::Trunk));
+/// assert!(DriftGateArg::from_str("main", false).is_err(), "only a head or the trunk");
+/// ```
+pub enum DriftGateArg {
+    /// A head: merged work the plan has not recorded is pending
+    Head,
+    /// The trunk: merged work unrecorded past the window is refused
+    Trunk,
 }
 
 #[derive(Debug, Args)]
@@ -3791,7 +3892,7 @@ pub enum WorktreeCommand {
         /// The branch, full name
         branch: String,
     },
-    /// Create the canonical worktree of a branch, creating the branch from --base (default: the trunk) when it does not exist. The path is derived; none may be given
+    /// Create the canonical worktree of a branch. A branch that does not exist here is fetched from the trunk's remote and taken up when the remote has it; otherwise it is created from --base, else from the remote's trunk fetched now (the local trunk only when the remote cannot be read, and then said, with how far behind). The path is derived; none may be given
     Create {
         /// The branch, full name (`feature/improve-cli`)
         #[arg(value_name = "BRANCH", required_unless_present = "issue")]
@@ -3875,6 +3976,8 @@ pub enum WorktreeCommand {
         #[arg(long, value_name = "DURATION")]
         older_than: Option<String>,
     },
+    /// How far this checkout and the local trunk are from the remote trunk, as of the last fetch, judged against the policy's checkout.trunk_distance: current, lagging, stale, unjudged or unmeasured, with the commands that bring it current. Fetches nothing; exit 10 when stale
+    Trunk,
     /// Every local branch, one per line, for a shell completion that wants the live set
     Branches {
         /// Only branches with no worktree
@@ -5248,6 +5351,48 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "plan delivery",
+        examples: &[
+            ExampleDoc {
+                id: "plan-delivery-json",
+                title: "How far every issue's work has travelled",
+                description: "The same answer `GET /api/v1/plan/delivery` and the MCP tool `majordomus_plan_delivery` return: every issue with its declared status and the furthest stage proved — none, branch, pr_open, merged, released, deployed — each stage with the branch, pull request, merge commit, tag or `latest.json` that proved it. A checkout that never observed the forge says the forge is unread, and an issue it could have moved further is not settled.",
+                argv: &["plan", "delivery", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/observed/commit", "/tallies/none", "/issues/0/stage", "/sources"]),
+            },
+            ExampleDoc {
+                id: "plan-delivery-at",
+                title: "One issue, as of a commit",
+                description: "`--at` reads the merges in that commit's history and the tree's release records, and nothing live — no branch, no forge, no deployment, no clock — so it proves only merged and released and the answer is a function of the commit alone. That is what `scripts/generate-site-data` writes to `site/data/generated/delivery.json` and reproduces under `--check`.",
+                argv: &["plan", "delivery", "I0001", "--at", "HEAD"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["I0001", "none", "unread"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "plan drift",
+        examples: &[
+            ExampleDoc {
+                id: "plan-drift-json",
+                title: "Where the plan's stamps contradict the delivered work",
+                description: "The same answer `GET /api/v1/plan/drift` and the MCP tool `majordomus_plan_drift` return: every merged_not_recorded, active_without_work and done_without_trace finding with the pull request, merge commit and release that prove it, its age against the window `.ai/repo/ci/plan.yaml` declares, and the command that settles it.",
+                argv: &["plan", "drift", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/observed/commit", "/window/model", "/tallies/merged_not_recorded", "/verdict"]),
+            },
+            ExampleDoc {
+                id: "plan-drift-at",
+                title: "As of a commit",
+                description: "`--at` reads that commit's history and the tree's records only, as `plan delivery --at` does, so the open pull requests are unread and a finding says it is not settled. `--gate head|trunk` judges the answer as `scripts/ci/plan-drift-check` does: on a head merged work the plan has not recorded is pending; on the trunk one merged longer than the window ago is refused, naming `majordomus plan verify|done <id>`, and a missing window refuses with exit 12.",
+                argv: &["plan", "drift", "--at", "HEAD"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["plan drift", "window"]),
+            },
+        ],
+    },
+    CommandExamples {
         command: "entity kinds",
         examples: &[ExampleDoc {
             id: "entity-kinds-json",
@@ -5932,6 +6077,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["worktree", "uncommitted"],
             setup: &[],
             expect: Expect::StdoutContains(&["0 with uncommitted work", "nothing was changed"]),
+        }],
+    },
+    CommandExamples {
+        command: "worktree trunk",
+        examples: &[ExampleDoc {
+            id: "worktree-trunk-unmeasured",
+            title: "How far this checkout is from the remote trunk",
+            description: "The checkout's HEAD and the local trunk counted against the remote-tracking trunk, as of the last fetch, and judged against the policy's checkout.trunk_distance. A repository with no remote has nothing to be measured against and says so — `unmeasured`, never `current`; nothing is fetched either way.",
+            argv: &["worktree", "trunk"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["unmeasured", "no remote-tracking branch"]),
         }],
     },
     CommandExamples {

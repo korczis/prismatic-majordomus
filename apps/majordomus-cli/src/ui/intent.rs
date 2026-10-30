@@ -63,8 +63,22 @@ fn strings(v: &Value, k: &str) -> Vec<String> {
         .unwrap_or_default()
 }
 
-/// The inspector of intent `id`.
+/// The verdict of an intent as its badge: `intents.list` answers the verdict as an object
+/// whose `state` is the word, which a reader of a plain string would draw as `unknown`.
+pub fn verdict(i: &Value) -> El {
+    match i.get("verdict") {
+        Some(v @ Value::Object(_)) => state(v, "state"),
+        _ => state(i, "verdict"),
+    }
+}
+
+/// The inspector of intent `id`, closed to the Roadmap.
 pub fn inspector(intents: &Answer, issues: &Answer, id: &str) -> El {
+    inspector_closing_to(intents, issues, id, super::roadmap::ROUTE)
+}
+
+/// The inspector of intent `id`, whose "Close" leads to `close`: the screen it is open on.
+pub fn inspector_closing_to(intents: &Answer, issues: &Answer, id: &str, close: &str) -> El {
     let body = unanswered(intents)
         .or_else(|| unanswered(issues))
         .unwrap_or_else(|| {
@@ -79,6 +93,19 @@ pub fn inspector(intents: &Answer, issues: &Answer, id: &str) -> El {
                 .and_then(Value::as_array)
                 .cloned()
                 .unwrap_or_default();
+            // the records the intent's prose may name: every issue of the plan and every
+            // milestone the intent names that the plan resolves; an id links only to those (I3000)
+            let known = super::prose::Known {
+                issues: list(issues, "/issues")
+                    .iter()
+                    .map(|x| text(x, "id"))
+                    .collect(),
+                milestones: milestones
+                    .iter()
+                    .filter(|m| m.get("resolved").and_then(Value::as_bool) == Some(true))
+                    .map(|m| text(m, "id"))
+                    .collect(),
+            };
             let serving: Vec<Value> = list(issues, "/issues")
                 .into_iter()
                 .filter(|x| strings(x, "serves").iter().any(|s| intent_of(s) == id))
@@ -103,7 +130,7 @@ pub fn inspector(intents: &Answer, issues: &Answer, id: &str) -> El {
                                 .child(
                                     el("span")
                                         .class("mj-ui-cell-title")
-                                        .text(text(c, "criterion")),
+                                        .nodes(super::prose::inline(&text(c, "criterion"), &known)),
                                 ),
                         )
                         .child(el("td").class("mj-ui-mono").text(text(c, "evidence")))
@@ -135,7 +162,7 @@ pub fn inspector(intents: &Answer, issues: &Answer, id: &str) -> El {
                             el("p")
                                 .class("mj-ui-badges")
                                 .child(state(&i, "stage"))
-                                .child(state(&i, "verdict"))
+                                .child(verdict(&i))
                                 .child(
                                     el("span")
                                         .class("mj-ui-mono mj-ui-dim")
@@ -144,31 +171,29 @@ pub fn inspector(intents: &Answer, issues: &Answer, id: &str) -> El {
                                 .child(
                                     el("a")
                                         .class("mj-ui-more")
-                                        .attr("href", super::roadmap::ROUTE)
+                                        .attr("href", close)
                                         .text("Close"),
                                 ),
                         ),
                 )
-                .child(el("p").class("mj-ui-lead").text(text(&i, "statement")))
+                .child(super::prose::paragraph(&text(&i, "statement"), &known))
                 .child(
                     el("h4")
                         .class("mj-ui-panel-title")
-                        .text("What it holds the work to"),
+                        .text("What does it hold the work to?"),
                 )
                 .child({
                     let inv = strings(&i, "invariants");
                     if inv.is_empty() {
                         nothing("It declares no invariant.")
                     } else {
-                        el("ul")
-                            .class("mj-ui-list")
-                            .children(inv.into_iter().map(|t| el("li").text(t)))
+                        super::prose::bullets(&inv, &known)
                     }
                 })
                 .child(
                     el("h4")
                         .class("mj-ui-panel-title")
-                        .text("Milestones that serve it"),
+                        .text("Which milestones serve it?"),
                 )
                 .child(if milestones.is_empty() {
                     nothing("No milestone serves it yet.")
@@ -185,7 +210,7 @@ pub fn inspector(intents: &Answer, issues: &Answer, id: &str) -> El {
                 .child(
                     el("h4")
                         .class("mj-ui-panel-title")
-                        .text("Issues that serve it"),
+                        .text("Which issues serve it?"),
                 )
                 .child(if serving.is_empty() {
                     nothing("No issue of the plan names it.")
@@ -200,7 +225,7 @@ pub fn inspector(intents: &Answer, issues: &Answer, id: &str) -> El {
                 .child(
                     el("h4")
                         .class("mj-ui-panel-title")
-                        .text("When it is satisfied"),
+                        .text("When is it satisfied?"),
                 )
                 .child(table(
                     &["Criterion", "Evidence", "State", "Met", "Reproduce"],
@@ -209,7 +234,7 @@ pub fn inspector(intents: &Answer, issues: &Answer, id: &str) -> El {
                 ))
         });
     panel(
-        "Intent",
+        "What is this intent for?",
         "What the work is for, what it holds the work to, and whether the evidence says it is met.",
         body,
         &[intents, issues],

@@ -232,7 +232,7 @@ ui_integrity() {
   local fresh=0 debt=0 paid=0 key where message
   while IFS="$(printf '\t')" read -r key where message; do
     [ -n "$key" ] || continue
-    if [ -n "$known" ] && printf '%s\n' "$known" | grep -qxF -- "$key"; then
+    if [ -n "$known" ] && grep -qxF -- "$key" <<<"$known"; then
       debt=$((debt + 1))
       printf 'debt %s  %s\n' "$where" "${key%% *}"
     else
@@ -245,7 +245,7 @@ EOF
   if [ -n "$known" ]; then
     while IFS= read -r key; do
       [ -n "$key" ] || continue
-      if ! printf '%s\n' "$keys" | grep -qxF -- "$key"; then
+      if ! grep -qxF -- "$key" <<<"$keys"; then
         paid=$((paid + 1))
         printf 'paid %s  (nothing matches it now; drop it with --write-baseline)\n' "$key"
       fi

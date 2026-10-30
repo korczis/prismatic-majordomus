@@ -1,0 +1,35 @@
+id: I2783
+milestone: idd-workspace
+title: "The intent workspace reads itself again when a move ends on its server"
+slug: the-workspace-follows-the-plan-live
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Have /ui/idd hold one channel to /events through the Cockpit's socket.js, named by the page with the channel's path, and read the screen again when an execution ends there, at most once per burst; the line beside the read time says whether that channel is live, reconnecting or offline, from the socket's own state."
+why: "The workspace reads its sources once a minute, so a move made from another tab, the Cockpit or an agent through this server is invisible on it for up to a minute; the server already reports every execution on one channel with one client to read it."
+serves:
+  - the-owner-directs-work-from-the-ui#the-workspace-follows-moves
+current_state: "/ui screens read again every minute; only the Cockpit follows /events."
+desired_state: "/ui/idd reads again within seconds of an execution ending on its server, says what its channel is doing, and still refreshes by the minute for what the channel does not carry."
+scope:
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/tests/ui_idd_live.rs"
+  - "share/ui/ui.js"
+  - "docs"
+  - "site"
+  - ".ai/repo/project"
+depends_on:
+  - "I2781"
+acceptance_criteria:
+  - "The workspace page names /events and the socket module, and the module is served"
+  - "A move started through executions.start ends on /events and the screen read again reads its new status"
+  - "No other screen declares that it follows executions"
+  - "A snapshot opens no channel"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --test ui_idd_live"
+  - "cargo test --lib ui::"
+evidence_required:
+  - "ui_idd_live_tests"
+created_at: 2026-10-17
+updated_at: 2026-10-17

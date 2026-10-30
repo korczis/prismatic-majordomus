@@ -1,0 +1,25 @@
+id: I2987
+milestone: a-second-adopter-is-served
+title: "server.status and peers.list ask every checkout at once, a bounded number at a time"
+slug: every-checkout-is-asked-at-once
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the repository-wide readings of `server.status` and `peers.list` ask the checkouts git registers concurrently, at most `server::ASKED_AT_ONCE` (16) at a time, through one helper (`server::each_checkout`). The answers are folded in the order git lists the checkouts, so the output, its order and `complete` are what the one-at-a-time loop gave. Each probe stays bounded by the declared probe timeout, so the wait is a few timeouts however many checkouts there are."
+why: "An adopter's 0.29.0 field report (prismatic-platform, 2026-10-18, item 5) measured `/api/v1/server` with the default `checkouts=repository` blocking for 30 s or more while `/` answered in 0.5 ms, and `serve status` failing with `Resource temporarily unavailable (os error 35)`, with about 58 `serve` processes on the machine. Both capabilities read each checkout's lease and probed its server one after another, so one wedged server added a full probe timeout per checkout. The brief reports 545 boards on this machine, and the blackboard (I2980) reads them through the same gather."
+current_state: "server_status and peers_list loop over the checkouts sequentially; the wait is the sum of every probe."
+desired_state: "The checkouts are asked sixteen at a time and the answer is the same, in the same order."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/server.rs"
+  - "apps/majordomus-cli/src/capability/builtin/peers.rs"
+depends_on: []
+acceptance_criteria:
+  - "Every checkout is answered in the order given, more than one is asked at once, and never more than ASKED_AT_ONCE (unit test every_checkout_is_asked_at_once_and_answered_in_order)"
+  - "The existing server and peers unit tests and their cases pass unchanged"
+validation:
+  - "cargo test --lib -- capability::builtin::server"
+  - "cargo test --lib -- capability::builtin::peers"
+evidence_required:
+  - "unit_checkouts_at_once"
+created_at: 2026-10-18
+updated_at: 2026-10-18

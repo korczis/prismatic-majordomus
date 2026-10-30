@@ -23,7 +23,9 @@ own. `pages.yaml` does the same for publication: what makes the public site diff
 what the fast path may spend, and how the result is measured. `github.yaml` models the GitHub projection on
 the trunk: the workflow every landing starts to apply a changed plan and prove the result
 (`.github/workflows/github.yml`), what that workflow may and may not do, and how long the
-trunk may carry a landed change that nothing has applied yet. `docker-image.yaml` models the deployment image: when it
+trunk may carry a landed change that nothing has applied yet. `plan.yaml` declares the window
+of the plan's drift gate: how long the trunk may carry merged work the plan has not recorded
+(`scripts/ci/plan-drift-check`, ADR 0166), and whether a refusal fails the trunk yet. `docker-image.yaml` models the deployment image: when it
 is built, what its smoke proves, the immutable name it is published under, and which build may
 write which cache.
 
