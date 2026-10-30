@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "da31b40589f677a60c83f92eedaa4d77ca560c96663b428da48f11686010cce8",
+    "fingerprint": "5badc88c0bd7cb48f88577dd2c183aa780fa136b157455f8deccded393283e51",
     "summary": {
-      "total": 3633,
+      "total": 3646,
       "builtin": 220,
-      "declarative": 3413,
+      "declarative": 3426,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3413
+        "resource": 3426
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3423
+        "implemented": 3436
       },
       "mcp_tools": 206,
-      "mcp_resources": 3470,
+      "mcp_resources": 3483,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91383,7 +91383,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1102,
+        "capabilities": 1115,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "1b1c1dbd708b0f93cdad0785ca9f66c5d1ce7915fa55817e723dcd6354675f6f",
+    "fingerprint": "507b9140c302236269091b0f348f8a5ca9fc377c58e5106ab28bc5368844b183",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92113,7 +92113,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 44,
-      "issue": 1102,
+      "issue": 1115,
       "knowledge": 60,
       "mesh-declaration": 1,
       "milestone": 113,
@@ -99585,7 +99585,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 982448
+        "bytes": 1044540
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -114987,6 +114987,50 @@
         "bytes": 1645
       },
       {
+        "uri": "majordomus://issue/I4254",
+        "kind": "issue",
+        "identity": "I4254",
+        "title": "An adopter projects its plan to GitHub with the installed tool, not a clone of its source",
+        "description": "The release carries the projection as a command (for example `majordomus github plan|check|apply`), its network calls still outside lib/, and apply sets or derives the remote's default branch when refs/remotes/<remote>/HEAD is absent.",
+        "path": ".ai/repo/project/issues/I4254.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2007
+      },
+      {
+        "uri": "majordomus://issue/I4255",
+        "kind": "issue",
+        "identity": "I4255",
+        "title": "A project rule can be enforced by a command the repository names",
+        "description": "A project rule may declare a command (repository-relative, with arguments) as its validator; doctor runs or reconciles it like a dispatched doctrine, and `rules list` reports it enforced.",
+        "path": ".ai/repo/project/issues/I4255.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2138
+      },
+      {
+        "uri": "majordomus://issue/I4256",
+        "kind": "issue",
+        "identity": "I4256",
+        "title": "A skill is proved by the adopter's own tests, and its findings name nothing of the tool's tree",
+        "description": "Test markers are read from the repository's declared test paths (scope or policy, with tests/ and test/ as defaults); the page and gate warnings apply only where the repository declares a site and a CI model; `skills check` reports what doctor will fail on.",
+        "path": ".ai/repo/project/issues/I4256.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2191
+      },
+      {
+        "uri": "majordomus://issue/I4257",
+        "kind": "issue",
+        "identity": "I4257",
+        "title": "init projects into an existing CLAUDE.md or AGENTS.md as a region",
+        "description": "For each projection target that already exists and carries no stamp, init writes mode region and says so.",
+        "path": ".ai/repo/project/issues/I4257.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1529
+      },
+      {
         "uri": "majordomus://issue/I4258",
         "kind": "issue",
         "identity": "I4258",
@@ -114998,6 +115042,72 @@
         "bytes": 1391
       },
       {
+        "uri": "majordomus://issue/I4259",
+        "kind": "issue",
+        "identity": "I4259",
+        "title": "A document's own metadata and a folded YAML scalar are diagnosed, not just refused",
+        "description": "document/v1 accepts an `x-` namespace for adopter keys; a folded or multi-line scalar is refused with a message that says so and shows the one-line form.",
+        "path": ".ai/repo/project/issues/I4259.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1860
+      },
+      {
+        "uri": "majordomus://issue/I4260",
+        "kind": "issue",
+        "identity": "I4260",
+        "title": "A task's scope can be widened, with the widening recorded",
+        "description": "`majordomus scope add <path>...` widens the active task's scope and appends a ledger line naming who widened it and why.",
+        "path": ".ai/repo/project/issues/I4260.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1408
+      },
+      {
+        "uri": "majordomus://issue/I4261",
+        "kind": "issue",
+        "identity": "I4261",
+        "title": "An issue names the external requirement it serves, and a milestone its due date",
+        "description": "Issues accept a `traces` list (tracker keys, requirement ids, URLs) projected into the GitHub body; milestones accept an optional `due_on` projected to GitHub's due date and never used to derive status.",
+        "path": ".ai/repo/project/issues/I4261.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1925
+      },
+      {
+        "uri": "majordomus://issue/I4262",
+        "kind": "issue",
+        "identity": "I4262",
+        "title": "An adopter gets the commit-message guard the projection's rules assume",
+        "description": "init offers a commit-msg line whose policy (issue id required, tracker key pattern, closing keywords refused, branch naming) is declared in the adopter's policy.",
+        "path": ".ai/repo/project/issues/I4262.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1767
+      },
+      {
+        "uri": "majordomus://issue/I4263",
+        "kind": "issue",
+        "identity": "I4263",
+        "title": "An adopter's README and wiki show the plan, rules and knowledge from the layer, regenerated",
+        "description": "A projection may target any Markdown file in mode region with a named generator (plan-status, rules, knowledge, adrs, skills), checked by doctor like the provider projections.",
+        "path": ".ai/repo/project/issues/I4263.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1607
+      },
+      {
+        "uri": "majordomus://issue/I4264",
+        "kind": "issue",
+        "identity": "I4264",
+        "title": "adr check names decisions it did not examine, and adr propose records who authored one",
+        "description": "adr check names untracked files under the section; adr propose writes `authored` unless --from names a source.",
+        "path": ".ai/repo/project/issues/I4264.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1438
+      },
+      {
         "uri": "majordomus://issue/I4265",
         "kind": "issue",
         "identity": "I4265",
@@ -115007,6 +115117,39 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 1406
+      },
+      {
+        "uri": "majordomus://issue/I4266",
+        "kind": "issue",
+        "identity": "I4266",
+        "title": "plan says why an issue with no dependency is BLOCKED by its milestone",
+        "description": "plan show and plan blocked name the milestone dependency that blocks an issue.",
+        "path": ".ai/repo/project/issues/I4266.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1302
+      },
+      {
+        "uri": "majordomus://issue/I4267",
+        "kind": "issue",
+        "identity": "I4267",
+        "title": "A repository's static site is a deployment the layer can state",
+        "description": "deployment/v1 accepts a static kind (build command, output directory, publish target, visibility) that doctor validates and the site pipeline reads.",
+        "path": ".ai/repo/project/issues/I4267.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1714
+      },
+      {
+        "uri": "majordomus://issue/I4268",
+        "kind": "issue",
+        "identity": "I4268",
+        "title": "An adopter runs every gate of its CI model and records it with one command",
+        "description": "`majordomus gates run [--tier <t>]` runs each gate the change selects (or all), records `evidence --gate` with its exit, and exits non-zero when one fails; the pre-push line init prints can use it.",
+        "path": ".ai/repo/project/issues/I4268.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1752
       },
       {
         "uri": "majordomus://issue/I4290",
@@ -129265,7 +129408,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1102
+      "objects": 1115
     },
     {
       "name": "knowledge",
