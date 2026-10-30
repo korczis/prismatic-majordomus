@@ -367,6 +367,33 @@
         "status": "query"
       },
       {
+        "id": "capability:design.kit",
+        "kind": "capability",
+        "label": "design.kit",
+        "summary": "Whether the interface is built on the kit",
+        "route": "/cockpit/capabilities/design.kit",
+        "source": "apps/majordomus-cli/src/capability/builtin/design.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:design.kit.adopt",
+        "kind": "capability",
+        "label": "design.kit.adopt",
+        "summary": "Declare the kit in the repository",
+        "route": "/cockpit/capabilities/design.kit.adopt",
+        "source": "apps/majordomus-cli/src/capability/builtin/design.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:design.licence",
+        "kind": "capability",
+        "label": "design.licence",
+        "summary": "Whether a public tree holds a licensed kit's files",
+        "route": "/cockpit/capabilities/design.licence",
+        "source": "apps/majordomus-cli/src/capability/builtin/design.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:design.system",
         "kind": "capability",
         "label": "design.system",
@@ -2860,6 +2887,22 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/design/kit.rs",
+        "kind": "file",
+        "label": "kit.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/design/kit.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/design/licence.rs",
+        "kind": "file",
+        "label": "licence.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/design/licence.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/design/mod.rs",
         "kind": "file",
         "label": "mod.rs",
@@ -4409,6 +4452,22 @@
         "label": "figure.css",
         "summary": "named by the layer; not an object of this index",
         "source": "share/design/figure.css",
+        "external": true
+      },
+      {
+        "id": "file:share/design/kits/flowbite-pro.rule.md",
+        "kind": "file",
+        "label": "flowbite-pro.rule.md",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/design/kits/flowbite-pro.rule.md",
+        "external": true
+      },
+      {
+        "id": "file:share/design/kits/flowbite-pro.yaml",
+        "kind": "file",
+        "label": "flowbite-pro.yaml",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/design/kits/flowbite-pro.yaml",
         "external": true
       },
       {
@@ -9609,6 +9668,32 @@
             "delivery",
             "pages",
             "plan"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0230",
+        "kind": "adr",
+        "label": "adr-0230",
+        "summary": "Flowbite Pro is adapted onto Tailwind 4 and Flowbite 4, a brand's colour is the primary scale, and one capability judges every repository's interface against it",
+        "route": "/cockpit/objects/adr/adr-0230",
+        "source": ".ai/repo/adrs/0230-flowbite-pro-is-adapted-onto-tailwind-4.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-28",
+          "related": [
+            "file:share/design/kits/flowbite-pro.yaml",
+            "file:share/design/kits/flowbite-pro.rule.md",
+            "file:apps/majordomus-cli/src/design/kit.rs",
+            "file:apps/majordomus-cli/src/design/licence.rs",
+            "file:.ai/repo/project/issues/I4334.yaml",
+            "file:.ai/repo/project/issues/I4336.yaml",
+            "test:test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh"
+          ],
+          "tags": [
+            "design",
+            "ui",
+            "enforcement"
           ]
         }
       },
@@ -21741,6 +21826,13 @@
         "label": "lib/finish.sh",
         "route": "/cockpit/objects/implementation/lib-finish-sh",
         "source": "lib/finish.sh"
+      },
+      {
+        "id": "majordomus://implementation/lib/fleet.sh",
+        "kind": "implementation",
+        "label": "lib/fleet.sh",
+        "route": "/cockpit/objects/implementation/lib-fleet-sh",
+        "source": "lib/fleet.sh"
       },
       {
         "id": "majordomus://implementation/lib/gates.sh",
@@ -73497,6 +73589,104 @@
         }
       },
       {
+        "id": "majordomus://issue/I4334",
+        "kind": "issue",
+        "label": "I4334",
+        "summary": "The UI kit is checked by one capability: design kit judges a repository's interface against the Flowbite Pro profile, and design kit adopt declares it",
+        "route": "/cockpit/objects/issue/i4334",
+        "source": ".ai/repo/project/issues/I4334.yaml",
+        "facts": {
+          "created_at": "2026-10-28",
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "one-kit-on-every-surface",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/design/kit.rs",
+            "apps/majordomus-cli/src/design/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/design.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/design.rs",
+            "apps/majordomus-cli/src/commands/mod.rs",
+            "share/design/kits",
+            ".ai/repo/adrs/0230-flowbite-pro-is-adapted-onto-tailwind-4.md",
+            ".ai/repo/project/issues/I4334.yaml",
+            "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
+            "docs/DESIGN_SYSTEM.md",
+            ".ai/repo/features/interfaces.md",
+            "apps/majordomus-cli/src/capability/builtin/mod.rs",
+            "apps/majordomus-cli/src/design/licence.rs",
+            "apps/majordomus-cli/src/commands/design_licence.rs",
+            "bin/majordomus"
+          ],
+          "slug": "the-ui-kit-is-checked-by-one-capability",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --lib design::kit",
+            "cargo test --test cli_examples --test cli_docs",
+            "test/run 4334",
+            "cargo test --lib design::licence",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4336",
+        "kind": "issue",
+        "label": "I4336",
+        "summary": "Every adopter the owner's fleet pack applies to receives its kit, rules and skills, and no licensed source reaches a public tree",
+        "route": "/cockpit/objects/issue/i4336",
+        "source": ".ai/repo/project/issues/I4336.yaml",
+        "facts": {
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "The judge, the design kit capability, adopt and the kit profile format (I4334, p2)",
+            "Shipping any licensed source: only manifests, rule text, skill/v1 text and hash prefixes travel",
+            "Near-copies and licensed fragments inlined inside a larger bundle: the evidence holds whole-file fingerprints only (stated in the usage text)",
+            "Migrating any adopter's UI onto a kit",
+            "Majordomus's own design surfaces (ADR 0031, ADR 0036)"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/design/licence.rs",
+            "lib/rules.sh",
+            "lib/init.sh",
+            "lib/migrate.sh",
+            "lib/update.sh",
+            "lib/doctor.sh",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy",
+            "share/kinds.yaml",
+            "share/skeleton/ai/repo/rules/README.md",
+            "share/skeleton/ai/repo/skills/README.md",
+            "test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh",
+            "test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
+            "test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh",
+            "test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh",
+            ".ai/repo/project/issues/I4336.yaml"
+          ],
+          "serves": [],
+          "slug": "the-fleet-pack-delivers-the-kit-and-keeps-licensed-sources-private",
+          "validation": [
+            "bash test/run.sh <the new licence, fleet-pack, projection and evidence cases>",
+            "bash test/run.sh 08_no_forbidden_constructs",
+            "bash test/run.sh 28_no_hardcoded_values",
+            "bash test/run.sh 3022_the_rule_package_is_stamped_and_adopter_neutral",
+            "majordomus doctor"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4338",
         "kind": "issue",
         "label": "I4338",
@@ -98096,6 +98286,34 @@
         "source": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh",
+        "kind": "test",
+        "label": "test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh",
+        "route": "/cockpit/objects/test/test-cases-4224-a-licensed-source-never-reaches-a-public-tree-sh",
+        "source": "test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
+        "kind": "test",
+        "label": "test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
+        "route": "/cockpit/objects/test/test-cases-4225-the-fleet-pack-installs-only-what-it-lists-sh",
+        "source": "test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh",
+        "kind": "test",
+        "label": "test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh",
+        "route": "/cockpit/objects/test/test-cases-4226-ci-judges-from-the-kit-evidence-secret-sh",
+        "source": "test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh",
+        "kind": "test",
+        "label": "test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh",
+        "route": "/cockpit/objects/test/test-cases-4227-a-fleet-skill-is-proved-by-its-pack-sh",
+        "source": "test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
         "kind": "test",
         "label": "test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
@@ -98157,6 +98375,13 @@
         "label": "test/cases/431_economics_claims_gated.sh",
         "route": "/cockpit/objects/test/test-cases-431-economics-claims-gated-sh",
         "source": "test/cases/431_economics_claims_gated.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
+        "kind": "test",
+        "label": "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
+        "route": "/cockpit/objects/test/test-cases-4334-the-ui-kit-is-checked-by-one-capability-sh",
+        "source": "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh"
       },
       {
         "id": "majordomus://test/test/cases/43_plan_command.sh",
@@ -102794,6 +103019,46 @@
       },
       {
         "source": "capability:design.explain",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.kit",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.kit",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.kit",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.kit.adopt",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.kit.adopt",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.licence",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.licence",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.licence",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -113653,6 +113918,46 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://adr/adr-0230",
+        "target": "file:apps/majordomus-cli/src/design/kit.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0230",
+        "target": "file:apps/majordomus-cli/src/design/licence.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0230",
+        "target": "file:share/design/kits/flowbite-pro.rule.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0230",
+        "target": "file:share/design/kits/flowbite-pro.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0230",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0230",
+        "target": "majordomus://issue/I4334",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0230",
+        "target": "majordomus://issue/I4336",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0230",
+        "target": "majordomus://test/test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -121629,6 +121934,11 @@
       },
       {
         "source": "majordomus://implementation/lib/finish.sh",
+        "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://implementation/lib/fleet.sh",
         "target": "kind:implementation",
         "kind": "is_a"
       },
@@ -137548,6 +137858,26 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4334",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4334",
+        "target": "majordomus://milestone/one-kit-on-every-surface",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4336",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4336",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4338",
         "target": "kind:issue",
         "kind": "is_a"
@@ -144383,6 +144713,26 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -144424,6 +144774,11 @@
       },
       {
         "source": "majordomus://test/test/cases/431_economics_claims_gated.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -148574,6 +148929,21 @@
       },
       {
         "source": "module:design",
+        "target": "capability:design.kit",
+        "kind": "composes"
+      },
+      {
+        "source": "module:design",
+        "target": "capability:design.kit.adopt",
+        "kind": "composes"
+      },
+      {
+        "source": "module:design",
+        "target": "capability:design.licence",
+        "kind": "composes"
+      },
+      {
+        "source": "module:design",
         "target": "capability:design.system",
         "kind": "composes"
       },
@@ -149509,8 +149879,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4097,
-      "edges": 9459,
+      "nodes": 4113,
+      "edges": 9488,
       "acyclic": false,
       "truncated": false
     }

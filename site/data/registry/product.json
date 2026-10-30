@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.9"
   },
-  "fingerprint": "37ea831ba48843584fa1564160d04535c2da84d26f30cdd3e51d1ff870b9a64e",
+  "fingerprint": "1dc063662371fa81cb4547df2f912b883168469d9db4b121367cee6b4bc54672",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 149,
+        "capabilities": 152,
         "moments": 38
       },
       "evidence": {
@@ -7518,7 +7518,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 167
+          "objects": 168
         },
         {
           "name": "knowledge",
@@ -7799,11 +7799,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 583,
+        "mcp_resources": 584,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 580,
+        "objects": 581,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -12084,6 +12084,29 @@
               "route": "GET /api/v1/design/explain"
             },
             {
+              "id": "design.kit",
+              "title": "Whether the interface is built on the kit",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_design_kit",
+              "cli": "majordomus design kit"
+            },
+            {
+              "id": "design.kit.adopt",
+              "title": "Declare the kit in the repository",
+              "kind": "command",
+              "stability": "experimental",
+              "cli": "majordomus design kit adopt"
+            },
+            {
+              "id": "design.licence",
+              "title": "Whether a public tree holds a licensed kit's files",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_design_licence",
+              "cli": "majordomus design licence"
+            },
+            {
               "id": "design.system",
               "title": "The design system",
               "kind": "query",
@@ -12301,11 +12324,11 @@
         "ui"
       ],
       "counts": {
-        "capabilities": 8,
-        "mcp_tools": 6,
+        "capabilities": 11,
+        "mcp_tools": 8,
         "mcp_resources": 2,
         "http_routes": 8,
-        "cli_paths": 1,
+        "cli_paths": 4,
         "commands": 0,
         "objects": 0,
         "rules": 1,
@@ -13485,7 +13508,7 @@
         },
         {
           "name": "issue",
-          "objects": 1102
+          "objects": 1104
         },
         {
           "name": "intent",
@@ -13695,11 +13718,11 @@
       "counts": {
         "capabilities": 26,
         "mcp_tools": 26,
-        "mcp_resources": 1305,
+        "mcp_resources": 1307,
         "http_routes": 26,
         "cli_paths": 13,
         "commands": 1,
-        "objects": 1302,
+        "objects": 1304,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -17527,7 +17550,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (167)",
+        "title": "adr (168)",
         "features": [
           "knowledge"
         ]
@@ -17632,7 +17655,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (1102)",
+        "title": "issue (1104)",
         "features": [
           "planning"
         ]
@@ -18692,19 +18715,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3633,
-    "builtin": 220,
-    "declarative": 3413,
+    "capabilities": 3645,
+    "builtin": 223,
+    "declarative": 3422,
     "modules": 60,
-    "mcp_tools": 206,
-    "mcp_resources": 3470,
+    "mcp_tools": 208,
+    "mcp_resources": 3479,
     "http_routes": 212,
-    "cli_commands": 220,
+    "cli_commands": 223,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3413,
+    "objects": 3422,
     "by_kind": {
-      "adr": 167,
+      "adr": 168,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -18719,9 +18742,9 @@
       "domain": 6,
       "feature": 29,
       "gap": 5,
-      "implementation": 52,
+      "implementation": 53,
       "intent": 44,
-      "issue": 1102,
+      "issue": 1104,
       "knowledge": 60,
       "mesh-declaration": 1,
       "milestone": 113,
@@ -18735,7 +18758,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 660,
+      "test": 665,
       "use-case": 49,
       "workspace": 1
     },

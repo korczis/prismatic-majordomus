@@ -111,6 +111,9 @@ H
   mj_init_file "$skel/ai/repo/knowledge/candidates/README.md" "$MJ_KNOWLEDGE_DIR/candidates/README.md"
   mj_init_tree "$skel/ai/repo/workflows" "$MJ_WORKFLOWS_DIR" '*.md'
   mj_init_tree "$skel/ai/repo/skills" "$MJ_SKILLS_DIR" '*.md'
+  # the fleet pack after the baseline, once the policy and the skills section exist: it
+  # reads the policy's visibility and installs beside both (nothing without a pack)
+  mj_fleet_install init || printf 'note: the fleet pack was not installed (see above), and nothing of it was written; doctor reports it until: majordomus rules vendor update\n' >&2
   mj_init_tree "$skel/ai/repo/adrs" "$MJ_ADRS_DIR" '*.md'
   # the use cases and applications: the sections exist from the start, with the taxonomy
   # and the context documents, so that the first use case is one file
