@@ -74401,6 +74401,353 @@
         }
       },
       {
+        "id": "majordomus://issue/I4460",
+        "kind": "issue",
+        "label": "I4460",
+        "summary": "An obligation whose inputs name no file in the repository is never a freshness proof: check reports it unknown and a completed finish refuses it, by one judgement both engines share",
+        "route": "/cockpit/objects/issue/i4460",
+        "source": ".ai/repo/project/issues/I4460.yaml",
+        "facts": {
+          "created_at": "2026-10-30",
+          "depends_on": [],
+          "evidence_required": [
+            "empty_input_set_case"
+          ],
+          "milestone": "a-bounded-task-is-carried-to-accepted-work",
+          "non_scope": [
+            "Declaring an adopter's own inputs for the tests token, or deriving them from the task's scope: the empty set is reported and refused here, never guessed",
+            "Remote obligations (push, target, pages, deploy), which are judged by commit, not by inputs hash (lib/evidence.sh:449-456)",
+            "The attribution of evidence to the calling episode: I4292, which also edits lib/evidence.sh and is merged around, not absorbed"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4460.yaml",
+            "lib/evidence.sh",
+            "apps/majordomus-cli/src/capability/builtin/obligations.rs",
+            "share/standard/majordomus/rules/obligation-closure.v1.md",
+            ".ai/repo/rules/vendor/majordomus/rules/obligation-closure.v1.md",
+            "docs/CLI.md",
+            "test/cases/103_obligations.sh",
+            "test/cases/4460_an_obligation_over_no_file_is_never_fresh.sh"
+          ],
+          "serves": [],
+          "slug": "an-obligation-over-no-file-is-never-fresh",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "MJ_TEST_JOBS=4 bash test/run.sh 4460_an_obligation_over_no_file_is_never_fresh 103_obligations",
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::obligations",
+            "bin/majordomus shell check",
+            "bin/majordomus doctor",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4461",
+        "kind": "issue",
+        "label": "I4461",
+        "summary": "handover --resolve judges the working tree as well as HEAD, and never says exact over changes made since the handover",
+        "route": "/cockpit/objects/issue/i4461",
+        "source": ".ai/repo/project/issues/I4461.yaml",
+        "facts": {
+          "created_at": "2026-10-30",
+          "depends_on": [],
+          "evidence_required": [
+            "handover_tree_case"
+          ],
+          "milestone": "a-bounded-task-is-carried-to-accepted-work",
+          "non_scope": [
+            "Published handovers that cross machines (continuity publish and resume, apps/majordomus-cli/src/continuity), whose dirty-tree handling ADR 0105 and case 822 already cover",
+            "Restoring or diffing the changed content itself: the resolution names the paths, it carries no source",
+            "One resolver for continuity in place of the shell's copies: I3145"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4461.yaml",
+            "lib/handover.sh",
+            "lib/common.sh",
+            "lib/derive.sh",
+            "docs/CLI.md",
+            "test/cases/05_handover.sh",
+            "test/cases/4461_a_handover_resolves_against_the_working_tree.sh"
+          ],
+          "serves": [],
+          "slug": "a-handover-resolves-against-the-working-tree",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "MJ_TEST_JOBS=4 bash test/run.sh 4461_a_handover_resolves_against_the_working_tree 05_handover 25_continuity_lifecycle",
+            "bin/majordomus shell check",
+            "bin/majordomus doctor",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4462",
+        "kind": "issue",
+        "label": "I4462",
+        "summary": "Use-case coverage of none of its targets never prints OK: doctor reports 0 of N covered as a finding that names the policy that allowed it",
+        "route": "/cockpit/objects/issue/i4462",
+        "source": ".ai/repo/project/issues/I4462.yaml",
+        "facts": {
+          "created_at": "2026-10-30",
+          "depends_on": [],
+          "evidence_required": [
+            "zero_coverage_case"
+          ],
+          "milestone": "a-bounded-task-is-carried-to-accepted-work",
+          "non_scope": [
+            "Changing the skeleton's coverage policy from advisory, or what an adopter must cover: the policy stays the adopter's",
+            "The coverage tally itself (mj_uc_coverage_rows) and the JSON of `usecase coverage`"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4462.yaml",
+            "lib/usecase.sh",
+            "docs/CLI.md",
+            "test/cases/94_use_cases.sh",
+            "test/cases/4462_no_use_case_coverage_never_reads_ok.sh"
+          ],
+          "serves": [],
+          "slug": "no-use-case-coverage-never-reads-ok",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "MJ_TEST_JOBS=4 bash test/run.sh 4462_no_use_case_coverage_never_reads_ok 94_use_cases",
+            "bin/majordomus shell check",
+            "bin/majordomus doctor",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4463",
+        "kind": "issue",
+        "label": "I4463",
+        "summary": "plan validate flags an open issue named as a blocker in another issue's current_state and absent from its depends_on, and plan next does not propose the issue it blocks",
+        "route": "/cockpit/objects/issue/i4463",
+        "source": ".ai/repo/project/issues/I4463.yaml",
+        "facts": {
+          "created_at": "2026-10-30",
+          "depends_on": [],
+          "evidence_required": [
+            "prose_blocker_case"
+          ],
+          "milestone": "a-bounded-task-is-carried-to-accepted-work",
+          "non_scope": [
+            "Amending I0703's depends_on: the coordinator's follow-up, once the finding exists",
+            "Saying why an issue with no dependency is BLOCKED by its milestone: I4266",
+            "Reporting work in an open pull request or under a live claim as taken: I3971",
+            "Reading ids from why, desired_state or any field other than current_state"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4463.yaml",
+            "lib/project.awk",
+            "lib/project.sh",
+            "lib/plan.sh",
+            "apps/majordomus-cli/src/plan.rs",
+            "share/schemas/majordomus/issue",
+            "docs/CLI.md",
+            "test/cases/4463_a_blocker_named_in_prose_is_a_dependency.sh"
+          ],
+          "serves": [],
+          "slug": "a-blocker-named-in-prose-is-a-dependency",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "MJ_TEST_JOBS=4 bash test/run.sh 4463_a_blocker_named_in_prose_is_a_dependency 133_plan_transition",
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::",
+            "bin/majordomus shell check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4464",
+        "kind": "issue",
+        "label": "I4464",
+        "summary": "plan next says when the ready issue needs a build the machine cannot start, and proposes a ready issue that needs none first, never hiding either",
+        "route": "/cockpit/objects/issue/i4464",
+        "source": ".ai/repo/project/issues/I4464.yaml",
+        "facts": {
+          "created_at": "2026-10-30",
+          "depends_on": [],
+          "evidence_required": [
+            "build_need_case"
+          ],
+          "milestone": "a-bounded-task-is-carried-to-accepted-work",
+          "non_scope": [
+            "Refusing or queueing a build below the floor or beside five builders: I3825",
+            "A machine-wide slot for heavy work: I4006",
+            "Reading the load average, the CPU count or another machine's capacity",
+            "Changing the order of READY issues at or above the floor, or removing any issue from plan ready"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4464.yaml",
+            "lib/plan.sh",
+            "lib/project.sh",
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/allow/policy.txt",
+            "docs/CLI.md",
+            "test/cases/4464_ready_work_names_the_build_it_needs.sh"
+          ],
+          "serves": [],
+          "slug": "ready-work-names-the-build-it-needs",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "MJ_TEST_JOBS=4 bash test/run.sh 4464_ready_work_names_the_build_it_needs 133_plan_transition",
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::",
+            "bin/majordomus shell check",
+            "bin/majordomus doctor",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4465",
+        "kind": "issue",
+        "label": "I4465",
+        "summary": "doctrine show prints the principle a rule rests on, derived from its depends_on, and doctrine status names the enforced rules that rest on none",
+        "route": "/cockpit/objects/issue/i4465",
+        "source": ".ai/repo/project/issues/I4465.yaml",
+        "facts": {
+          "created_at": "2026-10-30",
+          "depends_on": [],
+          "evidence_required": [
+            "principle_shown_case"
+          ],
+          "milestone": "a-bounded-task-is-carried-to-accepted-work",
+          "non_scope": [
+            "Giving the 13 rules a principle, enforcing the README claim, or narrowing it: the owner's question Q-principle of the P00 report",
+            "A binding field on rules or renaming class: the owner's question Q-H5",
+            "Rule-to-validator and rule-to-test edges in the composed graph, and one traversal of the whole chain: I1003 and the P00 slices R2 and R3",
+            "The Rust `rules show` projection"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4465.yaml",
+            "lib/doctrine.sh",
+            "docs/CLI.md",
+            "test/cases/18_doctrine_wiring.sh",
+            "test/cases/4465_doctrine_show_names_the_principle.sh"
+          ],
+          "serves": [],
+          "slug": "doctrine-show-names-the-principle",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "MJ_TEST_JOBS=4 bash test/run.sh 4465_doctrine_show_names_the_principle 18_doctrine_wiring 36_command_doctrines 44_model_doctrine",
+            "bin/majordomus shell check",
+            "bin/majordomus doctor",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4466",
+        "kind": "issue",
+        "label": "I4466",
+        "summary": "A mesh review answer names the head and the base it reviewed, and a verdict whose head or base has moved reads stale wherever reviews are shown",
+        "route": "/cockpit/objects/issue/i4466",
+        "source": ".ai/repo/project/issues/I4466.yaml",
+        "facts": {
+          "created_at": "2026-10-30",
+          "depends_on": [],
+          "evidence_required": [
+            "bound_review_case"
+          ],
+          "milestone": "a-bounded-task-is-carried-to-accepted-work",
+          "non_scope": [
+            "Landing an adopter's verdict file (OSCILLA's reviews/<pr>.yaml) on the builder's branch: the adopter's artifact, which this issue makes checkable, not writable",
+            "Reporting a stale verdict from check or finish --check: a follow-up once the answer names its revision",
+            "Who may answer a review and how old an open request may get: I4327 and I3608",
+            "Recording a critique answer with its evidence: I3420"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4466.yaml",
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/mesh/state.rs",
+            "apps/majordomus-cli/src/mesh/page.rs",
+            "apps/majordomus-cli/src/monitor/mesh.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            ".ai/repo/ci/mesh-event-fields.yaml",
+            "docs/MESH.md",
+            "docs/generated",
+            "test/cases/4466_a_review_verdict_names_its_head_and_base.sh"
+          ],
+          "serves": [],
+          "slug": "a-review-verdict-names-its-head-and-base",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "MJ_TEST_JOBS=4 bash test/run.sh 4466_a_review_verdict_names_its_head_and_base 3051_an_unlisted_event_field_fails_the_mesh_check 130_mesh",
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::",
+            "scripts/derive-check",
+            "bin/majordomus doctor",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4467",
+        "kind": "issue",
+        "label": "I4467",
+        "summary": "A handover records the work its writer delegated to subagents and peers, and resolving it says where each piece stands now",
+        "route": "/cockpit/objects/issue/i4467",
+        "source": ".ai/repo/project/issues/I4467.yaml",
+        "facts": {
+          "created_at": "2026-10-30",
+          "depends_on": [],
+          "evidence_required": [
+            "delegated_work_case"
+          ],
+          "milestone": "a-bounded-task-is-carried-to-accepted-work",
+          "non_scope": [
+            "Deriving delegation without the writer naming it, by tracing processes and subagents to their session: I3956",
+            "Pull request and CI run state from GitHub: no remote query on the handover path (mission section 10); such a ref is kept verbatim with standing unknown",
+            "Publishing the delegated list across machines: the continuity record (apps/majordomus-cli/src/continuity) is unchanged",
+            "Widening a running task's scope: I4260"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4467.yaml",
+            "lib/handover.sh",
+            "lib/common.sh",
+            "lib/derive.sh",
+            "docs/CLI.md",
+            "test/cases/05_handover.sh",
+            "test/cases/4467_a_handover_names_the_work_it_delegated.sh"
+          ],
+          "serves": [],
+          "slug": "a-handover-names-the-work-it-delegated",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "MJ_TEST_JOBS=4 bash test/run.sh 4467_a_handover_names_the_work_it_delegated 05_handover 25_continuity_lifecycle",
+            "bin/majordomus shell check",
+            "bin/majordomus doctor",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -75806,6 +76153,35 @@
             "bin/majordomus bench --check",
             "scripts/generate-site-data --check",
             "shellcheck -x -s bash bin/majordomus lib/*.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "milestone",
+        "label": "a-bounded-task-is-carried-to-accepted-work",
+        "summary": "A bounded task is carried to accepted work: one integration map of the cycle, each break owned by an existing issue and closed by a case",
+        "route": "/cockpit/objects/milestone/a-bounded-task-is-carried-to-accepted-work",
+        "source": ".ai/repo/project/milestones/a-bounded-task-is-carried-to-accepted-work.yaml",
+        "facts": {
+          "created_at": "2026-10-30",
+          "evidence_required": [
+            "suite"
+          ],
+          "order": 523,
+          "priority": "p1",
+          "scope": [
+            "lib",
+            "apps/majordomus-cli/src",
+            "share",
+            "docs",
+            "test/cases",
+            ".ai/repo/project"
+          ],
+          "slug": "a-bounded-task-is-carried-to-accepted-work",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "bin/majordomus plan validate"
           ]
         }
       },
@@ -137823,6 +138199,86 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4460",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4460",
+        "target": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4461",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4461",
+        "target": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4462",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4462",
+        "target": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4463",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4463",
+        "target": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4464",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4464",
+        "target": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4465",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4465",
+        "target": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4466",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4466",
+        "target": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4467",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4467",
+        "target": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -138149,6 +138605,11 @@
       },
       {
         "source": "majordomus://milestone/M004",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -149509,8 +149970,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4097,
-      "edges": 9459,
+      "nodes": 4106,
+      "edges": 9476,
       "acyclic": false,
       "truncated": false
     }

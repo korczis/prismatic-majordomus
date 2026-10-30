@@ -1,0 +1,40 @@
+id: I4465
+milestone: a-bounded-task-is-carried-to-accepted-work
+title: "doctrine show prints the principle a rule rests on, derived from its depends_on, and doctrine status names the enforced rules that rest on none"
+slug: doctrine-show-names-the-principle
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Two changes to lib/doctrine.sh, no change to any rule file. First, the loader derives each enforced rule's principle instead of reading a field no rule has: the principles are the rules of the effective set tagged `principle` (ten, under share/standard/majordomus/rules/principle-*.v1.md), and a rule's principle is every principle reached through its depends_on, transitively, with the version suffix dropped, comma-joined in the order reached. The awk pass that builds doctrines.N (lib/doctrine.sh:40-61), whose key list at :42 has no principle, records it as doctrines.N.principle, so the existing `principle` line of `doctrine show` (lib/doctrine.sh:301) prints it. A rule that reaches none prints `principle   none — no principle in its depends_on`. Second, `doctrine status` adds one count, `enforced rules resting on no principle: <n>`, and `doctrine status --json` the ids; it is reported, never a refusal."
+why: "Found by the P00 audit on master 51b38035a71 (H4, H5, matrix row Rule -> principle) and in the backward walk from mj_validate_knowledge_integrity: the `principle` line of `doctrine show` is blank for every rule, because the loader never parses a principle, and 13 of 50 dispatched rules reach no principle through depends_on, although README.md:195 and :205 say every enforced rule names the principle it rests on in depends_on. A reader asking why a refusal exists, which mission section 9 requires to be traceable from requirement to check, gets an empty line where the authority should be; and the README makes a claim no reader checks."
+current_state: "At master 51b38035a71: lib/doctrine.sh:42 splits `id title class validator category policy_key exit_code file provenance` as the scalar keys of a doctrine and lists depends_on among the list fields (:58); mj_doctrine_show prints `principle   $(mj_doc \"$i\" principle)` (lib/doctrine.sh:301), always empty. Principle rules carry `tags: [principle]` (for example share/standard/majordomus/rules/principle-10-handovers-carry-state.v1.md, id majordomus.handovers-carry-state). majordomus.scope-integrity depends on majordomus.one-worker-one-scope, a principle; majordomus.knowledge-integrity has `depends_on: []`. Case 18 (test/cases/18_doctrine_wiring.sh:74-75) asserts `wired       yes` for doctrine show and nothing about the principle."
+desired_state: "Every enforced rule's principle is shown where the README says it is named, derived from the rule's own dependencies, and the rules that rest on none are counted and named so the gap between the README and the rules is visible. Enforced by case 4465 and case 18 unchanged."
+scope:
+  - ".ai/repo/project/issues/I4465.yaml"
+  - "lib/doctrine.sh"
+  - "docs/CLI.md"
+  - "test/cases/18_doctrine_wiring.sh"
+  - "test/cases/4465_doctrine_show_names_the_principle.sh"
+non_scope:
+  - "Giving the 13 rules a principle, enforcing the README claim, or narrowing it: the owner's question Q-principle of the P00 report"
+  - "A binding field on rules or renaming class: the owner's question Q-H5"
+  - "Rule-to-validator and rule-to-test edges in the composed graph, and one traversal of the whole chain: I1003 and the P00 slices R2 and R3"
+  - "The Rust `rules show` projection"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Case 4465: `majordomus doctrine show majordomus.scope-integrity` prints a principle line naming majordomus.one-worker-one-scope"
+  - "Case 4465: in a fixture rule set where rule X depends on rule Y and Y depends on a principle P, `doctrine show X` names P"
+  - "Case 4465: `doctrine show majordomus.knowledge-integrity` prints `principle   none — no principle in its depends_on`, and no doctrine show prints an empty principle line"
+  - "Case 4465: `majordomus doctrine status` prints `enforced rules resting on no principle:` with a number, and `doctrine status --json` lists majordomus.knowledge-integrity among the ids; the exit code is the one it had before the change"
+  - "Case 18 passes unchanged"
+  - "Before the change, case 4465 fails at its first assertion"
+validation:
+  - "MJ_TEST_JOBS=4 bash test/run.sh 4465_doctrine_show_names_the_principle 18_doctrine_wiring 36_command_doctrines 44_model_doctrine"
+  - "bin/majordomus shell check"
+  - "bin/majordomus doctor"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "principle_shown_case"
+created_at: 2026-10-30
+updated_at: 2026-10-30
