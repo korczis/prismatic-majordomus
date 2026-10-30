@@ -58,14 +58,16 @@ Reported in this order, in the lines, in the JSON and in the report, and never l
 | `machine` | statvfs, `vm.swapusage` or `/proc/meminfo`, one `ps` | read now | 1 s | free disk against `machine.heavy_work.min_free_gib`, swap, builders against `machine.heavy_work.slots` | `df -g / ; sysctl vm.swapusage` |
 | `release` | `release.currency` | read now | 3 s | current, owed with the count, overdue, or unread with why (I3070) | `majordomus release next` |
 | `derive` | the derive lock (files) | read now | 100 ms | its holder, whether that process runs, how long it has held the lock, the priority marker | `majordomus doctor` |
-| `answered by` | — | — | 6 s overall | which process composed the brief, how long it took, and every section that ran past its budget | `majordomus brief --format json` |
+| `answered by` | — | — | 6 s overall | which process composed the brief, how long it took, and every section that ran past its budget, as `unread past its budget` when its owner had not answered when it was collected or `read past its budget: <section> <took> of <budget>` when it had | `majordomus brief --format json` |
 
 Each section carries a state (`read`, `partial`, `unread`, `undeclared`, kept for older
 readers) and an observation whose `verdict` is one status word of the design declaration:
 `current`, `stale` (its owner answered with a fact older than its bound, or contradicted by a
 newer one), `partial`, `unread` or `undeclared`. A stale or unread fact is never shown as
 current: the line says `prs stale 17h`, never a bare count, and a section past its budget reads
-`unread (took > N ms)` while every other section is read. The forge is asked by the leaseholder
+`unread (took > N ms)` while every other section is read. A fact that was not read is said
+with the status word, `[unread]`, and never a question mark: `origin/master is 51b38035a7
+(moved, count [unread])` when the commit count did not answer inside its bound. The forge is asked by the leaseholder
 alone; a brief composed anywhere else says `unread: not the leaseholder` and names
 `majordomus serve ensure`.
 

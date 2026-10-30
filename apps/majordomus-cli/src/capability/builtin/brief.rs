@@ -2397,20 +2397,20 @@ fn integration_words(
     let short = |x: &Option<String>| {
         x.as_deref()
             .map(|v| v.chars().take(10).collect::<String>())
-            .unwrap_or_else(|| "?".into())
+            .unwrap_or_else(|| report::NOT_READ.into())
     };
     let mut w = if s.stale {
         format!(
             "[stale] queue observed {} ago ({}) at {}; origin/master {}{}",
             s.age_seconds
                 .map(report::span)
-                .unwrap_or_else(|| "?".into()),
+                .unwrap_or_else(|| report::NOT_READ.into()),
             obs.observed_at,
             short(&s.observed_master),
             short(&s.master_now),
-            match s.moved_by {
-                Some(n) => format!(" (+{n})"),
-                None => String::new(),
+            match (&s.observed_master, &s.master_now) {
+                (Some(o), Some(n)) if o != n => format!(" ({})", report::moved_words(s.moved_by)),
+                _ => String::new(),
             }
         )
     } else {
@@ -2418,7 +2418,7 @@ fn integration_words(
             "[current] queue observed {} ago at {}",
             s.age_seconds
                 .map(report::span)
-                .unwrap_or_else(|| "?".into()),
+                .unwrap_or_else(|| report::NOT_READ.into()),
             short(&s.observed_master)
         )
     };
@@ -2430,13 +2430,19 @@ fn integration_words(
     }
     // the counts are the forge's at that observation, and are said as such
     w.push_str(&format!("; {} (as observed)", obs.counts));
-    if let Some(m) = &s.last_merge {
-        w.push_str(&format!(
+    match &s.last_merge {
+        Some(m) => w.push_str(&format!(
             "; last merge on master {}{} at {}",
             m.pr.map(|n| format!("#{n} ")).unwrap_or_default(),
             m.sha,
             m.at
-        ));
+        )),
+        // at a load average of 98 on 2026-10-30 the bounded `git log` did not answer, and the
+        // line said nothing of master's last merge, as if there were none
+        None if s.master_now.is_some() => {
+            w.push_str(&format!("; last merge on master {}", report::NOT_READ))
+        }
+        None => {}
     }
     if let Some(e) = &obs.last_executor_merge {
         w.push_str(&format!("; last executor merge {e}"));
@@ -2574,7 +2580,11 @@ fn derive_from(declared: bool, lock: Option<&Path>, priority: Option<&Path>) -> 
                 .and_then(|m| m.modified().ok())
                 .and_then(|t| t.elapsed().ok())
                 .map(|d| d.as_secs());
-            let who = line.split_whitespace().next().unwrap_or("?").to_string();
+            let who = line
+                .split_whitespace()
+                .next()
+                .unwrap_or("a holder its line does not name")
+                .to_string();
             let mut s = format!("lock held by {who}");
             match (section.pid, section.alive) {
                 (Some(pid), Some(true)) => s.push_str(&format!(" (pid {pid}, running")),
@@ -2595,7 +2605,11 @@ fn derive_from(declared: bool, lock: Option<&Path>, priority: Option<&Path>) -> 
     if let Some(p) = &section.priority {
         section.summary.push_str(&format!(
             "; priority to {}",
-            if p.is_empty() { "?" } else { p }
+            if p.is_empty() {
+                "a branch its marker does not name"
+            } else {
+                p
+            }
         ));
     }
     section
@@ -2926,7 +2940,23 @@ fn brief_lines(s: &Sections, attention: &[BriefAttention], origin: &BriefOrigin)
     if let Some(n) = &origin.note {
         answered.push_str(&format!("({n}) "));
     }
-    let late: Vec<&str> = [
+    answered.push_str(&format!("({}", budget_words(s)));
+    if let Some(slow) = &origin.slowest {
+        answered.push_str(&format!("; slowest {slow}"));
+    }
+    answered.push(')');
+    lines.extend(wrapped("answered by", &answered));
+    lines
+}
+
+/// What the sections cost against their budgets, in words. A section past its budget is one
+/// of two things, and the line says which: unread, because its owner had not answered when
+/// the composition collected it, or read late, because it had answered by then though past
+/// its budget (the sections are collected one after another, so one that finished late is
+/// still on the channel). On 2026-10-30 one list named both, and the brief called the
+/// integration section "past its budget" two lines below the facts it had read.
+fn budget_words(s: &Sections) -> String {
+    let all = [
         ("session", &s.session.observed),
         ("work", &s.work.observed),
         ("peers", &s.peers.observed),
@@ -2936,22 +2966,28 @@ fn brief_lines(s: &Sections, attention: &[BriefAttention], origin: &BriefOrigin)
         ("machine", &s.machine.observed),
         ("release", &s.release.observed),
         ("derive", &s.derive.observed),
-    ]
-    .into_iter()
-    .filter(|(_, o)| o.budget_ms > 0 && o.elapsed_ms > o.budget_ms)
-    .map(|(n, _)| n)
-    .collect();
-    if late.is_empty() {
-        answered.push_str("(every section inside its budget");
-    } else {
-        answered.push_str(&format!("(past its budget: {}", late.join(", ")));
+    ];
+    let over = |o: &BriefObservation| o.budget_ms > 0 && o.elapsed_ms > o.budget_ms;
+    let unread: Vec<&str> = all
+        .iter()
+        .filter(|(_, o)| over(o) && o.verdict == BriefVerdict::Unread)
+        .map(|(n, _)| *n)
+        .collect();
+    let late: Vec<String> = all
+        .iter()
+        .filter(|(_, o)| over(o) && o.verdict != BriefVerdict::Unread)
+        .map(|(n, o)| format!("{n} {} of {}", millis(o.elapsed_ms), millis(o.budget_ms)))
+        .collect();
+    match (unread.is_empty(), late.is_empty()) {
+        (true, true) => "every section inside its budget".into(),
+        (false, true) => format!("unread past its budget: {}", unread.join(", ")),
+        (true, false) => format!("read past its budget: {}", late.join(", ")),
+        (false, false) => format!(
+            "unread past its budget: {}; read past its budget: {}",
+            unread.join(", "),
+            late.join(", ")
+        ),
     }
-    if let Some(slow) = &origin.slowest {
-        answered.push_str(&format!("; slowest {slow}"));
-    }
-    answered.push(')');
-    lines.extend(wrapped("answered by", &answered));
-    lines
 }
 
 /// A worktree as a line names it: from the primary checkout's name on
@@ -3110,7 +3146,7 @@ fn one_line(s: &Sections, attention: &[BriefAttention]) -> String {
         (_, None) => tokens.push("derive free".into()),
         (_, Some(h)) => tokens.push(format!(
             "derive {}{}",
-            clip(h.split_whitespace().next().unwrap_or("?"), 28),
+            clip(h.split_whitespace().next().unwrap_or("unnamed"), 28),
             s.derive
                 .held_seconds
                 .map(|x| format!(" {}m", x / 60))
@@ -3150,7 +3186,7 @@ fn ci_token(c: &BriefCiSection) -> String {
     match (c.in_progress, c.queued) {
         (None, None) => "ci unread".into(),
         (r, q) => {
-            let n = |v: Option<u64>| v.map(|x| x.to_string()).unwrap_or_else(|| "?".into());
+            let n = |v: Option<u64>| v.map(|x| x.to_string()).unwrap_or_else(|| "unread".into());
             let mut t = format!("ci {} run {} queued", n(r), n(q));
             if c.runners_unread.is_none() && !c.runners.is_empty() {
                 t.push_str(&format!(" sh {}/{}", c.busy, c.online));
@@ -3166,11 +3202,15 @@ fn prs_token(i: &BriefIntegrationSection) -> String {
         (BriefSectionState::Unread, _) => "prs unread".into(),
         (_, true) => format!(
             "prs stale {}",
-            i.age_seconds.map(age_token).unwrap_or_else(|| "?".into())
+            i.age_seconds
+                .map(age_token)
+                .unwrap_or_else(|| "age unread".into())
         ),
         (_, false) => format!(
             "prs current {}",
-            i.age_seconds.map(age_token).unwrap_or_else(|| "?".into())
+            i.age_seconds
+                .map(age_token)
+                .unwrap_or_else(|| "age unread".into())
         ),
     }
 }
@@ -4165,7 +4205,12 @@ mod tests {
             "lock held by derive:feature/y (pid 99999999, NOT running: the next derive reclaims it"
         ));
         assert_eq!(gone.priority.as_deref(), Some(""));
-        assert!(gone.summary.ends_with("; priority to ?"));
+        assert!(
+            gone.summary
+                .ends_with("; priority to a branch its marker does not name"),
+            "an empty marker is said, never a question mark: {}",
+            gone.summary
+        );
         std::fs::File::open(&lock)
             .and_then(|f| f.set_modified(std::time::SystemTime::now() + Duration::from_secs(3600)))
             .expect("the lock's time");
@@ -5247,6 +5292,77 @@ mod tests {
         let fresh = integration_section(&fresh_dir.1);
         assert!(!fresh.stale, "{}", fresh.summary);
         assert_eq!(fresh.observed.verdict, BriefVerdict::Current);
+    }
+
+    #[test]
+    fn a_count_that_was_not_read_is_said_unread_never_a_question_mark() {
+        // 2026-10-30, load average 90: the commit count did not answer inside its bound and
+        // the brief said "origin/master is 51b38035a7 (+?)"
+        let (_d, moved) = observed_clone(true, 60, "moved");
+        let mut s = integration_section(&moved);
+        s.moved_by = None;
+        let b = brief_of(Sections {
+            integration: s,
+            ..calm()
+        });
+        let stale = b
+            .attention
+            .iter()
+            .find(|a| a.id == "integration.stale")
+            .expect("the stale queue is an attention entry");
+        assert!(
+            stale.fact.ends_with("(moved, count [unread])"),
+            "{}",
+            stale.fact
+        );
+        assert_eq!(report::moved_words(Some(3)), "+3");
+        for text in b.lines.iter().chain([&b.line, &b.report.prompt]) {
+            assert!(!text.contains("(+?)") && !text.contains(" ? "), "{text}");
+        }
+    }
+
+    #[test]
+    fn a_last_merge_that_was_not_read_is_said_unread_not_left_out() {
+        let (_d, moved) = observed_clone(true, 60, "moved");
+        let mut s = integration_section(&moved);
+        s.moved_by = None;
+        s.last_merge = None;
+        let obs = crate::commands::prs::IntegrationBrief {
+            summary: String::new(),
+            base: "master".into(),
+            observed_at: "2026-10-28T16:34:43Z".into(),
+            observed_master: s.observed_master.clone(),
+            counts: "90 open".into(),
+            lease: None,
+            last_executor_merge: Some("#2366 6 d ago".into()),
+        };
+        let words = integration_words(&s, &obs);
+        assert!(words.contains("(moved, count [unread])"), "{words}");
+        assert!(
+            words.contains("; last merge on master [unread];"),
+            "{words}"
+        );
+        assert!(!words.contains('?'), "{words}");
+    }
+
+    #[test]
+    fn a_section_read_late_is_not_called_unread() {
+        // 2026-10-30: "past its budget: peers, integration, release" two lines below the
+        // integration facts the brief had read; peers and release were unread, integration late
+        let mut s = calm();
+        s.work =
+            BriefWorkSection::over_budget("work", Duration::from_secs(5), Duration::from_secs(6));
+        s.integration.observed.elapsed_ms = 1300;
+        s.integration.observed.budget_ms = 1000;
+        s.integration.observed.verdict = BriefVerdict::Current;
+        let words = budget_words(&s);
+        assert!(words.contains("unread past its budget: work"), "{words}");
+        assert!(
+            words.contains("read past its budget: integration 1.3 s of 1.0 s"),
+            "{words}"
+        );
+        assert!(!words.contains("work, integration"), "{words}");
+        assert_eq!(budget_words(&calm()), "every section inside its budget");
     }
 
     #[test]

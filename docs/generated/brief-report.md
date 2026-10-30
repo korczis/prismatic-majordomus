@@ -3,7 +3,7 @@
      Generator: majordomus-cli 1.0.0-alpha.9 -->
 # The self-report contract
 
-What a session reports about itself on the interval, composed by brief.session from this declaration and the attention entries it measured, and relayed verbatim by every carrier. Declared in `share/brief/report.yaml` (`brief-report/v1`, schema `majordomus/brief-report/v1`, fingerprint `1aec904f87be`). `majordomus brief --report` prints the report owed now. This page is rendered from the declaration; edit the declaration, never this page.
+What a session reports about itself on the interval, composed by brief.session from this declaration and the attention entries it measured, and relayed verbatim by every carrier. Declared in `share/brief/report.yaml` (`brief-report/v1`, schema `majordomus/brief-report/v1`, fingerprint `3398aa56f184`). `majordomus brief --report` prints the report owed now. This page is rendered from the declaration; edit the declaration, never this page.
 
 The sections below are reported in this order, and none is ever omitted.
 
@@ -40,7 +40,7 @@ Each row is filled by one condition of `brief.session`; the two sets are held eq
 
 | Id | Section | Word | Actor | Fact | Remedy |
 |---|---|---|---|---|---|
-| `integration.stale` | integration | `stale` | session | queue observed {age} ago at {observed}; origin/master is {now} (+{moved}) | `majordomus prs refresh` |
+| `integration.stale` | integration | `stale` | session | queue observed {age} ago at {observed}; origin/master is {now} ({moved}) | `majordomus prs refresh` |
 | `integration.unfetched` | integration | `stale` | session | origin/master last fetched {age} ago | `git fetch origin master` |
 | `master.failing` | integration | `failing` | seat:landing | master {sha}: {workflow} run {run} {conclusion} | `gh run view {run} --json jobs` |
 | `run.failing` | work | `failing` | session | {branch}: run {run} {done}/{total}, failed {jobs} | `gh run view {run} --log-failed` |

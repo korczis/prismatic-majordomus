@@ -112,7 +112,10 @@ pub(crate) fn compose(
         BriefSectionState::Partial => BriefVerdict::Partial,
         _ => BriefVerdict::Unread,
     };
-    let n = |v: Option<u64>| v.map(|n| n.to_string()).unwrap_or_else(|| "?".into());
+    let n = |v: Option<u64>| {
+        v.map(|n| n.to_string())
+            .unwrap_or_else(|| super::report::NOT_READ.into())
+    };
     let mut summary = format!(
         "[{}] hosted {} [running], {} [queued]",
         verdict.as_str(),

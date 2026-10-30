@@ -18,6 +18,14 @@
 #   4  it fails when the prompt is no longer the brief's report.prompt verbatim (I4390)
 . "$ROOT/test/lib.sh"
 command -v claude >/dev/null 2>&1 || skip "no claude on PATH: the mod's test runs only in Claude Code's engine"
+# Claude Code 2.1.228 (the second MacBook on 2026-10-30) has `claude plugin` without `test`:
+# it answers `claude plugin test` with "unknown command 'test'" and `--help` with status 0, so
+# only the command list tells an engine that can run the mod's test from one that cannot.
+plugin_help="$(claude plugin --help 2>&1 || true)"
+case "$plugin_help" in
+  *$'\n  test '*) ;;
+  *) skip "this claude ($(claude --version 2>/dev/null || true)) has no 'claude plugin test'" ;;
+esac
 
 SRC="$ROOT/share/mods/claude-code/majordomus-brief"
 fail() { printf '    %s\n' "$*"; exit 1; }

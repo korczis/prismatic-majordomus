@@ -372,6 +372,20 @@ fn entry(id: &str, values: &[(&str, String)]) -> Option<BriefAttention> {
     })
 }
 
+/// What a template value says when the fact behind it was not read: the status word, in
+/// brackets, as every other state of the report is written. On 2026-10-30 a brief at a load
+/// average of 90 said "origin/master is 51b38035a7 (+?)": the commit count had not answered
+/// inside its bound, and a question mark is a placeholder, not a fact.
+pub(crate) const NOT_READ: &str = "[unread]";
+
+/// How far origin/master moved past the observation: `+3`, or that the count was not read.
+pub(crate) fn moved_words(moved: Option<u64>) -> String {
+    match moved {
+        Some(n) => format!("+{n}"),
+        None => format!("moved, count {NOT_READ}"),
+    }
+}
+
 /// A span of seconds as the report says it: `45 s`, `17 min`, `17 h`, `6 d`.
 pub(crate) fn span(seconds: u64) -> String {
     match seconds {
@@ -432,27 +446,25 @@ pub fn derive_attention(m: &Measured<'_>) -> Vec<BriefAttention> {
         push(
             "integration.stale",
             &[
-                ("age", i.age_seconds.map(span).unwrap_or_else(|| "?".into())),
+                (
+                    "age",
+                    i.age_seconds.map(span).unwrap_or_else(|| NOT_READ.into()),
+                ),
                 (
                     "observed",
                     i.observed_master
                         .as_deref()
                         .map(short)
-                        .unwrap_or_else(|| "?".into()),
+                        .unwrap_or_else(|| NOT_READ.into()),
                 ),
                 (
                     "now",
                     i.master_now
                         .as_deref()
                         .map(short)
-                        .unwrap_or_else(|| "?".into()),
+                        .unwrap_or_else(|| NOT_READ.into()),
                 ),
-                (
-                    "moved",
-                    i.moved_by
-                        .map(|n| n.to_string())
-                        .unwrap_or_else(|| "?".into()),
-                ),
+                ("moved", moved_words(i.moved_by)),
             ],
         );
     }
@@ -495,13 +507,13 @@ pub fn derive_attention(m: &Measured<'_>) -> Vec<BriefAttention> {
                         "done",
                         run.jobs_done
                             .map(|n| n.to_string())
-                            .unwrap_or_else(|| "?".into()),
+                            .unwrap_or_else(|| NOT_READ.into()),
                     ),
                     (
                         "total",
                         run.jobs_total
                             .map(|n| n.to_string())
-                            .unwrap_or_else(|| "?".into()),
+                            .unwrap_or_else(|| NOT_READ.into()),
                     ),
                     (
                         "jobs",
@@ -654,7 +666,7 @@ pub fn derive_attention(m: &Measured<'_>) -> Vec<BriefAttention> {
                     m.derive
                         .held_seconds
                         .map(span)
-                        .unwrap_or_else(|| "?".into()),
+                        .unwrap_or_else(|| NOT_READ.into()),
                 ),
             ],
         );

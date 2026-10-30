@@ -183,7 +183,11 @@ test('the status line is the brief, refreshed on the clock, read without buildin
   expect(w.submitted).toHaveLength(0);
 });
 
-test('an idle session whose surroundings only aged is never woken', async ($, on) => {
+// Twelve hours on the mock clock are 720 one-minute ticks, each a brief read and a status
+// line. At a load average of 90 on 2026-10-30 they took more than the kit's default 5 s, so
+// the test failed on the machine's load and not on the mod: with 30 s it passed in 11.3 s.
+const IDLE_DAY = { timeoutMs: 30_000 };
+test('an idle session whose surroundings only aged is never woken', IDLE_DAY, async ($, on) => {
   const clock = mock.clock(on);
   let n = 0;
   const w = engine(on, { supervised: true, answer: () => json(later(++n)) });
