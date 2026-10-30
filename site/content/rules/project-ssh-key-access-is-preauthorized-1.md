@@ -1,7 +1,7 @@
 +++
 title = "Owner-authorized SSH access persists across clients"
 description = "Owner-authorized SSH access persists across clients"
-weight = 156
+weight = 167
 [extra]
 kind = "rule"
 slug = "project-ssh-key-access-is-preauthorized-1"
@@ -62,10 +62,8 @@ checkout. Those machine-local settings are not committed or silently rewritten b
 repository check. Restart clients that load settings only at startup. More restrictive
 managed policies still take precedence.
 
-Native formats verified on 2026-10-10 against the vendors' own references, named here and not
-linked, because a published link is one the site's check can decide without the network
-(`project.every-link-and-control-is-tested`): Codex rules at
-`learn.chatgpt.com/docs/agent-configuration/rules`, Claude permissions at
-`code.claude.com/docs/en/permissions` and Gemini configuration at
-`geminicli.com/docs/reference/configuration/`.
+Native formats verified on 2026-10-10 against the vendors' own pages: Codex rules at
+`https://learn.chatgpt.com/docs/agent-configuration/rules`, Claude permissions at
+`https://code.claude.com/docs/en/permissions` and Gemini configuration at
+`https://geminicli.com/docs/reference/configuration/`.
 {% endraw %}

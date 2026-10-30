@@ -6,6 +6,7 @@ use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::mpsc;
+use std::time::SystemTime;
 
 use super::error::Result;
 use super::git;
@@ -55,7 +56,20 @@ pub fn dirty_state(worktree: &Path) -> Result<DirtyState> {
 /// assert_eq!(states[2], states[0], "answers come back in input order");
 /// ```
 pub fn dirty_states(worktrees: &[Option<&Path>]) -> Vec<Option<DirtyState>> {
-    let mut out: Vec<Option<DirtyState>> = vec![None; worktrees.len()];
+    probe_all(worktrees, |p| dirty_state(p).ok())
+}
+
+/// Take one measurement of each work tree on the pool [`dirty_states`] describes, answering
+/// in the order the work trees were given. A `None` in is a `None` out; a `None` from
+/// `measure` is a work tree git would not answer for. The one pool, so that every reading
+/// that asks each work tree a question costs the machine the same.
+pub(crate) fn probe_all<T, F>(worktrees: &[Option<&Path>], measure: F) -> Vec<Option<T>>
+where
+    T: Send,
+    F: Fn(&Path) -> Option<T> + Sync,
+{
+    let mut out: Vec<Option<T>> = Vec::with_capacity(worktrees.len());
+    out.resize_with(worktrees.len(), || None);
     let wanted: Vec<usize> = worktrees
         .iter()
         .enumerate()
@@ -64,7 +78,7 @@ pub fn dirty_states(worktrees: &[Option<&Path>]) -> Vec<Option<DirtyState>> {
     // One measurement is not worth a thread, and none is not worth a channel.
     if wanted.len() < 2 {
         for i in wanted {
-            out[i] = worktrees[i].and_then(|p| dirty_state(p).ok());
+            out[i] = worktrees[i].and_then(&measure);
         }
         return out;
     }
@@ -75,11 +89,12 @@ pub fn dirty_states(worktrees: &[Option<&Path>]) -> Vec<Option<DirtyState>> {
             let tx = tx.clone();
             let next = &next;
             let wanted = &wanted;
+            let measure = &measure;
             scope.spawn(move || loop {
                 let Some(&i) = wanted.get(next.fetch_add(1, Ordering::Relaxed)) else {
                     return;
                 };
-                let measured = worktrees[i].and_then(|p| dirty_state(p).ok());
+                let measured = worktrees[i].and_then(measure);
                 if tx.send((i, measured)).is_err() {
                     return;
                 }
@@ -92,6 +107,120 @@ pub fn dirty_states(worktrees: &[Option<&Path>]) -> Vec<Option<DirtyState>> {
         }
     });
     out
+}
+
+/// Uncommitted work in a work tree, counted as [`dirty_state`] counts it, with the moment
+/// of its oldest change: the earliest modification time among the paths `git status`
+/// names. A changed path that no longer exists on disk — a deletion — has no time of its
+/// own, and the index file's modification time stands in for it, as it does for a work
+/// tree whose paths cannot be read at all. `None` only when neither can be read.
+///
+/// The status is the one [`dirty_state`] takes, under `GIT_OPTIONAL_LOCKS=0`,
+/// so measuring writes nothing: not the index, not a lock, not a stat cache.
+///
+/// ```
+/// use majordomus_cli::worktree::state::aged_dirty_state;
+/// let repo = tempfile::tempdir().unwrap();
+/// let init = std::process::Command::new("git")
+///     .args(["init", "-q"])
+///     .current_dir(repo.path())
+///     .status()
+///     .unwrap();
+/// assert!(init.success());
+/// let (clean, none) = aged_dirty_state(repo.path()).unwrap();
+/// assert!(clean.clean && none.is_none(), "a clean work tree has no oldest change");
+/// std::fs::write(repo.path().join("new.txt"), "work").unwrap();
+/// let (dirty, oldest) = aged_dirty_state(repo.path()).unwrap();
+/// assert_eq!(dirty.untracked, 1);
+/// assert!(oldest.is_some(), "the file's own time is the change's");
+/// ```
+pub fn aged_dirty_state(worktree: &Path) -> Result<(DirtyState, Option<SystemTime>)> {
+    let bytes = git::status_porcelain_z(worktree, "all")?;
+    let mut state = parse_status_z(&bytes);
+    state.in_progress = operation_in_progress(worktree);
+    if state.clean {
+        return Ok((state, None));
+    }
+    Ok((state, oldest_change(worktree, &bytes)))
+}
+
+/// The earliest modification time among the paths of a `status --porcelain -z` answer for
+/// `worktree`, ignored entries left out, with the index file's time standing in for a path
+/// that cannot be read — or for all of them. `None` only when neither can be read.
+fn oldest_change(worktree: &Path, bytes: &[u8]) -> Option<SystemTime> {
+    let mut oldest: Option<SystemTime> = None;
+    let mut unreadable = false;
+    for entry in bytes.split(|b| *b == 0).filter(|e| e.len() >= 4) {
+        if entry.starts_with(b"!!") {
+            continue;
+        }
+        let rel = String::from_utf8_lossy(&entry[3..]);
+        let rel = rel.trim_end_matches('/');
+        match std::fs::symlink_metadata(worktree.join(rel)).and_then(|m| m.modified()) {
+            Ok(t) => oldest = Some(oldest.map_or(t, |o| o.min(t))),
+            Err(_) => unreadable = true,
+        }
+    }
+    if unreadable || oldest.is_none() {
+        let index = git_dir_of(worktree)
+            .map(|d| d.join("index"))
+            .and_then(|i| std::fs::metadata(i).and_then(|m| m.modified()).ok());
+        if let Some(t) = index {
+            oldest = Some(oldest.map_or(t, |o| o.min(t)));
+        }
+    }
+    oldest
+}
+
+/// Which of these directories has a process working inside it right now, one answer per
+/// directory in the order given.
+///
+/// `lsof -a -d cwd` asks the kernel which processes have their working directory where,
+/// which is the only reading that is true at the moment it is taken: the modification time
+/// of a work tree is not, and two of the four swept on 2026-09-15 looked untouched since the
+/// 12th with live processes inside them. One `lsof` answers for every directory. `None` is
+/// not knowing — no `lsof`, or a directory that cannot be resolved — and never "nothing is
+/// running".
+///
+/// ```
+/// use majordomus_cli::worktree::state::processes_inside;
+/// let here = std::env::current_dir().unwrap();
+/// if let Some(answers) = processes_inside(&[here.as_path()]) {
+///     assert_eq!(answers, vec![true], "this process works inside its own directory");
+/// }
+/// ```
+pub fn processes_inside(dirs: &[&Path]) -> Option<Vec<bool>> {
+    let real: Vec<String> = dirs
+        .iter()
+        .map(|d| {
+            std::fs::canonicalize(d)
+                .ok()
+                .map(|p| p.to_string_lossy().to_string())
+        })
+        .collect::<Option<Vec<_>>>()?;
+    if real.is_empty() {
+        return Some(Vec::new());
+    }
+    inside_by(&real, "lsof")
+}
+
+/// [`processes_inside`] for directories already resolved, asking the `lsof` at `program`:
+/// `None` when it cannot be run.
+fn inside_by(real: &[String], program: &str) -> Option<Vec<bool>> {
+    let out = std::process::Command::new(program)
+        .args(["-a", "-d", "cwd", "-Fn"])
+        .output()
+        .ok()?;
+    let text = String::from_utf8_lossy(&out.stdout);
+    let cwds: Vec<&str> = text.lines().filter_map(|l| l.strip_prefix('n')).collect();
+    Some(
+        real.iter()
+            .map(|r| {
+                let below = format!("{r}/");
+                cwds.iter().any(|c| *c == r || c.starts_with(&below))
+            })
+            .collect(),
+    )
 }
 
 /// How many work trees to measure at once. Each measurement waits on a git subprocess
@@ -167,7 +296,7 @@ pub fn operation_in_progress(worktree: &Path) -> Option<String> {
 /// cheapest possible `git rev-parse` took 1.5–2.2 s on this machine (n=3) — paid once per
 /// work tree for a question one `stat` and one small read answer. Git is asked only when
 /// `.git` is not there to read, so a checkout arranged some other way still gets an answer.
-fn git_dir_of(worktree: &Path) -> Option<PathBuf> {
+pub(crate) fn git_dir_of(worktree: &Path) -> Option<PathBuf> {
     let dot = worktree.join(".git");
     match std::fs::metadata(&dot) {
         Ok(m) if m.is_dir() => return Some(dot),
@@ -655,6 +784,61 @@ mod tests {
         let b = parse_branches("x\0abc\0origin/x\0\0\0\n");
         let u = b[0].upstream.as_ref().unwrap();
         assert_eq!((u.ahead, u.behind), (Some(0), Some(0)));
+    }
+
+    fn git(cwd: &Path, args: &[&str]) {
+        let ok = std::process::Command::new("git")
+            .args(["-c", "user.name=t", "-c", "user.email=t@t"])
+            .args(["-c", "commit.gpgsign=false"])
+            .args(args)
+            .current_dir(cwd)
+            .status()
+            .expect("run git");
+        assert!(ok.success(), "git {args:?}");
+    }
+
+    #[test]
+    fn a_directory_git_does_not_answer_for_has_no_aged_state() {
+        let plain = tempfile::tempdir().unwrap();
+        assert!(aged_dirty_state(plain.path()).is_err());
+    }
+
+    /// An ignored entry is not a change; a changed path that is gone takes the index's time;
+    /// a path that is there takes its own.
+    #[test]
+    fn the_oldest_change_skips_ignored_entries_and_a_gone_path_takes_the_index_time() {
+        let repo = tempfile::tempdir().unwrap();
+        git(repo.path(), &["init", "-q"]);
+        std::fs::write(repo.path().join("kept.txt"), "k").unwrap();
+        git(repo.path(), &["add", "kept.txt"]);
+        let index = std::fs::metadata(repo.path().join(".git/index"))
+            .and_then(|m| m.modified())
+            .unwrap();
+        let kept = std::fs::metadata(repo.path().join("kept.txt"))
+            .and_then(|m| m.modified())
+            .unwrap();
+
+        // only an ignored entry: nothing of its own counts, and the index stands in
+        let ignored = oldest_change(repo.path(), b"!! build/\0");
+        assert_eq!(ignored, Some(index));
+        // a present path counts by its own time
+        assert_eq!(oldest_change(repo.path(), b"A  kept.txt\0"), Some(kept));
+        // a gone path brings the index in beside the present one
+        let both = oldest_change(repo.path(), b"A  kept.txt\0 D gone.txt\0");
+        assert_eq!(both, Some(kept.min(index)));
+
+        // no repository at all: a gone path and no index answer nothing
+        let plain = tempfile::tempdir().unwrap();
+        assert_eq!(oldest_change(plain.path(), b" D gone.txt\0"), None);
+    }
+
+    #[test]
+    fn a_directory_that_cannot_be_resolved_or_an_absent_lsof_is_not_knowing() {
+        let gone = Path::new("/nonexistent/majordomus-test/worktree");
+        assert_eq!(processes_inside(&[gone]), None);
+        assert_eq!(processes_inside(&[]), Some(Vec::new()));
+        let real = ["/nonexistent".to_string()];
+        assert_eq!(inside_by(&real, "/nonexistent/majordomus-test/lsof"), None);
     }
 
     #[test]

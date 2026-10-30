@@ -1,0 +1,36 @@
+id: I3434
+milestone: a-prompt-reaches-the-work-it-serves
+title: "A capability declared as reading checkout-private records answers only this machine: a caller beyond loopback is refused on HTTP and MCP, and the refusal logs no input value"
+slug: a-private-read-stays-on-this-machine
+priority: p1
+profile: implementation
+objective: "Add one declared field to the existing ExecutionPolicy (apps/majordomus-cli/src/capability/model.rs, beside signed_input at :597) saying that the capability reads checkout-private records. admits_remote (model.rs:708) answers false for it, so two existing paths refuse it with the existing remote error: the router's refusal (http/router.rs:1028) and MCP's remote flag (mcp/protocol.rs:131, :297). Prove it with a fixture capability in tests/remote_callers.rs."
+why: "The owner's 2026-10-19 Cognitive Fabric pack (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/05_SURFACES.md, contracts/ARCHITECTURE.md, and the verification/ACCEPTANCE.md row on private .ai/local data, which names logs and static JSON) forbids private runtime data on any surface beyond the operator. ADR 0126 admits every read from beyond loopback, and servers bind every interface when MAJORDOMUS_HTTP_HOST says so (lib/context.sh:631). This lands before the slice adds the first reader of the prompt archive."
+current_state: "admits_remote answers Effect::Read or signed_input (capability/model.rs:708-710), so every read is served to a caller beyond loopback (ADR 0126). Availability::Authenticated states that nothing authenticates a caller yet (model.rs:1176-1179). No Rust capability reads .ai/local/prompts today."
+desired_state: "One field and the existing refusal, with the field projected as part of the capability's execution policy in the registry. A capability that declares it is answered on the command line and to loopback only."
+scope:
+  - "apps/majordomus-cli/src/capability/model.rs"
+  - "apps/majordomus-cli/tests/remote_callers.rs"
+  - "docs/CAPABILITIES.md"
+  - "docs/generated/registry.json"
+  - "docs/generated/registry.yaml"
+  - "site/data/registry/registry.json"
+non_scope:
+  - "Declaring the field on existing capabilities that read other .ai/local stores (an owner question)"
+  - "Authentication"
+  - "Changing ADR 0126's rule for any other read"
+serves:
+  - "a-change-reconciles-what-it-affects#a-private-read-stays-on-this-machine"
+acceptance_criteria:
+  - "A fixture capability declaring the field is refused with 403 to a remote HTTP request and refused over MCP with the remote flag set"
+  - "The same capability is answered from loopback and from the command line"
+  - "Every existing remote_callers.rs test passes unchanged"
+  - "The refusal's log line names the capability and carries no input value"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test remote_callers"
+  - "bash test/run.sh 1086_a_remote_caller_cannot_write"
+  - "bin/majordomus-cli generate --check"
+evidence_required:
+  - "a_private_read_is_refused_to_a_remote_caller"
+created_at: 2026-10-19
+updated_at: 2026-10-19

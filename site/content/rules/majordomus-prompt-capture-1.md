@@ -1,7 +1,7 @@
 +++
 title = "Prompt capture is proven, or reported unavailable"
 description = "Prompt capture is proven, or reported unavailable"
-weight = 40
+weight = 41
 [extra]
 kind = "rule"
 slug = "majordomus-prompt-capture-1"

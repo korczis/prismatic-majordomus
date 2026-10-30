@@ -1,0 +1,41 @@
+id: I2711
+milestone: M004
+title: "The pages job judges production only after the deployment of its own commit has arrived"
+slug: the-pages-job-waits-for-its-deployment
+priority: p0
+profile: implementation
+parallel_safe: true
+depends_on: []
+objective: "Stop validate's `pages` job on master from reporting red because it read majordomus.dev before the deployment of the commit it judges had been served."
+why: "2026-10-14: validate 38579234241 on 0dff496d1c and validate 38600347235 on ff38297096 both concluded failure on the `pages` job, step \"the published site came from master, is current, and is being served\" exit 10, while production served that very commit minutes later; the job passed on a manual rerun. A false red on master holds the v0.26.0 tag (only a commit with ci success may be tagged) and costs a rerun of the job each time."
+current_state: "The step reads production's build.json once, at the time the job reaches it, and fails when the deployment of its commit has not finished yet."
+desired_state: "The step waits, bounded, for production to serve its commit (polling build.json with a declared limit, saying what it waits for), and fails only when the bound passes or production serves a different commit that is not newer; a deployment that is still queued is reported as such, never as a defect of the tree."
+scope:
+  - .github/workflows/validate.yml
+  - scripts/ci/pages-check
+  - scripts/site-check
+  - docs/CI.md
+  - test/cases
+non_scope:
+  - "Making the Pages deployment itself faster"
+acceptance_criteria:
+  - "The pages job passes when the deployment of its commit arrives within the declared bound after the job starts"
+  - "It fails, naming both commits, when production serves an older commit after the bound"
+  - "The wait is bounded and declared, and liveness-check accepts it"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "pages_waits_for_its_deployment_case"
+created_at: 2026-10-14
+updated_at: 2026-10-14T22:02:38Z
+started_at: 2026-10-14T22:01:02Z
+started_event: sha256:80ed06b6058b86c7a10c5493435d27450578ecf7aa7af9cebb49ed5cdbe6b675
+completed_at: 2026-10-14T22:02:38Z
+completed_event: sha256:a1bc76379a2745d5e3ceaa39d92a092cbfae8d8bab6cd8a628c4e41267d5b104
+evidence:
+  - covers: pages_waits_for_its_deployment_case
+    type: test
+    command: "MJ_TEST_JOBS=3 bash test/run.sh 3027_the_release_path_goes_first 3028_the_pages_job_waits_for_its_deployment 3029_a_tag_in_flight_is_pending 3021_a_tag_does_not_freeze_the_queue 3019_a_failed_branch_run_cancels_itself 103_release_projection 94_ci_plan"
+    result: "tests: 7 passed, 0 failed (run 2026-10-14 ~22Z on master c0e3585dc836201089d6b5dd49f5a79fe8bff798 plus this change); case 3028: pages-check --for COMMIT waits, polling build.json every 30 s up to a declared 1200 s, passes when production serves the commit or a newer one, fails early only when an older commit is served with no deploy in flight, and names both commits"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T22:01:55Z

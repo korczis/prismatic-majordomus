@@ -1,0 +1,43 @@
+id: I3002
+milestone: idd-reads-at-a-glance
+title: "A command to reproduce is a code block a reader can copy"
+slug: a-reproduce-command-can-be-copied
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Render each reproduce command as a code block with a keyboard-reachable copy control, in the snapshot too."
+why: "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: commands are inline text that has to be selected by hand."
+serves:
+  - the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance
+current_state: "Inline commands."
+desired_state: "Copyable code blocks."
+scope:
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - "share/ui/ui.js"
+  - "apps/majordomus-cli/src/ui/view.rs"
+  - "apps/majordomus-cli/src/ui/intent.rs"
+  - "apps/majordomus-cli/src/ui/claim.rs"
+  - "share/ui/src/ui.css"
+  - "share/ui/ui.css"
+  - "test/cases/3408_a_reproduce_command_is_copied_exactly.sh"
+  - ".ai/repo/project"
+  - "docs"
+  - "site"
+depends_on: []
+acceptance_criteria:
+  - "Each reproduce command has a copy control that copies exactly the command"
+  - "The control is reached by the keyboard, says what the copy did, and is offered only where a clipboard can be written"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --lib ui::idd::"
+  - "scripts/ui audit --only /ui/idd"
+  - "bash test/run.sh --no-skips 3408_a_reproduce_command_is_copied_exactly"
+evidence_required: []
+created_at: 2026-10-18
+updated_at: 2026-10-28T16:41:45Z
+started_at: 2026-10-28T16:38:10Z
+started_event: sha256:0f43b5e714cd5cd6f11679109d23d6d029c3d90855da10b4739ff2e87cdb4ba7
+verified_at: 2026-10-28T16:39:05Z
+verified_event: sha256:690caf6ba5c5d45726a46baeead8e25e35b8eb6e6b32b903b2d4c7437050ed2b
+completed_at: 2026-10-28T16:41:45Z
+completed_event: sha256:d6200c07b758249c54d542ef2f4747b32b6f10fd802435450dd08846da55e8e9

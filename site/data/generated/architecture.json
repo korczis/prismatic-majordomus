@@ -430,6 +430,16 @@
       "external": false
     },
     {
+      "id": ".ai/local/cache/flat",
+      "kind": "artifact",
+      "label": "local/cache/flat",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/local/state/session-current.yaml",
       "kind": "artifact",
       "label": "local/state/session-current.yaml",
@@ -480,6 +490,16 @@
       "external": false
     },
     {
+      "id": ".ai/repo/project/issues",
+      "kind": "artifact",
+      "label": "repo/project/issues",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/deployment.sh",
       "kind": "module",
       "label": "deployment",
@@ -494,7 +514,7 @@
       "kind": "module",
       "label": "doctor",
       "command": "doctor",
-      "summary": "is Majordomus itself healthy and actually wired here?",
+      "summary": "governance only: is every declared enforcement wired here?",
       "read_only": true,
       "route": "/commands/doctor/",
       "external": false
@@ -740,9 +760,9 @@
       "external": false
     },
     {
-      "id": ".ai/local/prompts",
+      "id": ".ai/repo/mesh",
       "kind": "artifact",
-      "label": "local/prompts",
+      "label": "repo/mesh",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -750,9 +770,9 @@
       "external": false
     },
     {
-      "id": ".ai/local/cache",
+      "id": ".ai/local/prompts",
       "kind": "artifact",
-      "label": "local/cache",
+      "label": "local/prompts",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -830,16 +850,6 @@
       "external": false
     },
     {
-      "id": ".ai/repo/project/issues",
-      "kind": "artifact",
-      "label": "repo/project/issues",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
       "id": ".ai/repo/project/project.yaml",
       "kind": "artifact",
       "label": "repo/project/project.yaml",
@@ -900,6 +910,16 @@
       "external": false
     },
     {
+      "id": ".ai/local/state/locks/outbox-drain",
+      "kind": "artifact",
+      "label": "local/state/locks/outbox-drain",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/local/state/locks/session-pointer",
       "kind": "artifact",
       "label": "local/state/locks/session-pointer",
@@ -923,6 +943,16 @@
       "id": ".ai/local/evidence/use-cases",
       "kind": "artifact",
       "label": "local/evidence/use-cases",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".ai/local/cache/use-cases",
+      "kind": "artifact",
+      "label": "local/cache/use-cases",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -963,11 +993,6 @@
     },
     {
       "source": "lib/common.sh",
-      "target": ".ai/local/state/current.yaml",
-      "kind": "reads"
-    },
-    {
-      "source": "lib/common.sh",
       "target": ".ai/manifest.yaml",
       "kind": "reads"
     },
@@ -994,6 +1019,16 @@
     {
       "source": "lib/context.sh",
       "target": ".ai/local/state/open-questions.md",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/context.sh",
+      "target": ".ai/repo/project/issues",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/derive.sh",
+      "target": ".ai/local/state/current.yaml",
       "kind": "reads"
     },
     {
@@ -1054,6 +1089,11 @@
     {
       "source": "lib/init.sh",
       "target": ".ai/local/state/open-questions.md",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".ai/repo/policy.yaml",
       "kind": "reads"
     },
     {
@@ -1397,6 +1437,11 @@
       "kind": "sources"
     },
     {
+      "source": "lib/common.sh",
+      "target": "lib/rust_bin.sh",
+      "kind": "sources"
+    },
+    {
       "source": "lib/context.sh",
       "target": "lib/context_docs.sh",
       "kind": "sources"
@@ -1598,6 +1643,11 @@
     },
     {
       "source": "lib/knowledge.sh",
+      "target": "lib/decision.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/knowledge.sh",
       "target": "lib/rust_bin.sh",
       "kind": "sources"
     },
@@ -1693,12 +1743,22 @@
     },
     {
       "source": "lib/start.sh",
+      "target": "lib/context_docs.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/start.sh",
       "target": "lib/handover.sh",
       "kind": "sources"
     },
     {
       "source": "lib/start.sh",
       "target": "lib/intent_binding.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/usecase.sh",
+      "target": "lib/capture.sh",
       "kind": "sources"
     },
     {
@@ -1893,11 +1953,6 @@
     },
     {
       "source": "lib/init.sh",
-      "target": ".ai/local/cache",
-      "kind": "uses"
-    },
-    {
-      "source": "lib/init.sh",
       "target": ".ai/local/session-contexts",
       "kind": "uses"
     },
@@ -1938,7 +1993,7 @@
     },
     {
       "source": "lib/init.sh",
-      "target": ".ai/repo/policy.yaml",
+      "target": ".ai/repo/mesh",
       "kind": "uses"
     },
     {
@@ -1998,17 +2053,17 @@
     },
     {
       "source": "lib/knowledge.sh",
+      "target": ".ai/local/state/decisions.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/knowledge.sh",
       "target": ".ai/repo/knowledge/sources.yaml",
       "kind": "uses"
     },
     {
       "source": "lib/knowledge.sh",
       "target": ".ai/repo/policy.yaml",
-      "kind": "uses"
-    },
-    {
-      "source": "lib/migrate.sh",
-      "target": ".ai/local/cache",
       "kind": "uses"
     },
     {
@@ -2173,6 +2228,11 @@
     },
     {
       "source": "lib/session.sh",
+      "target": ".ai/local/state/locks/outbox-drain",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/session.sh",
       "target": ".ai/local/state/locks/session-pointer",
       "kind": "uses"
     },
@@ -2204,6 +2264,11 @@
     {
       "source": "lib/update.sh",
       "target": ".ai/local/state/handovers",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/update.sh",
+      "target": ".ai/repo/policy.yaml",
       "kind": "uses"
     },
     {
@@ -2253,7 +2318,22 @@
     },
     {
       "source": "lib/common.sh",
+      "target": ".ai/local/cache/flat",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/common.sh",
+      "target": ".ai/local/state/current.yaml",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/common.sh",
       "target": ".ai/local/state/ledger.jsonl",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/common.sh",
+      "target": ".ai/local/state/mcp/ensure.log",
       "kind": "writes"
     },
     {
@@ -2314,6 +2394,11 @@
     {
       "source": "lib/update.sh",
       "target": ".ai/local/prompts",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/usecase.sh",
+      "target": ".ai/local/cache/use-cases",
       "kind": "writes"
     },
     {

@@ -29,7 +29,16 @@
 # installed zola, the site's node_modules and jq, so any of them absent, or a tree of another
 # commit, fails the case; anywhere else it is what the person has not run yet
 # (scripts/rust-check --doc), and the case says what it did not measure and ends (skip_case).
-# The builds are real.
+# The builds are real, and they are the cheapest real ones that carry what is judged. What the
+# case judges is the composition of the committed topology and the refusals of the site's check
+# over it, none of which depends on the language copies: `== languages` derives a whole second
+# copy of the site from the English pages (ADR 0218) and was, measured, nearly all of every
+# build (625 s a build on one loaded machine, 71 s without the copy; the case cost 4017 s on CI
+# run 39762797718, the floor under every suite shard). So the clone declares the source language alone (site/i18n/languages.json, the
+# one declaration the build, the language switch and the check read) and derives no copy. The two
+# builds nobody checks afterwards (the second surface, and the mount the site fills) also skip
+# the stylesheet (--no-css): no assertion on them reads a style, and the site's check, which
+# does read the stylesheet's design stamp, runs over the two builds that keep it.
 . "$ROOT/test/lib.sh"
 command -v zola >/dev/null || skip_case "zola is absent, so no site was built and nothing was composed"
 [ -d "$ROOT/node_modules/tailwindcss" ] || skip_case "node_modules is absent, so no site was built and nothing was composed"
@@ -43,6 +52,15 @@ cd "$S/work" || exit 1
 # master at all — so the clone is given this checkout's, and sees the repository as it does.
 git fetch -q "$ROOT" '+refs/remotes/origin/*:refs/remotes/origin/*'
 ln -s "$ROOT/node_modules" node_modules
+# The clone declares the source language alone. The file stays tracked as committed in the
+# index, so the clone is as clean as the checkout it was cloned from: the build records it
+# clean, and the fixture check below sees the topology as the only change.
+source_language="$(jq -r .source site/i18n/languages.json)"
+jq --arg s "$source_language" '.languages = [$s] | .names |= with_entries(select(.key == $s))' \
+  site/i18n/languages.json > "$S/languages.json" && cp "$S/languages.json" site/i18n/languages.json
+git update-index --skip-worktree site/i18n/languages.json
+[ "$(jq -c .languages site/i18n/languages.json)" = "[\"$source_language\"]" ] \
+  || { echo "    the clone still declares a language copy:"; cat site/i18n/languages.json; exit 1; }
 TAB="$(printf '\t')"
 
 # ---------------------------------------------------------------- what the topology composes
@@ -97,7 +115,11 @@ expect_grep "^OK   link +.* the [0-9]+ page\(s\) under /rustdoc/ are composed su
 # The regression simulated where it happens: the topology the build reads lacks the surface —
 # a declaration dropped, or a composition that stopped reading it — and site-build carries it
 # out without a word, because it composes what the topology says. The site's own check, over
-# the committed topology, refuses that build from three sections at once.
+# the committed topology, refuses that build from two sections at once: the composed surfaces
+# (13m) and the links. The navigation section (13d) does not: it reads the homepage up to the
+# end of the hero, and since the navigation is rendered once (#1045) the reference is linked
+# from the footer alone, so 13d never meets the link. That 13d should see a footer-only link
+# is owed as a change of its own; this case asserts what refuses today.
 jq 'del(.surfaces[] | select(.id == "rustdoc"))' docs/generated/web.json > "$S/web-without.json"
 cp "$S/web-without.json" docs/generated/web.json
 expect_exit 0 scripts/site-build --no-data
@@ -106,7 +128,6 @@ expect_no_grep 'compose rustdoc'
 git checkout -q -- docs/generated/web.json
 expect_exit 10 scripts/site-check --no-sync
 expect_grep '^FAIL surfaces +surface rustdoc is not in the build: no /rustdoc/index\.html \(run its producer, scripts/rust-check --doc, then scripts/site-build\)$'
-expect_grep '^FAIL nav +navigation/hero link /rustdoc/ does not resolve$'
 expect_grep "^FAIL link +internal +[^ ]+: ${base%/}/rustdoc/ resolves to no file under site/public"
 # With the declaration itself gone as well, the check's own list of composed surfaces is empty
 # and 13m has nothing to ask about; the site's links into the reference are still links, and
@@ -132,7 +153,7 @@ jq -n --arg b "$(git rev-parse HEAD)" \
   > target/web/fixture-report/surface.json
 [ "$(git status --porcelain --untracked-files=no | sed 's/^...//')" = docs/generated/web.json ] \
   || { echo "    the fixture changed more than the topology:"; git status --porcelain; exit 1; }
-expect_exit 0 scripts/site-build --no-data
+expect_exit 0 scripts/site-build --no-data --no-css
 expect_grep '^== compose fixture-report at /fixture-report \(from target/web/fixture-report\)$'
 expect_grep 'composed: rustdoc fixture-report$'
 expect_file site/public/fixture-report/index.html
@@ -151,7 +172,7 @@ mkdir -p target/web/fixture-report
 printf '<!doctype html><title>fixture report</title>\n' > target/web/fixture-report/index.html
 jq '(.surfaces[] | select(.id == "fixture-report") | .mount) = "/guarantees"' \
   docs/generated/web.json > "$S/web.json" && cp "$S/web.json" docs/generated/web.json
-expect_exit 10 scripts/site-build --no-data
+expect_exit 10 scripts/site-build --no-data --no-css
 expect_grep 'the site itself built site/public/guarantees, the mount of surface fixture-report; one path has one owner'
 grep -q 'fixture report' site/public/guarantees/index.html 2>/dev/null \
   && { echo "    the site's own page was overwritten by the surface"; exit 1; }

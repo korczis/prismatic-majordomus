@@ -86,9 +86,27 @@ on by a default.
   was not measured; it is expected to be, since a path source's identity includes its path.
 - Builds that share the directory serialise on cargo's file lock: two worktrees building
   at once wait for each other. That is the cost, and `derive` already runs one at a time.
+  **Amended 2026-10-13.** The sentence counted one builder. The commit hook's launcher, the
+  lints, the tests and the documentation build start cargo as well, in every worktree, and
+  on that day one of them stood behind the lock for fourteen minutes in silence, because
+  `--quiet` removes the line in which cargo says it is blocked. The cost is now bounded
+  rather than accepted: a build waits `MAJORDOMUS_BUILD_LOCK_WAIT` seconds at most, says
+  what it waited behind, and then builds in the tree's own directory
+  (`mj_cargo_bounded`, `project.a-build-never-waits-in-silence-on-anothers-lock`). Sharing
+  stays the default and is what a build gets when nobody is in the way; a private
+  directory is the price of not waiting, paid only by the build that would have waited.
 - Intermediates are in one place, so `cargo clean` in a worktree cleans its artifacts and
   not the shared directory, which is what the ownership rule wants.
 - The shared directory is outside every checkout, so removing a worktree never frees it;
   only the reaper's bound does. That is the new accumulation and its measure, threshold
   and reducer are named in `project.worktrees-share-build-intermediates`.
+  **Amended 2026-10-23 (I3959).** The bound above never applied on a machine where some
+  cargo always runs: the directory reached 102GB against 6144MB. "Removes it as a whole when
+  nobody builds" stays, and while a build runs the reaper — and every bounded build, before it
+  starts and after it ends — evicts its stale units instead, oldest first until it is under
+  the bound, each inside cargo's own lock on its profile: an idle `llvm-cov-target`, a
+  dependency generation no worktree's `Cargo.lock` names, idle incremental sessions and idle
+  generations of this crate (`mj_rust_bound_build_dir`, docs/WORKTREES.md "The bound, while
+  builds run", `test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh`). The pass after
+  a build waits for a held lock in the background, bounded; a held profile is skipped and said.
 - Proven by `test/cases/1022_worktrees_share_build_intermediates.sh`.

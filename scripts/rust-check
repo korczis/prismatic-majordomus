@@ -8,7 +8,17 @@
 # scripts/rust-coverage-threshold over the crate and scripts/session-coverage-threshold over
 # the canonical session/continuity domain — when cargo-llvm-cov is installed, measured over
 # the code that is under test rather than over the code plus the tests. One script, so that
-# CI and a person run the same gates in the same order.
+# CI and a person run the same gates.
+#
+# One gate is asked first when a person runs this script: the quality report, the structure
+# job's `rust-quality` gate (.ai/repo/ci/gates.yaml) with the same subcommand, so the finding
+# it prints is the one the structure job would print. On 2026-10-14 two implementations
+# passed their crate tests, clippy, rustdoc and cases and then failed that gate on exported
+# items with no example, no behavioural test or two-word docs; each cost a further 20-40
+# minute round, because the only local run of the report stood after `cargo test`, at the
+# end of a run nobody waited for (I2715). Asked first, it answers in seconds on a warm
+# build, and `--quality` asks it alone. CI's modes (--ci, --integration) keep it after the
+# registry checks, where a red report does not hide the verdicts of the gates before it.
 #
 # The rustdoc step is a gate and a producer at once. The pages it proves warning-free are the
 # pages the public site serves at /rustdoc (ADR 0086), so wherever it runs its output is
@@ -16,7 +26,12 @@
 # surface.json that declares it and a landing page. One invocation of rustdoc, never a second
 # variant of it for publication — what is published is what the gate proved.
 #
-#   scripts/rust-check                  every gate (coverage when cargo-llvm-cov is installed)
+#   scripts/rust-check                  every gate, the quality report first (coverage when
+#                                       cargo-llvm-cov is installed)
+#   scripts/rust-check --quality        the quality report alone: the rust-quality gate's
+#                                       verdict, exit 10 on a finding the baseline does not
+#                                       accept. What a change adding an exported item owes
+#                                       before it is pushed
 #   scripts/rust-check --ci             every gate but coverage (its own CI job), plus the
 #                                       benchmark check against this platform's baseline
 #   scripts/rust-check --doc            the rustdoc step alone, and its handoff into
@@ -31,7 +46,13 @@
 #                                       coverage --check, web validate, quality report. What a change outside the crate
 #                                       can affect: the layer, the schemas, the documents the
 #                                       registry dataset is derived from.
-#   --artifact DIR                      after building, copy the executable into DIR with a
+#   scripts/rust-check --portable-core  the second crate, apps/majordomus-core (ADR 0170):
+#                                       its tests on the host, then the wasm32 module built
+#                                       and executed by node against the shared fixture, in
+#                                       the crate's own target directory. The structure job's
+#                                       portable-core gate: a build said in this script's
+#                                       words, as no gate may reach cargo otherwise (I3957)
+#   --artifact DIR                     after building, copy the executable into DIR with a
 #                                       majordomus-cli.json beside it (commit, target triple,
 #                                       rustc, Cargo.lock digest, profile) for a later job
 #   MJ_CI_TIMINGS=FILE                  append "rust-check<TAB>step<TAB>seconds" per step
@@ -60,14 +81,45 @@ while [ $# -gt 0 ]; do
     --ci) MODE=ci; shift ;;
     --doc) MODE=doc; shift ;;
     --integration) MODE=integration; shift ;;
+    --quality) MODE=quality; shift ;;
     --artifact) ARTIFACT="$2"; shift 2 ;;
     --lanes) MODE=lanes; shift ;;
+    --portable-core) MODE=portable-core; shift ;;
     *) echo "rust-check: unknown option $1" >&2; exit 2 ;;
   esac
 done
 # --doc builds the documentation and nothing else, so there is no executable to hand over
 if [ "$MODE" = doc ] && [ -n "$ARTIFACT" ]; then
   echo "rust-check: --artifact needs the executable, and --doc builds only the documentation" >&2; exit 2
+fi
+# --quality answers one question and hands nothing over either
+if [ "$MODE" = quality ] && [ -n "$ARTIFACT" ]; then
+  echo "rust-check: --artifact belongs to a run of every gate, and --quality runs one" >&2; exit 2
+fi
+# --portable-core proves the other crate, which has no executable to hand over, and nothing of
+# the CLI's setup below concerns it
+if [ "$MODE" = portable-core ]; then
+  [ -z "$ARTIFACT" ] || { echo "rust-check: --artifact needs the executable, and --portable-core builds the core" >&2; exit 2; }
+  CORE="$ROOT/apps/majordomus-core"
+  # The core builds against its own Cargo.lock, so it builds in its own build directory too.
+  # When its crate types were rlib+cdylib, cargo named the rlib without a hash, and
+  # --target-dir moves only the final artifacts: in the worktrees' shared build-dir this build
+  # replaced the one libmajordomus_core.rlib every executable links, with a serde_json the
+  # executable's lock does not have, and the next build anywhere failed at canonical_json
+  # (train 7). The crate is an rlib only now (I4232); its own build directory stays, because
+  # nothing of this build belongs in the shared one.
+  CARGO_BUILD_BUILD_DIR="$CORE/target"; export CARGO_BUILD_BUILD_DIR
+  # the target is added when it can be; a machine that has it already, or cannot reach the
+  # network, is answered by the build that follows
+  rustup target add wasm32-unknown-unknown >/dev/null 2>&1 || true
+  cargo test --quiet --manifest-path "$CORE/Cargo.toml" --target-dir "$CORE/target"
+  # the crate declares an rlib only (I4232), so the cdylib a browser loads is asked for here
+  cargo rustc --quiet --lib --release --target wasm32-unknown-unknown --crate-type cdylib \
+    --manifest-path "$CORE/Cargo.toml" --target-dir "$CORE/target"
+  node "$CORE/tests/wasm-parity.mjs" \
+    "$CORE/target/wasm32-unknown-unknown/release/majordomus_core.wasm" \
+    "$CORE/fixtures/canonical-digest.v1.json"
+  exit 0
 fi
 # the timings file is the caller's, named from the caller's directory: the script is about
 # to leave it, and a relative name would then append to a file nobody reads
@@ -85,6 +137,10 @@ if [ -n "${MJ_RUST_OUTPUTS:-}" ]; then
   } > "$MJ_RUST_OUTPUTS"
 fi
 cd "$CRATE"
+# Every cargo call of this script is the bounded one: a build, a test run or a lint that
+# stands behind another worktree's lock on the shared build directory says so and moves to
+# this tree's own at the bound (lib/rust_bin.sh; project.a-build-never-waits-in-silence-on-anothers-lock).
+cargo() { mj_cargo_bounded "$ROOT" "$@"; }
 # a machine-wide rustflags profile can make a dev build refuse to link; the crate sets none
 RUSTFLAGS=''; export RUSTFLAGS
 # Every build of this script is handed the commit it is checking, and the rustdoc handoff
@@ -301,6 +357,23 @@ if [ "$MODE" = lanes ]; then
   exit 0
 fi
 
+# The crate's own public surface against project.rust-public-api-quality and
+# project.operation-transport-parity: documentation that says more than the signature, an
+# executable example on everything that carries behaviour, a module boundary something
+# exercises, and every command of the command line accounted for against the registry.
+# Ratcheted against .ai/repo/rust-quality-baseline.txt while the debt shrinks. The same
+# subcommand the rust-quality gate runs, so the same finding text; its exit status is this
+# script's (10 on a finding). Defined once and asked from two places: first in a person's run
+# (the default mode and --quality), after the registry checks in CI's modes (see the header).
+quality_report() {
+  step "quality report";               cargo run --quiet -- quality report
+}
+if [ "$MODE" = quality ]; then
+  quality_report
+  step "rust-check: the quality report accepts every exported item"
+  exit 0
+fi
+
 if [ "$MODE" != integration ]; then
   if [ "$MODE" != doc ]; then
     if [ "$lane" = 1 ] || [ "$lane" = 2 ]; then
@@ -308,6 +381,8 @@ if [ "$MODE" != integration ]; then
       step "rust-check: lane $lane's tests passed; the other gates run in lane 3"
       exit 0
     fi
+    # a person's run: the verdict the structure job would give, before the slow gates
+    if [ "$MODE" = all ]; then quality_report; fi
     step "cargo fmt --check";            cargo fmt --check
     step "cargo clippy -D warnings";     cargo clippy --all-targets --all-features -- -D warnings
     step "cargo test";                   cargo_test
@@ -331,12 +406,8 @@ step "bench coverage --check";       cargo run --quiet -- bench coverage --check
 # --artifacts, so it is a check on the declarations rather than on whether a producer has
 # run in this checkout; the serving path requires the artifact at the moment it serves.
 step "web validate";                 cargo run --quiet -- web validate
-# the crate's own public surface against project.rust-public-api-quality and
-# project.operation-transport-parity: documentation that says more than the signature, an
-# executable example on everything that carries behaviour, a module boundary something
-# exercises, and every command of the command line accounted for against the registry.
-# Ratcheted against .ai/repo/rust-quality-baseline.txt while the debt shrinks.
-step "quality report";               cargo run --quiet -- quality report --summary
+# CI's modes ask the quality report here; a person's run asked it first, above
+if [ "$MODE" != all ]; then quality_report; fi
 # No benchmark comparison here. It compares a run with the baseline committed for its own
 # platform, and the only one under .ai/repo/benchmarks/rust/ is macOS's: on this job's Linux
 # runner it measured every target at the ci profile, printed "nothing compared", and could

@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `accumulation` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.23.0 -->
+     Generator: majordomus-cli 1.0.0-alpha.9 -->
 # Module `accumulation` — Accumulation
 
 What this repository has piled up without anyone deciding that it should, against the budgets its policy declares: the worktrees git registers, the local branches the trunk already reaches, and the free space on the volume under them. Each quantity carries its reading, its budget, its state — ok, over, unbudgeted when the policy declares no budget, unknown when the reading could not be taken — and the command that reduces it, which re-measures every candidate before it removes one. A provider's episode events read the same answer and say what is over budget before a worker's first tool call (ADR 0150).

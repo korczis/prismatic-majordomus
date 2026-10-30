@@ -12,13 +12,27 @@ desired_state: "Both renderers hash the same canonical form; a comment edit is a
 scope:
   - "lib/update.sh"
   - "apps/majordomus-cli/src/providers.rs"
+  - "apps/majordomus-cli/src/policy.rs"
+  - "apps/majordomus-cli/tests/providers_projection.rs"
+  - "lib/common.sh"
   - "test/cases"
 acceptance_criteria:
-  - "Adding a comment to policy.yaml leaves `majordomus update --check` clean"
+  - "Adding a comment to policy.yaml leaves `majordomus update --dry-run` reporting every target unchanged (update has no --check flag)"
 validation:
   - "bin/majordomus plan validate"
   - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
 evidence_required:
   - "comment_edit_noop_case"
 created_at: 2026-10-04
-updated_at: 2026-10-04
+updated_at: 2026-10-14T13:31:41Z
+started_at: 2026-10-14T13:31:22Z
+started_event: sha256:45ba0bd1b63d70ad27d8a91753a52dc3e3a757eff7c3d963730df5f41c95e13c
+completed_at: 2026-10-14T13:31:41Z
+completed_event: sha256:1940175a9735d9c68ee12577cfe972d6cd3117b2553650d514ab315441db3eee
+evidence:
+  - covers: comment_edit_noop_case
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 3018_a_comment_in_the_policy_moves_no_bootstrap && cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test providers_projection"
+    result: "tests: 1 passed; test result: ok. 4 passed: the shell's and Rust's normal forms agree (run 2026-10-14 13:30Z on master 4ec504616c plus this change)"
+    commit: 4ec504616c6dea8c64f75221c7eb97ed835819b8
+    recorded_at: 2026-10-14T13:31:31Z

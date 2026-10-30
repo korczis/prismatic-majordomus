@@ -1,7 +1,7 @@
 +++
 title = "GitHub Pages performance status"
 description = "the current numbers behind that document: the controlled budgets, the paths that start a publication, and the last measured build-and-check path per platform. Generated from `.ai/repo/ci/pages.yaml` and `.ai/repo/benchmarks/pages/`; never edited"
-weight = 79
+weight = 82
 [extra]
 source = "docs/PAGES_STATUS.md"
 +++
@@ -13,7 +13,7 @@ baselines under `.ai/repo/benchmarks/pages/`. Do not edit; measure with
 `scripts/pages benchmark --write-baseline` and regenerate. The architecture behind these
 numbers is `GITHUB_PAGES_PERFORMANCE.md`.
 
-Generated from canonical inputs `34362693eee7`.
+Generated from canonical inputs `798b1d27ff0d`.
 
 ## Controlled budget
 
@@ -27,15 +27,15 @@ and reported beside these and never budgeted: they belong to GitHub, not to this
 |---|---|
 | checkout |  s |
 | setup |  s |
-| build | 8 s |
-| check | 60 s |
-| publish | 28 s |
-| controlled | 210 s |
+| build | 400 s |
+| check | 660 s |
+| publish | 70 s |
+| controlled | 1398 s |
 
 </div>
 
 
-Cold runner, whole controlled path: 465 s. Push to publicly observable, reported and not
+Cold runner, whole controlled path: 1653 s. Push to publicly observable, reported and not
 enforced: 60 s.
 
 ## What starts a publication
@@ -94,6 +94,7 @@ held to it.
 - `scripts/lib/interaction-specs/**`
 - `scripts/lib/interactions.mjs`
 - `scripts/lib/project-links.awk`
+- `scripts/lib/site-i18n*.mjs`
 - `scripts/lib/ui-*.mjs`
 - `scripts/lib/ui-routes.mjs`
 - `scripts/pages`
@@ -105,6 +106,7 @@ held to it.
 - `scripts/site-deploy`
 - `scripts/site-probe`
 - `scripts/site-serve`
+- `scripts/site-translate`
 - `scripts/ui`
 - `share/**`
 - `share/allow/**`

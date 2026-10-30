@@ -1,6 +1,6 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the JSON Schema `majordomus.policy/v1` of the kind it validates; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.23.0
+# Generator: majordomus-cli 1.0.0-alpha.9
 ^version$
 ^context\.always_loaded_budget_lines$
 ^context\.builder_budget_lines$
@@ -22,6 +22,7 @@
 ^session\.handover_on_end$
 ^session\.handover_on_fill$
 ^session\.brief_on_interval$
+^session\.edits_require_claim$
 ^session\.brief_interval_minutes$
 ^session\.knowledge_on_end$
 ^session\.knowledge_on_compact$
@@ -32,6 +33,8 @@
 ^session\.record_sections(\.[0-9]+)?$
 ^session\.commit_record_on_end$
 ^session\.push_record_on_end$
+^session\.retention_max_files$
+^session\.archive$
 ^ledger\.retention_max_lines$
 ^prompts\.retention_max_days$
 ^prompts\.retention_max_bytes$
@@ -44,6 +47,7 @@
 ^accumulation\.announce_on_mesh$
 ^knowledge\.candidates_max_files$
 ^knowledge\.candidate_max_age_minutes$
+^cache\.flatten_max_entries$
 ^enforcement\.[0-9]+\.name$
 ^enforcement\.[0-9]+\.path$
 ^enforcement\.[0-9]+\.wired_by$
@@ -77,8 +81,12 @@
 ^use_cases\.coverage\.commands$
 ^use_cases\.coverage\.claims$
 ^use_cases\.coverage\.mcp_tools$
+^checkout\.trunk_distance\.warn_behind$
+^checkout\.trunk_distance\.fail_behind$
+^build_cache\.local_max_gib$
 ^server\.probe_timeout_seconds$
 ^server\.bind_grace_seconds$
 ^server\.join_timeout_seconds$
 ^server\.busy_grace_seconds$
 ^server\.read_deadline_seconds$
+^server\.idle_seconds$

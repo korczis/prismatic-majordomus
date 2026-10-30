@@ -1,7 +1,7 @@
 +++
-title = "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown"
+title = "A discovered node gains no execution and no authorization from being heard; only signed traffic from a linked node may change mesh state, and trust labels records under an explicit policy that defaults to deny_unknown"
 description = "Discovery creates awareness, not authority. Being heard on the network — even with a"
-weight = 226
+weight = 230
 [extra]
 claim_id = "mesh-observation-not-authority"
 status = "guaranteed"
@@ -13,9 +13,11 @@ source = "docs/claims/mesh-observation-not-authority.md"
 
 Discovery creates awareness, not authority. Being heard on the network — even with a
 valid signature, even trusted by policy — grants a node nothing: there is no remote
-execution in this executable to gain, the HTTP surface a node advertises is the same
-unauthenticated read-only projection it always served, and the one mutating mesh
-operation (`mesh.register`) changes the answering process's memory only. Trust is an
+execution in this executable to gain. The HTTP surface a node advertises answers its reads
+to whoever reaches it, unauthenticated; every capability that changes something — the mesh
+operations among them (`mesh.register`, `mesh.claim`, the handover, review and session
+operations) — is refused to a remote caller unless its input is signed by a node linked
+through the trust policy and a signed handshake (`ExecutionPolicy::admits_remote`). Trust is an
 explicit, declared policy: `deny_unknown` (the default — a valid unknown node is
 recorded, visible, and trusted for nothing), `allowlist` (declared public keys), or
 `tofu` (a development convenience every listing names as such). Whoever builds remote
@@ -48,8 +50,9 @@ integration test registers a forged envelope and reads the refusal.
 
 ## What it does not cover
 
-It does not authenticate the HTTP surface itself — that surface is read-only and
-unauthenticated by the repository's standing design, on loopback by default. And it
+It does not authenticate the HTTP surface's reads — they are unauthenticated by the
+repository's standing design, on loopback by default, and reachable from the network when
+the server is bound beyond it. And it
 does not promise future remote operations will be safe; it promises they cannot
 inherit authorization from discovery.
 

@@ -43,6 +43,7 @@ all_sections.update(sections(read(os.path.join(os.path.dirname(os.path.abspath(_
 all_sections.update(sections(read(os.path.join(os.path.dirname(os.path.abspath(__file__)), "sections-reader.html"))))
 all_sections.update(sections(read(os.path.join(os.path.dirname(os.path.abspath(__file__)), "sections-flows.html"))))
 all_sections.update(sections(read(os.path.join(os.path.dirname(os.path.abspath(__file__)), "sections-graph.html"))))
+all_sections.update(sections(read(os.path.join(HERE, "sections-outlook.html"))))
 
 
 def replace(sid, old, new):
@@ -103,7 +104,7 @@ PARTS = [
     ("Úvod", [
         ("uvod", "Co je Majordomus"), ("problemy", "Problémy a root causes"), ("hodnoceni", "Sebehodnocení týmu"),
         ("stavba", "Celá stavba"), ("graf", "Stavba z grafu repozitáře"), ("stav", "Šest druhů stavu"),
-        ("projekce", "Jeden fakt, mnoho rozhraní"), ("kudy", "Kudy číst"), ("nasazeni", "Nasazení krok za krokem"), ("osobni", "Osobní režim (BYOD)"),
+        ("projekce", "Jeden fakt, mnoho rozhraní"), ("mj-way", "MJ way"), ("kudy", "Kudy číst"), ("nasazeni", "Nasazení krok za krokem"), ("osobni", "Osobní režim (BYOD)"),
         ("mapa-prirucky", "Mapa příručky")]),
     ("Harness: vstup do session", [
         ("h-co-je", "Co je harness"), ("h-proc", "Proč nestačí provider"),
@@ -141,6 +142,9 @@ PARTS = [
     ("Repozitář v číslech", [
         ("cisla-tempo", "Tempo vývoje"), ("cisla-commity", "Commity"),
         ("cisla-adr", "Rozhodnutí v čase"), ("cisla-pravidla", "Pravidla a brány"), ("toky", "Toky spočítané z repozitáře")]),
+    ("Výhled", [
+        ("v-vyhled", "Výhled 2026–2027"), ("v-trh", "Trh a konkurence"),
+        ("v-realita", "Report proti realitě"), ("v-tokeny", "Tokeny a ekonomika")]),
     ("Reference", [
         ("pruzkumnik", "Průzkumník repozitáře"), ("citarna", "Čítárna dokumentů"), ("slovnik", "Slovník"), ("prikazy", "Reference příkazů"),
         ("p-prikazy", "Příkazy: paměť"), ("m-prikazy", "Příkazy: mesh")]),
@@ -154,7 +158,8 @@ SEE = {
     "stavba": ["graf", "projekce", "stav", "p-mapa"],
     "graf": ["stavba", "toky", "citarna", "pruzkumnik", "x-registry"],
     "stav": ["p-mapa", "p-pamet", "h-server"],
-    "projekce": ["h-bootstrap", "h-git", "h-server"],
+    "projekce": ["mj-way", "h-bootstrap", "h-git", "h-server"],
+    "mj-way": ["projekce", "h-vynuceni", "h-finish", "koordinace", "x-lessons"],
     "h-co-je": ["stavba", "h-proc"],
     "h-proc": ["problemy", "h-prenos"],
     "h-mapa": ["h-git", "h-ci", "h-finish", "koordinace"],
@@ -222,6 +227,10 @@ SEE = {
     "cisla-commity": ["h-git", "cisla-tempo"],
     "cisla-adr": ["p-rozhodnuti", "cisla-tempo"],
     "cisla-pravidla": ["h-vynuceni", "h-ci", "p-pravidla"],
+    "v-vyhled": ["v-realita", "v-trh", "x-plan", "x-lessons"],
+    "v-trh": ["v-vyhled", "problemy", "velka-org", "h-prenos"],
+    "v-realita": ["v-tokeny", "x-plan", "x-intent", "cisla-pravidla", "cisla-commity"],
+    "v-tokeny": ["h-mereni", "v-realita", "p-briefing", "x-evidence"],
     "prikazy": ["p-prikazy", "m-prikazy", "slovnik"],
     "p-prikazy": ["prikazy", "m-prikazy"],
     "m-prikazy": ["prikazy", "p-prikazy"],
@@ -347,7 +356,7 @@ def link_sources(page):
 
 short = {"Úvod": "Úvod", "Harness: vstup do session": "Harness I", "Harness: práce a brány": "Harness II",
          "Paměť a pravidla": "Paměť", "Koordinace a mesh": "Mesh", "Hranice": "Hranice", "Plán, důkazy a provoz": "Provoz",
-         "Repozitář v číslech": "Čísla", "Reference": "Reference"}
+         "Repozitář v číslech": "Čísla", "Výhled": "Výhled", "Reference": "Reference"}
 edges = set()
 for a, bs in SEE.items():
     for b in bs:
@@ -370,6 +379,8 @@ DATA = (
     ("data-gates", gates_json),
     ("data-explore", json.loads(read(os.path.join(GEN, "explorer-data.json")))),
     ("data-tracked", sorted(p for p in link_candidates if p in TRACKED or p.rstrip("/") in DIRS)),
+    ("data-outlook", json.loads(read(os.path.join(GEN, "outlook-data.json")))),
+    ("data-outlook-model", json.loads(read(os.path.join(HERE, "outlook-model.json")))),
 )
 CORPUS_INDEX = read(os.path.join(GEN, "corpus-index.json"))
 REPO_PATHS = [p for p in read(os.path.join(GEN, "tracked-new.txt")).split("\n") if p]
@@ -397,16 +408,94 @@ page = (template.replace("/*BASE_CSS*/", css)
         .replace("/*WIDGETS_CSS*/", read(os.path.join(HERE, "widgets.css")))
         .replace("<!--DATA-->", data_scripts)
         .replace("/*WIDGETS_JS*/", read(os.path.join(HERE, "widgets.js")))
-        .replace("/*EXTRAS_JS*/", read(os.path.join(HERE, "extras.js")) + "\n" + read(os.path.join(HERE, "extras2.js")) + "\n" + read(os.path.join(HERE, "extras3.js")) + "\n" + read(os.path.join(HERE, "extras4.js")) + "\n" + read(os.path.join(HERE, "extras5.js")) + "\n" + read(os.path.join(HERE, "extras6.js")) + "\n" + read(os.path.join(HERE, "extras7.js")) + "\n" + read(os.path.join(HERE, "extras8.js")) + "\n" + read(os.path.join(HERE, "extras9.js")) + "\n" + read(os.path.join(HERE, "extras10.js")) + "\n" + read(os.path.join(HERE, "extras11.js")) + "\n" + read(os.path.join(HERE, "extras12.js")) + "\n" + read(os.path.join(HERE, "extras13.js")) + "\n" + read(os.path.join(HERE, "extras14.js"))))
+        .replace("/*EXTRAS_JS*/", read(os.path.join(HERE, "extras.js")) + "\n" + read(os.path.join(HERE, "extras2.js")) + "\n" + read(os.path.join(HERE, "extras3.js")) + "\n" + read(os.path.join(HERE, "extras4.js")) + "\n" + read(os.path.join(HERE, "extras5.js")) + "\n" + read(os.path.join(HERE, "extras6.js")) + "\n" + read(os.path.join(HERE, "extras7.js")) + "\n" + read(os.path.join(HERE, "extras8.js")) + "\n" + read(os.path.join(HERE, "extras9.js")) + "\n" + read(os.path.join(HERE, "extras10.js")) + "\n" + read(os.path.join(HERE, "extras11.js")) + "\n" + read(os.path.join(HERE, "extras12.js")) + "\n" + read(os.path.join(HERE, "extras13.js")) + "\n" + read(os.path.join(HERE, "extras14.js")) + "\n" + read(os.path.join(HERE, "extras15.js"))))
 page = link_sources(page).replace("@@THEME_CLASS@@", THEME_CLASS)
 # every number a caption states is a fact of the data the page embeds, never typed
+# and so are the day and the version the page says it describes: the commit the corpus was
+# read at, and the version the crate manifest declares there (ADR 0085)
+import subprocess
+_root = os.environ.get("HANDBOOK_ROOT") or os.path.dirname(os.path.dirname(HERE))
+_day = subprocess.run(["git", "-C", _root, "log", "-1", "--format=%cs", "HEAD"],
+                      capture_output=True, text=True, check=True).stdout.strip().split("-")
+AS_OF = "%d. %d. %s" % (int(_day[2]), int(_day[1]), _day[0])
+_manifest = re.search(r'^version\s*=\s*"([^"]+)"', read(os.path.join(_root, "apps", "majordomus-cli", "Cargo.toml")), re.M)
+if not _manifest:
+    sys.exit("apps/majordomus-cli/Cargo.toml declares no version")
+VERSION = _manifest.group(1)
 _ex = json.loads(read(os.path.join(GEN, "explorer-data.json")))
 _ci = json.loads(CORPUS_INDEX)
 FACTS = {"adrs": len(_ex["adrs"]), "rules": len(_ex["rules"]), "caps": len(_ex["caps"]), "claims": len(_ex["claims"]),
          "ucs": len(_ex["ucs"]), "gates": len(gates_json["gates"]), "classes": len(gates_json["classes"]),
          "blocking": sum(1 for r in _ex["rules"] if r.get("c") == "blocking"),
          "advisory": sum(1 for r in _ex["rules"] if r.get("c") == "advisory"),
-         "docs": len(_ci["docs"]), "commit": _ci["commit"]}
+         "docs": len(_ci["docs"]), "commit": _ci["commit"],
+         "modules": len({c["m"] for c in _ex["caps"]}),
+         "tested": sum(1 for c in _ex["claims"] if c.get("t")),
+         "asof": AS_OF, "version": VERSION}
+
+
+# The outlook chapters: every figure is one of outlook-data.json (derived from the tree), and
+# every model figure is one of outlook-model.json (the owner's report, written once). Czech
+# number formatting: a space between thousands, a decimal comma.
+def cz(n, digits=0):
+    text = ("{:,.%df}" % digits).format(n).replace(",", " ")
+    return text.replace(".", ",")
+
+
+def share(part, whole, digits=1):
+    return cz(100.0 * part / whole, digits) + " %" if whole else "–"
+
+
+def cz_day(day):
+    y, m, d = day.split("-")
+    return "%d. %d. %s" % (int(d), int(m), y)
+
+
+_out = json.loads(read(os.path.join(GEN, "outlook-data.json")))
+_model = json.loads(read(os.path.join(HERE, "outlook-model.json")))
+_int, _plan, _eco = _out["integration"], _out["plan"], _out["economics"]
+_status = dict(_plan["status"])
+_ms = dict(_plan["milestones"])
+_types = _int["windowTypes"]
+_nonmerge = sum(n for _, n in _types)
+_proof = dict(json.loads(read(os.path.join(GEN, "repo-data.json")))["proof"])
+_scen = {s["id"]: s["end"] for s in _model["scenarios"]}
+_ctx = _eco["context"]
+_chain = _plan["telemetry"]["issues"]
+FACTS.update({
+    "scenbase": _model["baseline"]["index"], "scendays": _model["baseline"]["days"],
+    "scenday": cz_day(_model["baseline"]["day"]),
+    "scenlow": _scen["pes"], "scenmid": _scen["real"], "scenhigh": _scen["opt"],
+    "commitsall": cz(_int["commits"]), "merges": cz(_int["merges"]),
+    "mergeshare": share(_int["merges"], _int["commits"]),
+    "windowdays": _int["window"], "windowcommits": cz(_int["windowCommits"]),
+    "windowmerges": cz(_int["windowMerges"]),
+    "windowshare": share(_int["windowMerges"], _int["windowCommits"]),
+    "windowtop": _types[0][0], "windowtopshare": share(_types[0][1], _nonmerge),
+    "windowfeatshare": share(dict(_types).get("feat", 0), _nonmerge),
+    "issues": cz(_plan["total"]), "issuesdone": cz(_status.get("DONE", 0)),
+    "issuesready": cz(_status.get("READY", 0)), "issuesblocked": cz(_status.get("BLOCKED", 0)),
+    "issuesdoneshare": share(_status.get("DONE", 0), _plan["total"]),
+    "milestones": sum(_ms.values()), "milestonesdone": _ms.get("DONE", 0),
+    "milestonesactive": _ms.get("ACTIVE", 0),
+    "activems": _plan["active"], "nextissue": _plan["next"],
+    "intents": len(_out["intents"]),
+    "intentsmet": sum(1 for i in _out["intents"] if i["c"] and i["m"] == i["c"]),
+    "criteria": sum(i["c"] for i in _out["intents"]),
+    "criteriamet": sum(i["m"] for i in _out["intents"]),
+    "rulesgated": _proof.get("gated", 0), "rulesnotrun": _proof.get("not run", 0),
+    "ctxmedian": cz(_ctx["ppm"] / 1e4, 2) + " %", "ctxlow": cz(_ctx["lowPpm"] / 1e4, 2) + " %",
+    "ctxhigh": cz(_ctx["highPpm"] / 1e4, 2) + " %", "ctxn": cz(_ctx["n"]),
+    "ctxresamples": cz(_ctx["resamples"]), "ctxbudget": cz(_ctx["budget"]),
+    "ctxcandidate": cz(_ctx["candidate"]), "ctxselected": cz(_ctx["selected"]),
+    "ctxat": cz_day(_ctx["at"]), "ctxtokenizer": _ctx["tokenizer"],
+    "pairsvalid": _eco["validPairs"], "pairsneed": _eco["minPairs"],
+    "savings": "publikovatelná" if _eco["publishable"] else "neprokázaná",
+    "hypotheses": len(_eco["hypotheses"]),
+    "hypuntested": sum(1 for _, st in _eco["hypotheses"] if st == "untested"),
+    "telemetry": len(_chain), "telemetrydone": sum(1 for i in _chain if i[1] == "DONE"),
+    "telemetrystatus": _plan["telemetry"]["status"],
+})
 for k, v in FACTS.items():
     page = page.replace("%%" + k + "%%", str(v))
 left = sorted(set(re.findall(r"%%[a-z]+%%", page)))
@@ -524,6 +613,34 @@ page = page.replace('<script type="application/json" id="data-arch">',
                     % json.dumps(evidence, separators=(",", ":")), 1)
 print("evidence: %d chapter(s), %d seed object(s), %d neighbouring" % (
     len(evidence), sum(len(v["s"]) for v in evidence.values()), sum(v["nt"] for v in evidence.values())))
+# A heading never skips a level. The chapters title their cards with a fourth-level heading
+# wherever a card sits, and a card directly under a chapter's title would be a second level
+# followed by a fourth: a reader of the outline (a screen reader, a search index) loses the
+# step. The level is decided here from where the heading stands; the class keeps its look.
+def level_headings(html):
+    last = [1]
+    def one(m):
+        slash, level, rest = m.group(1), int(m.group(2)), m.group(3)
+        if slash:
+            return "</h%d>" % last.pop() if len(last) > 1 else m.group(0)
+        want = min(level, last[0] + 1)
+        last[0] = want
+        last.append(want)
+        if want == level:
+            return m.group(0)
+        if re.search(r'\bclass="', rest):
+            rest = re.sub(r'\bclass="', 'class="h%d ' % level, rest, count=1)
+        else:
+            rest = ' class="h%d"' % level + rest
+        return "<h%d%s>" % (want, rest)
+    return re.sub(r"<(/?)h([1-6])\b([^>]*)>", one, html)
+
+_head, _sep, _tail = page.partition("<script")
+page = level_headings(_head) + _sep + _tail
+_levels = [int(x) for x in re.findall(r"<h([1-6])\b", _head and page.partition("<script")[0])]
+if any(b > a + 1 for a, b in zip(_levels, _levels[1:])):
+    sys.exit("a heading of the edition skips a level")
+
 # The built page is a whole document: opened from a file it is read in standards mode, laid
 # out at the device's width, and says which language it is in — the one edition.toml declares.
 _lang = re.search(r'^\s*lang\s*=\s*"([a-z-]+)"', read(os.path.join(HERE, "edition.toml")), re.M).group(1)

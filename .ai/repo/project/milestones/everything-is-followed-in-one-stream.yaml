@@ -1,7 +1,7 @@
 id: everything-is-followed-in-one-stream
 title: "Everything that happens in the repository is followed in one stream"
 slug: everything-is-followed-in-one-stream
-order: 340
+order: 341
 priority: p1
 problem: "A worker that wants to know what is happening around it reads six surfaces with six cursors: the mesh journal (where about 95% of events are identical session re-projections on every heartbeat), the board, the executor trail, the executions, and GitHub's pull requests and checks through gh. Nothing joins them, nothing says which of it is addressed to the reader, and every session that needs it hand-rolls a jq loop over majordomus mesh events and gh pr list. Sessions miss reviews and handovers addressed to them for hours because nothing they read shows them."
 outcome: "majordomus monitor is the one stream: a typed, cursor-paged feed of signals from every source, with the heartbeat noise folded away and what is addressed to the reader marked and listed first, served by the running server over HTTP, MCP and the command line (with --follow), shown live in the Cockpit, printed at every session start, named by the provider bootstrap, documented and released."

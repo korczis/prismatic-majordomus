@@ -1,0 +1,94 @@
+intent: the-product-shows-what-it-caught
+reviewed_at: 707a04c7ce8
+reviewed_by: "claude-code subagent (read-only, fresh context, Plan type, same model family as the author) dispatched by session 82f2734c over the staged records of branch docs/the-chatgpt-project-is-promoted and the ChatGPT-conversation sources they were promoted from; resolved by a second fresh subagent acting as the plan author. Read only: nothing was run. Disposition: Accept with required changes: all 4 blocking findings and all 6 non-blocking ones are planned on I3130-I3133, with none rejected and none left open."
+findings:
+  - id: command-evidence-never-settles
+    class: delivery_verification
+    subject: "the-product-shows-what-it-caught#false-dones-are-counted"
+    finding: "All four criteria say `evidence: command` and point at `majordomus intent explain the-product-shows-what-it-caught`, so the intent's own explainer is offered as proof that the intent is met. In apps/majordomus-cli/src/intent.rs:302, `ledger_settles` accepts only `test` and `claim`. A `command` criterion is therefore always NotDerivable, and the verdict stays Unknown no matter what lands (see the doctest at intent.rs:319). The milestone's acceptance criterion 'Every criterion ... has its evidence' can never become true. The intents on master instead use `evidence: test` with a ref to the test case, e.g. a-session-leaves-what-it-observed.yaml:15-28. The planned proofs are also placeholders: `test/cases/35NN_...` has no number allocated. Fix: give each criterion `evidence: test` and a ref to the real test it names (gates_caught.rs, the numbered case, ui_caught.rs, the economics acceptance test). This pattern appears in all 20 promoted intents in the worktree; none of the 7 on master use it."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3130
+      because: "Confirmed: intent.rs:302 ledger_settles matches only test|claim, and the doctest pins a command criterion to Unknown. Each of the four issues now puts the intent record in scope and must rewrite its own criterion to `evidence: test` with the ref of the test it adds: I3130 for false-dones-are-counted (apps/majordomus-cli/tests/gates_caught.rs), I3131 for unanswered-refusals-are-separated (a case whose number is allocated on the board at start, which replaces 35NN), I3132 for ui-shows-caught-beside-cost (apps/majordomus-cli/tests/ui_caught.rs) and I3133 for acceptance-is-a-benchmark-treatment (apps/majordomus-cli/tests/economics.rs). Once the refs point at tests, the verdict can settle. Until each test exists the plan keeps the criterion as evidence: command with its planned test named in the text; for I3133 this matters because apps/majordomus-cli/tests/economics.rs already exists and would settle the criterion before the acceptance tests are written. The same pattern in the other 19 promoted intents belongs to each of their own critiques and is not resolved here."
+  - id: same-digest-rule-misclassifies-real-catches
+    class: unproven_assumption
+    subject: "I3131"
+    finding: "The rule that 'a refusal followed by acceptance at the same tree digest is unanswered' does not match how refusals are actually resolved. I counted the task.refused lines in all 440 linked-worktree ledgers plus master's (128 refusals). 95 were note-integrity alone. A completion note lives in $MJ_STATE_DIR/completed (lib/finish.sh:120-125), which is under .ai/local and gitignored (.gitignore:70). mj_worktree_tree_id (lib/common.sh:68) runs `git add -A`, which respects .gitignore, so fixing the note leaves the digest unchanged. Two other doctrines are also fixed without touching the tree: verification-integrity by adding --verify-command, and obligation-closure by recording evidence. A real case: task t-20261017182153-d794 was refused for obligation-closure at head 877ff431 (19:30:36) and accepted at the same head two minutes later. The canonical example in docs/claims/finish-refusal-is-recorded.md ('How to see it') is itself a refusal answered by no tree change. Under the plan's invariant, nearly every real catch would be counted as 'unanswered' and the headline figure would read close to zero. The classification has to depend on the doctrine (which doctrines are fixed by the tree and which by evidence or the note), or the digest has to cover the note and evidence inputs. It also has to handle an outcome downgraded at acceptance, for example refused as completed and then accepted as partial, as task t-20261017174441-0f57 shows. The intent invariant needs to be rewritten before I3130 fixes the answer's shape."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3131
+      because: "Confirmed: the completed note lives under the gitignored $MJ_STATE_DIR, and mj_worktree_tree_id runs `git add -A` into a temporary index, so a fixed note leaves the tree id unchanged. I3131 now records an answer digest over every input a refusing doctrine reads: the tree id from mj_worktree_tree_id, the completion note's content, the verify command, and the obligation evidence. A refusal counts as unanswered only when none of the inputs its own doctrine reads changed before acceptance. The doctrine-to-input map is derived from share/standard/majordomus/rules, not typed by hand. A refusal as completed followed by acceptance at a lower outcome goes in a separate 'downgraded' bucket. The plan already carries the rewritten invariant and criterion text, so I3131 only re-records the criterion's evidence. I3130 fixes the answer's shape, so it now has to type per-refusal classes (caught, unanswered, downgraded, unknown) with no tree-only assumption. That lets I3131 fill in the digest without reshaping the answer."
+  - id: one-checkout-ledger-holds-almost-nothing
+    class: missed_requirement
+    subject: "I3130"
+    finding: "The capability reads 'this checkout's ledger', but the data is not there. Master's .ai/local/state/ledger.jsonl holds 2 task.refused and 8 task.finished lines. The 440 linked worktrees under prismatic-majordomus-wt hold 126 refusals, and each worktree's ledger is lost when it is removed after landing (lib/common.sh:1098: the local half is never tracked). /ui on the shared server reads the main checkout, so the card would show a meaningless 2. The milestone lists this as a risk ('must say which'), but no acceptance criterion requires it. I3130 needs to decide its input before the answer is typed: one ledger, or every worktree of the repository from `git worktree list`. The answer should name the ledgers it read and how many lines each held. 'Not observed' must mean no task.* events, not just a missing file, because other commands create the ledger (the ui-snapshot job runs `majordomus prs refresh` at .github/workflows/pages.yml:322 before the snapshot). Without that, 'not observed in the snapshot' is not reliably what renders."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3130
+      because: "Decided: I3130 reads every checkout `git worktree list` reports, the primary included. This follows the precedent of peers and worktree.uncommitted, which already read across worktrees. The answer names each ledger it read with its task.* line count. 'Not observed' means no task.* event in any ledger read; a missing file or a ledger with only other events does not count as observed. The answer states that it covers only the ledgers that exist now. Keeping a removed worktree's ledger is listed as a non-goal. The intent's invariant, criterion text and non_goals now say this."
+  - id: acceptance-metric-has-no-valid-pairing-or-declaration
+    class: unproven_assumption
+    subject: "I3133"
+    finding: "Three problems with the acceptance metric. (1) .ai/repo/benchmarks/economics/methodology.yaml `pairing.valid` says 'Both runs succeeded', so a run whose hidden tests fail makes its pair invalid. Those are exactly the runs the metric counts, so 'published only past the methodology's existing rule' (min_valid_pairs 30 over valid pairs) has no meaning for it. Version 2 needs its own pairing and publication rule. (2) Nothing observes 'declared done'. Capture installs only SessionStart, SessionEnd and PreCompact (lib/capture.sh:286), with no Stop hook. The treatment excludes git hooks, and the control arm has no declaration at all. A headless session is held to the finish contract only if the agent chooses to call finish. (3) Without (2), the metric reduces to the acceptance failure rate per arm, which docs/generated/economics.md:38 already tabulates ('control failed | treatment failed'). Before work starts, the issue must define 'declared done' and the mechanism that applies the finish contract in the new treatment variant (for example a Stop hook or a prompt rule). It must also define the denominator."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3133
+      because: "Confirmed: methodology.yaml:44 requires both runs to have succeeded. Methodology version 2 now has its own acceptance pairing: a pair is valid when both sessions ran to their end and the hidden tests were run on both final states, and a hidden-test failure is the measured outcome, not a reason to invalidate the pair. It has its own min_valid_pairs. 'Declared done' is defined the same way in both arms: a completion declaration that the shared task prompt requires (runner.rs) and the runner parses. The finish-contract variant also requires `majordomus finish --outcome completed` and counts the session as declared done only when that finish is accepted. The runner applies the contract; the agent's own choice to call finish does not count. The denominator is the arm's sessions in valid acceptance pairs. The metric is declared-done with failing hidden tests over that denominator, which differs from the existing failed-run table."
+  - id: accepted-is-already-i0401s-definition
+    class: unnecessary_work
+    subject: "I3130"
+    finding: "I3130 counts 'accepted tasks' and 'tasks never accepted'. Open issue I0401 (milestone cost-per-accepted-outcome) exists to 'define precisely which finishes count as accepted outcomes ... matching what the finish contract actually enforces'. I0401's own risk note warns against the definition that yields more data points. If I3130 defines acceptance in passing (is a task.finished with outcome partial, blocked or abandoned accepted?), there will be two definitions of one term. Either I3130 depends on I0401, or I3130 absorbs I0401's definition and case and I0401 is closed against it."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3130
+      because: "I3130 and I3133 now depend on I0401. I0401 has no dependencies of its own, so it is not blocked by execution-telemetry. Neither issue defines 'accepted' itself; both use the written definition and drift case from I0401, and the intent now states this as an invariant."
+  - id: third-ledger-parser
+    class: regression_risk
+    subject: "I3130"
+    finding: "I3130's scope names only gates.rs, but the Rust side already has three ledger readers: apps/majordomus-cli/src/ledger.rs:454 `read`, session/ledger.rs:703 `Ledger::read`, and gates/judge.rs:187 `runs_for`. intent_realization.rs:1228-1246 also parses task.started and task.finished itself, and gates/mod.rs:410 holds `ledger_path`. A new aggregate in gates.rs would likely become a fourth parser that disagrees about corrupt lines and envelope keys. The scope should include ledger.rs, and the aggregate should be built on its `Entry`."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3130
+      because: "ledger.rs is now in I3130's scope, and the aggregate must be built on ledger::read and Entry (ledger.rs:422/454). It may not parse JSONL itself, and it reports corrupt lines the way ledger::read counts them."
+  - id: digest-already-exists-and-docs-left-stale
+    class: surface_missing
+    subject: "I3131"
+    finding: "I3131's current_state says task.refused carries 'no tree state'. But task.finished already records `verify.tree` from mj_worktree_tree_id (lib/finish.sh:129, 201), and every line's envelope carries `head`. The issue should reuse that helper and field rather than add a second digest computed a different way. It should also note the cost: `git add -A` into a temporary index on every refusal. Several documents that change are outside the scopes. docs/SCHEMAS.md:1476 lists task.refused's fields. docs/claims/finish-refusal-is-recorded.md says 'it does not count anything on its own: the count is what history lists', and docs/CLAIMS.yaml:394 says the same; both become false once I3130 lands, and a new claim for the aggregate belongs in CLAIMS.yaml. docs/DYNAMICITY.md:127 still calls a refused finish 'the one absent event'."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3131
+      because: "I3131 reuses mj_worktree_tree_id and the existing verify.tree field instead of adding a second digest, and records the cost of a temporary-index `git add -A` per refusal. It takes docs/SCHEMAS.md, docs/DYNAMICITY.md and lib/common.sh into scope. I3130 takes docs/claims/finish-refusal-is-recorded.md and docs/CLAIMS.yaml, because the count lands there; it corrects the 'does not count' sentence and adds a claim for the aggregate."
+  - id: cockpit-overview-and-kit-dependency
+    class: surface_missing
+    subject: "I3132"
+    finding: "Only /ui is covered. /cockpit's overview draws `dashboard.overview` (cockpit/pages.rs:442), which is also served over MCP as majordomus_dashboard_overview, and no issue adds the figure there. Adding it there later would also be wrong as things stand: that capability's `Count` measure turns a missing value into 0 (header of capability/builtin/dashboard.rs), which breaks the invariant 'not observed, never zero'. Either say that the figure appears on /ui only, or plan the dashboard.overview card with an absence-aware measure. Separately, I3132 relies on view::kpi_not_observed from I2943, which exists only on fix/an-unobserved-mesh-is-not-zero and is not on master (current view.rs:84-108 has only kpi, kpi_count and kpi_state). Its depends_on lists only I3130 and should also name I2943. Adding the aggregate to FIRST_PAINT will also change the existing test every_source_is_named_and_the_queue_waits_for_its_own_route in ui/dashboard.rs."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3132
+      because: "The figure is /ui only. A dashboard.overview or /cockpit card is a non-goal until that capability has an absence-aware measure. I2943 is not added to depends_on because its record exists only on fix/an-unobserved-mesh-is-not-zero, not on master or the promotion branch, and a dependency on a missing record would fail plan validation. Instead, an acceptance criterion requires reusing I2943's view::kpi_not_observed after it lands, with no local copy. The /cockpit card is a non-goal of the intent. The criteria also cover updating the FIRST_PAINT source test in ui/dashboard.rs."
+  - id: catches-move-to-check-which-records-nothing
+    class: regression_risk
+    subject: "the-product-shows-what-it-caught#ui-shows-caught-beside-cost"
+    finding: "Only `finish` refusals are counted, and `finish --check` writes nothing (share/events.yaml:62). The pre-push hook already runs --check. In-flight I2949 (board, p7: 'check forecasts what finish will refuse') moves catches onto that silent path, so the caught figure will fall as the tool gets better. Adopter report #19 (board, p11: check reports 0 failing while finish refuses on note-integrity) shows that some refusals are disagreements inside the tool, not false dones. The card and the answer need to say they count finish refusals only. Alternatively, check could record a forecast event that the aggregate reads, with I2949 coordinated."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3130
+      because: "The answer (I3130) and the card (I3132) now say they count finish refusals only, and that `finish --check` forecasts are not counted. Recording a check forecast event is a non-goal of the intent, and the intent's invariants say only finish refusals are counted; the event belongs to I2949 if that issue wants it. Refusals that come from disagreements inside the tool fall into I3131's unanswered bucket, so they are not counted as catches."
+  - id: false-acceptance-dropped
+    class: missed_requirement
+    subject: "the-product-shows-what-it-caught"
+    finding: "The source message c262#10 asks for false refusals and false acceptances as a pair, and calls false acceptances the more dangerous of the two. The intent recasts false refusal as the 'same digest' bucket and has no criterion for a finish that accepted work which was not actually done. Only I3133's treatment arm touches it, indirectly. Either add a criterion (for example, a completed task.finished whose task is later reopened or reverted, or the treatment-arm 'finish accepted but hidden tests fail' count reported under that name), or list it explicitly as a non-goal with the reason."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3133
+      because: "I3133 now reports the treatment-arm count of 'finish accepted while hidden tests fail' as a figure named false acceptance, under the same pairing and publication rule. The plan's acceptance-is-a-benchmark-treatment criterion now names that figure and the version 2 pairing rule. A ledger-side false-acceptance signal, such as reopen or revert, is a non-goal because no event records a reopen."

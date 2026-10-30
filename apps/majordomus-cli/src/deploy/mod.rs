@@ -2,17 +2,21 @@
 //! values that cannot hold nonsense, and validated against what this repository actually
 //! contains before anything is built from them.
 //!
-//! Nothing here reaches the network, spawns a process or talks to a hosting provider. The
-//! question this module answers is the local one — would this deployment work — and it is
-//! answered while a test is cheap rather than after a rollout is not. The projections (the
-//! image definition and its ignore file) read the values this module produces; they never
-//! re-read the file.
+//! Nothing here reaches the network or talks to a hosting provider. The question this
+//! module answers is the local one — would this deployment work — and it is answered while
+//! a test is cheap rather than after a rollout is not. The one process anything here starts
+//! is git, read-only, when [`slug`] assembles the tree a provider receives from one commit;
+//! pushing that tree is a workflow's, never this module's. The projections (the
+//! image definition, its ignore file and the files of the provider the object names) read
+//! the values this module produces; they never re-read the file.
 //!
-//! The object names no hosting provider. Fly.io was the one it named, and it is no target
-//! (owner order, 2026-10-12): what ships is the release binaries, GitHub Pages and the
-//! container image published to GHCR, and none of the three reads a provider block. A
-//! field nothing reads is removed rather than kept for later (`docs/SCHEMAS.md`), so the
-//! block, its Fly facts and the `fly.toml` they were rendered into went together.
+//! An object may name the hosting provider that runs it ([`Provider`], ADR 0219). Only a
+//! provider the contract knows is accepted — today Gigalixir — and a name it does not know
+//! is refused like any other value outside its type. Fly.io, which the object once named,
+//! stays no target (owner order, 2026-10-12); the owner's order of 2026-10-21 put Prismatic
+//! Majordomus on Gigalixir, derived rather than assembled by hand. A deployment that names
+//! no provider is what it was: the image, published to GHCR and run by nobody. The
+//! credential that authorises a push is never a field of the object.
 //!
 //! Every refusal names four things: the file, the key, the value observed and the
 //! correction. A message that names fewer sends the reader looking.
@@ -27,6 +31,7 @@ use crate::model::Object;
 
 pub(crate) mod observed;
 pub mod render;
+pub mod slug;
 
 /// The kind a deployment object is discovered as.
 pub const KIND: &str = "deployment";
@@ -281,6 +286,11 @@ pub struct Build {
     pub profile: String,
     /// The repository-relative paths the build context carries, and the only ones.
     pub inputs: Vec<String>,
+    /// The path dependencies the package compiles against (`apps/majordomus-core`): in the
+    /// build context and in the builder's dependency stage, never in the runtime image,
+    /// since the running process reads none of them. Absent means the package has none.
+    #[serde(default)]
+    pub crates: Vec<String>,
     /// The directory the canonical site pipeline writes; absent means the image serves no
     /// site.
     #[serde(default)]
@@ -383,6 +393,83 @@ pub struct Budgets {
     pub request_p99_ms: Option<Positive>,
 }
 
+/// A hosting provider the contract knows. A name outside this list is refused at parse time:
+/// a provider whose files nothing renders would be a block nothing reads.
+///
+/// ```
+/// use majordomus_cli::deploy::ProviderName;
+///
+/// let name: ProviderName = serde_json::from_value(serde_json::json!("gigalixir")).unwrap();
+/// assert_eq!(name, ProviderName::Gigalixir);
+/// assert_eq!(name.as_str(), "gigalixir");
+/// assert!(serde_json::from_value::<ProviderName>(serde_json::json!("fly")).is_err());
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ProviderName {
+    /// Gigalixir: a Heroku-compatible platform that runs a Procfile over a buildpack.
+    Gigalixir,
+}
+
+impl ProviderName {
+    /// The name as the object spells it, and the directory its files are rendered under
+    /// (`deploy/<name>/`).
+    ///
+    /// ```
+    /// use majordomus_cli::deploy::ProviderName;
+    /// assert_eq!(ProviderName::Gigalixir.as_str(), "gigalixir");
+    /// assert_eq!(ProviderName::Gigalixir.to_string(), "gigalixir", "Display is the same word");
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            ProviderName::Gigalixir => "gigalixir",
+        }
+    }
+}
+
+impl std::fmt::Display for ProviderName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+/// The hosting provider that runs the deployment, and the facts that are the provider's
+/// alone. Every file the provider reads is rendered from this block and the generic keys
+/// (see [`render`]); its credential is never one of these fields.
+///
+/// ```
+/// use majordomus_cli::deploy::{Provider, ProviderName};
+///
+/// let p: Provider = serde_json::from_value(serde_json::json!({
+///     "name": "gigalixir",
+///     "app": "prismatic-majordomus",
+///     "stack": "gigalixir-24",
+///     "url": "https://prismatic-majordomus.gigalixirapp.com",
+/// }))
+/// .unwrap();
+/// assert_eq!(p.name, ProviderName::Gigalixir);
+/// assert_eq!(p.app, "prismatic-majordomus");
+///
+/// // a key the provider block does not have is refused, a token above all
+/// assert!(serde_json::from_value::<Provider>(serde_json::json!({
+///     "name": "gigalixir", "app": "a-b-c", "stack": "gigalixir-24",
+///     "url": "https://a-b-c.gigalixirapp.com", "api_key": "x",
+/// }))
+/// .is_err());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct Provider {
+    /// Which provider.
+    pub name: ProviderName,
+    /// The application's name at the provider.
+    pub app: String,
+    /// The provider's stack the application runs on (`gigalixir-24`).
+    pub stack: String,
+    /// The public URL the deployment answers on; always `https://`.
+    pub url: String,
+}
+
 /// A deployment is presented by its id, which is its identity within the repository; the
 /// title is prose and two deployments may well be given the same one.
 impl crate::order::Ordered for Deployment {
@@ -426,6 +513,9 @@ pub struct Deployment {
     /// The measured figures it is held to.
     #[serde(default)]
     pub budgets: Budgets,
+    /// The hosting provider that runs it, when one does; absent, nobody hosts it.
+    #[serde(default)]
+    pub provider: Option<Provider>,
     /// When the object was written.
     #[serde(default)]
     pub created_at: Option<String>,
@@ -516,10 +606,19 @@ impl Deployment {
     /// metadata is the whole YAML file, so this is where an unknown key, a missing field
     /// and a value outside its type are all refused at once.
     pub fn parse(object: &Object) -> Result<Deployment, Refusal> {
-        let file = object.provenance.path.clone();
-        let parsed: Deployment = serde_json::from_value(object.metadata.clone()).map_err(|e| {
+        Deployment::from_metadata(&object.provenance.path, object.metadata.clone())
+    }
+
+    /// Parse the whole YAML file of a deployment, already read into a value, as
+    /// [`Deployment::parse`] does for an indexed object. The slug assembler reads the object
+    /// at a commit rather than from the index ([`slug`]), and the two must refuse alike.
+    pub(crate) fn from_metadata(
+        file: &str,
+        metadata: serde_json::Value,
+    ) -> Result<Deployment, Refusal> {
+        let parsed: Deployment = serde_json::from_value(metadata).map_err(|e| {
             Refusal::new(
-                &file,
+                file,
                 "(the object)",
                 e,
                 "not a deployment this executable can read",
@@ -528,7 +627,7 @@ impl Deployment {
         })?;
         if parsed.schema != SCHEMA_VERSION {
             return Err(Refusal::new(
-                &file,
+                file,
                 "schema",
                 &parsed.schema,
                 &format!(
@@ -539,7 +638,7 @@ impl Deployment {
         }
         if parsed.kind != KIND {
             return Err(Refusal::new(
-                &file,
+                file,
                 "kind",
                 &parsed.kind,
                 &format!("not {KIND}"),
@@ -598,11 +697,17 @@ impl Deployment {
         }
 
         // --- a build input that does not resolve makes an image out of nothing
-        for (n, input) in self.build.inputs.iter().enumerate() {
+        let inputs = self.build.inputs.iter().map(|i| ("inputs", i));
+        let crates = self.build.crates.iter().map(|c| ("crates", c));
+        let mut seen = std::collections::BTreeMap::new();
+        for (field, input) in inputs.chain(crates) {
+            let n = seen.entry(field).or_insert(0usize);
+            let at = format!("build.{field}.{n}");
+            *n += 1;
             if input.starts_with('/') || input.split('/').any(|s| s == "..") {
                 out.push(Refusal::new(
                     file,
-                    &format!("build.inputs.{n}"),
+                    &at,
                     input,
                     "not a path inside the repository",
                     "give a repository-relative path with no leading slash and no ..",
@@ -610,7 +715,7 @@ impl Deployment {
             } else if !ws.root.join(input).exists() {
                 out.push(Refusal::new(
                     file,
-                    &format!("build.inputs.{n}"),
+                    &at,
                     input,
                     "a path this repository does not have",
                     "correct the path, or remove it from the build context",
@@ -643,15 +748,37 @@ impl Deployment {
             ));
         }
 
-        // --- a hosted deployment that binds loopback is unreachable inside its machine
+        // --- a hosted deployment that binds loopback is unreachable inside its machine; one
+        // that names its provider is hosted by its own statement, so the refusal says which
+        // provider could not reach it
         if self.listen.interface == Interface::Loopback {
+            let problem = match &self.provider {
+                Some(p) => format!(
+                    "unreachable from outside the machine it runs in, and {} routes to every interface of it",
+                    p.name
+                ),
+                None => "unreachable from outside the machine it runs in".to_string(),
+            };
             out.push(Refusal::new(
                 file,
                 "listen.interface",
                 "loopback",
-                "unreachable from outside the machine it runs in",
+                &problem,
                 "state `interface: all`, which is what a hosted process means",
             ));
+        }
+
+        // --- the provider's public address is https, or a caller's traffic travels in clear
+        if let Some(p) = &self.provider {
+            if !p.url.starts_with("https://") {
+                out.push(Refusal::new(
+                    file,
+                    "provider.url",
+                    &p.url,
+                    "not an https URL; a hosted deployment answers its callers over TLS",
+                    "write the provider's https:// address, as the provider publishes it",
+                ));
+            }
         }
 
         out
@@ -766,6 +893,23 @@ mod tests {
         assert!(!r.correction.is_empty());
     }
 
+    /// An object of another kind is refused by `from_metadata`, which the slug assembler
+    /// reads an object at a commit through, exactly as `parse` refuses it from the index.
+    #[test]
+    fn an_object_of_another_kind_is_refused_naming_the_kind() {
+        let mut v = object_text();
+        v["kind"] = serde_json::json!("rule");
+        let r = Deployment::from_metadata("at/a/commit.yaml", v.clone()).expect_err("refused");
+        assert_eq!(r.file, "at/a/commit.yaml");
+        assert_eq!(r.key, "kind");
+        assert_eq!(r.found, "rule");
+        assert!(r.correction.contains("kind: deployment"), "{r}");
+        assert_eq!(
+            Deployment::parse(&object(v)).expect_err("refused").key,
+            "kind"
+        );
+    }
+
     #[test]
     fn a_malformed_object_is_refused_naming_its_file() {
         let mut v = object_text();
@@ -773,6 +917,51 @@ mod tests {
         let r = Deployment::parse(&object(v)).expect_err("refused");
         assert_eq!(r.file, ".ai/repo/deployments/example.yaml");
         assert!(r.found.contains("unprivileged"));
+    }
+
+    /// A provider block the contract knows, as the shipped object states it.
+    fn with_provider() -> serde_json::Value {
+        let mut v = object_text();
+        v["provider"] = serde_json::json!({
+            "name": "gigalixir",
+            "app": "prismatic-majordomus",
+            "stack": "gigalixir-24",
+            "url": "https://prismatic-majordomus.gigalixirapp.com",
+        });
+        v
+    }
+
+    #[test]
+    fn no_provider_is_none() {
+        assert_eq!(parse(object_text()).expect("parses").provider, None);
+    }
+
+    #[test]
+    fn a_known_provider_parses() {
+        let d = parse(with_provider()).expect("a known provider parses");
+        let p = d.provider.expect("the provider");
+        assert_eq!(p.name, ProviderName::Gigalixir);
+        assert_eq!(p.stack, "gigalixir-24");
+    }
+
+    #[test]
+    fn an_unknown_provider_is_refused_naming_it() {
+        let mut v = with_provider();
+        v["provider"]["name"] = serde_json::json!("fly");
+        let r = Deployment::parse(&object(v)).expect_err("refused");
+        assert_eq!(r.file, ".ai/repo/deployments/example.yaml");
+        assert!(r.found.contains("fly"), "{r}");
+        assert!(
+            r.found.contains("gigalixir"),
+            "the refusal names the known one: {r}"
+        );
+    }
+
+    #[test]
+    fn a_key_the_provider_block_does_not_have_is_refused() {
+        let mut v = with_provider();
+        v["provider"]["api_key"] = serde_json::json!("x");
+        assert!(parse(v).unwrap_err().contains("api_key"));
     }
 
     #[test]
@@ -866,6 +1055,28 @@ mod tests {
         }
 
         #[test]
+        fn a_path_dependency_that_does_not_resolve_or_leaves_the_repository_is_refused() {
+            let d = tree();
+            std::fs::create_dir_all(d.path().join("apps/majordomus-core")).unwrap();
+            let mut v = super::object_text();
+            v["build"]["crates"] = serde_json::json!(["apps/majordomus-core", "apps/not-here"]);
+            let out = deployment(v).check("x.yaml", &workspace(d.path()));
+            assert_eq!(out.len(), 1, "{out:?}");
+            assert_eq!(out[0].key, "build.crates.1", "counted within its own list");
+            assert_eq!(out[0].found, "apps/not-here");
+            assert!(out[0].problem.contains("does not have"));
+
+            let mut v = super::object_text();
+            v["build"]["inputs"] = serde_json::json!(["apps/majordomus-cli", "not/here"]);
+            v["build"]["crates"] = serde_json::json!(["../elsewhere", "/abs"]);
+            let out = deployment(v).check("x.yaml", &workspace(d.path()));
+            let keys: Vec<&str> = out.iter().map(|r| r.key.as_str()).collect();
+            assert_eq!(keys, ["build.inputs.1", "build.crates.0", "build.crates.1"]);
+            assert!(out[1].problem.contains("inside the repository"));
+            assert!(out[2].problem.contains("inside the repository"));
+        }
+
+        #[test]
         fn more_running_than_exist_is_refused() {
             let d = tree();
             let mut v = super::object_text();
@@ -886,15 +1097,51 @@ mod tests {
         }
 
         #[test]
+        fn a_deployment_with_a_known_provider_earns_no_refusal() {
+            let d = tree();
+            let dep = deployment(super::with_provider());
+            assert_eq!(dep.check("x.yaml", &workspace(d.path())), Vec::new());
+        }
+
+        #[test]
+        fn a_provider_url_that_is_not_https_is_refused() {
+            let d = tree();
+            let mut v = super::with_provider();
+            v["provider"]["url"] =
+                serde_json::json!("http://prismatic-majordomus.gigalixirapp.com");
+            let out = deployment(v).check("x.yaml", &workspace(d.path()));
+            assert_eq!(out.len(), 1, "{out:?}");
+            assert_eq!(out[0].file, "x.yaml");
+            assert_eq!(out[0].key, "provider.url");
+            assert_eq!(out[0].found, "http://prismatic-majordomus.gigalixirapp.com");
+            assert!(out[0].problem.contains("https"));
+            assert!(out[0].correction.contains("https://"));
+        }
+
+        #[test]
+        fn a_provider_with_a_loopback_interface_is_refused_naming_the_provider() {
+            let d = tree();
+            let mut v = super::with_provider();
+            v["listen"]["interface"] = serde_json::json!("loopback");
+            let out = deployment(v).check("x.yaml", &workspace(d.path()));
+            assert_eq!(out.len(), 1, "{out:?}");
+            assert_eq!(out[0].key, "listen.interface");
+            assert_eq!(out[0].found, "loopback");
+            assert!(out[0].problem.contains("gigalixir"), "{}", out[0]);
+            assert!(out[0].correction.contains("interface: all"));
+        }
+
+        #[test]
         fn every_refusal_names_the_file_the_key_the_value_and_the_correction() {
             let d = tree();
-            let mut v = super::object_text();
+            let mut v = super::with_provider();
             v["health"]["liveness"] = serde_json::json!("/gone");
             v["build"]["package"] = serde_json::json!("nothing-cli");
             v["machines"]["min_running"] = serde_json::json!(9);
             v["listen"]["interface"] = serde_json::json!("loopback");
+            v["provider"]["url"] = serde_json::json!("http://example.invalid");
             let out = deployment(v).check("the-file.yaml", &workspace(d.path()));
-            assert!(out.len() >= 4);
+            assert!(out.len() >= 5);
             for r in &out {
                 assert_eq!(r.file, "the-file.yaml");
                 assert!(!r.key.is_empty(), "a refusal with no key: {r}");

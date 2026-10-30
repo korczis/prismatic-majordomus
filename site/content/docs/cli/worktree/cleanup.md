@@ -1,7 +1,7 @@
 +++
 title = "majordomus worktree cleanup"
 description = "The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing without --remove"
-weight = 82
+weight = 84
 [extra]
 route = "/docs/cli/worktree/cleanup/"
 command = "majordomus worktree cleanup"

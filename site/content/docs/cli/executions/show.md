@@ -1,7 +1,7 @@
 +++
 title = "majordomus executions show"
 description = "One execution in full: its state, its steps, its diagnostics and what it produced"
-weight = 126
+weight = 130
 [extra]
 route = "/docs/cli/executions/show/"
 command = "majordomus executions show"

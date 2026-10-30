@@ -1,0 +1,27 @@
+id: I3244
+milestone: fly-deployment
+title: "The generated Dockerfile copies every path crate cargo metadata names, so a new workspace crate needs no edit of the image"
+slug: the-image-copies-every-path-crate
+priority: p1
+profile: implementation
+objective: "Have render.rs read the local path dependencies of the package from `cargo metadata` and emit their manifests in the recipe and dependency stages and their sources in the build stage."
+why: "c286#20 (2026-10-17): PR #1309 added majordomus-core and docker-image failed on a missing /src/apps/majordomus-core/Cargo.toml. The convergence plan keeps compute experimental, so this is not an alpha blocker, but it breaks the image the moment the core lands. Sources: chatgpt-majordomus:c286#20."
+current_state: "render.rs recipe stage: `COPY {pkg}/Cargo.toml {pkg}/Cargo.lock /recipe/in/` for one package; apps/ on master holds only majordomus-cli."
+desired_state: "A fixture with a second path crate builds the image with no generator edit; generate --check stays green."
+scope:
+  - "apps/majordomus-cli/src/deploy/render.rs"
+  - "deploy/Dockerfile"
+  - ".dockerignore"
+non_scope:
+  - "Hand edits of deploy/Dockerfile"
+acceptance_criteria:
+  - "The rendered Dockerfile names every path crate of the package"
+  - "A one-line source edit still leaves the dependency layers cached"
+  - "generate --check passes after a crate is added"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib deploy::"
+  - "majordomus generate --check"
+evidence_required:
+  - "path_crates_rendered_test"
+created_at: 2026-10-18
+updated_at: 2026-10-18
