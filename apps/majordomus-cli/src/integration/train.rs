@@ -829,6 +829,7 @@ mod tests {
                 skipped_permitted: Vec::new(),
                 labels: Vec::new(),
                 merge_method: Some("merge".into()),
+                merge_settings_unread: false,
                 up_to_date_required: None,
             },
             assessments,
@@ -1277,7 +1278,7 @@ mod tests {
                 required_checks: Some(vec!["ci".into()]),
                 review_policy: Some(Default::default()),
                 up_to_date_required: Some(true),
-                merge_methods: vec!["merge".into()],
+                merge_methods: Some(vec!["merge".into()]),
                 pull_requests: vec![
                     observed(1, &one, "", CheckRunState::Passed),
                     observed(2, &two, "Stacked on #1.", CheckRunState::Pending),
@@ -1336,7 +1337,7 @@ mod tests {
             required_checks: None,
             review_policy: None,
             up_to_date_required: None,
-            merge_methods: vec!["merge".into()],
+            merge_methods: Some(vec!["merge".into()]),
             pull_requests: vec![observed(
                 3,
                 &"3".repeat(40),

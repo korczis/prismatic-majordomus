@@ -1,0 +1,49 @@
+id: I3097
+milestone: safe-self-update
+title: "An older executable never takes the shared-server lease from a newer one because the newer one's file was rebuilt"
+slug: an-older-binary-never-takes-a-newer-lease
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the replaced-executable takeover in apps/majordomus-cli/src/lease.rs compare versions before it fires, so a process whose own version is older than the version the lease records attaches to the newer server (or reports it) and never replaces it, whatever happened to the file at the lease's executable path."
+why: "On 2026-10-20 at 22:27:58Z the shared server of this repository, 1.0.0-alpha.1 (pid 77871), lost its lease to a 0.30.2 process (pid 57957): apps/majordomus-cli/target/debug/majordomus had been rewritten at 22:27:01Z, and `superseded` (lease.rs) takes over whenever the file at the lease's path changed, before the version verdict of I2163 is asked. The board and every mesh claim dropped twice in 20 minutes, and for 8 minutes the repository was served by an older release (server.log lines 425265-425268)."
+current_state: "`superseded(doc)` returns a takeover reason when the lease's executable path is this process's and its mtime or size differ; it is checked before `version_verdict`, so it never asks which side is newer."
+desired_state: "A replaced executable takes over only when its version is the same as or newer than the lease's recorded version; an older one is told the newer server's address and attaches, and the log names both versions."
+scope:
+  - "apps/majordomus-cli/src/lease.rs"
+  - ".ai/repo/project/issues/I3097.yaml"
+non_scope:
+  - "Where branch builds write their binaries (a build of a branch into the primary's target directory is its own issue)"
+depends_on: []
+acceptance_criteria:
+  - "A lease recorded by a newer version, whose executable file is then replaced by an older build at the same path, is not taken over by that older build"
+  - "A replaced file of the same or a newer version still takes over, as before"
+  - "The log line of a refused takeover names both versions"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib lease"
+evidence_required:
+  - "older_replacement_attaches"
+  - "newer_replacement_takes_over"
+created_at: 2026-10-20
+updated_at: 2026-10-23T16:41:55Z
+started_at: 2026-10-21T02:42:11Z
+started_event: sha256:5dc2ab5068c58f0575f1f26322907154b0b928fcde9bc52f5a8f664813f21a4d
+verified_at: 2026-10-21T02:42:43Z
+verified_event: sha256:b5ed5d4ca24b3c7f9d9dc019b31b365943293f43858c9fd8405da701a02acf82
+completed_at: 2026-10-23T16:41:55Z
+completed_event: sha256:e71196527c778fe6252db6f7f5e45429103f7bf872dd5ffb3e190f427475845c
+evidence:
+  - covers: older_replacement_attaches
+    type: ci
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib lease::tests::older_replacement_attaches"
+    result: "ok, the rust job passed in master validate 39784979979 (success at 2034d4a3f0b, which holds lease.rs older_replacement_attaches, landed in a57482183bf)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39784979979"
+    commit: 376493cd4c9ad35892552208e74a8e527f17a73e
+    recorded_at: 2026-10-23T16:35:35Z
+  - covers: newer_replacement_takes_over
+    type: ci
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib lease::tests::newer_replacement_takes_over"
+    result: "ok, the rust job passed in master validate 39784979979 (success at 2034d4a3f0b, which holds newer_replacement_takes_over, landed in a57482183bf)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39784979979"
+    commit: 376493cd4c9ad35892552208e74a8e527f17a73e
+    recorded_at: 2026-10-23T16:35:49Z

@@ -1,7 +1,7 @@
 +++
 title = "Layout integrity"
 description = "Layout integrity"
-weight = 28
+weight = 29
 [extra]
 kind = "rule"
 slug = "majordomus-layout-integrity-1"

@@ -100,8 +100,12 @@
   .mj-fg {
     color: var(--mj-fg);
   }
+  /* A sentence breaks at its spaces; a word longer than the line — a path such as
+     share/schemas/majordomus/scope/scope.v1.schema.json in a claim's note — breaks only
+     when it cannot fit, so the page never grows sideways (break-word, not anywhere: a
+     sentence keeps its words whole wherever they fit). */
   .mj-prose {
-    @apply max-w-[var(--mj-measure)];
+    @apply max-w-[var(--mj-measure)] [overflow-wrap:break-word];
   }
 
   /* -------------------------------------------------------------------- tables */

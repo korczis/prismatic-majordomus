@@ -31,7 +31,9 @@ REPO="$(jq -r '.repository_url' "$ROOT/site/data/generated/project.json")"
 # row's first code span, or with `schema` its data-schema-file (and rows without one are skipped)
 rows() {
   awk -v mode="$2" 'BEGIN { RS = "<tr" } NR > 1 {
-    rec = $0; name = ""; hrefs = ""
+    # a row ends at its </tr>: the last row would otherwise run on to the end of the page and
+    # collect the links of whatever follows the table
+    rec = $0; name = ""; hrefs = ""; if ((e = index(rec, "</tr>")) > 0) rec = substr(rec, 1, e - 1)
     if (mode == "schema") {
       if (!match(rec, /data-schema-file="[^"]*"/)) next
       name = substr(rec, RSTART + 18, RLENGTH - 19)

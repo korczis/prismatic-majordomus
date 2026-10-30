@@ -1,0 +1,33 @@
+id: I3143
+milestone: the-session-domain-is-written-once
+title: "Each provider lifecycle event leaves a typed receipt written by the domain before any guard can return early"
+slug: provider-events-leave-receipts
+priority: p1
+profile: implementation
+objective: "ADR 0047 step 3: the provider hook shims call the domain instead of capture session, and every start, compact, end and prompt event writes a received or failed receipt with its diagnostic."
+why: "The six-day outage of 2026-09-05 was three guards that refused correctly, wrote to stderr and returned 0 (case 130). The inventory records that mj_capture_session_start returns 0 on every failure path. Sources: chatgpt-majordomus:c109#3."
+current_state: ".claude/hooks/majordomus-session-{start,compact,end} exec bin/majordomus capture session --event ...; lib/capture.sh decides; the receipt is already written before any guard (mj_capture_session_receipt) and case 408 holds that it is provider neutral."
+desired_state: "The shims exec one domain command; a silent early return is impossible; a failed event shows in health."
+scope:
+  - ".claude/hooks"
+  - "lib/capture.sh"
+  - "apps/majordomus-cli/src/session"
+  - "apps/majordomus-cli/src/capability/builtin/lifecycle.rs"
+  - "share/events.yaml"
+non_scope:
+  - "Changing the provider's fail-open contract: a hook still never blocks the provider"
+depends_on:
+  - "I3142"
+  - "I3320"
+serves:
+  - "a-session-record-says-what-it-served#hooks-run-the-domain"
+acceptance_criteria:
+  - "A forced failure in each event writes a failed receipt naming the cause"
+  - "health reports a failed receipt"
+  - "The shims stay generated and fail-open"
+validation:
+  - "bash test/run.sh --no-skips 54_session_lifecycle_hooks 408_a_receipt_is_provider_neutral 130_lifecycle_survives_a_stale_task"
+evidence_required:
+  - "case_every_event_leaves_a_receipt"
+created_at: 2026-10-18
+updated_at: 2026-10-18

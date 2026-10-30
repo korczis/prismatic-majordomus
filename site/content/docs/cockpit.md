@@ -1,7 +1,7 @@
 +++
 title = "The Cockpit"
 description = "the Cockpit: the registry rendered as pages for a person, what makes it a projection rather than a dashboard, the graph and health models, the browser layer and what happens without it, the security decisions, the asset pipeline"
-weight = 50
+weight = 51
 [extra]
 source = "docs/COCKPIT.md"
 +++
@@ -73,7 +73,7 @@ pages still render, say so, and remain fully usable.
 | `/cockpit/graphs/<id>` | one graph: the drawing, the vocabularies, and every node and edge as tables | `graph.get` |
 | `/cockpit/graphs/topology` | the registry graph in three dimensions — optional | `graph.get` (`registry`) |
 | `/cockpit/continuity` | what this checkout's lifecycle is holding, and what the subsystem around it is doing: the open episode the briefing is about, the active task, the records that resolve here with their labels, the blockers, the other machines — this device, the store against its remote, and the handovers other devices published that could be resumed here — then every open episode of the store, this process against the repository, recovery, the providers, and the tracked records | `continuity.state`, `continuity.status`, `lifecycle.episodes`, `lifecycle.runtime`, `lifecycle.recovery`, `lifecycle.providers`, `lifecycle.closed` |
-| `/cockpit/intents` | every intent with its derived stage, the criteria with current evidence, the work and providers realising it, and the findings — closed work the evidence contradicts among them | `intent_realization.work` |
+| `/cockpit/intents` | every intent with its derived stage, the criteria with current evidence, the work and providers realising it, the units of work serving no intent beside the empty records and the work from before the first intent (neither of which is orphan work, ADR 0075), and the findings — closed work the evidence contradicts among them | `intent_realization.work` |
 | `/cockpit/intents/<id>` | one intent: how far reality is from it, each criterion with its evidence state, a link to the test object it names, the issues serving it and the command that reproduces it; the milestones; every task, session record and peer claim realising it with the provenance of its link, its providers and handovers; and why it stands where it stands | `intent_realization.explain` |
 | `/cockpit/plan` | the milestones in derived order with the one that is now and the one after it, the issue the plan hands out next, and every issue filtered by milestone, status or wave | `plan.roadmap`, `plan.next`, `plan.issues` |
 | `/cockpit/plan/milestones/<id>` | one milestone as a graph of work: its outcome, every issue with its readiness and wave, the partitions, the critical blockers, what may run at the same time, and every finding | `devtask.milestone` |
@@ -90,7 +90,7 @@ pages still render, say so, and remain fully usable.
 | `/cockpit/mcp` | the MCP projection: server and protocol versions, transports with the sessions attached now, the methods served and what is not, the tools that write the repository, every tool with its effect (narrowed by `?effect=`), the client configurations and where each stands here, and where each executable capability is reachable (command line, HTTP, MCP tool, MCP resource) | `mcp.projection`, `capabilities.projections` |
 | `/cockpit/search` | capabilities and objects matching one query | the registry, `objects.search` |
 | `/cockpit/worktrees` | the branch-to-worktree topology: container, trunk, every worktree with its standing, uncommitted work and diagnostics, every branch without a worktree, the migration plan with the command that applies it; reloads itself when the topology changes | `worktree.topology`, `worktree.migration_plan` |
-| `/cockpit/peers` | every worker of this repository, from every checkout's board, the pairs whose claimed scope meets, and the checkouts whose board could not be read | `peers.list` |
+| `/cockpit/peers` | every worker of this repository, on every checkout's board and every linked machine, with where it was found, whether it is here, its client, its intent and its claims (the exclusive and the conflicted ones marked); the claims that meet, the open reviews and untaken handovers, the typed relations, every source with its state and reason, and the checkouts whose board could not be read; follows the blackboard's snapshot frames, is read again whenever the blackboard changes, and says whether it is live, reconnecting or offline (ADR 0176) | `blackboard.snapshot` |
 | `/cockpit/integration` | the pull-request integration queue and its executor; with nothing observed, says so and still renders | `integration.queue` |
 | `/cockpit/trains` | the trains of stacked pull requests, drawn as an interactive graph in the manner of the Neo4j Browser (master as the anchor, links coloured by disposition, `STACKED_ON` / `DEPENDS_ON` arrows, a property panel, filters, search, fit and zoom, keyboard navigation) and listed as one table per train that needs no JavaScript; polls its route once a minute (ADR 0138) | `integration.trains` |
 | `/cockpit/reasoning` | the optional advisors, and the open task's uncertainties and conclusions; with no advisor, only the local review path | `reasoning.advisors`, `reasoning.status` |
@@ -102,11 +102,12 @@ pages still render, say so, and remain fully usable.
 
 
 This table is checked against the dispatcher, not kept beside it. Every plain route
-`cockpit::STATIC_ROUTES` names has a row here, and no row names a plain route the dispatcher
-does not answer; `cockpit::tests::the_documented_route_table_is_the_dispatchers` fails the
-build otherwise. Editing a row's description is free. Adding or removing a route starts in
-`STATIC_ROUTES` beside the dispatcher's `match`, and the navigation area it belongs to in
-`nav::areas()` is checked by `every_area_has_a_route_and_every_route_its_area`.
+`cockpit::static_routes()` names has a row here, and no row names a plain route the
+dispatcher does not answer; `cockpit::tests::the_documented_route_table_is_the_dispatchers`
+fails the build otherwise. Editing a row's description is free. The routes are derived from
+the navigation: adding an area to `nav::areas()` adds its route, a page no area names is
+added to `PAGES_WITHOUT_AN_AREA` beside the dispatcher's `match`, and
+`every_plain_arm_of_the_dispatcher_is_a_static_route` holds the `match` to both.
 
 Every route is a deep link: the filters are query parameters, a refresh loses nothing, and
 a page can be sent to somebody.
@@ -625,14 +626,17 @@ scripts/cockpit-assets --check    # fail if the committed stylesheet differs fro
 | `cockpit.css` | yes | a generated artifact, compiled from `src/cockpit.css` with Tailwind and Flowbite's theme over the shared design sheets; drift-checked |
 | `src/cockpit.css` | yes | the source: what only the Cockpit has (shell, palette, runner, log, canvases), one semantic class per component, over the tokens and primitives it imports from `share/design/` |
 | `favicon.svg` | yes | a generated copy of the canonical mark `share/design/brand/logo-mark.svg`, written by `majordomus generate design` |
-| `*.js` | yes | written by hand, no build step |
+| `*.js` | yes | written by hand, no build step — but `nav.js` and `theme.js`, byte copies of the site's, written and checked by `scripts/cockpit-assets`: the bar at the top of every page is the site's, and so are its scripts ([`MAJORDOMUS_UI.md`](@/docs/majordomus-ui.md#the-navbar-comes-from-the-site)) |
 | `vendor/alpine.csp.min.js` | yes | the interaction depends on it and it is 70 kB |
 | `vendor/{cytoscape,three.module,three.core,p5,mermaid}.min.js` | no | ~5 MB, lazy, optional, every page complete without them |
 
 </div>
 
 
-There are no utility classes in the Rust that renders the pages. Everything the markup
+There are no utility classes in the Rust that renders the pages, and the one markup that has
+them is not the Cockpit's: the bar at the top of every page is majordomus.dev's own, compiled
+in from the built site and compiled into the stylesheet from that copy
+(`project.the-ui-wears-the-sites-navbar`). Everything the Cockpit's own markup
 names is defined in `src/cockpit.css` or in the shared `share/design/primitives.css` as a
 composition of Tailwind utilities over the design tokens, which keeps the design readable
 and makes the compiled stylesheet a function of those files and the pinned versions alone —
@@ -777,7 +781,8 @@ The browser sweep is the part a status code cannot reach:
   CSP build is vendored, and the check that catches a regression to the CDN build.
 - **The command palette** opens on `Ctrl`/`Cmd`+K, fills with entries the registry supplied,
   filters, and navigates where the chosen entry says.
-- **The theme toggle** flips the root class and the choice survives a reload.
+- **The theme toggle** — the site's, in the site's bar — flips the root class and the choice
+  survives a reload.
 - **The skip link** is the first tab stop and points at `#main`.
 - **The runner** is generated from the schema (the required string, the bounded integer, the
   disclosure of the capability's own benchmark cases), and submitting it calls the

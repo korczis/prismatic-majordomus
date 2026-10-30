@@ -1,7 +1,7 @@
 +++
 title = "One derive at a time per machine, and a stopped derive leaves no orphans"
 description = "One derive at a time per machine, and a stopped derive leaves no orphans"
-weight = 134
+weight = 142
 [extra]
 kind = "rule"
 slug = "project-one-derive-at-a-time-1"

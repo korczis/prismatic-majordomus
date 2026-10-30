@@ -1,7 +1,7 @@
 +++
 title = "Everything that accumulates is measured, bounded and reaped by a committed command"
 description = "Everything that accumulates is measured, bounded and reaped by a committed command"
-weight = 76
+weight = 82
 [extra]
 kind = "rule"
 slug = "project-accumulation-is-measured-2"
@@ -92,9 +92,13 @@ before it acts*, and until version 2 there was no such command.
    not only the history.
 5. **Build output is reclaimed by predicate, and only build output.** The reaper removes
    `apps/majordomus-cli/target` and never a worktree, so that a false positive costs a
-   rebuild and can never cost a byte of source. A build directory is reclaimed only when it
-   is merged into `origin/master`, nobody is working in that worktree, `git status` is
-   empty, and the directory is provably cargo's own and inside that worktree. Liveness is
+   rebuild and can never cost a byte of source. A build directory is reclaimed only when its
+   worktree's tip is merged into `origin/master` **or contained in a remote-tracking ref**,
+   nobody is working in that worktree, `git status` is empty, and the directory is provably
+   cargo's own and inside that worktree. Pushed counts as landed for this purpose: on
+   2026-10-10 the merged-only form could reclaim 3 of 31 build directories while 270GB sat in
+   branches that were pushed and queued, or in detached offload trees, and the volume reached
+   99% on two machines at once. Liveness is
    read from the machine — `ps` and every process's working directory — and never from the
    peer board: an announcement belongs to a connection, and a worker that reconnects keeps
    its work while losing its place on the board, which is exactly the window a reaper runs
@@ -108,13 +112,34 @@ before it acts*, and until version 2 there was no such command.
    An mtime is never the predicate — it is the one whose missing input becomes an extreme
    value, `find -newermt` matches nothing on macOS, and a status sweep that refreshes an
    index fakes liveness for every tree it touches.
-7. **A build is bounded before it starts.** Every path that starts a build on a worker's
-   behalf asks one shared check whether there is room, and refuses below the floor. The
+7. **A build is bounded before it starts, and reclaims before it is refused.** Every path
+   that starts a build on a worker's behalf asks one shared check whether there is room.
+   Below a high-water mark (`MAJORDOMUS_RECLAIM_BELOW_MB`, default 50GiB) that check first
+   runs the reaper's classified reclaim, at most once per ten minutes per machine, so the
+   sweep happens because builds happen and not because somebody remembered it; then it
+   refuses below the floor. A reaper that is absent or refuses never fails the build: the
+   floor decides. The test runner sets the mark to zero, because a case must not act on the
+   machine it measures. The
    floor is derived from a measurement of what one build of this crate consumes, and the
    measurement is written beside the number. A bound whose own input cannot be measured says
    so and lets the build run — the opposite of a deleting predicate, and deliberately so:
    refusing every build on a machine whose `df` is unreadable stops all work to prevent a
    hypothetical.
+9. **What a build directory accumulates is swept before every build, and never under one.**
+   Build output inside a worktree is reclaimed by the reaper (5); what accumulates outside any
+   worktree is not, and on 2026-10-16 and 2026-10-17 it was what filled the volume: idle
+   incremental sessions (79 GB), stale generations of this crate in the shared directory's
+   `deps` (204 GB) and private build directories builds fell back to and left (178 GiB in 35).
+   So every build first runs `mj_rust_prune_build_dir` and the disk floor's check also runs
+   `mj_rust_reclaim_private` (`lib/rust_bin.sh`), each with a declared age
+   (`MAJORDOMUS_INCREMENTAL_IDLE_MIN` 30, `MAJORDOMUS_DEPS_IDLE_MIN` 120,
+   `MAJORDOMUS_PRIVATE_BUILD_IDLE_MIN` 120 minutes). A profile is swept only while this sweep
+   holds cargo's own lock on it (`<profile>/.cargo-build-lock`, taken without waiting) **and**
+   no process names it: `cargo test` releases the lock before the binaries and doctests it
+   built run, and a sweep judged by age alone removed rlibs a running build was reading. A
+   generation is judged whole and kept while any file of it is recent or open; a private
+   directory is kept while anything in it is recent, any lock of it is held or a process names
+   it. Without `flock(1)` or `lsof` nothing is removed. The test runner turns all three off.
 8. **Growth is loud before it is a cliff.** `scripts/ci/backlog-check` reports the landable
    backlog and fails when it exceeds its threshold, so that "nothing is being deployed" is
    a gate's finding and not a person's.
@@ -123,13 +148,23 @@ before it acts*, and until version 2 there was no such command.
 
 - `scripts/ci/backlog-check` — the gate: the reaper and the integrator exist and are
   executable, the reaper matches processes by predicate and deletes only build directories,
-  it still holds all three conditions for reclaiming one and still refuses when liveness is
-  unmeasurable, every path that starts a build asks the shared space check, the doctrine
+  it still holds all three conditions for reclaiming one (landed or pushed, not live, clean)
+  and still refuses when liveness is unmeasurable, every path that starts a build asks the
+  shared space check, that check reclaims below its mark before the floor and the test
+  runner turns that off, every build sweeps its build directories under cargo's lock and
+  the test runner turns those sweeps off, the doctrine
   names the forge constraint, no document advertises the merge button, and (with a token)
   the landable backlog is within its threshold.
 - `test/cases/131_backlog_hygiene.sh` — the behavioural case for the servers and the gate.
+- `test/cases/3080_idle_incremental_sessions_are_pruned.sh`,
+  `test/cases/3196_stale_crate_artifacts_are_pruned_under_cargos_lock.sh` and
+  `test/cases/3197_idle_private_build_dirs_are_reclaimed.sh` — the sweeps of item 9 against
+  fixture build directories: what goes, what stays, and that nothing is removed under cargo's
+  lock or while a process names the profile.
 - `test/cases/276_disk_is_bounded.sh` — the behavioural case for the build output and the
-  bound: what the reaper refuses, and that a build below the floor does not start.
+  bound: what the reaper refuses, that a pushed clean unattended worktree is reclaimed and an
+  unpushed one kept, that a build below the mark reclaims first and once per interval, and
+  that a build below the floor does not start.
 - `scripts/reap-orphans` — the reaper, dry-run by default, with `--kill` and `--reclaim` as
   two separate consents.
 {% endraw %}

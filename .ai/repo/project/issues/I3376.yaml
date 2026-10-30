@@ -1,0 +1,66 @@
+id: I3376
+milestone: every-task-states-its-delivery-economics
+title: "One capability states each task's wall time and episodes from every checkout's ledger, and names every field it cannot yet fill as not observed"
+slug: each-task-states-its-delivery-economics
+priority: p0
+profile: implementation
+objective: "Add economics.tasks over a new module apps/majordomus-cli/src/economics/tasks.rs. It folds the ledgers of every checkout git worktree list reports, following ledger.rotated archives, into one record per task: task id, issue and intent, checkout and branch, first start, last finish or refusal, elapsed wall seconds, refusal count, the episodes that carried it with their spans, and the finish outcome as recorded. It fixes the full record shape now: interventions, ci_reruns, spend and accepted, each not_observed with a reason naming what will supply it. It takes an optional --since/--until window and lists each ledger read with its line and skipped-line counts and each checkout not read. It reuses intent_realization::tasks_from_ledger."
+why: "T3 of the owner's report of 2026-10-19 asks for each task's time, interventions, CI reruns, spend and accepted result, and T2 and T4 need one instrument. The ledger already records task steps and episodes; intent_realization folds them but only from the root checkout. Fixing the whole shape here lets later issues fill fields without changing the response type. I3130 plans the same fold and should reuse this one."
+current_state: "lib/start.sh:158-160 appends task.started; share/events.yaml:48-62 declares task.finished and task.refused; ledger.rs:10-12 says the ledger is per checkout and untracked; share/events.yaml:92-98 declares ledger.rotated; intent_realization.rs:1185 tasks_from_ledger, and gather at :1282-1284 reads only the root checkout's ledger; docs/generated/openapi.json already defines Delivery* components."
+desired_state: "majordomus economics tasks (CLI, HTTP, MCP) answers every task in the ledgers it read; wall time and episodes are measured; other fields read not_observed with their supplier."
+scope:
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/src/economics/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/economics.rs"
+  - "apps/majordomus-cli/src/commands/economics.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/intent_realization.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "docs/ECONOMICS.md"
+  - ".ai/repo/mcp-tool-run-baseline.txt"
+non_scope:
+  - "Filling interventions, CI reruns, spend or acceptance (I3377 to I3381)"
+  - "Benchmark runs (I3382)"
+  - "A stored join or second ledger"
+  - "Publishing any aggregate"
+serves:
+  - "the-product-proves-it-pays#every-task-states-its-delivery-economics"
+acceptance_criteria:
+  - "A fixture of two checkouts' ledgers, one rotated, yields one record per distinct task_id and the count equals that number"
+  - "A task started, refused twice and finished reports wall seconds between its started and finished ts and a refusal count of 2"
+  - "A task with no finish reads open, never finished"
+  - "A task whose lines carry two session stamps lists two episodes"
+  - "interventions, ci_reruns, spend and accepted are present as not_observed with a reason on every record"
+  - "A window filters by task.started ts, and a missing ledger is listed as not read"
+  - "Response types use a TaskEconomics prefix and no OpenAPI component collides"
+  - "CLI JSON, HTTP and MCP return the same reading"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "majordomus generate --check"
+  - "majordomus plan validate"
+evidence_required:
+  - "test_task_economics_per_task"
+  - "test_task_economics_reads_every_checkout"
+created_at: 2026-10-19
+updated_at: 2026-10-28T17:08:05Z
+started_at: 2026-10-28T17:06:25Z
+started_event: sha256:73cc2c268903d923952b2e71b2dc8f8b13839f3dcd0a69faced30746de08cf68
+verified_at: 2026-10-28T17:07:01Z
+verified_event: sha256:fef5c72d306186d6a70b0cde690304515bf35e0ef0de6570ed1fd475101434aa
+completed_at: 2026-10-28T17:08:05Z
+completed_event: sha256:4b092384ec148e6e827f8f7d2d04971524d80e09da99c86913e0b63cc8518e49
+evidence:
+  - covers: test_task_economics_per_task
+    type: ci
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics (CI validate, job rust (3))"
+    result: "test test_task_economics_per_task ... ok; economics target: 36 passed, 0 failed. https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939 job 122655182619 (log lines 1610-1650). Window unit test economics::tasks::tests::a_window_reads_the_start_and_answers_no_task_without_one ok in job 122655219231 line 3320"
+    artifact: "6c79dcf68cf329f4c21c219720b811381c3433aa"
+    commit: 81ef931a3e156907f1784c64c509884f565c17f0
+    recorded_at: 2026-10-28T17:07:43Z
+  - covers: test_task_economics_reads_every_checkout
+    type: ci
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics (CI validate, job rust (3))"
+    result: "test test_task_economics_reads_every_checkout ... ok; economics target: 36 passed, 0 failed. https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939 job 122655182619 (log line 1639)"
+    artifact: "6c79dcf68cf329f4c21c219720b811381c3433aa"
+    commit: 81ef931a3e156907f1784c64c509884f565c17f0
+    recorded_at: 2026-10-28T17:07:53Z

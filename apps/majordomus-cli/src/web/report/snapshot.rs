@@ -16,15 +16,17 @@
 //!   topology says which surfaces are published), and otherwise leads to the snapshot's one
 //!   page about the live UI, carrying the path it named, because only a running process
 //!   answers it: never a link to nothing;
-//! - **a panel a screen asks for after it has painted** (`data-panel-src`) is written into
-//!   the page. A running UI defers a slow panel so that no screen waits for a source (ADR
-//!   0142); a snapshot has no reader waiting and no process to ask later, so the placeholder
-//!   would be all a reader ever saw: a pull-request screen with no pull request on it;
 //! - **the script** is told it is in a snapshot (`data-snapshot` on the body), so it reads
 //!   nothing again and fetches no panel: a static page that refreshed itself would replace
 //!   what was read with whatever the host answers for a query it ignores;
+//! - **a slow panel** a screen defers to its script is read by the UI before the page is
+//!   written, because every page is asked with [`crate::ui::SNAPSHOT_HEADER`]: the published
+//!   screen shows what the live one shows once its script has run, not a link to it;
 //! - **every page says what it is**: read at which commit, when, and by which executable,
-//!   and how to see it live.
+//!   and how to see it live;
+//! - **no page names the machine**: the live surface shows the checkout's root and paths
+//!   under it, which on a publication would be the disk of whoever built it, so every
+//!   spelling of the root and of the home directory reads `<repo>` and `<home>` (I1012).
 //!
 //! A value the UI could not read when the snapshot was taken reads as the UI says it — none,
 //! unknown or not answered — and never as zero, because the UI's own rule (`ui-derived-state`)
@@ -93,7 +95,9 @@ pub const UI: Subject = Subject {
     live_title: "The live UI · majordomus ui",
     fragment: crate::ui::FRAGMENT,
     scripts: true,
-    withheld: &[],
+    // `/ui/peers` names every worker's intent, worktree and machine as it is now: a
+    // publication holds no page of it until its public-safe form exists (I2984).
+    withheld: &[crate::ui::peers::ROUTE],
     redirects: crate::ui::observatory::REDIRECTS,
 };
 
@@ -153,11 +157,6 @@ pub struct Snapshot {
     /// UI pages a page links to that are not in the snapshot: past the bound, or a query no
     /// file can stand for. Each link to one leads to the live page.
     pub left_out: Vec<String>,
-    /// The panels written into the pages that ask for them, by route: what a running UI
-    /// fetches after a screen has painted and a snapshot has no process to fetch. A record
-    /// that carries this field is one whose pages wait for no panel; a route whose panel did
-    /// not answer is absent from it, and its placeholder stands on the page.
-    pub panels: Vec<String>,
     /// The bound the run was given.
     pub limit: usize,
     /// The seconds the run was given for the pages the screens link to.
@@ -207,8 +206,6 @@ pub fn render(
     let mut pages: BTreeMap<String, String> = BTreeMap::new();
     let mut rendered: Vec<(String, String)> = Vec::new();
     let mut assets: BTreeSet<String> = BTreeSet::new();
-    // one reading of a panel serves every page that asks for it
-    let mut panels: BTreeMap<String, Option<String>> = BTreeMap::new();
     while pages.len() < limit.max(1) {
         let target = match seeds.pop_front() {
             Some(seed) => seed,
@@ -237,25 +234,17 @@ pub fn render(
             continue;
         };
         let asked = std::time::Instant::now();
-        let response = handle(&Request::parse_target("GET", &target, Vec::new()));
+        // asked as a snapshot: a screen answers with its slow panels already in place
+        let mut request = Request::parse_target("GET", &target, Vec::new());
+        request
+            .headers
+            .push((crate::ui::SNAPSHOT_HEADER.to_string(), "1".to_string()));
+        let response = handle(&request);
         tracing::debug!(target = %target, ms = asked.elapsed().as_millis() as u64, status = response.status, "snapshot page");
         if response.status != 200 {
             continue;
         }
-        let html = with_panels(&response.body.text(), |src| {
-            panels
-                .entry(src.to_string())
-                .or_insert_with(|| {
-                    let asked = format!(
-                        "{src}{}{}",
-                        if src.contains('?') { '&' } else { '?' },
-                        crate::ui::FRAGMENT
-                    );
-                    let panel = handle(&Request::parse_target("GET", &asked, Vec::new()));
-                    (panel.status == 200).then(|| panel.body.text().into_owned())
-                })
-                .clone()
-        });
+        let html = response.body.text().into_owned();
         for link in links(&html) {
             let link = unescape(&link);
             if let Some(name) = subject.asset_name(&link) {
@@ -300,6 +289,7 @@ pub fn render(
     let written: BTreeMap<String, String> = pages.clone();
     let mut left_out: BTreeSet<String> = BTreeSet::new();
     let mut frame: Option<String> = None;
+    let home = std::env::var_os("HOME").map(PathBuf::from);
     for (file, html) in &rendered {
         let page = rewrite(
             subject,
@@ -311,6 +301,7 @@ pub fn render(
             &origin,
             &mut left_out,
         );
+        let page = without_machine_paths(&page, root, home.as_deref());
         write(&dir, file, &page)?;
         if file == "index.html" {
             frame = Some(page);
@@ -340,10 +331,6 @@ pub fn render(
         pages,
         assets: copied.iter().map(|n| format!("assets/{n}")).collect(),
         left_out: left_out.into_iter().collect(),
-        panels: panels
-            .into_iter()
-            .filter_map(|(route, drawn)| drawn.map(|_| route))
-            .collect(),
         limit,
         budget_seconds,
         stopped_by,
@@ -420,7 +407,7 @@ fn relink_into(
 /// page with the path it meant: those paths are what a reader of the UI will follow first,
 /// so they are read before the bound can leave them out. No list of them is kept anywhere.
 pub fn cockpit_seeds(root: &Path) -> Vec<String> {
-    let mut seeds: Vec<String> = crate::cockpit::STATIC_ROUTES
+    let mut seeds: Vec<String> = crate::cockpit::static_routes()
         .iter()
         .map(|(path, _)| path.to_string())
         .filter(|path| COCKPIT.page_file(path).is_some())
@@ -719,7 +706,8 @@ impl Subject {
 }
 
 /// The attributes whose value is a URL a reader or the script follows.
-const URL_ATTRIBUTES: &str = "href|src|action|data-graph-lib|data-observatory-lib|data-panel-src";
+const URL_ATTRIBUTES: &str = "href|src|action|data-graph-lib|data-observatory-lib|\
+     data-observatory-companion|data-p5-lib|data-panel-src";
 
 fn attribute_pattern() -> regex::Regex {
     regex::Regex::new(&format!(r#"\b({URL_ATTRIBUTES})="([^"]*)""#))
@@ -729,71 +717,6 @@ fn attribute_pattern() -> regex::Regex {
 /// The link a graph's node carries, inside its JSON in an attribute.
 fn graph_href_pattern() -> regex::Regex {
     regex::Regex::new(r#"&quot;href&quot;:&quot;(.*?)&quot;"#).expect("the graph pattern compiles")
-}
-
-/// The element a screen leaves where a panel will be: the tag the UI's screens write it
-/// with, and the attribute that names the panel's own route.
-const PLACEHOLDER_TAG: &str = "section";
-const PLACEHOLDER_ATTRIBUTE: &str = "data-panel-src";
-
-/// A page with every panel it asks for written in place of the placeholder.
-///
-/// `panel` answers a panel's route with the panel's own rendering, or nothing when it could
-/// not be read — and then the placeholder stays, with its link to the panel's page, exactly
-/// as a reader without the script sees it on a running UI.
-fn with_panels(html: &str, mut panel: impl FnMut(&str) -> Option<String>) -> String {
-    let open = format!("<{PLACEHOLDER_TAG}");
-    let close = format!("</{PLACEHOLDER_TAG}>");
-    let named = format!("{PLACEHOLDER_ATTRIBUTE}=\"");
-    let mut out = String::with_capacity(html.len());
-    let mut rest = html;
-    while let Some(at) = rest.find(&named) {
-        // the tag this attribute is in, and where the element it opens ends
-        let Some(start) = rest[..at].rfind('<') else {
-            break;
-        };
-        let value = &rest[at + named.len()..];
-        let (Some(quote), true) = (value.find('"'), rest[start..].starts_with(&open)) else {
-            out.push_str(&rest[..at + named.len()]);
-            rest = value;
-            continue;
-        };
-        let src = unescape(&value[..quote]);
-        let Some(end) = element_end(&rest[start..], &open, &close) else {
-            break;
-        };
-        out.push_str(&rest[..start]);
-        match panel(&src) {
-            Some(drawn) => out.push_str(&drawn),
-            None => out.push_str(&rest[start..start + end]),
-        }
-        rest = &rest[start + end..];
-    }
-    out.push_str(rest);
-    out
-}
-
-/// Where the element that `html` opens with ends: past the closing tag that balances it.
-fn element_end(html: &str, open: &str, close: &str) -> Option<usize> {
-    let mut depth = 0usize;
-    let mut at = 0usize;
-    loop {
-        let next_open = html[at..].find(open).map(|i| at + i);
-        let next_close = html[at..].find(close).map(|i| at + i)?;
-        match next_open {
-            Some(opened) if opened < next_close => {
-                depth += 1;
-                at = opened + open.len();
-            }
-            _ => {
-                depth = depth.checked_sub(1)?;
-                at = next_close + close.len();
-                if depth == 0 {
-                    return Some(at);
-                }
-            }
-        }
-    }
 }
 
 /// Every URL a page names, as written (still escaped).
@@ -976,6 +899,17 @@ fn banner(origin: &Origin, live: &str) -> crate::cockpit::html::El {
 /// The page a redirected name is in a publication: it sends the reader to `target`, the file
 /// of the route the process redirects that name to, by a refresh a browser follows without a
 /// script, and says so in a link for a reader whose browser does not.
+/// A page as a publication may carry it (I1012): every spelling of the repository's root and
+/// of the home directory replaced as [`crate::redaction::normalise_machine_paths`] replaces
+/// it, by a name in angle brackets escaped here, because the page is HTML and the bare name
+/// would read as an element. The live surface names the checkout it serves; a published page
+/// says where a thing is in the repository, never where the machine that read it keeps it.
+fn without_machine_paths(page: &str, root: &Path, home: Option<&Path>) -> String {
+    crate::redaction::normalise_machine_paths(page, root, home)
+        .replace("<repo>", "&lt;repo&gt;")
+        .replace("<home>", "&lt;home&gt;")
+}
+
 fn redirect_page(subject: &Subject, file: &str, target: &str, to: &str) -> String {
     let href = format!("{}{target}", up(file));
     let head = vec![
@@ -1197,49 +1131,6 @@ mod tests {
     }
 
     #[test]
-    fn a_panel_a_screen_asks_for_is_written_into_the_page() {
-        let page = concat!(
-            "<main><h1>Drain</h1>",
-            "<section class=\"mj-ui-panel\" data-panel-src=\"/ui/panels/drain?issue=I1&amp;lane=held\" aria-busy=\"false\">",
-            "<header><h2>Drain</h2></header><section>inner</section><a href=\"/ui/panels/drain\">open</a></section>",
-            "<section class=\"mj-ui-panel\" data-panel-src=\"/ui/panels/slow\"><a href=\"/ui/panels/slow\">open</a></section>",
-            "<section>kept</section></main>",
-        );
-        let mut asked = Vec::new();
-        let drawn = with_panels(page, |src| {
-            asked.push(src.to_string());
-            (src != "/ui/panels/slow").then(|| "<div class=\"drawn\">34 open</div>".to_string())
-        });
-        // the route is asked as it was written, unescaped; the element is replaced whole,
-        // the section inside it included
-        assert_eq!(
-            asked,
-            ["/ui/panels/drain?issue=I1&lane=held", "/ui/panels/slow"]
-        );
-        assert!(
-            drawn.starts_with("<main><h1>Drain</h1><div class=\"drawn\">34 open</div><section"),
-            "{drawn}"
-        );
-        assert!(!drawn.contains("inner"), "{drawn}");
-        // a panel that did not answer keeps its placeholder and the link in it
-        assert!(
-            drawn.contains(
-                "data-panel-src=\"/ui/panels/slow\"><a href=\"/ui/panels/slow\">open</a></section>"
-            ),
-            "{drawn}"
-        );
-        assert!(drawn.ends_with("<section>kept</section></main>"), "{drawn}");
-        // a page that asks for nothing is the page
-        assert_eq!(with_panels("<p>plain</p>", |_| None), "<p>plain</p>");
-        // an unbalanced page is left as it is, never cut
-        let torn = "<section data-panel-src=\"/ui/panels/drain\"><p>no end";
-        assert_eq!(with_panels(torn, |_| Some("x".into())), torn);
-        // the attribute on another element is not a placeholder
-        let other = "<div data-panel-src=\"/ui/x\">a</div><p>b</p>";
-        assert_eq!(with_panels(other, |_| Some("x".into())), other);
-    }
-
-    #[test]
     fn the_snapshot_writes_every_screen_with_no_link_to_nothing() {
         let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
             .expect("a synthetic repository");
@@ -1260,13 +1151,30 @@ mod tests {
                 .expect("a topology");
         let snapshot =
             render(root.path(), &UI, &ask, seeds(), &topology, 60, 600).expect("a snapshot");
-        for screen in crate::ui::SCREENS {
+        let published = || {
+            crate::ui::SCREENS
+                .iter()
+                .filter(|s| UI.page_file(s.route).is_some())
+        };
+        for screen in published() {
             assert!(
                 snapshot.pages.contains_key(screen.route),
                 "{} is not in the snapshot",
                 screen.route
             );
         }
+        // a screen the subject withholds is no page, and the navigation's link to it leads to
+        // the live page with the path it meant
+        assert!(!snapshot.pages.contains_key(crate::ui::peers::ROUTE));
+        assert!(snapshot
+            .left_out
+            .iter()
+            .any(|p| p == crate::ui::peers::ROUTE));
+        let overview = std::fs::read_to_string(snapshot.dir.join("index.html")).unwrap();
+        assert!(
+            overview.contains(&format!("{LIVE_PAGE}#{}", crate::ui::peers::ROUTE)),
+            "the navigation's link to the withheld screen leads to the live page"
+        );
         assert!(snapshot.pages.len() <= 60);
         // no budget at all still writes every screen and panel, and says what stopped it
         let hurried =
@@ -1274,7 +1182,7 @@ mod tests {
         assert_eq!(hurried.stopped_by, "budget");
         assert_eq!(
             hurried.pages.len(),
-            crate::ui::SCREENS.len() + crate::ui::PANELS.len(),
+            published().count() + crate::ui::PANELS.len(),
             "the screens and panels, and nothing they link to"
         );
         let snapshot =
@@ -1314,30 +1222,6 @@ mod tests {
                     "{file} links {link}, which is not in the snapshot"
                 );
             }
-        }
-        // the record says which panels it wrote into pages, and every panel is among them
-        for panel in crate::ui::PANELS {
-            assert!(
-                snapshot
-                    .panels
-                    .iter()
-                    .any(|p| p.split('?').next() == Some(*panel)),
-                "{panel} is not recorded as written into a page: {:?}",
-                snapshot.panels
-            );
-        }
-        let record: serde_json::Value =
-            serde_json::from_str(&std::fs::read_to_string(dir.join("snapshot.json")).unwrap())
-                .unwrap();
-        assert!(record["panels"].is_array(), "the record names its panels");
-        // no screen of a snapshot waits for a panel nobody will fetch: each one is in the page
-        for screen in crate::ui::SCREENS {
-            let html = std::fs::read_to_string(dir.join(&snapshot.pages[screen.route])).unwrap();
-            assert!(
-                !html.contains(PLACEHOLDER_ATTRIBUTE),
-                "{} still asks for a panel after it has painted",
-                screen.route
-            );
         }
         let declared: Declaration =
             serde_json::from_str(&std::fs::read_to_string(dir.join(DECLARATION_FILE)).unwrap())
@@ -1453,6 +1337,61 @@ mod tests {
         assert_eq!(declared.id, "cockpit-snapshot");
         assert_eq!(declared.mount, COCKPIT.prefix);
         assert_eq!(declared.availability, Some(Availability::PublishedOnly));
+    }
+
+    /// The live overview names the checkout's root, and no page of the snapshot does (I1012):
+    /// the publication of 2026-10-21 carried the runner's absolute root on every Cockpit page.
+    #[test]
+    fn no_page_of_a_snapshot_names_the_root_it_was_read_from() {
+        let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
+            .expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let share = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share");
+        let cockpit =
+            crate::cockpit::Cockpit::new(std::sync::Arc::clone(&ctx), "0.0.0-test", Some(&share));
+        let root = repo.root();
+        let spellings: Vec<String> = [Some(root.to_path_buf()), std::fs::canonicalize(root).ok()]
+            .into_iter()
+            .flatten()
+            .map(|p| p.to_string_lossy().trim_end_matches('/').to_string())
+            .collect();
+        let live = cockpit.handle(&Request::parse_target("GET", "/cockpit", Vec::new()));
+        let live = live.body.text().into_owned();
+        assert!(
+            spellings.iter().any(|s| live.contains(s.as_str())),
+            "the live overview no longer names its root, so this proves nothing"
+        );
+        let topology = crate::web::discover::discover(root, crate::web::discover::Runtime::full())
+            .expect("a topology");
+        let snapshot = render(
+            root,
+            &COCKPIT,
+            &|request| cockpit.handle(request),
+            cockpit_seeds(root),
+            &topology,
+            40,
+            600,
+        )
+        .expect("a snapshot");
+        for file in snapshot
+            .pages
+            .values()
+            .chain(std::iter::once(&LIVE_PAGE.to_string()))
+        {
+            let html = std::fs::read_to_string(snapshot.dir.join(file)).unwrap();
+            for s in &spellings {
+                assert!(!html.contains(s.as_str()), "{file} names the root {s}");
+            }
+        }
+        let overview = std::fs::read_to_string(snapshot.dir.join("index.html")).unwrap();
+        assert!(
+            overview.contains("&lt;repo&gt;"),
+            "the overview's root reads as the repository"
+        );
+        assert!(
+            !overview.contains("<repo>"),
+            "the name is escaped, not an element"
+        );
     }
 
     /// Two snapshots under one root link into each other by the pages each holds: the one

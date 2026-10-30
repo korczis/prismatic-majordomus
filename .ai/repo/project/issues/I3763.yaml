@@ -1,0 +1,44 @@
+# campaign.md D16 names no milestone for N16 (marked optional there); truthful-plan-surfaces (ACTIVE) scopes plan.rs, lib/project.awk, lib/project.sh and share/schemas
+# the Fly-era dependents (I0916, I0925, I0926, I0932) are 852d7e's records under O3 and are cited here only as the evidence of the defect
+# case name: 3736_ stands for the case number allocated with the id
+id: "I3763"
+milestone: "truthful-plan-surfaces"
+title: "A cancelled dependency that names its replacement is satisfied by that replacement, and one that names none is reported"
+slug: "a-cancelled-dependency-is-satisfied-by-its-replacement"
+priority: "p2"
+profile: "implementation"
+parallel_safe: false
+objective: "An issue record may declare superseded_by (an issue id), and only beside cancelled true. In both engines a dependency on such an issue is satisfied exactly when its replacement, followed through further replacements, is DONE, and blocked_by names the replacement instead of the cancelled id. A dependency on a cancelled issue that names no replacement still blocks, and plan validate warns cancelled_dependency naming both issues, so a dependent that can never become READY is visible rather than silent."
+why: "The plan inventory of 2026-10-20 found I0925 (needs I0915), I0926 (needs I0913 and I0924), I0916 (needs I0914) and I0932 (needs I0929 and I0931) BLOCKED for ever on cancelled issues, because only a DONE dependency satisfies one. Nothing reported it, and the only remedy was to rewrite every dependent by hand. A cancellation that moves work elsewhere should carry that move, the way a milestone's superseded_by already does."
+current_state: "Verified on origin/master 91c0b5d5658. apps/majordomus-cli/src/plan.rs:874-884 counts a dependency satisfied only when it is DONE, and :717-723 never makes a cancelled issue DONE; lib/project.awk:164 is the same rule and :93 reads cancelled. share/schemas/majordomus/issue/issue.v1.schema.json closes its keys (:9, additionalProperties false) and declares no superseded_by, so share/allow/issue.txt, generated from it, has none either, while milestones already declare one (plan.rs:1017, lib/project.awk:236). .ai/repo/project/issues/I0925.yaml:17-18 depends on I0915, which is cancelled true and names no replacement."
+desired_state: "The issue schema declares superseded_by as an optional string and share/allow/issue.txt is regenerated from it. plan.rs and lib/project.awk resolve each dependency through its replacement chain before the satisfied test, identically; a replacement that is not an issue fails unknown_replacement, superseded_by on an issue that is not cancelled fails replacement_without_cancel, a replacement chain that loops fails replacement_cycle, and an open issue depending on a cancelled issue without a replacement warns cancelled_dependency. Waves follow the same resolved edges. case 99 compares the resolved blocked_by and the new findings over its fixture."
+scope:
+  - "apps/majordomus-cli/src/plan.rs"
+  - "lib/project.awk"
+  - "share/schemas/majordomus/issue/issue.v1.schema.json"
+  - "share/allow/issue.txt"
+  - "test/cases/99_plan_capabilities.sh"
+  - "test/cases/3736_a_cancelled_dependency_is_satisfied_by_its_replacement.sh"
+  - "docs/PLANNING.md"
+  - "docs/PLAN_STATUS.md"
+  - "docs/generated"
+  - "site/data/generated"
+  - ".ai/repo/project/issues/I3763.yaml"
+non_scope:
+  - "Repointing or cancelling the existing dependents of cancelled issues; those are records"
+  - "Treating a cancelled dependency without a replacement as satisfied"
+  - "A replacement for a milestone, which superseded_by already gives"
+acceptance_criteria:
+  - "An issue depending on a cancelled issue whose replacement is DONE is READY in both engines"
+  - "Negative: an issue depending on a cancelled issue whose replacement is not DONE is BLOCKED, and blocked_by names the replacement, not the cancelled id"
+  - "Negative: an issue depending on a cancelled issue with no replacement stays BLOCKED and plan validate warns cancelled_dependency naming both ids"
+  - "superseded_by on an issue that is not cancelled, a replacement that is not an issue and a replacement chain that loops each fail plan validate by name in both engines"
+  - "case 99 agrees on statuses, blocked_by and findings over a fixture holding each of these"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3736_a_cancelled_dependency_is_satisfied_by_its_replacement 99_plan_capabilities"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::tests"
+  - "majordomus plan validate"
+evidence_required:
+  - "cancelled_dependency_is_satisfied_by_its_replacement"
+  - "cancelled_dependency_without_replacement_is_reported"
+depends_on: []

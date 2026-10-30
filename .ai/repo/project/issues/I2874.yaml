@@ -1,0 +1,42 @@
+id: I2874
+milestone: mesh-journal-converges
+title: "A replicated mesh notice carries what a seat did, so a removal or a prune is seen on every machine"
+slug: a-replicated-mesh-notice-carries-what-a-seat-did
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Add one journal event kind, notice_published (NoticePublished { session, subject, text, bytes: Option<u64> }, agreed with f8 on 2026-10-21), a short statement of what a session did with the subject it did it to (a worktree cleanup run, a disk prune run with its bytes), signed and replicated like every other event, folded by its own function into a view of its own outside the digested state, and shown by mesh monitor; a command running in a checkout publishes one through the shared server, and with no server it reports that the notice was not sent rather than failing the work it reports."
+why: "I3832 (worktree cleanup) and I3833 (disk prune) each have the criterion that what they removed is announced on the mesh, and neither can meet it: EventBody (apps/majordomus-cli/src/mesh/journal.rs:523) is a closed enum of session, claim, handover and review events, Journal::append_own is server-internal, and peers.announce is one server's in-memory board, not replicated, and refuses a caller that is not an MCP session. Overloading a session's intent text would make the notice replace the session's own word. Found while building I3832 slice 2 on 2026-10-21; a3 assigned the id and placed it here because the journal schema is this milestone's."
+current_state: "No event kind carries a notice; a removal on one machine is visible elsewhere only as a worktree that is no longer there."
+desired_state: "A notice is an event like any other: signed over canonical JSON, ordered by (lamport, stream, seq), replicated, and kept for as long as its stream lives (compaction removes only whole dead streams, so a notice is permanent for the stream's life and counts against MAX_EVENTS_PER_NODE, the quota whose exhaustion deadlocked the mesh in I2825). Its kind is in KNOWN_KINDS and validate() bounds it (subject at most 256 bytes, text at most 1 KiB), so a peer that sends a bad notice is refused as Bounds; a runtime older than the kind stores and relays it without folding it, as ingest already does for an unknown kind. link::FEATURES carries notices, so a card says who folds them. The fold view keeps the last 64 per stream, in mesh state --kind notices, which monitor reads, never in the digested CooperationState, so a mixed-version mesh keeps one digest."
+scope:
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/mesh/state.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/mesh/link.rs"
+  - ".ai/repo/ci/mesh-event-fields.yaml"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/src/monitor"
+  - "apps/majordomus-cli/tests/mesh_cooperation.rs"
+  - "docs/MESH.md"
+  - "docs/SCHEMAS.md"
+non_scope:
+  - "The peer board and peers.announce, which stay per server and advisory"
+  - "Calling the notice from worktree cleanup and disk prune, which I3832 and I3833 do once it exists"
+depends_on: []
+acceptance_criteria:
+  - "A notice published on one runtime appears, once, in the mesh state and the monitor stream of a linked runtime, with its session, subject and text"
+  - "A notice is signed and verified like every other event, and one whose body exceeds the declared bound is refused at publication and, from a peer, at ingest as Bounds"
+  - "Two runtimes with the same events, one of which folds notices and one of which does not, answer the same state digest"
+  - "A session publishes at most one notice a minute; a second within the minute is refused with the reason, and the callers (I3832, I3833) publish one per run, not one per item"
+  - ".ai/repo/ci/mesh-event-fields.yaml classifies subject and text redacted (free text that crosses machines, I2708) and bytes clear, and mesh-check passes"
+  - "With no shared server, publishing answers that the notice was not sent, and the command that published it still exits with its own status"
+  - "docs/MESH.md and docs/SCHEMAS.md name the event kind and its fields, and MESH.md says a notice is permanent for its stream's life"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mesh_cooperation"
+  - "cargo test --lib mesh::journal"
+evidence_required:
+  - "a_notice_reaches_a_linked_runtime_test"
+created_at: 2026-10-21
+updated_at: 2026-10-21

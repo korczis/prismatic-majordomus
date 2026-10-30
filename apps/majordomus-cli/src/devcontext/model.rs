@@ -1084,6 +1084,198 @@ pub struct CompiledContext {
     /// hold, a session record that no longer describes this checkout. Never an error: an
     /// absent source is an answer.
     pub diagnostics: Vec<crate::model::Diagnostic>,
+    /// The source files the request's paths reach, outlined into ranges: what each whole
+    /// file would cost, what its selected ranges cost instead, and what was not read and
+    /// why. Absent when the request reaches no tracked source, so an answer about the layer
+    /// alone is unchanged.
+    #[serde(default, skip_serializing_if = "SourceCoverage::is_empty")]
+    pub sources: SourceCoverage,
+}
+
+/// What the compiler read of the source under a request's paths, and what that saved.
+///
+/// The index [`fingerprint`](CompiledContext::fingerprint) covers the layer's objects, not
+/// the source files the ranges come from, so each file carries the digest of the bytes
+/// that were parsed: a range is true of those bytes, which may be a dirty work tree's
+/// rather than any commit's, and two answers agree about a file exactly when its digests
+/// do.
+///
+/// Every number here is an estimate in the same unit as the budget ([`BYTES_PER_TOKEN`]),
+/// and the saving is measured against reading each outlined file whole — the reading this
+/// replaces — not against an ideal reader.
+///
+/// ```
+/// use majordomus_cli::devcontext::{SourceCoverage, SourceFile};
+///
+/// let file = SourceFile {
+///     path: "src/big.rs".into(),
+///     digest: "sha256:00".into(),
+///     bytes: 40_000,
+///     whole_tokens: 10_000,
+///     definitions: 120,
+///     ranges: 120, truncated: 0,
+///     selected: 3,
+///     selected_tokens: 900,
+///     saved_tokens: 9_100,
+/// };
+/// let c = SourceCoverage { files: vec![file], ..Default::default() };
+/// assert!(!c.is_empty());
+/// assert_eq!(c.whole_tokens(), 10_000);
+/// assert_eq!(c.selected_tokens(), 900);
+/// assert_eq!(c.saved_tokens(), 9_100);
+///
+/// // an answer that read no source has no coverage section at all
+/// assert!(SourceCoverage::default().is_empty());
+/// ```
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct SourceCoverage {
+    /// What parsed the files, and what that parser does not see.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub parser: String,
+    /// The files outlined, in path order.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub files: Vec<SourceFile>,
+    /// Source the paths reach and the compiler did not outline, with the reason: out of
+    /// the repository scope, a symbolic link, over the size bound, not valid syntax.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub unread: Vec<UnreadSource>,
+    /// Tracked files under the paths that no parser here covers, counted by extension.
+    /// These have no ranges; an empty outline for them would read as complete.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub unparsed: BTreeMap<String, usize>,
+    /// Source files past the per-request bound, counted and not read.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub truncated: usize,
+}
+
+fn is_zero(n: &usize) -> bool {
+    *n == 0
+}
+
+impl SourceCoverage {
+    /// Whether the request reached no tracked file at all.
+    ///
+    /// ```
+    /// use majordomus_cli::devcontext::{SourceCoverage, UnreadSource};
+    ///
+    /// assert!(SourceCoverage::default().is_empty());
+    /// let refused = SourceCoverage {
+    ///     unread: vec![UnreadSource { path: "src/x.rs".into(), reason: "a symbolic link".into() }],
+    ///     ..Default::default()
+    /// };
+    /// assert!(!refused.is_empty(), "a file reached and refused is still reached");
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        self.files.is_empty()
+            && self.unread.is_empty()
+            && self.unparsed.is_empty()
+            && self.truncated == 0
+    }
+
+    /// What reading every outlined file whole would cost.
+    ///
+    /// ```
+    /// use majordomus_cli::devcontext::{SourceCoverage, SourceFile};
+    ///
+    /// let f = |path: &str, whole: u64| SourceFile {
+    ///     path: path.into(), digest: String::new(), bytes: whole * 4, whole_tokens: whole,
+    ///     definitions: 1, ranges: 1, truncated: 0, selected: 0, selected_tokens: 0, saved_tokens: whole,
+    /// };
+    /// let c = SourceCoverage { files: vec![f("a.rs", 10), f("b.rs", 32)], ..Default::default() };
+    /// assert_eq!(c.whole_tokens(), 42);
+    /// ```
+    pub fn whole_tokens(&self) -> u64 {
+        self.files.iter().map(|f| f.whole_tokens).sum()
+    }
+
+    /// What the selected ranges of those files cost.
+    ///
+    /// ```
+    /// use majordomus_cli::devcontext::{SourceCoverage, SourceFile};
+    ///
+    /// let f = SourceFile {
+    ///     path: "a.rs".into(), digest: String::new(), bytes: 400, whole_tokens: 100,
+    ///     definitions: 3, ranges: 3, truncated: 0, selected: 1, selected_tokens: 25, saved_tokens: 75,
+    /// };
+    /// let c = SourceCoverage { files: vec![f.clone(), f], ..Default::default() };
+    /// assert_eq!(c.selected_tokens(), 50);
+    /// ```
+    pub fn selected_tokens(&self) -> u64 {
+        self.files.iter().map(|f| f.selected_tokens).sum()
+    }
+
+    /// The difference: what the ranges saved against whole-file reading.
+    ///
+    /// ```
+    /// use majordomus_cli::devcontext::{SourceCoverage, SourceFile};
+    ///
+    /// let f = SourceFile {
+    ///     path: "a.rs".into(), digest: String::new(), bytes: 400, whole_tokens: 100,
+    ///     definitions: 3, ranges: 3, truncated: 0, selected: 1, selected_tokens: 25, saved_tokens: 75,
+    /// };
+    /// let c = SourceCoverage { files: vec![f], ..Default::default() };
+    /// assert_eq!(c.saved_tokens(), c.whole_tokens() - c.selected_tokens());
+    /// ```
+    pub fn saved_tokens(&self) -> u64 {
+        self.files.iter().map(|f| f.saved_tokens).sum()
+    }
+}
+
+/// One source file the compiler outlined.
+///
+/// ```
+/// use majordomus_cli::devcontext::SourceFile;
+///
+/// let f: SourceFile = serde_json::from_value(serde_json::json!({
+///     "path": "src/big.rs", "digest": "sha256:00", "bytes": 4000, "whole_tokens": 1000,
+///     "definitions": 12, "ranges": 11, "truncated": 0, "selected": 2, "selected_tokens": 120,
+///     "saved_tokens": 880,
+/// })).unwrap();
+/// assert_eq!(f.whole_tokens - f.selected_tokens, f.saved_tokens);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct SourceFile {
+    /// Repository-relative.
+    pub path: String,
+    /// `sha256:<hex>` of the bytes parsed.
+    pub digest: String,
+    /// Its size.
+    pub bytes: u64,
+    /// What reading it whole costs, in estimated tokens.
+    pub whole_tokens: u64,
+    /// How many definitions the parser found in it.
+    pub definitions: usize,
+    /// How many ranges they were offered as: definitions written on the same lines share
+    /// one. Every range is either selected or excluded, so this is `selected` plus the
+    /// file's ranges in `excluded`.
+    pub ranges: usize,
+    /// Definitions past the per-file bound, not offered.
+    pub truncated: usize,
+    /// How many of its ranges the budget selected.
+    pub selected: usize,
+    /// What those ranges cost, in estimated tokens.
+    pub selected_tokens: u64,
+    /// `whole_tokens - selected_tokens`: what reading the selected ranges instead of the
+    /// file saves. Zero when the ranges cost as much as the file, and zero when none of its
+    /// ranges was selected: a file the answer gives nothing of was not read more cheaply,
+    /// it was not read at all.
+    pub saved_tokens: u64,
+}
+
+/// A source file reached and not outlined.
+///
+/// ```
+/// use majordomus_cli::devcontext::UnreadSource;
+///
+/// let u = UnreadSource { path: "src/link.rs".into(), reason: "a symbolic link; not followed".into() };
+/// assert_eq!(serde_json::to_value(&u).unwrap()["reason"], "a symbolic link; not followed");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct UnreadSource {
+    /// Repository-relative.
+    pub path: String,
+    /// Which guard refused it, or what the parser said.
+    pub reason: String,
 }
 
 /// Bytes of a file per estimated token. Four is the working figure for English prose and
@@ -1118,6 +1310,31 @@ pub fn tokens_for(bytes: u64) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_coverage_totals_are_the_sums_over_its_files() {
+        let f = |whole: u64, selected: u64| SourceFile {
+            path: format!("src/{whole}.rs"),
+            digest: String::new(),
+            bytes: whole * 4,
+            whole_tokens: whole,
+            definitions: 2,
+            ranges: 2,
+            truncated: 0,
+            selected: 1,
+            selected_tokens: selected,
+            saved_tokens: whole - selected,
+        };
+        let c = SourceCoverage {
+            files: vec![f(100, 30), f(40, 10)],
+            ..Default::default()
+        };
+        assert_eq!(c.whole_tokens(), 140);
+        assert_eq!(c.selected_tokens(), 40);
+        assert_eq!(c.saved_tokens(), 100);
+        let none = SourceCoverage::default();
+        assert_eq!((none.whole_tokens(), none.selected_tokens()), (0, 0));
+    }
 
     #[test]
     fn the_tiers_are_the_order_the_budget_spends_in() {

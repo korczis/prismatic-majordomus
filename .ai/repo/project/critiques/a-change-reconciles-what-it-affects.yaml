@@ -1,0 +1,145 @@
+intent: a-change-reconciles-what-it-affects
+reviewed_at: 2026-10-19
+reviewed_by: "claude-code subagent (read-only, fresh context, same model family as the author) dispatched by session 82f2734c over the gap-only plan drafted from campaigns/prismatic-way-cognitive-fabric-prompt-pack and its six reuse matrices; resolved by a second fresh subagent acting as the plan author. Read only: nothing was run. Disposition: Revised. All 8 blocking findings were resolved by changing the plan, and no blocking finding is left open. Of the 8 non-blocking findings, 7 were planned and 1 (F15) was planned with its stale count removed rather than re-measured. I re-checked these in code (read-only): Visibility and Availability (capability/model.rs:1160-1240); admits_remote and the remote refusal (model.rs:708-710, http/router.rs:1028, mcp/protocol.rs:131,297); the pointer rule (entity.rs:181-185); no-new-nouns (rule text); I2789 landed (9bcbc988baf is an ancestor of HEAD); the task.started fields (lib/start.sh:158-160); mj_lock_take (lib/common.sh:1406); the heartbeat (http/events.rs:70); the perf counters (perf.rs:40-60); the ledger being local (lib/common.sh:1657); and the provenance gap (I3168 plans campaign references, and the issue schema has no provenance field yet). git log --all found no ADR 0217-0229 on any ref. The board could not be read (connection refused on 8912 and 54441). Input gap that remains: the 01, 06 and 07 wave matrices were not supplied, so the ACCEPTANCE rows on coverage, performance, release and stop conditions are left to their own plan round."
+findings:
+  - id: f1
+    class: missed_requirement
+    subject: "slice end to end"
+    finding: "The slice changed no validated state, joined neither execution nor evidence, linked prompt to task only by time adjacency, ended on /ui and showed new prompts only on the 60 s poll."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3411
+      because: "I3411 records the prompt identity on task.started, through the task lifecycle that owns that state (lib/start.sh:158). That is the validated state change and the causal parent, with no new store. I3409 joins on that recorded key and labels a fallback as inferred. It adds the task.finished outcome, the verify command and the served criterion's evidence state. I3430 renders the knowledge per criterion on the Cockpit intent page as well as /ui/idd. I3431, broadened to the ledger and capture stamps on the existing 20 s heartbeat (events.rs:70), pushes new prompts and task starts, and I3409 and I3430 depend on it. Criteria the-slice-is-one-identity and a-task-names-the-prompt-it-followed were rewritten or added."
+  - id: f2
+    class: regression_risk
+    subject: "intents.matched privacy over HTTP and MCP"
+    finding: "Nothing restricted the private prompt reader to the local machine, while servers bind every interface and logs and static JSON are in scope."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3434
+      because: "Verified: admits_remote returns true for every read (model.rs:708-710), and the router (router.rs:1028) and MCP (protocol.rs:131,297) already refuse what it rejects. I3434 adds one checkout-private field to ExecutionPolicy, so the existing refusal applies, with a negative test in tests/remote_callers.rs and a refusal log line that carries no input value. I3408 declares the field and depends on I3434. I3433 and I3435 withhold any snapshot page that reads such a capability. New criterion a-private-read-stays-on-this-machine; invariant extended to log lines."
+  - id: f3
+    class: insufficient_work
+    subject: "I3406 idempotency"
+    finding: "Idempotent per request and only inside a window: no lock, a contradiction about different text, a permanent doctor finding, and no latency measurement."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3406
+      because: "I3406 now takes the existing bounded lock (lib/common.sh:1406) named by provider plus prompt id around the check-then-write, and adds a concurrent fixture with 10 writers. A known key with different text is a counted key collision, and the criterion was rewritten so it no longer contradicts this. capture status counts repeats over the whole archive off the hook path, including deliveries three days late, while the hook keeps a bounded two-day window. The doctor finding was dropped. The hook time over the largest day is measured and reported. I3406 no longer depends on I3304, so it is truly wave 0, and the milestone risk says its scope is re-recorded if I3304 moves the write path first."
+  - id: f4
+    class: regression_risk
+    subject: "I3427 verified class"
+    finding: "Computing verified inside entity.show contradicts the pointer rule at entity.rs:181-185, has no mapping from object to test, and adds a fifth vocabulary and a third freshness."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3427
+      because: "I3427 reads the class from record fields only and never answers verified; proof stays the ProofRef pointer, and verified is shown only from that proof capability's answer. The criterion an-entity-says-how-it-is-known was rewritten. The single vocabulary and its mapping onto the older four, none renamed, are now decision (4) of the ADR rather than an issue's choice. I3428 reuses repository.info's observed envelope (case 545) instead of a new freshness type, and names the existing two in non-scope."
+  - id: f5
+    class: regression_risk
+    subject: "I3423 routing tier"
+    finding: "A tier vocabulary violates the blocking rule project.no-new-nouns."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3423
+      because: "Verified against the rule text. I3423 is now a mapping in docs/REASONING.md of the pack's levels onto the existing PlanOutcome values and modes, with a unit test that fails when a variant lacks a row. There is no field, setting or noun, and a tier field is listed in non-scope. The criterion deterministic-work-calls-no-model was rewritten, and the ADR states that adding a tier would need the rule amended."
+  - id: f6
+    class: unnecessary_work
+    subject: "I3430 vs I2789, I3414 vs I3318, I3413 vs I3164"
+    finding: "I3430 duplicated I2789's landed panel; I3414 added a second backlink derivation in shell and Rust; I3413's rejected arm overlapped I3164."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3430
+      because: "Verified: I2789's commits 9bcbc988baf and fab8869e260 are on HEAD. I3430 now extends that standing panel in ui/idd.rs with knowledge per criterion only, and its current_state was corrected. The reverse-reference derivation lives once, in I3412 (entity.affected: records whose declared references name a path or an issue). I3414 and I3430 read it, the shell reader is unchanged, and case 981's parity leaves related out. I3413 drops the rejected arm, which I3164 owns, and depends on I3164."
+  - id: f7
+    class: unnecessary_work
+    subject: "ADR Prismatic Way and its number"
+    finding: "The ADR mostly restates existing rules, its consequences are advisory, and 0217 is claimed on no ref and on no board."
+    blocking: true
+    resolution:
+      state: rejected
+      because: "Resolved in the draft, so nothing is left to plan: adr-0217 was taken on the board at 2026-10-19T00:46Z (claim proof-program-adr) after adr next surveyed every ref, and the ADR was rewritten around the four decisions that no existing record owns: the hook boundary and its check, derived-on-read reconciliation with join provenance, the private-read gate on top of ADR 0126, and one class vocabulary with verified reserved for proof. Its context maps each Prismatic Way principle onto the rule that already owns it, and it states that the principles are not new rules. Each consequence names the check that enforces it (I3424, I3434, I3433, I3435, I3429) or names itself as review. The number is recorded as unallocated: git log --all shows 0217 is free, and the number is to be announced on the board before allocation."
+  - id: f8
+    class: missed_requirement
+    subject: "campaign provenance"
+    finding: "Every record had empty sources, which bypasses records-cite-campaigns (I3168), an-intent-shows-its-sources (I3275) and the I3273 intake path. The pack is only staged."
+    blocking: true
+    resolution:
+      state: rejected
+      because: "The work is carried by I3168 under another intent, so nothing is planned here. Every intent, milestone, issue, ADR and knowledge object now carries campaign references in sources, in I3168's planned grammar, pointing to the pack file it came from. The plan engines check them once I3168 lands: the issue schema has no provenance field today, so I3168, I3280 and I3281 carry that check, and this plan does not duplicate it. The pack is staged on this same branch and is committed with these records, so the file and campaign references resolve in the commit that adds them. A milestone risk records that I3273, when it lands, must classify these segments as existing."
+  - id: f9
+    class: unproven_assumption
+    subject: "I3424 hooks check"
+    finding: "A name grep over lib/ is not transitive, and it would refuse consultations a person invokes."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3424
+      because: "I3424 now derives the hook closure from share/providers.yaml, the shims and the lib/ units each subcommand sources. It refuses only inside that closure (a fixture outside it yields no finding), and it lists Rust capabilities reached from a hook as outside the closure instead of claiming they are model-free by construction."
+  - id: f10
+    class: regression_risk
+    subject: "I3413 on the session-end hook path"
+    finding: "It scanned every record in session close, without a bound or a measurement, and cannot see other checkouts' outboxes."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3413
+      because: "The comparison is now a directory listing of file names (the digest is part of the id), with no record read. Session close's added time is measured and reported. The limit on another checkout's outbox is stated in desired_state and in the milestone risks."
+  - id: f11
+    class: unproven_assumption
+    subject: "unfalsifiable criteria"
+    finding: "Bounds were undeclared, no work counter was named, the heartbeat had no interval, 'source' was undefined, the budget had nothing to read, and the I3432 duration had no threshold."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3407
+      because: "I3407 declares depth (default 2) and count (default 500) as inputs and asserts that the perf counters repository_scans and index_builds do not move (perf.rs:40-60). I3431 names the 20 s heartbeat (events.rs:70). I3419 and its criterion define a source as the adapter plus the recorded model, with fallbacks. The budget criterion now starts 'once I3295 declares'. The I3432 duration moved to evidence_required as a reported figure."
+  - id: f12
+    class: insufficient_work
+    subject: "risk about feature/a-local-runtime-is-observed"
+    finding: "The branch touches no file under src/reasoning or scripts/lib/advisors; the overlap is models.route and scripts/lib/inference."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3423
+      because: "The reasoning milestone risk was rewritten to name models/mod.rs, models/observed.rs, builtin/models.rs and scripts/lib/inference. I3423's mapping names models.route as it stands when I3423 lands, and I3424's transport pattern includes scripts/lib/inference."
+  - id: f13
+    class: regression_risk
+    subject: "I3431 vs feature/the-blackboard-is-pushed"
+    finding: "I3431 would duplicate crate::change::Generation from that unmerged branch."
+    blocking: false
+    resolution:
+      state: rejected
+      because: "The work is carried by I3431 under another intent, so nothing is planned here. I3431 now wakes followers through crate::change::Generation once that branch lands, and adds no wake mechanism of its own. No issue file for that work exists on any ref (git log --all on I2981.yaml is empty), so the dependency is named on the branch in objective and current_state rather than as an issue id."
+  - id: f14
+    class: insufficient_work
+    subject: "issue size"
+    finding: "I3407, I3414 and I3433 were too large for one pull request, and I3433 omitted the Cockpit files."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3407
+      because: "I3407 is split. I3407 covers scope, serves and incoming edges; I3412 covers records naming a path and revision ranges. I3414 lost its shell derivation, so its change is in the Rust reader, the UI, the skill and the docs only. I3433 is the UI subject, with ui/source.rs and ui/view.rs, which go through readings. The new I3435 is the Cockpit subject, with cockpit/pages.rs."
+  - id: f15
+    class: unproven_assumption
+    subject: "knowledge epistemics and counts in prose"
+    finding: "Figures that were not re-measured were labelled observed, counts were embedded in prose against project.no-counts-in-prose, and a sha was pinned."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3406
+      because: "The knowledge record now reads epistemics inferred. Every audit count was removed from milestone, issue and knowledge prose and replaced by the command that recounts it. The sha was removed from the milestone current_state and from the knowledge body."
+  - id: f16
+    class: missed_requirement
+    subject: "ACCEPTANCE rows without an issue"
+    finding: "No issue covered the causal cycle row, the causal parent, or logs (only Pages was covered)."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3411
+      because: "I3411 records the causal parent (the prompt on task.started). I3431 asserts that a woken reader writes nothing, so no frame causes another; the cycle row of ACCEPTANCE.md is listed in its why. I3434 asserts that the refusal log carries no input value, and the intent invariant now covers log lines. The rows on coverage, performance, release and stop conditions belong to waves 06 and 07, which this plan excludes in its non-goals."

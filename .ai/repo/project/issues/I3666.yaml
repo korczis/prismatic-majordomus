@@ -1,0 +1,30 @@
+id: I3666
+milestone: every-model-call-is-paid-from-a-declared-source
+title: "Spend against a funding source is observed from a named vendor seam or recorded absent, and no balance is derived from a price"
+slug: funding-spend-is-observed-or-absent
+priority: p3
+profile: implementation
+objective: "Give each held source a spend figure that is observed only when a vendor seam named in share/models.yaml with dated evidence reports it; otherwise record it absent with the reason (for an individual account: the vendor's cost report is not available to it), and refuse in economics check any remaining-credit or spent-credit figure computed from tokens and a price."
+why: "The owner will ask how much of the monthly grant is left. Majordomus holds no price list (share/models.yaml), and I3292's dated vendor claims say the cost report is unavailable to individual accounts, so the honest answer today is absent with that reason; a derived balance would be an estimate shown as a fact, which docs/ECONOMICS.md and ADR 0213 forbid."
+current_state: "No spend per source exists; economics check refuses typed quantities in prose."
+desired_state: "Spend per source reads observed with its seam, or absent with its reason; a derived balance is refused."
+scope:
+  - "apps/majordomus-cli/src/economics"
+  - "share/models.yaml"
+  - "docs/ECONOMICS.md"
+depends_on:
+  - "I3660"
+  - "I3292"
+cancelled: true
+completion: "Cancelled 2026-10-21 on feature/intent-funding-sources by the plan's critique (finding spend-seam-is-speculative-and-misplaced): no vendor seam reports spend to an individual account (I3292's dated vendor claims), so the seam scaffolding would have no real counterpart, ADR 0213 declares seams in share/providers.yaml rather than the model catalogue, and refusing a derived balance on generated and UI surfaces is I3297's work. Reopen when a seam is evidenced."
+acceptance_criteria:
+  - "With no seam declared, every held source's spend reads absent with the reason, never zero"
+  - "A surface showing a remaining-credit figure derived from tokens is refused by economics check (test)"
+  - "A seam, once declared with evidence, yields observed spend from a recorded fixture"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "majordomus economics check"
+evidence_required:
+  - "test_funding_spend_without_a_seam_is_absent"
+created_at: 2026-10-20
+updated_at: 2026-10-21

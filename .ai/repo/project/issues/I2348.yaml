@@ -1,0 +1,38 @@
+id: I2348
+milestone: ci-critical-path
+title: "A gate's result is reused only for the exact inputs it judged, and a skipped gate carries the proof that nothing it reads changed"
+slug: a-gate-result-is-bound-to-its-inputs
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Join the path-class gates and their implications with the affected closure, a cache key, a proof for each skipped gate, integrity of a remote against a local cache, concurrency and precise invalidation, so that a stale verification is never reused."
+why: "The plan already skips gates a change cannot affect, by pattern. It keeps no record that would let a later reader, or a merge commit, check that the skip was right, and every refresh of a branch runs the whole selected suite again for inputs it judged an hour before. Source: autopilot prompts/05-performance.md Issue 3 'Reusable CI selection'. Revived on 2026-10-18 from the delivery-packs rescue sweep into ci-critical-path, because its milestone derive-does-only-what-a-change-requires never landed; its dependency on I2324 was dropped, because no record of I2324 exists on master."
+current_state: "scripts/ci-plan selects gates from path classes in .ai/repo/ci/gates.yaml, escalates an unmatched path to the full plan, and the verdict accepts a skipped gate the plan left out (scripts/ci/verdict). Caches for the toolchain and the built executable are keyed in the workflow (docs/CI.md). No gate result is keyed by its inputs."
+desired_state: "A gate declares what it reads, as the derive's nodes do. A result is recorded with the digest of those inputs and the gate's own version, as evidence. The plan may substitute a recorded pass only when the digest matches exactly, and it records the substitution with the run it reuses. A skipped gate's row in the verdict names the unchanged digest. The required status and the branch rules are obeyed as before."
+scope:
+  - "scripts/ci-plan"
+  - "scripts/ci/run-plan"
+  - "scripts/ci/verdict"
+  - ".ai/repo/ci/gates.yaml"
+  - ".github/workflows/validate.yml"
+  - "scripts/ci/evidence-collect"
+  - "docs/CI.md"
+non_scope:
+  - "Skipping a gate the branch rules require to report."
+  - "Reusing a result across a changed gate script."
+depends_on:
+  - I2350
+acceptance_criteria:
+  - "A gate whose declared inputs are unchanged is satisfied by its recorded pass, and the verdict shows which run it reused"
+  - "Changing one declared input, or the gate's own script, makes the gate run"
+  - "A recorded failure is never reused as a pass, and a result older than its inputs is refused"
+  - "A gate with no declaration of what it reads is never reused"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci-plan --check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 26_ci_wiring 94_ci_plan <the cases this issue adds>"
+evidence_required:
+  - "gate_result_reuse_case"
+  - "stale_result_refused_case"
+created_at: 2026-10-10
+updated_at: 2026-10-18

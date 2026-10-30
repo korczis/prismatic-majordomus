@@ -1,0 +1,33 @@
+id: I3821
+milestone: fly-deployment
+title: "The tree a provider receives is assembled from the deployment object, and master publishes it after green ci"
+slug: master-publishes-its-provider-deployment
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "A typed capability deploy.slug assembles, outside the checkout, the tree a provider receives: the deployment object's build.inputs read at one commit, the generated provider files of that commit made executable, the inline buildpack line, and the executable built at that same commit; a workflow builds the musl executable at master's commit after master's ci succeeds, assembles the slug and pushes it to the provider with a workflow secret, and nothing else ever pushes to the provider. ADR 0219 decisions 3 and 5."
+why: "The live Gigalixir application was published from a slug assembled by hand, which is the parallel universe the owner refused on 2026-10-21, and it answers the release binary's commit rather than the tree it serves."
+current_state: "Measured on 27d017ea16a: deploy/gigalixir/{Procfile,bin/*} are generated from the object; no capability assembles a slug and no workflow publishes to the provider; the application runs a hand-assembled slug of 573df967bb5 with the v1.0.0-alpha.1 binary."
+desired_state: "majordomus deploy slug --deployment majordomus --commit <sha> --executable <path> --out <dir> writes exactly build.inputs, the provider files (mode 755 for bin/*), .buildpacks and the executable, refuses an out directory inside the checkout, and records the commit; .github/workflows/provider.yml runs on a successful master ci, builds the executable with MAJORDOMUS_BUILD_COMMIT set, assembles the slug and pushes it with GIGALIXIR_EMAIL/GIGALIXIR_API_KEY secrets; case 3821 assembles a fixture slug and proves its file list, modes and recorded commit."
+scope:
+  - "apps/majordomus-cli/src/deploy"
+  - "apps/majordomus-cli/src/capability/builtin/deploy.rs"
+  - ".github/workflows/provider.yml"
+  - "test/cases/3821_a_providers_tree_is_assembled_from_the_object.sh"
+  - "docs"
+  - ".ai/repo/project/issues/I3821.yaml"
+acceptance_criteria:
+  - "The slug holds the object's build.inputs at the named commit, the provider files with bin/* executable, the buildpack line and the executable, and nothing else"
+  - "An out directory inside the checkout is refused"
+  - "The workflow runs only after master's ci succeeded, builds at master's commit and pushes with secrets that appear in no file or log"
+  - "The deployed /api/v1/live answers master's commit"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3821_a_providers_tree_is_assembled_from_the_object"
+evidence_required:
+  - "slug_assembled_from_object"
+  - "master_publishes_after_green_ci"
+depends_on:
+  - "I3820"
+serves: []
+created_at: 2026-10-21
+updated_at: 2026-10-21

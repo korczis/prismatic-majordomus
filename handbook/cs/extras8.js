@@ -142,7 +142,7 @@
       b.addEventListener('click', function () { who = i; render(); });
     });
     var w = WHO[who];
-    el('h4', null, det, w.t);
+    el('h3', { 'class': 'h4' }, det, w.t);
     el('p', null, det, w.s);
     el('p', { 'class': 'arch-gh' }, det).appendChild(el('b', null, null, 'Co z toho máš'));
     var ul = el('ul', { 'class': 'sn-ul' }, det);

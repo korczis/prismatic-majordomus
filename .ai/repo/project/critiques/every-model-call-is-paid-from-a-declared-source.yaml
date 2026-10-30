@@ -1,0 +1,154 @@
+intent: every-model-call-is-paid-from-a-declared-source
+reviewed_at: e0b08828103
+reviewed_by: "claude-code subagent (read-only, fresh context, Plan type, same model family as the author) dispatched by session a4ef9a42 over the staged intent amendment, I3660-I3667 and the committed milestone on branch feature/intent-funding-sources at e0b08828103; it read the records, share/models.yaml, share/advisors.yaml, apps/majordomus-cli/src/{models,reasoning,economics,execution}, lib/doctor.sh, ADRs 0049/0069/0098/0140/0145/0207/0213, docs/ECONOMICS.md, the project rules and I3288/I3289/I3292/I3295/I3297, and ran only intent validate, plan validate and plan show; it fetched no vendor documentation. Resolved by the authoring session, which read code.claude.com/docs/en/authentication and the clau.de/api-credits redirect on 2026-10-21. Disposition: accept; the plan is cut to I3660, I3663 and I3665, I3661, I3662, I3664, I3666 and I3667 are cancelled with their reasons, and I3292 carries the one billing vocabulary."
+findings:
+  - id: credit-grant-facts-have-no-evidence
+    class: unproven_assumption
+    subject: "I3660"
+    finding: "The credit grant's renewal, the keys it covers, the vendor's draw order and the claim link rest on a notice the owner received, not on a vendor reference, and the shortlink clau.de would ship as the claim page."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3660
+      because: "Verified 2026-10-21: clau.de/api-credits answers 302 to claude.ai/settings/billing?action=link_org, so the grant is claimed by linking an API organization, and its key is ANTHROPIC_API_KEY; code.claude.com/docs/en/authentication documents the seat (CLAUDE_CODE_OAUTH_TOKEN, 'authenticates with your Claude subscription') and the API key and their precedence. I3660 now requires the vendor-domain claim page rather than the shortlink, a page, day and quote per source, renewal only where the vendor's own words state it (the notice says 'a month'), and no draw order: the catalogue names both sources that share the key and says nothing local tells them apart."
+  - id: one-credential-cannot-carry-a-source-order
+    class: unproven_assumption
+    subject: "I3662"
+    finding: "The grant and metered billing share ANTHROPIC_API_KEY, so a declared source order would change a prediction and not what is billed."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3660
+      because: "Accepted: I3662 is cancelled and routing by funding source is a non-goal of the intent until vendor evidence of draw order exists; the intent's invariant states that two sources on one credential are both named."
+  - id: metered-fallthrough-presupposes-separate-credentials
+    class: unproven_assumption
+    subject: "I3667"
+    finding: "Falling through to metered needs separate credentials the catalogue does not have, and a cap with spend absent can only read not judgeable."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3660
+      because: "Accepted: I3667 is cancelled; the gate is a non-goal until a per-source credential split or a spend seam is evidenced."
+  - id: subscription-has-no-credential-variable
+    class: unproven_assumption
+    subject: "I3664"
+    finding: "A seat is reached through the client's login, so a presence check would call a signed-in seat unusable, and nudging the owner to export the grant's key would move headless children off the seat."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3660
+      because: "Verified against code.claude.com/docs/en/authentication (2026-10-21): ANTHROPIC_API_KEY outranks CLAUDE_CODE_OAUTH_TOKEN and /login, and in -p mode is always used when present. I3664 is cancelled; I3660 lets a source say a client login reaches it, and the catalogue's note on the metered source records the precedence."
+  - id: route-loses-its-purity
+    class: regression_risk
+    subject: "I3662"
+    finding: "Reading the environment, holdings and policy in models::route breaks ADR 0049 point 4; I3662's why misstated what route reads; new policy keys need schema, allow-list and skeleton in scope."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3660
+      because: "Accepted: I3662 is cancelled and the intent's invariant keeps models::route pure over the catalogue and its inputs; no policy key is added."
+  - id: two-reporters-for-one-billing-fact
+    class: insufficient_work
+    subject: "I3661"
+    finding: "I3292's billing_mode through I3289 already reports how a call was paid; a holdings store in .ai/local and a second vocabulary fork that truth."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3665
+      because: "Accepted: I3661 is cancelled; I3292's billing_mode now takes the catalogue's funding kinds (local, credit_grant, subscription, metered) or unknown and depends on I3660, so there is one reporter (I3289) and one vocabulary; the intent's invariant says so."
+  - id: benchmark-runs-have-no-usage-record
+    class: regression_risk
+    subject: "I3665"
+    finding: "Benchmark runs have no I3288 usage record, and pairing on funding would change calculators I3288 freezes."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3665
+      because: "I3665 now adds an optional funding kind to EconomicsRun (not EconomicsRequest), reading unknown when absent, requires every recorded run file to parse unchanged, and puts the pairing in stats.rs and report.rs out of its scope."
+  - id: advisor-calls-are-the-calls-left-unattributed
+    class: missed_requirement
+    subject: "I3665"
+    finding: "No capability execution starts a model client; the advisor driver, the consumer the grant is meant to pay for, was left without a recorded source."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3665
+      because: "I3665 drops src/execution and covers the economics runner and the advisor consultation record (scripts/lib/advisors/driver.mjs and the reasoning record); the intent's title and statement now say 'a model call Majordomus starts' and name runs and consultations."
+  - id: headless-subscription-rule-contradicts-the-runner
+    class: regression_risk
+    subject: "I3662"
+    finding: "'Never for a headless caller' contradicts the runner, which runs Claude Code headless on the owner's seat."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3660
+      because: "Confirmed by the vendor's documentation (CLAUDE_CODE_OAUTH_TOKEN is for CI and scripts); the criterion goes with I3662's cancellation."
+  - id: anthropic-advisor-is-not-independent-of-a-claude-author
+    class: regression_risk
+    subject: "I3663"
+    finding: "An Anthropic advisor reviewing Claude-authored work is the same model family; src/reasoning need not be in scope; the absence word and the evidence name were wrong."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3663
+      because: "I3663 now claims no independence from a Claude author and requires the advisor's note to say so, drops src/reasoning (data and an adapter only), uses not_configured, and names its evidence by the contract suite's prose title."
+  - id: new-credential-variables-escape-the-ci-guard
+    class: regression_risk
+    subject: "I3660"
+    finding: "reasoning check forbids only vendor.credential_env in CI; the credential-smell test does not cover amounts; a load failure on one bad source would take every advisor down."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3660
+      because: "I3660 now extends the CI scan to every declared credential variable, adds an amount-field test, and reports an unreadable source as a diagnostic while the rest of the catalogue loads."
+  - id: doctor-scope-and-period-are-wrong
+    class: insufficient_work
+    subject: "I3664"
+    finding: "lib/doctrine.sh is not doctor; once-per-period needs persisted state and an account-specific period; the brief has a line budget."
+    blocking: false
+    resolution:
+      state: open
+      because: "Moot with I3664's cancellation; recorded here for whoever reopens it."
+  - id: spend-seam-is-speculative-and-misplaced
+    class: unnecessary_work
+    subject: "I3666"
+    finding: "A seam framework for a seam that does not exist, declared where ADR 0213 does not put seams, refused by a mechanism economics check lacks."
+    blocking: false
+    resolution:
+      state: open
+      because: "Accepted: I3666 is cancelled until a seam is evidenced, to be declared in share/providers.yaml as ADR 0213 decides."
+  - id: no-measured-problem-and-new-nouns
+    class: unnecessary_work
+    subject: "every-model-call-is-paid-from-a-declared-source"
+    finding: "ADR 0207 asks for the measured problem; holding and cap are new nouns; the smallest plan is I3660, I3663 and a source per run or consultation."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3660
+      because: "Accepted: the plan is that smallest plan. The problem it removes is observed, not modelled: share/models.yaml declares no funding and share/advisors.yaml no Anthropic API advisor, so a grant the owner holds pays for nothing Majordomus starts. 'holding' and 'cap' left with I3661 and I3667; funding is a field of the vendor declaration, as credential_env is, and adds no noun to docs/CONCEPTS.md."
+  - id: holdings-are-per-checkout-not-per-owner
+    class: unproven_assumption
+    subject: "I3661"
+    finding: ".ai/local is per checkout, so one owner's holdings would differ per worktree."
+    blocking: false
+    resolution:
+      state: open
+      because: "Moot with I3661's cancellation; the declaration lives with I3289's consented step."
+  - id: milestone-criterion-contradicts-the-amended-intent
+    class: insufficient_work
+    subject: "every-model-call-is-paid-from-a-declared-source"
+    finding: "The milestone still said 'drew on', and used classes docs/ECONOMICS.md does not have."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3665
+      because: "The milestone is rewritten to 'the funding kind the owner declared'; the words inferred and held-but-unusable are gone, and a declared kind is I3289's existing class declared, not a new economics class."
+  - id: criteria-name-no-planned-proof-and-no-live-round
+    class: delivery_verification
+    subject: "every-model-call-is-paid-from-a-declared-source#anthropic-api-reaches-the-advisors"
+    finding: "No criterion named its planned proof, every proof was a fixture, and some validation commands did not run what the criteria promised."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3663
+      because: "Each of the three criteria now names its planned proof, the advisor criterion adds one owner-recorded consultation the vendor console shows drawn on the grant, and I3663's reasoning check runs with MAJORDOMUS_SHARE unset."

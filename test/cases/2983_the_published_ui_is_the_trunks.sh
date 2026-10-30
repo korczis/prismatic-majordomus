@@ -14,9 +14,8 @@
 #                        workflow builds and uploads what that entry says
 #   2. the probe         `scripts/pages verify-ui` passes a snapshot read at the commit, with
 #                        and without --commit; refuses by name a stale built_from, a missing
-#                        surface.json, a listed page that is absent, a record of another run,
-#                        a first screen still waiting for a panel, and a record that does not
-#                        say what ended its reading; states what a cut
+#                        surface.json, a listed page that is absent, a record of another run
+#                        and one that does not say what ended its reading; states what a cut
 #                        short snapshot left out and what --max-pages did not ask; and is 12,
 #                        never a pass, for a site that does not answer
 #   3. the gate          `scripts/ci/pages-check` asks it of the published commit: ok for the
@@ -138,18 +137,6 @@ expect_exit 10 probe --commit "$A"
 expect_grep 'snapshot\.json is absent or is not a snapshot.s record \(status 404\)'
 echo "    a record of another run, a banner of another commit, no record at all: refused"
 
-# a screen published with a panel still to be fetched: no process will fetch it
-site "$A" "$A"
-sed 's|<body|<body><section data-panel-src="panels/drain/index.html">open the drain</section><i|' "$W$mount/index.html" > "$S/h" && cp "$S/h" "$W$mount/index.html"
-# a record written before the writer put panels into pages: stated, not this publication's failure
-expect_exit 0 probe --commit "$A"
-expect_grep 'its record predates panels written into the page \(no \.panels\)" ok$'
-# a record that says its panels are in the pages, beside a screen that still asks: refused
-jq '.panels = ["/ui/panels/drain"]' "$W$mount/snapshot.json" > "$S/j" && cp "$S/j" "$W$mount/snapshot.json"
-expect_exit 10 probe --commit "$A"
-expect_grep "FAIL $HTTP_BASE$mount/ still carries data-panel-src: the snapshot left a panel as a request no process answers"
-echo "    a first screen that still waits for a panel: refused by name when its record says panels are written in"
-
 # cut short: saying so is a pass that states it, not saying so is a refusal
 site "$A" "$A"
 jq '.left_out = ["/x?id=1", "/x?id=2", "/x?id=3"] | .stopped_by = "budget"' "$W$mount/snapshot.json" > "$S/j" && cp "$S/j" "$W$mount/snapshot.json"
@@ -214,7 +201,7 @@ chmod +x "$S/bin/gh"
 live() {   # <commit the snapshot was read at | none>: the published site, whole but for the UI
   rm -rf "$W"; mkdir -p "$W/releases"
   jq -n --arg c "$PUB" '{schema: 1, commit: $c, dirty: false, release: {version: "0.21.0"}}' > "$W/build.json"
-  printf '<html><body><dl data-trust><div data-trust-key="release" data-release="0.21.0"><dd>0.21.0</dd></div></dl>\n<a href="https://example.invalid/commit/%s">%s</a></body></html>\n' "$PUB" "$PUB" > "$W/index.html"
+  printf '<html><body><dl data-trust><div data-trust-key="release" data-release="0.21.0"><dd>0.21.0</dd></div></dl>\n<footer><a href="https://example.invalid/commit/%s">%s</a></footer></body></html>\n' "$PUB" "$PUB" > "$W/index.html"
   jq -n '{schema: "release/v1", version: "0.21.0", tag: "v0.21.0"}' > "$W/releases/latest.json"
   [ "$1" = none ] || publication_snapshots "$ROOT" "$W" "$1" || { echo "    the stand-in snapshot could not be placed"; exit 1; }
 }

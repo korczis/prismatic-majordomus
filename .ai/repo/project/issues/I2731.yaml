@@ -1,0 +1,42 @@
+id: I2731
+milestone: failure-is-visible
+title: "Every failure class in the published failure table names its test or its stated limitation"
+slug: every-failure-class-names-its-proof
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give the runtime's published failure table a proof column, in which every failure class names the tests that drive it or states the limitation that nothing does, and hold the column with a case that refuses a row with neither and a citation that does not resolve."
+why: "Leaf FV.3 of 2026-10-15 found the milestone's evidence token failure_class_table owned by no issue: docs/MCP.md's 'Failure behaviour' table said what each failure does and nothing about what shows it, docs/DEVELOPMENT_RUNTIME.md had no such table, and no case refused a row with no proof. The runtime baseline audit of 2026-10-09 (master 1fb8d6be44) named classes no test drives: disk full, a read-only journal directory, a frozen worker, a kill between lease creation and its first write. A table of behaviours with no proof column reads as a list of guarantees."
+current_state: "docs/MCP.md 'Failure behaviour' has a proof column over 28 failure classes: 23 cite tests under apps/majordomus-cli/tests/ or cases under test/cases/, and 5 state a limitation (a frozen request handler, a full disk, a read-only mesh journal directory, a kill between lease creation and its first write, a failing lease keep-alive write). The read-only journal row names PRs #1179 and #1196 (I2706, case 3052) as pending; on this tree no test drives it. docs/DEVELOPMENT_RUNTIME.md points at the table. Case 3056 refuses a row with neither a resolvable citation nor a reasoned limitation, a citation of a test function or case file the tree does not hold, a limitation with no reason, and a table without its proof column."
+desired_state: "The published failure table has no row without a test or a stated limitation, and a case refuses one; a limitation row is replaced by a citation when a test for its class lands."
+scope:
+  - "docs/MCP.md"
+  - "docs/DEVELOPMENT_RUNTIME.md"
+  - "test/cases"
+non_scope:
+  - "Writing the missing tests themselves (disk full, a frozen handler, a kill between lease creation and its first write, a failing keep-alive write); each is its own issue when taken"
+  - "Readiness and request deadlines, which I2157 and I2156 own"
+  - "Journal durability, which I2706 delivers in PRs #1179 and #1196"
+depends_on: []
+acceptance_criteria:
+  - "Every row of the 'Failure behaviour' table in docs/MCP.md names a test or case this tree holds, or a limitation with its reason"
+  - "Case 3056 fails on a row with neither, on a cited test function or case file that does not exist, and on a table without its proof column"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 3056_every_failure_class_names_its_proof"
+evidence_required:
+  - "failure_class_table"
+created_at: 2026-10-15
+updated_at: 2026-10-20T16:32:41Z
+started_at: 2026-10-20T16:17:47Z
+started_event: sha256:70dfb913a5af9ec84e043d741698f83a1ec5ad530000f90cc1dc7a1ad7d6482f
+completed_at: 2026-10-20T16:32:41Z
+completed_event: sha256:2459bb781bf9418fefc5753ff97941afe2f802e15786a3cb4cdd10db6a21891d
+evidence:
+  - covers: failure_class_table
+    type: ci
+    command: "validate run 39438896504 at master 9a5a9b77520: suite shards 1-4 (jobs 118683336189 118683338077 118683336157 118683336457) run every case, incl. 3056_every_failure_class_names_its_proof (a53fd3b8052)"
+    result: "success (the run's only red job is pages, which runs no test)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39438896504"
+    commit: a81b1e3537d333f6b7cfac24dd8aa8bce8a1a7ca
+    recorded_at: 2026-10-20T16:23:34Z
