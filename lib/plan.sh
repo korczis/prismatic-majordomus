@@ -397,6 +397,9 @@ mj_plan_body_issue() {
   mj_plan_sec Why "$id" why
   mj_plan_sec 'Current State' "$id" current_state
   mj_plan_sec 'Desired State' "$id" desired_state
+  # what the issue answers to outside the layer, as written: a body without traces is
+  # byte-identical to one rendered before the field existed, so no projection drifts
+  mj_plan_seclist Traces "$id" traces
   mj_plan_seclist Scope "$id" scope '- `' '`'
   mj_plan_seclist 'Out of Scope' "$id" non_scope
   printf '## Dependencies\n\n'
@@ -418,7 +421,7 @@ mj_plan_body_issue() {
 }
 
 mj_plan_body_milestone() {
-  local id="$1" row i
+  local id="$1" row i due
   row="$(mj_pj_row M "$id")"
   printf '# %s — %s\n\n' "$id" "$(mj_pj_m_title "$id")"
   printf '| field | value |\n|---|---|\n'
@@ -427,6 +430,9 @@ mj_plan_body_milestone() {
   printf '| ready / blocked / active / verify | %s / %s / %s / %s |\n' \
     "$(printf '%s' "$row" | cut -f10)" "$(printf '%s' "$row" | cut -f11)" \
     "$(printf '%s' "$row" | cut -f12)" "$(printf '%s' "$row" | cut -f13)"
+  # a declared date is shown, never read: the status above is derived from evidence alone
+  due="$(mj_pj_get "$id" due_on 2>/dev/null || true)"
+  [ -z "$due" ] || printf '| due | %s (declared) |\n' "$due"
   printf '| canonical | `%s/milestones/%s.yaml` |\n\n' "$(mj_rel "$MJ_PROJECT_DIR")" "$id"
   mj_plan_sec Problem "$id" problem
   mj_plan_sec Outcome "$id" outcome
@@ -500,10 +506,15 @@ mj_plan_transition() {
     done)
       [ -n "$bb" ] && mj_die "$MJ_EX_REFUSED" "$id cannot be DONE while $bb is not DONE"
       case "$st" in ACTIVE|VERIFY) ;; *) mj_die "$MJ_EX_REFUSED" "$id is $st; only an ACTIVE or VERIFY issue can move to DONE" ;; esac
+      # one token per line, read whole: a token may hold spaces ("anthropic api adapter:
+      # request normalisation, credential, usage"), and a word-split loop asked for each word
       local need missing=""
-      for need in $(mj_pj_list "$id" evidence_required); do
+      while IFS= read -r need; do
+        [ -n "$need" ] || continue
         mj_plan_has_evidence "$id" "$need" || missing="$missing $need"
-      done
+      done <<EOF
+$(mj_pj_list "$id" evidence_required)
+EOF
       [ -n "$missing" ] && mj_die "$MJ_EX_CONTRACT" "$id has no evidence for:$missing (run: majordomus plan evidence $id --covers <token> ...)"
       mj_plan_stamp "$id" completed_at completed_event plan_done "$now"
       printf 'plan: %s DONE\n' "$id" ;;
@@ -568,7 +579,8 @@ mj_plan_evidence() {
   {
     if grep -qE '^evidence:' "$f"; then cat "$f"
     else cat "$f"; printf 'evidence:\n'; fi
-    printf -- '  - covers: %s\n    type: %s\n' "$covers" "$etype"
+    # quoted as the command and the result are: a token holding ": " is no plain YAML scalar
+    printf -- '  - covers: "%s"\n    type: %s\n' "$(printf '%s' "$covers" | sed 's/"/\\"/g')" "$etype"
     [ -n "$ecmd" ] && printf '    command: "%s"\n' "$(printf '%s' "$ecmd" | sed 's/"/\\"/g')"
     [ -n "$eres" ] && printf '    result: "%s"\n' "$(printf '%s' "$eres" | sed 's/"/\\"/g')"
     [ -n "$eart" ] && printf '    artifact: "%s"\n' "$(printf '%s' "$eart" | sed 's/"/\\"/g')"

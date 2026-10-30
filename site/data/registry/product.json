@@ -3,9 +3,9 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "1.0.0-alpha.9"
+    "version": "1.0.0-alpha.10"
   },
-  "fingerprint": "3f04ab98b97029e2e9a0d341bb92bbc0cff3182ba82df0fbb700e0d186a4384b",
+  "fingerprint": "e19b464672b5f208312b2eac81024ed922f10e375a9ca339d5543a411921c9ad",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -13,11 +13,11 @@
     "features_all": 29,
     "featured": 16,
     "providers": 6,
-    "modules": 60,
-    "modules_covered": 58,
+    "modules": 62,
+    "modules_covered": 59,
     "commands": 30,
     "commands_covered": 30,
-    "kinds": 31,
+    "kinds": 32,
     "kinds_covered": 31
   },
   "surfaces": [
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 83,
+        "capabilities": 85,
         "moments": 17
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 149,
+        "capabilities": 152,
         "moments": 38
       },
       "evidence": {
@@ -4792,6 +4792,15 @@
               "cli": "majordomus worktree migrate"
             },
             {
+              "id": "worktree.reconciliation",
+              "title": "What becomes of every branch and every worktree",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_worktree_reconciliation",
+              "route": "GET /api/v1/worktrees/reconciliation",
+              "cli": "majordomus worktree reconcile"
+            },
+            {
               "id": "worktree.status",
               "title": "Where this is, and whether that is where it belongs",
               "kind": "query",
@@ -5193,11 +5202,11 @@
         "worktrees"
       ],
       "counts": {
-        "capabilities": 18,
-        "mcp_tools": 18,
+        "capabilities": 19,
+        "mcp_tools": 19,
         "mcp_resources": 2,
-        "http_routes": 18,
-        "cli_paths": 12,
+        "http_routes": 19,
+        "cli_paths": 13,
         "commands": 3,
         "objects": 0,
         "rules": 5,
@@ -5309,6 +5318,15 @@
               "tool": "majordomus_worktree_migration_plan",
               "route": "GET /api/v1/worktrees/migration",
               "cli": "majordomus worktree migrate"
+            },
+            {
+              "id": "worktree.reconciliation",
+              "title": "What becomes of every branch and every worktree",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_worktree_reconciliation",
+              "route": "GET /api/v1/worktrees/reconciliation",
+              "cli": "majordomus worktree reconcile"
             },
             {
               "id": "worktree.status",
@@ -5468,11 +5486,11 @@
         "planning"
       ],
       "counts": {
-        "capabilities": 7,
-        "mcp_tools": 7,
+        "capabilities": 8,
+        "mcp_tools": 8,
         "mcp_resources": 2,
-        "http_routes": 7,
-        "cli_paths": 7,
+        "http_routes": 8,
+        "cli_paths": 8,
         "commands": 0,
         "objects": 0,
         "rules": 2,
@@ -7518,7 +7536,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 167
+          "objects": 171
         },
         {
           "name": "knowledge",
@@ -7526,7 +7544,7 @@
         },
         {
           "name": "document",
-          "objects": 353
+          "objects": 354
         }
       ],
       "rule_refs": [
@@ -7589,7 +7607,7 @@
         {
           "id": "adr-0091",
           "title": "Knowledge is derived at the episode boundary, from the ledger and git, and a person promotes it",
-          "status": "proposed",
+          "status": "accepted",
           "path": ".ai/repo/adrs/0091-knowledge-is-derived-at-the-episode-boundary-and-a-person-promotes-it.md"
         }
       ],
@@ -7799,11 +7817,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 609,
+        "mcp_resources": 614,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 606,
+        "objects": 611,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -8038,7 +8056,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 192
+          "objects": 194
         }
       ],
       "rule_refs": [
@@ -8414,11 +8432,11 @@
       "counts": {
         "capabilities": 7,
         "mcp_tools": 5,
-        "mcp_resources": 194,
+        "mcp_resources": 196,
         "http_routes": 7,
         "cli_paths": 4,
         "commands": 5,
-        "objects": 192,
+        "objects": 194,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -12084,6 +12102,29 @@
               "route": "GET /api/v1/design/explain"
             },
             {
+              "id": "design.kit",
+              "title": "Whether the interface is built on the kit",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_design_kit",
+              "cli": "majordomus design kit"
+            },
+            {
+              "id": "design.kit.adopt",
+              "title": "Declare the kit in the repository",
+              "kind": "command",
+              "stability": "experimental",
+              "cli": "majordomus design kit adopt"
+            },
+            {
+              "id": "design.licence",
+              "title": "Whether a public tree holds a licensed kit's files",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_design_licence",
+              "cli": "majordomus design licence"
+            },
+            {
               "id": "design.system",
               "title": "The design system",
               "kind": "query",
@@ -12301,11 +12342,11 @@
         "ui"
       ],
       "counts": {
-        "capabilities": 8,
-        "mcp_tools": 6,
+        "capabilities": 11,
+        "mcp_tools": 8,
         "mcp_resources": 2,
         "http_routes": 8,
-        "cli_paths": 1,
+        "cli_paths": 4,
         "commands": 0,
         "objects": 0,
         "rules": 1,
@@ -13133,7 +13174,8 @@
         "plan",
         "devtask",
         "intents",
-        "intent_realization"
+        "intent_realization",
+        "board"
       ],
       "commands": [
         "plan"
@@ -13468,6 +13510,24 @@
               "cli": "majordomus intent realization"
             }
           ]
+        },
+        {
+          "id": "board",
+          "title": "The delivery board",
+          "description": "The documents the delivery board reads, derived from the plan, the roadmap, the intents, the recorded pull request queue and the release currency, with the lanes share/board.yaml declares once. Every open milestone is in a lane or the snapshot refuses, naming it.",
+          "stability": "experimental",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/board.rs",
+          "capabilities": [
+            {
+              "id": "board.snapshot",
+              "title": "The delivery board's documents",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_board_snapshot",
+              "route": "GET /api/v1/board/snapshot",
+              "cli": "majordomus board snapshot"
+            }
+          ]
         }
       ],
       "command_refs": [
@@ -13481,11 +13541,11 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 113
+          "objects": 114
         },
         {
           "name": "issue",
-          "objects": 1124
+          "objects": 1165
         },
         {
           "name": "intent",
@@ -13693,13 +13753,13 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 26,
-        "mcp_tools": 26,
-        "mcp_resources": 1327,
-        "http_routes": 26,
-        "cli_paths": 13,
+        "capabilities": 27,
+        "mcp_tools": 27,
+        "mcp_resources": 1369,
+        "http_routes": 27,
+        "cli_paths": 14,
         "commands": 1,
-        "objects": 1324,
+        "objects": 1366,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -13714,7 +13774,8 @@
           "rejected": 1
         },
         "modules": {
-          "behaviorally_verified": 5
+          "behaviorally_verified": 5,
+          "experimental": 1
         }
       },
       "domain_ref": {
@@ -13935,7 +13996,7 @@
       "kind_refs": [
         {
           "name": "context",
-          "objects": 39
+          "objects": 40
         },
         {
           "name": "scope",
@@ -14228,11 +14289,11 @@
       "counts": {
         "capabilities": 9,
         "mcp_tools": 9,
-        "mcp_resources": 45,
+        "mcp_resources": 46,
         "http_routes": 9,
         "cli_paths": 6,
         "commands": 1,
-        "objects": 41,
+        "objects": 42,
         "rules": 6,
         "enforced_rules": 5,
         "docs": 2,
@@ -16865,6 +16926,13 @@
         "features": []
       },
       {
+        "id": "board",
+        "title": "The delivery board",
+        "features": [
+          "planning"
+        ]
+      },
+      {
         "id": "brief",
         "title": "The session brief",
         "features": [
@@ -17017,6 +17085,11 @@
           "interfaces",
           "ui"
         ]
+      },
+      {
+        "id": "fleet",
+        "title": "Fleet",
+        "features": []
       },
       {
         "id": "gates",
@@ -17527,7 +17600,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (167)",
+        "title": "adr (171)",
         "features": [
           "knowledge"
         ]
@@ -17569,7 +17642,7 @@
       },
       {
         "id": "context",
-        "title": "context (39)",
+        "title": "context (40)",
         "features": [
           "context"
         ]
@@ -17617,6 +17690,11 @@
         ]
       },
       {
+        "id": "fleet-declaration",
+        "title": "fleet-declaration (1)",
+        "features": []
+      },
+      {
         "id": "gap",
         "title": "gap (5)",
         "features": [
@@ -17632,7 +17710,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (1124)",
+        "title": "issue (1165)",
         "features": [
           "planning"
         ]
@@ -17653,7 +17731,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (113)",
+        "title": "milestone (114)",
         "features": [
           "planning"
         ]
@@ -17695,7 +17773,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (192)",
+        "title": "rule (194)",
         "features": [
           "doctrine"
         ]
@@ -18692,50 +18770,51 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3686,
-    "builtin": 220,
-    "declarative": 3466,
-    "modules": 60,
-    "mcp_tools": 206,
-    "mcp_resources": 3523,
-    "http_routes": 212,
-    "cli_commands": 220,
+    "capabilities": 3768,
+    "builtin": 228,
+    "declarative": 3540,
+    "modules": 62,
+    "mcp_tools": 210,
+    "mcp_resources": 3597,
+    "http_routes": 214,
+    "cli_commands": 233,
     "shell_commands": 30,
-    "kinds": 34,
-    "objects": 3466,
+    "kinds": 35,
+    "objects": 3540,
     "by_kind": {
-      "adr": 167,
+      "adr": 171,
       "application": 5,
       "area": 9,
       "audience": 8,
       "claim": 250,
       "command": 31,
-      "context": 39,
+      "context": 40,
       "critique": 38,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 353,
+      "document": 354,
       "domain": 6,
       "feature": 29,
+      "fleet-declaration": 1,
       "gap": 5,
-      "implementation": 52,
+      "implementation": 53,
       "intent": 44,
-      "issue": 1124,
+      "issue": 1165,
       "knowledge": 86,
       "mesh-declaration": 1,
-      "milestone": 113,
+      "milestone": 114,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 5,
       "release-record": 38,
-      "rule": 192,
+      "rule": 194,
       "scope": 1,
       "session": 93,
       "skill": 8,
       "taxonomy": 10,
-      "test": 663,
+      "test": 685,
       "use-case": 49,
       "workspace": 1
     },

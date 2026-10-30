@@ -1,9 +1,9 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/tokens.yaml, the one declaration of the design; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.9 -->
+     Generator: majordomus-cli 1.0.0-alpha.10 -->
 # The design system
 
-One declaration, `share/design/tokens.yaml`, projected into every surface. Fingerprint `944a896b2646060d5dc100adcc36737fd5d8086e2f53d43d6858ac6fdad39540` (`--mj-design: "944a896b2646"` on every page that carries it). Explain any token with `majordomus_design_explain`, `GET /api/v1/design/explain?token=<name>` or the Cockpit's Design page.
+One declaration, `share/design/tokens.yaml`, projected into every surface. Fingerprint `b7914ad4140c57e51947f223bdd96d052020daa080f888a12fbf7e46f2e055a9` (`--mj-design: "b7914ad4140c"` on every page that carries it). Explain any token with `majordomus_design_explain`, `GET /api/v1/design/explain?token=<name>` or the Cockpit's Design page.
 
 ## Type
 
@@ -93,7 +93,7 @@ The class `dark` on the root element means dark; the choice is stored under `col
 
 ## Audit widths
 
-320px, 390px, 1024px, 1280px, 1600px
+320px, 375px, 390px, 768px, 1024px, 1280px, 1600px
 
 ## Palette
 

@@ -1279,6 +1279,8 @@ pub struct SessionBeatTally {
 struct BuildCachePublisher {
     file: Option<PathBuf>,
     published: Option<super::journal::BuildCacheOffer>,
+    /// The reason of the withdrawal this runtime wrote last, while it offers nothing.
+    withdrawn: Option<String>,
 }
 
 /// The most refusals the table lists: a stream of hellos from invented keys must not grow
@@ -2005,6 +2007,7 @@ impl Cooperation {
             .spawn(move || {
                 tracing::info!(runtime_id = %me.own_key, repository_id = %me.repository.id, "mesh cooperation started");
                 let mut tick: u64 = 0;
+                let mut refused_seen: u64 = 0;
                 while !me.stop.load(Ordering::SeqCst) {
                     // probed before the beat: a beat is then also the word that the store
                     // this runtime offers answered (I2671)
@@ -2017,7 +2020,11 @@ impl Cooperation {
                     if tick % 12 == 11 {
                         me.close_ended_clients();
                     }
-                    if tick % 60 == 59 {
+                    // on schedule, and at once when a peer's events were refused for capacity
+                    // since the last beat: a full quota refuses a release too (I2825)
+                    let refused = me.journal.capacity_refusals();
+                    if tick % 60 == 59 || refused > refused_seen {
+                        refused_seen = refused;
                         me.journal
                             .compact(me.expiry(), PEER_RETENTION, HANDOVER_RETENTION, false);
                     }
@@ -3660,7 +3667,8 @@ impl Cooperation {
             self.expiry(),
             super::build_cache::PROBE_BUDGET,
         );
-        let body = offer::next_event(publisher.published.as_ref(), now)?;
+        let body = offer::next_event(publisher.published.as_ref(), now.clone())
+            .or_else(|| offer::refined_withdrawal(publisher.withdrawn.as_deref(), &now))?;
         self.write_build_cache_record(&mut publisher, body)
     }
 
@@ -3671,13 +3679,15 @@ impl Cooperation {
         publisher: &mut BuildCachePublisher,
         body: EventBody,
     ) -> Option<MeshEvent> {
-        let offered = match &body {
-            EventBody::BuildCacheOffered { offer } => Some(offer.clone()),
-            _ => None,
+        let (offered, withdrawn) = match &body {
+            EventBody::BuildCacheOffered { offer } => (Some(offer.clone()), None),
+            EventBody::BuildCacheWithdrawn { reason } => (None, Some(reason.clone())),
+            _ => (None, None),
         };
         match self.journal.append_own(body) {
             Ok(event) => {
                 publisher.published = offered;
+                publisher.withdrawn = withdrawn;
                 Some(event)
             }
             Err(e) => {
@@ -6965,6 +6975,11 @@ mod tests {
         assert!(
             publisher.published.is_none(),
             "a withdrawal forgets the offer"
+        );
+        assert_eq!(
+            publisher.withdrawn.as_deref(),
+            Some("its own probe says unhealthy"),
+            "and remembers why, so an uncertain reason can be refined"
         );
     }
 }

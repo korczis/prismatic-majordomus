@@ -21,6 +21,7 @@ scope:
   - "site/content/docs/adoption.md"
   - ".ai/repo/project/intents"
   - "share/providers.yaml"
+  - "test/cases/3128_init_says_what_it_found.sh"
 non_scope:
   - "Fixing anything it finds"
   - "A new audit command or noun"
@@ -39,11 +40,12 @@ acceptance_criteria:
   - "The self-check runs init in a temporary clone of this repository with .ai/ removed, and its findings are empty or true; nothing in this checkout is written"
   - "test/fixtures/commands/init.json, the init note in share/commands.yaml and the recorded init runs in the four use cases are updated, and derive-check passes over site/data/generated/catalogue.json and site/content/docs/adoption.md"
   - "A personal init's git-status-unchanged check still holds after the findings run"
-  - "In the same change as its case, the intent's criterion init-says-what-it-found is re-recorded as evidence: test with the concrete case path, the case numbered by `scripts/case-numbers next` and announced on the board at start"
+  - "In the same change as its case, the intent's criterion init-says-what-it-found is re-recorded as evidence: test with the concrete case path, test/cases/3128_init_says_what_it_found.sh, case 3128 announced on the board at start"
+  - "init's account names the AI agents section it appended to README.md (lib/init.sh:372) as a change it made, so its usage line 'installs nothing' (lib/init.sh:42) is not contradicted; case 3128 proves it, for the criteria-and-authority row of milestone a-bounded-task-is-carried-to-accepted-work"
 validation:
   - "bash test/run.sh 3113_the_adoption_footprint_is_inventoried"
   - "majordomus plan validate"
 evidence_required:
   - "case_init_findings"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-30

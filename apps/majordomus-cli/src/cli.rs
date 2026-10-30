@@ -119,6 +119,8 @@ pub enum Command {
     Shell(ShellArgs),
     /// The boundary between the layer's tracked and local halves, checked against the layouts their contracts declare: every path a contract excludes, named with the contract
     Layout(LayoutArgs),
+    /// The repository's user interface against its UI kit: `kit` judges it against a kit profile of the distribution signal by signal (dependency, Tailwind plugin and source, the kit's JavaScript, no other kit, the shell on every root layout) and `kit adopt` declares the profile; `licence` judges whether a public tree holds a licensed kit's files, from kit-evidence/v1 fingerprints
+    Design(DesignArgs),
     /// The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output
     Pack(PackArgs),
     /// The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it
@@ -127,12 +129,16 @@ pub enum Command {
     Brief(BriefArgs),
     /// Who works on what in this repository, on every board and every linked machine: each worker with its client, intent, checkout, branch and claims, the claims that meet, the reviews and handovers that wait, typed relations verified only by an explicit identifier, and whether every source could be read — asked of the server holding this checkout's lease
     Blackboard(BlackboardArgs),
+    /// The delivery board's documents, derived: meta, milestones, intents, the pull request queue and the open issues of each lane share/board.yaml declares, with a digest that is equal for equal state; an open milestone in no lane is refused by name
+    Board(BoardArgs),
     /// Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans
     Skills(SkillsArgs),
     /// What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion, one record by id with every reference it names resolved, and the derivation status of this checkout judged against the policy's freshness thresholds
     Knowledge(KnowledgeArgs),
     /// Continue work on another machine: publish this checkout's newest handover as a signed record in refs/majordomus/continuity, exchange records with a git remote, and plan and resume a handover another device published — with its source compatibility, lineage and trust decided before anything is written
     Continuity(ContinuityArgs),
+    /// The machines that run this repository's mesh, as .ai/repo/fleet/ declares them: what a rollout would do, what every machine runs, and the rollout that installs this release everywhere, restarts each hub's service and verifies that the hubs see each other
+    Fleet(FleetArgs),
 }
 
 #[derive(Debug, Args)]
@@ -271,6 +277,54 @@ pub struct DashboardArgs {
     #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
     /// Output shape
     pub format: OutputFormat,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus board`: the `board` capabilities on the command line (I4294).
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{BoardArgs, BoardCommand, Cli, Command, OutputFormat};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "board", "snapshot", "--by", "s1", "--format", "json"]).unwrap();
+/// let Command::Board(args) = cli.command else { panic!("not the board command") };
+/// let args: BoardArgs = args;
+/// let BoardCommand::Snapshot { by } = args.command;
+/// assert_eq!(by.as_deref(), Some("s1"));
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// ```
+pub struct BoardArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `snapshot`. Required: the group runs nothing of its own.
+    pub command: BoardCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus board`.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{BoardCommand, Cli, Command};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "board", "snapshot"]).unwrap();
+/// let Command::Board(args) = cli.command else { panic!("not the board command") };
+/// assert!(matches!(args.command, BoardCommand::Snapshot { by: None }));
+/// ```
+pub enum BoardCommand {
+    /// Every document of the delivery board by id, each under 250000 bytes, and the digest over them without meta.syncedAt and meta.syncedBy; refused, naming it, when an open milestone is in no lane
+    Snapshot {
+        /// Who takes the snapshot, as meta.syncedBy names it (default: board.snapshot)
+        #[arg(long)]
+        by: Option<String>,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -520,6 +574,178 @@ pub struct LayoutArgs {
 pub enum LayoutCommand {
     /// Refuse every path a declared layout excludes, naming the contract; exit 10 on a finding, 12 when the halves cannot be read
     Check,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus design`. The output shape is global, so it reads where a person writes it.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, DesignArgs, DesignCommand, OutputFormat};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "design", "kit", "--check", "--format", "json"]).unwrap();
+/// let Command::Design(args) = cli.command else { panic!("not the design command") };
+/// let args: DesignArgs = args;
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// let DesignCommand::Kit(kit) = args.command else { panic!("not design kit") };
+/// assert!(kit.check && kit.action.is_none());
+/// // the group runs nothing of its own
+/// assert!(Cli::try_parse_from(["majordomus", "design"]).is_err());
+/// ```
+pub struct DesignArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read. `--repo` may name a repository Majordomus does
+    /// not supervise: `design kit` judges any tree.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `kit` or `licence`. Required: the group runs nothing of its own.
+    pub command: DesignCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus design`: `kit` judges the repository's user interface
+/// against the kit profile its policy names, and `kit adopt` declares a profile in it;
+/// `licence` judges whether a public tree holds a licensed kit's files.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, DesignCommand, KitAction, KitProfileArg};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "design", "kit", "adopt", "flowbite-pro", "--dry-run"]).unwrap();
+/// let Command::Design(args) = cli.command else { panic!("not the design command") };
+/// let DesignCommand::Kit(kit) = args.command else { panic!("not design kit") };
+/// assert!(matches!(kit.action, Some(KitAction::Adopt { profile: KitProfileArg::FlowbitePro, dry_run: true })));
+/// assert_eq!(KitProfileArg::FlowbitePro.name(), "flowbite-pro");
+/// assert!(Cli::try_parse_from(["majordomus", "design", "kit", "adopt", "bootstrap"]).is_err());
+///
+/// let cli = Cli::try_parse_from(["majordomus", "design", "licence", "--evidence", "ev.tsv", "--json"]).unwrap();
+/// let Command::Design(args) = cli.command else { panic!("not the design command") };
+/// let DesignCommand::Licence(licence) = args.command else { panic!("not design licence") };
+/// assert_eq!(licence.evidence.as_deref(), Some(std::path::Path::new("ev.tsv")));
+/// assert!(licence.json);
+/// ```
+pub enum DesignCommand {
+    /// Whether the interface is built on the kit: every finding with its signal, path, evidence and remedy; exit 0 when clean or when there is no interface, 10 on a finding under --check, 2 for a policy that cannot be read
+    Kit(KitArgs),
+    /// Whether a public tree holds a licensed kit's files: active, inactive, not_judged or refused, each match with its file, licensed source and kind; exit 0 for active and inactive, 10 when refused, 12 when not judged (no evidence here, or a ui: block that cannot be used), 2 for evidence that cannot be read, 13 when the tree cannot be listed
+    Licence(LicenceArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus design kit`: the judgement, or with `adopt` the declaration.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, DesignCommand, KitArgs};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "design", "kit"]).unwrap();
+/// let Command::Design(args) = cli.command else { panic!("not the design command") };
+/// let DesignCommand::Kit(kit) = args.command else { panic!("not design kit") };
+/// let kit: KitArgs = kit;
+/// assert!(!kit.check, "without --check the findings are reported and the exit is 0");
+/// assert!(kit.evidence.is_none(), "without --evidence the policy's ui.evidence is read");
+///
+/// let cli = Cli::try_parse_from(["majordomus", "design", "kit", "--check", "--evidence", "ev.tsv"]).unwrap();
+/// let Command::Design(args) = cli.command else { panic!("not the design command") };
+/// let DesignCommand::Kit(kit) = args.command else { panic!("not design kit") };
+/// assert_eq!(kit.evidence.as_deref(), Some(std::path::Path::new("ev.tsv")));
+/// ```
+pub struct KitArgs {
+    #[command(subcommand)]
+    /// `adopt`; none judges the repository.
+    pub action: Option<KitAction>,
+
+    /// Exit 10 when a finding stands, so CI and the pre-push hook refuse it
+    #[arg(long)]
+    pub check: bool,
+
+    /// The kit-evidence/v1 file the design licence judges a licensed marker by (in CI the launcher decodes an exported `MAJORDOMUS_KIT_EVIDENCE_<KIT>` into a private file and passes it here); absent reads the policy's ui.evidence entries under $HOME
+    #[arg(long, value_name = "FILE")]
+    pub evidence: Option<PathBuf>,
+}
+
+#[derive(Debug, Subcommand)]
+/// What `majordomus design kit` does besides judging.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, DesignCommand, KitAction, KitProfileArg};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "design", "kit", "adopt", "flowbite-pro"]).unwrap();
+/// let Command::Design(args) = cli.command else { panic!("not the design command") };
+/// let DesignCommand::Kit(kit) = args.command else { panic!("not design kit") };
+/// assert!(matches!(kit.action, Some(KitAction::Adopt { profile: KitProfileArg::FlowbitePro, dry_run: false })));
+/// ```
+pub enum KitAction {
+    /// Declare a kit profile in this repository: its rule under .ai/repo/rules/project/, the enforcement entries that run `design kit --check` in CI and before every push, and ui.kit in the policy's ui: block; idempotent, and --dry-run writes nothing
+    Adopt {
+        /// The kit profile, from share/design/kits/
+        #[arg(value_enum)]
+        profile: KitProfileArg,
+        /// Report what would be written, and write nothing
+        #[arg(long)]
+        dry_run: bool,
+    },
+}
+
+/// The kit profiles the distribution ships (`share/design/kits/<name>.yaml`).
+///
+/// ```
+/// use clap::ValueEnum;
+/// use majordomus_cli::cli::KitProfileArg;
+/// let names: Vec<String> = KitProfileArg::value_variants()
+///     .iter()
+///     .map(|p| p.to_possible_value().unwrap().get_name().to_string())
+///     .collect();
+/// assert_eq!(names, ["flowbite-pro"]);
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum KitProfileArg {
+    /// The owner's licensed Flowbite Pro on Tailwind 4 and Flowbite 4 (ADR 0230)
+    FlowbitePro,
+}
+
+impl KitProfileArg {
+    /// The profile's id, its file stem.
+    ///
+    /// ```
+    /// use majordomus_cli::cli::KitProfileArg;
+    /// assert_eq!(KitProfileArg::FlowbitePro.name(), "flowbite-pro");
+    /// ```
+    pub fn name(self) -> &'static str {
+        match self {
+            KitProfileArg::FlowbitePro => "flowbite-pro",
+        }
+    }
+}
+
+#[derive(Debug, Args)]
+/// `majordomus design licence`: the never-publish gate.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, DesignCommand, LicenceArgs};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "design", "licence"]).unwrap();
+/// let Command::Design(args) = cli.command else { panic!("not the design command") };
+/// let DesignCommand::Licence(licence) = args.command else { panic!("not design licence") };
+/// let licence: LicenceArgs = licence;
+/// // without --evidence the policy's ui.evidence entries are read
+/// assert!(licence.evidence.is_none() && !licence.json);
+/// ```
+pub struct LicenceArgs {
+    /// A kit-evidence/v1 file; absent reads the policy's ui.evidence entries under $HOME
+    #[arg(long, value_name = "FILE")]
+    pub evidence: Option<PathBuf>,
+
+    /// The same as --format json
+    #[arg(long)]
+    pub json: bool,
 }
 
 #[derive(Debug, Args)]
@@ -3626,6 +3852,60 @@ pub enum ContinuityCommand {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus fleet`. The output shape is global, so it reads where a person writes it.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, FleetCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "fleet", "rollout", "--machine", "lundra"]).unwrap();
+/// let Command::Fleet(args) = cli.command else { panic!("not the fleet command") };
+/// assert!(matches!(args.command, FleetCommand::Rollout { machine, .. } if machine == vec!["lundra".to_string()]));
+/// assert!(Cli::try_parse_from(["majordomus", "fleet"]).is_err(), "a subcommand is required");
+/// ```
+pub struct FleetArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `plan`, `status` or `rollout`.
+    pub command: FleetCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus fleet`: the command line of `fleet.plan`, `fleet.status`
+/// and `fleet.rollout`.
+pub enum FleetCommand {
+    /// What a rollout would do on every machine, reaching nothing
+    Plan {
+        /// A machine to plan for, by its name in the fleet; repeat for more, every machine when absent
+        #[arg(long)]
+        machine: Vec<String>,
+        /// The release to install; the latest stable release the repository records when absent
+        #[arg(long)]
+        version: Option<String>,
+    },
+    /// What every machine runs: platform, installed version, servers, and each hub's checkout and answer
+    Status,
+    /// Install the release on every machine, fast-forward and restart each hub, and verify that the hubs see each other; exits 10 unless every machine converged
+    Rollout {
+        /// A machine to roll out to, by its name in the fleet; repeat for more, every machine when absent
+        #[arg(long)]
+        machine: Vec<String>,
+        /// The release to install; the latest stable release the repository records when absent. Named, it is installed even where a newer one is
+        #[arg(long)]
+        version: Option<String>,
+        /// Leave running the servers a machine runs from an older installed tree, rather than restarting them at the version
+        #[arg(long)]
+        keep_servers: bool,
+    },
+}
+
+#[derive(Debug, Args)]
 /// `majordomus why`. The facets and the output shape are global, so they read the way a
 /// person writes them — `why list --audience solo-builder` — and are declared once.
 pub struct WhyArgs {
@@ -4192,6 +4472,65 @@ pub enum PrsCommand {
     Brief,
     /// Prove the non-mutating cycle moves nothing: snapshot origin's refs, the open pull requests, the audit trail, the lease and the local refs, run refresh, plan, drain --dry-run and cleanup (listing), snapshot again and compare; the refresh's fetched mirrors must equal what origin serves. Exit 10 naming what moved. Takes no flag: there is nothing to turn on
     ProveDryRun,
+    /// The executor as a user service (launchd on macOS, systemd --user on Linux) outside every agent session: restarted after a crash, an outage or a lease another executor held, never after a halt, an unverified merge or the rollout gate (I3913)
+    Service {
+        #[command(subcommand)]
+        /// The subcommand; none is `status`.
+        command: Option<PrsServiceCommand>,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus prs service`. Only `install` and `uninstall` write a unit,
+/// and only when the owner runs them; `run` is what the unit starts.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, PrsCommand, PrsServiceCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "prs", "service", "install", "--interval", "60"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!("not the prs command") };
+/// assert!(matches!(
+///     args.command,
+///     Some(PrsCommand::Service { command: Some(PrsServiceCommand::Install { interval: 60, max: 3, no_refresh: false, .. }) })
+/// ));
+/// let cli = Cli::try_parse_from(["majordomus", "prs", "service"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!() };
+/// assert!(matches!(args.command, Some(PrsCommand::Service { command: None })));
+/// assert!(Cli::try_parse_from(["majordomus", "prs", "service", "run", "--interval", "5"]).is_err());
+/// ```
+pub enum PrsServiceCommand {
+    /// Write this checkout's executor unit and have the service manager run it; a second install of the same unit changes nothing. The owner runs this: an agent session never installs a service
+    Install {
+        /// The executable the unit starts. Default: this one, which must not live under a build directory that a clean removes
+        #[arg(long)]
+        executable: Option<std::path::PathBuf>,
+        /// Seconds between cycles, 30 to 900
+        #[arg(long, default_value_t = 60, value_parser = clap::value_parser!(u64).range(crate::integration::drain::INTERVAL_SECONDS))]
+        interval: u64,
+        /// Merges per cycle at most
+        #[arg(long, default_value_t = 3)]
+        max: usize,
+        /// Never bring master into a pull request; by default a cycle with nothing ready refreshes the first one that needs it
+        #[arg(long)]
+        no_refresh: bool,
+    },
+    /// Whether the unit is installed and running, its process, what the service manager says, and the last decision a run left with what to do next
+    Status,
+    /// Stop the unit and remove it; nothing is left behind
+    Uninstall,
+    /// What the unit starts: one continuous drain under the lease, ending in exit 0 when a person must look first (a halt, an unverified merge, the rollout gate, a stop) and in exit 75 when what ended it is expected to pass (an outage, an unwritable trail, a lease another executor holds), so the service manager restarts only the second
+    Run {
+        /// Seconds between cycles, 30 to 900
+        #[arg(long, default_value_t = 60, value_parser = clap::value_parser!(u64).range(crate::integration::drain::INTERVAL_SECONDS))]
+        interval: u64,
+        /// Merges per cycle at most
+        #[arg(long, default_value_t = 3)]
+        max: usize,
+        /// Bring master into the first pull request that needs it when nothing is ready
+        #[arg(long)]
+        refresh: bool,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -4396,6 +4735,24 @@ pub enum WorktreeCommand {
     },
     /// How far this checkout and the local trunk are from the remote trunk, as of the last fetch, judged against the policy's checkout.trunk_distance: current, lagging, stale, unjudged or unmeasured, with the commands that bring it current. Fetches nothing; exit 10 when stale
     Trunk,
+    /// What becomes of every branch and every worktree: one state each (active, dirty, unreadable, unpublished, orphaned, unstarted, merged, equivalent, conflicted, stale, ready) decided from git and the kernel, never from an age, with the readings that decided it, the one step it permits and the command that takes it. With a selector, that one subject and why. Changes nothing without --apply
+    Reconcile {
+        /// One branch, or the path of one detached worktree: print its state and every reason
+        #[arg(conflicts_with = "apply")]
+        selector: Option<String>,
+
+        /// Take the steps whose proof is complete, each subject measured again first: remove
+        /// the clean worktree of a branch the trunk contains, and delete a branch whose every
+        /// commit a remote holds and whose merge would change nothing. Uncommitted work, a
+        /// worktree a process works in and an unpublished commit are never touched
+        #[arg(long)]
+        apply: bool,
+
+        /// With --apply, also remove scratch checkouts and detached worktrees whose proof is
+        /// complete. Without it they are listed and left to whoever made them
+        #[arg(long, requires = "apply")]
+        include_scratch: bool,
+    },
     /// Every local branch, one per line, for a shell completion that wants the live set
     Branches {
         /// Only branches with no worktree
@@ -5942,6 +6299,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "board snapshot",
+        examples: &[ExampleDoc {
+            id: "board-snapshot-refused",
+            title: "An open milestone in no lane is refused by name",
+            description: "The same answer `GET /api/v1/board/snapshot` and the MCP tool `majordomus_board_snapshot` return: the delivery board's documents by id (`meta`, `milestones`, `intents`, `prs`, and `issues-<lane>` for each lane with open work), each document's size under the 250000-byte bound, and a digest over them that leaves out `meta.syncedAt` and `meta.syncedBy`. The lanes are declared once, in share/board.yaml, and a milestone that is not DONE and is in no lane is refused rather than filed under other. This fixture's milestone is in no lane of the distribution's declaration, so the snapshot is refused, naming it, and the exit code is 10: a verdict not satisfied.",
+            argv: &["board", "snapshot", "--format", "json"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
         command: "brief",
         examples: &[ExampleDoc {
             id: "brief-line",
@@ -6019,6 +6387,46 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "design kit",
+        examples: &[ExampleDoc {
+            id: "design-kit-json",
+            title: "The interface against the kit profile",
+            description: "The same answer the MCP tool `majordomus_design_kit` returns (there is no HTTP route: the input names a file this process opens): the profile judged, whether the repository has a user interface and what showed it under `/ui` and `/ui_evidence`, every finding with its signal, path, evidence and remedy under `/findings`, every exemption the policy declares under `/exemptions`, and `/verdict`. This repository has no user interface, so the rule holds vacuously: the verdict is `no_ui` and the exit is 0, as it is for `--check`. A finding under `--check` exits 10, and a policy that cannot be read exits 2.",
+            argv: &["design", "kit", "--check", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/ui", "/findings", "/exemptions", "/verdict", "/passes"]),
+        }, ExampleDoc {
+            id: "design-kit-evidence",
+            title: "The kit judged with the licence evidence CI decoded",
+            description: "`--evidence` names the kit-evidence/v1 file the design licence judges a licensed marker by, as `design licence --evidence` does; the executable reads that file and never the environment. In CI the launcher does it: `majordomus design kit` or `design licence` run where a `MAJORDOMUS_KIT_EVIDENCE_<KIT>` variable is exported goes through the shell's `mj_fleet_design_judge` (lib/fleet.sh), which decodes the variable of the kit `ui.kit` names into a private temporary file, passes its path and removes it afterwards; a value that is not base64(gzip(kit-evidence/v1)) exits 2 naming the variable, never its value. Without evidence, a public tree that adopts a licensed kit and carries a licensed marker is undecided and exits 10 under `--check`: it fails closed. A file whose first line says `# kit: <id>` for another kit judges nothing. `/licence/state` and `/licence/reason` say what the design licence answered and why; this repository adopts no kit, so the licence is `inactive` and the file is never opened.",
+            argv: &["design", "kit", "--check", "--evidence", "kit-evidence.tsv", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/licence/state", "/licence/reason", "/verdict", "/passes"]),
+        }],
+    },
+    CommandExamples {
+        command: "design kit adopt",
+        examples: &[ExampleDoc {
+            id: "design-kit-adopt-dry-run",
+            title: "What adopting Flowbite Pro would write, before anything is written",
+            description: "Every file adoption touches with what it would do to it: the rule .ai/repo/rules/project/ui-uses-flowbite-pro.v1.md created from the distribution's template, and .ai/repo/policy.yaml updated with `ui.kit: flowbite-pro` (set in its `ui:` block, or the block appended when there is none) and the `design-kit-on-push` enforcement entry (this repository has no CI workflow, so the note says the `design-kit` entry waits for one). Exemptions under `ui.exempt` are the repository's to declare, and adoption writes none. `--dry-run` writes nothing; without it the same plan is written, and a second adoption reports every file unchanged.",
+            argv: &["design", "kit", "adopt", "flowbite-pro", "--dry-run", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/writes", "/notes", "/dry_run"]),
+        }],
+    },
+    CommandExamples {
+        command: "design licence",
+        examples: &[ExampleDoc {
+            id: "design-licence-json",
+            title: "Whether a public tree holds a licensed kit's files",
+            description: "The same answer the MCP tool `majordomus_design_licence` returns: `/verdict` (`active`, `inactive`, `not_judged` or `refused`), `/fails`, the declared `/kit` and `/visibility`, why under `/reason`, and every file that holds a licensed file's bytes under `/matches`. This repository's policy declares no kit (`ui.kit` is empty), so the gate is skipped: the verdict is `inactive` and the exit is 0. A refusal exits 10, a public tree with a declared kit and no evidence exits 12, and an evidence file that cannot be read exits 2 naming the file and the line, never its content.",
+            argv: &["design", "licence", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/verdict", "/fails", "/kit", "/visibility", "/matches"]),
+        }],
+    },
+    CommandExamples {
         command: "rules show",
         examples: &[ExampleDoc {
             id: "rules-show-absent",
@@ -6038,6 +6446,39 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["rules", "proves", "test/cases/125_rule_proof.sh", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/proves", "/sole_proof_of", "/path"]),
+        }],
+    },
+    CommandExamples {
+        command: "fleet plan",
+        examples: &[ExampleDoc {
+            id: "fleet-plan-no-fleet",
+            title: "A repository that declares no fleet says so",
+            description: "The plan reads `.ai/repo/fleet/` and reaches nothing. In a repository with no fleet declaration it exits 12 and names where one goes; with one, it lists every machine, the ssh destinations tried in order, the hub it serves and the steps a rollout would take there (docs/FLEET.md).",
+            argv: &["fleet", "plan"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "fleet status",
+        examples: &[ExampleDoc {
+            id: "fleet-status-no-fleet",
+            title: "No fleet, no machine to ask",
+            description: "Status asks every declared machine over ssh what it runs. With no fleet declared there is nothing to ask, and it exits 12 before opening any connection.",
+            argv: &["fleet", "status"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "fleet rollout",
+        examples: &[ExampleDoc {
+            id: "fleet-rollout-no-fleet",
+            title: "A rollout needs a fleet to roll out to",
+            description: "The rollout changes other machines, so it runs only from a terminal and only over what the repository declares. With no fleet declared it exits 12 and touches nothing; with one, it reports every machine's steps and verdict, and exits 10 unless every machine converged.",
+            argv: &["fleet", "rollout"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
         }],
     },
     CommandExamples {
@@ -6338,6 +6779,61 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "prs service",
+        examples: &[ExampleDoc {
+            id: "prs-service-not-installed",
+            title: "The executor service of a checkout that never installed one",
+            description: "With no subcommand `service` is `status`: whether this checkout's executor unit is installed and running, what the service manager says and the last decision a run left. A checkout that never installed one says so and exits 10, a finding, with `majordomus prs service install` as what to do next.",
+            argv: &["prs", "service"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "prs service status",
+        examples: &[ExampleDoc {
+            id: "prs-service-status-not-installed",
+            title: "Status reads the unit and the last run, and installs nothing",
+            description: "`status` reads the unit file under the user's service directory, asks launchd or systemd whether it runs, and reads the last decision a run left beside the executor's state. Nothing installed is a finding, exit 10, never an error.",
+            argv: &["prs", "service", "status"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "prs service install",
+        examples: &[ExampleDoc {
+            id: "prs-service-install-refuses-a-build-dir",
+            title: "A unit never starts an executable a rebuild removes",
+            description: "`install` writes the unit only for a stable executable. One under a `target/` build directory, which a clean or a rebuild deletes, is refused with exit 10 before anything is written or asked of the service manager.",
+            argv: &["prs", "service", "install", "--executable", "/opt/majordomus/target/debug/majordomus"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "prs service uninstall",
+        examples: &[ExampleDoc {
+            id: "prs-service-uninstall-nothing",
+            title: "Uninstalling what was never installed",
+            description: "`uninstall` stops and removes this checkout's unit. Where there is none it asks the service manager nothing, says so and exits 0, so it is safe to run twice.",
+            argv: &["prs", "service", "uninstall"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["was not installed"]),
+        }],
+    },
+    CommandExamples {
+        command: "prs service run",
+        examples: &[ExampleDoc {
+            id: "prs-service-run-rollout-gate",
+            title: "The rollout gate stops a service run, and the manager leaves it stopped",
+            description: "`run` is what the unit starts. A checkout whose audit trail holds fewer than five verified merges is refused a continuous drain (ADR 0101 §13): the run records why, says Stop, and exits 0, so launchd or systemd does not start it again until a person has looked.",
+            argv: &["prs", "service", "run"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["service run ended (Stop)"]),
+        }],
+    },
+    CommandExamples {
         command: "prs refresh",
         examples: &[ExampleDoc {
             id: "prs-refresh-no-forge",
@@ -6611,6 +7107,35 @@ pub const EXAMPLES: &[CommandExamples] = &[
             setup: &[],
             expect: Expect::StdoutContains(&["unmeasured", "no remote-tracking branch"]),
         }],
+    },
+    CommandExamples {
+        command: "worktree reconcile",
+        examples: &[
+            ExampleDoc {
+                id: "worktree-reconcile-plan",
+                title: "What becomes of every branch and worktree",
+                description: "Every non-trunk branch and every detached worktree with the one state git supports for it and the one step that state permits. A branch cut from the trunk and never published is `unstarted` and kept: it reads exactly like one that landed, and only having been published tells them apart. The reading removes nothing.",
+                argv: &["worktree", "reconcile"],
+                setup: &[&["worktree", "create", "feature/improve-cli"]],
+                expect: Expect::StdoutContains(&["unstarted", "feature/improve-cli", "nothing to reconcile"]),
+            },
+            ExampleDoc {
+                id: "worktree-reconcile-explain",
+                title: "Why is this worktree still here?",
+                description: "With a selector the answer is one subject: its state, its step, and every reading that decided it, one per line.",
+                argv: &["worktree", "reconcile", "feature/improve-cli"],
+                setup: &[&["worktree", "create", "feature/improve-cli"]],
+                expect: Expect::StdoutContains(&["unstarted", "the trunk reaches the branch"]),
+            },
+            ExampleDoc {
+                id: "worktree-reconcile-apply",
+                title: "Carry out what is proven, and nothing else",
+                description: "`--apply` takes only the steps whose proof is complete, each subject measured again immediately before it goes. Here nothing is removable on proof, so it removes nothing; run twice, the second run reads the same.",
+                argv: &["worktree", "reconcile", "--apply"],
+                setup: &[&["worktree", "create", "feature/improve-cli"]],
+                expect: Expect::StdoutContains(&["0 worktree(s) removed, 0 branch(es) deleted, 0 refused"]),
+            },
+        ],
     },
     CommandExamples {
         command: "worktree branches",

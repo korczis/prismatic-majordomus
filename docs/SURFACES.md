@@ -358,7 +358,7 @@ stages run in this order [C15]:
 flowchart TD
   build["build step<br>cargo build, or MAJORDOMUS_BIN"]
   a["stage A: majordomus generate --strict<br>code-only projections: openapi, registry, cli,<br>capabilities.md, modules/*.md, share/allow, provider bootstraps"]
-  b["stage B: scripts/generate-site-data<br>site/data/generated, site/content, docs/SITE_CLAIMS.md,<br>docs/PLAN_STATUS.md, docs/PAGES_STATUS.md"]
+  b["stage B: scripts/generate-site-data<br>site/data/generated, site/content, docs/SITE_CLAIMS.md,<br>docs/PLAN_STATUS.md, docs/plan-status/*.md, docs/PAGES_STATUS.md"]
   c["stage C: majordomus generate<br>projections over the index stage B changed:<br>site/data/registry, benchmarks, artifacts manifest"]
   d["stage D: scripts/gitattributes<br>the merge=derived block, from the artifact manifest<br>and the published content tree"]
   check["scripts/derive-check<br>generate --check, generate-site-data --check,<br>gitattributes --check: 0 current, 10 stale, 15 refused"]
@@ -1063,7 +1063,7 @@ as `:439-482` gives lines. A command in the last column is one you can run.
 | C21 | `pages-live` is an at-finish gate; `pages verify` in the workflow is continue-on-error | `.ai/repo/ci/gates.yaml:381-385`; `.github/workflows/pages.yml:213-218` | verified |
 | C22 | `doctor` detects and does not repair | `lib/doctor.sh` (read-only header; no `--fix` in `bin/majordomus` or `lib/`) | verified |
 | C23 | ten rule states, the weakest part wins | `src/rules/mod.rs:466-492`, `:1160-1182`; `DOCTRINE.md` "The proof graph" | verified |
-| C24 | the mode is the block's shape; an executable proof wins | `DOCTRINE.md` "Three enforcement modes"; `src/rules/mod.rs` `enforcement_of` | verified; the module comment still says "two enforcement modes" (`rules/mod.rs:28`) |
+| C24 | the mode is the block's shape; an executable proof wins | `DOCTRINE.md` "Four enforcement modes"; `src/rules/mod.rs` `enforcement_of` | verified; the module comment still says "two enforcement modes" (`rules/mod.rs:28`) |
 | C25 | `rule-proof-check` refuses dangling paths and ratchets unproven rules | `scripts/ci/rule-proof-check:1-45`; gate `rule-proof` in `gates.yaml` | verified |
 | C26 | findings by class; `Failing` sorts before `NotRun`, so it can be masked | `src/rules/mod.rs:1000-1023` with `:466-492` and `:1169-1176` | verified by reading; not observed in data |
 | C27 | rule-to-gate binding is inferred from `runs:` | `src/rules/mod.rs:876-916` | verified |

@@ -189,6 +189,21 @@ use_cases:
     claims: advisory
     mcp_tools: advisory
 
+# What a commit message is held to (docs/COMMIT.md). `majordomus commit validate <file>`
+# judges one message; the commit-msg line init prints asks it before git stores the commit.
+# A repository whose plan binds every change to an issue sets reference_required to error;
+# one that projects its plan onto a forge sets closing_keyword to error, because a forge
+# closes an issue the moment a commit saying `Closes #12` lands, and the layer, not a merge,
+# decides when an issue is done. Each judgement is off, info, warning or error.
+commit:
+  subject_max_chars: 72
+  scope_unknown: warning
+  fix_requires_test: warning
+  reference_unresolved: error
+  breaking_unexplained: error
+  reference_required: off
+  closing_keyword: off
+
 # Every entry here is reconciled by `majordomus doctor`: the path must resolve (on PATH,
 # repo-relative, or absolute in the hook line), be executable, and be invoked by the
 # artifact named in wired_by without its exit code being swallowed.
@@ -214,3 +229,20 @@ projections:
     target: CLAUDE.md
   - provider: gemini
     target: GEMINI.md
+
+# The user interface and the design kit it is built on (I4336). `kit` names the kit the UI
+# declares ("" is none, and the licence gate is then skipped). `visibility` is declared,
+# never fetched: a public tree never carries a licensed file of the kit, and a public tree
+# that declares a kit and has a UI fails closed when nothing could judge it.
+# MAJORDOMUS_VISIBILITY=public tightens a private declaration; nothing loosens one.
+# `publish` names the directories a deploy publishes (the upload-pages-artifact path), whose
+# untracked files the gate also hashes. `evidence` names the owner's kit-evidence/v1 files,
+# `~/`-relative and never absolute; CI reads MAJORDOMUS_KIT_EVIDENCE_<KIT> instead.
+# `exempt` (declared in the schema, absent here until the first one) lists the surfaces the
+# kit-use judge does not hold to the kit, each `- {path: <glob>, because: <why>}` with both
+# keys; the never-publish gate exempts nothing.
+ui:
+  kit: ""
+  visibility: public
+  publish: []
+  evidence: []

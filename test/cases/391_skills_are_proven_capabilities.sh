@@ -40,7 +40,12 @@ commit "alpha, invoked and named"
 expect_exit 0 "$RB" skills status
 expect_grep '^alpha +active +partial +not_run +no +no +yes$'
 expect_exit 0 "$RB" skills verify
-expect_grep '1 skill\(s\), 0 failure\(s\), 3 warning\(s\): valid'
+expect_grep '1 skill\(s\), 0 failure\(s\), 2 warning\(s\): valid'
+# a page is owed only where the repository publishes skill pages (I4256): none here, then one
+verify; lacks warn:undocumented
+mkdir -p site/content/skills && printf '# Beta\n' > site/content/skills/beta.md && commit "a published skill page"
+verify; has warn:undocumented
+git rm -q -r site && commit "no published skill pages again"
 expect_exit 0 "$RB" skills explain alpha
 expect_grep 'test +test/cases/01_alpha\.sh +not_run +\[reproduce: bash test/run\.sh 01_alpha\]'
 expect_grep 'invoked +\.ai/repo/workflows/uses-alpha\.md:3 +majordomus://skill/alpha'

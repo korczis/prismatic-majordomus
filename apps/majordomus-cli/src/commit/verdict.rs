@@ -73,6 +73,10 @@ pub enum CommitRule {
     UnresolvedReference,
     /// The commit declares itself breaking and explains nothing.
     BreakingUnexplained,
+    /// The message names no record id the layer holds, where the policy requires one.
+    ReferenceMissing,
+    /// The message carries a forge's closing keyword, `Closes #12`.
+    ClosingKeyword,
 }
 
 impl CommitRule {
@@ -92,6 +96,8 @@ impl CommitRule {
             CommitRule::FixWithoutTest => "commit.fix_without_test",
             CommitRule::UnresolvedReference => "commit.unresolved_reference",
             CommitRule::BreakingUnexplained => "commit.breaking_unexplained",
+            CommitRule::ReferenceMissing => "commit.reference_missing",
+            CommitRule::ClosingKeyword => "commit.closing_keyword",
         }
     }
 
@@ -106,6 +112,8 @@ impl CommitRule {
         CommitRule::UnknownScope,
         CommitRule::BreakingUnexplained,
         CommitRule::UnresolvedReference,
+        CommitRule::ReferenceMissing,
+        CommitRule::ClosingKeyword,
         CommitRule::FixWithoutTest,
     ];
 }
@@ -309,7 +317,25 @@ pub fn judge(subject: &CommitSubject, policy: &CommitPolicy) -> CommitVerdict {
             "the commit is marked breaking and explains nothing; write a body or a BREAKING CHANGE trailer".into(),
         );
     }
-    for candidate in record_candidates(&without_code_spans(&subject.text)) {
+    let prose = without_code_spans(&subject.text);
+    let candidates = record_candidates(&prose);
+    if !candidates.iter().any(|c| subject.records.contains(c)) {
+        add(
+            CommitRule::ReferenceMissing,
+            policy.reference_required,
+            "the message names no issue or milestone this repository's layer holds; name the one this change serves, as (I0012)".into(),
+        );
+    }
+    if let Some(phrase) = closing_keyword(&prose) {
+        add(
+            CommitRule::ClosingKeyword,
+            policy.closing_keyword,
+            format!(
+                "'{phrase}' closes a forge issue when the commit lands; the layer decides when an issue is done, so refer to it (Refs #n) instead"
+            ),
+        );
+    }
+    for candidate in candidates {
         if !subject.records.contains(&candidate) {
             add(
                 CommitRule::UnresolvedReference,
@@ -333,6 +359,35 @@ pub fn judge(subject: &CommitSubject, policy: &CommitPolicy) -> CommitVerdict {
     }
 
     finish(message, found)
+}
+
+/// The words a forge reads as "close this issue" when a commit naming one lands.
+const CLOSING_WORDS: &[&str] = &[
+    "close", "closes", "closed", "fix", "fixes", "fixed", "resolve", "resolves", "resolved",
+];
+
+/// The first closing phrase in `text` — a closing word, an optional colon, then `#12` or
+/// `owner/repo#12` — as written, or `None`.
+///
+/// ```
+/// use majordomus_cli::commit::verdict::closing_keyword;
+/// assert_eq!(closing_keyword("a body\n\nCloses #12").as_deref(), Some("Closes #12"));
+/// assert_eq!(closing_keyword("fixes: org/repo#3").as_deref(), Some("fixes: org/repo#3"));
+/// // a reference is not a closing phrase, and neither is the word without an issue
+/// assert_eq!(closing_keyword("Refs #12; this fixes the parser"), None);
+/// ```
+pub fn closing_keyword(text: &str) -> Option<String> {
+    let words: Vec<&str> = text.split_whitespace().collect();
+    words.windows(2).find_map(|pair| {
+        let word = pair[0].trim_end_matches(':').to_ascii_lowercase();
+        let target = pair[1].trim_end_matches(|c: char| ",.;:)".contains(c));
+        let issue = target.rsplit_once('#').is_some_and(|(repo, n)| {
+            !n.is_empty()
+                && n.chars().all(|c| c.is_ascii_digit())
+                && (repo.is_empty() || repo.contains('/'))
+        });
+        (CLOSING_WORDS.contains(&word.as_str()) && issue).then(|| format!("{} {}", pair[0], target))
+    })
 }
 
 /// Order the findings and decide the verdict.
@@ -552,6 +607,72 @@ mod tests {
             &CommitPolicy::default(),
         );
         assert!(trailer.findings.is_empty());
+    }
+
+    #[test]
+    fn a_required_reference_is_asked_for_only_when_the_policy_requires_one() {
+        let bare = CommitSubject {
+            text: "feat(plan): a thing".into(),
+            records: vec!["I1305".into()],
+            ..CommitSubject::default()
+        };
+        // this repository lets a commit stand on its own
+        assert!(judge(&bare, &CommitPolicy::default()).findings.is_empty());
+
+        let bound = CommitPolicy {
+            reference_required: FindingLevel::Error,
+            ..CommitPolicy::default()
+        };
+        let v = judge(&bare, &bound);
+        assert_eq!(codes(&v), vec!["commit.reference_missing"]);
+        assert!(!v.passed);
+
+        let named = CommitSubject {
+            text: "feat(plan): a thing (I1305)".into(),
+            ..bare.clone()
+        };
+        assert!(judge(&named, &bound).findings.is_empty());
+
+        // an invented id is not a reference: it is reported as unresolved and as missing
+        let invented = CommitSubject {
+            text: "feat(plan): a thing (I9999)".into(),
+            ..bare
+        };
+        assert_eq!(
+            codes(&judge(&invented, &bound)),
+            vec!["commit.unresolved_reference", "commit.reference_missing"]
+        );
+    }
+
+    #[test]
+    fn a_closing_keyword_is_refused_where_the_policy_refuses_it() {
+        let closing = CommitSubject::of("feat(plan): a thing\n\nCloses #12");
+        assert!(judge(&closing, &CommitPolicy::default())
+            .findings
+            .is_empty());
+
+        let projected = CommitPolicy {
+            closing_keyword: FindingLevel::Error,
+            ..CommitPolicy::default()
+        };
+        let v = judge(&closing, &projected);
+        assert_eq!(codes(&v), vec!["commit.closing_keyword"]);
+        assert!(v.findings[0].message.contains("'Closes #12'"));
+        assert!(!v.passed);
+
+        // a reference, the word in prose, and a keyword inside a code span all pass
+        for text in [
+            "feat(plan): a thing\n\nRefs #12",
+            "fix(plan): this fixes the parser",
+            "feat(plan): a thing\n\nthe projection refuses `Closes #12`",
+        ] {
+            assert!(
+                judge(&CommitSubject::of(text), &projected)
+                    .findings
+                    .is_empty(),
+                "{text}"
+            );
+        }
     }
 
     #[test]

@@ -421,20 +421,11 @@ pub fn report(root: &Path) -> Result<ConvergenceReport> {
     })
 }
 
-/// The commits that are on a local branch and on no remote-tracking ref.
-///
-/// One call: `git rev-list --branches --not --remotes`. Asking per branch would be one
-/// subprocess per branch, and this repository has three hundred of them. `--no-walk` is
-/// deliberately *not* used — it drops the exclusion, and the probe then reports that
-/// nothing is unpublished no matter what is unpublished.
+/// The commits that are on a local branch and on no remote-tracking ref: the one reading
+/// [`crate::worktree::state::commits_no_remote_reaches`] takes, shared with the
+/// reconciliation so that "published" means one thing in both.
 fn commits_no_remote_reaches(primary: &Path) -> Result<BTreeSet<String>> {
-    text_of(primary, &["rev-list", "--branches", "--not", "--remotes"]).map(|text| {
-        text.lines()
-            .map(str::trim)
-            .filter(|l| !l.is_empty())
-            .map(str::to_string)
-            .collect()
-    })
+    crate::worktree::state::commits_no_remote_reaches(primary)
 }
 
 /// Every stash entry: its ref and the subject git records for it.

@@ -65,7 +65,7 @@ impl FindingLevel {
     }
 }
 
-/// `commit:` in the repository policy: the subject width, and how loudly to report the four
+/// `commit:` in the repository policy: the subject width, and how loudly to report the six
 /// judgements a repository can reasonably decide differently about. The type vocabulary is
 /// deliberately absent — it is [`crate::release::ChangeKind`], which the changelog already
 /// renders from, and a second copy of those words here is the duplication this subsystem
@@ -108,6 +108,17 @@ pub struct CommitPolicy {
     /// change with no explanation is a release note that says a thing broke.
     #[serde(default = "error")]
     pub breaking_unexplained: FindingLevel,
+    /// A message that names no record id the layer holds. Off by default: this repository
+    /// lets a commit stand on its own, while an adopter whose plan binds every change to an
+    /// issue sets it to `error` and has the hook ask for the id before the commit exists.
+    #[serde(default = "off")]
+    pub reference_required: FindingLevel,
+    /// A closing keyword — `Closes #12`, `fixes #3` — anywhere in the message. Off by
+    /// default; a repository that projects its plan onto a forge sets it to `error`, because
+    /// a forge closes the issue the moment such a commit lands, and the layer, not a merged
+    /// commit, decides when an issue is done.
+    #[serde(default = "off")]
+    pub closing_keyword: FindingLevel,
 }
 
 fn subject_max_chars() -> usize {
@@ -118,6 +129,10 @@ fn error() -> FindingLevel {
     FindingLevel::Error
 }
 
+fn off() -> FindingLevel {
+    FindingLevel::Off
+}
+
 impl Default for CommitPolicy {
     fn default() -> Self {
         CommitPolicy {
@@ -126,6 +141,8 @@ impl Default for CommitPolicy {
             fix_requires_test: FindingLevel::Warning,
             reference_unresolved: FindingLevel::Error,
             breaking_unexplained: FindingLevel::Error,
+            reference_required: FindingLevel::Off,
+            closing_keyword: FindingLevel::Off,
         }
     }
 }

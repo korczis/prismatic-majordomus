@@ -140,6 +140,8 @@ commit:
   fix_requires_test: warning
   reference_unresolved: error
   breaking_unexplained: error
+  reference_required: off
+  closing_keyword: off
 ```
 
 `subject_max_chars` is measured, not chosen. The git convention is 72; over 1161 non-merge
@@ -151,6 +153,23 @@ the check.
 The three levels are the judgements a repository can reasonably disagree about. `off` is a
 value, not an absence: a repository that has decided a check does not apply to it has made a
 decision, and a decision is worth reading back.
+
+### What an adopter turns on
+
+The last two judgements are `off` here and in the skeleton `init` writes, because they are
+decisions about a plan rather than about a message. A repository whose plan binds every
+change to an issue (`intent.binding: required`) sets `reference_required: error`, and the
+hook asks for the id before the commit exists rather than a reviewer asking after it. A
+repository that projects its plan onto a forge sets `closing_keyword: error`: a forge closes
+an issue the moment a commit saying `Closes #12` lands, while the layer is what decides an
+issue is done, so such a commit refers to it (`Refs #12`) instead. A keyword quoted in a code
+span is prose about the keyword and is not judged.
+
+`init` prints the hook line that asks the judge, beside the two lines doctor verifies:
+
+```sh
+commit-msg: majordomus commit validate "$1" || exit $?
+```
 
 ## Findings
 
@@ -166,6 +185,8 @@ decision, and a decision is worth reading back.
 | `commit.breaking_unexplained` | policy | `!` with no body and no `BREAKING CHANGE:` |
 | `commit.unresolved_reference` | policy | a record id the layer does not hold |
 | `commit.fix_without_test` | policy | a `fix` with no test among its files |
+| `commit.reference_missing` | policy | the message names no issue or milestone the layer holds |
+| `commit.closing_keyword` | policy | `Closes #12`, `fixes org/repo#3`: a forge would close the issue on landing |
 
 </div>
 

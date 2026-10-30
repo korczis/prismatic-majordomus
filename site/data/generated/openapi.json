@@ -2,6 +2,7 @@
   "anchors": {
     "op-artifacts-list": "docs/api/artifacts/",
     "op-blackboard-snapshot": "docs/api/blackboard/",
+    "op-board-snapshot": "docs/api/board/",
     "op-brief-session": "docs/api/brief/",
     "op-capabilities-describe": "docs/api/capabilities/",
     "op-capabilities-list": "docs/api/capabilities/",
@@ -208,6 +209,7 @@
     "op-why-validate": "docs/api/why/",
     "op-worktree-inspect": "docs/api/worktree/",
     "op-worktree-migration_plan": "docs/api/worktree/",
+    "op-worktree-reconciliation": "docs/api/worktree/",
     "op-worktree-status": "docs/api/worktree/",
     "op-worktree-topology": "docs/api/worktree/",
     "op-worktree-trunk": "docs/api/worktree/",
@@ -279,6 +281,7 @@
     "schema-BlackboardWorker": "docs/api/blackboard/",
     "schema-Blocker": "docs/api/devtask/",
     "schema-BlockerKind": "docs/api/devtask/",
+    "schema-BoardSnapshot": "docs/api/board/",
     "schema-BoardView": "docs/api/shared/",
     "schema-BranchState": "docs/api/worktree/",
     "schema-BranchTrace": "docs/api/trace/",
@@ -993,6 +996,9 @@
     "schema-ReasoningSummary": "docs/api/environment/",
     "schema-ReasoningTotals": "docs/api/reasoning/",
     "schema-Recommendation": "docs/api/why/",
+    "schema-ReconcileEntry": "docs/api/worktree/",
+    "schema-ReconcileStep": "docs/api/worktree/",
+    "schema-Reconciliation": "docs/api/worktree/",
     "schema-Record": "docs/api/continuity/",
     "schema-RecordInput": "docs/api/continuity/",
     "schema-RecordView": "docs/api/continuity/",
@@ -1258,6 +1264,7 @@
     "schema-TrendRun": "docs/api/delivery/",
     "schema-TrendsReport": "docs/api/delivery/",
     "schema-TrunkDistance": "docs/api/shared/",
+    "schema-TrunkRelation": "docs/api/worktree/",
     "schema-TrunkSource": "docs/api/worktree/",
     "schema-TrunkStanding": "docs/api/shared/",
     "schema-TrunkThresholds": "docs/api/shared/",
@@ -1284,6 +1291,7 @@
     "schema-Vocabulary": "docs/api/obligations/",
     "schema-WaiverReason": "docs/api/capabilities/",
     "schema-WorkStanding": "docs/api/worktree/",
+    "schema-WorkState": "docs/api/worktree/",
     "schema-WorkflowCatalogue": "docs/api/environment/",
     "schema-WorkflowDescriptor": "docs/api/environment/",
     "schema-WorkflowEntrypoint": "docs/api/environment/",
@@ -1296,6 +1304,7 @@
     "schema-Written": "docs/api/mesh/",
     "tag-artifacts": "docs/api/artifacts/",
     "tag-blackboard": "docs/api/blackboard/",
+    "tag-board": "docs/api/board/",
     "tag-brief": "docs/api/brief/",
     "tag-capabilities": "docs/api/capabilities/",
     "tag-commands": "docs/api/commands/",
@@ -1357,9 +1366,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 212,
-    "schemas": 1082,
-    "tags": 60
+    "operations": 214,
+    "schemas": 1088,
+    "tags": 61
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1388,7 +1397,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 1.0.0-alpha.9",
+  "generated_by": "majordomus-cli 1.0.0-alpha.10",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -1397,7 +1406,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "1.0.0-alpha.9"
+    "version": "1.0.0-alpha.10"
   },
   "infrastructure": [
     {
@@ -1452,6 +1461,7 @@
   "op_homes": {
     "artifacts.list": "artifacts",
     "blackboard.snapshot": "blackboard",
+    "board.snapshot": "board",
     "brief.session": "brief",
     "capabilities.describe": "capabilities",
     "capabilities.list": "capabilities",
@@ -1658,6 +1668,7 @@
     "why.validate": "why",
     "worktree.inspect": "worktree",
     "worktree.migration_plan": "worktree",
+    "worktree.reconciliation": "worktree",
     "worktree.status": "worktree",
     "worktree.topology": "worktree",
     "worktree.trunk": "worktree",
@@ -1733,6 +1744,7 @@
     "BlackboardWorker": "blackboard",
     "Blocker": "devtask",
     "BlockerKind": "devtask",
+    "BoardSnapshot": "board",
     "BoardView": "shared",
     "BranchState": "worktree",
     "BranchTrace": "trace",
@@ -2447,6 +2459,9 @@
     "ReasoningSummary": "environment",
     "ReasoningTotals": "reasoning",
     "Recommendation": "why",
+    "ReconcileEntry": "worktree",
+    "ReconcileStep": "worktree",
+    "Reconciliation": "worktree",
     "Record": "continuity",
     "RecordInput": "continuity",
     "RecordView": "continuity",
@@ -2712,6 +2727,7 @@
     "TrendRun": "delivery",
     "TrendsReport": "delivery",
     "TrunkDistance": "shared",
+    "TrunkRelation": "worktree",
     "TrunkSource": "worktree",
     "TrunkStanding": "shared",
     "TrunkThresholds": "shared",
@@ -2738,6 +2754,7 @@
     "Vocabulary": "obligations",
     "WaiverReason": "capabilities",
     "WorkStanding": "worktree",
+    "WorkState": "worktree",
     "WorkflowCatalogue": "environment",
     "WorkflowDescriptor": "environment",
     "WorkflowEntrypoint": "environment",
@@ -6130,6 +6147,77 @@
           "value": "cycle"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "The answer of `board.snapshot`: every document of the board by id, and the digest that\nsays whether two snapshots describe the same state.",
+      "home": "board",
+      "is_enum": false,
+      "name": "BoardSnapshot",
+      "properties": [
+        {
+          "description": "`sha256:<hex>` over the canonical JSON of the documents, `meta.syncedAt` and\n`meta.syncedBy` left out: equal state, equal digest.",
+          "name": "digest",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit described, empty when the checkout has none.",
+          "name": "master_sha",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its committer time, RFC 3339.",
+          "name": "master_committed_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The ref it was read from: `refs/remotes/origin/master`, else `HEAD`.",
+          "name": "master_ref",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The bound every document is under, in bytes of compact JSON.",
+          "name": "document_limit",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Each document's compact size, in bytes, by id.",
+          "name": "sizes",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "The documents, by id: `meta`, `milestones`, `intents`, `prs`, and `issues-<lane>`\n(then `issues-<lane>-2`, ...) for each lane with open work.",
+          "name": "documents",
+          "refs": [],
+          "required": true,
+          "type": "object"
+        },
+        {
+          "description": "What could not be read, in words: an unobserved pull request queue, a lane naming a\nmilestone the plan lacks. Empty is the ordinary case.",
+          "name": "diagnostics",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "board.snapshot"
+      ],
+      "used_by_schemas": [],
+      "values": [],
       "variants": []
     },
     {
@@ -21756,6 +21844,7 @@
       "used_by": [
         "artifacts.list",
         "blackboard.snapshot",
+        "board.snapshot",
         "brief.session",
         "capabilities.list",
         "capabilities.projections",
@@ -21963,6 +22052,7 @@
         "worktree.topology",
         "worktree.inspect",
         "worktree.migration_plan",
+        "worktree.reconciliation",
         "worktree.status",
         "worktree.trunk",
         "worktree.uncommitted"
@@ -23360,7 +23450,7 @@
       "is_enum": true,
       "name": "ExecutionEffect",
       "properties": [],
-      "type": "\"read\" | \"process_state\" | \"repository_mutation\"",
+      "type": "\"read\" | \"process_state\" | \"repository_mutation\" | \"remote_mutation\"",
       "used_by": [
         "mcp.projection"
       ],
@@ -23382,6 +23472,10 @@
         {
           "description": "The repository changes.\n\nFor most of this executable's life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue's own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n`ExecutionPolicy::writes_repository`, the way one that stops says so with\n`ExecutionPolicy::stoppable`.\n\n[ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md",
           "value": "repository_mutation"
+        },
+        {
+          "description": "Other machines change: the handler reaches, over ssh, machines this process does not\nrun on, and installs, writes or restarts something there ([ADR 0132]). The strongest\neffect a capability can have, and the only one that is open-world: what it changes\noutlives this process, this repository and this machine. A handler says so with\n`ExecutionPolicy::changes_other_machines`.\n\n[ADR 0132]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0132-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md",
+          "value": "remote_mutation"
         }
       ],
       "variants": []
@@ -23746,7 +23840,7 @@
           "type": "boolean"
         },
         {
-          "description": "The call reaches beyond this machine. No handler of this executable does: observing\nthe forge and talking to an advisor are commands a person runs, not capabilities.",
+          "description": "The call reaches beyond this machine. Only a handler that changes other machines\ndoes (`Effect::RemoteMutation`): observing the forge and talking to an advisor are\ncommands a person runs, not capabilities.",
           "name": "open_world",
           "refs": [],
           "required": true,
@@ -46831,6 +46925,239 @@
       "variants": []
     },
     {
+      "description": "One branch or one detached worktree, decided.\n\n```\nuse majordomus_cli::worktree::reconcile::{ReconcileEntry, ReconcileStep, WorkState};\n\nlet entry = ReconcileEntry {\n    branch: Some(\"feature/x\".into()),\n    worktree: None,\n    head: \"0123456789abcdef\".into(),\n    state: WorkState::Merged,\n    step: ReconcileStep::DeleteBranch,\n    automatic: true,\n    scratch: false,\n    here: false,\n    relation: None,\n    behind: None,\n    reasons: vec![\"the trunk reaches the branch, and it was published\".into()],\n    command: \"git update-ref -d refs/heads/feature/x 0123456789abcdef\".into(),\n};\n// a branch is named by its name, a detached worktree by its path\nassert_eq!(entry.subject(), \"feature/x\");\n// and a field nothing was read for is left out of the document\nassert!(!serde_json::to_string(&entry).unwrap().contains(\"behind\"));\n```",
+      "home": "worktree",
+      "is_enum": false,
+      "name": "ReconcileEntry",
+      "properties": [
+        {
+          "description": "The branch. Absent for a detached worktree.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The worktree holding it, when one does.",
+          "name": "worktree",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The commit that was judged. An act names it, so a subject that moved is refused.",
+          "name": "head",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The state.",
+          "name": "state",
+          "refs": [
+            "WorkState"
+          ],
+          "required": true,
+          "type": "WorkState"
+        },
+        {
+          "description": "The step that state permits.",
+          "name": "step",
+          "refs": [
+            "ReconcileStep"
+          ],
+          "required": true,
+          "type": "ReconcileStep"
+        },
+        {
+          "description": "The step removes something, its proof is complete, and the subject is neither a\nscratch checkout nor where the call came from: removable on proof alone, and so taken\nby `reconcile --apply` on its own.",
+          "name": "automatic",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "A session's scratch checkout or a detached worktree: whoever made it removes it, so it\nis never removable on proof alone, and `--apply` leaves it unless `--include-scratch`\nis given.",
+          "name": "scratch",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The call came from inside this worktree. It is never removed from inside, whatever\nelse is true of it.",
+          "name": "here",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "How the commit stands against the trunk, when git could say.",
+          "name": "relation",
+          "refs": [
+            "TrunkRelation"
+          ],
+          "required": false,
+          "type": "TrunkRelation | null"
+        },
+        {
+          "description": "How many trunk commits it lacks, read when it merges cleanly.",
+          "name": "behind",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Why: the readings that decided it, one per line.",
+          "name": "reasons",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The command that takes the step.",
+          "name": "command",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Reconciliation"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The one step a state permits.\n\n```\nuse majordomus_cli::worktree::reconcile::ReconcileStep;\n\n// only three steps remove anything, and they are the only ones `reconcile --apply` takes\nassert!(ReconcileStep::RemoveWorktree.removes());\nassert!(ReconcileStep::DeleteBranch.removes());\nassert!(!ReconcileStep::Publish.removes() && !ReconcileStep::Keep.removes());\n```",
+      "home": "worktree",
+      "is_enum": true,
+      "name": "ReconcileStep",
+      "properties": [],
+      "type": "\"keep\" | \"commit\" | \"publish\" | \"name\" | \"remove_worktree\" | \"delete_branch\" | \"remove_worktree_and_delete_branch\" | \"refresh\" | \"integrate\" | \"resolve\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReconcileEntry"
+      ],
+      "values": [
+        {
+          "description": "Nothing to do, or nothing that may be done.",
+          "value": "keep"
+        },
+        {
+          "description": "Commit what the worktree holds: nothing else can carry it.",
+          "value": "commit"
+        },
+        {
+          "description": "Push the branch: its commits are on this disk only.",
+          "value": "publish"
+        },
+        {
+          "description": "Give the commit a branch: a detached worktree is its only name.",
+          "value": "name"
+        },
+        {
+          "description": "Remove the worktree and keep the branch.",
+          "value": "remove_worktree"
+        },
+        {
+          "description": "Delete the branch, which has no worktree.",
+          "value": "delete_branch"
+        },
+        {
+          "description": "Remove the worktree, then delete the branch.",
+          "value": "remove_worktree_and_delete_branch"
+        },
+        {
+          "description": "Bring the trunk into the branch before it is integrated.",
+          "value": "refresh"
+        },
+        {
+          "description": "Integrate it: nothing stands in the way.",
+          "value": "integrate"
+        },
+        {
+          "description": "Resolve its conflict with the trunk, or decide it is superseded.",
+          "value": "resolve"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Every branch and detached worktree of the repository, decided, with the one verdict over\nthem.\n\n```\nuse majordomus_cli::worktree::reconcile::{Reconciliation, RECONCILE_SCHEMA};\n\nlet none = Reconciliation {\n    schema: RECONCILE_SCHEMA.into(),\n    repository: \"/srv/repo\".into(),\n    trunk: Some(\"master\".into()),\n    base: Some(\"origin/master\".into()),\n    entries: vec![],\n    tallies: Default::default(),\n    automatic: 0,\n    settled: true,\n};\n// a repository with nothing removable on proof reads exactly this\nassert_eq!(none.summary(), \"nothing to reconcile: 0 subject(s), none removable on proof\");\n```",
+      "home": "worktree",
+      "is_enum": false,
+      "name": "Reconciliation",
+      "properties": [
+        {
+          "description": "`RECONCILE_SCHEMA`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The primary checkout this was measured from.",
+          "name": "repository",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The trunk, when there is one.",
+          "name": "trunk",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The ref every relation was decided against: the remote-tracking branch the trunk\nfollows when it has one, so a primary checkout nobody pulled hides nothing.",
+          "name": "base",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Every subject: what is removable on proof first, then by state, then by name.",
+          "name": "entries",
+          "refs": [
+            "ReconcileEntry"
+          ],
+          "required": true,
+          "type": "array of ReconcileEntry"
+        },
+        {
+          "description": "How many subjects are in each state, by its word.",
+          "name": "tallies",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "How many subjects are removable on proof.",
+          "name": "automatic",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Nothing is removable on proof: a second `--apply` would do nothing.",
+          "name": "settled",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "worktree.reconciliation"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One durable record of the local half, as much of it as a reader needs to decide whether\nto open the file.",
       "home": "continuity",
       "is_enum": false,
@@ -52255,7 +52582,7 @@
       "variants": []
     },
     {
-      "description": "One rule, as the repository canonically declares it.\n#### Example\n\nBuilt by `definitions` from the index rather than by hand. Its ordering is the one\nthe crate has, so a report over the same tree reads the same twice.\n\n```\nuse majordomus_cli::rules::{Class, RuleDefinition};\n#### use majordomus_cli::rules::{Enforcement, Mode};\nlet d = RuleDefinition {\n    id: \"project.scope-is-declared\".into(),\n    identity: \"project.scope-is-declared@1\".into(),\n    uri: \"majordomus://rule/project.scope-is-declared@1\".into(),\n    version: 1,\n    title: \"Scope is declared\".into(),\n    description: None,\n    statement: None,\n    status: \"active\".into(),\n    class: Class::Blocking,\n    namespace: \"project\".into(),\n    depends_on: vec![],\n    tags: vec![],\n    path: \".ai/repo/rules/project/scope-is-declared.v1.md\".into(),\n    enforcement: Enforcement {\n        mode: Mode::Declarative, validator: None, category: None, exit_code: None,\n        enforced_by: None, tests: vec![], reviewed_because: None,\n    },\n};\nassert_eq!(d.class, Class::Blocking);\n```",
+      "description": "One rule, as the repository canonically declares it.\n#### Example\n\nBuilt by `definitions` from the index rather than by hand. Its ordering is the one\nthe crate has, so a report over the same tree reads the same twice.\n\n```\nuse majordomus_cli::rules::{Class, RuleDefinition};\n#### use majordomus_cli::rules::{Enforcement, Mode};\nlet d = RuleDefinition {\n    id: \"project.scope-is-declared\".into(),\n    identity: \"project.scope-is-declared@1\".into(),\n    uri: \"majordomus://rule/project.scope-is-declared@1\".into(),\n    version: 1,\n    title: \"Scope is declared\".into(),\n    description: None,\n    statement: None,\n    status: \"active\".into(),\n    class: Class::Blocking,\n    namespace: \"project\".into(),\n    depends_on: vec![],\n    tags: vec![],\n    path: \".ai/repo/rules/project/scope-is-declared.v1.md\".into(),\n    enforcement: Enforcement {\n        mode: Mode::Declarative, validator: None, category: None, exit_code: None,\n        enforced_by: None, tests: vec![], reviewed_because: None, entry: None,\n    },\n};\nassert_eq!(d.class, Class::Blocking);\n```",
       "home": "rules",
       "is_enum": false,
       "name": "RuleDefinition",
@@ -52421,7 +52748,7 @@
       "variants": []
     },
     {
-      "description": "The enforcement block of a rule, read from `x-majordomus`.\n#### Example\n\nRead from front matter rather than built by hand; this is the shape a gated rule\nproduces, and the mode is decided by what the block actually names.\n\n```\nuse majordomus_cli::rules::{Enforcement, Mode};\nlet e = Enforcement {\n    mode: Mode::Gated,\n    validator: None,\n    category: None,\n    exit_code: None,\n    enforced_by: None,\n    tests: vec![\"test/cases/07_scope.sh\".into()],\n    reviewed_because: None,\n};\nassert_eq!(e.mode, Mode::Gated);\n```",
+      "description": "The enforcement block of a rule, read from `x-majordomus`.\n#### Example\n\nRead from front matter rather than built by hand; this is the shape a gated rule\nproduces, and the mode is decided by what the block actually names.\n\n```\nuse majordomus_cli::rules::{Enforcement, Mode};\nlet e = Enforcement {\n    mode: Mode::Gated,\n    validator: None,\n    category: None,\n    exit_code: None,\n    enforced_by: None,\n    tests: vec![\"test/cases/07_scope.sh\".into()],\n    reviewed_because: None,\n    entry: None,\n};\nassert_eq!(e.mode, Mode::Gated);\n```",
       "home": "rules",
       "is_enum": false,
       "name": "RuleEnforcement",
@@ -52473,6 +52800,13 @@
         {
           "description": "Why nothing executable can express this rule, when the mode is reviewed. Required\nthere: a declared exemption with no reason is the debt it exists to replace.",
           "name": "reviewed_because",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The name of the policy's enforcement entry that checks this rule, when the mode is\nentry. doctor resolves the name against the policy and verifies the entry's wiring.",
+          "name": "entry",
           "refs": [],
           "required": false,
           "type": "string | null"
@@ -52546,7 +52880,7 @@
       "is_enum": true,
       "name": "RuleMode",
       "properties": [],
-      "type": "\"dispatched\" | \"gated\" | \"reviewed\" | \"declarative\"",
+      "type": "\"dispatched\" | \"gated\" | \"reviewed\" | \"entry\" | \"declarative\"",
       "used_by": [],
       "used_by_schemas": [
         "RuleEnforcement"
@@ -52563,6 +52897,10 @@
         {
           "description": "Carries a reason why nothing executable can express it, and so declares that a\nreader enforces it. An honest declaration, not an absence: the reason *is* the\ndeclaration — there is no flag beside it, because a flag can be set and a reason\ncannot be set without writing one — it is counted apart from every executable mode,\nand it separates a rule nobody could automate from a rule nobody got round to.",
           "value": "reviewed"
+        },
+        {
+          "description": "Names the policy's enforcement entry that checks it: the repository's own command,\nwired into a hook or a CI job that doctor verifies. How a project's rule is enforced,\nsince it can name no validator of this tool's source.",
+          "value": "entry"
         },
         {
           "description": "Names neither. Correct for a rule nothing executable can express; a defect for a\nblocking one.",
@@ -61296,6 +61634,37 @@
       "variants": []
     },
     {
+      "description": "How a commit stands against the trunk, read from git and from nothing else.\n\n```\nuse majordomus_cli::worktree::reconcile::TrunkRelation;\n\n// the word a document carries; renaming a variant must not rename it\nassert_eq!(TrunkRelation::Equivalent.as_str(), \"equivalent\");\nassert_eq!(serde_json::to_string(&TrunkRelation::Landed).unwrap(), \"\\\"landed\\\"\");\n```",
+      "home": "worktree",
+      "is_enum": true,
+      "name": "TrunkRelation",
+      "properties": [],
+      "type": "\"landed\" | \"equivalent\" | \"mergeable\" | \"conflicting\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReconcileEntry"
+      ],
+      "values": [
+        {
+          "description": "The trunk reaches the commit: it is in the repository's own history.",
+          "value": "landed"
+        },
+        {
+          "description": "The trunk does not reach it, and merging it would produce the trunk's own tree: every\nchange it carries arrived by another commit.",
+          "value": "equivalent"
+        },
+        {
+          "description": "Merging it changes the trunk and conflicts on nothing.",
+          "value": "mergeable"
+        },
+        {
+          "description": "Merging it conflicts with the trunk.",
+          "value": "conflicting"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "Where the trunk was learned from, in the order it is looked for.",
       "home": "worktree",
       "is_enum": true,
@@ -62534,6 +62903,65 @@
       "variants": []
     },
     {
+      "description": "The one state a branch or a detached worktree is in.\n\nDeclared in the order `decide` asks its questions, which is the order of what must not\nbe lost: a process, then files, then commits, then a name.\n\n```\nuse majordomus_cli::worktree::reconcile::WorkState;\n\nassert_eq!(WorkState::Unpublished.as_str(), \"unpublished\");\nassert_eq!(serde_json::to_string(&WorkState::Equivalent).unwrap(), \"\\\"equivalent\\\"\");\n```",
+      "home": "worktree",
+      "is_enum": true,
+      "name": "WorkState",
+      "properties": [],
+      "type": "\"active\" | \"dirty\" | \"unreadable\" | \"unstarted\" | \"merged\" | \"equivalent\" | \"unpublished\" | \"orphaned\" | \"conflicted\" | \"stale\" | \"ready\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReconcileEntry"
+      ],
+      "values": [
+        {
+          "description": "A process has its working directory inside the worktree: somebody is here.",
+          "value": "active"
+        },
+        {
+          "description": "The worktree holds files no commit carries.",
+          "value": "dirty"
+        },
+        {
+          "description": "A reading could not be taken, so nothing is decided: not knowing is not permission.",
+          "value": "unreadable"
+        },
+        {
+          "description": "The trunk reaches the branch and it was never published: a branch somebody cut and\nhas not committed to yet, which reads exactly like one that landed.",
+          "value": "unstarted"
+        },
+        {
+          "description": "The trunk reaches it and it was published: its work is in the repository's history.",
+          "value": "merged"
+        },
+        {
+          "description": "Its commits are not the trunk's, and merging them changes nothing.",
+          "value": "equivalent"
+        },
+        {
+          "description": "It holds a commit no remote-tracking ref reaches.",
+          "value": "unpublished"
+        },
+        {
+          "description": "A detached worktree whose commit no ref holds: the worktree is its only name.",
+          "value": "orphaned"
+        },
+        {
+          "description": "Merging it conflicts with the trunk.",
+          "value": "conflicted"
+        },
+        {
+          "description": "It merges cleanly and the trunk has moved since it left.",
+          "value": "stale"
+        },
+        {
+          "description": "It merges cleanly and the trunk has not moved: nothing stands before integration.",
+          "value": "ready"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "The workflows a person can run here, as the workflow runner itself describes them.",
       "home": "environment",
       "is_enum": false,
@@ -63330,6 +63758,80 @@
         }
       ],
       "slug": "blackboard"
+    },
+    {
+      "description": "The documents the delivery board reads, derived from the plan, the roadmap, the intents, the recorded pull request queue and the release currency, with the lanes share/board.yaml declares once. Every open milestone is in a lane or the snapshot refuses, naming it.",
+      "name": "board",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "board snapshot",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/board/snapshot?by=a%20mesh%20session\"",
+          "description": "Every document of the delivery board by id: meta (the commit, the lanes, the issue counts, the release), milestones in roadmap order, intents, the pull request queue from the last recorded observation, and the open issues of each lane as issues-<lane>, split into issues-<lane>-2 and onwards so that no document serializes past 250000 bytes. The digest is a SHA-256 over the canonical JSON of the documents with meta.syncedAt and meta.syncedBy left out, so equal state is an equal digest. A milestone that is not DONE and is in no lane of share/board.yaml is refused by name, never filed under other. An unobserved queue is said in prs.unavailable and the diagnostics, never refused. Mesh seats, live work, CI runners and blockers are the sync step's and are not here. Reads only; nothing is cached.",
+          "home": "board",
+          "id": "board.snapshot",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_board_snapshot",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Who takes the snapshot, as `meta.syncedBy` names it; `board.snapshot` when absent.\nLeft out of the digest.",
+              "examples": [
+                {
+                  "case": "named",
+                  "value": "\"a mesh session\""
+                }
+              ],
+              "name": "by",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/board/snapshot",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::board",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The delivery board's documents: the result.",
+              "schema": "BoardSnapshot",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "BoardSnapshot",
+          "stability": "experimental",
+          "summary": "The delivery board's documents"
+        }
+      ],
+      "slug": "board"
     },
     {
       "description": "What surrounds one working session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, each section asked of its owner once and saying whether it could be read. The answer a session reports on itself from without being asked, and the one a provider mod shows as its status line (ADR 0136). Writes nothing.",
@@ -77853,6 +78355,60 @@
           "result_schema": "MigrationPlan",
           "stability": "behaviorally_verified",
           "summary": "What it would take to bring every worktree home"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "worktree reconcile",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/worktrees/reconciliation\"",
+          "description": "Every non-trunk branch and every detached worktree with the one state git and the kernel support for it — active (a process works inside), dirty (files no commit carries), unreadable (a reading failed, so nothing is decided), unpublished (a commit no remote holds), orphaned (a detached worktree is its commit's only name), unstarted, merged (the trunk reaches it), equivalent (merging it changes nothing), conflicted, stale, ready — the readings that decided it, the one step it permits, the command a person runs to take that step, and whether it is removable on proof alone. Decided against the remote-tracking branch the trunk follows, never from an age or a name. A read: it removes nothing, and a removal it names is git's own guarded form (`git worktree remove` without `--force`, `git update-ref -d` on the judged commit). Taking the proven steps is the command line's `majordomus worktree reconcile --apply`, which measures each subject again first.",
+          "home": "worktree",
+          "id": "worktree.reconciliation",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_worktree_reconciliation",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/worktrees/reconciliation",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::worktree",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What becomes of every branch and every worktree: the result.",
+              "schema": "Reconciliation",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Reconciliation",
+          "stability": "behaviorally_verified",
+          "summary": "What becomes of every branch and every worktree"
         },
         {
           "benchmark": "required",

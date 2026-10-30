@@ -32,6 +32,7 @@
 
 pub mod artifacts;
 pub(crate) mod blackboard;
+pub(crate) mod board;
 pub(crate) mod brief;
 pub(crate) mod cache_provision;
 pub(crate) mod capabilities;
@@ -55,6 +56,7 @@ pub mod environment;
 pub mod episodes;
 pub mod evidence;
 pub(crate) mod executions;
+pub(crate) mod fleet;
 pub mod gates;
 pub(crate) mod graph;
 pub(crate) mod guard;
@@ -203,12 +205,14 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         rules,
         executions,
         mesh,
+        fleet,
         monitor,
         models,
         reasoning,
         episodes,
         peers,
         blackboard,
+        board,
         brief,
         server,
         mcp,
@@ -335,6 +339,8 @@ mod tests {
                 "continuity.publish",
                 "continuity.resume",
                 "continuity.sync",
+                // writes the kit's rule and policy block into a repository (I4334)
+                "design.kit.adopt",
                 // runs any executable capability, writers included (ADR 0126)
                 "executions.start",
                 // writes one new intent record, never a stage (ADR 0144)

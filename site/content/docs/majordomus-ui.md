@@ -76,6 +76,7 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 
 | Screen | Route | Reads |
 |---|---|---|
+| Front door | `/` | the process itself (version, revision, and the checkout that answered, as `/` names it without the UI), `distribution.releases`, `repository.info`, the screens of the UI and every public surface of the web topology: a link when it answers, what builds it when it does not |
 | Dashboard | `/ui` | `repository.info`, `health.report`, `release.version`, `distribution.releases`, `plan.status`, `plan.roadmap`, `mesh.peers`; the queue on its own route |
 | Command | `/ui/command` | `commands.list` (its `origin` filter is the screen's tabs), `executions.list`; `capabilities.list` for the capability a command is |
 | Intent workspace | `/ui/idd` | `intents.list`, `plan.roadmap`, `plan.issues`, `plan.waves`, `plan.next`: one intent (`?intent=`, else the first `intents.list` reports executing, then verifying, planned, declared — the rule is printed) with its inspector, the milestones it names in the roadmap's order with what each waits for, every issue of those milestones or naming the intent by wave with its status, priority, blockers and the move its status allows; `?issue=` opens that issue's move panel on the screen itself, the form the Cockpit's issue page renders, wired by the one module both surfaces load (`share/cockpit/moves.js`, named by the page as `data-moves-lib`) and made by `plan.transition` as an execution, which refuses a move the plan does not allow and names why, the waves those issues occupy with the scope conflicts that serialise them, and their dependency graph over a table of the same edges. Why the intent stands where it stands is asked on its own route (`/ui/panels/standing?intent=`, `intent_realization.explain`, which takes seconds): the sentences its stage and verdict rest on, each unmet criterion with its evidence state, the command that reproduces it and the issues serving it, the work realising the intent with each link's provenance, and its drift. `executions.list` gives every `plan.transition` this server ran on the intent's issues, newest first, each leading to its execution on the Cockpit. The screen reads itself again when an execution of its server ends on `/events`, and says what that channel is doing (below). It decides no status, wave or membership of its own |
@@ -83,7 +84,7 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 | Issues & PRs | `/ui/work` | `plan.status`, `plan.issues`; the queue on its own route, one pull request (`?pr=`) in its detail |
 | Issues | `/ui/issues` | `plan.issues`, `plan.status`, `plan.roadmap`: every issue, narrowed by `?status=` (the plan's own statuses as tabs), `?milestone=`, `?priority=` and `?q=`, each leading to its inspector |
 | PR Drain | `/ui/prs` | `plan.issues` (one issue, `?issue=`); `integration.queue` (one count per lane it counted) and `integration.events` on its own route (`/ui/panels/drain`), narrowed by `?disposition=`, `?lane=` and `?q=`, one pull request (`?pr=`) in the inspector with what the executor did to it, the lane's recent activity, and its merges per day over the fortnight the trail ends on |
-| Capabilities | `/ui/capabilities` | `repository.info`, `capabilities.list` by kind; one capability (`?id=`) from `capabilities.describe` |
+| Capabilities | `/ui/capabilities` | `repository.info`, `capabilities.list` by kind: the queries and commands narrowed by kind, module, stability, surface and text, each facet counted; one capability (`?id=`) from `capabilities.describe`, keeping the filters |
 | Mesh | `/ui/mesh` | `mesh.peers`, `mesh.events`, `mesh.state` (live claims); one machine (`?node=`) in the inspector, and who holds each seat of [rule `project.the-cooperation-model-is-the-owners-word`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md) read from the claims |
 | Peers | `/ui/peers` | `blackboard.snapshot`, read through the live channel's shared read: every worker of every board and linked machine with its intent and claims, the claims that meet, the reviews and handovers that wait, the typed relations and every source; read again when the channel says the blackboard changed ([Followed live](#followed-live)) |
 | CI/CD & Releases | `/ui/delivery` | `distribution.releases`, `release.version`, `release.currency` (whether the work landed since the last release is released: current, owed or overdue, how many commits wait and since when, the release it is measured from and the version required next), `deploy.list`, `gates.model`, `integration.timings` (each check's median, 90th percentile and longest run, and the open heads that waited longest, each leading to its pull request) |
@@ -595,9 +596,11 @@ they cost. It renders nothing itself. What it changes is only what a file cannot
 </div>
 
 
-A snapshot knows what the UI could read where it was taken. A Pages runner has no mesh, no
-recorded forge observation and no running execution, so those panels read `none`, `unknown`
-or `not answered`, never zero. A snapshot is not evidence of the live state of anything: for
+A snapshot knows what the UI could read where it was taken. The publishing job observes the
+forge first (`majordomus prs refresh` for the open pull requests, `majordomus served forge`
+for the deployments and the releases), so the drain and the deployments are the forge's as of that minute. A Pages runner
+has no mesh and no running execution, so those panels read `none`, `unknown` or `not
+answered`, never zero. A snapshot is not evidence of the live state of anything: for
 that, run `majordomus serve` in a checkout and open `/ui`.
 
 **Evidence is the exception.** A Pages runner does have a record of the tests: the `evidence`

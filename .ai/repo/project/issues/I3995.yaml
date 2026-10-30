@@ -30,4 +30,12 @@ validation:
 evidence_required:
   - "a_task_started_before_the_first_commit_finishes"
 created_at: 2026-10-23
-updated_at: 2026-10-23
+updated_at: 2026-10-26T11:01:54Z
+evidence:
+  - covers: a_task_started_before_the_first_commit_finishes
+    type: test
+    command: "bash test/run.sh 3995_a_task_started_before_the_first_commit_finishes"
+    result: "at master 6259dac47af: 1 passed (start before the first commit, two commits, check advanced, finish completed); with the NONE line of mj_git_label (lib/common.sh:465) removed the same case fails at check with 'diverged from recorded head NONE', restored afterwards"
+    artifact: "6259dac47af"
+    commit: 6259dac47afb5b01008725c6040f366feb458578
+    recorded_at: 2026-10-26T11:01:54Z

@@ -26,6 +26,7 @@ fn effect_word(effect: Effect) -> &'static str {
         Effect::Read => "read",
         Effect::ProcessState => "process_state",
         Effect::RepositoryMutation => "repository_mutation",
+        Effect::RemoteMutation => "remote_mutation",
     }
 }
 
@@ -35,6 +36,7 @@ fn effect_label(effect: Effect) -> &'static str {
         Effect::Read => "read",
         Effect::ProcessState => "process state",
         Effect::RepositoryMutation => "writes the repository",
+        Effect::RemoteMutation => "changes other machines",
     }
 }
 
@@ -46,6 +48,7 @@ fn effect_badge(effect: Effect) -> El {
             Effect::Read => "ok",
             Effect::ProcessState => "info",
             Effect::RepositoryMutation => "warn",
+            Effect::RemoteMutation => "fail",
         },
         effect_label(effect),
     )

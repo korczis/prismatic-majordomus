@@ -174,6 +174,10 @@ pub enum Mode {
     /// cannot be set without writing one — it is counted apart from every executable mode,
     /// and it separates a rule nobody could automate from a rule nobody got round to.
     Reviewed,
+    /// Names the policy's enforcement entry that checks it: the repository's own command,
+    /// wired into a hook or a CI job that doctor verifies. How a project's rule is enforced,
+    /// since it can name no validator of this tool's source.
+    Entry,
     /// Names neither. Correct for a rule nothing executable can express; a defect for a
     /// blocking one.
     Declarative,
@@ -192,6 +196,7 @@ impl Mode {
             Mode::Dispatched => "dispatched",
             Mode::Gated => "gated",
             Mode::Reviewed => "reviewed",
+            Mode::Entry => "entry",
             Mode::Declarative => "declarative",
         }
     }
@@ -215,6 +220,7 @@ impl Mode {
 ///     enforced_by: None,
 ///     tests: vec!["test/cases/07_scope.sh".into()],
 ///     reviewed_because: None,
+///     entry: None,
 /// };
 /// assert_eq!(e.mode, Mode::Gated);
 /// ```
@@ -240,6 +246,10 @@ pub struct Enforcement {
     /// there: a declared exemption with no reason is the debt it exists to replace.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reviewed_because: Option<String>,
+    /// The name of the policy's enforcement entry that checks this rule, when the mode is
+    /// entry. doctor resolves the name against the policy and verifies the entry's wiring.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub entry: Option<String>,
 }
 
 /// One rule, as the repository canonically declares it.
@@ -268,7 +278,7 @@ pub struct Enforcement {
 ///     path: ".ai/repo/rules/project/scope-is-declared.v1.md".into(),
 ///     enforcement: Enforcement {
 ///         mode: Mode::Declarative, validator: None, category: None, exit_code: None,
-///         enforced_by: None, tests: vec![], reviewed_because: None,
+///         enforced_by: None, tests: vec![], reviewed_because: None, entry: None,
 ///     },
 /// };
 /// assert_eq!(d.class, Class::Blocking);
@@ -973,18 +983,24 @@ fn enforcement_of(meta: &Value) -> Enforcement {
             enforced_by: None,
             tests: Vec::new(),
             reviewed_because: None,
+            entry: None,
         };
     };
     let validator = field(block, "validator");
     let tests = list(block, "tests");
     let enforced_by = field(block, "enforced_by");
     let reviewed_because = field(block, "reviewed_because");
+    let entry = field(block, "enforcement");
     // The order matters. An executable proof wins over a declaration of review, so a rule
     // that acquires a case stops being review-enforced without anyone remembering to
     // delete the declaration. And a review declaration with no reason is not a mode: it
     // falls through to declarative, which is the finding it was meant to replace.
+    // A policy entry is an executable check too, and it is the rule's own declaration of
+    // what runs it, so it ranks beside the validator and ahead of the cases that prove it.
     let mode = if validator.is_some() {
         Mode::Dispatched
+    } else if entry.is_some() {
+        Mode::Entry
     } else if !tests.is_empty() {
         Mode::Gated
     } else if reviewed_because.is_some() {
@@ -1000,6 +1016,7 @@ fn enforcement_of(meta: &Value) -> Enforcement {
         enforced_by,
         tests,
         reviewed_because,
+        entry,
     }
 }
 
@@ -1433,6 +1450,10 @@ pub fn report(index: &Index, ledger: &Ledger) -> RulesReport {
             RuleState::Reviewed
         } else if def.enforcement.mode == Mode::Declarative {
             RuleState::Unproven
+        } else if def.enforcement.mode == Mode::Entry && tests.is_empty() {
+            // the project's command runs at the hook doctor verifies; this repository keeps
+            // no verdict of it, so what can be shown is the mechanism, as for a gate
+            RuleState::NotRun
         } else if tests.iter().any(|t| !t.present) {
             RuleState::Dangling
         } else {
@@ -1481,11 +1502,17 @@ pub fn report(index: &Index, ledger: &Ledger) -> RulesReport {
             Class::Advisory => coverage.advisory += 1,
             Class::Unknown => {}
         }
-        if matches!(def.enforcement.mode, Mode::Dispatched | Mode::Gated) {
+        if matches!(
+            def.enforcement.mode,
+            Mode::Dispatched | Mode::Gated | Mode::Entry
+        ) {
             coverage.named_proof += 1;
         }
         if state != RuleState::Dangling
-            && matches!(def.enforcement.mode, Mode::Dispatched | Mode::Gated)
+            && matches!(
+                def.enforcement.mode,
+                Mode::Dispatched | Mode::Gated | Mode::Entry
+            )
         {
             coverage.artifacts_present += 1;
         }

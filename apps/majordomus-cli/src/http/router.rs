@@ -782,6 +782,28 @@ impl Router {
         let topology = resolution.served.topology();
         let checkout = self.checkout(&resolution.ctx);
         if prefers_html(req) {
+            let ready = |id: &str| {
+                if resolution.served.ready(id) {
+                    home::Availability::Ready
+                } else {
+                    home::Availability::NotBuilt
+                }
+            };
+            // a process that serves the UI answers its door with the UI's own front door, in
+            // the UI's frame; one that does not, with the plain page of the same surfaces
+            if let Some(ui) = &self.ui {
+                let process = crate::ui::front::Process {
+                    version: self.version,
+                    repository: repository_name(&resolution.ctx.index.repository.root),
+                    revision: match &resolution.ctx.index.repository.git {
+                        crate::git::GitState::Available(info) => info.head.as_deref(),
+                        crate::git::GitState::Unavailable { .. } => None,
+                    },
+                    summary: crate::about::SUMMARY,
+                    checkout: checkout.as_home(),
+                };
+                return ui.front_door(&process, &home::entries(topology, &ready));
+            }
             let identity = home::Identity {
                 version: self.version,
                 summary: crate::about::SUMMARY,
@@ -792,13 +814,6 @@ impl Router {
                 },
                 capabilities: resolution.ctx.registry.summary().total,
                 checkout: checkout.as_home(),
-            };
-            let ready = |id: &str| {
-                if resolution.served.ready(id) {
-                    home::Availability::Ready
-                } else {
-                    home::Availability::NotBuilt
-                }
             };
             return Response::new(
                 200,
