@@ -1115,6 +1115,21 @@ mj_rust_prune_build_dir() {
 # the newest generations of the trees building now. It says so, with what remains.
 MJ_SHARED_BUILD_CAP_MB_DEFAULT=6144
 MJ_EVICT_IDLE_MIN_DEFAULT=60
+
+#   MAJORDOMUS_SHARED_BUILD_PRESSURE_IDLE_MIN  the idle age while the volume is under
+#                                              pressure (default below); 0 keeps the age above
+#
+# Under pressure means below the reclaim mark (MAJORDOMUS_RECLAIM_BELOW_MB), the line where a
+# build already reclaims unattended output before it starts. The hour above was the judgement
+# of a machine with room. On 2026-10-25 between 15:16Z and 15:48Z the directory grew from
+# 66 GB to 94 GB, and the volume fell from 44 GiB to 16 GiB free. About ten worktrees each
+# built a generation of this crate with an incremental session, 2 to 6 GB each, inside an
+# hour. Every pass took cargo's lock, evicted what was older than the hour, and ended "stays
+# over its bound", because nothing else was. Under pressure, one recompile of an idle tree
+# costs less than a full volume, which stops every session. Ten minutes still keeps the
+# generation of a tree in its edit-compile loop, and every eviction is still asked again
+# under the lock: written since, held open, or named by a process keeps it.
+MJ_EVICT_PRESSURE_IDLE_MIN_DEFAULT=10
 # How often one build directory is measured from the build path, at most: the measure is a
 # du of the whole directory, about a second at 60 GB. A rate limit, never a predicate.
 MJ_BOUND_SWEEP_EVERY_S=120
@@ -1135,6 +1150,26 @@ MJ_EVICT_LOCK_WAIT_DEFAULT=900
 mj_rust_bound_state() {
   printf '%s/majordomus/bound-%s\n' "${XDG_CACHE_HOME:-$HOME/.cache}" \
     "$(printf '%s' "$1" | cksum | awk '{ print $1 }')"
+}
+
+# mj_rust_pressure_idle <build-dir> <idle-minutes> — the idle age the bound applies there.
+# Sets mj_rp_idle: the shorter pressure age while the volume has less free than the reclaim
+# mark, else the age given. A free space that cannot be read is no pressure: a deleting sweep
+# whose input is unmeasured keeps the longer age (project.destructive-sweeps-fail-closed).
+# Sets mj_rp_free and mj_rp_mark for the caller to say what it measured.
+mj_rust_pressure_idle() {
+  mj_rp_idle="$2"
+  mj_rp_short="${MAJORDOMUS_SHARED_BUILD_PRESSURE_IDLE_MIN:-$MJ_EVICT_PRESSURE_IDLE_MIN_DEFAULT}"
+  case "$mj_rp_short" in ''|*[!0-9]*) mj_rp_short="$MJ_EVICT_PRESSURE_IDLE_MIN_DEFAULT" ;; esac
+  mj_rp_mark="${MAJORDOMUS_RECLAIM_BELOW_MB:-$MJ_RECLAIM_BELOW_MB_DEFAULT}"
+  case "$mj_rp_mark" in ''|*[!0-9]*) mj_rp_mark="$MJ_RECLAIM_BELOW_MB_DEFAULT" ;; esac
+  [ "$mj_rp_short" -gt 0 ] && [ "$mj_rp_short" -lt "$mj_rp_idle" ] && [ "$mj_rp_mark" -gt 0 ] \
+    || return 0
+  mj_rp_free="$(mj_free_mb "$1" || true)"
+  case "$mj_rp_free" in ''|*[!0-9]*) return 0 ;; esac
+  [ "$mj_rp_free" -lt "$mj_rp_mark" ] || return 0
+  mj_rp_idle="$mj_rp_short"
+  return 0
 }
 
 # mj_rust_bound_due <build-dir> — is a pass of the bound due for it? True at most once every
@@ -1441,6 +1476,12 @@ mj_rust_bound_build_dir() {
         "$mj_bb_say" "$mj_bb_dir" "$(mj_rust_human_kb "$mj_bb_size")" "$(mj_rust_human_kb "$mj_bb_bound")" >&2
       return 0
     fi
+  fi
+  mj_rust_pressure_idle "$mj_bb_dir" "$mj_bb_idle"
+  if [ "$mj_rp_idle" != "$mj_bb_idle" ]; then
+    printf '%s %s: its volume has %sMB free, below %sMB: a unit idle for %s min is stale, not %s\n' \
+      "$mj_bb_say" "$mj_bb_dir" "$mj_rp_free" "$mj_rp_mark" "$mj_rp_idle" "$mj_bb_idle" >&2
+    mj_bb_idle="$mj_rp_idle"
   fi
   mj_bb_tab="$(printf '\t')"
   mj_bb_now="$(date +%s)"
