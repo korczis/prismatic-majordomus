@@ -622,8 +622,34 @@
     background: var(--mj-sunken);
     border: 1px solid var(--mj-line);
   }
+  /* a card that leads somewhere is the link: the whole card answers the pointer and the
+     keyboard, and says so by its frame rather than by a colour alone */
+  .mj-ui-card--link {
+    @apply h-full no-underline transition-shadow;
+    color: inherit;
+  }
+  .mj-ui-card--link:hover,
+  .mj-ui-card--link:focus-visible {
+    border-color: var(--mj-accent-line);
+    box-shadow: 0 0 0 1px var(--mj-accent-line), 0 8px 24px -12px var(--mj-accent-line);
+  }
+  .mj-ui-card--link:hover .mj-ui-card-title {
+    @apply underline;
+  }
+  .mj-ui-card-head {
+    @apply flex min-w-0 items-center gap-2;
+  }
+  .mj-ui-card-glyph {
+    @apply inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg;
+    color: var(--mj-tone-fg, var(--mj-accent));
+    background: var(--mj-tone-bg, var(--mj-accent-soft));
+    border: 1px solid var(--mj-tone-line, var(--mj-accent-line));
+  }
+  .mj-ui-card-glyph > .mj-ui-icon {
+    @apply h-4 w-4;
+  }
   .mj-ui-card-kicker {
-    @apply text-xs;
+    @apply min-w-0 truncate text-xs;
     color: var(--mj-accent);
   }
   .mj-ui-card-title {

@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "da31b40589f677a60c83f92eedaa4d77ca560c96663b428da48f11686010cce8",
+    "fingerprint": "22ccf709188d29a8d4de865fe2eeabd93adca60d9ea5f7b9a10fd9107eaf27af",
     "summary": {
-      "total": 3633,
+      "total": 3637,
       "builtin": 220,
-      "declarative": 3413,
+      "declarative": 3417,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3413
+        "resource": 3417
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3423
+        "implemented": 3427
       },
       "mcp_tools": 206,
-      "mcp_resources": 3470,
+      "mcp_resources": 3474,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91383,7 +91383,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1102,
+        "capabilities": 1104,
         "capability_ids": []
       },
       {
@@ -91981,7 +91981,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 660,
+        "capabilities": 662,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "1b1c1dbd708b0f93cdad0785ca9f66c5d1ce7915fa55817e723dcd6354675f6f",
+    "fingerprint": "063096b23f3c9e7219ed9b35bd1a8fd3273af57ddc49d2607d648698a2c6d5b0",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92113,7 +92113,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 44,
-      "issue": 1102,
+      "issue": 1104,
       "knowledge": 60,
       "mesh-declaration": 1,
       "milestone": 113,
@@ -92127,7 +92127,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 660,
+      "test": 662,
       "use-case": 49,
       "workspace": 1
     },
@@ -99495,7 +99495,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 44548
+        "bytes": 44964
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -99585,7 +99585,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 982448
+        "bytes": 984468
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -107351,6 +107351,28 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 3530
+      },
+      {
+        "uri": "majordomus://issue/I2479",
+        "kind": "issue",
+        "identity": "I2479",
+        "title": "The capabilities are searched and faceted: kind, module, stability, surface and text, each counted",
+        "description": "Let a reader of majordomus ui narrow the queries and commands on /ui/capabilities by kind, module, stability, the surface they are projected on and text, with each facet counting what choosing it would show, every control a link or a GET form, and every row opening its declaration without losing the filters.",
+        "path": ".ai/repo/project/issues/I2479.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2242
+      },
+      {
+        "uri": "majordomus://issue/I2480",
+        "kind": "issue",
+        "identity": "I2480",
+        "title": "The home page is the UI's front door: every screen and every surface one click away, in the UI's design",
+        "description": "Let a person who opens a Majordomus process at / land on a screen of majordomus ui, in its frame and design: the version of this executable, the last release, the revision and the capability count, a card for every screen of the UI with the question it answers, and a card for every surface the process serves, leading to it when it answers and naming what builds it when it does not.",
+        "path": ".ai/repo/project/issues/I2480.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3043
       },
       {
         "uri": "majordomus://issue/I2481",
@@ -123719,6 +123741,22 @@
         "bytes": 2713
       },
       {
+        "uri": "majordomus://test/test/cases/1084_the_capabilities_are_faceted.sh",
+        "kind": "test",
+        "identity": "test/cases/1084_the_capabilities_are_faceted.sh",
+        "path": "test/cases/1084_the_capabilities_are_faceted.sh",
+        "source_class": "case",
+        "bytes": 4290
+      },
+      {
+        "uri": "majordomus://test/test/cases/1085_the_home_page_is_the_front_door.sh",
+        "kind": "test",
+        "identity": "test/cases/1085_the_home_page_is_the_front_door.sh",
+        "path": "test/cases/1085_the_home_page_is_the_front_door.sh",
+        "source_class": "case",
+        "bytes": 4479
+      },
+      {
         "uri": "majordomus://test/test/cases/1086_a_remote_caller_cannot_write.sh",
         "kind": "test",
         "identity": "test/cases/1086_a_remote_caller_cannot_write.sh",
@@ -126796,7 +126834,7 @@
         "identity": "test/cases/488_rustdoc_discoverable.sh",
         "path": "test/cases/488_rustdoc_discoverable.sh",
         "source_class": "case",
-        "bytes": 13001
+        "bytes": 13113
       },
       {
         "uri": "majordomus://test/test/cases/489_rustdoc_deploy.sh",
@@ -128036,7 +128074,7 @@
         "identity": "test/cases/89_web_surface.sh",
         "path": "test/cases/89_web_surface.sh",
         "source_class": "case",
-        "bytes": 11344
+        "bytes": 11995
       },
       {
         "uri": "majordomus://test/test/cases/900_prose_states_no_version.sh",
@@ -129265,7 +129303,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1102
+      "objects": 1104
     },
     {
       "name": "knowledge",
@@ -129427,7 +129465,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 660
+      "objects": 662
     },
     {
       "name": "use-case",
