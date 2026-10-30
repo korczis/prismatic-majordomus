@@ -1,0 +1,42 @@
+id: I4314
+milestone: a-review-is-published-at-its-commit
+title: "A security finding shows only its title, severity and status on the site and in every published file"
+slug: security-findings-are-redacted
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Add a security class to the critique finding classes (CritiqueClass, apps/majordomus-cli/src/intent_review.rs:226-257, and the critique schema), write one redaction function in the crate that reduces a finding of that class to its title, severity and status, and apply the same reduction wherever a finding leaves the checkout through the site: the site's data, its pages (the /quality/ page included) and every published JSON (the /quality/ download included); keep the full finding in the checkout-local report; fail the site build when a published file carries a security finding's path, line, cited text or reproduce command."
+why: "dev-68 asked for a redacted view, and the conclusion adopted it: 'Security findings show only title, severity and status on shared surfaces.' The JOBL atlas withholds attack details on its shared page for the same reason: a finding published in full tells an attacker where to look before the fix lands. The first review (I4305) will scan the history for secrets with apps/majordomus-cli/src/quality/leak-patterns.tsv, and leaks.rs already refuses to repeat a matched credential (apps/majordomus-cli/src/quality/leaks.rs:18-19); the review's published surfaces need the same discipline for every security finding. No /ui or Cockpit screen renders a critique finding today (the /ui observatory reads only quality.report's counts, apps/majordomus-cli/src/ui/observatory.rs:96, and the Cockpit's findings card shows intent validation findings, apps/majordomus-cli/src/cockpit/intents.rs:256), so the crate's redaction function is what a later screen of review findings calls, rather than a /ui change here. It lands in the first milestone because the first review (I4305) must not publish before it."
+current_state: "On 81ef931a3e1 CritiqueClass has seven classes and none is security; no surface redacts a finding; the site publishes no finding yet."
+desired_state: "A finding of the security class reaches the site and every published data file with title, severity and status only, through the one redaction function; the checkout-local report keeps the detail; site-check fails on a planted security finding whose path or reproduce command reaches the built site."
+scope:
+  - ".ai/repo/project/issues/I4314.yaml"
+  - "share/schemas/majordomus/critique/critique.v1.schema.json"
+  - "apps/majordomus-cli/src/intent_review.rs"
+  - "scripts/generate-site-data"
+  - "scripts/site-check"
+  - "site/templates/quality.html"
+non_scope:
+  - "Deciding what is a vulnerability: the finding's author sets the class"
+  - "Private publication of the full detail to anyone"
+  - "A /ui or Cockpit screen of review findings: none exists, and the screen that first renders one calls the redaction function"
+depends_on:
+  - "I4299"
+  - "I4309"
+serves:
+  - "a-review-is-seen-at-its-commit#security-findings-are-redacted"
+acceptance_criteria:
+  - "A planted security finding appears on the built site and in its JSON with title, severity and status and no path, line, text or command"
+  - "site-check fails when a planted security finding's path reaches any built file, naming the file"
+  - "The checkout-local report still carries the full finding"
+  - "The redaction function has a unit test over a fixture security finding, and an unknown class fails closed"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib intent_review::"
+  - "scripts/site-build"
+  - "scripts/site-check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "security_findings_are_redacted"
+risk: "Medium. A redaction that fails open publishes the detail; the site-check rule is the guard and must fail closed when it cannot read a finding's class."
+created_at: 2026-10-28
+updated_at: 2026-10-28

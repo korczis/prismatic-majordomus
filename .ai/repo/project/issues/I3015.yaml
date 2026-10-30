@@ -29,4 +29,16 @@ validation:
 evidence_required:
   - one_discovery_at_every_entry
 created_at: 2026-10-21
-updated_at: 2026-10-21
+updated_at: 2026-10-26T03:50:41Z
+started_at: 2026-10-26T03:50:13Z
+started_event: sha256:3c97e86720048ef010525911680eb03be3d38c8de112134352f78b4198eccf4e
+completed_at: 2026-10-26T03:50:41Z
+completed_event: sha256:ea67911dd5f1782e01b77140d9982ec1c2256bef660b285a6207288406795095
+evidence:
+  - covers: one_discovery_at_every_entry
+    type: ci
+    command: "cargo test --workspace --all-features (CI rust jobs)"
+    result: "master validate run 40196303175 at 2efeacea031 concluded success; tests/hot_path.rs asserts repository_discoveries 1 after an MCP initialize and after serve's startup; Repository::discover times itself as Phase::RepositoryDiscovery (repository.rs:197), so every entry that discovers is timed"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-26T03:50:32Z
