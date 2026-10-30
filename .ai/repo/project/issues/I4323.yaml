@@ -36,4 +36,15 @@ evidence_required:
   - "full_disk_is_one_finding_case"
 serves: []
 created_at: 2026-10-28
-updated_at: 2026-10-29
+updated_at: 2026-10-30T11:57:47Z
+started_at: 2026-10-30T11:56:03Z
+started_event: sha256:afd211cb36f4ef24a0e7c5d4dbc34859d1104138fe209ec80491819e6e2ba234
+completed_at: 2026-10-30T11:57:47Z
+completed_event: sha256:f2d91c18aeaa18e82d3b68ee2cb98a9d4ef8b38ea0b07aa9650e45e307207410
+evidence:
+  - covers: full_disk_is_one_finding_case
+    type: test
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4323_a_full_disk_is_one_finding"
+    result: "ok: with TMPDIR unwritable doctor prints one FAIL disk and INFO not judged, exit 10, no other FAIL and no majordomus update remedy; the installed pre-commit hook refuses the commit with that one FAIL; a floor above the free space gives the same one finding; above the floor doctor says nothing about the disk. Without the change the case fails: the entry point exits 1 on mktemp"
+    commit: 51b38035a7162332304aef58fed25b98761f412b
+    recorded_at: 2026-10-30T11:57:24Z
