@@ -74401,6 +74401,52 @@
         }
       },
       {
+        "id": "majordomus://issue/I4512",
+        "kind": "issue",
+        "label": "I4512",
+        "summary": "No derived page grows past the scope's size limit, so one derive is a fixpoint",
+        "route": "/cockpit/objects/issue/i4512",
+        "source": ".ai/repo/project/issues/I4512.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "No file scripts/derive writes exceeds 75% of out.max_bytes on master, and the plan status is split so that adding a milestone adds a page rather than growing one",
+            "A gate refuses a derived file above that fraction, naming the file, its size and the limit",
+            "On a fixture whose plan status would exceed max_bytes as one page, one run of scripts/derive is followed by a second that changes nothing"
+          ],
+          "created_at": "2026-10-30",
+          "evidence_required": [
+            "ci"
+          ],
+          "milestone": "derived-data-integrity",
+          "non_scope": [
+            "Raising out.max_bytes. That moves the edge as the plan grows rather than removing it.",
+            "Excluding docs/PLAN_STATUS.md from the index. A derived page the index cannot read is a page the briefing, search and context compiler cannot read either.",
+            "Reordering stage B and stage C. That would hide the symptom (the second pass) while leaving the page outside the index."
+          ],
+          "objective": "Keep every derived page under the index's per-file limit by construction, so that one run of scripts/derive leaves a tree the next run does not change.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "Low to medium. Every link to docs/PLAN_STATUS.md (site, docs, briefings) must keep resolving after the split, so the index page keeps that path.",
+          "scope": [
+            ".ai/repo/project/issues/I4512.yaml",
+            "scripts/generate-site-data",
+            "scripts/derive",
+            "scripts/derive-check",
+            ".ai/repo/ci/gates.yaml",
+            "test/cases/4512_no_derived_page_outgrows_the_index.sh",
+            "docs/PLAN_STATUS.md",
+            "docs/plan-status"
+          ],
+          "slug": "no-derived-page-outgrows-the-index",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "scripts/derive-check",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -137823,6 +137869,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4512",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4512",
+        "target": "majordomus://milestone/derived-data-integrity",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -149509,8 +149565,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4097,
-      "edges": 9459,
+      "nodes": 4098,
+      "edges": 9461,
       "acyclic": false,
       "truncated": false
     }
