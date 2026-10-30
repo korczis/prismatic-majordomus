@@ -74880,6 +74880,49 @@
         }
       },
       {
+        "id": "majordomus://issue/I4522",
+        "kind": "issue",
+        "label": "I4522",
+        "summary": "A repository's release records are judged against the repository's own distribution model, or on internal consistency alone when it declares none, never against the installed tool's",
+        "route": "/cockpit/objects/issue/i4522",
+        "source": ".ai/repo/project/issues/I4522.yaml",
+        "facts": {
+          "created_at": "2026-10-30",
+          "depends_on": [],
+          "evidence_required": [
+            "adopter_release_record_case"
+          ],
+          "milestone": "a-bounded-task-is-carried-to-accepted-work",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4522.yaml",
+            "apps/majordomus-cli/src/distribution/release.rs",
+            "apps/majordomus-cli/src/distribution/mod.rs",
+            "apps/majordomus-cli/src/distribution/tests.rs",
+            "apps/majordomus-cli/src/app.rs",
+            "apps/majordomus-cli/src/generate.rs",
+            "apps/majordomus-cli/src/commands/distribution.rs",
+            "apps/majordomus-cli/src/capability/builtin/distribution.rs",
+            "docs/RELEASE.md",
+            "docs/DISTRIBUTION.md",
+            "test/cases/4522_release_records_are_judged_by_their_own_model.sh"
+          ],
+          "serves": [],
+          "slug": "release-records-are-judged-by-their-own-model",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "MJ_TEST_JOBS=4 bash test/run.sh 4522_release_records_are_judged_by_their_own_model 84_distribution_model 139_release_record_schema 1024_an_installed_release_serves_a_foreign_repository",
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib distribution",
+            "bin/majordomus generate --check",
+            "bin/majordomus shell check",
+            "bin/majordomus doctor",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -138431,6 +138474,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4522",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4522",
+        "target": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -150122,8 +150175,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4107,
-      "edges": 9480,
+      "nodes": 4108,
+      "edges": 9482,
       "acyclic": false,
       "truncated": false
     }

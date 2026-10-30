@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "248582d92989ff5192a5708496298624c0b7688b8c13dd2484caab5e5c3a33ca",
+    "fingerprint": "e5d23d21729c82b4061851b229b680ace0437f05b1e8040f7cf7ed8ff9b3c2d0",
     "summary": {
-      "total": 3643,
+      "total": 3644,
       "builtin": 220,
-      "declarative": 3423,
+      "declarative": 3424,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3423
+        "resource": 3424
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3433
+        "implemented": 3434
       },
       "mcp_tools": 206,
-      "mcp_resources": 3480,
+      "mcp_resources": 3481,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91383,7 +91383,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1112,
+        "capabilities": 1113,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ac4ed47cf62befa6928313c0063eda4e668f75a65d7150ed2167e5b0040dd04c",
+    "fingerprint": "f022f2b7c2eadede083159103e9e92e303db40e108dbaa1d0d5a3a704ffd14db",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92113,7 +92113,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 44,
-      "issue": 1112,
+      "issue": 1113,
       "knowledge": 60,
       "mesh-declaration": 1,
       "milestone": 114,
@@ -115750,6 +115750,17 @@
         "bytes": 4742
       },
       {
+        "uri": "majordomus://issue/I4522",
+        "kind": "issue",
+        "identity": "I4522",
+        "title": "A repository's release records are judged against the repository's own distribution model, or on internal consistency alone when it declares none, never against the installed tool's",
+        "description": "Release records under .ai/repo/releases are judged against the distribution model of the repository that carries them: the distribution-model object its own knowledge sources index (Model::from_index, apps/majordomus-cli/src/distribution/mod.rs:370), which in this repository is share/distribution.yaml through the `distribution` class of .ai/repo/knowledge/sources.yaml:246-250. The installed tool's model, Model::load(&app.share) and Model::locate(&share), stays what describes this build, its installer and its archive names, and stops being what a repository's records are measured against. Releases::findings and Release::findings (apps/majordomus-cli/src/distribution/release.rs:348 and :134) take the repository's model as an Option: with a model, every finding they make today is made against it; with none, the model-bound findings (a target the model does not declare or does not publish, a name the naming function does not derive, a URL outside the model's download prefix; release.rs:174-199) are not made, and the record is judged on internal consistency alone: a semantic version, no pre-release on the stable channel, tag equal to `v` and the version (release.rs:106), every required target carried by an artifact, no target twice, no tag twice, a URL ending in its own tag and name, a 64-hex digest and a non-zero size. The judgement is chosen in one function every caller asks (the generator, distribution validate, distribution metadata, the distribution status capability), so the generator and the command line cannot judge one record two ways. A finding names which model it was judged against, or that it was judged on internal consistency because the repository declares none.",
+        "path": ".ai/repo/project/issues/I4522.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 10629
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -116733,7 +116744,7 @@
         "path": ".ai/repo/project/milestones/a-bounded-task-is-carried-to-accepted-work.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 12216
+        "bytes": 12610
       },
       {
         "uri": "majordomus://milestone/a-change-is-judged-in-minutes",
@@ -129379,7 +129390,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1112
+      "objects": 1113
     },
     {
       "name": "knowledge",
