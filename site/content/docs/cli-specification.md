@@ -985,6 +985,14 @@ different, still-open episode opened that task (ADR 0164); then its Markdown `ta
 `check --checkpoint` uses the same rule. A derived checkpoint uses that same prepared
 relation for its body; it cannot describe another episode's task as its own.
 
+The records that decide whether work is done follow the same rule and refuse instead of
+filing under another worker's task (I4292): `evidence --covers`, `evidence --gate` and a
+real `finish` exit `15` with `refused by adr-0164` when a different, still-open episode
+opened the active task, write nothing, and print the command to rerun under the opener's
+`MJ_SESSION_KEY` or the `session close --provider-session` that releases it. A hand-run
+`session close` with more than one episode open and none named exits `15` the same way and
+lists the keys to pass. `finish` counts only the checkpoints whose `task_id` is its task.
+
 This refused with `12` (no active task) and `15` (the task is no longer active) until ADR
 0052. Those two refusals are the 2026-09-05 outage: a task marked `handed_over` and never
 replaced silenced this repository's progress records for six days, while episodes went on
