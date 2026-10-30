@@ -24535,6 +24535,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:project.a-visualisation-is-interactive": {
+      "kind": "rule",
+      "id": "project.a-visualisation-is-interactive",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:1102_a_visualisation_is_interactive",
+          "path": "test/cases/1102_a_visualisation_is_interactive.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1102_a_visualisation_is_interactive.sh",
+            ".ai/repo/rules/project/a-visualisation-is-interactive.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [
+        "scripts/ci/visualisation-check"
+      ],
+      "findings": []
+    },
     "rule:project.a-worker-that-stops-leaves-its-work-behind": {
       "kind": "rule",
       "id": "project.a-worker-that-stops-leaves-its-work-behind",
@@ -26173,6 +26196,37 @@
           "inputs": [
             "test/cases/97_pages_fast_path.sh",
             ".ai/repo/rules/project/land-and-publish.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.markdown-is-rendered-once": {
+      "kind": "rule",
+      "id": "project.markdown-is-rendered-once",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "crate:markdown_bodies",
+          "path": "apps/majordomus-cli/tests/markdown_bodies.rs",
+          "category": "integration",
+          "inputs": [
+            "apps/majordomus-cli/tests/markdown_bodies.rs",
+            ".ai/repo/rules/project/markdown-is-rendered-once.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:1101_markdown_is_rendered_once",
+          "path": "test/cases/1101_markdown_is_rendered_once.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1101_markdown_is_rendered_once.sh",
+            ".ai/repo/rules/project/markdown-is-rendered-once.v1.md"
           ]
         }
       ],

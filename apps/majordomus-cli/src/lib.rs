@@ -61,6 +61,7 @@ pub mod lease;
 pub mod ledger;
 pub mod live;
 pub mod logging;
+pub(crate) mod markdown;
 pub mod mcp;
 pub mod mesh;
 pub mod metadata;

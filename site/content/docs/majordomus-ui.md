@@ -595,9 +595,11 @@ they cost. It renders nothing itself. What it changes is only what a file cannot
 </div>
 
 
-A snapshot knows what the UI could read where it was taken. A Pages runner has no mesh, no
-recorded forge observation and no running execution, so those panels read `none`, `unknown`
-or `not answered`, never zero. A snapshot is not evidence of the live state of anything: for
+A snapshot knows what the UI could read where it was taken. The publishing job observes the
+forge first (`majordomus prs refresh` for the open pull requests, `majordomus served forge`
+for the deployments and the releases), so the drain and the deployments are the forge's as of that minute. A Pages runner
+has no mesh and no running execution, so those panels read `none`, `unknown` or `not
+answered`, never zero. A snapshot is not evidence of the live state of anything: for
 that, run `majordomus serve` in a checkout and open `/ui`.
 
 **Evidence is the exception.** A Pages runner does have a record of the tests: the `evidence`

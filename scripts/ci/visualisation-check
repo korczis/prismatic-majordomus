@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# visualisation-check — the gate of project.a-visualisation-is-interactive: a drawing a
+# served surface makes is something a reader can act on, never a picture.
+#
+# A graph, a chart, a diagram or a scene stands for records: nodes are issues, bars are runs,
+# boxes are documents. Drawn without a way from the mark to the record, it is a dead end with
+# colours — the reader sees that something is wrong and has to go and find it by hand. So a
+# script that draws must also bind the way through: a pointer handler that selects or
+# navigates, or an anchor it builds for the mark.
+#
+# What is a drawing is not listed. A served script (share/ui/*.js, share/cockpit/*.js) is one
+# when it loads a vendored library at run time — `vendor(…)`, `vendorModule(…)`, `loadScript(…)`
+# — because that is the only way a drawing library reaches a page here. A script that loads
+# one and binds nothing a reader can press is a finding.
+#
+# The debt that predates the rule is named, not hidden: .ai/repo/visualisation-baseline.txt
+# lists the drawings that are still pictures, one path per line. The list may shrink and may
+# not grow: a drawing that is not interactive and not listed fails, and so does a listed one
+# that has become interactive or is gone — the baseline is lowered in the commit that pays.
+#
+#   scripts/ci/visualisation-check          report every finding, exit 10 on any
+#   scripts/ci/visualisation-check --list   every drawing, with whether it is interactive
+#   MJ_ROOT=<dir> scripts/ci/visualisation-check
+#
+# Exit: 0 clean, 10 findings, 12 unusable.
+set -euo pipefail
+HERE="$(cd "$(dirname "$0")/../.." && pwd)"
+ROOT="${MJ_ROOT:-$HERE}"
+cd "$ROOT"
+BASELINE=.ai/repo/visualisation-baseline.txt
+LIST=0
+[ "${1:-}" = "--list" ] && LIST=1
+
+LOADS="vendor\\('|vendorModule\\('|loadScript\\("
+BINDS="\\.on\\('tap'|addEventListener\\('click'|setAttribute\\('href'|\\.href = "
+
+[ -d share/ui ] && [ -d share/cockpit ] \
+  || { echo "visualisation-check: cannot measure: share/ui and share/cockpit are not both here" >&2; exit 12; }
+[ -f "$BASELINE" ] \
+  || { echo "visualisation-check: cannot measure: $BASELINE does not exist" >&2; exit 12; }
+
+# comments are prose: a script that only *describes* loading a library draws nothing.
+# Each question is asked of a value, never of a pipe: a reader that stops at its first match
+# closes the pipe on the writer, and under pipefail that reads as "no match".
+code() { grep -vE '^[[:space:]]*(//|\*|/\*)' "$1" || true; }
+has() { grep -qE "$2" <<<"$1"; }
+holds() { grep -qxF "$2" <<<"$1"; }
+
+accepted="$({ grep -vE '^[[:space:]]*(#|$)' "$BASELINE" || true; } | LC_ALL=C sort -u)"
+findings=0
+drawings=0
+pictures=""
+for script in $(find share/ui share/cockpit -maxdepth 1 -name '*.js' | LC_ALL=C sort); do
+  body="$(code "$script")"
+  has "$body" "$LOADS" || continue
+  drawings=$((drawings + 1))
+  if has "$body" "$BINDS"; then
+    state=interactive
+  else
+    state=picture
+    pictures="$pictures$script
+"
+  fi
+  [ "$LIST" = 1 ] && printf '%-12s %s\n' "$state" "$script"
+done
+[ "$LIST" = 1 ] && exit 0
+[ "$drawings" -gt 0 ] \
+  || { echo "visualisation-check: cannot measure: no served script loads a library, so the detector found nothing to judge" >&2; exit 12; }
+pictures="$(printf '%s' "$pictures" | LC_ALL=C sort -u)"
+
+for script in $pictures; do
+  if ! holds "$accepted" "$script"; then
+    echo "FAIL visualisation $script — draws and binds nothing a reader can press: every mark that stands for a record leads to it  [reproduce: scripts/ci/visualisation-check --list]"
+    findings=$((findings + 1))
+  fi
+done
+for script in $accepted; do
+  if ! holds "$pictures" "$script"; then
+    echo "FAIL visualisation $BASELINE — lists $script, which is interactive now or gone: lower the baseline in this commit  [reproduce: scripts/ci/visualisation-check --list]"
+    findings=$((findings + 1))
+  fi
+done
+
+if [ "$findings" -gt 0 ]; then
+  echo "visualisation-check: $findings finding(s)"
+  exit 10
+fi
+echo "visualisation-check: $drawings drawing(s), every one interactive or a named debt ($(printf '%s\n' "$accepted" | grep -c . || true) accepted)"

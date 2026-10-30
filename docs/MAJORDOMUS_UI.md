@@ -531,9 +531,11 @@ they cost. It renders nothing itself. What it changes is only what a file cannot
 | a slow panel is a placeholder (`data-panel-src`) the script fills once the screen has painted | the panel itself, already read: the snapshot asks every page with the `X-Majordomus-Snapshot` header and the UI puts each panel where its placeholder stood |
 | "Read at" in the tool bar | also a notice on every page: the commit, the time, the executable, and a link to the live UI |
 
-A snapshot knows what the UI could read where it was taken. A Pages runner has no mesh, no
-recorded forge observation and no running execution, so those panels read `none`, `unknown`
-or `not answered`, never zero. A snapshot is not evidence of the live state of anything: for
+A snapshot knows what the UI could read where it was taken. The publishing job observes the
+forge first (`majordomus prs refresh` for the open pull requests, `majordomus served forge`
+for the deployments and the releases), so the drain and the deployments are the forge's as of that minute. A Pages runner
+has no mesh and no running execution, so those panels read `none`, `unknown` or `not
+answered`, never zero. A snapshot is not evidence of the live state of anything: for
 that, run `majordomus serve` in a checkout and open `/ui`.
 
 **Evidence is the exception.** A Pages runner does have a record of the tests: the `evidence`
