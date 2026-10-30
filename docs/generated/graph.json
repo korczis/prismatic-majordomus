@@ -74401,6 +74401,90 @@
         }
       },
       {
+        "id": "majordomus://issue/I4520",
+        "kind": "issue",
+        "label": "I4520",
+        "summary": "finish runs its verify command in the caller's environment, not with the launcher's own MJ_* exported",
+        "route": "/cockpit/objects/issue/i4520",
+        "source": ".ai/repo/project/issues/I4520.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 4520: a verify command that fails while MJ_ROOT, MJ_STATE_DIR, MJ_AI_DIR, MJ_LIB_DIR, MJ_SELF or MAJORDOMUS_LAUNCHER is set lets finish complete, and refuses it on the base",
+            "Case 4520: an MJ_* variable the caller exported reaches the verify command with the caller's value, and MJ_FINISH_OUTCOME does not",
+            "Case 4520: under a launcher that exports MAJORDOMUS_LAUNCHER, as the installed one does, the verify command does not see it"
+          ],
+          "created_at": "2026-10-30",
+          "depends_on": [],
+          "desired_state": "A verify command sees no MJ_* variable and no MAJORDOMUS_LAUNCHER that its caller did not have, and keeps every MJ_* variable its caller did have, with the caller's value. Enforced by case 4520.",
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Pinning the fleet pack off while a use-case scenario is recorded (I4521)",
+            "The environment of other commands a caller hands to majordomus to run"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4520.yaml",
+            "bin/majordomus",
+            "lib/finish.sh",
+            "test/cases/4520_a_verify_command_runs_in_the_callers_environment.sh"
+          ],
+          "serves": [],
+          "slug": "finish-verify-does-not-inherit-the-launcher-env",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "env -u TMPDIR bash test/run.sh 4520_a_verify_command_runs_in_the_callers_environment 572_verification_records_the_tree_it_proved 06_finish",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4521",
+        "kind": "issue",
+        "label": "I4521",
+        "summary": "A use-case scenario is recorded with the fleet pack off, so its evidence is the same on every machine",
+        "route": "/cockpit/objects/issue/i4521",
+        "source": ".ai/repo/project/issues/I4521.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 4521: a scenario recorded with a fake pack under XDG_CONFIG_HOME, and again with MAJORDOMUS_FLEET_PACK naming it, records evidence byte-identical to the same scenario recorded with no pack",
+            "Case 4521: with MAJORDOMUS_FLEET=off, mj_fleet_install writes nothing and the doctor names the default pack path it would read",
+            "site/data/generated/catalogue.json derived on a machine with a pack equals the committed one"
+          ],
+          "created_at": "2026-10-30",
+          "depends_on": [],
+          "desired_state": "The evidence a scenario records is the same with and without a fleet pack on the recording machine, and catalogue.json derived on the owner's workstation equals the runner's. Enforced by case 4521.",
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "derived-data-integrity",
+          "non_scope": [
+            "What the fleet pack installs and where it is looked for (I4336)",
+            "The environment finish hands its verify command (I4520)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4521.yaml",
+            "lib/usecase.sh",
+            "lib/fleet.sh",
+            "test/cases/4521_a_scenario_is_recorded_without_the_fleet_pack.sh"
+          ],
+          "serves": [],
+          "slug": "a-scenario-is-recorded-without-the-fleet-pack",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "env -u TMPDIR bash test/run.sh 4521_a_scenario_is_recorded_without_the_fleet_pack 94_use_cases",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -98171,6 +98255,13 @@
         "label": "test/cases/44_model_doctrine.sh",
         "route": "/cockpit/objects/test/test-cases-44-model-doctrine-sh",
         "source": "test/cases/44_model_doctrine.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4520_a_verify_command_runs_in_the_callers_environment.sh",
+        "kind": "test",
+        "label": "test/cases/4520_a_verify_command_runs_in_the_callers_environment.sh",
+        "route": "/cockpit/objects/test/test-cases-4520-a-verify-command-runs-in-the-callers-environment-sh",
+        "source": "test/cases/4520_a_verify_command_runs_in_the_callers_environment.sh"
       },
       {
         "id": "majordomus://test/test/cases/45_github_projection.sh",
@@ -137823,6 +137914,26 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4520",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4520",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4521",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4521",
+        "target": "majordomus://milestone/derived-data-integrity",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -144438,6 +144549,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4520_a_verify_command_runs_in_the_callers_environment.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/45_github_projection.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -149509,8 +149625,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4097,
-      "edges": 9459,
+      "nodes": 4100,
+      "edges": 9464,
       "acyclic": false,
       "truncated": false
     }
