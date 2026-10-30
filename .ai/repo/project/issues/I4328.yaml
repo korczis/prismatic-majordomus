@@ -1,0 +1,36 @@
+id: I4328
+milestone: development-runtime
+title: "A local task claim says how old it is, who holds it and whether its work has landed, and a stale one stops reading as overlap"
+slug: a-stale-task-claim-is-named-not-overlapping
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "mj_report_overlap (lib/start.sh:182-195) is printed by `majordomus start` (lib/start.sh:170) and by `majordomus check --overlap` (lib/check.sh:48, :342-344). It qualifies each active task of another worktree with four facts: the age of its last checkpoint (checkpoint_at), its branch, whether a session is attached, and whether the branch has landed by the predicate of I4333. A claim whose branch has landed, or one that no session holds and whose checkpoint is older than a bound stated beside the check (default 7 days), prints `INFO overlap-stale <worktree> — claims <path>; task <id>, checkpoint <age> ago, <landed as <commit> (#<pr>)|unheld> (close it: majordomus finish in <worktree>)` instead of the live overlap line. A live claim's line gains its task id, age and branch."
+why: "Observed in OSCILLA (korczis/oscilla) on 2026-10-28 with majordomus 1.0.0-alpha.8. Every `majordomus start` printed `INFO overlap release-scripts-refuse-unknown-flags — claims scripts/release-publish.mjs / tests/unit / tests/README.md`. The holder, read with `git worktree list` and the worktree's .ai/local/state/current.yaml, is ~/dev/oscilla-wt/fix/release-scripts-refuse-unknown-flags: task t-20261018113950-99d5 ('R-4 of #198: release scripts refuse unknown flags and answer --help without acting'), outcome active, started and last checkpointed 2026-10-18T11:39:50Z, on branch fix/release-scripts-refuse-unknown-flags. Its work landed 36 minutes after that checkpoint, as PR #199, squash-merged on 2026-10-18T12:15:22Z as b820e04, and no session has held the task since. Ten days later the claim still overlaps any new task on those broad paths. No ancestry or tree test says it has landed: the branch is not an ancestor of main, and `git merge-tree --write-tree origin/main <branch>` does not give main's tree because main changed the same files later. Only the forge (PR #199 MERGED with head a5e5044) or the combined patch-id (equal to b820e04's) decides it, which is why this issue uses I4333's predicate. On master 81ef931a3e1, mj_report_overlap treats any task whose outcome is active in a linked worktree's current.yaml as a live claim, however old its checkpoint, whether or not a session is attached, and whether or not its work has landed. It names only the worktree basename and the path. I3832's merged-worktree sweep decides 'merged' by ancestry, and it removes worktrees rather than qualifying this report."
+current_state: "On master 81ef931a3e1, a finished but unclosed task in a squash-merged worktree prints the same overlap line as a task someone is working on now."
+desired_state: "A landed claim, or an unheld old one, reads overlap-stale with its task, its age and why it is stale. A live claim reads overlap with its task, age and branch. Nothing is closed or removed automatically."
+scope:
+  - "lib/start.sh"
+  - "lib/check.sh"
+  - "lib/common.sh"
+  - "docs/WORKTREES.md"
+  - "test/cases"
+non_scope:
+  - "The landed predicate: I4333"
+  - "Removing merged worktrees (I3832)"
+  - "The staleness of exclusive mesh claims (I3990)"
+  - "Closing a stale task automatically: only its holder or the owner finishes it"
+depends_on:
+  - "I4333"
+acceptance_criteria:
+  - "In a fixture with two worktrees, where the second holds an active task scoped to tests/unit and its three-commit branch was squash-merged into the trunk, start in the first with an overlapping scope prints overlap-stale naming the task and 'landed', and no overlap line"
+  - "The same task on an unmerged branch with a fresh checkpoint prints overlap with its task id, age and branch"
+  - "An unmerged task with no attached session and a checkpoint older than the bound prints overlap-stale naming its age"
+  - "Before the change the case fails on the plain overlap line printed for the squash-merged task"
+validation:
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "stale_claim_overlap_case"
+serves: []
+created_at: 2026-10-28
+updated_at: 2026-10-28
