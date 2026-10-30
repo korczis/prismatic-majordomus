@@ -74401,6 +74401,41 @@
         }
       },
       {
+        "id": "majordomus://issue/I4513",
+        "kind": "issue",
+        "label": "I4513",
+        "summary": "The pre-commit pages gate judges a staged merge as scripts/derive writes it, with both parents",
+        "route": "/cockpit/objects/issue/i4513",
+        "source": ".ai/repo/project/issues/I4513.yaml",
+        "facts": {
+          "created_at": "2026-10-30",
+          "evidence_required": [
+            "ci"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Teaching scripts/derive to derive from HEAD again. The two-parent history is the correct one (I3963).",
+            "Cherry-picks and reverts. scripts/derive still refuses them (I3963)."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4513.yaml",
+            "scripts/pages",
+            "scripts/derive",
+            ".githooks/pre-commit",
+            "test/cases/4513_a_derived_merge_commits_in_one_go.sh"
+          ],
+          "slug": "the-pages-gate-judges-a-merge-as-derive-writes-it",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "bash test/run.sh 4513_a_derived_merge_commits_in_one_go",
+            "scripts/pages current"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -137823,6 +137858,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4513",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4513",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -149509,8 +149554,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4097,
-      "edges": 9459,
+      "nodes": 4098,
+      "edges": 9461,
       "acyclic": false,
       "truncated": false
     }
