@@ -136,6 +136,26 @@ jobs:
       pages_live: ${{ steps.plan.outputs.pages_live }}
       rustdoc: ${{ steps.plan.outputs.rustdoc }}
     steps:
+      # I4338: a pull request labelled hold is a train member. Its train's top runs the validate
+      # that judges it, and it lands only with that top, so its own run decides nothing and only
+      # holds a slot of the one validate the pool runs at a time: on 2026-10-28 twelve member
+      # runs queued ahead of trains 10a and 10b. It gives the slot back before any job asks for a
+      # runner, as the release path does below, and since it never reaches ci it can never read
+      # green and land on its own. A cancel that does not take hold fails the step instead.
+      - name: a held member yields to its train
+        if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'hold')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          {
+            echo "## held"; echo
+            echo "Pull request #$PR_NUMBER carries the hold label: it is a train member, judged by its train's top, and lands with it. This run gives its runners back (I4338)."
+          } >> "$GITHUB_STEP_SUMMARY"
+          gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY"
+          sleep 120
+          echo "::error::the run was not cancelled; a held member's run must not go on"
+          exit 1
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
@@ -313,10 +333,17 @@ jobs:
       # job's (scripts/ci/step-bound-check): they take 95 to 212 s (2026-10-20), and the one
       # that did not return that day waited out the coverage job's 55 minutes and read as
       # cancelled, with nothing measured (run 39438896504).
+      # On 2026-10-28 (I4296) the full fetch of 533 heads and 190 tags took 216 to 488 s and
+      # hit the old 10-minute bound in 6 of 11 runs here and 4 in suite-shard (train 10a run
+      # 40733537887), so every full-history checkout of this file is bounded at 20 minutes.
+      # This one also keeps its history to commits and trees (blob:none): its gates read history
+      # as object ids, merge bases and paths, and the one file of the past they read, the
+      # release's registry, is fetched on demand, as pages.yml already does for its link check.
       - uses: actions/checkout@v4
-        timeout-minutes: 10
+        timeout-minutes: 20
         with:
           fetch-depth: 0
+          filter: blob:none
       - run: sudo apt-get install -y shellcheck >/dev/null
       # `generation-converges` runs the generator, and the editor projection is one of its
       # targets: it reads the tracked justfile's recipes through `just --dump` (ADR 0140) and
@@ -423,7 +450,7 @@ jobs:
       # the whole history: a case that clones this checkout into a fixture and pushes
       # (96_site_deploy does, to a bare repository of its own) cannot push a shallow clone
       - uses: actions/checkout@v4
-        timeout-minutes: 10
+        timeout-minutes: 20
         with:
           fetch-depth: 0
       - id: site
@@ -676,7 +703,7 @@ jobs:
       # document it is required to write. The gate then reported the committed artifact stale
       # for a reason no branch had caused. A check reads its inputs; this job now fetches them.
       - uses: actions/checkout@v4
-        timeout-minutes: 10
+        timeout-minutes: 20
         with:
           fetch-depth: 0
       - id: rust
@@ -973,7 +1000,7 @@ jobs:
     steps:
       # the whole history: the report compares each execution's commit with the tree
       - uses: actions/checkout@v4
-        timeout-minutes: 10
+        timeout-minutes: 20
         with:
           fetch-depth: 0
       # the build job's executable, downloaded; the toolchain is set up only if it has to be built
@@ -1091,7 +1118,7 @@ jobs:
       # commit is in the history being published, and refuses to report clean from a shallow
       # clone that cannot say.
       - uses: actions/checkout@v4
-        timeout-minutes: 10
+        timeout-minutes: 20
         with:
           fetch-depth: 0
       - id: site
@@ -1781,7 +1808,7 @@ jobs:
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
       - uses: actions/checkout@v4
-        timeout-minutes: 10
+        timeout-minutes: 20
         with:
           fetch-depth: 0
       - id: site
@@ -1918,7 +1945,7 @@ jobs:
       actions: write
     steps:
       - uses: actions/checkout@v4
-        timeout-minutes: 10
+        timeout-minutes: 20
         with:
           fetch-depth: 0
       # --for: this job runs beside the deploy of its own commit, and judging the site before

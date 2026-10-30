@@ -81,6 +81,18 @@ unset mj_git_local
 # and fails what it measures about the default (case 85). A case that wants another
 # interface states it itself.
 unset MAJORDOMUS_HTTP_HOST
+# Nor is the provider session the suite runs under a case's. A suite started from inside an
+# agent inherits that agent's session id, and ADR 0164 reads it as an identity the caller
+# supplied: with no episode keyed by it in the fixture, every ledger line a case writes is
+# stamped with no session, and case 61's closed episode named no task. The names are the
+# lifecycle adapters' own column (lib/capture.sh), so a provider added there is dropped here
+# too. A case that needs a provider session sets one itself, as cases 111 and 3049 do.
+# shellcheck source=../lib/capture.sh
+for mj_provider_var in MAJORDOMUS_PROVIDER_SESSION MJ_SESSION_KEY \
+    $( (. "$ROOT/lib/capture.sh" && mj_lifecycle_session_vars) 2>/dev/null); do
+  unset "$mj_provider_var"
+done
+unset mj_provider_var
 MJ="$ROOT/bin/majordomus"; export MJ ROOT
 # A case must not act on the machine it measures: a build a case starts on a machine below the
 # reclaim mark would otherwise run the reaper over this machine's real worktrees

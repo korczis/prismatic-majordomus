@@ -10,6 +10,9 @@
 #   keyboard    the block's copy button is offered, reached by Tab and pressed with Enter
 #   copied      the clipboard then holds exactly the command, and the button and the status
 #               beside it say "Copied"
+#   withheld    the same page where no clipboard can be written, once without
+#               navigator.clipboard and once outside a secure context, keeps the button hidden
+#               after ui.js has run, so a control that cannot copy is never offered
 #
 # Needs a browser scripts/lib/browser.mjs can launch; like case 3220 it is run in the ui job
 # (majordomus-skip-runs-in: ui), where a skip is a failure.
@@ -100,6 +103,35 @@ try {
   const copied = await page.evaluate(() => navigator.clipboard.readText());
   if (copied !== want) fail(`the clipboard holds "${copied}", not "${want}"`);
   console.log('    copied: the clipboard holds exactly the command, and the button and its status say Copied');
+
+  // withheld: where no clipboard can be written the button stays hidden. Each init script runs
+  // before ui.js; the page then proves its own setup took, and that ui.js ran (measureBar writes
+  // --ui-bar just before the copy buttons are judged), so a hidden button is the guard's doing.
+  const without = {
+    'without navigator.clipboard': [() => { delete Navigator.prototype.clipboard; },
+      () => navigator.clipboard === undefined && window.isSecureContext],
+    'outside a secure context': [() => {
+      Object.defineProperty(window, 'isSecureContext', { get: () => false, configurable: true });
+    }, () => Boolean(navigator.clipboard) && window.isSecureContext === false],
+  };
+  for (const [where, [unwritable, holds]] of Object.entries(without)) {
+    const bare = await browser.newContext();
+    await bare.addInitScript(unwritable);
+    const other = await bare.newPage();
+    other.setDefaultTimeout(60000);
+    other.on('pageerror', (e) => problems.push(`uncaught ${where}: ${e.message}`));
+    await other.goto(`${base}/ui/idd?intent=the-command-is-copied`, { waitUntil: 'networkidle' });
+    if (!(await other.evaluate(holds))) fail(`the page ${where} could not be set up`);
+    const ran = await other.evaluate(() => document.documentElement.style.getPropertyValue('--ui-bar'));
+    if (!ran) fail(`ui.js never ran on the page ${where}`);
+    const button = other.locator('.mj-ui-command button[data-mj-copy]');
+    if (!(await button.count())) fail(`the page ${where} carries no copy button at all`);
+    if (!(await button.first().evaluate((b) => b.hidden)) || (await button.first().isVisible())) {
+      fail(`the copy button is offered ${where}, where it cannot copy`);
+    }
+    await bare.close();
+  }
+  console.log('    withheld: without navigator.clipboard, and outside a secure context, the copy button stays hidden');
   if (problems.length) fail('the page reported: ' + problems.join(' | '));
 } catch (error) {
   process.exitCode = 1;
