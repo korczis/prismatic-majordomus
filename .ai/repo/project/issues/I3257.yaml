@@ -5,7 +5,7 @@ slug: explain-follows-work-to-its-deployment
 priority: p2
 profile: implementation
 objective: "Revive I2507 from origin/chore/seven-owner-packs-are-tracked-and-planned (689021d6ce2, 2026-10-15, never landed): intent explain and the realization join continue from each served issue's merge to the release record and the deployment observation that carry it, with a gap named where one is missing."
-why: "2026-10-02 and 2026-10-16: the chain from intent to runtime observation and from a commit to its criterion should be one query. Sources: chatgpt-majordomus:c176#2, chatgpt-majordomus:c270#4."
+why: "2026-10-02 and 2026-10-16: the chain from intent to runtime observation and from a commit to its criterion should be one query. Sources: chatgpt-majordomus:c176#2, chatgpt-majordomus:c270#4. The owner's pack asks for the same in campaigns/majordomus-autonomous-idd-maximal/15_RELEASE_GITHUB_ROLLOUT.md; PR #1058 planned it as I2507, which never landed, and the criteria of that record this one did not hold were folded in on 2026-10-30."
 current_state: "intent_realization.rs joins episodes, providers and handovers; delivery inference (I2740) is on its own branch."
 desired_state: "One explain answer carries intent -> criterion -> issue -> merge -> release -> deployment."
 scope:
@@ -17,10 +17,13 @@ depends_on:
   - "I2740"
 acceptance_criteria:
   - "A served issue merged and released shows both; one merged and not released names the missing release"
+  - "A served issue with no recorded observation reads never observed, never not deployed"
+  - "For each environment, the first observed deployment that contains the work is named with the observation's time"
+  - "The handler spawns no networked process: it reads recorded observations only"
 validation:
   - "majordomus plan validate"
   - "majordomus intent validate"
 evidence_required:
   - "test_explain_follows_work_to_its_deployment"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-30

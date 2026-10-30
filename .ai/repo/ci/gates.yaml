@@ -846,7 +846,7 @@ gates:
     job: structure
     lane: feedback
     runs: scripts/ci/campaigns-check
-    summary: every file under campaigns/ is the bytes the manifest recorded, every file present is declared, and every pack has a row in the index that names it
+    summary: every file under campaigns/ is the bytes the manifest recorded, every file present is declared, every pack has a row in the index that names it, and every pack is cited by a plan record or named as unplanned with its reason
 
   # Box art in a published document: a picture nothing can render, link, theme, diff against
   # what it describes, or wrap on a phone. File reads only, so it belongs in the structure
@@ -1209,7 +1209,7 @@ classes:
   # the campaign briefs and what proves them: provenance, read by people rather than by the tool,
   # so beyond the suite the only gate this class needs is the one that decides them
   - id: campaigns
-    paths: [campaigns/**, scripts/ci/campaigns-check, test/cases/340_a_brief_is_kept_as_received.sh, .ai/repo/rules/project/a-brief-is-kept-as-received.v1.md]
+    paths: [campaigns/**, scripts/ci/campaigns-check, .ai/repo/ci/campaigns-unplanned.txt, test/cases/340_a_brief_is_kept_as_received.sh, .ai/repo/rules/project/a-brief-is-kept-as-received.v1.md]
     gates: [campaigns-provenance, shell-suite]
 
   # the detector the collision-check gate calls. The gate runs on every plan already; this
