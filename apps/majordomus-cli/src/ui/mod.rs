@@ -493,6 +493,7 @@ impl Ui {
                     director: self.assets.url(observatory::LIB),
                     scenes: self.assets.url(observatory::SCENES_LIB),
                     p5: self.assets.url(observatory::P5_LIB),
+                    stream: self.assets.url(observatory::STREAM_LIB),
                 };
                 observatory::screen(ctx, query, &libs, kiosk)
             }

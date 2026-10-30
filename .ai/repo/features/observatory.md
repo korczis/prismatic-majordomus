@@ -4,7 +4,7 @@ id: observatory
 kind: feature
 title: "The Observatory: the repository and its mesh, drawn for a wall"
 short_title: Observatory
-headline: One screen of the UI rotates eight scenes on a display nobody is sitting at, and every mark on it is a value a capability answered; a scene with nothing true to draw says why and is never drawn empty.
+headline: One screen of the UI rotates nine scenes on a display nobody is sitting at, and every mark on it is a value a capability answered; a scene with nothing true to draw says why and is never drawn empty.
 summary: At /ui/observatory, and at /ui/kiosk filling the window unattended, the shared server draws the machines of the mesh and their runtimes, the newest events of its journal, the milestones of the plan, the dimensions of health, the published releases and the sessions cooperating, from the same capabilities the other screens read. The published site carries it as a snapshot that says which commit it was read at.
 status: stable
 weight: 94
@@ -25,8 +25,8 @@ tags: [ui, interface, mesh]
 ## What it does
 
 The other screens of `majordomus ui` are rows for a person who came to decide something.
-The Observatory is the same facts as a picture, for a hallway display. It rotates eight
-scenes: Mesh Cosmos, Event River, Intent Nebula, Token Spectrum, System Pulse, Delivery
+The Observatory is the same facts as a picture, for a hallway display. It rotates nine
+scenes: Mesh Cosmos, Event River, Execution Flow, Intent Nebula, Token Spectrum, System Pulse, Delivery
 Tree, Cooperation Choreography and Ambient Intelligence. Each scene names the capabilities
 it requires, what its marks mean, and the screen where the same facts are rows.
 
