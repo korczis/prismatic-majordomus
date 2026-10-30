@@ -1,0 +1,36 @@
+id: I4512
+milestone: derived-data-integrity
+title: "No derived page grows past the scope's size limit, so one derive is a fixpoint"
+slug: no-derived-page-outgrows-the-index
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Keep every derived page under the index's per-file limit by construction, so that one run of scripts/derive leaves a tree the next run does not change."
+why: "On 2026-10-30, PR #2753 (the owner packs mapped onto master) added 32 issues and 2 milestones, and docs/PLAN_STATUS.md grew from 982,448 bytes on master 51b38035a71 to 1,068,157 bytes, past .ai/repo/scope.yaml's out.max_bytes of 1,048,576. A text file over that limit is out of scope, so the page left the index. The derive's stage C (majordomus generate) reads the index, so the registry projection it wrote no longer matched the site data stage B had fingerprinted. The commit hook refused the tree as stale, and only a second derive converged. A derive that needs two passes is not idempotent, and the transition happens on whichever branch first pushes the plan past the limit, not on the branch whose change is large. Raising the limit only moves the edge as the plan grows."
+current_state: "Measured 2026-10-30 on master 51b38035a71: docs/PLAN_STATUS.md is 982,448 bytes, 93.7% of max_bytes 1048576 (.ai/repo/scope.yaml). scripts/generate-site-data writes it in stage B as one page for every milestone and issue. On chore/the-owner-packs-are-mapped-onto-master (83bfba2bd47) it is 1,068,157 bytes, and that branch's derive converged only on its second run. Nothing checks a derived page's size against the scope limit, so the first sign is a stale-tree refusal that names the registry rather than the page."
+desired_state: "A derived page that would approach the limit is written as several pages (for the plan status, one per milestone with an index page), so no derived file can leave the index as the plan grows. A gate refuses a derived file over a stated fraction of max_bytes before the index loses it, and names the file and the limit."
+scope:
+  - .ai/repo/project/issues/I4512.yaml
+  - scripts/generate-site-data
+  - scripts/derive
+  - scripts/derive-check
+  - .ai/repo/ci/gates.yaml
+  - test/cases/4512_no_derived_page_outgrows_the_index.sh
+  - docs/PLAN_STATUS.md
+  - docs/plan-status
+non_scope:
+  - "Raising out.max_bytes. That moves the edge as the plan grows rather than removing it."
+  - "Excluding docs/PLAN_STATUS.md from the index. A derived page the index cannot read is a page the briefing, search and context compiler cannot read either."
+  - "Reordering stage B and stage C. That would hide the symptom (the second pass) while leaving the page outside the index."
+acceptance_criteria:
+  - "No file scripts/derive writes exceeds 75% of out.max_bytes on master, and the plan status is split so that adding a milestone adds a page rather than growing one"
+  - "A gate refuses a derived file above that fraction, naming the file, its size and the limit"
+  - "On a fixture whose plan status would exceed max_bytes as one page, one run of scripts/derive is followed by a second that changes nothing"
+validation:
+  - scripts/derive-check
+  - majordomus plan validate
+evidence_required:
+  - ci
+risk: "Low to medium. Every link to docs/PLAN_STATUS.md (site, docs, briefings) must keep resolving after the split, so the index page keeps that path."
+created_at: 2026-10-30
+updated_at: 2026-10-30
