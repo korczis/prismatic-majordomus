@@ -605,8 +605,9 @@ hash as `<!-- majordomus:record I0001 -->`. A GitHub number is GitHub's to assig
 title is a person's to edit, so neither can be the key: matching on a title means a rename
 orphans the record and the next `--apply` creates a second one for work that already exists.
 
-Every finding about a body is one of six states, from two independent questions — has a
-person rewritten the region since it was posted, and has the canonical record moved since?
+Every finding about a body is one of these states, from two independent questions — has a
+person rewritten the region since it was posted, and has the canonical record moved since? —
+and, for a record GitHub does not serve, whether GitHub ever carried it (I4290):
 
 | state | meaning | `--apply` |
 |---|---|---|
@@ -615,10 +616,21 @@ person rewritten the region since it was posted, and has the canonical record mo
 | `edited` | a person rewrote the region | refuses without `--force` |
 | `conflict` | a person rewrote it and the record has moved | refuses without `--force` |
 | `adopt` | no identity marker; matched by title, this once | writes one |
-| `missing` | no counterpart on GitHub | creates |
+| `never-created` | no counterpart on GitHub, and GitHub never carried one | creates |
+| `deleted-remotely` | GitHub carried it and a person deleted it there | refuses until a person names it in `MJ_GH_RECREATE` (exit 15) |
 
 and, of a remote record rather than a canonical one, `unmanaged`: an issue claiming a
 canonical id this repository does not have.
+
+The two absences are told apart from what both sides already record, so nothing is stored
+for it. GitHub says when it created each projected record (an issue carrying an identity
+marker, a milestone titled `<id> — `), and the newest of those dates the last apply that
+created anything: an apply creates every record it finds missing, so a record whose file
+reached the trunk before that moment (read from the trunk's first-parent history) was
+created and then deleted. A record that reached the trunk later, a remote with no projected
+record yet (an adopter's first apply) and a record a shallow clone cannot date are
+`never-created`. A record an apply failed to create while later ones were created reads
+`deleted-remotely` and is refused rather than guessed at; naming it creates it.
 
 A title GitHub would refuse is refused before it merges. GitHub caps a milestone title at
 255 characters and an issue title at 256, and the projected title is `<id> — <title>`.
@@ -632,11 +644,11 @@ Applying is a consequence of landing; agreement is a gate. Every push to the def
 starts `.github/workflows/github.yml`, which runs `--check`, then `--apply` when something is
 owed, then the gate (`project.the-projection-is-applied-at-landing@2`); a person's `--apply`
 from the trunk is the fallback when that run fails. `scripts/ci/github-check` reads the
-remote on every change that can move either side, refuses the first six states outright,
-and ratchets `missing` and `adopt` against `.ai/repo/ci/github-drift-baseline.txt`, which
-may fall and may never rise. It exists because the detector was written, never called, and
-the projection decayed to a tenth of the model over five days with every build green
-(`project.github-projection-gated@1`).
+remote on every change that can move either side, refuses every state outright
+except the two it ratchets, `never-created` and `adopt`, which it holds against
+`.ai/repo/ci/github-drift-baseline.txt`, a ceiling that may fall and may never rise. It
+exists because the detector was written, never called, and the projection decayed to a
+tenth of the model over five days with every build green (`project.github-projection-gated@1`).
 
 A head is judged against what it changes. GitHub shows the trunk's plan and nothing else,
 so a record a pull request edits is `behind` there until the pull request has merged and
