@@ -127,6 +127,14 @@
         "pattern": "^[a-z0-9][a-z0-9-]*#[a-z0-9][a-z0-9-]*$"
       }
     },
+    "traces": {
+      "description": "What this issue answers to outside the layer: a tracker key (PROJ-12), a requirement id (A7), a URL. Projected into the forge body as written; nothing resolves, validates or dispatches on a trace, because the systems they name are not the layer's.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
     "acceptance_criteria": {
       "type": "array",
       "items": {
