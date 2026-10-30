@@ -54,9 +54,16 @@
 
          And it is the release that was PUBLISHED, not only the one recorded on master: `offered`
          (base.html, derived by scripts/site-build) is the newer of the two, so the badge moves
-         when the release does rather than when its record's pull request lands. #}
+         when the release does rather than when its record's pull request lands.
+
+         The newest pre-release stands beside it, never in its place, and only while it is
+         ahead of it (`offered.prerelease`, derived by scripts/site-build): a reader who sees
+         only the stable badge cannot tell that anything comes next. #}
       {% if offered %}
       <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading" data-release="{{ offered.version }}">v{{ offered.version }}</span>
+      {%- if offered.prerelease %}
+      <span class="hidden rounded border border-default px-1.5 py-0.5 font-mono text-xs text-body sm:inline" data-prerelease="{{ offered.prerelease.version }}" title="pre-release: install it with --version {{ offered.prerelease.tag }}">next v{{ offered.prerelease.version }}</span>
+      {%- endif %}
       {% endif %}
     </a>
     <div class="flex items-center gap-1 sm:gap-2 md:order-2">
