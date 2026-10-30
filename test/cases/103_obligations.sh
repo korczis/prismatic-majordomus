@@ -214,8 +214,18 @@ if start_http "$S/public"; then
     mkdir -p "$S/public$r"
     sed -n "/^    - route: ${r//\//\\/}\$/{n;s/^      marker: //p;}" "$ROOT/.ai/repo/ci/pages.yaml" > "$S/public${r}index.html"
   done
+  # ... but a homepage that offers no hero choice is still refused (I3324): the choices are
+  # read from the published page, so a page without them is a miss, not a pass
+  expect_exit 10 scripts/pages verify --commit "$(git rev-parse HEAD)" --timeout 0 --smoke
+  expect_grep 'offers no hero choice'
+  # a hero choice whose page does not answer is named ...
+  printf '<div data-hero-scenarios><a href="%s/use-cases/gone/" data-scenario="gone">x</a></div>\n' "$HTTP_BASE" >> "$S/public/index.html"
+  expect_exit 10 scripts/pages verify --commit "$(git rev-parse HEAD)" --timeout 0 --smoke
+  expect_grep 'hero choice .*/use-cases/gone/ did not answer'
+  # ... and once every choice answers, the probe passes and counts them
+  mkdir -p "$S/public/use-cases/gone"; printf 'a recorded scenario\n' > "$S/public/use-cases/gone/index.html"
   expect_exit 0 scripts/pages verify --commit "$(git rev-parse HEAD)" --timeout 0 --smoke
-  expect_grep 'smoke [0-9]+ route check\(s\) answered'
+  expect_grep 'smoke [0-9]+ route check\(s\) answered with their markers, and 1 hero choice'
 
   # the site serves an older commit: unpublished, and said in those words
   printf '{"commit":"deadbeefdeadbeefdeadbeefdeadbeefdeadbeef"}\n' > "$S/public/build.json"

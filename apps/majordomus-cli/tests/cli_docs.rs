@@ -134,8 +134,17 @@ fn arguments_carry_flags_positionals_defaults_requiredness_and_value_sets() {
     // because a default nobody types is noise
     assert_eq!(strict.defaults, vec!["false"]);
 
+    // the port is derived from the checkout, so it has no fixed default; the help says what
+    // the primary checkout asks for
     let port = find("majordomus serve", "port");
-    assert_eq!(port.defaults, vec!["8741"], "the documented default port");
+    assert!(
+        port.defaults.is_empty(),
+        "a derived port documents no fixed default"
+    );
+    assert!(
+        port.help.contains("8741"),
+        "the help names the primary checkout's port"
+    );
 
     let format = find("majordomus bench coverage", "format");
     let values: Vec<String> = format

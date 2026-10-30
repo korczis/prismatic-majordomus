@@ -174,11 +174,68 @@ pub fn bump_of(changes: &[Change]) -> Bump {
     Bump::Patch
 }
 
-/// A semantic version, only as much as this needs.
+/// One dot-separated identifier of a pre-release part (`alpha`, `1`).
 ///
-/// Ordered by the three numbers, which is what lets the writer refuse a version smaller than
-/// the one the contract requires rather than only a *bump* smaller than required.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+/// Numeric identifiers compare as numbers and rank below alphanumeric ones, which compare as
+/// ASCII text (semantic versioning 2.0.0, rule 11), so the derived order — `Numeric` before
+/// `Alpha` — is the specified one, and a list of them compares one by one with a shorter
+/// prefix first, which is `Vec`'s own order.
+///
+/// ```
+/// use majordomus_cli::release::version::Identifier;
+/// assert!(Identifier::Numeric(10) > Identifier::Numeric(2), "numbers, not text");
+/// assert!(Identifier::Numeric(99) < Identifier::Alpha("a".into()), "a number sorts first");
+/// assert!(Identifier::Alpha("alpha".into()) < Identifier::Alpha("beta".into()));
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Identifier {
+    /// Digits only, with no leading zero: compared as a number.
+    Numeric(u64),
+    /// Anything else of `[0-9A-Za-z-]`: compared as ASCII text.
+    Alpha(String),
+}
+
+impl std::fmt::Display for Identifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Identifier::Numeric(n) => write!(f, "{n}"),
+            Identifier::Alpha(s) => f.write_str(s),
+        }
+    }
+}
+
+/// A semantic version (2.0.0): three numbers, an optional pre-release part and optional build
+/// metadata — `1.0.0-alpha.1+build.5`.
+///
+/// # Precedence is the order
+///
+/// `Ord` is semantic-version precedence and nothing else, the one rule every reader of a
+/// version in this crate uses — the release writer, the compatibility gate, the landing
+/// allocator and the stable pointer of the `distribution` module — so no two of them can rank
+/// the same pair of versions differently (ADR 0004):
+///
+/// - the three numbers, as numbers;
+/// - then a pre-release below its own final: `1.0.0-alpha.1 < 1.0.0`, and `0.29.0 <
+///   1.0.0-alpha.1`;
+/// - then the pre-release identifiers one by one ([`Identifier`]), a shorter list below a
+///   longer one it prefixes.
+///
+/// Build metadata is ignored, by `Ord` and by `==` alike, because two orders that disagree
+/// about equality are not one order: `1.0.0+a == 1.0.0+b`, and [`Display`](std::fmt::Display)
+/// still writes each back as it was read.
+///
+/// ```
+/// use majordomus_cli::release::version::Version;
+/// let v = |s| Version::parse(s).unwrap();
+/// assert!(v("1.0.0-alpha.1") < v("1.0.0-alpha.2"));
+/// assert!(v("1.0.0-alpha.2") < v("1.0.0-alpha.10"), "numeric identifiers are numbers");
+/// assert!(v("1.0.0-alpha.10") < v("1.0.0-beta"));
+/// assert!(v("1.0.0-beta") < v("1.0.0"), "a pre-release sorts below its final");
+/// assert!(v("0.29.0") < v("1.0.0-alpha.1"));
+/// assert_eq!(v("1.0.0+a"), v("1.0.0+b"), "build metadata has no precedence");
+/// assert_eq!(v("1.0.0-alpha.1+b.7").to_string(), "1.0.0-alpha.1+b.7");
+/// ```
+#[derive(Debug, Clone)]
 pub struct Version {
     /// Major.
     pub major: u64,
@@ -186,23 +243,176 @@ pub struct Version {
     pub minor: u64,
     /// Patch.
     pub patch: u64,
+    /// The pre-release identifiers; empty for a final release.
+    pub pre: Vec<Identifier>,
+    /// The build metadata identifiers, kept for display and ignored by precedence.
+    pub build: Vec<String>,
+}
+
+impl PartialEq for Version {
+    fn eq(&self, other: &Self) -> bool {
+        self.cmp(other) == std::cmp::Ordering::Equal
+    }
+}
+
+impl Eq for Version {}
+
+impl PartialOrd for Version {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Version {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        (self.major, self.minor, self.patch)
+            .cmp(&(other.major, other.minor, other.patch))
+            // a final release (no identifiers) ranks above every pre-release of it
+            .then_with(|| self.pre.is_empty().cmp(&other.pre.is_empty()))
+            .then_with(|| self.pre.cmp(&other.pre))
+    }
+}
+
+/// Is `text` a non-empty identifier of `[0-9A-Za-z-]`, as semantic versioning requires of
+/// every pre-release and build identifier?
+fn is_identifier(text: &str) -> bool {
+    !text.is_empty() && text.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-')
+}
+
+/// A numeric part: digits only, and no leading zero unless it is `0` itself.
+fn numeric(text: &str) -> Option<u64> {
+    if text.is_empty() || !text.bytes().all(|b| b.is_ascii_digit()) {
+        return None;
+    }
+    if text.len() > 1 && text.starts_with('0') {
+        return None;
+    }
+    text.parse().ok()
 }
 
 impl Version {
-    /// Read `1.2.3`; anything else is `None`.
-    pub fn parse(text: &str) -> Option<Version> {
-        let mut parts = text.trim().split('.');
-        let major = parts.next()?.parse().ok()?;
-        let minor = parts.next()?.parse().ok()?;
-        let patch = parts.next()?.parse().ok()?;
-        if parts.next().is_some() {
-            return None;
+    /// A final release of three numbers, with no pre-release part and no build metadata.
+    ///
+    /// ```
+    /// use majordomus_cli::release::version::Version;
+    /// assert_eq!(Version::new(0, 29, 0).to_string(), "0.29.0");
+    /// ```
+    pub fn new(major: u64, minor: u64, patch: u64) -> Version {
+        Version {
+            major,
+            minor,
+            patch,
+            pre: Vec::new(),
+            build: Vec::new(),
         }
+    }
+
+    /// Read a semantic version, `1.2.3`, `1.0.0-alpha.1` or `1.0.0+build`; anything else is
+    /// `None`.
+    ///
+    /// Strict, because a version this accepts is one every reader orders: exactly three
+    /// numbers, none with a leading zero; a pre-release and build identifiers that are
+    /// non-empty `[0-9A-Za-z-]`; and no numeric pre-release identifier with a leading zero.
+    ///
+    /// ```
+    /// use majordomus_cli::release::version::Version;
+    /// assert!(Version::parse("1.0.0-alpha.1").is_some());
+    /// assert!(Version::parse("1.0.0-alpha..1").is_none(), "an empty identifier");
+    /// assert!(Version::parse("1.0.0-alpha.01").is_none(), "a leading zero");
+    /// assert!(Version::parse("1.2.3.4").is_none(), "four numbers");
+    /// ```
+    pub fn parse(text: &str) -> Option<Version> {
+        let text = text.trim();
+        let (text, build) = match text.split_once('+') {
+            Some((v, b)) => (v, Some(b)),
+            None => (text, None),
+        };
+        let (core, pre) = match text.split_once('-') {
+            Some((c, p)) => (c, Some(p)),
+            None => (text, None),
+        };
+        // exactly three parts: a split always yields a first one, so asking for each part in
+        // turn left a branch no input reaches; the count is decided once instead
+        let mut parts = core.split('.');
+        let (Some(major), Some(minor), Some(patch), None) =
+            (parts.next(), parts.next(), parts.next(), parts.next())
+        else {
+            return None;
+        };
+        let (major, minor, patch) = (numeric(major)?, numeric(minor)?, numeric(patch)?);
+        let pre = match pre {
+            None => Vec::new(),
+            Some(p) => p
+                .split('.')
+                .map(|i| {
+                    if !is_identifier(i) {
+                        None
+                    } else if i.bytes().all(|b| b.is_ascii_digit()) {
+                        numeric(i).map(Identifier::Numeric)
+                    } else {
+                        Some(Identifier::Alpha(i.to_string()))
+                    }
+                })
+                .collect::<Option<Vec<_>>>()?,
+        };
+        let build = match build {
+            None => Vec::new(),
+            Some(b) => b
+                .split('.')
+                .map(|i| is_identifier(i).then(|| i.to_string()))
+                .collect::<Option<Vec<_>>>()?,
+        };
         Some(Version {
             major,
             minor,
             patch,
+            pre,
+            build,
         })
+    }
+
+    /// Does this version carry a pre-release part (`1.0.0-alpha.1`)? Build metadata does not
+    /// make one: `1.0.0+x` is a final release.
+    ///
+    /// ```
+    /// use majordomus_cli::release::version::Version;
+    /// assert!(Version::parse("1.0.0-alpha.1").unwrap().is_prerelease());
+    /// assert!(!Version::parse("1.0.0+x").unwrap().is_prerelease());
+    /// ```
+    pub fn is_prerelease(&self) -> bool {
+        !self.pre.is_empty()
+    }
+
+    /// The final release this version is a pre-release of — itself, for a final release —
+    /// without build metadata.
+    ///
+    /// ```
+    /// use majordomus_cli::release::version::Version;
+    /// assert_eq!(Version::parse("1.0.0-rc.1+b").unwrap().final_release().to_string(), "1.0.0");
+    /// ```
+    pub fn final_release(&self) -> Version {
+        Version::new(self.major, self.minor, self.patch)
+    }
+
+    /// Does this version meet a floor — the smallest version a tree may declare?
+    ///
+    /// At or above it does, and so does a pre-release *of* a final floor: a floor of `1.0.0`
+    /// is met by `1.0.0-alpha.2`, because a pre-release of the version owed is that version
+    /// on its way, and it promises no compatibility of its own (semantic versioning 2.0.0,
+    /// rule 9). Without this, a project could not publish a second alpha: every raise of
+    /// `1.0.0-alpha.1` is `1.0.0`. A floor that is itself a pre-release is met only by
+    /// precedence, so nothing goes below it.
+    ///
+    /// ```
+    /// use majordomus_cli::release::version::Version;
+    /// let v = |s| Version::parse(s).unwrap();
+    /// assert!(v("1.0.0-alpha.2").reaches(&v("1.0.0")), "a pre-release of what is owed");
+    /// assert!(v("1.0.0-alpha.1").reaches(&v("0.30.0")));
+    /// assert!(!v("0.30.0-rc.1").reaches(&v("1.0.0")));
+    /// assert!(!v("1.0.0-alpha.1").reaches(&v("1.0.0-alpha.2")), "never below a pre-release");
+    /// ```
+    pub fn reaches(&self, floor: &Version) -> bool {
+        self >= floor || (!floor.is_prerelease() && self.final_release() >= *floor)
     }
 
     /// This version raised by `bump`.
@@ -211,23 +421,32 @@ impl Version {
     /// breaking change below 1.0 costs a major or a minor is a *policy* question and this
     /// repository answers it in exactly one place, [`crate::release::compat::Policy`]. A
     /// second answer here is the shape this subsystem was built to remove.
+    ///
+    /// From a pre-release the rule is semantic versioning's: the smallest final release of
+    /// that level above it, which for the level the pre-release already leads up to is its
+    /// own final — `1.0.0-alpha.1` raised by a major, a minor or a patch is `1.0.0`, and
+    /// `1.2.3-rc.1` raised by a patch is `1.2.3`. A raise drops build metadata; no raise at
+    /// all is the version as it is.
+    ///
+    /// ```
+    /// use majordomus_cli::release::version::{Bump, Version};
+    /// let v = |s| Version::parse(s).unwrap();
+    /// assert_eq!(v("1.0.0-alpha.1").raised(Bump::Major).to_string(), "1.0.0");
+    /// assert_eq!(v("1.0.0-alpha.1").raised(Bump::Patch).to_string(), "1.0.0");
+    /// assert_eq!(v("1.2.3-rc.1").raised(Bump::Minor).to_string(), "1.3.0");
+    /// assert_eq!(v("0.29.0").raised(Bump::Major).to_string(), "1.0.0");
+    /// ```
     pub fn raised(self, bump: Bump) -> Version {
+        let pre = self.is_prerelease();
+        let (major, minor, patch) = (self.major, self.minor, self.patch);
         match bump {
             Bump::None => self,
-            Bump::Patch => Version {
-                patch: self.patch + 1,
-                ..self
-            },
-            Bump::Minor => Version {
-                minor: self.minor + 1,
-                patch: 0,
-                ..self
-            },
-            Bump::Major => Version {
-                major: self.major + 1,
-                minor: 0,
-                patch: 0,
-            },
+            Bump::Patch if pre => Version::new(major, minor, patch),
+            Bump::Patch => Version::new(major, minor, patch + 1),
+            Bump::Minor if pre && patch == 0 => Version::new(major, minor, 0),
+            Bump::Minor => Version::new(major, minor + 1, 0),
+            Bump::Major if pre && minor == 0 && patch == 0 => Version::new(major, 0, 0),
+            Bump::Major => Version::new(major + 1, 0, 0),
         }
     }
 }
@@ -242,8 +461,8 @@ impl Version {
     /// use majordomus_cli::release::compat::Impact;
     /// use majordomus_cli::release::version::Version;
     /// let v = Version::parse("0.5.0").unwrap();
-    /// assert_eq!(v.raised_to(Impact::Minor).to_string(), "0.6.0");
-    /// assert_eq!(v.raised_to(Impact::Major).to_string(), "1.0.0");
+    /// assert_eq!(v.clone().raised_to(Impact::Minor).to_string(), "0.6.0");
+    /// assert_eq!(v.clone().raised_to(Impact::Major).to_string(), "1.0.0");
     /// assert_eq!(v.raised_to(Impact::None).to_string(), "0.5.0");
     /// ```
     pub fn raised_to(self, impact: crate::release::compat::Impact) -> Version {
@@ -259,7 +478,14 @@ impl Version {
 
 impl std::fmt::Display for Version {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}.{}.{}", self.major, self.minor, self.patch)
+        write!(f, "{}.{}.{}", self.major, self.minor, self.patch)?;
+        for (i, id) in self.pre.iter().enumerate() {
+            write!(f, "{}{id}", if i == 0 { '-' } else { '.' })?;
+        }
+        for (i, id) in self.build.iter().enumerate() {
+            write!(f, "{}{id}", if i == 0 { '+' } else { '.' })?;
+        }
+        Ok(())
     }
 }
 
@@ -1309,7 +1535,7 @@ pub struct Selection {
 /// // the writer's default target is read from this report, so it refuses with its reason
 /// let current = Version::parse("0.1.0").unwrap();
 /// assert_eq!(
-///     default_target(&selection.report, current).unwrap_err(),
+///     default_target(&selection.report, &current).unwrap_err(),
 ///     selection.report.contract_unreadable.clone().unwrap()
 /// );
 /// ```
@@ -1343,13 +1569,13 @@ pub fn select(
 ///     contract_unreadable: why.map(Into::into), changes: Vec::new() };
 /// let current = Version::parse("0.11.0").unwrap();
 /// let fix = report(Some("0.11.1"), DecidedBy::ContractAndCommits, None);
-/// assert_eq!(default_target(&fix, current).unwrap().to_string(), "0.11.1");
+/// assert_eq!(default_target(&fix, &current).unwrap().to_string(), "0.11.1");
 /// let nothing = report(None, DecidedBy::Contract, None);
-/// assert_eq!(default_target(&nothing, current), Ok(current));
+/// assert_eq!(default_target(&nothing, &current), Ok(current.clone()));
 /// let unread = report(None, DecidedBy::Undecided, Some("no release"));
-/// assert_eq!(default_target(&unread, current), Err("no release".into()));
+/// assert_eq!(default_target(&unread, &current), Err("no release".into()));
 /// ```
-pub fn default_target(report: &VersionReport, current: Version) -> Result<Version, String> {
+pub fn default_target(report: &VersionReport, current: &Version) -> Result<Version, String> {
     match (&report.next, report.decided_by) {
         (_, DecidedBy::Undecided) => Err(report
             .contract_unreadable
@@ -1357,7 +1583,7 @@ pub fn default_target(report: &VersionReport, current: Version) -> Result<Versio
             .unwrap_or_else(|| "the public contract could not be measured".into())),
         (Some(next), _) => Version::parse(next)
             .ok_or_else(|| format!("the selected version '{next}' is not three numbers")),
-        (None, _) => Ok(current),
+        (None, _) => Ok(current.clone()),
     }
 }
 
@@ -1471,14 +1697,14 @@ mod tests {
         let fix = report_of("0.11.0", "0.11.0", Bump::Patch, Ok("0.11.0".into()));
         assert_eq!(fix.next.as_deref(), Some("0.11.1"));
         assert_eq!(
-            default_target(&fix, current).map(|v| v.to_string()),
+            default_target(&fix, &current).map(|v| v.to_string()),
             Ok("0.11.1".to_string())
         );
         // released 0.10.0, declared 0.10.0, the contract requires a minor: 0.11.0 for both
         let minor = report_of("0.10.0", "0.10.0", Bump::Major, Ok("0.11.0".into()));
         assert_eq!(minor.next.as_deref(), Some("0.11.0"));
         assert_eq!(
-            default_target(&minor, Version::parse("0.10.0").unwrap()).map(|v| v.to_string()),
+            default_target(&minor, &Version::parse("0.10.0").unwrap()).map(|v| v.to_string()),
             Ok("0.11.0".to_string())
         );
         // the contract unreadable: the report decides nothing and the writer refuses, with
@@ -1487,7 +1713,7 @@ mod tests {
         assert_eq!(unread.next, None);
         assert_eq!(unread.commits_imply.as_deref(), Some("1.0.0"));
         assert_eq!(
-            default_target(&unread, current),
+            default_target(&unread, &current),
             Err("no baseline".to_string())
         );
     }
@@ -1514,10 +1740,140 @@ mod tests {
     #[test]
     fn raising_zeroes_what_the_bump_supersedes() {
         let v = Version::parse("0.3.1").unwrap();
-        assert_eq!(v.raised(Bump::Patch).to_string(), "0.3.2");
-        assert_eq!(v.raised(Bump::Minor).to_string(), "0.4.0");
-        assert_eq!(v.raised(Bump::Major).to_string(), "1.0.0");
+        assert_eq!(v.clone().raised(Bump::Patch).to_string(), "0.3.2");
+        assert_eq!(v.clone().raised(Bump::Minor).to_string(), "0.4.0");
+        assert_eq!(v.clone().raised(Bump::Major).to_string(), "1.0.0");
         assert_eq!(v.raised(Bump::None).to_string(), "0.3.1");
+    }
+
+    fn v(text: &str) -> Version {
+        Version::parse(text).unwrap_or_else(|| panic!("{text} is a version"))
+    }
+
+    /// A semantic version with a pre-release part and build metadata is read; junk is not.
+    #[test]
+    fn a_prerelease_is_parsed_and_junk_is_refused() {
+        let alpha = v("1.0.0-alpha.1");
+        assert_eq!((alpha.major, alpha.minor, alpha.patch), (1, 0, 0));
+        assert_eq!(
+            alpha.pre,
+            vec![Identifier::Alpha("alpha".into()), Identifier::Numeric(1)]
+        );
+        assert!(alpha.build.is_empty());
+        assert!(alpha.is_prerelease());
+        let built = v("1.0.0+build.007");
+        assert!(!built.is_prerelease(), "build metadata is no pre-release");
+        assert_eq!(built.build, vec!["build".to_string(), "007".to_string()]);
+        assert!(
+            v("1.0.0-x-y.0").is_prerelease(),
+            "a hyphen inside an identifier"
+        );
+        for junk in [
+            "",
+            "1",
+            "1.2",
+            "1.2.3.4",
+            "1..3",
+            "01.2.3",
+            "1.2.+3",
+            "1.0.0-",
+            "1.0.0-alpha..1",
+            "1.0.0-alpha.",
+            "1.0.0-alpha.01",
+            "1.0.0-alpha_1",
+            "1.0.0+",
+            "1.0.0+a..b",
+            "1.0.0-99999999999999999999999",
+            "v1.0.0",
+        ] {
+            assert_eq!(Version::parse(junk), None, "{junk:?} is not a version");
+        }
+    }
+
+    /// Semantic-version precedence, rule 11, end to end — and the line that matters for
+    /// v1.0.0-alpha.1: a later 0.x release does not outrank it, and it does not outrank 1.0.0.
+    #[test]
+    fn a_prerelease_is_ordered_by_semantic_version_precedence() {
+        let ascending = [
+            "0.29.0",
+            "0.30.1",
+            "1.0.0-0.3.7",
+            "1.0.0-alpha",
+            "1.0.0-alpha.1",
+            "1.0.0-alpha.2",
+            "1.0.0-alpha.10",
+            "1.0.0-alpha.beta",
+            "1.0.0-beta",
+            "1.0.0-beta.2",
+            "1.0.0-beta.11",
+            "1.0.0-rc.1",
+            "1.0.0",
+            "1.0.1-alpha.1",
+            "1.0.1",
+        ];
+        for pair in ascending.windows(2) {
+            assert!(v(pair[0]) < v(pair[1]), "{} < {}", pair[0], pair[1]);
+            assert!(v(pair[1]) > v(pair[0]), "{} > {}", pair[1], pair[0]);
+        }
+        let mut shuffled: Vec<Version> = ascending.iter().rev().map(|s| v(s)).collect();
+        shuffled.sort();
+        let sorted: Vec<String> = shuffled.iter().map(Version::to_string).collect();
+        assert_eq!(sorted, ascending);
+        // build metadata is no part of precedence, for `==` as for `<`
+        assert_eq!(v("1.0.0-alpha.1+a"), v("1.0.0-alpha.1+b"));
+        assert_eq!(v("1.0.0+a").cmp(&v("1.0.0+b")), std::cmp::Ordering::Equal);
+    }
+
+    /// Display writes back exactly what was read.
+    #[test]
+    fn a_version_displays_as_it_was_read() {
+        for text in [
+            "0.29.0",
+            "1.0.0-alpha.1",
+            "1.0.0-alpha.beta.10",
+            "1.0.0-x-y.0",
+            "1.0.0+build.007",
+            "1.0.0-rc.1+exp.sha.5114f85",
+        ] {
+            assert_eq!(v(text).to_string(), text);
+        }
+        assert_eq!(Version::new(0, 29, 0).to_string(), "0.29.0");
+    }
+
+    /// Raising a pre-release lands on the final it leads up to, as semantic versioning says.
+    #[test]
+    fn a_prerelease_is_raised_to_its_final() {
+        let alpha = v("1.0.0-alpha.1");
+        for bump in [Bump::Patch, Bump::Minor, Bump::Major] {
+            assert_eq!(alpha.clone().raised(bump).to_string(), "1.0.0", "{bump:?}");
+        }
+        assert_eq!(alpha.raised(Bump::None).to_string(), "1.0.0-alpha.1");
+        let rc = v("1.2.3-rc.1+b");
+        assert_eq!(rc.clone().raised(Bump::Patch).to_string(), "1.2.3");
+        assert_eq!(rc.clone().raised(Bump::Minor).to_string(), "1.3.0");
+        assert_eq!(rc.raised(Bump::Major).to_string(), "2.0.0");
+        let minor = v("1.3.0-beta");
+        assert_eq!(minor.clone().raised(Bump::Minor).to_string(), "1.3.0");
+        assert_eq!(minor.raised(Bump::Major).to_string(), "2.0.0");
+        assert_eq!(v("0.29.0").raised(Bump::Major).to_string(), "1.0.0");
+        assert_eq!(
+            v("1.0.0+b").raised(Bump::Patch).to_string(),
+            "1.0.1",
+            "a raise drops build metadata"
+        );
+    }
+
+    /// A floor is met at or above it, or by a pre-release of a final floor; never below a
+    /// pre-release floor.
+    #[test]
+    fn a_floor_is_reached_by_a_prerelease_of_it() {
+        assert!(v("1.0.0-alpha.1").reaches(&v("0.30.0")));
+        assert!(v("1.0.0-alpha.2").reaches(&v("1.0.0")));
+        assert!(v("1.0.0").reaches(&v("1.0.0")));
+        assert!(!v("0.30.0").reaches(&v("1.0.0")));
+        assert!(!v("0.30.0-rc.1").reaches(&v("0.30.1")));
+        assert!(!v("1.0.0-alpha.1").reaches(&v("1.0.0-alpha.2")));
+        assert!(v("1.0.0-alpha.2").reaches(&v("1.0.0-alpha.2")));
     }
 
     #[test]
@@ -1646,7 +2002,12 @@ mod tests {
             "missing is stale too"
         );
 
-        for unrelated in ["1.0.0", "0.9.0-rc1", "banana"] {
+        // a pre-release of the declared version precedes it: the projection of an earlier
+        // declaration, so stale like any lower version
+        std::fs::write(root.join(PROJECTION), render_projection("0.9.0-rc.1")).unwrap();
+        assert_eq!(diagnose(root)[0].id, PROJECTION_STALE, "0.9.0-rc.1");
+
+        for unrelated in ["1.0.0", "1.0.0-alpha.1", "0.9.0-rc.01", "banana"] {
             std::fs::write(root.join(PROJECTION), render_projection(unrelated)).unwrap();
             let found = diagnose(root);
             assert_eq!(found[0].id, WRITERS_DISAGREE, "{unrelated}");
@@ -1774,7 +2135,7 @@ mod tests {
         assert_eq!(report.contract_unreadable, None);
         let current = Version::parse("0.1.0").unwrap();
         assert_eq!(
-            default_target(report, current).map(|v| v.to_string()),
+            default_target(report, &current).map(|v| v.to_string()),
             Ok("0.1.1".to_string())
         );
     }
@@ -1799,24 +2160,24 @@ mod tests {
         };
         // undecided and no reason given: the refusal still says what was not measured
         assert_eq!(
-            default_target(&report(None, DecidedBy::Undecided, None), current),
+            default_target(&report(None, DecidedBy::Undecided, None), &current),
             Err("the public contract could not be measured".to_string())
         );
         // undecided wins over a stray `next`: no one decided it, so nothing is raised to it
         assert_eq!(
             default_target(
                 &report(Some("0.5.0"), DecidedBy::Undecided, Some("why")),
-                current
+                &current
             ),
             Err("why".to_string())
         );
         assert_eq!(
-            default_target(&report(Some("0.5"), DecidedBy::Contract, None), current),
+            default_target(&report(Some("0.5"), DecidedBy::Contract, None), &current),
             Err("the selected version '0.5' is not three numbers".to_string())
         );
         assert_eq!(
-            default_target(&report(None, DecidedBy::Contract, None), current),
-            Ok(current)
+            default_target(&report(None, DecidedBy::Contract, None), &current),
+            Ok(current.clone())
         );
     }
 
@@ -2041,5 +2402,76 @@ mod tests {
         let found = diagnose(root);
         assert_eq!(found.len(), 1, "{found:?}");
         assert_eq!(found[0].id, LABEL_IN_PROSE);
+    }
+
+    /// A version is exactly three numbers before anything else: a part that is not a
+    /// number, and one, two or four parts, are no version, so `x.1.2`, `1.2`, `1.2.3.4` and
+    /// an empty string never parse into something a reader would order.
+    #[test]
+    fn a_version_not_of_three_numbers_is_no_version() {
+        for text in [
+            "x.1.2", "1a.2.3", "", "-1.0.0", ".1.2", "v1.2.3", "1", "1.2", "1.2.3.4", "1.x.3",
+            "1.2.x",
+        ] {
+            assert_eq!(Version::parse(text), None, "{text:?}");
+        }
+        assert_eq!(
+            Version::parse("1.2.3").map(|v| v.to_string()),
+            Some("1.2.3".to_string())
+        );
+    }
+
+    /// A version writes itself back exactly as it was read: every pre-release identifier
+    /// after the first is joined with a dot, and the build metadata follows a `+` with its
+    /// own identifiers dotted too, so what is printed parses to the same version.
+    #[test]
+    fn a_version_with_several_prerelease_and_build_identifiers_prints_as_it_was_read() {
+        for text in [
+            "1.0.0-alpha.1",
+            "1.0.0-alpha.beta.10",
+            "1.0.0-rc.1+build.5",
+            "0.30.0+sha.0a19b7f.dirty",
+        ] {
+            let v = Version::parse(text).expect(text);
+            assert_eq!(v.to_string(), text);
+            assert_eq!(Version::parse(&v.to_string()), Some(v), "{text}");
+        }
+    }
+
+    /// A sink that refuses part of the way through a version gets the refusal, never a
+    /// version cut short: whichever piece the sink refuses (a number, a pre-release
+    /// identifier, a build identifier), the write reports the error.
+    #[test]
+    fn a_version_written_to_a_failing_sink_reports_the_failure_at_every_part() {
+        use std::fmt::Write as _;
+
+        /// Accepts `.0` writes and refuses every one after them.
+        struct RefuseAfter(usize);
+        impl std::fmt::Write for RefuseAfter {
+            fn write_str(&mut self, _: &str) -> std::fmt::Result {
+                if self.0 == 0 {
+                    return Err(std::fmt::Error);
+                }
+                self.0 -= 1;
+                Ok(())
+            }
+        }
+
+        let v = Version::parse("1.0.0-alpha.1+build.5").expect("a version");
+        // how many writes the whole version takes, counted by a sink that never refuses
+        let mut writes = 0;
+        while write!(RefuseAfter(writes), "{v}").is_err() {
+            writes += 1;
+        }
+        assert!(
+            writes >= 9,
+            "three numbers, two pre-release and two build identifiers"
+        );
+        for accepted in 0..writes {
+            assert!(
+                write!(RefuseAfter(accepted), "{v}").is_err(),
+                "a sink refusing write {accepted} of {writes} must see the error"
+            );
+        }
     }
 }

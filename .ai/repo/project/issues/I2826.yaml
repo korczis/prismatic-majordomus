@@ -1,0 +1,28 @@
+id: I2826
+milestone: safe-self-update
+title: "A GitHub release carries the tool's own changelog for its tag, never GitHub's generated notes"
+slug: a-release-carries-its-own-changelog
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Publish each GitHub release with the body `majordomus release changelog` composes for its tag (the release's decisions, including a release declaration such as ADR 0175, its conventional changes and its artifacts) instead of `gh release create --generate-notes`, and refuse a release whose published body is not that projection."
+why: "Found on 2026-10-17 while preparing v1.0.0-alpha.1's declaration (ADR 0175): .github/workflows/release.yml creates the release with --generate-notes, so the body a person reads is GitHub's list of merged pull requests, authored by nobody in this repository, while ADR 0029 says the changelog is composed from the layer and every surface is derived. The release record's notes_url points back at that page. The only authored text that reaches the tool's output for a tag is a decision dated in its window. Deferred past the alpha by the release seat: no release-path change before v1.0.0-alpha.1."
+current_state: "The GitHub release body is GitHub's generated pull request list; release.changelog is printed by the tool and published nowhere a release reader looks."
+desired_state: "release.yml writes `majordomus release changelog --tag <tag>` (or the equivalent capability output) as the release body; a check refuses a published release whose body differs from that projection; docs/RELEASE.md says so."
+scope:
+  - ".github/workflows/release.yml"
+  - "apps/majordomus-cli/src/capability/builtin/release.rs"
+  - "scripts/ci/release-check"
+  - "docs/RELEASE.md"
+  - "test/cases/3341_a_release_carries_its_own_changelog.sh"
+depends_on: []
+acceptance_criteria:
+  - "A release built from a fixture tag is created with the body the tool's changelog composes for that tag, and no --generate-notes"
+  - "release-check refuses a published release whose body is not the tool's changelog for its tag, naming the command that writes it"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash scripts/ci/release-check"
+evidence_required:
+  - "release_body_is_the_changelog_case"
+created_at: 2026-10-17
+updated_at: 2026-10-17

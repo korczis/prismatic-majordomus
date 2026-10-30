@@ -15,6 +15,14 @@
 #   substance   every declared section carries at least one link or one derived figure (<dd>);
 #               a heading with nothing under it is a section in name only
 #   honesty     no feature the product model does not call stable is linked from the homepage
+#   figures     every figure of the homepage that names a figure (data-figure="<key>") reads
+#               exactly what the page it links shows under the same key: in the hero strip
+#               (<dl data-hero-figures>) the link is its cell's <dt><a href>, anywhere else the
+#               element's own data-figure-href; a hero figure linking a page that declares
+#               figures names one of them: the homepage said 68 machine-enforced rules and its
+#               link, /doctrines/, said 43 blocking (I4318); a key its target does not carry, a
+#               target the build did not write, a keyed figure that links no page, and a <dd> of
+#               the strip or a data-figure the check cannot read, fail
 #   map         the product map draws exactly the domains the product model shows, in its order,
 #               each member linked, and every problem homepage.toml names is a shown domain the
 #               page renders (ADR 0104)
@@ -38,8 +46,28 @@
 #               data/registry/product.json `evidence` is supported; a verdict badge names a claim
 #               that has one, and some page renders them at all
 #   declared    the homepage proof band gives the declared guaranteed figure of the matrix and,
-#               apart from it, the figure a recorded run supports, or `unknown` when the evidence
-#               is not available; and it never says a test proves it while fewer are supported
+#               apart from it, the count of guaranteed claims the recorded run supports, read
+#               from site/data/evidence.json (the run the evidence page reads, which says the
+#               same count), named by the commit it was recorded at and how far behind the
+#               built one, or the words "not yet measured" and no number when no run measured
+#               it (I3916); a run whose own state is stale or unknown (failures, a dirty tree,
+#               a refused or absent report) shows no count, only "not confirmed"; the
+#               homepage's evidence chain (its last node and that node's detail) and
+#               /guarantees/ show the same figure, and every page under /guarantees/ and
+#               /features/matrix/ that shows another count or verdict says it is the committed
+#               ledger's, never a recorded run's (I4317); and it never says a test proves it
+#               while fewer are supported
+#   promises    a capability word site/data/homepage.toml [promises] declares appears in the
+#               hand-written copy (marketing.toml, manifesto.toml) only while the claim it names is
+#               guaranteed and supported by a recorded run; a declaration naming a claim that does
+#               not exist fails, and so does the name of a feature the model does not call stable
+#   present     no hand-written sentence the homepage renders states how the work stands: the
+#               string values of marketing.toml, manifesto.toml and homepage.toml and the
+#               literal text of site/templates/index.html carry none of the vocabulary of a
+#               present-state claim (today, not yet, nothing ... yet, no command ... today,
+#               shipped, currently, not built, under way, in progress, so far, scheduled, right
+#               now) —
+#               the plan, the releases and the claims matrix say it, rendered (ADR 0166)
 #   interfaces  the working interfaces the homepage lists are the data's, both ways: the stable
 #               features the web topology gives an `interface` surface, in the features' order,
 #               then the product model's other surfaces — and an interface is linked as
@@ -47,9 +75,24 @@
 #               a surface a publication carries, or the build names a snapshot of that surface
 #               (build.json `snapshots`, the publication model's); one only a running process
 #               answers states its mount and links no copy
-#   weight      the homepage's own HTML, the scripts and stylesheets it loads from this site, and
-#               any graph data it carries inline, weigh no more than site/data/homepage.toml's
-#               [budget] declares
+#   sentence    the product sentence is declared once, as marketing.toml's [hero] title and
+#               subtitle; README.md's bold line, project.json's tagline (every page title and
+#               og:description) and the built homepage title say exactly it, in its own case
+#   scenarios   the hero offers the challenge first, then exactly the use cases terminal.json
+#               derives from the recorded refusals, in their order, each linking its built page
+#   nodes       each problem card and lifecycle step names exactly the features the product
+#               model derives for it (a domain's, or those whose commands contain the step's)
+#   product     the hero opens the product: the first interface a person opens, as the data
+#               orders them — exactly once, named by its feature, at its mount when a
+#               publication holds it there and at no such address when only a running process
+#               answers it; the view beside it is of that product, the changes it counts are
+#               the newest release record's, by the changelog's groups, and it counts none of
+#               the plan's issues (rule v2, the owner's decision of 2026-10-22): /roadmap/,
+#               when built, counts them, by the plan's statuses, in the plan's order
+#   weight      for every language site/i18n/languages.json declares, the homepage's own HTML, the
+#               scripts and stylesheets it loads from this site, and any graph data it carries
+#               inline weigh no more than site/data/homepage.toml's [budget] declares; a declared
+#               language whose homepage the build did not write fails
 #   indexing    a page below a section nav.toml lists under [indexing] unlisted carries
 #               <meta name="robots" content="noindex"> and is absent from sitemap.xml; every
 #               other page has no noindex it did not ask for in its own front matter and is
@@ -123,6 +166,21 @@ def load_json(rel):
     with open(p) as f:
         return json.load(f)
 
+# An input only some checks read is theirs: missing, it is a finding of those checks and never
+# the end of the run, so a caller asking --only for another check is not stopped by it.
+missing_inputs = {}
+def load_own(checks, rel):
+    p = os.path.join(root, rel)
+    if not os.path.exists(p):
+        for c in checks:
+            missing_inputs.setdefault(c, []).append(rel)
+        return {}
+    if rel.endswith(".toml"):
+        with open(p, "rb") as f:
+            return tomllib.load(f)
+    with open(p) as f:
+        return json.load(f)
+
 homepage_decl = load_toml("site/data/homepage.toml")
 order = homepage_decl.get("order") or []
 budget = homepage_decl.get("budget") or {}
@@ -160,6 +218,128 @@ if empty:
     bad("substance", f"declared section(s) carry no link and no derived figure: {', '.join(empty)}")
 elif order:
     ok("substance", "every declared section carries at least one link or one derived figure")
+
+# ---------------------------------------------------------------- figures
+# A figure on the homepage and the page it links are two renderings of one count, so they say
+# the same number (I4318). The pair is named on both pages by data-figure="<key>"; nothing here
+# names a key, a page or a count. A hero figure that names no key is held only when its target
+# declares figures, which is when a reader following the link meets a number to compare. Every
+# <dd> of the strip and every data-figure of the page is accounted for: one the parser cannot
+# read is a finding, never a figure that silently left the comparison.
+def page_text(fragment):
+    return " ".join(html.unescape(re.sub(r"<[^>]+>", " ", fragment)).split())
+
+def target_page(href):
+    """The built file a homepage link reaches, or None for a link off this site."""
+    href = html.unescape(href).split("#", 1)[0].split("?", 1)[0]
+    m = re.match(r"^https?://[^/]+(/.*)?$", href)
+    if m:
+        cfg = os.path.join(root, "site", "config.toml")
+        site_host = ""
+        if os.path.exists(cfg):
+            with open(cfg, "rb") as f:
+                site_host = re.sub(r"^https?://", "", str(tomllib.load(f).get("base_url", ""))).rstrip("/")
+        host = re.sub(r"^https?://", "", href).split("/", 1)[0]
+        if site_host and host != site_host.split("/", 1)[0]:
+            return None, href
+        href = m.group(1) or "/"
+    if not href.startswith("/"):
+        return None, href
+    rel = href.strip("/")
+    return os.path.join(pub, rel, "index.html") if rel else os.path.join(pub, "index.html"), href
+
+FIGURE = re.compile(r'<(\w+)\b([^>]*?)\bdata-figure="([^"]*)"([^>]*)>(.*?)</\1>', re.S)
+FIGURE_ATTR = re.compile(r'\bdata-figure="')
+
+def declared_figures(text):
+    figs = {}
+    for m in FIGURE.finditer(text):
+        if m.group(3):
+            figs.setdefault(m.group(3), page_text(m.group(5)))
+    return figs
+
+strip = re.search(r"<dl\b[^>]*\bdata-hero-figures\b[^>]*>(.*?)</dl>", home, re.S)
+wrong, compared = [], []
+items = []  # (name, href, key, value): every figure the check reads, each to be compared
+keyed_read = 0
+if not strip:
+    wrong.append("the homepage has no hero figure strip (<dl data-hero-figures>)")
+    rest = home
+else:
+    rest = home[:strip.start()] + home[strip.end():]
+    # one cell per <dt>, holding the <dd>s up to the next <dt>; whatever markup a cell carries,
+    # every <dd> in it is read or named as unread
+    before, *cells = re.split(r"(?=<dt\b)", strip.group(1))
+    stray = len(re.findall(r"<dd\b", before))
+    if stray:
+        wrong.append(f"{stray} <dd> of the hero figure strip stand(s) before any <dt>, so no link says what they count")
+    if not cells:
+        wrong.append("the hero figure strip carries no linked figure (<dt><a href>label</a></dt><dd>figure</dd>)")
+    for cell in cells:
+        dt = re.match(r"<dt\b[^>]*>(.*?)</dt>", cell, re.S)
+        opened = len(re.findall(r"<dd\b", cell))
+        if not dt:
+            wrong.append(f"a <dt> of the hero figure strip is never closed, so its {opened} <dd> cannot be read")
+            continue
+        a = re.search(r'<a\b[^>]*\bhref="([^"]*)"[^>]*>(.*?)</a>', dt.group(1), re.S)
+        label = page_text(a.group(2) if a else dt.group(1))
+        dds = re.findall(r"<dd\b([^>]*)>(.*?)</dd>", cell[dt.end():], re.S)
+        if not a:
+            wrong.append(f"the figure {label!r} links no page: its <dt> carries no <a href>")
+            continue
+        if not opened:
+            wrong.append(f"the figure {label!r} carries no <dd>")
+        elif len(dds) != opened:
+            wrong.append(f"the figure {label!r} opens {opened} <dd> and {len(dds)} could be read")
+        for attrs, value in dds:
+            km = re.search(r'\bdata-figure="([^"]*)"', attrs)
+            key = km.group(1) if km else ""
+            keyed_read += 1 if km else 0
+            items.append((f"the figure {label!r}", a.group(1), key, page_text(value)))
+# outside the strip a figure carries its link itself: a value and its link are often apart
+# (a node and its detail panel), and the element is what names the pair
+for m in FIGURE.finditer(rest):
+    attrs, key, value = m.group(2) + m.group(4), m.group(3), page_text(m.group(5))
+    keyed_read += 1
+    name = f"the figure {key!r} outside the hero strip"
+    if not key:
+        wrong.append(f"a figure outside the hero strip ({value}) names an empty data-figure")
+        continue
+    hm = re.search(r'\bdata-figure-href="([^"]*)"', attrs)
+    if not hm:
+        wrong.append(f"{name} ({value}) links no page: it carries no data-figure-href")
+        continue
+    items.append((name, hm.group(1), key, value))
+keyed = len(FIGURE_ATTR.findall(home))
+if keyed != keyed_read:
+    wrong.append(f"the homepage names {keyed} figure(s) by data-figure and {keyed_read} could be read, so {keyed - keyed_read} would go uncompared")
+for name, href, key, value in items:
+    path, shown = target_page(href)
+    if path is None:
+        if key:
+            wrong.append(f"{name} names {key!r} and links {shown}, off this site, where no page can show it")
+        continue
+    if not os.path.exists(path):
+        wrong.append(f"{name} links {shown}, a page the build did not write")
+        continue
+    figs = declared_figures(open(path, errors="replace").read())
+    if not key:
+        if figs:
+            wrong.append(f"{name} ({value}) names no data-figure, and {shown} shows {', '.join(f'{k} {v}' for k, v in sorted(figs.items()))}")
+        continue
+    if key not in figs:
+        wrong.append(f"{name} names {key!r}, and {shown} shows no such figure")
+    elif figs[key] != value:
+        wrong.append(f"{name} reads {value!r}, and {shown} shows {key} {figs[key]!r}")
+    else:
+        compared.append(f"{key} {value} = {shown}")
+if not wrong and len(compared) != keyed:
+    wrong.append(f"the homepage names {keyed} figure(s) by data-figure and {len(compared)} were compared")
+if wrong:
+    for w in wrong:
+        bad("figures", w)
+else:
+    ok("figures", f"{len(compared)} homepage figure(s) read what the page they link shows: {'; '.join(dict.fromkeys(compared)) or 'none name a figure'}")
 
 # ---------------------------------------------------------------- honesty
 not_stable = {f["route"]: f.get("status") for f in product.get("features", []) if f.get("status") != "stable"}
@@ -224,6 +404,114 @@ elif absent:
     bad("install", "the install section does not carry the distribution model's " + ", ".join(absent))
 else:
     ok("install", "the install section carries the install, next-step and verification commands the distribution model gives")
+
+# sentence: the one sentence that says what the product is, declared once as the hero's title and
+# subtitle in site/data/marketing.toml (I3134, the owner's choice of 2026-10-20). The README's bold
+# line and the generated project record's tagline, which every page title and og:description
+# read, are projections of it; one that says it in other words fails, naming both wordings.
+hero = load_own(["sentence"], "site/data/marketing.toml").get("hero", {})
+sentence = " ".join(x for x in (hero.get("title", ""), hero.get("subtitle", "")) if x).strip()
+readme_path = os.path.join(root, "README.md")
+readme = open(readme_path, encoding="utf-8").read() if os.path.exists(readme_path) else ""
+bold = next((m.group(1) for m in re.finditer(r"(?m)^\*\*(.+?)\*\*$", readme)), "")
+tagline = load_own(["sentence"], "site/data/generated/project.json").get("tagline", "")
+st = []
+if not sentence:
+    st.append("site/data/marketing.toml [hero] declares no title and subtitle, the product sentence")
+if bold != sentence:
+    st.append(f"README.md's bold line says {bold!r}, the declared sentence is {sentence!r}")
+if tagline != sentence:
+    st.append(f"site/data/generated/project.json's tagline says {tagline!r}; run scripts/generate-site-data")
+site_desc = load_own(["sentence"], "site/config.toml").get("description", "")
+if site_desc != sentence:
+    st.append(f"site/config.toml's description (the feeds') says {site_desc!r}")
+card_path = os.path.join(root, "share/design/brand/social-card.svg")
+card = open(card_path, encoding="utf-8").read() if os.path.exists(card_path) else ""
+card_lines = " ".join(html.unescape(t) for t in re.findall(r'<text [^>]*fill="#cbd5e1"[^>]*>([^<]*)</text>', card))
+if card_lines != sentence:
+    st.append(f"the social card (og:image, share/design/brand/social-card.svg) says {card_lines!r}")
+# the launch kit's one sentence is the same declaration (I3135), as the paragraph under its heading
+kit_path = os.path.join(root, "docs/LAUNCH.md")
+kit = open(kit_path, encoding="utf-8").read() if os.path.exists(kit_path) else ""
+kit_m = re.search(r"(?m)^## One sentence\n\n(.+?)(?:\n\n|\Z)", kit, re.S)
+kit_sentence = " ".join(kit_m.group(1).split()) if kit_m else ""
+if kit_sentence != sentence:
+    st.append(f"docs/LAUNCH.md's one sentence says {kit_sentence!r}")
+# the built homepage's title carries the sentence as declared, in its own case (I3843): a filter
+# that lowercases it ("your ai agents ...") rewrites the owner's words on every search result
+title_m = re.search(r"<title>(.*?)</title>", home, re.S)
+title_text = " ".join(html.unescape(title_m.group(1)).split()) if title_m else ""
+if sentence and sentence.rstrip(".") not in title_text:
+    st.append(f"the homepage title says {title_text!r}, not the declared sentence")
+if missing_inputs.get("sentence"):
+    bad("sentence", f"{', '.join(missing_inputs['sentence'])} missing, so the declared sentence is not judged")
+elif st:
+    bad("sentence", "; ".join(st))
+else:
+    ok("sentence", f"README.md's bold line and every page title read the one declared sentence: {sentence!r}")
+
+# scenarios (I3223): the hero offers the challenge first, then exactly the use cases
+# terminal.json derives from the recorded refusals, in their order, each linking its own page,
+# which the build wrote. A choice with no recorded run behind it is refused.
+term = load_own(["scenarios", "nodes"], "site/data/generated/terminal.json")
+want_sc = [s.get("use_case") for s in term.get("scenarios", [])]
+routes_sc = {s.get("use_case"): s.get("route", "") for s in term.get("scenarios", [])}
+block = re.search(r'<div data-hero-scenarios[^>]*>(.*?)</div>', home, re.S)
+sc = []
+if not block:
+    sc.append("the hero renders no data-hero-scenarios list")
+else:
+    links = re.findall(r'<a href="([^"]+)" data-scenario="([^"]+)"', block.group(1))
+    got = [k for _, k in links]
+    if not got or got[0] != "challenge":
+        sc.append(f"the first scenario is {got[0] if got else 'missing'!r}, not the challenge")
+    if got[1:] != want_sc:
+        sc.append(f"the hero offers {got[1:]}, terminal.json's recorded refusals derive {want_sc}")
+    for href, k in links[1:]:
+        r = routes_sc.get(k)
+        if r is None:
+            sc.append(f"{k} has no recorded refusal in terminal.json")
+        elif not href.rstrip("/").endswith(r.rstrip("/")) or not os.path.exists(os.path.join(pub, r.strip("/"), "index.html")):
+            sc.append(f"{k} does not link its built page {r}")
+if missing_inputs.get("scenarios"):
+    bad("scenarios", f"{', '.join(missing_inputs['scenarios'])} missing, so the hero's scenarios are not judged")
+elif sc:
+    bad("scenarios", "; ".join(sc))
+else:
+    ok("scenarios", f"the hero offers the challenge and the {len(want_sc)} use case(s) the recorded refusals derive, each linking its page")
+
+# nodes (I3224): each problem card and each lifecycle step names exactly the features the
+# product model derives for it, in weight order: a problem its domain's stable features, a
+# step the stable features whose commands contain its command. A node no feature names says
+# so, and every named feature links a page the build wrote.
+features_n = product.get("features") or []
+stable = sorted([f for f in features_n if f.get("status") == "stable"], key=lambda f: f.get("weight", 0))
+routes_f = {f.get("id"): f.get("route", "") for f in features_n}
+want_nodes = {"problem:" + pid: [f.get("id") for f in stable if f.get("domain") == pid] for pid in problems_decl}
+for w in term.get("walkthrough", []):
+    label = w.get("label", "")
+    want_nodes["step:" + label] = [f.get("id") for f in stable if label in (f.get("commands") or [])]
+nd = []
+for node, want_ids in want_nodes.items():
+    m_ = re.search(r'data-node-features="' + re.escape(node) + r'"[^>]*>(.*?)</(?:ul|p)>', home, re.S)
+    if not m_:
+        nd.append(f"{node} renders no feature node")
+        continue
+    got_ids = re.findall(r'data-feature="([^"]+)"', m_.group(1))
+    if got_ids != want_ids:
+        nd.append(f"{node} names {got_ids}, the product model derives {want_ids}")
+    if not want_ids and "data-no-feature" not in m_.group(1):
+        nd.append(f"{node} has no feature and does not say so")
+    for fid in got_ids:
+        r_ = routes_f.get(fid, "")
+        if not os.path.exists(os.path.join(pub, r_.strip("/"), "index.html")):
+            nd.append(f"{node}: {fid} links {r_ or 'nothing'}, which the build did not write")
+if missing_inputs.get("nodes"):
+    bad("nodes", f"{', '.join(missing_inputs['nodes'])} missing, so the feature nodes are not judged")
+elif nd:
+    bad("nodes", "; ".join(nd))
+else:
+    ok("nodes", f"{len(want_nodes)} node(s) name exactly the features the product model derives, each linking its page")
 
 # ---------------------------------------------------------------- runtime
 mermaid_src = re.compile(r'<script\b[^>]*\bsrc="[^"]*mermaid(\.min)?\.js"')
@@ -349,14 +637,19 @@ else:
                 got = html.unescape(re.sub(r"<[^>]+>", "", m.group(1))).strip() if m else None
                 if got != want[key]:
                     problems.append(f"{shown}'s {key} reads {got!r}, the registry says {want[key]!r}")
+        # The picker ships the one capability it shows and draws the others from the slice it
+        # fetches, so the page does not carry the registry (I3759): its options are the shown one,
+        # selected, and a template over the loaded list; the slice is held to the registry below.
         picker = re.search(r"<select\b[^>]*\bdata-surface-picker\b[^>]*>(.*?)</select>", body, re.S)
         if not picker:
             problems.append("the homepage offers no data-surface-picker; only one capability can be shown")
         else:
-            offered = re.findall(r'<option\b[^>]*\bvalue="([^"]+)"', picker.group(1))
-            if offered != [c["id"] for c in builtin]:
-                gone = sorted(set(by_id) - set(offered)); typed = sorted(set(offered) - set(by_id))
-                problems.append("the picker offers other capabilities than the registry" + (": missing " + ", ".join(gone[:4]) if gone else "") + (": not in the registry " + ", ".join(typed[:4]) if typed else "") + ("" if gone or typed else ": in another order"))
+            inner = re.sub(r"<template\b.*?</template>", "", picker.group(1), flags=re.S)
+            offered = re.findall(r'<option\b[^>]*\bvalue="([^"]+)"', inner)
+            if offered != [shown]:
+                problems.append(f"the picker ships {len(offered)} option(s) ({', '.join(offered[:4])}); it ships only the one it shows, {shown!r}, and fetches the rest")
+            if len(builtin) > 1 and not re.search(r"<template\b[^>]*\bx-for=\"[^\"]*\blist\b", picker.group(1)):
+                problems.append("the picker draws no options from the slice it fetches; after it opens it would still offer one capability")
         pub_slice = os.path.join(pub, "graphs", "surfaces.json")
         if not os.path.exists(pub_slice):
             problems.append("graphs/surfaces.json was not published; the picker has nothing to fetch")
@@ -378,7 +671,7 @@ else:
     for p in problems:
         bad("surfaces", p)
     if not problems:
-        ok("surfaces", f"the homepage shows {default} on every surface the registry gives it, the picker offers all {len(builtin)} capabilities, and the published slice matches the registry")
+        ok("surfaces", f"the homepage shows {default} on every surface the registry gives it, the picker ships it alone and draws all {len(builtin)} capabilities from the published slice, which matches the registry")
 
 # ---------------------------------------------------------------- evidence and declared
 # A claim's status is what docs/CLAIMS.yaml declares; whether a recorded run supports it is the
@@ -392,7 +685,6 @@ statuses = list(caps.get("status_order") or [])
 ev = product.get("evidence")
 if not isinstance(ev, dict) or not isinstance(ev.get("claims"), dict):
     bad("evidence", "site/data/registry/product.json carries no evidence section, so no verdict stands behind any claim (regenerate: majordomus generate)")
-    bad("declared", "site/data/registry/product.json carries no evidence section, so the homepage cannot say what a recorded run supports")
 else:
     verdicts = ev["claims"]
     available = ev.get("available") is True
@@ -436,36 +728,428 @@ else:
     else:
         ok("evidence", f"{examined} claim evidence badge(s), each backed by a verdict, and no declared status or unsupported claim in the success colour")
 
-    # the homepage's proof band: the declared figure is the matrix's, and beside the guaranteed
-    # one the supported figure is the evidence's, or `unknown` when nothing is recorded — never
-    # a figure that reads as known without a dataset, and never "a test proves it" while the
-    # evidence supports fewer claims than are declared
-    wrong = []
-    band = re.search(r"<dl\b[^>]*\bdata-claims-proof\b[^>]*>(.*?)</dl>", home, re.S)
-    declared = sum(1 for c in caps.get("claims") or [] if c.get("status") == "guaranteed")
-    supported = sum(1 for v in verdicts.values() if v.get("supported") is True)
-    if not band:
-        wrong.append("the homepage has no claims proof band (<dl data-claims-proof>)")
-    else:
-        b = band.group(1)
-        dm = re.search(r'data-declared="guaranteed"[^>]*>\s*([^<]*?)\s*<', b)
-        if not dm or dm.group(1) != str(declared):
-            wrong.append(f"the declared guaranteed figure is {dm.group(1) if dm else 'absent'!r}, and docs/CLAIMS.yaml declares {declared}")
-        sm = re.search(r'data-supported="([^"]*)"[^>]*>(.*?)</dd>', b, re.S)
-        want = str(supported) if available else "unknown"
-        if not sm:
-            wrong.append("the proof band does not say how many guaranteed claims a recorded run supports")
+# the homepage's proof band (I3916): the declared figure is the matrix's, and beside the
+# guaranteed one the figure the recorded run supports is the count of the run the evidence page
+# reads — site/data/evidence.json `claims`, written by scripts/pages evidence for the deployment
+# and never committed — not the committed ledger's verdict in product.json. A measured figure
+# names the commit its run was recorded at and, when that commit is behind the built one, by
+# how many commits; with no measured run the figure is the words "not yet measured" and no
+# number at all, so a 0 can never stand for a run nobody recorded. The evidence page, when the
+# build wrote it, says the same count. And the page never says a test proves it while fewer are
+# supported than declared.
+#
+# What the count may be shown as follows the run's own state (I4317), the word
+# site/templates/partials/run-figure.html derives from the same fields: `current` (the run is
+# of the built commit and confirms its report) and `behind` (a run of an older commit that
+# nothing of its own withholds) show the count; a run whose state is stale or unknown for a
+# reason of its own — failures, a dirty tree, a refused or absent report, evidence.json
+# `unconfirmed` — confirms no count, and every page says "not confirmed" with no number, as
+# /evidence/ says the run does not confirm its report. /guarantees/ and its guaranteed page show
+# the same figure, and any other count they print says it is the committed ledger's.
+wrong = []
+band = re.search(r"<dl\b[^>]*\bdata-claims-proof\b[^>]*>(.*?)</dl>", home, re.S)
+declared = sum(1 for c in caps.get("claims") or [] if c.get("status") == "guaranteed")
+ci = {}
+ci_path = os.path.join(root, "site", "data", "evidence.json")
+if os.path.exists(ci_path):
+    try:
+        with open(ci_path) as f:
+            ci = json.load(f)
+    except ValueError:
+        wrong.append("site/data/evidence.json cannot be read as JSON, so the run behind the proof band is not judged")
+    if not isinstance(ci, dict):
+        ci = {}
+cl = ci.get("claims") if ci.get("available") is True else None
+measured = isinstance(cl, dict) and cl.get("measured") is True and isinstance(cl.get("supported"), int)
+run_state = str(ci.get("state") or "unknown") if measured else "unmeasured"
+reasons = [str(r) for r in (ci.get("unconfirmed") or []) if r] if measured else []
+run_commit = str(ci.get("commit") or "") if measured else ""
+behind = ci.get("behind") if measured and isinstance(ci.get("behind"), int) else 0
+if not measured:
+    figure = "unmeasured"
+elif not reasons and run_state == "current":
+    figure = "current"
+elif not reasons and run_state == "stale" and behind > 0:
+    figure = "behind"
+else:
+    figure = "unconfirmed"
+shown = figure in ("current", "behind")
+supported = cl["supported"] if shown else None
+want = str(supported) if shown else figure
+withheld = (f"the recorded run of {run_commit[:12]} is {run_state}"
+            + (f", {behind} commit(s) behind the built one" if behind else ", at the built commit")
+            + (": " + " ".join(reasons) if reasons else "") + ", so it confirms no count")
+
+def element(text, m):
+    """the whole element whose start tag the match `m` begins, balanced by its tag name, and its
+    inner markup; None when it never closes."""
+    tag = re.match(r"<([a-zA-Z0-9]+)", m.group(0)).group(1)
+    depth, pos = 0, m.start()
+    for t in re.finditer(rf"<(/?){tag}\b[^>]*>", text[m.start():]):
+        depth += -1 if t.group(1) else 1
+        if depth == 0:
+            return text[m.start():m.start() + t.end()], text[m.end():m.start() + t.start()]
+    return None
+
+def judge_figure(where, text):
+    """the problems of the supported figure in `text` (a page or the proof band), against the run."""
+    out = []
+    fm = re.search(r'<[a-zA-Z0-9]+\b[^>]*\bdata-supported="([^"]*)"[^>]*>', text)
+    el = element(text, fm) if fm else None
+    if not el:
+        return [f"{where} does not say how many guaranteed claims a recorded run supports"], None
+    got, inner = fm.group(1), el[1]
+    said = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", inner)).split())
+    sa = re.search(r'\bdata-supported-state="([^"]*)"', fm.group(0))
+    if got != want:
+        if figure == "unconfirmed" and re.fullmatch(r"[0-9]+", got):
+            out.append(f"{where}: the supported figure reads {got!r} ({said!r}), and {withheld}; it must say 'not confirmed', as the evidence page does")
         else:
-            said = html.unescape(re.sub(r"<[^>]+>", " ", sm.group(2)))
-            if sm.group(1) != want or want not in said:
-                wrong.append(f"the supported figure reads {sm.group(1)!r} ({' '.join(said.split())!r}), and the evidence says {want!r}")
-    if supported < declared and re.search(r"test proves it", html.unescape(re.sub(r"<[^>]+>", " ", home))):
-        wrong.append(f"the homepage says a test proves it, and a recorded run supports {supported} of {declared} declared guarantee(s)")
-    if wrong:
-        for w in wrong:
-            bad("declared", w)
+            out.append(f"{where}: the supported figure reads {got!r} ({said!r}), and the recorded run the evidence page reads says {want!r}")
+        return out, el[0]
+    if measured:
+        if not sa or sa.group(1) != run_state:
+            out.append(f"{where}: the supported figure says its run is {sa.group(1) if sa else 'in no state'!r} (data-supported-state), and the run's state is {run_state!r}")
+        cm = re.search(r'\bdata-supported-commit="([^"]*)"', inner)
+        if not cm or cm.group(1) != run_commit:
+            out.append(f"{where}: the supported figure names the revision {cm.group(1)[:12] if cm else 'nowhere'!r}, and its run was recorded at {run_commit[:12]!r}")
+        bm = re.search(r'\bdata-supported-behind="([0-9]+)"', inner)
+        if behind and (not bm or int(bm.group(1)) != behind):
+            out.append(f"{where}: the run behind the supported figure is {behind} commit(s) behind the built one, and the figure says {bm.group(1) if bm else 'nothing of it'}")
+        if not behind and bm:
+            out.append(f"{where}: the supported figure says its run is {bm.group(1)} commit(s) behind, and it was recorded at the built commit")
+    if shown:
+        if want not in said.split():
+            out.append(f"{where}: the supported figure is marked {got!r}, and its words do not show it: {said!r}")
+    elif figure == "unconfirmed":
+        if "not confirmed" not in said:
+            out.append(f"{where}: {withheld}, and the supported figure does not say 'not confirmed': {said!r}")
+        # the revision and the distance are named; anything else numeric is a count it does not have
+        bare = re.sub(r'<([a-zA-Z0-9]+)\b[^>]*\bdata-supported-(?:commit|behind)="[^"]*"[^>]*>.*?</\1>', " ", inner, flags=re.S)
+        bare = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", bare)).split())
+        if re.search(r"\d", bare):
+            out.append(f"{where}: {withheld}, and the supported figure shows a number: {said!r}")
     else:
-        ok("declared", f"the proof band says {declared} declared guaranteed and {want} supported by a recorded run, as the matrix and the evidence give them")
+        if "not yet measured" not in said:
+            out.append(f"{where}: no recorded run measured the guaranteed claims, and the supported figure does not say 'not yet measured': {said!r}")
+        if re.search(r"\d", said):
+            out.append(f"{where}: no recorded run measured the guaranteed claims, and the supported figure shows a number: {said!r}")
+    return out, el[0]
+
+def strip_where(problems, where):
+    """the homepage's findings read as they always have, without a page name in front"""
+    return [p[len(where) + 2:] if p.startswith(where + ": ") else p for p in problems]
+
+if not band:
+    wrong.append("the homepage has no claims proof band (<dl data-claims-proof>)")
+else:
+    b = band.group(1)
+    dm = re.search(r'data-declared="guaranteed"[^>]*>\s*([^<]*?)\s*<', b)
+    if not dm or dm.group(1) != str(declared):
+        wrong.append(f"the declared guaranteed figure is {dm.group(1) if dm else 'absent'!r}, and docs/CLAIMS.yaml declares {declared}")
+    problems, _ = judge_figure("the proof band", b)
+    wrong.extend(strip_where(problems, "the proof band"))
+# the homepage's evidence chain shows the same run's figure a second time, on its last node and
+# in that node's detail (partials/evidence-chain.html): each value carries the band's
+# data-supported and data-supported-state, and its words are the count when the run shows one,
+# otherwise exactly "not confirmed" or "unmeasured" — never a count the run does not confirm,
+# and, while it shows none, no other number than the declared total and the run's commit
+chain_words = want if shown else ("not confirmed" if figure == "unconfirmed" else "unmeasured")
+def judge_chain(kind, label):
+    where = f"the evidence chain's {label} 'supported by the recorded run'"
+    m = re.search(rf'<[a-zA-Z0-9]+\b[^>]*\bdata-chain-{kind}="evidence"[^>]*>', home)
+    el = element(home, m) if m else None
+    if not el:
+        return [f"{where} is missing (data-chain-{kind}=\"evidence\")"]
+    vm = re.search(r'<[a-zA-Z0-9]+\b[^>]*\bdata-supported="([^"]*)"[^>]*>', el[1])
+    ve = element(el[1], vm) if vm else None
+    if not ve:
+        return [f"{where} does not mark the run's figure (data-supported)"]
+    out = []
+    got = vm.group(1)
+    val = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", ve[1])).split())
+    sa = re.search(r'\bdata-supported-state="([^"]*)"', vm.group(0))
+    if got != want:
+        out.append(f"{where} reads {got!r} ({val!r}), and the recorded run the evidence page reads says {want!r}"
+                   + (f": {withheld}" if figure == "unconfirmed" else ""))
+    elif not sa or sa.group(1) != run_state:
+        out.append(f"{where} says its run is {sa.group(1) if sa else 'in no state'!r} (data-supported-state), and the run's state is {run_state!r}")
+    if val != chain_words:
+        out.append(f"{where} shows {val!r}, and the run's figure is {chain_words!r}"
+                   + (f": {withheld}" if figure == "unconfirmed" and re.search(r"\d", val) else ""))
+    if not shown:
+        rest = el[0].replace(ve[0], " ")
+        rest = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", rest)).split())
+        rest = rest.replace(f"of {declared} guaranteed", " ")
+        if run_commit:
+            rest = rest.replace(run_commit[:7], " ")
+        if re.search(r"\d", rest):
+            said = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", el[1])).split())
+            out.append(f"{where} shows a number beside the run's {chain_words!r}: {said!r}")
+    return out
+chain = re.search(r"<[a-zA-Z0-9]+\b[^>]*\sdata-chain(?=[\s>=])[^>]*>", home)
+if chain:
+    wrong.extend(judge_chain("node", "node"))
+    wrong.extend(judge_chain("detail", "detail"))
+# the evidence page reads the same run, so it says the same count, or the same word
+ev_page = os.path.join(pub, "evidence", "index.html")
+if os.path.exists(ev_page):
+    em = re.search(r'\bdata-ci-supported="([^"]*)"', open(ev_page, errors="replace").read())
+    if not em:
+        wrong.append("the evidence page does not say how many guaranteed claims the recorded run supports (data-ci-supported)")
+    elif em.group(1) != want:
+        wrong.append(f"the evidence page counts {em.group(1)!r} supported guaranteed claim(s), and the homepage's figure is {want!r}")
+# /guarantees/ and its guaranteed page show the homepage's figure, and any other count of
+# supported guarantees they print says it is the committed ledger's, never "a recorded run".
+# The same holds on every other page that shows the ledger's verdict — each claim's page under
+# /guarantees/ and /features/matrix/ — which carry no run figure: what they show is the
+# committed ledger's (product.json `evidence`), and words saying a recorded run supports or
+# does not support a claim there are the ledger's verdict labelled as the run's
+guarantee_pages = 0
+ledger_pages = []
+for rel in ("guarantees/index.html", "guarantees/guaranteed/index.html"):
+    if os.path.exists(os.path.join(pub, rel)):
+        ledger_pages.append((rel, True))
+gdir = os.path.join(pub, "guarantees")
+for d, dirs, files in os.walk(gdir):
+    dirs.sort()
+    if "index.html" in files:
+        rel = os.path.relpath(os.path.join(d, "index.html"), pub).replace(os.sep, "/")
+        if rel not in ("guarantees/index.html", "guarantees/guaranteed/index.html"):
+            ledger_pages.append((rel, False))
+if os.path.exists(os.path.join(pub, "features", "matrix", "index.html")):
+    ledger_pages.append(("features/matrix/index.html", False))
+for rel, figured in ledger_pages:
+    where = "/" + rel[:-len("index.html")]
+    gtext = open(os.path.join(pub, rel), errors="replace").read()
+    el = None
+    if figured:
+        guarantee_pages += 1
+        problems, el = judge_figure(where, gtext)
+        wrong.extend(problems)
+    rest = gtext.replace(el, " ") if el else gtext
+    # a ledger figure names the ledger, and stays in the text scanned below: naming the ledger
+    # somewhere in it does not license calling its verdict a recorded run's
+    for lm in re.finditer(r'<[a-zA-Z0-9]+\b[^>]*\bdata-ledger-supported="[^"]*"[^>]*>', rest):
+        le = element(rest, lm)
+        lsaid = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", le[1] if le else "")).split())
+        if "ledger" not in lsaid:
+            wrong.append(f"{where}: a second supported figure ({lsaid!r}) does not say it counts the committed ledger, so it reads as the recorded run's")
+    rest_said = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", rest)).split())
+    counted = []
+    for om in re.finditer(r"\b([0-9]+(?:/[0-9]+)?)(?: claims)? supported by (?:a|the) recorded run\b", rest_said):
+        counted.append(om.span())
+        wrong.append(f"{where}: counts {om.group(1)} supported by a recorded run apart from the run's figure ({want!r}), and does not say it is another count")
+    for pm in re.finditer(r"\b(?:(?:not|un)\s*)?supported by (?:a|the) recorded run\b", rest_said, re.I):
+        if any(a <= pm.start() < b for a, b in counted):
+            continue
+        ctx = rest_said[max(0, pm.start() - 40):pm.end() + 40].strip()
+        wrong.append(f"{where}: says {pm.group(0)!r} apart from the run's figure ({ctx!r}), and what it shows is the committed ledger's verdict, not the recorded run's")
+if (supported or 0) < declared and re.search(r"test proves it", html.unescape(re.sub(r"<[^>]+>", " ", home))):
+    wrong.append(f"the homepage says a test proves it, and a recorded run supports {supported if shown else ('an unconfirmed number' if figure == 'unconfirmed' else 'an unmeasured number')} of {declared} declared guarantee(s)")
+also = (f", the count the evidence page reads" + (" and /guarantees/ shows" if guarantee_pages else ""))
+if wrong:
+    for w in wrong:
+        bad("declared", w)
+elif shown:
+    ok("declared", f"the proof band says {declared} declared guaranteed and {want} supported by the recorded run of {run_commit[:12]}"
+                   + (f", {behind} commit(s) behind the built one" if behind else ", the built commit")
+                   + also)
+elif figure == "unconfirmed":
+    ok("declared", f"the proof band says {declared} declared guaranteed and, {withheld}, 'not confirmed' supported, never a count"
+                   + (", the word the evidence page reads" + (" and /guarantees/ shows" if guarantee_pages else "")))
+else:
+    ok("declared", f"the proof band says {declared} declared guaranteed and, with no recorded run measured, 'not yet measured' supported, never a number")
+
+# ---------------------------------------------------------------- promises
+# The site's two hand-written files are the only words on it nothing derives, so they are the
+# only place a capability can be promised that the repository does not have. homepage.toml
+# [promises] declares each such word with the claim that permits it ("" when no claim does
+# yet), and a word is allowed only while that claim is guaranteed and a recorded run supports
+# it. This decides the declared words and the feature names the model gives, and nothing else:
+# whether a sentence is conditional, or what it means, is not something a check can read.
+promise_decl = homepage_decl.get("promises")
+claim_status = {c.get("id"): c.get("status") for c in caps.get("claims") or []}
+ev_claims = ev.get("claims") if isinstance(ev, dict) and isinstance(ev.get("claims"), dict) else {}
+ev_available = isinstance(ev, dict) and ev.get("available") is True
+copy_lines = []
+problems, permits = [], []
+# A copy file that is missing or is not TOML is a finding of this check, never a clean pass and
+# never the end of the run: the other checks (and a caller asking --only for one of them) do
+# not read these files and must not be stopped by them.
+for rel in ("site/data/marketing.toml", "site/data/manifesto.toml"):
+    p = os.path.join(root, rel)
+    try:
+        with open(p, "rb") as f:
+            tomllib.load(f)
+    except (OSError, tomllib.TOMLDecodeError) as e:
+        problems.append(f"{rel} cannot be read as TOML ({e.__class__.__name__}), so its copy is not judged")
+        continue
+    for n, line in enumerate(open(p), 1):
+        if not line.lstrip().startswith("#"):
+            copy_lines.append((rel, n, line))
+# the launch kit is hand-written copy too (I3135): its prose outside code is judged by the same
+# vocabulary; a fenced block or an inline code span quotes a command, not a promise
+kit_rel = "docs/LAUNCH.md"
+if os.path.exists(os.path.join(root, kit_rel)):
+    fenced = False
+    for n, line in enumerate(open(os.path.join(root, kit_rel), encoding="utf-8"), 1):
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+            continue
+        if not fenced:
+            copy_lines.append((kit_rel, n, re.sub(r"`[^`]*`", "", line)))
+if not isinstance(promise_decl, dict) or not promise_decl:
+    problems.append("site/data/homepage.toml declares no [promises], so nothing holds the hand-written copy to the claims")
+else:
+    for word, cid in sorted(promise_decl.items()):
+        if not isinstance(cid, str):
+            problems.append(f"site/data/homepage.toml [promises] {word!r} names no claim id (a string, \"\" when none permits it)")
+            continue
+        if cid and cid not in claim_status:
+            problems.append(f"site/data/homepage.toml [promises] {word!r} is permitted by claim {cid!r}, which docs/CLAIMS.yaml does not hold")
+            continue
+        status = claim_status.get(cid) if cid else None
+        supported = ev_available and (ev_claims.get(cid) or {}).get("supported") is True
+        if not cid:
+            why = "no claim permits it"
+        elif status != "guaranteed":
+            why = f"claim {cid!r} is {status}"
+        elif not supported:
+            why = f"claim {cid!r} is guaranteed and no recorded run supports it"
+        else:
+            why = ""
+        permits.append(f"{word} ({cid or 'no claim'}: {'permitted' if not why else why})")
+        pat = re.compile(r"(?<![\w-])" + re.escape(word) + r"(?![\w-])", re.I)
+        for rel, n, line in copy_lines:
+            if why and pat.search(line):
+                problems.append(f"{rel}:{n} promises {word!r}: {why}")
+not_stable_names = []
+for f in product.get("features", []):
+    if f.get("status") == "stable":
+        continue
+    for name in {f.get("title"), f.get("short_title")} - {None, ""}:
+        not_stable_names.append((name, f.get("status"), f.get("id")))
+for name, status, fid in not_stable_names:
+    pat = re.compile(r"(?<![\w-])" + re.escape(name) + r"(?![\w-])")
+    for rel, n, line in copy_lines:
+        if pat.search(line):
+            problems.append(f"{rel}:{n} names feature {fid!r} ({name!r}), which the product model calls {status}")
+if problems:
+    for p in problems[:12]:
+        bad("promises", p)
+    if len(problems) > 12:
+        bad("promises", f"... and {len(problems) - 12} more")
+else:
+    ok("promises", f"the hand-written copy uses no declared word its claim does not permit and names no feature that is not stable: {'; '.join(permits)}")
+
+# ---------------------------------------------------------------- present
+# The landing page states no present tense it does not read (ADR 0166, decision 5). How the
+# work stands — what is shipped, what is not yet built, what nothing does today — is a fact of
+# the plan, the releases and the claims matrix, and the page renders those; a sentence typed
+# beside them describing the same thing is a second account of the repository that nothing
+# updates. The hand-written words the homepage renders are the copy files' string values (a
+# comment is not copy) and the literal text of its template: its markup and its expressions'
+# strings, never its {# comments #}. Each is refused when it carries the vocabulary of a
+# present-state claim. The vocabulary is this check's and is not declared elsewhere, because a
+# declaration a person could empty would make the check pass by saying nothing.
+PRESENT = [
+    ("today", r"\btoday\b"),
+    ("not yet", r"\bnot yet\b"),
+    ("nothing ... yet", r"\bnothing\b[^.!?\"]*\byet\b"),
+    ("no command ... today", r"\bno command\b[^.!?\"]*\b(today|yet|now)\b"),
+    ("shipped", r"\b(is |are |largely |partly )?shipped\b"),
+    ("currently", r"\bcurrently\b"),
+    ("not built", r"\b(mostly |still )?not (yet )?built\b"),
+    ("under way", r"\bunder ?way\b"),
+    ("in progress", r"\bin progress\b"),
+    ("so far", r"\bso far\b"),
+    ("scheduled", r"\bscheduled\b"),
+    ("right now", r"\b(right now|as of now|at present|at the moment)\b"),
+]
+present_re = [(w, re.compile(rx, re.I)) for w, rx in PRESENT]
+present_problems, present_judged = [], []
+
+def mask(text, spans):
+    """text with each (start, end) span blanked, newlines kept so line numbers survive."""
+    out = list(text)
+    for a, b in spans:
+        for i in range(a, b):
+            if out[i] != "\n":
+                out[i] = " "
+    return "".join(out)
+
+def present_scan(rel, text):
+    found = []
+    for word, rx in present_re:
+        for mt in rx.finditer(text):
+            n = text.count("\n", 0, mt.start()) + 1
+            near = " ".join(text[max(0, mt.start() - 40):mt.end() + 40].split())
+            found.append((n, f"{rel}:{n} states the present ({word!r}) instead of reading it: ...{near}..."))
+    present_problems.extend(m for _, m in sorted(found))
+
+STRING = re.compile(r'"((?:[^"\\\n]|\\.)*)"')
+for rel in ("site/data/marketing.toml", "site/data/manifesto.toml", "site/data/homepage.toml"):
+    p = os.path.join(root, rel)
+    try:
+        raw = open(p).read()
+        tomllib.loads(raw)
+    except (OSError, tomllib.TOMLDecodeError) as e:
+        present_problems.append(f"{rel} cannot be read as TOML ({e.__class__.__name__}), so its copy is not judged")
+        continue
+    # keep only the string values of lines that are not comments: a key is not copy
+    keep = []
+    pos = 0
+    for line in raw.splitlines(keepends=True):
+        if not line.lstrip().startswith("#"):
+            for mt in STRING.finditer(line):
+                keep.append((pos + mt.start(1), pos + mt.end(1)))
+        pos += len(line)
+    blank, last = [], 0
+    for a, b in keep:
+        blank.append((last, a)); last = b
+    blank.append((last, len(raw)))
+    present_scan(rel, mask(raw, blank))
+    present_judged.append(rel)
+
+tpl_rel = "site/templates/index.html"
+tpl_path = os.path.join(root, tpl_rel)
+if not os.path.exists(tpl_path):
+    present_problems.append(f"{tpl_rel} is missing, so the homepage's template text is not judged")
+else:
+    raw = open(tpl_path).read()
+    spans = [m.span() for m in re.finditer(r"\{#.*?#\}", raw, re.S)]
+    t = mask(raw, spans)
+    # the proof band's supported figure says "not yet measured" exactly when no recorded run
+    # measured it, and `declared` holds those words to site/data/evidence.json both ways: they
+    # are read, not stated, so they are not judged here (I3916). Nothing else is exempt.
+    t = mask(t, [m.span() for m in re.finditer(r"<dd\b[^>]*\bdata-supported=.*?</dd>", t, re.S)])
+    # an expression or a statement is not text, but a string literal inside one is: a label
+    # typed into a {% set %} is as hand-written as a sentence in the markup
+    spans = []
+    for m in re.finditer(r"\{\{.*?\}\}|\{%.*?%\}", t, re.S):
+        last = m.start()
+        for lit in re.finditer(r'"([^"\n]*)"|\'([^\'\n]*)\'', m.group(0)):
+            g = 1 if lit.group(1) is not None else 2
+            spans.append((last, m.start() + lit.start(g))); last = m.start() + lit.end(g)
+        spans.append((last, m.end()))
+    t = mask(t, spans)
+    # a tag is not text, but what it says to a reader is: aria-label, title, alt, placeholder
+    spans = []
+    for m in re.finditer(r"<[^>]*>", t, re.S):
+        last = m.start()
+        for a in re.finditer(r'\b(?:aria-label|title|alt|placeholder)="([^"]*)"', m.group(0)):
+            spans.append((last, m.start() + a.start(1))); last = m.start() + a.end(1)
+        spans.append((last, m.end()))
+    present_scan(tpl_rel, mask(t, spans))
+    present_judged.append(tpl_rel)
+if present_problems:
+    for p_ in present_problems[:24]:
+        bad("present", p_)
+    if len(present_problems) > 24:
+        bad("present", f"... and {len(present_problems) - 24} more")
+else:
+    ok("present", f"no hand-written sentence states how the work stands ({len(present_re)} forms refused in {', '.join(present_judged)})")
 
 # ---------------------------------------------------------------- interfaces
 # The working interfaces are the data's, both ways. Which ones a person opens is the web
@@ -480,6 +1164,7 @@ else:
 web_path = os.path.join(root, "site", "data", "generated", "web.json")
 rendered_faces = re.findall(r'<li\b[^>]*\bdata-interface="([^"]+)"', home)
 model_surfaces = product.get("surfaces") or []
+faces, by_feature, web_surfaces, snapshots = [], {}, [], []
 if not os.path.exists(web_path):
     if rendered_faces or model_surfaces:
         bad("interfaces", "site/data/generated/web.json is missing; where an interface runs cannot be held to the topology (regenerate: scripts/generate-site-data)")
@@ -528,44 +1213,179 @@ else:
         n_pub = sum(1 for _, fid in starts if f'data-published="{fid}"' in home)
         ok("interfaces", f"the homepage lists the {len(want)} interface(s) the data gives, in its order ({len(faces)} a person opens, {n_pub} of them held by the publication and linked as a snapshot; each states the mount a local server answers at)")
 
+# ---------------------------------------------------------------- product
+# The landing page is the product's front door, so the hero opens the product rather than
+# describing it: the first interface a person opens, in the order the list above is held
+# to. Where the call leads is decided the way an interface's own entry is — the published
+# copy exactly when a publication holds one — and the view the hero draws beside it is a
+# reading of this project's history and releases, so each figure in it is their own count.
+hero_m = re.search(r'<section\b[^>]*\bid="hero".*?</section>', home, re.S)
+hero = hero_m.group(0) if hero_m else ""
+opened = re.findall(r'<a\b[^>]*\bdata-cta="product"[^>]*>', hero)
+views = re.findall(r'\bdata-product-view="([^"]+)"', hero)
+pp = []
+if not faces:
+    if opened or views:
+        pp.append("the hero opens a product, and the data gives no interface a person opens")
+else:
+    pid = faces[0]["id"]
+    pmount = by_feature[pid].get("mount") or ""
+    held = [p.get("id") for p in web_surfaces if p.get("mount") == pmount and p.get("visibility") == "public"
+            and p.get("availability") in ("both", "published-only")]
+    held += [f"a snapshot of {s.get('id')}" for s in snapshots if s.get("id") == by_feature[pid].get("id")]
+    if len(opened) != 1:
+        pp.append(f"the hero carries {len(opened)} call(s) to open the product; {pid} is the first interface the data gives, and the hero opens it once")
+    else:
+        named = re.search(r'\bdata-product="([^"]+)"', opened[0])
+        href = re.search(r'\bhref="([^"]*)"', opened[0])
+        # the page about the product may itself end in the mount's last word (/features/ui
+        # against /ui), so an address is the mount only when it is not that page's
+        about = next((x.get("route") for x in model_surfaces if x.get("id") == pid), None) or faces[0].get("route") or ""
+        target = href.group(1).split("#")[0].rstrip("/") if href else ""
+        leads = bool(pmount) and target.endswith(pmount) and not (about.rstrip("/") and target.endswith(about.rstrip("/")))
+        said = "data-published-product=" in opened[0]
+        if not named or named.group(1) != pid:
+            pp.append(f"the hero opens {named.group(1) if named else 'an unnamed product'}, and the first interface the data gives is {pid}")
+        if held and not (leads and said):
+            pp.append(f"the publication holds {held[0]} at {pmount}, and the hero's call to open {pid} does not lead there")
+        if not held and (leads or said):
+            pp.append(f"the hero opens {pid} at {pmount}, and no publication holds it: only a running process answers that address")
+    if views != [pid]:
+        pp.append(f"the hero shows the product view(s) [{', '.join(views)}], and the product is {pid}")
+    # the plan's issues counted by status are not the hero's (I3917, rule v2): the owner took
+    # the backlog off the front page on 2026-10-22, after an outside reader took its blocked
+    # count for scope out of control. A count may be a link: the number is read inside it, and
+    # a block marked as the plan's counts is refused even when it holds none
+    shown = [(st, int(n)) for st, n in re.findall(r'\bdata-issues="([^"]+)"[^>]*>\s*(?:<a\b[^>]*>\s*)?([0-9]+)', hero)]
+    if shown or re.search(r'\bdata-(?:product-)?issues\b', hero):
+        pp.append("the hero counts the plan's issues by status [" + ", ".join(f"{st} {n}" for st, n in shown)
+                  + "]: the owner took the plan's counts off the hero on 2026-10-22, and /roadmap/ carries them")
+    # and /roadmap/, where a reader comes for them, counts every status the plan gives, in the
+    # plan's order, when the build wrote it
+    roadmap_path = os.path.join(pub, "roadmap", "index.html")
+    plan_path = os.path.join(root, "site", "data", "generated", "plan.json")
+    if os.path.exists(roadmap_path):
+        rtext = open(roadmap_path, errors="replace").read()
+        rshown = [(st, int(n)) for st, n in re.findall(r'\bdata-roadmap-issue-status="([^"]+)"[^>]*>\s*([0-9]+)', rtext)]
+        if not os.path.exists(plan_path):
+            pp.append("/roadmap/ is built, and site/data/generated/plan.json is missing, so its issue counts are not judged (regenerate: scripts/generate-site-data)")
+        else:
+            with open(plan_path) as f:
+                plan = json.load(f)
+            tally = {}
+            for i in plan.get("issues") or []:
+                tally[i.get("status")] = tally.get(i.get("status"), 0) + 1
+            want_counts = [(st, tally[st]) for st in (plan.get("statuses") or {}).get("issue") or [] if tally.get(st)]
+            if rshown != want_counts:
+                pp.append("/roadmap/ counts the plan's issues as [" + ", ".join(f"{st} {n}" for st, n in rshown)
+                          + "], and the plan gives [" + ", ".join(f"{st} {n}" for st, n in want_counts) + "]")
+    # how far the work travelled is the inferred delivery's count, stage by stage in its order
+    # (plan.delivery, ADR 0166): a stage the history proves no issue reached is not drawn, and
+    # `none` is the absence of a stage, never one; once the projection exists the view shows it
+    shown_d = [(k, int(n)) for k, n in re.findall(r'\bdata-delivery="([^"]+)"[^>]*>\s*(?:<a\b[^>]*>\s*)?([0-9]+)', hero)]
+    delivery_path = os.path.join(root, "site", "data", "generated", "delivery.json")
+    if shown_d and not os.path.exists(delivery_path):
+        pp.append("the product view counts delivery stages, and site/data/generated/delivery.json is missing (regenerate: scripts/generate-site-data)")
+    elif os.path.exists(delivery_path) and views:
+        with open(delivery_path) as f:
+            delivery = json.load(f)
+        tallies = delivery.get("tallies") or {}
+        want_d = [(k, tallies[k]) for k in delivery.get("stages") or [] if k != "none" and tallies.get(k)]
+        if want_d and not shown_d:
+            pp.append("the product view counts no delivery stage, and the inferred delivery gives [" + ", ".join(f"{k} {n}" for k, n in want_d) + "]")
+        elif shown_d != want_d:
+            pp.append("the product view counts the delivery as [" + ", ".join(f"{k} {n}" for k, n in shown_d)
+                      + "], and the inferred delivery gives [" + ", ".join(f"{k} {n}" for k, n in want_d) + "]")
+    # what the newest release carried is the changelog's count, group by group, in its order:
+    # the release records are the account of what landed, and the view reads them rather than
+    # a sentence about how the work stands (ADR 0166)
+    landed = re.search(r'\bdata-product-landings="([^"]*)"', hero)
+    shown_l = [(k, int(n)) for k, n in re.findall(r'\bdata-landings="([^"]+)"[^>]*>\s*([0-9]+)', hero)]
+    log_path = os.path.join(root, "site", "data", "generated", "changelog.json")
+    if (landed or shown_l) and not os.path.exists(log_path):
+        pp.append("the product view counts what a release carried, and site/data/generated/changelog.json is missing (regenerate: scripts/generate-site-data)")
+    elif os.path.exists(log_path):
+        with open(log_path) as f:
+            log = json.load(f)
+        released = [x for x in log.get("sections") or [] if not x.get("unreleased")]
+        if views and released and not landed:
+            pp.append(f"the product view says nothing of what v{released[0].get('version')} carried, and the changelog records it")
+        elif landed and not released:
+            pp.append(f"the product view counts the changes of v{landed.group(1)}, and the changelog records no release")
+        elif landed:
+            rel = released[0]
+            want_l = [(g.get("kind"), len(g.get("changes") or [])) for g in rel.get("groups") or [] if g.get("changes")]
+            if landed.group(1) != rel.get("version"):
+                pp.append(f"the product view counts the changes of v{landed.group(1)}, and the newest release record is v{rel.get('version')}")
+            elif shown_l != want_l:
+                pp.append(f"the product view counts v{rel.get('version')}'s changes as [" + ", ".join(f"{k} {n}" for k, n in shown_l)
+                          + "], and the changelog gives [" + ", ".join(f"{k} {n}" for k, n in want_l) + "]")
+for pr in pp:
+    bad("product", pr)
+if not pp:
+    if faces:
+        ok("product", f"the hero opens {faces[0]['id']}, the first interface the data gives, "
+                      + ("at the copy the publication holds" if held else "at the page that says how to open it")
+                      + ", and the view beside it counts what "
+                      + ("the inferred delivery and the newest release record count" if shown_d
+                         else "the newest release record counts")
+                      + ", and no count of the plan's issues")
+    else:
+        ok("product", "the data gives no interface a person opens, and the hero opens none")
+
 # ---------------------------------------------------------------- weight
 # What this page decides: its own HTML, the same-origin scripts and stylesheets it links, and
 # graph data inlined as JSON. The HTML was left unbudgeted until 2026-10-12, on the reasoning
 # that its size follows the recorded runs the page replays; it reached 243,477 bytes, most of
 # it a navigation rendered three times and transcripts that other pages already carried.
+# Every language's homepage is held to the same budget (I3759): the source language's page is
+# site/public/index.html and each other language site/i18n/languages.json declares is
+# site/public/<lang>/index.html. A declared language whose homepage the build did not write fails,
+# rather than leaving its weight unmeasured.
 limit = budget.get("assets_bytes")
 json_limit = budget.get("inline_json_bytes")
 html_limit = budget.get("html_bytes")
-html_size = len(home.encode())
+langs_path = os.path.join(root, "site", "i18n", "languages.json")
+langs_decl = load_json("site/i18n/languages.json") if os.path.exists(langs_path) else {}
+source_lang = langs_decl.get("source") or "en"
+languages = langs_decl.get("languages") or [source_lang]
 if not isinstance(limit, int) or not isinstance(json_limit, int) or not isinstance(html_limit, int):
     bad("weight", "site/data/homepage.toml declares no [budget] html_bytes, assets_bytes and inline_json_bytes; the homepage's weight is unbounded")
 else:
     sm = os.path.join(pub, "sitemap.xml")
     first_loc = re.search(r"<loc>(https?://[^/<]+)", open(sm).read()) if os.path.exists(sm) else None
     site_host = first_loc.group(1) if first_loc else ""
-    refs = re.findall(r'<script\b[^>]*\bsrc="([^"]+)"', home) + re.findall(r'<link\b[^>]*\brel="stylesheet"[^>]*\bhref="([^"]+)"', home)
-    total, counted, missing_assets = 0, [], []
-    for ref in dict.fromkeys(html.unescape(r) for r in refs):
-        if re.match(r"^(https?:)?//", ref) and not (site_host and ref.startswith(site_host + "/")):
-            continue                                  # another origin: not this site's weight to budget
-        path = re.sub(r"^https?://[^/]+", "", ref).split("?")[0].split("#")[0]
-        local = os.path.join(pub, path.lstrip("/"))
-        if os.path.isfile(local):
-            size = os.path.getsize(local); total += size; counted.append((path, size))
-        else:
-            missing_assets.append(path)
-    inline = sum(len(m.group(1).encode()) for m in re.finditer(r'<script\b[^>]*type="application/json"[^>]*>(.*?)</script>', home, re.S))
-    heaviest = ", ".join(f"{p} {n}" for p, n in sorted(counted, key=lambda x: -x[1])[:3])
-    if missing_assets:
-        bad("weight", "the homepage links asset(s) the build did not produce: " + ", ".join(missing_assets[:6]))
-    if total > limit:
-        bad("weight", f"the homepage loads {total} bytes of scripts and stylesheets from this site, over the declared {limit} (heaviest: {heaviest})")
-    if inline > json_limit:
-        bad("weight", f"the homepage carries {inline} bytes of inline JSON, over the declared {json_limit}; publish the data and fetch it")
-    if html_size > html_limit:
-        bad("weight", f"the homepage is {html_size} bytes of HTML, over the declared {html_limit}; link the page that carries the detail instead of inlining it")
-    if not missing_assets and total <= limit and inline <= json_limit and html_size <= html_limit:
-        ok("weight", f"the homepage is {html_size} of {html_limit} bytes of HTML, and loads {total} of {limit} bytes of scripts and stylesheets ({len(counted)} file(s); heaviest: {heaviest}) and {inline} of {json_limit} bytes of inline JSON")
+    for lang in languages:
+        rel = "index.html" if lang == source_lang else f"{lang}/index.html"
+        page_path = os.path.join(pub, rel)
+        if not os.path.isfile(page_path):
+            bad("weight", f"{lang}: site/i18n/languages.json declares the language and the build wrote no {rel}; its homepage's weight is unmeasured")
+            continue
+        page = home if lang == source_lang else open(page_path).read()
+        html_size = len(page.encode())
+        refs = re.findall(r'<script\b[^>]*\bsrc="([^"]+)"', page) + re.findall(r'<link\b[^>]*\brel="stylesheet"[^>]*\bhref="([^"]+)"', page)
+        total, counted, missing_assets = 0, [], []
+        for ref in dict.fromkeys(html.unescape(r) for r in refs):
+            if re.match(r"^(https?:)?//", ref) and not (site_host and ref.startswith(site_host + "/")):
+                continue                              # another origin: not this site's weight to budget
+            path = re.sub(r"^https?://[^/]+", "", ref).split("?")[0].split("#")[0]
+            local = os.path.join(pub, path.lstrip("/"))
+            if os.path.isfile(local):
+                size = os.path.getsize(local); total += size; counted.append((path, size))
+            else:
+                missing_assets.append(path)
+        inline = sum(len(m.group(1).encode()) for m in re.finditer(r'<script\b[^>]*type="application/json"[^>]*>(.*?)</script>', page, re.S))
+        heaviest = ", ".join(f"{p} {n}" for p, n in sorted(counted, key=lambda x: -x[1])[:3])
+        if missing_assets:
+            bad("weight", f"{lang}: the homepage links asset(s) the build did not produce: " + ", ".join(missing_assets[:6]))
+        if total > limit:
+            bad("weight", f"{lang}: the homepage loads {total} bytes of scripts and stylesheets from this site, over the declared {limit} (heaviest: {heaviest})")
+        if inline > json_limit:
+            bad("weight", f"{lang}: the homepage carries {inline} bytes of inline JSON, over the declared {json_limit}; publish the data and fetch it")
+        if html_size > html_limit:
+            bad("weight", f"{lang}: the homepage is {html_size} bytes of HTML, over the declared {html_limit} by {html_size - html_limit}; link the page that carries the detail instead of inlining it")
+        if not missing_assets and total <= limit and inline <= json_limit and html_size <= html_limit:
+            ok("weight", f"{lang}: the homepage is {html_size} of {html_limit} bytes of HTML, and loads {total} of {limit} bytes of scripts and stylesheets ({len(counted)} file(s); heaviest: {heaviest}) and {inline} of {json_limit} bytes of inline JSON")
 
 # ---------------------------------------------------------------- indexing
 sm_path = os.path.join(pub, "sitemap.xml")

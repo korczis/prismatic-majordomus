@@ -3,6 +3,11 @@
 #
 #   scripts/release-verify --archive FILE --target <rust target> --tag <vX.Y.Z> [--native]
 #                          [--browser-assets]
+#                          [--names-from docs/generated/distribution-matrix.json]
+#
+# --names-from reads the expected name and root from the build matrix generated from the
+# model rather than asking the executable, as scripts/release-package does; the release
+# workflow passes it, so no runner builds a debug executable only to learn two names.
 #
 # Checks, in order: the file name the naming function derives, that the archive reads, that
 # every entry is an ordinary file or directory under the archive's own root (no absolute
@@ -46,7 +51,7 @@ fail() {
 die() { printf 'release-verify: %s\n' "$*" >&2; exit "${2:-12}"; }
 ok() { printf 'release-verify: OK   %s\n' "$*"; }
 
-archive=""; target=""; tag=""; native=0; assets=0
+archive=""; target=""; tag=""; native=0; assets=0; names_from=""
 # an archive that is smaller than this is not a build of this tool
 MIN_BYTES=200000
 
@@ -57,17 +62,26 @@ while [ $# -gt 0 ]; do
     --tag) tag="${2:-}"; shift 2 ;;
     --native) native=1; shift ;;
     --browser-assets) assets=1; shift ;;
-    -h|--help) sed -n '2,17p' "$0"; exit 0 ;;
+    --names-from) names_from="${2:-}"; shift 2 ;;
+    -h|--help) sed -n '2,22p' "$0"; exit 0 ;;
     *) die "unknown option: $1" 2 ;;
   esac
 done
 [ -n "$archive" ] && [ -n "$target" ] && [ -n "$tag" ] || die "--archive, --target and --tag are required" 2
 [ -f "$archive" ] || die "no such archive: $archive"
 
-mj="${MAJORDOMUS_DIST_BIN:-$(mj_cargo_target_dir "$CRATE" ask-cargo)/debug/majordomus}"
-[ -x "$mj" ] || die "the distribution model needs the executable; build it or set MAJORDOMUS_DIST_BIN"
-names="$("$mj" distribution --repo "$ROOT" artifact --target "$target" --tag "$tag" --format text 2>/dev/null)" \
-  || die "the distribution model does not publish '$target'" 10
+if [ -n "$names_from" ]; then
+  [ -f "$names_from" ] || die "no build matrix at $names_from"
+  command -v jq >/dev/null 2>&1 || die "--names-from needs jq"
+  names="$(jq -r --arg target "$target" --arg tag "$tag" -f "$ROOT/scripts/lib/distribution-names.jq" "$names_from")" \
+    || die "$names_from is not a build matrix" 10
+  [ -n "$names" ] || die "the build matrix $names_from does not publish '$target'" 10
+else
+  mj="${MAJORDOMUS_DIST_BIN:-$(mj_cargo_target_dir "$CRATE" ask-cargo)/debug/majordomus}"
+  [ -x "$mj" ] || die "the distribution model needs the executable; build it or set MAJORDOMUS_DIST_BIN"
+  names="$("$mj" distribution --repo "$ROOT" artifact --target "$target" --tag "$tag" --format text 2>/dev/null)" \
+    || die "the distribution model does not publish '$target'" 10
+fi
 expected_name="$(printf '%s\n' "$names" | sed -n '1p')"
 expected_root="$(printf '%s\n' "$names" | sed -n '2p')"
 
@@ -138,11 +152,12 @@ done
 # stands, so a release build that skips scripts/cockpit-assets packs a tool whose graphs ask
 # for /ui/assets/vendor/cytoscape.min.js and get a 404: v0.22.0 and v0.23.0 were published
 # that way. The names are the ones scripts/cockpit-assets copies; alpine is committed and is
-# listed so that the six are named in one place.
+# listed so that the seven are named in one place.
 if [ "$assets" = 1 ]; then
   absent=0
   for built in \
     "$expected_root/share/ui/vendor/cytoscape.min.js" \
+    "$expected_root/share/ui/vendor/p5.min.js" \
     "$expected_root/share/cockpit/vendor/alpine.csp.min.js" \
     "$expected_root/share/cockpit/vendor/cytoscape.min.js" \
     "$expected_root/share/cockpit/vendor/three.module.min.js" \

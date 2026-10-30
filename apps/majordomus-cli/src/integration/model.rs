@@ -714,7 +714,7 @@ pub struct GateResult {
 /// What [`ReasonCode`]'s schema says, since its wire form is a string: the vocabulary.
 const REASON_VOCABULARY: &str = "A reason code, `code` or `code:payload`, one of: \
 `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, \
-`merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, \
+`merge_commit_not_allowed`, `merge_settings_unread`, `superseded_by:#N`, `successor_open:#N`, \
 `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, \
 `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, \
 `relation_unknown:WHY`, \
@@ -755,6 +755,9 @@ pub enum ReasonCode {
     /// `merge_commit_not_allowed`: the repository's settings allow no merge commit, and the
     /// executor never squashes or rebases.
     MergeCommitNotAllowed,
+    /// `merge_settings_unread`: the repository's merge settings could not be read, so whether
+    /// it allows a merge commit is unknown (I2966).
+    MergeSettingsUnread,
     /// `superseded_by:#N`: an authorised declared successor, N, landed (no longer open, its
     /// head or its merge commit contained in master).
     SupersededBy {
@@ -898,6 +901,7 @@ impl ReasonCode {
             ReasonCode::Label { .. } => "label",
             ReasonCode::AutoMergeArmed => "auto_merge_armed",
             ReasonCode::MergeCommitNotAllowed => "merge_commit_not_allowed",
+            ReasonCode::MergeSettingsUnread => "merge_settings_unread",
             ReasonCode::SupersededBy { .. } => "superseded_by",
             ReasonCode::SuccessorOpen { .. } => "successor_open",
             ReasonCode::SuccessorNotLanded { .. } => "successor_not_landed",
@@ -1038,6 +1042,7 @@ impl std::str::FromStr for ReasonCode {
             ("draft", None) => ReasonCode::Draft,
             ("auto_merge_armed", None) => ReasonCode::AutoMergeArmed,
             ("merge_commit_not_allowed", None) => ReasonCode::MergeCommitNotAllowed,
+            ("merge_settings_unread", None) => ReasonCode::MergeSettingsUnread,
             ("head_reachable_from_master", None) => ReasonCode::HeadReachableFromMaster,
             ("merge_changes_nothing", None) => ReasonCode::MergeChangesNothing,
             ("patch_ids_upstream", None) => ReasonCode::PatchIdsUpstream,

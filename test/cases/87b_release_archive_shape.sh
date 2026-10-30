@@ -101,7 +101,8 @@ ls "$OUT"/*.tar.gz >/dev/null 2>&1 && {
 # verifier stay as they are, since a checkout without node_modules still packs for the
 # installer's tests. What a release asks for is `release-verify --browser-assets`, and this is
 # what it refuses.
-BUILT="share/ui/vendor/cytoscape.min.js share/cockpit/vendor/alpine.csp.min.js
+BUILT="share/ui/vendor/cytoscape.min.js share/ui/vendor/p5.min.js
+share/cockpit/vendor/alpine.csp.min.js
 share/cockpit/vendor/cytoscape.min.js share/cockpit/vendor/three.module.min.js
 share/cockpit/vendor/three.core.min.js share/cockpit/vendor/p5.min.js"
 pack_dir="$T/repack"; mkdir -p "$pack_dir/full" "$pack_dir/short" "$pack_dir/tree"
@@ -117,7 +118,7 @@ name="$(basename "$archive")"
 verify_assets() { env MAJORDOMUS_DIST_BIN="$MJB" "$ROOT/scripts/release-verify" \
   --archive "$1" --target "$TARGET" --tag "$TAG" --browser-assets; }
 verify_assets "$pack_dir/full/$name" > "$T/assets-full.log" 2>&1 \
-  || { echo "    release-verify --browser-assets refused an archive that carries all six:"; tail -20 "$T/assets-full.log" | sed 's/^/      /'; exit 1; }
+  || { echo "    release-verify --browser-assets refused an archive that carries all seven:"; tail -20 "$T/assets-full.log" | sed 's/^/      /'; exit 1; }
 tar -tzf "$pack_dir/full/$name" > "$T/assets-listing"
 for file in $BUILT; do
   grep -q "/$file\$" "$T/assets-listing" || { echo "    the complete archive does not list $file"; exit 1; }

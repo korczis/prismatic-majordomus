@@ -7,7 +7,8 @@ longer there, so a chapter cannot keep describing something the repository has r
 removed. What the chapter's own text links to is found automatically and added to this.
 
 Reference syntax: kind:label, where label is the graph's label for that kind
-(doc:docs/MESH.md, feature:mesh, module:mesh, command:finish, adr:0067, rule:project.x, claim:x).
+(doc:docs/MESH.md, feature:mesh, module:mesh, command:finish, adr:0067, rule:project.x, claim:x,
+milestone:x).
 """
 
 SOURCES = {
@@ -17,6 +18,7 @@ SOURCES = {
     "stavba": "doc:docs/HOW_IT_WORKS.md doc:docs/SURFACES.md feature:interfaces module:graph",
     "stav": "doc:docs/CONCEPTS.md doc:docs/SCHEMAS.md module:objects",
     "projekce": "doc:docs/CAPABILITIES.md doc:docs/SURFACES.md feature:declare-once feature:interfaces module:capabilities adr:0002 adr:0004",
+    "mj-way": "doc:docs/DOCTRINE.md doc:docs/CAPABILITIES.md doc:docs/DELIVERY.md doc:docs/HANDBOOK.md feature:declare-once feature:doctrine feature:finish-contract adr:0004 rule:project.derived-files-regenerated rule:project.rule-is-a-doctrine rule:project.no-claim-without-test rule:project.work-is-claimed-before-it-is-built rule:project.worktree-topology rule:project.land-and-publish rule:project.the-handbook-is-built-from-the-tree",
     "nasazeni": "doc:docs/ADOPTION.md doc:docs/ADOPTION_FIRST_RUN.md doc:docs/INSTALL.md feature:install command:init command:update command:doctor",
     "osobni": "doc:docs/PERSONAL_MODE.md doc:docs/ADOPTION.md feature:install command:init command:update command:doctor",
     # Harness
@@ -84,6 +86,11 @@ SOURCES = {
     "cisla-commity": "doc:docs/COMMIT.md feature:commit module:commit",
     "cisla-adr": "doc:docs/CONCEPTS.md command:adr",
     "cisla-pravidla": "doc:docs/DOCTRINE.md doc:docs/CI.md feature:doctrine feature:ci module:rules module:gates",
+    # Výhled
+    "v-vyhled": "doc:docs/ROADMAP.md doc:docs/DOGFOODING.md doc:docs/ADOPTION_FIRST_RUN.md doc:docs/HANDBOOK.md feature:planning",
+    "v-trh": "doc:docs/PRODUCT.md doc:docs/SURFACES.md doc:docs/EVIDENCE.md doc:docs/ADOPTION.md feature:evidence feature:coordination",
+    "v-realita": "doc:docs/PLANNING.md doc:docs/DOCTRINE.md feature:planning module:plan module:intent_realization command:history milestone:execution-telemetry",
+    "v-tokeny": "doc:docs/ECONOMICS.md feature:economics module:economics adr:0082 claim:token-savings-measured claim:economics-claims-gated claim:telemetry milestone:execution-telemetry",
     # Reference
     "prikazy": "doc:docs/CLI.md doc:docs/COMMANDS.md module:commands command:help",
     "p-prikazy": "doc:docs/CLI.md doc:docs/KNOWLEDGE.md doc:docs/CONTINUITY.md command:knowledge command:session command:handover",

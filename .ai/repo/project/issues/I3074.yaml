@@ -1,0 +1,57 @@
+id: I3074
+milestone: public-proof
+title: "Every article ends with the articles related to it, in its reader's language, and each answers it back"
+slug: the-articles-are-linked-in-every-language
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "An article names the articles related to it in [extra] related, as the routes its [extra.translations] uses, and site/templates/page.html ends it with a Related section that draws each one from the page itself through get_page: its title, its description and its language, tagged where that is not the article's own. Check 21 of scripts/site-check reads the list with the reader it already has for the counterparts, and refuses, naming the file: a related route that is no page or no article, the article itself or one of its own counterparts, an entry listed twice, a page in another language where the related article has a counterpart in the article's own, a related article that names neither the article nor any of its counterparts back, two counterparts that relate different articles, and, once the site relates any article, an article the navigation lists that names none. The eight articles of site/content-src each name the other three groups in their own language. Case 3389 holds each refusal on fixtures, the real tree, and the built section of every article."
+why: "The owner asked on 2026-10-19 that the site's articles be developed and interlinked in every language, and enforced. e7's I3436-I3438 make every article read in every language and hold its counterparts to each other; an article still led nowhere but to its own translation, so a reader who finished the essay on the bet on a layer was not shown the documentation it argues for, the stream that measures it or the plan it becomes. The withdrawn first attempt of this issue is preserved at refs/rescue/docs/the-articles-are-linked-in-every-language/20261019T0400Z."
+current_state: "site/templates/page.html ends an article with its body. No article names a related one, and nothing in scripts/site-check or the suite reads such a list."
+desired_state: "Every article the navigation lists ends with a Related section naming the other groups of articles, each in the reader's language, and every group relates the same articles in each of its languages. Check 21 refuses a list that breaks any of those, on the real tree in the site job and on fixtures in case 3389."
+scope:
+  - ".ai/repo/project/issues/I3074.yaml"
+  - "scripts/site-check"
+  - "site/templates/page.html"
+  - "site/content-src/teze.md"
+  - "site/content-src/the-bet-on-a-layer.md"
+  - "site/content-src/proof-carrying-documentation.md"
+  - "site/content-src/dokumentace-kterou-lze-odmitnout.md"
+  - "site/content-src/everything-followed.md"
+  - "site/content-src/vsechno-v-jednom-proudu.md"
+  - "site/content-src/a-pasted-brief-becomes-a-plan.md"
+  - "site/content-src/vlozene-zadani-se-stava-planem.md"
+  - "test/cases/3389_related_articles_answer_each_other_in_every_language.sh"
+non_scope:
+  - "A link to an article's own counterpart under its title, and a language switch for the whole site: that is the multilingual site's (feature/site-multilingual)"
+  - "Translating the heading of the section, which is the site's English chrome like the breadcrumb"
+depends_on:
+  - "I3436"
+  - "I3437"
+acceptance_criteria:
+  - "Each of the eight articles is built with a Related section linking the three other groups' articles in its own language, each with the related page's own title and lang"
+  - "Check 21 refuses, naming the file, each fault the objective lists, and passes the real site/content-src with one OK articles line counting the related links"
+  - "A translation's source_digest does not move when its source's related list changes, because the digest covers the body alone"
+validation:
+  - "majordomus plan validate"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3389_related_articles_answer_each_other_in_every_language"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3502_every_article_reads_in_every_language"
+evidence_required:
+  - "related_articles_answer_each_other"
+serves: []
+created_at: 2026-10-19
+updated_at: 2026-10-22T04:42:19Z
+started_at: 2026-10-22T04:37:05Z
+started_event: sha256:ff8bcd1f6d41284699f21516194327a65561e8f45018d2927a202e46082cfddc
+verified_at: 2026-10-22T04:37:37Z
+verified_event: sha256:4db91db8430f9ef21b07572084471f00b5027e834ac355d008935795b23c559b
+completed_at: 2026-10-22T04:42:19Z
+completed_event: sha256:8a0ea1cf52c70dd4c409afd0968f7261a5e933cbe0298d061e646791fb4a8a94
+evidence:
+  - covers: related_articles_answer_each_other
+    type: ci
+    command: "validate run 39712017896 at 76c57859663 (PR #1789, the tree master holds since train 3a landed): suite-shard (4) job 119605435710 runs 3389_related_articles_answer_each_other_in_every_language; the site job runs scripts/site-check, check 21 included"
+    result: "3389 ok (10s); shard 4: 153 passed, 0 failed, 1 skipped; every job of the run passed"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39712017896"
+    commit: 76c578596631b290f9291691b388f359fbce97ae
+    recorded_at: 2026-10-22T04:42:09Z

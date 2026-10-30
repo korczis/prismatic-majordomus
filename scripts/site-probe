@@ -16,6 +16,19 @@
 #   SITE_PROBE_PORT=N             the local server's port (default: the first free one of 8791-8796)
 #   SITE_PROBE_TIMEOUT=N          seconds a browser process may take for one route before it is
 #                                 killed and the route reported as unanswered (default 90)
+#   SITE_PROBE_SHARD=K/N          only shard K of N: every Nth route of the sorted list, from the
+#                                 Kth. The N shards together are the whole sweep, each route in
+#                                 exactly one; the homepage behaviour and the command routes are
+#                                 shard 1's. CI runs N of them side by side (I2841).
+#   scripts/site-probe --partition K/N   the routes on stdin that shard K of N measures, one per
+#                                 line, by the same selection the sweep uses. Needs no site.
+#   SITE_PROBE_REPORT=FILE        write the routes this run measures to FILE, after a first line
+#                                 "# shard K/N of M routes"
+#   scripts/site-probe --verify-report DIR   the reports under DIR (*-routes*.txt) are shards 1..N
+#                                 of one sweep, each once, and together hold all M routes, each
+#                                 once (exit 10 if not). What the CI fan-in asks before it trusts
+#                                 the shards; scripts/interaction-probe shards by the same rule and
+#                                 is verified by the same question (I3602).
 #
 # A finding names what caused it. An absolutely positioned element is clipped by its
 # offsetParent chain, not by its parent chain — a .sr-only span inside a scrolling table is
@@ -43,7 +56,21 @@
 # declared). A finding names the route, the width, the assertion and what was measured.
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; SITE="$ROOT/site"; PUB="$SITE/public"; QUICK=0; SELF=0
-usage() { sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'; }
+# One shard of a route list: the lines whose position, counted from 1, is K modulo N. A stride
+# rather than N contiguous blocks, because the sorted list clusters its expensive pages (the
+# command reference, the registry) and a block would hand one shard all of them.
+shard_of() { # $1 = "K/N"; the route list on stdin
+  awk -v k="${1%/*}" -v n="${1#*/}" 'NR % n == k % n'
+}
+# K/N or nothing: two positive integers with K at most N. A malformed shard used to be the one
+# thing that could make a sweep quietly measure nothing, so it is refused before any build.
+shard_ok() {
+  case "$1" in */*) ;; *) return 1 ;; esac
+  case "${1%/*}" in ''|*[!0-9]*|0) return 1 ;; esac
+  case "${1#*/}" in ''|*[!0-9]*|0) return 1 ;; esac
+  [ "${1%/*}" -le "${1#*/}" ]
+}
 # An unknown flag used to fall through to the full sweep, so a person asking --help waited out
 # every route to be told nothing. `--route` is the worker the pool spawns, not a public flag.
 case "${1:-}" in
@@ -51,11 +78,45 @@ case "${1:-}" in
   --quick) QUICK=1 ;;
   --self-check) SELF=1 ;;
   --route) ;;
+  --partition)
+    shard_ok "${2:-}" || { echo "site-probe: --partition needs K/N with 1 <= K <= N, got '${2:-}'" >&2; exit 2; }
+    shard_of "$2"; exit 0 ;;
+  --verify-report)
+    [ -d "${2:-}" ] || { echo "site-probe: --verify-report needs a directory of shard reports, got '${2:-}'" >&2; exit 2; }
+    # Every report under DIR: its header names its shard and the size of the whole list. The
+    # verdict is about the set, so it is read whole before anything is said about it.
+    reports="$(find "$2" -type f -name '*-routes*.txt' | LC_ALL=C sort)"
+    [ -n "$reports" ] || { echo "FAIL shards     no shard report under $2: no shard said what it measured"; exit 10; }
+    vfail=0; vbad() { printf 'FAIL %-10s %s\n' shards "$1"; vfail=1; }
+    heads="$(for f in $reports; do head -1 "$f"; done)"
+    n="$(printf '%s\n' "$heads" | sed -n 's|^# shard [0-9]*/\([0-9]*\) of [0-9]* routes$|\1|p' | LC_ALL=C sort -u)"
+    m="$(printf '%s\n' "$heads" | sed -n 's|^# shard [0-9]*/[0-9]* of \([0-9]*\) routes$|\1|p' | LC_ALL=C sort -u)"
+    [ "$(printf '%s\n' "$heads" | grep -cv '^# shard [0-9]*/[0-9]* of [0-9]* routes$')" = 0 ] || vbad "a report does not begin with '# shard K/N of M routes'"
+    [ "$(printf '%s\n' "$n" | grep -c .)" = 1 ] || vbad "the reports disagree on how many shards there are: $(printf '%s' "$n" | tr '\n' ' ')"
+    [ "$(printf '%s\n' "$m" | grep -c .)" = 1 ] || vbad "the reports disagree on how many routes the site has: $(printf '%s' "$m" | tr '\n' ' ')"
+    if [ "$vfail" = 0 ]; then
+      ks="$(printf '%s\n' "$heads" | sed 's|^# shard \([0-9]*\)/.*|\1|' | LC_ALL=C sort -n | tr '\n' ' ')"
+      [ "$ks" = "$(seq 1 "$n" | tr '\n' ' ')" ] || vbad "shards ${ks}reported, not each of 1..$n once"
+      for f in $reports; do tail -n +2 "$f"; done > "${TMPDIR:-/tmp}/site-probe-union.$$"
+      got="$(grep -c . "${TMPDIR:-/tmp}/site-probe-union.$$" || true)"
+      dup="$(LC_ALL=C sort "${TMPDIR:-/tmp}/site-probe-union.$$" | uniq -d | head -3 | tr '\n' ' ')"
+      rm -f "${TMPDIR:-/tmp}/site-probe-union.$$"
+      [ -z "$dup" ] || vbad "measured by more than one shard: $dup"
+      [ "$got" = "$m" ] || vbad "the shards measured $got route(s) of the $m the site has"
+    fi
+    [ "$vfail" = 0 ] && { printf 'OK   %-10s %s\n' shards "$n shard(s) measured all $m route(s), each once"; exit 0; }
+    exit 10 ;;
   -h|--help) usage; exit 0 ;;
   *) echo "site-probe: unknown option '$1'" >&2; usage >&2; exit 2 ;;
 esac
 JOBS="${SITE_PROBE_JOBS:-1}"
 case "$JOBS" in ''|*[!0-9]*|0) echo "site-probe: SITE_PROBE_JOBS must be a positive integer, got '$JOBS'" >&2; exit 2 ;; esac
+SHARD="${SITE_PROBE_SHARD:-1/1}"
+shard_ok "$SHARD" || { echo "site-probe: SITE_PROBE_SHARD must be K/N with 1 <= K <= N, got '$SHARD'" >&2; exit 2; }
+# shard 1 also carries the checks that are about the site rather than one route
+FIRST=0; [ "${SHARD%/*}" = 1 ] && FIRST=1
+# --quick picks its own sample, one route per template, which no stride of the list preserves
+[ "$QUICK" = 1 ] && [ "$SHARD" != 1/1 ] && { echo "site-probe: --quick samples its own routes and cannot be split; drop SITE_PROBE_SHARD" >&2; exit 2; }
 # the self-check measures its own fixtures and never opens the site, so it answers in a
 # checkout that has never been built — which is where a person doubting the probe asks
 [ "$SELF" = 1 ] || [ -d "$PUB" ] || { echo "site-probe: site/public missing; run scripts/site-build" >&2; exit 12; }
@@ -307,14 +368,23 @@ if [ -n "${SITE_PROBE_ONLY:-}" ]; then
   routes="$(for r in $routes; do for o in $SITE_PROBE_ONLY; do [ "$r" = "$o" ] && printf '%s\n' "$r"; done; done; true)"
   [ -n "$routes" ] || { echo "site-probe: SITE_PROBE_ONLY names no built route" >&2; exit 12; }
 fi
+# SITE_PROBE_SHARD=K/N keeps this shard's stride of the list; the other N-1 jobs keep theirs, and
+# case 3602 holds that together they are the list, each route once. A shard left with nothing
+# measures nothing, which is refused rather than reported as a clean sweep.
+all_routes="$(printf '%s\n' "$routes" | wc -l | tr -d ' ')"
+if [ "$SHARD" != 1/1 ]; then
+  routes="$(printf '%s\n' "$routes" | shard_of "$SHARD")"
+  [ -n "$routes" ] || { echo "site-probe: shard $SHARD of $all_routes route(s) holds none; fewer shards than routes are needed" >&2; exit 12; }
+fi
 # The native command line's reference, fetched from the running server: every route the
 # executable declares answers 200, and the deepest command page carries what it promises —
 # its own path, an argument, and the session an example test executed. The route list is
 # site/data/generated/cli.json, which the executable derived from its clap declaration, so a
 # command added to it is fetched the day it appears and nothing here names one. This runs
-# whether or not the sweep below is narrowed to a sample.
+# whether or not the sweep below is narrowed to a sample, and in shard 1 of a split sweep only.
 CLIJ="$SITE/data/generated/cli.json"
-if [ -f "$CLIJ" ]; then
+if [ "$FIRST" = 0 ]; then :
+elif [ -f "$CLIJ" ]; then
   clibad=0; cli_n=0
   for r in $(jq -r '.commands[].route' "$CLIJ"); do
     cli_n=$((cli_n + 1))
@@ -358,6 +428,11 @@ if [ "$QUICK" = 1 ]; then
   routes="$(printf '%s\n' "$SAMPLE" | LC_ALL=C sort -u)"
   echo "site-probe: --quick, one route per template plus each template's widest page ($(printf '%s\n' "$routes" | wc -l | tr -d ' ') of $(printf '%s\n' "$MAP" | wc -l | tr -d ' '))"
 fi
+# what this run measures, for the fan-in that proves the shards were the whole sweep; written
+# after every narrowing, so it is the list the pool below is handed and nothing wider
+if [ -n "${SITE_PROBE_REPORT:-}" ]; then
+  { printf '# shard %s of %s routes\n' "$SHARD" "$all_routes"; printf '%s\n' "$routes"; } > "$SITE_PROBE_REPORT"
+fi
 # every route through the pool: "<n> <route>" per line, n in route order, so the findings
 # come back in route order whatever the order the processes finished in
 SITE_PROBE_WORK="$WORK" SITE_PROBE_PREFIX="$PREFIX" SITE_PROBE_PORT="$PORT"; export SITE_PROBE_WORK SITE_PROBE_PREFIX SITE_PROBE_PORT
@@ -372,7 +447,9 @@ for i in $(seq 1 "$n_routes"); do
 done
 ok overflow "$n route×width measurements without horizontal overflow (or listed above)"
 
-# behaviour on the homepage: mobile menu, one dropdown, theme toggle
+# behaviour on the homepage: mobile menu, one dropdown, theme toggle. One shard asks it, so a
+# split sweep reports each of these once.
+if [ "$FIRST" = 1 ]; then
 cat > "$WORK/srv/b.html" <<HTML
 <!doctype html><title>probe</title><iframe id=f src="$PREFIX/" style="width:390px;height:900px;border:0"></iframe>
 <script>document.getElementById('f').addEventListener('load',()=>{setTimeout(()=>{const d=document.getElementById('f').contentDocument,w=document.getElementById('f').contentWindow;
@@ -389,6 +466,7 @@ cat > "$WORK/srv/d.html" <<HTML
 HTML
 t="$(title_of "http://127.0.0.1:$PORT/d.html")"
 printf '%s' "$t" | grep -q 'dropdown=true' && ok dropdown "navigation dropdown opens (site/nav.js)" || bad dropdown "dropdown did not open ($t)"
+fi
 
 # A sample that passes is not a verdict about the site. Saying which question was answered
 # costs one line and stops "ok" from being read as a claim about every route: a --quick run
@@ -396,6 +474,9 @@ printf '%s' "$t" | grep -q 'dropdown=true' && ok dropdown "navigation dropdown o
 if [ "$QUICK" = 1 ]; then
   printf 'site-probe: %s failure(s) with %s — sampled %s of %s routes; a clean --quick is not a clean site, run without --quick before claiming one\n' \
     "$fails" "$CHROME" "$n_routes" "$(cd "$WORK/out" && find . -name index.html | wc -l | tr -d ' ')"
+elif [ "$SHARD" != 1/1 ]; then
+  printf 'site-probe: %s failure(s) with %s — shard %s, %s of %s routes, %s at a time; the other shards hold the rest\n' \
+    "$fails" "$CHROME" "$SHARD" "$n_routes" "$all_routes" "$JOBS"
 else
   printf 'site-probe: %s failure(s) with %s — every route, %s at a time\n' "$fails" "$CHROME" "$JOBS"
 fi

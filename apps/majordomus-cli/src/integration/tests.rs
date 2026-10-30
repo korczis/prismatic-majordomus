@@ -154,6 +154,9 @@ struct World {
     refresh_fails: bool,
     /// The merge methods the repository's settings allow, in the forge's words.
     merge_methods: Vec<&'static str>,
+    /// The forge's answer carries none of the merge settings (a token that may not read
+    /// them): `merge_methods` is then not observed at all.
+    merge_settings_unread: bool,
     /// Pull requests no longer open, and how they went: what the forge reports of those a
     /// supersession names.
     gone: Vec<(Sim, Gone)>,
@@ -211,6 +214,7 @@ impl Default for World {
             close_calls: 0,
             refresh_fails: false,
             merge_methods: vec!["merge"],
+            merge_settings_unread: false,
             gone: Vec::new(),
             merged_onto: BTreeMap::new(),
             foreign_merge_before: BTreeSet::new(),
@@ -248,7 +252,8 @@ impl World {
                 ..Default::default()
             }),
             up_to_date_required: Some(true),
-            merge_methods: self.merge_methods.iter().map(|m| m.to_string()).collect(),
+            merge_methods: (!self.merge_settings_unread)
+                .then(|| self.merge_methods.iter().map(|m| m.to_string()).collect()),
             pull_requests: self.open.iter().map(observe_pr).collect(),
             resolved: self.resolved(),
             delete_branch_on_merge: None,
@@ -457,7 +462,6 @@ impl Integrator for World {
 
     fn merge(&mut self, pr: u64, head_sha: &str, method: &str) -> Result<(), String> {
         self.merge_calls += 1;
-        assert_eq!(method, "merge", "the repository's merge method");
         if self.merge_refuses.contains(&pr) {
             return Err(
                 "Pull request is not mergeable: the base branch policy prohibits the merge".into(),
@@ -485,12 +489,23 @@ impl Integrator for World {
             self.open[i].labels.is_empty(),
             "merged a pull request that carries a label"
         );
+        // a head that contains master is fast-forwarded to; only one that carries it is merged
+        let fast_forward = self.open[i].contains == self.master;
+        assert_eq!(
+            method,
+            ["merge", drain::FAST_FORWARD][usize::from(fast_forward)],
+            "the landing method of #{pr}"
+        );
         if self.answer_lost_before_landing.contains(&pr) {
             return Err("Post https://api.github.com/graphql: timed out".into());
         }
         if self.foreign_merge_before.contains(&pr) {
-            // another change lands first; the forge then merges this one on top of it
+            // another change lands first; a fast-forward is then refused, as the forge does,
+            // and a merge is made on top of it
             self.master += 1;
+            if fast_forward {
+                return Err("gh: Update is not a fast forward (HTTP 422)".into());
+            }
         }
         let head = self.open[i].head.clone();
         self.merged_onto.insert(pr, (master_sha(self.master), head));
@@ -2541,7 +2556,7 @@ fn observed(dir: &std::path::Path, master: &str, prs: Vec<PullRequestObservation
         required_checks: Some(vec!["ci".into()]),
         review_policy: Some(Default::default()),
         up_to_date_required: Some(true),
-        merge_methods: vec!["merge".into()],
+        merge_methods: Some(vec!["merge".into()]),
         pull_requests: prs,
         resolved: Default::default(),
         delete_branch_on_merge: None,
@@ -4619,6 +4634,7 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         | R::Label { .. }
         | R::AutoMergeArmed
         | R::MergeCommitNotAllowed
+        | R::MergeSettingsUnread
         | R::SupersededBy { .. }
         | R::SuccessorOpen { .. }
         | R::SuccessorNotLanded { .. }
@@ -4667,6 +4683,7 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         },
         R::AutoMergeArmed,
         R::MergeCommitNotAllowed,
+        R::MergeSettingsUnread,
         R::SupersededBy { number: 12 },
         R::SuccessorOpen { number: 13 },
         R::SuccessorNotLanded { number: 14 },
@@ -4997,7 +5014,7 @@ proptest! {
                         "successor_not_landed",
                         "successor_unread",
                     ],
-                    G::MergeMethod => &["merge_commit_not_allowed"],
+                    G::MergeMethod => &["merge_commit_not_allowed", "merge_settings_unread"],
                     G::RelationToMaster => &[
                         "head_reachable_from_master",
                         "merge_changes_nothing",
@@ -5218,6 +5235,59 @@ fn a_repository_without_merge_commits_holds_every_candidate_and_merges_nothing()
     }
 }
 
+/// A forge answer that carries none of the merge settings (the Pages workflow's token reads
+/// the repository without them) is unknown, never "allows nothing": the published Cockpit said
+/// "allows no merge commit (it allows: nothing)" while all three were allowed (I2966). Every
+/// candidate is held as unknown with `merge_settings_unread`, nothing merges, and the
+/// diagnostic says the settings could not be read.
+#[test]
+fn unread_merge_settings_are_unknown_and_never_allow_nothing() {
+    use crate::integration::ReasonCode as R;
+    let mut ready = sim(1);
+    ready.contains = 1;
+    let mut w = World {
+        open: vec![ready],
+        master: 1,
+        merge_settings_unread: true,
+        ..Default::default()
+    };
+    let q = w.queue();
+    assert_eq!(q.policy.merge_method, None);
+    assert!(q.policy.merge_settings_unread);
+    let a = q.get(1).unwrap();
+    assert_eq!(
+        a.disposition,
+        PullRequestDisposition::Unknown,
+        "{:?}",
+        a.reasons
+    );
+    assert_eq!(a.reasons[0], R::MergeSettingsUnread, "{:?}", a.reasons);
+    let settings = a
+        .evidence
+        .iter()
+        .find(|e| e.kind == crate::integration::EvidenceKind::RepositorySettings)
+        .expect("settings evidence");
+    assert_eq!(settings.status, "merge_settings_unread");
+    assert!(
+        q.diagnostics
+            .iter()
+            .any(|d| d.contains("merge settings could not be read")),
+        "{:?}",
+        q.diagnostics
+    );
+    assert!(
+        !q.diagnostics
+            .iter()
+            .any(|d| d.contains("allows no merge commit")),
+        "an unread setting was said to allow nothing: {:?}",
+        q.diagnostics
+    );
+    let root = scratch();
+    let out = drain::step(&root, &mut w, false, true).unwrap();
+    assert!(matches!(out, DrainStepOutcome::Idle { .. }), "{out:?}");
+    assert_eq!((w.merge_calls, w.refresh_calls), (0, 0));
+}
+
 #[test]
 fn the_merge_method_is_a_merge_commit_and_never_another() {
     for allowed in [
@@ -5260,7 +5330,8 @@ fn the_merge_method_is_a_merge_commit_and_never_another() {
         .into_iter()
         .find(|e| e.action.as_str() == "merge_attempted")
         .expect("merge_attempted");
-    assert_eq!(attempted.detail, "--merge");
+    // a head that contains master is fast-forwarded to, whatever merge commits are allowed
+    assert_eq!(attempted.detail, "--fast-forward");
 }
 
 #[test]
@@ -6222,8 +6293,11 @@ fn asked(root: &std::path::Path, pr: u64, master: &str, head: &str) {
     .unwrap();
 }
 
+/// A fast-forward the forge refuses because master moved after the decision is a stale
+/// decision, not an unverified landing: the drain goes on, observes again and decides from
+/// the new master, where neither head contains master any more (I3910).
 #[test]
-fn a_foreign_merge_between_decision_and_merge_fails_verification() {
+fn a_fast_forward_refused_because_master_moved_is_decided_again() {
     let root = scratch();
     let mut w = World {
         open: vec![sim(1), sim(2)],
@@ -6232,14 +6306,51 @@ fn a_foreign_merge_between_decision_and_merge_fails_verification() {
     };
     let report = drain::drain(&root, &mut w, 2, false, false).unwrap();
     assert!(report.merged.is_empty(), "{report:?}");
+    match report.steps.first() {
+        Some(DrainStepOutcome::MergeRefused { pr: 1, class, .. }) => {
+            assert_eq!(*class, drain::FailureClass::Stale)
+        }
+        other => panic!("expected a stale refusal, got {other:?}"),
+    }
+    assert!(
+        matches!(report.steps.last(), Some(DrainStepOutcome::Idle { .. })),
+        "{report:?}"
+    );
+    assert_eq!(w.merge_calls, 1);
+    let actions = trail_actions(&root);
+    assert!(
+        !actions.iter().any(|a| a == "verification_failed"),
+        "{actions:?}"
+    );
+    assert_eq!(drain::halted_by(&root), None, "nothing waits for a person");
+}
+
+/// A merge commit made onto a master another change reached first is caught by its parents:
+/// the head that carries master is merged, and what landed is not what was decided.
+#[test]
+fn a_foreign_merge_between_decision_and_merge_fails_verification() {
+    let root = scratch();
+    let mut above = sim(2);
+    above.carries = vec![1];
+    let mut w = World {
+        open: vec![sim(1), above],
+        foreign_merge_before: [2].into(),
+        ..Default::default()
+    };
+    assert_eq!(
+        drain::drain(&root, &mut w, 1, false, false).unwrap().merged,
+        [1]
+    );
+    let report = drain::drain(&root, &mut w, 2, false, false).unwrap();
+    assert!(report.merged.is_empty(), "{report:?}");
     match report.steps.last() {
-        Some(DrainStepOutcome::VerificationFailed { pr: 1, reason }) => {
+        Some(DrainStepOutcome::VerificationFailed { pr: 2, reason }) => {
             assert!(reason.contains("unexpected_master"), "{reason}")
         }
         other => panic!("expected a failed verification, got {other:?}"),
     }
-    // the drain stopped there: #2 was not merged onto a master nobody verified
-    assert_eq!(w.merge_calls, 1);
+    // the drain stopped there: nothing else was merged onto a master nobody verified
+    assert_eq!(w.merge_calls, 2);
     assert_eq!(trail_actions(&root).last().unwrap(), "verification_failed");
 }
 
@@ -6307,7 +6418,7 @@ fn reconcile_closes_an_interrupted_merge_that_landed() {
         ..Default::default()
     };
     // the last executor asked, the forge merged, and the executor stopped before verifying
-    Integrator::merge(&mut w, 1, "h1.0", "merge").unwrap();
+    Integrator::merge(&mut w, 1, "h1.0", drain::FAST_FORWARD).unwrap();
     asked(&root, 1, "m0", "h1.0");
     let report = drain::drain(&root, &mut w, 1, false, false).unwrap();
     assert!(
@@ -8475,7 +8586,7 @@ fn assessed(f: &Allocating) -> PullRequestAssessment {
         required_checks: Some(vec!["ci".into()]),
         review_policy: Some(Default::default()),
         up_to_date_required: Some(true),
-        merge_methods: vec!["merge".into()],
+        merge_methods: Some(vec!["merge".into()]),
         pull_requests: vec![observed_pr(1, &f.head)],
         resolved: Default::default(),
         delete_branch_on_merge: None,

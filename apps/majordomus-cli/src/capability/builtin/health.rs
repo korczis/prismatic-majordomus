@@ -107,6 +107,42 @@ impl HealthStatus {
     }
 }
 
+/// The dimensions that describe the process serving a checkout and not the repository: the
+/// shared server, its peer board and its mesh runtime. Only a process holding the checkout's
+/// lease decides the last two, so in any other they are `unknown` by construction, never by
+/// a fault of the repository.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::health::PROCESS_DIMENSIONS;
+/// assert!(PROCESS_DIMENSIONS.contains(&"mesh"));
+/// assert!(!PROCESS_DIMENSIONS.contains(&"layer"));
+/// ```
+pub const PROCESS_DIMENSIONS: [&str; 3] = ["server", "peers", "mesh"];
+
+/// The worst status among the checks that describe the repository
+/// (every one whose id is not in [`PROCESS_DIMENSIONS`]); `ok` when there is none.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::health::{repository_status, HealthCheck, HealthStatus};
+/// let check = |id: &str, status| HealthCheck {
+///     id: id.into(),
+///     title: id.into(),
+///     status,
+///     detail: String::new(),
+///     decided_by: String::new(),
+///     evidence: Vec::new(),
+///     findings: Vec::new(),
+/// };
+/// let checks = [check("layer", HealthStatus::Warn), check("mesh", HealthStatus::Unknown)];
+/// assert_eq!(repository_status(&checks), HealthStatus::Warn);
+/// ```
+pub fn repository_status(checks: &[HealthCheck]) -> HealthStatus {
+    checks
+        .iter()
+        .filter(|c| !PROCESS_DIMENSIONS.contains(&c.id.as_str()))
+        .fold(HealthStatus::Ok, |acc, c| acc.worse(c.status))
+}
+
 /// One dimension of the system, decided by one engine, with what a reader needs to check
 /// it themselves.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -135,6 +171,13 @@ pub struct HealthCheck {
 pub struct Health {
     /// The worst check's status.
     pub status: HealthStatus,
+    /// The worst status among the dimensions that describe the repository at this commit:
+    /// every check but the ones in [`PROCESS_DIMENSIONS`]. A process that is no server —
+    /// the command line, or the reader of a published snapshot (ADR 0141) — cannot decide
+    /// who is attached or what the mesh runtime did, and says `unknown` for them; this is
+    /// the verdict that is the same whichever process read the repository, and it is what a
+    /// publication shows first.
+    pub repository: HealthStatus,
     /// How many checks stand where, by status word.
     pub tallies: BTreeMap<String, usize>,
     /// Every dimension, in a stable order.
@@ -411,25 +454,12 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
     );
 
     // --- git
-    let (git_status, git_detail) = match &index.repository.git {
-        GitState::Available(info) => {
-            let head = info.head.as_deref().unwrap_or("(unborn)");
-            (
-                if info.working_tree == "clean" {
-                    HealthStatus::Ok
-                } else {
-                    HealthStatus::Warn
-                },
-                format!(
-                    "{} at {}, working tree {}",
-                    info.branch.as_deref().unwrap_or("(detached)"),
-                    &head[..12.min(head.len())],
-                    info.working_tree
-                ),
-            )
-        }
-        GitState::Unavailable { reason } => (HealthStatus::Unknown, reason.clone()),
-    };
+    let (git_status, git_detail, git_decided_by) = git_verdict(
+        &index.repository.git,
+        &index.repository.discovery,
+        crate::COMMIT,
+        crate::DIRTY,
+    );
     record(
         &mut checks,
         &ctx.progress,
@@ -438,7 +468,7 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
             title: "Version control".into(),
             status: git_status,
             detail: git_detail,
-            decided_by: "git, as the index asked it when it was built".into(),
+            decided_by: git_decided_by.into(),
             evidence: vec!["git status".into()],
             findings: Vec::new(),
         },
@@ -570,7 +600,7 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
     //
     // Not a second opinion and not a second reading: `server::standing_at` is what answers
     // `GET /api/v1/server`, and this reports what it says. It costs one small file and,
-    // when the lease names an address, one probe bounded by `lease::PROBE_TIMEOUT`; the
+    // when the lease names an address, one probe bounded by the declared probe timeout; the
     // five-second cache on `health.report` is as fresh as a file other processes write can
     // usefully be, and `server.status` is the uncached answer for a caller that needs one.
     let checkout = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
@@ -716,6 +746,7 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
     .collect();
     Ok(Health {
         status,
+        repository: repository_status(&checks),
         tallies,
         checks,
         observed,
@@ -826,10 +857,121 @@ fn continuity_health(
     }
 }
 
+/// The `git` check: the checkout git describes, or — for a deployed build with no checkout
+/// to ask — the commit the executable was built from.
+///
+/// A hosted deployment receives a tree assembled from the deployment object, never a clone,
+/// so `git` there has nothing to answer and the check read `unknown` for a process whose
+/// commit is known exactly: the build identity names it, and `/api/v1/live` already serves
+/// it. Only a process that reads its layer from the filesystem (the deployed command lines
+/// pass `--discovery filesystem`) and was built from a named commit falls back to that
+/// identity; a version-control checkout git cannot read stays `unknown`, because there the
+/// build commit says nothing about the tree being served. A dirty build is a warning, as a
+/// dirty working tree is.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::health::git_verdict;
+/// use majordomus_cli::capability::builtin::health::HealthStatus;
+/// use majordomus_cli::git::GitState;
+///
+/// let none = GitState::Unavailable { reason: "git: not a git repository".into() };
+/// let (s, d, by) = git_verdict(&none, "filesystem", "0123456789abcdef0123", Some(false));
+/// assert_eq!(s, HealthStatus::Ok);
+/// assert!(d.contains("0123456789ab") && by.contains("build identity"), "{d} / {by}");
+///
+/// // a checkout git cannot read is still not known, whatever the executable was built from
+/// let (s, _, _) = git_verdict(&none, "vcs", "0123456789abcdef0123", Some(false));
+/// assert_eq!(s, HealthStatus::Unknown);
+/// ```
+pub fn git_verdict(
+    git: &GitState,
+    discovery: &str,
+    commit: &str,
+    dirty: Option<bool>,
+) -> (HealthStatus, String, &'static str) {
+    match git {
+        GitState::Available(info) => {
+            let head = info.head.as_deref().unwrap_or("(unborn)");
+            (
+                if info.working_tree == "clean" {
+                    HealthStatus::Ok
+                } else {
+                    HealthStatus::Warn
+                },
+                format!(
+                    "{} at {}, working tree {}",
+                    info.branch.as_deref().unwrap_or("(detached)"),
+                    &head[..12.min(head.len())],
+                    info.working_tree
+                ),
+                "git, as the index asked it when it was built",
+            )
+        }
+        GitState::Unavailable { .. }
+            if discovery == "filesystem" && !commit.is_empty() && commit != "unknown" =>
+        {
+            let state = match dirty {
+                Some(false) => "clean",
+                Some(true) => "dirty",
+                None => "of unknown cleanliness",
+            };
+            (
+                if dirty == Some(false) {
+                    HealthStatus::Ok
+                } else {
+                    HealthStatus::Warn
+                },
+                format!(
+                    "no checkout here (a deployed tree): built from commit {}, {state}",
+                    &commit[..12.min(commit.len())]
+                ),
+                "the build identity this executable carries, since there is no checkout to ask",
+            )
+        }
+        GitState::Unavailable { reason } => (
+            HealthStatus::Unknown,
+            reason.clone(),
+            "git, as the index asked it when it was built",
+        ),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::synthetic::{Shape, SyntheticRepository};
+
+    /// A deployed tree has no checkout: its commit comes from the build identity, a dirty or
+    /// unknown build is a warning, and only a filesystem-discovered layer falls back at all.
+    #[test]
+    fn a_deployed_build_names_its_commit_and_a_checkout_does_not_borrow_it() {
+        let none = GitState::Unavailable {
+            reason: "git: not a git repository".into(),
+        };
+        let sha = "2034d4a3f0b2f00ee0260f291330788448556b3b";
+        let (s, d, by) = git_verdict(&none, "filesystem", sha, Some(false));
+        assert_eq!(s, HealthStatus::Ok);
+        assert!(d.contains("2034d4a3f0b2") && d.contains("clean"), "{d}");
+        assert!(by.contains("build identity"), "{by}");
+        assert_eq!(
+            git_verdict(&none, "filesystem", sha, Some(true)).0,
+            HealthStatus::Warn
+        );
+        assert_eq!(
+            git_verdict(&none, "filesystem", sha, None).0,
+            HealthStatus::Warn
+        );
+        // no named commit, or a version-control layer: still not known
+        let (s, d, _) = git_verdict(&none, "filesystem", "unknown", Some(false));
+        assert_eq!(
+            (s, d.as_str()),
+            (HealthStatus::Unknown, "git: not a git repository")
+        );
+        assert_eq!(
+            git_verdict(&none, "vcs", sha, Some(false)).0,
+            HealthStatus::Unknown
+        );
+    }
 
     /// No board is no evidence: a process that holds no lease cannot say who is attached,
     /// and says so rather than reporting an empty board as a healthy one.
@@ -988,6 +1130,37 @@ mod tests {
         assert!(findings.is_empty());
     }
 
+    /// A process that is no server cannot decide who is attached or what the mesh did, and the
+    /// whole report says `unknown` for it; the repository's own verdict does not, because none
+    /// of its dimensions is the process's.
+    #[test]
+    fn the_repositorys_verdict_is_decided_where_no_server_runs() {
+        let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let report = health(&ctx, Empty {}).expect("a report");
+        let of = |id: &str| {
+            report
+                .checks
+                .iter()
+                .find(|c| c.id == id)
+                .unwrap_or_else(|| panic!("no {id} check"))
+                .status
+        };
+        assert_eq!(of("peers"), HealthStatus::Unknown);
+        assert_eq!(of("mesh"), HealthStatus::Unknown);
+        assert_eq!(report.status, HealthStatus::Unknown);
+        for id in PROCESS_DIMENSIONS {
+            of(id);
+        }
+        let expected = report
+            .checks
+            .iter()
+            .filter(|c| !PROCESS_DIMENSIONS.contains(&c.id.as_str()))
+            .fold(HealthStatus::Ok, |acc, c| acc.worse(c.status));
+        assert_eq!(report.repository, expected);
+        assert_eq!(report.repository, repository_status(&report.checks));
+    }
+
     /// The committed registry manifest is judged by what is there: a repository that commits
     /// none has nothing to drift from and is `ok`; one whose manifest exists and cannot be
     /// read is `unknown`, because this process cannot say whether it drifted.
@@ -1081,17 +1254,29 @@ mod tests {
         let copy = dir.path().join("health-tests");
         std::fs::copy(std::env::current_exe().expect("this test binary"), &copy)
             .expect("a copy of this test binary");
-        let out = std::process::Command::new(&copy)
-            .args([
-                "--exact",
-                "capability::builtin::health::tests::readiness_refuses_a_process_whose_executable_was_removed_under_it",
-                "--nocapture",
-                "--test-threads",
-                "1",
-            ])
-            .env(STALE_CHILD, "1")
-            .output()
-            .expect("the copy runs");
+        // another test thread forking while the copy was open for writing leaves the copy's
+        // write descriptor in that child until it execs, and Linux refuses to execute a file
+        // open for writing (ETXTBSY): the race is the harness's, so it is waited out
+        let mut attempts = 0;
+        let out = loop {
+            let run = std::process::Command::new(&copy)
+                .args([
+                    "--exact",
+                    "capability::builtin::health::tests::readiness_refuses_a_process_whose_executable_was_removed_under_it",
+                    "--nocapture",
+                    "--test-threads",
+                    "1",
+                ])
+                .env(STALE_CHILD, "1")
+                .output();
+            match run {
+                Err(e) if e.kind() == std::io::ErrorKind::ExecutableFileBusy && attempts < 50 => {
+                    attempts += 1;
+                    std::thread::sleep(std::time::Duration::from_millis(100));
+                }
+                other => break other.expect("the copy runs"),
+            }
+        };
         let stdout = String::from_utf8_lossy(&out.stdout);
         assert!(
             out.status.success() && stdout.contains("1 passed"),

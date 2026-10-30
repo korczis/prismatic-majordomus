@@ -1,0 +1,245 @@
+/* The site's two figures: a diagram's viewer and a chart (ADR 0152). Hand-written, over the
+   design tokens, and imported by the site's Tailwind entry point only: the Cockpit and
+   `majordomus ui` draw their own graphs and load none of this.
+
+   The same contract as share/design/primitives.css. Every colour is a role (`--mj-*`,
+   generated from share/design/tokens.yaml) and the pairs used here are ones the primitives
+   already put together (`--mj-fg` and `--mj-muted` on `--mj-raised`, `--mj-bg` and
+   `--mj-sunken`), so no text stands on a ground the contrast derivation has not measured.
+   The toolbar's buttons are the shared `.mj-button`; nothing here restyles one.
+
+   These rules are deliberately outside any cascade layer. A diagram arrives as a <pre>
+   wearing whatever its page gave it: a template's utilities, or the typography plugin's
+   padding, background and scrolling. site/diagrams.js turns that same element into the
+   viewer's frame, and a layered rule would lose to every one of those utilities. Unlayered
+   rules win over layered ones whatever their specificity, which is what lets the frame be
+   one thing on every page without any page being edited.
+
+   State is carried by attributes and classes site/diagrams.js and site/charts.js write
+   (`is-tracing`, `is-hot`, `is-selected`, `is-panning`, `is-expanded`), never by inline
+   colour. The one inline style either script writes is geometry: a transform, a height. */
+
+/* ------------------------------------------------------------------ the diagram viewer */
+
+.mj-diagram {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
+  margin-block: 1rem;
+  border: 1px solid var(--mj-line);
+  border-radius: 0.5rem;
+  background: var(--mj-raised);
+  color: var(--mj-fg);
+}
+/* inside a figure that already draws the frame, the viewer is not a second one */
+figure .mj-diagram {
+  margin-block: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.mj-diagram-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.5rem;
+  border-bottom: 1px solid var(--mj-line);
+}
+/* the build writes the toolbar hidden; it is shown once there is a drawing to control */
+.mj-diagram-bar[hidden] {
+  display: none;
+}
+.mj-diagram-status {
+  flex: 1 1 8rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: end;
+  font-size: var(--text-small);
+  line-height: var(--text-small--line-height);
+  color: var(--mj-muted);
+}
+
+/* The frame: the diagram's own <pre>, which keeps its id, its place in the tab order and
+   its source until the drawing replaces it. */
+pre.mj-diagram-canvas {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0 0 0.5rem 0.5rem;
+  background: var(--mj-bg);
+  color: var(--mj-fg);
+  white-space: normal;
+  cursor: grab;
+  /* a vertical swipe is the page's; a sideways drag and a pinch are the diagram's */
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+pre.mj-diagram-canvas.is-panning {
+  cursor: grabbing;
+}
+pre.mj-diagram-canvas:target,
+pre.mj-diagram-canvas.is-addressed {
+  box-shadow: inset 0 0 0 2px var(--mj-accent);
+}
+.mj-diagram-stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+.mj-diagram-stage.is-animated {
+  transition: transform var(--mj-motion-fast, 120ms) ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mj-diagram-stage.is-animated {
+    transition: none;
+  }
+}
+.mj-diagram-stage > svg {
+  display: block;
+  margin: 0;
+  max-width: none;
+}
+
+/* A node that stands for an object with a page is a link, and says so without colour. */
+.mj-diagram-stage a {
+  cursor: pointer;
+}
+.mj-diagram-stage a .nodeLabel,
+.mj-diagram-stage a text {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.mj-diagram-stage a:focus-visible {
+  outline: 2px solid var(--mj-accent);
+  outline-offset: 2px;
+}
+.mj-diagram-stage .node[data-node] {
+  cursor: pointer;
+}
+
+/* Tracing: the node under the pointer or the focus, its edges and its neighbours stay; the
+   rest steps back. Selection is the same picture, held. */
+.mj-diagram-canvas.is-tracing .node:not(.is-hot),
+.mj-diagram-canvas.is-tracing .cluster:not(.is-hot),
+.mj-diagram-canvas.is-tracing .edgePaths > :not(.is-hot),
+.mj-diagram-canvas.is-tracing .edgeLabel:not(.is-hot) {
+  opacity: 0.25;
+}
+.mj-diagram-stage .is-selected > rect,
+.mj-diagram-stage .is-selected > polygon,
+.mj-diagram-stage .is-selected > circle,
+.mj-diagram-stage .is-selected > ellipse,
+.mj-diagram-stage .is-selected > path,
+.mj-diagram-stage .is-selected > g > rect,
+.mj-diagram-stage .is-selected > g > path,
+.mj-diagram-stage .is-selected .label-container {
+  stroke: var(--mj-accent) !important;
+  stroke-width: 3px !important;
+}
+
+/* Full screen, by the browser's own or, where it refuses, by covering the viewport. */
+.mj-diagram:fullscreen,
+.mj-diagram.is-expanded {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--mj-raised);
+}
+.mj-diagram.is-expanded {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+.mj-diagram:fullscreen pre.mj-diagram-canvas,
+.mj-diagram.is-expanded pre.mj-diagram-canvas {
+  flex: 1 1 auto;
+  border-radius: 0;
+}
+
+/* The links the build inferred, as the list they are for a reader without the viewer. */
+.mj-diagram-links {
+  margin: 0;
+  padding: 0.375rem 0.75rem;
+  border-top: 1px solid var(--mj-line);
+  font-size: var(--text-small);
+  line-height: var(--text-small--line-height);
+  color: var(--mj-muted);
+}
+.mj-diagram-links > summary {
+  cursor: pointer;
+  padding-block: 0.25rem;
+}
+.mj-diagram-links > ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.125rem 1rem;
+  margin: 0.25rem 0 0.375rem;
+  padding: 0;
+  list-style: none;
+}
+.mj-diagram-links li {
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.mj-diagram-links a {
+  display: inline-block;
+  padding-block: 0.25rem;
+  color: var(--mj-accent);
+  text-decoration: underline;
+}
+
+/* ------------------------------------------------------------------ the chart */
+
+/* A chart is drawn above the table it reads. The table stays: it is the data, and it is
+   what a reader without the script, a screen reader and a printout get. */
+.mj-chart {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 20rem;
+  margin: 0 0 0.75rem;
+  border: 1px solid var(--mj-line);
+  border-radius: 0.5rem;
+  background: var(--mj-bg);
+}
+.mj-chart[hidden] {
+  display: none;
+}
+figure[data-chart]:target .mj-chart,
+figure[data-chart].is-addressed .mj-chart {
+  box-shadow: inset 0 0 0 2px var(--mj-accent);
+}
+.mj-chart-note {
+  margin: 0 0 0.5rem;
+  font-size: var(--text-small);
+  line-height: var(--text-small--line-height);
+  color: var(--mj-muted);
+}
+/* The table a chart is drawn from, on a narrow screen: it scrolls sideways inside its region, and
+   the first column (what a row is: a milestone, a run) stays in place while the numbers move, so a
+   reader never loses which row a number belongs to. Below the `sm` width only; a wide screen shows
+   the whole table and needs no anchor. */
+@media (max-width: 639.98px) {
+  figure[data-chart] table :is(th, td):first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--mj-bg);
+    box-shadow: inset -1px 0 0 var(--mj-line);
+  }
+}

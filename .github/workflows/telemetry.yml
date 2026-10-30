@@ -1,0 +1,50 @@
+# A completed validate run, exported as one OpenTelemetry trace: a span per job and per step,
+# with its queued time, its run time and its conclusion. Docs: docs/CI.md, "Telemetry".
+# The model is .ai/repo/ci/telemetry.yaml.
+#
+# Why it exists: queueing across overlapping runs cost up to 774 summed job-minutes on master
+# run 39784979979, and nothing measured it continuously. scripts/ci-baseline reads runs back
+# on request; this ships each run to a backend as it completes, so the queue can be drawn.
+#
+# It sends nothing unless the owner configures an endpoint. With no OTEL_EXPORTER_OTLP_ENDPOINT
+# secret the job decides that in its first step, skips the export, and succeeds. The export step
+# is also continue-on-error: telemetry never changes a verdict, and validate's `ci` job does not
+# wait for this workflow, which runs after it from the workflow_run event.
+#
+# Secrets stay out of the job environment: only the step that decides and the step that exports
+# receive them, each at step level, and neither prints them. The headers are a credential.
+name: telemetry
+on:
+  workflow_run:
+    workflows: [validate]
+    types: [completed]
+
+permissions:
+  actions: read
+
+concurrency:
+  group: telemetry-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # a secret cannot be tested in an `if:`, so the fact that one is set is written down here
+      # and the value never leaves this step
+      - id: endpoint
+        env:
+          HAS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT != '' }}
+        run: echo "present=$HAS_ENDPOINT" >> "$GITHUB_OUTPUT"
+
+      # dash0hq/otel-cicd-action (formerly corentinmusard/otel-cicd-action) v4.2.0
+      - if: steps.endpoint.outputs.present == 'true'
+        continue-on-error: true
+        uses: dash0hq/otel-cicd-action@4826b79d63662fa91657272e7711420cb6aea543
+        with:
+          otlpEndpoint: ${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}
+          otlpHeaders: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
+          otelServiceName: majordomus-ci
+          githubToken: ${{ github.token }}
+          runId: ${{ github.event.workflow_run.id }}

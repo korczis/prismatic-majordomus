@@ -37,11 +37,23 @@ line. A token the vocabulary does not declare is refused at `start`, not at the 
 try to discharge it. Declare what the work owes when you begin it: a task that promises
 nothing is told, truthfully and uselessly, that it promises nothing.
 
+On a repository whose mesh is enabled, `start` claims the scope on the mesh as the session
+`task-<id>`, and first ensures this checkout's shared server (`serve ensure`, bounded, said on
+stderr), because a fresh worktree has none. A start that could not claim reports `WARN mesh`
+with the reason; repair it without finishing: `majordomus serve ensure`, then `majordomus
+check`, which claims the running task's scope. Until then `finish --outcome completed` and the
+pre-push `finish --check` refuse it (rule `majordomus.task-on-the-mesh`, `docs/MESH.md`).
+
 `start` refuses while a task is active here: hand it over or finish it first. `check` and
 `finish --outcome completed` fail on a touched file outside the claimed scope; the other
 outcomes name the files as warnings and close the record, because `start` will not begin a
 task while one is active and refusing every outcome would strand a worker whose scope
-turned out too narrow. `finish --outcome completed` evaluates every line of the finish
+turned out too narrow. A path the repository declares derived — git's `merge=derived`
+attribute, which `scripts/gitattributes` writes from the generators — is admitted without
+being in the scope when the task also changed a file of the layer or a file inside its
+scope that is not derived: a scope names what a worker changes, not where a generator puts
+its projections. Projections committed with no such change beside them are refused as
+before. `finish --outcome completed` evaluates every line of the finish
 contract the policy selects and writes nothing when any line fails; the other outcomes are
 honest statements that the work did not complete, and each needs a note saying what comes
 next (`# Next Action`) or why (`# Reason`). `no_match` means the thing sought does not
@@ -52,6 +64,9 @@ The work between `start` and `finish` follows the repository's skills, each read
 `majordomus://skill/implement`; removing a file, branch, worktree, record or process that
 this task did not create follows `majordomus://skill/assess-before-deleting`; the final
 report and every handover body follow `majordomus://skill/report-verification-state`.
+What a task learned does not end as a note: before the episode closes, or whenever the
+briefing names candidates awaiting review, follow `majordomus://skill/evolve` — decide each
+candidate, put each lesson where it changes behaviour, deliver, and tell the peers.
 
 ## Answering "is it done?"
 
