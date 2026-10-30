@@ -105,6 +105,44 @@ mj_gate_inputs_hash() {
   ( set -f; cd "$MJ_ROOT" && mj_inputs_hash $files )
 }
 
+# ---------------------------------------------------------------- running the gates
+# mj_gate_run <all> — run the gates of the CI model and record each as `evidence --gate`
+# would (I4268). Without <all>, the gates the executable's plan requires for the active
+# task's change set (`gates.completion`, the judge `check` and `finish` read); with it, every
+# gate the model declares. Each gate's `runs` command is run from the repository root; a gate
+# with no `runs` is named and skipped. Exit 10 when any gate exits non-zero.
+mj_gate_run() {
+  local all="$1" ids="" id cmd code failed=0 bin share
+  mj_gate_model_load || mj_die "$MJ_EX_MISSING" \
+    "this repository declares no CI model at .ai/repo/ci/gates.yaml, so there is no gate to run"
+  mj_load_current || mj_die "$MJ_EX_MISSING" \
+    "no active task ($(mj_rel "$MJ_STATE_DIR")/current.yaml); a gate run is evidence for a task: run majordomus start"
+  if [ "$all" = 1 ]; then
+    ids="$(mj_gate_ids)"
+  else
+    # shellcheck source=rust_bin.sh
+    . "$MJ_LIB_DIR/rust_bin.sh"
+    bin="$(mj_rust_bin "$MJ_HOME")"
+    command -v jq >/dev/null 2>&1 && [ -x "$bin" ] || mj_die "$MJ_EX_MISSING" \
+      "the plan of required gates needs the executable and jq; run every gate with --all"
+    share="$(mj_rust_share "$MJ_ROOT")"
+    [ -n "$share" ] || { [ -f "$MJ_BIN_DIR/../share/kinds.yaml" ] && share="$MJ_BIN_DIR/../share"; }
+    ids="$( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+            "$bin" run gates.completion --input '{}' --quiet --format json --repo "$MJ_ROOT" 2>/dev/null \
+              | jq -r '.output.gates[]? | select(.required) | .id' 2>/dev/null )"
+    [ -n "$ids" ] || { printf 'gates: the change set requires no gate\n'; return 0; }
+  fi
+  for id in $ids; do
+    cmd="$(mj_gate_field "$id" runs)"
+    if [ -z "$cmd" ]; then printf '%-24s skipped  (the model names no command for it)\n' "$id"; continue; fi
+    code=0; ( cd "$MJ_ROOT" && bash -c "$cmd" ) >/dev/null 2>&1 || code=$?
+    mj_gate_record "$id" "$code" "$cmd" "" 0 >/dev/null
+    printf '%-24s exit %-3s %s\n' "$id" "$code" "$cmd"
+    [ "$code" = 0 ] || failed=1
+  done
+  [ "$failed" = 0 ] || return "$MJ_EX_CONTRACT"
+}
+
 # ---------------------------------------------------------------- recording a run
 # Called from `evidence --gate`. The option shape is `evidence`'s because a gate run is
 # evidence: the verb a worker reaches for is the same, and adding a second command for the

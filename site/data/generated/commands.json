@@ -1675,7 +1675,7 @@
       "requires_repository": true,
       "requires_installed": true,
       "json_output": true,
-      "syntax": "majordomus evidence (--covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) | --gate <id> --exit <status>) [--result <r>] [--json] | majordomus evidence <show|claim|proves|record|stamp> [options]",
+      "syntax": "majordomus evidence (--covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) | --gate <id> --exit <status>) [--result <r>] [--json] | majordomus evidence <show|claim|proves|record|stamp> [options] | majordomus evidence --run-gates [--all]",
       "demo": "obligation-evidence",
       "note": "Every argument the shell command takes is an option, so a word in the first position is never its own: show, claim, proves, record and stamp are subcommands of the Rust executable, which holds the ledger of what ran (docs/EVIDENCE.md), and the launcher hands them to it with every argument unchanged. Which words those are is read from the executable's declaration, never listed in the launcher. They need no active task, their exit codes are the executable's, and what each reads and writes is on its own page under /docs/cli/evidence/.",
       "reads": [
@@ -1697,7 +1697,8 @@
         "behaviour": [
           "103_obligations",
           "131_completion_gates",
-          "3059_gate_state_is_answerable"
+          "3059_gate_state_is_answerable",
+          "4268_an_adopter_runs_and_records_its_gates"
         ],
         "negative": [
           "103_obligations",
