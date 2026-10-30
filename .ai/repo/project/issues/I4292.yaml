@@ -1,0 +1,39 @@
+id: I4292
+milestone: M002
+title: The shell writers ADR 0164 did not name attribute through mj_record_attribution
+slug: remaining-shell-writers-attribute
+priority: p1
+profile: debugging
+parallel_safe: false
+objective: "Every shell command that writes a durable record goes through mj_record_attribution, and one that cannot relate a task to its caller refuses by name, saying what to run instead."
+why: "ADR 0164 listed six writers and they were fixed; the others still write the checkout's task into their records. finish can close the task another live episode opened, and evidence and a gate verdict can attach to it, which is the misattribution M002 forbids on the records that decide whether work is done."
+current_state: "At master 81ef931a3e1: session close writes the checkout's task (lib/session.sh), and closed by hand with more than one episode open it falls back to the pointer; finish closes the active task whichever episode opened it, and counts every checkpoint, not the task's (lib/finish.sh); evidence (lib/evidence.sh) and gates (lib/gates.sh) attach to the active task with no opener check; the mesh join names the checkout's task (lib/capture.sh). knowledge observe refuses an unattributable observation without naming a rule, and its remedy, session start, fails when the episode is ambiguous; its observation lines carry the literal task_id none. share/events.yaml still describes the withdrawn reading of task_id for decision.recorded and question.opened."
+desired_state: "session close, finish, evidence, gate and the mesh join resolve through mj_record_attribution; finish, evidence and gate refuse by name, with the command to run, when the active task was opened by another open episode; a hand-run close with more than one episode open refuses and points to --provider-session or MJ_SESSION_KEY; knowledge observe either writes an unattributed record, as ADR 0164 decision 4 says, or names its rule and a remedy that works; a line with no related task omits task_id; and a case covers two open episodes for each of these writers."
+scope:
+  - ".ai/repo/project/issues/I4292.yaml"
+  - "lib/session.sh"
+  - "lib/finish.sh"
+  - "lib/evidence.sh"
+  - "lib/gates.sh"
+  - "lib/capture.sh"
+  - "lib/knowledge.sh"
+  - "share/events.yaml"
+  - "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh"
+non_scope:
+  - "The six writers ADR 0164 named, already covered by I0703"
+  - "The Rust writers (I4291)"
+depends_on: []
+acceptance_criteria:
+  - "With two episodes open in one checkout, session close, finish, evidence, gate and the mesh join each name the calling episode, and none attaches to the task the other episode opened"
+  - "Every refusal names the rule that refused and the command that resolves it"
+  - "No ledger line carries the literal task_id none"
+validation:
+  - "bash test/run.sh 3049"
+  - "bash test/run.sh"
+  - "bin/majordomus doctor"
+evidence_required:
+  - suite
+  - doctor
+risk: "finish and gate decide whether work counts as done; a refusal that is wrong there stops a worker, so each refusal has to name the command that resolves it in the same breath."
+created_at: 2026-10-28
+updated_at: 2026-10-28

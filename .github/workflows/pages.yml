@@ -341,6 +341,25 @@ jobs:
           # and released
           apps/majordomus-cli/target/debug/majordomus prs refresh
           apps/majordomus-cli/target/debug/majordomus served forge
+      # The deployed stage, read from what was just observed (I4315, ADR 0227). Every Pages
+      # deployment is a gh-pages commit carrying the built site; the reader, from its first
+      # day (2026-10-16), looked for the pointer at its source path, and plan delivery read
+      # deployed for none of 1036 issues while the site served the trunk. This job published
+      # that answer every time, green. Once the forge has been observed, a publication the reader cannot
+      # read is a defect of this commit: only "no successful deployment" is an answer.
+      - name: the deployed stage reads what Pages published
+        timeout-minutes: 3
+        run: |
+          d="$RUNNER_TEMP/delivery.json"
+          apps/majordomus-cli/target/debug/majordomus plan delivery --format json > "$d"
+          state="$(jq -r '.sources[] | select(.name == "publication") | .state' "$d")"
+          detail="$(jq -r '.sources[] | select(.name == "publication") | .detail' "$d")"
+          echo "publication: ${state:-absent} — $detail"
+          case "$state:$detail" in
+            read:*|*"holds no successful"*) ;;
+            *) echo "::error title=The deployed stage is unread::${detail:-plan delivery names no publication source}"; exit 1 ;;
+          esac
+          jq -c '.tallies' "$d"
       # Every page the screens link to, not the first few: the default budget is sized for a
       # person waiting at a terminal and left most inspectors out of the published snapshot.
       # What was still left out is in snapshot.json, and `scripts/pages verify-ui` reports it.
