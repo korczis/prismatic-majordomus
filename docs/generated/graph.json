@@ -26695,10 +26695,6 @@
         "route": "/cockpit/objects/issue/i0828",
         "source": ".ai/repo/project/issues/I0828.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "doctor prints its total and the budget; over budget is WARN, never the exit code",
-            "Case 83 proves the finding appears with a tiny budget"
-          ],
           "created_at": "2026-09-05",
           "current_state": "10 s on this repository before this milestone.",
           "depends_on": [
@@ -26727,7 +26723,7 @@
             "test/cases/83_doctor_budget.sh"
           ],
           "slug": "doctor-budget",
-          "updated_at": "2026-09-05",
+          "updated_at": "2026-10-30",
           "validation": [
             "MJ_TIMING=1 bin/majordomus doctor",
             "bash test/run.sh 83_doctor_budget"
@@ -35237,10 +35233,11 @@
             "lib/init.sh",
             "docs/INSTALL.md",
             "share/install",
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
             "test/cases"
           ],
           "slug": "a-layer-names-the-tool-version-it-was-written-for",
-          "updated_at": "2026-10-04",
+          "updated_at": "2026-10-30",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -36026,6 +36023,7 @@
             "test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
             "docs",
             "lib/common.sh",
+            "lib/check.sh",
             "share/schemas/majordomus/policy",
             "share/schemas/majordomus/current",
             "share/skeleton",
@@ -36038,7 +36036,7 @@
             "intent-bound-work#start-is-gated"
           ],
           "slug": "start-asks-what-the-task-serves",
-          "updated_at": "2026-10-07",
+          "updated_at": "2026-10-30",
           "validation": [
             "bash test/run.sh 960_a_task_starts_bound_to_what_it_serves",
             "bash test/run.sh 04_start_check"
@@ -36482,16 +36480,17 @@
           "acceptance_criteria": [
             "A branch whose task scope names only the canonical input it changed passes `finish --check` with the derive's projections of that input committed beside it",
             "A projection committed without any change to its canonical inputs is still refused as outside the scope",
-            "`majordomus scope widen <paths> --because \\\"<reason>\\\"` adds the paths to the active task, keeps its id, and the task record says who widened it, when, and why",
             "A path outside both the scope and the declared projection set is refused exactly as before"
           ],
           "created_at": "2026-10-09",
           "evidence_required": [
-            "projection_admitted_case",
-            "scope_widen_case"
+            "projection_admitted_case"
           ],
           "milestone": "development-runtime",
-          "objective": "Stop the pre-push scope check from refusing a branch for the projections its own derive wrote, and give a task one supported command to widen its scope.",
+          "non_scope": [
+            "Widening a running task's scope: I4260 (scope add) owns that command, the scope widen half of the implementation row of milestone a-bounded-task-is-carried-to-accepted-work"
+          ],
+          "objective": "Stop the pre-push scope check from refusing a branch for the projections its own derive wrote. The command that widens a running task's scope is I4260's scope add, not this issue's.",
           "parallel_safe": true,
           "priority": "p2",
           "profile": "implementation",
@@ -36499,13 +36498,12 @@
             "lib/start.sh",
             "lib/check.sh",
             "scripts/gitattributes",
-            "apps/majordomus-cli/src/capability/builtin/scope.rs",
             "apps/majordomus-cli/src/capability/builtin/devtask.rs",
             "docs/CLI.md",
             "test/cases"
           ],
           "slug": "a-tasks-scope-admits-what-its-derive-writes",
-          "updated_at": "2026-10-09",
+          "updated_at": "2026-10-30",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
@@ -51148,13 +51146,14 @@
             "site/data/generated/catalogue.json",
             "site/content/docs/adoption.md",
             ".ai/repo/project/intents",
-            "share/providers.yaml"
+            "share/providers.yaml",
+            "test/cases/3128_init_says_what_it_found.sh"
           ],
           "serves": [
             "a-stranger-adopts-it-unaided#init-says-what-it-found"
           ],
           "slug": "init-says-what-it-found",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-10-30",
           "validation": [
             "bash test/run.sh 3113_the_adoption_footprint_is_inventoried",
             "majordomus plan validate"
@@ -57196,13 +57195,14 @@
             "share/allow/intent.txt",
             "share/allow/issue.txt",
             "share/allow/milestone.txt",
-            "apps/majordomus-cli/src/commands/plan.rs"
+            "apps/majordomus-cli/src/commands/plan.rs",
+            "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh"
           ],
           "serves": [
             "what-a-workspace-decides-reaches-the-repository-with-its-source#a-reference-validates-everywhere"
           ],
           "slug": "plan-records-carry-provenance",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-10-30",
           "validation": [
             "majordomus plan validate",
             "majordomus generate --check",
@@ -58046,7 +58046,8 @@
         "facts": {
           "acceptance_criteria": [
             "Each budget has a benchmark that fails when exceeded",
-            "Idle CPU is measured on an inactive fixture"
+            "Idle CPU is measured on an inactive fixture",
+            "plan next, plan start and check print MJ_TIMING phases against declared budgets; case 83, extended to them, proves it, for the speed row of milestone a-bounded-task-is-carried-to-accepted-work"
           ],
           "created_at": "2026-10-18",
           "current_state": "rule project.performance-evidence and bench --check hold UI latency budgets (I2489 done) for this repository only.",
@@ -58067,13 +58068,16 @@
             "apps/majordomus-cli/src/capability/benchmark.rs",
             "apps/majordomus-cli/src/commands/bench.rs",
             "apps/majordomus-cli/tests/bench.rs",
-            "docs/generated/benchmarks.json"
+            "docs/generated/benchmarks.json",
+            "test/cases/83_doctor_budget.sh",
+            "lib/plan.sh",
+            "lib/check.sh"
           ],
           "serves": [
             "every-sessions-usage-is-observed#own-overhead-is-measured"
           ],
           "slug": "adoption-overhead-is-measured",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-10-30",
           "validation": [
             "majordomus bench --check",
             "majordomus plan validate"
@@ -58873,13 +58877,6 @@
         "route": "/cockpit/objects/issue/i3318",
         "source": ".ai/repo/project/issues/I3318.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "Every adr object of the index is listed on the decisions screen and its inspector shows its related records as links and the records that cite it",
-            "Every curated knowledge note is listed with its class, epistemics and status, and its relations are links",
-            "A decision added to the tree appears with no edit outside its own file",
-            "The incoming links an inspector shows are the backlinks `majordomus entity show` reports for the same object",
-            "Every link the two screens draw answers 200 under the ui_links walk"
-          ],
           "created_at": "2026-10-18",
           "evidence_required": [
             "ui_decisions"
@@ -58895,10 +58892,13 @@
             "apps/majordomus-cli/src/ui/knowledge.rs",
             "apps/majordomus-cli/src/ui/mod.rs",
             "docs/MAJORDOMUS_UI.md",
-            "apps/majordomus-cli/tests/ui_links.rs"
+            "apps/majordomus-cli/tests/ui_links.rs",
+            "lib/knowledge.awk",
+            "apps/majordomus-cli/src/entity.rs",
+            "test/cases/3318_a_notes_references_agree_on_every_surface.sh"
           ],
           "slug": "decisions-and-knowledge-are-read-on-the-ui",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-10-30",
           "validation": [
             "cargo test -p majordomus-cli --test ui_links",
             "cargo test -p majordomus-cli --test ui_surface",
@@ -71535,10 +71535,6 @@
         "route": "/cockpit/objects/issue/i4265",
         "source": ".ai/repo/project/issues/I4265.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "The printed hook line sets the commit context",
-            "doctor reports it wired"
-          ],
           "created_at": "2026-10-27",
           "current_state": "init prints `majordomus doctor || exit $?`.",
           "depends_on": [],
@@ -71559,7 +71555,7 @@
             "test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh"
           ],
           "slug": "the-commit-hook-runs-doctor-in-commit-context",
-          "updated_at": "2026-10-27",
+          "updated_at": "2026-10-30",
           "validation": [
             "bash test/run.sh 4265_the_adopter_hook_runs_doctor_in_commit_context"
           ]

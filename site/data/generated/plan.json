@@ -12711,7 +12711,8 @@
       "desired_state": "Under 1.5 s on this repository, with the budget declared and the hook unchanged.",
       "acceptance_criteria": [
         "doctor prints its total and the budget; over budget is WARN, never the exit code",
-        "Case 83 proves the finding appears with a tiny budget"
+        "Case 83 proves the finding appears with a tiny budget",
+        "doctor validates the shipped skeleton once per release, pinned by its content hash, and on every other run checks only the hash and the changed paths; case 83 proves it, for the speed row of milestone a-bounded-task-is-carried-to-accepted-work"
       ],
       "validation": [
         "MJ_TIMING=1 bin/majordomus doctor",
@@ -23244,6 +23245,7 @@
         "lib/init.sh",
         "docs/INSTALL.md",
         "share/install",
+        "apps/majordomus-cli/src/capability/builtin/brief.rs",
         "test/cases"
       ],
       "non_scope": [],
@@ -23254,7 +23256,8 @@
       "acceptance_criteria": [
         "A fixture layer written for the previous minor version upgraded in place yields doctor output that names version skew and the migrate command, and exits with the skew status the issue defines, not 10 for every finding",
         "A layer whose manifest names a newer tool is refused by the older tool with one message naming both versions",
-        "init writes the version key and migrate advances it"
+        "init writes the version key and migrate advances it",
+        "doctor and the brief name an installed launcher older than the latest release as a step for the launcher's holder, with the command that takes it; case 1024 proves it, for the criteria-and-authority row of milestone a-bounded-task-is-carried-to-accepted-work"
       ],
       "validation": [
         "bin/majordomus plan validate",
@@ -24305,6 +24308,7 @@
         "test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
         "docs",
         "lib/common.sh",
+        "lib/check.sh",
         "share/schemas/majordomus/policy",
         "share/schemas/majordomus/current",
         "share/skeleton",
@@ -24327,7 +24331,8 @@
         "intent realization reads the issue a task named from the ledger as a declared link, and agrees with intents.binding about the same task",
         "A scope that lies outside the named issue's scope is said in the binding as a note the start prints",
         "Under required an unreadable binding (no built executable, no jq) refuses naming the command that builds it; under advisory it warns; with the key absent a flag that was given is still asked and an unreadable answer refuses",
-        "The share of scope-only starts that bind against this repository's plan is measured before this repository's policy is set to required, and the value chosen is recorded with the measurement"
+        "The share of scope-only starts that bind against this repository's plan is measured before this repository's policy is set to required, and the value chosen is recorded with the measurement",
+        "start --issue writes the issue's evidence_required and the obligations its paths imply into the task's requires, so check and finish hold them without a hand-typed --requires; case 960 proves it, for the bounded-task-and-coordination row of milestone a-bounded-task-is-carried-to-accepted-work"
       ],
       "validation": [
         "bash test/run.sh 960_a_task_starts_bound_to_what_it_serves",
@@ -24886,20 +24891,20 @@
         "lib/start.sh",
         "lib/check.sh",
         "scripts/gitattributes",
-        "apps/majordomus-cli/src/capability/builtin/scope.rs",
         "apps/majordomus-cli/src/capability/builtin/devtask.rs",
         "docs/CLI.md",
         "test/cases"
       ],
-      "non_scope": [],
-      "objective": "Stop the pre-push scope check from refusing a branch for the projections its own derive wrote, and give a task one supported command to widen its scope.",
+      "non_scope": [
+        "Widening a running task's scope: I4260 (scope add) owns that command, the scope widen half of the implementation row of milestone a-bounded-task-is-carried-to-accepted-work"
+      ],
+      "objective": "Stop the pre-push scope check from refusing a branch for the projections its own derive wrote. The command that widens a running task's scope is I4260's scope add, not this issue's.",
       "why": "A derive writes a known set of files: docs/generated/*, site/data/*, site/content/* and, on a version bump, apps/majordomus-cli design tokens, share/version.txt, share/schemas/*, share/sections/* and site/static/*. A task's scope names what the worker means to change, and those projections are almost never in it. On 2026-10-09 the pre-push `finish --check` refused the 0.19.0 release branch (#852) on 30 scope findings, every one a projection of the bump. It refused f7's I2106 the same way, for docs, site/content and site/data. The only route was `handover --close` followed by a new `start` with a wider scope, done three times in one day on two branches. That route is supported but costs a new task id and a handover record each time, and nobody finds it without being told.",
       "current_state": "`check` and `finish --check` judge every changed path against the active task's declared scope, the derive's projections included. A task's scope cannot change; it can only be closed and a new task started with another.",
-      "desired_state": "A path the derive wrote is admitted when the branch also changes one of that projection's canonical inputs. The set is the one already declared: docs/generated/artifacts.json and the site generator's publish block, which is what scripts/gitattributes reads. A path outside both the scope and that set is still refused. `majordomus scope widen <paths>` adds paths to the active task's scope, records who widened it and why, and leaves the task's id unchanged.",
+      "desired_state": "A path the derive wrote is admitted when the branch also changes one of that projection's canonical inputs. The set is the one already declared: docs/generated/artifacts.json and the site generator's publish block, which is what scripts/gitattributes reads. A path outside both the scope and that set is still refused.",
       "acceptance_criteria": [
         "A branch whose task scope names only the canonical input it changed passes `finish --check` with the derive's projections of that input committed beside it",
         "A projection committed without any change to its canonical inputs is still refused as outside the scope",
-        "`majordomus scope widen <paths> --because \\\"<reason>\\\"` adds the paths to the active task, keeps its id, and the task record says who widened it, when, and why",
         "A path outside both the scope and the declared projection set is refused exactly as before"
       ],
       "validation": [
@@ -24907,8 +24912,7 @@
         "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
       ],
       "evidence_required": [
-        "projection_admitted_case",
-        "scope_widen_case"
+        "projection_admitted_case"
       ],
       "evidence": [],
       "risk": "",
@@ -43209,7 +43213,8 @@
         "site/data/generated/catalogue.json",
         "site/content/docs/adoption.md",
         ".ai/repo/project/intents",
-        "share/providers.yaml"
+        "share/providers.yaml",
+        "test/cases/3128_init_says_what_it_found.sh"
       ],
       "non_scope": [
         "Fixing anything it finds",
@@ -43230,7 +43235,8 @@
         "The self-check runs init in a temporary clone of this repository with .ai/ removed, and its findings are empty or true; nothing in this checkout is written",
         "test/fixtures/commands/init.json, the init note in share/commands.yaml and the recorded init runs in the four use cases are updated, and derive-check passes over site/data/generated/catalogue.json and site/content/docs/adoption.md",
         "A personal init's git-status-unchanged check still holds after the findings run",
-        "In the same change as its case, the intent's criterion init-says-what-it-found is re-recorded as evidence: test with the concrete case path, the case numbered by `scripts/case-numbers next` and announced on the board at start"
+        "In the same change as its case, the intent's criterion init-says-what-it-found is re-recorded as evidence: test with the concrete case path, test/cases/3128_init_says_what_it_found.sh, case 3128 announced on the board at start",
+        "init's account names the AI agents section it appended to README.md (lib/init.sh:372) as a change it made, so its usage line 'installs nothing' (lib/init.sh:42) is not contradicted; case 3128 proves it, for the criteria-and-authority row of milestone a-bounded-task-is-carried-to-accepted-work"
       ],
       "validation": [
         "bash test/run.sh 3113_the_adoption_footprint_is_inventoried",
@@ -50728,7 +50734,8 @@
         "share/allow/intent.txt",
         "share/allow/issue.txt",
         "share/allow/milestone.txt",
-        "apps/majordomus-cli/src/commands/plan.rs"
+        "apps/majordomus-cli/src/commands/plan.rs",
+        "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh"
       ],
       "non_scope": [
         "New reference types (I3281)",
@@ -50745,7 +50752,8 @@
         "The reference grammar is declared once and `majordomus generate` inlines it into the adr, knowledge, intent, milestone and issue schemas; no schema uses a cross-file $ref and the jsonschema build is unchanged",
         "Each kind admits its own declared subset: intent, milestone and issue admit only tracked-resolvable types (commit, issue, file, test); adr keeps decision|session|commit|issue|file|test; knowledge keeps task:",
         "A plan record citing task:, session: or decision: is refused with the reason that ledger-local references fail in every other checkout",
-        "The adr `origin` and knowledge `origin` semantics are kept per kind and covered by one test each"
+        "The adr `origin` and knowledge `origin` semantics are kept per kind and covered by one test each",
+        "One observed run in which a person's request becomes an intent whose criterion a task carries to finish is recorded against the intent row of milestone a-bounded-task-is-carried-to-accepted-work; case 388 is its proof"
       ],
       "validation": [
         "majordomus plan validate",
@@ -51809,7 +51817,10 @@
         "apps/majordomus-cli/src/capability/benchmark.rs",
         "apps/majordomus-cli/src/commands/bench.rs",
         "apps/majordomus-cli/tests/bench.rs",
-        "docs/generated/benchmarks.json"
+        "docs/generated/benchmarks.json",
+        "test/cases/83_doctor_budget.sh",
+        "lib/plan.sh",
+        "lib/check.sh"
       ],
       "non_scope": [],
       "objective": "Declare budgets for CLI start, warm discovery, idle server CPU and resident memory, incremental derive, and the bootstrap tokens a session pays, measure them in an adopting fixture repository with the existing bench, and fail when one is exceeded.",
@@ -51818,7 +51829,8 @@
       "desired_state": "An adoption overhead suite in benchmark policy with recorded measurements.",
       "acceptance_criteria": [
         "Each budget has a benchmark that fails when exceeded",
-        "Idle CPU is measured on an inactive fixture"
+        "Idle CPU is measured on an inactive fixture",
+        "plan next, plan start and check print MJ_TIMING phases against declared budgets; case 83, extended to them, proves it, for the speed row of milestone a-bounded-task-is-carried-to-accepted-work"
       ],
       "validation": [
         "majordomus bench --check",
@@ -52759,7 +52771,10 @@
         "apps/majordomus-cli/src/ui/knowledge.rs",
         "apps/majordomus-cli/src/ui/mod.rs",
         "docs/MAJORDOMUS_UI.md",
-        "apps/majordomus-cli/tests/ui_links.rs"
+        "apps/majordomus-cli/tests/ui_links.rs",
+        "lib/knowledge.awk",
+        "apps/majordomus-cli/src/entity.rs",
+        "test/cases/3318_a_notes_references_agree_on_every_surface.sh"
       ],
       "non_scope": [
         "Editing a decision or a note from the UI",
@@ -52767,9 +52782,10 @@
       ],
       "objective": "Give /ui one screen for decisions (adr kind) and one for curated knowledge, each list and inspector projected from the index the objects API already serves, with an inspector showing the record's related/relations as links and the reverse edges (which issues, milestones, intents and notes name it) derived from the same index.",
       "why": "A follow-up the promotion of the owner's ChatGPT project (Refs: I3100) produced on 2026-10-18, not a message of that project: the promotion added proposed decisions and curated notes, each linked to the plan records it governs or documents, and a reader of /ui/idd cannot follow a criterion to the decision that governs it. The objects are served by /api/v1/objects and over MCP, and the Cockpit shows each one at /cockpit/objects/<kind>, but /ui routes neither kind: no /ui route names adr or decisions, and /ui/knowledge shows the candidate queue, not the curated notes.",
-      "current_state": "apps/majordomus-cli/src/ui/ has knowledge.rs (route /ui/knowledge: candidates and status) and no decisions screen. `majordomus entity show` already derives each object's references and backlinks, and `majordomus entity kinds` routes adr and knowledge to /cockpit/objects/adr and /cockpit/objects/knowledge (117 adr and 4 knowledge objects on master at 4a4573690f8, by that command).",
+      "current_state": "apps/majordomus-cli/src/ui/ has knowledge.rs (route /ui/knowledge: candidates and status) and no decisions screen. `majordomus entity show` does not yet give a curated note the references its record declares: for knowledge:a-commit-stood-behind-a-build-lock the 2026-10-30 P00 audit read 6 references from knowledge record, 3 from knowledge related and 0 from entity show, and the knowledge compiler's path_edge drops a file: reference whose target is tracked but not a node it models, with no edge and no finding (lib/knowledge.awk:452). `majordomus entity kinds` routes adr and knowledge to /cockpit/objects/adr and /cockpit/objects/knowledge (117 adr and 4 knowledge objects on master at 4a4573690f8, by that command).",
       "desired_state": "/ui/decisions and /ui/knowledge/curated (names to be settled against the screen list in ui/mod.rs) list every object of the kind from the index, each inspector renders its body through ui::prose and its outgoing and incoming links taken from the entity layer's references and backlinks (not a second derivation), and an object added to the tree appears with no registration.",
       "acceptance_criteria": [
+        "The P00 slice comes first: entity show, knowledge related and knowledge record agree on the references of knowledge:a-commit-stood-behind-a-build-lock (today 0, 3 and 6), and a tracked file: target that lib/knowledge.awk:452 drops is reported as unresolved instead; case 3318 asserts the agreement and fails on 51b38035a71, for the context-and-existing-work row of milestone a-bounded-task-is-carried-to-accepted-work",
         "Every adr object of the index is listed on the decisions screen and its inspector shows its related records as links and the records that cite it",
         "Every curated knowledge note is listed with its class, epistemics and status, and its relations are links",
         "A decision added to the tree appears with no edit outside its own file",
@@ -67895,7 +67911,8 @@
       "desired_state": "init prints the commit-context form, and doctor's wiring check accepts it.",
       "acceptance_criteria": [
         "The printed hook line sets the commit context",
-        "doctor reports it wired"
+        "doctor reports it wired",
+        "init offers the two hook lines it prints (lib/init.sh:212-214) as one supported step that writes them and refuses to overwrite a hook it did not write (finding F4 of the 2026-10-30 stranger fixture), for the criteria-and-authority row of milestone a-bounded-task-is-carried-to-accepted-work"
       ],
       "validation": [
         "bash test/run.sh 4265_the_adopter_hook_runs_doctor_in_commit_context"
@@ -77221,6 +77238,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I0201",
+      "message": "shares lib with I3299; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I0201",
       "message": "shares lib with I3304; they may not run concurrently"
     },
     {
@@ -77240,6 +77263,12 @@
       "code": "scope_conflict",
       "subject": "I0201",
       "message": "shares share with I3312; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I0201",
+      "message": "shares lib with I3318; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -78061,6 +78090,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1504",
+      "message": "shares lib/plan.sh with I3299; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1504",
       "message": "shares test/cases with I3304; they may not run concurrently"
     },
     {
@@ -78074,6 +78109,12 @@
       "code": "scope_conflict",
       "subject": "I1504",
       "message": "shares test/cases with I3309; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1504",
+      "message": "shares test/cases with I3318; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -79213,6 +79254,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1980",
+      "message": "shares apps/majordomus-cli/src/capability/builtin/brief.rs with I2690; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1980",
       "message": "shares test/cases with I2714; they may not run concurrently"
     },
     {
@@ -79225,7 +79272,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1980",
-      "message": "shares test/cases with I2720; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/capability/builtin/brief.rs with I2720; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -79393,6 +79440,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1980",
+      "message": "shares apps/majordomus-cli/src/capability/builtin/brief.rs with I3179; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1980",
       "message": "shares test/cases with I3241; they may not run concurrently"
     },
     {
@@ -79400,6 +79453,12 @@
       "code": "scope_conflict",
       "subject": "I1980",
       "message": "shares share/schemas with I3280; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1980",
+      "message": "shares test/cases with I3299; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -79424,6 +79483,12 @@
       "code": "scope_conflict",
       "subject": "I1980",
       "message": "shares share/schemas with I3312; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1980",
+      "message": "shares test/cases with I3318; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -79459,7 +79524,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1980",
-      "message": "shares test/cases with I3607; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/capability/builtin/brief.rs with I3607; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -79633,7 +79698,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1980",
-      "message": "shares test/cases with I3961; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/capability/builtin/brief.rs with I3961; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -79663,13 +79728,13 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1980",
-      "message": "shares test/cases with I4002; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/capability/builtin/brief.rs with I4002; they may not run concurrently"
     },
     {
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1980",
-      "message": "shares test/cases with I4006; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/capability/builtin/brief.rs with I4006; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -79772,6 +79837,12 @@
       "code": "scope_conflict",
       "subject": "I1980",
       "message": "shares test/cases with I4325; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1980",
+      "message": "shares apps/majordomus-cli/src/capability/builtin/brief.rs with I4327; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -80281,6 +80352,18 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1990",
+      "message": "shares test/cases with I3280; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1990",
+      "message": "shares test/cases with I3299; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1990",
       "message": "shares test/cases with I3304; they may not run concurrently"
     },
     {
@@ -80300,6 +80383,12 @@
       "code": "scope_conflict",
       "subject": "I1990",
       "message": "shares docs/CLI.md with I3310; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1990",
+      "message": "shares test/cases with I3318; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -80983,6 +81072,18 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1997",
+      "message": "shares test/cases with I3280; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1997",
+      "message": "shares test/cases with I3299; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1997",
       "message": "shares test/cases with I3304; they may not run concurrently"
     },
     {
@@ -80996,6 +81097,12 @@
       "code": "scope_conflict",
       "subject": "I1997",
       "message": "shares test/cases with I3309; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1997",
+      "message": "shares test/cases with I3318; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -81889,7 +81996,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1999",
-      "message": "shares apps/majordomus-cli/src with I3299; they may not run concurrently"
+      "message": "shares lib with I3299; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -81949,7 +82056,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1999",
-      "message": "shares apps/majordomus-cli/src with I3318; they may not run concurrently"
+      "message": "shares lib with I3318; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -82759,6 +82866,18 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2059",
+      "message": "shares test/cases with I3280; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2059",
+      "message": "shares test/cases with I3299; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2059",
       "message": "shares test/cases with I3304; they may not run concurrently"
     },
     {
@@ -82772,6 +82891,12 @@
       "code": "scope_conflict",
       "subject": "I2059",
       "message": "shares test/cases with I3309; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2059",
+      "message": "shares test/cases with I3318; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -83239,7 +83364,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2114",
-      "message": "shares apps/majordomus-cli/src/capability/builtin/scope.rs with I2690; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/capability/builtin/devtask.rs with I2690; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -83257,7 +83382,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2114",
-      "message": "shares apps/majordomus-cli/src/capability/builtin/scope.rs with I2720; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/capability/builtin/devtask.rs with I2720; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -83425,6 +83550,18 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2114",
+      "message": "shares test/cases with I3280; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2114",
+      "message": "shares lib/check.sh with I3299; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2114",
       "message": "shares test/cases with I3304; they may not run concurrently"
     },
     {
@@ -83444,6 +83581,12 @@
       "code": "scope_conflict",
       "subject": "I2114",
       "message": "shares lib/start.sh with I3310; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2114",
+      "message": "shares test/cases with I3318; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -83473,7 +83616,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2114",
-      "message": "shares apps/majordomus-cli/src/capability/builtin/scope.rs with I3607; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/capability/builtin/devtask.rs with I3607; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -83677,13 +83820,13 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2114",
-      "message": "shares apps/majordomus-cli/src/capability/builtin/scope.rs with I4002; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/capability/builtin/devtask.rs with I4002; they may not run concurrently"
     },
     {
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2114",
-      "message": "shares apps/majordomus-cli/src/capability/builtin/scope.rs with I4006; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/capability/builtin/devtask.rs with I4006; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -83785,7 +83928,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2114",
-      "message": "shares apps/majordomus-cli/src/capability/builtin/scope.rs with I4327; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/capability/builtin/devtask.rs with I4327; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -84025,6 +84168,18 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2115",
+      "message": "shares test/cases with I3280; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2115",
+      "message": "shares test/cases with I3299; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2115",
       "message": "shares test/cases with I3304; they may not run concurrently"
     },
     {
@@ -84038,6 +84193,12 @@
       "code": "scope_conflict",
       "subject": "I2115",
       "message": "shares test/cases with I3309; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2115",
+      "message": "shares test/cases with I3318; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -84703,6 +84864,18 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2148",
+      "message": "shares test/cases with I3280; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2148",
+      "message": "shares test/cases with I3299; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2148",
       "message": "shares test/cases with I3304; they may not run concurrently"
     },
     {
@@ -84716,6 +84889,12 @@
       "code": "scope_conflict",
       "subject": "I2148",
       "message": "shares test/cases with I3309; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2148",
+      "message": "shares test/cases with I3318; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -85369,6 +85548,18 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2350",
+      "message": "shares test/cases with I3280; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I3299; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
       "message": "shares test/cases with I3304; they may not run concurrently"
     },
     {
@@ -85382,6 +85573,12 @@
       "code": "scope_conflict",
       "subject": "I2350",
       "message": "shares apps/majordomus-cli/src/gates/model.rs with I3309; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I3318; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -86083,6 +86280,18 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2411",
+      "message": "shares test/cases with I3280; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2411",
+      "message": "shares test/cases with I3299; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2411",
       "message": "shares test/cases with I3304; they may not run concurrently"
     },
     {
@@ -86096,6 +86305,12 @@
       "code": "scope_conflict",
       "subject": "I2411",
       "message": "shares test/cases with I3309; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2411",
+      "message": "shares test/cases with I3318; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -88453,6 +88668,18 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2714",
+      "message": "shares test/cases with I3280; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2714",
+      "message": "shares test/cases with I3299; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2714",
       "message": "shares test/cases with I3304; they may not run concurrently"
     },
     {
@@ -88466,6 +88693,12 @@
       "code": "scope_conflict",
       "subject": "I2714",
       "message": "shares test/cases with I3309; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2714",
+      "message": "shares test/cases with I3318; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -89089,6 +89322,18 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2717",
+      "message": "shares test/cases with I3280; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2717",
+      "message": "shares test/cases with I3299; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2717",
       "message": "shares test/cases with I3304; they may not run concurrently"
     },
     {
@@ -89102,6 +89347,12 @@
       "code": "scope_conflict",
       "subject": "I2717",
       "message": "shares test/cases with I3309; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2717",
+      "message": "shares test/cases with I3318; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -89803,6 +90054,18 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2720",
+      "message": "shares test/cases with I3280; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2720",
+      "message": "shares test/cases with I3299; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2720",
       "message": "shares apps/majordomus-cli/src/capability/builtin with I3304; they may not run concurrently"
     },
     {
@@ -89840,6 +90103,12 @@
       "code": "scope_conflict",
       "subject": "I2720",
       "message": "shares apps/majordomus-cli/src/capability/builtin with I3317; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2720",
+      "message": "shares test/cases with I3318; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -90548,6 +90817,18 @@
       "code": "scope_conflict",
       "subject": "I2723",
       "message": "shares test/cases with I3241; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2723",
+      "message": "shares test/cases with I3280; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2723",
+      "message": "shares test/cases with I3299; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -111031,6 +111312,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3280",
+      "message": "shares test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh with I3607; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3280",
       "message": "shares apps/majordomus-cli/src/plan.rs with I3757; they may not run concurrently"
     },
     {
@@ -111265,6 +111552,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3299",
+      "message": "shares test/cases/83_doctor_budget.sh with I3607; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3299",
       "message": "shares docs/generated/benchmarks.json with I3663; they may not run concurrently"
     },
     {
@@ -111314,6 +111607,30 @@
       "code": "scope_conflict",
       "subject": "I3299",
       "message": "shares docs/generated/benchmarks.json with I3841; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3299",
+      "message": "shares lib/plan.sh with I4322; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3299",
+      "message": "shares lib/plan.sh with I4329; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3299",
+      "message": "shares lib/plan.sh with I4463; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3299",
+      "message": "shares lib/plan.sh with I4464; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -111764,6 +112081,12 @@
       "code": "scope_conflict",
       "subject": "I3317",
       "message": "shares docs/generated/openapi.json with I4466; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3318",
+      "message": "shares test/cases/3318_a_notes_references_agree_on_every_surface.sh with I3607; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -116654,7 +116977,7 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "count": 6611,
+      "count": 6662,
       "examples": [
         {
           "level": "WARN",
