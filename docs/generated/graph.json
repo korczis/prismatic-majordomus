@@ -38167,6 +38167,62 @@
         }
       },
       {
+        "id": "majordomus://issue/I2374",
+        "kind": "issue",
+        "label": "I2374",
+        "summary": "The site shows what changed since its previously deployed commit, computed at build time and never committed",
+        "route": "/cockpit/objects/issue/i2374",
+        "source": ".ai/repo/project/issues/I2374.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 3045 builds a fixture repository with two deployed commits and a capability, a claim and a document moved between them, and finds each movement on the rendered changelog page with its group",
+            "A movement inside a release record's range is labelled released with that tag; one after the newest record is labelled not yet released; a planned claim is not listed as a movement",
+            "With no previous commit, or one that is not an ancestor of the built commit, the page says the delta is unknown and lists no movement",
+            "No tracked file changes when the site is built twice from the same commit with two different previous commits, and scripts/site-check refuses the build-time file if it is tracked"
+          ],
+          "created_at": "2026-10-10",
+          "depends_on": [],
+          "evidence_required": [
+            "delta_since_deploy_rendered",
+            "unknown_baseline_case",
+            "delta_never_committed"
+          ],
+          "milestone": "public-proof",
+          "non_scope": [
+            "Not a second differ: capability movements come from `release analyze` and documentation from the changelog composition; only claims compare two committed snapshots",
+            "Not changing compose_published or docs/generated/changelog.*: the committed changelog keeps ending at the last release",
+            "Not a new homepage section: the trust strip gains a link, and site/data/homepage.toml `order` is unchanged",
+            "No Rust change: the existing `release analyze --since` and `release changelog` surfaces suffice"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I2374.yaml",
+            "scripts/site-build",
+            "scripts/site-deploy",
+            "scripts/site-check",
+            ".github/workflows/pages.yml",
+            ".ai/repo/ci/gates.yaml",
+            "site/templates/changelog.html",
+            "site/templates/index.html",
+            "site/templates/partials/since-deploy.html",
+            ".gitignore",
+            "test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh",
+            "docs/GITHUB_PAGES_ARCHITECTURE.md",
+            "docs/generated",
+            "site/data/generated"
+          ],
+          "slug": "change-since-the-last-deploy",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 3045_the_site_shows_what_changed_since_it_was_deployed",
+            "scripts/derive-check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2396",
         "kind": "issue",
         "label": "I2396",
@@ -96605,6 +96661,13 @@
         "source": "test/cases/3043_site_json_cannot_close_its_script.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh",
+        "kind": "test",
+        "label": "test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh",
+        "route": "/cockpit/objects/test/test-cases-3045-the-site-shows-what-changed-since-it-was-deployed-sh",
+        "source": "test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/3047_a_leak_finding_names_where_it_is.sh",
         "kind": "test",
         "label": "test/cases/3047_a_leak_finding_names_where_it_is.sh",
@@ -126848,6 +126911,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2374",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2374",
+        "target": "majordomus://milestone/public-proof",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2396",
         "target": "kind:issue",
         "kind": "is_a"
@@ -143318,6 +143391,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/3047_a_leak_finding_names_where_it_is.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -149509,8 +149587,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4097,
-      "edges": 9459,
+      "nodes": 4099,
+      "edges": 9462,
       "acyclic": false,
       "truncated": false
     }
