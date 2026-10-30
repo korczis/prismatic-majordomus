@@ -13,7 +13,7 @@
 use crate::capability::Context;
 use crate::cockpit::html::{el, El};
 use crate::cockpit::view::word_badge;
-use crate::web::home::{Availability, Entry};
+use crate::web::home::{Availability, Checkout, Entry};
 use crate::web::model::Category;
 
 use super::icons::icon;
@@ -40,6 +40,8 @@ pub struct Process<'a> {
     pub revision: Option<&'a str>,
     /// The one-line description of what this is.
     pub summary: &'a str,
+    /// Which checkout answered: the front door names it as the plain page does (I1031).
+    pub checkout: Checkout<'a>,
 }
 
 /// A tile of the hero for a fact the process holds itself, cited as such.
@@ -235,6 +237,12 @@ pub fn screen(ctx: &Context, process: &Process<'_>, sections: &[(Category, Vec<E
         el("div")
             .class("mj-ui-stack")
             .child(top)
+            // escaped by the line itself: identities are digests, branch and head git's names
+            .child(
+                el("div")
+                    .class("mj-ui-dim")
+                    .raw(process.checkout.line(process.repository)),
+            )
             .child(screens)
             .child(served),
     )
@@ -280,6 +288,12 @@ mod tests {
             repository: "fixture",
             revision: Some("0123456789abcdef"),
             summary: "What this is.",
+            checkout: Checkout {
+                id: "fedcba9876543210fedcba9876543210",
+                linked: true,
+                branch: Some("feature/alpha"),
+                ..Checkout::default()
+            },
         };
         let html = screen(&ctx, &process, &sections()).main.render();
         for s in SCREENS {
@@ -295,6 +309,9 @@ mod tests {
             "href=\"/cockpit\"",
             "scripts/build-docs",
             "Everything this process serves",
+            "data-mj-checkout=\"fedcba9876543210fedcba9876543210\"",
+            "linked worktree",
+            "feature/alpha",
         ] {
             assert!(html.contains(want), "no {want}: {html}");
         }

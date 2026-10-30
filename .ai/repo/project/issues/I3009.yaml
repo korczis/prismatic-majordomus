@@ -1,0 +1,37 @@
+id: I3009
+milestone: surfaces-never-disagree
+title: "No record's prose and no board announcement holds a template delimiter"
+slug: prose-holds-no-template-delimiter
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Refuse a template delimiter (a double brace, a brace-percent or a brace-hash) in every prose field of a plan record, at plan validate and in the commit hook, naming the record, the field and the remedy; and refuse one in a board announcement or claim text when it is made, since the continue prompt renders the live board."
+why: "On 2026-10-18 I3007's objective quoted the templates' commit link literally; Zola read it on /plan/i3007 as an unresolved placeholder and the 0.30.1 top's site job failed. On 2026-10-19 a board announcement quoting the same delimiters reached the rendered continue prompt, and core-check, which refuses an unrendered token there, failed for another session."
+current_state: "Nothing refuses a delimiter in record prose or in board text; each one is found by a red site job or a red core-check."
+desired_state: "A delimiter in record prose or board text is refused where it is written, with the field and the remedy named."
+scope:
+  - "apps/majordomus-cli/src/plan.rs"
+  - "lib/plan.sh"
+  - "lib/project.awk"
+  - ".githooks"
+  - "apps/majordomus-cli/src/capability/builtin/peers.rs"
+  - "test/cases"
+  - ".ai/repo/project/issues/I3009.yaml"
+  - "docs"
+  - "site"
+non_scope:
+  - "Template files themselves, where the delimiters belong"
+depends_on: []
+acceptance_criteria:
+  - "plan validate names a record and field whose prose holds a template delimiter, with the remedy, and exits non-zero"
+  - "An announcement whose text holds a template delimiter is refused with the remedy"
+  - "Removing either check turns its case red"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+created_at: 2026-10-19
+updated_at: 2026-10-23T16:38:17Z
+started_at: 2026-10-23T16:29:29Z
+started_event: sha256:7b22a11e6c6a73fe19bda39929969206f909002597881abee9c31ee4136f2abe
+completed_at: 2026-10-23T16:38:17Z
+completed_event: sha256:c863073f58496ff9d42be1bafc7bd144b6dbe9fb81246cb4e442b65f63909dff

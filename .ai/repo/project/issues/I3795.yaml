@@ -1,0 +1,26 @@
+id: I3795
+milestone: one-kit-on-every-surface
+title: "A surface links to another surface and never embeds it"
+slug: a-surface-links-and-never-embeds
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "State in the design book that one surface reaches another by a link (the site to the published /ui and /cockpit snapshots, for example) and never by an iframe, embed or object, and add an audit rule that refuses those elements on every surface."
+why: "On 2026-10-20 no iframe, embed or object existed on any surface, and nothing kept it so: an embedded surface would carry its own navigation, theme and language inside another's and escape the audits of both."
+current_state: "No embeds; the snapshots are linked (pages.yaml); Mermaid diagrams render inline on the site through diagrams.js."
+desired_state: "The design book's embed section says link, not embed; ui-audit rule embed.forbidden fails any iframe, embed or object on the site, /ui and the Cockpit."
+scope:
+  - "docs/DESIGN_SYSTEM.md"
+  - "scripts/lib/ui-audit.mjs"
+  - "scripts/lib/ui.test.mjs"
+depends_on: []
+acceptance_criteria:
+  - "ui-audit fails a page carrying an iframe, embed or object, naming the page and the element"
+  - "Every surface passes the rule on master"
+validation:
+  - "bin/majordomus plan validate"
+  - "node scripts/lib/ui.test.mjs"
+evidence_required:
+  - "embed_forbidden_rule_test"
+created_at: 2026-10-20
+updated_at: 2026-10-20

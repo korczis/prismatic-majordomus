@@ -1,0 +1,37 @@
+id: I3951
+milestone: builds-reuse-the-mesh-cache
+title: "The mesh store is spoken natively: signed S3 requests, bounded in time, with the credential read from a private file and never answered"
+slug: the-mesh-store-is-spoken-natively
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "An S3 client under mesh/build_cache/: AWS Signature V4 over a bounded HTTP/1.1 connection, HEAD, GET into a file and PUT from a file, path-style; the node's credential read from the AWS-format file of mode 0600 that sccache also reads (profile mesh-build-cache), never from the environment."
+why: "The owner, 2026-10-22, after lundra (the build and deploy host) reached zero free bytes: the shared cache must be part of Majordomus — used when MinIO is available, enforced, dynamic, derived — for compiled Rust, the shared cargo build directory, mix deps.get and npm install, keyed by a triplet for the most reuse. Decided the same day after critique: the store is trusted only through a signed offer (I2671), the build directory archive is measured before it is built (I3955), and the dependency cache is generic and wired first into prismatic-platform. See ADR 0157 and intent a-build-reuses-what-the-mesh-already-built."
+current_state: "Measured on master 2034d4a3f0b on 2026-10-22: no key derivation, no S3 client and no dependency cache exist in the crate; I2670 (#1118) holds the offer model and the pure selection only."
+desired_state: "The crate can probe, read and write a store with no dependency added, and no answer, log line, error or child environment carries the secret."
+scope:
+  - "apps/majordomus-cli/src/mesh/build_cache.rs"
+  - "apps/majordomus-cli/src/mesh/build_cache/"
+  - ".ai/repo/project/intents/a-build-reuses-what-the-mesh-already-built.yaml"
+  - "test/cases/3951_the_mesh_store_is_spoken_natively.sh"
+non_scope:
+  - "Multipart upload: an object larger than one PUT is not saved, and says so"
+  - "Choosing a store (I2671, I2672) and provisioning one (I2674)"
+depends_on:
+  - I2670
+acceptance_criteria:
+  - "The signature and HMAC reproduce the AWS SigV4 GET Object example and RFC 4231 byte for byte"
+  - "A credential file readable by its group or others is refused, with the cause named and no value"
+  - "Every network call has a bound; a store that does not answer within it is unknown, never down"
+  - "A refused credential, a full store and a body cut short are distinct errors, and a cut body leaves no file"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3951_the_mesh_store_is_spoken_natively"
+evidence_required:
+  - "sigv4_vectors"
+  - "store_failure_paths_case"
+serves:
+  - "a-build-reuses-what-the-mesh-already-built#store-absent-is-only-a-miss"
+  - "a-build-reuses-what-the-mesh-already-built#nothing-secret-nothing-unbounded"
+created_at: 2026-10-22
+updated_at: 2026-10-22

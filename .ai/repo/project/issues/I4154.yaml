@@ -1,0 +1,29 @@
+id: I4154
+milestone: ci-critical-path
+title: The follow backlog test waits on the follower's cursor, not on fifty milliseconds
+slug: the-follow-backlog-test-waits-on-the-cursor
+priority: p1
+profile: implementation
+parallel_safe: true
+serves: []
+objective: "http::follow::tests::a_backlog_beyond_the_bound_in_the_stream_starts_the_client_again writes its backlog only once the follower's cursor stands, and writes it whole, so a loaded runner cannot turn it red."
+why: "Train 5's validate 39997497168 failed rust (2) on that test alone (3765 passed, 1 failed): 'never came', with one signal and no stream.resync. run() writes stream.ready (follow.rs:500) before it takes its starting cursor (follow.rs:518, a monitor.stream read under the process-wide PAGE mutex). The test waited for ready plus 50 ms, so on the runner the cursor was taken after two of the three sessions. Every append also advances BLACKBOARD (mesh/journal.rs:1999), so a stalled test thread could split the backlog one signal per round. Train 4's run had passed it: a verdict that depends on the runner's load is a rerun, not a verdict."
+current_state: "The test waits for any frame and sleeps 50 ms before writing three sessions, each its own change."
+desired_state: "The follower's heartbeat is 50 ms and the test waits for stream.heartbeat, which only the loop after the cursor writes; the three sessions are written under PAGE's lock, so one round reads them whole. The assertions are unchanged."
+scope:
+  - apps/majordomus-cli/src/http/follow.rs
+  - .ai/repo/project/issues/I4154.yaml
+non_scope:
+  - Production code, which loses no change (I4155 records the caches' keys)
+depends_on: []
+acceptance_criteria:
+  - "The test passes 50 times in a row"
+  - "The whole http::follow test module passes"
+validation:
+  - "bash -c 'for i in $(seq 1 50); do cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib http::follow::tests::a_backlog_beyond_the_bound_in_the_stream_starts_the_client_again -- --exact || exit 1; done'"
+  - cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib http::follow::tests
+evidence_required:
+  - suite
+risk: "Holding PAGE while writing sessions: open_session never takes PAGE, which is private to follow.rs, so it cannot deadlock."
+created_at: 2026-10-23
+updated_at: 2026-10-23

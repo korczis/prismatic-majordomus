@@ -595,7 +595,11 @@ mod tests {
         let found = accumulated(&root, 0).unwrap();
         assert_eq!((found.worktrees_now, found.worktrees.len()), (0, 0));
         // and a registry that is not a directory is an error, never "no worktrees"
-        std::fs::remove_dir_all(root.join(".git/worktrees")).unwrap();
+        // the reading may itself have pruned the empty registry, so it is removed if it is there
+        match std::fs::remove_dir_all(root.join(".git/worktrees")) {
+            Err(e) if e.kind() != std::io::ErrorKind::NotFound => panic!("{e}"),
+            _ => {}
+        }
         std::fs::write(root.join(".git/worktrees"), "not a directory\n").unwrap();
         let refused = accumulated(&root, 0).unwrap_err();
         assert!(refused.contains("worktrees"), "{refused}");

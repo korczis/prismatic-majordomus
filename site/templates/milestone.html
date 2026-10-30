@@ -62,7 +62,7 @@
   </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The graph</h2>
-  {{ <plan_graph mermaid={ms.mermaid} caption={ms.id ~ " dependency graph"} /> }}
+  {{ <plan_graph mermaid={ms.mermaid} caption={ms.id ~ " dependency graph"} name={ms.id} /> }}
 
   <p class="mt-8 text-sm text-body">Canonical record: <a href="{{ repo }}.ai/repo/project/milestones/{{ ms.id }}.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/{{ ms.id }}.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show {{ ms.id }}</code>.</p>
 </div>

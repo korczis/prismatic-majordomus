@@ -1,0 +1,32 @@
+id: I3432
+milestone: a-prompt-reaches-the-work-it-serves
+title: "The UI and Cockpit snapshots pass both privacy gates after they are placed and before anything is published, on CI and from a terminal"
+slug: a-snapshot-is-checked-before-it-is-published
+priority: p1
+profile: implementation
+objective: "In .github/workflows/pages.yml, after the steps that place every snapshot at its mount and before the publish step, run scripts/ci/local-never-published --no-probe and scripts/ci/prompt-privacy over the composed site/public tree. Run the same two gates in scripts/site-deploy before it pushes, including under --skip-build. Extend case 181 to assert the order."
+why: "The owner's 2026-10-19 Cognitive Fabric pack (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/05_SURFACES.md, contracts/ARCHITECTURE.md) requires that no public Pages byte carries .ai/local, raw prompts or private runtime data. So does verification/ACCEPTANCE.md, in its row on private .ai/local data and the negative fixture of a public view that serialises .ai/local/prompts."
+current_state: ".github/workflows/pages.yml:479-481 runs scripts/pages check, whose cmd_check runs local-never-published (scripts/pages:264-276). The snapshots are placed afterwards (pages.yml:489-517) and published (pages.yml:520) with no further privacy check. scripts/site-deploy runs only scripts/site-check (scripts/site-deploy:182), and nothing under --skip-build. scripts/ci/prompt-privacy scans the docs and site trees in the structure job (scripts/ci/prompt-privacy:40-41), where no snapshot is placed."
+desired_state: "Every byte that reaches gh-pages, snapshots included, has passed both privacy gates in the run that publishes it."
+scope:
+  - ".github/workflows/pages.yml"
+  - "scripts/site-deploy"
+  - "test/cases/181_local_is_never_published.sh"
+non_scope:
+  - "Changing what either gate looks for"
+  - "The declared reading lists (I3433, I3435)"
+serves:
+  - "a-change-reconciles-what-it-affects#nothing-private-is-published"
+acceptance_criteria:
+  - "Case 181 fails when the privacy step is moved before the snapshot steps or removed"
+  - "scripts/site-deploy --skip-build refuses a fixture snapshot that holds a file byte-identical to a record under .ai/local"
+validation:
+  - "MJ_TEST_JOBS=4 bash test/run.sh 181_local_is_never_published"
+  - "scripts/ci/local-never-published --no-probe"
+  - "scripts/ci/prompt-privacy"
+  - "majordomus shell check"
+evidence_required:
+  - "local_is_never_published_after_the_snapshots"
+  - "the added step's duration from the first Pages run after landing, reported and not asserted"
+created_at: 2026-10-19
+updated_at: 2026-10-19

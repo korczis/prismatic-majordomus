@@ -4,7 +4,7 @@
 
 # Prismatic Majordomus
 
-**A lightweight supervisory control layer for AI-assisted work.**
+**Your AI agents say the work is done. Majordomus makes them prove it.**
 
 [Website](https://majordomus.dev) ·
 **[The challenge: watch it refuse an agent](https://majordomus.dev/challenge/)** ·
@@ -126,7 +126,11 @@ majordomus check
 majordomus finish --outcome completed --verify-command "make test"
 ```
 
-Requirements: bash 3.2 or newer, git, and `sha256sum` or `openssl`. Nothing else.
+The shell tool, `bin/majordomus`, is small and portable: bash 3.2 or newer, git, and
+`sha256sum` or `openssl` run it on a stock macOS or Linux. It answers `init`, `start`,
+`check`, `finish` and the other commands of the task cycle itself. Every command it does not
+know it hands to the Rust executable it ships prebuilt as `libexec/majordomus-cli`, so
+`mcp`, `serve`, `generate` and `worktree` exist only there.
 Nothing is installed into your project except `.ai/` and the files the policy names. A
 repository set up before the `.ai/` layer, with its data under `.majordomus/`, is moved
 by `majordomus migrate` (preview with `--dry-run`); every other command refuses that
@@ -299,19 +303,19 @@ table, rule bullets, a rules or lifecycle or finish-contract heading — and a
 
 | command | answers | writes | exit |
 |---|---|---|---|
-| `init` | create the `.ai/` layer here | yes; refuses to overwrite, `--extend` adds what is missing | 0 / 15 |
-| `migrate` | move pre-`.ai` project data from `.majordomus/` into `.ai/` | git moves, a verified backup, the index | 0 / 12 / 15 |
-| `rules` | the effective rule set: vendored baseline plus project rules, resolved | only `vendor update` | 0 / 10 / 11 / 12 / 15 |
-| `doctor` | is Majordomus itself real and wired here? | no | 0 / 10 / 12 |
-| `start <task>` | begin a scoped task under a profile | task record, ledger | 0 / 15 |
-| `check` | is the task consistent with policy, scope, state? | no (`--checkpoint` updates one timestamp) | 0 / 10 |
-| `watch` | what has drifted? | no | 0 / 11 |
-| `doctrine` | what rules are enforced, by what, and are they wired? | no | 0 / 10 / 12 |
-| `update` | regenerate projections from policy | projections | 0 / 10 / 15 |
-| `handover` | write a continuation record; `--resolve` finds one | one new file | 0 / 10 / 12 |
-| `finish` | evaluate the finish contract | task record, ledger | 0 / 10 / 15 |
-| `skills` | the repository's skills: list, show one, check every one against its contract | no | 0 / 10 / 12 / 13 |
-| `bench` | how long does every public command take here, cold and warm, against the baseline? | local evidence under `.ai/local/benchmarks/`; the baseline only with `--write-baseline` | 0 / 10 / 12 / 15 |
+| `init` | create the `.ai/` layer here | yes; refuses to overwrite, `--extend` adds what is missing | 0 / 2 / 10 / 13 / 15 |
+| `migrate` | move pre-`.ai` project data from `.majordomus/` into `.ai/` | git moves, a verified backup, the index | 0 / 2 / 10 / 12 / 13 / 15 |
+| `rules` | the effective rule set: vendored baseline plus project rules, resolved | only `vendor update` | 0 / 2 / 10 / 11 / 12 / 13 / 15 |
+| `doctor` | is Majordomus itself real and wired here? | no | 0 / 2 / 10 / 12 |
+| `start <task>` | begin a scoped task under a profile | task record, ledger | 0 / 2 / 10 / 12 / 15 |
+| `check` | is the task consistent with policy, scope, state? | no (`--checkpoint` updates one timestamp) | 0 / 2 / 10 / 12 / 13 |
+| `watch` | what has drifted? | no | 0 / 2 / 10 / 11 |
+| `doctrine` | what rules are enforced, by what, and are they wired? | no | 0 / 2 / 10 / 12 / 13 |
+| `update` | regenerate projections from policy | projections | 0 / 2 / 10 / 12 / 15 |
+| `handover` | write a continuation record; `--resolve` finds one | one new file | 0 / 2 / 10 / 12 / 13 |
+| `finish` | evaluate the finish contract | task record, ledger | 0 / 2 / 10 / 12 / 13 / 15 |
+| `skills` | the repository's skills: list, show one, check every one against its contract | no | 0 / 2 / 10 / 12 / 13 |
+| `bench` | how long does every public command take here, cold and warm, against the baseline? | local evidence under `.ai/local/benchmarks/`; the baseline only with `--write-baseline` | 0 / 2 / 10 / 12 / 13 / 15 |
 | `archive` | a snapshot of the tracked tree that can be read, or checked, somewhere else | an archive under `tmp/archives/`, or wherever `--out` says | 0 / 2 / 10 / 12 / 13 / 15 |
 
 Exit codes are a contract: `0` ok, `2` usage, `10` contract unmet, `11` drift found,
@@ -331,9 +335,12 @@ seeds, and discovery grants nothing: a **link** is admitted only by a signed han
 that checks the peer's key is trusted, its repository is the same one (by root commits or
 a declared identity — never a path) and its protocol is compatible. Linked runtimes
 replicate one journal of signed events — sessions, claims, handovers, reviews — every
-heartbeat and fold it into the same state, so an exclusive claim on one machine refuses an
-overlapping claim on another, a handover published on one is consumed on another, and a
-runtime that crashes expires everywhere on its own. The whole subsystem is **off until the
+heartbeat and fold it into the same state, so a claim taken on one machine is seen on every
+other, a handover published on one is consumed on another, and the claims of a runtime
+that stops beating expire everywhere. Exclusivity is admission on the runtime that takes the
+claim plus a deterministic naming of the winner when two claims meet, not a lock across
+machines: there is no fencing yet, and an expired claim can return when its runtime beats
+again (milestone `mesh-journal-converges`). The whole subsystem is **off until the
 repository commits an enabled `mesh` declaration** with the keys to trust, so the default
 posture — nothing leaves the machine — holds until a person decides otherwise.
 
@@ -418,8 +425,10 @@ Unknown keys anywhere are errors, so a typo fails loudly.
 - not an agent framework, orchestrator, or runtime
 - not a prompt library or a memory system
 - not a daemon, database, queue, or hosted service; the Rust executable's `mcp` and
-  `serve` are read-only processes a client or a person starts and owns, one shared server
-  per repository on the loopback interface that ends when its last client leaves
+  `serve` are processes a client or a person starts and owns, one shared server per
+  repository on the loopback interface that ends when its last client leaves. Most of what
+  they serve reads; the capabilities whose registry effect is `repository_mutation` write
+  the repository, and the `initialize` instructions every client reads name them
   ([`docs/MCP.md`](docs/MCP.md))
 - not a slice of any other platform; there is no shared code
 
@@ -467,7 +476,7 @@ ordering, the gate and the claim linkage are derived.
 ## Interfaces
 
 The Rust executable under [`apps/majordomus-cli/`](apps/majordomus-cli/) exposes the same
-`.ai/` layer to programs, read-only, through several interfaces that are all derived from
+`.ai/` layer to programs through several interfaces that are all derived from
 one capability registry: a capability is defined once, in a typed descriptor or in a
 declarative file with its JSON Schema, and MCP, HTTP, OpenAPI, Swagger UI, the Cockpit, the
 command line and the generated reference are projections of it, so nothing is maintained
@@ -604,7 +613,8 @@ value came from: [`docs/WEB.md`](docs/WEB.md),
 **Clients start it themselves.** [`.mcp.json`](.mcp.json) (Claude Code),
 [`.gemini/settings.json`](.gemini/settings.json) (Gemini CLI) and
 [`.codex/config.toml`](.codex/config.toml) (Codex) name [`bin/majordomus-mcp`](bin/majordomus-mcp),
-which builds the executable when it must and runs `majordomus mcp`. Open the repository in
+which runs `majordomus mcp` from the tree's executable and never builds it (`just build` does;
+a release of the tree's generation stands in, ADR 0224). Open the repository in
 any of them and the server is there; open it in two and they share one. Which tools the
 distribution has an adapter for, what each reads and where each keeps its scratch
 checkouts is one generated table, [`docs/generated/providers.md`](docs/generated/providers.md),

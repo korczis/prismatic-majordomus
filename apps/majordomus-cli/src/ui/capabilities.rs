@@ -332,7 +332,7 @@ pub fn browser(commands: &Answer, queries: &Answer, pick: &Pick) -> El {
                 .attr("action", ROUTE)
                 .child(
                     el("label")
-                        .class("mj-ui-sr-only")
+                        .class("mj-sr-only")
                         .attr("for", "mj-ui-capabilities-q")
                         .text("Search capabilities"),
                 )
@@ -545,8 +545,9 @@ mod tests {
             source: Source::with("capabilities.list", input),
             route: None,
             exposure: super::super::source::Exposure::default(),
-            value: Ok(serde_json::json!({ "capabilities": capabilities })),
+            value: Ok(serde_json::json!({ "capabilities": capabilities }).into()),
             took: std::time::Duration::from_millis(1),
+            standing: super::super::source::Standing::NOW,
         }
     }
 

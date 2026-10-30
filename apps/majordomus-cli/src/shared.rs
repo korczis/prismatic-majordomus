@@ -39,11 +39,80 @@ pub struct SharedServer {
     /// Set by [`SharedServer::take_stop_requests`]: the owner's loop answers a stop signal
     /// itself, and the reader thread leaves it to it.
     owner_answers: Arc<AtomicBool>,
+    /// The repository as this server reads it, for what the idle timer asks of its current
+    /// context: the executions it is running and the board of its peers (I4007).
+    live: Arc<crate::live::Live>,
+}
+
+/// How a hosted hub differs from a checkout's server on the mesh (ADR 0220 decisions 2
+/// and 3). Both are what the deployment object's generated start command passes; a
+/// developer's server passes neither and keeps its key in the state directory and its
+/// interface addresses as its endpoints.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct MeshHosting {
+    /// The environment variable that holds the node's 32-byte seed, in hex. When named,
+    /// the identity is that seed and nothing else: absent or malformed, the mesh stays off
+    /// with the reason, and no key is minted that nobody trusts.
+    pub node_seed_env: Option<String>,
+    /// The one endpoint this node advertises, instead of the addresses of the interface it
+    /// is bound to: what a peer outside the platform's network can dial.
+    pub advertise: Option<String>,
+}
+
+/// The key this node signs with, or the reason the mesh stays off. A hosted hub's key is its
+/// deployment's secret, the seed in the variable it names read through `var`, held in memory
+/// only: its disk is gone at every boot, and a fresh key would be one nobody trusts (ADR
+/// 0220). A checkout's server keeps its key in the file `path` names, made on first use.
+fn node_identity(
+    hosting: &MeshHosting,
+    var: impl Fn(&str) -> Option<String>,
+    path: impl FnOnce() -> Option<std::path::PathBuf>,
+) -> std::result::Result<crate::mesh::NodeIdentity, String> {
+    match hosting.node_seed_env.as_deref() {
+        Some(name) => match var(name) {
+            Some(seed) => crate::mesh::NodeIdentity::from_seed_hex(&seed, name)
+                .map_err(|e| e.to_string()),
+            None => Err(format!(
+                "{name} is not set: a hosted hub takes its node key from that secret and mints none of its own, because a fresh key is one no trust.allow lists"
+            )),
+        },
+        None => match path() {
+            Some(path) => {
+                crate::mesh::NodeIdentity::load_or_create(&path).map_err(|e| e.to_string())
+            }
+            None => Err(
+                "no HOME and no XDG_STATE_HOME: nowhere to keep a node identity".to_string(),
+            ),
+        },
+    }
+}
+
+/// The value of the environment variable `name`, when it is set and is text.
+fn environment_variable(name: &str) -> Option<String> {
+    std::env::var(name).ok()
+}
+
+/// Where peers can reach a server bound at `bound`: the URL a hosted hub advertises, else the
+/// bound address, or every interface's address when it is bound to all of them. A loopback
+/// bind is reachable from this machine only, and `mesh doctor` says so.
+fn endpoints(hosting: &MeshHosting, bound: &str) -> Vec<String> {
+    match hosting.advertise.as_deref() {
+        Some(public) => vec![public.trim_end_matches('/').to_string()],
+        None => crate::mesh::address::advertised_endpoints(bound),
+    }
+}
+
+/// Whether a server bound at `bound` is bound to every interface, so that what it can be
+/// reached at changes with them.
+fn follows_interfaces(bound: &str) -> bool {
+    bound
+        .parse::<std::net::SocketAddr>()
+        .is_ok_and(|addr| addr.ip().is_unspecified())
 }
 
 /// Activate the mesh from the repository's declaration, when there is one and it is
 /// enabled. Every failure is a reason on `mesh.status`, never a failed server.
-fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str) {
+fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str, hosting: &MeshHosting) {
     let resolved = crate::capability::builtin::mesh::resolved_declaration(ctx);
     if !resolved.narrowed.is_empty() {
         // obeyed as narrowed; `mesh doctor` fails its `trust-root` check with the same lines
@@ -68,24 +137,23 @@ fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str) {
         ctx.mesh.decline("the mesh declaration is disabled");
         return;
     }
-    let Some(identity_path) = crate::mesh::default_identity_path() else {
-        ctx.mesh
-            .decline("no HOME and no XDG_STATE_HOME: nowhere to keep a node identity");
-        return;
-    };
-    let identity = match crate::mesh::NodeIdentity::load_or_create(&identity_path) {
+    let identity = match node_identity(
+        hosting,
+        environment_variable,
+        crate::mesh::default_identity_path,
+    ) {
         Ok(identity) => identity,
-        Err(e) => {
-            tracing::warn!(error = %e, "the node identity did not load; the mesh stays off");
-            ctx.mesh.decline(&e.to_string());
+        Err(reason) => {
+            tracing::warn!(reason = %reason, "the node identity did not load; the mesh stays off");
+            ctx.mesh.decline(&reason);
             return;
         }
     };
-    // Where peers can reach this server: the bound address, or every interface's address
-    // when it is bound to all of them. A loopback bind is reachable from this machine
-    // only, and `mesh doctor` says so.
-    let bound = url.trim_start_matches("http://").trim_end_matches('/');
-    let endpoints = crate::mesh::address::advertised_endpoints(bound);
+    let bound = url
+        .trim_start_matches("http://")
+        .trim_end_matches('/')
+        .to_string();
+    let endpoints = endpoints(hosting, &bound);
     let root = std::path::Path::new(&ctx.index.repository.root);
     // One runtime per checkout, and one repository identity per repository on every
     // machine — derived from content or declared, never from a path.
@@ -115,7 +183,14 @@ fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str) {
             return;
         }
         Ok(()) => {
-            tracing::info!(node = %node, runtime_id = %runtime, "mesh active: this node announces and listens per the declaration")
+            tracing::info!(node = %node, runtime_id = %runtime, "mesh active: this node announces and listens per the declaration");
+            // a server bound to every interface advertises the addresses they hold now, not
+            // the ones they held when it started: DHCP moves a machine's address under it
+            if hosting.advertise.is_none() && follows_interfaces(&bound) {
+                ctx.mesh.follow_endpoints(Arc::new(move || {
+                    crate::mesh::address::advertised_endpoints(&bound)
+                }));
+            }
         }
         Err(e) => {
             tracing::warn!(error = %e, "the mesh did not activate");
@@ -155,6 +230,9 @@ fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str) {
     };
     match crate::mesh::cooperation::Cooperation::new(setup) {
         Ok(cooperation) => {
+            // the store this node serves, if its own file outside the repository declares one,
+            // is offered on the journal from the first heartbeat (I2671)
+            cooperation.serve_build_cache_from(crate::mesh::build_cache::offer::node_file());
             cooperation.start();
             ctx.mesh.attach_cooperation(cooperation);
         }
@@ -178,6 +256,7 @@ impl SharedServer {
         declared_by: Option<&str>,
         lease: Lease,
         share_dir: Option<&std::path::Path>,
+        hosting: &MeshHosting,
     ) -> Result<Self> {
         // Three ways to arrive at a socket, and they are not interchangeable: a canonical
         // object declared this address (bind it, say which object said so), the port is a
@@ -191,7 +270,7 @@ impl SharedServer {
         let url = bound.url();
         let ctx_for_mesh = live.current();
         let endpoint = Arc::new(McpEndpoint::new(Arc::clone(&live), version, url.clone()));
-        let router = Router::new(live, version)
+        let router = Router::new(Arc::clone(&live), version)
             .with_mcp(Arc::clone(&endpoint))
             .with_cockpit(share_dir)
             .with_ui(share_dir);
@@ -200,7 +279,7 @@ impl SharedServer {
         // the activated runtime. Never blocking: providers open sockets on their own
         // threads, and a declaration that is absent, disabled or malformed leaves the
         // runtime inactive with the reason `mesh.status` reports.
-        activate_mesh(&ctx_for_mesh, version, &url);
+        activate_mesh(&ctx_for_mesh, version, &url, hosting);
         // what it serves is read off the resolution, so this line cannot name a route the
         // process does not have or miss one it does
         let surfaces = router.served()?.summary(&url);
@@ -214,8 +293,8 @@ impl SharedServer {
         // stopped pinging — on every path, not only while the owner waits for peers to
         // leave, so that a dead peer never stays `attached` on the board — and it checks
         // that the lease is still its own. A lease another process took over is that
-        // process's to remove; this one stops claiming it, serves the peers it has, and
-        // ends with them.
+        // process's to remove; this one stops claiming it and retires from the mesh,
+        // serves the peers it has, and ends with them.
         //
         // It is also the stopper of last resort. A signal asking this process to stop is only
         // recorded by its handler (`crate::lease` says why); when the owner's loop does not
@@ -265,9 +344,15 @@ impl SharedServer {
                         {
                             lost = true;
                             crate::lease::lost();
+                            // A successor has the same mesh runtime key. Leaving this
+                            // instance active makes both replace each other's links.
+                            // Retire discovery and cooperation, keeping HTTP sessions.
+                            mesh.begin_stop();
+                            mesh.stop();
+                            mesh.decline("the server no longer holds its checkout lease");
                             tracing::warn!(
                                 lease = %path.display(),
-                                "the lease is no longer this server's: another process took it over; this server serves the peers it has and ends with them"
+                                "the lease is no longer this server's: another process took it over; this server leaves the mesh, serves the peers it has and ends with them"
                             );
                         }
                     }
@@ -291,6 +376,7 @@ impl SharedServer {
             mesh: ctx_for_mesh.mesh.clone(),
             claimed,
             owner_answers,
+            live,
         })
     }
 
@@ -308,6 +394,20 @@ impl SharedServer {
     pub fn peers_attached(&self) -> usize {
         self.endpoint.reap();
         self.endpoint.active()
+    }
+
+    /// What keeps this server in use right now, for its idle timer: the peers attached (its
+    /// MCP sessions, or the rows of its peer board, whichever is more), the executions it
+    /// has not finished, its live channels, and whether a client's request was answered
+    /// within `window` — machine traffic is not counted ([`crate::idle::counts_as_use`]).
+    pub(crate) fn activity(&self, window: Duration) -> crate::idle::Activity {
+        let ctx = self.live.current();
+        crate::idle::Activity {
+            peers: self.peers_attached().max(ctx.peers.len()),
+            executions: ctx.executions.store().active(),
+            channels: server::open_channels(),
+            client_request: server::used_within(window),
+        }
     }
 
     /// Block until no HTTP session remains, or a signal asks this process to stop: a server
@@ -494,6 +594,7 @@ mod tests {
             None,
             lease,
             None,
+            &MeshHosting::default(),
         )
         .is_err());
     }
@@ -551,6 +652,7 @@ mod tests {
             None,
             lease,
             None,
+            &MeshHosting::default(),
         )
         .unwrap();
         (fixture, shared)
@@ -637,5 +739,149 @@ mod tests {
             Some(token),
             "the lease is still this server's"
         );
+    }
+
+    /// A hosted hub's key is the seed its variable holds and nothing else: one seed is one
+    /// node at every boot, and an unset or malformed seed keeps the mesh off with a reason
+    /// that names the variable and never its value. A checkout's key is its file, the same
+    /// node every time it is read, and with nowhere to keep one there is no node.
+    #[test]
+    fn a_node_key_is_a_hosted_seed_or_a_checkouts_file() {
+        let hosted = MeshHosting {
+            node_seed_env: Some("SEED".into()),
+            advertise: None,
+        };
+        let seed = "22".repeat(32);
+        let no_file = || -> Option<std::path::PathBuf> { panic!("a hosted hub reads no key file") };
+        let a = node_identity(&hosted, |v| (v == "SEED").then(|| seed.clone()), no_file).unwrap();
+        let b = node_identity(&hosted, |_| Some(format!("{seed}\n")), no_file).unwrap();
+        assert_eq!(a.public.node_id, b.public.node_id, "one seed, one node");
+        let unset = node_identity(&hosted, |_| None, no_file).unwrap_err();
+        assert!(unset.starts_with("SEED is not set"), "{unset}");
+        let bad = node_identity(&hosted, |_| Some("q".repeat(64)), no_file).unwrap_err();
+        assert!(bad.contains("SEED") && !bad.contains("qqqq"), "{bad}");
+
+        let checkout = MeshHosting::default();
+        let no_var = |_: &str| -> Option<String> { panic!("a checkout reads no seed") };
+        let nowhere = node_identity(&checkout, no_var, || None).unwrap_err();
+        assert!(
+            nowhere.contains("nowhere to keep a node identity"),
+            "{nowhere}"
+        );
+        let dir = tempfile::tempdir().unwrap();
+        let key = dir.path().join("node.json");
+        let first = node_identity(&checkout, no_var, || Some(key.clone())).unwrap();
+        let again = node_identity(&checkout, no_var, || Some(key.clone())).unwrap();
+        assert_eq!(
+            first.public.node_id, again.public.node_id,
+            "one file, one node"
+        );
+        assert!(node_identity(&checkout, no_var, || Some(dir.path().to_path_buf())).is_err());
+    }
+
+    /// A hosted hub advertises its public URL alone; a checkout's server, its bound address.
+    #[test]
+    fn a_hosted_hub_advertises_its_public_url_alone() {
+        let hosted = MeshHosting {
+            node_seed_env: None,
+            advertise: Some("https://hub.example/".into()),
+        };
+        assert_eq!(endpoints(&hosted, "0.0.0.0:4000"), ["https://hub.example"]);
+        assert_eq!(
+            endpoints(&MeshHosting::default(), "127.0.0.1:4000"),
+            crate::mesh::address::advertised_endpoints("127.0.0.1:4000")
+        );
+    }
+
+    #[test]
+    fn only_a_server_bound_to_every_interface_follows_them() {
+        assert!(follows_interfaces("0.0.0.0:8791"));
+        assert!(!follows_interfaces("127.0.0.1:8741"));
+        assert!(!follows_interfaces("192.168.100.100:8791"));
+        assert!(!follows_interfaces("hub.example:443"));
+    }
+
+    /// A hosted hub whose seed variable is unset activates no mesh: `mesh.status` says why,
+    /// naming the variable, and the server goes on serving without one.
+    #[test]
+    fn a_hosted_hub_without_its_seed_keeps_the_mesh_off_and_says_why() {
+        let fixture = SyntheticRepository::small().unwrap();
+        let sources = fixture.root().join(".ai/repo/knowledge/sources.yaml");
+        let mut text = std::fs::read_to_string(&sources).unwrap();
+        text.push_str("  - id: mesh-declaration\n    kind: mesh-declaration\n    discovery: vcs\n    pathspec: ':(glob).ai/repo/mesh/*.yaml'\n    required: false\n");
+        std::fs::write(&sources, text).unwrap();
+        let dir = fixture.root().join(".ai/repo/mesh");
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(
+            dir.join("majordomus.yaml"),
+            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntrust:\n  policy: deny_unknown\n",
+        )
+        .unwrap();
+        let app = App::load(&RepoArgs {
+            repo: Some(fixture.root().to_path_buf()),
+            discovery: DiscoveryMode::Filesystem,
+            share: Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share")),
+            ..Default::default()
+        })
+        .unwrap();
+        let ctx = Arc::new(app.context);
+        let var = "MAJORDOMUS_TEST_SEED_THAT_IS_NEVER_SET";
+        assert!(environment_variable(var).is_none());
+        let hosted = MeshHosting {
+            node_seed_env: Some(var.into()),
+            advertise: None,
+        };
+        activate_mesh(&ctx, crate::VERSION, "http://127.0.0.1:1", &hosted);
+        let reason = ctx.mesh.status().reason.unwrap_or_default();
+        assert!(reason.contains(&format!("{var} is not set")), "{reason}");
+    }
+
+    /// A server bound to every interface advertises the addresses the machine holds when a
+    /// beacon is cut, not the ones it held at start: the source it follows is read by
+    /// `mesh.status`.
+    #[test]
+    fn a_server_bound_to_every_interface_follows_the_interfaces_it_advertises() {
+        let fixture = SyntheticRepository::small().unwrap();
+        let sources = fixture.root().join(".ai/repo/knowledge/sources.yaml");
+        let mut text = std::fs::read_to_string(&sources).unwrap();
+        text.push_str("  - id: mesh-declaration\n    kind: mesh-declaration\n    discovery: vcs\n    pathspec: ':(glob).ai/repo/mesh/*.yaml'\n    required: false\n");
+        std::fs::write(&sources, text).unwrap();
+        let dir = fixture.root().join(".ai/repo/mesh");
+        std::fs::create_dir_all(&dir).unwrap();
+        // the hub's key is listed, so the mesh is open to it and the server announces
+        let seed = "07".repeat(32);
+        let key = crate::mesh::NodeIdentity::from_seed_hex(&seed, "test")
+            .unwrap()
+            .public
+            .public_key;
+        std::fs::write(
+            dir.join("majordomus.yaml"),
+            format!("schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  allow:\n    - {key}\n"),
+        )
+        .unwrap();
+        let app = App::load(&RepoArgs {
+            repo: Some(fixture.root().to_path_buf()),
+            discovery: DiscoveryMode::Filesystem,
+            share: Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share")),
+            ..Default::default()
+        })
+        .unwrap();
+        let ctx = Arc::new(app.context);
+        // a variable no other test reads: the node key of this hub, 32 bytes of hex
+        let var = "MAJORDOMUS_TEST_T7_SHARED_NODE_SEED";
+        std::env::set_var(var, &seed);
+        let hosting = MeshHosting {
+            node_seed_env: Some(var.into()),
+            advertise: None,
+        };
+        activate_mesh(&ctx, crate::VERSION, "http://0.0.0.0:1", &hosting);
+        let status = ctx.mesh.status();
+        assert!(status.active, "{:?}", status.reason);
+        assert_eq!(
+            status.advertised,
+            crate::mesh::address::advertised_endpoints("0.0.0.0:1"),
+            "the interfaces' addresses, read again when asked"
+        );
+        ctx.mesh.stop();
     }
 }

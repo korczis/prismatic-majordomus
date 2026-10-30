@@ -36,7 +36,7 @@ links="$(printf '%s' "$page" | grep -o 'href="[^"]*"' | sed 's/href="//; s/"$//'
 # ---------------------------------------------------------------- the frame
 printf '%s' "$page" | grep -q 'class="mj-body mj-ui"' || { echo "    / is not drawn in the UI's frame"; exit 1; }
 printf '%s\n' "$links" | grep -q '^/ui/assets/ui\.css' || { echo "    / does not carry the UI's stylesheet"; exit 1; }
-version="$("$RB" --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
+version="$("$RB" --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?' | head -1)"
 printf '%s' "$page" | grep -qF ">$version<" || { echo "    / does not carry the version $version of the executable that answered"; exit 1; }
 
 # ---------------------------------------------------------------- the screens

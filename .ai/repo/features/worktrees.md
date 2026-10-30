@@ -11,7 +11,7 @@ weight: 40
 domain: coordination
 featured: true
 areas: [coordination, work-tracking]
-modules: [worktree]
+modules: [worktree, convergence]
 rules: [project.worktree-topology, project.no-machine-paths]
 docs: [docs/WORKTREES.md]
 adrs: [adr-0021]

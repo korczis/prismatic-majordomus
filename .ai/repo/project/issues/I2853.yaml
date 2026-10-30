@@ -1,0 +1,41 @@
+id: I2853
+milestone: test-evidence
+title: "a Pages deploy on a fresh master is not refused for claims newer than the ledger it reads"
+slug: a-claim-newer-than-the-ledger-is-not-yet-recorded
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "`scripts/pages published-evidence` reads a `not run` claim whose test exists at none of the commits the ledger was recorded against as not yet recorded: it is named in the output and is not held against the published-not-run baseline. A claim whose test existed when the ledger was recorded still counts, and every claim counts when no commit of the ledger is in the history."
+why: "The first Pages deploy of 0.30.0 (run 39145730187, master 2dfff96988a, 2026-10-18) failed at ui-snapshot. Master's own validation was still running, so the publication read the previous master's ledger (707a04c7ce83, 141 commits behind). Three guaranteed claims added since then (mcp-client-always-served, release-prerelease-channel, session-start-prompt) read `not run` over a baseline of zero. No run of a test that did not exist when the ledger was recorded can be in that ledger, so every deploy in the ~90 minutes before a fresh master's evidence is recorded was refused for a gap that was not missing evidence. Found by 3e, assigned for 0.30.2 by the release seat."
+current_state: "published-evidence compares the total `not run` count with the baseline and refuses over it, whatever made each claim `not run`."
+desired_state: "published-evidence subtracts the `not run` claims whose test path (the file part of `path::name`) exists at none of the ledger's commits that this history holds, names them as newer than the ledger, and compares the rest with the baseline; a ledger outside the history excuses nothing."
+scope:
+  - "scripts/pages"
+  - "test/cases/3242_a_claim_newer_than_the_ledger_is_not_yet_recorded.sh"
+non_scope:
+  - "Making the deploy wait for master's evidence artifact: the other remedy the release seat named. Not needed once a newer claim is not a refusal, and it would delay every deploy."
+  - "How the published UI words a claim newer than the ledger: it reads `not run`, which is true; a distinct `not yet recorded` state in evidence.report is a change to the capability."
+depends_on: []
+acceptance_criteria:
+  - "A not-run claim whose test exists at no ledger commit is named and not counted against the baseline"
+  - "A not-run claim whose test existed at a ledger commit is still refused over the baseline"
+  - "A ledger none of whose commits is in the history excuses no claim"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 3242_a_claim_newer_than_the_ledger_is_not_yet_recorded 3178_the_published_ui_reads_the_evidence_ci_recorded"
+evidence_required:
+  - "a_claim_newer_than_the_ledger_case"
+created_at: 2026-10-18
+updated_at: 2026-10-20T16:30:56Z
+started_at: 2026-10-20T16:16:37Z
+started_event: sha256:b31318868e2ea1ca6a5c85ba345c5967a11b6f3fecc67795230832cf1debd0ca
+completed_at: 2026-10-20T16:30:56Z
+completed_event: sha256:e43042d97f44c2694bb9770ceb45179449eb2e6ee5a1e0338450b48026492338
+evidence:
+  - covers: a_claim_newer_than_the_ledger_case
+    type: ci
+    command: "validate run 39438896504 at master 9a5a9b77520: suite shards 1-4 (jobs 118683336189 118683338077 118683336157 118683336457) run every case, incl. 3242_a_claim_newer_than_the_ledger_is_not_yet_recorded (29acb77dd13)"
+    result: "success (the run's only red job is pages, which runs no test)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39438896504"
+    commit: a81b1e3537d333f6b7cfac24dd8aa8bce8a1a7ca
+    recorded_at: 2026-10-20T16:23:01Z

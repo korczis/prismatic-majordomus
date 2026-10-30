@@ -30,6 +30,72 @@ pub struct Identity<'a> {
     pub revision: Option<&'a str>,
     /// How many capabilities the registry holds.
     pub capabilities: usize,
+    /// Which checkout answered, as the repository model names it.
+    pub checkout: Checkout<'a>,
+}
+
+/// Which checkout a process is serving, as the repository model names it: an identity a
+/// reader can compare between two pages, never the place the checkout sits on the host.
+///
+/// Several sessions share one machine and each may bind a server of its own, so a page read
+/// in a browser may come from a server of another worktree or of another repository. Every
+/// surface that renders this says which one answered, and none of it is a path: the identities are digests
+/// (`crate::repository::identity`, `crate::repository::git_identity`), the branch and the
+/// commit are git's names.
+#[derive(Debug, Clone, Default)]
+pub struct Checkout<'a> {
+    /// The checkout's identity: one per checkout root (`crate::repository::identity`).
+    pub id: &'a str,
+    /// The git repository's identity: one for every worktree of it, `None` without git.
+    pub git_repository: Option<&'a str>,
+    /// Whether the checkout is a linked worktree rather than the primary one.
+    pub linked: bool,
+    /// The branch the served tree had checked out, `None` when detached or unknown.
+    pub branch: Option<&'a str>,
+    /// The commit the served answers were read from.
+    pub head: Option<&'a str>,
+}
+
+impl Checkout<'_> {
+    /// One line of HTML naming the checkout: what a page puts beside its content so that a
+    /// reader can tell whose answers they are reading. Every value is escaped.
+    ///
+    /// The module is the crate's own, so the example is the unit test
+    /// `the_line_names_identity_branch_and_head` rather than a doc test.
+    pub fn line(&self, repository: &str) -> String {
+        let mut parts = vec![format!(
+            "serving <strong>{}</strong>, checkout <span class=\"mono\" data-mj-checkout=\"{}\">{}</span> ({})",
+            html::escape(repository),
+            html::escape(self.id),
+            html::escape(short(self.id)),
+            if self.linked { "linked worktree" } else { "primary checkout" }
+        )];
+        if let Some(repository) = self.git_repository {
+            parts.push(format!(
+                "repository <span class=\"mono\" data-mj-repository=\"{}\">{}</span>",
+                html::escape(repository),
+                html::escape(short(repository))
+            ));
+        }
+        if let Some(branch) = self.branch {
+            parts.push(format!(
+                "branch <span class=\"mono\">{}</span>",
+                html::escape(branch)
+            ));
+        }
+        if let Some(head) = self.head {
+            parts.push(format!(
+                "HEAD <span class=\"mono\">{}</span>",
+                html::escape(short(head))
+            ));
+        }
+        format!("<p class=\"mj-checkout\">{}</p>", parts.join(" · "))
+    }
+}
+
+/// The first twelve characters of an identity or a commit: enough to tell two apart.
+fn short(id: &str) -> &str {
+    &id[..12.min(id.len())]
 }
 
 /// Whether a surface is ready to answer, decided by asking it rather than by assuming.
@@ -105,7 +171,9 @@ pub fn page(topology: &Topology, identity: &Identity<'_>, ready: Readiness<'_>) 
                 .map(|r| r[..12.min(r.len())].to_string())
                 .unwrap_or_else(|| "unknown".into()),
         ),
+        ("Checkout", short(identity.checkout.id).to_string()),
     ]));
+    body.push_str(&identity.checkout.line(identity.repository));
 
     for (category, surfaces) in entries(topology, ready) {
         body.push_str(&format!("<h2>{}</h2>", html::escape(category.title())));
@@ -193,7 +261,74 @@ mod tests {
             repository: "prismatic-majordomus",
             revision: Some("abcdef0123456789"),
             capabilities: 42,
+            checkout: Checkout {
+                id: "0123456789abcdef0123456789abcdef",
+                git_repository: Some("fedcba9876543210fedcba9876543210"),
+                linked: false,
+                branch: Some("master"),
+                head: Some("abcdef0123456789"),
+            },
         }
+    }
+
+    #[test]
+    fn the_page_names_the_checkout_that_answered() {
+        let html = page(&topology(), &identity(), &|_| Availability::Ready);
+        assert!(
+            html.contains("data-mj-checkout=\"0123456789abcdef0123456789abcdef\""),
+            "{html}"
+        );
+        assert!(
+            html.contains("data-mj-repository=\"fedcba9876543210fedcba9876543210\""),
+            "{html}"
+        );
+        assert!(html.contains("primary checkout"), "{html}");
+        let without_git = Identity {
+            checkout: Checkout {
+                git_repository: None,
+                branch: None,
+                head: None,
+                ..identity().checkout
+            },
+            ..identity()
+        };
+        let html = page(&topology(), &without_git, &|_| Availability::Ready);
+        assert!(
+            html.contains("data-mj-checkout="),
+            "a checkout without git is still named"
+        );
+        assert!(!html.contains("data-mj-repository="), "{html}");
+    }
+
+    #[test]
+    fn the_line_names_identity_branch_and_head() {
+        let line = Checkout {
+            id: "0123456789abcdef0123456789abcdef",
+            branch: Some("feature/x"),
+            head: Some("89abcdef0123456789abcdef0123456789abcdef"),
+            linked: true,
+            ..Checkout::default()
+        }
+        .line("repo");
+        assert!(line.contains(">0123456789ab<"), "{line}");
+        assert!(
+            line.contains("feature/x") && line.contains(">89abcdef0123<"),
+            "{line}"
+        );
+        assert!(line.contains("linked worktree"), "{line}");
+    }
+
+    #[test]
+    fn a_branch_from_git_cannot_close_a_tag() {
+        let line = Checkout {
+            branch: Some("x\"><script>alert(1)</script>"),
+            ..Checkout::default()
+        }
+        .line("<b>repo</b>");
+        assert!(
+            !line.contains("<script>") && !line.contains("<b>repo"),
+            "{line}"
+        );
     }
 
     /// A repository whose only relevant fact is that it has a site.
