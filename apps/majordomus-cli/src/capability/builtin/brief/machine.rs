@@ -241,7 +241,7 @@ pub(crate) fn section(
             builders_list.len() as u64
         }
     });
-    let gib = |b: u64| b as f64 / (1u64 << 30) as f64;
+    let gib = super::report::gib;
     let mut words: Vec<String> = Vec::new();
     let mut worst = "current";
     let mut verdict_of = |w: &'static str| {
@@ -261,12 +261,12 @@ pub(crate) fn section(
                 verdict_of("blocked");
             }
             words.push(format!(
-                "disk {:.0} GiB free (floor {floor} GiB) [{}]",
+                "disk {} GiB free (floor {floor} GiB) [{}]",
                 gib(f),
                 if below { "blocked" } else { "current" }
             ));
         }
-        (Some(f), None) => words.push(format!("disk {:.0} GiB free (no floor declared)", gib(f))),
+        (Some(f), None) => words.push(format!("disk {} GiB free (no floor declared)", gib(f))),
         (None, _) => words.push("disk [unread]".into()),
     }
     match swap.and_then(|(used, total)| {
@@ -284,7 +284,7 @@ pub(crate) fn section(
                 verdict_of("degraded");
             }
             words.push(format!(
-                "swap {:.1}/{:.1} GiB ({pct} %) [{w}]",
+                "swap {}/{} GiB ({pct} %) [{w}]",
                 gib(used),
                 gib(total)
             ));
@@ -397,7 +397,7 @@ mod tests {
         assert_eq!(low.word, "blocked", "{}", low.summary);
         assert!(
             low.summary
-                .contains("disk 20 GiB free (floor 35 GiB) [blocked]"),
+                .contains("disk 20.0 GiB free (floor 35 GiB) [blocked]"),
             "{}",
             low.summary
         );

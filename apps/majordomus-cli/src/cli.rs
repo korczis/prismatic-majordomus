@@ -352,6 +352,10 @@ pub struct BriefArgs {
     /// The provider's background tasks as a JSON array of {id, description, status}, when its engine exposes them
     pub background_json: Option<String>,
 
+    #[arg(long = "previous-json", value_name = "JSON")]
+    /// The section fingerprints of the brief last told, as the JSON object `fingerprints` carried: the report says which sections changed since
+    pub previous_json: Option<String>,
+
     #[arg(long = "this-checkout")]
     /// Read this checkout's board alone instead of every checkout's
     pub this_checkout: bool,

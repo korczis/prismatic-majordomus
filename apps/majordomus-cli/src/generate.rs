@@ -1069,16 +1069,35 @@ pub(crate) fn brief_report_artifacts(app: &App) -> Result<Vec<Artifact>> {
         report::fingerprint_of(&text),
         contract.order_note
     );
-    page.push_str("## Sections, in order\n\n| # | Key | Heading | Holds | Evidence | Cap |\n|---|---|---|---|---|---|\n");
+    page.push_str("## What a session is told at its start\n\n");
+    page.push_str(
+        "`keep_awake`, one sentence each; the interval in minutes and the contract's name and \
+         fingerprint are filled in where the declaration says `{n}` and `{cite}`.\n\n",
+    );
+    for t in &contract.start {
+        page.push_str(&format!("- {t}\n"));
+    }
+    page.push_str("\n## Sections, in order\n\nA section is listed as unchanged in the interval prompt when none of the brief sections it is written from changed since the previous report.\n\n| # | Key | Heading | Holds | Evidence | Cap | Written from |\n|---|---|---|---|---|---|---|\n");
     for (i, sec) in contract.sections.iter().enumerate() {
         page.push_str(&format!(
-            "| {} | `{}` | {} | {} | {} | {} |\n",
+            "| {} | `{}` | {} | {} | {} | {} | {} |\n",
             i + 1,
             sec.key,
-            sec.heading,
+            // a reader page carries no template slot: the prompt fills `{since}` with the
+            // previous report's instant
+            report::heading_of(sec, None),
             sec.holds,
-            sec.evidence,
-            sec.cap
+            sec.evidence.replace('|', "\\|"),
+            sec.cap,
+            if sec.from.is_empty() {
+                "nothing: it always changes".to_string()
+            } else {
+                sec.from
+                    .iter()
+                    .map(|f| format!("`{f}`"))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            }
         ));
     }
     page.push_str("\n## Rules\n\n| Id | Rule |\n|---|---|\n");
@@ -1089,12 +1108,13 @@ pub(crate) fn brief_report_artifacts(app: &App) -> Result<Vec<Artifact>> {
             r.text.replace('|', "\\|")
         ));
     }
-    page.push_str("\n## Attention rows\n\nEach row is filled by one condition of `brief.session`; the two sets are held equal by a unit test.\n\n| Id | Section | Word | Actor | Fact | Remedy |\n|---|---|---|---|---|---|\n");
+    page.push_str("\n## Attention rows\n\nEach row is filled by one condition of `brief.session`; the two sets are held equal by a unit test. `{name}` is a value the condition measured; `{section}`, `{report_section}` and `{remedy}` are named by the condition for the section it is about.\n\n| Id | Section | Report section | Word | Actor | Fact | Remedy |\n|---|---|---|---|---|---|---|\n");
     for a in &contract.attention {
         page.push_str(&format!(
-            "| `{}` | {} | `{}` | {} | {} | `{}` |\n",
+            "| `{}` | {} | `{}` | `{}` | {} | {} | `{}` |\n",
             a.id,
             a.section,
+            a.report_section,
             a.word,
             a.actor,
             a.fact.replace('|', "\\|"),
@@ -1103,7 +1123,11 @@ pub(crate) fn brief_report_artifacts(app: &App) -> Result<Vec<Artifact>> {
     }
     page.push_str("\n## Live reads\n\n| Fact | Command |\n|---|---|\n");
     for l in &contract.live_reads {
-        page.push_str(&format!("| {} | `{}` |\n", l.fact, l.command));
+        page.push_str(&format!(
+            "| {} | `{}` |\n",
+            l.fact,
+            l.command.replace('|', "\\|")
+        ));
     }
     Ok(vec![
         Artifact::verbatim(

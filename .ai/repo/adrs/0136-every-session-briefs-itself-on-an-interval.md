@@ -23,6 +23,14 @@ related:
   - file:.ai/repo/project/issues/I4293.yaml
   - test:test/cases/1065_a_session_briefs_itself.sh
   - test:test/cases/4250_the_brief_reports_only_what_changed.sh
+  - file:share/brief/report.yaml
+  - file:apps/majordomus-cli/src/capability/builtin/brief/report.rs
+  - file:share/schemas/majordomus/brief-report/brief-report.v1.schema.json
+  - test:test/cases/4401_the_report_contract_is_declared_once.sh
+  - test:test/cases/4402_brief_words_are_status_words.sh
+  - test:test/cases/4403_a_stale_source_is_never_shown_as_current.sh
+  - test:test/cases/4404_a_brief_never_truncates_without_a_count.sh
+  - test:test/cases/4405_a_brief_is_bounded_and_never_builds.sh
 ---
 
 # 136. Every session briefs itself on an interval, from one capability a provider mod the policy switches keeps in front of it
@@ -78,8 +86,10 @@ installs writes into the adopter's `.claude/` tree.
   mod can do this job: the status line and a clock are the provider's, inside the
   conversation, and no event fires for either. The mod shows the one line as the status line
   and refreshes it every minute. Once per interval it submits a prompt of its own, queued until
-  the session is idle, that carries the brief and asks for a report of two to four lines. A
-  prompt the person sends after the interval carries the last brief.
+  the session is idle, that carries the brief and asks for a report of two to four lines
+  (superseded 2026-10-29: no line count; see the amendment of that date and
+  `share/brief/report.yaml`). A prompt the person sends after the interval carries the last
+  brief.
 
 ## Consequences
 
@@ -234,12 +244,26 @@ Decision, in addition to the above:
 - **The session is the caller's.** The provider session defaults from the environment as the
   shell lifecycle resolves it. A task counts only when its outcome is active.
 - **A change is a section fingerprint.** The brief carries, per section, a fingerprint of its
-  clock-free facts; the mod compares those and reads no prose.
+  clock-free facts; the mod compares those and reads no prose. A section's fingerprint is of
+  the facts that concern this session: the peers section's is who is attached on which
+  branch, the boards not read and the overlaps with this session's claims, never the count of
+  checkouts asked or another worker's re-announcement; the CI pool's and the machine's are
+  their words and attention entries; a section read past its budget is `late` and is never
+  said to have changed.
+- **The report opens with what changed.** Item 3 of the 2026-10-27 amendment stands: the mod
+  passes the fingerprints of the brief the session was last told (`--previous-json`), and the
+  interval prompt opens with the sections that changed since and lists the report sections
+  none of whose sources moved, which the report writes as their heading and `[unchanged]`.
+  `--since` is the instant of the last report, which a reminder never moves.
+- **Where an attention entry goes is the contract's.** Each attention row names the report
+  section it is written under (`report_section`), and the prompt carries each entry once,
+  grouped under those sections, never a second time inside the fenced lines.
 
 Consequences:
 
 - The interval prompt grows to carry the contract. It is still one turn per interval, and the
-  report a person reads is shorter where nothing happened and complete where something did.
+  report a person reads is shorter where nothing happened (the unchanged sections are a
+  heading and one word) and complete where something did.
 - Adding a section means adding an attention row and its condition. A unit test holds the two
   sets equal.
 - The 2026-10-11 sentence on the `majordomus ui` surface is superseded: `/ui` is on master and

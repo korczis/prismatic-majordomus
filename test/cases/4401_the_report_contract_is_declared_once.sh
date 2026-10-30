@@ -10,9 +10,13 @@
 # case refuses one wherever it appears.
 #
 # What it proves:
-#   1  every rule text and every section's `holds` sentence of share/brief/report.yaml appears
-#      in the tracked tree only in the declaration, its compiled copy, the reader page rendered
-#      from it, the site's projection of that page and the site's translation memory
+#   1  every sentence of share/brief/report.yaml — each start sentence, rule text, section
+#      heading, holds and evidence, attention fact longer than 20 characters, and remedy and
+#      live-read command longer than 30 — appears in the tracked tree only in the declaration,
+#      its compiled copy, the reader page rendered from it, the site's projection of that page
+#      and the site's translation memory. On 2026-10-30 the start text was prose kept in Rust and
+#      docs/BRIEF.md restated the live reads in a column of its own; neither was a rule or a
+#      `holds`, so this case could not see them
 #   2  the placeholder wording the owner refused is in no tracked file but ADR 0136's dated
 #      history and the tests that hold its absence
 #   3  in a fixture, a rule pasted into docs/BRIEF.md is refused, by path
@@ -21,16 +25,29 @@ fail() { printf '    %s\n' "$*"; exit 1; }
 DECL=share/brief/report.yaml
 [ -f "$ROOT/$DECL" ] || fail "$DECL is missing"
 
-# The sentences that are the contract: every rule's text and every section's holds, read from
-# the declaration (one double- or single-quoted scalar per line, the layer's YAML subset).
+# The sentences that are the contract, read from the declaration (one double- or single-quoted
+# scalar per line, the layer's YAML subset): every start sentence; every quoted text, holds,
+# heading, evidence and fact longer than 20 characters; every quoted remedy and command longer
+# than 30, since a short command (`majordomus peers`) is everyone's to name.
 sentences() { # root
   awk '
-    /^  - id: / { in_rule = 1 }
-    /^    text: / || /^    holds: / {
-      line = $0; sub(/^    (text|holds): /, "", line)
+    /^[a-z_]+:/ { in_start = ($0 ~ /^start:/) }
+    in_start && /^  - / {
+      line = $0; sub(/^  - /, "", line)
       q = substr(line, 1, 1); line = substr(line, 2, length(line) - 2)
       if (q == "\047") gsub(/\047\047/, "\047", line)
-      print line
+      if (length(line) > 20) print line
+      next
+    }
+    /^    (text|holds|heading|evidence|fact|remedy|command): / {
+      key = $0; sub(/^ +/, "", key); sub(/:.*$/, "", key)
+      line = $0; sub(/^    [a-z_]+: /, "", line)
+      q = substr(line, 1, 1)
+      if (q != "\"" && q != "\047") next
+      line = substr(line, 2, length(line) - 2)
+      if (q == "\047") gsub(/\047\047/, "\047", line)
+      min = (key == "remedy" || key == "command") ? 30 : 20
+      if (length(line) > min) print line
     }' "$1/$DECL"
 }
 
@@ -61,7 +78,7 @@ check() {
   done <<EOF
 $(sentences "$root")
 EOF
-  [ "$n" -gt 10 ] || { printf '    only %s sentences were read from %s\n' "$n" "$DECL"; return 1; }
+  [ "$n" -gt 40 ] || { printf '    only %s sentences were read from %s\n' "$n" "$DECL"; return 1; }
   return "$bad"
 }
 

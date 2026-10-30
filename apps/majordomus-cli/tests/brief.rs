@@ -113,7 +113,7 @@ fn without_a_server_the_command_line_composes_the_brief_and_says_so() {
         "nobody is attached without a server"
     );
     let line = b["line"].as_str().expect("a line");
-    assert!(line.contains("| peers 0/1b |"), "{line}");
+    assert!(line.contains("| peers 0 |"), "{line}");
     assert!(b["keep_awake"]
         .as_str()
         .is_some_and(|k| k.contains("majordomus brief")));
@@ -133,7 +133,7 @@ fn without_a_server_the_command_line_composes_the_brief_and_says_so() {
     assert_eq!(code, 0);
     assert!(out.starts_with("majordomus brief  "), "{out}");
     assert!(out.contains("\nattention    "), "{out}");
-    assert!(out.contains("\nanswered by  this_process"), "{out}");
+    assert!(out.contains("\nanswered by  this process — "), "{out}");
 }
 
 /// The attention entries and the report every surface carries.
@@ -197,9 +197,9 @@ fn beside_a_server_every_surface_carries_the_leaseholders_board() {
         "{b}"
     );
     assert!(
-        b["session"]["summary"].as_str().is_some_and(
-            |s| s.contains("no open episode for provider session no-such-provider-session")
-        ),
+        b["session"]["summary"]
+            .as_str()
+            .is_some_and(|s| s.contains("no open episode for provider session no-such-")),
         "{b}"
     );
 

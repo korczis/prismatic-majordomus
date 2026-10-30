@@ -44,32 +44,56 @@ when its engine exposes them. `checkouts` is `repository` (every board, the defa
 
 ### The sections
 
-Reported in this order, in the lines, in the JSON and in the report, and never left out:
+Reported in this order, in the lines, in the JSON and in the report, and never left out. The
+command each section's line names when it is not current, and the live read the report is
+given for it, are the declaration's: [the reader page](generated/brief-report.md) lists them, and
+a section past its budget names the command that reads that section alone, never the brief.
 
-| Section | Source | Bound | Budget | Says | Remedy |
-|---|---|---|---|---|---|
-| `attention` | derived from the sections below | — | — | every condition the sections measured, as `[word] section: fact — remedy (actor)`, a person's first, then worst first | each entry's own |
-| `session` | `lifecycle.episodes`, the checkout's refs and `current.yaml` (files) | read now | 200 ms | the caller (its board peer and provider session), the episode the provider session owns, else the checkout's pointer said as such, the branch and head, and the task only while its outcome is `active` | `majordomus lifecycle episodes` |
-| `work` | the mesh journal (memory), refs and canonical worktrees (files), the forge via the monitor cache | 2 min, refreshed in the background past 30 s | 5 s | this session's claims, its branches with their canonical worktrees and tasks, pull requests with mergeStateStatus, trains, the latest run with jobs done/total and failed jobs by name, builds under its client, and what it delivered since the previous report | `gh pr list --author @me ; majordomus mesh state` |
-| `peers` | `peers.list` (every board's server) | read now | 4 s | workers across the boards read, unread boards, overlaps, and up to eight workers with their branch and their whole intent, then `+N more: majordomus peers` | `majordomus peers` |
-| `mesh` | the mesh journal (memory) | read now | 200 ms | links connected and failing, claims held and this runtime's share, open reviews naming it, handovers nobody consumed, overlaps with another runtime's claim | `majordomus mesh state` |
-| `integration` | `.ai/local/state/integration/observation.json` and the queue's `summary.json` (files), `origin/master` and `FETCH_HEAD` | 1 h | 1 s | the queue's observation, its age and the master it saw against `origin/master` now (and by how many commits it moved), the required run on master, the last merge on master's first-parent line and the executor's own last merge | `majordomus prs refresh`, with `git fetch origin master` past 15 min unfetched |
-| `ci` | the forge via the monitor cache, leaseholder only | 2 min, refreshed in the background past 30 s (runners past 60 s) | 5 s | hosted runs in progress and queued, self-hosted runners online, busy and offline by name | `gh api repos/<owner>/<repo>/actions/runners` |
-| `machine` | statvfs, `vm.swapusage` or `/proc/meminfo`, one `ps` | read now | 1 s | free disk against `machine.heavy_work.min_free_gib`, swap, builders against `machine.heavy_work.slots` | `df -g / ; sysctl vm.swapusage` |
-| `release` | `release.currency` | read now | 3 s | current, owed with the count, overdue, or unread with why (I3070) | `majordomus release next` |
-| `derive` | the derive lock (files) | read now | 100 ms | its holder, whether that process runs, how long it has held the lock, the priority marker | `majordomus doctor` |
-| `answered by` | — | — | 6 s overall | which process composed the brief, how long it took, and every section that ran past its budget, as `unread past its budget` when its owner had not answered when it was collected or `read past its budget: <section> <took> of <budget>` when it had | `majordomus brief --format json` |
+| Section | Source | Bound | Budget | Says |
+|---|---|---|---|---|
+| `attention` | derived from the sections below | — | — | every condition the sections measured, as `[word] section: fact — remedy (actor)`, a person's first, then worst first |
+| `session` | `lifecycle.episodes`, the checkout's refs and `current.yaml` (files) | read now | 200 ms | the caller (its board peer and provider session), the episode the provider session owns, else the checkout's pointer said as such, the branch and head, and the task only while its outcome is `active` |
+| `work` | the mesh journal (memory), refs and canonical worktrees (files), the forge via the monitor cache | 2 min, refreshed in the background past 30 s | 5 s | this session's claims, its branches with their canonical worktrees and tasks, pull requests with mergeStateStatus, trains, the latest run with jobs done/total and failed jobs by name, builds under its client, and what it delivered since the previous report |
+| `peers` | `peers.list` (every board's server), asked once at a time per process | read now | 4 s | workers attached, the checkouts asked and the boards read, unread boards, overlaps with this session's claims and with whom, overlaps in all, and up to eight workers with their branch and their whole intent, then `+N more: majordomus peers` |
+| `mesh` | the mesh journal (memory) | read now | 200 ms | links connected and failing, claims held and this runtime's share, open reviews naming it, handovers nobody consumed, overlaps with another runtime's claim |
+| `integration` | `.ai/local/state/integration/observation.json` and the queue's `summary.json` (files; a linked worktree reads the primary checkout's, said so), `origin/master`, and the `FETCH_HEAD` files naming master with `origin/master`'s reflog for the fetch age | 1 h | 1 s | the queue's observation, its age and the master it saw against `origin/master` now (and by how many commits it moved), the required run on master, the last merge on master's first-parent line and the executor's own last merge |
+| `ci` | the forge via the monitor cache, leaseholder only | 2 min, refreshed in the background past 30 s (runners past 60 s) | 5 s | hosted runs in progress and queued, self-hosted runners online, busy and offline by name |
+| `machine` | statvfs, `vm.swapusage` or `/proc/meminfo`, one `ps` | read now | 1 s | free disk against `machine.heavy_work.min_free_gib`, swap, builders against `machine.heavy_work.slots` |
+| `release` | `release.currency`, asked once at a time per process and reused while `origin/master` and the tags are unchanged (5 min at most) | read now | 3 s | current, owed with the count, overdue, or unread with why (I3070) |
+| `derive` | the derive lock (files) | read now | 100 ms | its holder, whether that process runs, how long it has held the lock, the priority marker |
+| `answered by` | — | — | 6 s overall | which process composed the brief, how long it took, and every section that ran past its budget, as `unread past its budget` when its owner had not answered when it was collected or `read past its budget: <section> <took> of <budget>` when it had |
 
 Each section carries a state (`read`, `partial`, `unread`, `undeclared`, kept for older
 readers) and an observation whose `verdict` is one status word of the design declaration:
 `current`, `stale` (its owner answered with a fact older than its bound, or contradicted by a
 newer one), `partial`, `unread` or `undeclared`. A stale or unread fact is never shown as
 current: the line says `prs stale 17h`, never a bare count, and a section past its budget reads
-`unread (took > N ms)` while every other section is read. A fact that was not read is said
-with the status word, `[unread]`, and never a question mark: `origin/master is 51b38035a7
-(moved, count [unread])` when the commit count did not answer inside its bound. The forge is asked by the leaseholder
-alone; a brief composed anywhere else says `unread: not the leaseholder` and names
-`majordomus serve ensure`.
+`[unread] took > 3.0 s` while every other section is read. Every section's line leads with its
+status word in brackets and, when that word is not `current`, ends with its remedy
+(`[unread] not the leaseholder ... — majordomus serve ensure`), kept whole on one line so that
+it can be copied as shown. A fact that was not read is said with the status word, `[unread]`,
+and never a question mark: `origin/master is 51b38035a7 (moved, count [unread])` when the
+commit count did not answer inside its bound, `session unread` and `disk unread` in the one
+line, and a peer that names no branch is `on no branch it named`. A list that was not read is
+said so with why (`delivered [unread]: the caller named no previous report (--since)`), never
+left empty. The forge is asked by the leaseholder alone; a brief composed anywhere else says
+`[unread] not the leaseholder` and names `majordomus serve ensure`, and the integration line
+then says `master run [unread] (not the leaseholder)` with the `gh run list` that reads it.
+
+The session's task is the running task of this provider session: this checkout's record when
+it names this session or none, else the record in the canonical worktree of one of the
+session's own branches, and the line names that worktree. A record another provider session
+wrote is said to be that session's, and raises no `session.no_task`. Instants are UTC; the
+brief also carries `at_local`, the composing host's clock with its offset and zone, which the
+report's header names. Free disk and swap are GiB with one decimal, cut and never rounded up,
+in every place they appear.
+
+A process the mesh is not active in (a command line in a checkout whose server is absent)
+holds no journal of this session's claims. It reads the board instead: the work section waits,
+inside the peers section's budget, for this session's entries on the boards the peers section
+read, and lists their announcements as claims in the state `announced`, their `refs/heads/`
+scopes as branches, and the processes under the client's pid when that client runs on this
+machine. Its source then says `the board's announcements (this process holds no mesh)`.
 
 ### The one line
 
@@ -138,12 +162,22 @@ shim `capture install` already wires, and a Claude Code session loads a mod from
 
 ### What counts as a change
 
-The brief carries, per section, a fingerprint of its facts with every instant, age and cost
-taken out (`fingerprints` in the JSON), together with the attention entries about it. Two briefs
-differ in a section exactly when its fingerprint does, so the mod compares fingerprints and
-reads no prose. `queue observed 17 h ago` and `18 h ago` an hour later are one fact; master
-moving past the observation is a new one. A threshold the clock crosses still counts when it
+The brief carries, per section, a fingerprint of the facts that concern this session, with
+every instant, age and cost taken out (`fingerprints` in the JSON), together with the attention
+entries about it. Two briefs differ in a section exactly when its fingerprint does, so the mod
+compares fingerprints and reads no prose. `queue observed 17 h ago` and `18 h ago` an hour later
+are one fact; master moving past the observation is a new one. The peers section is
+fingerprinted by who is attached on which branch, the boards not read and the overlaps with
+this session's claims, so another worker re-announcing or one more worktree is no change; the
+CI pool by its state and its runners online and offline; the machine by its word. A section
+read past its budget carries `late` and is never said to have changed, and the over-budget
+entry belongs to no section's fingerprint. A threshold the clock crosses still counts when it
 changes a verdict, as when a release that has waited too long becomes `overdue`.
+
+The mod passes the fingerprints it was last told (`--previous-json`), and the interval prompt
+then opens with `Changed since <instant>: ...` and lists the report sections none of whose
+sources changed; the report writes those as their heading and `[unchanged]`. `--since` is the
+instant of the last report, which a reminder never moves.
 
 Claude Code adds a framing sentence of its own after any prompt a plugin submits ("This is how
 Claude Code surfaces a prompt a plugin submits between turns ..."). That sentence is Claude

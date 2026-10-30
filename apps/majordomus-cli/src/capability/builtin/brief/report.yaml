@@ -25,55 +25,72 @@ marker: "Majordomus report owed"
 about: "What a session reports about itself on the interval, composed by brief.session from this declaration and the attention entries it measured, and relayed verbatim by every carrier."
 order_note: "The sections below are reported in this order, and none is ever omitted."
 
+# What a session is told at its start (`keep_awake`), one sentence per entry: {n} is the
+# interval in minutes and {cite} the contract's name and fingerprint.
+start:
+  - "Report on yourself every {n} minutes without being asked ({cite}, ADR 0136)."
+  - "Read the brief live each time, never from memory: `majordomus brief`, or `majordomus brief --report` for the report owed with the measured attention entries in it."
+  - "Where your client schedules its own prompts and the majordomus-brief mod is not loaded, schedule `/loop {n}m /mj-brief` now."
+  - "Where the mod is loaded (Claude Code, `.claude/skills/majordomus-brief`), it shows the one-line brief as the status line and submits the report owed when a fact in the brief changed, at most once per interval, so a loop of your own would only repeat it."
+  - "A brief whose section fingerprints did not move is owed no report: they leave out times, ages, costs, free space, swap usage, the count of checkouts asked and what other workers announced."
+
 sections:
   - key: header
     heading: "Majordomus report"
     holds: "the report's clock time in the person's zone and in UTC; the session id and its peer id; when the brief was composed, by which process, and in how long"
-    evidence: "brief.at, answered_by.process, answered_by.elapsed_ms"
+    evidence: "brief.at (UTC), brief.at_local (the composing host's zone), answered_by.process, answered_by.elapsed_ms"
     cap: "1 line"
+    from: []
   - key: blocked
     heading: "Blocked on you"
     holds: "each decision, approval, credential, scope or physical act only the person can give (the attention entries whose actor is person), and what waits on it"
     evidence: "the waiting object (PR number, run id, issue id, seat) and since when"
     cap: "5 lines"
     empty: "one word"
+    from: [session, work, peers, mesh, integration, ci, machine, release, derive]
   - key: delivered
     heading: "Delivered since {since}"
-    holds: "own pull requests merged (with the merge sha), own branch heads pushed (branch, sha of 10, push time) and releases tagged since the previous report"
-    evidence: "per report-verification-state: VERIFIED with the command that showed it, or PARTIAL or BLOCKED with what is missing"
+    holds: "own pull requests merged (with the merge sha), own branch heads pushed (branch, sha of 10, and the push time, or the commit time where the brief read no push) and releases tagged (tag, sha of 10, tag time) since the previous report"
+    evidence: "[verified] with the command that showed it, or [partial] / [blocked] with what is missing; a list the brief marks [unread] is reported [unread] with its reason, never as none"
     cap: "8 lines"
     empty: "one word"
+    from: [work]
   - key: in_flight
     heading: "In flight"
     holds: "each own item of work, one per issue or pull request: issue, branch, worktree, PR number, head, merge-state word; the train carrying it; its latest run with id, jobs done/total and every failed job by name; local background processes with pid and age"
     evidence: "a status word per item; run ids; the source and age of any fact not read live"
     cap: "8 items, at most 2 lines each"
     empty: "one word"
+    from: [session, work]
   - key: integration
     heading: "Integration"
     holds: "the master sha and its required run's word and id; the queue observation's word, age and remedy; the trains carrying own pull requests or master's fix; the last merge on master"
     evidence: "sha of 10, run id, the observation's age"
     cap: "3 lines"
+    from: [integration, release]
   - key: mesh
     heading: "Mesh"
     holds: "peers and unread boards; overlaps with own claims and with whom; reviews and handovers for this runtime; failing links"
     evidence: "peer ids, claim scopes, link counts"
     cap: "3 lines"
     empty: "one word"
+    from: [peers, mesh]
   - key: machine_ci
     heading: "Machine and CI"
     holds: "free disk against the builder floor; swap; builders against their limit; the derive lock; CI hosted running and queued; self-hosted runners online and busy"
     evidence: "GiB figures, runner names, the age of the forge reading"
     cap: "3 lines"
+    from: [machine, ci, derive]
   - key: next
     heading: "Next"
     holds: "the one next action of this session with its trigger (now, or an event); then each planned action, labelled planned, with its owner and trigger; with no work in hand, say so and stop"
     evidence: "the object each action acts on"
     cap: "3 lines"
+    from: [session, work]
 
 rules:
   - id: status-words
-    text: "Every state is a status word of share/design/tokens.yaml status.states, written in brackets ([failing], [stale], [queued], [merged]). No other verdict adjective (green, red, done, fine, OK, looks good)."
+    text: "Every state is a status word of share/design/tokens.yaml status.states, written in brackets ([failing], [stale], [queued], [merged], [verified]). No other verdict adjective (green, red, fine, all good, looks good)."
   - id: evidence
     text: "Every line carries the identifier that proves it (PR number, run id, sha of 10, issue id, path). A fact not read in this turn also carries its source and age."
   - id: stale-is-not-current
@@ -82,6 +99,10 @@ rules:
     text: 'Nothing future is written as state ("X will be removed", "is being fixed"). A future action is labelled planned and names its owner (this session, a peer id, a seat) and its trigger (an event or a clock time).'
   - id: empty
     text: "An empty section is its heading and one word (none; in Czech, nic)."
+  - id: unchanged
+    text: "A section the prompt lists as unchanged since the previous report is its heading and [unchanged], unless an attention entry is listed under it."
+  - id: attention
+    text: "Every attention entry is reported, under the report section the prompt lists it under, with its word, its fact and its remedy as written."
   - id: no-restatement
     text: "Do not restate this contract, the brief's lines, or a list of categories. Report only what was measured or read."
   - id: language
@@ -93,153 +114,178 @@ rules:
 
 # The rows the Rust conditions fill (brief/report.rs `derive_attention`): the ids here and
 # the conditions there are one set, which a unit test holds equal. `word` is a status word
-# filed in share/design/tokens.yaml; `actor` is session, person or seat:<name>; `{name}`
-# is a value the condition measured.
+# filed in share/design/tokens.yaml; `actor` is session, person or seat:<name>;
+# `report_section` is the key of the report section the entry is written under (an entry
+# a person must act on is under `blocked`); `{name}` is a value the condition measured.
 attention:
   - id: integration.stale
     section: integration
+    report_section: integration
     word: stale
     actor: session
     fact: "queue observed {age} ago at {observed}; origin/master is {now} ({moved})"
-    remedy: "majordomus prs refresh"
+    remedy: "git fetch origin master && majordomus prs refresh"
   - id: integration.unfetched
     section: integration
+    report_section: integration
     word: stale
     actor: session
     fact: "origin/master last fetched {age} ago"
     remedy: "git fetch origin master"
   - id: master.failing
     section: integration
+    report_section: integration
     word: failing
     actor: "seat:landing"
     fact: "master {sha}: {workflow} run {run} {conclusion}"
     remedy: "gh run view {run} --json jobs"
   - id: run.failing
     section: work
+    report_section: in_flight
     word: failing
     actor: session
     fact: "{branch}: run {run} {done}/{total}, failed {jobs}"
     remedy: "gh run view {run} --log-failed"
   - id: pr.dirty
     section: work
+    report_section: in_flight
     word: dirty
     actor: session
     fact: "#{pr} conflicts with master"
     remedy: "git -C {worktree} merge origin/master"
   - id: pr.blocked
     section: work
+    report_section: in_flight
     word: blocked
     actor: session
     fact: "#{pr} mergeStateStatus BLOCKED"
     remedy: "gh pr checks {pr}"
   - id: branch.no_pr
     section: work
+    report_section: in_flight
     word: unmerged
     actor: session
     fact: "{branch} pushed at {head}, no PR"
     remedy: "gh pr create --head {branch}"
   - id: ci.queued_idle
     section: ci
+    report_section: machine_ci
     word: queued
     actor: session
-    fact: "{queued} queued while self-hosted {online} online, {busy} busy"
+    fact: "{queued} run(s) [queued]; self-hosted {online} online, {busy} busy"
     remedy: "gh api repos/{repo}/actions/runners"
   - id: ci.no_runner
     section: ci
+    report_section: blocked
     word: blocked
     actor: person
     fact: "{queued} queued, 0 runners online"
     remedy: "gh api repos/{repo}/actions/runners"
   - id: ci.unread_scope
     section: ci
+    report_section: blocked
     word: unread
     actor: person
-    fact: "runners not readable ({reason})"
-    remedy: "gh auth refresh -h github.com -s admin:org"
+    fact: "runners not readable ({reason}); reading them takes a token whose user is an admin of the repository"
+    remedy: "gh auth refresh -h github.com -s repo"
   - id: machine.below_floor
     section: machine
+    report_section: machine_ci
     word: blocked
     actor: session
     fact: "{free} GiB free < floor {floor} GiB"
     remedy: "scripts/reap-orphans"
   - id: machine.swap
     section: machine
+    report_section: machine_ci
     word: degraded
     actor: session
     fact: "swap {used}/{total} GiB ({pct} %)"
     remedy: "top -o mem"
   - id: machine.builders_full
     section: machine
+    report_section: machine_ci
     word: blocked
     actor: session
     fact: "builders {n}/{max}"
     remedy: "ps -Ao pid,etime,comm | grep -E 'cargo|rustc'"
   - id: peers.unread
     section: peers
+    report_section: mesh
     word: unread
     actor: session
     fact: "boards not read: {boards}"
     remedy: "majordomus peers"
   - id: peers.superseded
     section: peers
+    report_section: mesh
     word: superseded
     actor: session
     fact: "this server lost the lease to {leaseholder}"
     remedy: "majordomus server"
   - id: mesh.review
     section: mesh
+    report_section: mesh
     word: pending
     actor: session
     fact: "{n} review(s) for this runtime"
     remedy: "majordomus mesh state"
   - id: mesh.handover
     section: mesh
+    report_section: mesh
     word: pending
     actor: session
     fact: "{n} handover(s) waiting"
-    remedy: "majordomus mesh handover consume"
+    remedy: "majordomus mesh state"
   - id: mesh.overlap
     section: mesh
+    report_section: mesh
     word: warn
     actor: session
     fact: "{n} overlap(s) between a claim of this runtime and another's"
     remedy: "majordomus peers"
   - id: mesh.failing
     section: mesh
+    report_section: mesh
     word: failing
     actor: session
     fact: "{n} link(s) failing"
     remedy: "majordomus mesh doctor"
   - id: release.owed
     section: release
+    report_section: integration
     word: owed
     actor: "seat:release"
     fact: "{landed} landed commit(s) past the last release"
     remedy: "majordomus release next"
   - id: release.overdue
     section: release
+    report_section: integration
     word: overdue
     actor: "seat:release"
     fact: "{landed} landed commit(s) past the last release, past its bound"
     remedy: "majordomus release next"
   - id: derive.dead_holder
     section: derive
+    report_section: machine_ci
     word: blocked
     actor: session
     fact: "derive lock held by dead pid {pid} for {held}"
     remedy: "majordomus doctor"
   - id: session.no_task
     section: session
+    report_section: next
     word: inactive
     actor: session
     fact: "no active task (last {task} [{outcome}])"
-    remedy: 'majordomus start "<task>" --scope <paths>'
+    remedy: "{remedy}"
   - id: section.over_budget
     section: "{section}"
+    report_section: "{report_section}"
     word: unread
     actor: session
-    fact: "{section} took > {budget} ms"
-    remedy: "majordomus brief --format json"
+    fact: "took > {budget}"
+    remedy: "{remedy}"
 
 # Where the brief cannot be current, the command that is.
 live_reads:
@@ -256,6 +302,8 @@ live_reads:
   - fact: "the mesh"
     command: "majordomus mesh state"
   - fact: "the CI pool"
-    command: "gh api repos/<owner>/<repo>/actions/runners"
+    command: "gh api repos/{owner}/{repo}/actions/runners"
+  - fact: "releases tagged"
+    command: "gh release list --limit 5"
   - fact: "the machine"
-    command: "df -g / ; sysctl vm.swapusage"
+    command: "df -h / && (sysctl vm.swapusage 2>/dev/null || free -h)"

@@ -719,6 +719,51 @@ mod tests {
     }
 
     #[test]
+    fn a_failed_read_is_served_briefly_and_with_its_age() {
+        let dir = tempfile::tempdir().expect("a scratch directory");
+        let args = ["pr", "list", "--a-failure-of-this-test"];
+        let first = ask_with(
+            "false",
+            dir.path(),
+            &args,
+            BRIEF_TTL,
+            Duration::from_secs(5),
+        )
+        .expect_err("false fails");
+        assert!(!first.reason().contains(" ago)"), "{}", first.reason());
+        // asked again at once: the same failure, said with how long ago it was met
+        let again = ask_with(
+            "false",
+            dir.path(),
+            &args,
+            BRIEF_TTL,
+            Duration::from_secs(5),
+        )
+        .expect_err("still failing");
+        assert!(again.reason().ends_with(" s ago)"), "{}", again.reason());
+        // and never for longer than a few seconds: a cached failure older than that is asked
+        // again, never served for the answers' TTL
+        let key: Question = (
+            dir.path().to_path_buf(),
+            args.iter().map(|s| s.to_string()).collect(),
+        );
+        if let Ok(mut asked) = ASKED.lock() {
+            if let Some(entry) = asked.as_mut().and_then(|m| m.get_mut(&key)) {
+                entry.0 = Instant::now() - FAILURE_SERVED_FOR - Duration::from_millis(1);
+            }
+        }
+        let retried = ask_with(
+            "false",
+            dir.path(),
+            &args,
+            BRIEF_TTL,
+            Duration::from_secs(5),
+        )
+        .expect_err("asked again, and still failing");
+        assert!(!retried.reason().contains(" ago)"), "{}", retried.reason());
+    }
+
+    #[test]
     fn a_missing_gh_is_absent_and_a_failing_one_is_an_error() {
         let dir = std::env::temp_dir();
         let (state, reason) =
@@ -827,11 +872,18 @@ fn ask_with(
         .and_then(|asked| asked.as_ref().and_then(|m| m.get(&key)).cloned());
     if let Some((at, answer)) = cached {
         let age = at.elapsed();
-        if age < served_bound(ttl) {
-            if age >= ttl {
-                refresh_in_background(program, key, budget);
+        match answer {
+            Ok(value) if age < served_bound(ttl) => {
+                if age >= ttl {
+                    refresh_in_background(program, key, budget);
+                }
+                return Ok(Answer { value, age });
             }
-            return answer.map(|value| Answer { value, age });
+            // a failure is served for a few seconds alone, so that a burst of readers asks
+            // once, and with its age: a reason read minutes ago is not this composition's
+            // (2026-10-30: "gh pr took longer than 4000 ms" was served for 120 s as if new)
+            Err(e) if age < FAILURE_SERVED_FOR => return Err(aged(e, age)),
+            _ => {}
         }
     }
     let answer = ask_now(program, root, args, budget);
@@ -840,6 +892,18 @@ fn ask_with(
         value,
         age: Duration::ZERO,
     })
+}
+
+/// How long a failed read is served before the question is asked again.
+pub(crate) const FAILURE_SERVED_FOR: Duration = Duration::from_secs(5);
+
+/// A failure as it is served from the cache: its reason with how long ago it was met.
+fn aged(e: Unanswered, age: Duration) -> Unanswered {
+    let when = format!(" ({} s ago)", age.as_secs());
+    match e {
+        Unanswered::Forbidden(r) => Unanswered::Forbidden(format!("{r}{when}")),
+        Unanswered::Failed(r) => Unanswered::Failed(format!("{r}{when}")),
+    }
 }
 
 fn remember(key: Question, answer: Result<Value, Unanswered>) {

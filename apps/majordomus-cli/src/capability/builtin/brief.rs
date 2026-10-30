@@ -50,7 +50,7 @@ pub(crate) mod refs;
 pub(crate) mod report;
 mod work;
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
@@ -156,6 +156,9 @@ pub struct BriefInput {
     /// The provider's background tasks, when its engine exposes them; absent, the brief says the provider's background is not exposed.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub background: Vec<BriefBackground>,
+    /// The section fingerprints of the brief the caller was last told, as `fingerprints` carried them: the report then says which sections changed since, and lists the report sections that did not.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub previous: BTreeMap<String, String>,
 }
 
 impl BenchmarkCases for BriefInput {
@@ -174,6 +177,7 @@ impl BenchmarkCases for BriefInput {
                     description: "cargo test --lib brief".into(),
                     status: "running".into(),
                 }],
+                previous: BTreeMap::from([("peers".to_string(), "000000000000".to_string())]),
             },
         )]
     }
@@ -375,6 +379,14 @@ pub struct BriefSessionSection {
     /// The provider session that started it, when its record names one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub task_owner_session: Option<String>,
+    /// The canonical worktree the active task was found in, when it is not this checkout: a
+    /// session works in its branch's worktree while the brief is composed in the primary.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub task_worktree: Option<String>,
+    /// Whether this checkout's task record names another provider session than the one the
+    /// brief is about: that record is not this session's, finished or not.
+    #[serde(default)]
+    pub task_record_foreign: bool,
     /// The caller's place on this checkout's board: the MCP session the call came through, else the board peer whose address carries the provider session.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub caller: Option<String>,
@@ -427,13 +439,20 @@ pub struct BriefPeersSection {
     pub observed: BriefObservation,
     /// Attached peers across the boards read, the caller included.
     pub attached: usize,
-    /// How many boards the answer covers.
+    /// How many checkouts the answer covers (asked, or counted as holding no board).
     pub boards: usize,
+    /// How many boards were read: checkouts whose server answered with its board.
+    #[serde(default)]
+    pub boards_read: usize,
     /// Every board that could not be read, as `<worktree>: <reason>`.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub unread: Vec<String>,
-    /// Pairs of peers whose claimed scopes meet.
+    /// Pairs of peers whose claimed scopes meet, across every board read.
     pub overlaps: usize,
+    /// The overlaps between a claim of this session and another worker's, as
+    /// `p9 (feature/x): docs/BRIEF.md ~ docs`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub overlaps_with_you: Vec<String>,
     /// Set when the composing server is superseded: its own board is unreachable by the repository's gather.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub superseded: Option<String>,
@@ -693,9 +712,10 @@ pub struct BriefDeriveSection {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-/// One mesh claim this session holds.
+/// One claim this session holds on the mesh, or announced on a board when the composing
+/// process holds no mesh.
 pub struct BriefClaim {
-    /// Its key on the mesh.
+    /// Its key on the mesh, or `board-<peer>/<claim name>` for a board's announcement.
     pub key: String,
     /// The issue it names.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -705,7 +725,8 @@ pub struct BriefClaim {
     pub intent: Option<String>,
     /// The paths and refs it claims.
     pub scope: Vec<String>,
-    /// `held`, `conflicted` or `suspended`.
+    /// `held`, `conflicted` or `suspended` on the mesh; `announced` for a board's
+    /// announcement, which is a claim and never a lease.
     pub state: String,
 }
 
@@ -777,7 +798,7 @@ pub struct BriefProcess {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 /// Something this session delivered since the previous report.
 pub struct BriefDelivered {
-    /// `merged` (an own pull request merged into master) or `pushed` (an own branch head committed after it).
+    /// `merged` (an own pull request merged into master), `pushed` (an own branch head that reached origin after it) or `tagged` (a release tag created after it).
     pub kind: String,
     /// The pull request.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -786,8 +807,11 @@ pub struct BriefDelivered {
     pub branch: String,
     /// The commit, abbreviated.
     pub sha: String,
-    /// When, RFC 3339.
+    /// When, RFC 3339 in UTC.
     pub at: String,
+    /// What `at` is: `merge` (the merge commit's time), `push` (when this clone's remote-tracking ref took the head, from its reflog), `commit` (the head's commit time, where the reflog holds no such entry) or `tag` (the tag's time).
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub at_source: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -814,6 +838,11 @@ pub struct BriefWorkSection {
     /// One item per branch.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub items: Vec<BriefWorkItem>,
+    /// Whether the forge's pull requests were read for its branches: only then is a branch
+    /// with no pull request said to have none. False in a composition that is not the
+    /// leaseholder, and in an answer from a server older than this field.
+    #[serde(default)]
+    pub pull_requests_read: bool,
     /// The trains carrying its pull requests.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub trains: Vec<BriefTrain>,
@@ -829,6 +858,9 @@ pub struct BriefWorkSection {
     /// What it delivered since the previous report.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub delivered: Vec<BriefDelivered>,
+    /// Why `delivered` was not read, when it was not: an empty list is then no fact.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub delivered_unread: Option<String>,
     /// The section in words.
     pub summary: String,
 }
@@ -844,11 +876,15 @@ impl Default for BriefWorkSection {
             suspended: 0,
             claims: Vec::new(),
             items: Vec::new(),
+            pull_requests_read: false,
             trains: Vec::new(),
             background: Vec::new(),
             provider_background: Vec::new(),
             provider_background_exposed: false,
             delivered: Vec::new(),
+            delivered_unread: Some(
+                "the server that composed this brief does not measure it".into(),
+            ),
             summary:
                 "unread: the server that composed this brief does not measure this session's work"
                     .into(),
@@ -1002,6 +1038,9 @@ pub struct BriefAttention {
     pub id: String,
     /// The section it is about.
     pub section: String,
+    /// The key of the report section it is written under (share/brief/report.yaml).
+    #[serde(default)]
+    pub report_section: String,
     /// A status word of the design declaration.
     pub word: String,
     /// The fact, with what was measured.
@@ -1028,14 +1067,22 @@ pub struct BriefReport {
     /// The previous report's instant, when the caller gave one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub since: Option<String>,
+    /// The brief's sections whose fingerprint differs from the one the caller was last told,
+    /// when the caller passed those (`previous`); absent when it did not, so that "nothing
+    /// changed" is never said of a comparison nobody made.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub changed: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 /// The answer of `brief.session`: what surrounds one session, in one line and in a few, the
 /// conditions that need attention, and the report it owes.
 pub struct SessionBrief {
-    /// When it was composed, RFC 3339.
+    /// When it was composed, RFC 3339 in UTC.
     pub at: String,
+    /// The same instant on the composing host's clock, RFC 3339 with its offset and, when the host names it, its zone (`2026-10-30T07:00:00+01:00 CET`); empty when the host's zone could not be read.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub at_local: String,
     /// The brief in one line: the status line's text.
     pub line: String,
     /// The brief in a few lines: the attention block, then one or more per section.
@@ -1110,7 +1157,7 @@ fn brief(ctx: &Context, input: BriefInput) -> Result<SessionBrief, CapabilityErr
             }
         } else {
             note = Some(format!(
-                "no server answers for this checkout (its server is {}); composed by this process, whose board is empty",
+                "no server answers for this checkout (its server is {}); this process holds no board or mesh of its own and reads the other checkouts' boards",
                 standing.as_str()
             ));
         }
@@ -1154,21 +1201,72 @@ fn brief(ctx: &Context, input: BriefInput) -> Result<SessionBrief, CapabilityErr
         unanswered,
     );
     let interval_minutes = interval_minutes(&root);
-    // master's run is read with the CI pool, inside its budget, and said with integration
-    if let Some(run) = sections.master_run.take() {
-        sections.integration.master_ci = Some(run);
-        sections.integration.summary = integration_summary(&sections.integration);
+    // master's run is read with the CI pool, inside its budget, and said with integration;
+    // when it was not read the line says so, with the command that reads it, rather than
+    // leaving the report's Integration section to leave it out or make it up
+    match sections.master_run.take() {
+        Some(run) => {
+            sections.integration.master_ci = Some(run);
+            sections.integration.summary = integration_summary(&sections.integration);
+        }
+        None => {
+            if let Some(sha) = sections.integration.master_now.clone() {
+                let why = if own {
+                    "the forge did not answer inside the CI budget"
+                } else {
+                    "not the leaseholder"
+                };
+                sections.integration.summary.push_str(&format!(
+                    "; master run {} ({why}): gh run list --workflow {REQUIRED_WORKFLOW} --commit {}",
+                    report::NOT_READ,
+                    sha.chars().take(10).collect::<String>()
+                ));
+            }
+        }
     }
     let mut origin = origin;
     origin.elapsed_ms = started.elapsed().as_millis() as u64;
     origin.slowest = sections.slowest();
-    Ok(compose(
-        crate::ledger::now(),
-        interval_minutes,
-        origin,
-        sections,
-        input.since,
+    Ok(told(
+        compose(
+            crate::ledger::now(),
+            interval_minutes,
+            origin,
+            sections,
+            input.since,
+        ),
+        &input.previous,
     ))
+}
+
+/// The brief with what changed since the brief the caller was last told: the sections whose
+/// fingerprint differs from `previous`, and the interval prompt composed again to open with
+/// them. With no `previous` nothing was compared, and the prompt says so.
+fn told(mut b: SessionBrief, previous: &BTreeMap<String, String>) -> SessionBrief {
+    if previous.is_empty() {
+        return b;
+    }
+    b.report.changed = Some(changed_sections(previous, &b.fingerprints));
+    b.report.prompt = report::render(report::Use::Interval, &b);
+    b
+}
+
+/// The sections whose fingerprint differs between two briefs. A section read past its budget
+/// carries [`LATE`] for a fingerprint: its facts were not read, so it is not said to have
+/// changed, whichever side was late.
+pub(crate) fn changed_sections(
+    before: &BTreeMap<String, String>,
+    after: &BTreeMap<String, String>,
+) -> Vec<String> {
+    let names: BTreeSet<&String> = before.keys().chain(after.keys()).collect();
+    names
+        .into_iter()
+        .filter(|k| {
+            let (b, a) = (before.get(*k), after.get(*k));
+            b.map(String::as_str) != Some(LATE) && a.map(String::as_str) != Some(LATE) && b != a
+        })
+        .cloned()
+        .collect()
 }
 
 /// A leaseholder's answer, finished here when it is older than the report contract: its
@@ -1184,6 +1282,11 @@ fn finish_forwarded(mut b: SessionBrief, input: &BriefInput) -> SessionBrief {
             s,
             input.since.clone(),
         );
+    }
+    // a leaseholder older than `previous` compared nothing: this process does, from the
+    // fingerprints the leaseholder composed
+    if b.report.changed.is_none() {
+        b = told(b, &input.previous);
     }
     b
 }
@@ -1213,19 +1316,44 @@ fn forward(ctx: &Context, url: &str, input: &BriefInput) -> Result<SessionBrief,
         query.push_str("&background=");
         query.push_str(&percent_encode(&text));
     }
+    if !input.previous.is_empty() {
+        let text = serde_json::to_string(&input.previous).unwrap_or_else(|_| "{}".into());
+        query.push_str("&previous=");
+        query.push_str(&percent_encode(&text));
+    }
     let reply = crate::mcp::bridge::request(url, "GET", &query, &[], None, FORWARD_TIMEOUT)
-        .map_err(|e| {
-            format!("the leaseholder at {url} did not answer ({e}); composed by this process")
-        })?;
+        .map_err(|e| format!("leaseholder {url} {}", unanswered_words(&e.to_string())))?;
     if reply.status != 200 {
         return Err(format!(
-            "the leaseholder at {url} answered {} (a server older than this executable has no brief); composed by this process",
+            "leaseholder {url} answered {} (a server older than this executable has no brief)",
             reply.status
         ));
     }
     serde_json::from_str(&reply.body).map_err(|e| {
-        format!("the leaseholder at {url} answered a brief this executable cannot read ({e}); composed by this process")
+        format!("leaseholder {url} answered a brief this executable cannot read ({e})")
     })
+}
+
+/// Why a request to the leaseholder failed, in words: a read that timed out is said as the
+/// bound it ran past (`did not answer within 10 s`), never as the operating system's
+/// `Resource temporarily unavailable (os error 35)`, which is how a socket read past its
+/// timeout reads on macOS.
+fn unanswered_words(error: &str) -> String {
+    let timed_out = [
+        "os error 35",
+        "os error 11",
+        "Resource temporarily unavailable",
+        "WouldBlock",
+        "timed out",
+        "TimedOut",
+    ]
+    .iter()
+    .any(|w| error.contains(w));
+    if timed_out {
+        format!("did not answer within {} s", FORWARD_TIMEOUT.as_secs())
+    } else {
+        format!("did not answer: {error}")
+    }
 }
 
 /// The word a [`Checkouts`] is spelled with on every transport.
@@ -1251,6 +1379,7 @@ fn percent_encode(s: &str) -> String {
 // ---------------------------------------------------------------- the sections, bounded
 
 /// Every section of one composition.
+#[derive(Clone)]
 pub(crate) struct Sections {
     pub(crate) session: BriefSessionSection,
     pub(crate) work: BriefWorkSection,
@@ -1317,7 +1446,9 @@ trait Section: Send + 'static {
     fn over_budget(name: &str, budget: Duration, waited: Duration) -> Self;
 }
 
-/// The unread section of an owner that ran past its budget.
+/// The unread section of an owner that ran past its budget. Its remedy is the command that
+/// reads that section on its own: the brief that ran out of time on it would only run out
+/// again (2026-10-30, release past its budget in four briefs running, its remedy the brief).
 fn late(name: &str, budget: Duration, waited: Duration) -> (BriefObservation, String) {
     let budget_ms = budget.as_millis() as u64;
     (
@@ -1327,12 +1458,12 @@ fn late(name: &str, budget: Duration, waited: Duration) -> (BriefObservation, St
             age_seconds: None,
             bound_seconds: None,
             verdict: BriefVerdict::Unread,
-            remedy: Some("majordomus brief --format json".into()),
+            remedy: Some(report::direct_read(name).into()),
             // strictly past the budget, whatever the clock's grain
             elapsed_ms: (waited.as_millis() as u64).max(budget_ms + 1),
             budget_ms,
         },
-        format!("unread (took > {budget_ms} ms)"),
+        format!("unread (took > {})", millis(budget_ms)),
     )
 }
 
@@ -1368,6 +1499,8 @@ section_impl!(BriefSessionSection, |observed, summary| {
         task_started_at: None,
         task_checkpoint_at: None,
         task_owner_session: None,
+        task_worktree: None,
+        task_record_foreign: false,
         caller: None,
         summary,
     }
@@ -1382,8 +1515,10 @@ section_impl!(BriefPeersSection, |observed, summary| BriefPeersSection {
     observed,
     attached: 0,
     boards: 0,
+    boards_read: 0,
     unread: Vec::new(),
     overlaps: 0,
+    overlaps_with_you: Vec::new(),
     superseded: None,
     leaseholder: None,
     named: Vec::new(),
@@ -1463,7 +1598,10 @@ struct Pending<T> {
 }
 
 /// Start `work` in a thread of its own. The thread is never joined: a section past its
-/// budget is reported unread and left to finish (every child it runs is bounded on its own).
+/// budget is reported unread and left to finish. Every child process a section starts is
+/// bounded on its own (`work::git_bounded`, the forge's `ask`, the release currency's git
+/// calls), and the two questions every tick asks again, the release currency and the peers
+/// gather, are asked once at a time per process ([`shared`]), so late threads do not pile up.
 fn spawn<T: Send + 'static>(
     name: &'static str,
     work: impl FnOnce() -> T + Send + 'static,
@@ -1545,6 +1683,12 @@ fn run_sections(
             session_section(&ctx, &root, psid.as_deref(), &ids)
         })
     };
+    // A process the mesh is not active in holds no journal of this session's claims, but the
+    // peers section reads the board, where they are announced: the work section waits for
+    // this session's entries on it, inside the peers section's budget, and is composed from
+    // them (work::OwnBoard). A process with the mesh reads its journal and waits for nothing.
+    let (own_tx, own_rx) = mpsc::channel::<work::OwnBoard>();
+    let own_tx = ctx.mesh.cooperation().is_none().then_some(own_tx);
     let work = {
         let (ctx, root, psid, ids) = (
             ctx.clone(),
@@ -1554,7 +1698,11 @@ fn run_sections(
         );
         let (since, background, procs) =
             (input.since.clone(), input.background.clone(), procs.clone());
+        let waits = own_tx.is_some();
         spawn("work", move || {
+            let board = waits
+                .then(|| own_rx.recv_timeout(budget_of("peers")).ok())
+                .flatten();
             work::section(&work::Inputs {
                 ctx: &ctx,
                 root: &root,
@@ -1564,6 +1712,7 @@ fn run_sections(
                 since: since.as_deref(),
                 background: &background,
                 procs: &procs,
+                board: board.as_ref(),
             })
         })
     };
@@ -1575,7 +1724,14 @@ fn run_sections(
             unanswered.clone(),
         );
         spawn("peers", move || {
-            peers_section(&ctx, checkouts, superseded_by, unanswered, psid.as_deref())
+            peers_section(
+                &ctx,
+                checkouts,
+                superseded_by,
+                unanswered,
+                psid.as_deref(),
+                own_tx,
+            )
         })
     };
     let mesh = {
@@ -1625,9 +1781,11 @@ fn run_sections(
     let mut session: BriefSessionSection = session.take();
     let peers: BriefPeersSection = peers.take();
     name_the_caller(&mut session, &peers, psid.as_deref());
+    let work: BriefWorkSection = work.take();
+    adopt_worktree_task(&mut session, &work, psid.as_deref());
     Sections {
         session,
-        work: work.take(),
+        work,
         peers,
         mesh: mesh.take(),
         integration: integration.take(),
@@ -1744,7 +1902,16 @@ fn session_section(
     let local = server::local_half(root);
     let record = root.join(&local).join("state/current.yaml");
     let task = super::continuity::read_task(&record);
-    let running = task.as_ref().filter(|t| task_is_running(&t.outcome));
+    // a record another provider session wrote is that session's, running or not: the primary
+    // checkout's record is whoever started a task there last (2026-10-30: the brief composed in
+    // the primary called session 07a5ffde inactive on a record of 10-23, while its own task
+    // ran in its branch's worktree)
+    let foreign = task.as_ref().is_some_and(|t| {
+        !t.provider_session.is_empty() && provider_session.is_some_and(|p| p != t.provider_session)
+    });
+    let running = task
+        .as_ref()
+        .filter(|t| task_is_running(&t.outcome) && !foreign);
     let state = if episodes.is_ok() {
         BriefSectionState::Read
     } else {
@@ -1764,37 +1931,56 @@ fn session_section(
             owner
                 .as_deref()
                 .map(short_session)
-                .unwrap_or_else(|| "unknown".into())
+                .unwrap_or_else(|| "[unknown]".into())
         )),
         (None, _) => match (&episodes, provider_session) {
             (Err(e), _) => s.push_str(&format!("; episodes unread ({e})")),
-            (Ok(_), Some(p)) => s.push_str(&format!("; no open episode for provider session {p}")),
+            (Ok(_), Some(p)) => s.push_str(&format!(
+                "; no open episode for provider session {}",
+                short_session(p)
+            )),
             (Ok(_), None) => s.push_str("; no open episode"),
         },
     }
     s.push_str(&format!(" on {branch} at {head}"));
+    let outcome = |t: &super::continuity::ActiveTask| {
+        if t.outcome.is_empty() {
+            "unknown".to_string()
+        } else {
+            t.outcome.clone()
+        }
+    };
+    let checkpointed = |t: &super::continuity::ActiveTask| {
+        if t.checkpoint_at.is_empty() {
+            String::new()
+        } else {
+            format!(", checkpointed {}", ago_words(&t.checkpoint_at))
+        }
+    };
     match (&task, running) {
         (Some(t), Some(_)) => s.push_str(&format!("; task {} [active]: {}", t.id, t.task)),
-        (Some(t), None) => s.push_str(&format!(
-            "; no active task (last {} [{}]{}, owner {}) — source current.yaml, read now",
+        (Some(t), None) if foreign => s.push_str(&format!(
+            "; {NO_TASK_HERE} (its record {} [{}]{} is session {}'s) — source current.yaml, read now",
             t.id,
-            if t.outcome.is_empty() {
-                "unknown"
-            } else {
-                t.outcome.as_str()
-            },
-            if t.checkpoint_at.is_empty() {
-                String::new()
-            } else {
-                format!(", checkpointed {}", day_words(&t.checkpoint_at))
-            },
+            outcome(t),
+            checkpointed(t),
+            short_session(&t.provider_session)
+        )),
+        (Some(t), None) => s.push_str(&format!(
+            "; {NO_TASK_HERE} (last {} [{}]{}, owner {}) — source current.yaml, read now",
+            t.id,
+            outcome(t),
+            checkpointed(t),
+            // a record written before `start` declared its provider session names none
             if t.provider_session.is_empty() {
-                "unknown".to_string()
+                "[unknown]: the record names no provider session".to_string()
             } else {
                 short_session(&t.provider_session)
             }
         )),
-        (None, _) => s.push_str("; no task recorded — source current.yaml, read now"),
+        (None, _) => s.push_str(&format!(
+            "; {NO_TASK_HERE} (no task recorded) — source current.yaml, read now"
+        )),
     }
     let summary = format!("[{}] {s}", BriefVerdict::of_state(state).as_str());
     BriefSessionSection {
@@ -1829,8 +2015,66 @@ fn session_section(
             .as_ref()
             .map(|t| t.provider_session.clone())
             .filter(|o| !o.is_empty()),
+        task_worktree: None,
+        task_record_foreign: foreign,
         caller,
         summary,
+    }
+}
+
+/// How the session line opens its task clause when this checkout holds no running task of
+/// this session: the clause [`adopt_worktree_task`] replaces when a worktree holds one.
+const NO_TASK_HERE: &str = "no active task in this checkout";
+
+/// The running task of this session found in the canonical worktree of one of its own
+/// branches, when this checkout holds none: a session works in its branch's worktree while
+/// the mod composes its brief from the primary checkout (`$.session.root()`), and on
+/// 2026-10-30 one brief said the session's task was `[active]` on its work line and
+/// `[inactive] session: no active task` two lines above. A record there that names another
+/// provider session is not this session's; one that names none is, because the branch it is
+/// the worktree of is this session's own claim. The line names the worktree it came from.
+fn adopt_worktree_task(
+    session: &mut BriefSessionSection,
+    work: &BriefWorkSection,
+    psid: Option<&str>,
+) {
+    if session.task_id.is_some() || session.state == BriefSectionState::Unread {
+        return;
+    }
+    for item in work.items.iter().filter(|i| i.task.is_some()) {
+        let Some(wt) = item.worktree.as_deref() else {
+            continue;
+        };
+        let wt = Path::new(wt);
+        let local = server::local_half(wt);
+        let Some(t) = super::continuity::read_task(&wt.join(&local).join("state/current.yaml"))
+        else {
+            continue;
+        };
+        let owned = t.provider_session.is_empty() || psid.is_none_or(|p| p == t.provider_session);
+        if !task_is_running(&t.outcome) || !owned {
+            continue;
+        }
+        let at = session
+            .summary
+            .find(&format!("; {NO_TASK_HERE}"))
+            .unwrap_or(session.summary.len());
+        session.summary.truncate(at);
+        session.summary.push_str(&format!(
+            "; task {} [active] in worktree {}: {}",
+            t.id,
+            worktree_words(&wt.display().to_string()),
+            t.task
+        ));
+        session.task_id = Some(t.id.clone());
+        session.task = Some(t.task.clone());
+        session.last_task = Some(t.id.clone());
+        session.task_outcome = Some(t.outcome.clone());
+        session.task_started_at = Some(t.started_at.clone()).filter(|x| !x.is_empty());
+        session.task_checkpoint_at = Some(t.checkpoint_at.clone()).filter(|x| !x.is_empty());
+        session.task_owner_session = Some(t.provider_session.clone()).filter(|x| !x.is_empty());
+        session.task_worktree = Some(wt.display().to_string());
+        return;
     }
 }
 
@@ -1840,8 +2084,13 @@ fn caller_words(caller: Option<&str>, provider_session: Option<&str>, board_read
     match (caller, provider_session) {
         (Some(c), Some(p)) => format!("{c} = {} (provider session)", short_session(p)),
         (Some(c), None) => format!("{c} (no provider session named)"),
-        (None, Some(p)) if board_read => format!("provider session {p} (not on this board)"),
-        (None, Some(p)) => format!("provider session {p} (this checkout's board unread)"),
+        (None, Some(p)) if board_read => {
+            format!("provider session {} (not on this board)", short_session(p))
+        }
+        (None, Some(p)) => format!(
+            "provider session {} (this checkout's board unread)",
+            short_session(p)
+        ),
         (None, None) => "no provider session named and no board peer".into(),
     }
 }
@@ -1891,11 +2140,6 @@ fn ago_words(at: &str) -> String {
     }
 }
 
-/// `10-27` for an RFC 3339 instant.
-fn day_words(at: &str) -> String {
-    at.get(5..10).unwrap_or(at).to_string()
-}
-
 fn now_epoch() -> i64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -1911,6 +2155,7 @@ fn peers_section(
     leaseholder: Option<String>,
     unanswered: Option<String>,
     psid: Option<&str>,
+    own: Option<mpsc::Sender<work::OwnBoard>>,
 ) -> BriefPeersSection {
     // A command line whose leaseholder did not answer the brief composes it here, and this
     // process's own board is empty: this checkout's board is the leaseholder's. It is asked
@@ -1923,13 +2168,21 @@ fn peers_section(
             .name("brief-board".into())
             .spawn(move || super::peers::board_of(&ctx, &url))
     });
-    let list: PeerList = match ctx
-        .execute(
+    // one gather in flight per process: every session's status line asks the leaseholder,
+    // and the gather asks every checkout's server
+    let key = format!(
+        "peers {} {}",
+        ctx.index.repository.root,
+        checkouts_word(checkouts)
+    );
+    let list: PeerList = match shared(&key, PEERS_REUSED_FOR, || {
+        ctx.execute(
             "peers.list",
             json!({ "checkouts": checkouts_word(checkouts) }),
         )
         .map_err(|e| e.to_string())
-        .and_then(|v| serde_json::from_value(v).map_err(|e| e.to_string()))
+    })
+    .and_then(|v| serde_json::from_value(v).map_err(|e| e.to_string()))
     {
         Ok(l) => l,
         Err(e) => {
@@ -1943,8 +2196,10 @@ fn peers_section(
                 ),
                 attached: 0,
                 boards: 0,
+                boards_read: 0,
                 unread: Vec::new(),
                 overlaps: 0,
+                overlaps_with_you: Vec::new(),
                 superseded: None,
                 leaseholder: None,
                 named: Vec::new(),
@@ -1953,6 +2208,13 @@ fn peers_section(
             };
         }
     };
+    // a board is read when its checkout's server answered with it; the leaseholder's, asked
+    // apart, is counted when it answers below
+    let mut boards_read = list
+        .boards
+        .iter()
+        .filter(|b| b.reason.is_none() && (b.url.is_some() || b.checkout.this_checkout))
+        .count();
     let mut peers = list.peers;
     let mut unread: Vec<String> = list
         .boards
@@ -1972,6 +2234,7 @@ fn peers_section(
         match super::peers::board_of(ctx, url) {
             Ok(theirs) => {
                 let stamp = peers.iter().find_map(|p| p.checkout.clone());
+                boards_read += 1;
                 peers.extend(theirs.into_iter().map(|mut p| {
                     p.checkout = stamp.clone();
                     p
@@ -1993,14 +2256,21 @@ fn peers_section(
             Err(e) => Err(format!("no thread to ask it in ({e})")),
         };
         match answer {
-            Ok(theirs) => peers.extend(theirs.into_iter().map(|mut p| {
-                p.checkout = stamp.clone();
-                p
-            })),
+            Ok(theirs) => {
+                boards_read += 1;
+                peers.extend(theirs.into_iter().map(|mut p| {
+                    p.checkout = stamp.clone();
+                    p
+                }))
+            }
             Err(e) => unread.push(format!("{THIS_BOARD_UNREAD}, held by the leaseholder: {e}")),
         }
     }
     let attached: Vec<&Peer> = peers.iter().filter(|p| p.attached).collect();
+    if let Some(tx) = own {
+        // the work section waits on this; a closed receiver (it gave up) is not an error
+        let _ = tx.send(work::OwnBoard::of(&attached, psid));
+    }
     let sessions = mesh_branches(ctx);
     let people: Vec<BriefPeer> = attached
         .iter()
@@ -2013,13 +2283,33 @@ fn peers_section(
     } else {
         BriefSectionState::Partial
     };
+    // counted over every board read, the leaseholder's included: `peers.list` counts the
+    // overlaps of the boards it gathered, before this checkout's board was added (2026-10-30:
+    // the primary checkout said 0 overlaps where a linked worktree said 68, a minute apart)
+    let overlaps = crate::peers::overlaps_among(&peers).len();
+    let with_you = overlaps_with(&attached, psid);
     let mut summary = format!(
-        "[{}] {} attached on {} board(s), {} unread, {} overlap(s)",
+        "[{}] {} attached ({} checkout(s) asked, {boards_read} board(s) read), {} unread; overlaps: {} worker(s) on your claims{}, {} claim pair(s) in all",
         BriefVerdict::of_state(state).as_str(),
         attached.len(),
         list.covered,
         unread.len(),
-        list.overlaps.len()
+        with_you.len(),
+        if with_you.is_empty() {
+            String::new()
+        } else {
+            format!(
+                " ({})",
+                with_you
+                    .iter()
+                    .map(|o| o.split(':').next().unwrap_or(o).to_string())
+                    .collect::<BTreeSet<_>>()
+                    .into_iter()
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )
+        },
+        overlaps
     );
     if let Some(s) = &superseded {
         summary.push_str(&format!("; {s}"));
@@ -2041,14 +2331,60 @@ fn peers_section(
         // every checkout covered, listed or counted: the summary lists only the ones that
         // hold a board (peers::PeerView), and a checkout with none is still covered
         boards: list.covered,
+        boards_read,
         unread,
-        overlaps: list.overlaps.len(),
+        overlaps,
+        overlaps_with_you: with_you,
         superseded,
         leaseholder,
         named,
         people,
         summary,
     }
+}
+
+/// Every overlap between a claim of this session's own peers (attached, carrying `psid`) and
+/// a claim of another worker, once per pair of peers: `p9 (fix/x): docs/BRIEF.md ~ docs`, its
+/// first meeting pair of paths and how many more. A pair among this session's own peers (its
+/// subagents in several worktrees) is not an overlap with anyone.
+fn overlaps_with(attached: &[&Peer], psid: Option<&str>) -> Vec<String> {
+    let Some(psid) = psid else {
+        return Vec::new();
+    };
+    let own = |p: &Peer| p.address.as_ref().and_then(|a| a.session.as_deref()) == Some(psid);
+    let mut out = Vec::new();
+    for other in attached.iter().copied().filter(|p| !own(*p)) {
+        let mut paths: Vec<(String, String)> = Vec::new();
+        for mine in attached.iter().copied().filter(|p| own(*p)) {
+            for c in &mine.claims {
+                for theirs in &other.claims {
+                    for y in &c.scope {
+                        for t in &theirs.scope {
+                            if crate::peers::claims_meet(y, t)
+                                && !paths.iter().any(|(a, b)| a == y && b == t)
+                            {
+                                paths.push((y.clone(), t.clone()));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if let Some((y, t)) = paths.first() {
+            let branch = naming_claim(&other.claims).1;
+            out.push(format!(
+                "{}{}: {y} ~ {t}{}",
+                other.id.as_str(),
+                branch.map(|b| format!(" ({b})")).unwrap_or_default(),
+                if paths.len() > 1 {
+                    format!(" (+{} more)", paths.len() - 1)
+                } else {
+                    String::new()
+                }
+            ));
+        }
+    }
+    out
 }
 
 /// The branch each mesh session of this runtime says it is on, by session name
@@ -2142,7 +2478,7 @@ fn peer_text(p: &BriefPeer) -> String {
     match (&p.branch, p.branch_source.as_str()) {
         (Some(b), "server") => s.push_str(&format!(" @{b} (server's)")),
         (Some(b), src) => s.push_str(&format!(" @{b} ({src})")),
-        (None, _) => s.push_str(" @?"),
+        (None, _) => s.push_str(" on no branch it named"),
     }
     s.push_str(": ");
     s.push_str(p.intent.as_deref().unwrap_or("announced nothing"));
@@ -2296,32 +2632,54 @@ fn mesh_section(ctx: &Context, unanswered: Option<&str>) -> BriefMeshSection {
 // ---------------------------------------------------------------- integration
 
 fn integration_section(root: &Path) -> BriefIntegrationSection {
-    let Some(obs) = crate::commands::prs::brief_typed(root) else {
-        return BriefIntegrationSection {
+    let common = refs::git_dir(root).map(|g| refs::common_dir(&g));
+    // a linked worktree has no observation of its own: the primary checkout's is the
+    // repository's, said as the primary's (2026-10-30: a linked worktree's line said only
+    // "this checkout never observed the forge" while origin/master and its last merge were
+    // readable and the primary held an observation)
+    let (obs, borrowed) = match crate::commands::prs::brief_typed(root) {
+        Some(o) => (Some(o), false),
+        None => match work::primary_checkout(root).filter(|p| p.as_path() != root) {
+            Some(p) => (crate::commands::prs::brief_typed(&p), true),
+            None => (None, false),
+        },
+    };
+    let base = obs
+        .as_ref()
+        .map(|o| o.base.clone())
+        .unwrap_or_else(|| "master".into());
+    let master_now = common
+        .as_deref()
+        .and_then(|c| refs::resolve(c, &format!("refs/remotes/origin/{base}")));
+    let fetched_age = refs::fetched_seconds_ago(root, &base);
+    let fetched_at = refs::fetched_at(root, &base);
+    let Some(obs) = obs else {
+        let mut section = BriefIntegrationSection {
             state: BriefSectionState::Undeclared,
             observed: BriefObservation::read(
-                ".ai/local/state/integration/observation.json (never written here)",
+                ".ai/local/state/integration/observation.json (never written here or in the primary checkout)",
                 BriefSectionState::Undeclared,
                 "majordomus prs refresh",
             ),
             observed_at: None,
             age_seconds: None,
             observed_master: None,
-            master_now: None,
-            master_fetched_at: None,
-            master_fetched_age_seconds: None,
+            master_now,
+            master_fetched_at: fetched_at,
+            master_fetched_age_seconds: fetched_age,
             moved_by: None,
             master_ci: None,
-            last_merge: last_merge(root),
+            last_merge: last_merge(root, &base),
             stale: false,
             remedy: Some("majordomus prs refresh".into()),
-            summary: "this checkout never observed the forge: majordomus prs refresh".into(),
+            summary: String::new(),
         };
+        section.summary = format!(
+            "[unread] queue: this checkout never observed the forge{}",
+            master_words(&section)
+        );
+        return section;
     };
-    let common = refs::git_dir(root).map(|g| refs::common_dir(&g));
-    let master_now = common
-        .as_deref()
-        .and_then(|c| refs::resolve(c, &format!("refs/remotes/origin/{}", obs.base)));
     let age =
         crate::peers::epoch_seconds(&obs.observed_at).map(|t| (now_epoch() - t).max(0) as u64);
     let moved = match (&obs.observed_master, &master_now) {
@@ -2334,20 +2692,22 @@ fn integration_section(root: &Path) -> BriefIntegrationSection {
     let differs = matches!((&obs.observed_master, &master_now), (Some(o), Some(n)) if o != n);
     let bound = crate::integration::OBSERVATION_STALE_AFTER.as_secs();
     let stale = age.is_some_and(|a| a > bound) || differs;
-    let fetched_age = refs::fetched_seconds_ago(root);
-    let mut remedy = stale.then(|| "majordomus prs refresh".to_string());
-    if fetched_age.is_some_and(|a| a > FETCH_STALE_AFTER.as_secs()) {
-        remedy = Some(match remedy {
-            Some(r) => format!("git fetch origin master && {r}"),
-            None => "git fetch origin master".into(),
-        });
-    }
+    let unfetched = fetched_age.is_some_and(|a| a > FETCH_STALE_AFTER.as_secs());
+    // one remedy for one cause, the attention entry's: a stale queue is fetched and refreshed
+    let remedy = match (stale, unfetched) {
+        (true, _) => Some(format!("git fetch origin {base} && majordomus prs refresh")),
+        (false, true) => Some(format!("git fetch origin {base}")),
+        (false, false) => None,
+    };
+    let source = if borrowed {
+        "the primary checkout's .ai/local/state/integration/observation.json and the queue's summary.json (files)"
+    } else {
+        ".ai/local/state/integration/observation.json and the queue's summary.json (files)"
+    };
     let mut section = BriefIntegrationSection {
         state: BriefSectionState::Read,
         observed: BriefObservation {
-            source:
-                ".ai/local/state/integration/observation.json and the queue's summary.json (files)"
-                    .into(),
+            source: source.into(),
             observed_at: Some(obs.observed_at.clone()),
             age_seconds: age,
             bound_seconds: Some(bound),
@@ -2364,17 +2724,49 @@ fn integration_section(root: &Path) -> BriefIntegrationSection {
         age_seconds: age,
         observed_master: obs.observed_master.clone(),
         master_now,
-        master_fetched_at: refs::fetched_at(root),
+        master_fetched_at: fetched_at,
         master_fetched_age_seconds: fetched_age,
         moved_by: moved,
         master_ci: None,
-        last_merge: last_merge(root),
+        last_merge: last_merge(root, &base),
         stale,
         remedy,
         summary: String::new(),
     };
-    section.summary = integration_words(&section, &obs);
+    section.summary = integration_words(&section, &obs, borrowed);
     section
+}
+
+/// What a checkout reads of master on its own, whatever the queue's observation: its
+/// `origin/master`, how long ago it was fetched and the last merge on it.
+fn master_words(s: &BriefIntegrationSection) -> String {
+    let mut w = String::new();
+    match &s.master_now {
+        Some(m) => w.push_str(&format!(
+            "; origin/master {}",
+            m.chars().take(10).collect::<String>()
+        )),
+        None => w.push_str(&format!("; origin/master {}", report::NOT_READ)),
+    }
+    match s.master_fetched_age_seconds {
+        Some(a) => w.push_str(&format!(", fetched {} ago", report::span(a))),
+        None => w.push_str(&format!(", fetch age {}", report::NOT_READ)),
+    }
+    match &s.last_merge {
+        Some(m) => w.push_str(&format!(
+            "; last merge on master {}{} at {}",
+            m.pr.map(|n| format!("#{n} ")).unwrap_or_default(),
+            m.sha,
+            m.at
+        )),
+        // at a load average of 98 on 2026-10-30 the bounded `git log` did not answer, and the
+        // line said nothing of master's last merge, as if there were none
+        None if s.master_now.is_some() => {
+            w.push_str(&format!("; last merge on master {}", report::NOT_READ))
+        }
+        None => {}
+    }
+    w
 }
 
 /// The integration section in words, once master's run is known.
@@ -2390,21 +2782,32 @@ fn integration_summary(s: &BriefIntegrationSection) -> String {
     words
 }
 
+/// The integration line: the queue's observation and how master stands against it, the
+/// counts as observed, master's last merge, the executor and the lease. Its remedy is not
+/// here: the line ends with it ([`section_words`]), after every fact, in the `fact — remedy`
+/// shape of an attention line, so that no fact reads as an argument of the command.
 fn integration_words(
     s: &BriefIntegrationSection,
     obs: &crate::commands::prs::IntegrationBrief,
+    borrowed: bool,
 ) -> String {
     let short = |x: &Option<String>| {
         x.as_deref()
             .map(|v| v.chars().take(10).collect::<String>())
             .unwrap_or_else(|| report::NOT_READ.into())
     };
+    let whose = if borrowed {
+        " (the primary checkout's)"
+    } else {
+        ""
+    };
+    let age = s
+        .age_seconds
+        .map(report::span)
+        .unwrap_or_else(|| report::NOT_READ.into());
     let mut w = if s.stale {
         format!(
-            "[stale] queue observed {} ago ({}) at {}; origin/master {}{}",
-            s.age_seconds
-                .map(report::span)
-                .unwrap_or_else(|| report::NOT_READ.into()),
+            "[stale] queue observed{whose} {age} ago ({}) at {}; origin/master {}{}",
             obs.observed_at,
             short(&s.observed_master),
             short(&s.master_now),
@@ -2415,21 +2818,19 @@ fn integration_words(
         )
     } else {
         format!(
-            "[current] queue observed {} ago at {}",
-            s.age_seconds
-                .map(report::span)
-                .unwrap_or_else(|| report::NOT_READ.into()),
+            "[current] queue observed{whose} {age} ago at {}",
             short(&s.observed_master)
         )
     };
     if let Some(a) = s.master_fetched_age_seconds {
         w.push_str(&format!(", fetched {} ago", report::span(a)));
     }
-    if let Some(r) = &s.remedy {
-        w.push_str(&format!(" — {r}"));
-    }
-    // the counts are the forge's at that observation, and are said as such
-    w.push_str(&format!("; {} (as observed)", obs.counts));
+    // the counts are the forge's at that observation, and are said as such; their breakdown
+    // follows a colon, since a dash on this line introduces the remedy
+    w.push_str(&format!(
+        "; {} (as observed)",
+        obs.counts.replacen(" — ", ": ", 1)
+    ));
     match &s.last_merge {
         Some(m) => w.push_str(&format!(
             "; last merge on master {}{} at {}",
@@ -2437,8 +2838,6 @@ fn integration_words(
             m.sha,
             m.at
         )),
-        // at a load average of 98 on 2026-10-30 the bounded `git log` did not answer, and the
-        // line said nothing of master's last merge, as if there were none
         None if s.master_now.is_some() => {
             w.push_str(&format!("; last merge on master {}", report::NOT_READ))
         }
@@ -2453,21 +2852,24 @@ fn integration_words(
     w
 }
 
-/// The last merge on origin/master's first-parent line.
-fn last_merge(root: &Path) -> Option<BriefMerge> {
+/// The last merge on origin/master's first-parent line: `--merges`, so that a commit pushed
+/// straight to master is never called its last merge, and its time in UTC, as every instant
+/// of the brief is written (`%cI` printed the committer's own offset beside UTC instants).
+fn last_merge(root: &Path, base: &str) -> Option<BriefMerge> {
     let text = work::git_bounded(
         root,
         &[
             "log",
             "-1",
             "--first-parent",
-            "--format=%H%x09%cI%x09%s",
-            "refs/remotes/origin/master",
+            "--merges",
+            "--format=%H%x09%ct%x09%s",
+            &format!("refs/remotes/origin/{base}"),
         ],
     )?;
     let mut f = text.trim().splitn(3, '\t');
     let sha: String = f.next()?.chars().take(10).collect();
-    let at = f.next()?.to_string();
+    let at = utc(f.next()?.trim().parse().ok()?);
     let subject = f.next().unwrap_or_default();
     Some(BriefMerge {
         pr: work::merged_pr(subject).map(|(n, _)| n),
@@ -2476,14 +2878,76 @@ fn last_merge(root: &Path) -> Option<BriefMerge> {
     })
 }
 
+/// An instant given in seconds since the epoch, RFC 3339 in UTC.
+pub(crate) fn utc(epoch: i64) -> String {
+    crate::peers::rfc3339(
+        std::time::UNIX_EPOCH + std::time::Duration::from_secs(epoch.max(0) as u64),
+    )
+}
+
+/// The composing host's clock at `epoch`: RFC 3339 with its UTC offset, and the zone's name
+/// when the host names it (`2026-10-30T07:00:00+01:00 CET`), read with `localtime_r(3)`; empty
+/// when the host's zone cannot be read. The report's header names the person's clock time,
+/// and the brief is what it is read from rather than a guess.
+pub(crate) fn local_words(epoch: i64) -> String {
+    // SAFETY: `tm` is a plain C struct that `localtime_r` fills in full on success; `t` is a
+    // valid time_t for the call's duration, and nothing of `tm` is read when it returns null.
+    let mut tm: libc::tm = unsafe { std::mem::zeroed() };
+    let t: libc::time_t = epoch as libc::time_t;
+    // SAFETY: both pointers are to live locals of the right types for the call's duration.
+    let filled = unsafe { libc::localtime_r(&t, &mut tm) };
+    if filled.is_null() {
+        return String::new();
+    }
+    let offset = tm.tm_gmtoff as i64;
+    let sign = if offset < 0 { '-' } else { '+' };
+    let off = offset.unsigned_abs();
+    let mut s = format!(
+        "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}{sign}{:02}:{:02}",
+        tm.tm_year + 1900,
+        tm.tm_mon + 1,
+        tm.tm_mday,
+        tm.tm_hour,
+        tm.tm_min,
+        tm.tm_sec,
+        off / 3600,
+        (off % 3600) / 60
+    );
+    if !tm.tm_zone.is_null() {
+        // SAFETY: a non-null `tm_zone` points at a NUL-terminated name the C library owns for
+        // the life of the process; it is copied out at once.
+        let zone = unsafe { std::ffi::CStr::from_ptr(tm.tm_zone) }.to_string_lossy();
+        let zone = zone.trim();
+        if !zone.is_empty()
+            && zone
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || "+-_/".contains(c))
+        {
+            s.push(' ');
+            s.push_str(zone);
+        }
+    }
+    s
+}
+
 // ---------------------------------------------------------------- release and derive
 
 /// Whether the trunk is released (`release.currency`, I3070), without the version: a brief is
 /// composed at every session's start, and the version reads the last release's registry.
+///
+/// One currency is in flight per process at a time, and its answer is reused while
+/// origin/master and the tag refs are what they were, for at most [`RELEASE_REUSED_FOR`]: in
+/// the leaseholder every status-line tick of every session asked it again, each in a thread
+/// a late section leaves behind, and at a load average of 90 those piled up while the
+/// release missed its budget in every brief.
 fn release_section(ctx: &Context) -> BriefReleaseSection {
-    let answer: Result<crate::release::currency::Currency, String> = ctx
-        .execute(super::release::CURRENCY_ID, json!({ "next": false }))
-        .map_err(|e| e.to_string())
+    let root = PathBuf::from(&ctx.index.repository.root);
+    let key = format!("release {}", release_key(&root));
+    let answer: Result<crate::release::currency::Currency, String> =
+        shared(&key, RELEASE_REUSED_FOR, || {
+            ctx.execute(super::release::CURRENCY_ID, json!({ "next": false }))
+                .map_err(|e| e.to_string())
+        })
         .and_then(|v| serde_json::from_value(v).map_err(|e| e.to_string()));
     match answer {
         Ok(a) => {
@@ -2513,6 +2977,100 @@ fn release_section(ctx: &Context) -> BriefReleaseSection {
             ..BriefReleaseSection::default()
         },
     }
+}
+
+/// How long a release currency is reused while what it reads is unchanged: its stance turns
+/// overdue with time alone, so not for long.
+const RELEASE_REUSED_FOR: Duration = Duration::from_secs(5 * 60);
+/// How long a peers gather that just landed is handed to the readers that asked meanwhile.
+const PEERS_REUSED_FOR: Duration = Duration::from_secs(2);
+
+/// What the release currency reads, as one key: origin/master's sha and when the tag refs
+/// last changed (loose tags and `packed-refs`).
+fn release_key(root: &Path) -> String {
+    let common = refs::git_dir(root).map(|g| refs::common_dir(&g));
+    let master = common
+        .as_deref()
+        .and_then(|c| refs::resolve(c, "refs/remotes/origin/master"))
+        .unwrap_or_default();
+    let changed = |p: PathBuf| {
+        std::fs::metadata(p)
+            .and_then(|m| m.modified())
+            .ok()
+            .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+            .map(|d| d.as_nanos())
+            .unwrap_or(0)
+    };
+    let (tags, packed) = common
+        .as_deref()
+        .map(|c| (changed(c.join("refs/tags")), changed(c.join("packed-refs"))))
+        .unwrap_or((0, 0));
+    format!("{} {master} {tags} {packed}", root.display())
+}
+
+/// The questions in flight in this process, and the answers that landed, by key.
+#[derive(Default)]
+struct Flights {
+    running: BTreeSet<String>,
+    landed: BTreeMap<String, (Instant, Result<serde_json::Value, String>)>,
+}
+
+static FLIGHTS: std::sync::Mutex<Option<Flights>> = std::sync::Mutex::new(None);
+/// The key prefix the test of [`shared`] shares under.
+#[cfg(test)]
+const SHARED_TEST: &str = "shared-test ";
+static LANDED: std::sync::Condvar = std::sync::Condvar::new();
+
+/// `ask`, at most once at a time per `key` in this process: a reader that finds it in flight
+/// waits for that answer rather than asking again, and an answer that landed less than
+/// `reuse` ago is handed out as it is. A reader whose section runs past its budget is left
+/// waiting in its own thread, asking nothing.
+fn shared(
+    key: &str,
+    reuse: Duration,
+    ask: impl FnOnce() -> Result<serde_json::Value, String>,
+) -> Result<serde_json::Value, String> {
+    // a unit test composes sections against stand-in owners whose answers change under one
+    // root from one call to the next: only the test of this function shares
+    #[cfg(test)]
+    if !key.starts_with(SHARED_TEST) {
+        return ask();
+    }
+    let Ok(mut guard) = FLIGHTS.lock() else {
+        return ask();
+    };
+    loop {
+        let flights = guard.get_or_insert_with(Flights::default);
+        if let Some((at, answer)) = flights.landed.get(key) {
+            if at.elapsed() < reuse {
+                return answer.clone();
+            }
+        }
+        if !flights.running.contains(key) {
+            flights.running.insert(key.to_string());
+            break;
+        }
+        guard = match LANDED.wait_timeout(guard, OVERALL_DEADLINE) {
+            Ok((g, _)) => g,
+            Err(_) => return ask(),
+        };
+    }
+    drop(guard);
+    let answer = ask();
+    if let Ok(mut guard) = FLIGHTS.lock() {
+        let flights = guard.get_or_insert_with(Flights::default);
+        flights.running.remove(key);
+        // a failure is not handed on: the next reader asks for itself
+        if answer.is_ok() {
+            flights
+                .landed
+                .insert(key.to_string(), (Instant::now(), answer.clone()));
+        } else {
+            flights.landed.remove(key);
+        }
+    }
+    LANDED.notify_all();
+    answer
 }
 
 /// The derive lock and its priority marker, where `lib/machine_lock.sh` puts them: beside the
@@ -2655,11 +3213,16 @@ fn compose(
         machine: &s.machine,
         release: &s.release,
         derive: &s.derive,
+        interval_seconds: interval_minutes.saturating_mul(60),
     });
+    let at_local = crate::peers::epoch_seconds(&at)
+        .map(local_words)
+        .unwrap_or_default();
     let line = one_line(&s, &attention);
     let lines = brief_lines(&s, &attention, &answered_by);
     let mut b = SessionBrief {
         at,
+        at_local,
         line,
         lines,
         interval_minutes,
@@ -2673,6 +3236,8 @@ fn compose(
             prompt: String::new(),
             reminder: String::new(),
             since,
+            // what the caller was last told is compared by `told`, never here
+            changed: None,
         },
         fingerprints: BTreeMap::new(),
         session: s.session,
@@ -2692,31 +3257,85 @@ fn compose(
     b
 }
 
-/// One fingerprint per section, of its facts with every instant, age and cost taken out,
-/// and the attention entries about it: what the mod compares to decide that a fact changed.
+/// What a section read past its budget carries for a fingerprint: its facts were not read,
+/// so nothing can be said to have changed in it ([`changed_sections`]).
+pub(crate) const LATE: &str = "late";
+
+/// One fingerprint per section, of the facts that concern this session with every instant,
+/// age and cost taken out, and the attention entries about it: what decides that a report is
+/// owed. On 2026-10-30 a quiet interval still woke the session, because the peers section's
+/// whole serialisation moved with every other worker's re-announcement (their intents carry
+/// their own clock), the count of checkouts asked moved by one with every worktree, the CI
+/// counts moved by the minute and macOS resized swap. Those are left out: the peers section
+/// is fingerprinted by who is attached on which branch, the boards not read and the overlaps
+/// with this session's claims; CI by its state, its online runners and offline ones by name,
+/// and its attention; the machine by its word and its attention. A section read past its
+/// budget is [`LATE`], and the over-budget entry is no fact of any section.
 fn fingerprints(b: &SessionBrief) -> BTreeMap<String, String> {
     let by = report::by_section(&b.attention);
-    let section = |name: &str, v: serde_json::Value| {
-        let mut v = v;
+    let ids = |name: &str| -> Vec<&str> {
+        by.get(name)
+            .map(|es| {
+                es.iter()
+                    .filter(|e| e.id != "section.over_budget")
+                    .map(|e| e.id.as_str())
+                    .collect()
+            })
+            .unwrap_or_default()
+    };
+    let late = |o: &BriefObservation| {
+        o.verdict == BriefVerdict::Unread && o.budget_ms > 0 && o.elapsed_ms > o.budget_ms
+    };
+    let print = |name: &str, o: &BriefObservation, facts: serde_json::Value| {
+        if late(o) {
+            return (name.to_string(), LATE.to_string());
+        }
+        let mut v = facts;
         clock_free(&mut v);
-        let attention: Vec<&str> = by
-            .get(name)
-            .map(|es| es.iter().map(|e| e.id.as_str()).collect())
-            .unwrap_or_default();
-        let text = format!("{v}{attention:?}");
+        let text = format!("{v}{:?}", ids(name));
         (name.to_string(), report::fingerprint_of(&text))
     };
     let j = |v: Result<serde_json::Value, serde_json::Error>| v.unwrap_or_default();
+    let peers = json!({
+        "state": b.peers.state,
+        "attached": b.peers.people.iter().map(|p| (p.id.as_str(), p.branch.as_deref())).collect::<Vec<_>>(),
+        "unread": b.peers.unread.iter().map(|u| u.split(": ").next().unwrap_or(u)).collect::<Vec<_>>(),
+        "with_you": b.peers.overlaps_with_you,
+        "superseded": b.peers.leaseholder,
+    });
+    let ci = json!({
+        "state": b.ci.state,
+        "online": b.ci.online,
+        "offline": b.ci.runners.iter().filter(|r| r.status != "online").map(|r| r.name.as_str()).collect::<Vec<_>>(),
+        "runners_unread": b.ci.runners_unread.is_some(),
+    });
+    let machine = json!({ "state": b.machine.state, "word": b.machine.word });
     [
-        section("session", j(serde_json::to_value(&b.session))),
-        section("work", j(serde_json::to_value(&b.work))),
-        section("peers", j(serde_json::to_value(&b.peers))),
-        section("mesh", j(serde_json::to_value(&b.mesh))),
-        section("integration", j(serde_json::to_value(&b.integration))),
-        section("ci", j(serde_json::to_value(&b.ci))),
-        section("machine", j(serde_json::to_value(&b.machine))),
-        section("release", j(serde_json::to_value(&b.release))),
-        section("derive", j(serde_json::to_value(&b.derive))),
+        print(
+            "session",
+            &b.session.observed,
+            j(serde_json::to_value(&b.session)),
+        ),
+        print("work", &b.work.observed, j(serde_json::to_value(&b.work))),
+        print("peers", &b.peers.observed, peers),
+        print("mesh", &b.mesh.observed, j(serde_json::to_value(&b.mesh))),
+        print(
+            "integration",
+            &b.integration.observed,
+            j(serde_json::to_value(&b.integration)),
+        ),
+        print("ci", &b.ci.observed, ci),
+        print("machine", &b.machine.observed, machine),
+        print(
+            "release",
+            &b.release.observed,
+            j(serde_json::to_value(&b.release)),
+        ),
+        print(
+            "derive",
+            &b.derive.observed,
+            j(serde_json::to_value(&b.derive)),
+        ),
     ]
     .into_iter()
     .collect()
@@ -2758,12 +3377,27 @@ fn clock_free(v: &mut serde_json::Value) {
 
 /// Text wrapped at [`WRAP_WIDTH`] after a label column, every word kept.
 fn wrapped(label: &str, text: &str) -> Vec<String> {
+    wrapped_with(label, text, None)
+}
+
+/// Text wrapped at [`WRAP_WIDTH`] after a label column, every word kept, and `tail` (a
+/// remedy, `— git fetch origin master (session)`) kept whole on one line: a command broken
+/// across two lines cannot be copied as shown (2026-10-30: `— majordomus` ended one line and
+/// `start "<task>" ...` began the next). A line break or tab inside the text (a multi-line
+/// intent, a subprocess's error) is a space: such a word was once dropped whole.
+fn wrapped_with(label: &str, text: &str, tail: Option<&str>) -> Vec<String> {
     let indent = " ".repeat(LABEL_WIDTH);
     let mut out = Vec::new();
     let mut current = format!("{label:<width$}", width = LABEL_WIDTH);
     let mut empty = true;
+    let text = text.replace(['\n', '\r', '\t'], " ");
+    let tail = tail.map(|t| t.replace(['\n', '\r', '\t'], " "));
     // split on single spaces so that a deliberate double space (`p2  claude-code`) survives
-    for word in text.split(' ').filter(|w| !w.contains('\n')) {
+    let units = text
+        .split(' ')
+        .map(str::to_string)
+        .chain(tail.into_iter().filter(|t| !t.trim().is_empty()));
+    for word in units {
         let fits = current.chars().count() + 1 + word.chars().count() <= WRAP_WIDTH;
         if !empty && !fits {
             out.push(std::mem::replace(&mut current, indent.clone()));
@@ -2772,7 +3406,7 @@ fn wrapped(label: &str, text: &str) -> Vec<String> {
         if !empty {
             current.push(' ');
         }
-        current.push_str(word);
+        current.push_str(&word);
         empty = false;
     }
     out.push(current.trim_end().to_string());
@@ -2782,13 +3416,62 @@ fn wrapped(label: &str, text: &str) -> Vec<String> {
 /// A section's summary led by its status word, as every section's line is
 /// (`[owed] 2 landed commit(s) ...`): an owner whose own sentence carries no word (the release
 /// currency, the derive lock, the mesh) gets the section's. A summary that already leads with
-/// a bracketed word, or with `unread`, is left as it is.
+/// a bracketed word is left as it is, and one that leads with a bare `unread` has it bracketed:
+/// on 2026-10-30 the release and CI lines read `unread (took > 3000 ms)` and `unread: not the
+/// leaseholder` between lines that all led with their word in brackets.
 fn worded(word: &str, summary: &str) -> String {
-    if summary.starts_with('[') || summary.starts_with("unread") {
-        summary.to_string()
-    } else {
-        format!("[{word}] {summary}")
+    if summary.starts_with('[') {
+        return summary.to_string();
     }
+    match summary.strip_prefix("unread") {
+        Some(rest) if rest.is_empty() || rest.starts_with([':', ' ']) => {
+            let rest = rest.trim_start_matches(':').trim_start();
+            // `unread (took > 3000 ms)`: the parenthesis held the reason, which now stands alone
+            let rest = rest
+                .strip_prefix('(')
+                .and_then(|r| r.strip_suffix(')'))
+                .filter(|r| !r.contains(['(', ')']))
+                .unwrap_or(rest);
+            if rest.is_empty() {
+                "[unread]".into()
+            } else {
+                format!("[unread] {rest}")
+            }
+        }
+        _ => format!("[{word}] {summary}"),
+    }
+}
+
+/// A section's line: its summary led by its status word ([`worded`]) and, when its verdict is
+/// not `current`, ended by the command that reads it again or explains it, unless the summary
+/// already names that command. The report contract's rule is that a stale, partial or unread
+/// fact is said with its word, its age and its remedy; the line is where a person reads it.
+fn section_words(o: &BriefObservation, word: &str, summary: &str) -> String {
+    match section_parts(o, word, summary) {
+        (s, Some(tail)) => format!("{s} {tail}"),
+        (s, None) => s,
+    }
+}
+
+/// A section's line as [`section_words`] says it, with its remedy apart: `(words, "— r")`.
+fn section_parts(o: &BriefObservation, word: &str, summary: &str) -> (String, Option<String>) {
+    let s = worded(word, summary);
+    let tail = (o.verdict != BriefVerdict::Current)
+        .then(|| {
+            o.remedy
+                .as_deref()
+                .map(str::trim)
+                .filter(|r| !r.is_empty() && !s.contains(r))
+                .map(|r| format!("— {r}"))
+        })
+        .flatten();
+    (s, tail)
+}
+
+/// A section's line, wrapped, with its remedy kept whole.
+fn section_line(label: &str, o: &BriefObservation, word: &str, summary: &str) -> Vec<String> {
+    let (s, tail) = section_parts(o, word, summary);
+    wrapped_with(label, &s, tail.as_deref())
 }
 
 /// The release's status word: its stance (`current`, `owed`, `overdue`), `unread` otherwise.
@@ -2819,26 +3502,56 @@ fn brief_lines(s: &Sections, attention: &[BriefAttention], origin: &BriefOrigin)
         lines.extend(wrapped("attention", "none measured"));
     } else {
         for (i, a) in attention.iter().enumerate() {
-            let text = format!(
-                "[{}] {}: {} — {} ({})",
-                a.word, a.section, a.fact, a.remedy, a.actor
-            );
-            lines.extend(wrapped(if i == 0 { "attention" } else { "" }, &text));
+            // the one wording of an entry (report::attention_line), its remedy kept whole
+            let line = report::attention_line(a);
+            let (text, tail) = match line.split_once(" — ") {
+                Some((t, r)) => (t.to_string(), Some(format!("— {r}"))),
+                None => (line, None),
+            };
+            lines.extend(wrapped_with(
+                if i == 0 { "attention" } else { "" },
+                &text,
+                tail.as_deref(),
+            ));
         }
     }
-    lines.extend(wrapped(
+    lines.extend(section_line(
         "session",
-        &worded(s.session.observed.verdict.as_str(), &s.session.summary),
+        &s.session.observed,
+        s.session.observed.verdict.as_str(),
+        &s.session.summary,
     ));
-    lines.extend(wrapped(
+    lines.extend(section_line(
         "work",
-        &worded(s.work.observed.verdict.as_str(), &s.work.summary),
+        &s.work.observed,
+        s.work.observed.verdict.as_str(),
+        &s.work.summary,
     ));
     for item in &s.work.items {
         lines.extend(wrapped("", &work_item_words(item)));
     }
-    if !s.work.background.is_empty() || s.work.state != BriefSectionState::Unread {
-        let mut bg: Vec<String> = s
+    // the background row is printed when there is a background to name: a constant "none;
+    // provider background: not exposed" under every work line said nothing (the work summary
+    // says once that the provider's background is undeclared)
+    let provider: Vec<String> = s
+        .work
+        .provider_background
+        .iter()
+        .map(|t| {
+            format!(
+                "{} {} [{}]",
+                t.id,
+                t.description,
+                if t.status.is_empty() {
+                    "unknown"
+                } else {
+                    &t.status
+                }
+            )
+        })
+        .collect();
+    if !s.work.background.is_empty() || !provider.is_empty() {
+        let mut parts: Vec<String> = s
             .work
             .background
             .iter()
@@ -2851,65 +3564,42 @@ fn brief_lines(s: &Sections, attention: &[BriefAttention], origin: &BriefOrigin)
                 )
             })
             .collect();
-        if bg.is_empty() {
-            bg.push("none".into());
+        if !provider.is_empty() {
+            parts.push(format!("provider: {}", provider.join(", ")));
         }
-        let provider = if s.work.provider_background_exposed {
-            s.work
-                .provider_background
-                .iter()
-                .map(|t| {
-                    format!(
-                        "{} {} [{}]",
-                        t.id,
-                        t.description,
-                        if t.status.is_empty() {
-                            "unknown"
-                        } else {
-                            &t.status
-                        }
-                    )
-                })
-                .collect::<Vec<_>>()
-                .join(", ")
-        } else {
-            "not exposed".into()
-        };
-        lines.extend(wrapped(
-            "",
-            &format!(
-                "background  {}; provider background: {provider}",
-                bg.join(", ")
-            ),
-        ));
+        lines.extend(wrapped("", &format!("background: {}", parts.join(", "))));
     }
     for d in &s.work.delivered {
-        lines.extend(wrapped(
-            "",
-            &format!(
-                "delivered [{}] {}{} {} at {}",
-                d.kind,
-                d.pr.map(|n| format!("#{n} ")).unwrap_or_default(),
-                d.branch,
-                d.sha,
-                d.at
-            ),
-        ));
+        lines.extend(wrapped("", &delivered_words(d)));
     }
-    lines.extend(wrapped(
+    if let Some(why) = &s.work.delivered_unread {
+        if s.work.state != BriefSectionState::Unread {
+            lines.extend(wrapped(
+                "",
+                &format!("delivered {}: {why}", report::NOT_READ),
+            ));
+        }
+    }
+    lines.extend(section_line(
         "peers",
-        &worded(s.peers.observed.verdict.as_str(), &s.peers.summary),
+        &s.peers.observed,
+        s.peers.observed.verdict.as_str(),
+        &s.peers.summary,
     ));
     for n in &s.peers.named {
         lines.extend(wrapped("", n));
     }
-    lines.extend(wrapped(
+    lines.extend(section_line(
         "mesh",
-        &worded(s.mesh.observed.verdict.as_str(), &s.mesh.summary),
+        &s.mesh.observed,
+        s.mesh.observed.verdict.as_str(),
+        &s.mesh.summary,
     ));
-    lines.extend(wrapped(
+    lines.extend(section_line(
         "integration",
-        &worded(integration_word(&s.integration), &s.integration.summary),
+        &s.integration.observed,
+        integration_word(&s.integration),
+        &s.integration.summary,
     ));
     for t in &s.work.trains {
         lines.extend(wrapped(
@@ -2917,36 +3607,72 @@ fn brief_lines(s: &Sections, attention: &[BriefAttention], origin: &BriefOrigin)
             &format!("train {} carries #{} (from {})", t.branch, t.pr, t.source),
         ));
     }
-    lines.extend(wrapped(
+    lines.extend(section_line(
         "ci",
-        &worded(s.ci.observed.verdict.as_str(), &s.ci.summary),
+        &s.ci.observed,
+        s.ci.observed.verdict.as_str(),
+        &s.ci.summary,
     ));
-    lines.extend(wrapped(
+    lines.extend(section_line(
         "machine",
-        &worded(s.machine.observed.verdict.as_str(), &s.machine.summary),
+        &s.machine.observed,
+        s.machine.observed.verdict.as_str(),
+        &s.machine.summary,
     ));
-    lines.extend(wrapped(
+    lines.extend(section_line(
         "release",
-        &worded(release_word(&s.release), &s.release.summary),
+        &s.release.observed,
+        release_word(&s.release),
+        &s.release.summary,
     ));
-    lines.extend(wrapped(
+    lines.extend(section_line(
         "derive",
-        &worded(s.derive.observed.verdict.as_str(), &s.derive.summary),
+        &s.derive.observed,
+        s.derive.observed.verdict.as_str(),
+        &s.derive.summary,
     ));
-    let mut answered = format!("{} ", origin.process);
+    lines.extend(wrapped("answered by", &answered_words(s, origin)));
+    lines
+}
+
+/// Who composed the brief, why that process, and what the sections cost, flat:
+/// `this process — leaseholder http://... did not answer within 10 s; unread past its budget:
+/// release (3.0 s); slowest release 3.0 s`. On 2026-10-30 the line nested three parentheses
+/// deep and quoted the operating system's error.
+fn answered_words(s: &Sections, origin: &BriefOrigin) -> String {
+    let mut parts: Vec<String> = Vec::new();
+    let mut who = origin.process.replace('_', " ");
     if let Some(u) = &origin.url {
-        answered.push_str(&format!("{u} "));
+        who.push_str(&format!(" {u}"));
     }
     if let Some(n) = &origin.note {
-        answered.push_str(&format!("({n}) "));
+        who.push_str(&format!(" — {n}"));
     }
-    answered.push_str(&format!("({}", budget_words(s)));
+    parts.push(who);
+    parts.push(budget_words(s));
     if let Some(slow) = &origin.slowest {
-        answered.push_str(&format!("; slowest {slow}"));
+        parts.push(format!("slowest {slow}"));
     }
-    answered.push(')');
-    lines.extend(wrapped("answered by", &answered));
-    lines
+    parts.join("; ")
+}
+
+/// One delivery in words: `delivered: merged #2686 fix/x 51b38035a7 at 2026-10-29T17:31:00Z
+/// (merge time)`. The kind is no status word, so it is not bracketed.
+fn delivered_words(d: &BriefDelivered) -> String {
+    let source = match d.at_source.as_str() {
+        "" => String::new(),
+        "push" => " (pushed, from the remote-tracking ref's reflog)".into(),
+        "commit" => " (commit time: no push of it in this clone's reflog)".into(),
+        other => format!(" ({other} time)"),
+    };
+    format!(
+        "delivered: {} {}{} {} at {}{source}",
+        d.kind,
+        d.pr.map(|n| format!("#{n} ")).unwrap_or_default(),
+        d.branch,
+        d.sha,
+        d.at
+    )
 }
 
 /// What the sections cost against their budgets, in words. A section past its budget is one
@@ -2977,6 +3703,11 @@ fn budget_words(s: &Sections) -> String {
         .iter()
         .filter(|(_, o)| over(o) && o.verdict != BriefVerdict::Unread)
         .map(|(n, o)| format!("{n} {} of {}", millis(o.elapsed_ms), millis(o.budget_ms)))
+        .collect();
+    let unread: Vec<String> = all
+        .iter()
+        .filter(|(n, _)| unread.contains(n))
+        .map(|(n, o)| format!("{n} ({})", millis(o.budget_ms)))
         .collect();
     match (unread.is_empty(), late.is_empty()) {
         (true, true) => "every section inside its budget".into(),
@@ -3036,6 +3767,10 @@ fn work_item_words(i: &BriefWorkItem) -> String {
     ));
     match (&i.pr, &i.merge_state) {
         (Some(_), Some(m)) => s.push_str(&format!(" mergeStateStatus {m}")),
+        // its head is on master already: no pull request is owed for it
+        (None, _) if i.word == "merged" => s.push_str(" no open PR; its head is on master"),
+        // its pull request was not looked up (work::word_of_read): never "no PR"
+        (None, _) if i.pushed && i.word == "unread" => s.push_str(" pull request not read"),
         (None, _) if i.pushed => s.push_str(" no PR"),
         (None, _) => s.push_str(" not pushed"),
         _ => {}
@@ -3075,7 +3810,7 @@ fn one_line(s: &Sections, attention: &[BriefAttention]) -> String {
         .map(|c| format!("{c} "))
         .unwrap_or_default();
     let first = if session.state == BriefSectionState::Unread {
-        format!("{caller}session ?")
+        format!("{caller}session unread")
     } else {
         let prs = s.work.items.iter().filter(|i| i.pr.is_some()).count();
         format!(
@@ -3092,7 +3827,13 @@ fn one_line(s: &Sections, attention: &[BriefAttention]) -> String {
     // the worst entry names its section, as `release owed 1 landed commit(s) past ...`: the
     // section's own token keeps its place further right, and is the first a full line drops,
     // so the lead must say on its own what it is about
-    if let Some(worst) = attention.iter().find(|a| a.id != "session.no_task") {
+    // a section past its budget is the brief's own cost, not a measured condition: it never
+    // leads the line (2026-10-30: "[unread] release took > 3000 ms" led it, and the release
+    // token said "release unread" again further right)
+    if let Some(worst) = attention
+        .iter()
+        .find(|a| a.id != "session.no_task" && a.id != "section.over_budget")
+    {
         // a fact that already starts with its section ("peers took > 4000 ms") says it once
         let fact = worst
             .fact
@@ -3124,12 +3865,14 @@ fn one_line(s: &Sections, attention: &[BriefAttention]) -> String {
             m
         }
         BriefSectionState::Unread => "mesh unread".into(),
-        _ => "mesh off".into(),
+        // filed status words, never a word of the line's own
+        _ => "mesh inactive".into(),
     });
     tokens.push(match s.peers.state {
         BriefSectionState::Unread => "peers unread".to_string(),
         _ => {
-            let mut p = format!("peers {}/{}b", s.peers.attached, s.peers.boards);
+            // workers attached: the checkouts asked are no count a person acts on
+            let mut p = format!("peers {}", s.peers.attached);
             if !s.peers.unread.is_empty() {
                 p.push_str(&format!(" ({} unread)", s.peers.unread.len()));
             }
@@ -3143,7 +3886,7 @@ fn one_line(s: &Sections, attention: &[BriefAttention]) -> String {
     match (&s.derive.state, &s.derive.holder) {
         (BriefSectionState::Undeclared, _) => {}
         (BriefSectionState::Unread, _) => tokens.push("derive unread".into()),
-        (_, None) => tokens.push("derive free".into()),
+        (_, None) => tokens.push("derive idle".into()),
         (_, Some(h)) => tokens.push(format!(
             "derive {}{}",
             clip(h.split_whitespace().next().unwrap_or("unnamed"), 28),
@@ -3229,11 +3972,12 @@ fn machine_token(m: &BriefMachineSection) -> String {
     if m.state == BriefSectionState::Unread {
         return "machine unread".into();
     }
-    let gib = |b: u64| b / (1 << 30);
+    // one decimal, as the machine line and the attention entry say the same measurement
+    let gib = report::gib;
     let mut t = match (m.free_bytes, m.floor_gib) {
         (Some(f), Some(fl)) => format!("disk {}/{fl}G", gib(f)),
         (Some(f), None) => format!("disk {}G", gib(f)),
-        _ => "disk ?".into(),
+        _ => "disk unread".into(),
     };
     if let (Some(u), Some(tot)) = (m.swap_used_bytes, m.swap_total_bytes) {
         if let Some(pct) = u.saturating_mul(100).checked_div(tot) {
@@ -3329,6 +4073,8 @@ mod tests {
             task_started_at: None,
             task_checkpoint_at: None,
             task_owner_session: None,
+            task_worktree: None,
+            task_record_foreign: false,
             caller: Some("p2".into()),
             summary:
                 "[current] p2 = 07a5ffde (provider session); episode s-1 on feature/x at abc1234567"
@@ -3346,10 +4092,12 @@ mod tests {
             observed: BriefObservation::now(),
             attached: 3,
             boards: 5,
+            boards_read: 5,
             unread: (0..unread)
                 .map(|i| format!("/wt/{i}: did not answer"))
                 .collect(),
             overlaps: 0,
+            overlaps_with_you: Vec::new(),
             superseded: superseded.then(|| "this server is superseded by x".to_string()),
             leaseholder: superseded.then(|| "http://127.0.0.1:9".to_string()),
             named: vec!["p1  claude-code @master (server's): integrating".into()],
@@ -3494,6 +4242,7 @@ mod tests {
                 ..BriefWorkItem::default()
             },
         ];
+        s.work.pull_requests_read = true;
         s.peers = peers(1, true);
         s.mesh = BriefMeshSection {
             state: BriefSectionState::Read,
@@ -3614,7 +4363,11 @@ mod tests {
         );
         let mut overdue = everything_wrong();
         overdue.release = release(Stance::Overdue, 30);
-        for s in [idle, none, overdue] {
+        // a fetch older than the interval is its own entry only when the queue is not stale
+        let mut unfetched = everything_wrong();
+        unfetched.integration.stale = false;
+        unfetched.integration.master_fetched_age_seconds = Some(2 * 3600);
+        for s in [idle, none, overdue, unfetched] {
             emitted.extend(brief_of(s).attention.iter().map(|a| a.id.clone()));
         }
         let emitted: std::collections::BTreeSet<&str> =
@@ -3623,6 +4376,39 @@ mod tests {
             emitted, conditions,
             "a declared row no condition fires is dead wording"
         );
+    }
+
+    #[test]
+    fn a_branch_is_said_to_have_no_pr_only_when_the_pull_requests_were_read() {
+        // 2026-10-30, a linked worktree whose server was absent: the brief said
+        // "[unmerged] ... no PR — gh pr create" of a branch whose PRs it had never asked for
+        let mut unread = everything_wrong();
+        unread.work.pull_requests_read = false;
+        let b = brief_of(unread);
+        assert!(
+            !b.attention.iter().any(|a| a.id == "branch.no_pr"),
+            "{:?}",
+            b.attention
+        );
+        let read = brief_of(everything_wrong());
+        assert!(read.attention.iter().any(|a| a.id == "branch.no_pr"));
+        // a dirty PR whose branch has no canonical worktree here names the command that
+        // prints where it belongs, never a `<worktree>` to fill in
+        let mut s = everything_wrong();
+        s.work.items[0].worktree = None;
+        let b = brief_of(s);
+        let dirty = b
+            .attention
+            .iter()
+            .find(|a| a.id == "pr.dirty")
+            .expect("the dirty PR is an attention entry");
+        assert_eq!(
+            dirty.remedy,
+            "git -C \"$(majordomus worktree path docs/a)\" merge origin/master"
+        );
+        for text in b.lines.iter().chain([&b.line, &b.report.prompt]) {
+            assert!(!text.contains("<worktree>"), "{text}");
+        }
     }
 
     #[test]
@@ -3708,7 +4494,18 @@ mod tests {
         }
         // the stale queue, the failing run, the swap and the dirty PR, each with its remedy
         let p = &b.report.prompt;
-        assert!(p.contains("[stale] integration: queue observed 17 h ago at 81ef931a3e; origin/master is 5370ee63d1 (+3) — majordomus prs refresh (session)"), "{p}");
+        // the remedy is the contract's row, read from it rather than restated (case 4401)
+        let fetch = &report::contract()
+            .row("integration.stale")
+            .expect("the row")
+            .remedy;
+        assert!(p.contains(&format!("[stale] integration: queue observed 17 h ago at 81ef931a3e; origin/master is 5370ee63d1 (+3 commits) — {fetch} (session)")), "{p}");
+        // one cause, one entry: the stale queue's remedy fetches, so no unfetched entry beside it
+        assert!(
+            !b.attention.iter().any(|a| a.id == "integration.unfetched"),
+            "{:?}",
+            b.attention
+        );
         assert!(p.contains("[failing] work: integration/train-10a-20261028: run 40813274272 24/36, failed structure (timed_out)"), "{p}");
         assert!(
             p.contains("[degraded] machine: swap 9.0/10.0 GiB (90 %) — top -o mem"),
@@ -3797,11 +4594,12 @@ mod tests {
     fn the_line_drops_tokens_with_a_count() {
         let b = brief_of(everything_wrong());
         assert!(b.line.chars().count() <= LINE_WIDTH, "{}", b.line);
-        // the worst entry that is not the absent task follows the caller
+        // the worst entry that is neither the absent task nor the brief's own cost follows the
+        // caller
         let worst = b
             .attention
             .iter()
-            .find(|a| a.id != "session.no_task")
+            .find(|a| a.id != "session.no_task" && a.id != "section.over_budget")
             .unwrap();
         let second = b.line.split(" | ").nth(1).unwrap_or_default();
         let lead = format!("{} {} ", worst.section, worst.word);
@@ -3869,7 +4667,7 @@ mod tests {
     #[test]
     fn a_work_line_names_its_worktree_from_the_primarys_name() {
         assert_eq!(
-            worktree_words("/Users/k/dev/prismatic-majordomus-wt/fix/a-stuck-run-is-stopped"),
+            worktree_words("/srv/work/dev/prismatic-majordomus-wt/fix/a-stuck-run-is-stopped"),
             "prismatic-majordomus-wt/fix/a-stuck-run-is-stopped"
         );
         assert_eq!(worktree_words("repo-wt/feature/x"), "repo-wt/feature/x");
@@ -3881,7 +4679,7 @@ mod tests {
         let item = BriefWorkItem {
             branch: "fix/a-stuck-run-is-stopped-by-its-bound".into(),
             worktree: Some(
-                "/Users/korczis/dev/prismatic-majordomus-wt/fix/a-stuck-run-is-stopped-by-its-bound"
+                "/srv/work/dev/prismatic-majordomus-wt/fix/a-stuck-run-is-stopped-by-its-bound"
                     .into(),
             ),
             ..BriefWorkItem::default()
@@ -4076,17 +4874,48 @@ mod tests {
         assert!(
             b.attention
                 .iter()
-                .any(|a| a.id == "section.over_budget" && a.fact == "derive took > 100 ms"),
+                .any(|a| a.id == "section.over_budget" && a.fact == "took > 100 ms"),
             "{:?}",
             b.attention
         );
-        // the line leads with it, naming its section once
-        assert!(
-            b.line.contains(" | derive unread took > 100 ms"),
-            "{}",
-            b.line
+        let entry = b
+            .attention
+            .iter()
+            .find(|a| a.id == "section.over_budget")
+            .expect("the over-budget entry");
+        // its remedy reads the section on its own, never the brief that ran out of time on it
+        assert_eq!(entry.remedy, "majordomus doctor");
+        assert_eq!(entry.report_section, "machine_ci");
+        // the brief's own cost never leads the line: the derive token says it once
+        assert!(b.line.contains(" | derive unread"), "{}", b.line);
+        assert!(!b.line.contains("derive unread took"), "{}", b.line);
+        // and the budget is said in the unit the answered-by line says it in
+        let mut release_late = calm();
+        release_late.release = BriefReleaseSection::over_budget(
+            "release",
+            Duration::from_secs(3),
+            Duration::from_secs(4),
         );
-        assert!(!b.line.contains("derive unread derive"), "{}", b.line);
+        let b = brief_of(release_late);
+        let entry = b
+            .attention
+            .iter()
+            .find(|a| a.id == "section.over_budget")
+            .expect("the over-budget entry");
+        assert_eq!(entry.fact, "took > 3.0 s");
+        assert_eq!(entry.remedy, "majordomus release next");
+        let answered = b
+            .lines
+            .iter()
+            .skip_while(|l| !l.starts_with("answered by"))
+            .flat_map(|l| l.split_whitespace())
+            .collect::<Vec<_>>()
+            .join(" ");
+        assert!(
+            answered.contains("unread past its budget: release (3.0 s)"),
+            "{answered}"
+        );
+        assert!(!answered.contains("composed by this process"), "{answered}");
     }
 
     #[test]
@@ -4146,6 +4975,331 @@ mod tests {
         let c = brief_of(moved);
         assert_ne!(a.fingerprints["integration"], c.fingerprints["integration"]);
         assert_eq!(a.fingerprints["mesh"], c.fingerprints["mesh"]);
+    }
+
+    #[test]
+    fn a_quiet_interval_moves_no_fingerprint_of_the_peers_the_ci_or_the_machine() {
+        // 2026-10-30: three briefs a quarter of an hour apart, nothing of this session changed,
+        // and every one woke it: the boards counted 572, 573, 574 worktrees, the overlaps 62
+        // and 65, other workers re-announced with their own clocks, the CI counts moved, swap
+        // was resized, and a section crossed its budget once
+        let mut base = calm();
+        base.peers.people = vec![BriefPeer {
+            id: "p9".into(),
+            client: "claude-code".into(),
+            pid: Some(11643),
+            host: Some("lundra".into()),
+            socket: None,
+            branch: Some("feature/links".into()),
+            worktree: None,
+            branch_source: "announce".into(),
+            intent: Some("I4298 links (ab/p9 01:34Z)".into()),
+            other_claims: 3,
+            you: false,
+        }];
+        let a = brief_of(base.clone());
+        let mut quiet = base.clone();
+        quiet.peers.boards += 1;
+        quiet.peers.overlaps += 3;
+        quiet.peers.people[0].intent = Some("I4298 links (ab/p9 01:49Z)".into());
+        quiet.peers.people[0].other_claims = 4;
+        quiet.peers.people[0].pid = Some(11700);
+        quiet.ci.in_progress = Some(7);
+        quiet.ci.queued = Some(21);
+        quiet.machine.swap_total_bytes = Some(12 << 30);
+        quiet.machine.builders = Some(2);
+        let b = brief_of(quiet);
+        for section in ["peers", "ci", "machine"] {
+            assert_eq!(
+                a.fingerprints[section], b.fingerprints[section],
+                "{section}"
+            );
+        }
+        // a section read past its budget is late, never changed, and its entry is no fact
+        let mut late_peers = base.clone();
+        late_peers.peers =
+            BriefPeersSection::over_budget("peers", Duration::from_secs(4), Duration::from_secs(5));
+        let c = brief_of(late_peers);
+        assert_eq!(c.fingerprints["peers"], LATE);
+        assert!(changed_sections(&a.fingerprints, &c.fingerprints).is_empty());
+        assert!(changed_sections(&c.fingerprints, &a.fingerprints).is_empty());
+        // and a fact that concerns this session does move it
+        let mut moved = base.clone();
+        moved.peers.people[0].branch = Some("feature/other".into());
+        moved.machine = machine::section(
+            vec![BriefVolume {
+                path: "/".into(),
+                free_bytes: 20 << 30,
+            }],
+            Some((1 << 30, 10 << 30)),
+            &Ok(Vec::new()),
+            Some(35),
+            Some(5),
+        );
+        let d = brief_of(moved);
+        assert_eq!(
+            changed_sections(&a.fingerprints, &d.fingerprints),
+            ["machine", "peers"]
+        );
+    }
+
+    #[test]
+    fn the_interval_prompt_opens_with_what_changed_and_lists_what_did_not() {
+        let a = brief_of(calm());
+        let mut s = calm();
+        s.peers.people = vec![BriefPeer {
+            id: "p9".into(),
+            client: "claude-code".into(),
+            pid: None,
+            host: None,
+            socket: None,
+            branch: Some("feature/links".into()),
+            worktree: None,
+            branch_source: "announce".into(),
+            intent: None,
+            other_claims: 0,
+            you: false,
+        }];
+        let mut b = brief_of(s);
+        b.report.since = Some("2026-10-29T09:20:00Z".into());
+        let b = told(b, &a.fingerprints);
+        assert_eq!(
+            b.report.changed.as_deref(),
+            Some(&["peers".to_string()][..])
+        );
+        let p = &b.report.prompt;
+        assert!(
+            p.contains("Changed since 2026-10-29T09:20:00Z: peers."),
+            "{p}"
+        );
+        assert!(
+            p.contains("written as the heading and [unchanged]: delivered, in_flight, integration, machine_ci, next."),
+            "{p}"
+        );
+        // nothing compared, nothing said to be unchanged
+        let none = brief_of(calm());
+        assert!(none.report.changed.is_none());
+        assert!(
+            none.report.prompt.contains("not compared"),
+            "{}",
+            none.report.prompt
+        );
+        assert!(
+            !none.report.prompt.contains("[unchanged]:"),
+            "{}",
+            none.report.prompt
+        );
+    }
+
+    #[test]
+    fn a_question_in_flight_is_asked_once_and_its_answer_handed_on() {
+        let asked = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let key = format!("{SHARED_TEST}release {}", std::process::id());
+        let readers: Vec<_> = (0..6)
+            .map(|_| {
+                let (asked, key) = (asked.clone(), key.clone());
+                std::thread::spawn(move || {
+                    shared(&key, Duration::from_secs(60), || {
+                        asked.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                        std::thread::sleep(Duration::from_millis(200));
+                        Ok(json!({ "stance": "owed" }))
+                    })
+                })
+            })
+            .collect();
+        for r in readers {
+            assert_eq!(r.join().expect("a reader"), Ok(json!({ "stance": "owed" })));
+        }
+        assert_eq!(
+            asked.load(std::sync::atomic::Ordering::SeqCst),
+            1,
+            "one call for six readers"
+        );
+        // inside its reuse window the answer is handed out as it is; a failure never is
+        let again = shared(&key, Duration::from_secs(60), || Ok(json!("asked again")));
+        assert_eq!(again, Ok(json!({ "stance": "owed" })));
+        let failing = format!("{SHARED_TEST}failing {}", std::process::id());
+        assert!(shared(&failing, Duration::from_secs(60), || Err("no".into())).is_err());
+        assert_eq!(
+            shared(&failing, Duration::from_secs(60), || Ok(json!(1))),
+            Ok(json!(1))
+        );
+    }
+
+    #[test]
+    fn the_attention_reads_in_order_of_consequence() {
+        // the five entries of the primary checkout's brief of 2026-10-30 05:33Z, in the order
+        // they must be read: the stale queue first, the brief's own cost last
+        let mut s = calm();
+        s.session.task_id = None;
+        s.session.last_task = Some("t-20261023195110-d51b".into());
+        s.integration = BriefIntegrationSection {
+            state: BriefSectionState::Read,
+            stale: true,
+            age_seconds: Some(36 * 3600),
+            observed_master: Some("81ef931a3e0000".into()),
+            master_now: Some("51b38035a70000".into()),
+            moved_by: Some(93),
+            master_fetched_age_seconds: Some(23 * 60),
+            ..integration_never()
+        };
+        s.peers = peers(1, false);
+        s.release = BriefReleaseSection::over_budget(
+            "release",
+            Duration::from_secs(3),
+            Duration::from_secs(4),
+        );
+        let ids: Vec<String> = brief_of(s).attention.into_iter().map(|a| a.id).collect();
+        assert_eq!(
+            ids,
+            [
+                "integration.stale",
+                "peers.unread",
+                "session.no_task",
+                "section.over_budget"
+            ]
+        );
+    }
+
+    #[test]
+    fn a_session_working_in_its_worktree_is_not_called_inactive() {
+        // 2026-10-30: the mod composed the brief in the primary checkout, whose record was a
+        // task of 10-23, while session 07a5ffde's task ran in its branch's worktree
+        let dir = tempfile::tempdir().expect("a scratch directory");
+        let wt = dir.path().join("prismatic-majordomus-wt/feature/x");
+        std::fs::create_dir_all(wt.join(".ai/local/state")).expect("the worktree");
+        std::fs::write(
+            wt.join(".ai/local/state/current.yaml"),
+            "id: t-20261029110638-0dd3\ntask: \"I4390: the brief\"\noutcome: active\nstarted_at: 2026-10-29T11:06:38Z\n",
+        )
+        .expect("the record");
+        let mut s = calm();
+        s.session = session(None);
+        s.session.summary.push_str(&format!(
+            "; {NO_TASK_HERE} (last t-20261023195110-d51b [partial], owner [unknown]) — source current.yaml, read now"
+        ));
+        s.work.items = vec![BriefWorkItem {
+            branch: "feature/x".into(),
+            worktree: Some(wt.display().to_string()),
+            task: Some("t-20261029110638-0dd3".into()),
+            task_outcome: Some("active".into()),
+            ..BriefWorkItem::default()
+        }];
+        adopt_worktree_task(&mut s.session, &s.work, Some("07a5ffde-74b3"));
+        assert_eq!(s.session.task_id.as_deref(), Some("t-20261029110638-0dd3"));
+        assert!(
+            s.session
+                .summary
+                .contains("; task t-20261029110638-0dd3 [active] in worktree prismatic-majordomus-wt/feature/x: I4390: the brief"),
+            "{}",
+            s.session.summary
+        );
+        assert!(
+            !s.session.summary.contains(NO_TASK_HERE),
+            "{}",
+            s.session.summary
+        );
+        let b = brief_of(s);
+        assert!(
+            !b.attention.iter().any(|a| a.id == "session.no_task"),
+            "{:?}",
+            b.attention
+        );
+        assert!(!b.lines.join("\n").contains("[inactive]"));
+        // a record another provider session wrote is not adopted
+        std::fs::write(
+            wt.join(".ai/local/state/current.yaml"),
+            "id: t-2\ntask: x\noutcome: active\nprovider_session: 61e1283f\n",
+        )
+        .expect("the record");
+        let mut other = session(None);
+        let work = BriefWorkSection {
+            items: vec![BriefWorkItem {
+                branch: "feature/x".into(),
+                worktree: Some(wt.display().to_string()),
+                task: Some("t-2".into()),
+                ..BriefWorkItem::default()
+            }],
+            ..BriefWorkSection::default()
+        };
+        adopt_worktree_task(&mut other, &work, Some("07a5ffde-74b3"));
+        assert_eq!(other.task_id, None);
+        // and this checkout's record of another session raises no session.no_task
+        let mut s = calm();
+        s.session = session(None);
+        s.session.task_record_foreign = true;
+        assert!(!brief_of(s)
+            .attention
+            .iter()
+            .any(|a| a.id == "session.no_task"));
+    }
+
+    #[test]
+    fn a_session_with_no_task_is_given_a_command_that_runs_as_written() {
+        let mut s = calm();
+        s.session = session(None);
+        let b = brief_of(s);
+        let e = b
+            .attention
+            .iter()
+            .find(|a| a.id == "session.no_task")
+            .expect("no task");
+        assert_eq!(e.remedy, "majordomus plan next");
+        let mut s = calm();
+        s.session = session(None);
+        s.work.claims = vec![BriefClaim {
+            key: "board-p2/I4390".into(),
+            issue: Some("I4390".into()),
+            intent: Some("I4390 the brief's review fixes".into()),
+            scope: vec![
+                "refs/heads/feature/x".into(),
+                "share/brief/".into(),
+                "docs/BRIEF.md".into(),
+            ],
+            state: "announced".into(),
+        }];
+        let b = brief_of(s);
+        let e = b
+            .attention
+            .iter()
+            .find(|a| a.id == "session.no_task")
+            .expect("no task");
+        assert_eq!(
+            e.remedy,
+            "majordomus start 'I4390 the brief'\\''s review fixes' --scope share/brief/ docs/BRIEF.md"
+        );
+        for a in brief_of(everything_wrong()).attention {
+            assert!(
+                !a.remedy.contains('<') && !a.remedy.split(' ').any(|w| w == "?"),
+                "{}: {}",
+                a.id,
+                a.remedy
+            );
+        }
+    }
+
+    #[test]
+    fn a_remedy_is_never_broken_across_lines_and_no_word_is_dropped() {
+        let text = "[stale] integration: queue observed 36 h ago at 81ef931a3e; origin/master is 51b38035a7 (+93 commits)";
+        let tail = "— git fetch origin master && git log -1 --format=%H origin/master (session)";
+        let lines = wrapped_with("attention", text, Some(tail));
+        assert!(lines.iter().any(|l| l.contains(tail)), "{lines:?}");
+        // a word that held a line break is kept, as a space
+        let kept = wrapped("", "one\ntwo\tthree four").join(" ");
+        assert!(kept.contains("one two three four"), "{kept}");
+        // every line of a brief keeps each attention remedy whole
+        let b = brief_of(everything_wrong());
+        for a in &b.attention {
+            assert!(
+                b.lines
+                    .iter()
+                    .any(|l| l.contains(&format!("— {} ({})", a.remedy, a.actor))
+                        || a.remedy.chars().count() + LABEL_WIDTH > WRAP_WIDTH),
+                "{} is broken across lines: {:?}",
+                a.remedy,
+                b.lines
+            );
+        }
     }
 
     // ------------------------------------------------ the derive lock
@@ -4455,7 +5609,10 @@ mod tests {
         assert_eq!(mine.resolved_by.as_deref(), Some("provider_session"));
         assert_eq!(mine.provider_session.as_deref(), Some("prov-2"));
         assert_eq!(mine.caller.as_deref(), Some(me.as_str()));
-        assert_eq!(mine.task_id.as_deref(), Some("t-1"));
+        // the record is prov-9's: running or not, it is not this session's task, and no
+        // session.no_task is raised on it (2026-10-30, the primary checkout's record)
+        assert_eq!(mine.task_id, None);
+        assert!(mine.task_record_foreign);
         assert_eq!(mine.task_owner_session.as_deref(), Some("prov-9"));
         assert!(
             mine.summary.starts_with(&format!(
@@ -4466,10 +5623,20 @@ mod tests {
             mine.summary
         );
         assert!(
-            mine.summary
-                .contains("; task t-1 [active]: I2399: cover the brief"),
+            mine.summary.contains(&format!(
+                "; {NO_TASK_HERE} (its record t-1 [active], checkpointed "
+            )) && mine.summary.contains(" is session prov-9's)"),
             "{}",
             mine.summary
+        );
+        let owner = session_section(&ctx, &root, Some("prov-9"), &[]);
+        assert_eq!(owner.task_id.as_deref(), Some("t-1"));
+        assert!(
+            owner
+                .summary
+                .contains("; task t-1 [active]: I2399: cover the brief"),
+            "{}",
+            owner.summary
         );
 
         let pointed = session_section(&ctx, &root, None, &[]);
@@ -4510,8 +5677,8 @@ mod tests {
             assert_eq!(s.task_outcome.as_deref(), Some(outcome));
             assert!(
                 s.summary.contains(&format!(
-                    "no active task (last t-1 [{outcome}], checkpointed 10-27, owner prov-9)"
-                )),
+                    "{NO_TASK_HERE} (last t-1 [{outcome}], checkpointed "
+                )) && s.summary.contains(" ago, owner prov-9)"),
                 "{outcome}: {}",
                 s.summary
             );
@@ -4587,7 +5754,7 @@ mod tests {
         let repo = SyntheticRepository::small().expect("a repository");
         let ctx = canned_context(&repo);
         can("peers.list", list);
-        let s = peers_section(&ctx, Checkouts::Repository, None, None, None);
+        let s = peers_section(&ctx, Checkouts::Repository, None, None, None, None);
         assert_eq!(s.state, BriefSectionState::Partial);
         assert_eq!((s.attached, s.boards, s.overlaps), (9, 2, 1));
         assert_eq!(
@@ -4595,16 +5762,17 @@ mod tests {
             ["/elsewhere: its server is starting and has no board to read yet"]
         );
         assert_eq!((s.named.len(), s.people.len()), (PEERS_NAMED, PEERS_NAMED));
+        // a peer that names no branch is said so in words, never "@?"
         assert!(
-            s.named[0].ends_with("@? : worker 0 at work")
-                || s.named[0].ends_with("@?: worker 0 at work"),
+            s.named[0].ends_with(" on no branch it named: worker 0 at work"),
             "{}",
             s.named[0]
         );
+        assert!(!s.named.iter().any(|n| n.contains("@?")), "{:?}", s.named);
         assert_eq!(s.people[0].intent.as_deref(), Some("worker 0 at work"));
         assert_eq!(
             s.summary,
-            "[partial] 9 attached on 2 board(s), 1 unread, 1 overlap(s); +1 more: majordomus peers"
+            "[partial] 9 attached (2 checkout(s) asked, 1 board(s) read), 1 unread; overlaps: 0 worker(s) on your claims, 1 claim pair(s) in all; +1 more: majordomus peers"
         );
     }
 
@@ -4612,7 +5780,7 @@ mod tests {
     fn a_board_nobody_answers_for_is_unread() {
         let repo = SyntheticRepository::small().expect("a repository");
         let bare = bare_context(&repo);
-        let s = peers_section(&bare, Checkouts::This, None, None, None);
+        let s = peers_section(&bare, Checkouts::This, None, None, None, None);
         assert_eq!(s.state, BriefSectionState::Unread);
         assert_eq!(s.observed.verdict, BriefVerdict::Unread);
         assert_eq!(s.observed.remedy.as_deref(), Some("majordomus peers"));
@@ -4648,7 +5816,7 @@ mod tests {
         own["overlaps"] = json!([]);
         can("peers.list", own);
 
-        let s = peers_section(&ctx, Checkouts::This, None, Some(url), None);
+        let s = peers_section(&ctx, Checkouts::This, None, Some(url), None, None);
         assert_eq!(s.state, BriefSectionState::Read, "{}", s.summary);
         assert_eq!(
             s.attached, 1,
@@ -4662,7 +5830,7 @@ mod tests {
             s.named
         );
 
-        let s = peers_section(&ctx, Checkouts::This, None, Some(dead_url()), None);
+        let s = peers_section(&ctx, Checkouts::This, None, Some(dead_url()), None, None);
         assert_eq!(s.state, BriefSectionState::Partial, "{}", s.summary);
         assert_eq!(s.unread.len(), 1, "{:?}", s.unread);
         assert!(s.unread[0].starts_with("this checkout's board, held by the leaseholder: "));
@@ -4678,8 +5846,10 @@ mod tests {
         let psid = "07a5ffde-74b3-4ca6-ab0d-1ad2c9e56d9e";
         let unnamed = || {
             let mut s = BriefSessionSection::over_budget("session", Duration::ZERO, Duration::ZERO);
-            s.summary =
-                format!("[current] provider session {psid} (not on this board); episode e1");
+            s.summary = format!(
+                "[current] provider session {} (not on this board); episode e1",
+                short_session(psid)
+            );
             s
         };
         let none = || BriefPeersSection::over_budget("peers", Duration::ZERO, Duration::ZERO);
@@ -4893,15 +6063,27 @@ mod tests {
         let dead = dead_url();
         let e = forward(&ctx, &dead, &asked).expect_err("nobody listens");
         assert!(
-            e.starts_with(&format!("the leaseholder at {dead} did not answer (")),
+            e.starts_with(&format!("leaseholder {dead} did not answer")),
             "{e}"
         );
+        assert!(!e.contains("composed by this process"), "{e}");
 
         let old = serve(|_| (404, "{}".into()));
         let e = forward(&ctx, &old, &asked).expect_err("an older server");
         assert_eq!(
             e,
-            format!("the leaseholder at {old} answered 404 (a server older than this executable has no brief); composed by this process")
+            format!(
+                "leaseholder {old} answered 404 (a server older than this executable has no brief)"
+            )
+        );
+        // a read past its timeout is said as the bound, never as the operating system's error
+        assert_eq!(
+            unanswered_words("Resource temporarily unavailable (os error 35)"),
+            "did not answer within 10 s"
+        );
+        assert_eq!(
+            unanswered_words("connection refused"),
+            "did not answer: connection refused"
         );
 
         let theirs = brief_of(calm());
@@ -4925,11 +6107,16 @@ mod tests {
                 description: "x".into(),
                 status: String::new(),
             }],
+            previous: BTreeMap::from([("peers".to_string(), "abc".to_string())]),
             ..asked
         };
         let _ = forward(&ctx, &good, &full);
         let path = seen.lock().unwrap().clone();
         assert!(path.contains("&since=2026-10-29T09%3A20%3A00Z"), "{path}");
+        assert!(
+            path.contains("&previous=%7B%22peers%22%3A%22abc%22%7D"),
+            "{path}"
+        );
         assert!(
             path.contains("&background=%5B%7B%22id%22%3A%22b1%22"),
             "{path}"
@@ -4958,7 +6145,7 @@ mod tests {
         assert_eq!(b.answered_by.process, "this_process");
         let note = b.answered_by.note.clone().expect("why");
         assert!(
-            note.contains(&format!("the leaseholder at {url} answered 404")),
+            note.contains(&format!("leaseholder {url} answered 404")),
             "{note}"
         );
         assert_eq!(b.session.episode.as_deref(), Some("s-0002"));
@@ -5130,9 +6317,40 @@ mod tests {
             worded("current", "[stale] queue observed 2 h ago"),
             "[stale] queue observed 2 h ago"
         );
+        // 2026-10-30: "ci  unread: not the leaseholder" and "release  unread (took > 3000 ms)"
+        // stood between lines that all led with their word in brackets
         assert_eq!(
             worded("unread", "unread: not the leaseholder"),
-            "unread: not the leaseholder"
+            "[unread] not the leaseholder"
+        );
+        assert_eq!(
+            worded("unread", "unread (took > 3000 ms)"),
+            "[unread] took > 3000 ms"
+        );
+        assert_eq!(
+            worded("unread", "unread: peers.list did not answer (closed)"),
+            "[unread] peers.list did not answer (closed)"
+        );
+        assert_eq!(worded("current", "unreadable x"), "[current] unreadable x");
+        let mut o = BriefObservation {
+            verdict: BriefVerdict::Unread,
+            remedy: Some("majordomus serve ensure".into()),
+            ..BriefObservation::default()
+        };
+        assert_eq!(
+            section_words(&o, "unread", "unread: not the leaseholder"),
+            "[unread] not the leaseholder — majordomus serve ensure",
+            "a line that is not current names what reads it again"
+        );
+        assert_eq!(
+            section_words(&o, "unread", "[unread] run majordomus serve ensure"),
+            "[unread] run majordomus serve ensure",
+            "a remedy the line already names is not said twice"
+        );
+        o.verdict = BriefVerdict::Current;
+        assert_eq!(
+            section_words(&o, "current", "lock free"),
+            "[current] lock free"
         );
         assert_eq!(release_word(&release(Stance::Owed, 2)), "owed");
         assert_eq!(release_word(&release(Stance::Overdue, 2)), "overdue");
@@ -5185,10 +6403,11 @@ mod tests {
         let never = integration_section(&root);
         assert_eq!(never.state, BriefSectionState::Undeclared);
         assert_eq!(integration_word(&never), "unread");
-        let line = worded(integration_word(&never), &never.summary);
+        let line = section_words(&never.observed, integration_word(&never), &never.summary);
+        // and still says what it reads of master on its own, its remedy last
         assert_eq!(
             line,
-            "[unread] this checkout never observed the forge: majordomus prs refresh"
+            "[unread] queue: this checkout never observed the forge; origin/master [unread], fetch age [unread] — majordomus prs refresh"
         );
     }
 
@@ -5263,7 +6482,15 @@ mod tests {
         let s = integration_section(&old);
         assert!(s.stale, "{}", s.summary);
         assert_eq!(s.observed.verdict, BriefVerdict::Stale);
-        assert_eq!(s.remedy.as_deref(), Some("majordomus prs refresh"));
+        // the section's remedy is the stale queue's attention remedy: one cause, one command
+        let fetch = &report::contract()
+            .row("integration.stale")
+            .expect("the row")
+            .remedy;
+        assert_eq!(s.remedy.as_deref(), Some(fetch.as_str()));
+        // the remedy ends the line, after every fact
+        let line = section_words(&s.observed, integration_word(&s), &s.summary);
+        assert!(line.ends_with(&format!(" — {fetch}")), "{line}");
         assert!(
             s.summary.starts_with("[stale] queue observed 2 h ago"),
             "{}",
@@ -5315,7 +6542,7 @@ mod tests {
             "{}",
             stale.fact
         );
-        assert_eq!(report::moved_words(Some(3)), "+3");
+        assert_eq!(report::moved_words(Some(3)), "+3 commits");
         for text in b.lines.iter().chain([&b.line, &b.report.prompt]) {
             assert!(!text.contains("(+?)") && !text.contains(" ? "), "{text}");
         }
@@ -5336,7 +6563,7 @@ mod tests {
             lease: None,
             last_executor_merge: Some("#2366 6 d ago".into()),
         };
-        let words = integration_words(&s, &obs);
+        let words = integration_words(&s, &obs, false);
         assert!(words.contains("(moved, count [unread])"), "{words}");
         assert!(
             words.contains("; last merge on master [unread];"),
@@ -5368,7 +6595,30 @@ mod tests {
     #[test]
     fn the_last_merge_is_masters_not_the_trails() {
         use crate::integration::drain;
-        let (_d, root) = observed_clone(false, 60, "Merge pull request #2653 from korczis/chore/x");
+        // a commit pushed straight to master is no merge, whatever its subject says
+        let (_d, straight) =
+            observed_clone(false, 60, "Merge pull request #1 from korczis/not-a-merge");
+        assert_eq!(last_merge(&straight, "master"), None);
+        let (_d, root) = observed_clone(false, 60, "tip");
+        git(&root, &["checkout", "-q", "-b", "chore/x"]);
+        git(&root, &["commit", "-q", "--allow-empty", "-m", "the work"]);
+        git(&root, &["checkout", "-q", "master"]);
+        git(
+            &root,
+            &[
+                "merge",
+                "-q",
+                "--no-ff",
+                "-m",
+                "Merge pull request #2653 from korczis/chore/x",
+                "chore/x",
+            ],
+        );
+        let merged = git(&root, &["rev-parse", "HEAD"]);
+        git(
+            &root,
+            &["update-ref", "refs/remotes/origin/master", &merged],
+        );
         drain::record(
             &root,
             drain::IntegrationEvent {
@@ -5384,6 +6634,12 @@ mod tests {
             Some(2653),
             "{}",
             s.summary
+        );
+        // in UTC, as every instant of the brief
+        assert!(
+            s.last_merge.as_ref().is_some_and(|m| m.at.ends_with('Z')),
+            "{:?}",
+            s.last_merge
         );
         assert!(
             s.summary.contains("last merge on master #2653"),

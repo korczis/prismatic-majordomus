@@ -9,9 +9,13 @@ brief itself is [the session brief](https://majordomus.dev/docs/brief/).
 ## What it does
 
 - **Status line.** At session start and then every minute it runs `majordomus brief --format
-  json --session <this session's id>` (with `--since <the instant the session was last told>`
-  once it has told it anything) and shows the answer's one line as the status line. A brief that
-  cannot be read shows `majordomus brief: not answered`.
+  json --session` with this session's id, `--since` with the instant of the last report (the
+  start event's briefing until the mod submits one; a reminder never moves it), and
+  `--previous-json` with the fingerprints of the brief the session was last told, so that the
+  report opens with the sections that changed and lists those that did not. It shows the
+  answer's one line as the status line. A brief that cannot be read shows why and how old the
+  last answer is: `majordomus brief [unread]: exit 12 — <the first line it printed on standard
+  error>; last answer 3 min ago`, or `timed out after 30 s`.
 - **The report, when something changed.** When the interval has passed
   (`session.brief_interval_minutes`, carried by the brief; 20 when it cannot be read) and one of
   the brief's per-section fingerprints changed since the session was last told, it submits
@@ -21,8 +25,9 @@ brief itself is [the session brief](https://majordomus.dev/docs/brief/).
   not news, and the mod reads no prose to decide it. A change that reverts before the interval
   passes is never reported.
 - **A prompt after the interval.** A prompt the person sends under the same two conditions
-  carries `report.reminder` as a row the model reads. Either way of telling the session counts
-  as telling it.
+  carries `report.reminder` as a row the model reads, while the brief it was read from is at
+  most two refreshes old; an older one is not presented as now and is not sent. Either way of
+  telling the session counts as telling it for the change test; only a report moves `--since`.
 
 The prompt's first words are the contract's marker, which the brief carries as
 `report.marker`; the mod never briefs a prompt that opens with it, nor one that opens with the
@@ -34,7 +39,7 @@ is Claude Code's, and this mod neither writes it nor can remove it.
 
 It never builds the executable (`MAJORDOMUS_NO_BUILD=1`), it passes the provider's background
 tasks to the brief only where the engine exposes them (this engine does not, and the brief says
-`provider background: not exposed`), and in a repository without `.ai/manifest.yaml` it does
+`provider background [undeclared]`), and in a repository without `.ai/manifest.yaml` it does
 nothing at all.
 
 ## How it is installed

@@ -135,8 +135,14 @@ pub(crate) fn compose(
                 "; self-hosted {online} online ({}), {busy} busy, {offline} offline",
                 names.join(", ")
             ));
+            // the counts alone: which labels the queued jobs wait for was not read, so no
+            // cause is named (2026-10-30: "queued for hosted labels" was an inference from a
+            // count of runs, which queued self-hosted jobs or a concurrency group give too)
             if queued.unwrap_or(0) > 0 && online > 0 && busy < online {
-                summary.push_str("; queued for hosted labels, self-hosted idle");
+                summary.push_str(&format!(
+                    "; {} self-hosted idle while runs are [queued]",
+                    online - busy
+                ));
             }
             if queued.unwrap_or(0) > 0 && online == 0 {
                 summary.push_str("; [blocked] no runner online");
@@ -230,8 +236,13 @@ mod tests {
         assert_eq!((idle.online, idle.busy), (2, 0));
         assert!(
             idle.summary
-                .contains("queued for hosted labels, self-hosted idle"),
+                .contains("2 self-hosted idle while runs are [queued]"),
             "{}",
+            idle.summary
+        );
+        assert!(
+            !idle.summary.contains("hosted labels"),
+            "a cause nobody measured is not named: {}",
             idle.summary
         );
         let forbidden = compose(

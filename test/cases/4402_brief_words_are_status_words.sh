@@ -61,6 +61,25 @@ for w in $words; do
   if [ "$n" != 1 ]; then note "'$w' is filed $n times in status.states (${got:-nowhere}); file it once, under $want"
   elif [ "$got" != "$want" ]; then note "'$w' is filed under $got; its role is $want"; fi
 done
+# --- one vocabulary in the contract itself (2026-10-30): its delivered section asked for
+# VERIFIED / PARTIAL / BLOCKED in capitals and unbracketed two blocks above the rule that
+# demands bracketed filed words, and the rule banned `done` and `OK`, which tokens.yaml files
+contract="$ROOT/share/brief/report.yaml"
+# (the sections and the rules, which the report is written by; an attention fact quotes the
+# forge's own enum, `mergeStateStatus BLOCKED`, and is not a verdict of the report)
+if grep -E '^    (holds|evidence|text): ' "$contract" | grep -nwE 'VERIFIED|PARTIAL|BLOCKED|PASSED|FAILED|DONE|OK'; then
+  note "share/brief/report.yaml writes a verdict in capitals: write the filed word in brackets ([verified])"
+fi
+banned="$(sed -n 's/.*No other verdict adjective (\([^)]*\)).*/\1/p' "$contract" | tr ',' '\n' | sed 's/^ *//; s/ *$//')"
+[ -n "$banned" ] || note "the status-words rule names no adjective it bans"
+while IFS= read -r w; do
+  [ -n "$w" ] || continue
+  if printf '%s\n' "$filed" | awk -v w="$w" '$1 == w { found = 1 } END { exit !found }'; then
+    note "the status-words rule bans '$w', which share/design/tokens.yaml files as a status word"
+  fi
+done <<EOF2
+$banned
+EOF2
 [ "$fail" = 0 ] || exit 1
 
 # --- the generator refuses a brief word filed under a second role (the fixture of case 501)

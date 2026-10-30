@@ -157,6 +157,9 @@ test('a change in a section fingerprint, and only that, is a change', () => {
   // lines and the line that differ while every fingerprint holds are not a change
   const reworded = { ...make(), lines: ['something else entirely'], line: 'another line' };
   expect(changedSections(make(), reworded)).toEqual([]);
+  // a section read past its budget is `late`: not read, so not changed, either way round
+  expect(changedSections(make(), make({ peers: 'late' }))).toEqual([]);
+  expect(changedSections(make({ peers: 'late' }), make())).toEqual([]);
 });
 
 test('an older executable is compared by its lines with the clock taken out', () => {
@@ -175,10 +178,12 @@ test('the status line is the brief, refreshed on the clock, read without buildin
   expect(w.argvs[0]).toEqual(['/repo/bin/majordomus', 'brief', '--format', 'json', '--session', 'sess-1']);
   await clock.advance(MINUTE);
   expect(w.status.at(-1)).toBe('line 2');
-  // the second read says since when: the instant the session was last told
+  // the second read says since when (the start event's briefing, the first report) and
+  // which fingerprints the session was last told, so the report names what changed
   expect(w.argvs[1]).toEqual([
     '/repo/bin/majordomus', 'brief', '--format', 'json', '--session', 'sess-1',
     '--since', '2026-10-29T09:40:12Z',
+    '--previous-json', JSON.stringify(make().fingerprints),
   ]);
   expect(w.submitted).toHaveLength(0);
 });
@@ -250,7 +255,38 @@ test('a prompt after the interval carries report.reminder only when a fact chang
   const clock = mock.clock(on);
   const session = mock.session(on);
   let n = 0;
+  // the start event's brief, then a changed one every minute up to the 30th, whose tick fails
+  // (so the interval's own report is not submitted first), then nothing readable
+  const changed = later(2, { interval: 30, peers: '777777777777' });
   engine(on, {
+    supervised: true,
+    answer: () => {
+      n += 1;
+      if (n === 1) return json({ interval: 30 });
+      if (n <= 30) return json(changed);
+      return 'not json';
+    },
+  });
+  await $.session.start(start);
+  await clock.advance(10 * MINUTE);
+  await $.prompt.submit({ text: 'early' });
+  expect(session.appended()).toHaveLength(0);
+  await clock.advance(20 * MINUTE + 30_000);
+  await $.prompt.submit({ text: 'late' });
+  const rows = session.appended();
+  expect(rows).toHaveLength(1);
+  const said = JSON.stringify(rows[0]?.message.content);
+  expect(said).toContain(JSON.stringify(make(changed).report?.reminder).slice(1, -1));
+  await clock.advance(60 * MINUTE);
+  await $.prompt.submit({ text: 'again' });
+  expect(session.appended()).toHaveLength(1);
+});
+
+test('a reminder read from a brief older than two refreshes is not sent', async ($, on) => {
+  const clock = mock.clock(on);
+  const session = mock.session(on);
+  let n = 0;
+  const w = engine(on, {
     supervised: true,
     answer: () => {
       n += 1;
@@ -260,18 +296,44 @@ test('a prompt after the interval carries report.reminder only when a fact chang
     },
   });
   await $.session.start(start);
-  await clock.advance(10 * MINUTE);
-  await $.prompt.submit({ text: 'early' });
-  expect(session.appended()).toHaveLength(0);
-  await clock.advance(21 * MINUTE);
+  await clock.advance(31 * MINUTE);
   await $.prompt.submit({ text: 'late' });
-  const rows = session.appended();
-  expect(rows).toHaveLength(1);
-  const said = JSON.stringify(rows[0]?.message.content);
-  expect(said).toContain(JSON.stringify(make(later(2, { interval: 30, peers: '777777777777' })).report?.reminder).slice(1, -1));
-  await clock.advance(60 * MINUTE);
-  await $.prompt.submit({ text: 'again' });
+  expect(session.appended()).toHaveLength(0);
+  // and the status line says why it is not read, and how old the last answer is
+  expect(w.status.at(-1)).toBe('majordomus brief [unread]: its answer is not JSON; last answer 30 min ago');
+});
+
+test('a reminder never moves the instant Delivered is counted from', async ($, on) => {
+  const clock = mock.clock(on);
+  const session = mock.session(on);
+  let n = 0;
+  let facts: Facts = {};
+  const ats: string[] = [];
+  const w = engine(on, {
+    supervised: true,
+    answer: () => {
+      n += 1;
+      // the 11th read, at 10:00, fails: the person's prompt at 10:30 then gets the reminder
+      if (n === 11) return 'not json';
+      const b = make(later(n, facts));
+      ats.push(b.at);
+      return JSON.stringify(b);
+    },
+  });
+  await $.session.start(start);
+  facts = { integration: '999999999999' };
+  await clock.advance(5 * MINUTE);
+  // the report at 5:00 (read 6)
+  expect(w.submitted).toHaveLength(1);
+  const reportedAt = ats[5];
+  facts = { integration: '999999999999', peers: '777777777777' };
+  await clock.advance(5 * MINUTE + 30_000);
+  await $.prompt.submit({ text: 'a person asks' });
   expect(session.appended()).toHaveLength(1);
+  await clock.advance(MINUTE);
+  // the read after the reminder still counts Delivered from the report, not the reminder
+  const after = w.argvs.at(-1) ?? [];
+  expect(after[after.indexOf('--since') + 1]).toBe(reportedAt);
 });
 
 test('the self-report is not briefed again on its way through the prompt hook', async ($, on) => {
@@ -291,7 +353,7 @@ test('a brief that cannot be read says so on the status line and asks nothing', 
   const clock = mock.clock(on);
   const w = engine(on, { supervised: true, exit: 12 });
   await $.session.start(start);
-  expect(w.status.at(-1)).toBe('majordomus brief: not answered');
+  expect(w.status.at(-1)).toBe('majordomus brief [unread]: exit 12');
   await clock.advance(60 * MINUTE);
   expect(w.submitted).toHaveLength(0);
 });
