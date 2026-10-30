@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "da31b40589f677a60c83f92eedaa4d77ca560c96663b428da48f11686010cce8",
+    "fingerprint": "3e954c5cde32c13f55790bc76f3eb8339af26427d53fd000d7ab09288b74ed68",
     "summary": {
-      "total": 3633,
+      "total": 3635,
       "builtin": 220,
-      "declarative": 3413,
+      "declarative": 3415,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3413
+        "resource": 3415
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3423
+        "implemented": 3425
       },
       "mcp_tools": 206,
-      "mcp_resources": 3470,
+      "mcp_resources": 3472,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -60305,7 +60305,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "How far the evidence is from this checkout, in the repository's one staleness\nvocabulary. `None` when there is no evidence to label.\n\nA remote fact is labelled against the commit it was taken at, because the site that\nserves a commit goes on serving it while the tree moves underneath. A tree-bound\nfact is labelled by re-hashing: equal hashes are `exact`, and a difference takes the\ncommit's label, which is `advanced` when the working tree has merely moved on and\n`diverged` when the history it named is gone. A token that declares neither inputs\nnor a remote fact is bound to nothing and stays `exact` once recorded — that is the\nvalidator's behaviour, and it is reproduced rather than tightened here."
+                    "description": "How far the evidence is from this checkout, in the repository's one staleness\nvocabulary. `None` when there is no evidence to label, and `None` when the evidence\ncannot be judged because the token's pathspecs select no tracked file here: an empty\ninput set is never a freshness proof, so that obligation is `owed` (I4434).\n\nA remote fact is labelled against the commit it was taken at, because the site that\nserves a commit goes on serving it while the tree moves underneath. A tree-bound\nfact is labelled by re-hashing: equal hashes are `exact`, and a difference takes the\ncommit's label, which is `advanced` when the working tree has merely moved on and\n`diverged` when the history it named is gone. A token that declares neither inputs\nnor a remote fact is bound to nothing and stays `exact` once recorded — that is the\nvalidator's behaviour, and it is reproduced rather than tightened here."
                   },
                   "evidence": {
                     "anyOf": [
@@ -91383,7 +91383,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1102,
+        "capabilities": 1103,
         "capability_ids": []
       },
       {
@@ -91981,7 +91981,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 660,
+        "capabilities": 661,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "1b1c1dbd708b0f93cdad0785ca9f66c5d1ce7915fa55817e723dcd6354675f6f",
+    "fingerprint": "e6912e141c4305a3800b5a30c34c44f08f795281e672a8b30673606c8087065e",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92113,7 +92113,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 44,
-      "issue": 1102,
+      "issue": 1103,
       "knowledge": 60,
       "mesh-declaration": 1,
       "milestone": 113,
@@ -92127,7 +92127,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 660,
+      "test": 661,
       "use-case": 49,
       "workspace": 1
     },
@@ -99585,7 +99585,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 982448
+        "bytes": 987282
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -101169,7 +101169,7 @@
         "title": "A task that declares obligations reaches the outcome completed only when each one has evidence, and evidence taken over files that have since changed no longer discharges anything",
         "path": "docs/claims/obligation-closure.md",
         "source_class": "claim_page",
-        "bytes": 4981
+        "bytes": 5483
       },
       {
         "uri": "majordomus://document/docs/claims/obligation-establishment.md",
@@ -102790,7 +102790,7 @@
         "identity": "lib/evidence.sh",
         "path": "lib/evidence.sh",
         "source_class": "library",
-        "bytes": 29815
+        "bytes": 31205
       },
       {
         "uri": "majordomus://implementation/lib/finish.sh",
@@ -115647,6 +115647,17 @@
         "bytes": 5755
       },
       {
+        "uri": "majordomus://issue/I4434",
+        "kind": "issue",
+        "identity": "I4434",
+        "title": "An obligation whose inputs select no tracked file is not judged, so evidence over an empty input set never discharges it",
+        "description": "When a non-remote obligation declares pathspecs that select no tracked file in the tree, and its evidence was recorded over that empty selection, both judges answer that it is not judged instead of discharged: mj_obligation_judge (lib/evidence.sh, run by check and finish through majordomus.obligation-closure) returns unmet with the message `not judged: its inputs (<specs>) select no tracked file in this tree, so no evidence can be judged fresh over them` and the reproduce `git ls-files -- '<spec>' ...`; obligations.closure returns state owed, staleness null, the evidence attached and the same detail and reproduce, so gates.completion reads it as queued. `finish --outcome completed` therefore refuses it; an outcome that is not completed reports it without refusing, as every other shortfall. As soon as the pathspecs select a file, the existing judgement applies unchanged: evidence over the empty hash is stale, evidence over the selection discharges, and an edit after it makes it stale.",
+        "path": ".ai/repo/project/issues/I4434.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6180
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -126735,6 +126746,14 @@
         "bytes": 4717
       },
       {
+        "uri": "majordomus://test/test/cases/4408_an_obligation_without_inputs_proves_nothing.sh",
+        "kind": "test",
+        "identity": "test/cases/4408_an_obligation_without_inputs_proves_nothing.sh",
+        "path": "test/cases/4408_an_obligation_without_inputs_proves_nothing.sh",
+        "source_class": "case",
+        "bytes": 6936
+      },
+      {
         "uri": "majordomus://test/test/cases/44_model_doctrine.sh",
         "kind": "test",
         "identity": "test/cases/44_model_doctrine.sh",
@@ -129265,7 +129284,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1102
+      "objects": 1103
     },
     {
       "name": "knowledge",
@@ -129427,7 +129446,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 660
+      "objects": 661
     },
     {
       "name": "use-case",
