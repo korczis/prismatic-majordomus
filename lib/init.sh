@@ -79,7 +79,10 @@ H
   mj_init_file "$skel/ai/README.md" "$MJ_AI_DIR/README.md"
   mj_init_file "$skel/ai/manifest.yaml" "$MJ_AI_MANIFEST"
   mj_init_file "$skel/ai/repo/README.md" "$MJ_AI_REPO_DIR/README.md"
+  # a policy this run seeds, as opposed to one an --extend found: only the former is fitted
+  local seeds_policy=0; [ -e "$MJ_POLICY_FILE" ] || seeds_policy=1
   mj_init_file "$skel/policy.yaml" "$MJ_POLICY_FILE"
+  if [ "$personal" = 1 ] && [ "$seeds_policy" = 1 ]; then mj_init_personal_projections; fi
   # the scope: seeded beside the policy; an --extend on a layer whose manifest predates
   # the section seeds the file and says the manifest must name it
   if [ -n "$MJ_SCOPE_FILE" ]; then mj_init_scope "$skel/ai/repo/scope.yaml" "$MJ_SCOPE_FILE"
@@ -136,6 +139,10 @@ H
   mkdir -p "$deployments_dir"
   mj_init_file "$MJ_SKELETON_DIR/ai/repo/deployments/README.md" "$deployments_dir/README.md"
   mj_init_file "$skel/ai/repo/project/README.md" "$MJ_PROJECT_DIR/README.md"
+  # The mesh: a declaration that is enabled and closed until a machine is enrolled. A
+  # machine whose key is not in trust.allow opens no socket (`mesh::manager::closed_to`), so
+  # shipping it enabled sends nothing anywhere; `majordomus mesh enrol` is the one step left.
+  mj_init_tree "$skel/ai/repo/mesh" "$MJ_AI_REPO_DIR/mesh" '*'
   # the checkout-local half: the state directories the durable commands write into, and
   # the two hand-editable stores, seeded from the tool's templates. Never tracked.
   mkdir -p "$MJ_STATE_DIR/handovers" "$MJ_STATE_DIR/checkpoints" "$MJ_AI_LOCAL_DIR/prompts" \
@@ -150,7 +157,7 @@ H
   [ -f "$MJ_STATE_DIR/open-questions.md" ] || cp "$skel/templates/open-questions.md" "$MJ_STATE_DIR/open-questions.md"
   if [ "$personal" = 1 ]; then
     MJ_INIT_CREATED="$MJ_INIT_CREATED $(mj_personal_exclude_file):/$ai_rel/"
-  else mj_init_gitignore; fi
+  else mj_init_gitignore; mj_init_readme; fi
 
   local rel; rel="${MJ_SELF:-$(cd "$MJ_BIN_DIR" && pwd)/majordomus}"
   if [ -n "$MJ_INIT_CREATED" ]; then
@@ -183,10 +190,111 @@ H
 local state: $(mj_rel "$MJ_STATE_DIR")/ (ignored by git; this checkout's own)
 next: majordomus update      # generate the provider instruction files named in the policy
 next: majordomus doctor      # verify nothing is declared that is not wired
+OUT
+  mj_init_hook_advice "$personal" "$rel"
+}
+
+# Where the two hook lines go. Git says where its hooks are, and in a personal layer that
+# answer decides whose they are: under the git directory they are this clone's and the lines
+# go straight in; under a directory the project tracks (core.hooksPath pointing into the work
+# tree) the hook git calls is the project's, and a line added to it would change what
+# everyone shares. A dispatcher that runs <hook>.d/ leaves room for a file of one's own,
+# which is covered here before it exists, so that creating it shows nothing in git status;
+# a tracked hook with no such directory has no place of one's own, and that is said.
+mj_init_hook_advice() {
+  local personal="$1" rel="$2" hookdir hookrel h line dropin tracked=0
+  hookdir="$(mj_git rev-parse --git-path hooks 2>/dev/null || true)"; [ -n "$hookdir" ] || hookdir=".git/hooks"
+  case "$hookdir" in "$MJ_ROOT"/*) hookrel="${hookdir#"$MJ_ROOT"/}" ;; /*) hookrel="" ;; *) hookrel="$hookdir" ;; esac
+  if [ "$personal" = 1 ] && [ -n "$hookrel" ] \
+     && [ -n "$(mj_git ls-files -- "$hookrel" 2>/dev/null | head -n 1)" ]; then tracked=1; fi
+  if [ "$tracked" = 0 ]; then
+    cat <<OUT
 hooks are not installed by init; add these two lines yourself, doctor verifies them:
-  pre-commit: $rel doctor || exit \$?
+  pre-commit: MAJORDOMUS_DOCTOR_CONTEXT=commit $rel doctor || exit \$?
   pre-push:   $rel finish --check || exit \$?
 OUT
+    return 0
+  fi
+  printf "hooks are not installed by init, and this repository's hooks are the project's (%s/ is tracked):\n" "$hookrel"
+  for h in pre-commit pre-push; do
+    case "$h" in pre-commit) line="MAJORDOMUS_DOCTOR_CONTEXT=commit $rel doctor || exit \$?" ;; *) line="$rel finish --check || exit \$?" ;; esac
+    if [ -d "$MJ_ROOT/$hookrel/$h.d" ]; then
+      dropin="$hookrel/$h.d/majordomus-personal"
+      mj_personal_cover "$dropin" || mj_die "$MJ_EX_INTERNAL" "cannot write $(mj_personal_exclude_file)"
+      printf '  %s: an executable file of your own, %s (covered already), holding: %s\n' "$h" "$dropin" "$line"
+    else
+      printf "  %s: %s/%s is tracked and runs no %s.d/, so there is no place of your own for: %s\n" "$h" "$hookrel" "$h" "$h" "$line"
+    fi
+  done
+  printf '  doctor verifies whichever you add; an entry you cannot wire is yours to remove from %s\n' "$(mj_rel "$MJ_POLICY_FILE")"
+}
+
+# Fit the seeded projections to a repository other people share (ADR 0145). The skeleton
+# names AGENTS.md, CLAUDE.md and GEMINI.md, which is right where none of them exists. Where
+# the project already tracks one, `update` refuses it, whole, and the three commands the
+# manual gives — init --personal, update, doctor — stopped at the second in exactly the
+# repositories personal mode is for: the ones somebody already set up. So a tracked target
+# is moved to the file its provider reads for one person (share/providers.yaml,
+# personal_target), or left out when the provider has none, and one projection stays
+# always-loaded, which the policy requires. Nothing is fitted in a repository that tracks
+# none of them: there the personal layer is the plain one, as before.
+mj_init_personal_projections() {
+  local pol="$MJ_POLICY_FILE" flat prov_flat i=0 prov tgt own plan="" kept=0 loaded="" first="" changed=0 tmp
+  flat="$(mj_yaml_flatten "$pol" 2>/dev/null)" || return 0
+  prov_flat="$(mj_yaml_flatten "$MJ_SHARE_DIR/providers.yaml" 2>/dev/null || true)"
+  while :; do
+    tgt="$(printf '%s\n' "$flat" | sed -n "s/^projections\\.$i\\.target=//p" | head -n 1)"
+    [ -n "$tgt" ] || break
+    prov="$(printf '%s\n' "$flat" | sed -n "s/^projections\\.$i\\.provider=//p" | head -n 1)"
+    if mj_git ls-files --error-unmatch -- "$tgt" >/dev/null 2>&1; then
+      changed=1
+      own="$(printf '%s\n' "$prov_flat" | sed -n "s/^providers\\.$prov\\.personal_target=//p" | head -n 1)"
+      if [ -n "$own" ] && ! mj_git ls-files --error-unmatch -- "$own" >/dev/null 2>&1; then
+        plan="$plan$i	$own	move	$tgt|"; kept=$((kept+1)); [ -n "$first" ] || first="$i"
+      else
+        plan="$plan$i	-	drop	$tgt|"
+      fi
+    else
+      plan="$plan$i	-	keep	$tgt|"; kept=$((kept+1)); [ -n "$first" ] || first="$i"
+      [ "$(printf '%s\n' "$flat" | sed -n "s/^projections\\.$i\\.always_loaded=//p" | head -n 1)" = true ] && loaded="$i"
+    fi
+    i=$((i+1))
+  done
+  # nothing the project tracks, or nothing left to keep: the seeded block stands, and in the
+  # second case `update` says what it always said
+  [ "$changed" = 1 ] && [ "$kept" -gt 0 ] || return 0
+  [ -n "$loaded" ] || loaded="$first"
+  tmp="$pol.mj-tmp.$$"
+  awk -v plan="$plan" -v loaded="$loaded" '
+    BEGIN {
+      n = split(plan, rows, "|")
+      for (r = 1; r <= n; r++) { if (rows[r] == "") continue; split(rows[r], f, "\t"); own[f[1]] = f[2]; act[f[1]] = f[3]; was[f[1]] = f[4] }
+      idx = -1
+    }
+    function flush(   j) {
+      if (idx < 0) return
+      if (act[idx] == "drop") {
+        printf "  # %s is the project%ss and its provider reads no file of one person%ss: left out\n", was[idx], q, q
+      } else {
+        if (act[idx] == "move") printf "  # %s is the project%ss; this is the file its provider reads beside it\n", was[idx], q
+        for (j = 1; j <= m; j++) {
+          if (item[j] ~ /^    always_loaded:/) continue
+          if (act[idx] == "move" && item[j] ~ /^    target:/) { printf "    target: %s\n", own[idx]; continue }
+          print item[j]
+        }
+        if (idx == loaded) print "    always_loaded: true"
+      }
+      m = 0
+    }
+    BEGIN { q = sprintf("%c", 39) }
+    !inb && /^projections:[ \t]*$/ { inb = 1; print; next }
+    inb && /^  - / { flush(); idx++; m = 0; item[++m] = $0; next }
+    inb && /^[^ \t#]/ { flush(); idx = -1; inb = 0; print; next }
+    inb && idx >= 0 { item[++m] = $0; next }
+    { print }
+    END { if (inb) flush() }
+  ' "$pol" > "$tmp" || { rm -f "$tmp"; mj_die "$MJ_EX_INTERNAL" "cannot fit $(mj_rel "$pol") to a personal layer"; }
+  mv "$tmp" "$pol" || mj_die "$MJ_EX_INTERNAL" "cannot write $(mj_rel "$pol")"
 }
 
 # copy one skeleton file into place unless it already exists
@@ -249,4 +357,19 @@ mj_init_gitignore() {
     { [ -f "$gi" ] && [ -n "$(tail -c1 "$gi")" ] && printf '\n'; printf '%s\n' "$line"; } >> "$gi"
     MJ_INIT_CREATED="$MJ_INIT_CREATED .gitignore:$line"
   done
+}
+
+# the reader's way in: a README that does not name AGENTS.md is a FAIL of doctor's bootstrap
+# check (majordomus.bootstrap-integrity: a person reaches the layer through README.md and
+# AGENTS.md), so a shared init adds one paragraph that names it, once, to a README whose other
+# content is left alone. A README is not created where there is none, which that check does
+# not ask for, and a personal layer never reaches here: the README is the project's (I2941).
+mj_init_readme() {
+  local readme="$MJ_ROOT/README.md"
+  [ -f "$readme" ] || return 0
+  grep -q 'AGENTS\.md' "$readme" && return 0
+  { [ -n "$(tail -c1 "$readme")" ] && printf '\n'
+    printf '\n## AI agents\n\nThis repository is supervised by Majordomus. An agent starts at [AGENTS.md](AGENTS.md).\n'
+  } >> "$readme"
+  MJ_INIT_CREATED="$MJ_INIT_CREATED README.md:AGENTS.md"
 }

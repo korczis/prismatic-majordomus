@@ -1,0 +1,55 @@
+id: I3276
+milestone: operation-convergence
+title: "The time from an intent's proposal to its verified satisfaction is derived from the records, with the interventions on the way"
+slug: intent-to-verified-done-is-measured
+priority: p2
+profile: implementation
+objective: "Derive per intent: proposed_at (the author time of the commit that first added the intent record), the first commit at which every criterion reads current (from evidence-ledger receipts), elapsed time, replans (commits that change the intent's criteria or milestones or the issues serving them), interventions (each kind read from the record that holds it, or not_recorded), governance time and rework as docs/ECONOMICS.md defines them, and the windowed aggregate; thin data says thin (I0403)."
+why: "Operation Convergence asks to measure intent-to-verified-done after the alpha; 2026-10-08 the owner's success measure was fewer interventions and less time; 2026-10-18 autonomous intent throughput as the top metric. It extends milestone cost-per-accepted-outcome. Proposed in ADR 0198 (Delivery is judged by verified outcomes landed per day, with lead time p95 as its control, never by commits, pull requests or sessions) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c198#5, chatgpt-majordomus:c295#9, chatgpt-majordomus:c245#5, chatgpt-majordomus:c283#5."
+current_state: "cost-per-accepted-outcome defines accepted outcomes (I0401-I0404) for tasks; nothing reads intents."
+desired_state: "A read capability under capability/builtin that /ui's economics row draws from; the with/without comparison is read from I3133's matched runs behind ADR 0082's rule; the criterion it serves is rebound to its test."
+scope:
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/src/intent.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "docs/ECONOMICS.md"
+  - ".ai/repo/project/intents"
+  - "apps/majordomus-cli/src/economics/mod.rs"
+  - "apps/majordomus-cli/src/economics/model.rs"
+  - "apps/majordomus-cli/src/economics/report.rs"
+  - "apps/majordomus-cli/src/economics/usage.rs"
+  - "apps/majordomus-cli/src/capability/builtin/economics.rs"
+  - "apps/majordomus-cli/src/ui/observatory.rs"
+  - "scripts/lib/ui-observatory.mjs"
+  - "docs/MAJORDOMUS_UI.md"
+  - "docs/CLAIMS.yaml"
+non_scope:
+  - "Repairing the self-referential command criteria of other imported intents; each intent's own critique carries its criterion, and the promotion step that wrote them belongs to the workflow, not the repository"
+  - "Running the matched with/without benchmark itself; I3133 carries it"
+  - "Verifying the alpha conditions on the tag commit"
+depends_on:
+  - "I3255"
+  - "I0403"
+  - "I3133"
+serves:
+  - "operation-convergence#the-method-is-measured-after-the-alpha"
+acceptance_criteria:
+  - "An intent satisfied after two replans reports both and its elapsed time"
+  - "An intent never satisfied is excluded and counted"
+  - "The criterion operation-convergence#the-method-is-measured-after-the-alpha names evidence test with ref apps/majordomus-cli/tests/economics.rs, not a command; a run of majordomus intent explain alone never makes it current"
+  - "operation-convergence lists milestone cost-per-accepted-outcome among its milestones, and the claim cost-per-outcome in docs/CLAIMS.yaml names the test that proves it"
+  - "proposed_at is the author time of the commit that first added the intent record (git history, --diff-filter=A); created_at is shown only as the declared date and is never the clock elapsed time is measured from"
+  - "The first satisfied commit is the earliest commit at which every criterion of the intent reads current, derived from the evidence-ledger receipts' recorded commits and times; an intent whose receipts carry no commit reports its elapsed time as unknown, not zero"
+  - "A replan is a commit that changes the intent record's criteria or milestones, or adds or removes an issue serving one of its criteria, derived from the git history of those records; a fixture with two such commits before satisfaction reports two"
+  - "Each intervention kind (an owner-acknowledged refused finish, a manual override, an exemption) names the record it is read from; a kind with no record reads not_recorded, never 0"
+  - "docs/ECONOMICS.md defines governance time (wall time of check, finish and gate receipts on the intent's issues) and rework (replans plus commits to an issue's scope after its first finish) by the records they are derived from; a metric without a source reads not_measured"
+  - "The with/without figure is read from I3133's matched benchmark runs and is published only past ADR 0082's rule; below the threshold the output presents observations and no average (I0403)"
+  - "The read is a capability declared under capability/builtin and projected by majordomus generate, and /ui draws its row from that capability"
+  - "cargo test --test economics runs and passes test_intent_to_verified_done_is_measured"
+validation:
+  - "majordomus plan validate"
+  - "majordomus intent validate"
+evidence_required:
+  - "test_intent_to_verified_done_is_measured"
+created_at: 2026-10-18
+updated_at: 2026-10-18

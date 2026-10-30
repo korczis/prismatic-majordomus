@@ -1,0 +1,45 @@
+id: I3095
+milestone: public-proof
+title: "A count inside a translated sentence is a slot, so a changed number never drops the translation"
+slug: a-count-is-a-slot-in-the-translation-memory
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Key the translation memory on a segment's template, with every standalone number replaced by an <nK/> slot the build fills from the page, and re-key the existing Czech memory by matching each number by value, so a sentence like '153 nodes, 549 edges' or '4 of 26' is translated once and keeps its translation whatever the counts."
+why: "On 2026-10-20 an audit of the live /cs/roadmap/ (finding F11) found 58 of 100 milestone titles and 310 of 799 issue titles in English, and count chips mixed 'N of M' with 'N z M'. One cause was keying: the memory was keyed by the whole segment, numbers included, so every changed count was a segment it had never seen."
+current_state: "keyOf hashes the segment with its numbers; a changed count is a missing segment."
+desired_state: "keyOf hashes the template; a translation is admitted only with each <nK/> of its source exactly once; identifiers joined to letters, hyphens, dots or a hash (I3091, v0.30.2, 2026-10-20, 82ac259, #1434) stay literal."
+scope:
+  - "scripts/lib/site-i18n.mjs"
+  - "scripts/site-translate"
+  - "site/i18n/cs/memory"
+  - "test/cases/3590_the_site_is_derived_in_every_language.sh"
+  - ".ai/repo/project/issues/I3095.yaml"
+non_scope:
+  - "Plural forms by count (one form per template; a language whose noun changes form for one, two and five is a follow-up)"
+depends_on: []
+acceptance_criteria:
+  - "A page whose sentence carries different counts than the memory's example is translated from the template, with its own numbers"
+  - "A translation missing or repeating an <nK/> slot is refused"
+  - "Identifiers and versions are never slots"
+  - "The existing memory is re-keyed without re-translation: 6942 entries re-keyed, 1183 merged into a shared template, 52 kept under their old key because their numbers do not match one to one"
+validation:
+  - "env -u MAJORDOMUS_SHARE bash test/run.sh 3590_the_site_is_derived_in_every_language"
+evidence_required:
+  - "count_slot_translates"
+created_at: 2026-10-20
+updated_at: 2026-10-22T04:42:35Z
+started_at: 2026-10-22T04:37:10Z
+started_event: sha256:7fa35841b596e4a7cf922dde02bffda4271f003723ed354946bbd224c9dcbef5
+verified_at: 2026-10-22T04:39:46Z
+verified_event: sha256:5b67ab3202a8ed96c2b91dd64d66fc58a4217be7a73728ddfd73d9105eeda4ad
+completed_at: 2026-10-22T04:42:35Z
+completed_event: sha256:8f6d77d7ea6546c3929c11be4f7edb9b9ebf3b36de44c952a7d28c2db29647b8
+evidence:
+  - covers: count_slot_translates
+    type: ci
+    command: "bash test/run.sh 3590_the_site_is_derived_in_every_language"
+    result: "passed in train 3a validate 39712017896 (76c57859663, landed on master 2026-10-22)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39712017896"
+    commit: 76c578596631b290f9291691b388f359fbce97ae
+    recorded_at: 2026-10-22T04:38:10Z

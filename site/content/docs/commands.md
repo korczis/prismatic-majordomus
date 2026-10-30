@@ -1,7 +1,7 @@
 +++
 title = "The command graph"
 description = "the command graph: the three declarations it composes, stable identities, the effect model and the exposure policy derived from it, the generated workflow bridge and its compatibility aliases, the one completion engine every surface asks, repository entry, and what adding a command costs (nothing)"
-weight = 39
+weight = 40
 [extra]
 source = "docs/COMMANDS.md"
 +++
@@ -37,21 +37,26 @@ carried a fourth copy. Every one of those lists was correct on the day it was wr
 
 The graph replaces the lists with one composition and a set of projections.
 
-```text
-   clap tree            share/commands.yaml         just --dump
-   (the executable)     (the shell tool)            (the workflows)
-         │                     │                          │
-         └──────────┬──────────┴──────────┬───────────────┘
-                    ▼                     ▼
-              contributors          capability registry
-                    └──────────┬──────────┘
-                               ▼
-                        CommandGraph  ── fingerprint
-                               │
-    ┌──────────┬───────────────┼───────────────┬──────────────┐
-    ▼          ▼               ▼               ▼              ▼
-  bridge   completion      MCP · HTTP       Cockpit         docs
-```
+<pre class="mermaid">
+flowchart TD
+  subgraph contributors["contributors"]
+    clap["clap tree&lt;br/&gt;&lt;small&gt;the executable&lt;/small&gt;"]
+    yaml["share/commands.yaml&lt;br/&gt;&lt;small&gt;the shell tool&lt;/small&gt;"]
+    dump["just --dump&lt;br/&gt;&lt;small&gt;the workflows&lt;/small&gt;"]
+  end
+  registry["capability registry&lt;br/&gt;capabilities.list"]
+  commandGraph["CommandGraph&lt;br/&gt;commands.graph"]
+  fingerprint["fingerprint"]
+  contributors --&gt; commandGraph
+  registry --&gt; commandGraph
+  commandGraph --- fingerprint
+  commandGraph --&gt; bridge["workflow bridge&lt;br/&gt;majordomus commands bridge"]
+  commandGraph --&gt; completion["completion&lt;br/&gt;majordomus completion query"]
+  commandGraph --&gt; api["MCP · HTTP"]
+  commandGraph --&gt; cockpit["Cockpit"]
+  commandGraph --&gt; docs["docs"]
+</pre>
+
 
 Nothing registers with the graph. Every node is *read* from a declaration that already
 existed and is already authority for what it states.

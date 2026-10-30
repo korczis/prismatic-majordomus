@@ -1,0 +1,29 @@
+id: I4008
+milestone: a-session-proceeds-through-the-mesh
+title: "A push that only deletes refs runs no plan in the pre-push hook"
+slug: a-push-that-only-deletes-runs-no-plan
+priority: p1
+profile: implementation
+parallel_safe: true
+serves:
+  - a-session-proceeds-through-the-mesh#heavy-work-shares-the-machine
+objective: "A push whose every ref is a deletion runs no plan in the pre-push hook, by the reasoning of the refs/majordomus/* exemption: no source travels."
+why: "Deleting a merged branch runs the whole pre-push plan, which takes tens of minutes on a loaded machine and judges nothing."
+current_state: "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists."
+desired_state: "The acceptance criteria below hold and case 4008 proves them."
+scope:
+  - ".githooks/pre-push"
+  - "apps/majordomus-cli/src/hooks"
+  - "docs/HOOKS.md"
+  - "test/cases/4008_a_push_that_only_deletes_runs_no_plan.sh"
+  - ".ai/repo/project/issues/I4008.yaml"
+acceptance_criteria:
+  - "A push of only deletions runs no plan and exits 0"
+  - "A push of any non-deletion ref runs the plan as before"
+  - "The exemption is declared data beside the refs/majordomus/* one"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4008_a_push_that_only_deletes_runs_no_plan"
+evidence_required:
+  - "case_4008_a_push_that_only_deletes_runs_no_plan"
+created_at: 2026-10-23
+updated_at: 2026-10-23

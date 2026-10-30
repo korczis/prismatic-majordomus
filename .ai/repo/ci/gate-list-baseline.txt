@@ -1,0 +1,55 @@
+# The second lists of gates that remain (I3943, I2350 acceptance criterion 2).
+#
+# `scripts/ci-plan --inventory` looks in the tracked files, outside .ai/repo/ci/gates.yaml and
+# what is generated from it or recorded about it, for a list of gates:
+#   runs    commands, within ten lines of each other, that invoke the `runs:` command of two
+#           or more distinct gates;
+#   names   a line that enumerates three or more gate ids.
+# Each line below is `file:what` for a finding that is accepted for now, with the reason above
+# it. A finding that is not here fails the gate; an entry that matches nothing is STALE and
+# fails it too, so this file can only shrink. Delete a line when the list it names is gone,
+# and never add one: a new list is read from the model instead.
+
+# A unit of the automation inventory describes scripts/ci/* by naming seven of its gates in a
+# parenthesis. It describes what the scripts are; the parenthesis goes when that description
+# is read from the model.
+.ai/repo/automation/inventory.jsonl:names
+
+# A rule's reproduction block runs the two gates that enforce it, release-check and
+# version-authored-once, as the rule's own evidence. Two commands in a rule are its claim, not
+# a plan; they go when the rule names the gates by id.
+.ai/repo/rules/project/release-is-a-projection.v2.md:runs
+
+# The structure job's comment names the gates every plan runs, in a sentence that also says
+# the job dispatches from the plan rather than listing them. The sentence is stale by
+# construction; it is reworded to name none when the comment is next touched.
+.github/workflows/validate.yml:names
+
+# The comment on the test recipe records the list that recipe once carried and why it was
+# wrong. It is the history of the defect this inventory exists to prevent; it goes when the
+# comment is shortened.
+.just/test.just:names
+
+# One recipe per Cockpit command: cockpit-assets-check and cockpit-probe each wrap their own
+# gate's command and sit near each other. They are two wrappers, not a plan; they go when the
+# recipes are projected from the model.
+.just/serve.just:runs
+
+# A unit test builds a model of three gates to prove a gate is found by the command it runs.
+# The commands are the fixture, not the repository's plan.
+apps/majordomus-cli/src/rules/tests.rs:runs
+
+# The prose on the on-demand gates names the three that carry the flag. The model states them
+# and ci-plan prints them, so the sentence is a reading aid; it goes when the document is
+# derived from the model.
+docs/CI.md:names
+
+# The block "The gates" lists commands by hand although its own first sentence says the
+# list is the model. It goes when the block is replaced by the output of
+# `scripts/ci-plan --full x --format text`.
+docs/CI.md:runs
+
+# The rule's verification block runs the site build and the Cockpit stylesheet check as the
+# rule's own evidence. Two commands in a rule are its claim, not a plan; they go when the rule
+# names the gates by id.
+.ai/repo/rules/project/the-ui-wears-the-sites-navbar.v1.md:runs

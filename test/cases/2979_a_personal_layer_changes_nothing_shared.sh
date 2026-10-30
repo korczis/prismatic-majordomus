@@ -67,6 +67,55 @@ out="$(cd "$A" && "$MJ" capture install 2>&1)" || { echo "    capture install fa
 [ -f "$A/.claude/settings.json" ] || { echo "    capture install wrote no configuration"; exit 1; }
 [ "$(status_of "$A")" = "$before" ] || { echo "    capture install changed what the repository shows:"; status_of "$A" | sed 's/^/      /'; exit 1; }
 
+# ------------------------------------------------------------------ a repository already set up
+# The repositories personal mode is for are the ones somebody set up: they track an
+# AGENTS.md, a CLAUDE.md and their own hooks. The seeded policy named those two files, so
+# `update` refused whole and the manual's three commands stopped at the second. The seed is
+# fitted instead: a tracked target moves to the file its provider declares for one person
+# (share/providers.yaml, personal_target), a provider that declares none is left out, and
+# one projection stays always-loaded. The name is read from the declaration, not typed here.
+S="$T/setup"; mkdir -p "$S/.githooks/pre-push.d" && G -C "$S" init -q . \
+  && printf 'a project\n' > "$S/README.md" && printf 'the team\n' > "$S/AGENTS.md" && printf 'the team\n' > "$S/CLAUDE.md" \
+  && printf '#!/bin/sh\nfor h in .githooks/pre-push.d/*; do [ -x "$h" ] || continue; "$h" || exit $?; done\n' > "$S/.githooks/pre-push" \
+  && printf '#!/bin/sh\nexit 0\n' > "$S/.githooks/pre-commit" && printf '#!/bin/sh\nexit 0\n' > "$S/.githooks/pre-push.d/10-team" \
+  && chmod +x "$S/.githooks/pre-push" "$S/.githooks/pre-commit" "$S/.githooks/pre-push.d/10-team" \
+  && G -C "$S" add -A && G -C "$S" commit -qm first && git -C "$S" config core.hooksPath .githooks \
+  && printf 'in progress\n' >> "$S/README.md"
+sbefore="$(status_of "$S")"; team_before="$(cat "$S/AGENTS.md" "$S/CLAUDE.md" "$S/.githooks/pre-push" | cksum)"
+own="$(sed -n 's/^    personal_target: *//p' "$ROOT/share/providers.yaml" | head -n 1)"
+[ -n "$own" ] || { echo "    share/providers.yaml declares no personal_target; nothing would be measured"; exit 1; }
+out="$(cd "$S" && "$MJ" init --personal 2>&1)" || { echo "    init --personal failed in a set-up repository: $out"; exit 1; }
+[ "$(status_of "$S")" = "$sbefore" ] || { echo "    init --personal changed what a set-up repository shows"; exit 1; }
+spol="$S/.ai/repo/policy.yaml"
+for tracked in AGENTS.md CLAUDE.md; do
+  ! grep -qE "^ +target: $tracked\$" "$spol" || { echo "    the seeded policy still projects into the project's $tracked"; exit 1; }
+done
+grep -qE "^ +target: $own\$" "$spol" || { echo "    the seeded policy does not project into $own"; exit 1; }
+grep -qE '^ +target: GEMINI.md$' "$spol" || { echo "    a target the project does not track was moved or dropped"; exit 1; }
+[ "$(sed -n '/^projections:/,$p' "$spol" | grep -cE '^ +always_loaded: true')" = 1 ] \
+  || { echo "    the fitted policy does not carry exactly one always-loaded projection"; exit 1; }
+out="$(cd "$S" && "$MJ" update 2>&1)" || { echo "    update refused the policy init --personal seeded: $out"; exit 1; }
+[ -f "$S/$own" ] || { echo "    update wrote no $own"; exit 1; }
+[ "$(status_of "$S")" = "$sbefore" ] || { echo "    update changed what a set-up repository shows:"; status_of "$S" | sed 's/^/      /'; exit 1; }
+[ "$(cat "$S/AGENTS.md" "$S/CLAUDE.md" "$S/.githooks/pre-push" | cksum)" = "$team_before" ] || { echo "    a file of the team's was written"; exit 1; }
+# the hooks are the project's here, and the advice says where a line of one's own goes
+out="$(cd "$S" && "$MJ" init --extend 2>&1)" || { echo "    init --extend failed on the personal layer: $out"; exit 1; }
+printf '%s\n' "$out" | grep -qF '.githooks/pre-push.d/majordomus-personal' || { echo "    the advice does not name a drop-in of one's own: $out"; exit 1; }
+printf '%s\n' "$out" | grep -q 'pre-commit: .*no place of your own' || { echo "    a tracked hook with no .d/ is not said to have no place: $out"; exit 1; }
+! printf '%s\n' "$out" | grep -q 'add these two lines yourself' || { echo "    the advice still says to edit the project's hooks: $out"; exit 1; }
+block_of "$S/.git/info/exclude" | grep -qxF '/.githooks/pre-push.d/majordomus-personal' || { echo "    the drop-in is not covered before it exists"; exit 1; }
+printf '#!/bin/sh\nmajordomus finish --check || exit $?\n' > "$S/.githooks/pre-push.d/majordomus-personal" && chmod +x "$S/.githooks/pre-push.d/majordomus-personal"
+[ "$(status_of "$S")" = "$sbefore" ] || { echo "    the drop-in shows in git status"; exit 1; }
+out="$(cd "$S" && PATH="$(dirname "$MJ"):$PATH" "$MJ" doctor 2>&1)" || true
+printf '%s\n' "$out" | grep -q '^OK   wiring      finish-on-push' || { echo "    doctor does not see the drop-in: $(printf '%s\n' "$out" | grep wiring)"; exit 1; }
+[ -z "$(printf '%s\n' "$out" | grep '^FAIL' | grep -v 'doctor-on-commit' || true)" ] \
+  || { echo "    doctor fails for more than the one hook that has no place: $(printf '%s\n' "$out" | grep '^FAIL')"; exit 1; }
+# an --extend fits nothing: the policy is the person's from the moment it was seeded
+pol_sum="$(cksum < "$spol")"; ( cd "$S" && "$MJ" init --extend >/dev/null 2>&1 )
+[ "$(cksum < "$spol")" = "$pol_sum" ] || { echo "    init --extend rewrote a policy it did not seed"; exit 1; }
+# and where the project tracks none of them, the personal layer is the plain one (above):
+grep -qE '^ +target: AGENTS.md$' "$A/.ai/repo/policy.yaml" || { echo "    a repository tracking no target had its seed changed"; exit 1; }
+
 # ------------------------------------------------------------------ an episode's end commits nothing
 # The seeded policy commits and pushes the session record when an episode closes. Under a
 # personal layer that would put a file of the layer on a branch other people share.
@@ -97,6 +146,12 @@ rm "$A/.ai/repo/workflows/task-lifecycle.md"
 # ------------------------------------------------------------------ a tracked target refuses, whole
 B="$T/b"; dirty_repo "$B"; printf 'ours\n' > "$B/CLAUDE.md"; G -C "$B" add CLAUDE.md; G -C "$B" commit -qm claude
 ( cd "$B" && "$MJ" init --personal >/dev/null 2>&1 ) || { echo "    init --personal failed beside a tracked CLAUDE.md"; exit 1; }
+# The seed no longer names the tracked file (the section above), so the policy is put back
+# to what a hand-edited one, or one whose target was tracked later, looks like: the refusal
+# is what holds then, and it is the refusal this section measures.
+sed 's|^\( *target: \)CLAUDE\.local\.md$|\1CLAUDE.md|' "$B/.ai/repo/policy.yaml" > "$B/.ai/repo/policy.yaml.new" \
+  && mv "$B/.ai/repo/policy.yaml.new" "$B/.ai/repo/policy.yaml"
+grep -qE '^ +target: CLAUDE.md$' "$B/.ai/repo/policy.yaml" || { echo "    the fixture policy does not name the tracked CLAUDE.md"; exit 1; }
 bbefore="$(status_of "$B")"
 # without --force first: the refusal must be the personal one, and must not advise forcing
 # a file that is the project's (the hand-edit protection used to answer here, and did)

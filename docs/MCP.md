@@ -10,7 +10,7 @@ option, the kind schema) is in the application's own
 ## What it is
 
 A process the client starts, speaking the Model Context Protocol on its stdin and stdout,
-serving the repository's AI layer read-only, and joining the repository's one shared
+serving the repository's AI layer (reads, and the named commands that change state), and joining the repository's one shared
 server: the first such process in a repository binds the loopback HTTP projection beside
 its stdio session (a home page listing every surface, this repository's documentation, Swagger UI, the OpenAPI document, every capability route, MCP over
 HTTP) and says where; every later one attaches to it.
@@ -44,7 +44,7 @@ registry entry, none declared in the MCP code. The decision is
 | | |
 |---|---|
 | election | the first process to create `.ai/local/state/mcp/server.json` (atomically) is the server; it binds, writes its URL into the file, and logs it |
-| port | `--http-port` (default `8741`) on `--http-host` (default: the interface `MAJORDOMUS_HTTP_HOST` names on this machine, and `127.0.0.1` when it names none — [below](#the-machine-names-the-interface)); a taken port is replaced by a free one and both are logged, so a second repository or a stray process never stops a client from starting |
+| port | `--http-port` on `--http-host` (default: the interface `MAJORDOMUS_HTTP_HOST` names on this machine, and `127.0.0.1` when it names none — [below](#the-machine-names-the-interface)). Without `--http-port` the server asks for the port its checkout derives, the same on every start: `8741` for a repository's primary checkout, and for a linked worktree a port in `8742`–`9740` derived from the worktree's identity (`cli::checkout_port`), so two checkouts of one repository ask for different ports and a bookmarked address or a Streamable HTTP client configuration survives a restart (I2702). `serve`, `serve ensure` and `env enter` derive it the same way, and `server.status` reports it as the desired port. A taken port is replaced by a free one and both are logged, so a second repository or a stray process never stops a client from starting |
 | attaching | a later `majordomus mcp` reads the lease, checks that the server answers for this root, and bridges its stdio to `/mcp`: one HTTP request per message, a ping every twenty seconds, no index and no registry of its own, so it starts in milliseconds |
 | stale lease | a lease whose server does not answer for this root (the process was killed), a file that is not a lease document, an empty one, or one whose owner published no URL within the **bind grace** is taken over by the next process, and the log says which of these it was; nothing a client leaves behind can lock the others out |
 | lifetime | the server serves while its own client is attached or any peer is; when the owner's client goes first, the log says `serving until the last peer leaves`; when the last peer goes, the server stops, closes the port and removes the lease |
@@ -74,7 +74,11 @@ exists, and `GET /api/v1/ready` answers `ready: false` with the same reason (I15
 `git_repository_id` is the repository's (a digest of the git directory every worktree
 shares; absent where git cannot be asked), `linked_worktree` says whether this is the
 primary checkout, and `leaseholder` says whether the process answering is still the one
-(below). `GET /api/v1/server` — the tool `majordomus_server`, the resource
+(below). `branch` and `head` are the branch and commit the served answers were read from,
+as the index read them (I1031). The home page and the Swagger shell at `/swagger` carry the
+same identity in one line beside their content; none of it is a path, because whoever can
+reach the socket is told which checkout answered and never where it sits.
+`GET /api/v1/server` — the tool `majordomus_server`, the resource
 `majordomus://server` — lists every checkout git registers for the repository, the primary
 first, each with its lease, where its server stands and how many peers it holds, and says
 where this checkout's own server stands measured against what this executable would serve:
@@ -121,20 +125,36 @@ serving code that is no longer on disk", or because it is an older release than 
 electing. The installer puts each release in a directory of its own, so an upgrade changes
 the executable's path and the rebuild check never sees it; the release check does. One
 verdict (`lease::version_verdict`) decides for the election, `serve ensure` and
-`server.status` alike:
+`server.status` alike, ordering releases by the semantic-version precedence
+`release::version::Version` defines, so a server at `1.0.0-alpha.1` is newer than `0.29.0`
+and older than `1.0.0-alpha.2` and `1.0.0`:
 
 | the server's release is | a client of this executable |
 |---|---|
 | the same | attaches |
 | older | takes the lease over; the older server hands its sessions on as below |
 | newer | attaches, and its `initialize` answer says first that this client is the older one |
-| unpublished, or not ordered as a release (a pre-release) | attaches; `server.status` reports `outdated` |
+| unpublished, or not ordered as a release (not a semantic version, such as a local build tag) | attaches; `server.status` reports `outdated` |
 
 A newer server is never taken over by an older client, so two releases side by side do not
 fight over the lease: the newer one holds it (I2163). The superseded process is not killed. It
 keeps its socket, its peer board and the generation of the layer it loaded, and it goes on
 serving the sessions it already had until they end. That is deliberate: a client mid-answer
 should not lose its server because somebody ran `cargo build`.
+
+Nor, since I2059, does a build take the lease. A process that may hold it — `majordomus mcp`,
+and `majordomus serve` without a subcommand — started from a cargo build output (the file
+under a directory carrying cargo's `CACHEDIR.TAG`) first replaces its own process image with a
+copy of that file, `<profile dir>/served/majordomus-<mtime>-<size>` — a second link to the
+build's own file where the filesystem allows one, the bytes otherwise — made once per build,
+never replaced, and shared by every server started from it (`served_executable`). The lease names the copy; a
+rebuild replaces `target/debug/majordomus` and never the copy, so the server stays `ready`
+on the address it had, and a launcher of the new build attaches to it, because a lease
+naming another path makes no rebuild claim. The new build serves once something restarts
+the server on purpose: `serve stop`, or its idle timeout. Copies older than a week are removed
+when a new one is made; a copy that cannot be made is said on stderr and the server runs in
+place, as before. An installed release is never copied: its path is already versioned.
+`test/cases/3061` holds it, and `test/cases/885` the server run from a file that is replaced.
 
 What it must not do is go on being *the* server. From the moment its own reader finds the
 lease no longer carries its token:
@@ -144,7 +164,12 @@ lease no longer carries its token:
 | its index says so | `GET /` answers `leaseholder: false`; every other field — `repository`, `repository_id`, `git_repository_id` — is as true of it as of the current server, which is exactly why one field has to separate them |
 | the probe refuses it | `lease::probe` asks three questions, not two: a Majordomus server, this checkout, still the leaseholder. A client holding an address from before the takeover is told there is no server there rather than served a board nobody else can see |
 | it takes on nobody new | an `initialize` with no session gets `409 lease_lost`, naming the launcher as the way to the current server |
+| it leaves the mesh | discovery and cooperation stop; the successor alone represents this checkout, so the retired process cannot keep replacing its authenticated links |
 | its open sessions are handed on | they are answered for the declared busy grace (`server.busy_grace_seconds`), so a request in flight and the ones behind it finish where they started; after it, each session is closed and answered 404, the client's bridge opens a new one, is refused 409 `lease_lost` and elects the current server; with no session left the superseded process ends (I2127) |
+
+`tests/mesh_lease_retirement.rs` proves the takeover with real servers: the retired
+process still answers its attached MCP client, stops participating in the mesh, and the successor
+synchronizes with a remote runtime without repeated reconnects.
 
 A server too old to answer the third question is accepted by the probe. It cannot be told
 from a current one on that endpoint, and refusing it would be the worse failure: a live
@@ -210,6 +235,24 @@ REST API keeps the server they are using (I2131) — which is what keeps ADR 000
 there is no process without a client — true in time rather than at every instant: an
 agent's entry is owed a server before its first attach, and a checkout nobody works in
 does not keep one.
+
+What keeps it is a client, not the machine (I4007). Every server on a machine hears the
+mesh's multicast and links to the others, a board gather reads every sibling checkout's
+board, and `serve status`, `serve ensure` and the gather probe every lease's server; when
+each of those requests counted as use, the servers of one Mac kept each other alive — fifteen
+of them, for up to eight hours, with no peer attached. So the idle timer, in
+`apps/majordomus-cli/src/idle.rs`, decides from what the server holds: no MCP session and no
+row on its peer board, no execution queued or running, no live `/events` channel, and no
+request from a client since its last look. The mesh transport (`/api/v1/mesh/link/hello`,
+`/api/v1/mesh/link/sync`, `/api/v1/mesh/register`), a probe of `/` (which this executable
+marks with `X-Majordomus-Probe`) and a sibling's `GET /api/v1/peers?checkouts=this` are
+not use. When the bound passes, the server logs the reason (`idle for N s (bound N s): no
+peer attached, no execution queued or running, ...; stopping`), runs the same ordered stop
+`serve stop` asks for — sessions and episodes closed, listeners closed, mesh drained, lease
+released — and exits 0. It leaves on its own; nothing signals it (ADR 0200). The bound is
+`server.idle_seconds` below; a server started without one — plain `serve`, a deployment,
+the server `majordomus mcp` hosts for its stdio client — never idle-exits.
+`test/cases/4007_an_idle_server_leaves_by_itself.sh` holds it.
 
 `serve stop` signals the server the lease names, when that server answers for this
 checkout, and waits for *that server's* lease to go — the document it read, by its token,
@@ -288,6 +331,7 @@ export MAJORDOMUS_HTTP_HOST=0.0.0.0     # every interface; or one address of thi
 | `majordomus mcp` (a client electing itself) | `--http-host` when given; else `MAJORDOMUS_HTTP_HOST`; else `127.0.0.1` |
 | `majordomus serve ensure` (session start, shell entry) | it passes no host; the server it starts inherits the variable |
 | `majordomus serve --deployment <id>` | the deployment object's `listen` block, and nothing else: a declared address is not overridden by a machine's environment |
+| any of the first three, in a linked worktree | `127.0.0.1` when only `MAJORDOMUS_HTTP_HOST` names an interface; a flag still binds where it says. The variable is the machine's face on its network, which is the primary checkout's server; a worktree's server serves its own sessions, and its mesh commands go through the primary's ([`MESH.md`](MESH.md#configuration)) |
 
 Four things follow from it being a variable and not a setting:
 
@@ -348,6 +392,7 @@ when the repository is opened: Both `mcp` and `serve` read it before their first
 | `join_timeout_seconds` | how long a process waits to join or create the lease file before refusing rather than waiting forever |
 | `busy_grace_seconds` | how long a live owner that does not answer is waited on, and asked again, before its lease is taken over. The election gives a busy owner this long, and so does `serve ensure` before it starts anything: a probe that times out against a live process is not a dead server, but one that stays silent this long is wedged and replaced. A server that `ensure` started after waiting out this grace is told which lease it judged, so its election does not wait on it a second time |
 | `read_deadline_seconds` | how long the server lets a connection go without a request read in full on it — waiting for a head, kept alive between requests, or reading a body — before it closes the connection. A client sending one byte a second would otherwise hold a request thread forever, and enough of them would leave the probe above unanswered. A connection whose request is being answered, or that was upgraded to the live channel, is never closed by it. Each close is counted in `server.status` (`connections.closed_by_deadline`), beside the requests refused `503` because all 64 request handlers were busy (`connections.refused_busy`); the probe, `GET /`, is answered even then. The HTTP library keeps a thread on each connection while it lives and can queue a connection that arrives in a burst until one is free; the deadline is also what bounds that wait (I2156) |
+| `idle_seconds` | how long a server started for a checkout no client owns — by `serve ensure`, or by a shell entering the checkout — outlives its last peer before it stops by itself; 900 when it is not declared. `--idle` on the command line overrides it. A server started by hand with plain `serve` and no `--idle` runs until it is stopped, as before: its owner is whoever started it (I2701) |
 
 Until 2026-09-15 all of them were compiled constants in `apps/majordomus-cli/src/lease.rs`:
 unchangeable without a rebuild, stated nowhere a reader would look, and invisible to every
@@ -375,22 +420,104 @@ others attach:
 | Gemini CLI | [`.gemini/settings.json`](../.gemini/settings.json) | the same launcher under `mcpServers.majordomus` |
 | Codex | [`.codex/config.toml`](../.codex/config.toml) | `[mcp_servers.majordomus]`, loaded when the project is trusted |
 | bb | nothing of its own | an orchestrator: the agent it starts (Claude Code, Codex, an ACP agent) reads its own file above, so a bb thread attaches through the agent, not through bb (ADR 0024). Claude Code under bb runs with `settingSources: project`, which loads `.mcp.json`; a server loaded from a settings file gets two seconds before the first turn, so a cold checkout that has to build the executable shows it `pending` at init and connected afterwards |
-
-The rows are the providers whose declaration names a client configuration; the whole set,
-with what each reads and where it keeps its scratch checkouts, is
-[`docs/generated/providers.md`](generated/providers.md), generated from the same declaration.
 | anything speaking Streamable HTTP | the running server's `/mcp` | `initialize` answers with an `Mcp-Session-Id`; every later request carries it; `DELETE /mcp` ends the session; an idle session expires and the client re-initialises on the 404, as the transport prescribes |
 
-`bin/majordomus-mcp` builds the executable when it is missing or older than its sources
-(`MAJORDOMUS_BUILD_PROFILE=release` for a release build; `MAJORDOMUS_BIN` names an
-executable and never builds; `MAJORDOMUS_NO_BUILD=1` refuses to build and exits 12 with the
-command to run), sets `MAJORDOMUS_SHARE` to the distribution's `share/` beside it, writes
-nothing to stdout, and passes every argument to `majordomus mcp`. `just mcp`, `just serve`
+The provider rows are the providers whose declaration names a client configuration; the whole
+set, with what each reads and where it keeps its scratch checkouts, is
+[`docs/generated/providers.md`](generated/providers.md), generated from the same declaration.
+
+`bin/majordomus-mcp` never builds (ADR 0224, which supersedes ADR 0172). It runs this
+checkout's executable (`MAJORDOMUS_BUILD_PROFILE=release` for the release build; `MAJORDOMUS_BIN`
+names another), sets `MAJORDOMUS_SHARE` to the distribution's `share/` beside it, writes nothing
+to stdout, and passes every argument to `majordomus mcp`. When that executable is missing or older
+than its sources, the installed release (`MAJORDOMUS_INSTALLED_BIN`, by default `majordomus` in
+`~/.local/bin`, where `install.sh` puts it) answers instead only when it is of this tree's
+generation: the commit its `RELEASE.json` names is in this repository and carries every crate
+input of the working tree unchanged (`mj_rust_same_generation` in `lib/rust_bin.sh`, the rule the
+gates borrow an executable on). It says so on stderr. A version string is not a generation, so any
+other release is refused: exit 12, naming why and the explicit build, `just build`, which the
+client reports as a failed server — a session told it has no server can be fixed, one served by a
+release of another crate answers for a tree it was not built from. The same answer holds for every
+command of the launcher, not `mcp` alone. A file inside the repository is never taken for the
+installed release, nor one that does not answer `--version`. The case is
+`test/cases/3177_a_client_always_gets_a_server.sh`; every entry path and gate is held to it by
+`test/cases/3958_no_entry_path_or_gate_builds.sh`.
+
+`just mcp`, `just serve`
 and `just inspect` at the root do the same for a person; `just docs-ui` opens the running
 server's Swagger UI. The same document, with its tags, examples and statuses, is the API
 reference on the site at `/docs/api/` and is served raw at the site's `/openapi.json`; the
 `initialize` instructions, the OpenAPI `info` and `GET /` open with the one summary from
 `about.rs` ([`CAPABILITIES.md`](CAPABILITIES.md)).
+
+### A session that starts by joining
+
+A hook can only add context; nothing but a first message starts a turn. So a session that is
+merely opened is handed the briefing and waits for a person to type, and until someone does
+it is not on the board (ADR 0226, ADR 0172). `share/shell/session-start.sh` closes that for
+Claude Code: sourced from `~/.bashrc` or `~/.zshrc`, it wraps a **bare** `claude` so that,
+inside a repository with an `.ai/` layer, the first message is
+`majordomus prompt render session-start` — the repository's own prompt
+([`.ai/repo/prompts/session-start.md`](../.ai/repo/prompts/session-start.md)): say how you are
+attached, read the board, find the work that is owed, check for collisions, announce, then work
+inside the task's scope and keep everything local. Any argument is the person's own and is
+passed through, so is a run outside a supervised repository, with `MAJORDOMUS_NO_AUTOSTART=1`,
+or when the prompt cannot be rendered. The prompt is the repository's, so changing it is a
+commit and every checkout that pulls it is updated; the file ships in the release's `share/`
+and is updated with it. `test/cases/3221_a_bare_session_start_joins_the_cluster.sh` proves it in
+bash and zsh. It is not installed for you: the installer touches nothing outside its prefix
+(`docs/DISTRIBUTION.md`), so sourcing the file is the one line a person adds.
+
+### Claude in the browser
+
+Three Claude surfaces meet a browser. Only one of them reaches this server today, and the
+other two must not be made to look as if they did:
+
+| surface | reaches this server through | reaches a page through | state |
+|---|---|---|---|
+| Claude Code (terminal, desktop, IDE) | `.mcp.json` above: stdio, then the shared server, as a loopback caller that reads and changes | the Claude in Chrome extension's bridge: the `mcp__claude-in-chrome__*` tools, on with `claude --chrome` or `/chrome` | works: the one path that drives a page and the live mesh in one session |
+| Claude in Chrome side panel | nothing yet | itself | an agent of its own on claude.ai, which calls only a connector Anthropic's cloud reaches over the public internet; a server on loopback or a LAN address is out of its reach |
+| claude.ai chat (web, desktop) | nothing yet | — | the same: a custom connector or nothing |
+
+A tunnel from the public internet to the loopback server would give a vendor's requests the
+loopback caller's right to change the repository (ADR 0126 judges a caller by its address), so
+none is set up. The side panel and the chat reach the mesh when a vendor caller has a listener
+of its own that authenticates it and serves reads only (I3285, which covers a claude.ai custom
+connector as well as a ChatGPT one), and the hosted hub serves the mesh over TLS to an
+authenticated caller only (the owner's decision of 2026-10-21: TLS first, then the hub, and no
+anonymous caller reads the mesh). Until then a side-panel session reads what is published:
+<https://majordomus.dev> and its `/ui/`, a snapshot built without a running mesh, which is why it
+says the mesh is not observed. To work on the live mesh from a page, drive the page from Claude
+Code.
+
+Set it up once, per person rather than per repository:
+
+- In Claude Code run `/chrome` and choose **Enabled by default**. It is a user setting: Claude Code
+  ignores `CLAUDE_CODE_ENABLE_CFC` in a project's settings ("a project can't turn on Claude in
+  Chrome", Claude Code documentation, `code.claude.com/docs/en/chrome`), so this repository does not try.
+- Sign the extension in to the claude.ai organization that `/status` names in Claude Code. Claude
+  Code needs a claude.ai login (Pro, Max, Team, Enterprise); an API key or a `setup-token` keeps
+  the bridge off.
+- The first enable writes the native messaging host — on macOS
+  `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/com.anthropic.claude_code_browser_extension.json`,
+  which runs `claude --chrome-native-host` — and Chrome finds it after a restart.
+
+Every browser action still passes the extension's own per-site permissions; a rule in
+`.claude/settings.json` does not lift them, and this repository pre-approves no browser tool.
+
+When it does not connect — `list_connected_browsers` answers an empty list, or a browser tool says
+"Browser extension is not connected":
+
+1. The extension is not running, or it is signed in to another account or organization than
+   `/status` names. Sign it in again with that organization.
+2. `/chrome` → **Reconnect extension**, then restart Chrome and Claude Code.
+3. An organization IP allowlist that blocks `bridge.claudeusercontent.com` blocks the bridge
+   (Claude Code documentation, `code.claude.com/docs/en/network-config`).
+4. A JavaScript dialog open in a controlled tab stops every later browser event until a person
+   dismisses it.
+
+The mesh half is diagnosed as always, from the same session: `majordomus mesh doctor`, and
+`majordomus_peers` for the board.
 
 ## Peers
 
@@ -402,14 +529,27 @@ transport, when it attached and when it was last seen. The `initialize` result's
 `instructions` tell a client the server's URL, its own peer id and every other peer with
 what it announced, before its first tool call.
 
-| tool | capability | arguments | answers |
-|---|---|---|---|
-| `majordomus_peers` | `peers.list` | `checkouts?` | every worker of the repository with the checkout it is on, the caller's own id, each peer's announcement, every pair of claims that meet, and which checkouts the answer covered |
-| `majordomus_announce` | `peers.announce` | `intent`, `scope?` | the calling peer's record, and the peers whose claimed scope it collides with |
+A peer's row also carries its `address` (I3956): where the worker behind it can be reached
+from outside its connection — the machine, the worker's own process (`CLAUDE_PID`, else the
+parent of the process it started), the provider's session id and the socket other sessions
+message it through (`CLAUDE_CODE_SESSION_ID`, `CLAUDE_CODE_MESSAGING_SOCKET`). It is derived
+from the environment the provider hands the process it starts, never announced by hand: the
+server's own stdio client is located from the server's environment, and a bridged
+`majordomus mcp` carries its own under `_meta["dev.majordomus/address"]` in the `initialize`
+it forwards. The provider's messaging token is a credential and is never read. A client that
+exposes none of it is still named by its machine and its process. The provider and session
+id together spell the mesh session the edit guard judges the provider's claims under
+(`claude-code-<session id>`), which joins the board row to the mesh.
+
+Two tools serve the board: `majordomus_peers` reads it (`peers.list`) and
+`majordomus_announce` writes to it (`peers.announce`). Their arguments and answers are the
+registry's, and this page does not repeat them: the generated reference
+([`generated/capabilities.md`](generated/capabilities.md), `/registry/mcp/` on the site) and
+`majordomus_capability` at runtime carry them.
 
 An announcement is one line of intent and the repository-relative paths the peer expects
 to touch. The board lives in the server's memory and is gone with the process;
-`peers.announce` is the one capability of kind `command`, because it changes that memory,
+`peers.announce` is of kind `command`, because it changes that memory,
 and it is announced to MCP clients as not read-only. Over plain HTTP there is no caller,
 so `POST /api/v1/peers/announce` is refused (422) and `GET /api/v1/peers` answers without
 a `caller`.
@@ -435,9 +575,12 @@ with the reason instead.
 |---|---|
 | `peers[].checkout` | the checkout a peer is on — its id, worktree, branch, and whether it is this one. Not decoration: `p1` is the first session of *every* board, so a merged listing without it holds several `p1`s |
 | `overlaps` | every pair of claims that meet, now across checkouts as well as within one, each naming the checkout the other worker is on |
-| `boards` | one entry per checkout the answer covered, reached or not, with its standing and the reason it was not read |
+| `covered` | how many checkouts the answer covered, listed in `boards` or counted in `omitted` |
+| `boards` | one entry per checkout the answer lists, reached or not, with its standing and the reason it was not read. Under the default `view: summary` that is this checkout, every checkout with a worker or a standing server, and every board that could not be read; `view: full` lists every covered checkout |
+| `omitted` | the covered checkouts the summary counts rather than lists, by standing (`absent`, `stale`): no server, nobody attached, no board. On 2026-10-22 that was 601 of 625, and the default answer went from 168 kB to about 18 kB |
 | `complete` | whether every board covered could be read. `false` means a checkout could not be asked — a short board is never to be mistaken for an empty repository |
-| `checkouts` | `repository` (the default) or `this`: this checkout alone, enumerating nothing, probing nothing, reading one board out of memory |
+| `checkouts` (input) | `repository` (the default) or `this`: this checkout alone, enumerating nothing, probing nothing, reading one board out of memory |
+| `view` (input) | `summary` (the default) or `full`, the same words as `majordomus_mesh_peers` |
 
 A peer id is a **position on one board**, handed out in attachment order and reassigned
 after a reconnect — a session that was `p3` this morning is `p1` once its bridge
@@ -492,11 +635,10 @@ provider hooks of its own the connection is the only thing that can draw its bou
 Until it, drawing the boundary below the model was wired for Claude Code alone, and the
 repository's claim to do so was a claim about one vendor.
 
-| tool | capability | arguments | answers |
-|---|---|---|---|
-| `majordomus_session_attach` | `episodes.attach` | `external_id` | the episode this connection now holds, whether it was resumed, and the reattach grace |
-| `majordomus_session_detach` | `episodes.detach` | `external_id?` | the episode as it was closed, and what the repository's end event reported |
-| `majordomus_episodes` | `episodes.list` | none | every episode this server holds, open and detached, and the caller's own |
+A connection holds an episode with `majordomus_session_attach` (`episodes.attach`), closes it
+with `majordomus_session_detach` (`episodes.detach`) and reads them with
+`majordomus_episodes` (`episodes.list`); their arguments and answers are in the generated
+reference ([`generated/capabilities.md`](generated/capabilities.md), `/registry/mcp/`).
 
 ```mermaid
 stateDiagram-v2
@@ -606,32 +748,25 @@ manifest section it falls under, and its size.
 
 ## Tools
 
-| tool | capability | arguments | answers |
-|---|---|---|---|
-| `majordomus_list` | `objects.list` | `kind?`, `tag?` | the objects, summarised |
-| `majordomus_get` | `objects.get` | `uri` | tagged by `source`: `declarative`, a file of the layer with metadata, provenance, media type and content; or `builtin`, a query the URI projects (`majordomus://repository`) with its `answer`, the capability's provenance and the same text as `content` |
-| `majordomus_search` | `objects.search` | `query`, `kind?`, `limit?` | case-insensitive substring hits with one snippet line each |
-| `majordomus_entity` | `entity.show` | `uri?`, `kind?` + `slug?` | one object as an addressable node: its derived route, the references it declares, the references that resolve to it, the surfaces that answer for it, the state of the executable artefacts it names, and its public documentation page |
-| `majordomus_kinds` | `entity.kinds` | none | every kind the index holds with the route of its listing, how many objects are addressable, and every route collision there is |
-| `majordomus_repository` | `repository.info` | none | the `majordomus://repository` document |
-| `majordomus_scope` | `repository.scope` | none | the `majordomus://scope` document: the declaration, its origin, the tally |
-| `majordomus_scope_classify` | `repository.scope_classify` | `path` | whether a repository-relative path is in or out of the scope, the reason, and the rule that decided |
-| `majordomus_capabilities` | `capabilities.list` | `kind?`, `exposure?` | every capability with its projections |
-| `majordomus_capability` | `capabilities.describe` | `id` | one capability: schemas, provenance, every projection |
-| `majordomus_peers` | `peers.list` | `checkouts?` | every worker of the repository, gathered from the board of every checkout (above) |
-| `majordomus_announce` | `peers.announce` | `intent`, `scope?` | records what the calling peer is working on (above) |
-| `majordomus_mcp` | `mcp.projection` | `effect?` | the projection described (below): server, protocol versions, transports and attached sessions, methods served, every tool with its effect and hints, the writers, the resources, and where each declared client's configuration stands here |
-| `majordomus_perf` | `perf.counters` | none | this process's work counters and phase timings: what happened once at startup, what happens per call |
-| `majordomus_worktrees` | `worktree.topology` | none | the `majordomus://worktrees` document: the container, the trunk, every worktree with its standing and diagnostics, every branch, the tallies |
-| `majordomus_worktree_status` | `worktree.status` | `path?` | one worktree — the repository's own, or the one holding `path` — with its standing, canonical path, uncommitted work and whether it is where it belongs; a path in another repository is refused |
-| `majordomus_worktree_inspect` | `worktree.inspect` | `branch` | the canonical path of a branch, whether it exists, what occupies the path, the worktree holding it |
-| `majordomus_worktree_migration_plan` | `worktree.migration_plan` | none | every misplaced worktree with where it belongs, how it would move and what blocks it; the exceptions; changes nothing |
+Every tool is a projection of one capability of the registry, under the name that
+capability declares (`objects.list` is served as `majordomus_list`, `worktree.status` as
+`majordomus_worktree_status`). The list grows whenever a module is composed, so this page
+keeps no copy of it: a hand-written table of tools is the second definition ADR 0004 calls
+a design defect, and the copy that stood here had already fallen behind the registry it
+repeated. The total reference, with every tool's capability, arguments and answers, is
+derived:
 
-The table above is the core set and not the whole of it: the tool list is a projection of
-the capability registry, it grows whenever a module is composed, and a list in prose that
-claimed to be complete would be wrong the next time one is. `majordomus_capabilities` and
-`docs/generated/capabilities.md` are the derived, total reference; what is written here is
-what a reader needs before opening it.
+- [`generated/capabilities.md`](generated/capabilities.md) — every capability with its MCP
+  tool, HTTP route and command (`majordomus generate`);
+- `/registry/mcp/` on the site — one row per tool the registry projects, each linking its
+  capability's page (case 532 holds it to the registry, no more and no fewer);
+- `majordomus_capabilities` and `majordomus_capability` at runtime — the registry of the
+  executable that is answering.
+
+Where the sections above and below name a tool, they say why it exists and how it behaves;
+what it takes and returns is the registry's. Case
+`3062_the_mcp_reference_repeats_no_registry_entry` refuses a hand-written tool row in any
+document under `docs/` outside `docs/generated/`.
 
 ### Sessions and continuity
 
@@ -640,14 +775,12 @@ and they are the reason the server binds to the loopback interface. They are ser
 never published: no generator writes them into `docs/generated/` and no site page carries
 one.
 
-| tool | capability | answers |
-|---|---|---|
-| `majordomus_continuity` | `continuity.state` | what a worker resuming *here* would be handed: the episode the pointer resolves to, the active task, the handover and checkpoint that resolve for this worktree and branch with their labels, the blockers |
-| `majordomus_lifecycle_episodes` | `lifecycle.episodes` | every open episode of the store — not only the one the pointer follows — with its provider session, its standing (`current`, `open`, `foreign`, `stranded`) and the last ledger line stamped with it |
-| `majordomus_lifecycle_recovery` | `lifecycle.recovery` | episodes that can no longer close themselves and the command that clears each, temporary files a killed close left in the tracked sessions section, the pointer's layout, and the started-against-closed arithmetic |
-| `majordomus_lifecycle_runtime` | `lifecycle.runtime` | the commit this process's index was built at, against the commit the repository is on right now, and whether they agree |
-| `majordomus_lifecycle_providers` | `lifecycle.providers` | per provider: the lifecycle events its adapter declares, whether it can archive prompts, and the enforcement entries this repository wires to its hook |
-| `majordomus_lifecycle_closed` | `lifecycle.closed` | the tracked records a clone receives: how many, how many on this branch, and the newest twenty |
+They are `majordomus_continuity` (`continuity.state`) — what a worker resuming *here* would
+be handed — and the operator's five: `majordomus_lifecycle_episodes`,
+`majordomus_lifecycle_recovery`, `majordomus_lifecycle_runtime`,
+`majordomus_lifecycle_providers` and `majordomus_lifecycle_closed` (`lifecycle.*`). Because
+no generated page carries them, their arguments and answers are read where they are served:
+`majordomus_capability` with the id, or `majordomus capabilities describe <id>`.
 
 The first answers the worker's question and the rest answer the operator's, which is a
 different question and not a superset: `continuity.state` follows
@@ -710,26 +843,41 @@ unknown tool, method or resource is a protocol error.
 
 ## Failure behaviour
 
-| state | what happens |
-|---|---|
-| no `.ai/manifest.yaml` above the working directory | exit `12`, the start directory named |
-| project data under `.majordomus/` and no manifest | exit `12`, naming `majordomus migrate` |
-| manifest or `sources.yaml` malformed, unknown key, unsupported schema | exit `10`, the path and the key or line named |
-| one file that cannot become an object | excluded; an error diagnostic names its path and a stable code; the index is `degraded` and still serves; `--strict` exits `10` instead |
-| `git` unusable | `--discovery vcs` (the default) exits `13` naming `--discovery filesystem`; the git block of `majordomus://repository` reads `unavailable` with the reason |
-| no share directory (kinds and schemas) found | exit `12`, every directory tried named, and `--share` / `MAJORDOMUS_SHARE` named as the remedy |
-| a kind schema or a schema file invalid, or a repository redefining a distributed kind | exit `10`, both files named |
-| client closes its pipe | the process ends with `0`, after the last attached peer has left when it was the server |
-| the port is taken | a free port is bound instead; both are logged |
-| the lease names a server that does not answer for this root | it is taken over; `stale lease` is logged with the URL |
-| the shared server a bridge is attached to dies | the bridge takes over on its next message, or re-attaches to the process that did; the client never re-initialises |
-| a bridge cannot take over (its `--strict`, a broken layer) | the client's request is answered with a JSON-RPC error (`-32603`) naming why; the stdio session stays open |
-| the lease file is corrupt, empty, or has had no URL for longer than the bind grace | it is taken over; `corrupt lease`, `empty lease` or `abandoned lease` is logged with the path |
-| the lease cannot be created, joined or replaced (a filesystem refusing writes under `.ai/local/`), or the shared server cannot start | the client is served alone, as `--standalone` would: `cannot use the shared server` is logged with the path and the reason, then `serving this client alone`; no port, no lease, no peers; the layer's own errors still exit as above |
-| the server gets `SIGTERM`, `SIGINT` or `SIGHUP` | it stops in order: sessions and episodes closed, listeners closed, the lease released if it is still the server's own; `serve` exits `0`, a `majordomus mcp` then dies of the signal; a second signal or eight seconds end it at once; its bridges elect again on their next message |
-| `--http-host`, `--host` or `MAJORDOMUS_HTTP_HOST` names an address that is not loopback | served, with a warning that every host reaching that interface can read the layer, its diagnostics and its peers; when the variable supplied it, the line before says so |
-| `MAJORDOMUS_HTTP_HOST` names an address nothing can bind | the process exits non-zero with `cannot bind <address>`, and leaves no lease behind |
-| an HTTP client leaves without `DELETE /mcp` | its session expires after ninety seconds of silence; a server whose owner has already left ends then, never later |
+Each row names the failure, what a client observes, and what proves it: the tests that drive
+it, or a stated limitation that says why nothing does. A row with neither, or one citing a
+test or case this tree does not hold, is refused by
+`test/cases/3056_every_failure_class_names_its_proof.sh`.
+
+| state | what happens | proof |
+|---|---|---|
+| no `.ai/manifest.yaml` above the working directory | exit `12`, the start directory named | `test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh` |
+| project data under `.majordomus/` and no manifest | exit `12`, naming `majordomus migrate` | `apps/majordomus-cli/tests/repository_discovery.rs::the_pre_ai_layout_is_refused_by_name` |
+| manifest or `sources.yaml` malformed, unknown key, unsupported schema | exit `10`, the path and the key or line named | `apps/majordomus-cli/tests/repository_discovery.rs::a_nearer_broken_manifest_is_an_error_not_a_skip` |
+| one file that cannot become an object | excluded; an error diagnostic names its path and a stable code; the index is `degraded` and still serves; `--strict` exits `10` instead | `apps/majordomus-cli/tests/metadata_contract.rs::malformed_front_matter_is_named_and_excluded`, `apps/majordomus-cli/tests/mcp_stdio.rs::strict_refuses_a_degraded_layer_before_serving` |
+| `git` unusable | `--discovery vcs` (the default) exits `13` naming `--discovery filesystem`; the git block of `majordomus://repository` reads `unavailable` with the reason | `apps/majordomus-cli/tests/index_behavior.rs::without_git_vcs_discovery_is_refused_and_the_walk_still_works` |
+| no share directory (kinds and schemas) found | exit `12`, every directory tried named, and `--share` / `MAJORDOMUS_SHARE` named as the remedy | `apps/majordomus-cli/tests/metadata_contract.rs::without_a_share_directory_nothing_starts_and_the_search_is_named` |
+| a kind schema or a schema file invalid, or a repository redefining a distributed kind | exit `10`, both files named | `apps/majordomus-cli/tests/external_extension.rs::a_repository_defines_a_new_kind_with_its_schema_and_it_is_served_without_a_rust_change` |
+| client closes its pipe | the process ends with `0`, after the last attached peer has left when it was the server | `apps/majordomus-cli/tests/mcp_stdio.rs::a_client_that_closes_its_read_end_ends_the_session` |
+| the port is taken | a free port is bound instead; both are logged | `apps/majordomus-cli/tests/mcp_shared.rs::a_taken_port_falls_back_to_a_free_one_and_serve_defers_to_the_running_server`, `apps/majordomus-cli/tests/serve_lifecycle.rs::ensure_takes_a_free_port_when_the_one_it_asks_for_is_taken` |
+| the lease names a server that does not answer for this root | it is taken over; `stale lease` is logged with the URL | `apps/majordomus-cli/tests/mcp_shared.rs::a_stale_lease_is_taken_over` |
+| the shared server a bridge is attached to dies | the bridge takes over on its next message, or re-attaches to the process that did; the client never re-initialises | `apps/majordomus-cli/tests/mcp_shared.rs::a_bridged_peer_takes_over_when_its_server_dies`, `apps/majordomus-cli/tests/mcp_shared.rs::a_bridged_peer_re_attaches_when_another_process_took_the_lease_first` |
+| a bridge cannot take over (its `--strict`, a broken layer) | the client's request is answered with a JSON-RPC error (`-32603`) naming why; the stdio session stays open | `apps/majordomus-cli/tests/mcp_shared.rs::a_peer_that_cannot_serve_the_layer_says_so_instead_of_taking_over` |
+| the lease file is corrupt, empty, or has had no URL for longer than the bind grace | it is taken over; `corrupt lease`, `empty lease` or `abandoned lease` is logged with the path | `apps/majordomus-cli/tests/mcp_shared.rs::a_corrupt_lease_is_taken_over`, `apps/majordomus-cli/tests/mcp_shared.rs::a_lease_of_another_schema_and_an_old_empty_file_are_taken_over`, `apps/majordomus-cli/tests/mcp_shared.rs::an_abandoned_lease_is_taken_over_without_waiting_when_it_is_old` |
+| the lease cannot be created, joined or replaced (a filesystem refusing writes under `.ai/local/`), or the shared server cannot start | the client is served alone, as `--standalone` would: `cannot use the shared server` is logged with the path and the reason, then `serving this client alone`; no port, no lease, no peers; the layer's own errors still exit as above | `apps/majordomus-cli/tests/mcp_shared.rs::an_unwritable_lease_directory_degrades_to_a_standalone_session` |
+| the server gets `SIGTERM`, `SIGINT` or `SIGHUP` | it stops in order: sessions and episodes closed, listeners closed, the lease released if it is still the server's own; `serve` exits `0`, a `majordomus mcp` then dies of the signal; a second signal or eight seconds end it at once; its bridges elect again on their next message | `apps/majordomus-cli/tests/mcp_shared.rs::sigterm_removes_the_lease_before_the_process_dies`, `apps/majordomus-cli/tests/mcp_shared.rs::sigint_and_sighup_remove_the_lease_before_the_process_dies`, `apps/majordomus-cli/tests/lease_holder.rs::serve_stop_ends_the_server_in_order_and_closes_its_episodes` |
+| the server is killed with `SIGKILL` | nothing runs on its way out; the lease it leaves names a process that is gone, and the next client takes it over at once | `apps/majordomus-cli/tests/serve_lifecycle.rs::a_stale_lease_and_a_killed_server_are_both_recovered`, `apps/majordomus-cli/tests/lease_busy.rs::a_silent_server_whose_process_is_gone_is_taken_over_at_once` |
+| the lease's owner is alive and frozen: it answers nothing | a contender waits the declared grace, then takes the lease over; the log names the owner given up on | `apps/majordomus-cli/tests/lease_busy.rs::a_live_server_that_stays_silent_loses_its_lease_after_the_grace`, `apps/majordomus-cli/tests/serve_lifecycle.rs::a_live_owner_that_never_answers_is_still_taken_over`, `apps/majordomus-cli/tests/lease_declared.rs::a_busy_owner_is_given_up_on_after_the_declared_grace_and_the_log_names_it` |
+| the server's lease is taken by another process | the server says so, takes on no new client, and an unbounded server ends by itself | `apps/majordomus-cli/tests/lease_lost.rs::a_server_that_lost_its_lease_says_so_and_takes_on_nobody_new`, `apps/majordomus-cli/tests/cov_runtime_a_server.rs::an_unbounded_server_whose_lease_is_taken_over_ends_by_itself` |
+| `--http-host`, `--host` or `MAJORDOMUS_HTTP_HOST` names an address that is not loopback | served, with a warning that every host reaching that interface can read the layer, its diagnostics and its peers; when the variable supplied it, the line before says so | `apps/majordomus-cli/tests/mcp_shared.rs::a_non_loopback_bind_is_warned_about`, `test/cases/992_the_local_bind_is_the_machines_to_name.sh` |
+| `MAJORDOMUS_HTTP_HOST` names an address nothing can bind | the process exits non-zero with `cannot bind <address>`, and leaves no lease behind | `test/cases/992_the_local_bind_is_the_machines_to_name.sh` |
+| an HTTP client leaves without `DELETE /mcp` | its session expires after ninety seconds of silence; a server whose owner has already left ends then, never later | `apps/majordomus-cli/tests/shared_units.rs::the_endpoint_opens_reaps_and_closes_sessions`, `apps/majordomus-cli/tests/serve_in_use.rs::a_server_read_over_http_outlives_its_idle_timeout_and_ends_when_left_alone` |
+| an HTTP client sends its request slowly, or not at all | its connection is closed at the declared read deadline and counted; the other clients are answered | `apps/majordomus-cli/tests/http_slow_client.rs::slow_client_released_test` |
+| every request handler is held | a further request is refused at once as busy; the liveness probe is still answered | `apps/majordomus-cli/tests/http_slow_client.rs::past_the_handler_bound_a_request_is_refused_and_the_probe_is_answered` |
+| a request handler never returns (a frozen worker) | its worker is held for as long as it runs: the read deadline bounds a request's arrival, not its handling | limitation: not tested — no test freezes a handler, and nothing bounds one; the busy refusal above is what a client meets once every handler is held |
+| the disk is full | unmeasured: the lease, the mesh journal and generated output each write through their own error path | limitation: not tested — no test or case fills a filesystem, so what a write refused for space does to each writer is not shown |
+| the mesh journal directory refuses writes (read-only) | on master an own event whose append fails is not reported to its caller as not durable | limitation: not tested on master — PRs #1179 and #1196 (I2706, case 3052) report a refused append as not durable and drive it end to end; until they land, no test on this tree does |
+| the process is killed between creating the lease and its first write | the empty lease left behind is taken over once it is older than the bind grace, as the row for an empty lease says | limitation: not tested as a kill — no test kills a process at that instant; the state it leaves is the one `apps/majordomus-cli/tests/mcp_shared.rs::a_lease_of_another_schema_and_an_old_empty_file_are_taken_over` builds by hand |
+| a lease keep-alive write fails | the failure is dropped and the next tick tries again; nothing is logged or reported | limitation: not tested — `Lease::keep_alive` discards the error by design and no test drives a failing touch |
 
 Two files of one kind claiming one identity are both excluded and both named, as the
 rules contract requires. Nothing is repaired, defaulted or rewritten.

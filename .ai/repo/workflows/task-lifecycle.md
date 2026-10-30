@@ -37,11 +37,35 @@ line. A token the vocabulary does not declare is refused at `start`, not at the 
 try to discharge it. Declare what the work owes when you begin it: a task that promises
 nothing is told, truthfully and uselessly, that it promises nothing.
 
+On a repository whose mesh is enabled, `start` claims the scope on the mesh as the session
+`task-<id>`, and first ensures this checkout's shared server (`serve ensure`, bounded, said on
+stderr), because a fresh worktree has none. A start that could not claim reports `WARN mesh`
+with the reason; repair it without finishing: `majordomus serve ensure`, then `majordomus
+check`, which claims the running task's scope. Until then `finish --outcome completed` and the
+pre-push `finish --check` refuse it (rule `majordomus.task-on-the-mesh`, `docs/MESH.md`).
+
+A task binds every push of its checkout: the pre-push hook runs `finish --check` against it,
+scope and mesh included. So start one only in the checkout whose work it is, never in a
+worktree whose pushes are another seat's, such as a train's, to hold a reasoning record or
+any other record; hold it under your own worktree's task. On 2026-10-28 a task started in
+the worktree of `integration/train-10b-20261028` only to hold a reasoning record made the
+train's push refuse on scope and mesh. If one was started there, close it with a
+non-completed outcome and its `# Next Action` before that checkout pushes.
+
+Name in `--scope` every file the change will edit before the first edit, the test cases it
+pins among them: a scope cannot be widened while its task is active, so a missed case costs
+a `finish --outcome partial` with a note and a second `start` (I4340, 2026-10-29).
+
 `start` refuses while a task is active here: hand it over or finish it first. `check` and
 `finish --outcome completed` fail on a touched file outside the claimed scope; the other
 outcomes name the files as warnings and close the record, because `start` will not begin a
 task while one is active and refusing every outcome would strand a worker whose scope
-turned out too narrow. `finish --outcome completed` evaluates every line of the finish
+turned out too narrow. A path the repository declares derived — git's `merge=derived`
+attribute, which `scripts/gitattributes` writes from the generators — is admitted without
+being in the scope when the task also changed a file of the layer or a file inside its
+scope that is not derived: a scope names what a worker changes, not where a generator puts
+its projections. Projections committed with no such change beside them are refused as
+before. `finish --outcome completed` evaluates every line of the finish
 contract the policy selects and writes nothing when any line fails; the other outcomes are
 honest statements that the work did not complete, and each needs a note saying what comes
 next (`# Next Action`) or why (`# Reason`). `no_match` means the thing sought does not

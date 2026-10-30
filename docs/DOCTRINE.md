@@ -8,22 +8,17 @@ exists to know the difference, and to say so in one command.
 
 ## The chain
 
-```
-principle          why the rule exists at all
-  ↓
-doctrine           what must be true          share/standard/majordomus/
-  ↓
-validator          whether it is true          mj_validate_<name> in lib/
-  ↓
-enforcement point  when the validator runs     the commands in enforced_by
-  ↓
-propagation        what a violation costs      the command's exit code
-  ↓
-test               proof of the behaviour      test/cases/
-  ↓
-CI                 proof it blocks integration .github/workflows/validate.yml
-  ↓
-claim              what may be promised        docs/CLAIMS.yaml
+```mermaid
+flowchart TD
+  principle["principle<br/><small>why the rule exists at all</small>"]
+  doctrine["doctrine<br/><small>what must be true · share/standard/majordomus/</small>"]
+  validator["validator<br/><small>whether it is true · mj_validate_#lt;name#gt; in lib/</small>"]
+  point["enforcement point<br/><small>when the validator runs · the commands in enforced_by</small>"]
+  propagation["propagation<br/><small>what a violation costs · the command's exit code</small>"]
+  test["test<br/><small>proof of the behaviour · test/cases/</small>"]
+  ci["CI<br/><small>proof it blocks integration · .github/workflows/validate.yml</small>"]
+  claim["claim<br/><small>what may be promised · docs/CLAIMS.yaml</small>"]
+  principle --> doctrine --> validator --> point --> propagation --> test --> ci --> claim
 ```
 
 `majordomus doctor` walks that chain for every doctrine and reports the first link that

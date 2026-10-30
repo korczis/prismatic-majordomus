@@ -17,6 +17,16 @@
 #                                         also write the measurement as JSON: the crate, the
 #                                         domain and every source file, covered/total per
 #                                         dimension (with --report or a gate; ignored by --changed)
+#   scripts/rust-coverage --lcov FILE     also write the measurement as LCOV (TN/SF/FN/FNDA/FNF/FNH/
+#                                         DA/LF/LH/end_of_record), paths relative to the repository
+#                                         root, for Coveralls, Codecov and any graph that tracks it
+#   scripts/rust-coverage --cobertura FILE
+#                                         the same measurement as Cobertura XML (line-rate,
+#                                         lines-covered, lines-valid, one package per directory,
+#                                         one class per file). Both exports are written from the
+#                                         tallies this script prints -- see THE EXPORTS below --
+#                                         with --report, a gate, --from or --export; ignored by
+#                                         --changed
 #
 # WHY THIS EXISTS.
 #
@@ -55,6 +65,17 @@
 # per line. A crate-wide floor says nothing about whether the subsystem a repository's
 # continuity depends on is tested at all: it can sit at zero while the number stays green,
 # which is where it was.
+#
+# THE EXPORTS. The measurement used to be kept nowhere: the llvm-cov JSON is a fourteen-day CI
+# artifact, so a trend over time had nothing to read. --lcov and --cobertura write it in the two
+# formats the trackers read, and they write it from the very tallies the report below prints:
+# the per-line counts and the merged functions that survived the test-code exclusion, collected
+# in the same loops that fill the Tally (`kept_lines`, `kept_functions`). They are not a
+# `cargo llvm-cov report --lcov`, which would count the test modules and publish a second
+# number. So a file's LF/LH is its `lines` pair, FNF/FNH its `functions` pair, and the sums over
+# all files are the crate's `lines` and `functions` figures on the report's first row; Cobertura's
+# lines-valid/lines-covered are the same sums. Regions have no place in either format and are not
+# exported. test/cases/3932_the_coverage_export_is_its_one_measurement.sh holds the equality.
 set -eu
 # pipefail: this script reads the changed lines through `git diff | awk`. Without it a
 # failing git reports the pipeline's status as awk's success, the changed-line file comes
@@ -74,9 +95,13 @@ while [ $# -gt 0 ]; do
     --domain) ONLY=domain; shift ;;
     --summary-json) SUMMARY_JSON="$2"; export SUMMARY_JSON; shift 2 ;;
     --summary-json=*) SUMMARY_JSON="${1#--summary-json=}"; export SUMMARY_JSON; shift ;;
+    --lcov) LCOV_OUT="$2"; export LCOV_OUT; shift 2 ;;
+    --lcov=*) LCOV_OUT="${1#--lcov=}"; export LCOV_OUT; shift ;;
+    --cobertura) COBERTURA_OUT="$2"; export COBERTURA_OUT; shift 2 ;;
+    --cobertura=*) COBERTURA_OUT="${1#--cobertura=}"; export COBERTURA_OUT; shift ;;
     --changed) MODE=changed; CHANGED="$2"; shift 2 ;;
     --changed=*) MODE=changed; CHANGED="${1#--changed=}"; shift ;;
-    -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
     *) echo "rust-coverage: unknown option $1" >&2; exit 2 ;;
   esac
 done
@@ -260,10 +285,12 @@ def read(path):
 #
 # Brace matching rather than a regex over the whole file: `#[cfg(test)] mod tests { ... }` is
 # a block, its end is a brace, and a regex looking for the next `^}` would stop at the first
-# closing brace of a nested item. Braces inside strings, chars and line comments are skipped,
-# because a test module containing a brace in a string literal would otherwise never close
+# closing brace of a nested item. Braces inside strings (plain, byte and raw, on one line or
+# across several), chars and comments are skipped, and that state is carried from line to
+# line, because a test module containing a brace in a string literal would otherwise never close
 # and the whole rest of the file would be called test code -- an exclusion that raises the
 # number, which is the one thing this script exists to refuse.
+RAW_OPEN = re.compile(r'b?r(#*)"')   # r"  r#"  br##"  -- the opening of a raw string
 ATTR = re.compile(r'^\s*#\[(cfg\(test\)|test|bench|cfg_attr\(test\b)')
 
 def test_lines(path):
@@ -282,25 +309,53 @@ def test_lines(path):
         if j >= len(src):
             break
         depth, k, opened = 0, j, False
+        # What the scan is inside when a line ends: None, "str" (a "..." or b"..." string,
+        # which runs on across lines), ("raw", hashes) for r#"..."#, or "block" for /* ... */.
+        # It is carried from line to line, because a string or comment need not end where
+        # its line does.
+        st = None
         while k < len(src):
             line, m = src[k], 0
             while m < len(line):
-                c = line[m]
-                if c == '"':
+                if st == "str":
+                    if line[m] == "\\":
+                        m += 2
+                        continue
+                    if line[m] == '"':
+                        st = None
                     m += 1
-                    while m < len(line):
-                        if line[m] == "\\":
-                            m += 2
-                            continue
-                        if line[m] == '"':
-                            break
+                    continue
+                if isinstance(st, tuple):
+                    if line.startswith('"' + "#" * st[1], m):
+                        m += 1 + st[1]
+                        st = None
+                    else:
                         m += 1
+                    continue
+                if st == "block":
+                    if line.startswith("*/", m):
+                        st = None
+                        m += 2
+                    else:
+                        m += 1
+                    continue
+                c = line[m]
+                raw = RAW_OPEN.match(line, m) if c in "rb" and (m == 0 or not (line[m - 1].isalnum() or line[m - 1] == "_")) else None
+                if raw:
+                    st = ("raw", len(raw.group(1)))
+                    m = raw.end()
+                    continue
+                if c == '"':
+                    st = "str"
                 elif c == "'" and m + 2 < len(line) and (line[m + 2] == "'" or line[m + 1] == "\\"):
                     m += 2
                     while m < len(line) and line[m] != "'":
                         m += 1
                 elif c == "/" and m + 1 < len(line) and line[m + 1] == "/":
                     break
+                elif c == "/" and m + 1 < len(line) and line[m + 1] == "*":
+                    st = "block"
+                    m += 1
                 elif c == "{":
                     depth += 1
                     opened = True
@@ -417,6 +472,9 @@ class Tally(object):
             a[0] += b[0]; a[1] += b[1]
 
 files = {}
+# The executable lines that survived the exclusion, with their counts, and the merged
+# functions that did, with their names: what --lcov and --cobertura write (THE EXPORTS above).
+kept_lines, kept_functions, function_names = {}, {}, {}
 def tally(rel):
     return files.setdefault(rel, Tally())
 
@@ -437,6 +495,7 @@ for f in export.get("files", []):
         t.lines[1] += 1
         if count:
             t.lines[0] += 1
+        kept_lines.setdefault(rel, {})[line] = count
 
 regions, functions = {}, {}
 for fn in export.get("functions", []):
@@ -457,8 +516,9 @@ for fn in export.get("functions", []):
         b = min(own, key=lambda r: (r[0], r[1]))
         key = (home, b[0], b[1], b[2], b[3])
         functions[key] = functions.get(key, 0) + fn.get("count", 0)
+        function_names.setdefault(key, fn.get("name", ""))
 
-def fold(pairs, all_attr, kept_attr):
+def fold(pairs, all_attr, kept_attr, keep=None):
     for key, count in pairs.items():
         ab, l1 = key[0], key[1]
         rel = os.path.relpath(ab, root)
@@ -471,9 +531,11 @@ def fold(pairs, all_attr, kept_attr):
         getattr(t, kept_attr)[1] += 1
         if count:
             getattr(t, kept_attr)[0] += 1
+        if keep is not None:
+            keep.setdefault(rel, []).append(key)
 
 fold(regions, "regions_all", "regions")
-fold(functions, "functions_all", "functions")
+fold(functions, "functions_all", "functions", kept_functions)
 
 # ------------------------------------------------------------------ differential mode
 #
@@ -596,6 +658,83 @@ if summary_json:
     with open(summary_json, "w", encoding="utf-8") as fh:
         json.dump(doc, fh, indent=2, sort_keys=True)
         fh.write("\n")
+
+# ------------------------------------------------------------------ the exports
+# LCOV and Cobertura, written from `kept_lines` and `kept_functions` and nothing else (see THE
+# EXPORTS in the header). A file appears when it holds a line or a function under test; its
+# counts are the ones the tallies above were made of, so the sums below are the crate's figures.
+def lcov_name(name):
+    return (name or "?").replace(",", ";").replace("\n", " ")
+
+def export_lcov(path):
+    out = []
+    for rel in sorted(set(kept_lines) | set(kept_functions)):
+        lines = kept_lines.get(rel, {})
+        fns = sorted(kept_functions.get(rel, []))
+        if not lines and not fns:
+            continue
+        out.append("TN:")
+        out.append("SF:" + rel)
+        for key in fns:
+            out.append("FN:%d,%s" % (key[1], lcov_name(function_names.get(key))))
+        for key in fns:
+            out.append("FNDA:%d,%s" % (functions[key], lcov_name(function_names.get(key))))
+        out.append("FNF:%d" % len(fns))
+        out.append("FNH:%d" % sum(1 for key in fns if functions[key]))
+        for line in sorted(lines):
+            out.append("DA:%d,%d" % (line, lines[line]))
+        out.append("LF:%d" % len(lines))
+        out.append("LH:%d" % sum(1 for c in lines.values() if c))
+        out.append("end_of_record")
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(out) + ("\n" if out else ""))
+
+def export_cobertura(path):
+    import time
+    from xml.sax.saxutils import quoteattr
+    def rate(got, of):
+        return "%.4f" % (1.0 if of == 0 else float(got) / of)
+    packages = {}
+    for rel in sorted(kept_lines):
+        if kept_lines[rel]:
+            packages.setdefault(os.path.dirname(rel) or ".", []).append(rel)
+    def hits(rel):
+        ls = kept_lines[rel]
+        return len(ls), sum(1 for c in ls.values() if c)
+    valid = sum(hits(r)[0] for rs in packages.values() for r in rs)
+    got = sum(hits(r)[1] for rs in packages.values() for r in rs)
+    out = ['<?xml version="1.0" ?>',
+           '<coverage line-rate="%s" branch-rate="0" lines-covered="%d" lines-valid="%d" '
+           'branches-covered="0" branches-valid="0" complexity="0" version="1" timestamp="%d">'
+           % (rate(got, valid), got, valid, int(time.time())),
+           '  <sources><source>.</source></sources>', '  <packages>']
+    for pkg in sorted(packages):
+        pv = sum(hits(r)[0] for r in packages[pkg])
+        pg = sum(hits(r)[1] for r in packages[pkg])
+        out.append('    <package name=%s line-rate="%s" branch-rate="0" complexity="0">'
+                   % (quoteattr(pkg), rate(pg, pv)))
+        out.append('      <classes>')
+        for rel in packages[pkg]:
+            v, g = hits(rel)
+            out.append('        <class name=%s filename=%s line-rate="%s" branch-rate="0" complexity="0">'
+                       % (quoteattr(rel), quoteattr(rel), rate(g, v)))
+            out.append('          <methods/>')
+            out.append('          <lines>')
+            for line in sorted(kept_lines[rel]):
+                out.append('            <line number="%d" hits="%d" branch="false"/>'
+                           % (line, kept_lines[rel][line]))
+            out.append('          </lines>')
+            out.append('        </class>')
+        out.append('      </classes>')
+        out.append('    </package>')
+    out += ['  </packages>', '</coverage>']
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(out) + "\n")
+
+if os.environ.get("LCOV_OUT"):
+    export_lcov(os.environ["LCOV_OUT"])
+if os.environ.get("COBERTURA_OUT"):
+    export_cobertura(os.environ["COBERTURA_OUT"])
 
 def row(label, t):
     return ("%-56s %7.2f%%  %8.2f%%  %7.2f%%   %6d/%-6d lines"

@@ -1,0 +1,39 @@
+id: I3202
+milestone: delivery-flow-is-measured
+title: "CI timings measure the wait before a run starts beside the run, and count what cancelled runs spent"
+slug: ci-timings-measure-the-queue
+priority: p1
+profile: implementation
+objective: "Read the Actions workflow-runs and jobs API over a declared window in prs refresh, so integration.timings gives each run its queue time (created to started) beside its execution time (started to completed) and tallies the runner minutes of cancelled and superseded runs, and the one-at-a-time pool's wait is measured instead of inferred."
+why: "Audits read validate wall times of 59-98 minutes on 2026-10-10 and 90-115 minutes on 2026-10-15..17, and 41 of 67 validate runs on 2026-10-11 cancelled (c199#14); a 2026-10-13 proposal asked that queue time, execution time and wasted minutes be told apart (c255#7). Those were timestamp readings by a reviewer, not repository measurements. Proposed in ADR 0196 (Delivery latency targets are budgets of benchmark policy, measured per phase, and never a correctness gate on runners the repository does not own) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c199#14, chatgpt-majordomus:c255#7."
+current_state: "apps/majordomus-cli/src/integration/timings.rs measures completed_at - started_at of an open pull request's head checks and counts queued runs without measuring them (I2472 DONE). The forge observation (forge.rs) reads statusCheckRollup CheckRun{name status conclusion startedAt completedAt} for the current heads of open pull requests only: it holds no created or queued time, no run of a superseded head and no run of a merged pull request. The /ui CI/CD & Releases screen (ui/timings.rs, ui/delivery.rs) draws integration.timings."
+desired_state: "integration.timings reports per run: queued, started, completed, queue seconds, run seconds, conclusion; per window: p50/p95 of each, cancelled and superseded run minutes, sample size and observation time. A run still queued is pending, never zero."
+scope:
+  - "apps/majordomus-cli/src/integration/timings.rs"
+  - "apps/majordomus-cli/src/integration/forge.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "docs/CI.md"
+  - "apps/majordomus-cli/src/ui/timings.rs"
+  - "apps/majordomus-cli/src/ui/delivery.rs"
+non_scope:
+  - "Changing what CI runs"
+  - "Publishing a target before it is measured"
+  - "A persisted history of runs beyond the window one refresh reads"
+serves:
+  - "finished-work-reaches-a-verified-release#delivery-is-measured-per-phase"
+acceptance_criteria:
+  - "A three-run fixture yields the stated queue and run seconds for each run"
+  - "A cancelled run's minutes are counted as spent and its conclusion stays cancelled"
+  - "Re-reading the same observation creates no duplicate rows"
+  - "Queue and run times come from the Actions workflow-runs and jobs API (created_at, run_started_at, updated_at, status, conclusion, run_attempt, head_sha), read by prs refresh with pagination over a declared window, never from statusCheckRollup"
+  - "The window is written into the existing forge observation, which each refresh replaces; no other file or store holds runs"
+  - "A run is identified by run id and attempt: reading the same window twice counts each run once"
+  - "A run is superseded when its head_sha is no longer its branch's head; its minutes are counted as spent"
+  - "The /ui CI/CD & Releases screen renders the new reading's shape, and a case or test holds the screen to it"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::timings"
+  - "majordomus plan validate"
+evidence_required:
+  - "test_integration_timings_queue"
+created_at: 2026-10-18
+updated_at: 2026-10-18

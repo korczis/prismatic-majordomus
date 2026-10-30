@@ -50,4 +50,29 @@ risks:
   - "The backfill is an outward-facing mutation: applying the projection creates roughly 180 public issues in one run. It must be a deliberate, confirmed act, not a side effect of wiring a gate."
   - "Wiring the gate before the backfill makes CI red on master until the backfill lands. The order matters and is part of the work."
 created_at: 2026-09-09
-updated_at: 2026-09-09
+updated_at: 2026-10-17T07:54:47Z
+evidence:
+  - covers: drift_gated
+    type: test
+    command: "bash test/run.sh 97_github_gate"
+    result: "tests: 1 passed, 0 failed, 0 skipped on master 01227a0f74a (2026-10-17); gate github-projection runs scripts/ci/github-check, and the github-projection workflow run 39004503235 was green on 01227a0f74a"
+    commit: 01227a0f74ab9de734edd3672dcc9d8d3a2d666c
+    recorded_at: 2026-10-17T07:53:56Z
+  - covers: identity_stable
+    type: test
+    command: "bash test/run.sh 45_github_projection 602_a_spliced_body_is_recognised_as_its_own"
+    result: "tests: 2 passed, 0 failed, 0 skipped on master 01227a0f74a (2026-10-17): a rewritten remote title resolves by its marker, a spliced body reads back insync"
+    commit: 01227a0f74ab9de734edd3672dcc9d8d3a2d666c
+    recorded_at: 2026-10-17T07:54:14Z
+  - covers: offline_provable
+    type: test
+    command: "bash test/run.sh 45_github_projection"
+    result: "tests: 1 passed, 0 failed, 0 skipped on master 01227a0f74a (2026-10-17): reconciliation runs against fixture remotes with no network and no token; --apply refuses a fixture"
+    commit: 01227a0f74ab9de734edd3672dcc9d8d3a2d666c
+    recorded_at: 2026-10-17T07:54:31Z
+  - covers: traceability_both_ways
+    type: test
+    command: "bash test/run.sh 98_traceability 99_work_graph_chain 99_plan_capabilities"
+    result: "tests: 3 passed, 0 failed, 0 skipped on master 01227a0f74a plus the closed records (2026-10-17): an issue leads to its branch, merge and commits, and a commit leads back to its issue and milestone"
+    commit: 01227a0f74ab9de734edd3672dcc9d8d3a2d666c
+    recorded_at: 2026-10-17T07:54:47Z

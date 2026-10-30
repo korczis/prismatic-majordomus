@@ -23,6 +23,7 @@ RUN mkdir -p /recipe/out \
 # Every dependency compiled, as layer content a registry cache can carry.
 FROM toolchain AS deps
 COPY --from=recipe /recipe/out/ ./apps/majordomus-cli/
+COPY apps/majordomus-core ./apps/majordomus-core
 RUN --mount=type=cache,id=majordomus-sccache,target=/sccache mkdir -p apps/majordomus-cli/src \
   && echo 'fn main() {}' > apps/majordomus-cli/src/main.rs && echo 'fn main() {}' > apps/majordomus-cli/build.rs \
   && touch apps/majordomus-cli/src/lib.rs \
