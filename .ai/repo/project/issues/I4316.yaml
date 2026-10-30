@@ -1,0 +1,34 @@
+id: I4316
+milestone: a-review-is-published-at-its-commit
+title: "New review surfaces start from a Flowbite Pro block, adapted, with every colour and type value read from the --mj-* tokens and no Pro source in the tree"
+slug: review-surfaces-start-from-flowbite-pro
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Record, as an amendment to ADR 0036, that a new page or screen of the review surfaces (/quality/, /trace/, the hotspot view and the /ui status charts) starts from the matching Flowbite Pro block, adapts its markup, takes every colour and type value from the --mj-* tokens, and commits no Flowbite Pro source verbatim; and add the check that refuses a Pro source file or a raw palette value in those templates."
+why: "On 2026-10-28 the owner made Flowbite Pro the kit of every UI and, asked how that meets this repository's design system, chose 'Flowbite Pro through the mj tokens'. The site is already written in open-source Flowbite over Tailwind (package.json: flowbite 4.0.2, flowbite-typography 1.0.5, @tailwindcss/cli 4.1.14), and ADR 0031 and ADR 0036 already make the --mj-* declaration override Flowbite's default theme, so the decision needs no new dependency: it needs the review surfaces to start from the licensed Pro blocks the owner holds, and a guard so that adapting a Pro block never publishes its source in this public tree, the licence's one condition."
+current_state: "On 81ef931a3e1 no template names Flowbite Pro, no record says which block a page starts from, and nothing refuses a raw Tailwind palette class or a copied Pro file in a site or /ui template; the owner's Pro sources live outside the repository."
+desired_state: "ADR 0036 carries an amendment naming Flowbite Pro blocks as the starting point of the review surfaces, with the token mapping and the licence boundary; each such template names the block it adapts in a comment; scripts/ci/design-check refuses, in the review templates, a raw palette colour class or value instead of a token and any file whose content matches a Flowbite Pro source file byte for byte."
+scope:
+  - ".ai/repo/project/issues/I4316.yaml"
+  - ".ai/repo/adrs/0036-the-design-system-is-a-typed-declaration-and-every-first-party-surface-consumes-its-projections.md"
+  - "scripts/ci/design-check"
+non_scope:
+  - "Restyling existing pages that are not review surfaces; one-kit-on-every-surface owns the rest of the kit"
+  - "Committing or vendoring any Flowbite Pro source file, stylesheet or script"
+  - "A second CSS framework or a CDN load"
+depends_on: []
+serves:
+  - "a-review-is-seen-at-its-commit#findings-are-published-at-their-commit"
+acceptance_criteria:
+  - "ADR 0036 records the amendment: the review surfaces start from a named Flowbite Pro block, every colour and type value is a --mj-* token, and no Pro source is committed"
+  - "design-check fails a planted review template that uses a raw palette class (for example bg-blue-600) instead of a token, naming the file and the class"
+  - "design-check fails a planted file that is a byte-for-byte copy of a Flowbite Pro source, naming it, and passes on the tree"
+validation:
+  - "MAJORDOMUS_SHARE=$PWD/share scripts/ci/design-check"
+  - "bin/majordomus adr check"
+evidence_required:
+  - design_check_refuses_raw_palette_and_pro_source
+risk: "The licence allows adapting Pro markup into the owner's products and forbids publishing its source; a check by byte identity misses a lightly edited copy, so the amendment states the boundary in words and the review of each surface keeps it."
+created_at: 2026-10-28
+updated_at: 2026-10-28

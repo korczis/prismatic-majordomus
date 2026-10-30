@@ -126,7 +126,7 @@ fn build<W: Write>(
         .and_then(|verdict| {
             let value =
                 json!({ "plan": plan, "out": dest.display().to_string(), "verdict": verdict });
-            let text = render_plan(plan) + &render_verdict(&verdict);
+            let text = render_plan(plan) + render_verdict(&verdict).as_str();
             emit(out, format, &value, &text).map(|()| verdict_code(&verdict))
         })
 }
@@ -216,11 +216,12 @@ fn render_plan(plan: &PackPlan) -> String {
             sh.file, sh.files, sh.tokens
         );
     }
-    s + &if plan.passes {
+    s + if plan.passes {
         "pack plan: clean\n".to_string()
     } else {
         format!("pack plan: {} finding(s)\n", plan.findings.len())
     }
+    .as_str()
 }
 
 /// The terminal rendering of a verdict on a written pack.
@@ -234,9 +235,10 @@ fn render_verdict(v: &PackVerdict) -> String {
         "pack {}: {} file(s) to upload, {} source file(s), the largest {} tokens\n",
         v.dir, v.files, v.sources, v.largest_tokens
     );
-    s + &if v.passes {
+    s + if v.passes {
         "pack verify: clean\n".to_string()
     } else {
         format!("pack verify: {} finding(s)\n", v.findings.len())
     }
+    .as_str()
 }

@@ -1,0 +1,39 @@
+id: I3086
+milestone: public-proof
+title: "An article explains in both languages why silence is not a verdict"
+slug: silence-is-not-a-verdict
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Publish site/content-src/silence-is-not-a-verdict.md, an English article on why a check that has not reported is unknown and never passing (rule project.never-reported-is-not-green). It covers the night of 2026-09-10 that ADR 0037 measured, the other shapes the rule records, a verdict arranged so that it arrives, the queued status a task's gates carry, proof as a recorded execution (ADR 0041 and ADR 0080), the required verdict a skipped gate owes its proof to (ADR 0186), and what a gate enforces against what only review holds (ADR 0039). Every statement is one that those ADRs, the rule, rule majordomus.completion-gates, docs/EVIDENCE.md, docs/CLI.md or docs/CI.md on master states, each ADR with its status, and no count is typed by hand. site/content-src/mlceni-neni-verdikt.md is its Czech translation, naming translated_from and its source's digest. site/data/nav.toml lists both. Both relate the proof-carrying documentation, everything-followed and reasoning articles, each of which names them back in its own language."
+why: "The owner asked on 2026-10-19 that the site's articles be developed and interlinked in every language. That a missing verdict is not a passing one is the principle every gate and every finish of this repository rests on, and the site explained it only in a rule and five ADRs written for the sessions that follow them."
+current_state: "No article explains why silence is not a verdict. The article groups relate each other, and none of them names it."
+desired_state: "/silence-is-not-a-verdict/ and /mlceni-neni-verdikt/ are built, are counterparts of each other, are listed in the navigation, and are related both ways with three other groups. Check 21 passes, with the translation at its source's digest."
+scope:
+  - ".ai/repo/project/issues/I3086.yaml"
+  - "site/content-src/silence-is-not-a-verdict.md"
+  - "site/content-src/mlceni-neni-verdikt.md"
+  - "site/content-src/proof-carrying-documentation.md"
+  - "site/content-src/dokumentace-kterou-lze-odmitnout.md"
+  - "site/content-src/everything-followed.md"
+  - "site/content-src/vsechno-v-jednom-proudu.md"
+  - "site/content-src/a-doubt-is-settled-by-an-experiment.md"
+  - "site/content-src/pochybnost-rozhodne-experiment.md"
+  - "site/data/nav.toml"
+  - "scripts/ci/english-only-allow.txt"
+non_scope:
+  - "Changing the rule, the gates or the ADRs the article explains, or settling the contradictions between those records that the fact-check found"
+depends_on:
+  - "I3085"
+acceptance_criteria:
+  - "Both articles are built, declare each other in [extra.translations], and the Czech one records translated_from = silence-is-not-a-verdict/ and the digest check 21 computes of its source"
+  - "Each statement is one a record or manual on master states, and check 19 finds no count typed by hand"
+  - "scripts/site-check --articles passes the tree, counting the new related links"
+validation:
+  - "majordomus plan validate"
+  - "scripts/site-check --articles site/content-src site/data/nav.toml site/config.toml"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3389_related_articles_answer_each_other_in_every_language"
+evidence_required: []
+serves: []
+created_at: 2026-10-21
+updated_at: 2026-10-21

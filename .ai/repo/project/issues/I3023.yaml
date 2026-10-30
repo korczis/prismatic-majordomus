@@ -1,0 +1,36 @@
+id: I3023
+milestone: truthful-plan-surfaces
+title: "The Knowledge screen reads in review order, in plain labels, and leads to the knowledge manual"
+slug: the-knowledge-screen-reads-in-review-order
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "/ui/knowledge orders its panels as a reviewer works (Awaiting review, By subject, How to review, Is learning up to date?), labels its tiles and facts in plain words (From an unknown branch, Sessions not yet learned from, Newest session, Up to date, Last learned from, Last session closed) and links the review to the knowledge manual under /docs/knowledge/."
+why: "The published /ui/knowledge (majordomus.dev, v0.29.0) opened on the deriver's internals before the queue a reviewer came for, used internal terms as labels (Unattributed, Closed, underived, Newest episode, The deriver), and linked nowhere a reviewer could learn what a record class or a promotion means."
+current_state: "The grid draws The deriver, Review, By subject, Awaiting review in that order, with internal labels and no link to the manual."
+desired_state: "The grid draws the queue first and the deriver's judgement last, under plain labels, and the review panel ends with a link to the knowledge manual; crate tests pin the order, the labels and the link."
+scope:
+  - "apps/majordomus-cli/src/ui/knowledge.rs"
+acceptance_criteria:
+  - "Awaiting review precedes How to review, which precedes Is learning up to date?"
+  - "No tile or panel is labelled Unattributed, Closed, underived, Newest episode or The deriver"
+  - "The review panel links to the knowledge manual under the documentation mount"
+validation:
+  - "cargo test --lib ui::knowledge"
+  - "scripts/ui audit --only /ui/knowledge"
+evidence_required:
+  - "knowledge_screen_reads_in_review_order"
+created_at: 2026-10-18
+updated_at: 2026-10-20T16:27:11Z
+started_at: 2026-10-20T16:15:13Z
+started_event: sha256:803a09d528914f0a659c29b6c8dc65a91fb96813eb7e402c02a176d74ffc3f3c
+completed_at: 2026-10-20T16:27:11Z
+completed_event: sha256:c46027910b87773440ebaa10363d338c9852737661a39391d0e58c94150f5cbf
+evidence:
+  - covers: knowledge_screen_reads_in_review_order
+    type: ci
+    command: "validate run 39438896504 at master 9a5a9b77520: rust (1-3) jobs 118683336143 118683336062 118683336401 run cargo test, incl. ui::knowledge::the_screen_reads_in_review_order_with_plain_labels_and_the_manual (076312f8aef)"
+    result: "success (the run's only red job is pages, which runs no test)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39438896504"
+    commit: a81b1e3537d333f6b7cfac24dd8aa8bce8a1a7ca
+    recorded_at: 2026-10-20T16:21:28Z

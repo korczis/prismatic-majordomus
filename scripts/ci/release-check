@@ -31,10 +31,14 @@
 #      which is what a failure in the publish job looks like from the outside: nothing red,
 #      and an installer that goes on serving the previous version. A tag whose record is
 #      proposed — a fresh release/record-<tag> branch carries it — is pending, not missing,
-#      so the window between a tag and its record's merge turns no unrelated head red.
+#      so the window between a tag and its record's merge turns no unrelated head red. So is
+#      a tag whose release is still in flight (I2712): its release run queued or running, or
+#      no run concluded yet and no GitHub release published — asked of the forge, see 5.
 #
 #   scripts/ci/release-check                report every finding, exit 10 on any
 #   MJ_ROOT=<dir> scripts/ci/release-check  against another tree (the behavioural case does)
+#   MJ_RELEASE_CHECK_REPO=<owner/name>      the GitHub repository whose release runs are asked
+#                                           (default: the one `origin` points at, if any)
 #
 # Exit: 0 clean, 10 findings, 12 unusable.
 set -eu
@@ -126,22 +130,42 @@ done
 if [ "$authored" = 0 ]; then ok "no changelog is kept by hand"; fi
 
 # ----------------------------------------------- 4. the tree is not behind what was published
+# A version is X.Y.Z, or a pre-release X.Y.Z-alpha.N, -beta.N or -rc.N and no other suffix
+# (I2829; the same pattern is in scripts/site-deploy, scripts/ci/install-check and release.yml,
+# and site/static/install.sh refuses any pre-release it was not asked for by name). Precedence is semantic versioning's: the numbers
+# first, a pre-release below its own final, alpha < beta < rc, then N as a number. A plain
+# `sort -t.` ties 1.0.0 with 1.0.0-alpha.1 and breaks the tie bytewise, the wrong way round.
+VERSION_ERE='[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?'
+version_newer() {   # <a> <b>: exit 0 when a takes precedence over b
+  awk -v a="$1" -v b="$2" 'function key(v, k,   core, pre, n, c, p) {
+      core = v; pre = ""
+      if (index(v, "-")) { core = substr(v, 1, index(v, "-") - 1); pre = substr(v, index(v, "-") + 1) }
+      n = split(core, c, ".")
+      k[1] = c[1] + 0; k[2] = c[2] + 0; k[3] = c[3] + 0
+      if (pre == "") { k[4] = 3; k[5] = 0; return }
+      split(pre, p, ".")
+      k[4] = (p[1] == "alpha") ? 0 : (p[1] == "beta") ? 1 : 2
+      k[5] = p[2] + 0
+    }
+    BEGIN {
+      key(a, x); key(b, y)
+      for (i = 1; i <= 5; i++) { if (x[i] > y[i]) exit 0; if (x[i] < y[i]) exit 1 }
+      exit 1
+    }'
+}
 newest=""
 for r in .ai/repo/releases/*.yaml; do
   [ -f "$r" ] || continue
-  v="$(sed -n 's/^version: *"\{0,1\}\([0-9][0-9.]*\)"\{0,1\} *$/\1/p' "$r" | head -n 1)"
+  v="$(sed -n -E "s/^version: *\"?($VERSION_ERE)\"? *\$/\\1/p" "$r" | head -n 1)"
   [ -n "$v" ] || continue
-  newest="$(printf '%s\n%s\n' "$newest" "$v" | grep -v '^$' | LC_ALL=C sort -t. -k1,1n -k2,2n -k3,3n | tail -n 1)"
+  if [ -z "$newest" ] || version_newer "$v" "$newest"; then newest="$v"; fi
 done
 if [ -z "$newest" ] || [ -z "$crate" ]; then
   ok "no published release to compare the declared version with"
+elif version_newer "$newest" "$crate"; then
+  fail "the tree declares $crate and $newest is already published; the bump that released it was never made"
 else
-  behind="$(printf '%s\n%s\n' "$crate" "$newest" | LC_ALL=C sort -t. -k1,1n -k2,2n -k3,3n | tail -n 1)"
-  if [ "$behind" = "$crate" ]; then
-    ok "the tree declares $crate and the newest release is $newest"
-  else
-    fail "the tree declares $crate and $newest is already published; the bump that released it was never made"
-  fi
+  ok "the tree declares $crate and the newest release is $newest"
 fi
 
 # ------------------------------------------ 5. every published tag has a record in the layer
@@ -202,6 +226,57 @@ case "$RECORD_GRACE_HOURS" in ''|*[!0-9]*)
   exit 12 ;;
 esac
 now_epoch="$(date -u +%s)"
+
+# A release still in flight (I2712). Between the tag push and the moment the publish job
+# pushes release/record-<tag> there is no record and no record branch, and the release is not
+# published either: its run is building. On 2026-10-14 18:37Z the structure job of #1146 failed
+# here on v0.26.0 while release run 38613749519 was still waiting for its macOS build and no
+# GitHub release existed — every branch judged in that window was red for nothing of its own.
+#
+# This is the one question git cannot answer, so it is asked of the forge, and only for a tag
+# that already has no record and no proposal. What it says, for tag t:
+#   a release run of t queued or running              -> pending, naming the run
+#   no run of t listed and no GitHub release of t      -> pending while the tag is younger than
+#                                                         the grace (the run is being created)
+#   a run concluded (any way) and still nothing        -> the finding stands, naming the run
+#   the forge cannot be asked                          -> the finding stands, and a note says
+#                                                         why it was not asked
+# It cannot be asked without gh, without a token gh accepts, or when no GitHub repository is
+# known (MJ_RELEASE_CHECK_REPO, else the `origin` remote's URL). That is the safe side: what
+# could not be read never excuses a tag, so offline the gate is what it was before — strict.
+# The structure job runs this gate with GH_TOKEN, so on CI the forge is asked.
+release_repo() {
+  if [ -n "${MJ_RELEASE_CHECK_REPO:-}" ]; then printf '%s' "$MJ_RELEASE_CHECK_REPO"; return 0; fi
+  git remote get-url origin 2>/dev/null \
+    | sed -n 's#^.*github\.com[:/]\([^/][^/]*/[^/][^/]*\)$#\1#p' | sed 's/\.git$//'
+}
+# prints "pending <phrase>" or "stands <phrase>"; the phrase is printed either way
+release_in_flight() {
+  local t="$1" repo runs active done_run rel_rc age made
+  repo="$(release_repo)"
+  if [ -z "$repo" ]; then printf 'stands no GitHub repository is known (MJ_RELEASE_CHECK_REPO, or an origin on github.com), so its release run was not asked'; return 0; fi
+  if ! command -v gh >/dev/null 2>&1; then printf 'stands gh is not installed, so the release run of %s in %s was not asked' "$t" "$repo"; return 0; fi
+  if ! runs="$(gh api "repos/$repo/actions/workflows/release.yml/runs?branch=$t&per_page=20" 2>/dev/null)" \
+     || ! printf '%s' "$runs" | jq -e '.workflow_runs' >/dev/null 2>&1; then
+    printf 'stands the release runs of %s in %s could not be read (gh, its token, or the network)' "$t" "$repo"; return 0
+  fi
+  active="$(printf '%s' "$runs" | jq -r '[.workflow_runs[] | select(.status != "completed")] | sort_by(.created_at) | last | select(.) | "\(.id) (\(.status)) \(.html_url // "")"')"
+  if [ -n "$active" ]; then printf 'pending its release run %s is still going' "$active"; return 0; fi
+  done_run="$(printf '%s' "$runs" | jq -r '.workflow_runs | sort_by(.created_at) | last | select(.) | "\(.id) (\(.conclusion // "no conclusion"))"')"
+  if [ -n "$done_run" ]; then printf 'stands its release run %s has concluded' "$done_run"; return 0; fi
+  rel_rc=0; gh api "repos/$repo/releases/tags/$t" >/dev/null 2>&1 || rel_rc=$?
+  if [ "$rel_rc" = 0 ]; then printf 'stands GitHub holds a release of %s and no release run of it is listed' "$t"; return 0; fi
+  # the tag's own date when it is annotated, its commit's when it is not: never later than
+  # the push, so the grace can only close early, never stay open past its hours
+  made="$(git for-each-ref --format='%(creatordate:unix)' "refs/tags/$t" 2>/dev/null || true)"
+  case "$made" in ''|*[!0-9]*) made="$now_epoch" ;; esac
+  age="$(( (now_epoch - made) / 3600 ))"
+  if [ "$age" -lt "$RECORD_GRACE_HOURS" ]; then
+    printf 'pending no release run of it is listed yet and GitHub holds no release of it (%sh old, grace %sh)' "$age" "$RECORD_GRACE_HOURS"
+  else
+    printf 'stands no release run of it was ever listed and GitHub holds no release of it, %sh after the tag' "$age"
+  fi
+}
 # prints "<ref> <age in hours>" for the freshest branch that proposes the tag's record
 proposed_record() {
   git for-each-ref --sort=-committerdate --format='%(refname) %(committerdate:unix)' \
@@ -221,10 +296,12 @@ else
   # Local tags, after a fetch: the same list the pipeline tags from, read without a token.
   # `git ls-remote --tags origin` would ask the forge for a fact a fetched clone already
   # holds, and would make this gate fail on a machine with no network.
-  # v<major>.<minor>.<patch> exactly: that is what the release workflow cuts, and it refuses
-  # to publish a tag that does not agree with the crate's version, so a tag with a suffix
-  # (v0.2.0-ai-documents) named something else and never published a release.
-  tags="$(git tag --list 'v[0-9]*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | LC_ALL=C sort -u || true)"
+  # v<major>.<minor>.<patch>, or a pre-release of it (-alpha.N, -beta.N, -rc.N): that is what
+  # the release workflow cuts, and it refuses to publish a tag that does not agree with the
+  # crate's version, so a tag with any other suffix (v0.2.0-ai-documents) named something
+  # else and never published a release. A published pre-release owes its record as a stable
+  # release does (I2829).
+  tags="$(git tag --list 'v[0-9]*' | grep -E "^v$VERSION_ERE\$" | LC_ALL=C sort -u || true)"
   if [ -z "$tags" ]; then
     # No tags is two different states, and only one of them is fine. A repository that has
     # published nothing has no tags and no records; a checkout whose tags were not fetched
@@ -240,6 +317,7 @@ else
     missing=0
     excused=0
     pending=0
+    inflight=0
     for t in $tags; do
       if recorded_tag "$t"; then continue; fi
       if printf '%s\n' "$excused_list" | grep -qx "$t"; then
@@ -261,19 +339,31 @@ else
         fail "$t is published and its record has waited on $pref for ${page}h, longer than the ${RECORD_GRACE_HOURS}h grace, without landing; merge its pull request, or close it and write the record again with scripts/release-record"
         continue
       fi
+      flight="$(release_in_flight "$t")"
+      case "$flight" in
+        pending\ *)
+          printf 'pending %s is tagged and its release is still in flight: %s; nothing for this head to do — the release proposes its record when it publishes\n' \
+            "$t" "${flight#pending }"
+          inflight=$((inflight+1))
+          continue ;;
+        *) printf 'note  %s: %s\n' "$t" "${flight#stands }" ;;
+      esac
       missing=$((missing+1))
       fail "$t is published and the layer holds no release record for it (.ai/repo/releases/$t.yaml is missing) and no release/record-$t branch proposes one; the site's releases/latest.json, the installation guide and every baseline are composed from the records, so this release is invisible to them and the advertised installer still installs the previous one — scripts/release-record writes it"
     done
     # Said as it is: a tree carrying excused or pending tags has not been proved clean, and a
     # summary that read "every published tag has a record" over a baseline or a proposal would
     # be the quiet pass this check exists to remove.
-    if [ "$missing" = 0 ] && [ "$excused" = 0 ] && [ "$pending" = 0 ]; then
+    if [ "$missing" = 0 ] && [ "$excused" = 0 ] && [ "$pending" = 0 ] && [ "$inflight" = 0 ]; then
       ok "every published tag this checkout carries has a release record"
     elif [ "$missing" = 0 ]; then
       except=""
       [ "$excused" = 0 ] || except="the $excused recorded as debt in $RECORD_BASELINE"
       if [ "$pending" != 0 ]; then
         except="${except:+$except and }the $pending whose record is proposed and not yet landed"
+      fi
+      if [ "$inflight" != 0 ]; then
+        except="${except:+$except and }the $inflight whose release is still in flight"
       fi
       ok "every published tag has a release record except $except"
     fi
@@ -286,6 +376,10 @@ else
 fi
 
 if [ "$findings" -eq 0 ]; then
+  if [ "${inflight:-0}" -gt 0 ]; then
+    printf 'release-check: the release is a projection — authored once, the tool prints it, no kept changelog, every published tag recorded, its record proposed or its release still in flight (%s pending)\n' "$(( ${pending:-0} + inflight ))"
+    exit 0
+  fi
   if [ "${pending:-0}" -gt 0 ]; then
     printf 'release-check: the release is a projection — authored once, the tool prints it, no kept changelog, every published tag recorded or its record proposed (%s pending)\n' "$pending"
     exit 0

@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you. This project is small on purpose. The best contribution is often a deletion.
+Thank you. The shell tool is small on purpose; the Rust executable beside it, `apps/majordomus-cli`, is where the rest lives. The best contribution is often a deletion.
 
 ## Working from a checkout
 
@@ -33,7 +33,7 @@ arbitrary. Most of them were paid for.
 
 - a failing test that shows a documented behaviour is not real
 - a smaller implementation of an existing command
-- a portability fix for bash 3.2 or BSD userland, with the platform named
+- a portability fix for the shell tool's bash 3.2 or BSD userland, with the platform named
 - a projection adapter for a provider, if it translates and adds no rules
 - a correction to a claim in any document, with the reproduce command
 
@@ -68,11 +68,15 @@ arbitrary. Most of them were paid for.
    `90_mcp_shared_server.sh`, `91_canonical_architecture.sh`,
    `93_rust_provider_projections.sh`) drive the executable `MAJORDOMUS_BIN` names, build
    it once with cargo when it is unset, and skip themselves when there is neither.
-   For a change under `apps/majordomus-cli/`, run `scripts/rust-check`: format, clippy
+   For a change under `apps/majordomus-cli/`, run `scripts/rust-check`: the quality report
+   first (the structure job's `rust-quality` gate: an executable example, a behavioural test
+   and documentation beyond the signature for every exported item), then format, clippy
    with warnings as errors (a public item without documentation is one), `cargo test`
    including doctests, `cargo doc`, `majordomus generate --check`, `capabilities validate`
    and the coverage threshold; CI runs the same, plus `bench coverage --check` and a
-   conservative `bench --profile ci --check`. A capability is declared once, in its
+   conservative `bench --profile ci --check`. A change that adds or widens an exported item
+   runs `scripts/rust-check --quality` before it is pushed: the report alone, seconds on a
+   built crate, with the finding the structure job would print. A capability is declared once, in its
    module's file, and every interface, benchmark target, cache behaviour and generated
    document is derived from it (`project.interfaces-are-projections`,
    `project.rust-canonical-declaration`): change the `capability!` block, the declarative
@@ -152,7 +156,12 @@ arbitrary. Most of them were paid for.
    `mj_covers_resolve` in [`lib/commands.sh`](lib/commands.sh), called by the doctor check and
    by `test/cases/31_command_coverage.sh` alike.
 8. Commit in conventional format, `type(scope): description`, small commits that each
-   leave the tree consistent.
+   leave the tree consistent. A pull request's title is a conventional commit too, and it
+   names the issue ids it serves, `(I3970)`: its labels, milestone, assignee and the
+   `Refs #<n>` links in its body are projected from those records
+   (`scripts/github-sync --prs`, `docs/PLANNING.md`). Never write a closing keyword
+   (`Closes`, `Fixes` or `Resolves` followed by an issue number) in a title, body or commit
+   message: GitHub would close the issue ahead of its canonical record. Link with `Refs #<n>`.
 8. Before marking the pull request ready, compare every capability sentence you touched
    in `README.md` or `docs/` against the tests. Wording that outruns the tests is
    downgraded or removed in the same pull request. A new capability sentence also needs

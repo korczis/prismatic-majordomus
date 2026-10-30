@@ -1,0 +1,181 @@
+# The completion policy: the questions a task must answer before anybody may call it
+# finished, the stage of the lifecycle each one belongs to, and the source that answers it.
+# Shipped with the tool beside share/obligations.yaml.
+#
+# This file is the one definition of done. The completion report (`gates.completion`, which
+# `majordomus check` and `finish` read, the HTTP route and the MCP tool serve) asks exactly
+# these questions in exactly this order, and `gates.policy` serves the file itself. A second
+# list of what "done" means, anywhere, is the drift this file exists to prevent.
+#
+# Nothing here is a checklist a person ticks. A question names a *source*, and its answer
+# is taken from that source and from nowhere else:
+#
+#   obligation:<token>   the token's standing in `obligations.closure` (share/obligations.yaml)
+#   gates                the aggregate of every gate the change selects (.ai/repo/ci/gates.yaml)
+#   gate:<id>            one gate of that model, by id
+#   change:test-path     the change set itself: whether a test path is among the touched files
+#   convergence          `convergence.report`: whether work is held where it can be lost
+#   closing:debt         the debt baselines at the commit the task started at, and now
+#   closing:accumulated  the branches and worktrees created since the task started that remain
+#   closing:backlog      the pull requests opened since the task started that are still open
+#   elsewhere:<command>  nothing reachable from the completion report; the command that answers
+#
+# A question whose source has not spoken is `queued` or `unknown`, never `pass`; one the
+# change makes irrelevant is `exempt`. The stage of a task is derived from these answers in
+# the order below — the first stage blocked, else the first stage with a question still
+# owed, is where the task stands — and is never written down by anybody.
+#
+# fields:
+#   stages       the lifecycle, in order; every question names one
+#   questions    id, stage, question, source, remediation (the command that would settle it)
+version: 1
+
+stages:
+  - id: context
+    title: Context and governance
+    summary: The task exists, its scope is claimed, and the rules that apply are loaded.
+  - id: implementation
+    title: Implementation
+    summary: The promised work is present in the tree.
+  - id: validation
+    title: Tests and validation
+    summary: The cases the change obliges ran and passed, and the change carries a test of its own.
+  - id: documentation
+    title: Documentation and generated artifacts
+    summary: The documents a reader needs are written and every derived artifact is current.
+  - id: commit
+    title: Commit and push
+    summary: The work is in the branch's history and the branch has reached the remote.
+  - id: gates
+    title: Gates
+    summary: Every gate the change selects has reported over this tree, and none refuses.
+  - id: version
+    title: Version impact
+    summary: The declared version is at least what the public surface requires, and the release record is current.
+  - id: integration
+    title: Integration
+    summary: The trunk reaches the commit, and no branch, worktree or pull request holds work where it can be lost.
+  - id: deployment
+    title: Deployment
+    summary: Every surface the change affects is serving the revision the task produced.
+  - id: verification
+    title: Live verification
+    summary: The deployed result was looked at after it was deployed.
+  - id: closing
+    title: Closing
+    summary: The task leaves the repository no worse than it found it, with nothing it created left behind.
+  - id: provenance
+    title: Provenance
+    summary: The continuation record, the issue and the milestone say what happened.
+
+questions:
+  - id: implemented
+    stage: implementation
+    question: Is all the work this task promised present in the tree?
+    source: obligation:implementation
+    remediation: majordomus check
+  - id: tested
+    stage: validation
+    question: Were the cases the change obliges run, and did they pass?
+    source: obligation:tests
+    remediation: majordomus usecase impact
+  - id: regression-tested
+    stage: validation
+    question: Does the change touch a test of its own?
+    source: change:test-path
+    remediation: add a case under test/cases/ or a test beside the code
+  - id: documented
+    stage: documentation
+    question: Were the documents a reader needs updated?
+    source: obligation:docs
+    remediation: scripts/ci/reference-check
+  - id: generated
+    stage: documentation
+    question: Is every derived artifact current with its canonical source?
+    source: obligation:generated
+    remediation: majordomus generate --check
+  - id: openapi
+    stage: documentation
+    question: Are the OpenAPI document and the transport registries current?
+    source: obligation:generated
+    remediation: majordomus generate --check
+  - id: parity
+    stage: documentation
+    question: Does every surface — command line, HTTP, MCP, Cockpit — agree with the registry?
+    source: elsewhere:majordomus quality report
+    remediation: majordomus quality report
+  - id: committed
+    stage: commit
+    question: Are the changes in the branch's history rather than in the working tree?
+    source: obligation:commit
+    remediation: git commit
+  - id: pushed
+    stage: commit
+    question: Has the commit reached the remote?
+    source: obligation:push
+    remediation: git push
+  - id: ci
+    stage: gates
+    question: Has every gate the change selects reported, and did it pass?
+    source: gates
+    remediation: majordomus evidence --gate <id> --exit <status>
+  - id: version
+    stage: version
+    question: Has the declared version moved as far as the public surface has?
+    source: gate:version-surface
+    remediation: majordomus release version
+  - id: changelog
+    stage: version
+    question: Is the release's own record current with the tree?
+    source: gate:release-check
+    remediation: scripts/ci/release-check
+  - id: integrated
+    stage: integration
+    question: Does the trunk reach this commit?
+    source: obligation:target
+    remediation: open a pull request and land it
+  - id: published
+    stage: deployment
+    question: Does the published site serve this commit?
+    source: obligation:pages
+    remediation: scripts/pages verify --commit HEAD
+  - id: deployed
+    stage: deployment
+    question: Is the environment this change targets running it?
+    source: obligation:deploy
+    remediation: majordomus deployment
+  - id: deployment-verified
+    stage: verification
+    question: Was the deployed result looked at after it was deployed?
+    source: obligation:verify
+    remediation: majordomus evidence --covers verify --command '<the live check>'
+  - id: no-stale-topology
+    stage: integration
+    question: Is a branch, worktree or pull request left behind?
+    source: convergence
+    remediation: majordomus convergence
+  - id: no-new-debt
+    stage: closing
+    question: Is the repository's recorded debt no larger than when this task started?
+    source: closing:debt
+    remediation: take out what the change added to the baseline, or settle what the entry records
+  - id: nothing-accumulated
+    stage: closing
+    question: Has every branch and worktree created since this task started gone again?
+    source: closing:accumulated
+    remediation: majordomus worktree cleanup
+  - id: backlog-not-grown
+    stage: closing
+    question: Has every pull request opened since this task started been closed?
+    source: closing:backlog
+    remediation: majordomus prs status
+  - id: handover
+    stage: provenance
+    question: Is the session's continuation record written?
+    source: elsewhere:majordomus handover
+    remediation: majordomus handover < note.md
+  - id: issue
+    stage: provenance
+    question: Do the issue and milestone this work belongs to say so?
+    source: elsewhere:majordomus plan status
+    remediation: majordomus plan record

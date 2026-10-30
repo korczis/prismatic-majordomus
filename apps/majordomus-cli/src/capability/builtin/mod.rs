@@ -31,7 +31,9 @@
 //! ```
 
 pub mod artifacts;
+pub(crate) mod blackboard;
 pub(crate) mod brief;
+pub(crate) mod cache_provision;
 pub(crate) mod capabilities;
 pub mod commands;
 pub mod commit;
@@ -55,11 +57,13 @@ pub mod evidence;
 pub(crate) mod executions;
 pub mod gates;
 pub(crate) mod graph;
+pub(crate) mod guard;
 pub mod health;
 pub(crate) mod integration;
 pub mod intent_realization;
 pub mod intents;
 pub mod knowledge_base;
+pub mod layout;
 pub mod lifecycle;
 pub mod mcp;
 pub(crate) mod mesh;
@@ -184,6 +188,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         capabilities,
         commands,
         graph,
+        guard,
         health,
         dashboard,
         continuity,
@@ -203,11 +208,13 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         reasoning,
         episodes,
         peers,
+        blackboard,
         brief,
         server,
         mcp,
         session_domain,
         shell,
+        layout,
         pack,
         perf,
         plan,
@@ -332,6 +339,8 @@ mod tests {
                 "executions.start",
                 // writes one new intent record, never a stage (ADR 0144)
                 "intents.propose",
+                // lists this machine's key in the mesh declaration's trust.allow (I2412)
+                "mesh.enrol",
                 "plan.transition",
                 "reasoning.record",
                 "recover.orphans"

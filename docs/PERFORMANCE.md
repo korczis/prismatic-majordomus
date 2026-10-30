@@ -96,6 +96,16 @@ Three things that are easy to confuse and are kept apart:
   `benchmark.regression` fraction over the baseline is a `FAIL` naming the metric, both
   values and the threshold, and the command exits `10`. No baseline exits `12`; a baseline
   with another schema is not comparable and exits `15` rather than producing a number.
+- **A regression needs two samples that agree.** Each sample is held to the same bound,
+  baseline × (1 + threshold), and counted: a metric over its threshold on one sample (the
+  only cold sample of a read-only command, or the one slow sample a small p95 rests on) is a
+  `WARN` to re-measure, and does not fail. `--cold-samples <n>` takes further cold samples of
+  a read-only command, each the first run in a repository of its own. Every finding names
+  the samples it rests on (`on 2 of 3 sample(s)`), the runner and its 1-minute load average
+  at the start and end of the run: on 2026-10-08 one cold sample of `version` read
+  9 -> 23 ms on a saturated runner and failed a change that ran none of the measured code.
+  The Rust executable's `bench --check` holds its baseline to the same rule (`WARN`,
+  `agree/n`) and names its runner and load on the verdict line.
 
 Wall-clock thresholds are noisy across machines, so the fractions in the policy are
 conservative and relative; the exact evidence is the counters.

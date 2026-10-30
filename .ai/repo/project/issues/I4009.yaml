@@ -1,0 +1,33 @@
+id: I4009
+milestone: a-session-proceeds-through-the-mesh
+title: "/watchdog reads liveness and runs wake, handover, reap"
+slug: watchdog-wakes-hands-over-and-reaps
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - a-session-proceeds-through-the-mesh#a-dead-loop-resumes
+  - a-session-proceeds-through-the-mesh#a-stall-is-signalled
+objective: "/watchdog: the session-side verb that reads the liveness signals of I3990-I3994 (suspended claims, phase beats, overdue) and runs wake, then handover, then reap; reap only by the owner or a seat and only after assess-before-deleting."
+why: "A stuck, silent or dead loop is found by a person; nothing wakes it, hands its work over or reaps what it left."
+current_state: "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists."
+desired_state: "The acceptance criteria below hold and case 4009 proves them."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "share/skills"
+  - "docs/PROCEED.md"
+  - "test/cases/4009_watchdog_wakes_hands_over_and_reaps.sh"
+  - ".ai/repo/project/issues/I4009.yaml"
+depends_on:
+  - "I4005"
+acceptance_criteria:
+  - "A suspended claim, a missed phase beat or an overdue deadline is signalled with its claim, holder and phase"
+  - "Wake precedes handover precedes reap, and each is recorded"
+  - "Reap by anyone but the owner or a seat is refused (ADR 0200), and only after assess-before-deleting"
+  - "It depends on the liveness substrate I3990-I3994 (branch feature/a-claim-lives-by-its-holders-progress); this issue adds none of it"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4009_watchdog_wakes_hands_over_and_reaps"
+evidence_required:
+  - "case_4009_watchdog_wakes_hands_over_and_reaps"
+created_at: 2026-10-23
+updated_at: 2026-10-23

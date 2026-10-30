@@ -227,9 +227,9 @@ pub enum Freshness {
 /// assert!(latest.took >= std::time::Duration::ZERO);
 /// ```
 #[derive(Debug, Clone)]
-pub struct Latest {
+pub struct Latest<V = Value> {
     /// What the source answered, or why it could not. `Err` for a pending reading too.
-    pub value: Result<Value, String>,
+    pub value: Result<V, String>,
     /// How long the executor took to produce this reading.
     pub took: Duration,
     /// When it was read; `None` while pending.
@@ -242,9 +242,9 @@ pub struct Latest {
     pub refreshing: bool,
 }
 
-impl Latest {
+impl<V> Latest<V> {
     /// A reading taken just now, by the caller itself.
-    fn now(value: Result<Value, String>, took: Duration) -> Latest {
+    fn now(value: Result<V, String>, took: Duration) -> Latest<V> {
         Latest {
             value,
             took,
@@ -286,6 +286,9 @@ struct World {
     reading: u64,
     fingerprint: String,
     writes: u64,
+    /// The generation the source follows beyond the repository (`crate::change`), zero for
+    /// a source that follows none: part of one source's world, never of the repository's.
+    followed: u64,
 }
 
 impl World {
@@ -294,13 +297,26 @@ impl World {
             reading: ctx.reading,
             fingerprint: ctx.registry.fingerprint().to_string(),
             writes: ctx.executor.writes(),
+            followed: 0,
+        }
+    }
+
+    /// The world a reading of `id` is taken in: the repository's, and the generation the
+    /// source follows when it follows one, so that a reading from before that generation
+    /// moved is stale like one from before the repository moved.
+    fn of_source(&self, id: &str) -> World {
+        World {
+            followed: crate::change::generation_of(id).unwrap_or(0),
+            ..self.clone()
         }
     }
 }
 
 #[derive(Debug)]
 struct Outcome {
-    value: Result<Value, String>,
+    /// The answer as the executor's cache shares it: reading a source again whose answer is
+    /// cached copies nothing, and a caller copies it only after the slot's lock is released.
+    value: Result<Arc<Value>, String>,
     world: World,
     at: Instant,
     wall: SystemTime,
@@ -415,11 +431,14 @@ impl Readings {
     fn behind(&self, world: &World) -> Vec<(String, Arc<Slot>)> {
         lock(&self.slots)
             .iter()
-            .filter(|(_, slot)| {
+            .filter(|((id, _), slot)| {
                 let state = lock(&slot.state);
                 !state.flying
                     && state.asked.elapsed() < REMEMBERED
-                    && state.outcome.as_ref().is_some_and(|o| &o.world != world)
+                    && state
+                        .outcome
+                        .as_ref()
+                        .is_some_and(|o| o.world != world.of_source(id))
             })
             .map(|((id, _), slot)| (id.clone(), Arc::clone(slot)))
             .collect()
@@ -445,14 +464,35 @@ impl Readings {
 /// assert_eq!(ctx.executor.readings_remembered(), 1);
 /// ```
 pub fn read(ctx: &Context, id: &str, input: Value, patience: Patience) -> Latest {
+    let latest = read_shared(ctx, id, input, patience);
+    Latest {
+        value: latest.value.map(Arc::unwrap_or_clone),
+        took: latest.took,
+        read_at: latest.read_at,
+        age: latest.age,
+        freshness: latest.freshness,
+        refreshing: latest.refreshing,
+    }
+}
+
+/// The same reading, with the answer as the slot shares it rather than a copy of it: what a
+/// screen that only reads the answer asks, so that a large one is copied for nobody.
+pub(crate) fn read_shared(
+    ctx: &Context,
+    id: &str,
+    input: Value,
+    patience: Patience,
+) -> Latest<Arc<Value>> {
     if bypassed() {
         let started = Instant::now();
         let value = ctx.execute(id, input).map_err(|e| e.to_string());
-        return Latest::now(value, started.elapsed());
+        return Latest::now(value.map(Arc::new), started.elapsed());
     }
     let readings = &ctx.executor.readings;
-    let world = World::of(ctx);
-    let moved = readings.moved_to(&world);
+    let repository = World::of(ctx);
+    let moved = readings.moved_to(&repository);
+    // this source's world: the repository's, and the generation it follows if it follows one
+    let world = repository.of_source(id);
     let slot = readings.slot(id, &input);
 
     let wait = {
@@ -463,7 +503,7 @@ pub fn read(ctx: &Context, id: &str, input: Value, patience: Patience) -> Latest
         // it is current at once, and no worker is needed for it.
         let behind = state.outcome.as_ref().is_none_or(|o| o.world != world);
         if behind {
-            if let Some(value) = ctx.executor.cached(ctx, id, &state.input) {
+            if let Some(value) = ctx.executor.cached_shared(ctx, id, &state.input) {
                 state.outcome = Some(Outcome {
                     value: Ok(value),
                     world: world.clone(),
@@ -493,14 +533,15 @@ pub fn read(ctx: &Context, id: &str, input: Value, patience: Patience) -> Latest
         wait
     };
     if moved {
-        for (other, behind) in readings.behind(&world) {
+        for (other, behind) in readings.behind(&repository) {
             let mut state = lock(&behind.state);
             if state.flying {
                 continue;
             }
             state.flying = true;
             drop(state);
-            work(ctx, &other, behind, world.clone(), false);
+            let theirs = repository.of_source(&other);
+            work(ctx, &other, behind, theirs, false);
         }
     }
 
@@ -526,27 +567,38 @@ pub fn read(ctx: &Context, id: &str, input: Value, patience: Patience) -> Latest
             }
         };
     }
-    match &state.outcome {
-        None => Latest {
-            value: Err(PENDING.to_string()),
-            took: Duration::ZERO,
-            read_at: None,
-            age: None,
-            freshness: Freshness::Pending,
-            refreshing: state.flying,
-        },
-        Some(o) => Latest {
-            value: o.value.clone(),
-            took: o.took,
-            read_at: Some(o.wall),
-            age: Some(o.at.elapsed()),
-            freshness: if o.world == world {
+    let refreshing = state.flying;
+    let (value, took, read_at, age, freshness) = match &state.outcome {
+        None => (
+            Err(PENDING.to_string()),
+            Duration::ZERO,
+            None,
+            None,
+            Freshness::Pending,
+        ),
+        Some(o) => (
+            o.value.clone(),
+            o.took,
+            Some(o.wall),
+            Some(o.at.elapsed()),
+            if o.world == world {
                 Freshness::Current
             } else {
                 Freshness::Stale
             },
-            refreshing: state.flying,
-        },
+        ),
+    };
+    // a caller's own copy, when it wants one, is made once the slot is free again, so that a
+    // large answer copied for one page holds up neither the worker landing a reading nor
+    // another page
+    drop(state);
+    Latest {
+        value,
+        took,
+        read_at,
+        age,
+        freshness,
+        refreshing,
     }
 }
 
@@ -642,7 +694,9 @@ fn take(job: Job) {
     let input = lock(&landing.slot.state).input.clone();
     let started = Instant::now();
     let asked = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        ctx.execute(&id, input).map_err(|e| e.to_string())
+        ctx.executor
+            .execute_shared(&ctx, &id, input)
+            .map_err(|e| e.to_string())
     }));
     let value = asked.unwrap_or_else(|_| Err("the source panicked while answering".to_string()));
     landing.land(value, started.elapsed());
@@ -656,7 +710,7 @@ struct Landing {
 }
 
 impl Landing {
-    fn land(&mut self, value: Result<Value, String>, took: Duration) {
+    fn land(&mut self, value: Result<Arc<Value>, String>, took: Duration) {
         let mut state = lock(&self.slot.state);
         state.outcome = Some(Outcome {
             value,
@@ -680,5 +734,67 @@ impl Drop for Landing {
                 Duration::ZERO,
             );
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    /// A source that follows a change generation of its own (the blackboard, ADR 0176) is
+    /// current until that generation moves, is then handed over as stale and read again, and
+    /// a caller that waits is given the reading of the new generation. A source that follows
+    /// no such generation is not disturbed by it.
+    #[test]
+    fn a_followed_source_goes_stale_when_its_generation_moves() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let input = json!({ "signals": 0 });
+        let first = read(&ctx, "blackboard.snapshot", input.clone(), Patience::WAIT);
+        assert_eq!(first.freshness, Freshness::Current);
+        let plan = read(&ctx, "plan.status", json!({}), Patience::WAIT);
+        assert_eq!(plan.freshness, Freshness::Current);
+
+        crate::change::BLACKBOARD.advance();
+        let behind = read(&ctx, "blackboard.snapshot", input.clone(), Patience::PAGE);
+        assert!(
+            behind.freshness == Freshness::Stale || behind.freshness == Freshness::Current,
+            "{:?}",
+            behind.freshness
+        );
+        if behind.freshness == Freshness::Stale {
+            assert!(behind.refreshing, "a stale reading is being read again");
+            assert!(
+                behind.read_at.is_some() && behind.age.is_some(),
+                "it keeps its age"
+            );
+        } else {
+            // current only as a new reading, never as the one from before the change
+            assert_ne!(
+                behind.read_at, first.read_at,
+                "the reading before the change"
+            );
+        }
+        // Other tests of this process announce peers and append to the journal, and every such
+        // move advances the same shared generation. A wait that one of them overtakes is handed
+        // a reading already one move behind, so the caller waits again, as a reader of a busy
+        // blackboard would; alone, the first wait is current (2026-10-21, 3524 tests in parallel).
+        let mut caught = read(&ctx, "blackboard.snapshot", input.clone(), Patience::WAIT);
+        for _ in 0..50 {
+            if caught.freshness == Freshness::Current {
+                break;
+            }
+            caught = read(&ctx, "blackboard.snapshot", input.clone(), Patience::WAIT);
+        }
+        assert_eq!(caught.freshness, Freshness::Current);
+        let plan = read(&ctx, "plan.status", json!({}), Patience::PAGE);
+        assert_eq!(
+            plan.freshness,
+            Freshness::Current,
+            "an unrelated source stays current"
+        );
+        assert_eq!(crate::change::generation_of("plan.status"), None);
+        assert!(crate::change::generation_of("blackboard.snapshot").is_some());
     }
 }

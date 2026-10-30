@@ -16,6 +16,12 @@
 #                                           it; a routine push does not, because three macOS
 #                                           jobs per push is demand no runner pool answers and
 #                                           the verdict that needs them then never arrives
+#   --tier T                                plan at the tier T of the model's `tiers` (ADR 0186):
+#                                           a gate whose lane T does not run is left out, and
+#                                           neither implies nor requires brings it back. A
+#                                           model without tiers, or a tier it does not
+#                                           declare, is a usage error. Without --tier every
+#                                           lane is planned
 #   --format json|text|github               json (default): the plan; text: one line per gate;
 #                                           github: name=value lines for $GITHUB_OUTPUT
 #   --model FILE                            another model (the tests mutate a copy)
@@ -23,10 +29,21 @@
 #                                           are derived, for the model's shapes (default: this
 #                                           one); the tests point it at a fixture
 #   --check                                 validate the model and exit: 0 sound, 10 not
+#   --inventory                             find a second list of gates: a tracked file outside the
+#                                           model that runs the `runs:` commands of two or more
+#                                           gates, or names three or more gate ids on one line.
+#                                           One line per finding (file:line and the gates); a
+#                                           finding the baseline does not hold, or a baseline
+#                                           entry that matches nothing (STALE), exits 10
+#   --baseline FILE                         the findings an inventory accepts, one file:what per
+#                                           line (default .ai/repo/ci/gate-list-baseline.txt)
+#   --tree DIR                              the checkout an inventory reads (default: this one);
+#                                           the tests point it at a fixture
 #
 # The plan is deterministic for a given model and path list, and the same command runs
 # here and in the workflow. Exit 0 with a plan, 2 on usage, 10 on a model that does not
-# resolve, 12 when git cannot answer.
+# resolve, 12 when git cannot answer. An inventory exits 0 clean, 10 on a finding or a
+# stale baseline entry, 12 when it cannot read the tree or the baseline.
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MJ_VERSION="ci-plan"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
@@ -35,7 +52,7 @@ MJ_VERSION="ci-plan"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_
 command -v jq >/dev/null || { echo "ci-plan: jq is required" >&2; exit 12; }
 
 MODEL="$ROOT/.ai/repo/ci/gates.yaml"; BASE=""; HEAD=""; FILES=""; FULL=0; WHY=""; FORMAT=json; CHECK=0; ONDEMAND=0
-ATTR_ROOT="$ROOT"
+ATTR_ROOT="$ROOT"; INVENTORY=0; BASELINE=""; TREE="$ROOT"; TIER=""; TIER_SET=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --base) BASE="$2"; shift 2 ;;
@@ -43,10 +60,14 @@ while [ $# -gt 0 ]; do
     --files) FILES="$2"; shift 2 ;;
     --full) FULL=1; shift; if [ $# -gt 0 ] && [ "${1#--}" = "$1" ]; then WHY="$1"; shift; fi ;;
     --on-demand) ONDEMAND=1; shift ;;
+    --tier) TIER="$2"; TIER_SET=1; shift 2 ;;
     --format) FORMAT="$2"; shift 2 ;;
     --model) MODEL="$2"; shift 2 ;;
     --attr-root) ATTR_ROOT="$2"; shift 2 ;;
     --check) CHECK=1; shift ;;
+    --inventory) INVENTORY=1; shift ;;
+    --baseline) BASELINE="$2"; shift 2 ;;
+    --tree) TREE="$2"; shift 2 ;;
     # A bare path list — `ci-plan a.sh b.sh` — is the obvious guess, and it is the one thing
     # the parser cannot take: the paths a plan is computed over come from one of three named
     # sources, so that a plan always records what it was computed from. An argument that does
@@ -62,7 +83,7 @@ case "$FORMAT" in json|text|github) ;; *) echo "ci-plan: --format is json, text 
 [ -f "$MODEL" ] || { echo "ci-plan: no CI model at $MODEL" >&2; exit 10; }
 
 # ---------------------------------------------------------------- the model
-FLAT="$(mktemp "${TMPDIR:-/tmp}/mj-ci-plan.XXXXXX")"; trap 'rm -f "$FLAT" "$FLAT".block "$FLAT".attr "$FLAT".derived "$FLAT".kinds "${LIST:-}"' EXIT
+FLAT="$(mktemp "${TMPDIR:-/tmp}/mj-ci-plan.XXXXXX")"; trap 'rm -f "$FLAT" "$FLAT".block "$FLAT".attr "$FLAT".derived "$FLAT".kinds "$FLAT".needles "$FLAT".needles.pat "$FLAT".hits "${LIST:-}"' EXIT
 mj_yaml_flatten "$MODEL" > "$FLAT" || { echo "ci-plan: $MODEL does not parse" >&2; exit 10; }
 [ "$(mj_yget "$FLAT" version)" = 1 ] || { echo "ci-plan: $MODEL: version must be 1" >&2; exit 10; }
 gate_ids="$(awk -F= '$1 ~ /^gates\.[0-9]+\.id$/ { print $2 }' "$FLAT")"
@@ -78,6 +99,19 @@ for g in $gate_ids; do
   [ -z "$od" ] || [ "$od" = true ] || { echo "ci-plan: gate $g: on-demand is true or absent, not $od" >&2; bad=1; }
   [ "$od" != true ] || [ "$(mj_yget "$FLAT" "gates.$i.always")" != true ] \
     || { echo "ci-plan: gate $g is both always and on-demand" >&2; bad=1; }
+  # `network` says the gate reaches beyond this machine; like on-demand, true or absent
+  net="$(mj_yget "$FLAT" "gates.$i.network")"
+  [ -z "$net" ] || [ "$net" = true ] || { echo "ci-plan: gate $g: network is true or absent, not $net" >&2; bad=1; }
+  # `subsumed-by` names one other gate that exists: a gate is not subsumed by itself, and the
+  # gate that subsumes it is not itself subsumed (a chain would drop a gate for a gate the plan
+  # then drops, and nothing would run the cases)
+  sub="$(mj_yget "$FLAT" "gates.$i.subsumed-by")"
+  if [ -n "$sub" ]; then
+    [ "$sub" != "$g" ] || { echo "ci-plan: gate $g is subsumed by itself" >&2; bad=1; }
+    printf '%s\n' "$gate_ids" | grep -x "$sub" >/dev/null || { echo "ci-plan: gate $g is subsumed by a gate that does not exist: $sub" >&2; bad=1; }
+    j="$(awk -F= -v g="$sub" '$1 ~ /^gates\.[0-9]+\.id$/ && $2 == g { split($1, a, "."); print a[2]; exit }' "$FLAT")"
+    [ -z "$j" ] || [ -z "$(mj_yget "$FLAT" "gates.$j.subsumed-by")" ] || { echo "ci-plan: gate $g is subsumed by $sub, which is itself subsumed; a chain is not a relation the planner applies" >&2; bad=1; }
+  fi
   for ref in $(mj_ylist "$FLAT" "gates.$i.implies") $(mj_ylist "$FLAT" "gates.$i.requires"); do
     printf '%s\n' "$gate_ids" | grep -x "$ref" >/dev/null || { echo "ci-plan: gate $g refers to a gate that does not exist: $ref" >&2; bad=1; }
   done
@@ -119,15 +153,235 @@ i=0; while [ "$i" -lt "$n_shapes" ]; do
   i=$((i+1))
 done
 [ "$(printf '%s' "$shape_ids" | LC_ALL=C sort | uniq -d | grep -c . || true)" = 0 ] || { echo "ci-plan: a shape id is declared twice" >&2; bad=1; }
+# Lanes and tiers (ADR 0186, the model's header). A lane is feedback, proof or release, whether
+# or not tiers are declared; once they are, every gate declares one and every lane a tier names
+# is one of the three. A model with neither is read exactly as before. The executable's reader
+# (src/gates/model.rs, GateModel::lane_problems) refuses the same things in the same words and
+# in the same order: the gates in declaration order, then the tiers in the order written. A
+# list or a map where a lane belongs is named as such, as the executable names it.
+lane_problems="$(awk -F= '
+  function known(v) { return v == "feedback" || v == "proof" || v == "release" }
+  function kind(seg) { return seg ~ /^[0-9]+$/ ? "a list" : "a map" }
+  $1 ~ /^gates\.[0-9]+\./ { split($1, a, "."); if (a[2] + 1 > ng) ng = a[2] + 1 }
+  $1 ~ /^gates\.[0-9]+\.id$/ { split($1, a, "."); id[a[2] + 0] = $2 }
+  $1 ~ /^gates\.[0-9]+\.lane$/ { split($1, a, "."); v = substr($0, length($1) + 2); lane[a[2] + 0] = (v == "[]" ? "a list" : v) }
+  $1 ~ /^gates\.[0-9]+\.lane\./ { split($1, a, "."); if (!((a[2] + 0) in lane)) lane[a[2] + 0] = kind(a[4]) }
+  $1 == "tiers" { tiers = 1; shape = 1 }
+  index($1, "tiers.") == 1 {
+    tiers = 1; n = split($1, a, "."); v = substr($0, length($1) + 2)
+    if (a[2] ~ /^[0-9]+$/) { shape = 1; next }
+    if (!(a[2] in seen)) { seen[a[2]] = 1; tier[++nt] = a[2] }
+    if (n == 2) { if (v != "[]") notlist[a[2]] = 1; next }
+    if (a[3] !~ /^[0-9]+$/) { notlist[a[2]] = 1; next }
+    k = a[2] SUBSEP a[3]; if (k in tl) next
+    tl[k] = (n > 3 ? kind(a[4]) : (v == "[]" ? "a list" : v)); items[a[2]] = items[a[2]] " " a[3]
+  }
+  END {
+    for (i = 0; i < ng; i++) {
+      if (!(i in lane)) { if (tiers) print "gate " id[i] " declares no lane, and with tiers declared every gate is in one of feedback, proof and release" }
+      else if (!known(lane[i])) print "gate " id[i] ": lane is feedback, proof or release, not " lane[i]
+    }
+    if (shape) { print "tiers maps each tier to a list of the lanes it runs"; exit }
+    for (t = 1; t <= nt; t++) {
+      if (tier[t] in notlist) { print "tier " tier[t] " names its lanes as a list"; continue }
+      m = split(items[tier[t]], o, " ")
+      for (j = 1; j <= m; j++) if (!known(tl[tier[t] SUBSEP o[j]])) print "tier " tier[t] " names a lane that does not exist: " tl[tier[t] SUBSEP o[j]]
+    }
+  }' "$FLAT")"
+[ -z "$lane_problems" ] || { printf '%s\n' "$lane_problems" | sed 's/^/ci-plan: /' >&2; bad=1; }
 [ "$bad" = 0 ] || exit 10
+# The tier a plan is asked at (ADR 0186, I3947): the lanes its entry in `tiers` names. A model
+# without tiers, or a tier it does not declare, is refused as a usage error, before anything is
+# planned; the executable (GateModel::tier in src/gates/model.rs) refuses both in these words.
+tier_lanes=""
+if [ "$TIER_SET" = 1 ]; then
+  tier_names="$(awk -F= 'index($1, "tiers.") == 1 { split($1, a, "."); print a[2] }' "$FLAT" | LC_ALL=C sort -u)"
+  [ -n "$tier_names" ] || { echo "ci-plan: tier $TIER: the model declares no tiers, so it cannot plan one" >&2; exit 2; }
+  grep -qxF -e "$TIER" <<<"$tier_names" \
+    || { echo "ci-plan: tier $TIER: the model declares no such tier; it declares $(printf '%s' "$tier_names" | tr '\n' ',' | sed 's/,/, /g')" >&2; exit 2; }
+  tier_lanes=" $(mj_ylist "$FLAT" "tiers.$TIER" | tr '\n' ' ')"
+fi
 gate_jobs="$(awk -F= '$1 ~ /^gates\.[0-9]+\.id$/ { split($1, a, "."); id[a[2]] = $2 } $1 ~ /^gates\.[0-9]+\.job$/ { split($1, a, "."); job[a[2]] = $2 } END { for (i in id) print id[i] "\t" job[i] }' "$FLAT")"
 gate_runs="$(awk -F= '$1 ~ /^gates\.[0-9]+\.id$/ { split($1, a, "."); id[a[2]] = $2 } $1 ~ /^gates\.[0-9]+\.runs$/ { split($1, a, "."); r[a[2]] = substr($0, length($1) + 2) } END { for (i in id) print id[i] "\t" r[i] }' "$FLAT")"
+network_ids="$(awk -F= '
+  $1 ~ /^gates\.[0-9]+\.id$/ { split($1, a, "."); id[a[2]] = $2 }
+  $1 ~ /^gates\.[0-9]+\.network$/ && $2 == "true" { split($1, a, "."); n[a[2]] = 1 }
+  END { for (i in id) if (i in n) print id[i] }' "$FLAT" | LC_ALL=C sort | tr '\n' ' ')"
 ondemand_ids="$(awk -F= '
   $1 ~ /^gates\.[0-9]+\.id$/ { split($1, a, "."); id[a[2]] = $2 }
   $1 ~ /^gates\.[0-9]+\.on-demand$/ && $2 == "true" { split($1, a, "."); od[a[2]] = 1 }
   END { for (i in id) if (i in od) print id[i] }' "$FLAT" | LC_ALL=C sort | tr '\n' ' ')"
 on_demand() { case " $ondemand_ids " in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
-[ "$CHECK" = 1 ] && { echo "ci-plan: $MODEL: $(printf '%s\n' "$gate_ids" | wc -l | tr -d ' ') gates ($(printf '%s' "$ondemand_ids" | wc -w | tr -d ' ') on demand), $n_classes classes, $n_shapes shape(s), every reference resolves"; exit 0; }
+gate_lanes="$(awk -F= '$1 ~ /^gates\.[0-9]+\.id$/ { split($1, a, "."); id[a[2]] = $2 } $1 ~ /^gates\.[0-9]+\.lane$/ { split($1, a, "."); l[a[2]] = $2 } END { for (i in id) if (i in l) print id[i] "\t" l[i] }' "$FLAT")"
+lane_of() { printf '%s\n' "$gate_lanes" | awk -F'\t' -v g="$1" '$1 == g { print $2; exit }'; }
+# 0 when no tier was asked for or the tier runs the gate's lane. Once tiers are declared every
+# gate has a lane (the check above refuses a model where one does not)
+in_tier() { [ "$TIER_SET" = 0 ] && return 0; case "$tier_lanes " in *" $(lane_of "$1") "*) return 0 ;; esac; return 1; }
+# the lanes are counted only where tiers make them complete; a model without tiers says nothing of them
+lanes_said=""
+if grep -q '^tiers[.=]' "$FLAT"; then
+  n_tiers="$(awk -F= 'index($1, "tiers.") == 1 { split($1, a, "."); if (!(a[2] in s)) { s[a[2]] = 1; n++ } } END { print n + 0 }' "$FLAT")"
+  lanes_said="$(printf '%s\n' "$gate_lanes" | awk -F'\t' -v t="$n_tiers" '{ n[$2]++ } END { printf ", %d tier(s), lanes %d feedback, %d proof, %d release", t, n["feedback"], n["proof"], n["release"] }')"
+fi
+[ "$CHECK" = 1 ] && { echo "ci-plan: $MODEL: $(printf '%s\n' "$gate_ids" | wc -l | tr -d ' ') gates ($(printf '%s' "$ondemand_ids" | wc -w | tr -d ' ') on demand), $n_classes classes, $n_shapes shape(s)$lanes_said, every reference resolves"; exit 0; }
+
+# ---------------------------------------------------------------- the inventory
+# No script outside the model carries a list of gates (I2350). A gate added to the model and
+# not to a second list is a gate that list never runs, so the second list is looked for: the
+# tracked files, outside the model and what is generated from or recorded about it, that run
+# the commands of two gates, or name three gates on a line. The gate ids and commands are the
+# ones parsed above; this adds no second reading of the model. A command that is not one
+# plain line (a chain, a command substitution, a "then") cannot be found by text and is not
+# looked for; where one command contains another (cockpit-projection-check and its
+# --ui-integrity form) the longer match is the only one counted.
+#
+# What is left is a ratchet: .ai/repo/ci/gate-list-baseline.txt holds the findings that
+# remain, each with the reason, and a finding it does not hold fails, as does an entry that no
+# longer matches anything, so the baseline can only shrink.
+if [ "$INVENTORY" = 1 ]; then
+  [ -n "$BASELINE" ] || BASELINE="$TREE/.ai/repo/ci/gate-list-baseline.txt"
+  [ -r "$BASELINE" ] || { echo "ci-plan: no baseline at $BASELINE" >&2; exit 12; }
+  git -C "$TREE" rev-parse --git-dir >/dev/null 2>&1 || { echo "ci-plan: $TREE is not a git checkout; the inventory reads its tracked files" >&2; exit 12; }
+  # kind, gate, text: one needle per gate id and one per plain command, in the model's order.
+  # A command chained with && is looked for step by step, and a step that two gates share
+  # (scripts/rust-check --doc) names neither and is left out.
+  printf '%s\n' "$gate_runs" | LC_ALL=C sort | awk -F'\t' '
+    NF >= 2 {
+      print "id\t" $1 "\t" $1
+      r = substr($0, length($1) + 2)
+      if (index(r, "$(") || index(r, ", ")) next
+      m = split(r, seg, " && ")
+      for (k = 1; k <= m; k++) if (length(seg[k]) >= 8) { owners[seg[k]] = owners[seg[k]] "\t" $1; steps[++ns] = seg[k]; stepgate[ns] = $1 }
+    }
+    END {
+      for (k = 1; k <= ns; k++) {
+        n = split(owners[steps[k]], o, "\t") - 1
+        if (n == 1 || (n == 2 && o[2] == o[3])) print "run\t" stepgate[k] "\t" steps[k]
+      }
+    }' > "$FLAT.needles"
+  cut -f3 "$FLAT.needles" | LC_ALL=C sort -u > "$FLAT.needles.pat"
+  rc=0
+  git -C "$TREE" grep -I -n --no-color -F -f "$FLAT.needles.pat" -- . \
+    ':!.ai/repo/ci/gates.yaml' ':!.ai/repo/ci/gate-list-baseline.txt' ':!docs/generated' \
+    ':!site/data/generated' ':!site/data/registry' ':!site/content' ':!site/i18n' ':!handbook/shape' \
+    ':!.ai/repo/project' ':(exclude,glob).ai/repo/*baseline*.txt' ':!test/cases' ':!test/fixtures' \
+    > "$FLAT.hits" || rc=$?
+  rm -f "$FLAT.needles.pat"
+  [ "$rc" = 0 ] || [ "$rc" = 1 ] || { echo "ci-plan: git grep failed in $TREE (exit $rc)" >&2; exit 12; }
+  rc=0
+  LC_ALL=C awk -v needles="$FLAT.needles" -v baseline="$BASELINE" '
+    # an identifier character: a match inside a longer word, or a file name, is not a mention
+    function word(c) { return c != "" && c ~ /[A-Za-z0-9_-]/ }
+    function bounded(t, s, e,   b, a, a2) {
+      b = (s > 1) ? substr(t, s - 1, 1) : ""; a = substr(t, e + 1, 1); a2 = substr(t, e + 2, 1)
+      if (word(b) || b == ".") return 0
+      if (word(a)) return 0
+      if (a == "." && a2 ~ /[A-Za-z0-9_]/) return 0
+      return 1
+    }
+    # the text before a command, back to the last separator, is only what introduces a command
+    # (a prompt, a list dash, "if", "bash", "run:", a path prefix, an assignment): the command
+    # is then run on this line, and not discussed in a sentence or a comment
+    function invoked(t, s,   pre, n, w, i, tok, k, ok) {
+      pre = substr(t, 1, s - 1)
+      if (index(pre, "#")) return 0
+      for (k = length(pre); k >= 1; k--) {
+        c2 = substr(pre, k - 1, 2)
+        if (c2 == "&&" || c2 == "||" || c2 == "$(") { pre = substr(pre, k + 1); break }
+        if (substr(pre, k, 1) == ";" || substr(pre, k, 1) == "|") { pre = substr(pre, k + 1); break }
+      }
+      n = split(pre, w, /[ \t]+/)
+      for (i = 1; i <= n; i++) {
+        tok = w[i]
+        if (tok == "-" && w[i + 1] == "run:") continue
+        if (tok == "" || tok ~ /^(@|\$|!|"|if|then|do|else|elif|while|until|run:|bash|sh|exec|time|sudo|env)$/) continue
+        if (tok ~ /^[A-Za-z_][A-Za-z0-9_]*=[^ ]*$/) continue
+        if (tok ~ /^"?(\.\/|\$ROOT\/|\$\{ROOT\}\/)$/ || tok ~ /^"?\$ROOT"?\/?$/) continue
+        return 0
+      }
+      return 1
+    }
+    # two gate ids are one enumeration when only list punctuation, quotes and "and"/"or" lie between
+    function listed(g) {
+      gsub(/[`"*()]/, "", g); gsub(/\047/, "", g); gsub(/\[|\]/, "", g)
+      gsub(/(^|[ \t])(and|or)([ \t]|$)/, " ", g); gsub(/[,|+\/&]/, " ", g)
+      return g ~ /^[ \t]*$/
+    }
+    # the run of commands just ended names two or more gates: one finding for its file
+    function flush(   g, list) {
+      if (ncl >= 2 && !((curfile ":runs") in found)) {
+        for (g = 1; g <= ng; g++) if (gname[g] in cl) list = list (list == "" ? "" : ", ") gname[g]
+        found[curfile ":runs"] = curfile ":" clstart ": runs the commands of " ncl " gates: " list; order[++nf] = curfile ":runs"
+      }
+    }
+    BEGIN {
+      gap = 10
+      while ((getline l < needles) > 0) {
+        split(l, f, "\t"); n++; kind[n] = f[1]; gate[n] = f[2]; text[n] = substr(l, length(f[1]) + length(f[2]) + 3)
+        if (f[1] == "id" && !(f[2] in seen)) { seen[f[2]] = 1; ng++; gname[ng] = f[2] }
+      }
+      while ((getline l < baseline) > 0) {
+        sub(/[ \t]+$/, "", l)
+        if (l == "" || l ~ /^#/) continue
+        want[l] = 1; wantorder[++nw] = l
+      }
+    }
+    {
+      p = index($0, ":"); file = substr($0, 1, p - 1); rest = substr($0, p + 1)
+      q = index(rest, ":"); num = substr(rest, 1, q - 1); line = substr(rest, q + 1)
+      # the workflow reads the plan'"'"'s outputs on lines of its own (case 26_ci_wiring holds them)
+      if (file == ".github/workflows/validate.yml" && index(line, "needs.plan.outputs.")) next
+      nm = 0; ni = 0
+      for (i = 1; i <= n; i++) {
+        off = 0; rem = line
+        while ((p = index(rem, text[i])) > 0) {
+          s = off + p; e = s + length(text[i]) - 1
+          if (bounded(line, s, e)) {
+            if (kind[i] == "id") { ni++; is[ni] = s; ie[ni] = e; ig[ni] = gate[i] }
+            else if (invoked(line, s)) { nm++; ms[nm] = s; me[nm] = e; mg[nm] = gate[i] }
+          }
+          off = s; rem = substr(line, off + 1)
+        }
+      }
+      for (a = 1; a <= nm; a++) {
+        inner = 0
+        for (b = 1; b <= nm; b++) if (b != a && ms[b] <= ms[a] && me[b] >= me[a] && (me[b] - ms[b]) > (me[a] - ms[a])) inner = 1
+        if (inner) continue
+        # a list is commands near each other: a gap of more than gap lines starts another
+        if (file != curfile || num - lastnum > gap) { flush(); curfile = file; delete cl; ncl = 0; clstart = num }
+        if (!(mg[a] in cl)) { cl[mg[a]] = 1; ncl++ }
+        lastnum = num
+      }
+      # the ids, in the order they stand on the line; a run of them is counted by distinct gate
+      for (a = 2; a <= ni; a++) { s = is[a]; e = ie[a]; g = ig[a]; for (b = a - 1; b >= 1 && is[b] > s; b--) { is[b+1] = is[b]; ie[b+1] = ie[b]; ig[b+1] = ig[b] } is[b+1] = s; ie[b+1] = e; ig[b+1] = g }
+      delete grp; best = 0; c = 0
+      for (a = 1; a <= ni; a++) {
+        if (a > 1 && !listed(substr(line, ie[a-1] + 1, is[a] - ie[a-1] - 1))) { delete grp; c = 0 }
+        if (!(ig[a] in grp)) { grp[ig[a]] = 1; c++ }
+        if (c > best) { best = c; bestgrp = ""; for (g in grp) bestgrp = bestgrp "\t" g }
+      }
+      if (best >= 3) {
+        k = file ":names"
+        if (!(k in found)) {
+          list = ""; for (g = 1; g <= ng; g++) if (index(bestgrp "\t", "\t" gname[g] "\t")) list = list (list == "" ? "" : ", ") gname[g]
+          found[k] = file ":" num ": lists " best " gates: " list; order[++nf] = k
+        }
+      }
+    }
+    END {
+      flush()
+      bad = 0; held = 0
+      for (i = 1; i <= nf; i++) {
+        k = order[i]
+        if (k in want) { held++; continue }
+        print found[k] " (not in the baseline)"; bad++
+      }
+      for (i = 1; i <= nw; i++) if (!(wantorder[i] in found)) { print "STALE " wantorder[i] ": the baseline holds an entry that matches nothing; delete the line"; bad++ }
+      printf "ci-plan: inventory: %d finding(s), %d in the baseline, %d to fix\n", nf, held, bad
+      exit (bad > 0 ? 10 : 0)
+    }' "$FLAT.hits" || rc=$?
+  exit "$rc"
+fi
 
 # ---------------------------------------------------------------- the change
 LIST="$(mktemp "${TMPDIR:-/tmp}/mj-ci-plan-files.XXXXXX")"
@@ -143,6 +397,13 @@ else
     done
     [ -n "$BASE" ] || { echo "ci-plan: no default branch to compare with; pass --base" >&2; exit 12; }
   fi
+  # a base or head that names no commit is refused here: the worktree branch below pipes git
+  # into sort, whose status is the pipe's, so an unknown base used to yield a plan of whatever
+  # `git status` listed and exit 0, a plan computed from nothing that read as a pass
+  for ref in "$BASE" ${HEAD:+"$HEAD"}; do
+    git -C "$ROOT" rev-parse -q --verify "$ref^{commit}" >/dev/null 2>&1 \
+      || { echo "ci-plan: $ref names no commit here; nothing can be compared with it" >&2; exit 12; }
+  done
   if [ -n "$HEAD" ]; then
     git -C "$ROOT" diff --name-only "$BASE" "$HEAD" > "$LIST" || { echo "ci-plan: git diff $BASE $HEAD failed" >&2; exit 12; }
   else
@@ -200,10 +461,12 @@ elif printf '%s\n' "$MATCH" | grep -q '^unclassified'; then
 elif [ ! -s "$LIST" ]; then
   reason="no changed path; only the gates that always run"
 fi
-if [ "$mode" = full ] && [ "$ONDEMAND" = 0 ] && [ -n "$ondemand_ids" ]; then
-  # the escalation reasons end in a space (`tr '\n' ' '` above); strip it so the note
-  # reads as one sentence rather than as two with a gap between them
-  reason="${reason% } (without the on-demand gates: ${ondemand_ids% })"
+if [ "$mode" = full ]; then
+  # the escalation reasons end in a space (`tr '\n' ' '` above); strip it whether or not the
+  # note follows, so the reason is one sentence either way and is the executable's word for
+  # word (src/gates/model.rs; test/cases/131_completion_gates.sh compares them)
+  reason="${reason% }"
+  [ "$ONDEMAND" = 1 ] || [ -z "$ondemand_ids" ] || reason="$reason (without the on-demand gates: ${ondemand_ids% })"
 fi
 
 # ---------------------------------------------------------------- the shapes
@@ -293,6 +556,15 @@ add() { case " $selected " in *" $1 "*) ;; *) selected="$selected $1" ;; esac; w
 $1	$2"; }
 for g in $gate_ids; do
   i="$(awk -F= -v g="$g" '$1 ~ /^gates\.[0-9]+\.id$/ && $2 == g { split($1, a, "."); print a[2]; exit }' "$FLAT")"
+  # A gate whose lane the tier asked for does not run is left out first, and says so: it is
+  # out whatever else is asked (--on-demand, --full), and it is out before implies, requires
+  # and subsumed-by are applied, so that nothing brings it back and nothing is dropped for it
+  # (I3947; the executable decides it at the same point, in the same words).
+  if ! in_tier "$g"; then
+    why_of="$why_of
+$g	lane $(lane_of "$g"): not in the $TIER tier"
+    continue
+  fi
   # An on-demand gate is left out of every plan that did not ask for it — including the full
   # one — and says so, so that a reader of the plan sees a gate that was not planned rather
   # than a job that will be pending for ever.
@@ -310,13 +582,13 @@ $g	on demand only: its runner is not available on demand; the schedule, a dispat
     [ -n "$by" ] && add "$g" "class ${by% }"
   fi
 done
-# a selected gate brings what it implies and what it requires
+# a selected gate brings what it implies and what it requires, never a gate the tier left out
 changed=1; while [ "$changed" = 1 ]; do
   changed=0
   for g in $selected; do
     i="$(awk -F= -v g="$g" '$1 ~ /^gates\.[0-9]+\.id$/ && $2 == g { split($1, a, "."); print a[2]; exit }' "$FLAT")"
-    for ref in $(mj_ylist "$FLAT" "gates.$i.implies"); do case " $selected " in *" $ref "*) ;; *) add "$ref" "implied by $g"; changed=1 ;; esac; done
-    for ref in $(mj_ylist "$FLAT" "gates.$i.requires"); do case " $selected " in *" $ref "*) ;; *) add "$ref" "required by $g"; changed=1 ;; esac; done
+    for ref in $(mj_ylist "$FLAT" "gates.$i.implies"); do case " $selected " in *" $ref "*) ;; *) in_tier "$ref" || continue; add "$ref" "implied by $g"; changed=1 ;; esac; done
+    for ref in $(mj_ylist "$FLAT" "gates.$i.requires"); do case " $selected " in *" $ref "*) ;; *) in_tier "$ref" || continue; add "$ref" "required by $g"; changed=1 ;; esac; done
   done
 done
 # ... but nothing implies or requires its way past the plan the caller asked for: an
@@ -324,7 +596,25 @@ done
 if [ "$ONDEMAND" = 0 ] && [ -n "$ondemand_ids" ]; then
   kept=""; for g in $selected; do on_demand "$g" || kept="$kept $g"; done; selected="$kept"
 fi
-selected="${selected# }"
+# ... and a gate whose subsuming gate is in the plan is not planned beside it. This is the last
+# step of the selection, after the closure above, so a subsuming gate that was only implied or
+# required still counts; the reason replaces the one that selected the gate, because the plan
+# must say why a gate is absent, not why it once was present.
+kept=""
+for g in $selected; do
+  i="$(awk -F= -v g="$g" '$1 ~ /^gates\.[0-9]+\.id$/ && $2 == g { split($1, a, "."); print a[2]; exit }' "$FLAT")"
+  sub="$(mj_yget "$FLAT" "gates.$i.subsumed-by")"
+  if [ -n "$sub" ]; then
+    case " $selected " in
+      *" $sub "*)
+        why_of="$(printf '%s\n' "$why_of" | awk -F'\t' -v g="$g" '$1 != g')
+$g	subsumed by $sub: the planned $sub runs every case this gate runs, so planning it too would run them twice"
+        continue ;;
+    esac
+  fi
+  kept="$kept $g"
+done
+selected="${kept# }"
 
 # ---------------------------------------------------------------- the output
 # what a gate the plan left out is told: under a shape it was the shape that left it out, and
@@ -360,19 +650,22 @@ case "$FORMAT" in
     jq -n --arg mode "$mode" --arg reason "$reason" --arg base "$BASE" --arg head "$HEAD" --arg model "${MODEL#"$ROOT"/}" \
       --rawfile changed "$LIST" --rawfile classes "$FLAT.classes" \
       --arg selected "$selected" --arg gates "$gate_ids" --arg why "$why_of" --arg jobs "$gate_jobs" --arg runs "$gate_runs" \
+      --arg network "$network_ids" --arg lanes "$gate_lanes" \
       --arg unclassified "$(printf '%s\n' "$MATCH" | awk -F'\t' '$1=="unclassified"{print $3}')" \
       --arg skip_why "$skip_why" --arg shape "$shape" --arg shape_records "$shape_records" --arg shape_derived "$shape_derived" '
       def lines: split("\n") | map(select(length > 0));
       ($why | lines | map(split("\t") | {key: .[0], value: .[1]}) | from_entries) as $w
       | ($jobs | lines | map(split("\t") | {key: .[0], value: .[1]}) | from_entries) as $jobs
       | ($runs | lines | map(split("\t") | {key: .[0], value: .[1]}) | from_entries) as $runs
+      | ($lanes | lines | map(split("\t") | {key: .[0], value: .[1]}) | from_entries) as $lanes
       | ($selected | split(" ") | map(select(length > 0))) as $sel
+      | ($network | split(" ") | map(select(length > 0))) as $net
       | { schema: 1, model: $model, mode: $mode, reason: $reason, base: $base, head: $head,
           changed: ($changed | lines),
           classes: ($classes | lines | map(split("\t")) | group_by(.[0]) | map({id: .[0][0], paths: map(.[1])})),
           unclassified: ($unclassified | lines),
           shape: (if $shape == "" then null else {id: $shape, records: ($shape_records | lines), derived: ($shape_derived | tonumber)} end),
-          gates: ($gates | lines | map({id: ., job: ($jobs[.] // ""), runs: ($runs[.] // ""), selected: (. as $g | $sel | index($g) != null), reason: ($w[.] // $skip_why)})),
+          gates: ($gates | lines | map({id: ., job: ($jobs[.] // ""), lane: ($lanes[.] // null), runs: ($runs[.] // ""), selected: (. as $g | $sel | index($g) != null), network: (. as $g | $net | index($g) != null), reason: ($w[.] // $skip_why)})),
           selected: $sel }'
     rm -f "$FLAT.classes" ;;
 esac

@@ -1,0 +1,35 @@
+id: I3911
+milestone: landing-survives-any-session
+title: "The executor reads its audit trail, its halt and its lease from origin, so any clone continues it and a stale holder is refused"
+slug: the-executor-state-is-on-origin
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "The integration audit trail, the halt left by an unverified landing and the executor lease move from one clone (.git/majordomus/integration/events.jsonl, an flock under the common git dir) to a ref on origin, appended by non-forced pushes. The lease names its holder, its host and its expiry, and the holder renews it with a non-forced push immediately before every landing, so a holder that slept past its expiry and wakes after another clone took over is refused before it lands. The --continuous gate counts verified landings from that ref, so a takeover machine is admitted with the same record and stopped by the same halt."
+why: "On 2026-10-22 only the clone on machine 641bdb94 had the five verified merges --continuous needs (16 in total, 9 after #822); every other machine and clone starts at 0 and is refused, and a halt left on one clone does not stop another. The lease today is an 1800 s flock (drain.rs:54) that a sleeping laptop keeps while another machine would take over."
+current_state: "drain.rs keeps the trail per clone (events.jsonl) and refuses --continuous below five verified merges since the last verification_failed (drain.rs:1396-1423); the lease is an flock plus an exclusive mesh claim whose scope falls back to integration//master when the clone has no observation (exclusive.rs:289-293)."
+desired_state: "Two clones on two machines read the same trail and the same halt from origin; an expired lease is taken over by another clone after its expiry and not before; the old holder, waking, finds its renewal refused and lands nothing."
+scope:
+  - "apps/majordomus-cli/tests/integration_executor.rs"
+  - "apps/majordomus-cli/tests/integration_trail.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/exclusive.rs"
+  - "apps/majordomus-cli/src/integration/metrics.rs"
+  - "docs/INTEGRATION.md"
+  - "docs/INTEGRATION_ROLLOUT.md"
+  - ".ai/repo/project/issues/I3911.yaml"
+acceptance_criteria:
+  - "A clone with no local trail reads the verified count and the halt from origin"
+  - "A lease whose holder stopped renewing it is taken over after its expiry and not before"
+  - "A holder whose lease was taken over is refused at its renewal and lands nothing (case an_expired_lease_holder_is_refused_before_it_lands)"
+validation:
+  - "bin/majordomus plan validate"
+  - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::"
+  - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_executor"
+evidence_required:
+  - "state_on_origin"
+depends_on: []
+serves:
+  - "landing-survives-any-session#state-on-origin"
+created_at: 2026-10-22
+updated_at: 2026-10-22

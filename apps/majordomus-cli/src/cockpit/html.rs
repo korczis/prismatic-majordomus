@@ -8,8 +8,6 @@
 //! call site; this puts it in one place, and a page that wants raw markup has to say
 //! [`El::raw`] and be read for it.
 
-use std::fmt::Write as _;
-
 /// Escape text for an element body or an attribute value. The five characters that can
 /// leave either context are replaced; nothing else is touched, so UTF-8 stays UTF-8.
 ///
@@ -20,17 +18,30 @@ use std::fmt::Write as _;
 /// ```
 pub fn escape(text: &str) -> String {
     let mut out = String::with_capacity(text.len());
-    for c in text.chars() {
-        match c {
-            '<' => out.push_str("&lt;"),
-            '>' => out.push_str("&gt;"),
-            '&' => out.push_str("&amp;"),
-            '"' => out.push_str("&quot;"),
-            '\'' => out.push_str("&#39;"),
-            other => out.push(other),
-        }
-    }
+    escape_into(&mut out, text);
     out
+}
+
+/// `text` escaped as [`escape`] does, appended to `out` with no string of its own: a page writes
+/// every text and attribute through this, and a page can hold the whole plan (I4200). The five
+/// characters it replaces are ASCII, so every cut falls on a character boundary, and a run with
+/// nothing to replace is copied whole.
+fn escape_into(out: &mut String, text: &str) {
+    let mut from = 0;
+    for (i, b) in text.bytes().enumerate() {
+        let entity = match b {
+            b'<' => "&lt;",
+            b'>' => "&gt;",
+            b'&' => "&amp;",
+            b'"' => "&quot;",
+            b'\'' => "&#39;",
+            _ => continue,
+        };
+        out.push_str(&text[from..i]);
+        out.push_str(entity);
+        from = i + 1;
+    }
+    out.push_str(&text[from..]);
 }
 
 /// Void elements: they take no children and are written without a closing tag.
@@ -169,6 +180,44 @@ impl El {
         }
     }
 
+    /// This element with every element that carries the attribute `name` replaced by what
+    /// `with` makes of its value, when it makes anything; an element it leaves is searched
+    /// on, one it replaces is not.
+    ///
+    /// ```
+    /// use majordomus_cli::cockpit::html::el;
+    /// let page = el("div").child(el("p").attr("data-src", "/a").text("later"));
+    /// let filled = page.replacing("data-src", &mut |src| Some(el("p").text(src)));
+    /// assert_eq!(filled.render(), "<div><p>/a</p></div>");
+    /// ```
+    pub fn replacing(self, name: &str, with: &mut dyn FnMut(&str) -> Option<El>) -> El {
+        let value = self
+            .attributes
+            .iter()
+            .find(|(n, _)| n == name)
+            .map(|(_, v)| v.clone());
+        if let Some(replacement) = value.and_then(|v| with(&v)) {
+            return replacement;
+        }
+        let El {
+            tag,
+            attributes,
+            children,
+        } = self;
+        let children = children
+            .into_iter()
+            .map(|c| match c {
+                Node::Element(e) => Node::Element(e.replacing(name, with)),
+                other => other,
+            })
+            .collect();
+        El {
+            tag,
+            attributes,
+            children,
+        }
+    }
+
     /// The element as markup.
     pub fn render(&self) -> String {
         let mut out = String::new();
@@ -177,12 +226,15 @@ impl El {
     }
 
     fn write(&self, out: &mut String) {
-        let _ = write!(out, "<{}", self.tag);
+        out.push('<');
+        out.push_str(self.tag);
         for (name, value) in &self.attributes {
-            if value.is_empty() {
-                let _ = write!(out, " {name}");
-            } else {
-                let _ = write!(out, " {name}=\"{}\"", escape(value));
+            out.push(' ');
+            out.push_str(name);
+            if !value.is_empty() {
+                out.push_str("=\"");
+                escape_into(out, value);
+                out.push('"');
             }
         }
         out.push('>');
@@ -192,11 +244,13 @@ impl El {
         for child in &self.children {
             match child {
                 Node::Element(e) => e.write(out),
-                Node::Text(t) => out.push_str(&escape(t)),
+                Node::Text(t) => escape_into(out, t),
                 Node::Raw(r) => out.push_str(r),
             }
         }
-        let _ = write!(out, "</{}>", self.tag);
+        out.push_str("</");
+        out.push_str(self.tag);
+        out.push('>');
     }
 }
 
@@ -207,7 +261,24 @@ impl El {
 /// on every page by construction, so a new page cannot forget the parts that make the
 /// Cockpit behave.
 pub fn document(title: &str, head: Vec<El>, body: El) -> String {
-    let mut out = String::from("<!doctype html>\n<html lang=\"en\">\n<head>\n");
+    document_on(title, &[], head, body)
+}
+
+/// A whole page whose root element carries `root`'s attributes besides its language: the
+/// theme contract, where a script written for the site reads it from `<html>` as the site's
+/// pages carry it.
+///
+/// ```
+/// use majordomus_cli::cockpit::html::{document_on, el};
+/// let page = document_on("t", &[("data-theme-key", "a\"b".into())], vec![], el("body"));
+/// assert!(page.contains("<html lang=\"en\" data-theme-key=\"a&quot;b\">"), "{page}");
+/// ```
+pub fn document_on(title: &str, root: &[(&str, String)], head: Vec<El>, body: El) -> String {
+    let mut out = String::from("<!doctype html>\n<html lang=\"en\"");
+    for (name, value) in root {
+        out.push_str(&format!(" {name}=\"{}\"", escape(value)));
+    }
+    out.push_str(">\n<head>\n");
     out.push_str(&el("meta").attr("charset", "utf-8").render());
     out.push_str(
         &el("meta")
@@ -228,6 +299,16 @@ pub fn document(title: &str, head: Vec<El>, body: El) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_root_carries_its_attributes_escaped_and_a_plain_page_none() {
+        let page = document_on("t", &[("data-x", "<y>".into())], vec![], el("body"));
+        assert!(
+            page.contains("<html lang=\"en\" data-x=\"&lt;y&gt;\">"),
+            "{page}"
+        );
+        assert!(document("t", vec![], el("body")).contains("<html lang=\"en\">\n<head>"));
+    }
 
     #[test]
     fn repository_content_cannot_escape_an_element_body() {

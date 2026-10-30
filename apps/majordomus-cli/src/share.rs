@@ -182,7 +182,12 @@ impl Share {
     /// [`ProviderDeclaration`] per id that has either, sorted by id. A distribution without
     /// the file declares nothing and every template is a provider named by its file; a
     /// file that does not parse is an error naming it, because a declaration half-read is
-    /// worse than none.
+    /// worse than none. So is an `offers:` block that leaves out `browser` or gives no
+    /// `browser_evidence` (I3829): the browser answer is read as a word with its citation or
+    /// not at all, never as a silent `none` or an empty citation. An entry with no `offers:`
+    /// block at all declares nothing on any axis, which reads as the undeclared state
+    /// [`ProviderOffers`] describes and the evidence gate (`scripts/provider-evidence-check`)
+    /// names, not as a read failure: a template-only provider has no entry either.
     pub fn providers(&self) -> Result<ProviderDeclarations> {
         let path = self.providers_path();
         let file: ProvidersFile = match std::fs::read_to_string(&path) {
@@ -194,6 +199,28 @@ impl Share {
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => ProvidersFile::default(),
             Err(e) => return Err(Error::io(&path, e)),
         };
+        for (id, entry) in &file.providers {
+            let Some(offers) = &entry.offers else {
+                continue;
+            };
+            let missing = if offers.browser.is_none() {
+                "browser"
+            } else if offers
+                .browser_evidence
+                .as_deref()
+                .is_none_or(|e| e.trim().is_empty())
+            {
+                "browser_evidence"
+            } else {
+                continue;
+            };
+            return Err(Error::KindSchema {
+                reason: format!(
+                    "{}: provider '{id}' declares offers without {missing}",
+                    path.display()
+                ),
+            });
+        }
         let templates = self.provider_templates();
         let mut ids: Vec<String> = templates.clone();
         ids.extend(file.providers.keys().cloned());
@@ -248,6 +275,11 @@ struct ProviderEntry {
     title: Option<String>,
     #[serde(default)]
     client_config: Option<String>,
+    /// The file the provider reads for one person's instructions beside the project's.
+    /// Read by `init --personal` in the shell tool; accepted here so the declaration parses.
+    #[serde(default)]
+    #[allow(dead_code)]
+    personal_target: Option<String>,
     #[serde(default)]
     scratch_roots: Vec<String>,
     #[serde(default)]
@@ -275,6 +307,18 @@ struct ProviderOffersEntry {
     prompts: Option<PromptSource>,
     #[serde(default)]
     prompts_evidence: Option<String>,
+    #[serde(default)]
+    browser: Option<BrowserSource>,
+    #[serde(default)]
+    browser_evidence: Option<String>,
+    #[serde(default)]
+    browser_host: Option<String>,
+    #[serde(default)]
+    browser_setup: Option<String>,
+    #[serde(default)]
+    usage: Option<Vec<UsageSource>>,
+    #[serde(default)]
+    usage_evidence: Option<String>,
 }
 
 fn offers_of(e: &ProviderOffersEntry) -> ProviderOffers {
@@ -283,6 +327,12 @@ fn offers_of(e: &ProviderOffersEntry) -> ProviderOffers {
         episode_evidence: e.episode_evidence.clone().unwrap_or_default(),
         prompts: e.prompts.unwrap_or_default(),
         prompts_evidence: e.prompts_evidence.clone().unwrap_or_default(),
+        browser: e.browser.unwrap_or_default(),
+        browser_evidence: e.browser_evidence.clone().unwrap_or_default(),
+        browser_host: e.browser_host.clone(),
+        browser_setup: e.browser_setup.clone(),
+        usage: e.usage.clone().unwrap_or_default(),
+        usage_evidence: e.usage_evidence.clone().unwrap_or_default(),
     }
 }
 
@@ -396,6 +446,60 @@ impl PromptSource {
     }
 }
 
+/// Whether one provider's client drives a browser in the same session as this repository's
+/// MCP server.
+///
+/// A bridge is the one way a single session both works on a page and reads and changes the
+/// live mesh (`docs/MCP.md`, "Claude in the browser"). It is a vendor capability like the two
+/// above, so it is declared with its citation; whether *this machine* has the bridge is a
+/// different fact, which preflight reads from the machine and never from here. A browser
+/// agent of the vendor's own — a side panel that reaches only the vendor's cloud — is not a
+/// bridge: nothing it does arrives in a session that holds this repository's server.
+///
+/// ```
+/// use majordomus_cli::share::BrowserSource;
+/// assert_eq!(serde_json::from_str::<BrowserSource>("\"bridge\"").unwrap(), BrowserSource::Bridge);
+/// assert!(serde_json::from_str::<BrowserSource>("\"extension\"").is_err(), "one word for it");
+/// assert_eq!(BrowserSource::default(), BrowserSource::None, "undeclared reads as none");
+/// assert_eq!(BrowserSource::Bridge.as_str(), "bridge");
+/// ```
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    PartialEq,
+    Eq,
+    serde::Serialize,
+    serde::Deserialize,
+    schemars::JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum BrowserSource {
+    /// The client drives a browser through a vendor extension whose tools arrive in the same
+    /// session as this repository's MCP server.
+    Bridge,
+    /// It does not, or not in a session that holds this repository's server.
+    #[default]
+    None,
+}
+
+impl BrowserSource {
+    /// The word as the declaration writes it, which is also how it serialises.
+    ///
+    /// ```
+    /// use majordomus_cli::share::BrowserSource;
+    /// assert_eq!(BrowserSource::None.as_str(), "none");
+    /// assert_eq!(serde_json::to_string(&BrowserSource::Bridge).unwrap(), "\"bridge\"");
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            BrowserSource::Bridge => "bridge",
+            BrowserSource::None => "none",
+        }
+    }
+}
+
 /// What one provider can do about the session lifecycle, and where that was verified.
 ///
 /// **Every cell carries its evidence.** A capability asserted with no citation is the defect
@@ -433,6 +537,77 @@ pub struct ProviderOffers {
     pub prompts: PromptSource,
     /// Where `prompts` was verified, on the same terms as `episode_evidence`.
     pub prompts_evidence: String,
+    /// Whether the client drives a browser beside this repository's server. Absent in a
+    /// value written before the axis existed, and read as `none` there.
+    #[serde(default)]
+    pub browser: BrowserSource,
+    /// Where `browser` was verified, on the same terms as `episode_evidence`.
+    #[serde(default)]
+    pub browser_evidence: String,
+    /// The native messaging host a bridge registers with the browser, which is how a
+    /// machine is seen to have it. Declared for a `bridge` only.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub browser_host: Option<String>,
+    /// What a person does, once, to install the bridge on a machine, in the vendor's terms.
+    /// Declared for a `bridge` only.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub browser_setup: Option<String>,
+    /// The official seams through which the provider reports what a session consumed (I3287,
+    /// ADR 0213), every one it offers: `none` alone when it offers nothing a receiver could
+    /// read. Empty in a value written before the axis existed, which declares nothing.
+    #[serde(default)]
+    pub usage: Vec<UsageSource>,
+    /// Where `usage` was verified, on the same terms as `episode_evidence`.
+    #[serde(default)]
+    pub usage_evidence: String,
+}
+
+/// One official seam through which a provider reports what a session consumed.
+///
+/// Usage is read only where the provider itself reports it (ADR 0213): an official
+/// OpenTelemetry export, a protocol notification of the client's own server, or the usage a
+/// non-interactive run prints in its structured output. Never a transcript, a proxy, or a
+/// patched client. `none` is the declared answer for a provider that offers no such seam,
+/// and it stands alone.
+///
+/// ```
+/// use majordomus_cli::share::UsageSource;
+/// assert_eq!(serde_json::from_str::<UsageSource>("\"otel\"").unwrap(), UsageSource::Otel);
+/// assert_eq!(serde_json::from_str::<UsageSource>("\"app-server\"").unwrap(), UsageSource::AppServer);
+/// assert!(serde_json::from_str::<UsageSource>("\"transcript\"").is_err(), "no transcript seam");
+/// assert_eq!(UsageSource::StreamJson.as_str(), "stream-json");
+/// ```
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize, schemars::JsonSchema,
+)]
+#[serde(rename_all = "kebab-case")]
+pub enum UsageSource {
+    /// The provider's own OpenTelemetry export, which the person enables.
+    Otel,
+    /// A notification of the client's own app server protocol.
+    AppServer,
+    /// The usage a non-interactive run reports in its structured (`stream-json`) output.
+    StreamJson,
+    /// No official seam reports usage.
+    None,
+}
+
+impl UsageSource {
+    /// The word as the declaration writes it, which is also how it serialises.
+    ///
+    /// ```
+    /// use majordomus_cli::share::UsageSource;
+    /// assert_eq!(UsageSource::None.as_str(), "none");
+    /// assert_eq!(serde_json::to_string(&UsageSource::AppServer).unwrap(), "\"app-server\"");
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            UsageSource::Otel => "otel",
+            UsageSource::AppServer => "app-server",
+            UsageSource::StreamJson => "stream-json",
+            UsageSource::None => "none",
+        }
+    }
 }
 
 /// What the distribution declares about its providers, joined with the templates it ships.
@@ -706,6 +881,32 @@ mod tests {
             );
         }
         for (source, word) in [(PromptSource::Hook, "hook"), (PromptSource::None, "none")] {
+            assert_eq!(source.as_str(), word);
+            assert_eq!(
+                serde_json::to_string(&source).unwrap(),
+                format!("\"{word}\"")
+            );
+        }
+        for (source, word) in [
+            (BrowserSource::Bridge, "bridge"),
+            (BrowserSource::None, "none"),
+        ] {
+            assert_eq!(source.as_str(), word);
+            assert_eq!(
+                serde_json::to_string(&source).unwrap(),
+                format!("\"{word}\"")
+            );
+        }
+    }
+
+    #[test]
+    fn every_usage_seam_prints_as_the_word_it_is_declared_as() {
+        for (source, word) in [
+            (UsageSource::Otel, "otel"),
+            (UsageSource::AppServer, "app-server"),
+            (UsageSource::StreamJson, "stream-json"),
+            (UsageSource::None, "none"),
+        ] {
             assert_eq!(source.as_str(), word);
             assert_eq!(
                 serde_json::to_string(&source).unwrap(),

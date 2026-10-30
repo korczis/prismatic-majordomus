@@ -29,6 +29,7 @@
 //!
 //! [ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
 
+use std::collections::BTreeMap;
 use std::path::Path;
 
 use schemars::JsonSchema;
@@ -38,10 +39,13 @@ use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::CapabilityKind;
 use crate::capability::model::{
-    BenchmarkPolicy, BenchmarkPrecondition, CachePolicy, Exposure, McpExposure, McpResource,
-    Stability,
+    BenchmarkPolicy, BenchmarkPrecondition, CachePolicy, CliExposure, Exposure, McpExposure,
+    McpResource, Stability,
 };
 use crate::capability::module::ModuleDescriptor;
+use crate::plan::delivery::{self, DeliveryReading, DeliverySource, IssueDeliveryReport};
+use crate::plan::drift::{self, DriftReport};
+use crate::plan::flight::{self, IssueClaim, PlanFlight};
 use crate::plan::{
     Plan, PlanCounts, PlanFinding, PlanIssue, PlanMilestone, PlanProject, PlanVocabulary, PlanWave,
     Transition, TransitionError,
@@ -260,8 +264,9 @@ pub struct PlanNextIssue {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 /// The milestones in derived order, with the one being executed and the one after it.
 pub struct PlanRoadmap {
-    /// The milestones ordered by rank, then order, then id. The sequence is derived from
-    /// the milestone graph; no list of versions is maintained anywhere.
+    /// The milestones ordered by rank, then order, then id, each with the release that
+    /// carried it (`released_in`). The sequence is derived from the milestone graph and the
+    /// release from the release records; no list of versions is maintained anywhere.
     pub milestones: Vec<PlanMilestone>,
     #[serde(skip_serializing_if = "Option::is_none")]
     /// The first unfinished, unblocked milestone in that sequence.
@@ -441,7 +446,15 @@ fn plan_next(ctx: &Context, input: PlanMilestoneFilter) -> Result<PlanNextIssue,
 
 fn plan_roadmap(ctx: &Context, _: Empty) -> Result<PlanRoadmap, CapabilityError> {
     let plan = plan_of(ctx)?;
-    let ordered: Vec<PlanMilestone> = plan.roadmap().into_iter().cloned().collect();
+    // the release each milestone shipped in, from the release records: only a DONE one asks git
+    let ordered: Vec<PlanMilestone> = plan
+        .roadmap()
+        .into_iter()
+        .map(|m| PlanMilestone {
+            released_in: Some(crate::plan::released_in(&ctx.index, &plan, &m.id)),
+            ..m.clone()
+        })
+        .collect();
     let mut open = ordered
         .iter()
         .filter(|m| !matches!(m.status.as_str(), "DONE" | "CANCELLED" | "SUPERSEDED"));
@@ -680,8 +693,343 @@ pub fn module() -> ModuleDescriptor {
             // claimed only this process's memory would be projected wherever a peer
             // announcement is, which is not the same permission.
             .writes_repository(),
+            capability! {
+                id: "plan.delivery",
+                title: "How far each issue's work has travelled",
+                description: "For every issue (or one), the furthest delivery stage proved — none, branch, pr_open, merged, released, deployed — each with the object that proved it and when it was observed: the branch that names the issue (by id, the I1405 rule, or by its slug), the open pull request in the recorded forge observation, the newest commit in the trunk's history that names it (a merge by its pull-request title or branch, any other commit by its subject, never by its body), the first release record (`.ai/repo/releases/v*.yaml`) whose commit contains that merge, and the published `latest.json` that names that release or a later one. Beside it, the issue's declared status, so a contradiction between the stamps and the work is one comparison away. Live by default: the trunk this clone knows, every branch, the forge observation `majordomus prs refresh` recorded, the release records, and the `latest.json` of the commit the last Pages deployment published. With `at`, the merges of that commit's history and the tree's release records and nothing live — every branch, forge and deployment source is reported unread — so only merged and released can be proved and the answer is a function of the commit alone. A source that was not read is reported unread with its reason, never as none: an issue it could have moved further is not settled and names it. Inferred on every call and stored nowhere; it never writes a stamp.",
+                input: PlanDeliveryInput,
+                output: IssueDeliveryReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_plan_delivery"),
+                    http: get("/api/v1/plan/delivery"),
+                    cli: Some(CliExposure { path: vec!["plan".into(), "delivery".into()] }),
+                },
+                tags: ["plan", "project", "delivery", "git", "provenance"],
+                cache: CachePolicy::Disabled,
+                handler: plan_delivery,
+            },
+            capability! {
+                id: "plan.flight",
+                title: "Where the work is now",
+                description: "The milestones with work in flight, the one the graph allows next, and the latest release as the releases themselves say it, read live on every call (ADR 0166, decision 4). Now is every open milestone holding an open issue with an open pull request that names it (`plan.delivery`'s `pr_open`), a live mesh claim made for it, or a declared ACTIVE status, each with those issues, why they are in flight, their declared status beside their inferred stage, and the objects that prove it (branch, pull request, merge commit, release tag, published `latest.json`, claim), linked on the forge where the forge has them. Next is the first open milestone in the plan's order that is not now and whose unfinished prerequisites are all now. The latest release is the highest stable version among the release records, the `v*` tags of this clone and the `latest.json` the last successful Pages deployment published, so a release whose record merged after its tag is not shown older than it is; `executable_tagged` says whether the answering executable's own version is tagged. `milestone` adds that milestone with every one of its issues. A source that was not read (the forge, the publication, the mesh outside a server) is named with its reason, never treated as empty.",
+                input: PlanFlightInput,
+                output: PlanFlight,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_plan_flight"),
+                    http: get("/api/v1/plan/flight"),
+                    cli: None,
+                },
+                tags: ["plan", "project", "delivery", "release", "mesh"],
+                cache: CachePolicy::Disabled,
+                handler: plan_flight,
+            },
+            capability! {
+                id: "plan.drift",
+                title: "Where the plan's stamps contradict the delivered work",
+                description: "Every contradiction between an issue's declared status and its delivery (plan.delivery), each with the objects that prove it: `merged_not_recorded` — READY, BLOCKED or ACTIVE, with a merge on the trunk naming it (pull request, merge commit, release) and no open pull request naming it; `active_without_work` — ACTIVE since before the window, with no branch, pull request, merge or live mesh claim naming it; `done_without_trace` — DONE with no merge naming it, advisory because record-only issues exist. Each finding carries its age, whether it is past the window `.ai/repo/ci/plan.yaml` declares (`drift.window`, seconds), the sources that were not read and could have dissolved it, and the command that settles it (`majordomus plan verify|done <id>`). With `gate`, judged as a gate: on a `head` every merged_not_recorded is pending; on the `trunk` one merged longer than the window ago is refused and a younger one pending; the other classes never refuse; a missing or unreadable window refuses (exit 12); refusals fail the gate (exit 10) only under `drift.enforcement: blocking`, and are reported with exit 0 under `advisory`. Observed live, or `at` a commit as plan.delivery is. Inferred on every call; it never writes a stamp.",
+                input: PlanDriftInput,
+                output: DriftReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_plan_drift"),
+                    http: get("/api/v1/plan/drift"),
+                    cli: Some(CliExposure { path: vec!["plan".into(), "drift".into()] }),
+                },
+                tags: ["plan", "project", "delivery", "drift", "gate"],
+                cache: CachePolicy::Disabled,
+                handler: plan_drift,
+            },
         ],
     }
+}
+
+// ---------------------------------------------------------------- plan.delivery
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// Which issues, and as of when: the input of `plan.delivery`.
+///
+/// Both fields are optional, and an unknown one is refused rather than ignored, so a caller
+/// who misspells `at` is not silently answered live.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::plan::PlanDeliveryInput;
+///
+/// let every: PlanDeliveryInput = serde_json::from_str("{}").unwrap();
+/// assert!(every.issue.is_none() && every.at.is_none(), "live, every issue");
+/// let one: PlanDeliveryInput =
+///     serde_json::from_value(serde_json::json!({ "issue": "I2740", "at": "HEAD" })).unwrap();
+/// assert_eq!((one.issue.as_deref(), one.at.as_deref()), (Some("I2740"), Some("HEAD")));
+/// assert!(serde_json::from_str::<PlanDeliveryInput>(r#"{"commit":"HEAD"}"#).is_err());
+/// ```
+pub struct PlanDeliveryInput {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// One issue id (`I2740`). Default: every issue of the plan. An id the plan does not
+    /// declare is not found, never answered as `none`.
+    pub issue: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Observe as of this commit (`HEAD`, a sha, a ref): its history and the tree's release
+    /// records, and nothing live — no branch, forge, deployment or clock. Default: live.
+    pub at: Option<String>,
+}
+
+impl BenchmarkCases for PlanDeliveryInput {
+    fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        let plan = Plan::build(ctx.index);
+        let issue = plan
+            .issues
+            .first()
+            .map_or_else(|| "I0001".to_string(), |i| i.id.clone());
+        vec![
+            NamedCase::new("every-issue", PlanDeliveryInput::default()),
+            NamedCase::new(
+                "one-issue-at-head",
+                PlanDeliveryInput {
+                    issue: Some(issue),
+                    at: Some("HEAD".into()),
+                },
+            ),
+        ]
+    }
+}
+
+fn plan_delivery(
+    ctx: &Context,
+    input: PlanDeliveryInput,
+) -> Result<IssueDeliveryReport, CapabilityError> {
+    let plan = Plan::build(&ctx.index);
+    if let Some(id) = input.issue.as_deref() {
+        if plan.issue(id).is_none() {
+            return Err(CapabilityError::NotFound(format!(
+                "no issue '{id}' in this plan; `plan.issues` lists every one"
+            )));
+        }
+    }
+    let root = Path::new(&ctx.index.repository.root);
+    let identity = crate::worktree::RepositoryIdentity::discover(root)
+        .map_err(|e| CapabilityError::Refused(e.to_string()))?;
+    delivery::infer(
+        root,
+        &plan,
+        identity.trunk(),
+        input.at.as_deref(),
+        input.issue.as_deref(),
+    )
+    .map_err(CapabilityError::Refused)
+}
+
+// ---------------------------------------------------------------- plan.flight
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// Which milestone to inspect besides where the work is: the input of `plan.flight`.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::plan::PlanFlightInput;
+///
+/// let plain: PlanFlightInput = serde_json::from_str("{}").unwrap();
+/// assert!(plain.milestone.is_none());
+/// assert!(serde_json::from_str::<PlanFlightInput>(r#"{"issue":"I1"}"#).is_err());
+/// ```
+pub struct PlanFlightInput {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// A milestone id: the answer then carries it, with every one of its issues, as
+    /// `inspected`. An id the plan does not declare is not found.
+    pub milestone: Option<String>,
+}
+
+impl BenchmarkCases for PlanFlightInput {
+    fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        // a repository with no milestone yet still shows what `milestone` takes: the
+        // placeholder id, as `plan.delivery` falls back to I0001 when there is no issue
+        let plan = Plan::build(ctx.index);
+        let milestone = plan
+            .milestones
+            .first()
+            .map_or_else(|| "M001".to_string(), |m| m.id.clone());
+        vec![
+            NamedCase::new("where-the-work-is", PlanFlightInput::default()),
+            NamedCase::new(
+                "one-milestone-inspected",
+                PlanFlightInput {
+                    milestone: Some(milestone),
+                },
+            ),
+        ]
+    }
+}
+
+fn plan_flight(ctx: &Context, input: PlanFlightInput) -> Result<PlanFlight, CapabilityError> {
+    let plan = Plan::build(&ctx.index);
+    if let Some(id) = input.milestone.as_deref() {
+        if plan.milestone(id).is_none() {
+            return Err(CapabilityError::NotFound(format!(
+                "no milestone '{id}' in this plan; `plan.roadmap` lists every one"
+            )));
+        }
+    }
+    let root = Path::new(&ctx.index.repository.root);
+    let identity = crate::worktree::RepositoryIdentity::discover(root)
+        .map_err(|e| CapabilityError::Refused(e.to_string()))?;
+    // the claims are the mesh's, and the mesh runs in a server; elsewhere it is unread
+    let claims = match ctx.mesh.cooperation() {
+        Some(c) => Ok(c
+            .state()
+            .claims
+            .into_iter()
+            .filter(|c| c.state.is_live())
+            .filter_map(|c| c.issue.map(|issue| IssueClaim { issue, key: c.key }))
+            .collect()),
+        // an inactive cooperation always says why
+        None => Err(ctx.mesh.cooperation_status().reason.unwrap_or_default()),
+    };
+    flight::observe(
+        root,
+        &plan,
+        identity.trunk(),
+        claims,
+        input.milestone.as_deref(),
+    )
+    .map_err(CapabilityError::Refused)
+}
+
+// ---------------------------------------------------------------- plan.drift
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+/// Which tree a `plan.drift` gate judges.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::plan::DriftGate;
+/// assert_eq!(serde_json::to_value(DriftGate::Trunk).unwrap(), "trunk");
+/// assert_eq!(serde_json::from_str::<DriftGate>(r#""head""#).unwrap(), DriftGate::Head);
+/// ```
+pub enum DriftGate {
+    /// A head: not the shared plan, so every merged_not_recorded is pending.
+    Head,
+    /// The trunk: merged work unrecorded past the window is refused.
+    Trunk,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// Which issues, as of when, and judged as which gate: the input of `plan.drift`.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::plan::{DriftGate, PlanDriftInput};
+///
+/// let every: PlanDriftInput = serde_json::from_str("{}").unwrap();
+/// assert!(every.issue.is_none() && every.at.is_none() && every.gate.is_none());
+/// let gate: PlanDriftInput = serde_json::from_value(serde_json::json!({ "gate": "trunk" })).unwrap();
+/// assert_eq!(gate.gate, Some(DriftGate::Trunk));
+/// assert!(serde_json::from_str::<PlanDriftInput>(r#"{"gate":"main"}"#).is_err());
+/// assert!(serde_json::from_str::<PlanDriftInput>(r#"{"window":60}"#).is_err());
+/// ```
+pub struct PlanDriftInput {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// One issue id. Default: every issue of the plan.
+    pub issue: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Observe as of this commit, as `plan.delivery` does. Default: live.
+    pub at: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Judge as a gate on a `head` or on the `trunk`. Default: report only, exit 0.
+    pub gate: Option<DriftGate>,
+}
+
+impl BenchmarkCases for PlanDriftInput {
+    fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        let plan = Plan::build(ctx.index);
+        let issue = plan
+            .issues
+            .first()
+            .map_or_else(|| "I0001".to_string(), |i| i.id.clone());
+        vec![
+            NamedCase::new("every-issue", PlanDriftInput::default()),
+            NamedCase::new(
+                "one-issue-at-head-as-trunk-gate",
+                PlanDriftInput {
+                    issue: Some(issue),
+                    at: Some("HEAD".into()),
+                    gate: Some(DriftGate::Trunk),
+                },
+            ),
+        ]
+    }
+}
+
+/// The live mesh claims that name an issue, by issue, and the source that says so.
+fn issue_claims(ctx: &Context) -> (Option<BTreeMap<String, String>>, DeliverySource) {
+    let Some(c) = ctx.mesh.cooperation() else {
+        // an inactive cooperation always says why
+        let reason = ctx.mesh.cooperation_status().reason.unwrap_or_default();
+        return (
+            None,
+            DeliverySource {
+                name: "claims".into(),
+                state: DeliveryReading::Unread,
+                detail: reason,
+                observed_at: None,
+            },
+        );
+    };
+    let mut by_issue: BTreeMap<String, String> = BTreeMap::new();
+    let state = c.state();
+    for claim in state.claims.iter().filter(|c| c.state.is_live()) {
+        if let Some(issue) = claim.issue.as_deref() {
+            by_issue
+                .entry(issue.trim().to_string())
+                .or_insert_with(|| claim.key.clone());
+        }
+    }
+    let detail = format!("{} issue(s) named by a live mesh claim", by_issue.len());
+    (
+        Some(by_issue),
+        DeliverySource {
+            name: "claims".into(),
+            state: DeliveryReading::Read,
+            detail,
+            observed_at: None,
+        },
+    )
+}
+
+fn plan_drift(ctx: &Context, input: PlanDriftInput) -> Result<DriftReport, CapabilityError> {
+    let plan = Plan::build(&ctx.index);
+    if let Some(id) = input.issue.as_deref() {
+        if plan.issue(id).is_none() {
+            return Err(CapabilityError::NotFound(format!(
+                "no issue '{id}' in this plan; `plan.issues` lists every one"
+            )));
+        }
+    }
+    let root = Path::new(&ctx.index.repository.root);
+    let identity = crate::worktree::RepositoryIdentity::discover(root)
+        .map_err(|e| CapabilityError::Refused(e.to_string()))?;
+    let delivered = delivery::infer(
+        root,
+        &plan,
+        identity.trunk(),
+        input.at.as_deref(),
+        input.issue.as_deref(),
+    )
+    .map_err(CapabilityError::Refused)?;
+    let started: BTreeMap<String, String> = plan
+        .issues
+        .iter()
+        .map(|i| (i.id.clone(), i.started_at.clone()))
+        .collect();
+    let (claims, claims_source) = issue_claims(ctx);
+    Ok(drift::judge(
+        delivered,
+        &started,
+        claims.as_ref(),
+        claims_source,
+        drift::read_window(root),
+        input.gate,
+    ))
 }
 
 // ---------------------------------------------------------------- plan.transition
@@ -944,6 +1292,17 @@ mod tests {
                 "majordomus_plan_transition",
                 "/api/v1/plan/transition",
             ),
+            (
+                "plan.delivery",
+                "majordomus_plan_delivery",
+                "/api/v1/plan/delivery",
+            ),
+            (
+                "plan.flight",
+                "majordomus_plan_flight",
+                "/api/v1/plan/flight",
+            ),
+            ("plan.drift", "majordomus_plan_drift", "/api/v1/plan/drift"),
         ];
         let ids: Vec<&str> = m
             .capabilities

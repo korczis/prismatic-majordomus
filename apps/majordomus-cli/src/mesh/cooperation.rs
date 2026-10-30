@@ -100,8 +100,8 @@ use serde::{Deserialize, Serialize};
 use super::config::{CooperationConfig, TrustConfig};
 use super::identity::{node_id_of_key, NodeIdentity};
 use super::journal::{
-    ClaimMode, EventBody, HandoverBody, Journal, JournalTallies, Marks, MeshEvent, Rejection,
-    SessionInfo, StreamId, StreamLiveness, HANDOVER_RETENTION,
+    ClaimMode, Durability, EventBody, HandoverBody, IngestReport, Journal, JournalTallies, Marks,
+    MeshEvent, Rejection, SessionInfo, StreamId, StreamLiveness, HANDOVER_RETENTION,
 };
 use super::link::{
     fresh_token, negotiate, sign, verify_signed, Domain, Hello, LinkRefusal, LinkReply,
@@ -111,11 +111,49 @@ use super::link::{
 };
 use super::registry::{MeshRegistry, NodeRecord, Presence};
 use super::repository::MeshRepositoryIdentity;
-use super::state::{admission_conflicts, fold, ClaimView, CooperationState, HandoverView};
+use super::state::{
+    admission_conflicts, fold, fold_with, scopes_meet, ClaimState, ClaimView, CooperationState,
+    HandoverView,
+};
 use super::trust::{self, TrustState};
 
 /// The most peers one runtime links to.
 pub const MAX_PEERS: usize = 256;
+
+/// The window session beats are counted over (I3990): an hour.
+pub const SESSION_BEAT_WINDOW: Duration = Duration::from_secs(60 * 60);
+
+/// How many sessions holding exclusive claims one runtime is sized to beat for at full rate
+/// (I3990). A session beats at most once a quarter of its ttl, so one window holds at most
+/// `ceil(window / (ttl / 4))` beats of it, and the runtime's limit per window is this many
+/// times that — see [`session_beat_limit`]. A runtime whose exclusive holders outnumber it
+/// stops writing beats until the window moves: their claims suspend, which frees scopes
+/// rather than holding them, and it says so in the log and in `mesh doctor`. A total per run
+/// that then wrote ttl 0 — the first version of this layer — turned the rule off in silence
+/// after half an hour of a beater whose phase changed every second: the 5d incident again,
+/// found by the review of 2026-10-23.
+pub const SESSION_BEAT_SESSIONS: usize = 8;
+
+/// The most session beats one runtime writes in one [`SESSION_BEAT_WINDOW`] for a progress
+/// ttl of `ttl`: [`SESSION_BEAT_SESSIONS`] sessions, each at most once a quarter of the ttl.
+///
+/// ```
+/// use std::time::Duration;
+/// use majordomus_cli::mesh::cooperation::session_beat_limit;
+/// // the default ten minutes: a beat every 150 s, 24 an hour, for eight sessions
+/// assert_eq!(session_beat_limit(Duration::from_secs(600)), 8 * 24);
+/// assert_eq!(session_beat_limit(Duration::from_secs(3600)), 8 * 4);
+/// ```
+pub fn session_beat_limit(ttl: Duration) -> usize {
+    let interval = (ttl / 4).as_secs().max(1);
+    let per_session = SESSION_BEAT_WINDOW.as_secs().div_ceil(interval);
+    SESSION_BEAT_SESSIONS * per_session as usize
+}
+
+/// The reason a runtime gives when it releases a suspended exclusive claim at its holder's
+/// next beat, because another session was admitted to its scope meanwhile (I3990).
+pub const OVERTAKEN: &str =
+    "suspended while its holder made no progress, and another session was admitted to its scope";
 
 /// How long an expired peer stays listed before it leaves the table.
 pub const PEER_RETENTION: Duration = Duration::from_secs(15 * 60);
@@ -275,12 +313,18 @@ struct Outbound {
     endpoint: String,
     counter: u64,
     remote_marks: Marks,
+    /// What this runtime did with the events of the last round's answer: what
+    /// [`Cooperation::verify`] reads to tell a round that carried nothing from one whose every
+    /// event was refused.
+    last_round: IngestReport,
 }
 
 #[derive(Clone)]
 struct Inbound {
     link: String,
     counter: u64,
+    /// The timestamp of the hello that made this link: an older hello cannot replace it.
+    hello_ts: u64,
 }
 
 struct PeerLink {
@@ -951,13 +995,14 @@ impl MeshVerifyReport {
 /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
 /// # }).unwrap();
 /// use majordomus_cli::mesh::cooperation::Written;
-/// use majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};
+/// use majordomus_cli::mesh::journal::{ClaimMode, Durability, SessionInfo};
 ///
 /// let session = SessionInfo::named("s1", "cli");
 /// let written: Written = cooperation
 ///     .claim(&session, vec!["docs".into()], None, ClaimMode::Advisory, None)
 ///     .unwrap();
 /// assert!(written.lamport > 0, "placed against every other runtime's events");
+/// assert_eq!(written.durability, Durability::Memory, "this journal has no file");
 ///
 /// // and the key it returned is how the claim is addressed from here on
 /// cooperation.release(&written.key).unwrap();
@@ -970,6 +1015,11 @@ pub struct Written {
     pub event: String,
     /// The event's Lamport stamp.
     pub lamport: u64,
+    /// Whether the event reached this machine's disk: `synced`, `memory` (a journal with no
+    /// file, by configuration), or `not_durable` — held and replicated to peers, not on disk
+    /// here, and not acknowledged as durable. `unknown` from an executable that predates it.
+    #[serde(default)]
+    pub durability: Durability,
 }
 
 /// What a dial or a sync round did not do. The three are kept apart because they are acted
@@ -1062,18 +1112,27 @@ impl crate::order::Ordered for DialCandidate<'_> {
 /// [`MAX_TARGETS_PER_NODE`] of one node, taken in [`DialCandidate`] order, so a node's present
 /// runtimes are dialed before its stopped ones. The same records in any order choose the
 /// same targets.
+///
+/// A record of another node that advertises loopback alone is left out: `127.0.0.1` on that
+/// machine is not `127.0.0.1` on this one, so the dial can only fail, and a machine runs
+/// many loopback worktree servers beside the one hub that listens beyond it. Counted against
+/// the cap, they filled it, and the hub — the only runtime of that machine another one can
+/// reach — was never dialed.
 fn dial_targets(
     records: &[NodeRecord],
     repository: &str,
     own_key: &str,
     trusted: impl Fn(&str) -> bool,
 ) -> Vec<Target> {
+    let own_node = own_key.split_once('-').map_or(own_key, |(node, _)| node);
     let mut candidates: Vec<DialCandidate<'_>> = records
         .iter()
         .filter(|record| {
             !record.runtime.is_empty()
                 && !record.endpoints.is_empty()
                 && record.repositories.iter().any(|r| r == repository)
+                && (record.node_id.as_str() == own_node
+                    || !super::address::loopback_only(&record.endpoints))
         })
         .map(|record| DialCandidate {
             key: format!("{}-{}", record.node_id, record.runtime),
@@ -1162,6 +1221,64 @@ pub struct Cooperation {
     projected: Mutex<BTreeMap<String, Projected>>,
     admission: Mutex<()>,
     rounds: Mutex<BTreeMap<String, Arc<Mutex<()>>>>,
+    /// The newest session beat this run wrote for each session (I3990). Locked after
+    /// `projected` and `admission` whenever either is held, never before them.
+    beats: Mutex<BTreeMap<String, LastBeat>>,
+    /// The session beats of the last [`SESSION_BEAT_WINDOW`], the counters of every beat
+    /// written and withheld, and when one was last withheld.
+    beat_window: Mutex<BeatWindow>,
+    build_cache: Mutex<BuildCachePublisher>,
+}
+
+/// The newest session beat a run wrote for one session (I3990).
+struct LastBeat {
+    /// When it was written, on this process's clock.
+    at: Instant,
+    /// The phase it named, or the newer one a beat inside the interval said since: what
+    /// the session is doing now, shown before the next beat carries it.
+    phase: Option<String>,
+    /// What writing it answered, given again to a beat that writes nothing new.
+    written: Written,
+}
+
+/// The rolling count of one runtime's session beats (I3990).
+#[derive(Default)]
+struct BeatWindow {
+    times: std::collections::VecDeque<Instant>,
+    written: u64,
+    withheld: u64,
+    withheld_at: Option<Instant>,
+    warned: bool,
+}
+
+/// What `mesh doctor` reads of a runtime's session beats (I3990).
+///
+/// ```
+/// use majordomus_cli::mesh::cooperation::SessionBeatTally;
+/// let tally = SessionBeatTally { written: 3, limit: 192, window_seconds: 3600, ..Default::default() };
+/// assert!(tally.written < tally.limit && !tally.withheld_recently);
+/// ```
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct SessionBeatTally {
+    /// Session beats written since the runtime started.
+    pub written: u64,
+    /// Session beats withheld since it started because the window's limit was reached.
+    pub withheld: u64,
+    /// Whether one was withheld within the last window.
+    pub withheld_recently: bool,
+    /// The limit per window, for the ttl in force; 0 when the rule is off.
+    pub limit: u64,
+    /// The window, in seconds.
+    pub window_seconds: u64,
+}
+
+/// What this runtime publishes of the build cache its node serves (I2671): the node file it
+/// reads the declaration from on every heartbeat, and the offer it last wrote — none after a
+/// withdrawal, and none in a new run, which is a new stream.
+#[derive(Default)]
+struct BuildCachePublisher {
+    file: Option<PathBuf>,
+    published: Option<super::journal::BuildCacheOffer>,
 }
 
 /// The most refusals the table lists: a stream of hellos from invented keys must not grow
@@ -1173,8 +1290,10 @@ pub const MAX_TARGETS_PER_NODE: usize = 8;
 
 /// `text` cut to at most `max` bytes on a character boundary, with control characters
 /// removed: what the journal's single-line bounds accept, so a projection never fails
-/// validation on a long or multi-byte title and silently retries forever.
-fn clip(text: &str, max: usize) -> String {
+/// validation on a long or multi-byte title and silently retries forever. A reader that
+/// matches a projection against what it was projected from cuts the same way (the
+/// blackboard's join).
+pub(crate) fn clip(text: &str, max: usize) -> String {
     let mut out = String::new();
     for c in text.chars().filter(|c| !c.is_control()) {
         if out.len() + c.len_utf8() > max {
@@ -1325,6 +1444,9 @@ impl Cooperation {
             projected: Mutex::new(BTreeMap::new()),
             admission: Mutex::new(()),
             rounds: Mutex::new(BTreeMap::new()),
+            beats: Mutex::new(BTreeMap::new()),
+            beat_window: Mutex::new(BeatWindow::default()),
+            build_cache: Mutex::new(BuildCachePublisher::default()),
         }))
     }
 
@@ -1476,6 +1598,350 @@ impl Cooperation {
         }
     }
 
+    /// The progress ttl this runtime writes into its session beats; `None` when the
+    /// declaration turned the rule off.
+    fn session_ttl(&self) -> Option<Duration> {
+        (self.config.session_ttl_seconds > 0)
+            .then(|| Duration::from_secs(self.config.session_ttl_seconds))
+    }
+
+    /// The board peer behind a session of this runtime, when it is one (`board-<peer>`)
+    /// and still attached: the only sessions whose progress this runtime can see. A session
+    /// opened by name from the command line has no peer, never beats, and keeps the stream
+    /// rule it always had.
+    fn board_peer(&self, session: &str) -> Option<crate::peers::PeerId> {
+        let id = session.strip_prefix("board-")?;
+        self.board
+            .as_ref()?
+            .list()
+            .into_iter()
+            .find(|p| p.attached && p.id.as_str() == id)
+            .map(|p| p.id)
+    }
+
+    /// Write one session beat for `session` as of `now`, when it still holds an exclusive
+    /// claim to keep and the window's limit allows; `None` when nothing was written.
+    ///
+    /// Before it beats it lets go of what it must not re-arm (N1 of the review of
+    /// 2026-10-23): an exclusive claim of the session that reads suspended, whose scope
+    /// another session holds a live exclusive claim over — admitted while this one was
+    /// silent — is released with [`OVERTAKEN`] rather than made to hold again, so two
+    /// sessions never both hold one scope; the holder claims again through admission.
+    fn beat_session(
+        &self,
+        session: &str,
+        ttl: Duration,
+        phase: Option<String>,
+        now: Instant,
+    ) -> Option<Written> {
+        let state = self.state_at(now);
+        let mine = self.own(session);
+        let mut armed = 0usize;
+        for claim in state
+            .claims
+            .iter()
+            .filter(|c| c.session == mine && c.mode == ClaimMode::Exclusive)
+        {
+            match &claim.state {
+                ClaimState::Held | ClaimState::Conflicted(_) => armed += 1,
+                ClaimState::Suspended(_) => {
+                    let overtaken = state.claims.iter().any(|other| {
+                        other.session != mine
+                            && other.mode == ClaimMode::Exclusive
+                            && other.state.is_live()
+                            && scopes_meet(&other.scope, &claim.scope)
+                    });
+                    // The release cannot be refused: the claim is this run's own and in the
+                    // fold, and the reason a constant line the journal's bounds admit.
+                    if !overtaken {
+                        armed += 1;
+                    } else {
+                        let released = self.release_because(&claim.key, OVERTAKEN).is_ok();
+                        tracing::info!(runtime_id = %self.own_key, session_id = %session, claim = %claim.key, released, "a suspended claim another session was admitted over is released, not re-armed");
+                    }
+                }
+                ClaimState::Released | ClaimState::Expired(_) => {}
+            }
+        }
+        if armed == 0 {
+            return None;
+        }
+        {
+            let limit = session_beat_limit(ttl);
+            let mut window = self.beat_window.lock().expect("cooperation beat window");
+            while window
+                .times
+                .front()
+                .is_some_and(|t| now.saturating_duration_since(*t) >= SESSION_BEAT_WINDOW)
+            {
+                window.times.pop_front();
+            }
+            if window.times.len() >= limit {
+                window.withheld += 1;
+                window.withheld_at = Some(now);
+                if !window.warned {
+                    window.warned = true;
+                    tracing::warn!(runtime_id = %self.own_key, session_id = %session, limit, window_seconds = SESSION_BEAT_WINDOW.as_secs(), "session beats withheld: this runtime reached its limit per window; the exclusive claims of sessions it cannot beat for will suspend until the window moves (mesh doctor reports it)");
+                }
+                return None;
+            }
+        }
+        let body = EventBody::SessionBeat {
+            session: session.to_string(),
+            ttl_seconds: u32::try_from(ttl.as_secs()).unwrap_or(u32::MAX),
+            phase: phase.clone(),
+        };
+        // The journal cannot refuse this beat: the session is one this runtime opened, so its
+        // name passed the same bound; the ttl passed the declaration's check; and the phase
+        // was clipped to one line of its bound. Only a refused write would answer `None` here.
+        self.write(body, mine).ok().inspect(|written| {
+            {
+                let mut window = self.beat_window.lock().expect("cooperation beat window");
+                window.times.push_back(now);
+                window.written += 1;
+                window.warned = false;
+            }
+            self.beats.lock().expect("cooperation beats").insert(
+                session.to_string(),
+                LastBeat {
+                    at: now,
+                    phase,
+                    written: written.clone(),
+                },
+            );
+        })
+    }
+
+    /// The session beats this runtime wrote and withheld, for `mesh doctor` (I3990).
+    pub(crate) fn session_beat_tally(&self) -> SessionBeatTally {
+        let window = self.beat_window.lock().expect("cooperation beat window");
+        SessionBeatTally {
+            written: window.written,
+            withheld: window.withheld,
+            withheld_recently: window
+                .withheld_at
+                .is_some_and(|t| t.elapsed() < SESSION_BEAT_WINDOW),
+            limit: self
+                .session_ttl()
+                .map_or(0, |ttl| session_beat_limit(ttl) as u64),
+            window_seconds: SESSION_BEAT_WINDOW.as_secs(),
+        }
+    }
+
+    /// What a session of this runtime last said it was doing, as this runtime holds it —
+    /// newer than its last beat when a beat inside the interval changed it (I3990).
+    pub(crate) fn session_phase(&self, key: &str) -> Option<String> {
+        let local = key.strip_prefix(&format!("{}/", self.journal.own_stream()))?;
+        self.beats
+            .lock()
+            .expect("cooperation beats")
+            .get(local)
+            .and_then(|last| last.phase.clone())
+    }
+
+    /// Say that a session of this runtime is making progress, and what it is doing (I3990):
+    /// the typed way for a long-running process — a lander waiting on a CI run, a derive
+    /// waiting on the build lock — to keep its exclusive claims excluding while it sends no
+    /// MCP request. A phase that names a wait (`waiting on CI run 123`) is progress: a
+    /// process waiting on something outside itself is working, and only one that waits on
+    /// nobody is stalled.
+    ///
+    /// Once a session has beaten it lives by its beats: its exclusive claims are suspended
+    /// when no beat comes within the ttl, so a process that beats once must keep beating.
+    /// `pid`, when given, must be a running process of this machine — a beat speaks for a
+    /// live process, and the pid is shown with the phase. The phase is redacted before it
+    /// is signed and cut to one line of [`super::journal::MAX_PHASE_BYTES`]. A beat inside a
+    /// quarter of the ttl of the last one writes nothing, whatever its phase — the newer
+    /// phase is held and shown, and the next beat carries it — and answers the last one: a
+    /// process may beat as often as it likes without filling the journal. A session holding
+    /// no exclusive claim has nothing a beat would keep, and is refused.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// use majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};
+    ///
+    /// cooperation.claim(&SessionInfo::named("lander", "cli"), vec!["integration".into()], None,
+    ///     ClaimMode::Exclusive, None).unwrap();
+    /// let beat = cooperation.beat("lander", Some("waiting on CI run 42".into()), None).unwrap();
+    /// assert!(beat.key.ends_with("/lander"));
+    /// // again at once, with a newer phase: nothing new is written inside the interval
+    /// let again = cooperation.beat("lander", Some("waiting on CI run 43".into()), None).unwrap();
+    /// assert_eq!(again.event, beat.event);
+    /// // a session this runtime never opened is not one it can speak for
+    /// cooperation.beat("nobody", None, None).expect_err("no such session");
+    /// ```
+    pub fn beat(
+        &self,
+        session: &str,
+        phase: Option<String>,
+        pid: Option<u32>,
+    ) -> Result<Written, CooperationError> {
+        self.beat_at(session, phase, pid, Instant::now())
+    }
+
+    /// [`Cooperation::beat`] as if it were `now`: what the tests use to let the interval
+    /// and the window pass without waiting for them.
+    pub(crate) fn beat_at(
+        &self,
+        session: &str,
+        phase: Option<String>,
+        pid: Option<u32>,
+        now: Instant,
+    ) -> Result<Written, CooperationError> {
+        let Some(ttl) = self.session_ttl() else {
+            return Err(CooperationError::Invalid(
+                "the progress rule is off on this runtime (cooperation.session_ttl_seconds is 0): a session beat would mean nothing".into(),
+            ));
+        };
+        if !self.session_exists(&self.state(), session) {
+            return Err(CooperationError::NotFound(format!(
+                "no session '{session}' on this runtime"
+            )));
+        }
+        if let Some(pid) = pid {
+            if !crate::lease::alive(pid) {
+                return Err(CooperationError::Invalid(format!(
+                    "process {pid} is not running on this machine: a beat speaks for a live process"
+                )));
+            }
+        }
+        let phase = phase
+            .map(|p| redacted(p.trim().to_string()))
+            .filter(|p| !p.is_empty())
+            .map(|p| match pid {
+                Some(pid) => format!("{p} (pid {pid})"),
+                None => p,
+            })
+            .or_else(|| pid.map(|pid| format!("pid {pid}")))
+            .map(|p| clip(&p, super::journal::MAX_PHASE_BYTES));
+        // At most one beat a quarter of the ttl, whatever the phase says: a new phase inside
+        // the interval is held here and shown, and the next beat carries it to the journal.
+        if let Some(last) = self
+            .beats
+            .lock()
+            .expect("cooperation beats")
+            .get_mut(session)
+        {
+            if now.saturating_duration_since(last.at) < ttl / 4 {
+                last.phase = phase;
+                return Ok(last.written.clone());
+            }
+        }
+        self.beat_session(session, ttl, phase, now).ok_or_else(|| {
+            CooperationError::Invalid(format!(
+                "no beat was written for '{session}': it holds no exclusive claim a beat would keep, this runtime reached its limit of session beats per window (mesh doctor says which), or the journal refused it"
+            ))
+        })
+    }
+
+    /// Keep the exclusive claims of every working board session excluding (I3990). Runs
+    /// once a heartbeat, after the board projection.
+    ///
+    /// For each attached board session of this runtime that holds a live exclusive claim
+    /// by the stream rule: when its peer did real work since its last beat and that beat is
+    /// a quarter of the ttl old, one [`EventBody::SessionBeat`] is written. Nothing else
+    /// happens to a session that stops: no close — its exclusive claims read suspended on
+    /// every runtime once the ttl passes, and hold again at its next beat, or are released
+    /// then when another session was admitted over them meanwhile. A peer that only pings is
+    /// not working: that is the whole rule.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// use majordomus_cli::peers::{PeerBoard, Transport};
+    ///
+    /// let board = Arc::new(PeerBoard::new());
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: Some(Arc::clone(&board)),
+    /// #     checkout: CheckoutFacts::default() }).unwrap();
+    /// let worker = board.attach(Transport::Http);
+    /// board.announce(&worker, "documenting the mesh", vec!["docs".into()]);
+    /// cooperation.project_board();
+    /// let beats = |c: &Cooperation| c.journal().events().iter()
+    ///     .filter(|e| e.kind() == "session_beat").count();
+    /// assert_eq!(beats(&cooperation), 0, "an advisory claim refuses nobody and costs no beat");
+    ///
+    /// // an exclusive claim beats at once, and within a quarter of its ttl nothing more
+    /// use majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};
+    /// let session = SessionInfo::named(&format!("board-{worker}"), "claude-code");
+    /// cooperation.claim(&session, vec!["apps".into()], None, ClaimMode::Exclusive, None).unwrap();
+    /// assert_eq!(beats(&cooperation), 1);
+    /// cooperation.beat_sessions();
+    /// assert_eq!(beats(&cooperation), 1, "a quarter of the ttl has not passed");
+    /// assert!(cooperation.state().claims.iter().all(|c| c.state.is_live()));
+    /// ```
+    pub fn beat_sessions(&self) {
+        self.beat_sessions_at(Instant::now());
+    }
+
+    /// [`Cooperation::beat_sessions`] as if it were `now`: what the tests use to let a
+    /// quarter of the ttl pass without waiting for it.
+    pub(crate) fn beat_sessions_at(&self, now: Instant) {
+        let Some(ttl) = self.session_ttl() else {
+            return;
+        };
+        let Some(board) = &self.board else { return };
+        // Which sessions hold a claim is read by the stream rule alone: a claim this
+        // runtime's own fold already calls suspended is exactly the one a resumed worker's
+        // beat must bring back, and it must not drop out of the reckoning.
+        let live = self.journal.stream_liveness(self.expiry());
+        let base = fold(&self.journal.events(), &|s| {
+            live.get(s)
+                .map(|(l, _)| *l)
+                .unwrap_or(StreamLiveness::Expired)
+        });
+        for peer in board.list().into_iter().filter(|p| p.attached) {
+            let session = format!("board-{}", peer.id);
+            let key = self.own(&session);
+            // only an exclusive claim refuses anybody, so only its holder has anything to keep
+            let holds = base
+                .claims
+                .iter()
+                .any(|c| c.session == key && c.mode == ClaimMode::Exclusive && c.state.is_live());
+            if !holds {
+                continue;
+            }
+            let Some(progressed) = board.progressed_at(&peer.id) else {
+                continue;
+            };
+            let last = self
+                .beats
+                .lock()
+                .expect("cooperation beats")
+                .get(&session)
+                .map(|last| last.at);
+            let due = match last {
+                None => true,
+                Some(at) => progressed > at && now.saturating_duration_since(at) >= ttl / 4,
+            };
+            if due {
+                self.beat_session(&session, ttl, None, now);
+            }
+        }
+    }
+
     /// This runtime's key, `<node>-<runtime>`: who it is to every other runtime, for as
     /// long as this checkout exists on this machine. It survives a restart — which is what
     /// lets a peer recognise a returning runtime as the same one rather than a second —
@@ -1540,10 +2006,17 @@ impl Cooperation {
                 tracing::info!(runtime_id = %me.own_key, repository_id = %me.repository.id, "mesh cooperation started");
                 let mut tick: u64 = 0;
                 while !me.stop.load(Ordering::SeqCst) {
+                    // probed before the beat: a beat is then also the word that the store
+                    // this runtime offers answered (I2671)
+                    me.refresh_build_cache_offer();
                     me.journal.beat_own();
                     me.project_board();
+                    me.beat_sessions();
                     me.reconcile_workers();
                     me.expire_links();
+                    if tick % 12 == 11 {
+                        me.close_ended_clients();
+                    }
                     if tick % 60 == 59 {
                         me.journal
                             .compact(me.expiry(), PEER_RETENTION, HANDOVER_RETENTION, false);
@@ -1970,6 +2443,23 @@ impl Cooperation {
             table
                 .nonces
                 .retain(|_, ts| now.saturating_sub(*ts) <= 2 * MAX_LINK_SKEW_SECONDS);
+            // The cache is memory, so a restart forgets it; the link a peer made since is what
+            // a hello captured before the restart would displace. A hello older than the one
+            // that made the peer's live link cannot replace it (one runtime key is one
+            // checkout on one machine, so its hellos carry one clock).
+            let established = table
+                .peers
+                .get(&runtime_key)
+                .and_then(|peer| peer.inbound.as_ref())
+                .map(|inbound| inbound.hello_ts);
+            if established.is_some_and(|ts| hello.ts < ts) {
+                drop(table);
+                return self.refuse_in(
+                    RefusalCode::Replay,
+                    "this hello is older than the one that made the peer's live link".into(),
+                    runtime,
+                );
+            }
             let key = (hello.card.pk.clone(), hello.nonce.clone());
             if table.nonces.contains_key(&key) {
                 drop(table);
@@ -2043,6 +2533,7 @@ impl Cooperation {
             peer.inbound = Some(Inbound {
                 link: link.clone(),
                 counter: 0,
+                hello_ts: hello.ts,
             });
             peer.last_exchange = Some(Instant::now());
             peer.handshakes += 1;
@@ -2495,6 +2986,7 @@ impl Cooperation {
                 endpoint: endpoint.clone(),
                 counter: 0,
                 remote_marks: welcome.marks.clone(),
+                last_round: IngestReport::default(),
             });
             peer.last_exchange = Some(Instant::now());
             peer.rtt = Some(started.elapsed());
@@ -2657,7 +3149,8 @@ impl Cooperation {
                 failed("the sync answer is not the linked peer's answer to this round".into()),
             )));
         }
-        self.journal
+        let round = self
+            .journal
             .ingest(&answer.events, &|e| self.origin_accept(e));
         self.journal.merge_marks(
             &answer.marks,
@@ -2669,6 +3162,7 @@ impl Cooperation {
             if let Some(peer) = table.peers.get_mut(runtime_key) {
                 if let Some(o) = peer.outbound.as_mut() {
                     o.remote_marks = answer.marks;
+                    o.last_round = round;
                 }
                 peer.last_exchange = Some(Instant::now());
                 peer.rtt = Some(started.elapsed());
@@ -3077,12 +3571,25 @@ impl Cooperation {
     /// assert!(!cooperation.state().claims[0].state.is_live(), "released, not forgotten");
     /// ```
     pub fn state(&self) -> CooperationState {
+        self.state_at(Instant::now())
+    }
+
+    /// [`Cooperation::state`] with sessions' progress judged as if it were `now`: what the
+    /// tests use to let a progress ttl pass without waiting for it.
+    pub(crate) fn state_at(&self, now: Instant) -> CooperationState {
         let live = self.journal.stream_liveness(self.expiry());
-        fold(&self.journal.events(), &|s| {
-            live.get(s)
-                .map(|(l, _)| *l)
-                .unwrap_or(StreamLiveness::Expired)
-        })
+        // A session's progress is judged by the ttl its own beat carries, plus the stream
+        // expiry for another runtime's: the beat reached this one up to a round late (I3990).
+        let grace = self.expiry();
+        fold_with(
+            &self.journal.events(),
+            &|s| {
+                live.get(s)
+                    .map(|(l, _)| *l)
+                    .unwrap_or(StreamLiveness::Expired)
+            },
+            &|session| self.journal.session_progress_at(session, grace, now),
+        )
     }
 
     /// Every stream's liveness and the milliseconds since its beat rose — the layer claims
@@ -3125,6 +3632,79 @@ impl Cooperation {
             .into_iter()
             .map(|(id, (l, age))| (id, l, age.map(|a| a.as_millis() as u64)))
             .collect()
+    }
+
+    /// Offer the build cache the node file at `file` declares, from the next heartbeat on;
+    /// `None` offers nothing, and withdraws at the next heartbeat what was offered.
+    pub(crate) fn serve_build_cache_from(&self, file: Option<PathBuf>) {
+        self.build_cache
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .file = file;
+    }
+
+    /// Probe this node's store and write the build-cache record that changed, if one did:
+    /// an offer of a healthy store not offered yet or offered differently, a withdrawal of one
+    /// that stopped answering or is no longer declared (`mesh::build_cache::offer`). Called on
+    /// every heartbeat before the beat; the probe is bounded by
+    /// [`super::build_cache::PROBE_BUDGET`].
+    pub(crate) fn refresh_build_cache_offer(&self) -> Option<MeshEvent> {
+        use super::build_cache::offer;
+        let mut publisher = self
+            .build_cache
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let now = offer::current(
+            publisher.file.as_deref(),
+            self.journal.own_stream().node(),
+            self.expiry(),
+            super::build_cache::PROBE_BUDGET,
+        );
+        let body = offer::next_event(publisher.published.as_ref(), now)?;
+        self.write_build_cache_record(&mut publisher, body)
+    }
+
+    /// Append the build-cache record `body`; the offer is remembered as published only when
+    /// the journal took it, so a refused record is tried again at the next heartbeat.
+    fn write_build_cache_record(
+        &self,
+        publisher: &mut BuildCachePublisher,
+        body: EventBody,
+    ) -> Option<MeshEvent> {
+        let offered = match &body {
+            EventBody::BuildCacheOffered { offer } => Some(offer.clone()),
+            _ => None,
+        };
+        match self.journal.append_own(body) {
+            Ok(event) => {
+                publisher.published = offered;
+                Some(event)
+            }
+            Err(e) => {
+                tracing::warn!(runtime_id = %self.own_key, error = %e, "mesh build-cache record not written");
+                None
+            }
+        }
+    }
+
+    /// The build-cache offers of the mesh as this runtime reads them now: each stream's newest
+    /// record, read as an offer only when its signature verifies, the trust in force trusts
+    /// its key, and its stream beat within the offer's lifetime and this runtime's expiry
+    /// (`mesh::build_cache::offer::read`). What `mesh::build_cache::select` takes.
+    pub(crate) fn build_cache_offers(&self) -> super::build_cache::offer::OfferReading {
+        let ages = self.journal.stream_liveness(self.expiry());
+        let records: Vec<MeshEvent> = self
+            .journal
+            .events()
+            .into_iter()
+            .filter(|e| super::build_cache::offer::KINDS.contains(&e.kind()))
+            .collect();
+        super::build_cache::offer::read(
+            &records,
+            &|pk| self.trust_of_key(pk).is_trusted(),
+            &|s| ages.get(s).and_then(|(_, age)| *age),
+            self.expiry(),
+        )
     }
 
     /// Verify cooperation now: the local checks, then one sync round with every peer this
@@ -3232,6 +3812,7 @@ impl Cooperation {
             impact: (tallies.pending > 0).then(|| "events after a gap are held until the gap arrives; the state lags the stream they belong to".into()),
             remediation: (tallies.pending > 0).then(|| "a peer relays a partial stream: run mesh verify on the peers and compare their marks".into()),
         });
+        checks.push(instances_check(&doubled_runtimes(&self.streams())));
         let refused = self.status().refused;
         let suspicious: Vec<&RefusedView> = refused
             .iter()
@@ -3268,18 +3849,27 @@ impl Cooperation {
         });
 
         let mut peers = Vec::new();
+        // The rounds just run whose answer carried events and had every one refused: the
+        // peer keeps offering what this runtime keeps refusing, and nothing crosses (I2825).
+        let mut storms: Vec<(String, Rejection, u64, u64)> = Vec::new();
         for peer in self.peers() {
             if peer.outbound {
                 let outcome = self.sync_with(&peer.runtime);
                 let after = self.peers().into_iter().find(|p| p.runtime == peer.runtime);
-                let remote = {
+                let (remote, round) = {
                     let table = self.table.lock().expect("cooperation table");
-                    table
+                    let out = table
                         .peers
                         .get(&peer.runtime)
-                        .and_then(|p| p.outbound.as_ref())
-                        .map(|o| o.remote_marks.clone())
+                        .and_then(|p| p.outbound.as_ref());
+                    (
+                        out.map(|o| o.remote_marks.clone()),
+                        out.map(|o| o.last_round.clone()),
+                    )
                 };
+                if let Some(round) = round.filter(|_| outcome.is_ok()) {
+                    storms.extend(storm_of(&peer.runtime, &round));
+                }
                 let converged = remote.map(|remote| {
                     let local = self.journal.marks();
                     local.keys().chain(remote.keys()).all(|s| {
@@ -3323,6 +3913,7 @@ impl Cooperation {
                 });
             }
         }
+        checks.push(rejections_check(&storms));
         // Declared seeds say that peers exist: a runtime with seeds and no connected peer has
         // verified nothing, however clean its local checks are.
         let connected = peers
@@ -3363,14 +3954,15 @@ impl Cooperation {
     // ------------------------------------------------------------------ operations
 
     fn write(&self, body: EventBody, key: String) -> Result<Written, CooperationError> {
-        let event = self
+        let appended = self
             .journal
-            .append_own(body)
+            .append_acknowledged(body)
             .map_err(|e| CooperationError::Invalid(e.to_string()))?;
         Ok(Written {
             key,
-            event: event.id(),
-            lamport: event.lamport,
+            event: appended.event.id(),
+            lamport: appended.event.lamport,
+            durability: appended.durability,
         })
     }
 
@@ -3473,6 +4065,82 @@ impl Cooperation {
         )
     }
 
+    /// Close every open session of this runtime whose client process has ended, and answer
+    /// the ids it closed (I3810).
+    ///
+    /// A session says goodbye in its client's end hook, and a client that crashes or is
+    /// killed never runs it: the session stayed active for as long as this runtime beat, and
+    /// every exclusive claim under it blocked every other worker. A session that named its
+    /// client process (`client_pid`, `client_started`) is closed here once that process is
+    /// gone — or once its pid belongs to a process that started at another time. A session
+    /// that named none is left exactly as before. Only this runtime's own sessions are
+    /// judged: the process belongs to this machine, and so does the clock it is read on.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// use majordomus_cli::mesh::journal::SessionInfo;
+    ///
+    /// let gone = SessionInfo { client_pid: Some(41), client_started: Some("then".into()),
+    ///     ..SessionInfo::named("gone", "claude-code") };
+    /// let here = SessionInfo { client_pid: Some(42), client_started: Some("now".into()),
+    ///     ..SessionInfo::named("here", "claude-code") };
+    /// cooperation.open_session(gone).unwrap();
+    /// cooperation.open_session(here).unwrap();
+    /// cooperation.open_session(SessionInfo::named("unnamed", "cli")).unwrap();
+    ///
+    /// let alive = |pid: u32, started: Option<&str>| pid == 42 && started == Some("now");
+    /// assert_eq!(cooperation.close_ended_clients_with(&alive), ["gone"]);
+    /// assert!(cooperation.close_ended_clients_with(&alive).is_empty(), "closed once");
+    /// ```
+    pub fn close_ended_clients_with(
+        &self,
+        alive: &dyn Fn(u32, Option<&str>) -> bool,
+    ) -> Vec<String> {
+        let state = self.state();
+        let ended: Vec<String> = state
+            .sessions
+            .iter()
+            .filter(|s| s.state == super::state::SessionState::Active)
+            .filter(|s| s.key == self.own(&s.info.session))
+            .filter(|s| {
+                s.info
+                    .client_pid
+                    .is_some_and(|pid| !alive(pid, s.info.client_started.as_deref()))
+            })
+            .map(|s| s.info.session.clone())
+            .collect();
+        ended
+            .into_iter()
+            .filter(|session| {
+                // a session the supervisor found is one the state holds under that name, so
+                // closing it is not refused; what it answered is logged either way
+                let closed = self.close_session(session);
+                tracing::info!(runtime_id = %self.own_key, session_id = %session, closed = closed.is_ok(), error = ?closed.as_ref().err(), "a mesh session whose client process has ended");
+                closed.is_ok()
+            })
+            .collect()
+    }
+
+    /// [`Self::close_ended_clients_with`], judged by this machine's process table.
+    pub(crate) fn close_ended_clients(&self) -> Vec<String> {
+        self.close_ended_clients_with(&|pid, started| {
+            process_facts(pid).is_some_and(|p| started.is_none_or(|s| s == p.started))
+        })
+    }
+
     /// Claim a scope for a session of this runtime. An exclusive claim that meets a live
     /// exclusive claim of another session — on any runtime this one has heard — is
     /// refused with the claims it meets; the session is opened first if it is new.
@@ -3536,7 +4204,7 @@ impl Cooperation {
             self.open_session(session.clone())?;
         }
         let claim = format!("c-{}", &fresh_token()[..12]);
-        self.write(
+        let written = self.write(
             EventBody::ClaimAcquired {
                 claim: claim.clone(),
                 session: session.session.clone(),
@@ -3546,7 +4214,27 @@ impl Cooperation {
                 issue,
             },
             self.own(&claim),
-        )
+        )?;
+        // A board session's exclusive claim lives by its worker's progress from the moment it
+        // is taken: one beat now — unless one inside the interval already covers it — and
+        // more only while the worker keeps working. An advisory claim refuses nobody and
+        // costs no beat (I3990).
+        if let Some(ttl) = self.session_ttl() {
+            let now = Instant::now();
+            let covered = self
+                .beats
+                .lock()
+                .expect("cooperation beats")
+                .get(&session.session)
+                .is_some_and(|last| now.saturating_duration_since(last.at) < ttl / 4);
+            if mode == ClaimMode::Exclusive
+                && !covered
+                && self.board_peer(&session.session).is_some()
+            {
+                self.beat_session(&session.session, ttl, None, now);
+            }
+        }
+        Ok(written)
     }
 
     /// Release a claim this runtime took in its current run.
@@ -3587,6 +4275,20 @@ impl Cooperation {
     /// cooperation.release("somebody-0000000000000002/c-abc").expect_err("not its author");
     /// ```
     pub fn release(&self, claim_key: &str) -> Result<Written, CooperationError> {
+        self.release_with(claim_key, None)
+    }
+
+    /// Release a claim of this runtime's current run, saying why the runtime and not its
+    /// session decided it (I3990).
+    fn release_because(&self, claim_key: &str, reason: &str) -> Result<Written, CooperationError> {
+        self.release_with(claim_key, Some(reason.to_string()))
+    }
+
+    fn release_with(
+        &self,
+        claim_key: &str,
+        reason: Option<String>,
+    ) -> Result<Written, CooperationError> {
         let own_prefix = format!("{}/", self.journal.own_stream());
         let Some(local) = claim_key.strip_prefix(&own_prefix) else {
             return Err(CooperationError::NotOwn(format!(
@@ -3600,6 +4302,7 @@ impl Cooperation {
         self.write(
             EventBody::ClaimReleased {
                 claim: local.into(),
+                reason,
             },
             claim_key.into(),
         )
@@ -3771,11 +4474,11 @@ impl Cooperation {
             EventBody::ReviewRequested {
                 review: review.clone(),
                 session: session.into(),
-                subject,
+                subject: redacted(subject),
                 scope,
                 issue,
                 reviewer,
-                body,
+                body: body.map(redacted),
             },
             self.own(&review),
         )
@@ -3841,8 +4544,8 @@ impl Cooperation {
             EventBody::ReviewAnswered {
                 request: request.into(),
                 session: session.into(),
-                verdict,
-                note,
+                verdict: redacted(verdict),
+                note: note.map(redacted),
             },
             request.into(),
         )
@@ -3912,11 +4615,21 @@ impl Cooperation {
             EventBody::ReviewWithdrawn {
                 request: request.into(),
                 session: session.into(),
-                note,
+                note: note.map(redacted),
             },
             request.into(),
         )
     }
+}
+
+/// Free text of a review as it is signed: every credential shape replaced by the marker that
+/// names it, through the one rule set (`redaction::redact_secrets`), as a handover body is.
+///
+/// A review's subject, body, verdict and notes are typed by a session and replicated in clear
+/// to every linked runtime, so a pasted credential would otherwise travel with them (I2708).
+/// The entries of `.ai/repo/ci/mesh-event-fields.yaml` that say `redacted` name these fields.
+fn redacted(text: String) -> String {
+    crate::redaction::redact_secrets(&text).text
 }
 
 /// A JSON error as the text a refusal or a round error carries.
@@ -3924,9 +4637,418 @@ fn json_text(error: serde_json::Error) -> String {
     error.to_string()
 }
 
+/// The dominant reason and its count when a round refused events and accepted none, which is
+/// what a peer re-offering what this runtime keeps refusing looks like from one round; `None`
+/// for a round that carried nothing or let anything in. Ties go to the first reason in
+/// [`Rejection`]'s order, so the answer does not depend on the map's iteration.
+fn refused_round(round: &IngestReport) -> Option<(Rejection, u64)> {
+    if round.accepted > 0 || round.rejected_total() == 0 {
+        return None;
+    }
+    round
+        .rejected
+        .iter()
+        .fold(None, |best: Option<(Rejection, u64)>, (r, n)| match best {
+            Some((_, m)) if m >= *n => best,
+            _ => Some((*r, *n)),
+        })
+}
+
+/// The runtimes that beat as more than one instance at once, each with its live instances in
+/// order. A runtime is a checkout's server; a restart is a new instance and the old one falls
+/// silent, so two that beat together are two processes speaking for one checkout. On
+/// 2026-10-19 a 0.21.0 server started on 2026-10-15 still answered for the primary checkout
+/// beside every server that had taken its lease since, and its peers' links flapped between
+/// the two on every round (I2825).
+fn doubled_runtimes(
+    streams: &[(StreamId, StreamLiveness, Option<u64>)],
+) -> Vec<(String, Vec<String>)> {
+    let mut live: BTreeMap<String, Vec<String>> = BTreeMap::new();
+    for (id, liveness, _) in streams {
+        if matches!(liveness, StreamLiveness::Live | StreamLiveness::Own) {
+            live.entry(id.runtime_key())
+                .or_default()
+                .push(id.instance().to_string());
+        }
+    }
+    live.into_iter()
+        .filter(|(_, instances)| instances.len() > 1)
+        .map(|(runtime, mut instances)| {
+            crate::order::canonical_strings(&mut instances);
+            (runtime, instances)
+        })
+        .collect()
+}
+
+/// A rejection reason as its wire word (`capacity`, `untrusted`), the word a counter and a
+/// JSON report carry.
+fn rejection_word(reason: Rejection) -> String {
+    serde_json::to_value(reason)
+        .ok()
+        .and_then(|v| v.as_str().map(String::from))
+        .unwrap_or_default()
+}
+
+/// A round whose every event `runtime` offered was refused: the peer, the dominant reason,
+/// how many it refused, and how many were refused in all. `None` for any other round.
+fn storm_of(runtime: &str, round: &IngestReport) -> Option<(String, Rejection, u64, u64)> {
+    refused_round(round)
+        .map(|(reason, most)| (runtime.to_string(), reason, most, round.rejected_total()))
+}
+
+/// `mesh verify`'s `instances` check over the runtimes that beat as more than one instance
+/// (`doubled_runtimes`): two processes speaking for one checkout (I2825).
+fn instances_check(doubled: &[(String, Vec<String>)]) -> MeshVerifyCheck {
+    MeshVerifyCheck {
+        check: "instances".into(),
+        ok: doubled.is_empty(),
+        detail: if doubled.is_empty() {
+            "every runtime beats as one instance".into()
+        } else {
+            doubled
+                .iter()
+                .map(|(runtime, instances)| {
+                    format!("{runtime} beats as {} instances: {}", instances.len(), instances.join(", "))
+                })
+                .collect::<Vec<_>>()
+                .join("; ")
+        },
+        impact: (!doubled.is_empty()).then(|| {
+            "two processes speak for one checkout: every peer that hears both keeps replacing one link with the other (handshakes rise with reconnects), and each claims and releases in its own stream".into()
+        }),
+        remediation: (!doubled.is_empty()).then(|| {
+            "one of them is a server that never left the mesh when another took its lease — an executable older than v0.27.0 does not: find the checkout's server processes (pgrep -fl 'majordomus (serve|mcp)'), keep the one `majordomus serve status` names, and stop the other by its pid".into()
+        }),
+    }
+}
+
+/// `mesh verify`'s `rejections` check over the rounds whose every event was refused
+/// (`storm_of`): a peer offering what this runtime keeps refusing (I2825).
+fn rejections_check(storms: &[(String, Rejection, u64, u64)]) -> MeshVerifyCheck {
+    let capacity = storms.iter().any(|s| s.1 == Rejection::Capacity);
+    MeshVerifyCheck {
+        check: "rejections".into(),
+        ok: storms.is_empty(),
+        detail: if storms.is_empty() {
+            "no round had its every event refused".into()
+        } else {
+            storms
+                .iter()
+                .map(|(runtime, reason, most, all)| {
+                    format!(
+                        "{runtime}: 0 accepted, {all} refused, {most} of them {}",
+                        rejection_word(*reason)
+                    )
+                })
+                .collect::<Vec<_>>()
+                .join("; ")
+        },
+        impact: (!storms.is_empty()).then(|| {
+            "a peer keeps offering what this runtime refuses: claims, releases and handovers from it stop arriving, and the counters grow without anything crossing".into()
+        }),
+        remediation: (!storms.is_empty()).then(|| {
+            if capacity {
+                "capacity: a node fills its event quota, usually with dead streams of its own machine; count the journal's events per node (jq -r '.stream|split(\"-\")[0]' .ai/local/state/mesh/journal.jsonl | sort | uniq -c), and run an executable that compacts a node at three quarters of its quota (I2825)".into()
+            } else {
+                "read the reason: untrusted or identity means a key this runtime does not trust, version an older or newer executable, clock_ahead a runtime whose clock ran away".into()
+            }
+        }),
+    }
+}
+
+/// One process of this machine as its process table reports it.
+///
+/// Two readings are one process exactly when they are equal: a pid the system handed to
+/// a later process carries another start time (I3810).
+///
+/// ```
+/// use majordomus_cli::mesh::cooperation::{process_facts, ProcessFacts};
+///
+/// let me: ProcessFacts = process_facts(std::process::id()).expect("this process exists");
+/// let reused = ProcessFacts { started: "Mon Jan  1 00:00:00 1990".into(), ..me.clone() };
+/// assert_ne!(me, reused, "the same pid, another process");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProcessFacts {
+    /// Its parent's pid.
+    pub ppid: u32,
+    /// When it started, as `ps -o lstart=` prints it in the C locale: an identity compared
+    /// for equality on this machine, never a time compared with another clock.
+    pub started: String,
+    /// What it runs, as `ps -o comm=` prints it.
+    pub command: String,
+}
+
+/// The process `pid` of this machine, or `None` when there is no such process.
+///
+/// Read through `ps`, which macOS and Linux both carry with the same columns, so that the
+/// session that names its client and the runtime that later asks whether that client is
+/// still there read the start time with one instrument and the same format.
+///
+/// ```
+/// use majordomus_cli::mesh::cooperation::process_facts;
+///
+/// let me = process_facts(std::process::id()).expect("this process exists");
+/// assert!(!me.started.is_empty() && me.ppid > 0);
+/// assert_eq!(process_facts(std::process::id()), Some(me), "the same reading twice");
+/// ```
+pub fn process_facts(pid: u32) -> Option<ProcessFacts> {
+    let out = std::process::Command::new("ps")
+        .env("LC_ALL", "C")
+        .args(["-o", "ppid=,lstart=,comm=", "-p", &pid.to_string()])
+        .output()
+        .ok()
+        .filter(|out| out.status.success())?;
+    parse_process_line(&String::from_utf8_lossy(&out.stdout))
+}
+
+/// `"  412 Tue Oct 21 04:23:01 2026 /usr/local/bin/claude"`: the parent, the five words of
+/// the start and the rest as the command.
+fn parse_process_line(line: &str) -> Option<ProcessFacts> {
+    let mut words = line.split_whitespace();
+    let ppid = words.next()?.parse().ok()?;
+    let started: Vec<&str> = words.by_ref().take(5).collect();
+    if started.len() < 5 {
+        return None;
+    }
+    let command = words.collect::<Vec<_>>().join(" ");
+    Some(ProcessFacts {
+        ppid,
+        started: started.join(" "),
+        command,
+    })
+}
+
+/// The commands that stand between a client and the executable it ran: shells and
+/// Majordomus' own launchers. The client is the first ancestor that is none of them.
+const CLIENT_WRAPPERS: &[&str] = &[
+    "sh",
+    "bash",
+    "zsh",
+    "dash",
+    "ksh",
+    "fish",
+    "env",
+    "nice",
+    "nohup",
+    "timeout",
+    "gtimeout",
+    "direnv",
+    "majordomus",
+    "majordomus-cli",
+    "majordomus-mcp",
+];
+
+/// The client this executable was started for, `(pid, started)`: the nearest ancestor that
+/// is not a shell or a Majordomus launcher (`CLIENT_WRAPPERS`). A session hook is run by
+/// its client through a shell and `bin/majordomus`, so this is the Claude Code, Codex or
+/// Gemini process whose end should close the session it opened. `None` when the walk
+/// reaches the system's first process without meeting one.
+///
+/// ```
+/// use majordomus_cli::mesh::cooperation::{client_process, process_facts};
+///
+/// // whatever runs this test is an ancestor that is no shell: cargo, or the harness
+/// if let Some((pid, started)) = client_process() {
+///     assert_eq!(process_facts(pid).map(|p| p.started), Some(started));
+/// }
+/// ```
+pub fn client_process() -> Option<(u32, String)> {
+    client_of(std::process::id(), &process_facts)
+}
+
+/// [`client_process`] over any process table.
+fn client_of(from: u32, table: &dyn Fn(u32) -> Option<ProcessFacts>) -> Option<(u32, String)> {
+    let mut pid = table(from)?.ppid;
+    for _ in 0..32 {
+        if pid <= 1 {
+            return None;
+        }
+        let facts = table(pid)?;
+        let name = facts
+            .command
+            .rsplit('/')
+            .next()
+            .unwrap_or_default()
+            .trim_start_matches('-');
+        if !CLIENT_WRAPPERS.contains(&name) {
+            return Some((pid, facts.started));
+        }
+        pid = facts.ppid;
+    }
+    None
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn round(accepted: u64, refused: &[(Rejection, u64)]) -> IngestReport {
+        IngestReport {
+            accepted,
+            rejected: refused.iter().copied().collect(),
+            ..IngestReport::default()
+        }
+    }
+
+    /// The storm of 2026-10-19 (I2825): every event a peer offered was refused for capacity,
+    /// 1 207 768 of them against 26 158 received, and mesh verify still said ok.
+    #[test]
+    fn a_round_whose_every_event_is_refused_names_its_dominant_reason() {
+        let storm = round(0, &[(Rejection::Capacity, 40), (Rejection::Untrusted, 2)]);
+        assert_eq!(refused_round(&storm), Some((Rejection::Capacity, 40)));
+        assert_eq!(rejection_word(Rejection::Capacity), "capacity");
+        assert_eq!(rejection_word(Rejection::ClockAhead), "clock_ahead");
+        // a tie goes to the first reason in the enum's order, whatever the map holds
+        let tie = round(0, &[(Rejection::Untrusted, 3), (Rejection::Capacity, 3)]);
+        assert_eq!(refused_round(&tie), Some((Rejection::Untrusted, 3)));
+    }
+
+    /// What `mesh verify` reports for the storm and the flapping, each way: the check fails,
+    /// says which runtime, and names the remediation that fits the reason.
+    #[test]
+    fn verify_names_a_storm_and_a_doubled_runtime() {
+        assert_eq!(storm_of("b", &round(3, &[(Rejection::Capacity, 9)])), None);
+        let storm = storm_of(
+            "b",
+            &round(0, &[(Rejection::Capacity, 40), (Rejection::Untrusted, 2)]),
+        )
+        .expect("every event refused");
+        assert_eq!(storm, ("b".to_string(), Rejection::Capacity, 40, 42));
+
+        let quiet = rejections_check(&[]);
+        assert!(quiet.ok && quiet.impact.is_none() && quiet.remediation.is_none());
+        let capacity = rejections_check(&[storm]);
+        assert!(!capacity.ok);
+        assert_eq!(
+            capacity.detail,
+            "b: 0 accepted, 42 refused, 40 of them capacity"
+        );
+        assert!(capacity.impact.is_some());
+        assert!(capacity.remediation.unwrap().starts_with("capacity:"));
+        let untrusted = rejections_check(&[("c".into(), Rejection::Untrusted, 5, 5)]);
+        assert!(untrusted
+            .remediation
+            .unwrap()
+            .starts_with("read the reason"));
+
+        let one = instances_check(&[]);
+        assert!(one.ok && one.impact.is_none() && one.remediation.is_none());
+        let two = instances_check(&[("n-r".into(), vec!["i1".into(), "i2".into()])]);
+        assert!(!two.ok);
+        assert_eq!(two.detail, "n-r beats as 2 instances: i1, i2");
+        assert!(two.impact.is_some() && two.remediation.unwrap().contains("by its pid"));
+    }
+
+    /// `verify` reads the round it just ran with every peer it dials, and a round that
+    /// refused nothing leaves the rejections check ok (I2825).
+    #[test]
+    fn verify_reads_every_dialled_round_and_a_clean_one_is_no_storm() {
+        use super::super::repository::{of_root_commits, runtime_id};
+        use super::super::trust::TrustPolicy;
+        use std::sync::Weak;
+
+        #[derive(Default)]
+        struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);
+        impl LinkTransport for Net {
+            fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {
+                let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))
+                    .ok_or_else(|| format!("{e}: nobody there"))?;
+                Ok(if p == HELLO_PATH {
+                    peer.accept_hello(m)
+                } else {
+                    peer.accept_sync(m)
+                })
+            }
+        }
+        let net = Arc::new(Net::default());
+        let runtime = |endpoint: &str| {
+            let c = Cooperation::new(CooperationSetup {
+                identity: Arc::new(NodeIdentity::ephemeral().unwrap()),
+                runtime: runtime_id(endpoint),
+                repository: of_root_commits(&["root".into()]),
+                endpoints: vec![endpoint.into()],
+                version: "test".into(),
+                config: CooperationConfig::default(),
+                trust: TrustConfig {
+                    policy: TrustPolicy::Tofu,
+                    allow: vec![],
+                },
+                journal_path: None,
+                registry: Arc::new(MeshRegistry::new()),
+                transport: Arc::clone(&net) as Arc<dyn LinkTransport>,
+                board: None,
+                checkout: CheckoutFacts::default(),
+            })
+            .unwrap();
+            net.0
+                .lock()
+                .unwrap()
+                .insert(endpoint.into(), Arc::downgrade(&c));
+            c
+        };
+        let (a, b) = (runtime("a:1"), runtime("b:1"));
+        a.dial(&["b:1".into()]).unwrap();
+        a.journal().beat_own();
+
+        let report = a.verify();
+        assert_eq!(report.peers[0].round_trip, Some(true));
+        let rejections = |r: &MeshVerifyReport| {
+            r.checks
+                .iter()
+                .find(|c| c.check == "rejections")
+                .is_some_and(|c| c.ok)
+        };
+        assert!(rejections(&report), "{:?}", report.checks);
+        assert!(report.ok, "every check held: {:?}", report.checks);
+
+        // A round that did not go through is no evidence of a storm either way.
+        drop(b);
+        let gone = a.verify();
+        assert_eq!(gone.peers[0].round_trip, Some(false));
+        assert!(rejections(&gone), "{:?}", gone.checks);
+    }
+
+    /// The flapping of 2026-10-19 (I2825): the primary checkout's runtime beat as two
+    /// instances, a 0.21.0 server that never left the mesh and the lease's holder.
+    #[test]
+    fn a_runtime_that_beats_as_two_instances_is_named_with_both() {
+        let id = |runtime: char, instance: char| {
+            StreamId::parse(&format!(
+                "{}-{}-{}",
+                "a".repeat(32),
+                runtime.to_string().repeat(16),
+                instance.to_string().repeat(16)
+            ))
+            .unwrap()
+        };
+        let streams = vec![
+            (id('b', '8'), StreamLiveness::Live, Some(900)),
+            (id('b', '7'), StreamLiveness::Own, Some(10)),
+            (id('b', '1'), StreamLiveness::Expired, None),
+            (id('c', '2'), StreamLiveness::Live, Some(40)),
+        ];
+        let doubled = doubled_runtimes(&streams);
+        assert_eq!(
+            doubled.len(),
+            1,
+            "one runtime twice; the expired run is a restart, not a twin"
+        );
+        assert_eq!(doubled[0].0, id('b', '7').runtime_key());
+        assert_eq!(doubled[0].1, vec!["7".repeat(16), "8".repeat(16)]);
+        assert!(doubled_runtimes(&streams[2..]).is_empty());
+    }
+
+    #[test]
+    fn a_round_that_let_anything_in_or_carried_nothing_is_no_storm() {
+        assert_eq!(refused_round(&round(1, &[(Rejection::Capacity, 99)])), None);
+        assert_eq!(refused_round(&round(0, &[])), None, "an idle round");
+        let duplicates = IngestReport {
+            duplicate: 5,
+            ..IngestReport::default()
+        };
+        assert_eq!(refused_round(&duplicates), None, "at-least-once delivery");
+    }
     use crate::mesh::repository::of_root_commits;
     use crate::mesh::trust::TrustPolicy;
     use std::sync::Weak;
@@ -4029,6 +5151,181 @@ mod tests {
 
     fn session(name: &str) -> SessionInfo {
         SessionInfo::named(name, "test")
+    }
+
+    #[test]
+    fn a_gone_clients_mesh_session_is_closed_test() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let mut client = std::process::Command::new("sleep")
+            .arg("60")
+            .spawn()
+            .expect("a stand-in client");
+        let started = process_facts(client.id()).expect("it runs").started;
+        let named = SessionInfo {
+            client_pid: Some(client.id()),
+            client_started: Some(started),
+            ..SessionInfo::named("claude-code-x", "claude-code")
+        };
+        a.open_session(named.clone()).unwrap();
+        a.claim(
+            &named,
+            vec!["apps".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        // a session that named no client is left exactly as before
+        a.open_session(SessionInfo::named("unnamed", "cli"))
+            .unwrap();
+
+        // the client is alive: nothing is closed, the claim holds
+        assert!(a.close_ended_clients().is_empty());
+        assert!(a.state().claims[0].state.is_live());
+
+        // the client ends without a word: its session is closed once, and its claim ends
+        client.kill().unwrap();
+        client.wait().unwrap();
+        assert_eq!(a.close_ended_clients(), ["claude-code-x"]);
+        assert!(a.close_ended_clients().is_empty(), "closed once");
+        let state = a.state();
+        assert!(
+            !state.claims[0].state.is_live(),
+            "{:?}",
+            state.claims[0].state
+        );
+        let unnamed = state
+            .sessions
+            .iter()
+            .find(|s| s.info.session == "unnamed")
+            .unwrap();
+        assert_eq!(unnamed.state, crate::mesh::state::SessionState::Active);
+
+        // a pid the system gave to another process is not the client
+        let reused = SessionInfo {
+            client_pid: Some(std::process::id()),
+            client_started: Some("Mon Jan  1 00:00:00 1990".into()),
+            ..SessionInfo::named("reused", "claude-code")
+        };
+        a.open_session(reused).unwrap();
+        assert_eq!(a.close_ended_clients(), ["reused"]);
+    }
+
+    #[test]
+    fn the_client_is_the_first_ancestor_that_is_no_shell() {
+        let line = parse_process_line(" 412 Tue Oct  1 04:23:01 2026 /usr/local/bin/claude\n");
+        assert_eq!(
+            line,
+            Some(ProcessFacts {
+                ppid: 412,
+                started: "Tue Oct 1 04:23:01 2026".into(),
+                command: "/usr/local/bin/claude".into(),
+            })
+        );
+        assert_eq!(parse_process_line(""), None);
+        assert_eq!(parse_process_line("12 Tue Oct"), None, "a start cut short");
+
+        let table = |pid: u32| {
+            let (ppid, command) = match pid {
+                50 => (40, "/opt/homebrew/bin/majordomus-cli"),
+                40 => (30, "bash"),
+                30 => (20, "/bin/sh"),
+                20 => (10, "/opt/claude/claude"),
+                10 => (1, "-zsh"),
+                _ => return None,
+            };
+            Some(ProcessFacts {
+                ppid,
+                started: format!("start of {pid}"),
+                command: command.into(),
+            })
+        };
+        assert_eq!(client_of(50, &table), Some((20, "start of 20".into())));
+        // nothing but shells up to the first process: no client
+        let shells = |pid: u32| {
+            table(pid).map(|facts| match pid {
+                20 => ProcessFacts {
+                    ppid: 1,
+                    command: "zsh".into(),
+                    ..facts
+                },
+                _ => facts,
+            })
+        };
+        assert_eq!(client_of(50, &shells), None);
+    }
+
+    /// A line whose parent is not a number is no process, and a walk finds no client when
+    /// the table lacks where it starts, lacks a process on the way, or never ends.
+    #[test]
+    fn a_walk_with_a_gap_or_without_an_end_finds_no_client() {
+        assert_eq!(
+            parse_process_line("init Tue Oct  1 04:23:01 2026 /sbin/launchd"),
+            None
+        );
+        let table = |pid: u32| {
+            (pid == 50).then(|| ProcessFacts {
+                ppid: 40,
+                started: "start of 50".into(),
+                command: "bash".into(),
+            })
+        };
+        assert_eq!(client_of(7, &table), None, "the start is not in the table");
+        assert_eq!(
+            client_of(50, &table),
+            None,
+            "its parent is not in the table"
+        );
+        let looping = |pid: u32| {
+            Some(ProcessFacts {
+                ppid: if pid == 60 { 61 } else { 60 },
+                started: format!("start of {pid}"),
+                command: "/bin/sh".into(),
+            })
+        };
+        assert_eq!(
+            client_of(60, &looping),
+            None,
+            "two shells that parent each other"
+        );
+    }
+
+    /// The client of this test process is an ancestor read from this machine's process
+    /// table: never this process itself, and named with the start `ps` reports for it.
+    #[test]
+    fn the_client_of_this_process_is_an_ancestor_named_with_its_start() {
+        if let Some((pid, started)) = client_process() {
+            assert_ne!(pid, std::process::id());
+            assert_eq!(process_facts(pid).map(|p| p.started), Some(started));
+        }
+    }
+
+    /// The supervisor closes a session whose client has ended on its own, every twelfth
+    /// beat, with nobody asking it to.
+    #[test]
+    fn the_supervisor_closes_a_session_whose_client_has_ended() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        a.open_session(SessionInfo {
+            client_pid: Some(std::process::id()),
+            client_started: Some("Mon Jan  1 00:00:00 1990".into()),
+            ..SessionInfo::named("ended", "claude-code")
+        })
+        .unwrap();
+        let closed = |c: &Cooperation| {
+            c.state().sessions.iter().any(|s| {
+                s.info.session == "ended" && s.state == crate::mesh::state::SessionState::Closed
+            })
+        };
+        assert!(!closed(&a));
+        a.start();
+        let deadline = Instant::now() + Duration::from_secs(40);
+        while !closed(&a) && Instant::now() < deadline {
+            std::thread::sleep(Duration::from_millis(100));
+        }
+        a.stop();
+        assert!(closed(&a), "{:?}", a.state().sessions);
     }
 
     #[test]
@@ -4316,6 +5613,70 @@ mod tests {
             matches!(wrong, Err(RoundError::Refused(ref r)) if r.code == RefusalCode::Misaddressed),
             "{wrong:?}"
         );
+    }
+
+    #[test]
+    fn a_hello_replayed_after_a_restart_cannot_displace_the_link_a_newer_one_made() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        // a hello B addressed to A thirty seconds ago, captured on its way: inside the skew
+        // window, and A answers it once
+        let captured = sign(
+            &b.identity,
+            Domain::Hello,
+            serde_json::to_value(&Hello {
+                proto_min: LINK_PROTOCOL_MIN,
+                proto_max: LINK_PROTOCOL_MAX,
+                card: b.card.clone(),
+                nonce: fresh_token(),
+                ts: crate::mesh::protocol::now() - 30,
+                to: Some(a.runtime_key().to_string()),
+            })
+            .unwrap(),
+        );
+        assert!(a.accept_hello(&captured).refusal.is_none());
+        // A restarts: the same key and runtime, and a replay cache that remembers nothing
+        let identity = Arc::clone(&a.identity);
+        drop(a);
+        let a = Cooperation::new(CooperationSetup {
+            identity,
+            runtime: crate::mesh::repository::runtime_id("a:1"),
+            repository: of_root_commits(&["root".into()]),
+            endpoints: vec!["a:1".into()],
+            version: "test".into(),
+            config: CooperationConfig::default(),
+            trust: TrustConfig {
+                policy: TrustPolicy::Tofu,
+                allow: vec![],
+            },
+            journal_path: None,
+            registry: Arc::new(MeshRegistry::new()),
+            transport: Arc::clone(&net) as Arc<dyn LinkTransport>,
+            board: None,
+            checkout: CheckoutFacts::default(),
+        })
+        .unwrap();
+        net.runtimes
+            .lock()
+            .unwrap()
+            .insert("a:1".into(), Arc::downgrade(&a));
+        // B links to the restarted A with a fresh hello, and the link carries a sync
+        b.dial_to(Some(a.runtime_key()), &["a:1".into()])
+            .expect("linked again");
+        assert!(b.sync_with(a.runtime_key()).is_ok());
+        let reconnects = a.counters.reconnects.load(Ordering::Relaxed);
+        // the captured hello, replayed: A's cache has never seen its nonce, and it is refused
+        // all the same, because it is older than the hello that made the link it would replace
+        let refusal = a.accept_hello(&captured).refusal.expect("refused");
+        assert_eq!(refusal.code, RefusalCode::Replay, "{refusal:?}");
+        // and the link B holds is the one A still serves
+        assert!(
+            b.sync_with(a.runtime_key()).is_ok(),
+            "the established link was not displaced"
+        );
+        assert_eq!(a.counters.reconnects.load(Ordering::Relaxed), reconnects);
+        assert_eq!(a.peers().len(), 1);
     }
 
     #[test]
@@ -4780,6 +6141,595 @@ mod tests {
         );
     }
 
+    /// The 5d incident (2026-10-22), in one runtime: a worker took the lease exclusively
+    /// and then sat on a dialog while its server beat on. Once the ttl passes without real
+    /// work its exclusive claim reads suspended and refuses nobody, its advisory claim and
+    /// its session are untouched, and nothing was written to make it so; when the worker
+    /// works again, one beat makes the claim hold again (I3990).
+    #[test]
+    fn a_stalled_board_session_s_exclusive_claim_is_suspended_and_holds_again_on_progress() {
+        use crate::mesh::state::{admission_conflicts, ClaimState, SessionState};
+        let net = Arc::new(InProcess::default());
+        let board = Arc::new(crate::peers::PeerBoard::new());
+        let a = Cooperation::new(CooperationSetup {
+            identity: Arc::new(NodeIdentity::ephemeral().unwrap()),
+            runtime: "00000000000000a1".into(),
+            repository: of_root_commits(&["root".into()]),
+            endpoints: vec!["a:1".into()],
+            version: "test".into(),
+            config: CooperationConfig {
+                heartbeat_seconds: 1,
+                expiry_seconds: 3,
+                session_ttl_seconds: 8,
+                ..CooperationConfig::default()
+            },
+            trust: TrustConfig::default(),
+            journal_path: None,
+            registry: Arc::new(MeshRegistry::new()),
+            transport: Arc::clone(&net) as Arc<dyn LinkTransport>,
+            board: Some(Arc::clone(&board)),
+            checkout: CheckoutFacts::default(),
+        })
+        .unwrap();
+        let beats = |c: &Cooperation| {
+            c.journal()
+                .events()
+                .iter()
+                .filter(|e| e.kind() == "session_beat")
+                .count()
+        };
+        let p = board.attach(crate::peers::Transport::Http);
+        board.announce(&p, "land the train", vec!["docs".into()]);
+        a.project_board();
+        let worker = SessionInfo::named(&format!("board-{p}"), "test");
+        a.claim(
+            &worker,
+            vec!["integration".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        assert_eq!(
+            beats(&a),
+            1,
+            "an exclusive claim of a board session beats at once; its advisory one does not"
+        );
+        let start = Instant::now();
+        let mine = format!("{}/board-{p}", a.journal().own_stream());
+        let exclusive = |s: &CooperationState| {
+            s.claims
+                .iter()
+                .find(|c| c.mode == ClaimMode::Exclusive)
+                .unwrap()
+                .state
+                .clone()
+        };
+        let advisory = |s: &CooperationState| {
+            s.claims
+                .iter()
+                .find(|c| c.mode == ClaimMode::Advisory)
+                .unwrap()
+                .state
+                .clone()
+        };
+
+        // within the ttl nothing happens, and nothing is written while nothing is worked
+        a.beat_sessions_at(start + Duration::from_secs(3));
+        assert_eq!(beats(&a), 1);
+        assert_eq!(
+            exclusive(&a.state_at(start + Duration::from_secs(3))),
+            ClaimState::Held
+        );
+
+        // past it: the exclusive claim is suspended and admits another; nothing else moved
+        let events = a.journal().events().len();
+        a.beat_sessions_at(start + Duration::from_secs(9));
+        assert_eq!(a.journal().events().len(), events, "a stall writes nothing");
+        let stalled = a.state_at(start + Duration::from_secs(9));
+        assert!(matches!(
+            exclusive(&stalled),
+            ClaimState::Suspended(why) if why.contains("stopped making progress")
+        ));
+        assert_eq!(
+            advisory(&stalled),
+            ClaimState::Held,
+            "advisory claims are untouched"
+        );
+        let view = stalled.sessions.iter().find(|s| s.key == mine).unwrap();
+        assert_eq!(
+            view.state,
+            SessionState::Active,
+            "an idle session is not closed"
+        );
+        let other = format!("{}/s2", a.journal().own_stream());
+        assert!(
+            admission_conflicts(
+                &stalled,
+                &other,
+                &["integration".into()],
+                ClaimMode::Exclusive
+            )
+            .is_empty(),
+            "the lease is free for the next claimant"
+        );
+
+        // a peer that only pings writes nothing
+        board.touch(&p);
+        a.project_board();
+        a.beat_sessions_at(start + Duration::from_secs(20));
+        assert_eq!(a.journal().events().len(), events, "a ping is not progress");
+
+        // real work: one beat, and the claim holds again
+        board.progress(&p);
+        a.beat_sessions_at(start + Duration::from_secs(20));
+        assert_eq!(beats(&a), 2);
+        assert_eq!(exclusive(&a.state()), ClaimState::Held);
+
+        // and a long-running process may speak for a session with a phase
+        let phase = "waiting on CI run 42";
+        let written = a
+            .beat_at(
+                &format!("board-{p}"),
+                Some(phase.into()),
+                None,
+                start + Duration::from_secs(40),
+            )
+            .unwrap();
+        assert!(written.key.ends_with(&format!("/board-{p}")));
+        let (_, said) = a.journal().session_beat_age(&mine).unwrap();
+        assert_eq!(said.as_deref(), Some(phase));
+        let dead = u32::MAX - 1;
+        assert!(
+            a.beat(&format!("board-{p}"), None, Some(dead)).is_err(),
+            "a dead pid beats nothing"
+        );
+    }
+
+    /// A runtime with a progress ttl of `ttl` seconds, a heartbeat of one, and `board`.
+    fn progress_runtime(ttl: u64, board: Option<Arc<crate::peers::PeerBoard>>) -> Arc<Cooperation> {
+        Cooperation::new(CooperationSetup {
+            identity: Arc::new(NodeIdentity::ephemeral().unwrap()),
+            runtime: "00000000000000a1".into(),
+            repository: of_root_commits(&["root".into()]),
+            endpoints: vec!["a:1".into()],
+            version: "test".into(),
+            config: CooperationConfig {
+                heartbeat_seconds: 1,
+                expiry_seconds: 3,
+                session_ttl_seconds: ttl,
+                ..CooperationConfig::default()
+            },
+            trust: TrustConfig::default(),
+            journal_path: None,
+            registry: Arc::new(MeshRegistry::new()),
+            transport: Arc::new(InProcess::default()) as Arc<dyn LinkTransport>,
+            board,
+            checkout: CheckoutFacts::default(),
+        })
+        .unwrap()
+    }
+
+    fn session_beats(c: &Cooperation) -> Vec<MeshEvent> {
+        c.journal()
+            .events()
+            .into_iter()
+            .filter(|e| e.kind() == "session_beat")
+            .collect()
+    }
+
+    /// B1 of the review of 2026-10-23: a script that beats every second with a phase that
+    /// changes every second ("waiting on CI (13s)") writes at most one beat a quarter of the
+    /// ttl — the newer phase is held and shown, not written — so it cannot spend the
+    /// runtime's beats.
+    #[test]
+    fn a_phase_changing_beater_writes_at_most_one_beat_a_quarter_of_the_ttl() {
+        let a = progress_runtime(8, None);
+        let lander = SessionInfo::named("lander", "cli");
+        a.claim(
+            &lander,
+            vec!["integration".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        assert!(
+            session_beats(&a).is_empty(),
+            "a command-line claim beats nothing by itself"
+        );
+        let start = Instant::now();
+        let span = 120u64;
+        for second in 0..span {
+            a.beat_at(
+                "lander",
+                Some(format!("waiting on CI ({second}s)")),
+                None,
+                start + Duration::from_secs(second),
+            )
+            .unwrap();
+        }
+        let interval = 8 / 4;
+        let written = session_beats(&a).len() as u64;
+        assert!(
+            written <= span.div_ceil(interval),
+            "{written} beats in {span} s with a {interval} s interval"
+        );
+        assert!(written >= span / interval - 1, "and it did beat: {written}");
+        let key = format!("{}/lander", a.journal().own_stream());
+        assert_eq!(
+            a.session_phase(&key).as_deref(),
+            Some("waiting on CI (119s)"),
+            "the newest phase is shown though it was not written"
+        );
+    }
+
+    /// B1: only a session holding a live exclusive claim is beaten for. A worker that only
+    /// announces holds advisory claims, which refuse nobody, and costs no beat however hard
+    /// it works; a mesh beat for it writes nothing and says why.
+    #[test]
+    fn an_advisory_only_session_writes_no_beats() {
+        let board = Arc::new(crate::peers::PeerBoard::new());
+        let a = progress_runtime(8, Some(Arc::clone(&board)));
+        let p = board.attach(crate::peers::Transport::Http);
+        board.announce(&p, "document the mesh", vec!["docs".into()]);
+        a.project_board();
+        let start = Instant::now();
+        for second in [3, 6, 9, 12] {
+            board.progress(&p);
+            a.beat_sessions_at(start + Duration::from_secs(second));
+        }
+        assert!(session_beats(&a).is_empty(), "{:?}", session_beats(&a));
+        let refused = a
+            .beat_at(&format!("board-{p}"), Some("working".into()), None, start)
+            .expect_err("nothing a beat would keep");
+        assert!(
+            refused.to_string().contains("no exclusive claim"),
+            "{refused}"
+        );
+    }
+
+    /// B1: past its limit per window a runtime withholds beats — never a ttl-0 beat that
+    /// turns the rule off — warns once, and fails `mesh doctor`'s session_beats check; the
+    /// window moving lets it beat again.
+    #[test]
+    fn a_runtime_past_its_beat_limit_withholds_beats_and_says_so() {
+        let ttl = 3600;
+        let a = progress_runtime(ttl, None);
+        let limit = session_beat_limit(Duration::from_secs(ttl));
+        assert_eq!(limit, SESSION_BEAT_SESSIONS * 4);
+        for n in 0..=limit {
+            a.claim(
+                &SessionInfo::named(&format!("s{n}"), "cli"),
+                vec![format!("d{n}")],
+                None,
+                ClaimMode::Exclusive,
+                None,
+            )
+            .unwrap();
+        }
+        let start = Instant::now();
+        for n in 0..limit {
+            a.beat_at(&format!("s{n}"), None, None, start).unwrap();
+        }
+        let over = format!("s{limit}");
+        assert!(
+            a.beat_at(&over, None, None, start).is_err(),
+            "the limit holds"
+        );
+        assert_eq!(session_beats(&a).len(), limit);
+        assert!(
+            session_beats(&a).iter().all(|e| matches!(
+                e.body(),
+                Some(EventBody::SessionBeat { ttl_seconds, .. }) if ttl_seconds == 3600
+            )),
+            "nothing turns the rule off"
+        );
+        let tally = a.session_beat_tally();
+        assert_eq!((tally.written, tally.withheld), (limit as u64, 1));
+        assert!(tally.withheld_recently);
+        let check = crate::mesh::doctor::session_beats_check(&tally);
+        assert!(
+            !check.ok && check.detail.contains("1 session beat(s) withheld"),
+            "{}",
+            check.detail
+        );
+        // asked again inside the window it is withheld again, and counted, though the
+        // warning was said once
+        assert!(a.beat_at(&over, None, None, start).is_err());
+        assert_eq!(a.session_beat_tally().withheld, 2);
+        assert_eq!(session_beats(&a).len(), limit);
+        // an hour on, the window has moved
+        a.beat_at(&over, None, None, start + SESSION_BEAT_WINDOW)
+            .expect("the window moved");
+    }
+
+    /// N1 of the review of 2026-10-23: a holder that resumes after another session was
+    /// admitted over its suspended exclusive claim does not get the scope back. Its next beat
+    /// is preceded by the release of that claim, saying why, and it must claim again through
+    /// admission — which the newcomer now refuses. Two sessions never both hold one scope.
+    #[test]
+    fn a_resumed_holder_releases_a_claim_another_session_was_admitted_over() {
+        let board = Arc::new(crate::peers::PeerBoard::new());
+        let a = progress_runtime(8, Some(Arc::clone(&board)));
+        let p = board.attach(crate::peers::Transport::Http);
+        board.progress(&p);
+        let worker = SessionInfo::named(&format!("board-{p}"), "test");
+        a.claim(
+            &worker,
+            vec!["integration".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        assert_eq!(session_beats(&a).len(), 1);
+        let start = Instant::now();
+        // while it is silent another session is admitted over it (admission read it
+        // suspended at that moment; the journal holds what it then wrote)
+        a.journal()
+            .append_own(EventBody::ClaimAcquired {
+                claim: "c-newcomer".into(),
+                session: "s2".into(),
+                scope: vec!["integration".into()],
+                intent: None,
+                mode: ClaimMode::Exclusive,
+                issue: None,
+            })
+            .unwrap();
+        let silent = a.state_at(start + Duration::from_secs(9));
+        let mine = format!("{}/board-{p}", a.journal().own_stream());
+        let held_by = |s: &CooperationState, session: &str| {
+            s.claims
+                .iter()
+                .find(|c| c.session == session)
+                .map(|c| c.state.clone())
+                .unwrap()
+        };
+        assert!(matches!(held_by(&silent, &mine), ClaimState::Suspended(_)));
+        let newcomer = format!("{}/s2", a.journal().own_stream());
+        assert_eq!(held_by(&silent, &newcomer), ClaimState::Held);
+
+        // the worker comes back
+        board.progress(&p);
+        a.beat_sessions_at(start + Duration::from_secs(20));
+        let now = a.state();
+        assert_eq!(held_by(&now, &mine), ClaimState::Released, "not re-armed");
+        assert_eq!(
+            held_by(&now, &newcomer),
+            ClaimState::Held,
+            "one holder, the newcomer"
+        );
+        assert_eq!(session_beats(&a).len(), 1, "nothing was left to beat for");
+        let reason = a.journal().events().iter().find_map(|e| match e.body() {
+            Some(EventBody::ClaimReleased { reason, .. }) => reason,
+            _ => None,
+        });
+        assert_eq!(reason.as_deref(), Some(OVERTAKEN));
+        assert!(
+            matches!(
+                a.claim(
+                    &worker,
+                    vec!["integration".into()],
+                    None,
+                    ClaimMode::Exclusive,
+                    None
+                ),
+                Err(CooperationError::Conflict(_))
+            ),
+            "it claims again through admission, which the newcomer's claim refuses"
+        );
+    }
+
+    /// With the progress rule turned off (`session_ttl_seconds: 0`) nothing beats: a board
+    /// session's exclusive claim costs no beat, the heartbeat beats for nobody, and a beat
+    /// asked for is refused, saying the rule is off — its claims live by the stream rule
+    /// alone (I3990).
+    #[test]
+    fn a_runtime_with_the_progress_rule_off_beats_for_nobody() {
+        let board = Arc::new(crate::peers::PeerBoard::new());
+        let a = progress_runtime(0, Some(Arc::clone(&board)));
+        let p = board.attach(crate::peers::Transport::Http);
+        board.progress(&p);
+        let session = format!("board-{p}");
+        a.claim(
+            &SessionInfo::named(&session, "test"),
+            vec!["integration".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        board.progress(&p);
+        a.beat_sessions_at(Instant::now() + Duration::from_secs(3600));
+        assert!(session_beats(&a).is_empty(), "{:?}", session_beats(&a));
+        let refused = a
+            .beat(&session, Some("working".into()), None)
+            .expect_err("the rule is off");
+        assert!(
+            refused.to_string().contains("the progress rule is off"),
+            "{refused}"
+        );
+        assert_eq!(a.session_beat_tally().limit, 0);
+        assert!(a.state().claims.iter().all(|c| c.state.is_live()));
+    }
+
+    /// A beat speaks for a session this runtime opened, and for a live process when it names
+    /// one: the pid is shown with the phase, or alone when the phase is blank (I3990).
+    #[test]
+    fn a_beat_names_its_live_process_beside_its_phase() {
+        let a = progress_runtime(8, None);
+        assert!(matches!(
+            a.beat("nobody", None, None),
+            Err(CooperationError::NotFound(_))
+        ));
+        a.claim(
+            &SessionInfo::named("lander", "cli"),
+            vec!["integration".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        let pid = std::process::id();
+        let key = format!("{}/lander", a.journal().own_stream());
+        let start = Instant::now();
+        a.beat_at(
+            "lander",
+            Some("waiting on CI run 42".into()),
+            Some(pid),
+            start,
+        )
+        .unwrap();
+        assert_eq!(
+            a.session_phase(&key),
+            Some(format!("waiting on CI run 42 (pid {pid})"))
+        );
+        // a quarter of the ttl on, a blank phase names the process alone, and is written
+        a.beat_at(
+            "lander",
+            Some("  ".into()),
+            Some(pid),
+            start + Duration::from_secs(2),
+        )
+        .unwrap();
+        assert_eq!(a.session_phase(&key), Some(format!("pid {pid}")));
+        assert_eq!(
+            a.session_phase("another-stream/lander"),
+            None,
+            "this runtime holds the phases of its own sessions alone"
+        );
+        let (_, written) = a.journal().session_beat_age(&key).unwrap();
+        assert_eq!(written, Some(format!("pid {pid}")));
+        assert_eq!(session_beats(&a).len(), 2);
+    }
+
+    /// A runtime without a board has no board peer to speak for: a session named like one is
+    /// beaten for when it asks, never at its claim or by the heartbeat (I3990).
+    #[test]
+    fn a_board_named_session_without_a_board_beats_only_when_it_asks() {
+        let a = progress_runtime(8, None);
+        a.claim(
+            &SessionInfo::named("board-p1", "test"),
+            vec!["integration".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        assert!(session_beats(&a).is_empty(), "no peer behind it");
+        a.beat_sessions_at(Instant::now() + Duration::from_secs(4));
+        assert!(
+            session_beats(&a).is_empty(),
+            "no board to read progress from"
+        );
+        a.beat("board-p1", None, None).expect("it asks");
+        assert_eq!(session_beats(&a).len(), 1);
+    }
+
+    /// A released exclusive claim keeps nothing: a session left with released claims alone
+    /// is refused a beat, and one that claims again beats for the claim it holds (I3990).
+    #[test]
+    fn a_released_claim_arms_no_beat() {
+        let a = progress_runtime(8, None);
+        let lander = SessionInfo::named("lander", "cli");
+        let first = a
+            .claim(
+                &lander,
+                vec!["docs".into()],
+                None,
+                ClaimMode::Exclusive,
+                None,
+            )
+            .unwrap();
+        a.release(&first.key).unwrap();
+        assert!(
+            a.beat("lander", None, None).is_err(),
+            "a released claim is nothing to keep"
+        );
+        a.claim(
+            &lander,
+            vec!["integration".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        a.beat("lander", None, None)
+            .expect("the held claim is kept");
+        assert_eq!(session_beats(&a).len(), 1);
+    }
+
+    /// The heartbeat beats for a board session only on its worker's real work: one holding an
+    /// exclusive claim that never worked is left to suspend, and one whose claim reached the
+    /// journal without a beat is beaten for at its first work (I3990).
+    #[test]
+    fn the_heartbeat_beats_for_a_board_session_only_on_its_workers_progress() {
+        let board = Arc::new(crate::peers::PeerBoard::new());
+        let a = progress_runtime(8, Some(Arc::clone(&board)));
+        let p = board.attach(crate::peers::Transport::Http);
+        let session = format!("board-{p}");
+        a.open_session(SessionInfo::named(&session, "test"))
+            .unwrap();
+        a.journal()
+            .append_own(EventBody::ClaimAcquired {
+                claim: "c-1".into(),
+                session: session.clone(),
+                scope: vec!["integration".into()],
+                intent: None,
+                mode: ClaimMode::Exclusive,
+                issue: None,
+            })
+            .unwrap();
+        let start = Instant::now();
+        a.beat_sessions_at(start);
+        assert!(session_beats(&a).is_empty(), "no work, no beat");
+        board.progress(&p);
+        a.beat_sessions_at(start + Duration::from_secs(1));
+        assert_eq!(
+            session_beats(&a).len(),
+            1,
+            "its first work is beaten for at once"
+        );
+    }
+
+    /// A board session that takes a second exclusive claim inside a quarter of the ttl of
+    /// its last beat writes no second beat: the beat it has keeps both claims (I3990).
+    #[test]
+    fn a_second_exclusive_claim_inside_the_interval_is_kept_by_the_last_beat() {
+        let board = Arc::new(crate::peers::PeerBoard::new());
+        let a = progress_runtime(8, Some(Arc::clone(&board)));
+        let p = board.attach(crate::peers::Transport::Http);
+        let worker = SessionInfo::named(&format!("board-{p}"), "test");
+        for path in ["integration", "docs"] {
+            a.claim(&worker, vec![path.into()], None, ClaimMode::Exclusive, None)
+                .unwrap();
+        }
+        assert_eq!(session_beats(&a).len(), 1);
+        let state = a.state();
+        assert_eq!(state.claims.len(), 2);
+        assert!(state.claims.iter().all(|c| c.state.is_live()));
+    }
+
+    /// A claim the journal refuses — a scope that leaves the repository — is refused to its
+    /// caller, and no claim is left behind to beat for.
+    #[test]
+    fn a_claim_over_a_path_outside_the_repository_is_refused_and_leaves_no_claim() {
+        let a = progress_runtime(8, None);
+        let refused = a
+            .claim(
+                &SessionInfo::named("s1", "cli"),
+                vec!["../etc".into()],
+                None,
+                ClaimMode::Exclusive,
+                None,
+            )
+            .unwrap_err();
+        assert!(matches!(refused, CooperationError::Invalid(_)), "{refused}");
+        assert!(a.state().claims.is_empty());
+        assert!(session_beats(&a).is_empty());
+    }
+
     #[test]
     fn a_release_is_the_holders_and_a_session_close_ends_its_claims() {
         let net = Arc::new(InProcess::default());
@@ -4872,6 +6822,38 @@ mod tests {
         );
     }
 
+    /// On 2026-10-23 two MacBooks shared no claim for hours: each ran a dozen loopback
+    /// worktree servers and one hub bound beyond loopback, the loopback records sorted first
+    /// and filled the per-node cap, and neither machine ever dialed the other's hub.
+    #[test]
+    fn another_node_s_loopback_runtimes_are_not_dialed_and_its_hub_is() {
+        let mut records: Vec<NodeRecord> = (0..12)
+            .map(|i| {
+                let mut r = record(1, &format!("{i:016}"), Presence::Present, "trusted");
+                r.endpoints = vec![format!("127.0.0.1:{}", 9000 + i)];
+                r
+            })
+            .collect();
+        let mut hub = record(1, "ffffffffffffffff", Presence::Present, "trusted");
+        hub.endpoints = vec!["192.168.100.100:8791".into(), "127.0.0.1:8791".into()];
+        records.push(hub);
+        let mut sibling = record(0, "0000000000000002", Presence::Present, "trusted");
+        sibling.endpoints = vec!["127.0.0.1:9454".into()];
+        records.push(sibling);
+        let own = format!("{:032x}-{:016x}", 0, 1);
+
+        let chosen = ids(&dial_targets(&records, "root", &own, |k| k == "trusted"));
+
+        assert_eq!(
+            chosen,
+            vec![
+                format!("{:032x}-0000000000000002", 0),
+                format!("{:032x}-ffffffffffffffff", 1),
+            ],
+            "this node's loopback sibling and the other node's hub, nothing it cannot reach"
+        );
+    }
+
     use proptest::strategy::{Just, Strategy};
 
     proptest::proptest! {
@@ -4932,5 +6914,57 @@ mod tests {
                 proptest::prop_assert_eq!(present_chosen, present.min(cap));
             }
         }
+    }
+
+    #[test]
+    fn a_build_cache_record_the_journal_refuses_is_not_remembered_as_published() {
+        use crate::mesh::build_cache::Scope;
+        use crate::mesh::journal::BuildCacheOffer;
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let offer = BuildCacheOffer {
+            protocol: "s3".into(),
+            provider: "minio".into(),
+            scope: Scope::Lan,
+            endpoint: "http://192.0.2.10:9000".into(),
+            bucket: "majordomus-build-cache".into(),
+            priority: 0,
+            headroom_gib: None,
+            lifetime_seconds: 30,
+        };
+        let mut publisher = BuildCachePublisher::default();
+        // user information is where a key would ride: the journal refuses it
+        let smuggled = BuildCacheOffer {
+            endpoint: "http://k:s@192.0.2.10:9000".into(),
+            ..offer.clone()
+        };
+        let refused = a.write_build_cache_record(
+            &mut publisher,
+            EventBody::BuildCacheOffered { offer: smuggled },
+        );
+        assert!(refused.is_none());
+        assert!(
+            publisher.published.is_none(),
+            "so the next heartbeat tries again"
+        );
+        let written = a.write_build_cache_record(
+            &mut publisher,
+            EventBody::BuildCacheOffered {
+                offer: offer.clone(),
+            },
+        );
+        assert_eq!(written.unwrap().body["kind"], "build_cache_offered");
+        assert_eq!(publisher.published, Some(offer));
+        let withdrawn = a.write_build_cache_record(
+            &mut publisher,
+            EventBody::BuildCacheWithdrawn {
+                reason: "its own probe says unhealthy".into(),
+            },
+        );
+        assert!(withdrawn.is_some());
+        assert!(
+            publisher.published.is_none(),
+            "a withdrawal forgets the offer"
+        );
     }
 }

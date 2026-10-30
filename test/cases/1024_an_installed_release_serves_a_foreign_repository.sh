@@ -21,13 +21,14 @@ FIX="$T/fixture"; mkdir -p "$FIX/releases"
 start_http "$FIX" || skip "no python3 or node to serve a fixture release"
 trap 'stop_http' EXIT INT TERM HUP
 
-VERSION="$("$ROOT/scripts/release-version")"
+# the fixture serves the stable base of a pre-release tree (scripts/release-fixture)
+REAL_VERSION="$("$ROOT/scripts/release-version")"; VERSION="${REAL_VERSION%%-*}"
 MAJORDOMUS_DIST_BIN="$MJB" "$ROOT/scripts/release-fixture" --out "$FIX" --base-url "$HTTP_BASE" > "$T/fixture.log" 2>&1 \
   || { rc=$?; echo "    the fixture release could not be built (exit $rc)"; tail -20 "$T/fixture.log" | sed 's/^/      /'; exit 1; }
 expect_file "$FIX/releases/latest.json"
 
 # --- a working release serves a repository of its own ----------------------------------
-out="$(env HOME="$T/home-green" "$GATE" --base "$HTTP_BASE" --expect "v$VERSION" 2>&1)" || {
+out="$(env HOME="$T/home-green" MAJORDOMUS_HTTP_HOST=0.0.0.0 "$GATE" --base "$HTTP_BASE" --expect "v$VERSION" 2>&1)" || {
   echo "    the gate failed against a complete release"
   printf '%s\n' "$out" | sed 's/^/      /'
   exit 1

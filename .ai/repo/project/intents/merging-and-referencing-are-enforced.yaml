@@ -1,0 +1,57 @@
+id: merging-and-referencing-are-enforced
+title: "Merging and referencing are enforced: every pull request carries its metadata, every reference resolves, every number is taken once"
+statement: "On 2026-10-22 the owner asked for better doctrines and tooling for merging and for referencing, learned from prismatic-platform: every pull request carries its metadata, kept current automatically and offloaded to GitHub. Today a pull request carries only what its author typed; work sitting in an open pull request is offered again as the next issue; a milestone dependency holds issues that need nothing from it, and nothing says which; a record can be named before it reaches master; issue ids have no allocator while ADR and case numbers have two separate ones; a GitHub issue can be created by hand and adopted by its title; a commit need not name the issue it serves; and the landing duties of a train member are prose. Each of these becomes a projection from the records, a typed command or a gate."
+invariants:
+  - "The records under .ai/repo/project stay canonical; GitHub labels, milestones, assignees and pull request bodies are projections of them and never their source"
+  - "A pull request references the issues it serves and never closes one: no projected body carries a closing keyword, because the record, not the forge, decides when an issue is done; I3970 writes this into the projection rule and I3976 refuses it in commit messages"
+  - "A region a person edited is left alone and reported, never overwritten (the github-sync rule without --force)"
+  - "No check is bypassed, no landing is forced, and no new canonical issue status is added: the six statuses of lib/project.awk and plan.rs stay byte-equal (case 99_plan_capabilities)"
+non_goals:
+  - "Moving the plan to GitHub issues or GitHub Projects"
+  - "Auto-merge on GitHub; landing stays with the integration executor (landing-survives-any-session)"
+  - "Rewriting published history to satisfy a new commit rule; old debt is a baseline"
+milestones:
+  - "merging-and-referencing-are-enforced"
+satisfaction:
+  - id: pr-metadata-projected
+    criterion: "Every open pull request carries labels (type, area, priority, train, records, hold), the GitHub milestone of the issue it serves, an assignee and a managed body region of Refs links to the issues it serves, all projected from the records by a workflow and by a local command that agree, idempotent, with no closing keyword (planned proof: case a_pull_request_carries_its_projected_metadata of I3970)"
+    evidence: command
+    ref: "majordomus intent explain merging-and-referencing-are-enforced"
+  - id: work-in-review-is-not-next
+    criterion: "An issue whose work sits in an open pull request or under a live branch claim is reported taken and is never the answer of plan next or plan ready, and the observation it was judged from is named (planned proof: case work_in_an_open_pull_request_is_not_next of I3971)"
+    evidence: command
+    ref: "majordomus intent explain merging-and-referencing-are-enforced"
+  - id: milestone-gate-is-explained
+    criterion: "plan validate names every issue held only by its milestone gate, and an issue that declares it needs nothing from its milestone dependencies is not held by them and trips no premature finding (planned proof: case an_issue_held_only_by_its_milestone_is_named of I3972)"
+    evidence: command
+    ref: "majordomus intent explain merging-and-referencing-are-enforced"
+  - id: references-resolve-on-master
+    criterion: "A pull request naming a record id that resolves neither on master nor in the pull request itself is refused, and convergence reports every record named on master that lives only on an unmerged branch (planned proof: case a_pull_request_naming_an_unlanded_id_is_refused of I3973)"
+    evidence: command
+    ref: "majordomus intent explain merging-and-referencing-are-enforced"
+  - id: one-allocator
+    criterion: "Issue ids, ADR numbers and case numbers are allocated by one survey over the tree, sibling worktrees, every ref and the peer board, and the collision gate refuses two branches adding the same number under different names (planned proof: case two_branches_taking_one_number_are_refused of I3974)"
+    evidence: command
+    ref: "majordomus intent explain merging-and-referencing-are-enforced"
+  - id: issues-come-from-the-projection
+    criterion: "A GitHub issue is created only by github-sync: an agent command creating one by hand is refused, an issue nobody projected is labelled and reported on GitHub, and an issue without a record marker is never adopted by its title (planned proof: case a_raw_issue_create_is_refused of I3975)"
+    evidence: command
+    ref: "majordomus intent explain merging-and-referencing-are-enforced"
+  - id: every-commit-names-its-issue
+    criterion: "A commit whose message names no issue, or carries a closing keyword, is refused by the commit-msg hook and by commit-policy, except the narrow machine-verifiable exemptions, and only commits after the rule's recorded boundary are judged (planned proof: case a_commit_naming_no_issue_is_refused of I3976)"
+    evidence: command
+    ref: "majordomus intent explain merging-and-referencing-are-enforced"
+  - id: one-version-everywhere
+    criterion: "Every page a deployment serves names only versions of the release model, each in its labelled role, and a served page naming another is refused after the deploy (planned proof: case a_served_page_with_a_foreign_version_is_refused of I3977)"
+    evidence: command
+    ref: "majordomus intent explain merging-and-referencing-are-enforced"
+  - id: merged-result-is-judged
+    criterion: "Each train member is judged on its merged tree (structure job, library tests, the cases its change touches), and a fix member joins only with a test and its changed-code coverage (planned proof: case a_train_member_is_judged_on_its_merged_tree of I3978)"
+    evidence: command
+    ref: "majordomus intent explain merging-and-referencing-are-enforced"
+  - id: conventions-declared-once
+    criterion: "Every label, the branch prefixes and the commit types are declared once in a tracked labels file, projected to GitHub, described in CONTRIBUTING, and a label used anywhere but not declared is refused (planned proof: case an_undeclared_label_is_refused of I3979)"
+    evidence: command
+    ref: "majordomus intent explain merging-and-referencing-are-enforced"
+created_at: 2026-10-22
+updated_at: 2026-10-22

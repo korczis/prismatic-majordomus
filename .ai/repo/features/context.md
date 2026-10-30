@@ -11,9 +11,9 @@ weight: 140
 domain: context
 featured: false
 areas: [context]
-modules: [directories, repository, devcontext]
+modules: [directories, repository, devcontext, pack]
 commands: [context]
-kinds: [context, scope]
+kinds: [context, scope, workspace]
 rules: [majordomus.context-integrity, majordomus.minimum-sufficient-context, project.context-locality, project.scope-is-declared, majordomus.layout-integrity, majordomus.ai-layout-integrity]
 docs: [docs/CONTEXT.md, docs/SCOPE.md]
 adrs: [adr-0011]

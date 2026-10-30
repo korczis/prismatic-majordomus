@@ -102,23 +102,23 @@ command graph, not a third scheduler.
 
 ## Ownership boundaries
 
-```text
-                    ┌───────────────────────────────────────────────┐
-                    │  THE LAYER  .ai/repo (shared) + .ai/local     │  storage
-                    │  typed by share/kinds.yaml,                   │
-                    │  discovered by .ai/repo/knowledge/sources.yaml│
-                    └───────────────────────┬───────────────────────┘
-                                            │  reads and writes
-                    ┌───────────────────────▼───────────────────────┐
-                    │  THE CANONICAL RUNTIME                        │
-                    │  apps/majordomus-cli/src/capability/          │
-                    │  one capability! per operation, typed in/out  │  semantics
-                    │  exposure derived by command_graph/policy.rs  │
-                    └──┬────────┬────────┬─────────┬────────┬───────┘
-                       │        │        │         │        │         projections
-                  ┌────▼──┐ ┌───▼───┐ ┌──▼───┐ ┌───▼───┐ ┌──▼─────┐
-                  │Cockpit│ │HTTP+WS│ │OpenAPI│ │  MCP  │ │  CLI   │  surfaces
-                  └───────┘ └───────┘ └───────┘ └───────┘ └────────┘
+```mermaid
+flowchart TD
+  store["THE LAYER · storage<br/><small>.ai/repo (shared) + .ai/local<br/>typed by share/kinds.yaml<br/>discovered by .ai/repo/knowledge/sources.yaml</small>"]
+  runtime["THE CANONICAL RUNTIME · semantics<br/><small>apps/majordomus-cli/src/capability/<br/>one capability! per operation, typed in/out<br/>exposure derived by command_graph/policy.rs</small><br/>docs/CAPABILITIES.md"]
+  store <-->|"reads and writes"| runtime
+  subgraph surfaces["projections · surfaces"]
+    cockpitui["Cockpit<br/>docs/COCKPIT.md"]
+    http["HTTP + WS"]
+    openapi["OpenAPI"]
+    mcp["MCP<br/>docs/MCP.md"]
+    cli["CLI<br/>docs/CLI.md"]
+  end
+  runtime --> cockpitui
+  runtime --> http
+  runtime --> openapi
+  runtime --> mcp
+  runtime --> cli
 ```
 
 **The layer owns storage.** Every development object is a typed file of `.ai/`. Its kind is
@@ -319,6 +319,11 @@ ADR 0040, not an architecture.
 | context (compiled) | `lib/context.sh`, `lib/context_docs.sh` | assembled per call | budgeted assembly | `.ai/**/README.md`, kind `context` | a worker, the briefing | — (read-only) | — | `test/cases/*` | [`CONTEXT.md`](CONTEXT.md) | **the Rust half (`directories.list`) reports contracts, not compiled context**; `DYNAMICITY.md` already marks the provider table a *target* |
 | repository / index | `src/repository.rs`, `src/index.rs` | `.ai/manifest.yaml` + the trees it names | `manifest/v1` | manifest, then `sources.yaml` | everything | — | — | `tests/` | [`SCHEMAS.md`](SCHEMAS.md) | `benchmarks`, `ci`, `providers` and `workspaces` are on disk but in no manifest section, alongside several loose baseline files |
 | shared server / lease | `src/lease.rs`, `src/shared.rs` | `.ai/local/state/mcp/server.json` | `LeaseDocument` | — | every attached client | `serve`, `mcp` | — | `test/cases/108` | [`ENTRY.md`](ENTRY.md), ADR 0035 | one server per *checkout*, not per repository |
+
+How the runtime behaves under each failure it can suffer, and what proves it, is the
+[failure table in `MCP.md`](MCP.md#failure-behaviour): every row names the tests that drive
+it or states the limitation that nothing does, and `test/cases/3056` refuses a row with
+neither.
 
 ### Governance and surfaces
 

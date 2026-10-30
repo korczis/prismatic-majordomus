@@ -26,8 +26,10 @@ serve_up serve.out serve.err || exit 1
 get() { curl -s --max-time 120 -o page.html -w '%{http_code}' "$U$1"; }
 
 [ "$(get /ui/knowledge)" = 200 ] || { echo "    /ui/knowledge did not answer 200"; exit 1; }
+# a fresh repository has no candidate, so the queue is one sentence naming how a record is
+# made (I3022), and the deriver's panel is asked as a question (I3023)
 for want in 'What the work left behind' 'knowledge_base.status' 'knowledge_base.candidates' \
-  'The deriver' 'By subject' 'Awaiting review' 'No candidate awaits review.' \
+  'Is learning up to date?' 'Awaiting review' 'majordomus knowledge observe' \
   'majordomus knowledge promote &lt;id&gt;' 'majordomus knowledge reject &lt;id&gt;'; do
   grep -qF -- "$want" page.html || { echo "    /ui/knowledge does not show: $want"; exit 1; }
 done

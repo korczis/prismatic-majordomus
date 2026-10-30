@@ -123,7 +123,7 @@ fn skipped<P>() -> Result<SourceRead<P>, (MonitorSourceHealth, String)> {
     Err((MonitorSourceHealth::Skipped, "not asked for".into()))
 }
 
-fn monitor(ctx: &Context, input: MonitorInput) -> Result<MonitorPage, CapabilityError> {
+pub(crate) fn monitor(ctx: &Context, input: MonitorInput) -> Result<MonitorPage, CapabilityError> {
     let previous = match input.after.as_deref() {
         Some(token) => Cursor::parse(token).map_err(CapabilityError::InvalidInput)?,
         None => Cursor::default(),
@@ -226,7 +226,9 @@ pub fn module() -> ModuleDescriptor {
                 exposure: Exposure { mcp: mcp("majordomus_monitor"), http: get("/api/v1/monitor"), cli: None },
                 tags: ["monitor", "mesh", "coordination", "observability"],
                 handler: monitor,
-            },
+            }
+            // the mesh's working state, not the repository's: a loopback caller only (ADR 0220)
+            .reads_only_locally(),
         ],
     }
 }
