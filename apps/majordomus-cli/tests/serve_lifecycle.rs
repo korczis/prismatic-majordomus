@@ -1,7 +1,8 @@
 //! The server's lifecycle as a person or a hook converges on it: `serve ensure` starts one
 //! server and finds it the next time, three at once start one process and share it, a start
 //! in progress holds another off while a dead one does not, a stale lease and a killed
-//! server are both recovered, an idle server ends by itself, a taken port is not a failure,
+//! server are both recovered, an idle server ends by itself after the idle time it was given
+//! or the one its policy declares, a taken port is not a failure,
 //! `serve stop` ends the server this checkout's lease names and leaves another checkout's
 //! alone.
 
@@ -64,6 +65,89 @@ fn get(url: &str, target: &str) -> Option<(u16, String)> {
     Some((status, body.to_string()))
 }
 
+/// What answers at `url` as the server `pid`, or `None` when nothing does: nothing answers
+/// there, or something else does (another test's server given the freed port, or not a server
+/// of ours at all). Asked of the server itself, at /api/v1/server (I3099).
+fn still_answers_as(url: &str, pid: u64) -> Option<String> {
+    let (_, body) = get(url, "/api/v1/server")?;
+    let answered = serde_json::from_str::<Value>(&body)
+        .ok()
+        .and_then(|s| s["this_process"]["pid"].as_u64());
+    (answered == Some(pid)).then(|| format!("pid {pid} still answers at {url}"))
+}
+
+/// A one-shot HTTP server on a free port that answers `answers` requests with `body`; its
+/// address, as a URL.
+fn answering(body: &'static str, answers: usize) -> String {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("a free port");
+    let url = format!("http://{}", listener.local_addr().unwrap());
+    std::thread::spawn(move || {
+        for mut stream in listener.incoming().take(answers).flatten() {
+            let mut buf = [0u8; 1024];
+            let _ = stream.read(&mut buf);
+            let _ = write!(
+                stream,
+                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                body.len()
+            );
+        }
+    });
+    url
+}
+
+#[test]
+fn a_stopped_servers_address_answered_by_another_server_is_closed_for_it() {
+    // 2026-10-21, master run 39565286918: the stopped server was gone and its freed port
+    // answered as another test's server; the old check read that as the stopped one (I3099)
+    let other = answering(r#"{"this_process":{"pid":4242}}"#, 1);
+    assert_eq!(
+        still_answers_as(&other, 77),
+        None,
+        "another pid at the address is not it"
+    );
+    let same = answering(r#"{"this_process":{"pid":77}}"#, 1);
+    assert_eq!(
+        still_answers_as(&same, 77),
+        Some(format!("pid 77 still answers at {same}")),
+        "the same pid still answering is named"
+    );
+    let not_ours = answering("not json", 1);
+    assert_eq!(
+        still_answers_as(&not_ours, 77),
+        None,
+        "something that is not our server"
+    );
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let closed = format!("http://{}", listener.local_addr().unwrap());
+    drop(listener);
+    assert_eq!(still_answers_as(&closed, 77), None, "nothing answers");
+}
+
+/// Whether `pid` is a live process, asked of the system rather than of any port.
+fn process_alive(pid: u64) -> bool {
+    Command::new("kill")
+        .args(["-0", &pid.to_string()])
+        .stderr(std::process::Stdio::null())
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false)
+}
+
+/// [`wait_until`], with a failure that says what was last seen rather than only that the
+/// bound ran out: `ok` returns `Err(what it saw)` while the condition does not hold.
+fn wait_until_or(what: &str, timeout: Duration, mut ok: impl FnMut() -> Result<(), String>) {
+    let deadline = Instant::now() + timeout;
+    let mut last = String::from("nothing was observed");
+    while Instant::now() < deadline {
+        match ok() {
+            Ok(()) => return,
+            Err(seen) => last = seen,
+        }
+        std::thread::sleep(Duration::from_millis(100));
+    }
+    panic!("{what} did not happen within {timeout:?}: {last}");
+}
+
 fn wait_until(what: &str, timeout: Duration, mut ok: impl FnMut() -> bool) {
     let deadline = Instant::now() + timeout;
     while Instant::now() < deadline {
@@ -119,14 +203,28 @@ fn ensure_starts_one_server_finds_it_the_next_time_and_stop_ends_it() {
     assert!(out.starts_with("standing   ready"), "{out}");
     assert!(out.contains("<- this checkout"), "{out}");
 
-    // stop: the lease goes and the port closes
+    // stop: the lease goes, the process is gone, and the server no longer answers
     let (code, out, err) = mj(&f.root(), &["serve", "stop"]);
     assert_eq!(code, 0, "{out}{err}");
     assert!(out.starts_with("stopped "), "{out}");
     assert_eq!(LeaseFile::read(&lease_path(&f)), LeaseFile::Absent);
-    wait_until("the port closes", Duration::from_secs(5), || {
-        get(&url, "/").is_none()
-    });
+    // "stopped" is printed only once the process has exited, so that is asserted outright
+    assert!(
+        !process_alive(pid),
+        "serve stop said {out:?} while pid {pid} is still running"
+    );
+    // What the address answers next is not proof either way: the tests of this binary run at
+    // once, and another one's server may be given the freed port within the second. On
+    // 2026-10-21 (master run 39565286918, a loaded runner) "the port closes" failed after 5s
+    // with the stopped process provably gone (I3099). So the server is asked who it is.
+    wait_until_or(
+        "the stopped server's address stops answering as it",
+        Duration::from_secs(5),
+        || match still_answers_as(&url, pid) {
+            Some(seen) => Err(seen),
+            None => Ok(()),
+        },
+    );
     let (code, out, _) = mj(&f.root(), &["serve", "stop"]);
     assert_eq!(code, 0);
     assert!(out.contains("nothing to stop"), "{out}");
@@ -716,6 +814,101 @@ fn an_idle_server_ends_by_itself() {
     let (code, out, _) = mj(&f.root(), &["serve", "status"]);
     assert_eq!(code, 0);
     assert!(out.starts_with("standing   absent"), "{out}");
+}
+
+/// I2701: the idle life of a server `ensure` starts is declared beside the other server
+/// timings (`server.idle_seconds:`), not compiled. Declared at two seconds, a server started
+/// without `--idle` stops after about that long rather than after 900; and `--idle` on the
+/// command line overrides the declaration, so a server given 120 is still serving well past
+/// the declared two.
+#[test]
+fn idle_timeout_declared_test() {
+    let f = Fixture::new();
+    f.write(
+        ".ai/repo/policy.yaml",
+        &format!("{}\nserver:\n  idle_seconds: 2\n", common::POLICY),
+    );
+    f.commit("declare a short idle timeout");
+
+    // no --idle: the declaration decides
+    let (code, a, err) = ensure(&f.root(), &[]);
+    assert_eq!(code, 0, "{a}\n{err}");
+    let url = a["url"].as_str().unwrap().to_string();
+    wait_until(
+        "a server started without --idle ends after the declared idle time",
+        Duration::from_secs(20),
+        || LeaseFile::read(&lease_path(&f)) == LeaseFile::Absent,
+    );
+    wait_until("its port closes", Duration::from_secs(5), || {
+        get(&url, "/").is_none()
+    });
+
+    // --idle overrides the declaration
+    let (code, b, err) = ensure(&f.root(), &["--idle", "120"]);
+    assert_eq!(code, 0, "{b}\n{err}");
+    let url = b["url"].as_str().unwrap().to_string();
+    std::thread::sleep(Duration::from_secs(6));
+    assert_ne!(
+        LeaseFile::read(&lease_path(&f)),
+        LeaseFile::Absent,
+        "a server given --idle 120 stopped after the declared 2 s: the command line did not override the declaration"
+    );
+    assert!(
+        get(&url, "/").is_some(),
+        "the server given --idle 120 no longer answers"
+    );
+    let (code, _, err) = mj(&f.root(), &["serve", "stop"]);
+    assert_eq!(code, 0, "{err}");
+}
+
+/// The port in a server's URL.
+fn port_of(url: &str) -> u16 {
+    url.rsplit(':')
+        .next()
+        .and_then(|p| p.parse().ok())
+        .unwrap_or_else(|| panic!("no port in {url}"))
+}
+
+/// I2702: a linked worktree's server asks for the port its checkout derives, so two
+/// consecutive starts bind the same address, and two worktrees of one repository ask for
+/// different ones — while the primary checkout keeps the documented default.
+#[test]
+fn stable_port_per_checkout_test() {
+    let f = Fixture::new();
+    // the layer is in HEAD, so that each worktree checks it out
+    f.git(&["add", "-A"]);
+    f.git(&["commit", "-q", "--allow-empty", "-m", "the layer"]);
+    let parent = f.root().parent().unwrap().to_path_buf();
+    let a = parent.join("worktree-a");
+    let b = parent.join("worktree-b");
+    for (dir, branch) in [(&a, "a"), (&b, "b")] {
+        f.git(&["worktree", "add", "-q", "-b", branch, dir.to_str().unwrap()]);
+    }
+    let derived = |dir: &Path| {
+        let repo = majordomus_cli::Repository::discover(dir).expect("a checkout");
+        majordomus_cli::cli::checkout_port(repo.root())
+    };
+    assert_eq!(derived(&f.root()), majordomus_cli::cli::DEFAULT_PORT);
+    let (pa, pb) = (derived(&a), derived(&b));
+    assert_ne!(pa, pb, "two checkouts of one repository ask for one port");
+    assert_ne!(pa, majordomus_cli::cli::DEFAULT_PORT);
+
+    let mut seen = Vec::new();
+    for _ in 0..2 {
+        let (code, v, err) = ensure(&a, &["--idle", "120"]);
+        assert_eq!(code, 0, "{v}\n{err}");
+        seen.push(port_of(v["url"].as_str().unwrap()));
+        let (code, out, _) = mj(&a, &["serve", "stop"]);
+        assert_eq!(code, 0, "{out}");
+    }
+    assert_eq!(seen[0], seen[1], "a restart moved the address: {seen:?}");
+    assert_eq!(
+        seen[0], pa,
+        "the server did not ask for its checkout's port first"
+    );
+    for dir in [&a, &b] {
+        f.git(&["worktree", "remove", "--force", dir.to_str().unwrap()]);
+    }
 }
 
 #[test]

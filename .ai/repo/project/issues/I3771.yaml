@@ -1,0 +1,37 @@
+id: "I3771"
+milestone: "mesh-journal-converges"
+title: "A claim scope that is not a repository path is refused, or mapped to the record file it names, so a milestone claim excludes what it says"
+slug: "a-claim-scope-that-is-not-a-path-is-refused-or-mapped"
+priority: "p1"
+profile: "implementation"
+parallel_safe: true
+objective: "Give the mesh one rule for a claim scope written as a namespace and a name (milestone:<id>, issue:<id>, or any other word followed by a colon): milestone:<id> and issue:<id> are mapped to .ai/repo/project/milestones/<id>.yaml and .ai/repo/project/issues/<id>.yaml before admission and in the fold, so they meet the record and anything claimed under it; any other namespaced scope is refused at admission as scope_not_a_path, naming the entry and the accepted forms. The seat scopes the cooperation rule declares (campaign/*/landing, release/seat, refs/heads/*) keep their meaning unchanged."
+why: "Found on 2026-10-20 by the mesh audit: that day's dispatch gave four milestone owners exclusive claims with the scope milestone:<id>. Claims meet by a path test, so milestone:idd-workspace meets neither the milestone's record nor any issue file or source path: four exclusive claims that the board shows as held refuse nothing, and every owner believed the milestone was protected. The milestone promises that a stale or wrong claim never wins; a claim that silently excludes nothing loses the race it was taken to win, unseen."
+current_state: "Verified on origin/master 91c0b5d5658. apps/majordomus-cli/src/peers.rs:314-337 claims_meet is equality or a prefix ending at a slash, after trimming slashes, so milestone:x meets only the identical string. apps/majordomus-cli/src/mesh/state.rs:849-852 scopes_meet and :900 admission_conflicts use it unchanged for exclusion, and the module comment at :18-19 says both machines share that one predicate. apps/majordomus-cli/src/capability/builtin/mesh.rs:918-927 ClaimInput documents scope as repository-relative paths, and mesh_claim at :958-978 passes input.scope to apps/majordomus-cli/src/mesh/cooperation.rs:3523 Cooperation::claim, which checks only conflicts (:3535) and writes ClaimAcquired with any strings at all. docs/MESH.md:291-293 says a claim is a scope of repository-relative paths, and nothing enforces it. The seat names are declared in .ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md:61-63 and matched in apps/majordomus-cli/src/ui/mesh.rs:49-65."
+desired_state: "One pure function in mesh/state.rs normalises a scope entry: milestone:<id> and issue:<id> become their record paths, path-shaped entries pass as they are, and any other namespace is an error. Admission (Cooperation::claim) refuses an entry the function rejects as scope_not_a_path before anything is written, and the answer of an accepted claim lists the mapped scope it holds. The fold applies the same mapping to replicated ClaimAcquired events, so a milestone:<id> claim written by an older runtime also excludes its record. docs/MESH.md names the accepted forms and the refusal."
+scope:
+  - "apps/majordomus-cli/src/mesh/state.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/tests/mesh_cooperation.rs"
+  - "docs/MESH.md"
+  - "test/cases/3744_a_claim_scope_that_is_not_a_path_is_refused.sh"
+  - ".ai/repo/project/issues/I3771.yaml"
+non_scope:
+  - "Advisory board announcements of peers.rs, which refuse nothing by design"
+  - "A milestone claim that also excludes every issue file of the milestone, which needs the plan inside the fold"
+  - "Releasing the milestone: claims already held"
+acceptance_criteria:
+  - "An exclusive claim on milestone:idd-workspace holds the scope .ai/repo/project/milestones/idd-workspace.yaml, and a second session's exclusive claim on that file is refused as claim_conflict"
+  - "An exclusive claim on issue:I2781 meets a claim on .ai/repo/project/issues/I2781.yaml"
+  - "Negative: an exclusive claim on intent:anything, or on a scope with an unknown namespace, is refused as scope_not_a_path and writes no event"
+  - "Negative: the seat scopes release/seat, campaign/c1/landing and refs/heads/fix-x are accepted and mean exactly what they meant before"
+  - "A replicated ClaimAcquired with scope milestone:x from a runtime that did not map it folds as excluding .ai/repo/project/milestones/x.yaml"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::state"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_cooperation"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3744_a_claim_scope_that_is_not_a_path_is_refused 130_mesh"
+  - "majordomus plan validate"
+evidence_required:
+  - "test_a_claim_scope_that_is_not_a_path_is_refused_or_mapped"
+depends_on: []

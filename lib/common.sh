@@ -460,6 +460,9 @@ mj_git_label() {
   cur_head="$(mj_git_head)"; cur_branch="$(mj_git_branch)"
   if [ "$rec_branch" != "$cur_branch" ]; then printf 'different_context'; return; fi
   if [ "$rec_head" = "$cur_head" ]; then printf 'exact'; return; fi
+  # NONE is a task started before the first commit (mj_git_head): an empty history is an
+  # ancestor of every commit on its branch, and merge-base cannot be asked about a non-revision.
+  if [ "$rec_head" = NONE ]; then printf 'advanced'; return; fi
   if mj_git merge-base --is-ancestor "$rec_head" "$cur_head" 2>/dev/null; then printf 'advanced'; return; fi
   printf 'diverged'
 }
@@ -543,6 +546,37 @@ mj_git_trunk_ref() {
   def="$(mj_git symbolic-ref -q "refs/remotes/$remote/HEAD" 2>/dev/null || true)"
   [ -n "$def" ] && mj_git rev-parse -q --verify "$def^{commit}" >/dev/null 2>&1 && printf '%s' "$def"
   return 0
+}
+
+# Is this checkout on the trunk? True when HEAD is the local branch named like the trunk's
+# remote-tracking branch (`main` for refs/remotes/origin/main). No trunk known (no remote,
+# or no refs/remotes/<remote>/HEAD) and a detached HEAD are both "not on the trunk", so a
+# repository without a remote keeps writing its records where it always has. ADR 0091,
+# amendment of 2026-10-15: a trunk that changes only through pull requests cannot commit
+# what an episode boundary writes there, so a trunk episode stages it in the outbox.
+mj_on_trunk() {
+  local trunk br
+  trunk="$(mj_git_trunk_ref)"
+  [ -n "$trunk" ] || return 1
+  br="$(mj_git symbolic-ref -q --short HEAD 2>/dev/null)" || return 1
+  trunk="${trunk#refs/remotes/}"
+  [ "${trunk#*/}" = "$br" ]
+}
+
+# Where a trunk episode stages what it would have written into a tracked section: the
+# closed session record under sessions/, the derived knowledge candidates under
+# candidates/. Checkout-local and never tracked; a branch episode moves it into the tracked
+# sections, and that branch's pull request carries it to the trunk.
+mj_outbox_dir() { printf '%s/outbox' "$MJ_STATE_DIR"; }
+
+# "<sessions> <candidates>": how many records wait in the outbox. `context` and `doctor`
+# name a non-empty outbox, so a clone that never branches again still says what it holds.
+mj_outbox_counts() {
+  local d s=0 c=0 f
+  d="$(mj_outbox_dir)"
+  for f in "$d"/sessions/*.md; do [ -f "$f" ] && s=$((s + 1)); done
+  for f in "$d"/candidates/*.md; do [ -f "$f" ] && c=$((c + 1)); done
+  printf '%s %s' "$s" "$c"
 }
 
 # Every commit this checkout made, sorted: the HEAD reflog's entries that created one.
@@ -712,7 +746,26 @@ mj_path_contains() {
   local a b
   mj_norm_path_into a "$1" || a="$1"
   mj_norm_path_into b "$2" || b="$2"
+  # `.` is the repository itself: `start` accepts it as a scope, and read as a literal it
+  # contained no path at all, so a task scoped to the whole repository judged every file
+  # it changed to be outside its scope (case 3190). A path that escapes the repository
+  # is refused by the normalisation and is still not contained.
+  if [ "$a" = . ]; then mj_norm_path_into b "$2" && return 0; return 1; fi
   case "$b" in "$a"|"$a"/*) return 0 ;; esac; return 1
+}
+
+# Is commit $1 in the history of $2 (default HEAD)? 0 it is, 1 it is not, 2 this clone cannot
+# know: it is shallow, or it lacks the object, and an absent commit is then no evidence that the
+# commit does not exist. The one predicate for whoever records or checks a commit (I3007, and the
+# producer side I3050); scripts/ci/link-check decides a page's commit links by the same rule.
+mj_commit_in_history() {
+  local sha="$1" head="${2:-HEAD}"
+  case "$sha" in ''|*[!0-9a-f]*) return 1 ;; esac
+  [ "${#sha}" -ge 7 ] && [ "${#sha}" -le 40 ] || return 1
+  [ "$(mj_git rev-parse --is-shallow-repository 2>/dev/null)" = true ] && return 2
+  mj_git cat-file -e "$sha^{commit}" 2>/dev/null || return 2
+  mj_git merge-base --is-ancestor "$sha" "$head" 2>/dev/null && return 0
+  return 1
 }
 
 # "15m" / "2h" / "90s" -> seconds
@@ -808,7 +861,132 @@ MJ_FLATTEN_AWK='
   }'
 mj_yaml_flatten() {
   mj_count yaml_flatten
+  if [ -n "$MJ_FLAT_CACHE_DIR" ] && [ -f "$1" ] && [ -r "$1" ]; then
+    mj_yaml_flatten_cached "$1"; return
+  fi
   awk -v outdir="" -v front=0 "$MJ_FLATTEN_AWK" "$1"
+}
+
+# ---------------------------------------------------------------- the flatten cache
+# A flatten is one awk process, and a command parses the same unchanged files again and
+# again: doctor alone flattens several hundred, and the hook, watch and context each start
+# over. The cache under .ai/local/cache/flat/ keeps each file's flat lines, so a second
+# command on an unchanged file starts no process to read it (I0821).
+#
+# It is keyed by content, never by path or time: an entry holds the exact bytes of the file
+# it was parsed from, and it is served only when the file asked about is those bytes,
+# compared in full. The entry's name is only where to look — the content's length and a few
+# of its characters, computed with builtins — because a SHA-256 of the file costs one
+# process, which is what the flatten costs, and a cache that forks to learn whether it may
+# skip a fork saves nothing (measured: hash 2.8 ms, flatten 3.1 ms on a 35-line file). Two
+# files that land in one slot evict each other; neither is ever served the other's lines.
+# The directory above the entries is the flattener's own identity, the hash of
+# MJ_FLATTEN_AWK, so a changed parser never reads what an older one wrote.
+#
+# An entry is one file: a header line `mjflat 1 <source length> <flat length>`, the
+# source, the flat lines. Anything else — truncated, edited, unreadable, a header that
+# does not add up, a source that differs — is a miss, and the miss rewrites it. A miss
+# parses with the same awk, prints what it printed, and keeps it only when the parse
+# succeeded and the file did not change while it ran; the entry is written beside the
+# others and renamed into place, so a reader sees an old entry or a new one, never half of
+# one. After every new entry the directory holds at most `cache.flatten_max_entries`
+# (policy), the oldest written removed first. A policy without the key, or with 0, has
+# no cache. There is never a default: a reader's own number is a second source of truth.
+#
+# Set by mj_flat_cache_init, which mj_load_policy calls: an empty directory is no cache.
+MJ_FLAT_CACHE_DIR=""; MJ_FLAT_CACHE_CAP=0; MJ_FLAT_CACHE_KEY=""
+mj_flat_cache_init() {
+  local line cap="" dir
+  MJ_FLAT_CACHE_DIR=""; MJ_FLAT_CACHE_CAP=0
+  [ -n "${MJ_AI_LOCAL_DIR:-}" ] && [ -d "$MJ_AI_LOCAL_DIR" ] && [ -w "$MJ_AI_LOCAL_DIR" ] || return 0
+  [ -n "${MJ_POL_FLAT:-}" ] && [ -r "$MJ_POL_FLAT" ] || return 0
+  while IFS= read -r line; do
+    case "$line" in cache.flatten_max_entries=*) cap="${line#*=}"; break ;; esac
+  done < "$MJ_POL_FLAT"
+  case "$cap" in '' | *[!0-9]*) return 0 ;; esac
+  [ "$cap" -gt 0 ] || return 0
+  if [ -z "$MJ_FLAT_CACHE_KEY" ]; then
+    MJ_FLAT_CACHE_KEY="$(printf '%s' "$MJ_FLATTEN_AWK" | mj_sha256_hex 2>/dev/null)" || MJ_FLAT_CACHE_KEY=""
+    case "$MJ_FLAT_CACHE_KEY" in
+      [0-9a-f][0-9a-f][0-9a-f][0-9a-f]*) MJ_FLAT_CACHE_KEY="${MJ_FLAT_CACHE_KEY:0:16}" ;;
+      *) MJ_FLAT_CACHE_KEY=""; return 0 ;;
+    esac
+  fi
+  dir="$MJ_AI_LOCAL_DIR/cache/flat/$MJ_FLAT_CACHE_KEY"
+  [ -d "$dir" ] || mkdir -p "$dir" 2>/dev/null || return 0
+  MJ_FLAT_CACHE_DIR="$dir"; MJ_FLAT_CACHE_CAP="$cap"
+}
+# The slot an entry for this content is looked up in, into the variable named by $1: the
+# content's length and sixteen of its characters, evenly spaced, as numbers. Builtins only.
+mj_flat_cache_slot() {
+  # names of its own: printf -v into the caller's variable must not land on a local here
+  local _fs_n="${#2}" _fs_i _fs_p _fs_v _fs_s
+  _fs_s="$_fs_n"
+  if [ "$_fs_n" -gt 0 ]; then
+    for _fs_i in 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+      _fs_p=$(( (_fs_n - 1) * _fs_i / 15 ))
+      printf -v _fs_v '%d' "'${2:_fs_p:1}" 2>/dev/null || _fs_v=0
+      _fs_s="$_fs_s-${_fs_v#-}"
+    done
+  fi
+  printf -v "$1" '%s' "$_fs_s"
+}
+mj_yaml_flatten_cached() {
+  local f="$1" nl='
+' src="" rs=unopened again e head rest flat slot entry tmp st fl new
+  # read -d '' stops at a NUL byte and returns 0 there: a file with one is not text a shell
+  # variable can hold. A file that would not open leaves rs as it was. Either is parsed as
+  # it always was, error and all. Stderr is closed before the file is opened, or bash's own
+  # complaint about the redirection would print where the parser's never did.
+  { IFS= read -r -d '' src && rs=0 || rs=$?; } 2>/dev/null < "$f" || :
+  case "$rs" in 0 | unopened) awk -v outdir="" -v front=0 "$MJ_FLATTEN_AWK" "$f"; return ;; esac
+  mj_flat_cache_slot slot "$src"
+  entry="$MJ_FLAT_CACHE_DIR/$slot"
+  if [ -f "$entry" ]; then
+    e=""; IFS= read -r -d '' e 2>/dev/null < "$entry" || :
+    head="${e%%"$nl"*}"; rest="${e#*"$nl"}"; fl="${head##* }"
+    case "$head" in "mjflat 1 ${#src} "*[0-9]) case "$fl" in *[!0-9]*) fl="" ;; esac ;; *) fl="" ;; esac
+    if [ -n "$fl" ] && [ "${#e}" -eq $(( ${#head} + 1 + ${#src} + fl )) ] \
+      && [ "${rest:0:${#src}}" = "$src" ]; then
+      mj_count flatten_cache_hit
+      printf '%s' "${rest:${#src}}"
+      return 0
+    fi
+  fi
+  tmp="$MJ_FLAT_CACHE_DIR/.w.${BASHPID:-$$}.$RANDOM"
+  # st=$? on the next line would never run under set -e when the parse fails, and the lines
+  # it printed before failing would stay in the temporary file
+  st=0; awk -v outdir="" -v front=0 "$MJ_FLATTEN_AWK" "$f" > "$tmp" || st=$?
+  flat=""; IFS= read -r -d '' flat 2>/dev/null < "$tmp" || :
+  printf '%s' "$flat"
+  again=""; IFS= read -r -d '' again 2>/dev/null < "$f" || :
+  if [ "$st" -eq 0 ] && [ "$again" = "$src" ] \
+    && printf 'mjflat 1 %s %s\n%s%s' "${#src}" "${#flat}" "$src" "$flat" > "$tmp" 2>/dev/null; then
+    new=0; [ -e "$entry" ] || new=1
+    if mv -f "$tmp" "$entry" 2>/dev/null; then
+      [ "$new" = 0 ] || mj_flat_cache_trim
+    else
+      rm -f "$tmp"
+    fi
+  else
+    rm -f "$tmp"
+  fi
+  return "$st"
+}
+# Past the cap the oldest written go first, until the directory holds the cap again. The
+# count is a glob, so a write from a subshell or another process is counted too. A `.w.*`
+# file an hour old is a writer that died between its write and its rename.
+mj_flat_cache_trim() {
+  local entries old=() name n=0
+  entries=("$MJ_FLAT_CACHE_DIR"/[!.]*)
+  [ "${#entries[@]}" -gt "$MJ_FLAT_CACHE_CAP" ] || return 0
+  while IFS= read -r name; do
+    n=$(( n + 1 ))
+    [ "$n" -le "$MJ_FLAT_CACHE_CAP" ] || old+=("$MJ_FLAT_CACHE_DIR/$name")
+  done < <(ls -t "$MJ_FLAT_CACHE_DIR")
+  [ "${#old[@]}" -eq 0 ] || rm -f -- "${old[@]}"
+  find "$MJ_FLAT_CACHE_DIR" -maxdepth 1 -name '.w.*' -mmin +60 -exec rm -f {} + 2>/dev/null
+  return 0
 }
 # --numbered names the outputs 1, 2, 3 ... in argument order, for callers whose files
 # may share a basename; the caller keeps the number-to-path map.
@@ -1038,7 +1216,8 @@ mj_event_requires() {
 # inside a string is not one either.
 MJ_LEDGER_ENVELOPE_KEYS='ts event head branch by session'
 
-# mj_ledger_append event 'extra json fields without braces'
+# mj_ledger_append event 'extra json fields without braces' [resolved-session]
+# A third argument, including empty, reuses attribution prepared before a record was written.
 # The event must be one share/events.yaml declares, must carry the payload keys that entry
 # requires, and must not carry a key from the envelope. All three are internal errors rather
 # than findings: a command that writes an event the vocabulary does not define, or that
@@ -1061,7 +1240,7 @@ mj_ledger_append() {
     esac
   done
   line="{\"ts\":\"$(mj_now)\",\"event\":\"$ev\",\"head\":\"$(mj_git_head)\",\"branch\":\"$(mj_json_esc "$(mj_git_branch)")\",\"by\":\"majordomus/$MJ_VERSION\""
-  sid="$(mj_open_session_id)"
+  if [ "$#" -ge 3 ]; then sid="$3"; else sid="$(mj_open_session_id)"; fi
   [ -n "$sid" ] && line="$line,\"session\":\"$sid\""
   [ -n "$extra" ] && line="$line,$extra"
   # the local half is never tracked, so a second worktree of the same repository starts
@@ -1163,12 +1342,75 @@ mj_session_here_file() {
 # for real. A line with no session belongs to no episode, which is the honest answer for
 # work done outside one: sessions are optional, and nothing is attributed by proximity.
 mj_open_session_id() {
-  local f w
-  f="$(mj_session_here_file)"
+  local f w k candidate="" n=0
+  k="${MJ_SESSION_KEY:-}"
+  [ -n "$k" ] || k="$(mj_provider_session_env)"
+  if [ -n "$k" ]; then
+    # An explicit identity names its own episode or none, never the checkout's pointer.
+    f="$(mj_session_key_file "$k")"
+  else
+    # Preserve the unambiguous single-episode case. The pointer is still useful for
+    # status, but the last of several open episodes is not a writer's identity.
+    for f in "$(mj_session_open_dir)"/*.yaml; do
+      [ -f "$f" ] || continue
+      w="$(sed -n 's/^worktree: //p' "$f" | head -n 1)"
+      [ -n "$w" ] && [ "$w" != "$MJ_ROOT" ] && continue
+      candidate="$f"; n=$((n+1))
+    done
+    [ "$n" = 1 ] || return 0
+    f="$candidate"
+  fi
   [ -f "$f" ] || return 0
   w="$(sed -n 's/^worktree: //p' "$f" | head -n 1)"
   [ -n "$w" ] && [ "$w" != "$MJ_ROOT" ] && return 0
   sed -n 's/^session_id: //p' "$f" | head -n 1
+}
+
+# The one task.started event is the evidence of who opened a task. Missing or ambiguous
+# history supplies no identity.
+mj_task_opening_session() {
+  [ -f "$MJ_STATE_DIR/ledger.jsonl" ] || return 0
+  awk -v id="$1" "$MJ_LEDGER_FIELD_AWK"'
+    mjfield($0, "event") == "task.started" && mjfield($0, "task_id") == id {
+      n++; session = mjfield($0, "session")
+    }
+    END { if (n == 1 && session != "") print session }
+  ' "$MJ_STATE_DIR/ledger.jsonl"
+}
+
+# Whether an episode is still open in this checkout: its open record names that session.
+mj_session_is_open() {
+  local f w
+  for f in "$(mj_session_open_dir)"/*.yaml; do
+    [ -f "$f" ] || continue
+    w="$(sed -n 's/^worktree: //p' "$f" | head -n 1)"
+    [ -n "$w" ] && [ "$w" != "$MJ_ROOT" ] && continue
+    [ "$(sed -n 's/^session_id: //p' "$f" | head -n 1)" = "$1" ] && return 0
+  done
+  return 1
+}
+
+# Prepare the envelope and optional task relation once, before a durable record is
+# published. The same values reach its event, front matter and derived body (ADR 0164).
+# The active task is the caller's unless another episode that is still open opened it:
+# that is the one case a record could be filed under somebody else's work. A task whose
+# opener has closed, or whose opening names no episode, has no live owner, and the caller
+# continuing it (a second sitting, a handover across providers) carries it on.
+MJ_RECORD_SESSION=""; MJ_RECORD_TASK=""; MJ_RECORD_PROFILE=""; MJ_RECORD_OWNER=""
+mj_record_attribution() {
+  MJ_RECORD_SESSION="$(mj_open_session_id)"
+  MJ_RECORD_TASK=""; MJ_RECORD_PROFILE=""; MJ_RECORD_OWNER=""
+  mj_load_current || return 0
+  local id w opened
+  w="$(mj_cur worktree)"
+  [ -n "$w" ] && [ "$w" != "$MJ_ROOT" ] && return 0
+  id="$(mj_cur id)"; [ -n "$id" ] || return 0
+  opened="$(mj_task_opening_session "$id")"
+  if [ -n "$opened" ] && [ "$opened" != "$MJ_RECORD_SESSION" ] && mj_session_is_open "$opened"; then
+    return 0
+  fi
+  MJ_RECORD_TASK="$id"
+  MJ_RECORD_PROFILE="$(mj_cur profile)"; MJ_RECORD_OWNER="$(mj_cur owner)"
 }
 
 # ---------------------------------------------------------------- current task
@@ -1199,6 +1441,7 @@ mj_cur() { [ -n "${MJ_CUR_FLAT:-}" ] || return 0; mj_yget "$MJ_CUR_FLAT" "$1"; }
 mj_load_policy() {
   MJ_POL_FLAT="$(mktemp "${TMPDIR:-/tmp}/mj.pol.XXXXXX")"
   mj_yaml_flatten "$MJ_POLICY_FILE" > "$MJ_POL_FLAT" || return 1
+  mj_flat_cache_init
 }
 mj_pol() { [ -n "${MJ_POL_FLAT:-}" ] || return 0; mj_yget "$MJ_POL_FLAT" "$1"; }
 # A policy value the code depends on. There is no default here on purpose: a fallback
@@ -1796,4 +2039,165 @@ mj_web_composed() {
             | select(.kind == "static-directory" and (.artifact // "") != "" and ((.id | IN($ids[])) | not))
             | .artifact as $host | $c[] | $host + .mount)
       end' "$mj_wc_web" || { mj_err "$mj_wc_web does not parse as a web topology"; return 12; }
+}
+
+# A task is on the mesh while it works (I2288). `start` claims the task's scope as an
+# advisory claim of the mesh session `task-<id>` on this checkout's running server, so every
+# linked runtime on every machine sees what the task works on and reports an overlap; the key is
+# kept on the task record. `finish` closes the session, which ends its claims everywhere. An
+# exclusive claim before building stays the worker's own act. Silent, and never a failure, when
+# no server serves this checkout or its mesh does not run: the task is the repository's, the
+# mesh only tells others about it.
+mj_mesh_task_bin() {
+  mj_has jq || return 1
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  MJ_MESH_BIN="$(mj_rust_bin "$MJ_HOME")"; [ -x "$MJ_MESH_BIN" ] || return 1
+  local share; share="$(mj_rust_share "$MJ_ROOT")"
+  [ -n "$share" ] && export MAJORDOMUS_SHARE="$share"
+  return 0
+}
+
+# Always returns 0 (its callers run under set -e); MJ_MESH_CLAIMED says whether the scope is
+# now claimed, and MJ_MESH_WHY why not when it is not.
+mj_mesh_task_claim() { # <task id> <scope, one path per word> <intent> <issue>
+  local id="$1" scope="$2" intent="$3" issue="$4" out key
+  MJ_MESH_CLAIMED=0; MJ_MESH_WHY=""
+  mj_mesh_task_bin || { MJ_MESH_WHY="there is no executable to ask a server with (jq or the majordomus executable is missing)"; return 0; }
+  set -- --session "task-$id" --advisory --task "$id" --repo "$MJ_ROOT" --format json
+  [ -n "$intent" ] && set -- "$@" --intent "$intent"
+  [ -n "$issue" ] && set -- "$@" --issue "$issue"
+  # shellcheck disable=SC2086 # the scope is one path per word
+  out="$("$MJ_MESH_BIN" mesh claim $scope "$@" 2>/dev/null)" || true
+  key="$(printf '%s' "$out" | jq -r '.key // empty' 2>/dev/null || true)"
+  [ -n "$key" ] || { MJ_MESH_WHY="no shared server of this checkout answered with a running mesh"; return 0; }
+  printf 'mesh_claim: %s
+' "$key" >> "$MJ_CUR"
+  MJ_MESH_CLAIMED=1
+  mj_info mesh "task-$id" "the scope is claimed on every linked runtime (advisory) as $key" "majordomus mesh state --full"
+  return 0
+}
+
+# A task is claimed when it starts (I2288). In a fresh linked worktree no server runs yet —
+# no provider start event fired there, so nothing brought one up — and a claim asked of
+# nobody left the task off the mesh until the pre-push `finish --check` refused it, curable
+# only by finishing the task partial and starting it again. So on a repository that declares
+# its mesh enabled, `start` brings this checkout's shared server up itself before it claims:
+# the same `serve ensure` the provider's start event and the shell entry run, under the same
+# switches (`session.ensure_server_on_start`; `MAJORDOMUS_RUNTIME=off` for one person's
+# shell). `serve ensure` is runtime-lifecycle's bounded election: one server per checkout, a
+# ready one left alone, nothing stopped, the wait its own `--wait`. What it starts is said on
+# stderr. Returns 0 when a ready server serves the checkout, 1 with MJ_MESH_WHY otherwise.
+mj_mesh_task_ensure_server() {
+  MJ_MESH_WHY=""
+  if [ "${MAJORDOMUS_RUNTIME:-}" = off ]; then
+    MJ_MESH_WHY="MAJORDOMUS_RUNTIME=off, so start brought no server up"; return 1
+  fi
+  if [ "$(mj_pol session.ensure_server_on_start)" = false ]; then
+    MJ_MESH_WHY="session.ensure_server_on_start is false, so start brought no server up"; return 1
+  fi
+  mj_mesh_task_bin || { MJ_MESH_WHY="there is no executable to bring a server up with (jq or the majordomus executable is missing)"; return 1; }
+  if mj_rust_stale "$MJ_HOME" "$MJ_MESH_BIN"; then
+    MJ_MESH_WHY="the executable is older than its sources, and no server is started from stale code (run: just build)"; return 1
+  fi
+  local line
+  # whether a server already serves the checkout is serve ensure's to answer: it starts
+  # one only when none does, and says so below ("started by this call")
+  mkdir -p "$MJ_STATE_DIR/mcp" 2>/dev/null || true
+  line="$("$MJ_MESH_BIN" serve ensure --repo "$MJ_ROOT" 2>>"$MJ_STATE_DIR/mcp/ensure.log")" || true
+  case "$line" in
+    ready\ *"(started by this call)"*) mj_err "start: $line" ;;
+    ready\ *) ;;
+    *) MJ_MESH_WHY="serve ensure did not converge: ${line:-it said nothing} (log: $(mj_rel "$MJ_STATE_DIR/mcp/ensure.log"))"; return 1 ;;
+  esac
+  return 0
+}
+
+# start's half. On an enabled mesh: ensure the server, claim, and when the claim still did
+# not happen say so as a WARN finding naming why and the repair — never silence, and never a
+# refused start (a worker with no server still works; finish judges it). On a repository that
+# declares no enabled mesh: claim only if a server already answers, as before.
+mj_mesh_task_start_claim() { # <task id> <scope, one path per word> <intent> <issue>
+  if ! mj_mesh_declared_enabled; then
+    mj_mesh_task_claim "$@"
+    return 0
+  fi
+  local why=""
+  mj_mesh_task_ensure_server || why="$MJ_MESH_WHY"
+  mj_mesh_task_claim "$@"
+  [ "$MJ_MESH_CLAIMED" = 1 ] && return 0
+  mj_warn mesh "task-$1" \
+    "the repository declares its mesh enabled and this task's scope is not claimed on it: ${why:-$MJ_MESH_WHY}; a completed finish, and the pre-push finish --check, refuse it until it is" \
+    "majordomus serve ensure, then majordomus check (check claims the running task's scope once a server answers)"
+  return 0
+}
+
+mj_mesh_task_release() { # <task id>
+  local id="$1"
+  grep -q '^mesh_claim: ' "$MJ_CUR" 2>/dev/null || return 0
+  mj_mesh_task_bin || return 0
+  "$MJ_MESH_BIN" mesh session close --session "task-$id" --repo "$MJ_ROOT" --format json >/dev/null 2>&1 || true
+  return 0
+}
+
+# Whether the repository declares its mesh enabled: a tracked declaration under
+# .ai/repo/mesh/ whose top-level `enabled` is true. The declaration is what the server obeys
+# (ADR 0059); whether a server runs right now is another question, and a task is judged
+# against what the repository declared, not against which processes happen to be up.
+mj_mesh_declared_enabled() {
+  local f
+  for f in $(mj_git ls-files -- '.ai/repo/mesh/*.yaml' '.ai/repo/mesh/*.yml' 2>/dev/null); do
+    mj_mesh_declaration_open "$MJ_ROOT/$f" && return 0
+  done
+  return 1
+}
+
+# Whether one declaration opens a mesh for some machine: `enabled: true`, and either
+# `trust.policy: tofu` or at least one key in `trust.allow`. A declaration closed to everyone
+# (deny_unknown, the default, with nobody listed: the seed `init` writes since I2412) runs no
+# mesh on any machine, so nothing can be claimed on it — the same rule as
+# mesh::manager::closed_to and guard::mesh_declared_enabled.
+mj_mesh_declaration_open() { # <file>
+  awk '
+    /^enabled:[[:space:]]*true[[:space:]]*$/ { enabled = 1 }
+    /^trust:[[:space:]]*$/ { trust = 1; allow = 0; next }
+    trust && /^[^[:space:]#]/ { trust = 0; allow = 0 }
+    trust && /^[[:space:]]+policy:[[:space:]]*tofu[[:space:]]*$/ { open = 1 }
+    trust && /^[[:space:]]+allow:[[:space:]]*\[[[:space:]]*[^][:space:]]/ { open = 1 }
+    trust && /^[[:space:]]+allow:[[:space:]]*$/ { allow = 1; next }
+    trust && allow && /^[[:space:]]+-[[:space:]]*[^[:space:]]/ { open = 1 }
+    trust && allow && /^[[:space:]]+[A-Za-z_]+:/ { allow = 0 }
+    END { exit !(enabled && open) }
+  ' "$1" 2>/dev/null
+}
+
+# A task works on the mesh (I2289, project.a-task-works-on-the-mesh). On a repository that
+# declares its mesh enabled, an active task's scope must have been claimed on it — `start`
+# brings the checkout's server up and claims (I2288), `check` claims again when a server
+# answers, and `finish` tries again before it judges — so that no
+# machine builds what another machine never saw being built. Only a completed finish is
+# refused: a worker whose server never came up still leaves by partial, blocked or failed.
+mj_validate_task_on_the_mesh() {
+  if ! mj_load_current || [ "$(mj_cur outcome)" != active ]; then
+    mj_doctrine_skip mesh "-" "no active task; nothing claims anything"
+    MJ_DOCTRINE_SKIPPED=1; return 0
+  fi
+  local id key; id="$(mj_cur id)"
+  if ! mj_mesh_declared_enabled; then
+    mj_doctrine_skip mesh "$id" "the repository declares no enabled mesh"
+    MJ_DOCTRINE_SKIPPED=1; return 0
+  fi
+  key="$(sed -n 's/^mesh_claim: //p' "$MJ_CUR" 2>/dev/null | head -n 1)"
+  if [ -n "$key" ]; then
+    mj_doctrine_ok mesh "$id" "the scope is claimed on the mesh as $key"
+    return 0
+  fi
+  if [ "${MJ_DOCTRINE_CMD:-}" = finish ] && [ -n "${MJ_FINISH_OUTCOME:-}" ] && [ "$MJ_FINISH_OUTCOME" != completed ]; then
+    mj_doctrine_skip mesh "$id" "the scope was never claimed on the mesh; outcome is $MJ_FINISH_OUTCOME, not completed, so it is not refused"
+    MJ_DOCTRINE_SKIPPED=1; return 0
+  fi
+  mj_doctrine_fail mesh "$id" \
+    "the repository declares its mesh enabled and this task's scope was never claimed on it: no shared server answered when it started or since, so no other machine saw what it works on" \
+    "majordomus serve ensure, then majordomus check (check, and finish, claim the running task's scope once a server answers)"
+  return 0
 }

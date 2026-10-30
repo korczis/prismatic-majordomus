@@ -390,6 +390,17 @@
       document.documentElement.classList.add(document.body.dataset.themeClass || 'dark');
     }
 
+    // the scenes of ADR 0160 are another file's: it registers them here, so this one is
+    // not edited for each. A scene it has not registered yet is drawn as unavailable.
+    const companion = holder.dataset.observatoryCompanion;
+    if (companion && !registry.companion) {
+      registry.companion = true;
+      const tag = document.createElement('script');
+      tag.src = companion;
+      tag.async = true;
+      document.head.append(tag);
+    }
+
     const note = holder.querySelector('.mj-obs-noscript');
     if (note) note.remove();
     canvas.hidden = false;
@@ -509,9 +520,14 @@
     let failures = 0;
     let timer = null;
     let controller = null;
+    // A reading that fell due while the page was hidden is not asked, so as not to spend the
+    // server on a display nobody sees; it is owed, and asked the moment the page is seen
+    // again. Until then the reading's age is the display's silence, not the server's.
+    let pollOwed = false;
     async function poll() {
       timer = null;
-      if (document.visibilityState === 'visible') {
+      pollOwed = document.visibilityState !== 'visible';
+      if (!pollOwed) {
         controller = new AbortController();
         const give = setTimeout(() => controller.abort(), POLL_MS);
         try {
@@ -553,6 +569,7 @@
     let streamTimer = null;
     let streamController = null;
     let streamFailures = 0;
+    let streamOwed = false;
     const river = () => data.scenes.find((s) => s.id === 'activity');
     function syncCursor() {
       const r = river();
@@ -562,7 +579,9 @@
     async function follow() {
       streamTimer = null;
       const r = river();
-      if (cursor !== null && r && r.available && !r.replay && document.visibilityState === 'visible') {
+      const due = cursor !== null && r && r.available && !r.replay;
+      streamOwed = due && document.visibilityState !== 'visible';
+      if (due && !streamOwed) {
         streamController = new AbortController();
         const give = setTimeout(() => streamController.abort(), STREAM_MS * 3);
         try {
@@ -670,15 +689,17 @@
       let line = '';
       c.save();
       c.globalAlpha = still ? 1 : fade;
+      // a scene is the director's own, or one a companion script registered (ADR 0160)
+      const painter = draw[scene.id] || registry.scenes[scene.id];
       if (quarantined.has(scene.id)) {
         label(c, box, 'QUARANTINED', box.cx, box.cy - u * 1.2, 1.5);
         label(c, box, `its renderer failed: ${quarantined.get(scene.id)}`, box.cx, box.cy + u * 1.2, 0.7);
         line = 'nothing is drawn: this scene\'s renderer failed, and the others go on';
-      } else if (scene.available && draw[scene.id]) {
+      } else if (scene.available && painter) {
         // a replayed model says so to the scene that draws it, and its marks are not news
         const model = scene.replay ? { ...scene.model, replayed: true } : scene.model;
         try {
-          line = draw[scene.id](c, box, model, t, moving, scene.replay ? new Map() : born);
+          line = painter(c, box, model, t, moving, scene.replay ? new Map() : born);
         } catch (e) {
           quarantined.set(scene.id, String((e && e.message) || e).slice(0, 120));
           trace.push({ at: new Date().toISOString(), scene: scene.id, reason: 'quarantined' });
@@ -697,12 +718,16 @@
       // a replayed scene is a replay whatever the page is: it shows when it was recorded
       const resynced = Date.now() - resyncedAt < 10000;
       const word = scene.replay ? 'REPLAY' : snapshot ? 'SNAPSHOT' : resynced ? 'RESYNCED' : age < LIVE_WITHIN_MS ? 'LIVE' : 'STALE';
+      // why a reading is old: only an asking that failed blames the server
+      const silence = failures || streamFailures ? 'the server is not answering'
+        : pollOwed || streamOwed ? 'not asked while the page was hidden'
+          : 'asking again';
       const when = String(data.observed_at).replace('T', ' ');
       const recordedAt = scene.replay ? String(scene.replay.recorded_at).replace('T', ' ') : '';
       const text = [
         word,
         scene.replay ? `recorded ${recordedAt}${scene.replay.revision ? ` at ${scene.replay.revision}` : ''} · not live`
-          : snapshot ? `read once at ${data.revision || 'an unknown commit'} · ${when}` : `read ${when}${word === 'STALE' ? ` · ${Math.round(age / 1000)} s ago, the server is not answering` : ''}`,
+          : snapshot ? `read once at ${data.revision || 'an unknown commit'} · ${when}` : `read ${when}${word === 'STALE' ? ` · ${Math.round(age / 1000)} s ago, ${silence}` : ''}`,
         `${String(current + 1).padStart(2, '0')} / ${String(data.scenes.length).padStart(2, '0')}  ${scene.label.toUpperCase()}`,
         line,
         auto && !held ? 'auto' : 'held',
@@ -726,8 +751,71 @@
       if (still) frame = setTimeout(() => paint(performance.now()), 1000);
       else frame = requestAnimationFrame(paint);
     }
-    const onVisible = () => { last = performance.now(); schedule(); };
+    // A display that is watched, not touched, must not be put to sleep by the system: the
+    // kiosk, and any display in full screen, holds a screen wake lock the way a video does.
+    // The browser releases it whenever the page is hidden, so it is asked for again each
+    // time the page is visible. Where the API is absent or refuses (an insecure context, a
+    // battery saver), nothing is drawn differently and the status says the display may sleep.
+    let wake = null;
+    let wakePending = false; // a request is in flight: one at a time, or a second lock leaks
+    let gone = false; // disposed: a request that resolves after this must let go at once
+    let wantWake = kiosk || Boolean(document.fullscreenElement);
+    const wakeState = (word) => { holder.dataset.awake = word; };
+    wakeState(navigator.wakeLock ? 'idle' : 'unsupported');
+    async function holdAwake() {
+      if (gone || !wantWake || wake || wakePending || !navigator.wakeLock
+        || document.visibilityState !== 'visible') return;
+      wakePending = true;
+      let lock;
+      try {
+        lock = await navigator.wakeLock.request('screen');
+      } catch (e) {
+        wakePending = false;
+        if (!gone) wakeState('refused');
+        return;
+      }
+      wakePending = false;
+      // what was wanted when it was asked may not be wanted when it is granted (full screen
+      // ended, the display was disposed): a lock nobody holds a reason for is given back
+      if (gone || !wantWake) { lock.release().catch(() => {}); return; }
+      wake = lock;
+      wakeState('held');
+      lock.addEventListener('release', () => {
+        if (wake === lock) { wake = null; wakeState('idle'); }
+      });
+    }
+    function releaseAwake() {
+      if (wake) { wake.release().catch(() => {}); wake = null; }
+      wakeState(navigator.wakeLock ? 'idle' : 'unsupported');
+    }
+    const onFullscreen = () => {
+      wantWake = kiosk || Boolean(document.fullscreenElement);
+      if (wantWake) holdAwake(); else releaseAwake();
+    };
+    document.addEventListener('fullscreenchange', onFullscreen);
+    // Seen again: what fell due while hidden is asked now, each reader at most once at a time —
+    // one already asking is left to finish, and its own timer is replaced, not doubled.
+    const onVisible = () => {
+      last = performance.now();
+      holdAwake();
+      if (document.visibilityState === 'visible') {
+        if (pollOwed && controller === null) {
+          if (timer) clearTimeout(timer);
+          poll();
+        }
+        if (streamOwed && streamController === null) {
+          if (streamTimer) clearTimeout(streamTimer);
+          follow();
+        }
+      }
+      schedule();
+    };
     document.addEventListener('visibilitychange', onVisible);
+    // some browsers grant it only after a gesture: the first one is enough
+    const onGesture = () => { holdAwake(); };
+    document.addEventListener('pointerdown', onGesture, { once: true });
+    document.addEventListener('keydown', onGesture, { once: true });
+    holdAwake();
     schedule();
 
     return {
@@ -747,6 +835,11 @@
         document.removeEventListener('keydown', onKey);
         document.removeEventListener('visibilitychange', onVisible);
         document.removeEventListener('fullscreenchange', fit);
+        document.removeEventListener('fullscreenchange', onFullscreen);
+        document.removeEventListener('pointerdown', onGesture);
+        document.removeEventListener('keydown', onGesture);
+        gone = true;
+        releaseAwake();
         for (const node of [head, foot, legend, controls]) node.remove();
       },
     };
@@ -761,5 +854,13 @@
     }
   }
 
-  window.mjObservatory = { mount };
+  // What a companion script needs to draw in this display's own look: the stylesheet's
+  // tokens, the tone of a state word, a stable place from an identity, the text label.
+  const registry = {
+    mount,
+    scenes: {},
+    companion: false,
+    kit: { token, tone, colour, withAlpha, unit, label, TAU },
+  };
+  window.mjObservatory = registry;
 })();

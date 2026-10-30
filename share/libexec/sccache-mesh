@@ -1,0 +1,51 @@
+#!/bin/sh
+# sccache-mesh: the rustc wrapper of a mesh node (RUSTC_WRAPPER). sccache with this node's disk
+# as the first level and the mesh build cache as the second (ADR 0157, I2673).
+#
+# The configuration is not written here. `majordomus mesh build-cache env` derives it from the
+# store this node selected, and answers local-only (no variables) when there is no store, no
+# usable credential file, no multi-level sccache, or when the store does not answer *now*:
+# sccache fixes its chain when its server starts and fails the compile when an S3 level is
+# down at that moment, so the second level is only handed to a server that is starting.
+#
+# A server that is already running ignores all of it, so nothing is asked of majordomus then:
+# the wrapper's cost on a warm build is one connect to the server's port.
+#
+# Only the path of the credential file is exported, never a key: an exported secret is readable
+# in every compiler's environment (`ps eww`, /proc/<pid>/environ) and in every build script.
+#
+#   SCCACHE_MESH_OFF=1       never ask; the build is local-only
+#   SCCACHE_MESH_SCCACHE     the sccache to run (default: sccache on PATH)
+#   MAJORDOMUS_BIN           the majordomus to ask (default: majordomus on PATH)
+real=${SCCACHE_MESH_SCCACHE:-sccache}
+# --start-only: start the server with the store when none runs, run no compile (I3953). Exit 0
+# when a server is up (it was, or now is) and the compiler may go through sccache; otherwise
+# exit 1 with one reason line. lib/rust_bin.sh calls this before a cargo, once per process.
+if [ "${1:-}" = --start-only ]; then
+  [ -z "${SCCACHE_MESH_OFF:-}" ] || { echo "local-only: SCCACHE_MESH_OFF is set"; exit 1; }
+  command -v "$real" >/dev/null 2>&1 || { echo "local-only: no sccache"; exit 1; }
+  command -v nc >/dev/null 2>&1 || { echo "local-only: no nc to see whether an sccache server runs"; exit 1; }
+  port=${SCCACHE_SERVER_PORT:-4226}
+  nc -z -w 1 127.0.0.1 "$port" >/dev/null 2>&1 && exit 0
+  exports=$("${MAJORDOMUS_BIN:-majordomus}" mesh build-cache env --sccache "$real" 2>/dev/null) \
+    || { echo "local-only: majordomus could not derive a configuration"; exit 1; }
+  case "$exports" in
+    *"export "*)
+      ( eval "$exports" && "$real" --start-server ) >/dev/null 2>&1 \
+        || { echo "local-only: sccache did not start with the store"; exit 1; }
+      exit 0 ;;
+    *) printf '%s\n' "$exports" | sed -n 's/^# build cache: //p' | head -n 1 | grep . \
+         || echo "local-only: no store configuration"
+       exit 1 ;;
+  esac
+fi
+if [ -z "${SCCACHE_MESH_OFF:-}" ] && [ -z "${SCCACHE_MULTILEVEL_CHAIN:-}" ]; then
+  port=${SCCACHE_SERVER_PORT:-4226}
+  # no nc, no answer: ask anyway, which costs a probe and cannot change a running server
+  if ! nc -z -w 1 127.0.0.1 "$port" >/dev/null 2>&1; then
+    if exports=$("${MAJORDOMUS_BIN:-majordomus}" mesh build-cache env --sccache "$real" 2>/dev/null); then
+      eval "$exports"
+    fi
+  fi
+fi
+exec "$real" "$@"

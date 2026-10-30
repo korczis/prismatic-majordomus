@@ -4,7 +4,9 @@
 //! local registry's own handler is truthful. Everything else is a fact of the *running
 //! server*'s memory — the registry, the links, the journal — so the command finds this
 //! checkout's server (through the same `server.status` capability `serve status` renders)
-//! and asks it over HTTP; a missing server is an answer with its reason, never an error.
+//! and asks it over HTTP. A linked worktree with no server of its own asks the repository's
+//! running one, the primary's first, and says so on stderr; a missing server is an answer
+//! with its reason, never an error.
 //! `doctor` is both: its `runtime` check is the server's verdict on the declaration, so the
 //! report is the server's when one serves this checkout, and this process's — where that
 //! check reports an absence — when none does (ADR 0059). The command owns rendering and
@@ -22,8 +24,9 @@ use serde_json::{json, Value};
 use crate::app::App;
 use crate::capability::CapabilityError;
 use crate::cli::{
-    MeshArgs, MeshCommand, MeshFirewallCommand, MeshHandoverCommand, MeshQueryArgs,
-    MeshReviewCommand, MeshSessionCommand, OutputFormat,
+    MeshArgs, MeshBuildCacheCommand, MeshBuildCacheEnsureArgs, MeshBuildCacheEnvArgs, MeshCommand,
+    MeshFirewallCommand, MeshHandoverCommand, MeshQueryArgs, MeshReviewCommand, MeshSessionCommand,
+    OutputFormat,
 };
 use crate::error::{Error, Result};
 
@@ -43,7 +46,31 @@ pub fn run(args: MeshArgs) -> Result<u8> {
         MeshCommand::Identity(q) => {
             in_process(q, &["mesh", "identity"], json!({}), render_identity, never)
         }
+        MeshCommand::Enrol(q) => {
+            in_process(q, &["mesh", "enrol"], json!({}), render_enrolment, never)
+        }
         MeshCommand::Doctor(q) => doctor(q),
+        // A key is a fact of this machine's toolchains and this checkout's lockfiles:
+        // answered in this process, like the identity.
+        MeshCommand::BuildCache(a) => match a.command {
+            MeshBuildCacheCommand::Key(k) => in_process(
+                k.query,
+                &["mesh", "build-cache", "key"],
+                json!({ "kind": k.kind }),
+                render_build_cache_key,
+                never,
+            ),
+            // it runs a command and writes outside the repository: this process, never a server
+            MeshBuildCacheCommand::Ensure(e) => build_cache_ensure(e),
+            MeshBuildCacheCommand::Env(e) => build_cache_env(e),
+            MeshBuildCacheCommand::Provision(x) => in_process(
+                x.query,
+                &["mesh", "build-cache", "provision"],
+                json!({ "apply": x.apply, "root": x.root }),
+                render_provision,
+                not_ok,
+            ),
+        },
         // The host firewall is a fact of this machine, like the identity: answered in
         // this process. `apply` runs a privileged host tool and is offered nowhere else.
         MeshCommand::Firewall(a) => match a.command {
@@ -77,20 +104,7 @@ pub fn run(args: MeshArgs) -> Result<u8> {
             ask(&v.query, "GET", &target, None, render_state, never)
         }
         MeshCommand::Events(a) => {
-            let mut target = "/api/v1/mesh/events".to_string();
-            let mut pairs = Vec::new();
-            if let Some(after) = a.after {
-                pairs.push(format!("after={after}"));
-            }
-            if let Some(limit) = a.limit {
-                pairs.push(format!("limit={limit}"));
-            }
-            if a.newest {
-                pairs.push("newest=true".to_string());
-            }
-            if !pairs.is_empty() {
-                target = format!("{target}?{}", pairs.join("&"));
-            }
+            let target = events_target(&a);
             ask(&a.query, "GET", &target, None, render_events, never)
         }
         MeshCommand::Verify(q) => ask(
@@ -124,25 +138,46 @@ pub fn run(args: MeshArgs) -> Result<u8> {
             render_written,
             never,
         ),
+        MeshCommand::Beat(a) => ask(
+            &a.query,
+            "POST",
+            "/api/v1/mesh/beats",
+            Some(json!({ "session": a.session, "phase": a.phase, "pid": a.pid })),
+            render_written,
+            never,
+        ),
         MeshCommand::Session(s) => match s.command {
-            MeshSessionCommand::Open(a) => ask(
-                &a.query,
-                "POST",
-                "/api/v1/mesh/sessions",
-                Some(json!({
-                    "session": a.session,
-                    "client": a.client,
-                    "worker": a.worker,
-                    "intent": a.intent,
-                    "task": a.task,
-                    "issue": a.issue,
-                    "milestone": a.milestone,
-                    "branch": a.branch,
-                    "head": a.head,
-                })),
-                render_written,
-                never,
-            ),
+            MeshSessionCommand::Open(a) => {
+                // read here, in the process the client started, and not by the server: the
+                // client is this executable's ancestor, and the server's is somebody else
+                let client = a.client_pid.as_deref().and_then(|pid| match pid {
+                    "auto" => crate::mesh::cooperation::client_process(),
+                    pid => pid.parse::<u32>().ok().and_then(|pid| {
+                        crate::mesh::cooperation::process_facts(pid).map(|p| (pid, p.started))
+                    }),
+                });
+                let (client_pid, client_started) = client.unzip();
+                ask(
+                    &a.query,
+                    "POST",
+                    "/api/v1/mesh/sessions",
+                    Some(json!({
+                        "session": a.session,
+                        "client": a.client,
+                        "worker": a.worker,
+                        "intent": a.intent,
+                        "task": a.task,
+                        "issue": a.issue,
+                        "milestone": a.milestone,
+                        "branch": a.branch,
+                        "head": a.head,
+                        "client_pid": client_pid,
+                        "client_started": client_started,
+                    })),
+                    render_written,
+                    never,
+                )
+            }
             MeshSessionCommand::Close(a) => ask(
                 &a.query,
                 "POST",
@@ -236,13 +271,19 @@ fn not_ok(v: &Value) -> bool {
     v["ok"] != json!(true)
 }
 
-/// `mesh doctor`: the running server's report when one serves this checkout, because its
-/// `runtime` check is that server's verdict on the declaration; this process's otherwise.
-/// Exit 10 when a check failed.
+/// `mesh doctor`: the running server's report when one answers for this checkout
+/// ([`choose`]), because its `runtime` check is that server's verdict on the declaration;
+/// this process's otherwise. Exit 10 when a check failed.
 fn doctor(args: MeshQueryArgs) -> Result<u8> {
-    match server_url(&args)? {
-        Some(url) => ask_at(
-            &url,
+    let serving = server_url(&args)?;
+    doctor_through(serving, args)
+}
+
+/// [`doctor`] once the server that answers, if any, is known.
+fn doctor_through(serving: Option<Serving>, args: MeshQueryArgs) -> Result<u8> {
+    match serving {
+        Some(serving) => ask_at(
+            &serving.url,
             &args,
             "GET",
             "/api/v1/mesh/doctor",
@@ -294,24 +335,93 @@ fn in_process(
     Ok(if failed(&value) { EXIT_REFUSED } else { 0 })
 }
 
-/// This checkout's ready server, when there is one.
-fn server_url(args: &MeshQueryArgs) -> Result<Option<String>> {
+/// The server a mesh command asks.
+#[derive(Debug, PartialEq)]
+struct Serving {
+    url: String,
+    /// The other checkout whose server answers, when this one has none of its own.
+    borrowed_from: Option<String>,
+}
+
+/// The server of this repository that answers for this checkout, from `server.status`'s
+/// list of every checkout's server: this checkout's when it is ready, otherwise the
+/// primary's, otherwise the first other ready one. A linked worktree is a checkout of the
+/// same repository, and the mesh — the machine's identity, its links, its journal — is
+/// the repository's, so a worktree without a server of its own cooperates through the
+/// running one rather than reporting the mesh inactive or starting a second server.
+fn choose(servers: &[Value]) -> Option<Serving> {
+    let ready = |s: &&Value| s["standing"] == json!("ready") && s["lease"]["url"].is_string();
+    let url = |s: &Value| s["lease"]["url"].as_str().unwrap_or_default().to_string();
+    if let Some(own) = servers
+        .iter()
+        .filter(ready)
+        .find(|s| s["this_checkout"] == json!(true))
+    {
+        return Some(Serving {
+            url: url(own),
+            borrowed_from: None,
+        });
+    }
+    let other = servers
+        .iter()
+        .filter(ready)
+        .find(|s| s["primary"] == json!(true))
+        .or_else(|| servers.iter().find(|s| ready(s)))?;
+    Some(Serving {
+        url: url(other),
+        borrowed_from: Some(
+            other["worktree"]
+                .as_str()
+                .unwrap_or("another checkout")
+                .to_string(),
+        ),
+    })
+}
+
+/// The ready server that answers for this checkout ([`choose`]), and a note on stderr when
+/// it is another checkout's.
+fn server_url(args: &MeshQueryArgs) -> Result<Option<Serving>> {
     let app = App::load(&args.repo)?;
     let status = app
         .context
         .execute("server.status", json!({}))
         .map_err(map)?;
-    Ok(status["servers"]
-        .as_array()
-        .into_iter()
-        .flatten()
-        .find(|s| s["this_checkout"] == json!(true) && s["standing"] == json!("ready"))
-        .and_then(|s| s["lease"]["url"].as_str())
-        .map(str::to_string))
+    let servers = status["servers"].as_array().cloned().unwrap_or_default();
+    let serving = choose(&servers);
+    if let Some(Serving {
+        url,
+        borrowed_from: Some(worktree),
+    }) = &serving
+    {
+        eprintln!(
+            "mesh: this checkout has no running server; asking the server of {worktree} at {url} (the same repository)"
+        );
+    }
+    Ok(serving)
 }
 
-/// Ask this checkout's running server, and render the answer. No running server is an
-/// answer for a question and a refusal for a command: the mesh lives in the server.
+/// Why a request cannot go through another checkout's server, when it cannot: it reads or
+/// writes the files of the checkout whose server answers it. A published handover is read
+/// from that checkout's `.ai/local/state/handovers/` (the latest, or the path named under
+/// it), so through a borrowed server it would publish the other checkout's record; a
+/// consumed handover is materialized there, so it would land in the other checkout.
+fn touches_the_serving_checkout(target: &str, body: Option<&Value>) -> Option<&'static str> {
+    match target {
+        "/api/v1/mesh/handovers" => Some(
+            "publishing through it would read that checkout's handovers, not this one's: publish from a checkout with its own running server (`majordomus serve ensure` here)",
+        ),
+        "/api/v1/mesh/handovers/consume"
+            if body.is_some_and(|b| b["materialize"] != json!(false)) =>
+        {
+            Some("consuming through it would write the handover into that checkout: pass --no-materialize, or consume it there")
+        }
+        _ => None,
+    }
+}
+
+/// Ask the running server that answers for this checkout ([`choose`]), and render the
+/// answer. No running server in the repository is an answer for a question and a refusal
+/// for a command: the mesh lives in the server.
 fn ask(
     args: &MeshQueryArgs,
     method: &str,
@@ -320,15 +430,47 @@ fn ask(
     render: fn(&Value) -> String,
     failed: fn(&Value) -> bool,
 ) -> Result<u8> {
-    let Some(url) = server_url(args)? else {
+    let serving = server_url(args)?;
+    ask_through(serving, args, method, target, body, render, failed)
+}
+
+/// [`ask`] once the server that answers, if any, is known.
+fn ask_through(
+    serving: Option<Serving>,
+    args: &MeshQueryArgs,
+    method: &str,
+    target: &str,
+    body: Option<Value>,
+    render: fn(&Value) -> String,
+    failed: fn(&Value) -> bool,
+) -> Result<u8> {
+    let Some(serving) = serving else {
         let answer = json!({
             "active": false,
-            "reason": "no running server for this checkout: the mesh lives inside the shared server (majordomus serve ensure starts one)",
+            "reason": "no running server for any checkout of this repository: the mesh lives inside the shared server (majordomus serve ensure in the primary checkout starts one)",
         });
         emit(args, &answer, render);
         return Ok(if method == "GET" { 0 } else { EXIT_REFUSED });
     };
-    ask_at(&url, args, method, target, body, render, failed)
+    if let Some(worktree) = &serving.borrowed_from {
+        if let Some(why) = touches_the_serving_checkout(target, body.as_ref()) {
+            let message = format!(
+                "this checkout has no running server, and the one answering is {worktree}'s; {why}"
+            );
+            match args.format {
+                OutputFormat::Json => println!(
+                    "{}",
+                    serde_json::to_string_pretty(&json!({
+                        "error": { "code": "borrowed_server", "message": message }
+                    }))
+                    .unwrap_or_default()
+                ),
+                OutputFormat::Text => eprintln!("mesh: borrowed_server: {message}"),
+            }
+            return Ok(EXIT_REFUSED);
+        }
+    }
+    ask_at(&serving.url, args, method, target, body, render, failed)
 }
 
 /// [`ask`] of the server at `url`, already found.
@@ -493,6 +635,135 @@ fn render_nodes(v: &Value) -> String {
     out.trim_end().to_string()
 }
 
+/// `mesh build-cache ensure`: the capability answered in this process, whose exit code is the
+/// command's own, so that a caller replacing `npm ci` with it sees the same failure.
+fn build_cache_ensure(e: MeshBuildCacheEnsureArgs) -> Result<u8> {
+    let app = App::load(&e.query.repo)?;
+    let input = json!({ "kind": e.kind, "dir": e.dir, "command": e.command });
+    let value = app
+        .context
+        .execute("mesh.build_cache.ensure", input)
+        .map_err(map)?;
+    emit(&e.query, &value, render_build_cache_ensure);
+    Ok(ensure_exit(&value))
+}
+
+/// The command's exit code, clamped to what a process can return; 0 when nothing ran, 1 when
+/// it could not start or a signal ended it.
+fn ensure_exit(v: &Value) -> u8 {
+    if !v["command"].is_object() {
+        return 0;
+    }
+    match v["command"]["exit"].as_i64() {
+        Some(0) => 0,
+        Some(n) => u8::try_from(n.clamp(1, 255)).unwrap_or(1),
+        None => 1,
+    }
+}
+
+/// `mesh build-cache ensure`: where the content came from, and every note.
+fn render_build_cache_ensure(v: &Value) -> String {
+    let mut out = format!("kind       {} ({})\n", s(v, "kind"), s(v, "dir"));
+    out.push_str(&format!(
+        "key        {}\n",
+        v["key"].as_str().unwrap_or("none")
+    ));
+    out.push_str(&format!("target     {}\n", s(v, "target")));
+    out.push_str(&format!(
+        "source     {}\n",
+        s(v, "source").replace('_', " ")
+    ));
+    if v["command"].is_object() {
+        let argv: Vec<&str> = v["command"]["argv"]
+            .as_array()
+            .map(|a| a.iter().filter_map(Value::as_str).collect())
+            .unwrap_or_default();
+        let exit = v["command"]["exit"]
+            .as_i64()
+            .map(|n| n.to_string())
+            .unwrap_or_else(|| "none".into());
+        out.push_str(&format!("command    {} -> exit {exit}\n", argv.join(" ")));
+    }
+    let saved: Vec<&str> = v["saved"]
+        .as_array()
+        .map(|a| a.iter().filter_map(Value::as_str).collect())
+        .unwrap_or_default();
+    if !saved.is_empty() {
+        out.push_str(&format!("saved      {}\n", saved.join(", ")));
+    }
+    let gib = |n: &Value| n.as_u64().unwrap_or(0) as f64 / (1024.0 * 1024.0 * 1024.0);
+    out.push_str(&format!(
+        "local      {}  {:.2} of {:.0} GiB, {} pruned\n",
+        s(&v["local"], "dir"),
+        gib(&v["local"]["bytes"]),
+        gib(&v["local"]["bound_bytes"]),
+        v["local"]["pruned"].as_u64().unwrap_or(0)
+    ));
+    for note in v["notes"].as_array().into_iter().flatten() {
+        out.push_str(&format!("note       {}\n", note.as_str().unwrap_or("")));
+    }
+    out.trim_end().to_string()
+}
+
+/// `mesh build-cache env`: a fact of this machine (its sccache, its node file, its store), so
+/// it is answered without loading a repository: a compile in any directory asks it.
+fn build_cache_env(args: MeshBuildCacheEnvArgs) -> Result<u8> {
+    use crate::mesh::build_cache::env::{report, script, EnvOptions};
+    let answer = report(&EnvOptions {
+        sccache: args.sccache.unwrap_or_else(|| "sccache".to_string()),
+        node_file: args.node_file,
+        credentials: args.credentials,
+    });
+    match args.format {
+        OutputFormat::Json => println!(
+            "{}",
+            serde_json::to_string_pretty(&answer).unwrap_or_default()
+        ),
+        OutputFormat::Text => print!("{}", script(&answer)),
+    }
+    Ok(0)
+}
+
+/// `mesh build-cache key`: one line per cached thing, its key or why it has none.
+fn render_build_cache_key(v: &Value) -> String {
+    let mut out = format!("platform   {}\n", v["platform"].as_str().unwrap_or(""));
+    let kinds = v["kinds"].as_array().cloned().unwrap_or_default();
+    if kinds.is_empty() {
+        out.push_str("no lockfile is tracked: nothing here is cacheable\n");
+    }
+    for k in kinds {
+        let kind = k["kind"].as_str().unwrap_or("");
+        let dir = k["dir"].as_str().unwrap_or("");
+        match k["key"].as_str() {
+            Some(key) => out.push_str(&format!("{kind:<16} {dir:<12} {key}\n")),
+            None => out.push_str(&format!(
+                "{kind:<16} {dir:<12} no key: {}\n",
+                k["unavailable"].as_str().unwrap_or("unknown")
+            )),
+        }
+        out.push_str(&format!(
+            "{:<29} -> {}\n",
+            "",
+            k["location"].as_str().unwrap_or("")
+        ));
+    }
+    out
+}
+
+fn render_enrolment(v: &Value) -> String {
+    format!(
+        "{}   {}\nkey        {}\nnext       {}",
+        if v["added"] == json!(true) {
+            "enrolled"
+        } else {
+            "listed  "
+        },
+        v["path"].as_str().unwrap_or_default(),
+        v["key"].as_str().unwrap_or_default(),
+        v["next"].as_str().unwrap_or_default()
+    )
+}
+
 fn render_identity(v: &Value) -> String {
     let mut out = String::new();
     out.push_str(&format!("present    {}\n", v["present"]));
@@ -601,6 +872,72 @@ fn render_firewall(v: &Value) -> String {
         }
     }
     out.push_str(&format!("verdict     {}", s(v, "verdict")));
+    out
+}
+
+fn render_provision(v: &Value) -> String {
+    let mut out = format!(
+        "mode        {}\nroot        {}\n",
+        s(v, "mode"),
+        s(v, "root")
+    );
+    for f in v["plan"]["files"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "{:<13} {} {} ({})\n",
+            s(f, "state"),
+            s(f, "mode"),
+            s(f, "path"),
+            s(f, "source")
+        ));
+    }
+    for e in v["plan"]["edits"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "{:<13} {}\n",
+            if e["owed"] == json!(true) {
+                "edit"
+            } else {
+                "current"
+            },
+            s(e, "path")
+        ));
+    }
+    for st in v["plan"]["steps"].as_array().into_iter().flatten() {
+        out.push_str(&format!("step ({})  {}\n", s(st, "when"), s(st, "line")));
+    }
+    out.push_str(&format!(
+        "plan        {} change(s) owed, {} not observable here\n",
+        v["plan"]["changes"], v["plan"]["unobservable"]
+    ));
+    if let Some(a) = v.get("apply").filter(|a| a.is_object()) {
+        if let Some(r) = a["refused"].as_str() {
+            out.push_str(&format!("refused     {r}\n"));
+        }
+        for p in a["written"].as_array().into_iter().flatten() {
+            out.push_str(&format!("written     {}\n", p.as_str().unwrap_or("")));
+        }
+        for r in a["ran"].as_array().into_iter().flatten() {
+            out.push_str(&format!(
+                "{}  {}\n",
+                if r["ok"] == json!(true) {
+                    "ok  "
+                } else {
+                    "FAIL"
+                },
+                s(r, "line")
+            ));
+        }
+        for k in a["skipped"].as_array().into_iter().flatten() {
+            out.push_str(&format!("skipped     {}\n", k.as_str().unwrap_or("")));
+        }
+    }
+    out.push_str(&format!(
+        "verdict     {}",
+        if v["ok"] == json!(true) {
+            "ok"
+        } else {
+            "not provisioned (see above)"
+        }
+    ));
     out
 }
 
@@ -813,6 +1150,33 @@ fn viewed(path: &str, v: &crate::cli::MeshViewArgs) -> String {
     }
 }
 
+/// The `mesh.events` route `mesh events` asks: each flag given becomes one query pair, and
+/// no flag is the bare route under the server's own default page.
+fn events_target(a: &crate::cli::MeshEventsArgs) -> String {
+    let mut pairs = Vec::new();
+    if let Some(after) = a.after {
+        pairs.push(format!("after={after}"));
+    }
+    if let Some(cursor) = &a.cursor {
+        pairs.push(format!("cursor={}", encode(cursor)));
+    }
+    if let Some(limit) = a.limit {
+        pairs.push(format!("limit={limit}"));
+    }
+    if a.newest {
+        pairs.push("newest=true".to_string());
+    }
+    if a.beats {
+        pairs.push("beats=true".to_string());
+    }
+    let target = "/api/v1/mesh/events";
+    if pairs.is_empty() {
+        target.to_string()
+    } else {
+        format!("{target}?{}", pairs.join("&"))
+    }
+}
+
 /// The summary view of `mesh.state`: the totals, then each runtime, the open reviews and
 /// the untaken handovers, each list followed by how many it did not show.
 fn render_summary(sm: &Value) -> String {
@@ -964,6 +1328,9 @@ fn render_events(v: &Value) -> String {
         "events     {} (lamport {})",
         v["count"], v["lamport"]
     ));
+    if let Some(cursor) = v["cursor"].as_str() {
+        out.push_str(&format!("\nnext       --cursor {cursor}"));
+    }
     out
 }
 
@@ -1014,12 +1381,20 @@ fn render_written(v: &Value) -> String {
     if let Some(text) = inactive(v) {
         return text;
     }
-    format!(
+    let mut out = format!(
         "written    {}\nevent      {} (lamport {})",
         s(v, "key"),
         s(v, "event"),
         v["lamport"]
-    )
+    );
+    // Said only when it is not so: an event the disk did not take is not acknowledged.
+    if v["durability"] == json!("not_durable") {
+        out.push_str(
+            "\ndisk       NOT DURABLE — held in memory and replicated to peers, not on this \
+             machine's disk; `majordomus mesh doctor` says why",
+        );
+    }
+    out
 }
 
 fn render_consumed(v: &Value) -> String {
@@ -1051,6 +1426,229 @@ fn map(e: CapabilityError) -> Error {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// `mesh events` asks for what its flags say and nothing else: no flag is the bare
+    /// route, and `--beats` asks for the session beats the journal hides by default (I3990).
+    #[test]
+    fn the_events_flags_are_the_query_the_server_is_asked() {
+        use clap::Parser;
+        let target = |args: &[&str]| {
+            let cli = crate::cli::Cli::try_parse_from(
+                ["majordomus", "mesh", "events"].iter().chain(args),
+            )
+            .unwrap();
+            let crate::cli::Command::Mesh(mesh) = cli.command else {
+                panic!("expected `mesh`")
+            };
+            let MeshCommand::Events(events) = mesh.command else {
+                panic!("expected `events`")
+            };
+            events_target(&events)
+        };
+        assert_eq!(target(&[]), "/api/v1/mesh/events");
+        assert_eq!(
+            target(&["--beats"]),
+            "/api/v1/mesh/events?beats=true",
+            "beats are asked for by name"
+        );
+        assert_eq!(
+            target(&["--after", "42", "--limit", "10", "--newest", "--beats"]),
+            "/api/v1/mesh/events?after=42&limit=10&newest=true&beats=true"
+        );
+        assert_eq!(
+            target(&["--cursor", "00000000000000aa:7", "--beats"]),
+            "/api/v1/mesh/events?cursor=00000000000000aa%3A7&beats=true",
+            "a cursor resumes the walk, encoded, beside the beats"
+        );
+    }
+
+    /// One entry of `server.status`'s `servers`, as `checkouts_of` writes it.
+    fn server(worktree: &str, primary: bool, this: bool, standing: &str, port: u16) -> Value {
+        json!({
+            "worktree": worktree,
+            "primary": primary,
+            "this_checkout": this,
+            "standing": standing,
+            "lease": { "url": format!("http://127.0.0.1:{port}") },
+        })
+    }
+
+    #[test]
+    fn this_checkouts_ready_server_answers_for_it() {
+        let servers = [
+            server("/r", true, false, "ready", 1),
+            server("/r-wt/x", false, true, "ready", 2),
+        ];
+        assert_eq!(
+            choose(&servers),
+            Some(Serving {
+                url: "http://127.0.0.1:2".into(),
+                borrowed_from: None
+            })
+        );
+    }
+
+    #[test]
+    fn a_worktree_without_a_server_borrows_the_primarys_first() {
+        let servers = [
+            server("/r", true, false, "ready", 1),
+            server("/r-wt/x", false, true, "absent", 2),
+            server("/r-wt/y", false, false, "ready", 3),
+        ];
+        assert_eq!(
+            choose(&servers),
+            Some(Serving {
+                url: "http://127.0.0.1:1".into(),
+                borrowed_from: Some("/r".into())
+            })
+        );
+        // the primary not ready: the first ready other checkout
+        let servers = [
+            server("/r", true, false, "outdated", 1),
+            server("/r-wt/x", false, true, "stale", 2),
+            server("/r-wt/y", false, false, "ready", 3),
+        ];
+        assert_eq!(
+            choose(&servers),
+            Some(Serving {
+                url: "http://127.0.0.1:3".into(),
+                borrowed_from: Some("/r-wt/y".into())
+            })
+        );
+        // nothing ready anywhere: no server, and the command answers so
+        let servers = [
+            server("/r", true, false, "absent", 1),
+            server("/r-wt/x", false, true, "outdated", 2),
+        ];
+        assert_eq!(choose(&servers), None);
+        assert_eq!(choose(&[]), None);
+    }
+
+    #[test]
+    fn a_publish_and_a_materializing_consume_touch_the_serving_checkout() {
+        let consume = "/api/v1/mesh/handovers/consume";
+        assert!(touches_the_serving_checkout(
+            consume,
+            Some(&json!({ "handover": "h", "materialize": true }))
+        )
+        .is_some_and(|why| why.contains("--no-materialize")));
+        assert_eq!(
+            touches_the_serving_checkout(
+                consume,
+                Some(&json!({ "handover": "h", "materialize": false }))
+            ),
+            None
+        );
+        // a publish reads the serving checkout's handovers, named or latest
+        assert!(touches_the_serving_checkout(
+            "/api/v1/mesh/handovers",
+            Some(&json!({ "path": "p" }))
+        )
+        .is_some_and(|why| why.contains("that checkout's handovers")));
+        assert!(touches_the_serving_checkout("/api/v1/mesh/handovers", None).is_some());
+        assert_eq!(
+            touches_the_serving_checkout("/api/v1/mesh/claims", None),
+            None
+        );
+        assert_eq!(touches_the_serving_checkout("/api/v1/mesh", None), None);
+    }
+
+    fn query(repo: Option<std::path::PathBuf>, format: OutputFormat) -> MeshQueryArgs {
+        MeshQueryArgs {
+            repo: crate::cli::RepoArgs {
+                repo,
+                ..Default::default()
+            },
+            format,
+        }
+    }
+
+    /// A loopback address nothing listens on: a port the system handed out and took back.
+    fn closed_url() -> String {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        drop(listener);
+        format!("http://127.0.0.1:{port}")
+    }
+
+    #[test]
+    fn a_question_outside_any_repository_is_an_error_not_an_answer() {
+        let plain = tempfile::tempdir().unwrap();
+        let args = query(Some(plain.path().to_path_buf()), OutputFormat::Json);
+        assert!(ask(&args, "GET", "/api/v1/mesh", None, render_status, never).is_err());
+    }
+
+    /// `mesh doctor` outside any repository has no server to find and no layer to read:
+    /// an error, not a report.
+    #[test]
+    fn a_doctor_outside_any_repository_is_an_error_not_a_report() {
+        let plain = tempfile::tempdir().unwrap();
+        let args = query(Some(plain.path().to_path_buf()), OutputFormat::Json);
+        assert!(doctor(args).is_err());
+    }
+
+    /// Through a borrowed server, a publish is refused by name on the text surface too.
+    #[test]
+    fn a_publish_through_a_borrowed_server_is_refused_in_text() {
+        let serving = Serving {
+            url: closed_url(),
+            borrowed_from: Some("/r".into()),
+        };
+        let code = ask_through(
+            Some(serving),
+            &query(None, OutputFormat::Text),
+            "POST",
+            "/api/v1/mesh/handovers",
+            Some(json!({ "path": null })),
+            render_written,
+            never,
+        )
+        .unwrap();
+        assert_eq!(code, EXIT_REFUSED);
+    }
+
+    /// A server that answers for this checkout is asked, by `ask` and by `doctor`; one that
+    /// has gone since it was found is an error naming its address, not an absence.
+    #[test]
+    fn a_found_server_is_asked_and_one_gone_since_is_an_error_naming_it() {
+        let url = closed_url();
+        let serving = || Serving {
+            url: url.clone(),
+            borrowed_from: None,
+        };
+        let asked = ask_through(
+            Some(serving()),
+            &query(None, OutputFormat::Json),
+            "GET",
+            "/api/v1/mesh",
+            None,
+            render_status,
+            never,
+        )
+        .expect_err("nothing answers");
+        assert!(asked.to_string().contains(&url), "{asked}");
+        let doctor = doctor_through(Some(serving()), query(None, OutputFormat::Json))
+            .expect_err("nothing answers");
+        assert!(
+            doctor.to_string().contains("/api/v1/mesh/doctor"),
+            "{doctor}"
+        );
+    }
+
+    #[test]
+    fn an_enrolment_says_whether_it_changed_the_declaration_and_what_is_next() {
+        let added = render_enrolment(&json!({
+            "path": ".ai/repo/mesh/mesh.yaml", "key": "ab", "added": true, "next": "commit it",
+        }));
+        assert_eq!(
+            added,
+            "enrolled   .ai/repo/mesh/mesh.yaml\nkey        ab\nnext       commit it"
+        );
+        let listed = render_enrolment(&json!({
+            "path": "p", "key": "ab", "added": false, "next": "nothing",
+        }));
+        assert!(listed.starts_with("listed     p\n"), "{listed}");
+    }
 
     /// A 32-hex node key, as `<node>-<runtime>` carries it.
     const NODE_A: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
@@ -1537,6 +2135,20 @@ mod tests {
         );
     }
 
+    /// A page of a walk by cursor ends with the cursor to pass back, written as the flag
+    /// that resumes the walk exactly after this page.
+    #[test]
+    fn a_cursor_page_ends_with_the_flag_that_resumes_the_walk() {
+        let text = render_events(&json!({
+            "active": true, "count": 0, "lamport": 3, "cursor": "00000000000000aa:7",
+            "events": [],
+        }));
+        assert!(
+            text.ends_with("events     0 (lamport 3)\nnext       --cursor 00000000000000aa:7"),
+            "{text}"
+        );
+    }
+
     #[test]
     fn an_event_of_a_kind_this_executable_does_not_know_is_shown_rather_than_dropped() {
         let text = render_events(&json!({
@@ -1644,6 +2256,19 @@ mod tests {
             "key": "s/c1", "event": "s/4", "lamport": 17,
         }));
         assert_eq!(text, "written    s/c1\nevent      s/4 (lamport 17)");
+        let synced = render_written(&json!({
+            "key": "s/c1", "event": "s/4", "lamport": 17, "durability": "synced",
+        }));
+        assert_eq!(synced, text, "a durable write says nothing more");
+    }
+
+    #[test]
+    fn a_write_the_disk_did_not_take_is_said_not_to_be_durable() {
+        let text = render_written(&json!({
+            "key": "s/c1", "event": "s/4", "lamport": 17, "durability": "not_durable",
+        }));
+        assert!(text.contains("NOT DURABLE"), "{text}");
+        assert!(text.contains("mesh doctor"), "{text}");
     }
 
     #[test]
@@ -2065,6 +2690,192 @@ mod tests {
         assert!(
             refused.is_err(),
             "a port that is not a number was answered: {refused:?}"
+        );
+    }
+
+    #[test]
+    fn an_ensure_answer_reads_as_its_source_command_levels_and_notes() {
+        let v = json!({
+            "kind": "npm-modules", "dir": "site", "target": "site/node_modules",
+            "key": "v1/npm-modules/p/t/d", "source": "in_place",
+            "command": { "argv": ["npm", "ci"], "exit": 0 },
+            "saved": ["local", "store"],
+            "notes": ["local: no archive under this key"],
+            "local": { "dir": "~/.cache/majordomus/build-cache", "bytes": 1073741824_u64,
+                       "bound_bytes": 21474836480_u64, "pruned": 2 },
+        });
+        let text = render_build_cache_ensure(&v);
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines,
+            [
+                "kind       npm-modules (site)",
+                "key        v1/npm-modules/p/t/d",
+                "target     site/node_modules",
+                "source     in place",
+                "command    npm ci -> exit 0",
+                "saved      local, store",
+                "local      ~/.cache/majordomus/build-cache  1.00 of 20 GiB, 2 pruned",
+                "note       local: no archive under this key",
+            ]
+        );
+        assert_eq!(ensure_exit(&v), 0);
+        let bare = json!({ "kind": "mix-deps", "dir": ".", "source": "uncached",
+                           "saved": [], "notes": [], "local": {} });
+        let text = render_build_cache_ensure(&bare);
+        assert!(text.contains("key        none"), "{text}");
+        assert!(
+            !text.contains("command") && !text.contains("saved"),
+            "{text}"
+        );
+        assert_eq!(ensure_exit(&bare), 0, "nothing ran: nothing failed");
+        assert_eq!(ensure_exit(&json!({ "command": { "exit": 3 } })), 3);
+        assert_eq!(ensure_exit(&json!({ "command": { "exit": 300 } })), 255);
+        assert_eq!(ensure_exit(&json!({ "command": { "argv": ["x"] } })), 1);
+        let signalled = render_build_cache_ensure(&json!({ "command": { "argv": ["x"] } }));
+        assert!(
+            signalled.contains("command    x -> exit none"),
+            "{signalled}"
+        );
+    }
+
+    /// The repository this crate is built in, as the command line would name it.
+    fn this_repository(format: OutputFormat) -> MeshQueryArgs {
+        MeshQueryArgs {
+            repo: crate::cli::RepoArgs {
+                repo: Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")),
+                ..Default::default()
+            },
+            format,
+        }
+    }
+
+    #[test]
+    fn an_ensure_outside_a_repository_or_refused_by_the_capability_is_an_error() {
+        let elsewhere = tempfile::tempdir().unwrap();
+        let outside = build_cache_ensure(MeshBuildCacheEnsureArgs {
+            kind: crate::mesh::build_cache::key::Kind::NpmModules,
+            dir: None,
+            command: vec!["true".into()],
+            query: MeshQueryArgs {
+                repo: crate::cli::RepoArgs {
+                    repo: Some(elsewhere.path().to_path_buf()),
+                    ..Default::default()
+                },
+                format: OutputFormat::Text,
+            },
+        });
+        assert!(
+            outside.is_err(),
+            "no layer to load was answered: {outside:?}"
+        );
+        // npm needs its install command: the capability refuses before anything runs
+        let refused = build_cache_ensure(MeshBuildCacheEnsureArgs {
+            kind: crate::mesh::build_cache::key::Kind::NpmModules,
+            dir: None,
+            command: Vec::new(),
+            query: this_repository(OutputFormat::Text),
+        });
+        let why = refused.expect_err("an npm ensure without a command was answered");
+        assert!(
+            why.to_string()
+                .contains("npm-modules needs the install command after `--`"),
+            "{why}"
+        );
+    }
+
+    #[test]
+    fn the_env_answer_is_printed_as_json_and_asks_sccache_by_name_when_none_is_given() {
+        let d = tempfile::tempdir().unwrap();
+        // the node file is absent, so no store is asked whatever sccache is installed
+        let code = build_cache_env(MeshBuildCacheEnvArgs {
+            sccache: None,
+            node_file: Some(d.path().join("absent.json")),
+            credentials: None,
+            format: OutputFormat::Json,
+        })
+        .unwrap();
+        assert_eq!(code, 0, "the answer is a fact, never a failure");
+    }
+
+    #[test]
+    fn a_key_answer_lists_each_kind_with_its_key_or_why_it_has_none() {
+        let v = json!({
+            "platform": "aarch64-apple-darwin",
+            "kinds": [
+                { "kind": "npm-modules", "dir": "site", "key": "v1/npm/k",
+                  "location": "store/v1/npm/k" },
+                { "kind": "mix-deps", "dir": ".", "unavailable": "elixir is not installed",
+                  "location": "" },
+                { "kind": "cargo-build-dir" },
+            ],
+        });
+        let text = render_build_cache_key(&v);
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines,
+            [
+                "platform   aarch64-apple-darwin",
+                "npm-modules      site         v1/npm/k",
+                "                              -> store/v1/npm/k",
+                "mix-deps         .            no key: elixir is not installed",
+                "                              -> ",
+                "cargo-build-dir               no key: unknown",
+                "                              -> ",
+            ]
+        );
+        let none = render_build_cache_key(&json!({ "platform": "p", "kinds": [] }));
+        assert!(none.contains("nothing here is cacheable"), "{none}");
+    }
+
+    #[test]
+    fn a_provision_answer_reads_its_edits_and_what_the_apply_did() {
+        let v = json!({
+            "mode": "apply", "root": "/srv/node", "ok": false,
+            "plan": {
+                "files": [{ "state": "owed", "mode": "0600", "path": "env", "source": "derived" }],
+                "edits": [{ "owed": true, "path": "a.conf" }, { "owed": false, "path": "b.conf" }],
+                "steps": [{ "when": "after", "line": "systemctl restart x" }],
+                "changes": 2, "unobservable": 1,
+            },
+            "apply": {
+                "refused": "the disk is below its floor",
+                "written": ["env"],
+                "ran": [{ "ok": true, "line": "true" }, { "ok": false, "line": "false" }],
+                "skipped": ["systemctl restart x"],
+            },
+        });
+        let text = render_provision(&v);
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines,
+            [
+                "mode        apply",
+                "root        /srv/node",
+                "owed          0600 env (derived)",
+                "edit          a.conf",
+                "current       b.conf",
+                "step (after)  systemctl restart x",
+                "plan        2 change(s) owed, 1 not observable here",
+                "refused     the disk is below its floor",
+                "written     env",
+                "ok    true",
+                "FAIL  false",
+                "skipped     systemctl restart x",
+                "verdict     not provisioned (see above)",
+            ]
+        );
+        let planned = render_provision(&json!({ "mode": "plan", "root": "/r", "ok": true,
+            "plan": { "changes": 0, "unobservable": 0 }, "apply": null }));
+        assert!(planned.ends_with("verdict     ok"), "{planned}");
+        assert!(!planned.contains("refused"), "{planned}");
+        let applied = render_provision(&json!({ "mode": "apply", "root": "/r", "ok": true,
+            "plan": { "changes": 0, "unobservable": 0 },
+            "apply": { "refused": null, "written": ["env"], "ran": [], "skipped": [] } }));
+        assert!(applied.contains("written     env"), "{applied}");
+        assert!(
+            !applied.contains("refused"),
+            "an apply that was not refused says nothing of a refusal: {applied}"
         );
     }
 }

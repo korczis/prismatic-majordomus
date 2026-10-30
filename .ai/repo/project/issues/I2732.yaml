@@ -1,0 +1,41 @@
+id: I2732
+milestone: capability-graph
+title: "The MCP reference repeats no registry entry: no hand-written document lists tools"
+slug: the-mcp-reference-repeats-no-registry
+priority: p2
+profile: implementation
+parallel_safe: true
+depends_on: []
+objective: "Remove the second inventory of MCP tools from docs/MCP.md and hold every hand-written document under docs/ to naming tools in prose, so the next composed module cannot be missing from a list nobody regenerates."
+why: "On 2026-10-15 the 0.27.0 integration top (#1183) went red on case 532 while the new capability worktree.uncommitted reached the registry and every generated page; tracing it showed that docs/MCP.md's five hand-written tool tables (29 rows: tool, capability, arguments, answers) did not carry it. Those tables repeated the registry, which CLAUDE.md and ADR 0004 call a design defect, and the generated reference already exists: docs/generated/capabilities.md and the site's /registry/mcp/, which case 532 holds to the registry."
+current_state: "docs/MCP.md carries hand-written tool tables under Peers, Episodes, Tools and Sessions and continuity; nothing checks them against the registry, and majordomus_worktree_uncommitted is absent from them."
+desired_state: "docs/MCP.md names each tool in prose where it explains why it exists, and links the derived reference for arguments and answers (docs/generated/capabilities.md, /registry/mcp/, majordomus_capability at runtime; the local-only session tools through majordomus capabilities describe). Case 3062 refuses a table row whose first cell is a majordomus_ tool in any tracked Markdown document under docs/ outside docs/generated/, after proving its pattern on a planted row and a planted non-row."
+scope:
+  - docs/MCP.md
+  - test/cases/3062_the_mcp_reference_repeats_no_registry_entry.sh
+  - .ai/repo/project/issues/I2732.yaml
+non_scope:
+  - "Generating a tool table into a region of docs/MCP.md, which would need a region projection in majordomus generate"
+  - "The site's /registry/mcp/ page, which is already derived and held by case 532"
+acceptance_criteria:
+  - "No tracked document under docs/ outside docs/generated/ has a table row whose first cell is a backticked majordomus_ tool name"
+  - "Case 3062 fails on the tables docs/MCP.md carried before this change and passes after it"
+validation:
+  - "bin/majordomus plan validate"
+  - "test/run.sh 3062_the_mcp_reference_repeats_no_registry_entry"
+evidence_required:
+  - "the_mcp_reference_repeats_no_registry_entry_case"
+created_at: 2026-10-15
+updated_at: 2026-10-25T23:41:38Z
+started_at: 2026-10-25T23:41:14Z
+started_event: sha256:d50212bf219e03ae636f5662b32ff1e5f1080eb2b3a82161804ef34ff39e11b3
+completed_at: 2026-10-25T23:41:38Z
+completed_event: sha256:bcc6d0e3b24483f46ef87d18122070d7c0659917acd4e6ade5488db9170a2369
+evidence:
+  - covers: the_mcp_reference_repeats_no_registry_entry_case
+    type: test
+    command: "MJ_TEST_JOBS=2 env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3062_the_mcp_reference_repeats_no_registry_entry"
+    result: "at master 2efeacea031: case 3062 ok (C1: no tracked document under docs/ outside docs/generated/ has a table row whose first cell is a backticked majordomus_ tool name). C2 by mutation: with docs/MCP.md as it was before 5b2c2813ca8 (git show 5b2c2813ca8^:docs/MCP.md), case 3062 fails naming 29 hand-written tool rows (docs/MCP.md:394 onwards); restored, the file is identical to master. Master validate run 40196303175 suite-shard (4) job 121182964713: case 3062 ok. Landed 5b2c2813ca8 (2026-10-15)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175"
+    commit: cb4741a60d9a1e6e57bb2c60c91ccf7f5806a847
+    recorded_at: 2026-10-25T23:40:46Z

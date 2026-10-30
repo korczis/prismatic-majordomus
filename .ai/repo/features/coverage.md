@@ -11,7 +11,7 @@ weight: 72
 domain: completion
 featured: false
 areas: [verification]
-modules: []
+modules: [gates]
 commands: []
 rules: [project.new-code-is-covered]
 docs: [docs/COVERAGE.md]

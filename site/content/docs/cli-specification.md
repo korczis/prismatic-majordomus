@@ -55,6 +55,13 @@ a check passed, it failed.
   the context's reading of the repository (`generation`), or the checkout's state as well
   (`checkout`: HEAD, the staging index, the refs, and every changed or untracked path).
   The switch also makes a page's reading of a source run its handler and wait for it.
+- `MAJORDOMUS_BUILD_CACHE=off` makes `majordomus mesh build-cache ensure` ask no level of
+  the build cache: neither the key marked in place, nor the local archive level under
+  `~/.cache/majordomus/build-cache`, nor the store; the command after `--` runs, and nothing
+  is saved or marked. A cold, a warm and a bypassed install leave the same files
+  (`project.cache-is-invisible`); the switch settles a doubt by installing without the
+  cache. A restore and a save also respect the build's free-space floor,
+  `MAJORDOMUS_MIN_FREE_MB` (5120 by default, 0 disables it).
 - `MAJORDOMUS_READING_PATIENCE_MS` sets how long a page waits for a source after the
   repository changed before it shows the reading it has, marked stale (50 by default; see
   [`MAJORDOMUS_UI.md`](@/docs/majordomus-ui.md#fast-and-current)). `wait` makes every read wait for
@@ -248,6 +255,25 @@ check: 1 action(s) would be taken and nothing was written (run: majordomus recov
 
 Is the supervisory layer real here? Read-only. Blocking by design: intended to run
 from a pre-commit hook and from CI.
+
+**It checks governance only** — the policy, the profiles, the wiring of every declared
+enforcement, the projections, the records and their retention. It reads nothing of the
+checkout's server, its lease or the mesh, so a clean report says nothing about whether the
+server answering for this checkout is current (I2707). The runtime is read by:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Question | Where it is read |
+| --- | --- |
+| Is the server answering for this checkout current, or stale? | `majordomus serve status` |
+| Is the mesh healthy here: identity, trust, link, runtime, journal? | `majordomus mesh doctor` |
+| What does the server report about itself, the mesh included? | `GET /api/v1/health` (`health.report`) |
+| Can this process answer: lease held, executable current? | `GET /api/v1/ready` (`health.ready`) |
+
+</div>
+
+
+`majordomus doctor --help` prints the same before its usage.
 
 **Checks, in order:**
 
@@ -510,6 +536,7 @@ weakest evidence about the present.
 | `LATEST CHECKPOINT` | `state/checkpoints/` | a checkpoint resolves for this task |
 | `LATEST COMPATIBLE HANDOVER` | `state/handovers/` | a handover resolves for this worktree and branch |
 | knowledge candidates | `.ai/repo/knowledge/candidates/` | in the derived briefing, after the open questions and before the handover: the candidates awaiting review whose episode was on this branch, count and ids, bounded; unattributed ones on their own line; absence printed rather than omitted |
+| `KNOWLEDGE POINTERS` | the knowledge graph (`majordomus knowledge`), compiled on this read | `context.knowledge: true` and the task names an issue: see below |
 | `FILES TOUCHED IN SCOPE` | git | `context.relevant_files: true` |
 | `RECENT HISTORY` | `state/ledger.jsonl` | `context.recent_history_depth` is above zero |
 | `PROMPT` | `prompts/<name>.md` | `--prompt <name>` was given |
@@ -527,6 +554,27 @@ rather than disappearing. Git, task, profile and blockers are never dropped. Eve
 named under `EXCLUDED` with its reason, so an under-filled context is debugged from the
 exclusion list instead of guessed at. Exit `10` if what cannot be dropped is already over
 budget.
+
+**Knowledge pointers.** A bounded slice of the knowledge graph, not the graph: one line per
+pointer — the relation that selected it, the kind, the id, the source path and the title.
+Selection follows only edges a file states, in this order, each tier in byte order of the
+id: the issue the task was started for, the issues it `depends_on`, its milestone, the
+claims that milestone declares, and every node whose source is a path the task or the issue
+names in its `scope`. Nothing is searched and nothing is scored — a document whose words
+match the issue's but that nothing references is not selected. The list stops at the
+profile's `context.knowledge_max_items` (the policy's `context.max_list_items` when unset,
+and never above it), and a last line counts the rest with `majordomus knowledge related
+issue:<id>`, which prints them. The section is absent, and named under `EXCLUDED` with the
+reason, when the profile does not set `context.knowledge: true`, and when the task names no
+issue under a policy whose `intent.binding` is not `off`; with no task, or with binding off
+and no issue, it is simply absent. Only the kinds and paths the selection can reach are compiled,
+so it costs about two seconds on a plan of four hundred issues rather than the eight a whole
+compile takes; it is a few lines of a 300-line budget. When the issue the task names is not
+a node — its record left the version-control index, or is gone — the section prints a
+`stale` line saying which and why, and still lists what the graph does hold. Under a tight
+budget it is dropped with the derived listings, after files and before the context
+documents, and so long before git, the task, the profile and the open questions, which are
+never dropped; the drop names the command that prints the pointers.
 
 **`--for <provider>`** wraps the same body with a header naming the provider and its
 always-loaded file. The body does not change: the canonical context is provider-neutral,
@@ -763,7 +811,19 @@ validation gate of the CI model that has reported.
 ```
 majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]
 majordomus evidence --gate <id> --exit <status> [--command <cmd>] [--result <r>] [--json]
+majordomus evidence <show|claim|proves|record|stamp> [options]
 ```
+
+The third form is the other program's. Every argument this command takes is an option, so a
+word in the first position is never its own: `show`, `claim`, `proves`, `record` and `stamp`
+are subcommands of the Rust executable, which holds the ledger of what ran
+([`EVIDENCE.md`](@/docs/evidence.md#the-capabilities)), and the launcher hands them to it with
+every argument unchanged — `--repo` on either side of the command included. Their exit
+codes are the executable's, and they need no active task. Which words those are is read
+from the executable's own declaration (`docs/generated/cli.yaml` in a checkout, the shipped
+executable's `help evidence <word>` in an installed tree), so `majordomus evidence --help`
+lists exactly the subcommands this installation reaches. A word neither program has is
+refused here, exit `2`. The rest of this section is about the first two forms.
 
 The two forms record different kinds of fact and are never one invocation. An obligation is
 a promise the task made; a gate is what the validation pipeline said about the tree. A line
@@ -852,16 +912,31 @@ about and refuses nothing. `queued` is reported by
 name, never accepted as a pass and never refused: a verdict that never arrived and a verdict
 that said pass are different facts, and on 2026-09-10 this repository's trunk carried three
 branch-breaking defects overnight because they looked identical
-(`majordomus.never-reported-is-not-green`).
+(`project.never-reported-is-not-green`).
 
 The whole judgement — every gate, the plan that selected it, which obligations the change
-implies, and the twenty-two questions of the done invariant with the source that answered
-each — is one document, `gates.completion`, read the same way by the command line, the HTTP
-API, MCP and the Cockpit:
+implies, and the questions of the done invariant with the source that answered each — is
+one document, `gates.completion`, read the same way by the command line, the HTTP API, MCP
+and the Cockpit:
 
 ```
 majordomus-cli run gates.completion --input '{}' --format json | jq '.output.questions'
 ```
+
+The questions are declared once, in `share/completion.yaml`, which the tool ships: the
+stages of the work in order (implementation, validation, documentation, commit, gates,
+version, integration, deployment, verification, closing, provenance), every question in the
+stage it belongs to, and the source its answer is taken from — an obligation, a gate, the
+change set, the repository's convergence or a closing reading. `gates.policy`
+(`majordomus_completion_policy`, `GET /api/v1/gates/policy`) serves the file with what it
+resolves to here: a token the vocabulary lacks is a `problem`, and a gate question this
+repository's CI model never answers is listed under `unanswered_gates`. The report asks
+exactly those questions in that order, and folds the answers into `stage` — the first stage
+blocked, else the first with a question still owed, else the last — which is derived on
+every reading and written down by nobody. `complete` is true only when a task is present
+and every question passes or is exempt; `finishable` and `complete` are two different
+words. A distribution whose policy cannot be read is asked one question, `policy`, answered
+`unknown`, and nothing is complete.
 
 ### The closing questions
 
@@ -918,11 +993,11 @@ one that can also say what was true.
 - `--list` lists this worktree's checkpoints, newest first, with each one's git label.
 
 A checkpoint belongs to the **episode**, not to a task. It is written whether or not a task
-is open and whatever outcome the last one reached; the record's `task_id` is the task when
-there is one and `none` otherwise, and the ledger event omits the field entirely rather than
-writing a literal `none` that every reader of that event would collect as a task by that
-name. Only the task's own `checkpoint_at` is left alone when the task is over, because that
-field is the task's.
+is open and whatever outcome the last one reached. It relates the active task unless a
+different, still-open episode opened that task (ADR 0164); then its Markdown `task_id` is
+`none`, its ledger event omits `task_id`, and it leaves the task's `checkpoint_at` alone.
+`check --checkpoint` uses the same rule. A derived checkpoint uses that same prepared
+relation for its body; it cannot describe another episode's task as its own.
 
 This refused with `12` (no active task) and `15` (the task is no longer active) until ADR
 0052. Those two refusals are the 2026-09-05 outage: a task marked `handed_over` and never
@@ -972,7 +1047,7 @@ $ majordomus history --task t-20260903193012-a4f1
 
 Record or read durable decisions. One append-only file: `state/decisions.md`.
 
-`decision add "<what>" --why "<why>"` appends an entry with the task id and git head
+`decision add "<what>" --why "<why>"` appends an entry with the task relation and git head
 computed. `--why` is required: a decision with no recorded reason cannot be reviewed later,
 only re-argued. `--rejected` and `--evidence` are optional and default to `-`.
 
@@ -984,6 +1059,16 @@ decision. `decision list` marks a replaced entry with `Superseded by: <title>`.
 
 `decision list [--task <id>] [--limit <n>]` prints entries newest first; `decision show
 "<text>"` prints the first entry whose title contains that text, or exits `12`.
+
+Decisions, questions, checkpoints, handovers and `knowledge observe` prepare attribution
+once. An explicit caller identity resolves its own open episode or none; an unknown identity
+never borrows the checkout's pointer. With no supplied identity, exactly one local open
+episode is unambiguous; zero or several produce an event with no `session`, and status may
+still show the pointer as a guess. A record relates the active task unless a different
+episode that is still open opened it (its `task.started` event names that episode); a task
+whose opener closed, or that opened outside an episode, is carried on by whoever continues
+it, and a handover never closes another live episode's task. Markdown uses `none` for an
+absent task; the event omits `task_id`. The record is still written.
 
 The `deep-work` profile sets `verification.decision_record_required: true`; `finish` then
 refuses `completed` unless an entry names the task.
@@ -1002,12 +1087,15 @@ Open, resolve and list the questions that block acceptance. One mutable index:
 `state/open-questions.md`.
 
 Unresolved questions are explicit state, not prose inside a handover, because
-`finish --outcome completed` refuses while any entry names the active task. That gate is
+`finish --outcome completed` refuses while any unresolved entry exists here, including an
+entry without a task relation. That gate is
 the reason the file has a machine-written line format, and the reason `check`, `doctor` and
 `watch` fail on an entry that does not parse: a gate that cannot read an entry is a gate
 that can be bypassed by mistyping one.
 
 - `question add "<question>"` appends `- [unresolved] <task id> — <question> (<date>)`.
+  The task is `none` when a different, still-open episode opened the active task; a
+  question does not require an active task.
 - `question resolve <n|"<text>"> --answer "<answer>"` rewrites that one line to
   `[resolved <date>]` and appends the answer. `n` is the number `question list` printed.
   `--answer` is required, and an ambiguous selector is refused rather than guessed.
@@ -1019,6 +1107,8 @@ that can be bypassed by mistyping one.
 
 Resolving edits the index because an index of what is still open must not accumulate. The
 append-only record of every opening and resolution, with its answer, is the ledger.
+Resolution preserves the index entry's original task token. Its ledger event describes
+the resolving caller and relates that caller's active task only when attributable.
 
 ```
 $ majordomus question add "Does the legacy mobile callback still require the old URI form?"
@@ -1473,8 +1563,9 @@ search: 2 match(es)
 ## `majordomus knowledge`
 
 A compiler over what this repository already states, and the writer of what an episode
-learned. `sources`, `nodes`, `edges`, `candidates` and `check` are read-only; `derive`,
-`promote` and `reject` write knowledge records and ledger lines, and nothing else.
+learned. `sources`, `nodes`, `edges`, `search`, `show`, `related`, `candidates` and `check`
+are read-only; `derive`, `promote` and `reject` write knowledge records and ledger lines, and
+nothing else.
 
 It is not a wiki, not a database, not a memory service, and not a second place to write
 things down. Every source it reads is a file somebody already maintains, everything it
@@ -1496,6 +1587,22 @@ changes the other.
   claim one identity.
 - `edges [--scope ...] [--type <t>]` derives one edge per stated relationship, with the file
   and the field or line it was observed in.
+- `search <query> [--scope ...]` returns the nodes the query matches, in an order that is a
+  rule rather than a score. A node is placed on the first rung it reaches: `id` (the query is
+  its canonical id), `title` (the query is its title), `title-prefix` (its title begins with
+  the query), `path` (its source path contains the query), `body` (its source file contains
+  the query literally); every comparison ignores case. Within a rung the order is byte order
+  of the id. Each result names the rung it was placed on (`matched`, and `rung` in `--json`),
+  so the reason for the order is in the answer. Nodes carry no tags, so there is no tag rung.
+- `show <id> [--scope ...]` prints one node with its kind, scope, title, source path and
+  content hash. Exits `12` when no node has that id.
+- `related <id> [--scope ...]` prints the edges out of and into one node, each with its type
+  and the file and field or line it was observed in. Exits `12` when no node has that id.
+
+  None of the three writes, and none rebuilds anything: there is no stored index to go
+  stale, so each call compiles what the checkout holds at that moment, exactly as `nodes`
+  does. Case 3037 asserts the ladder, the fields of every result, and that the working tree
+  reads the same after all three.
 - `derive [--episode <id>] [--dry-run] [--json]` derives the knowledge the episode produced
   into candidate records under `.ai/repo/knowledge/candidates/`, from the ledger and git and
   never from a conversation: a recorded decision becomes a `convention`, a resolved question a
@@ -2035,9 +2142,9 @@ majordomus adr affected [--base <ref>|--staged|--worktree] [--json]   the decisi
   merging. The verdict always states its subject — how many identities were added and what
   they were measured against — and when the base does not resolve it says the other refs were
   **not** surveyed rather than exiting clean with nothing said. `doctor` runs the same
-  examination, and `doctor` is the pre-commit hook, so a collision is refused on the branch
-  rather than at the merge where `generate --strict` would exclude every claimant and name
-  only the identity. `ADR 0053` is the reasoning.
+  examination: the pre-commit hook prints it on the branch, and CI's core-check refuses it
+  there, rather than at the merge where `generate --strict` would exclude every claimant and
+  name only the identity. `ADR 0053` is the reasoning.
 
 - `affected` reads a change set — the working tree against `HEAD` by default, `--staged`
   for the index, `--base <ref>` for `<ref>..HEAD` plus the working tree — and names every

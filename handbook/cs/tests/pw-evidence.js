@@ -42,6 +42,9 @@ const fs = require('fs'), path = require('path');
   for (let i = 0; i < 5; i++) await p.locator('#sw-steps .flow-step-b').nth(i).click();
   console.log('switch stepper:', await p.locator('#sw-ctl .flow-pos').textContent(), '|', (await p.locator('#sw-out').innerText()).split('\n').slice(-1)[0].slice(0, 80));
   console.log('grad stepper steps:', await p.locator('#gr-steps .flow-step').count());
+  // no heading skips a level, in the page as built and after the panels above were drawn
+  const skips = await p.evaluate(() => { const h = Array.from(document.querySelectorAll('main h1, main h2, main h3, main h4, main h5, main h6')).filter((e) => !e.closest('.md')).map((e) => [+e.tagName[1], e.textContent.trim().slice(0, 40)]); return h.filter((x, i) => i && x[0] > h[i - 1][0] + 1); });
+  console.log('heading skips', skips.length, JSON.stringify(skips.slice(0, 5)));
   console.log('overflow', await p.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth), 'errors', JSON.stringify(errs));
   await b.close();
 })();

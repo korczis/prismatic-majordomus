@@ -1,0 +1,34 @@
+# sequence: take after I3440 lands and the stale exclusive claim on apps/majordomus-cli/src/ui/roadmap.rs is released (I3440 is not on origin/master yet, so it is not a depends_on)
+id: "I3756"
+milestone: "truthful-plan-surfaces"
+title: "A published UI snapshot says once why it reads no mesh and no deployed commit, and shows no unread notice for either"
+slug: "a-snapshot-explains-what-it-cannot-read"
+priority: "p2"
+profile: "implementation"
+parallel_safe: true
+objective: "When a screen is read as a published snapshot, the plan.flight sources that are unread because of the snapshot itself (the mesh, which no process on a Pages runner activates, and the publication pointer of a deployed commit the CI clone did not fetch) are not drawn as unread notices on /ui/roadmap/ and on every milestone inspector; the screen states once, in plain words, that a snapshot does not observe them and that the live UI does. Every other unread source is still drawn as unread, in the snapshot and live."
+why: "Found by the roadmap audit of 2026-10-20 (finding F15): the published /ui/roadmap/ and every milestone inspector show 'unread publication: ... cannot be read in this clone' and 'unread mesh: not active: no shared server activated the mesh in this process'. Both are always true of a snapshot, so a visitor reads them as errors of the product when they are a property of how the page was produced. The milestone promises that a plan surface shows what delivery says; a notice that is never informative on the published copy is noise in that promise. ui/mesh.rs already solved the same problem for the mesh screen (I2943), so the fix has a precedent to reuse."
+current_state: "Verified on origin/master 91c0b5d5658. apps/majordomus-cli/src/ui/roadmap.rs:456-473 unread_sources draws every source of plan.flight whose state is unread, and it is called at :288 (now_panel) and :305 (delivery_panel, the milestone inspector), with no knowledge of whether the screen is a snapshot. apps/majordomus-cli/src/plan/flight.rs:526-545 adds the mesh source as Unread with the cooperation reason when no claims could be read, and :502 adds the publication source as unread from apps/majordomus-cli/src/plan/delivery.rs:696, whose text is the 'cannot be read in this clone' sentence. The reason 'no shared server activated the mesh in this process' is the default of apps/majordomus-cli/src/mesh/manager.rs:168. The snapshot is marked only by the request header SNAPSHOT_HEADER (apps/majordomus-cli/src/ui/mod.rs:119), read at :376 to inline slow panels, and nothing else in a screen consults it. apps/majordomus-cli/src/ui/mesh.rs:135-139 (unobserved, I2943, case 3343) already turns an inactive mesh into 'not observed' instead of a measurement."
+desired_state: "A screen read with the snapshot header passes that fact to the roadmap panels; unread_sources leaves out the mesh source whose reason is the inactive default and the publication source whose reason is an unfetched deployed commit, and the panel carries one sentence saying what a published snapshot cannot observe and where the live reading is. A live screen, and a snapshot whose records or tags source is unread, still list every unread source with its reason. The sentence is one shared string, not a second copy per panel."
+scope:
+  - "apps/majordomus-cli/src/ui/roadmap.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/tests/ui_roadmap.rs"
+  - "test/cases/3729_a_snapshot_explains_what_it_cannot_read.sh"
+  - ".ai/repo/project/issues/I3756.yaml"
+non_scope:
+  - "Fetching the deployed commit into the Pages clone so the publication source can be read there"
+  - "The meters and the now/next derivation, which I3440 and I3439 own"
+  - "The mesh screen, which ui/mesh.rs already handles"
+acceptance_criteria:
+  - "A roadmap screen and a milestone inspector read with the snapshot header, over a flight whose mesh and publication sources are unread for the snapshot reasons, show no unread badge and show the one explanatory sentence once"
+  - "Negative: the same screens read without the snapshot header still list both unread sources with their reasons"
+  - "Negative: a snapshot whose records or tags source is unread still lists that source as unread, so the rule hides only what a snapshot can never read"
+  - "The published /ui/roadmap/ of the next Pages run carries no 'unread publication' or 'unread mesh' text"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_roadmap"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3729_a_snapshot_explains_what_it_cannot_read"
+  - "majordomus plan validate"
+evidence_required:
+  - "test_a_snapshot_explains_what_it_cannot_read"
+depends_on: []

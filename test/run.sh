@@ -11,6 +11,10 @@
 #                                       the verdicts are rendered in name order at the end
 #   MJ_TEST_REPORT=<file>               also write one TSV row per case:
 #                                       name, result, seconds, phase (parallel|exclusive|serial)
+#   MJ_TEST_FAILURES=<file>             also write the output of every case that failed or
+#                                       timed out, each under a "== <name>" line (with
+#                                       MJ_TEST_JOBS > 1): the reason a case gives reaches a
+#                                       file an artifact can carry, not only the job's log
 #   MJ_TEST_SHARD=<i>/<n>               run only the i-th of n shards (with MJ_TEST_JOBS > 1):
 #                                       cases are dealt longest-first over n x MJ_TEST_JOBS
 #                                       worker slots by the seconds MJ_TEST_DURATIONS records,
@@ -21,6 +25,9 @@
 #                                       weighs 300 s. Stale numbers unbalance shards, never
 #                                       drop a case
 #   MJ_TEST_LIST=1                      print the cases this invocation would run and run none
+#   MJ_TEST_KEEP=1                      keep each case's scratch dir and print where it is, to
+#                                       debug a case; without it the dir is removed when the
+#                                       case ends, fails, times out or the runner is interrupted
 #   bash test/run.sh --no-skips [...]   a case that declines fails the run, unless its header
 #                                       says where its subject is read instead:
 #                                       "# majordomus-skip-runs-in: <job>"; CI runs the suite so
@@ -50,7 +57,53 @@
 # `git status` of the checkout changed, the run fails naming the paths.
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+# A case builds repositories of its own, and git tells a hook which repository it is in
+# through the environment: a pre-push hook run from a linked worktree gets GIT_DIR. A fixture
+# that inherits it runs `git init`, `git branch -M`, `git commit`, `git config` and `git tag`
+# in the repository the suite was started from. On 2026-10-10 that renamed a feature branch
+# to master, moved master and gh-pages onto fixture commits, and left a fixture identity and
+# core.bare=true in the configuration every worktree shares. So every variable git reads its
+# repository from is dropped here, before a case can run: the ones git itself names, and
+# five by name for a git too old to list them. The two that carry `git -c` settings stay,
+# as they do when git enters another repository itself: they name no repository, and
+# test/lib.sh keeps a case's git quiet through them. Case 1030 holds this and removes it to
+# show what it prevents; scripts/ci/run-plan does the same for the gates it dispatches.
+for mj_git_local in $(git rev-parse --local-env-vars 2>/dev/null) \
+    GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_PREFIX; do
+  case "$mj_git_local" in GIT_CONFIG_PARAMETERS|GIT_CONFIG_COUNT) continue ;; esac
+  unset "$mj_git_local"
+done
+unset mj_git_local
+# The interface a server binds is the operator's choice for this machine, not a case's:
+# .envrc.local exports MAJORDOMUS_HTTP_HOST=0.0.0.0 where the owner wants the shared
+# server on the LAN, and a case that starts a server with it inherits a wildcard bind
+# and fails what it measures about the default (case 85). A case that wants another
+# interface states it itself.
+unset MAJORDOMUS_HTTP_HOST
+# Nor is the provider session the suite runs under a case's. A suite started from inside an
+# agent inherits that agent's session id, and ADR 0164 reads it as an identity the caller
+# supplied: with no episode keyed by it in the fixture, every ledger line a case writes is
+# stamped with no session, and case 61's closed episode named no task. The names are the
+# lifecycle adapters' own column (lib/capture.sh), so a provider added there is dropped here
+# too. A case that needs a provider session sets one itself, as cases 111 and 3049 do.
+# shellcheck source=../lib/capture.sh
+for mj_provider_var in MAJORDOMUS_PROVIDER_SESSION MJ_SESSION_KEY \
+    $( (. "$ROOT/lib/capture.sh" && mj_lifecycle_session_vars) 2>/dev/null); do
+  unset "$mj_provider_var"
+done
+unset mj_provider_var
 MJ="$ROOT/bin/majordomus"; export MJ ROOT
+# A case must not act on the machine it measures: a build a case starts on a machine below the
+# reclaim mark would otherwise run the reaper over this machine's real worktrees
+# (lib/rust_bin.sh mj_rust_reclaim). Case 276 sets its own mark against a fixture.
+MAJORDOMUS_RECLAIM_BELOW_MB=0; export MAJORDOMUS_RECLAIM_BELOW_MB
+# Nor may a case's build sweep the build directory every worktree of this machine shares
+# (lib/rust_bin.sh mj_rust_prune_build_dir): the incremental and deps sweeps are proved
+# against fixtures by cases 3080, 3196 and 3197, which set their own ages; the bound's
+# eviction (mj_rust_bound_build_dir) by case 3959, which sets its own.
+MAJORDOMUS_INCREMENTAL_IDLE_MIN=0; MAJORDOMUS_DEPS_IDLE_MIN=0; MAJORDOMUS_PRIVATE_BUILD_IDLE_MIN=0; MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN=0
+export MAJORDOMUS_INCREMENTAL_IDLE_MIN MAJORDOMUS_DEPS_IDLE_MIN MAJORDOMUS_PRIVATE_BUILD_IDLE_MIN MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN
 pass=0; fail=0; skipped=0; failed_names=""; skipped_names=""
 # The status a case exits with to say it declined to run; test/lib.sh's `skip` uses it.
 # Read here rather than sourced: run.sh is the runner, not a case, and the two agree on one
@@ -98,16 +151,40 @@ case_skip_runs_in() {
        { exit }' "$1" 2>/dev/null | head -n 1
 }
 
+# The case running now, so that a runner interrupted or killed between a case's start and its
+# end leaves no fixture behind (I3834). Orphaned $TMPDIR/mj-test.* were the machine's steady
+# disk drain: 13 GiB of them on 2026-10-21, from runs a pre-push hook or a session had stopped.
+# The case's process group is stopped first, so nothing writes into the directory as it goes.
+MJ_CASE_DIR="" MJ_CASE_PID=""
+case_cleanup() {
+  [ -n "$MJ_CASE_PID" ] && kill -TERM "-$MJ_CASE_PID" 2>/dev/null
+  [ -n "$MJ_CASE_DIR" ] && drop_case_dir "$MJ_CASE_DIR"
+  MJ_CASE_DIR="" MJ_CASE_PID=""
+}
+trap case_cleanup EXIT
+trap 'case_cleanup; trap - EXIT; exit 130' INT
+trap 'case_cleanup; trap - EXIT; exit 143' TERM HUP
+
+# Removes a case's scratch dir and its skip mark, unless MJ_TEST_KEEP asks to keep them.
+drop_case_dir() {
+  if [ "${MJ_TEST_KEEP:-0}" = 1 ]; then
+    echo "    kept $1" >&2
+  else
+    rm -rf "$1" "$1.skip"
+  fi
+}
+
 # Runs one case in a fresh repository. The case's output streams through; the status is
 # 0 passed, 1 failed, 2 the fixture could not be set up, 3 the bound fired.
 run_case() {
   local case="$1" T rc=0 limit pid waited grace mark declined=0
   T="$(mktemp -d "${TMPDIR:-/tmp}/mj-test.XXXXXX")"
+  MJ_CASE_DIR="$T"
   # where `skip` says it was called: beside the fixture rather than in it, so a case that
   # empties its own directory cannot erase the declaration, and unique because $T is
   mark="$T.skip"
   ( cd "$T" && git init -q . && git config user.email t@example.com && git config user.name t \
-    && git commit -q --allow-empty -m init ) || { rm -rf "$T"; return 2; }
+    && git commit -q --allow-empty -m init ) || { case_cleanup; return 2; }
   limit="$(case_timeout "$case")"
   # a case that runs the runner itself (26 does, in a harness of its own) gets a fresh
   # serial runner, never this run's worker mode, log directory, pool or report
@@ -120,10 +197,16 @@ run_case() {
   set -m
   # the runner's own selection never reaches a case: a case that runs test/run.sh itself
   # (123, 413, 26, 94 do) would otherwise run its own shard of a suite it did not choose
+  #
+  # stdin is closed. Bash gives a background job /dev/null for stdin only while job control
+  # is off, and it is on here, so every case inherited the runner's stdin. A case whose
+  # command reads stdin (54's `session close` reads a summary) then waited for ever whenever
+  # that was an open pipe: 39 minutes on 2026-10-09, with nothing printed.
   ( cd "$T" && unset MJ_TEST_WORKER MJ_TEST_LOGDIR MJ_TEST_JOBS MJ_TEST_REPORT \
-      MJ_TEST_SHARD MJ_TEST_DURATIONS MJ_TEST_LIST \
-    && T="$T" MJ_SKIP_MARK="$mark" bash -eu "$case" ) &
+      MJ_TEST_FAILURES MJ_TEST_SHARD MJ_TEST_DURATIONS MJ_TEST_LIST \
+    && T="$T" MJ_SKIP_MARK="$mark" bash -eu "$case" < /dev/null ) &
   pid=$!
+  MJ_CASE_PID="$pid"
   set +m
   if [ "$limit" = 0 ]; then
     wait "$pid" || rc=$?
@@ -139,7 +222,7 @@ run_case() {
         kill -KILL "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
         wait "$pid" 2>/dev/null || true
         echo "    the case did not finish within ${limit}s and was terminated" >&2
-        rm -rf "$T" "$mark"
+        MJ_CASE_PID=""; case_cleanup
         return 3
       fi
       sleep 1; waited=$((waited+1))
@@ -147,7 +230,7 @@ run_case() {
     wait "$pid" || rc=$?
   fi
   [ -f "$mark" ] && declined=1
-  rm -rf "$T" "$mark"
+  MJ_CASE_PID=""; case_cleanup
   # Only two statuses mean anything to the caller besides 0: the skip the case declared, and
   # failure. A case's own exit 2 or 3 is a failure of that case and must not be read as this
   # function's "the fixture could not be set up" or "the bound fired", which are the
@@ -230,6 +313,9 @@ while [ $# -gt 0 ]; do
   esac
 done
 [ -z "$runs_in" ] || [ "$no_skips" = 1 ] || { echo "run.sh: --runs-in reads cases whose skip is excused elsewhere; it means nothing without --no-skips" >&2; exit 2; }
+# the job this run stands for, so a case that belongs to one job can tell it is in another: empty
+# outside a --runs-in run (case 3220 walks its browser loop only under the ui job)
+MAJORDOMUS_RUNS_IN="$runs_in"; export MAJORDOMUS_RUNS_IN
 
 only=""
 for n in "$@"; do
@@ -240,6 +326,8 @@ jobs="${MJ_TEST_JOBS:-1}"
 case "$jobs" in ''|*[!0-9]*|0) echo "run.sh: MJ_TEST_JOBS must be a positive integer, got '$jobs'" >&2; exit 2 ;; esac
 report="${MJ_TEST_REPORT:-}"
 [ -n "$report" ] && : > "$report"
+failures="${MJ_TEST_FAILURES:-}"
+[ -n "$failures" ] && : > "$failures"
 
 # the cases in name order, the exclusive ones told apart by their header, never by a list here
 parallel_names=""; exclusive_names=""
@@ -272,11 +360,16 @@ if [ -n "${MJ_TEST_SHARD:-}" ]; then
   durations="${MJ_TEST_DURATIONS:-$ROOT/.ai/repo/ci/suite-durations.tsv}"
   [ -f "$durations" ] || durations=/dev/null
   tab="$(printf '\t')"
+  # A case the file does not record is dealt at the recorded median, not at a guess. The guess
+  # was 300 s against a median of 9: 192 unrecorded cases weighed 16 h instead of 89 min, so
+  # the deal put 87 minutes on one shard and 43 on another (run 39762797718, 2026-10-22).
+  unrecorded="$(awk -F'\t' '$2 ~ /^[0-9]+$/ { print $2 }' "$durations" | LC_ALL=C sort -n |
+    awk '{ v[NR] = $1 } END { print (NR ? v[int((NR + 1) / 2)] : 300) }')"
   dealt="$( { for n in $parallel_names; do printf '%s\tp\n' "$n"; done
               for n in $exclusive_names; do printf '%s\te\n' "$n"; done; } |
-    awk -F'\t' -v OFS='\t' -v dur="$durations" '
+    awk -F'\t' -v OFS='\t' -v dur="$durations" -v unk="$unrecorded" '
       BEGIN { while ((getline l < dur) > 0) { split(l, f, "\t"); if (f[2] ~ /^[0-9]+$/) d[f[1]] = f[2] } }
-      { print (($1 in d) ? d[$1] : 300), $1, $2 }' |
+      { print (($1 in d) ? d[$1] : unk), $1, $2 }' |
     LC_ALL=C sort -t "$tab" -k3,3r -k1,1nr -k2,2 |
     awk -F'\t' -v N="$of" -v J="$jobs" -v me="$me" '
       $3 == "p" { b = 0; for (s = 1; s < N * J; s++) if (slot[s] < slot[b]) b = s
@@ -331,6 +424,11 @@ else
     phase=parallel; case " $exclusive_names " in *" $name "*) phase=exclusive ;; esac
     rc="$(cat "$L/$name.rc" 2>/dev/null || echo 2)"; sec="$(cat "$L/$name.sec" 2>/dev/null || echo 0)"
     [ "$rc" = 0 ] || [ "$rc" = 2 ] || [ "$rc" = 4 ] || cat "$L/$name.log" 2>/dev/null
+    # the same reason, kept: a case's own words are the one account of why it failed, and a
+    # job log is read by a person once while an artifact is read by the next tool (I4223)
+    if [ -n "$failures" ] && [ "$rc" != 0 ] && [ "$rc" != 4 ]; then
+      { printf '== %s\n' "$name"; cat "$L/$name.log" 2>/dev/null; } >> "$failures"
+    fi
     verdict "$name" "$rc" "$sec" "$phase"
   done
   rm -rf "$L"

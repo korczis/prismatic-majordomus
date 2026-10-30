@@ -12,7 +12,9 @@
 //! it accepts and what it answers are its declaration's to say, and this file repeats none of
 //! it beyond the title and description the declaration itself carries (ADR 0144, ADR 0140).
 
-use super::{CommandRef, EditorAdapter, EditorCapability, EditorDiagnostic, EditorSupport};
+use super::{
+    CommandRef, DomainRef, EditorAdapter, EditorCapability, EditorDiagnostic, EditorSupport,
+};
 use crate::generate::{banner_lines, Artifact, ArtifactFormat};
 use crate::model::Severity;
 
@@ -107,6 +109,173 @@ pub fn command_artifact(command: &CommandRef, version: &str) -> Artifact {
     )
 }
 
+/// What a domain's description says in the listing at most: Claude Code shows the start of
+/// it beside every other skill, and fifty-odd domains must not crowd the listing out.
+const DOMAIN_DESCRIPTION_BUDGET: usize = 300;
+
+/// The description of a domain skill: the module and its capabilities' own titles, cut at a
+/// word so that what the listing shows is what the registry says.
+fn domain_description(domain: &DomainRef) -> String {
+    let titles: Vec<&str> = domain
+        .entries
+        .iter()
+        .map(|e| e.title.trim_end_matches('.'))
+        .collect();
+    let whole = format!(
+        "Majordomus {}: {}.",
+        domain.module.replace('_', " "),
+        titles.join("; ")
+    );
+    if whole.chars().count() <= DOMAIN_DESCRIPTION_BUDGET {
+        return whole;
+    }
+    let cut: String = whole.chars().take(DOMAIN_DESCRIPTION_BUDGET - 1).collect();
+    let at = cut.rfind(' ').unwrap_or(cut.len());
+    format!("{}…", cut[..at].trim_end_matches([';', ',', ' ']))
+}
+
+/// The skill of one domain (ADR 0165): the module's capabilities as a table the agent chooses
+/// from, the request typed after the name, and the rule that a capability that changes
+/// something runs only when the person asked for that change. The model may load it on its
+/// own, because loading it changes nothing; calling a capability is what the rule governs.
+pub fn domain_artifact(domain: &DomainRef, version: &str) -> Artifact {
+    let path = skill_path(&domain.alias);
+    // a JSON string's rendering cannot fail, so there is no fallback to take
+    let quoted = serde_json::Value::String(domain_description(domain)).to_string();
+    let source = format!("module:{}", domain.module);
+    let [a, b, c] = banner_lines(&source, version);
+    let cell = |s: &str| s.replace('|', "\\|").replace('\n', " ");
+    let mut rows = String::new();
+    for e in &domain.entries {
+        rows.push_str(&format!(
+            "| `{}` | {} | `{}` | {} | {} |\n",
+            e.capability,
+            cell(&e.title),
+            e.tool,
+            e.cli
+                .as_ref()
+                .map(|c| format!("`majordomus {c}`"))
+                .unwrap_or_else(|| "—".into()),
+            if e.changes_something {
+                "changes"
+            } else {
+                "reads"
+            },
+        ));
+    }
+    let content = format!(
+        "---\nname: {alias}\ndescription: {quoted}\nargument-hint: \"[request]\"\n---\n\
+         <!-- {a}\n     {b}\n     {c} -->\n\n\
+         # Majordomus `{module}`\n\n\
+         The capabilities the Majordomus registry declares in its module `{module}`. Choose the \
+         one that answers the request below — or, without one, the person's last request about \
+         `{module}` — call it through its MCP tool, and report what it answers, as it answered:\n\n\
+         $ARGUMENTS\n\n\
+         | Capability | What it is | MCP tool | Command line | Effect |\n\
+         |---|---|---|---|---|\n\
+         {rows}\n\
+         A capability that *changes* something runs only when the person asked for that change: \
+         call it once, and if it is refused or its outcome is not known, report that as it is \
+         and do not try again by another way. One that *reads* may be called whenever the \
+         request needs it.\n\n\
+         Without the Majordomus MCP server attached, run the command line form from the \
+         repository root; `--help` shows its arguments. What each capability accepts and \
+         answers is defined once, in its declaration: `majordomus capabilities describe <id>`, \
+         or the MCP tool's own description. This file is derived from the registry and says \
+         nothing the declarations do not.\n",
+        alias = domain.alias,
+        module = domain.module,
+    );
+    Artifact::verbatim(
+        path,
+        format!("{}domain", super::DOCUMENT_PREFIX),
+        ArtifactFormat::Markdown,
+        None,
+        source,
+        content,
+    )
+}
+
+/// The domains Claude Code is given: every derived domain whose name no command alias and no
+/// workflow skill of the layer already has. A name both want stays theirs, and the domain is
+/// reported by [`name_findings`].
+pub(crate) fn reachable_domains(
+    domains: Vec<DomainRef>,
+    commands: &[CommandRef],
+    skills: &[super::SkillRef],
+) -> Vec<DomainRef> {
+    domains
+        .into_iter()
+        .filter(|d| !commands.iter().any(|c| c.alias == d.alias))
+        .filter(|d| !skills.iter().any(|s| s.id == d.alias))
+        .collect()
+}
+
+/// The name a projected file is typed by, when it is a skill Claude Code reads:
+/// `.claude/skills/<name>/SKILL.md` → `<name>`.
+pub(crate) fn skill_name(path: &str) -> Option<String> {
+    let name = path
+        .strip_prefix(&format!("{SKILLS_DIR}/"))?
+        .strip_suffix("/SKILL.md")?;
+    (!name.contains('/')).then(|| name.to_string())
+}
+
+/// Where Claude Code reads a person's own commands and skills: `$CLAUDE_CONFIG_DIR`, else
+/// `~/.claude`. `None` when neither can be named.
+pub fn personal_dir() -> Option<std::path::PathBuf> {
+    personal_dir_from(
+        std::env::var_os("CLAUDE_CONFIG_DIR"),
+        std::env::var_os("HOME"),
+    )
+}
+
+/// [`personal_dir`] from the two variables' values, so that it is judged without changing
+/// the environment every other test reads.
+fn personal_dir_from(
+    config: Option<std::ffi::OsString>,
+    home: Option<std::ffi::OsString>,
+) -> Option<std::path::PathBuf> {
+    config
+        .filter(|v| !v.is_empty())
+        .map(std::path::PathBuf::from)
+        .or_else(|| home.map(|h| std::path::PathBuf::from(h).join(".claude")))
+}
+
+/// Every projected skill a person's own command or skill shares a name with. Claude Code
+/// answers one name with one thing, so under that name the person sees either theirs or the
+/// repository's, never both, and which one has changed between sessions; nothing in the
+/// repository can see this, because the other half lives in the person's profile. Only the
+/// names are read, never the content: this reports, it projects nothing (ADR 0140).
+pub(crate) fn shadow_findings(
+    projected: &[String],
+    personal: Option<&std::path::Path>,
+) -> Vec<EditorDiagnostic> {
+    let Some(personal) = personal else {
+        return Vec::new();
+    };
+    projected
+        .iter()
+        .filter_map(|name| {
+            let command = personal.join("commands").join(format!("{name}.md"));
+            let skill = personal.join("skills").join(name).join("SKILL.md");
+            let theirs = [command, skill].into_iter().find(|p| p.is_file())?;
+            Some(EditorDiagnostic {
+                severity: Severity::Warning,
+                code: "personal-name-hides-a-skill".into(),
+                adapter: Some(ID.into()),
+                path: Some(skill_path(name)),
+                message: format!(
+                    "/{name} is this repository's skill and also the person's own {}; Claude Code offers one of the two under that name, so the other is unreachable",
+                    theirs.display()
+                ),
+                remedy: format!(
+                    "rename the personal one (for example to {name}-personal), or remove it if the repository's skill replaces it"
+                ),
+            })
+        })
+        .collect()
+}
+
 /// A command whose name a workflow skill of the layer already has, where both products that
 /// read `.agents/skills/` and Claude Code would show two things under one name.
 pub(crate) fn name_findings(
@@ -144,7 +313,11 @@ pub(crate) fn workflow_skills<'a>(
 }
 
 /// What Claude Code does with each capability here.
-pub fn adapter(commands: &[CommandRef], skills: &[super::SkillRef]) -> EditorAdapter {
+pub fn adapter(
+    commands: &[CommandRef],
+    domains: &[DomainRef],
+    skills: &[super::SkillRef],
+) -> EditorAdapter {
     EditorAdapter {
         id: ID.into(),
         title: "Claude Code".into(),
@@ -156,6 +329,13 @@ pub fn adapter(commands: &[CommandRef], skills: &[super::SkillRef]) -> EditorAda
                 artifacts: commands.iter().map(|c| skill_path(&c.alias)).collect(),
                 evidence: "code.claude.com/docs/en/skills".into(),
                 note: "One skill per capability that declares an alias: /<alias> <text> calls the capability once with the text in its declared field. A capability that changes something is invoked by a person only. Every other capability is reached by its MCP tool, which needs no file.".into(),
+            },
+            EditorCapability {
+                id: "domains".into(),
+                support: EditorSupport::Supported,
+                artifacts: domains.iter().map(|d| skill_path(&d.alias)).collect(),
+                evidence: "code.claude.com/docs/en/skills".into(),
+                note: "One skill per module of the registry with a public MCP tool (ADR 0165): /mj-<module> lists the module's capabilities, and the model may load it when a request is about that module. A capability that changes something runs only on the person's request.".into(),
             },
             EditorCapability {
                 id: "skills".into(),
@@ -273,11 +453,132 @@ mod tests {
             ["evolve"],
             "the command keeps `intent`, and a name the product refuses is not written"
         );
-        let a = adapter(&[command(true)], &skills);
+        let a = adapter(&[command(true)], &[], &skills);
         let listed = a.capabilities.iter().find(|c| c.id == "skills").unwrap();
         assert_eq!(listed.artifacts, [".claude/skills/evolve/SKILL.md"]);
         let commands = a.capabilities.iter().find(|c| c.id == "commands").unwrap();
         assert_eq!(commands.artifacts, [".claude/skills/intent/SKILL.md"]);
+    }
+
+    fn domain(module: &str, titles: &[(&str, bool)]) -> DomainRef {
+        DomainRef {
+            module: module.into(),
+            alias: format!("mj-{}", module.replace('_', "-")),
+            entries: titles
+                .iter()
+                .enumerate()
+                .map(|(i, (title, changes))| crate::editors::DomainEntry {
+                    capability: format!("{module}.c{i}"),
+                    title: (*title).into(),
+                    tool: format!("majordomus_{module}_c{i}"),
+                    cli: (i == 0).then(|| format!("{module} c{i}")),
+                    changes_something: *changes,
+                })
+                .collect(),
+            sha256: "0".repeat(64),
+        }
+    }
+
+    /// A domain is one skill the model may load: every capability of the module is a row
+    /// naming its tool, its command line where it has one, and whether it changes anything.
+    #[test]
+    fn a_domain_is_one_skill_listing_every_capability_of_its_module() {
+        let d = domain(
+            "knowledge_base",
+            &[("Read the base", false), ("Record a | lesson", true)],
+        );
+        let a = domain_artifact(&d, "1.2.3");
+        assert_eq!(a.path, ".claude/skills/mj-knowledge-base/SKILL.md");
+        assert_eq!(a.document, "editors/domain");
+        let c = &a.content;
+        assert!(c.starts_with(
+            "---\nname: mj-knowledge-base\ndescription: \"Majordomus knowledge base: Read the base; Record a | lesson.\"\nargument-hint: \"[request]\"\n---\n<!-- "
+        ), "{c}");
+        assert!(
+            !c.contains("disable-model-invocation"),
+            "loading a domain changes nothing"
+        );
+        assert!(crate::editors::banner_is_present(c));
+        assert_eq!(c.matches("$ARGUMENTS").count(), 1);
+        for said in [
+            "| `knowledge_base.c0` | Read the base | `majordomus_knowledge_base_c0` | `majordomus knowledge_base c0` | reads |",
+            "| `knowledge_base.c1` | Record a \\| lesson | `majordomus_knowledge_base_c1` | — | changes |",
+            "runs only when the person asked for that change",
+            "Generator: majordomus-cli 1.2.3",
+        ] {
+            assert!(c.contains(said), "{said:?} is missing from:\n{c}");
+        }
+    }
+
+    #[test]
+    fn a_long_domain_description_is_cut_at_a_word() {
+        let many: Vec<(&str, bool)> = (0..60).map(|_| ("Something rather long", false)).collect();
+        let said = domain_description(&domain("mesh", &many));
+        assert!(said.chars().count() <= DOMAIN_DESCRIPTION_BUDGET, "{said}");
+        assert!(said.ends_with("long…"), "{said}");
+    }
+
+    #[test]
+    fn a_domain_yields_a_name_a_command_or_a_workflow_skill_has() {
+        let mut taken = command(true);
+        taken.alias = "mj-plan".into();
+        let given = reachable_domains(
+            vec![
+                domain("plan", &[("p", false)]),
+                domain("mesh", &[("m", false)]),
+                domain("brief", &[("b", false)]),
+            ],
+            &[taken],
+            &[workflow("mj-brief")],
+        );
+        assert_eq!(
+            given.iter().map(|d| d.alias.as_str()).collect::<Vec<_>>(),
+            ["mj-mesh"]
+        );
+        let a = adapter(&[], &given, &[]);
+        let listed = a.capabilities.iter().find(|c| c.id == "domains").unwrap();
+        assert_eq!(listed.artifacts, [".claude/skills/mj-mesh/SKILL.md"]);
+    }
+
+    /// A personal command or skill that shares a projected skill's name is named, with the
+    /// file that does; a name nobody else has, or a profile that cannot be found, is quiet.
+    #[test]
+    fn a_personal_name_that_hides_a_skill_is_a_finding() {
+        let home = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(home.path().join("commands")).unwrap();
+        std::fs::write(home.path().join("commands/evolve.md"), "x").unwrap();
+        std::fs::create_dir_all(home.path().join("skills/mj-mesh")).unwrap();
+        std::fs::write(home.path().join("skills/mj-mesh/SKILL.md"), "x").unwrap();
+        let names = [
+            "evolve".to_string(),
+            "mj-mesh".to_string(),
+            "implement".to_string(),
+        ];
+        let found = shadow_findings(&names, Some(home.path()));
+        assert_eq!(found.len(), 2, "{found:?}");
+        assert!(found
+            .iter()
+            .all(|d| d.code == "personal-name-hides-a-skill"));
+        assert_eq!(
+            found[0].path.as_deref(),
+            Some(".claude/skills/evolve/SKILL.md")
+        );
+        assert!(
+            found[0].message.contains("/evolve") && found[0].message.contains("commands/evolve.md")
+        );
+        assert!(found[1].message.contains("skills/mj-mesh/SKILL.md"));
+        assert!(shadow_findings(&names, None).is_empty());
+        assert_eq!(
+            skill_name(".claude/skills/evolve/SKILL.md").as_deref(),
+            Some("evolve")
+        );
+        assert_eq!(skill_name(".agents/skills/evolve/SKILL.md"), None);
+        assert_eq!(
+            skill_name(".claude/skills/evolve/README.md"),
+            None,
+            "a file under the skills directory that is not a SKILL.md names no skill"
+        );
+        assert_eq!(skill_name(".claude/skills/a/b/SKILL.md"), None);
     }
 
     #[test]
@@ -293,11 +594,33 @@ mod tests {
         assert_eq!(found.len(), 1);
         assert_eq!(found[0].code, "command-shares-a-skill-name");
         assert!(name_findings(&[command(true)], &[]).is_empty());
-        let a = adapter(&[command(true)], &[]);
+        let a = adapter(&[command(true)], &[], &[]);
         assert_eq!(a.id, "claude-code");
         assert_eq!(
             a.capabilities[0].artifacts,
             [".claude/skills/intent/SKILL.md"]
         );
+    }
+
+    /// `CLAUDE_CONFIG_DIR` names where a person's own commands live, unless it is empty, and
+    /// then `~/.claude` does; with neither there is no directory. Judged from the values, so
+    /// no test's environment changes under another.
+    #[test]
+    fn the_personal_directory_is_the_configured_one_unless_the_variable_is_empty() {
+        let home = || Some(std::ffi::OsString::from("/home/a"));
+        assert_eq!(
+            personal_dir_from(Some("/somewhere/claude-config".into()), home()),
+            Some(std::path::PathBuf::from("/somewhere/claude-config"))
+        );
+        assert_eq!(
+            personal_dir_from(Some("".into()), home()),
+            Some(std::path::PathBuf::from("/home/a/.claude")),
+            "an empty variable names nothing"
+        );
+        assert_eq!(
+            personal_dir_from(None, home()),
+            Some(std::path::PathBuf::from("/home/a/.claude"))
+        );
+        assert_eq!(personal_dir_from(None, None), None);
     }
 }
