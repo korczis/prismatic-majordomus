@@ -7,7 +7,9 @@
 #                                      docs/generated/{openapi,registry,cli}.{json,yaml},
 #                                      docs/generated/{capabilities,cli}.md, modules/*.md,
 #                                      share/allow/*.txt, and the provider bootstraps
-#                                      (policy + templates)
+#                                      (policy + templates); then scripts/rules-package
+#                                      write: the rule package's manifest, its hashes and
+#                                      the release it is stamped with (I1986)
 #   stage B  scripts/generate-site-data the site's data and content, docs/SITE_CLAIMS.md and
 #                                      docs/PLAN_STATUS.md, from the canonical files and from
 #                                      stage A's registry.json and openapi.json
@@ -173,6 +175,11 @@ if [ "$rc" != 0 ]; then
   fi
   exit "$rc"
 fi
+# The rule package's manifest: the hash of every rule file and the release the package ships
+# in. A bump that left it alone shipped a package labelled with an older release (I1986). It
+# reads the crate manifest, so it is current even before the projections above caught up; and
+# it runs after the generator accepted the tree, so a refusal still writes nothing.
+mj_lock_run "$ROOT/scripts/rules-package" write >/dev/null
 step_done
 step "stage B: scripts/generate-site-data (site data, content, derived documents)"
 mj_lock_run "$ROOT/scripts/generate-site-data"

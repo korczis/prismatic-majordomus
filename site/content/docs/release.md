@@ -421,7 +421,7 @@ changed that minimum is the release already made. `next` is then never the last 
 the commits carry anything, it is the smallest release above it, a patch, labelled
 `decided_by: contract_and_commits` — however much the subjects claim — and if they carry
 nothing, `next` is absent and nothing would be released. When the contract cannot be
-measured — no published release carries a registry, a version is not three numbers and the
+measured — no published release carries a registry, a version is not a semantic version and the
 analysis could only guess, or any other error diagnostic makes the plan unsound (a baseline
 whose record and tag name different commits, a version stated by hand) — nothing decides: an
 unmeasurable baseline is refused, not guessed.
@@ -441,6 +441,17 @@ The contract measures the capability registry's surface, of which every interfac
 projection, so a behavioural breaking change the registry cannot see needs an explicit higher
 target: `release bump --level major` (or `minor` below 1.0), named by
 the person who knows what changed.
+
+A version is a semantic version: three numbers, an optional pre-release part and optional
+build metadata (`1.0.0-alpha.1+build.5`), ordered by semantic-version precedence —
+`0.29.0 < 1.0.0-alpha.1 < 1.0.0-alpha.2 < 1.0.0-alpha.10 < 1.0.0-beta < 1.0.0`, build
+metadata ignored. A pre-release is only ever an explicit target (`release bump --exact
+1.0.0-alpha.1`); nothing derives one. Raising a pre-release lands on the final it leads up
+to (`1.0.0-alpha.1` raised by a major, a minor or a patch is `1.0.0`), and a pre-release of
+the floor reaches it (`Version::reaches`): with a floor of `1.0.0`, `1.0.0-alpha.2` is
+accepted, so an alpha series can continue, while nothing goes below a version already
+declared. The last release a plan measures from is the highest recorded version, a
+pre-release included; the stable pointer (`docs/DISTRIBUTION.md`) never is one.
 
 A stale projection is a warning rather than an error on purpose: a writer that refused its
 own un-derived state could not correct a bump it had just made.
@@ -587,6 +598,12 @@ a schedule, without anybody choosing it. `test/cases/353` asserts exactly that, 
 assertion is a mutation rather than a description: a variant of the workflow with `git tag`
 appended is refused, naming the tag.
 
+Since 2026-10-16 that decision has an owner and a cadence: the release seat of
+[rule `project.the-cooperation-model-is-the-owners-word`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md)
+(ADR 0167) cuts a release whenever master holds landed work past the last tag, not once per
+milestone, and verifies what the site serves after it. The rule says which mesh claim makes a
+session that seat; the tag still waits for `scripts/ci/release-verdict`.
+
 ## What proves it
 
 <div class="overflow-x-auto" tabindex="0">
@@ -594,12 +611,14 @@ appended is refused, naming the tag.
 | | |
 |---|---|
 | `apps/majordomus-cli/src/release/commits.rs` | the parser: the conventional shapes, both spellings of breaking, an unknown lowercase type, and a subject that is not conventional kept whole; and the resolution: an id the layer holds becomes a reference carrying that record's title, an id of the same shape that names nothing does not, a name mentioned twice is carried once, and a word that merely starts with the letter is not an id |
-| `apps/majordomus-cli/src/release/version.rs` | the contract decides `next`, and an unmeasurable one decides nothing — `next` absent, `undecided`, with the reason; the report's `next` and the writer's default target are one selection; a contract that requires no release never answers the last release; the commit inference raises the last release, not the declared version; the bump is a total function of the changes, raising zeroes what it supersedes, a version that is not three numbers is refused, writing touches only the manifest's line and the lock's own entry, the projection round-trips through the generated file, a stale projection warns and one nothing derives is refused, and a version written by hand is found where a generated one is not |
+| `apps/majordomus-cli/src/release/version.rs` | the contract decides `next`, and an unmeasurable one decides nothing — `next` absent, `undecided`, with the reason; the report's `next` and the writer's default target are one selection; a contract that requires no release never answers the last release; the commit inference raises the last release, not the declared version; the bump is a total function of the changes, raising zeroes what it supersedes, a version that is not a semantic version is refused, a pre-release orders, raises and reaches a floor as semantic versioning says, writing touches only the manifest's line and the lock's own entry, the projection round-trips through the generated file, a stale projection warns and one nothing derives is refused, and a version written by hand is found where a generated one is not |
 | `apps/majordomus-cli/src/release/changelog.rs` | a decision belongs to the release whose window contains its date, the unreleased window opens after the last release, a timestamp and a date compare on the day they share, and the groups reach the renderer in rank order whatever order the commits arrived in |
 | `test/cases/103_release_projection.sh` | the whole surface against the real executable, in a disposable repository with a real history: which commits fall in which range, which decision belongs to which window, a record added with nothing else edited, a subject that follows no convention carried rather than dropped, a fixture whose repository is not a forge the tool knows producing no link rather than a guessed one, a commit naming one id the layer holds and one it does not, and every exit code above |
 | `test/cases/743_release_version_answers_with_the_contract.sh` | on a fixture whose commits say BREAKING and whose surface only grew, `release version`'s `next` is `release analyze`'s required version, decided by the contract, with the commits' major shown as evidence, and `release bump --dry-run` raises to that same 0.11.0; with no published baseline `next` is absent, `decided_by: undecided` with its reason, a bump with no target refuses with exit 12 and a named one is still written, the manifest raised to 0.11.0; a version stated by hand in `lib/` leaves the plan unsound, so `next` is absent, `decided_by: undecided` with the `version-stated-by-hand` message, and `release bump --dry-run` refuses with exit 12 and that same message; a version already raised to the requirement is not raised again; a manifest with no version line is not passed off as the contract's answer and a bump with no target refuses it; after a published release with only a `fix:` since and an unchanged surface, `next` is a patch above it and not the release itself, and `release bump --dry-run` raises to that same 0.11.1; and with a version declared above the minimum the commit inference still raises the last release |
 | `test/cases/484_the_version_is_authored_once.sh` | the shell tool states no version; it prints the authority because it reads its own projection, generated from the manifest and never from `MAJORDOMUS_SHARE`; a hand-edited projection is refused by `generate --check`; the writer writes the manifest's line and the lock's own entry and nothing else; a version written by hand in `lib/` is refused — each section first shown to fail against the tree before ADR 0085 |
-| `scripts/ci/release-check` | the manifest the writer names is the one the release script reads, the shell tool prints what it declares on every plan rather than only at publication, the lock records it, no hand-kept changelog has appeared, and the tree is not behind the newest release the layer records |
+| `scripts/ci/release-check` | the manifest the writer names is the one the release script reads, the shell tool prints what it declares on every plan rather than only at publication, the lock records it, no hand-kept changelog has appeared, the tree is not behind the newest release the layer records, and every published tag has a record — or, for at most a day, a `release/record-<tag>` branch proposing one ([`DISTRIBUTION.md`](@/docs/distribution.md#releasing) says why the tag comes first); before that branch exists, a tag whose release run is queued or running, or that has neither run nor GitHub release yet within the same day, is pending with its run named — asked of the forge with `gh`, and where the forge cannot be asked (no `gh`, no token, no GitHub repository known) the tag is not excused |
+| `test/cases/3021_a_tag_does_not_freeze_the_queue.sh` | a head that changes no release file passes while a tag's record is proposed, naming the tag pending; the record's own branch passes as recorded; a record branch without the record, a proposal past its grace and no proposal at all are refused |
+| `test/cases/3029_a_tag_in_flight_is_pending.sh` | before the record branch exists, a tag whose release run is queued or running — or that has no run listed and no GitHub release yet, inside the grace — is pending with its run named; a concluded run, a published GitHub release, a forge that cannot be read and an unknown repository leave the finding standing, each with a note |
 | gate `version-authored-once` | `bin/majordomus-cli release version`: the projection is current and no version is written by hand where the tool's files live |
 | `scripts/rust-check` (gate `rust-check`) | `generate --check`: the committed changelog and `share/version.txt` still describe the tree |
 | `scripts/release-version --check` | the shell tool prints the version the manifest declares — the question `generate --check` leaves open |

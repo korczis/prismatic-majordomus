@@ -3,7 +3,10 @@
 # Cockpit's under share/cockpit/ and the UI's (`majordomus ui`, ADR 0135) under share/ui/.
 #
 # share/ui/ holds one compiled stylesheet, ui.css from share/ui/src/ui.css, committed and
-# drift-checked exactly as cockpit.css is, and ui.js, written by hand.
+# drift-checked exactly as cockpit.css is, and ui.js, written by hand. Both directories also
+# hold two of the site's scripts, nav.js and theme.js, copied byte for byte: the bar every UI
+# screen and every Cockpit page wears is the site's (project.the-ui-wears-the-sites-navbar),
+# and so are the scripts it behaves by.
 #
 # Two kinds of file live under share/cockpit/:
 #
@@ -34,6 +37,11 @@ SRC="$OUT/src/cockpit.css"
 # every compiled stylesheet: source, then the committed output
 SHEETS="share/cockpit/src/cockpit.css share/cockpit/cockpit.css
 share/ui/src/ui.css share/ui/ui.css"
+# every committed byte copy: source, then the copy
+COPIES="site/nav.js share/ui/nav.js
+site/theme.js share/ui/theme.js
+site/nav.js share/cockpit/nav.js
+site/theme.js share/cockpit/theme.js"
 CHECK=0
 [ "${1:-}" = "--check" ] && CHECK=1
 
@@ -78,8 +86,11 @@ if [ "$CHECK" = 1 ]; then
       stale=1
     fi
   done <<< "$SHEETS"
+  while read -r src out; do
+    cmp -s "$ROOT/$src" "$ROOT/$out" || { echo "cockpit-assets: $out is not a copy of $src; run: scripts/cockpit-assets" >&2; stale=1; }
+  done <<< "$COPIES"
   [ "$stale" = 0 ] || exit 10
-  echo "==> cockpit-assets: every committed stylesheet matches its source"
+  echo "==> cockpit-assets: every committed stylesheet matches its source, every copy its original"
   exit 0
 fi
 
@@ -87,6 +98,11 @@ while read -r src out; do
   echo "==> cockpit-assets: compiling $out"
   build_css "$ROOT/$out" "$ROOT/$src"
 done <<< "$SHEETS"
+
+while read -r src out; do
+  echo "==> cockpit-assets: copying $src to $out"
+  cp "$ROOT/$src" "$ROOT/$out"
+done <<< "$COPIES"
 
 echo "==> cockpit-assets: vendoring the pinned libraries"
 mkdir -p "$OUT/vendor"
@@ -106,6 +122,9 @@ cp "$ROOT/node_modules/p5/lib/p5.min.js" "$OUT/vendor/p5.min.js"
 # own asset directory; not committed, for the same reason
 mkdir -p "$ROOT/share/ui/vendor"
 cp "$ROOT/node_modules/cytoscape/dist/cytoscape.min.js" "$ROOT/share/ui/vendor/cytoscape.min.js"
+# the Observatory's proof scenes (ADR 0160) are drawn with the same pinned p5, loaded only
+# by that screen; a checkout without it says so on the stage and keeps the scenes as rows
+cp "$ROOT/node_modules/p5/lib/p5.min.js" "$ROOT/share/ui/vendor/p5.min.js"
 
 printf '==> cockpit-assets: done\n'
 ls -l "$OUT" "$OUT/vendor" | sed 's/^/    /'

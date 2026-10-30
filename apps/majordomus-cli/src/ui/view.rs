@@ -38,6 +38,43 @@ pub const TONES: &[&str] = &["blue", "violet", "green", "cyan", "orange", "rose"
 /// The hero band every screen opens with: the screen's glyph, its title, one line saying
 /// what it is for, one sentence of lead, and the group of KPI tiles beside them.
 pub fn hero(glyph: &str, tone: &str, title: &str, tagline: &str, lead: &str, kpis: Vec<El>) -> El {
+    hero_of(None, glyph, tone, title, tagline, lead, kpis)
+}
+
+/// The hero of a screen that shows one record: the record's title is the heading, and the
+/// screen's own name stands above it as the eyebrow, so the page says first what it is about.
+pub fn hero_under(
+    eyebrow: &str,
+    glyph: &str,
+    tone: &str,
+    title: &str,
+    tagline: &str,
+    lead: &str,
+    kpis: Vec<El>,
+) -> El {
+    hero_of(Some(eyebrow), glyph, tone, title, tagline, lead, kpis)
+}
+
+fn hero_of(
+    eyebrow: Option<&str>,
+    glyph: &str,
+    tone: &str,
+    title: &str,
+    tagline: &str,
+    lead: &str,
+    kpis: Vec<El>,
+) -> El {
+    let heading = el("h1")
+        .attr("id", "mj-ui-title")
+        .class("mj-ui-title")
+        .text(title);
+    let heading = match eyebrow {
+        Some(eyebrow) => el("div")
+            .class("mj-ui-hero-titles")
+            .child(el("p").class("mj-ui-eyebrow").text(eyebrow))
+            .child(heading),
+        None => heading,
+    };
     el("section")
         .class("mj-ui-hero")
         .attr("aria-labelledby", "mj-ui-title")
@@ -52,12 +89,7 @@ pub fn hero(glyph: &str, tone: &str, title: &str, tagline: &str, lead: &str, kpi
                                 .class(format!("mj-ui-hero-glyph mj-tone--{tone}"))
                                 .child(icon(glyph)),
                         )
-                        .child(
-                            el("h1")
-                                .attr("id", "mj-ui-title")
-                                .class("mj-ui-title")
-                                .text(title),
-                        ),
+                        .child(heading),
                 )
                 .child(el("p").class("mj-ui-tagline").text(tagline))
                 .child(el("p").class("mj-ui-lead").text(lead)),
@@ -103,6 +135,30 @@ pub fn kpi_state(label: &str, reading: &Reading) -> El {
         .filter(|w| !w.is_empty())
         .map(|w| word_badge(&w));
     kpi_with(label, reading, shown(reading), badge)
+}
+
+/// A KPI tile for a figure this process did not observe, and why: never a `0` and never a
+/// `no`, because a runtime that is not here measured nothing (a published snapshot's runner
+/// is on no mesh, a checkout may run no forge). The reason is the answer's own word.
+pub fn kpi_not_observed(label: &str, reason: &str, reading: &Reading) -> El {
+    el("span")
+        .class("mj-ui-kpi")
+        .attr(
+            "title",
+            format!("not observed: {reason}; read from {}", reading.cite()),
+        )
+        .child(el("span").class("mj-ui-kpi-label").text(label))
+        .child(el("span").class("mj-ui-kpi-value").text("not observed"))
+        .child(el("span").class("mj-ui-kpi-source").text(reading.cite()))
+}
+
+/// The body of a panel whose subject this process did not observe, with the reason the
+/// source gave: an unobserved subject is said in words, never drawn as an empty one.
+pub fn not_observed(subject: &str, reason: &str) -> El {
+    el("p")
+        .class("mj-ui-empty")
+        .child(word_badge("unknown"))
+        .text(format!(" {subject} was not observed here: {reason}"))
 }
 
 fn kpi_with(label: &str, reading: &Reading, value: String, badge: Option<El>) -> El {
@@ -426,11 +482,18 @@ pub fn text(entry: &Value, key: &str) -> String {
 
 /// The list at `pointer` in an answer, or none.
 pub fn list(answer: &Answer, pointer: &str) -> Vec<Value> {
+    items(answer, pointer).to_vec()
+}
+
+/// The list at `pointer` in an answer, borrowed, or none: what a screen that only reads the
+/// rows asks, so that a large answer (`capabilities.list` holds thousands) is not copied on
+/// every request.
+pub fn items<'a>(answer: &'a Answer, pointer: &str) -> &'a [Value] {
     answer
         .ok()
         .and_then(|v| v.pointer(pointer))
         .and_then(Value::as_array)
-        .cloned()
+        .map(Vec::as_slice)
         .unwrap_or_default()
 }
 
@@ -729,7 +792,7 @@ mod tests {
             source: Source::of("plan.status"),
             route: Some("GET /api/v1/plan/status".into()),
             exposure: Exposure::default(),
-            value,
+            value: value.map(Into::into),
             took: Duration::from_millis(5),
             standing: crate::ui::source::Standing::NOW,
         }

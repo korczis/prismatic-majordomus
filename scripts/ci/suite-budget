@@ -15,12 +15,23 @@
 # and on the runner's cores, so a budget over wall would fail on GitHub's weather rather than
 # on a regression anybody here can fix. Case time is the quantity this repository controls.
 #
-#   scripts/ci/suite-budget [--report FILE] [--model FILE]
+# A budget that only speaks once it is crossed speaks too late. On 2026-10-08
+# 95_executable_reference cost 3465 s against a 3450 s budget on a slow runner and failed a
+# suite whose every case passed; its recorded cost had sat within a few percent of the budget
+# for days and nothing said so. So a case whose cost — in this run, or as recorded in
+# suite-durations.tsv — is within `budget.near_percent` of the per-case budget is named, by
+# case, as NEAR, before the run that crosses it. NEAR never changes the exit status: it is the
+# warning, the budget is still the verdict, and no budget is loosened by it.
 #
-#   --report FILE   the TSV test/run.sh writes under MJ_TEST_REPORT (default: suite.tsv)
-#   --model FILE    the declaration (default: .ai/repo/ci/suite.yaml)
+#   scripts/ci/suite-budget [--report FILE] [--model FILE] [--durations FILE]
 #
-# exit 0   within budget
+#   --report FILE     the TSV test/run.sh writes under MJ_TEST_REPORT (default: suite.tsv)
+#   --model FILE      the declaration (default: .ai/repo/ci/suite.yaml)
+#   --durations FILE  the recorded cost of every case, <case> TAB <seconds>, the file the shards
+#                     are dealt from (default: suite-durations.tsv beside the model); absent,
+#                     only this run's costs are held to the margin
+#
+# exit 0   within budget (NEAR lines included)
 # exit 10  over budget — the total, the slowest case, or both
 # exit 12  it could not measure: no report, no model, or a model with no budget. Never a pass,
 #          because "I did not look" and "I looked and it was fine" are different answers.
@@ -35,10 +46,12 @@ set -o pipefail
 
 REPORT="suite.tsv"
 MODEL=".ai/repo/ci/suite.yaml"
+DURATIONS=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --report) REPORT="$2"; shift 2 ;;
     --model) MODEL="$2"; shift 2 ;;
+    --durations) DURATIONS="$2"; shift 2 ;;
     *) echo "suite-budget: unknown option $1" >&2; exit 2 ;;
   esac
 done
@@ -53,10 +66,20 @@ declared() {
 }
 budget_total="$(declared cases_seconds || true)"
 budget_slowest="$(declared slowest_case_seconds || true)"
+near_percent="$(declared near_percent || true)"
 [ -n "$budget_total" ] && [ -n "$budget_slowest" ] || {
   echo "suite-budget: $MODEL declares no budget.cases_seconds and budget.slowest_case_seconds"
   exit 12
 }
+[ -n "$near_percent" ] && [ "$near_percent" -lt 100 ] || {
+  echo "suite-budget: $MODEL declares no budget.near_percent below 100; the margin a case is named inside is declared there"
+  exit 12
+}
+[ -n "$DURATIONS" ] || DURATIONS="$(dirname "$MODEL")/suite-durations.tsv"
+# the cost from which a case is named as near its budget: the budget less near_percent of it,
+# rounded down, so that a margin is never narrower than declared
+near_slowest=$(( budget_slowest * (100 - near_percent) / 100 ))
+near_total=$(( budget_total * (100 - near_percent) / 100 ))
 
 # name <tab> result <tab> seconds <tab> phase
 total="$(awk -F'\t' 'NF >= 3 && $3 ~ /^[0-9]+$/ { s += $3 } END { print s + 0 }' "$REPORT")"
@@ -93,6 +116,40 @@ if [ "$slowest" -gt "$budget_slowest" ]; then
   printf 'FAILED  %s costs %s s, over the %s s one case may cost\n' "$slowest_name" "$slowest" "$budget_slowest"
   printf '        a single case that runs away is invisible in the total until it is most of it\n'
   status=10
+fi
+
+# ---------------------------------------------------------------- near the budget
+# Named by case, after any verdict above, and never a verdict of its own. A case over the
+# budget was refused above; this names the ones that are not over yet.
+near=0
+while IFS=' ' read -r cost name; do
+  [ -n "$name" ] || continue
+  printf 'NEAR    %s costs %s s in this run, within %s%% of the %s s one case may cost (%s s of room)\n' \
+    "$name" "$cost" "$near_percent" "$budget_slowest" "$((budget_slowest - cost))"
+  near=$((near + 1))
+done < <(LC_ALL=C awk -F'\t' -v lo="$near_slowest" -v hi="$budget_slowest" '
+  NF >= 3 && $3 ~ /^[0-9]+$/ && $3 + 0 >= lo && $3 + 0 <= hi { print $3, $1 }' "$REPORT" | LC_ALL=C sort -k1,1rn -k2,2)
+if [ -f "$DURATIONS" ]; then
+  while IFS=' ' read -r cost name; do
+    [ -n "$name" ] || continue
+    if [ "$cost" -gt "$budget_slowest" ]; then
+      printf 'NEAR    %s is recorded at %s s in %s, over the %s s one case may cost; this run'"'"'s cost is the verdict\n' \
+        "$name" "$cost" "$DURATIONS" "$budget_slowest"
+    else
+      printf 'NEAR    %s is recorded at %s s in %s, within %s%% of the %s s one case may cost (%s s of room)\n' \
+        "$name" "$cost" "$DURATIONS" "$near_percent" "$budget_slowest" "$((budget_slowest - cost))"
+    fi
+    near=$((near + 1))
+  done < <(LC_ALL=C awk -F'\t' -v lo="$near_slowest" '
+    NF >= 2 && $2 ~ /^[0-9]+$/ && $2 + 0 >= lo { print $2, $1 }' "$DURATIONS" | LC_ALL=C sort -k1,1rn -k2,2)
+fi
+if [ "$total" -ge "$near_total" ] && [ "$total" -le "$budget_total" ]; then
+  printf 'NEAR    the suite costs %s s, within %s%% of the %s s it may cost (%s s of room)\n' \
+    "$total" "$near_percent" "$budget_total" "$((budget_total - total))"
+  near=$((near + 1))
+fi
+if [ "$near" -gt 0 ]; then
+  printf '        a NEAR line is not a failure: make that case cheaper, or split it, before a slow runner crosses the budget\n'
 fi
 
 [ "$status" = 0 ] && echo "suite-budget: within budget"

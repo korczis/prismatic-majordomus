@@ -1993,7 +1993,7 @@ mod tests {
                 required_checks: Some(vec!["ci".into()]),
                 review_policy: Some(Default::default()),
                 up_to_date_required: Some(true),
-                merge_methods: vec!["merge".into()],
+                merge_methods: Some(vec!["merge".into()]),
                 pull_requests: Vec::new(),
                 resolved: Default::default(),
                 delete_branch_on_merge: None,

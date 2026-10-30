@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `mesh` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.24.1 -->
+     Generator: majordomus-cli 0.30.2 -->
 # Module `mesh` — Mesh
 
 The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.
@@ -92,6 +92,10 @@ The journal's events above a Lamport stamp, in Lamport order, at most a page: ea
 |---|---|---|---|
 | `after` | integer or null | no | Only events whose Lamport stamp is above this. |
 | `limit` | integer or null | no | At most this many (default 100, at most 1000). |
+| `newest` | boolean or null | no | The newest `limit` events above `after` instead of the first ones: what a reader who
+wants the journal as it stands now asks for. Still in Lamport order, and `lamport` is
+then the newest stamp the journal holds, so resuming after it reads only what comes
+next. Without it the journal is read forward from `after`, a page at a time. |
 
 Output: `EventList`.
 

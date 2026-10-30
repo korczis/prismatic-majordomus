@@ -25,6 +25,16 @@
 # Nothing else is interpreted. A root that does not exist is not an error: the question is
 # only ever asked about a path that does.
 #
+# personal_target — the file this provider reads for one person's instructions beside the
+# project's own, where the vendor defines one (Claude Code: CLAUDE.local.md,
+# https://code.claude.com/docs/en/memory). It is what `init --personal` points a projection
+# at when the target the skeleton names is a file the project already tracks, so that the
+# seeded policy is one `update` can write without changing anything shared (ADR 0145). A
+# provider with no such file declares none, and its projection is left out of a personal
+# layer whose project tracks the shared target: there is nowhere of the person's own for it.
+# Declared here because the name is the vendor's decision and was otherwise a sentence in a
+# refusal message.
+#
 # lifecycle / prompt_capture — what the tool's adapter for this provider can do, in the
 # provider's own vocabulary. Declared here because a surface that wants to say "Claude Code
 # fires SessionStart, SessionEnd and PreCompact, and archives prompts" had two ways to find
@@ -109,6 +119,7 @@ providers:
   claude-code:
     title: Claude Code
     client_config: .mcp.json
+    personal_target: CLAUDE.local.md
     lifecycle:
       - SessionStart
       - SessionEnd

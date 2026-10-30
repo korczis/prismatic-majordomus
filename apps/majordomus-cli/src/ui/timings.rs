@@ -181,7 +181,7 @@ mod tests {
             source: TIMINGS,
             route: Some("GET /api/v1/pull-requests/timings".into()),
             exposure: Exposure::default(),
-            value: Ok(value),
+            value: Ok(value.into()),
             took: Duration::from_millis(1),
             standing: crate::ui::source::Standing::NOW,
         }

@@ -20,6 +20,9 @@
 command -v jq >/dev/null 2>&1 || skip "jq is not installed"
 git config user.email a@b.c; git config user.name a
 "$MJ" init >/dev/null
+# records of every kind the validators read (test/lib.sh synthetic_repo), so the counters the
+# two forms are compared on count real work and not only what a bare layer costs
+synthetic_repo 4
 
 # 1. the same command, both forms
 # doctor may report findings in a fresh repository; its exit is not what this case is about

@@ -1,0 +1,32 @@
+id: I2827
+milestone: failure-is-visible
+title: "A tool written a moment ago is run once its writer lets go"
+slug: a-tool-written-a-moment-ago-is-run-when-its-writer-lets-go
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give the crate one helper that starts a program and, while the program's file is still open for writing somewhere (ETXTBSY), waits briefly and asks again within a bound; use it at the spawn sites whose tests write a stand-in tool and run it at once."
+why: "CI run 39049547899, job rust (2), failed deploy::observed::tests::the_forge_is_asked_through_its_own_tool_and_every_refusal_is_said at apps/majordomus-cli/src/deploy/observed.rs:514 with 'the GitHub CLI (.../fake-gh) could not run: Text file busy (os error 26)'. The test writes an executable stand-in and runs it; another test thread forked a child while the write descriptor was open, the child holds it until it execs, and Linux refuses to exec a file open for writing. Writing a copy and renaming it does not help (the inherited descriptor holds the inode); waiting does. The same wait existed only test-side or inline (capability/builtin/health.rs, worktree/direnv.rs)."
+current_state: "A product spawn of a freshly written stand-in fails at once on ETXTBSY and the failure is reported as the tool's, turning an unrelated CI job red. This issue covers the GitHub CLI calls of deploy::observed and monitor::github; five more spawn sites whose tests write a stand-in and run it are deferred until after v1.0.0-alpha.1 (listed under non_scope)."
+desired_state: "apps/majordomus-cli/src/process.rs holds retrying_busy, which asks again 50 times 100 ms apart while the start fails with ExecutableFileBusy and returns the last answer; deploy::observed::run (the GitHub CLI call, also reached by the served capability's forge refresh) and monitor::github::run start gh through it."
+scope:
+  - "apps/majordomus-cli/src/process.rs"
+  - "apps/majordomus-cli/src/lib.rs"
+  - "apps/majordomus-cli/src/deploy/observed.rs"
+  - "apps/majordomus-cli/src/monitor/github.rs"
+non_scope:
+  - "Deferred until after v1.0.0-alpha.1: the spawns at apps/majordomus-cli/src/delivery/public.rs:279 (run_pages), apps/majordomus-cli/src/offload/remote.rs:139, :160 and :175 (Remote::run, run_to_file, spawn), apps/majordomus-cli/src/economics/runner.rs:644 (harness_version) and :370 (spawn_group), and apps/majordomus-cli/src/episodes.rs:358 (the hook tool), each of which a test reaches with a stand-in it has just written"
+  - "Spawn sites reached only by integration tests through a separate majordomus process"
+  - "Hooks git executes (continuity's pre-receive stand-ins), which no Majordomus spawn starts"
+depends_on: []
+acceptance_criteria:
+  - "On Linux, a program held open for writing by this process is refused with ExecutableFileBusy, and retrying_busy starts it once the writer lets go"
+  - "A program that cannot start for another reason is answered at once, with that reason"
+  - "deploy::observed::run and monitor::github::run start the GitHub CLI through retrying_busy"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib -- process:: deploy::observed:: monitor::github:: capability::builtin::served::"
+evidence_required:
+  - "etxtbsy_retry_test"
+created_at: 2026-10-17
+updated_at: 2026-10-17

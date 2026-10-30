@@ -1,0 +1,22 @@
+intent: the-owner-directs-work-from-the-ui
+reviewed_at: d116266803
+reviewed_by: "claude-code (session 21616f1e) — SELF-REVIEW: the session that authored I2780 to I2783 also wrote this critique. Stated rather than hidden: a critique carries more weight when another session or the owner writes it."
+findings:
+  - id: a-second-wave-screen
+    class: regression_risk
+    subject: I2780
+    finding: The open #1184 adds /ui/waves over plan.waves; a workspace that draws waves too would be two renderings of one answer drifting apart.
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2780
+      because: The workspace draws only the waves of the chosen intent's issues, as rows linking to each issue, and adds no wave semantics; when /ui/waves lands, the panel links to it rather than growing.
+  - id: frontend-truth
+    class: unproven_assumption
+    subject: the-owner-directs-work-from-the-ui#workspace-is-derived
+    finding: Selecting the intent shown first, or counting ready issues, in the screen could become a status the screen decides.
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2780
+      because: The first intent shown is the first the plan reports executing, then planned, in intents.list's order, and the rule is printed on the screen; every status, wave and blocker is the capability's word, drawn as given.

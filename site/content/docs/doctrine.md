@@ -16,23 +16,19 @@ exists to know the difference, and to say so in one command.
 
 ## The chain
 
-```
-principle          why the rule exists at all
-  ↓
-doctrine           what must be true          share/standard/majordomus/
-  ↓
-validator          whether it is true          mj_validate_<name> in lib/
-  ↓
-enforcement point  when the validator runs     the commands in enforced_by
-  ↓
-propagation        what a violation costs      the command's exit code
-  ↓
-test               proof of the behaviour      test/cases/
-  ↓
-CI                 proof it blocks integration .github/workflows/validate.yml
-  ↓
-claim              what may be promised        docs/CLAIMS.yaml
-```
+<pre class="mermaid">
+flowchart TD
+  principle["principle&lt;br/&gt;&lt;small&gt;why the rule exists at all&lt;/small&gt;"]
+  doctrine["doctrine&lt;br/&gt;&lt;small&gt;what must be true · share/standard/majordomus/&lt;/small&gt;"]
+  validator["validator&lt;br/&gt;&lt;small&gt;whether it is true · mj_validate_#lt;name#gt; in lib/&lt;/small&gt;"]
+  point["enforcement point&lt;br/&gt;&lt;small&gt;when the validator runs · the commands in enforced_by&lt;/small&gt;"]
+  propagation["propagation&lt;br/&gt;&lt;small&gt;what a violation costs · the command's exit code&lt;/small&gt;"]
+  test["test&lt;br/&gt;&lt;small&gt;proof of the behaviour · test/cases/&lt;/small&gt;"]
+  ci["CI&lt;br/&gt;&lt;small&gt;proof it blocks integration · .github/workflows/validate.yml&lt;/small&gt;"]
+  claim["claim&lt;br/&gt;&lt;small&gt;what may be promised · docs/CLAIMS.yaml&lt;/small&gt;"]
+  principle --&gt; doctrine --&gt; validator --&gt; point --&gt; propagation --&gt; test --&gt; ci --&gt; claim
+</pre>
+
 
 `majordomus doctor` walks that chain for every doctrine and reports the first link that
 breaks. It reads the source, not the registry's own description of itself, so a registry
@@ -168,9 +164,14 @@ resolution with exit 10 and the reason, and nothing is applied partially:
 The baseline under `vendor/majordomus/` is a copy of the package the executable ships in
 `share/standard/majordomus/`, written by `init` and afterwards only by
 `majordomus rules vendor update`. The shipped package's own manifest is written by its
-maintainer with `scripts/rules-package write` and checked by `scripts/rules-package check`
-in the test suite; no command that runs in a managed repository writes into the
-distribution. The repository's copy is authoritative for that
+maintainer with `scripts/rules-package write` — `scripts/derive` runs it — and checked by
+`scripts/rules-package check` in the test suite and in `scripts/derive-check`; no command
+that runs in a managed repository writes into the distribution. Its `source_revision` is the
+release the tree produces, read from the crate manifest, so the label an adopter sees in
+`rules vendor status` tells one package from another, and `check` refuses a stamp a bump left
+behind. The package's rules are written for any adopter: an incident that taught one of them
+is told as the Majordomus repository's, never as "this repository", which in a vendored copy
+would name the adopter (`test/cases/3022`). The repository's copy is authoritative for that
 repository: a newer executable reports a newer baseline through `rules vendor status` and
 `rules vendor diff`, and never applies it. The manifest names every rule file with its
 hash, so a hand edit under `vendor/` is detected by `rules vendor status` and refused by

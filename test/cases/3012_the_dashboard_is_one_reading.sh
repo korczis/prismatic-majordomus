@@ -25,7 +25,7 @@ cp -R "$ROOT/share/skeleton/ai" "$R/.ai"
   || { echo "    could not make a fixture repository"; exit 1; }
 
 # --- 1. the shape, and the exit code
-( cd "$R" && "$RB" dashboard cluster --format json ) > page.json 2> err.txt; code=$?
+( cd "$R" && "$RB" dashboard cluster --format json ) > page.json 2> err.txt && code=0 || code=$?
 [ "$code" = 0 ] || { echo "    dashboard cluster exited $code"; cat err.txt; exit 1; }
 jq -e '
   (.at | type == "string") and (.origin | type == "string")
@@ -64,6 +64,6 @@ diff <(grep -v " CLUSTER " text.txt) <(grep -v " CLUSTER " lines.txt) >/dev/null
   || { echo "    the text format is not the lines of the page:"; diff <(grep -v " CLUSTER " text.txt) <(grep -v " CLUSTER " lines.txt) | head -6; exit 1; }
 
 # --- 5. an undeclared page is a usage error
-( cd "$R" && "$RB" dashboard nonsense ) >/dev/null 2>&1; code=$?
+( cd "$R" && "$RB" dashboard nonsense ) >/dev/null 2>&1 && code=0 || code=$?
 [ "$code" = 2 ] || { echo "    an undeclared page exited $code, not 2"; exit 1; }
 echo "    cluster page: shape, plan tally, width bounds, text = lines, usage error"

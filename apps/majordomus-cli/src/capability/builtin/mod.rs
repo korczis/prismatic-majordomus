@@ -56,6 +56,7 @@ pub mod evidence;
 pub(crate) mod executions;
 pub mod gates;
 pub(crate) mod graph;
+pub(crate) mod guard;
 pub mod health;
 pub(crate) mod integration;
 pub mod intent_realization;
@@ -68,6 +69,7 @@ pub(crate) mod models;
 pub(crate) mod monitor;
 pub mod objects;
 pub mod obligations;
+pub mod observatory;
 pub mod pack;
 pub(crate) mod peers;
 pub(crate) mod perf;
@@ -184,6 +186,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         capabilities,
         commands,
         graph,
+        guard,
         health,
         dashboard,
         continuity,
@@ -231,7 +234,8 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         integration,
         convergence,
         trace,
-        product
+        product,
+        observatory
     ]
 }
 

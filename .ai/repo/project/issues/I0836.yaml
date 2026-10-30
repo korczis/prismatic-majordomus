@@ -11,7 +11,7 @@ current_state: "Fixtures are hand-built per case."
 desired_state: "One generator in test/lib.sh, one scaling case, counters linear in N."
 scope:
   - test/lib.sh
-  - test/cases/84_scaling.sh
+  - test/cases
 non_scope:
   - Wall-clock assertions in the scaling case
 depends_on:
@@ -20,9 +20,20 @@ acceptance_criteria:
   - Counters at N, 2N and 4N are within a linear bound
   - The generator is reused by at least one other case
 validation:
-  - bash test/run.sh 84_scaling
+  - bash test/run.sh 3053_a_repository_of_n_records_costs_n
 evidence_required:
   - batch_reads
 risk: "The generated records must pass plan validate; the helper builds them from the same templates the skeleton ships."
 created_at: 2026-09-05
-updated_at: 2026-09-05
+updated_at: 2026-10-15T07:36:57Z
+started_at: 2026-10-15T07:36:51Z
+started_event: sha256:3dd5f8761273879d6f41d24669d0301413e70ac2191323e70c634641e052b2a5
+completed_at: 2026-10-15T07:36:57Z
+completed_event: sha256:4549374aad2f9bdef7036497c0bed399fae29221b6525e6b1f9c2c7d3c820dfb
+evidence:
+  - covers: batch_reads
+    type: test
+    command: "bash test/run.sh 3053_a_repository_of_n_records_costs_n 886_the_timing_report_is_json"
+    result: "tests: 2 passed; at N=8/16/32 records plan validate makes 3/3/3 YAML parses and 0 git calls, doctor 116/124/140 parses and 124/124/124 git calls (linear bound holds); synthetic_repo is also used by case 886"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-15T07:36:55Z
