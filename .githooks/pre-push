@@ -28,3 +28,5 @@ for head in $heads; do
   scripts/rust-check --doc || { echo "pre-push: the crate's rustdoc does not build with warnings denied (scripts/rust-check --doc); a push that changes the crate is refused until it does" >&2; exit 1; }
   break
 done
+# what CI would find first, within a bound (project.a-push-runs-what-ci-would-find-first)
+scripts/ci/run-plan --before-push || exit $?

@@ -227,9 +227,9 @@ pub enum Freshness {
 /// assert!(latest.took >= std::time::Duration::ZERO);
 /// ```
 #[derive(Debug, Clone)]
-pub struct Latest {
+pub struct Latest<V = Value> {
     /// What the source answered, or why it could not. `Err` for a pending reading too.
-    pub value: Result<Value, String>,
+    pub value: Result<V, String>,
     /// How long the executor took to produce this reading.
     pub took: Duration,
     /// When it was read; `None` while pending.
@@ -242,9 +242,9 @@ pub struct Latest {
     pub refreshing: bool,
 }
 
-impl Latest {
+impl<V> Latest<V> {
     /// A reading taken just now, by the caller itself.
-    fn now(value: Result<Value, String>, took: Duration) -> Latest {
+    fn now(value: Result<V, String>, took: Duration) -> Latest<V> {
         Latest {
             value,
             took,
@@ -300,7 +300,9 @@ impl World {
 
 #[derive(Debug)]
 struct Outcome {
-    value: Result<Value, String>,
+    /// The answer as the executor's cache shares it: reading a source again whose answer is
+    /// cached copies nothing, and a caller copies it only after the slot's lock is released.
+    value: Result<Arc<Value>, String>,
     world: World,
     at: Instant,
     wall: SystemTime,
@@ -445,10 +447,29 @@ impl Readings {
 /// assert_eq!(ctx.executor.readings_remembered(), 1);
 /// ```
 pub fn read(ctx: &Context, id: &str, input: Value, patience: Patience) -> Latest {
+    let latest = read_shared(ctx, id, input, patience);
+    Latest {
+        value: latest.value.map(Arc::unwrap_or_clone),
+        took: latest.took,
+        read_at: latest.read_at,
+        age: latest.age,
+        freshness: latest.freshness,
+        refreshing: latest.refreshing,
+    }
+}
+
+/// The same reading, with the answer as the slot shares it rather than a copy of it: what a
+/// screen that only reads the answer asks, so that a large one is copied for nobody.
+pub(crate) fn read_shared(
+    ctx: &Context,
+    id: &str,
+    input: Value,
+    patience: Patience,
+) -> Latest<Arc<Value>> {
     if bypassed() {
         let started = Instant::now();
         let value = ctx.execute(id, input).map_err(|e| e.to_string());
-        return Latest::now(value, started.elapsed());
+        return Latest::now(value.map(Arc::new), started.elapsed());
     }
     let readings = &ctx.executor.readings;
     let world = World::of(ctx);
@@ -463,7 +484,7 @@ pub fn read(ctx: &Context, id: &str, input: Value, patience: Patience) -> Latest
         // it is current at once, and no worker is needed for it.
         let behind = state.outcome.as_ref().is_none_or(|o| o.world != world);
         if behind {
-            if let Some(value) = ctx.executor.cached(ctx, id, &state.input) {
+            if let Some(value) = ctx.executor.cached_shared(ctx, id, &state.input) {
                 state.outcome = Some(Outcome {
                     value: Ok(value),
                     world: world.clone(),
@@ -526,27 +547,38 @@ pub fn read(ctx: &Context, id: &str, input: Value, patience: Patience) -> Latest
             }
         };
     }
-    match &state.outcome {
-        None => Latest {
-            value: Err(PENDING.to_string()),
-            took: Duration::ZERO,
-            read_at: None,
-            age: None,
-            freshness: Freshness::Pending,
-            refreshing: state.flying,
-        },
-        Some(o) => Latest {
-            value: o.value.clone(),
-            took: o.took,
-            read_at: Some(o.wall),
-            age: Some(o.at.elapsed()),
-            freshness: if o.world == world {
+    let refreshing = state.flying;
+    let (value, took, read_at, age, freshness) = match &state.outcome {
+        None => (
+            Err(PENDING.to_string()),
+            Duration::ZERO,
+            None,
+            None,
+            Freshness::Pending,
+        ),
+        Some(o) => (
+            o.value.clone(),
+            o.took,
+            Some(o.wall),
+            Some(o.at.elapsed()),
+            if o.world == world {
                 Freshness::Current
             } else {
                 Freshness::Stale
             },
-            refreshing: state.flying,
-        },
+        ),
+    };
+    // a caller's own copy, when it wants one, is made once the slot is free again, so that a
+    // large answer copied for one page holds up neither the worker landing a reading nor
+    // another page
+    drop(state);
+    Latest {
+        value,
+        took,
+        read_at,
+        age,
+        freshness,
+        refreshing,
     }
 }
 
@@ -642,7 +674,9 @@ fn take(job: Job) {
     let input = lock(&landing.slot.state).input.clone();
     let started = Instant::now();
     let asked = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        ctx.execute(&id, input).map_err(|e| e.to_string())
+        ctx.executor
+            .execute_shared(&ctx, &id, input)
+            .map_err(|e| e.to_string())
     }));
     let value = asked.unwrap_or_else(|_| Err("the source panicked while answering".to_string()));
     landing.land(value, started.elapsed());
@@ -656,7 +690,7 @@ struct Landing {
 }
 
 impl Landing {
-    fn land(&mut self, value: Result<Value, String>, took: Duration) {
+    fn land(&mut self, value: Result<Arc<Value>, String>, took: Duration) {
         let mut state = lock(&self.slot.state);
         state.outcome = Some(Outcome {
             value,

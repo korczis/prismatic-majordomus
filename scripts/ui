@@ -6,6 +6,7 @@
 #   scripts/ui viewports [--json]  the widths every page is audited at, and where they came from
 #   scripts/ui check               the static invariants: markup a keyboard cannot use
 #   scripts/ui audit [OPTIONS]     visit every page in a browser and write the results document
+#   scripts/ui navbar [--write]    whether the bar of the UI is the site's (see below)
 #   scripts/ui test                the UI tooling's own tests
 #
 # Options of `audit`, and of `pages` and `viewports` where they apply:
@@ -18,6 +19,14 @@
 #   --report           render the results into the tests surface afterwards (/tests/ui)
 #
 #   MJ_UI_JOBS=N       how many pages are driven at once (default: the machine, 2-4)
+#
+# `navbar` holds project.the-ui-wears-the-sites-navbar, and `audit` runs it first. The bar of
+# every UI screen is the site's bar as the built site renders it (scripts/lib/ui-navbar.mjs):
+# the bar cut out of site/public is compared with apps/majordomus-cli/src/ui/navbar.html, the
+# copy the executable compiles in, and then the bar a browser draws on the site's front page
+# is compared with the one it draws on /ui and on /cockpit — every element, its box and its computed styles,
+# in both themes, at every width the design declares, closed and with a menu open. `--write`
+# writes the copy from the built site instead, and starts nothing.
 #
 # Nothing here holds a list, and nothing here decides where a page is served from. The
 # surfaces come from `majordomus web list` — every surface the executable serves, with the
@@ -52,7 +61,7 @@ MJ="${MAJORDOMUS_BIN:-$(mj_cargo_target_dir "$ROOT/apps/majordomus-cli" ask-carg
 usage() { sed -n '2,38p' "$0" | sed 's/^# \{0,1\}//'; }
 
 sub="${1:-pages}"; [ $# -gt 0 ] && shift || true
-json=0; only=""; limit=""; out="$ROOT/target/web/run-ui.json"; origin=""; render=0; port=8790; build=""
+json=0; only=""; limit=""; out="$ROOT/target/web/run-ui.json"; origin=""; render=0; port=8790; build=""; write=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --json) json=1 ;;
@@ -63,6 +72,7 @@ while [ $# -gt 0 ]; do
     --port) port="${2:?--port needs a number}"; shift ;;
     --no-build) build=0 ;;
     --report) render=1 ;;
+    --write) write=1 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "ui: unknown option '$1'" >&2; usage >&2; exit 2 ;;
   esac
@@ -73,13 +83,67 @@ case "$sub" in
   -h|--help|help) usage; exit 0 ;;
   test) exec node "$ROOT/scripts/lib/ui.test.mjs" ;;
   check) ;;
-  pages|viewports|audit) ;;
+  pages|viewports|audit|navbar) ;;
   *) echo "ui: unknown subcommand '$sub'" >&2; usage >&2; exit 2 ;;
 esac
 
 # `audit` builds the documentation it is about to measure; asking what the page set is does
 # not rebuild the site behind the caller's back.
 [ -n "$build" ] || { [ "$sub" = audit ] && build=1 || build=0; }
+
+# ------------------------------------------------------------------------ the site's bar
+# The copy first: it needs only the built site, and `--write` stops there.
+PUB="$ROOT/site/public"
+NAVBAR="$ROOT/apps/majordomus-cli/src/ui/navbar.html"
+navbar_copy() { # write|check
+  [ -f "$PUB/404.html" ] || { echo "ui navbar: the site is not built ($PUB/404.html); run: scripts/site-build" >&2; return 12; }
+  node --input-type=module -e '
+import { readFileSync, writeFileSync } from "node:fs";
+import { fragmentOf } from "'"$ROOT"'/scripts/lib/ui-navbar.mjs";
+import { siteOrigin } from "'"$ROOT"'/scripts/lib/browser.mjs";
+const [mode, pub, file, root] = process.argv.slice(1);
+const want = fragmentOf(pub, siteOrigin(root));
+if (mode === "write") { writeFileSync(file, want); console.log(`ui navbar: wrote ${file.replace(root + "/", "")} from the built site`); process.exit(0); }
+let have = ""; try { have = readFileSync(file, "utf8"); } catch { /* absent */ }
+if (have !== want) {
+  console.log(`FAIL ui navbar: ${file.replace(root + "/", "")} is not the bar the site renders; run: scripts/site-build && scripts/ui navbar --write, then scripts/cockpit-assets`);
+  process.exit(10);
+}
+console.log("ui navbar: the executable compiles in the bar the site renders");
+' "$1" "$PUB" "$NAVBAR" "$ROOT"
+}
+# Then the browser: the site's front page against /ui and /cockpit, on the server this script
+# started.
+navbar_compare() {
+  [ -d "$ROOT/node_modules/playwright" ] || { echo "SKIP ui navbar: playwright is not installed; run: npm ci" >&2; return 13; }
+  node --input-type=module -e '
+import { readFileSync } from "node:fs";
+import { launch, serveSite, siteOrigin } from "'"$ROOT"'/scripts/lib/browser.mjs";
+import { run } from "'"$ROOT"'/scripts/lib/ui-navbar.mjs";
+const [root, pub, server] = process.argv.slice(1);
+const design = JSON.parse(readFileSync(`${root}/site/data/registry/design.json`, "utf8"));
+const browser = await launch();
+if (!browser) { console.log("SKIP ui navbar: no browser"); process.exit(process.env.CI === "true" ? 13 : 0); }
+const origin = siteOrigin(root);
+const foreign = new Set();
+const siteContext = async (opts) => { const c = await browser.newContext(opts); await serveSite(c, pub, origin, (u) => foreign.add(u)); return c; };
+const findings = []; let compared = 0;
+for (const page of ["/ui", "/cockpit"]) {
+  const r = await run(browser, { siteContext, siteUrl: `${origin}/`, uiUrl: `${server}${page}`, widths: design.viewports, themeKey: design.theme.storage_key });
+  compared += r.compared;
+  findings.push(...r.findings.map((f) => `${page} ${f}`));
+}
+await browser.close();
+for (const f of findings.slice(0, 60)) console.log(`FAIL ui navbar ${f}`);
+if (findings.length > 60) console.log(`     ... and ${findings.length - 60} more`);
+console.log(`ui navbar: ${compared} comparison(s) of the site bar with the bar of /ui and /cockpit at ${design.viewports.join(", ")} px, light and dark, closed and open: ${findings.length} difference(s)`);
+process.exit(findings.length ? 10 : 0);
+' "$ROOT" "$PUB" "$origin"
+}
+if [ "$sub" = navbar ] && [ "$write" = 1 ]; then
+  navbar_copy write
+  exit $?
+fi
 
 # ------------------------------------------------------------------- the static check
 # The check reads markup, so it reads files that *are* markup: every tracked .html of the
@@ -215,6 +279,14 @@ if [ "$build" = 1 ]; then
 fi
 
 start_server
+if [ "$sub" = navbar ] || [ "$sub" = audit ]; then
+  nb=0
+  navbar_copy check || nb=$?
+  [ "$nb" != 0 ] || navbar_compare || nb=$?
+  [ "$sub" = navbar ] && exit "$nb"
+  # the audit goes on, and ends with the bar's verdict if its own is clean
+  [ "$nb" = 0 ] || [ "$nb" = 13 ] || navbar_status="$nb"
+fi
 surf="$(mktemp "${TMPDIR:-/tmp}/mj-ui-surfaces.XXXXXX")"
 write_surfaces "$surf"
 [ -s "$surf" ] || { echo "ui: the executable serves no surface with pages; run: scripts/site-build --serve" >&2; exit 12; }
@@ -251,6 +323,7 @@ process.exitCode = total ? 10 : 0;
   if [ "$render" = 1 ]; then
     "$MJ" web report ui --from "$out" --repo "$ROOT"
   fi
+  [ "$status" != 0 ] || status="${navbar_status:-0}"
   exit "$status"
 fi
 

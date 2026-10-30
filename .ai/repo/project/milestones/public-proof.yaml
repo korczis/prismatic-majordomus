@@ -47,4 +47,26 @@ evidence_required:
   - public_site_serves_it
 depends_on: []
 created_at: 2026-09-15
-updated_at: 2026-09-15
+updated_at: 2026-10-11T05:02:14Z
+evidence:
+  - covers: challenge_recorded
+    type: test
+    command: "MJ_TEST_JOBS=4 bash test/run.sh 632_a_scenario_shows_the_worker_it_judges 103_obligations"
+    result: "ok 632 and ok 103 at master 1393d9ef2a; its one issue I1600 is DONE (de14385dd3); site/data/generated/challenge.json holds the 10-step run: check refused on scope, finish refused twice on the failing test, handover then context, accepted finish"
+    artifact: "site/data/generated/challenge.json"
+    commit: de14385dd3feeb0e15cb75022a56dd8cbe63d0a8
+    recorded_at: 2026-10-11T05:02:11Z
+  - covers: site_holds_the_run
+    type: ci
+    command: "gh run view 38083715376 --json jobs (validate on master 890e112d04: the site job runs scripts/generate-site-data --check and scripts/site-check --no-sync)"
+    result: "site and pages jobs success; 890e112d04..1393d9ef2a changes no file under apps, lib, scripts, site/templates or test; site-check holds /challenge/ and the homepage replay to every recorded line, the panel count, the CTA and each guarantee link"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38083715376"
+    commit: de14385dd3feeb0e15cb75022a56dd8cbe63d0a8
+    recorded_at: 2026-10-11T05:02:12Z
+  - covers: public_site_serves_it
+    type: artifact
+    command: "curl -fsS https://majordomus.dev/challenge/ | grep -o 'data-outcome=\"[a-z]*\"' | sort | uniq -c; curl -fsS https://majordomus.dev/build.json"
+    result: "HTTP 200; 10 step panels (4 accepted, 3 change, 3 refused) = the 10 recorded steps; the homepage CTA links /challenge/; build.json names master 890e112d04, 0.20.0, dirty false"
+    artifact: "https://majordomus.dev/challenge/"
+    commit: de14385dd3feeb0e15cb75022a56dd8cbe63d0a8
+    recorded_at: 2026-10-11T05:02:14Z

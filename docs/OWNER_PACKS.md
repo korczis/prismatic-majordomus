@@ -50,7 +50,7 @@ flowchart LR
 | `campaigns/majordomus-incremental-derive-prompt-pack` | `a-derive-does-only-the-work-its-inputs-changed`, `a-derivation-computed-once-is-reused` | I2521-I2533 | I2521: measure what a derive costs per stage |
 | `campaigns/majordomus-intent-ui-pack` | `the-ui-starts-work-through-the-executor`, `an-intent-is-carried-from-a-sentence-to-a-verdict` | I2536-I2545 | I2536, I2538, I2541-I2544: none depends on another |
 | `campaigns/majordomus-autonomous-idd-maximal` | `started-work-is-explained-bounded-and-survives-a-restart`, `an-intent-is-followed-to-the-deployment-that-carries-it` | I2502, I2503, I2505-I2508, I2511 | I2502: say which ready issue may start, and why |
-| `campaigns/majordomus-shellfall` | `automation-is-scripted-capabilities`, `shell-shrinks-to-its-bootstrap` | I2549-I2561 | I2549: put ADR 0069 on the trunk; I2550: the baseline |
+| `campaigns/majordomus-shellfall` | `scripted-capabilities-are-the-automation`, `shell-shrinks-to-its-bootstrap` | I2549-I2561 | I2549: put ADR 0069 on the trunk; I2550: the baseline |
 | `campaigns/majordomus-ui-speed-pack` | `a-screen-is-fast-bounded-and-says-why` | I2563-I2570 | I2564, I2565, I2566, I2568 |
 | `campaigns/majordomus-profile-system-v2-prompt-pack` | `a-profile-is-resolved-once-and-enforced` | I2573-I2584 | I2573: trace a profile from its file to finish |
 | `campaigns/majordomus-convergence-pack-20261012` | none: it is the running campaign `majordomus-autonomous-convergence` | none | the campaign's coordinator |

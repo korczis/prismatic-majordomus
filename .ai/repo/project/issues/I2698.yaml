@@ -1,0 +1,26 @@
+id: I2698
+milestone: development-runtime
+title: "The new scenes have screenshot evidence at 1080p and 4K on a named revision"
+slug: ui-proof-scenes-have-screenshots
+priority: p3
+profile: verification
+parallel_safe: true
+objective: "A manifest names the revision and holds a screenshot of each new scene at 1920x1080 and 3840x2160."
+why: "The scenes are drawn in a browser; only a screenshot proves they are drawn legibly at wall size."
+current_state: "ADR 0160 proposes the scenes; the Observatory of ADR 0158 has eight."
+desired_state: "A manifest names the revision and holds a screenshot of each new scene at 1920x1080 and 3840x2160."
+scope:
+  - ".ai/repo/project/issues/I2698.yaml"
+non_scope:
+  - "Stating a frame rate or a figure that was not measured"
+depends_on: []
+acceptance_criteria:
+  - "A screenshot of each of the five scenes at 1920x1080 is evidence of a named revision"
+  - "A screenshot of each at 3840x2160 is evidence of the same revision"
+  - "The display with reduced motion is drawn still"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "observatory_proof_scenes"
+created_at: 2026-10-14
+updated_at: 2026-10-14

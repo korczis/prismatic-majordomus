@@ -30,4 +30,23 @@ evidence_required:
   - "revocation_without_restart_test"
   - "key_file_created_private_test"
 created_at: 2026-10-09
-updated_at: 2026-10-14
+updated_at: 2026-10-14T23:33:07Z
+started_at: 2026-10-14T23:32:46Z
+started_event: sha256:5f4f537a93d134531573f4332374a401e5ea215bfd043082ba2cd9cc428c9cf0
+verified_at: 2026-10-14T23:32:54Z
+verified_event: sha256:d4f1ff297c468f9877c7252e79a6ec6c4a8d2f3731f6ef418b586c04eedafc45
+completed_at: 2026-10-14T23:33:07Z
+completed_event: sha256:a1d2499eb1843d6145f5d1189f180c453fb790d3381ed5208f95a5a8255b61de
+evidence:
+  - covers: revocation_without_restart_test
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib -- mesh::cooperation::tests::a_withdrawn_key_loses_its_link_without_a_restart"
+    result: "revocation_without_restart_test names a test never written under that name; proved by mesh::cooperation::tests::a_withdrawn_key_loses_its_link_without_a_restart (delivered by 9d09a4a5f22): 1 passed at c0e3585dc8, 2026-10-14 23:3xZ, this Mac"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T23:33:01Z
+  - covers: key_file_created_private_test
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib -- mesh::identity::tests::a_node_key_is_never_readable_by_others"
+    result: "key_file_created_private_test names a test never written under that name; proved by mesh::identity::tests::a_node_key_is_never_readable_by_others (delivered by 37c72bbed6c): 1 passed at c0e3585dc8, 2026-10-14 23:3xZ, this Mac"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T23:33:04Z

@@ -11,6 +11,7 @@ import { breakpointsFromCss, commonPrefix, criticalWidths, discoverPages, tierPa
 import { alignCells, escapes, nameTaskCheckboxes, normalise, normaliseRendered, plainClasses, scan, scrollingTags, textOf } from './ui-static.mjs';
 import { contrast, enforce, measure, raise, MINIMUM } from './ui-contrast.mjs';
 import { sample, siblingFamilies } from './ui-routes.mjs';
+import { compare, cut, fragment, GENERATED, VERSION_SLOT } from './ui-navbar.mjs';
 
 const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
@@ -342,6 +343,46 @@ test('a new section brings its own sweep without a list changing', () => {
   assert.equal(before.filter((p) => p.tier === 'sweep').length, 2);
   assert.equal(after.filter((p) => p.tier === 'sweep').length, 3);
   assert.equal(after.find((p) => p.route === '/reports/').tier, 'sweep');
+});
+
+// ------------------------------------------------------------------ the site's bar
+const builtPage = (origin) => `<html><body><a href="#main">skip</a>
+<nav class="sticky" aria-label="Main"><a href="${origin}/">Majordomus <span data-release="0.27.0">v0.27.0</span></a>
+<!-- a comment of the build -->
+<a href="#site-map-1">All 9 pages</a></nav><main><nav aria-label="Other">x</nav></main></body></html>`;
+
+test('the bar is cut out of a built page as the one Main landmark, and nothing after it', () => {
+  const bar = cut(builtPage('https://example.test'));
+  assert.ok(bar.startsWith('<nav class="sticky" aria-label="Main">') && bar.endsWith('</nav>'));
+  assert.ok(!bar.includes('Other'));
+  assert.equal(cut('<html><nav aria-label="Other"></nav></html>'), null);
+});
+
+test('the copy leaves the version to the executable, drops the build\'s comments and leads the site map to the site', () => {
+  const f = fragment(builtPage('https://example.test'), 'https://example.test');
+  assert.ok(f.startsWith(GENERATED));
+  assert.ok(f.includes(`data-release="${VERSION_SLOT}">v${VERSION_SLOT}<`), f);
+  assert.ok(!f.includes('0.27.0') && !f.includes('a comment of the build'), f);
+  assert.ok(f.includes('href="https://example.test/#site-map-1"'), f);
+  assert.ok(!f.includes('href="#'), f);
+});
+
+test('a site built for another origin is refused, never copied', () => {
+  assert.throws(() => fragment(builtPage('/docs'), 'https://example.test'), /another origin/);
+  assert.throws(() => fragment('<html></html>', 'https://example.test'), /no <nav/);
+});
+
+test('two bars are compared element by element: a class, a box past a pixel, a style, a missing element', () => {
+  const el = (over = {}) => ({ path: 'nav', tag: 'nav', cls: 'a', id: '', label: 'Main', text: '', hidden: false,
+    box: [0, 0, 100, 73], style: { 'font-size': '16px', color: 'rgb(0, 0, 0)' }, ...over });
+  assert.deepEqual(compare([el()], [el({ box: [0, 0, 101, 73] })]), [], 'one pixel is rounding');
+  const d = compare([el(), el({ path: 'nav>a[0]', tag: 'a' })],
+    [el({ cls: 'b', box: [0, 0, 100, 67], style: { 'font-size': '14px', color: 'rgb(0, 0, 0)' } })]);
+  assert.ok(d.some((x) => /cls is "b" on the UI, "a" on the site/.test(x)), d.join('\n'));
+  assert.ok(d.some((x) => /box 0,0,100,67 on the UI, 0,0,100,73 on the site/.test(x)), d.join('\n'));
+  assert.ok(d.some((x) => /font-size is 14px on the UI, 16px on the site/.test(x)), d.join('\n'));
+  assert.ok(d.some((x) => /nav>a\[0\]: only the site has this element/.test(x)), d.join('\n'));
+  assert.deepEqual(compare(null, [el()]), ['the site page has no <nav aria-label="Main">']);
 });
 
 let failed = 0;

@@ -10,6 +10,7 @@
 #   share/standard/majordomus/         ->  principles (the rules tagged principle, in package order)
 #   share/skeleton/ai/repo/workflows/  ->  lifecycle steps and the worker sequence
 #   docs/*.md                          ->  docs index
+#   git history + release records      ->  delivery.json (majordomus plan delivery --at HEAD)
 #   share/schemas/**                   ->  schemas.json (every schema file, linked to its source)
 #   git                                ->  source.json (commit, input hash, generator version)
 #
@@ -1032,6 +1033,22 @@ jq --argjson ex "${EX_JSON:-[]}" --arg src "$AI/repo/skills/" '
    count: .count,
    by_tag: (reduce (.skills[] | . as $s | $s.tags[] | {k: ., v: $s.id}) as $e ({}; .[$e.k] += [$e.v]))}' \
   "$STAGE/skills.base.json" > "$OUT/skills.json"
+# every skill an agent reads by name (ADR 0165): the editors projection's files under
+# .claude/skills/, read from the generated-artifact manifest the projection writes, each with
+# the description its own front matter carries. Nothing here names a skill: a domain the
+# registry gains is a row the next time the projection is generated.
+ARTS="$ROOT/docs/generated/artifacts.json"
+[ -f "$ARTS" ] || { echo "generate-site-data: docs/generated/artifacts.json is missing (run: apps/majordomus-cli/target/debug/majordomus generate)" >&2; exit 10; }
+jq -r '.artifacts[] | select(.document | startswith("editors/")) | select(.path | test("^\\.claude/skills/[^/]+/SKILL\\.md$")) | [.path, .document, .source] | @tsv' "$ARTS" \
+  | while IFS="$MJ_TAB" read -r path doc src; do
+      desc="$(sed -n '2,6{s/^description: //p;}' "$ROOT/$path" | head -1)"
+      [ -n "$desc" ] || desc='""'
+      jq -n --arg p "$path" --arg d "$doc" --arg s "$src" --argjson t "$desc" \
+        '{name: ($p | split("/")[2]), path: $p, kind: ($d | sub("^editors/"; "")), source: $s, description: $t}'
+    done | jq -s 'sort_by(.kind, .name)' > "$STAGE/skills.claude.json"
+jq --slurpfile c "$STAGE/skills.claude.json" \
+  '. + {claude: $c[0], claude_by_kind: (reduce $c[0][] as $s ({}; .[$s.kind] += 1))}' \
+  "$OUT/skills.json" > "$STAGE/skills.with-claude.json" && mv "$STAGE/skills.with-claude.json" "$OUT/skills.json"
 # a related id names a skill in this catalogue or the build fails — the same check the
 # command makes, repeated at the last writer so that a page never links to a 404
 for bad in $(jq -r '[.skills[].id] as $ids | .skills[] | .related[] | select(IN($ids[]) | not)' "$OUT/skills.json"); do
@@ -1843,7 +1860,7 @@ if mj_project_load; then
        source: ".ai/repo/project/milestones/",
        edge_kinds: {requires: "the target cannot begin until the source is accepted"},
        nodes: [.milestones[] | {id: .id, kind: "milestone",
-                                label: (if .version == "" then .id else .version + "  " + .id end),
+                                label: (if .released_in == "unreleased" then .id else .released_in + "  " + .id end),
                                 status: .status, route: ("/plan/" + (.id | ascii_downcase) + "/"),
                                 external: false, summary: .title}],
        edges: [.milestones[] | . as $m | $m.depends_on[] | {source: ., target: $m.id, kind: "requires"}]}' \
@@ -1873,6 +1890,41 @@ else
 fi
 
 mj_phase_end "gen:plan.json_the_execution_mode" "$GEN_T0"
+# ---------------------------------------------------------------- delivery.json (how far each issue's work travelled)
+GEN_T0="$(mj_phase_begin "gen:delivery.json")"
+# Inferred by the executable (`plan.delivery`, ADR 0166) and never here: this asks it and
+# pretty-prints the answer. It is asked `--at` a commit, which reads that commit's merges and
+# the tree's release records and nothing live — no branch, no forge, no deployment, no clock —
+# so the file carries only `merged` and `released` and is a function of the commit alone:
+# a tag, a push, a pull request or a deployment elsewhere cannot make --check red. The live
+# stages (branch, pr_open, deployed) are the capability's live answer, for the CLI, HTTP, MCP
+# and the UI; bringing them to the published site at Pages build time is the plan surfaces'
+# work (I2743, I2744).
+#
+# Which commit. A derived file cannot name the commit it lands in (case 51), so a generation
+# observes HEAD as it stands, the commit before. --check reproduces the commit the committed
+# file names rather than HEAD: a merge that lands later does not make a committed answer
+# wrong, it makes the next generation newer. And a generation whose issues read exactly as the
+# committed file's keeps the committed file, observation and all, so regenerating a clean tree
+# moves nothing unless an issue moved.
+DELIVERY_COMMITTED="$DEST_DATA/delivery.json"
+DELIVERY_AT=""
+if [ "$CHECK" = 1 ] && [ -f "$DELIVERY_COMMITTED" ]; then
+  DELIVERY_AT="$(jq -r '.observed.commit // empty' "$DELIVERY_COMMITTED" 2>/dev/null || true)"
+  if [ -n "$DELIVERY_AT" ] && ! git -C "$ROOT" cat-file -e "$DELIVERY_AT^{commit}" 2>/dev/null; then
+    DELIVERY_AT=""
+  fi
+fi
+[ -n "$DELIVERY_AT" ] || DELIVERY_AT="$(git -C "$ROOT" rev-parse HEAD)"
+mj_tool_read "$STAGE/delivery.raw.json" "the issues' delivery" --json plan delivery --at "$DELIVERY_AT"
+jq . "$STAGE/delivery.raw.json" > "$OUT/delivery.json"
+if [ "$CHECK" = 0 ] && [ -f "$DELIVERY_COMMITTED" ]; then
+  delivery_facts() { jq -S '.issues | walk(if type == "object" then del(.observed_at) else . end)' "$1" 2>/dev/null; }
+  if [ "$(delivery_facts "$OUT/delivery.json")" = "$(delivery_facts "$DELIVERY_COMMITTED")" ]; then
+    cp "$DELIVERY_COMMITTED" "$OUT/delivery.json"
+  fi
+fi
+mj_phase_end "gen:delivery.json" "$GEN_T0"
 # ---------------------------------------------------------------- source.json
 GEN_T0="$(mj_phase_begin "gen:source.json")"
 HASH="$(mj_site_inputs_hash)"
@@ -1900,7 +1952,7 @@ mk_section profiles "Execution profiles" "Capability class, reasoning effort, ou
 i=0; for slug in $(jq -r '.profiles[].slug' "$OUT/profiles.json"); do i=$((i+1))
   jstr_to L1 "$slug profile"; jstr_to L2 "$slug"
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nslug = %s\nsource = "share/skeleton/profiles/%s.yaml"\n+++\n' "$L1" "$(jq -r --arg s "$slug" '.profiles[] | select(.slug==$s) | .description' "$OUT/profiles.json" | jline)" "$i" "$L2" "$slug" > "$CONTENT_ROOT/profiles/$slug.md"; done
-mk_section guarantees "Guaranteed, advisory, planned" "What Majordomus actually does today, row by row, with the file that implements it and the test that proves it." guarantees.html claim.html 40
+mk_section guarantees "Guaranteed, advisory, planned" "What Majordomus does today, row by row, with the file that implements it, the test that is to prove it, and what that test's recorded run says." guarantees.html claim.html 40
 i=0; for st in $(jq -r '.statuses | keys_unsorted[]' "$OUT/capabilities.json"); do i=$((i+1))
   jstr_to L1 "$st"
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\ntemplate = "status.html"\n[extra]\nstatus = %s\n+++\n' "$(jstr "$(printf '%s' "$st" | awk '{print toupper(substr($0,1,1)) substr($0,2)}') capabilities")" "$(jq -r --arg s "$st" '.statuses[$s]' "$OUT/capabilities.json" | jline)" "$i" "$L1" > "$CONTENT_ROOT/guarantees/$st.md"; done
@@ -2351,7 +2403,7 @@ mj_phase_end "gen:cli_routes" "$GEN_T0"
 GEN_T0="$(mj_phase_begin "gen:docs_SITE_CLAIMS.md_derived")"
 SC="$STAGE/SITE_CLAIMS.md"
 {
-  printf '# Site claims\n\nGenerated by `scripts/generate-site-data` from `docs/CLAIMS.yaml`. Do not edit; edit the YAML.\nEvery substantive public claim the website makes, with its status, the file that defines it,\nthe file that implements it, and the test that proves it. The website renders the same data.\n\n'
+  printf '# Site claims\n\nGenerated by `scripts/generate-site-data` from `docs/CLAIMS.yaml`. Do not edit; edit the YAML.\nEvery substantive public claim the website makes, with its status, the file that defines it,\nthe file that implements it, and the test that is to prove it. The website renders the same data,\nwith what each test'\''s recorded run says.\n\n'
   for st in $(jq -r '.statuses | keys_unsorted[]' "$OUT/capabilities.json"); do
     printf '## %s\n\n%s\n\n| claim | source | implementation | test |\n|---|---|---|---|\n' "$st" "$(jq -r --arg s "$st" '.statuses[$s]' "$OUT/capabilities.json")"
     jq -r --arg s "$st" --arg base "$SITE_BASE" '.claims[] | select(.status==$s) | "| [\(.claim)](\($base)/guarantees/\(.id)/) | `\(.source)` | \(if .implementation then "`\(.implementation)`" else "—" end) | \(if .test then "`\(.test)`" else "—" end) |"' "$OUT/capabilities.json"

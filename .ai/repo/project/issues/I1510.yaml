@@ -29,4 +29,21 @@ evidence_required:
   - check_is_in_the_suite
 risk: "Low. The trap worth naming is a check that parses prose too eagerly and starts failing on an editorial change to a sentence; it must key on the status vocabulary and the issue id, and ignore everything else in the row."
 created_at: 2026-09-11
-updated_at: 2026-09-11
+updated_at: 2026-10-14T17:42:45Z
+started_at: 2026-10-14T17:42:28Z
+started_event: sha256:84d042cc0bc6f2461636cad6b7163bfa4bb4a4c538948ab2a3235ff42160c3bf
+completed_at: 2026-10-14T17:42:45Z
+completed_event: sha256:0f306de9e3312cb471881f0d2b7767734764eb2d70d1630adc5c81da9e716c5b
+evidence:
+  - covers: unplanned_row_is_refused
+    type: test
+    command: "bash test/run.sh 194_audit_rows_are_planned 94_ci_plan"
+    result: "tests: 2 passed, 0 failed; case 194 drives scripts/ci/audit-plan-check over fixture matrices: a planned row naming an existing issue passes, one naming a missing id fails MISSING with the row and the id, one naming no id fails UNPLANNED, a non-planned row naming a missing id is ignored (run 2026-10-14 17:4xZ on master ff3829709616e638596315d6ca42be64b570b74f plus this change)"
+    commit: ff3829709616e638596315d6ca42be64b570b74f
+    recorded_at: 2026-10-14T17:42:39Z
+  - covers: check_is_in_the_suite
+    type: test
+    command: "scripts/ci/audit-plan-check; scripts/ci-plan --check"
+    result: "audit-plan is a structure gate in .ai/repo/ci/gates.yaml, selected by the class audit-plan (the audit, the issues, the script, the case); on the real docs/COCKPIT_IDE_AUDIT.md: 0 planned row(s) of 66, rc 0; case 194 is in the suite"
+    commit: ff3829709616e638596315d6ca42be64b570b74f
+    recorded_at: 2026-10-14T17:42:42Z

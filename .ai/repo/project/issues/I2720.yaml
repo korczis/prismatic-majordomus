@@ -1,0 +1,34 @@
+id: I2720
+milestone: safe-self-update
+title: "majordomus self update re-runs the published installer, and never reimplements it"
+slug: self-update-wraps-the-installer
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Give every installation one typed command that reports and applies an upgrade to the stable release by running the published install.sh with --version and the installation's own prefix, so the download, verification and swap exist once."
+why: "ADR 0161 (owner decision of 2026-10-14) makes a mesh node follow the published release. docs/DISTRIBUTION.md left open whether a self-update reimplements the installer in Rust or re-runs it; ADR 0161 decides it re-runs it, because the installer's digest and size check and its atomic launcher rename are the tested risky part (case 85)."
+current_state: "There is no self-update command; a person reruns install.sh with --version on each machine."
+desired_state: "A capability self.update with --check (current version, the stable pointer's version, whether an upgrade applies, forward-only and stable-only verdict) and --apply (runs the installer the installation's share/distribution.yaml names, with --version <tag> and the installation's prefix, and reports the installed version read back from the new launcher). It refuses a downgrade, a pre-release and a version the metadata does not list."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/release"
+  - "share/commands.yaml"
+  - "docs/DISTRIBUTION.md"
+  - "docs/CLI.md"
+  - "test/cases"
+non_scope:
+  - "A second implementation of download, verification or swap"
+  - "Activating the new version in a running server (I2722, I2163)"
+depends_on: []
+acceptance_criteria:
+  - "self update --check names the running and the stable version and whether an upgrade applies, without a network write"
+  - "self update --apply installs the stable release through install.sh and the new launcher reports it"
+  - "A downgrade, a pre-release and an unlisted version are refused with the reason"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 85_installer <the case this issue adds>"
+evidence_required:
+  - "self_update_wraps_installer_test"
+  - "self_update_refuses_downgrade_test"
+created_at: 2026-10-14
+updated_at: 2026-10-14
