@@ -58553,6 +58553,8 @@
             "A quote, a backslash and a non-ASCII letter in the task are stored and read back unchanged by check",
             "A case drives each refusal and each round trip in a disposable repository"
           ],
+          "completed_at": "2026-10-26T11:23:20Z",
+          "completed_event": "sha256:98ff87ed1a5cb0c59d2cd281c29a8b6c156722440bd651cd14c2488dfd589ba4",
           "created_at": "2026-10-18",
           "desired_state": "One shared predicate judges every scalar a task command writes, start applies it to task, owner and because, and a refused start leaves no state behind.",
           "evidence_required": [
@@ -58571,10 +58573,14 @@
             "docs/CLI.md"
           ],
           "slug": "start-refuses-unsafe-scalars",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-26T11:21:53Z",
+          "started_event": "sha256:6626a716a459b6fde9b1fafe0de2fff06c76a16868b235c146dc5dc5493b9b5d",
+          "updated_at": "2026-10-26T11:23:20Z",
           "validation": [
             "bash test/run.sh 04_start_check"
-          ]
+          ],
+          "verified_at": "2026-10-26T11:22:12Z",
+          "verified_event": "sha256:b8e53bdeb1adcdf36fb45062ab62dc4a51673e40bffe206d72e237962e067174"
         }
       },
       {
@@ -78347,7 +78353,7 @@
             "docs/MCP.md"
           ],
           "slug": "failure-is-visible",
-          "updated_at": "2026-10-15T02:04:24Z",
+          "updated_at": "2026-10-26T11:24:17Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test health_server --test http_serve --test mcp_shared --test lease_busy",
@@ -98101,6 +98107,13 @@
         "label": "test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
         "route": "/cockpit/objects/test/test-cases-4232-a-core-build-keeps-its-own-rlib-sh",
         "source": "test/cases/4232_a_core_build_keeps_its_own_rlib.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4233_start_refuses_unsafe_scalars.sh",
+        "kind": "test",
+        "label": "test/cases/4233_start_refuses_unsafe_scalars.sh",
+        "route": "/cockpit/objects/test/test-cases-4233-start-refuses-unsafe-scalars-sh",
+        "source": "test/cases/4233_start_refuses_unsafe_scalars.sh"
       },
       {
         "id": "majordomus://test/test/cases/4251_a_mod_links_nothing_outside_the_repository.sh",
@@ -144388,6 +144401,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4233_start_refuses_unsafe_scalars.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/4251_a_mod_links_nothing_outside_the_repository.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -149509,8 +149527,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4097,
-      "edges": 9459,
+      "nodes": 4098,
+      "edges": 9460,
       "acyclic": false,
       "truncated": false
     }

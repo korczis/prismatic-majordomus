@@ -315,8 +315,8 @@ $ echo $?
 Begin a scoped task.
 
 **Arguments:** `<task>` one line. `--scope <path>[,<path>...]` required. `--profile
-<name>` default from `policy.profiles.default`. `--owner <string>` free-form, default
-`$USER`. `--issue <id>`, `--intent <id>`, or `--exempt <class> --because "<reason>"` name
+<name>` default from `policy.profiles.default`. `--owner <string>` free-form on one line,
+default `$USER`. `--issue <id>`, `--intent <id>`, or `--exempt <class> --because "<reason>"` name
 what the task serves.
 
 **Reads:** policy, profile, git state, and `intents.binding` through the built executable
@@ -327,6 +327,11 @@ when the binding is asked.
 - Refuses (`15`) if `state/current.yaml` exists and its outcome is not terminal. One
   active task per checkout: hand the existing task over (`handover --close`) or finish
   it first. No flag discards an active task.
+- Refuses (`2`) a task, `--owner` or `--because` that holds a line break, a tab or any
+  other control character, before a finished record is archived or anything is written:
+  the record keeps each of them as one scalar on one line, which is all the layer's YAML
+  readers accept. Every other character is kept: the three are written single-quoted, so
+  a quote, a backslash and a non-ASCII letter come back from `check` exactly as given.
 - Normalises each scope path: strips trailing `/`, canonicalises, refuses paths outside
   the repository. Records the normalised form.
 - Reads every other worktree from `git worktree list` and, where one has an active
