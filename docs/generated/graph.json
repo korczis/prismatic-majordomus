@@ -75441,6 +75441,102 @@
         }
       },
       {
+        "id": "majordomus://issue/I4523",
+        "kind": "issue",
+        "label": "I4523",
+        "summary": "The lander judges the candidate it would merge even when the forge cannot list every open pull request",
+        "route": "/cockpit/objects/issue/i4523",
+        "source": ".ai/repo/project/issues/I4523.yaml",
+        "facts": {
+          "created_at": "2026-10-30",
+          "depends_on": [
+            "I4380"
+          ],
+          "evidence_required": [
+            "test",
+            "rust"
+          ],
+          "milestone": "landing-survives-any-session",
+          "non_scope": [
+            "Page size, retry count and retry backoff of the open list (I4380 and retry.rs): this issue adds a read when they are exhausted, and does not tune them",
+            "Landing without a verdict: a candidate whose rollup, writers or cross-references could not be read is still not decided, as case 934 requires of a failed declarations read",
+            "Refresh, reopen and cleanup on a partial observation: each of them chooses among every open pull request and stays a whole-observation act",
+            "A tracked train manifest that names the next top without asking the forge (I3915)",
+            "The Pages workflow's forge observation (`prs refresh` in pages.yml): it degrades already (I4380)"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4523.yaml",
+            "apps/majordomus-cli/src/integration/forge.rs",
+            "apps/majordomus-cli/src/integration/drain.rs",
+            "apps/majordomus-cli/src/integration/mod.rs",
+            "apps/majordomus-cli/src/integration/model.rs",
+            "apps/majordomus-cli/src/integration/tests.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/prs.rs",
+            "test/cases/4523_the_lander_judges_its_candidate_when_the_open_list_fails.sh",
+            "docs/INTEGRATION.md",
+            "docs/generated",
+            "site/content/plan/I4523.md"
+          ],
+          "serves": [
+            "landing-survives-any-session#one-executor"
+          ],
+          "slug": "the-lander-judges-its-candidate-when-the-open-list-fails",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::",
+            "bash test/run.sh 4523_the_lander_judges_its_candidate_when_the_open_list_fails 742_only_an_outage_is_asked_again 850_integration_drains_cycle_by_cycle 934_a_failed_declarations_read_decides_nothing",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4524",
+        "kind": "issue",
+        "label": "I4524",
+        "summary": "Telemetry does not run for a validate run that was cancelled",
+        "route": "/cockpit/objects/issue/i4524",
+        "source": ".ai/repo/project/issues/I4524.yaml",
+        "facts": {
+          "created_at": "2026-10-30",
+          "depends_on": [],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "a-change-is-judged-in-minutes",
+          "non_scope": [
+            "Cancelling superseded or hold-member validate runs (I3903, prs supervise): this issue only makes a cancel cost no second runner",
+            "Which runner validate itself runs on (I4242, MJ_RUNNER)",
+            "Exporting the queue time of a cancelled run by other means: the traces of the runs that completed still show the queue those runs waited in",
+            "The export itself, its action pin and its secrets (I3934)"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4524.yaml",
+            ".github/workflows/telemetry.yml",
+            ".ai/repo/ci/telemetry.yaml",
+            "test/cases/4524_telemetry_does_not_run_for_a_cancelled_validate_run.sh",
+            "docs/CI.md",
+            "site/content/plan/I4524.md"
+          ],
+          "serves": [
+            "a-change-is-judged-in-minutes#pr-verdict-within-five-minutes"
+          ],
+          "slug": "telemetry-does-not-run-for-a-cancelled-validate-run",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "bash test/run.sh 4524_telemetry_does_not_run_for_a_cancelled_validate_run",
+            "actionlint .github/workflows/telemetry.yml",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -139798,6 +139894,31 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4523",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4523",
+        "target": "majordomus://issue/I4380",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4523",
+        "target": "majordomus://milestone/landing-survives-any-session",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4524",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4524",
+        "target": "majordomus://milestone/a-change-is-judged-in-minutes",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -151639,8 +151760,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4150,
-      "edges": 9554,
+      "nodes": 4152,
+      "edges": 9559,
       "acyclic": false,
       "truncated": false
     }
