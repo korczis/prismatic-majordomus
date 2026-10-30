@@ -73018,6 +73018,8 @@
         "route": "/cockpit/objects/issue/i4323",
         "source": ".ai/repo/project/issues/I4323.yaml",
         "facts": {
+          "completed_at": "2026-10-30T11:57:47Z",
+          "completed_event": "sha256:f2d91c18aeaa18e82d3b68ee2cb98a9d4ef8b38ea0b07aa9650e45e307207410",
           "created_at": "2026-10-28",
           "depends_on": [],
           "evidence_required": [
@@ -73043,7 +73045,9 @@
           ],
           "serves": [],
           "slug": "a-full-disk-is-one-finding",
-          "updated_at": "2026-10-29",
+          "started_at": "2026-10-30T11:56:03Z",
+          "started_event": "sha256:afd211cb36f4ef24a0e7c5d4dbc34859d1104138fe209ec80491819e6e2ba234",
+          "updated_at": "2026-10-30T11:57:47Z",
           "validation": [
             "bin/majordomus doctor",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -98157,6 +98161,13 @@
         "label": "test/cases/431_economics_claims_gated.sh",
         "route": "/cockpit/objects/test/test-cases-431-economics-claims-gated-sh",
         "source": "test/cases/431_economics_claims_gated.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4323_a_full_disk_is_one_finding.sh",
+        "kind": "test",
+        "label": "test/cases/4323_a_full_disk_is_one_finding.sh",
+        "route": "/cockpit/objects/test/test-cases-4323-a-full-disk-is-one-finding-sh",
+        "source": "test/cases/4323_a_full_disk_is_one_finding.sh"
       },
       {
         "id": "majordomus://test/test/cases/43_plan_command.sh",
@@ -144428,6 +144439,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4323_a_full_disk_is_one_finding.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/43_plan_command.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -149509,8 +149525,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4097,
-      "edges": 9459,
+      "nodes": 4098,
+      "edges": 9460,
       "acyclic": false,
       "truncated": false
     }

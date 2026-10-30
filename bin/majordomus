@@ -281,8 +281,12 @@ case "$cmd" in
     fi
     mj_parse_global_opts "$@"
     # after the dispatch and not before it: a command handed to the other program is an
-    # exec, and an exec runs no exit trap to remove the root
-    mj_tmp_root_init
+    # exec, and an exec runs no exit trap to remove the root. A root that cannot be made
+    # leaves `mktemp` as it was, as the library does for a script that sources it: on a full
+    # or unwritable TMPDIR the entry point died here with mktemp's own message and exit 1,
+    # before doctor could say what was wrong (I4323)
+    mj_tmp_root_init 2>/dev/null || true
+    [ -d "${MJ_TMP_ROOT:-}" ] || MJ_TMP_ROOT=""
     # shellcheck disable=SC1090
     . "$MJ_LIB_DIR/$cmd.sh"
     "mj_cmd_$cmd" "${MJ_ARGS[@]+"${MJ_ARGS[@]}"}"
