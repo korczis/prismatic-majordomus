@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 167,
+      "count": 168,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -38,7 +38,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 167
+      "count": 168
     },
     {
       "kind": "application",
@@ -174,7 +174,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 1102
+      "count": 1103
     },
     {
       "kind": "knowledge",
@@ -286,7 +286,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 660
+      "count": 661
     },
     {
       "kind": "use-case",
@@ -1284,6 +1284,13 @@
         }
       ],
       "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0127",
+          "kind": "adr",
+          "route": "/adrs/adr-0127/",
+          "external": false
+        },
         {
           "edge": "put_in_force",
           "label": "adr-0169",
@@ -4126,6 +4133,13 @@
         }
       ],
       "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0127",
+          "kind": "adr",
+          "route": "/adrs/adr-0127/",
+          "external": false
+        },
         {
           "edge": "put_in_force",
           "label": "adr-0157",
@@ -7613,6 +7627,80 @@
           "external": false
         }
       ]
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0127",
+      "identity": "adr-0127",
+      "slug": "adr-0127",
+      "cockpit": "/cockpit/objects/adr/adr-0127",
+      "title": "Every branch and every worktree has one state and one next step, and a landed branch is deleted on proof",
+      "status": "proposed",
+      "tags": [
+        "worktrees",
+        "operations",
+        "safety"
+      ],
+      "source": ".ai/repo/adrs/0127-every-branch-and-worktree-has-one-state-and-the-proven-ones-are-removed.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/worktree/reconcile.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0021",
+          "kind": "adr",
+          "route": "/adrs/adr-0021/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0055",
+          "kind": "adr",
+          "route": "/adrs/adr-0055/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/WORKTREES.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.reclaim-only-what-you-own@1",
+          "kind": "rule",
+          "route": "/rules/project-reclaim-only-what-you-own-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.worktree-topology@1",
+          "kind": "rule",
+          "route": "/rules/project-worktree-topology-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/612_every_worktree_has_a_disposition.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
     },
     {
       "kind": "adr",
@@ -22734,6 +22822,13 @@
         },
         {
           "edge": "put_in_force",
+          "label": "adr-0127",
+          "kind": "adr",
+          "route": "/adrs/adr-0127/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "adr-0200",
           "kind": "adr",
           "route": "/adrs/adr-0200/",
@@ -24631,6 +24726,13 @@
           "label": "adr-0055",
           "kind": "adr",
           "route": "/adrs/adr-0055/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0127",
+          "kind": "adr",
+          "route": "/adrs/adr-0127/",
           "external": false
         },
         {

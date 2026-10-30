@@ -1,7 +1,7 @@
 +++
 title = "majordomus economics runs"
 description = "The recorded runs every metric is computed from"
-weight = 216
+weight = 217
 [extra]
 route = "/docs/cli/economics/runs/"
 command = "majordomus economics runs"

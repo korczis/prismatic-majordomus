@@ -6,27 +6,27 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "da31b40589f677a60c83f92eedaa4d77ca560c96663b428da48f11686010cce8",
+    "fingerprint": "994638a5a6bf5e5e0ac17924d47622d5d223f1285d193485bff9bd39db016688",
     "summary": {
-      "total": 3633,
-      "builtin": 220,
-      "declarative": 3413,
+      "total": 3637,
+      "builtin": 221,
+      "declarative": 3416,
       "by_kind": {
         "command": 36,
-        "query": 184,
-        "resource": 3413
+        "query": 185,
+        "resource": 3416
       },
       "by_stability": {
-        "behaviorally_verified": 147,
+        "behaviorally_verified": 148,
         "experimental": 63,
-        "implemented": 3423
+        "implemented": 3426
       },
-      "mcp_tools": 206,
-      "mcp_resources": 3470,
-      "http_routes": 212,
-      "cli_commands": 120,
+      "mcp_tools": 207,
+      "mcp_resources": 3473,
+      "http_routes": 213,
+      "cli_commands": 121,
       "modules": 94,
-      "benchmark_required": 181,
+      "benchmark_required": 182,
       "benchmark_waived": 39,
       "cached": 55
     },
@@ -88491,6 +88491,355 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs"
       },
       {
+        "id": "worktree.reconciliation",
+        "module": "worktree",
+        "kind": "query",
+        "title": "What becomes of every branch and every worktree",
+        "description": "Every non-trunk branch and every detached worktree with the one state git and the kernel support for it — active (a process works inside), dirty (files no commit carries), unreadable (a reading failed, so nothing is decided), unpublished (a commit no remote holds), orphaned (a detached worktree is its commit's only name), unstarted, merged (the trunk reaches it), equivalent (merging it changes nothing), conflicted, stale, ready — the readings that decided it, the one step it permits, the command a person runs to take that step, and whether it is removable on proof alone. Decided against the remote-tracking branch the trunk follows, never from an age or a name. A read: it removes nothing, and a removal it names is git's own guarded form (`git worktree remove` without `--force`, `git update-ref -d` on the judged commit). Taking the proven steps is the command line's `majordomus worktree reconcile --apply`, which measures each subject again first.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "Reconciliation",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "schema": {
+                "type": "string",
+                "description": "`RECONCILE_SCHEMA`."
+              },
+              "repository": {
+                "type": "string",
+                "description": "The primary checkout this was measured from."
+              },
+              "trunk": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The trunk, when there is one."
+              },
+              "base": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The ref every relation was decided against: the remote-tracking branch the trunk\nfollows when it has one, so a primary checkout nobody pulled hides nothing."
+              },
+              "entries": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ReconcileEntry"
+                },
+                "description": "Every subject: what is removable on proof first, then by state, then by name."
+              },
+              "tallies": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0
+                },
+                "description": "How many subjects are in each state, by its word."
+              },
+              "automatic": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many subjects are removable on proof."
+              },
+              "settled": {
+                "type": "boolean",
+                "description": "Nothing is removable on proof: a second `--apply` would do nothing."
+              }
+            },
+            "required": [
+              "schema",
+              "repository",
+              "entries",
+              "tallies",
+              "automatic",
+              "settled"
+            ],
+            "description": "Every branch and detached worktree of the repository, decided, with the one verdict over\nthem.\n\n```\nuse majordomus_cli::worktree::reconcile::{Reconciliation, RECONCILE_SCHEMA};\n\nlet none = Reconciliation {\n    schema: RECONCILE_SCHEMA.into(),\n    repository: \"/srv/repo\".into(),\n    trunk: Some(\"master\".into()),\n    base: Some(\"origin/master\".into()),\n    entries: vec![],\n    tallies: Default::default(),\n    automatic: 0,\n    settled: true,\n};\n// a repository with nothing removable on proof reads exactly this\nassert_eq!(none.summary(), \"nothing to reconcile: 0 subject(s), none removable on proof\");\n```",
+            "title": "Reconciliation",
+            "$defs": {
+              "ReconcileEntry": {
+                "type": "object",
+                "properties": {
+                  "branch": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The branch. Absent for a detached worktree."
+                  },
+                  "worktree": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The worktree holding it, when one does."
+                  },
+                  "head": {
+                    "type": "string",
+                    "description": "The commit that was judged. An act names it, so a subject that moved is refused."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/WorkState",
+                    "description": "The state."
+                  },
+                  "step": {
+                    "$ref": "#/$defs/ReconcileStep",
+                    "description": "The step that state permits."
+                  },
+                  "automatic": {
+                    "type": "boolean",
+                    "description": "The step removes something, its proof is complete, and the subject is neither a\nscratch checkout nor where the call came from: removable on proof alone, and so taken\nby `reconcile --apply` on its own."
+                  },
+                  "scratch": {
+                    "type": "boolean",
+                    "description": "A session's scratch checkout or a detached worktree: whoever made it removes it, so it\nis never removable on proof alone, and `--apply` leaves it unless `--include-scratch`\nis given."
+                  },
+                  "here": {
+                    "type": "boolean",
+                    "description": "The call came from inside this worktree. It is never removed from inside, whatever\nelse is true of it."
+                  },
+                  "relation": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/TrunkRelation"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "How the commit stands against the trunk, when git could say."
+                  },
+                  "behind": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How many trunk commits it lacks, read when it merges cleanly."
+                  },
+                  "reasons": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Why: the readings that decided it, one per line."
+                  },
+                  "command": {
+                    "type": "string",
+                    "description": "The command that takes the step."
+                  }
+                },
+                "required": [
+                  "head",
+                  "state",
+                  "step",
+                  "automatic",
+                  "scratch",
+                  "here",
+                  "reasons",
+                  "command"
+                ],
+                "description": "One branch or one detached worktree, decided.\n\n```\nuse majordomus_cli::worktree::reconcile::{ReconcileEntry, ReconcileStep, WorkState};\n\nlet entry = ReconcileEntry {\n    branch: Some(\"feature/x\".into()),\n    worktree: None,\n    head: \"0123456789abcdef\".into(),\n    state: WorkState::Merged,\n    step: ReconcileStep::DeleteBranch,\n    automatic: true,\n    scratch: false,\n    here: false,\n    relation: None,\n    behind: None,\n    reasons: vec![\"the trunk reaches the branch, and it was published\".into()],\n    command: \"git update-ref -d refs/heads/feature/x 0123456789abcdef\".into(),\n};\n// a branch is named by its name, a detached worktree by its path\nassert_eq!(entry.subject(), \"feature/x\");\n// and a field nothing was read for is left out of the document\nassert!(!serde_json::to_string(&entry).unwrap().contains(\"behind\"));\n```"
+              },
+              "WorkState": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "active",
+                    "description": "A process has its working directory inside the worktree: somebody is here."
+                  },
+                  {
+                    "type": "string",
+                    "const": "dirty",
+                    "description": "The worktree holds files no commit carries."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unreadable",
+                    "description": "A reading could not be taken, so nothing is decided: not knowing is not permission."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unstarted",
+                    "description": "The trunk reaches the branch and it was never published: a branch somebody cut and\nhas not committed to yet, which reads exactly like one that landed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "merged",
+                    "description": "The trunk reaches it and it was published: its work is in the repository's history."
+                  },
+                  {
+                    "type": "string",
+                    "const": "equivalent",
+                    "description": "Its commits are not the trunk's, and merging them changes nothing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unpublished",
+                    "description": "It holds a commit no remote-tracking ref reaches."
+                  },
+                  {
+                    "type": "string",
+                    "const": "orphaned",
+                    "description": "A detached worktree whose commit no ref holds: the worktree is its only name."
+                  },
+                  {
+                    "type": "string",
+                    "const": "conflicted",
+                    "description": "Merging it conflicts with the trunk."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stale",
+                    "description": "It merges cleanly and the trunk has moved since it left."
+                  },
+                  {
+                    "type": "string",
+                    "const": "ready",
+                    "description": "It merges cleanly and the trunk has not moved: nothing stands before integration."
+                  }
+                ],
+                "description": "The one state a branch or a detached worktree is in.\n\nDeclared in the order `decide` asks its questions, which is the order of what must not\nbe lost: a process, then files, then commits, then a name.\n\n```\nuse majordomus_cli::worktree::reconcile::WorkState;\n\nassert_eq!(WorkState::Unpublished.as_str(), \"unpublished\");\nassert_eq!(serde_json::to_string(&WorkState::Equivalent).unwrap(), \"\\\"equivalent\\\"\");\n```"
+              },
+              "ReconcileStep": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "keep",
+                    "description": "Nothing to do, or nothing that may be done."
+                  },
+                  {
+                    "type": "string",
+                    "const": "commit",
+                    "description": "Commit what the worktree holds: nothing else can carry it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "publish",
+                    "description": "Push the branch: its commits are on this disk only."
+                  },
+                  {
+                    "type": "string",
+                    "const": "name",
+                    "description": "Give the commit a branch: a detached worktree is its only name."
+                  },
+                  {
+                    "type": "string",
+                    "const": "remove_worktree",
+                    "description": "Remove the worktree and keep the branch."
+                  },
+                  {
+                    "type": "string",
+                    "const": "delete_branch",
+                    "description": "Delete the branch, which has no worktree."
+                  },
+                  {
+                    "type": "string",
+                    "const": "remove_worktree_and_delete_branch",
+                    "description": "Remove the worktree, then delete the branch."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refresh",
+                    "description": "Bring the trunk into the branch before it is integrated."
+                  },
+                  {
+                    "type": "string",
+                    "const": "integrate",
+                    "description": "Integrate it: nothing stands in the way."
+                  },
+                  {
+                    "type": "string",
+                    "const": "resolve",
+                    "description": "Resolve its conflict with the trunk, or decide it is superseded."
+                  }
+                ],
+                "description": "The one step a state permits.\n\n```\nuse majordomus_cli::worktree::reconcile::ReconcileStep;\n\n// only three steps remove anything, and they are the only ones `reconcile --apply` takes\nassert!(ReconcileStep::RemoveWorktree.removes());\nassert!(ReconcileStep::DeleteBranch.removes());\nassert!(!ReconcileStep::Publish.removes() && !ReconcileStep::Keep.removes());\n```"
+              },
+              "TrunkRelation": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "landed",
+                    "description": "The trunk reaches the commit: it is in the repository's own history."
+                  },
+                  {
+                    "type": "string",
+                    "const": "equivalent",
+                    "description": "The trunk does not reach it, and merging it would produce the trunk's own tree: every\nchange it carries arrived by another commit."
+                  },
+                  {
+                    "type": "string",
+                    "const": "mergeable",
+                    "description": "Merging it changes the trunk and conflicts on nothing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "conflicting",
+                    "description": "Merging it conflicts with the trunk."
+                  }
+                ],
+                "description": "How a commit stands against the trunk, read from git and from nothing else.\n\n```\nuse majordomus_cli::worktree::reconcile::TrunkRelation;\n\n// the word a document carries; renaming a variant must not rename it\nassert_eq!(TrunkRelation::Equivalent.as_str(), \"equivalent\");\nassert_eq!(serde_json::to_string(&TrunkRelation::Landed).unwrap(), \"\\\"landed\\\"\");\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::worktree"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_worktree_reconciliation"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/worktrees/reconciliation"
+          },
+          "cli": {
+            "path": [
+              "worktree",
+              "reconcile"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "worktree",
+          "git",
+          "topology",
+          "reconciliation"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs"
+      },
+      {
         "id": "worktree.status",
         "module": "worktree",
         "kind": "query",
@@ -90743,7 +91092,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 167,
+        "capabilities": 168,
         "capability_ids": []
       },
       {
@@ -91383,7 +91732,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1102,
+        "capabilities": 1103,
         "capability_ids": []
       },
       {
@@ -91981,7 +92330,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 660,
+        "capabilities": 661,
         "capability_ids": []
       },
       {
@@ -92059,10 +92408,11 @@
         "description": "Where every linked git worktree of this repository belongs and where each one is. The container is the primary checkout's sibling named with `-wt`, the path under it is the branch name with its hierarchy kept, and both are derived from git's own identity — the common directory, the registered worktrees, the branches — never from a registry, a configuration or the current directory. A worktree somewhere else is a typed diagnostic with a remedy; the migration that repairs it is a command-line operation of the same service.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 6,
+        "capabilities": 7,
         "capability_ids": [
           "worktree.inspect",
           "worktree.migration_plan",
+          "worktree.reconciliation",
           "worktree.status",
           "worktree.topology",
           "worktree.trunk",
@@ -92073,7 +92423,7 @@
     ]
   },
   "index": {
-    "fingerprint": "1b1c1dbd708b0f93cdad0785ca9f66c5d1ce7915fa55817e723dcd6354675f6f",
+    "fingerprint": "250d77d4ef81e0b3cf238a4351a168b00ad36f618f4d2d7be51fb3b24d8e4c23",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92096,7 +92446,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 167,
+      "adr": 168,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -92113,7 +92463,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 44,
-      "issue": 1102,
+      "issue": 1103,
       "knowledge": 60,
       "mesh-declaration": 1,
       "milestone": 113,
@@ -92127,7 +92477,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 660,
+      "test": 661,
       "use-case": 49,
       "workspace": 1
     },
@@ -93599,6 +93949,22 @@
           "mesh",
           "mcp",
           "http"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0127",
+        "kind": "adr",
+        "identity": "adr-0127",
+        "title": "Every branch and every worktree has one state and one next step, and a landed branch is deleted on proof",
+        "description": "Every branch and every worktree has one state and one next step, and a landed branch is deleted on proof",
+        "path": ".ai/repo/adrs/0127-every-branch-and-worktree-has-one-state-and-the-proven-ones-are-removed.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 8590,
+        "tags": [
+          "worktrees",
+          "operations",
+          "safety"
         ]
       },
       {
@@ -99585,7 +99951,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 982448
+        "bytes": 995843
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -99765,7 +100131,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 53219
+        "bytes": 58096
       },
       {
         "uri": "majordomus://document/docs/claims/a-candidate-is-routed-by-what-it-is-about.md",
@@ -106889,6 +107255,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 7338
+      },
+      {
+        "uri": "majordomus://issue/I2283",
+        "kind": "issue",
+        "identity": "I2283",
+        "title": "Every branch and every worktree has one state and one next step, and the proven ones are carried out",
+        "description": "Give every non-trunk branch and every detached worktree one typed state and one next step, decided from git and the kernel and read by one command and one capability, and let `--apply` carry out the steps whose proof is complete, so that finished work stops accumulating as worktrees and branches nobody can tell from live ones.",
+        "path": ".ai/repo/project/issues/I2283.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4907
       },
       {
         "uri": "majordomus://issue/I2288",
@@ -127263,6 +127640,14 @@
         "bytes": 8188
       },
       {
+        "uri": "majordomus://test/test/cases/612_every_worktree_has_a_disposition.sh",
+        "kind": "test",
+        "identity": "test/cases/612_every_worktree_has_a_disposition.sh",
+        "path": "test/cases/612_every_worktree_has_a_disposition.sh",
+        "source_class": "case",
+        "bytes": 11807
+      },
+      {
         "uri": "majordomus://test/test/cases/617_a_case_can_name_what_it_covers.sh",
         "kind": "test",
         "identity": "test/cases/617_a_case_can_name_what_it_covers.sh",
@@ -129102,7 +129487,7 @@
       "identity": [
         "id"
       ],
-      "objects": 167
+      "objects": 168
     },
     {
       "name": "application",
@@ -129265,7 +129650,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1102
+      "objects": 1103
     },
     {
       "name": "knowledge",
@@ -129427,7 +129812,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 660
+      "objects": 661
     },
     {
       "name": "use-case",
@@ -141896,6 +142281,210 @@
                 "command": "majordomus worktree trunk",
                 "setup": [],
                 "expectation": "exits 0; prints unmeasured, no remote-tracking branch"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "worktree",
+              "reconcile"
+            ],
+            "route": "/docs/cli/worktree/reconcile/",
+            "executable": true,
+            "usage": "majordomus worktree reconcile [OPTIONS] [SELECTOR]",
+            "about": "What becomes of every branch and every worktree: one state each (active, dirty, unreadable, unpublished, orphaned, unstarted, merged, equivalent, conflicted, stale, ready) decided from git and the kernel, never from an age, with the readings that decided it, the one step it permits and the command that takes it. With a selector, that one subject and why. Changes nothing without --apply",
+            "args": [
+              {
+                "name": "selector",
+                "positional": true,
+                "help": "One branch, or the path of one detached worktree: print its state and every reason",
+                "value_name": "SELECTOR",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "apply",
+                "long": "apply",
+                "positional": false,
+                "help": "Take the steps whose proof is complete, each subject measured again first: remove the clean worktree of a branch the trunk contains, and delete a branch whose every commit a remote holds and whose merge would change nothing. Uncommitted work, a worktree a process works in and an unpublished commit are never touched",
+                "value_name": "APPLY",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "include_scratch",
+                "long": "include-scratch",
+                "positional": false,
+                "help": "With --apply, also remove scratch checkouts and detached worktrees whose proof is complete. Without it they are listed and left to whoever made them",
+                "value_name": "INCLUDE_SCRATCH",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "worktree-reconcile-plan",
+                "title": "What becomes of every branch and worktree",
+                "description": "Every non-trunk branch and every detached worktree with the one state git supports for it and the one step that state permits. A branch cut from the trunk and never published is `unstarted` and kept: it reads exactly like one that landed, and only having been published tells them apart. The reading removes nothing.",
+                "argv": [
+                  "worktree",
+                  "reconcile"
+                ],
+                "command": "majordomus worktree reconcile",
+                "setup": [
+                  {
+                    "argv": [
+                      "worktree",
+                      "create",
+                      "feature/improve-cli"
+                    ],
+                    "command": "majordomus worktree create feature/improve-cli"
+                  }
+                ],
+                "expectation": "exits 0; prints unstarted, feature/improve-cli, nothing to reconcile"
+              },
+              {
+                "id": "worktree-reconcile-explain",
+                "title": "Why is this worktree still here?",
+                "description": "With a selector the answer is one subject: its state, its step, and every reading that decided it, one per line.",
+                "argv": [
+                  "worktree",
+                  "reconcile",
+                  "feature/improve-cli"
+                ],
+                "command": "majordomus worktree reconcile feature/improve-cli",
+                "setup": [
+                  {
+                    "argv": [
+                      "worktree",
+                      "create",
+                      "feature/improve-cli"
+                    ],
+                    "command": "majordomus worktree create feature/improve-cli"
+                  }
+                ],
+                "expectation": "exits 0; prints unstarted, the trunk reaches the branch"
+              },
+              {
+                "id": "worktree-reconcile-apply",
+                "title": "Carry out what is proven, and nothing else",
+                "description": "`--apply` takes only the steps whose proof is complete, each subject measured again immediately before it goes. Here nothing is removable on proof, so it removes nothing; run twice, the second run reads the same.",
+                "argv": [
+                  "worktree",
+                  "reconcile",
+                  "--apply"
+                ],
+                "command": "majordomus worktree reconcile --apply",
+                "setup": [
+                  {
+                    "argv": [
+                      "worktree",
+                      "create",
+                      "feature/improve-cli"
+                    ],
+                    "command": "majordomus worktree create feature/improve-cli"
+                  }
+                ],
+                "expectation": "exits 0; prints 0 worktree(s) removed, 0 branch(es) deleted, 0 refused"
               }
             ],
             "subcommands": []
@@ -167333,6 +167922,23 @@
         "output": "MigrationPlan"
       },
       {
+        "name": "majordomus_worktree_reconciliation",
+        "id": "worktree.reconciliation",
+        "title": "What becomes of every branch and every worktree",
+        "description": "Every non-trunk branch and every detached worktree with the one state git and the kernel support for it — active (a process works inside), dirty (files no commit carries), unreadable (a reading failed, so nothing is decided), unpublished (a commit no remote holds), orphaned (a detached worktree is its commit's only name), unstarted, merged (the trunk reaches it), equivalent (merging it changes nothing), conflicted, stale, ready — the readings that decided it, the one step it permits, the command a person runs to take that step, and whether it is removable on proof alone. Decided against the remote-tracking branch the trunk follows, never from an age or a name. A read: it removes nothing, and a removal it names is git's own guarded form (`git worktree remove` without `--force`, `git update-ref -d` on the judged commit). Taking the proven steps is the command line's `majordomus worktree reconcile --apply`, which measures each subject again first.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "Empty",
+        "output": "Reconciliation"
+      },
+      {
         "name": "majordomus_worktree_status",
         "id": "worktree.status",
         "title": "Where this is, and whether that is where it belongs",
@@ -169052,6 +169658,12 @@
         "method": "GET",
         "path": "/api/v1/worktrees/migration",
         "id": "worktree.migration_plan",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/worktrees/reconciliation",
+        "id": "worktree.reconciliation",
         "kind": "query"
       },
       {
@@ -176392,6 +177004,35 @@
         "route": "GET /api/v1/worktrees/migration"
       },
       {
+        "key": "worktree.reconciliation|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "worktree.reconciliation",
+        "module": "worktree",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "worktree.reconciliation|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "worktree.reconciliation",
+        "module": "worktree",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_worktree_reconciliation"
+      },
+      {
+        "key": "worktree.reconciliation|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "worktree.reconciliation",
+        "module": "worktree",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/worktrees/reconciliation"
+      },
+      {
         "key": "worktree.status|direct|default",
         "kind": "capability",
         "transport": "direct",
@@ -181523,6 +182164,27 @@
           "cases": 1
         },
         {
+          "subject": "worktree.reconciliation",
+          "module": "worktree",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "worktree.reconciliation",
+          "module": "worktree",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "worktree.reconciliation",
+          "module": "worktree",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "worktree.status",
           "module": "worktree",
           "transport": "direct",
@@ -181707,22 +182369,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 220,
-          "covered": 181,
+          "required": 221,
+          "covered": 182,
           "missing": 0,
           "waived": 39,
           "inapplicable": 0
         },
         "http": {
-          "required": 212,
-          "covered": 181,
+          "required": 213,
+          "covered": 182,
           "missing": 0,
           "waived": 31,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 206,
-          "covered": 176,
+          "required": 207,
+          "covered": 177,
           "missing": 0,
           "waived": 30,
           "inapplicable": 0
@@ -181735,8 +182397,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 652,
-          "covered": 552,
+          "required": 655,
+          "covered": 555,
           "missing": 0,
           "waived": 100,
           "inapplicable": 0
