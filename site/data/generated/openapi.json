@@ -70983,15 +70983,28 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "mesh doctor",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh/doctor\"",
-          "description": "Every prerequisite proved on this machine alone — the declaration parses, the identity loads and, under an allowlist, is on it, the repository has a mesh identity, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory — and then the server's own verdict: in a shared server, whether an enabled declaration actually activated the mesh and, when it did not, the server's reason, which fails the report. Each failed check names its impact and its remedy. Deterministic, no second node required.",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh/doctor?build_host=false\"",
+          "description": "Every prerequisite proved on this machine alone — the declaration parses, the identity loads and, under an allowlist, is on it, the repository has a mesh identity, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory — and then the server's own verdict: in a shared server, whether an enabled declaration actually activated the mesh and, when it did not, the server's reason, which fails the report. Each failed check names its impact and its remedy. Deterministic, no second node required. `build_host` adds whether this build host's own guard is observed live: disk-guard.timer and build-host-observe.timer active, the ballast present, its state fresh, every declared critical-service drop-in present and every declared tenant at or under its bound (I4343).",
           "home": "mesh",
           "id": "mesh.doctor",
           "kind": "query",
           "mcp_resource": "",
           "mcp_tool": "majordomus_mesh_doctor",
           "method": "GET",
-          "parameters": [],
+          "parameters": [
+            {
+              "description": "Also observe this build host's own guard (I4343): disk-guard.timer and\nbuild-host-observe.timer active, the ballast present, its state fresh, every\ndeclared critical-service drop-in present and every declared tenant at or under its\nbound. Observed against `/`, never a fixture: a test calls\n`crate::mesh::cache_provision::observe_build_host` directly.",
+              "examples": [
+                {
+                  "case": "default",
+                  "value": "false"
+                }
+              ],
+              "name": "build_host",
+              "required": false,
+              "type": "boolean"
+            }
+          ],
           "path": "/api/v1/mesh/doctor",
           "primary": true,
           "provenance": {

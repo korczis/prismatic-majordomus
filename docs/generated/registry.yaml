@@ -35082,6 +35082,12 @@ capabilities:
                 items:
                   type: string
                 description: The services that restart always and are the last the OOM killer takes.
+              build_host_tenants:
+                type: array
+                items:
+                  "$ref": "#/$defs/Tenant"
+                description: "The build host's baseline tenants (I4343): a path and the size, in GiB, it must not\noutgrow. Observed, never reclaimed by this: which homes disk-guard itself sweeps is\nI4352's."
+                default: []
             required:
               - user
               - home
@@ -35099,6 +35105,26 @@ capabilities:
               - nodes
               - critical_services
             description: "What the provisioning declares: who runs the builds, which store, how bounded, which\nnodes receive an identity."
+          Tenant:
+            type: object
+            additionalProperties: false
+            properties:
+              name:
+                type: string
+                description: "A short name for what lives at `path`: `korczis home`, `docker`, `minio`, `swap`."
+              path:
+                type: string
+                description: "The path observed, repository-unrelated: a host path such as `/home/korczis`."
+              bound_gib:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "The size, in GiB, this tenant must not exceed."
+            required:
+              - name
+              - path
+              - bound_gib
+            description: "One baseline tenant of the build host, observed against its bound (I4343)."
           Plan:
             type: object
             properties:
@@ -36061,14 +36087,19 @@ capabilities:
     module: mesh
     kind: query
     title: The mesh self-check
-    description: "Every prerequisite proved on this machine alone — the declaration parses, the identity loads and, under an allowlist, is on it, the repository has a mesh identity, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory — and then the server's own verdict: in a shared server, whether an enabled declaration actually activated the mesh and, when it did not, the server's reason, which fails the report. Each failed check names its impact and its remedy. Deterministic, no second node required."
+    description: "Every prerequisite proved on this machine alone — the declaration parses, the identity loads and, under an allowlist, is on it, the repository has a mesh identity, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory — and then the server's own verdict: in a shared server, whether an enabled declaration actually activated the mesh and, when it did not, the server's reason, which fails the report. Each failed check names its impact and its remedy. Deterministic, no second node required. `build_host` adds whether this build host's own guard is observed live: disk-guard.timer and build-host-observe.timer active, the ballast present, its state fresh, every declared critical-service drop-in present and every declared tenant at or under its bound (I4343)."
     input:
-      name: Empty
+      name: DoctorInput
       schema:
         type: object
         additionalProperties: false
-        description: No input.
-        title: Empty
+        properties:
+          build_host:
+            type: boolean
+            description: "Also observe this build host's own guard (I4343): disk-guard.timer and\nbuild-host-observe.timer active, the ballast present, its state fresh, every\ndeclared critical-service drop-in present and every declared tenant at or under its\nbound. Observed against `/`, never a fixture: a test calls\n`crate::mesh::cache_provision::observe_build_host` directly."
+            default: false
+        description: "The input of `mesh.doctor`."
+        title: DoctorInput
     output:
       name: MeshDoctorReport
       schema:
