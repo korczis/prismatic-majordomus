@@ -28,5 +28,43 @@ from those and from the graph. Two issues that touch one file are reported as un
 run concurrently; that report is why `parallel_safe` exists and why scope is a pathspec
 list rather than a paragraph.
 
+So a scope names the files the work changes: files that exist, and the exact path of each
+file it will create. Never a directory other issues plan under (`test/cases`, `docs`,
+`.ai/repo/rules`): the scope-conflict warnings of `plan validate` then name the files those
+other issues plan and nobody has written yet, `docs/PLAN_STATUS.md` publishes the warnings,
+and `scripts/ci/reference-check` refuses the missing paths, so case 59
+(`test/cases/59_reference_integrity.sh`) fails in pre-push on a branch that touched none of
+them. That happened three times on 2026-10-28, and each was repaired by narrowing the scope
+to file paths. `plan validate` already computes those conflicts; issue I4350 makes it
+refuse a directory scope that holds a file another issue plans, and until it lands nothing
+but this paragraph decides it.
+
+An issue id is taken on the board, not in the refs: two sessions took I4251 within two hours
+on 2026-10-27, and on 2026-10-28 one session committed I4296 at 18:37Z while another had
+held an exclusive mesh claim on that issue's file since 18:16Z; the
+pushed one kept the id and the claim holder renumbered its work to I4315. Before writing the file, ask every ref for the id, read
+the board and the mesh's claims (`majordomus_peers`, `majordomus_mesh_peers`), and announce
+it with `majordomus_announce`, naming the id beside the paths, before the first commit that
+carries it (rule `project.work-is-claimed-before-it-is-built`). Issue I3974 owes the
+allocator and the gate that would decide this; until it lands, these steps are all there is:
+
+```bash
+git fetch --quiet origin
+# a branch whose tip holds the file: every tip in one pass, about 2 s over 2100 refs
+git for-each-ref --format='%(refname):.ai/repo/project/issues/I<id>.yaml %(refname)' \
+    refs/heads refs/remotes/origin refs/rescue \
+  | git cat-file --batch-check='%(objectname) %(rest)' | grep -v ' missing$'
+# a recent commit naming the id, its message only: under 1 s
+git log --oneline --since=30.days -i --grep 'I<id>' --branches --remotes=origin
+```
+
+Ask with these two and nothing wider. A search of every ref's content (`git log --all -S`,
+`git grep` over every remote branch) has no bound: on 2026-10-28 three of them, run by one
+session's workflow agents for an id and a path, held the shared machine at load 92 until the
+shared server stopped answering, and stopping those three processes was what let it answer.
+Whether a branch carries a path is `scripts/collision-check --new <path>`.
+
+A collision found later is resolved by renumbering the issue that was announced second.
+
 The order of execution is not a number here. It is the dependency graph, validated as a
 DAG, and `majordomus plan next` is the only correct answer to what may be worked on now.

@@ -1,0 +1,47 @@
+id: I4344
+milestone: development-runtime
+title: "A CI runner's home stays under its cap during a job, not only between jobs"
+slug: a-runner-home-stays-under-its-cap-during-a-job
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Bound a self-hosted runner's build directory inside a job, not only around it. The build host policy gives each runner home's build directory a filesystem of its own size, a loop-mounted ext4 image or an XFS project quota the provision creates from the policy's per-home cap, so a job that outgrows it fails with ENOSPC inside its own home while the root filesystem keeps its floor. Around that hard bound: on runner.environment == 'self-hosted', .github/actions/setup-rust runs the build directory bound (mj_rust_bound_build_dir) before cargo and again in a post step; scripts/rust-coverage removes llvm-cov-target on a self-hosted runner once its report is exported; and every job that builds on a self-hosted runner samples its build directory every 30 s and writes the job summary facts `build-dir size` and `build-dir peak`."
+why: "Incident 1 of 2026-10-28: lundra's root filesystem reached 100% under the runners' cargo build directories, /home/ghrunner/home-2 and home-3/.cargo/build-shared (74.6 and 39.9 GiB, as measured for I4352), and runners lundra-1..3 went offline during run 40680986818. Three hand-provisioned runner homes each keep an unbounded build directory. I4352 (fix/lundra-provisions-its-runners, not landed) renders the homes and the runner drop-ins and makes disk-guard reclaim a runner build directory over its cap once it is idle; it sets no quota, and a coverage job that fills tens of GiB inside one run never becomes idle. A bound applied before and after cargo is also only a bound between invocations. I3959's bound runs only where lib/rust_bin.sh is the entry, and #2567 never reaches CI."
+current_state: "Measured at 81ef931a3e1: .github/actions/setup-rust/action.yml has no step conditioned on a self-hosted runner; scripts/rust-coverage names no llvm-cov-target; apps/majordomus-cli/assets/mesh-cache-provider/policy.json declares no per-home cap and cache_provision.rs creates no per-home filesystem or quota; no job reports the size of its build directory."
+desired_state: "A runner home's build directory cannot outgrow its cap during a job: the job fails with ENOSPC in its own home and the root filesystem keeps its floor; around the hard bound a self-hosted job evicts idle units before cargo and after it, a coverage run leaves no llvm-cov-target behind, and each job's summary carries the peak it reached. Enforced by the per-home filesystem the provision creates and the observation (I4343) reports, by case 4344 on action.yml and rust-coverage, by case 3959, and by the `build-dir peak` fact."
+scope:
+  - ".ai/repo/project/issues/I4344.yaml"
+  - ".github/actions/setup-rust/action.yml"
+  - "scripts/rust-coverage"
+  - "lib/rust_bin.sh"
+  - "apps/majordomus-cli/src/mesh/cache_provision.rs"
+  - "apps/majordomus-cli/assets/mesh-cache-provider/policy.json"
+  - "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh"
+  - "test/cases/4344_a_runner_home_stays_under_its_cap.sh"
+  - "docs/CI.md"
+  - "docs/BUILD_CACHE.md"
+non_scope:
+  - "disk-guard's runner homes and the runner units' drop-ins (I4352)"
+  - "Reclaiming outside cargo's lock on a developer machine (I4354)"
+acceptance_criteria:
+  - "Unit test: for a policy declaring a runner home with a cap, the provision plan creates that home's bounded filesystem (or project quota) of the cap's size and mounts it at the home's build directory; a second plan over the applied fixture owes nothing"
+  - "On lundra: a fixture job that writes past its home's cap fails with ENOSPC inside the home, and the root filesystem's free space stays above the policy's floor throughout (df sampled during the job, recorded as evidence)"
+  - "Case 4344 fails on an action.yml without a self-hosted bound step before cargo, or without one after it, and passes on the change"
+  - "Case 4344 with RUNNER_ENVIRONMENT=self-hosted stubbed: scripts/rust-coverage leaves no llvm-cov-target after exporting its report; with a hosted runner it behaves as before"
+  - "Case 4344: the sampler writes `build-dir peak` as the largest of its samples, not the last one"
+  - "Case 3959: the post step's bound over a build directory past its cap evicts idle units and keeps a unit with an open file"
+  - "Two consecutive coverage runs on lundra report a `build-dir peak` under each home's cap in their job summaries"
+validation:
+  - "bash test/run.sh 4344_a_runner_home_stays_under_its_cap 3959_the_shared_build_dir_stays_under_its_bound"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::cache_provision"
+  - "actionlint .github/workflows/validate.yml"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+  - "rust"
+  - "runner_home_peak_under_cap_during_two_coverage_runs"
+depends_on:
+  - "I4343"
+serves: []
+created_at: 2026-10-29
+updated_at: 2026-10-29
