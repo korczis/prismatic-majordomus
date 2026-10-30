@@ -531,10 +531,13 @@ mj_capture_prompt() {
   mj_capture_adapter "$provider" >/dev/null 2>&1 || {
     mj_err "capture prompt: no adapter for provider '$provider' (have: $(mj_capture_providers | tr '\n' ' '))"
     return "$MJ_EX_MISSING"; }
-
   # A hook must work in a repository whose policy does not parse, so nothing here needs
   # more than the local half of the layer.
   mj_require_repo 2>/dev/null || { mj_err "capture prompt: not in a repository"; return "$MJ_EX_MISSING"; }
+  # The watch's share of this event, before anything below can return: the free disk against
+  # its floor (ADR 0150). It never fails, never reads the payload, and a policy that does
+  # not parse silences it rather than the capture.
+  mj_capture_accumulation_prompt || true
   dir="$(mj_capture_dir)"
   mkdir -p "$dir" 2>/dev/null || { mj_err "capture prompt: cannot create $dir"; return "$MJ_EX_INTERNAL"; }
   # every capture, not only the one that created the directory: a mode set once is a mode
@@ -1647,7 +1650,12 @@ Mesh session: $joined — this session is on the mesh under that id; claim the p
       . "$MJ_LIB_DIR/rust_bin.sh"
       monitor="$(mj_rust_monitor_brief "$MJ_ROOT" "$MJ_HOME")" ;;
   esac
-  mj_derive_briefing "$server" "$mesh" "$monitor" 2>/dev/null || mj_session_context_log "$provider start event: the briefing could not be assembled"
+  # What has piled up past its budget (ADR 0150), read without the server: git's registry
+  # of worktrees, the branches the trunk reaches and the volume are all on this disk.
+  local accumulation; accumulation="$(mj_capture_accumulation_brief)"
+  mj_derive_briefing "$server" "$mesh" "$monitor" "$accumulation" 2>/dev/null || mj_session_context_log "$provider start event: the briefing could not be assembled"
+  mj_capture_accumulation_mesh
+  [ -z "$accumulation" ] || mj_capture_accumulation_reduce
   # How to keep itself awake and reporting (ADR 0136), told to every provider's session the
   # policy switches it for, whether or not a mod of that provider shows the brief as well.
   [ "$(mj_pol session.brief_on_interval)" = true ] && mj_capture_keep_awake "$psession"
@@ -1799,6 +1807,102 @@ mj_capture_mesh_line() {
 # It is skipped when there is no active task. A checkpoint is a progress note inside a task,
 # and inventing one outside a task in order to have written something would put a record in
 # the ledger that belongs to no work.
+# ---------------------------------------------------------------- the accumulation watch
+# A session's context is watched by the provider: it compacts before the window is full,
+# and the compaction event is where this tool records what would be lost. Worktrees, the
+# names of landed branches and the disk under both had no such watch — each has a command
+# that measures it and one that reduces it, and nothing ran either until a person noticed
+# (ADR 0150). The provider's events are the moments a worker is already listening, so they
+# are where the watch reads:
+#
+#   start    what is over budget goes into the briefing, before the first tool call, and
+#            to the mesh as an advisory claim when the policy has it announced
+#   prompt   the free disk alone — one `df`, no executable — and a line when it is under its
+#            floor, at most once per cooldown: disk is the one quantity that ends the machine
+#            between two starts
+#   compact  a reduction, when the policy consents and one is due
+#   end      the same: a session that closes is a session whose worktrees may now be spare
+#
+# Every path is silent unless `accumulation.watch` is true, and removes nothing unless
+# `accumulation.act` is `reduce`. MAJORDOMUS_ACCUMULATION=off switches the whole watch off
+# for a process tree — the test harness sets it, so that no case run in this repository
+# sweeps the worktrees of the machine it runs on — and a dry run of an event never acts.
+
+# Whether the watch is on for this event at all.
+mj_capture_accumulation_on() {
+  [ "${MAJORDOMUS_ACCUMULATION:-}" != off ] || return 1
+  [ "$(mj_pol accumulation.watch)" = true ]
+}
+
+# The lines a briefing carries, or nothing.
+mj_capture_accumulation_brief() {
+  mj_capture_accumulation_on || return 0
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  mj_rust_accumulation_brief "$MJ_ROOT" "$MJ_HOME"
+  return 0
+}
+
+# Start a reduction in the background when the policy consents. Whether a budget is crossed
+# and whether the cooldown has passed are read by the command itself, at the moment it runs.
+mj_capture_accumulation_reduce() {
+  mj_capture_accumulation_on || return 0
+  [ "$(mj_pol accumulation.act)" = reduce ] || return 0
+  [ "${MJ_SESSION_DRY_RUN:-0}" != 1 ] || return 0
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  mj_rust_accumulation_reduce "$MJ_ROOT" "$MJ_HOME" "$MJ_STATE_DIR/accumulation/reduce.log"
+  return 0
+}
+
+# Tell the mesh, when the policy has it announced: a crossed budget becomes an advisory claim
+# every linked machine's monitor shows, and is taken back when the budget holds again.
+mj_capture_accumulation_mesh() {
+  mj_capture_accumulation_on || return 0
+  [ "$(mj_pol accumulation.announce_on_mesh)" = true ] || return 0
+  [ "${MJ_SESSION_DRY_RUN:-0}" != 1 ] || return 0
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  mj_rust_accumulation_mesh "$MJ_ROOT" "$MJ_HOME" "${MJ_STATE_DIR#"$MJ_ROOT"/}/accumulation" \
+    "$MJ_STATE_DIR/accumulation/announced"
+  return 0
+}
+
+# The prompt event's share: the free disk against its floor. Standard output here reaches the
+# worker's context, so it is one line, only when the floor is crossed, and at most once per
+# cooldown. A reading that cannot be taken says nothing — the start event's briefing is
+# where a watch that went blind is reported.
+mj_capture_accumulation_prompt() {
+  # The prompt path loads no policy of its own, so the flattened copy this reads is this
+  # function's to remove: one temporary file per prompt is an accumulation too.
+  local MJ_POL_FLAT=""
+  mj_load_policy 2>/dev/null && mj_capture_accumulation_prompt_say
+  [ -z "$MJ_POL_FLAT" ] || rm -f "$MJ_POL_FLAT"
+  return 0
+}
+mj_capture_accumulation_prompt_say() {
+  mj_capture_accumulation_on || return 0
+  local floor free cool stamp now last
+  floor="$(mj_pol accumulation.disk_free_min_mb)"
+  case "$floor" in ''|*[!0-9]*) return 0 ;; esac
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  free="$(mj_free_mb "$MJ_ROOT")" || return 0
+  case "$free" in ''|*[!0-9]*) return 0 ;; esac
+  [ "$free" -lt "$floor" ] || return 0
+  cool="$(mj_pol accumulation.cooldown_minutes)"
+  case "$cool" in ''|*[!0-9]*) cool=10 ;; esac
+  stamp="$MJ_STATE_DIR/accumulation/said-at"
+  now="$(date +%s)"; last="$(cat "$stamp" 2>/dev/null || true)"
+  case "$last" in ''|*[!0-9]*) last=0 ;; esac
+  [ "$((now - last))" -ge "$((cool * 60))" ] || return 0
+  mkdir -p "$MJ_STATE_DIR/accumulation" 2>/dev/null && printf '%s\n' "$now" > "$stamp" 2>/dev/null
+  printf 'Majordomus accumulation watch: %s MiB free on this volume, budget at least %s (accumulation.disk_free_min_mb). Do not start a build before reducing: `majordomus accumulation` has every reading and the command, and the policy says %s.\n' \
+    "$free" "$floor" "$(mj_pol accumulation.act)"
+  mj_capture_accumulation_reduce
+  return 0
+}
+
 mj_capture_session_compact() {
   local provider="$1" psession="$2" out
   # shellcheck source=checkpoint.sh
@@ -1837,6 +1941,9 @@ mj_capture_session_compact() {
   else
     mj_err "capture session: session.knowledge_on_compact is false, so no knowledge is derived"
   fi
+  # A compaction is the provider reducing what the session holds; the same moment reduces
+  # what the repository holds, when a budget is crossed and the policy consents (ADR 0150).
+  mj_capture_accumulation_reduce
   return 0
 }
 
@@ -1942,6 +2049,8 @@ mj_capture_session_end() {
     mj_err "capture session: episode closed ($outcome${reason:+, reason $reason}) into $(printf '%s\n' "$out" | tail -n 1)"
     mj_capture_publish_record "$(printf '%s\n' "$out" | tail -n 1)"
   else mj_err "capture session: no open episode here${psession:+ for provider session $psession}; nothing to close"; fi
+  # A session that closes is a session whose worktrees may now be spare (ADR 0150).
+  mj_capture_accumulation_reduce
   return 0
 }
 

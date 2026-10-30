@@ -9,6 +9,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 
 | module | title | stability | capabilities | reference |
 |---|---|---|---|---|
+| `accumulation` | Accumulation | experimental | 1 | [`modules/accumulation.md`](modules/accumulation.md) |
 | `artifacts` | Generated artifacts | behaviorally_verified | 1 | [`modules/artifacts.md`](modules/artifacts.md) |
 | `blackboard` | The peer blackboard | experimental | 1 | [`modules/blackboard.md`](modules/blackboard.md) |
 | `brief` | The session brief | behaviorally_verified | 1 | [`modules/brief.md`](modules/brief.md) |
@@ -74,6 +75,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 
 | id | module | kind | stability | MCP tool | MCP resource | HTTP | CLI | cache | benchmark |
 |---|---|---|---|---|---|---|---|---|---|
+| `accumulation.status` | `accumulation` | query | experimental | `majordomus_accumulation` | `majordomus://accumulation` | `GET /api/v1/accumulation` | `majordomus accumulation` | — | required |
 | `artifacts.list` | `artifacts` | query | behaviorally_verified | `majordomus_artifacts` | `majordomus://artifacts` | `GET /api/v1/artifacts` | — | process, 8 entries, 5s | required |
 | `blackboard.snapshot` | `blackboard` | query | experimental | `majordomus_blackboard` | — | `GET /api/v1/blackboard` | `majordomus blackboard` | — | required |
 | `brief.session` | `brief` | query | behaviorally_verified | `majordomus_brief` | — | `GET /api/v1/brief` | `majordomus brief` | — | required |

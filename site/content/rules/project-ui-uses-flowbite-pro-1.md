@@ -1,7 +1,7 @@
 +++
 title = "Every user interface here is built on Flowbite Pro, through the mj tokens"
 description = "Every user interface here is built on Flowbite Pro, through the mj tokens"
-weight = 183
+weight = 184
 [extra]
 kind = "rule"
 slug = "project-ui-uses-flowbite-pro-1"

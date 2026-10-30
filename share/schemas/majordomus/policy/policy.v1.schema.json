@@ -231,6 +231,46 @@
         }
       }
     },
+    "accumulation": {
+      "type": "object",
+      "description": "Budgets for what grows in a repository without anyone deciding that it should, and what crossing one may do (ADR 0150). A provider's episode events read the quantities against these and say what is over budget; a quantity with no budget is measured and reported as unbudgeted. Absent, nothing is watched and nothing is removed.",
+      "additionalProperties": false,
+      "properties": {
+        "watch": {
+          "type": "boolean",
+          "description": "Whether the provider's start, prompt, compaction and end events read the quantities and say what is over budget."
+        },
+        "act": {
+          "type": "string",
+          "enum": ["report", "reduce"],
+          "description": "What a crossed budget may do. report says it and names the command; reduce also runs it: the worktrees of landed branches are removed, each re-measured immediately before, then the names of landed branches nothing has checked out are deleted."
+        },
+        "worktrees_max": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "More registered worktrees than this, the primary checkout among them, is a finding."
+        },
+        "merged_branches_max": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "More local branches the trunk already reaches than this is a finding."
+        },
+        "disk_free_min_mb": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Less free space than this on the repository's volume, in MiB, is a finding, said on the next prompt as well as at the next start."
+        },
+        "cooldown_minutes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "A reduction, and a repeated warning, happens at most once in this many minutes for the whole repository."
+        },
+        "announce_on_mesh": {
+          "type": "boolean",
+          "description": "Whether a crossed budget is told to the mesh as an advisory claim of the watch's own session, which every linked machine's monitor shows, and taken back when the budget holds again."
+        }
+      }
+    },
     "knowledge": {
       "type": "object",
       "description": "Bounds on the review queue of derived knowledge records under the tracked knowledge section. A candidate is a record the deriver wrote and nobody has judged; the queue is measured, never emptied by a machine, and both numbers are declared once here and read by the shell validator and the Rust reader alike (ADR 0091).",

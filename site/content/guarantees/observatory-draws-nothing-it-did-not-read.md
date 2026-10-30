@@ -1,7 +1,7 @@
 +++
 title = "The Observatory at /ui/observatory and /ui/kiosk shows a scene only when the capabilities it requires answered with something to draw, or, for a scene of the mesh where no mesh runs, when the repository carries a recording of it, which it labels a replay; a scene without either carries no model and states the source's reason, on a server and in the published snapshot alike"
 description = "The Observatory (/ui/observatory, and /ui/kiosk as its unattended preset) draws the"
-weight = 201
+weight = 202
 [extra]
 claim_id = "observatory-draws-nothing-it-did-not-read"
 status = "guaranteed"

@@ -114,6 +114,12 @@
           "route": "/docs/cli/convergence/"
         },
         {
+          "about": "Is anything piling up past its budget? The worktrees git registers, the local branches the trunk already reaches and the free space under them, each against the budget the policy declares under `accumulation:`, with the command that reduces it; `--reduce` removes what is provably spare when the policy consents (ADR 0150)",
+          "command": "majordomus accumulation",
+          "name": "accumulation",
+          "route": "/docs/cli/accumulation/"
+        },
+        {
           "about": "The commit as a value: what the working tree would commit and how it divides, the scope vocabulary this repository's history yields, and the verdict on one message against the commit policy",
           "command": "majordomus commit",
           "name": "commit",
@@ -14151,7 +14157,7 @@
             "false"
           ],
           "global": false,
-          "help": "Remove the worktrees listed, each re-measured immediately before it goes: a branch ahead of its remote, uncommitted work, or a process working inside is refused and named. Branches are never deleted; the listing still says how",
+          "help": "Remove the worktrees listed, each re-measured immediately before it goes: a branch ahead of its remote, uncommitted work, or a process working inside is refused and named. No branch is deleted unless --branches says so; the listing still says how",
           "long": "remove",
           "name": "remove",
           "positional": false,
@@ -14159,6 +14165,20 @@
           "required": false,
           "takes_value": false,
           "value_name": "REMOVE"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "With --remove, also delete the names of merged branches nothing has checked out: each re-read, deleted only while it still points where it was read, and kept when it stands at the trunk's own tip. Every commit a deleted name pointed at is in the trunk",
+          "long": "branches",
+          "name": "branches",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "BRANCHES"
         },
         {
           "defaults": [],
@@ -14260,6 +14280,20 @@
           "id": "worktree-cleanup-nothing",
           "setup": [],
           "title": "What could go, and what it would take"
+        },
+        {
+          "argv": [
+            "worktree",
+            "cleanup",
+            "--remove",
+            "--branches"
+          ],
+          "command": "majordomus worktree cleanup --remove --branches",
+          "description": "Removes the worktree of every branch merged into the trunk, each re-measured immediately before it goes, then deletes the name of every merged branch no worktree has checked out — only while the ref still points where it was read, and never a branch that stands at the trunk's own tip. Everything that is kept is named with the reading that kept it. Without `--branches` no name is deleted.",
+          "expectation": "exits 0; prints worktree cleanup: 0 removed",
+          "id": "worktree-cleanup-remove-branches",
+          "setup": [],
+          "title": "Remove what is spare, and the names after it"
         }
       ],
       "executable": true,
@@ -17205,6 +17239,246 @@
       ],
       "route": "/docs/cli/convergence/",
       "usage": "majordomus convergence [OPTIONS]"
+    },
+    {
+      "about": "Is anything piling up past its budget? The worktrees git registers, the local branches the trunk already reaches and the free space under them, each against the budget the policy declares under `accumulation:`, with the command that reduces it; `--reduce` removes what is provably spare when the policy consents (ADR 0150)",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "How to render the verdict",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Only what a briefing carries: one line per quantity over its budget, nothing when every budget holds or the policy has the watch off; always exits 0",
+          "long": "brief",
+          "name": "brief",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "BRIEF"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Only what a mesh claim carries: one line naming every quantity over its budget with its reading and budget, when the policy says `accumulation.announce_on_mesh: true` and the watch is on; nothing otherwise; always exits 0",
+          "long": "headline",
+          "name": "headline",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "HEADLINE"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Remove what is provably spare — the worktrees of landed branches, then the names of landed branches nothing has checked out — when the policy says `accumulation.act: reduce` and a quantity is over its budget; every candidate is re-measured before it goes",
+          "long": "reduce",
+          "name": "reduce",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "REDUCE"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "With --reduce, act only when `accumulation.cooldown_minutes` have passed since the last reduction in this repository",
+          "long": "if-due",
+          "name": "if_due",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "IF_DUE"
+        }
+      ],
+      "children": [],
+      "command": "majordomus accumulation",
+      "depth": 1,
+      "examples": [
+        {
+          "argv": [
+            "accumulation",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus accumulation --format json",
+          "description": "Every quantity that grows on its own — the worktrees git registers, the local branches the trunk already reaches, the free space on the volume under them — with its reading, the budget the policy declares for it under `accumulation:`, its state and the command that reduces it. A quantity with no declared budget is measured and reported as unbudgeted, one that could not be read as unknown with the reason; neither is a pass. A provider's episode events read this answer and say what is over budget before a worker's first tool call.",
+          "expectation": "exits 0; prints one JSON document carrying /schema, /quantities, /over, /within_budget",
+          "id": "accumulation-status-json",
+          "setup": [],
+          "title": "Is anything piling up past its budget?"
+        },
+        {
+          "argv": [
+            "accumulation"
+          ],
+          "command": "majordomus accumulation",
+          "description": "One line per quantity — its state, its reading, its budget or the policy key that would declare one, and the command that reduces it when the budget is crossed — then what the watch last removed here, if it ever acted, and the verdict. The exit code is the verdict: 10 when a quantity is over its budget.",
+          "expectation": "exits 0; prints worktrees, merged_branches, disk_free, accumulation: 0 of 3 quantities over budget",
+          "id": "accumulation-status-text",
+          "setup": [],
+          "title": "Every reading against its budget, for a person"
+        },
+        {
+          "argv": [
+            "accumulation",
+            "--brief"
+          ],
+          "command": "majordomus accumulation --brief",
+          "description": "What a provider's start event puts in front of a worker: one line per quantity that is over its budget, and nothing at all when every budget holds or the policy has the watch off. It builds no index and always exits 0, because it runs inside a hook on every start of every session.",
+          "expectation": "exits 0",
+          "id": "accumulation-brief",
+          "setup": [],
+          "title": "What a briefing carries"
+        },
+        {
+          "argv": [
+            "accumulation",
+            "--headline"
+          ],
+          "command": "majordomus accumulation --headline",
+          "description": "One line naming every quantity over its budget with its reading and its budget, printed only when the policy says `accumulation.announce_on_mesh: true`, the watch is on and a budget is crossed. A provider's start event makes that line the intent of an advisory mesh claim, so every linked machine's monitor shows it, and closes the claim's session when the line is empty again. Always exits 0.",
+          "expectation": "exits 0",
+          "id": "accumulation-headline",
+          "setup": [],
+          "title": "What a mesh claim carries"
+        },
+        {
+          "argv": [
+            "accumulation",
+            "--reduce"
+          ],
+          "command": "majordomus accumulation --reduce",
+          "description": "Removes what is provably spare — the worktrees of landed branches, then the names of landed branches nothing has checked out — when the policy says `accumulation.act: reduce` and a quantity is over its budget. Here no budget is crossed, so nothing is touched and the command says so. With a budget crossed and a policy that says `report`, it removes nothing either, names the command and exits 10.",
+          "expectation": "exits 0; prints nothing is over budget, so nothing is reduced",
+          "id": "accumulation-reduce-nothing-over",
+          "setup": [],
+          "title": "A reduction needs a crossed budget"
+        },
+        {
+          "argv": [
+            "accumulation",
+            "--reduce",
+            "--if-due"
+          ],
+          "command": "majordomus accumulation --reduce --if-due",
+          "description": "The same reduction, held to `accumulation.cooldown_minutes` since the last one in this repository: every session of a machine fires the same events, and one of them acting is enough. The provider's compaction and end events start exactly this, detached.",
+          "expectation": "exits 0; prints nothing is over budget",
+          "id": "accumulation-reduce-if-due",
+          "setup": [],
+          "title": "What an episode event runs"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "accumulation",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "accumulation"
+      ],
+      "route": "/docs/cli/accumulation/",
+      "usage": "majordomus accumulation [OPTIONS]"
     },
     {
       "about": "The commit as a value: what the working tree would commit and how it divides, the scope vocabulary this repository's history yields, and the verdict on one message against the commit policy",
@@ -40038,10 +40312,10 @@
     }
   ],
   "counts": {
-    "arguments": 1735,
-    "commands": 252,
-    "examples": 253,
-    "runnable": 220
+    "arguments": 1745,
+    "commands": 253,
+    "examples": 260,
+    "runnable": 221
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "1.0.0-alpha.9",

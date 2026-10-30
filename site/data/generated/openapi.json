@@ -1,5 +1,6 @@
 {
   "anchors": {
+    "op-accumulation-status": "docs/api/accumulation/",
     "op-artifacts-list": "docs/api/artifacts/",
     "op-blackboard-snapshot": "docs/api/blackboard/",
     "op-brief-session": "docs/api/brief/",
@@ -212,6 +213,8 @@
     "op-worktree-topology": "docs/api/worktree/",
     "op-worktree-trunk": "docs/api/worktree/",
     "op-worktree-uncommitted": "docs/api/worktree/",
+    "schema-AccumulationAct": "docs/api/accumulation/",
+    "schema-AccumulationReport": "docs/api/accumulation/",
     "schema-ActiveTask": "docs/api/shared/",
     "schema-Actor": "docs/api/executions/",
     "schema-ActorKind": "docs/api/executions/",
@@ -292,6 +295,8 @@
     "schema-BriefSessionSection": "docs/api/brief/",
     "schema-BrowserSource": "docs/api/product/",
     "schema-Budget": "docs/api/devcontext/",
+    "schema-BudgetBound": "docs/api/accumulation/",
+    "schema-BudgetState": "docs/api/accumulation/",
     "schema-Budgets": "docs/api/deploy/",
     "schema-Build": "docs/api/deploy/",
     "schema-BuildCacheEnvReport": "docs/api/mesh/",
@@ -751,6 +756,7 @@
     "schema-LabelPolicy": "docs/api/integration/",
     "schema-LandingDecision": "docs/api/release/",
     "schema-Lane": "docs/api/gates/",
+    "schema-LastReduction": "docs/api/accumulation/",
     "schema-LayerSummary": "docs/api/environment/",
     "schema-LayoutFinding": "docs/api/layout/",
     "schema-LayoutReport": "docs/api/layout/",
@@ -968,6 +974,7 @@
     "schema-QualityAnswer": "docs/api/quality/",
     "schema-QualityReport": "docs/api/quality/",
     "schema-QualitySeverity": "docs/api/quality/",
+    "schema-Quantity": "docs/api/accumulation/",
     "schema-QuestionDecl": "docs/api/gates/",
     "schema-QueueTallies": "docs/api/integration/",
     "schema-RankFactors": "docs/api/integration/",
@@ -1294,6 +1301,7 @@
     "schema-WorktreeKind": "docs/api/worktree/",
     "schema-WorktreeState": "docs/api/worktree/",
     "schema-Written": "docs/api/mesh/",
+    "tag-accumulation": "docs/api/accumulation/",
     "tag-artifacts": "docs/api/artifacts/",
     "tag-blackboard": "docs/api/blackboard/",
     "tag-brief": "docs/api/brief/",
@@ -1357,9 +1365,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 212,
-    "schemas": 1082,
-    "tags": 60
+    "operations": 213,
+    "schemas": 1088,
+    "tags": 61
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1450,6 +1458,7 @@
     }
   ],
   "op_homes": {
+    "accumulation.status": "accumulation",
     "artifacts.list": "artifacts",
     "blackboard.snapshot": "blackboard",
     "brief.session": "brief",
@@ -1666,6 +1675,8 @@
   "openapi": "3.1.0",
   "schema": 1,
   "schema_homes": {
+    "AccumulationAct": "accumulation",
+    "AccumulationReport": "accumulation",
     "ActiveTask": "shared",
     "Actor": "executions",
     "ActorKind": "executions",
@@ -1746,6 +1757,8 @@
     "BriefSessionSection": "brief",
     "BrowserSource": "product",
     "Budget": "devcontext",
+    "BudgetBound": "accumulation",
+    "BudgetState": "accumulation",
     "Budgets": "deploy",
     "Build": "deploy",
     "BuildCacheEnvReport": "mesh",
@@ -2205,6 +2218,7 @@
     "LabelPolicy": "integration",
     "LandingDecision": "release",
     "Lane": "gates",
+    "LastReduction": "accumulation",
     "LayerSummary": "environment",
     "LayoutFinding": "layout",
     "LayoutReport": "layout",
@@ -2422,6 +2436,7 @@
     "QualityAnswer": "quality",
     "QualityReport": "quality",
     "QualitySeverity": "quality",
+    "Quantity": "accumulation",
     "QuestionDecl": "gates",
     "QueueTallies": "integration",
     "RankFactors": "integration",
@@ -2750,6 +2765,127 @@
     "Written": "mesh"
   },
   "schemas": [
+    {
+      "description": "What the watch may do when a budget is crossed.\n\n```\nuse majordomus_cli::accumulation::AccumulationAct;\n// a policy that says nothing has consented to nothing\nassert_eq!(AccumulationAct::default(), AccumulationAct::Report);\nlet act: AccumulationAct = serde_json::from_str(\"\\\"reduce\\\"\").unwrap();\nassert_eq!(act, AccumulationAct::Reduce);\nassert_eq!(act.as_str(), \"reduce\");\nassert_eq!(AccumulationAct::Report.as_str(), \"report\");\n```",
+      "home": "accumulation",
+      "is_enum": true,
+      "name": "AccumulationAct",
+      "properties": [],
+      "type": "\"report\" | \"reduce\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "AccumulationReport"
+      ],
+      "values": [
+        {
+          "description": "Say it, and name the command. Nothing is removed.",
+          "value": "report"
+        },
+        {
+          "description": "Say it, and run the command that removes what is provably spare.",
+          "value": "reduce"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "What a repository has accumulated, against what its policy allows.\n\n```\nuse majordomus_cli::accumulation::{judge, AccumulationPolicy, AccumulationReport, Readings, SCHEMA};\nlet policy = AccumulationPolicy { watch: true, disk_free_min_mb: Some(100), ..Default::default() };\nlet readings = Readings { worktrees: Ok(2), merged_branches: Ok(0), disk_free_mb: Ok(99) };\nlet report = AccumulationReport::of(\"/repo\", &policy, judge(&readings, &policy));\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"schema\"], SCHEMA);\nassert_eq!(json[\"over\"], 1);\nassert_eq!(json[\"within_budget\"], false);\nassert_eq!(json[\"quantities\"][2][\"state\"], \"over\");\nassert!(json.get(\"last_reduction\").is_none(), \"absent until the watch has acted\");\n```",
+      "home": "accumulation",
+      "is_enum": false,
+      "name": "AccumulationReport",
+      "properties": [
+        {
+          "description": "`SCHEMA`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The primary checkout of the repository that was measured.",
+          "name": "repository",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the policy has the episode events read this.",
+          "name": "watched",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether a crossed budget is told to the mesh.",
+          "name": "announce_on_mesh",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "description": "What the policy lets a crossed budget do.",
+          "name": "act",
+          "refs": [
+            "AccumulationAct"
+          ],
+          "required": true,
+          "type": "AccumulationAct"
+        },
+        {
+          "description": "How often a reduction may start, in minutes.",
+          "name": "cooldown_minutes",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Every quantity, with its reading, its budget and its state.",
+          "name": "quantities",
+          "refs": [
+            "Quantity"
+          ],
+          "required": true,
+          "type": "array of Quantity"
+        },
+        {
+          "description": "How many quantities are over their budget.",
+          "name": "over",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many could not be measured.",
+          "name": "unknown",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Whether nothing is over budget. A quantity that could not be measured does not make\nthis false, and is not hidden by it: `unknown` says how many there are.",
+          "name": "within_budget",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "What the watch last removed here, when it has ever acted.",
+          "name": "last_reduction",
+          "refs": [
+            "LastReduction"
+          ],
+          "required": false,
+          "type": "LastReduction | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "accumulation.status"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
     {
       "description": "The active task of this checkout, when there is one.",
       "home": "shared",
@@ -6919,6 +7055,60 @@
         "Explanation"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Which side of its budget a quantity must stay on.\n\n```\nuse majordomus_cli::accumulation::{judge, AccumulationPolicy, BudgetBound, Readings};\nlet q = judge(&Readings::unread(\"not asked\"), &AccumulationPolicy::default());\n// things that pile up are bounded from above, what is left of the disk from below\nassert_eq!(q[0].bound, BudgetBound::AtMost);\nassert_eq!(q[2].bound, BudgetBound::AtLeast);\nassert_eq!(serde_json::to_value(BudgetBound::AtLeast).unwrap(), \"at_least\");\n```",
+      "home": "accumulation",
+      "is_enum": true,
+      "name": "BudgetBound",
+      "properties": [],
+      "type": "\"at_most\" | \"at_least\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Quantity"
+      ],
+      "values": [
+        {
+          "description": "The measurement must not exceed the budget: a count of things that pile up.",
+          "value": "at_most"
+        },
+        {
+          "description": "The measurement must not fall below the budget: what is left of something.",
+          "value": "at_least"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Where a quantity stands against its budget.\n\n```\nuse majordomus_cli::accumulation::{judge, AccumulationPolicy, BudgetState, Readings};\nlet policy = AccumulationPolicy { worktrees_max: Some(3), ..Default::default() };\nlet state = |worktrees| {\n    let readings = Readings { worktrees, ..Readings::unread(\"not asked\") };\n    judge(&readings, &policy)[0].state\n};\nassert_eq!(state(Ok(3)), BudgetState::Ok);\nassert_eq!(state(Ok(4)), BudgetState::Over);\nassert_eq!(state(Err(\"git is absent\".into())), BudgetState::Unknown);\n// with no budget there is a reading and no verdict\nlet free = judge(&Readings { worktrees: Ok(9), ..Readings::unread(\"x\") }, &AccumulationPolicy::default());\nassert_eq!(free[0].state, BudgetState::Unbudgeted);\n```",
+      "home": "accumulation",
+      "is_enum": true,
+      "name": "BudgetState",
+      "properties": [],
+      "type": "\"ok\" | \"over\" | \"unbudgeted\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Quantity"
+      ],
+      "values": [
+        {
+          "description": "Measured, and on the right side of its budget.",
+          "value": "ok"
+        },
+        {
+          "description": "Measured, and on the wrong side of its budget.",
+          "value": "over"
+        },
+        {
+          "description": "Measured, with no budget declared for it: neither a pass nor a finding.",
+          "value": "unbudgeted"
+        },
+        {
+          "description": "Not measured. The reason is in the evidence; it is never read as a pass.",
+          "value": "unknown"
+        }
+      ],
       "variants": []
     },
     {
@@ -21754,6 +21944,7 @@
       ],
       "type": "object",
       "used_by": [
+        "accumulation.status",
         "artifacts.list",
         "blackboard.snapshot",
         "brief.session",
@@ -33048,6 +33239,56 @@
           "value": "release"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "The last reduction the watch ran in this repository, as it recorded it.\n\n```\nuse majordomus_cli::accumulation::LastReduction;\nlet done: LastReduction = serde_json::from_str(\n    r#\"{\"at\": 1791850000, \"because\": [\"worktrees\"], \"removed\": [\"feature/a\"],\n        \"deleted\": [\"feature/a\", \"fix/b\"], \"refused\": 4}\"#,\n)\n.unwrap();\nassert_eq!((done.removed.len(), done.deleted.len(), done.refused), (1, 2, 4));\nassert_eq!(done.because, [\"worktrees\"]);\n```",
+      "home": "accumulation",
+      "is_enum": false,
+      "name": "LastReduction",
+      "properties": [
+        {
+          "description": "When it started, in Unix seconds.",
+          "name": "at",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The quantities that were over budget and asked for it.",
+          "name": "because",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Branches whose worktree was removed.",
+          "name": "removed",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Branches whose name was deleted.",
+          "name": "deleted",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "How many candidates were kept, each for a reading that said so.",
+          "name": "refused",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "AccumulationReport"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -44609,6 +44850,95 @@
           "value": "warning"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "One quantity that accumulates: what was measured, what the policy allows, and what\nreduces it.\n\n```\nuse majordomus_cli::accumulation::{judge, AccumulationPolicy, BudgetState, Quantity, Readings};\nlet policy = AccumulationPolicy { merged_branches_max: Some(20), ..Default::default() };\nlet readings = Readings { merged_branches: Ok(118), ..Readings::unread(\"not asked\") };\nlet q: &Quantity = &judge(&readings, &policy)[1];\nassert_eq!((q.id.as_str(), q.measured, q.budget), (\"merged_branches\", Some(118), Some(20)));\nassert_eq!(q.state, BudgetState::Over);\nassert_eq!(q.policy_key, \"accumulation.merged_branches_max\");\nassert_eq!(q.reduce, majordomus_cli::accumulation::REDUCE_COMMAND);\n```",
+      "home": "accumulation",
+      "is_enum": false,
+      "name": "Quantity",
+      "properties": [
+        {
+          "description": "`worktrees`, `merged_branches` or `disk_free`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What is counted, in words.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The reading, absent when it could not be taken.",
+          "name": "measured",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The unit of the reading and of the budget.",
+          "name": "unit",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The budget the policy declares, absent when it declares none.",
+          "name": "budget",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Which side of the budget the reading must stay on.",
+          "name": "bound",
+          "refs": [
+            "BudgetBound"
+          ],
+          "required": true,
+          "type": "BudgetBound"
+        },
+        {
+          "description": "Where the reading stands.",
+          "name": "state",
+          "refs": [
+            "BudgetState"
+          ],
+          "required": true,
+          "type": "BudgetState"
+        },
+        {
+          "description": "Where the reading was taken, or why it could not be.",
+          "name": "evidence",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The policy key that declares the budget.",
+          "name": "policy_key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The command that reduces the quantity. It re-measures every candidate before it acts.",
+          "name": "reduce",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "AccumulationReport"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -63129,6 +63459,70 @@
   "shared_operations": [],
   "source": "docs/generated/openapi.json",
   "tags": [
+    {
+      "description": "What this repository has piled up without anyone deciding that it should, against the budgets its policy declares: the worktrees git registers, the local branches the trunk already reaches, and the free space on the volume under them. Each quantity carries its reading, its budget, its state — ok, over, unbudgeted when the policy declares no budget, unknown when the reading could not be taken — and the command that reduces it, which re-measures every candidate before it removes one. A provider's episode events read the same answer and say what is over budget before a worker's first tool call (ADR 0150).",
+      "name": "accumulation",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "accumulation",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/accumulation\"",
+          "description": "Every accumulating quantity of this repository with its reading, the budget the policy declares for it under `accumulation:`, where it stands and the command that reduces it; how many are over budget and how many could not be measured; what the policy lets a crossed budget do (report, or reduce) and how often; and what the watch last removed here. Read from git and the volume on every call, with no subprocess per worktree. Reads only: nothing is removed by asking.",
+          "home": "accumulation",
+          "id": "accumulation.status",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "accumulation",
+            "uri": "majordomus://accumulation"
+          },
+          "mcp_tool": "majordomus_accumulation",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/accumulation",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::accumulation",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Is anything piling up past its budget?: the result.",
+              "schema": "AccumulationReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "AccumulationReport",
+          "stability": "experimental",
+          "summary": "Is anything piling up past its budget?"
+        }
+      ],
+      "slug": "accumulation"
+    },
     {
       "description": "What `majordomus generate` writes: every document with the encodings it is committed in — JSON for a program, YAML beside it, Markdown for a reader — each with its schema, its source and its hash, reconciled with the working tree. The declaration is the generator's own manifest; nothing here keeps a list.",
       "name": "artifacts",

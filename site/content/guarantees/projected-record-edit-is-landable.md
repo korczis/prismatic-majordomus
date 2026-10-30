@@ -1,7 +1,7 @@
 +++
 title = "A pull request that edits a projected plan record is not refused because GitHub does not show the edit yet, and the trunk is refused for it once a declared window has passed"
 description = "GitHub's issues and milestones are a projection of the plan on the trunk. A pull request"
-weight = 111
+weight = 112
 [extra]
 claim_id = "projected-record-edit-is-landable"
 status = "guaranteed"

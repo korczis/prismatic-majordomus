@@ -526,12 +526,12 @@ mj_derive_ses_outcome() {
 # stands, as `mj_capture_ensure_server` reported it, and its second what that server did with
 # the mesh declaration, as `mj_capture_mesh_line` reported it; each empty when nothing asked.
 mj_derive_briefing() {
-  local server="${1:-}" mesh="${2:-}" monitor="${3:-}" budget out
+  local server="${1:-}" mesh="${2:-}" monitor="${3:-}" accumulation="${4:-}" budget out
   budget="$(mj_pol session.briefing_budget_lines)"
   case "$budget" in ''|*[!0-9]*) budget="$(mj_pol context.always_loaded_budget_lines)" ;; esac
   case "$budget" in ''|*[!0-9]*) budget=60 ;; esac
 
-  out="$(mj_derive_briefing_body "$server" "$mesh")"
+  out="$(mj_derive_briefing_body "$server" "$mesh" "$monitor" "$accumulation")"
   printf '%s\n' "$out" | head -n "$budget"
   local total; total="$(mj_derive_nlines "$out")"
   [ "$total" -gt "$budget" ] && printf '... %s more line(s) withheld by session.briefing_budget_lines; run `majordomus context` for the whole briefing.\n' "$((total - budget))"
@@ -539,7 +539,7 @@ mj_derive_briefing() {
 }
 
 mj_derive_briefing_body() {
-  local server="${1:-}" mesh="${2:-}" sid task_id outcome n
+  local server="${1:-}" mesh="${2:-}" monitor="${3:-}" accumulation="${4:-}" sid task_id outcome n
   sid="$(mj_open_session_id)"
   printf '## Majordomus — what this repository already knows\n\n'
   printf 'Episode %s, on %s at %s, working tree %s.\n' \
@@ -562,6 +562,15 @@ mj_derive_briefing_body() {
   if [ -n "$mesh" ]; then printf 'Mesh: %s\n' "$mesh"; fi
   # --- what happened around the repository in the last hour, what names this worker first
   if [ -n "$monitor" ]; then printf 'Monitor: %s\n' "$monitor"; fi
+
+  # --- what has piled up past its budget (ADR 0150): worktrees, merged branches, free disk.
+  # Said here because the next thing this worker does may be a build, and a volume that is
+  # full is not a failure anything can report afterwards. Absent when every budget holds.
+  if [ -n "$accumulation" ]; then
+    printf 'Accumulation: over budget — `majordomus accumulation` has every reading, and the policy says %s\n' \
+      "$(mj_pol accumulation.act)"
+    printf '%s\n' "$accumulation" | sed 's/^/  /'
+  fi
 
   # --- what blocks acceptance. First, because it is the only thing here that refuses a
   # command the worker is otherwise about to run.

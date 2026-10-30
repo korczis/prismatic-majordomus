@@ -1972,6 +1972,75 @@ mj_rust_monitor_brief() {
   return 0
 }
 
+# mj_rust_accumulation_brief <repository-root> [home]
+#
+# What is over its budget, one line each, as `majordomus accumulation --brief` says it: the
+# worktrees, the merged branches and the free disk against the policy's `accumulation:`
+# block (ADR 0150). Prints nothing when every budget holds, when the policy has the watch
+# off, or when there is no executable — a briefing degrades to silence, never to an error.
+mj_rust_accumulation_brief() {
+  mj_ab_root="$1"
+  mj_ab_bin="$(mj_rust_bin "${2:-$1}")"
+  [ -x "$mj_ab_bin" ] || return 0
+  mj_ab_share="$(mj_rust_share "${2:-$1}")"
+  ( [ -z "$mj_ab_share" ] || export MAJORDOMUS_SHARE="$mj_ab_share"
+    "$mj_ab_bin" accumulation --brief --repo "$mj_ab_root" ) 2>/dev/null || true
+  return 0
+}
+
+# mj_rust_accumulation_reduce <repository-root> <home> <log>
+#
+# Start `majordomus accumulation --reduce --if-due` and do not wait for it. It decides for
+# itself whether to act — the policy's consent, a crossed budget and the cooldown are all
+# read there, at the moment it runs — and what it did is in <log> and in the record the next
+# measurement carries. Detached with every descriptor redirected: a provider's hook that
+# leaves a child holding its standard output is a hook the provider waits on.
+mj_rust_accumulation_reduce() {
+  mj_ar_root="$1"
+  mj_ar_bin="$(mj_rust_bin "${2:-$1}")"
+  [ -x "$mj_ar_bin" ] || return 0
+  mj_ar_log="$3"
+  mkdir -p "$(dirname "$mj_ar_log")" 2>/dev/null || return 0
+  mj_ar_share="$(mj_rust_share "${2:-$1}")"
+  ( [ -z "$mj_ar_share" ] || export MAJORDOMUS_SHARE="$mj_ar_share"
+    nohup "$mj_ar_bin" accumulation --reduce --if-due --repo "$mj_ar_root" \
+      </dev/null >"$mj_ar_log" 2>&1 & ) >/dev/null 2>&1
+  return 0
+}
+
+# mj_rust_accumulation_mesh <repository-root> <home> <scope> <stamp>
+#
+# Tell the mesh what is over budget, or take it back. `accumulation --headline` prints one
+# line when the policy has it announced and a budget is crossed; that line becomes the
+# intent of an advisory claim of the watch's own session on <scope>, which every linked
+# machine's monitor shows — the alert sessions used to write on the board by hand (ADR 0150).
+# When nothing is crossed any more and <stamp> says something was announced, the session is
+# closed and its claim ends on every runtime. Detached, and silent without a server: a
+# repository with no mesh is not an error.
+mj_rust_accumulation_mesh() {
+  mj_am_root="$1"
+  mj_am_bin="$(mj_rust_bin "${2:-$1}")"
+  [ -x "$mj_am_bin" ] || return 0
+  mj_am_scope="$3"; mj_am_stamp="$4"
+  mj_am_share="$(mj_rust_share "${2:-$1}")"
+  mj_am_line="$( ( [ -z "$mj_am_share" ] || export MAJORDOMUS_SHARE="$mj_am_share"
+    "$mj_am_bin" accumulation --headline --repo "$mj_am_root" ) 2>/dev/null)" || return 0
+  if [ -n "$mj_am_line" ]; then
+    mkdir -p "$(dirname "$mj_am_stamp")" 2>/dev/null && printf '%s\n' "$mj_am_line" > "$mj_am_stamp" 2>/dev/null
+    mj_am_host="$(hostname -s 2>/dev/null || true)"
+    ( [ -z "$mj_am_share" ] || export MAJORDOMUS_SHARE="$mj_am_share"
+      nohup "$mj_am_bin" mesh claim --repo "$mj_am_root" --session accumulation-watch --advisory \
+        --intent "accumulation over budget on ${mj_am_host:-this machine}: $mj_am_line" "$mj_am_scope" \
+        </dev/null >/dev/null 2>&1 & ) >/dev/null 2>&1
+  elif [ -e "$mj_am_stamp" ]; then
+    rm -f "$mj_am_stamp"
+    ( [ -z "$mj_am_share" ] || export MAJORDOMUS_SHARE="$mj_am_share"
+      nohup "$mj_am_bin" mesh session close --repo "$mj_am_root" --session accumulation-watch \
+        </dev/null >/dev/null 2>&1 & ) >/dev/null 2>&1
+  fi
+  return 0
+}
+
 mj_rust_prs_brief() {
   mj_pb_root="$1"
   mj_pb_bin="$(mj_rust_bin "${2:-$1}")"
