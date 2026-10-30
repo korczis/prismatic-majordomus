@@ -74401,6 +74401,40 @@
         }
       },
       {
+        "id": "majordomus://issue/I4434",
+        "kind": "issue",
+        "label": "I4434",
+        "summary": "An obligation whose inputs select no tracked file is not judged, so evidence over an empty input set never discharges it",
+        "route": "/cockpit/objects/issue/i4434",
+        "source": ".ai/repo/project/issues/I4434.yaml",
+        "facts": {
+          "created_at": "2026-10-30",
+          "depends_on": [],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/evidence.sh",
+            "apps/majordomus-cli/src/capability/builtin/obligations.rs",
+            "docs/claims/obligation-closure.md",
+            "site/content/guarantees",
+            "test/cases/4408_an_obligation_without_inputs_proves_nothing.sh"
+          ],
+          "serves": [],
+          "slug": "an-obligation-without-inputs-proves-nothing",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "cargo test --locked --lib obligations",
+            "MJ_TEST_JOBS=4 bash test/run.sh 4408_an_obligation_without_inputs_proves_nothing 103_obligations 2998_evidence_reaches_the_subcommands_the_executable_owns",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -98164,6 +98198,13 @@
         "label": "test/cases/43_plan_command.sh",
         "route": "/cockpit/objects/test/test-cases-43-plan-command-sh",
         "source": "test/cases/43_plan_command.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4408_an_obligation_without_inputs_proves_nothing.sh",
+        "kind": "test",
+        "label": "test/cases/4408_an_obligation_without_inputs_proves_nothing.sh",
+        "route": "/cockpit/objects/test/test-cases-4408-an-obligation-without-inputs-proves-nothing-sh",
+        "source": "test/cases/4408_an_obligation_without_inputs_proves_nothing.sh"
       },
       {
         "id": "majordomus://test/test/cases/44_model_doctrine.sh",
@@ -137823,6 +137864,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4434",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4434",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -144433,6 +144484,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4408_an_obligation_without_inputs_proves_nothing.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/44_model_doctrine.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -149509,8 +149565,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4097,
-      "edges": 9459,
+      "nodes": 4099,
+      "edges": 9462,
       "acyclic": false,
       "truncated": false
     }
