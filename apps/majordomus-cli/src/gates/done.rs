@@ -139,6 +139,14 @@ pub(crate) fn answer(
                         .find(|o| o.id == token)
                         .map(|o| (o.applicable, o.declared, o.reason.clone()));
                     match (standing.get(token), applicable) {
+                        // neither the task nor the change asks for it: not applicable,
+                        // whatever the closure read for a token it judged live on the
+                        // change's behalf (a fact git holds is judged whether or not declared)
+                        (_, Some((false, false, why))) => (
+                            GateStatus::Exempt,
+                            why,
+                            format!("obligation {token} (derived from its own inputs)"),
+                        ),
                         // the closure judged it: that word is the answer, translated once
                         (Some(s), _) => (
                             match s.state.as_str() {
@@ -270,8 +278,12 @@ pub(crate) fn answer(
                                 "convergence.report".to_string(),
                             )
                         } else {
+                            // owed, not wrong: a branch still being worked is at risk until it
+                            // is pushed, which the `pushed` question also waits for. A failure
+                            // here would read every task in progress as blocked in the stage
+                            // fold; queued keeps `complete` false and names the holdings.
                             (
-                                GateStatus::Fail,
+                                GateStatus::Queued,
                                 format!("{}: {}", report.summary(), at_risk.join(", ")),
                                 "convergence.report".to_string(),
                             )
@@ -869,6 +881,28 @@ mod tests {
         assert!(by("tested").source.contains("obligations.closure"));
     }
 
+    /// The closure judges the facts git holds live whether or not the task declared them.
+    /// Its word answers a question only when the task or the change asks for that token: a
+    /// push nobody owes is not applicable, whatever the remote says, and a commit the change
+    /// implies is answered by what git says about it.
+    #[test]
+    fn a_token_judged_live_that_nobody_asks_for_is_not_applicable() {
+        let mut s = BTreeMap::new();
+        s.insert("push".to_string(), standing("owed"));
+        s.insert("commit".to_string(), standing("discharged"));
+        let implied = vec![
+            implied_of("push", false, false),
+            implied_of("commit", true, false),
+        ];
+        let q = answer(shipped(), &s, &implied, &[], &[], true, None, None);
+        let by = |id: &str| q.iter().find(|q| q.id == id).unwrap().clone();
+        assert_eq!(by("pushed").status, GateStatus::Exempt);
+        assert_eq!(by("pushed").evidence, "because");
+        assert!(by("pushed").source.contains("derived from its own inputs"));
+        assert_eq!(by("committed").status, GateStatus::Pass);
+        assert!(by("committed").source.contains("obligations.closure"));
+    }
+
     #[test]
     fn an_obligation_the_change_implies_and_nobody_declared_is_a_debt_not_a_pass() {
         let implied = vec![
@@ -1066,7 +1100,8 @@ mod tests {
             None,
         );
         let question = q.iter().find(|q| q.id == "no-stale-topology").unwrap();
-        assert_eq!(question.status, GateStatus::Fail);
+        // owed, never a pass, and never a failure that would read work in progress as blocked
+        assert_eq!(question.status, GateStatus::Queued);
         assert!(
             question.evidence.contains("feature/never-pushed"),
             "the finding must name the holding, not only count it: {}",

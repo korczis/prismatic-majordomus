@@ -74401,6 +74401,63 @@
         }
       },
       {
+        "id": "majordomus://issue/I4433",
+        "kind": "issue",
+        "label": "I4433",
+        "summary": "Where the policy says completed means complete, finish refuses completed until the completion report is complete, and every finish records the stage it stopped at",
+        "route": "/cockpit/objects/issue/i4433",
+        "source": ".ai/repo/project/issues/I4433.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With completed_means_complete on, finish completed is refused naming every question that is neither pass nor exempt, with its remediation; partial is accepted",
+            "Completed is accepted exactly when gates.completion says complete",
+            "task.finished carries stage and complete whenever the completion-gates doctrine ran",
+            "evidence --run-gates records one task.gate line per gate it ran, passing or failing",
+            "Without the key, finish behaves as before"
+          ],
+          "created_at": "2026-10-30",
+          "desired_state": "One bit decides whether an owed question refuses completed; the refusal and the record are the executable's report, read once; the gates are run and recorded by the dispatcher CI runs.",
+          "evidence_required": [
+            "case_completion_is_proved"
+          ],
+          "milestone": "a-finish-reads-the-criteria-its-work-serves",
+          "non_scope": [
+            "Turning the key on in this repository: the shipped policy still answers generated, handover and issue only elsewhere (unknown), so complete is out of reach here until those questions have sources",
+            "The deployment plan (deploy/targets.rs) and the release, issue and handover sources of the #292 core",
+            "Live verification of a deployed surface (deploy.verify)"
+          ],
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/gates.sh",
+            "lib/finish.sh",
+            "lib/evidence.sh",
+            "lib/derive.sh",
+            "lib/usecase.sh",
+            "scripts/ci/run-plan",
+            "apps/majordomus-cli/src/capability/builtin/obligations.rs",
+            "apps/majordomus-cli/src/capability/builtin/gates.rs",
+            "apps/majordomus-cli/src/gates/done.rs",
+            "share/completion.yaml",
+            "share/obligations.yaml",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/allow/policy.txt",
+            "share/commands.yaml",
+            "docs/CLI.md",
+            "test/cases/880_completion_is_proved.sh"
+          ],
+          "slug": "completed-is-earned",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "bash test/run.sh 880_completion_is_proved",
+            "bash test/run.sh 131_completion_gates",
+            "majordomus plan validate",
+            "majordomus intent validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -99228,6 +99285,13 @@
         "label": "test/cases/87b_release_archive_shape.sh",
         "route": "/cockpit/objects/test/test-cases-87b-release-archive-shape-sh",
         "source": "test/cases/87b_release_archive_shape.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/880_completion_is_proved.sh",
+        "kind": "test",
+        "label": "test/cases/880_completion_is_proved.sh",
+        "route": "/cockpit/objects/test/test-cases-880-completion-is-proved-sh",
+        "source": "test/cases/880_completion_is_proved.sh"
       },
       {
         "id": "majordomus://test/test/cases/884_a_declared_kind_is_a_kind_the_graph_knows.sh",
@@ -137823,6 +137887,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4433",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4433",
+        "target": "majordomus://milestone/a-finish-reads-the-criteria-its-work-serves",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -145193,6 +145267,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/880_completion_is_proved.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/884_a_declared_kind_is_a_kind_the_graph_knows.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -149509,8 +149588,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4097,
-      "edges": 9459,
+      "nodes": 4099,
+      "edges": 9462,
       "acyclic": false,
       "truncated": false
     }

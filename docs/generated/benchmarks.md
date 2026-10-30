@@ -165,7 +165,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `objects.list` | objects | query | — | covered | covered | covered | `all`, `first-kind` |
 | `objects.search` | objects | query | process, 64 entries | covered | covered | covered | `common-word`, `no-hit` |
 | `objects.verify` | objects | query | — | covered | covered | covered | `bounded` |
-| `obligations.closure` | obligations | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `obligations.closure` | obligations | query | process, 2 entries, 2s | covered | covered | covered | `live`, `recorded-only` |
 | `obligations.vocabulary` | obligations | query | process, 2 entries | covered | covered | covered | `default` |
 | `observatory.capture` | observatory | query | — | covered | covered | covered | `default` |
 | `observatory.events` | observatory | query | — | covered | covered | covered | `newest`, `after a cursor` |

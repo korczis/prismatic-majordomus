@@ -769,10 +769,11 @@ validation gate of the CI model that has reported.
 ```
 majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]
 majordomus evidence --gate <id> --exit <status> [--command <cmd>] [--result <r>] [--json]
+majordomus evidence --run-gates
 majordomus evidence <show|claim|proves|record|stamp> [options]
 ```
 
-The third form is the other program's. Every argument this command takes is an option, so a
+The last form is the other program's. Every argument this command takes is an option, so a
 word in the first position is never its own: `show`, `claim`, `proves`, `record` and `stamp`
 are subcommands of the Rust executable, which holds the ledger of what ran
 ([`EVIDENCE.md`](EVIDENCE.md#the-capabilities)), and the launcher hands them to it with
@@ -781,7 +782,7 @@ codes are the executable's, and they need no active task. Which words those are 
 from the executable's own declaration (`docs/generated/cli.yaml` in a checkout, the shipped
 executable's `help evidence <word>` in an installed tree), so `majordomus evidence --help`
 lists exactly the subcommands this installation reaches. A word neither program has is
-refused here, exit `2`. The rest of this section is about the first two forms.
+refused here, exit `2`. The rest of this section is about the first three forms.
 
 The two forms record different kinds of fact and are never one invocation. An obligation is
 a promise the task made; a gate is what the validation pipeline said about the tree. A line
@@ -807,7 +808,10 @@ a deployment is a fact about a machine this repository never contacts.
 `--command` or `--artifact` is required: narrative is not evidence. A token the vocabulary
 does not declare exits `2`; a token the active task never promised exits `15`, because
 recording evidence for something nobody asked for is how a checklist grows entries nobody
-wanted.
+wanted — unless the change set implies it (the completion report's `obligations`, derived
+from the token's own inputs). A task cannot be restarted to declare what its change turned
+out to need, so such a token is added to the task's `requires` by recording it, and the
+closure judges it from then on exactly as one declared at `start`.
 
 **Writes:** a `task.evidence` line in the ledger, carrying the obligation, how it was taken,
 the command or artifact, and the hash of the tracked files the obligation names. Nothing
@@ -836,6 +840,12 @@ an `--exit` that is not a number.
 ```
 majordomus evidence --gate rust-check --exit 0 --command 'scripts/rust-check --ci'
 ```
+
+`--run-gates` runs every gate the task's change selects, here, with the commands the CI
+model names, through the dispatcher CI runs (`scripts/ci/run-plan`, told to record through
+this verb with `MJ_GATE_RECORD`), and records each one's exit as it finishes, passing or
+failing. A gate recorded this way and a gate CI ran are the same command reaching the same
+ledger line. It exits with the dispatcher's status: `1` when a gate failed.
 
 **Writes:** a `task.gate` line in the ledger, carrying the gate, its exit status and the hash
 of the files that select it. Those files are derived from the model rather than declared:
@@ -890,6 +900,24 @@ every reading and written down by nobody. `complete` is true only when a task is
 and every question passes or is exempt; `finishable` and `complete` are two different
 words. A distribution whose policy cannot be read is asked one question, `policy`, answered
 `unknown`, and nothing is complete.
+
+`check` prints where the task stands as one line, `stage`, with what that stage still owes,
+and `finish` records the stage and `complete` on its `task.finished` line, so a task closed
+`partial` says where it stopped and not only the word. Where the policy sets
+`verification.completed_means_complete: true` and the completion-gates doctrine runs at
+finish (`gates_passed` in `verification.finish_requires`), `completed` is earned rather than
+claimed: it is refused unless `complete` is true, and the refusal names each question still
+owed with the command that settles it. A weaker outcome is never refused. The skeleton ships
+the key off, because a repository with no CI model and no recorded evidence would be refused
+every completion; a question the report answers only `elsewhere` stays `unknown`, so a
+policy that keeps such questions keeps `complete` out of reach until something answers them.
+
+The obligation closure the report reads settles the facts git holds — `commit`, `push`,
+`target` — live at HEAD (`live`, on by default, an input of both `gates.completion` and
+`obligations.closure`), and the published site only for a task that declared `pages`. A
+handover derived at an episode's end asks with `live: false`, reads the ledger alone and says
+a live token is owed rather than proven; its `Completion` section is that report's stage and
+the questions still owed.
 
 ### The closing questions
 

@@ -66,6 +66,10 @@
           "items": {
             "type": "string"
           }
+        },
+        "completed_means_complete": {
+          "type": "boolean",
+          "description": "When true, and the completion-gates doctrine runs at finish (gates_passed in finish_requires), the outcome completed is refused unless the completion report (gates.completion, share/completion.yaml) says complete: every question of the policy passes or is exempt. The refusal names each question still owed with the command that settles it. A weaker outcome is never refused, and every finish records the stage the report derived. When false or absent, the same questions are reported and the outcome is not refused over them."
         }
       }
     },
