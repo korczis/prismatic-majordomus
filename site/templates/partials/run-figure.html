@@ -1,0 +1,29 @@
+{#- What the recorded run's count of supported guaranteed claims may be shown as: one word, the
+    one definition every page that shows the figure reads (I4317). The caller captures it:
+
+      {% set ci_figure %}{% include "partials/run-figure.html" %}{% endset %}{% set ci_figure = ci_figure | trim %}
+
+    with `ci` the data/evidence.json that scripts/pages evidence wrote (or nothing). The words:
+
+      current      the run is of the commit the page was built from and confirms its report:
+                   the count is shown as the count
+      behind       the run is of an older commit and nothing withholds it there (no failure, no
+                   dirty tree, nothing absent or refused): the count is shown, marked stale and
+                   with its distance, as what held there
+      unconfirmed  the run counted, and its state is stale or unknown for a reason of its own
+                   (failures, a dirty tree, a refused or absent report): no count is shown,
+                   because the run does not confirm one; the evidence page says why
+      unmeasured   no run counted anything
+
+    scripts/ci/homepage-check `declared` derives the same word from the same fields and holds
+    the homepage, /guarantees/ and /evidence/ to it. -#}
+{%- set rf_word = "unmeasured" -%}
+{%- if ci and ci.available and ci.claims and ci.claims.measured -%}
+{%- set rf_reasons = ci.unconfirmed | default(value=[]) | length -%}
+{%- set rf_state = ci.state | default(value="unknown") -%}
+{%- set rf_word = "unconfirmed" -%}
+{%- if rf_reasons == 0 and rf_state == "current" -%}{%- set rf_word = "current" -%}
+{%- elif rf_reasons == 0 and rf_state == "stale" and (ci.behind | default(value=0)) > 0 -%}{%- set rf_word = "behind" -%}
+{%- endif -%}
+{%- endif -%}
+{{ rf_word }}
