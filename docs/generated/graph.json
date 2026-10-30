@@ -71528,6 +71528,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I4259",
+        "kind": "issue",
+        "label": "I4259",
+        "summary": "A document's own metadata and a folded YAML scalar are diagnosed, not just refused",
+        "route": "/cockpit/objects/issue/i4259",
+        "source": ".ai/repo/project/issues/I4259.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A document with x-source front matter is indexed",
+            "Any other unknown key is refused naming the x- namespace as the remedy",
+            "A value wrapped onto the next line is refused naming the key it continues, by both parsers"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "Unknown keys and folded scalars are refused with no hint of either.",
+          "depends_on": [],
+          "desired_state": "document/v1 accepts an `x-` namespace for adopter keys; a folded or multi-line scalar is refused with a message that says so and shows the one-line form.",
+          "evidence_required": [
+            "case_adopter_front_matter_is_read_not_refused"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "document/v1 accepts an `x-` namespace for adopter keys; a folded or multi-line scalar is refused with a message that says so and shows the one-line form.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4259.yaml",
+            "share/schemas/majordomus/document/document.v1.schema.json",
+            "apps/majordomus-cli/src/index.rs",
+            "apps/majordomus-cli/src/metadata/yaml.rs",
+            "lib/common.sh",
+            "test/cases/4259_a_wrapped_value_is_named.sh"
+          ],
+          "slug": "adopter-front-matter-is-read-not-refused",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4259_a_wrapped_value_is_named"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4265",
         "kind": "issue",
         "label": "I4265",
@@ -98122,6 +98162,13 @@
         "label": "test/cases/4258_documents_below_docs_are_discovered.sh",
         "route": "/cockpit/objects/test/test-cases-4258-documents-below-docs-are-discovered-sh",
         "source": "test/cases/4258_documents_below_docs_are_discovered.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4259_a_wrapped_value_is_named.sh",
+        "kind": "test",
+        "label": "test/cases/4259_a_wrapped_value_is_named.sh",
+        "route": "/cockpit/objects/test/test-cases-4259-a-wrapped-value-is-named-sh",
+        "source": "test/cases/4259_a_wrapped_value_is_named.sh"
       },
       {
         "id": "majordomus://test/test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh",
@@ -136983,6 +137030,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4259",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4259",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4265",
         "target": "kind:issue",
         "kind": "is_a"
@@ -144403,6 +144460,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4259_a_wrapped_value_is_named.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -149509,8 +149571,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4097,
-      "edges": 9459,
+      "nodes": 4099,
+      "edges": 9462,
       "acyclic": false,
       "truncated": false
     }

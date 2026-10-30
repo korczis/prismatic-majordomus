@@ -533,6 +533,21 @@ fn read_objects(
     ))
 }
 
+/// Whether a schema leaves the adopting project a key namespace of its own: a
+/// `patternProperties` entry for `x-` keys anywhere in it.
+fn admits_extensions(schema: &Value) -> bool {
+    match schema {
+        Value::Object(map) => {
+            map.get("patternProperties")
+                .and_then(Value::as_object)
+                .is_some_and(|p| p.keys().any(|k| k.starts_with("^x-")))
+                || map.values().any(admits_extensions)
+        }
+        Value::Array(items) => items.iter().any(admits_extensions),
+        _ => false,
+    }
+}
+
 /// Validate a document against its kind's schema: keys the schema does not allow are one
 /// `unknown_key` diagnostic naming them all; any other violation is `schema_violation`
 /// naming every failed constraint with its path.
@@ -551,10 +566,17 @@ fn conforms(
         .flat_map(|v| v.unknown_keys.clone())
         .collect();
     if !unknown.is_empty() {
+        // a kind that leaves adopters a namespace of their own says so, because the key
+        // was most often a project's provenance rather than a misspelt contract key
+        let remedy = if admits_extensions(&sch.json) {
+            "; a key the project owns goes in the x- namespace (x-<name>)"
+        } else {
+            ""
+        };
         return Err(d(
             "unknown_key",
             format!(
-                "{prefix}key(s) not in schema '{}': {}",
+                "{prefix}key(s) not in schema '{}': {}{remedy}",
                 sch.name,
                 unknown.join(", ")
             ),
