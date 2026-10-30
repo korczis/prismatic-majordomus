@@ -1310,6 +1310,10 @@ pub fn open_pull_requests(
     Ok(listed)
 }
 
+/// One GraphQL read of the forge: the query, its typed size variable and the cursor of the
+/// page before, answered as the forge's JSON ([`open_list`] asks [`OPEN_QUERY`] through it).
+type ForgeAsk<'a> = dyn Fn(&str, &str, Option<&str>) -> Result<Value, ForgeError> + 'a;
+
 /// The open pull requests from what `gh pr list` answered (`listed`, as [`gh`] returns it): its
 /// list when it listed them, and when the forge timed the page out or cut its body off
 /// ([`list_needs_smaller_pages`]) the same list read again [`OPEN_PAGE`] at a time through
@@ -1318,7 +1322,7 @@ pub fn open_pull_requests(
 fn open_list(
     list_args: &[&str],
     listed: (bool, String, String),
-    ask: &dyn Fn(&str, &str, Option<&str>) -> Result<Value, ForgeError>,
+    ask: &ForgeAsk,
 ) -> Result<Value, ForgeError> {
     if listed.0 || !list_needs_smaller_pages(&listed.2) {
         return json_of(list_args, listed);
