@@ -196,8 +196,8 @@ run_case() {
   # leaves its background server holding a port for the next one.
   set -m
   # MAJORDOMUS_ACCUMULATION=off: a case that fires a provider's event in this repository
-  # would otherwise run the accumulation watch against the machine it runs on, and this
-  # repository's policy lets that watch remove worktrees (ADR 0150). A case that tests the
+  # would otherwise run the accumulation watch against the machine it runs on, and a policy
+  # that says `act: reduce` lets that watch remove worktrees (ADR 0150). A case that tests the
   # watch unsets it for the one command it measures.
   # the runner's own selection never reaches a case: a case that runs test/run.sh itself
   # (123, 413, 26, 94 do) would otherwise run its own shard of a suite it did not choose
