@@ -13,6 +13,7 @@ featured: false
 areas: [documentation]
 commands: [skills]
 kinds: [skill]
+modules: [skills]
 rules: [majordomus.skill-integrity]
 docs: [docs/CONCEPTS.md]
 adrs: [adr-0007]

@@ -1,0 +1,46 @@
+# rehomed from NM1: a new milestone for the-site-is-always-fully-multilingual would derive PLANNED (none of its issues ACTIVE, VERIFY or DONE), so O1 refuses it; public-proof is ACTIVE, owns what the public site tells a visitor and holds scripts/site-check and site/ in its scope
+# the case number of 3731_a_number_in_a_segment_is_a_placeholder is allocated with the id
+id: "I3758"
+milestone: "public-proof"
+title: "A number in a segment is a placeholder, so a changed count keeps its translation, and site-check reports each copy's untranslated share"
+slug: "a-number-in-a-segment-is-a-placeholder"
+priority: "p1"
+profile: "implementation"
+parallel_safe: true
+objective: "scripts/lib/site-i18n.mjs cuts every run of digits in a segment's text into a numbered value placeholder that is never translated, so the memory key of a sentence does not change when the count inside it does; scripts/site-translate re-keys the existing memory to that form without losing an admitted translation; the build publishes each copy's untranslated share per route in /<lang>/i18n.json; and scripts/site-check prints that share for every language and refuses a homepage copy with any untranslated segment."
+why: "The roadmap and landing audits of 2026-10-20 traced most of the English left on /cs/ to one cause: the memory is keyed by the hash of the whole segment, digits included, so every new milestone, changed count or new release reverts a translated sentence to English until the memory is refilled out of band, and the count chips of /cs/roadmap/ read 'N of M' beside 'N z M'. The intent the-site-is-always-fully-multilingual says an incomplete translation is stated by measurement, not by promise; today the only figure is one share for the whole site, so the homepage's own share is invisible. public-proof owns what the site tells a visitor."
+current_state: "On origin/master scripts/lib/site-i18n.mjs:185-186 keys a segment by sha256 of its source with digits included, and only a value wrapped in <data> is a placeholder (OPAQUE at :33, explained at :30-32); a bare number in text is part of the key. The memory therefore holds All 10, 11, 15 and 17 pages in the site map as four entries (site/i18n/cs/memory/1f.jsonl:225, 54.jsonl:93, e0.jsonl:12, 6b.jsonl:62) and the graph's text heading once per count (10.jsonl:189, 58.jsonl:131, a8.jsonl:109, df.jsonl:264, f0.jsonl:200), none of them for the counts the build renders now. The report at site-i18n.mjs:605-607 carries one coverage per language, written to every /<lang>/i18n.json at :623, with no per-route figure; scripts/site-check:1289-1294 names the language copies only to exempt them from the navigation check and measures no share; scripts/site-translate:4-9 offers status, export, import and run and no re-keying."
+desired_state: "A segment's source shows each digit run as a void value placeholder, admissible demands it once like any other placeholder, restore puts the page's own digits back, and keyOf hashes the placeholder form; scripts/site-translate rekey rewrites every memory entry whose English and translation carry the same digit runs to the placeholder form and reports the entries it could not re-key; /<lang>/i18n.json carries, beside the language total, each route's segments, translated count and untranslated share; scripts/site-check prints one line per language with its share and the routes with the largest untranslated share, and refuses a / copy with an untranslated segment; case 3731_a_number_in_a_segment_is_a_placeholder holds it on a fixture site."
+scope:
+  - "scripts/lib/site-i18n.mjs"
+  - "scripts/site-translate"
+  - "scripts/site-check"
+  - "site/templates/index.html"
+  - "site/templates/partials/footer.html"
+  - "site/i18n/cs/memory"
+  - "test/cases/3731_a_number_in_a_segment_is_a_placeholder.sh"
+  - "test/cases/3590_the_site_is_derived_in_every_language.sh"
+  - ".ai/repo/adrs/0218-every-language-of-the-site-is-derived-from-the-english-build-and-a-translation-memory.md"
+  - ".ai/repo/project/issues/I3758.yaml"
+non_scope:
+  - "Translating a date or a version into a local format; a value placeholder carries the English digits unchanged"
+  - "Content fixes to individual Czech entries, which I3753 makes"
+  - "A model call from the build; the build stays a pure function of the English pages and the memory"
+  - "A share floor for any route other than the homepage"
+acceptance_criteria:
+  - "Two fixture pages that differ only in a count inside one sentence produce one memory key, and one translation serves both with each page's own number restored"
+  - "A changing value that is the whole text of an inline element, a short commit id (7 to 40 hex digits) or a version with its date, becomes a void value placeholder too: two builds of one page at different commits produce the same memory key for the sentence around it (33 measured three /cs/ homepage segments re-keyed on every build of 76c57859663: inferred at a commit id, read once at this site's commit id, and the release record line)"
+  - "Negative: a translation that drops, repeats or changes a value placeholder is not admitted and the segment is counted as missing"
+  - "An identifier that contains digits, such as I1011 or v0.30.2, inside opaque markup or as a lone token stays untranslated and unchanged"
+  - "site-translate rekey keeps every translation whose digits match its English, and the cs coverage after a rekey and rebuild of master is not lower than before it"
+  - "/<lang>/i18n.json carries each route's segments, translated and untranslated share, and its route totals sum to the language total"
+  - "site-check prints each language's untranslated share and fails, naming the missing segments, when the / copy of a language has one; a fixture with a fully translated / passes"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3731_a_number_in_a_segment_is_a_placeholder"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3590_the_site_is_derived_in_every_language"
+  - "scripts/site-build && scripts/site-check"
+evidence_required:
+  - "a_number_in_a_segment_is_a_placeholder"
+  - "site_check_reports_each_copys_untranslated_share"
+depends_on:
+  - "I3753"

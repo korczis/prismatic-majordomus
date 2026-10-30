@@ -56,7 +56,8 @@ mj_cmd_doctor() {
   local a
   for a in "$@"; do case "$a" in
     --help|-h) echo "usage: majordomus doctor [--json]   (read-only; exit 0 healthy, 10 failures, 12 missing)"
-               echo "  MAJORDOMUS_DOCTOR_CONTEXT=commit   the pre-commit hook's run: leaves out the per-worktree uncommitted-work reading and says so"
+               echo "  MAJORDOMUS_DOCTOR_CONTEXT=commit   the pre-commit hook's run: leaves out the per-worktree uncommitted-work reading, and the"
+               echo "                                     context builder when nothing staged can change it, and says so"
                return 0 ;;
     *) mj_die "$MJ_EX_USAGE" "doctor: unknown option $a" ;;
   esac; done
@@ -80,6 +81,7 @@ mj_cmd_doctor() {
   mj_doctrine_dispatch doctor
   mj_report_environment
   mj_report_reasoning
+  mj_report_layout
   mj_report_budget doctor "$t_start"
   mj_finish_doctor
 }
@@ -348,8 +350,18 @@ mj_validate_projection() {
 # names .ai/README.md, and no generated target carries what the layer is for. A rule that
 # exists in one provider's file and nowhere else is the two-rulebooks failure this tool was
 # distilled from, so a generated target that holds a rule corpus fails here.
+#
+# Both questions are asked of the generated content only: the whole file in file mode, the
+# region in region mode. The host document around a region is the repository's own, written
+# by people before or beside the layer; it may carry rule bullets and a rules section, and no
+# edit of the policy could remove them, so a finding there could never be fixed by what
+# doctor tells the reader to run. The pointer is read from the same span for the same reason
+# turned round: the region is what a worker is promised, and a host that happens to name
+# .ai/README.md does not stand in for a region that lost it. Absent or malformed markers are
+# the projection doctrine's finding and nothing is judged here.
 mj_validate_bootstrap() {
-  local j=0 tgt mode bad=0
+  local j=0 tgt mode bad=0 owned region
+  region="$(mktemp "${TMPDIR:-/tmp}/mj.bs.XXXXXX")"
   if mj_personal_active; then
     # The chain starts at the project's README, and a personal layer changes nothing the
     # project shares: the README is the repository's, the layer is one person's. The agent
@@ -363,13 +375,19 @@ mj_validate_bootstrap() {
     tgt="$(mj_pol "projections.$j.target")"; mode="$(mj_projection_mode "$j")"; j=$((j+1))
     [ -f "$MJ_ROOT/$tgt" ] || continue   # projection_integrity reports absence
     mj_personal_is_the_projects "$tgt" && continue   # the project's file, like its README
-    if ! grep -q '\.ai/README\.md' "$MJ_ROOT/$tgt"; then
+    owned="$MJ_ROOT/$tgt"
+    if [ "$mode" = region ]; then
+      mj_region_extract "$MJ_ROOT/$tgt" > "$region" 2>/dev/null || continue   # projection_integrity reports the markers
+      owned="$region"
+    fi
+    if ! grep -q '\.ai/README\.md' "$owned"; then
       mj_doctrine_fail bootstrap "$tgt" "does not point at .ai/README.md; a worker reading it never reaches the layer" "grep -n '.ai/README.md' $tgt"; bad=1
-    elif grep -qE '^\| *`?(profile|routine|implementation)`? *\||^- \*\*[A-Za-z].*\*\*|^### (Rules|Ten rules|Lifecycle|Finish contract)' "$MJ_ROOT/$tgt"; then
+    elif grep -qE '^\| *`?(profile|routine|implementation)`? *\||^- \*\*[A-Za-z].*\*\*|^### (Rules|Ten rules|Lifecycle|Finish contract)' "$owned"; then
       mj_doctrine_fail bootstrap "$tgt" "carries a rule corpus of its own (a profile table, rule bullets or a rules section); rules live under .ai/repo/rules/" "grep -nE '^- \*\*|^### ' $tgt"; bad=1
     fi
     mj_bootstrap_rule_refs "$tgt" "$mode" "$(mj_pol "projections.$((j-1)).provider")" || bad=1
   done
+  rm -f "$region"
   [ "$bad" = 0 ] && [ "$j" -gt 0 ] && mj_doctrine_ok bootstrap "$j projection(s)" "each points at .ai/README.md, carries no rule of its own and names only rules in force"
   return 0
 }
@@ -477,6 +495,15 @@ mj_validate_budget() {
     "grep -n 'always_loaded' $(mj_rel "$MJ_POLICY_FILE")"; fi
   rm -f "$owned"
 
+  # In the commit hook the builder is proved only when the commit can change what it reads
+  # (I4265): it composes the whole context, about a quarter of an adopter's doctor run, and a
+  # commit that stages nothing under .ai/ or in a provider file cannot break it. Said by name,
+  # with the command that runs it, because an absent check must not read as a passing one.
+  if [ "${MAJORDOMUS_DOCTOR_CONTEXT:-}" = commit ] \
+     && ! mj_git diff --cached --name-only 2>/dev/null | grep -qE '^(\.ai/|AGENTS\.md$|CLAUDE\.md$|GEMINI\.md$)'; then
+    mj_info context "builder" "not read in the commit hook (MAJORDOMUS_DOCTOR_CONTEXT=commit): nothing staged under .ai/ or in a provider file can change it; run doctor on its own" "majordomus doctor"
+    return 0
+  fi
   # 8. the continuity subsystem: reachable through the CLI, not merely present on disk.
   #    A directory full of records that no command reads is the failure mode this whole
   #    tool exists to catch, so doctor proves each store is readable by the command that
@@ -555,6 +582,35 @@ mj_report_reasoning() {
   return 0
 }
 
+# The boundary between the layer's halves, judged by the executable against the layouts their
+# contracts declare (I2871): a tracked file the ignore rules match under a contract that
+# excludes runtime state, or a copy of authored knowledge in the local half. Exit 10 is the
+# check's verdict on a finding, not a failure to run; an empty answer is.
+mj_report_layout() {
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  local bin share report
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  if [ ! -x "$bin" ]; then
+    mj_info layout "-" "the executable is not built, so the layout boundary is not judged here (majordomus layout check)"
+    return 0
+  fi
+  share="$(mj_rust_share "$MJ_ROOT")"
+  report="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+               "$bin" layout check --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || true
+  if [ -z "$report" ] || [ "$(printf '%s' "$report" | jq -r '.measured')" != true ]; then
+    mj_info layout "-" "the layout boundary could not be judged (majordomus layout check)"
+  elif [ "$(printf '%s' "$report" | jq -r '.passes')" = true ]; then
+    mj_ok layout "-" "$(printf '%s' "$report" | jq -r '"layout check: \(.checked) path(s) judged against their declared layouts; no finding"')"
+  else
+    printf '%s' "$report" | jq -r '.findings[] | [.path, .contract, .excludes, .reason] | @tsv' | \
+      while IFS="$(printf '\t')" read -r path contract excludes reason; do
+        mj_fail layout "$path" "violates $contract: excludes $excludes; $reason" "majordomus layout check"
+      done
+  fi
+  return 0
+}
+
 mj_report_environment() {
   local env="bash ${BASH_VERSION%%(*}"; env="$env, git $(git --version | awk '{print $3}')"
   mj_has jq && env="$env, jq $(jq --version 2>/dev/null | sed 's/jq-//')" || env="$env, jq absent"
@@ -577,14 +633,32 @@ mj_report_clone() {
   # Work that exists on one disk. A branch whose commits reach no remote is not backed up,
   # is invisible to every other session, and cannot be folded by whoever is integrating —
   # fifteen commits over sixty-eight files sat in exactly that state for three days.
-  local unpushed="" b n
-  while read -r b; do
-    [ -n "$b" ] || continue
-    n="$(git -C "$MJ_ROOT" rev-list --count "$b" --not --remotes 2>/dev/null || echo 0)"
-    [ "$n" -gt 0 ] 2>/dev/null && unpushed="$unpushed $b($n)"
-  done <<EOF
-$(git -C "$MJ_ROOT" for-each-ref --format='%(refname:short)' refs/heads 2>/dev/null)
-EOF
+  #
+  # One walk, whatever the number of branches (I2993): the commits some branch reaches and no
+  # remote does, each with its parents, then every branch's tip. A branch's count is the
+  # commits of that set its tip reaches, walked inside the set: a commit a remote reaches has
+  # only ancestors a remote reaches, so the walk never has to leave it. The commits a walk has
+  # seen are the branch's, not its tip's: two branches at one commit are counted alike. One `rev-list` per
+  # branch took minutes on a clone of six hundred branches, in every commit hook.
+  local unpushed
+  unpushed="$({
+    git -C "$MJ_ROOT" rev-list --parents --branches --not --remotes 2>/dev/null
+    echo '--'
+    git -C "$MJ_ROOT" for-each-ref --format='%(objectname) %(refname:short)' refs/heads 2>/dev/null
+  } | awk '
+    $0 == "--" { tips = 1; next }
+    !tips { held[$1] = 1; parents[$1] = $0; next }
+    ($1 in held) {
+      count = 0; top = 1; stack[1] = $1
+      while (top > 0) {
+        c = stack[top--]
+        if (!(c in held) || ((NR, c) in seen)) continue
+        seen[NR, c] = 1; count++
+        m = split(parents[c], p, " ")
+        for (j = 2; j <= m; j++) stack[++top] = p[j]
+      }
+      printf " %s(%d)", $2, count
+    }')"
   if [ -n "$unpushed" ]; then
     mj_warn clone "unpushed" \
       "commits on no remote:${unpushed} — work on one disk is invisible to every other session and cannot be integrated" \
@@ -604,6 +678,95 @@ EOF
       "ls $(mj_rel "$(mj_outbox_dir)")/*/"
   fi
   mj_report_uncommitted
+  mj_report_trunk_distance
+  mj_report_release_currency
+}
+
+# Whether the trunk's landed work is released (release.currency, I3070; the owner's order of
+# 2026-10-19: a measured version after every session and milestone). The measurement is the
+# executable's, read here and judged nowhere else. Current is OK. Owed work, landed and
+# waiting for the release seat, is a WARN, and overdue, past the six hours it may wait, is a
+# WARN saying so. Unknown (no trunk, no release this clone can read) is INFO. A clone with no
+# remote-tracking branch says so the same way whether or not the executable is at hand,
+# because the use-case catalogue records this line, as it does trunk's.
+mj_report_release_currency() {
+  if [ -z "$(git -C "$MJ_ROOT" for-each-ref --count=1 --format='%(refname)' refs/remotes 2>/dev/null)" ]; then
+    mj_info clone "release" "no remote-tracking branch, so whether the trunk's landed work is released cannot be measured"
+    return 0
+  fi
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  local bin share out stance summary
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  if [ ! -x "$bin" ] || ! mj_has jq; then
+    mj_info clone "release" "the executable or jq is absent, so whether the trunk is released is not measured here (majordomus run release.currency)"
+    return 0
+  fi
+  share="$(mj_rust_share "$MJ_ROOT")"
+  out="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+            "$bin" run release.currency --input '{"next":false}' --quiet --format json --repo "$MJ_ROOT" ) 2>/dev/null | jq -c '.output // empty' 2>/dev/null )" || true
+  stance="$(printf '%s' "$out" | jq -r '.stance // empty' 2>/dev/null)"
+  summary="$(printf '%s' "$out" | jq -r '.summary // empty' 2>/dev/null)"
+  case "$stance" in
+    current) mj_ok clone "release" "$summary" ;;
+    owed) mj_warn clone "release" "$summary" "the release seat releases it: majordomus run release.currency" ;;
+    overdue) mj_warn clone "release" "OVERDUE: $summary" "the release seat releases it now: majordomus run release.currency" ;;
+    unknown) mj_info clone "release" "$summary" "majordomus run release.currency" ;;
+    *) mj_info clone "release" "whether the trunk is released could not be read (majordomus run release.currency)" ;;
+  esac
+  return 0
+}
+
+# How far this checkout is from the remote trunk (project.a-checkout-serves-the-current-trunk).
+# On 2026-10-16 the primary checkout was 779 commits behind origin/master and its shared
+# server answered every session from that tree; nothing said so. The measurement and the
+# judgement are the executable's (`worktree trunk`, also in `worktree status`): the checkout's
+# HEAD and the local trunk branch counted against the remote-tracking trunk, as of the last
+# fetch, judged against the policy's checkout.trunk_distance with no threshold invented here.
+# Rendered once: stale FAILs — and with it the commit hook — lagging WARNs, unjudged and
+# unmeasured are INFO. A merge in progress counts what it brings in, so the commit that
+# makes a branch current is never refused for the tree it replaces. The local trunk of a
+# linked worktree is somebody else's checkout to move, so it is at most a WARN here.
+mj_report_trunk_distance() {
+  # A clone with no remote-tracking branch has nothing to be measured against, and says so
+  # the same way whether or not the executable is at hand (the catalogue records this line).
+  if [ -z "$(git -C "$MJ_ROOT" for-each-ref --count=1 --format='%(refname)' refs/remotes 2>/dev/null)" ]; then
+    mj_info clone "trunk" "no remote-tracking branch, so this checkout's distance from the remote trunk cannot be measured"
+    return 0
+  fi
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  local bin share out standing message remedy local_standing
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  if [ ! -x "$bin" ] || ! mj_has jq; then
+    mj_info clone "trunk" "the executable or jq is absent, so this checkout's distance from the remote trunk is not judged here (majordomus worktree trunk)"
+    return 0
+  fi
+  share="$(mj_rust_share "$MJ_ROOT")"
+  # exit 10 is the reading's verdict on a stale checkout, not a failure to answer
+  out="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+            "$bin" worktree trunk --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || true
+  standing="$(printf '%s' "$out" | jq -r '.standing // empty' 2>/dev/null)"
+  if [ -z "$standing" ]; then
+    mj_info clone "trunk" "this checkout's distance from the remote trunk could not be read (majordomus worktree trunk)"
+    return 0
+  fi
+  message="$(printf '%s' "$out" | jq -r '.message')"
+  remedy="$(printf '%s' "$out" | jq -r '.remedy // "majordomus worktree trunk"')"
+  case "$standing" in
+    current) mj_ok clone "trunk" "$message" ;;
+    lagging) mj_warn clone "trunk" "$message" "$remedy" ;;
+    stale) mj_fail clone "trunk" "$message" "$remedy" ;;
+    *) mj_info clone "trunk" "$standing: $message" "majordomus worktree trunk" ;;
+  esac
+  local_standing="$(printf '%s' "$out" | jq -r 'if .on_trunk then "" else .local_trunk_standing end')"
+  case "$local_standing" in
+    lagging|stale)
+      mj_warn clone "local-trunk" \
+        "$(printf '%s' "$out" | jq -r '"the local \(.trunk) is \(.local_trunk.behind) commit(s) behind \(.remote_trunk) (\(.local_trunk_standing)): a branch made from it starts from a tree that is not the trunk"')" \
+        "$remedy" ;;
+  esac
+  return 0
 }
 
 # Work that exists in one worktree's files and in no commit (I1995). On 2026-10-07 and
@@ -1256,12 +1419,13 @@ mj_validate_project() {
 # as drift. A warning from the model is a warning here: work in progress is reported, not
 # blocked, and only a graph that cannot be executed is a failure.
 # The roadmap is a projection of milestone state, so no document may be a second authority
-# for it. While a hand-written roadmap table survives anywhere, every version it lists has to
-# be a canonical milestone's version and every canonical version has to appear in it — a table
-# that can neither invent a release nor hide one. When the table is gone the check holds
-# trivially, which is the point: this refuses the regression, it does not require the table.
+# for it. While a hand-written roadmap table survives anywhere, every release it lists has to
+# be one a milestone was released in — inferred from the release records (released_in), never typed —
+# and every such release has to appear in it: a table that can neither invent a release nor
+# hide one. When the table is gone the check holds trivially, which is the point: this
+# refuses the regression, it does not require the table.
 mj_validate_roadmap() {
-  local readme canon doc missing extra
+  local readme canon doc missing extra id
   mj_project_doctrine_load || return 0
   readme="$MJ_ROOT/README.md"
   [ -f "$readme" ] || { mj_doctrine_ok roadmap "README.md" "absent; nothing can duplicate the roadmap"; return 0; }
@@ -1269,28 +1433,33 @@ mj_validate_roadmap() {
     mj_doctrine_ok roadmap "README.md" "no authored roadmap section; the roadmap is only a projection"
     return 0
   fi
-  canon="$(awk -F'\t' '$1=="M" && $9!="" { print $9 }' "$MJ_PJ/model.tsv" | LC_ALL=C sort -u)"
   doc="$(awk '/^## Roadmap/{f=1;next} /^## /{f=0} f' "$readme" \
-         | sed -n 's/^| *\**\([0-9][0-9.]*\)\** *|.*/\1/p' | LC_ALL=C sort -u)"
-  # A section that lists no versions is prose pointing at the projection, not a second
-  # authority. The rule is about an authored version list, not about the heading: a partial
-  # list is the dangerous case, and no list at all is the intended end state.
+         | sed -n 's/^| *\**v\{0,1\}\([0-9][0-9.]*\)\** *|.*/v\1/p' | LC_ALL=C sort -u)"
+  # A section that lists no releases is prose pointing at the projection, not a second
+  # authority. The rule is about an authored release list, not about the heading: a partial
+  # list is the dangerous case, and no list at all is the intended end state. It is decided
+  # before any milestone's release is looked up, because there is nothing to compare them
+  # with: each lookup walks the history, and all of them took a minute of every doctor in a
+  # repository whose README lists none (I2995).
   if [ -z "$doc" ]; then
-    mj_doctrine_ok roadmap "README.md" "the roadmap section lists no versions; it points at the projection rather than restating it"
+    mj_doctrine_ok roadmap "README.md" "the roadmap section lists no releases; it points at the projection rather than restating it"
     return 0
   fi
+  # only a DONE milestone can have been released
+  canon="$(for id in $(awk -F'\t' '$1=="M" && $3=="DONE" { print $2 }' "$MJ_PJ/model.tsv"); do
+             mj_pj_m_released_in "$id"; printf '\n'; done | { grep -v '^unreleased$' || :; } | LC_ALL=C sort -u)"
   missing="$(LC_ALL=C comm -23 <(printf '%s\n' "$canon") <(printf '%s\n' "$doc") | tr '\n' ' ')"
   extra="$(LC_ALL=C comm -13 <(printf '%s\n' "$canon") <(printf '%s\n' "$doc") | tr '\n' ' ')"
   missing="${missing% }"; extra="${extra% }"
   if [ -n "$extra" ]; then
-    mj_doctrine_fail roadmap "README.md" "lists version(s) no milestone declares: $extra" "majordomus plan roadmap"
+    mj_doctrine_fail roadmap "README.md" "lists release(s) no milestone was released in: $extra" "majordomus plan roadmap"
     return 0
   fi
   if [ -n "$missing" ]; then
-    mj_doctrine_fail roadmap "README.md" "omits milestone version(s) the model declares: $missing" "majordomus plan roadmap"
+    mj_doctrine_fail roadmap "README.md" "omits release(s) the records show a milestone was released in: $missing" "majordomus plan roadmap"
     return 0
   fi
-  mj_doctrine_ok roadmap "README.md" "every version it lists is a milestone, and no milestone is hidden from it"
+  mj_doctrine_ok roadmap "README.md" "every release it lists carried a milestone, and no release that did is hidden from it"
   return 0
 }
 

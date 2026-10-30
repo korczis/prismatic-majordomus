@@ -1,0 +1,38 @@
+id: I4321
+milestone: intent-planning
+title: "A critique or gap file that fails its schema is named by intent validate, and never reads as no critique"
+slug: an-invalid-critique-is-named-not-missing
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "intent validate reads the index diagnostics on paths under .ai/repo/project/critiques/ and .ai/repo/project/gaps/. It reports each one as FAIL critique_invalid or FAIL gap_invalid, against the intent the file declares: its `intent:` value when the YAML parses, otherwise the filename stem. The finding names the file and the schema error. plan_not_critiqued is reported only for an intent that has no critique file at all, valid or not. The refusal to execute work on an intent whose only critique is invalid names critique_invalid as its reason."
+why: "Observed in OSCILLA (korczis/oscilla) on 2026-10-28 with majordomus 1.0.0-alpha.8. The critique file .ai/repo/project/critiques/ui-current.yaml carried `class: scope_creep`, a value outside the critique/v1 enum. `majordomus intent validate` printed only `WARN plan_not_critiqued ui-current: has planned work but no critique; execution will be refused until one is recorded`. The schema error (schema 'majordomus.critique/v1': findings.5.class ...) appeared once, as a stderr ERROR log line, and only after the file was tracked. While the file was untracked there was no diagnostic at all, because vcs discovery skips the file before its schema is checked (I4322). docs/CLI.md says nothing but usage and internal errors goes to stderr. The finding never named the file, so the author first looked for the cause in reviewed_at. Cause on master 81ef931a3e1: the index drops a record that fails conforms (apps/majordomus-cli/src/index.rs:509-511) and keeps it only as a repository diagnostic (index.rs:540-576). Intents::build (intent.rs:1260-1269) reads CritiqueRecord::all(index), so review() (intent_review.rs:743) never sees the file. The record-level checks critique_unknown_class (intent_review.rs:769) and critique_unknown_resolution (:780) can never fire for a value outside the schema enum, because the schema refuses the record first. plan_not_critiqued (intent_review.rs:846) then reports the missing critique."
+current_state: "On master 81ef931a3e1, a critique whose findings.N.class is outside the critique/v1 enum yields `WARN plan_not_critiqued <intent>` from intent validate and from the intent.validate capability, plus one stderr ERROR line from the index. Nothing names the file."
+desired_state: "The same file yields `FAIL critique_invalid <intent> .ai/repo/project/critiques/<file>.yaml: schema 'majordomus.critique/v1': findings.5.class ...` from the CLI and from the intent.validate capability, and no plan_not_critiqued for that intent. A gap file failing gap/v1 yields gap_invalid in the same way."
+scope:
+  - "apps/majordomus-cli/src/intent_review.rs"
+  - "apps/majordomus-cli/src/intent.rs"
+  - "apps/majordomus-cli/src/index.rs"
+  - "apps/majordomus-cli/tests/intent_plan.rs"
+  - "test/cases/386_a_plan_is_held_to_its_intent.sh"
+  - "docs/PLANNING.md"
+non_scope:
+  - "Moving the class or resolution enum out of the schema into review(): the schema stays the record's contract"
+  - "Untracked critique and gap files, which vcs discovery skips before any schema check: I4322 names them. The two together cover an untracked invalid critique: I4322 says it is untracked, and once it is tracked this issue says it is invalid"
+depends_on: []
+acceptance_criteria:
+  - "A critique with a finding class outside the enum makes intent validate print critique_invalid naming the file and the failing schema path, and no plan_not_critiqued for its intent"
+  - "A gap file that fails gap/v1 makes intent validate print gap_invalid naming the file"
+  - "An intent with no critique file still prints plan_not_critiqued, unchanged"
+  - "Starting work that serves an intent whose only critique is invalid is refused through the built executable, and the refusal names critique_invalid"
+  - "Before the change the new unit test fails on the plan_not_critiqued it reads"
+validation:
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib intent_review::"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test intent_plan"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 386_a_plan_is_held_to_its_intent"
+evidence_required:
+  - "invalid_critique_is_named"
+serves:
+  - "intent-planning#critique-precedes-execution"
+created_at: 2026-10-28
+updated_at: 2026-10-28

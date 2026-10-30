@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # reap-orphans — reclaim what a session that is gone left behind: the majordomus servers
-# nothing owns any more, and the build output of worktrees whose work has landed.
+# nothing owns any more, and the build output of worktrees whose work has landed or is pushed.
 #
 # Two subjects, one discipline. Both are quantities that grow because nothing decided that
 # they should, both are invisible from the place a person looks, and both are reduced by a
@@ -46,14 +46,26 @@
 # a false positive costs somebody a rebuild and cannot cost a byte of source. A build
 # directory is reclaimed only when all four hold:
 #
-#   - merged     — the worktree's tip is an ancestor of origin/master
+#   - published  — the worktree's tip is an ancestor of origin/master, or is contained in a
+#                  remote-tracking ref: its commits are on a remote, so the branch is waiting
+#                  in a queue, not being written
 #   - not live   — no process names that path and no process is standing in it
 #   - idle       — `git status` is empty: nothing uncommitted, nothing untracked
 #   - owned      — a real directory inside that worktree, never a symlink out of it
 #                  (worktrees here have shared one build directory exactly that way),
 #                  carrying cargo's own CACHEDIR.TAG signature
 #
-# Merged-ness alone would be a disaster, and it is worth saying why. A session working in a
+# Merged-ness was the only form of this condition until 2026-10-10, and that evening it was the
+# cliff. Twenty-eight worktrees held 270GB of build output and the sweep could reclaim three:
+# every other branch was pushed and waiting in the landing queue, or was a detached offload
+# tree the executor had pushed and left, and none of them is an ancestor of origin/master until
+# it lands — which with one required run per pull request is hours, and for a superseded one
+# never. The volume reached 99% on two machines at once. A pushed tip is the same fact as a
+# merged one for what this sweep protects: the commits are safe on a remote, and the build
+# directory is regenerable either way. The three conditions below are what keep a session's
+# work-in-progress from being mistaken for a parked branch.
+#
+# Merged-ness (or publication) alone would be a disaster, and it is worth saying why. A session working in a
 # worktree that has not committed yet leaves its tip exactly where the merge left it, so the
 # branch reads as fully merged while somebody is mid-task in it. On the morning this was
 # written `feature/entities-are-routable` was that worktree: an ancestor of origin/master by
@@ -79,7 +91,8 @@
 #   scripts/reap-orphans --servers    only the servers
 #   scripts/reap-orphans --targets    only the build directories
 #   scripts/reap-orphans --kill       end the abandoned servers (TERM, then KILL after --grace)
-#   scripts/reap-orphans --reclaim    remove the build output of landed, unattended worktrees
+#   scripts/reap-orphans --reclaim    remove the build output of landed or pushed, unattended worktrees,
+#                                     and reduce the build cache's local level to its bound
 #   scripts/reap-orphans --min-age 2h only consider servers older than two hours
 #
 # `--kill` and `--reclaim` are separate on purpose: the two subjects are consented to
@@ -454,7 +467,7 @@ reap_targets() {
 
   # What every candidate is measured against. Unresolvable means merged-ness is undecidable
   # for everybody, which is a refusal and not an empty result.
-  local base main_wt self_wt wt tip target size st rc
+  local base main_wt self_wt wt tip target size st rc why published
   base="$(git -C "$ROOT" rev-parse --verify --quiet origin/master 2>/dev/null || true)"
   [ -n "$base" ] || die "origin/master cannot be resolved: merged-ness is undecidable, so nothing is reclaimed"
 
@@ -504,15 +517,27 @@ reap_targets() {
 
     rc=0; git -C "$ROOT" merge-base --is-ancestor "$tip" "$base" >/dev/null 2>&1 || rc=$?
     case "$rc" in
-      0) : ;;
-      1) row "$wt" "$(human "$size")" "keep — ${tip:0:9} is not an ancestor of origin/master"
-         tgt_kept=$((tgt_kept + 1)); continue ;;
+      0) why="merged" ;;
+      1) # Not landed: published is the other way its commits are safe. Asked of git as a
+         # count of remote-tracking refs containing the tip, and an unreadable answer is a
+         # skip, never a "no" that a later reader could mistake for a measurement.
+         rc=0; published="$(git -C "$ROOT" for-each-ref --contains "$tip" --count=1 \
+           --format='%(refname:short)' refs/remotes/ 2>/dev/null)" || rc=$?
+         if [ "$rc" -ne 0 ]; then
+           row "$wt" "$(human "$size")" "skip — publication could not be decided (git exit $rc)"
+           unreadable=$((unreadable + 1)); continue
+         fi
+         if [ -z "$published" ]; then
+           row "$wt" "$(human "$size")" "keep — ${tip:0:9} is neither on origin/master nor on any remote"
+           tgt_kept=$((tgt_kept + 1)); continue
+         fi
+         why="published on $published" ;;
       *) row "$wt" "$(human "$size")" "skip — merged-ness could not be decided (git exit $rc)"
          unreadable=$((unreadable + 1)); continue ;;
     esac
 
     if live_in "$wt"; then
-      row "$wt" "$(human "$size")" "keep — merged, but somebody is working in it"
+      row "$wt" "$(human "$size")" "keep — $why, but somebody is working in it"
       tgt_kept=$((tgt_kept + 1)); continue
     fi
 
@@ -541,7 +566,7 @@ reap_targets() {
 
     tgt_found=$((tgt_found + 1))
     if [ "$RECLAIM" -eq 0 ]; then
-      row "$wt" "$(human "$size")" "would reclaim — merged, nobody in it, nothing uncommitted"
+      row "$wt" "$(human "$size")" "would reclaim — $why, nobody in it, nothing uncommitted"
       tgt_freed=$((tgt_freed + size))
       continue
     fi
@@ -582,7 +607,7 @@ EOF
   # machine it was only asked to measure, and a fixture with no declaration must find
   # nothing to reclaim. Cargo's answer or nothing — and one without cargo's CACHEDIR.TAG is
   # not provably the build directory cargo named, so it is left alone and counted.
-  local shared cap_kb
+  local shared cap_kb bound_out why
   shared_build_dir
   shared="$SHARED_DIR"
   [ -z "${MAJORDOMUS_SHARED_BUILD_DIR:-}" ] || { shared="$MAJORDOMUS_SHARED_BUILD_DIR"; SHARED_WHY=""; }
@@ -596,15 +621,41 @@ EOF
     if [ -z "$size" ]; then
       row "$shared" "?" "skip — its size could not be read"
       unreadable=$((unreadable + 1))
-    elif [ "$(head -n 1 "$shared/CACHEDIR.TAG" 2>/dev/null || true)" != "$CACHEDIR_SIG" ]; then
-      row "$shared" "$(human "$size")" "skip — carries no CACHEDIR.TAG of cargo's: not provably the build directory cargo named"
-      unreadable=$((unreadable + 1))
     elif [ "$size" -le "$cap_kb" ]; then
       row "$shared" "$(human "$size")" "keep — shared by every worktree, within its $(human "$cap_kb") bound"
       tgt_kept=$((tgt_kept + 1))
-    elif grep -qE '(^|/)(cargo|rustc)( |$)' "$SNAP_PS"; then
-      row "$shared" "$(human "$size")" "keep — over its bound, but a cargo or rustc process is running"
-      tgt_kept=$((tgt_kept + 1))
+    elif [ "$(head -n 1 "$shared/CACHEDIR.TAG" 2>/dev/null || true)" != "$CACHEDIR_SIG" ] \
+      || grep -qE '(^|/)(cargo|rustc)( |$)' "$SNAP_PS"; then
+      # Not kept whole until nobody builds anywhere, which on a machine where nine sessions
+      # build is never: on 2026-10-23 that held it at 102GB against its 6GB bound (I3959).
+      # Its stale units go instead, oldest first until it is under its bound, each inside
+      # cargo's own lock on its profile; a profile a build holds is skipped and said
+      # (lib/rust_bin.sh mj_rust_bound_build_dir).
+      #
+      # Nor is it kept whole for want of a CACHEDIR.TAG: a removal of the whole directory
+      # needs that tag, but cargo writes none into a build-dir apart from its target-dir, so
+      # the directory .cargo/config.toml names never carries one. Skipping it for that held
+      # it at 43GB on 2026-10-29, with 40GB of units idle 100 to 212 minutes, while the
+      # volume fell to 21GiB (I4340). Its units are evicted instead, and the eviction asks
+      # cargo's marks again and refuses a directory with none of them.
+      if grep -qE '(^|/)(cargo|rustc)( |$)' "$SNAP_PS"; then
+        why="a cargo or rustc process is running"
+      else
+        why="it carries no CACHEDIR.TAG of cargo's, so it is not removed whole"
+      fi
+      bound_out="$(mktemp "${TMPDIR:-/tmp}/mj-reap-bound.XXXXXX")"
+      if [ "$RECLAIM" -eq 0 ]; then
+        row "$shared" "$(human "$size")" "over its bound, and $why: stale units would be evicted under cargo's lock"
+        rc=0; mj_rust_bound_build_dir "$shared" "$ROOT/$CRATE_REL" dry-run > "$bound_out" 2>&1 || rc=$?
+        sed 's/^/    /' "$bound_out"
+        if [ "$rc" -eq 10 ]; then tgt_found=$((tgt_found + 1)); else tgt_kept=$((tgt_kept + 1)); fi
+      else
+        row "$shared" "$(human "$size")" "over its bound, and $why: evicting stale units under cargo's lock"
+        mj_rust_bound_build_dir "$shared" "$ROOT/$CRATE_REL" evict > "$bound_out" 2>&1 || true
+        sed 's/^/    /' "$bound_out"
+        tgt_kept=$((tgt_kept + 1))
+      fi
+      rm -f "$bound_out"
     else
       tgt_found=$((tgt_found + 1))
       if [ "$RECLAIM" -eq 0 ]; then
@@ -628,6 +679,66 @@ EOF
   fi
 }
 
+# ------------------------------------------------------------------------------- build cache
+#
+# The machine-wide archive level of `majordomus mesh build-cache ensure` (ADR 0157 decision 13,
+# I3952): every checkout of this machine restores its npm, mix and cargo build-directory
+# archives from `${XDG_CACHE_HOME:-~/.cache}/majordomus/build-cache` and saves to it. `ensure`
+# holds it under the policy's `build_cache.local_max_gib` (20 when the policy says nothing)
+# whenever it adds an archive; this measures it on every run and, with --reclaim, reduces it to
+# that bound, oldest archive first. An archive is the result of an install that a miss simply
+# runs again, so the bound is the only predicate; a level whose size cannot be read is left
+# alone and counted. MAJORDOMUS_BUILD_CACHE_CAP_MB overrides the bound, in MiB, for one run.
+build_cache_bound_kb() {
+  local gib
+  case "${MAJORDOMUS_BUILD_CACHE_CAP_MB:-}" in
+    '') ;;
+    *[!0-9]*) ;;
+    *) echo $(( MAJORDOMUS_BUILD_CACHE_CAP_MB * 1024 )); return 0 ;;
+  esac
+  gib="$(awk '/^build_cache:/ { inb = 1; next }
+              /^[^ #]/ { inb = 0 }
+              inb && $1 == "local_max_gib:" { print $2; exit }' "$ROOT/.ai/repo/policy.yaml" 2>/dev/null || true)"
+  case "$gib" in ''|*[!0-9]*) gib=20 ;; esac
+  echo $(( gib * 1048576 ))
+}
+
+reap_build_cache() {
+  local level size bound over removed freed a s sz
+  level="${XDG_CACHE_HOME:-$HOME/.cache}/majordomus/build-cache"
+  [ -d "$level" ] || return 0
+  bound="$(build_cache_bound_kb)"
+  size="$(size_kb "$level")"
+  if [ -z "$size" ]; then
+    row "$level" "?" "skip — the build cache: its size could not be read"
+    unreadable=$((unreadable + 1)); return 0
+  fi
+  if [ "$size" -le "$bound" ]; then
+    row "$level" "$(human "$size")" "keep — the build cache, within its $(human "$bound") bound"
+    tgt_kept=$((tgt_kept + 1)); return 0
+  fi
+  over=$((size - bound))
+  tgt_found=$((tgt_found + 1))
+  if [ "$RECLAIM" -eq 0 ]; then
+    row "$level" "$(human "$size")" "would reduce — the build cache, over its $(human "$bound") bound by $(human "$over"): oldest archives first"
+    tgt_freed=$((tgt_freed + over)); return 0
+  fi
+  removed=0; freed=0
+  # oldest first, as `ensure` prunes; a scratch directory (a leading dot) is a run in flight
+  while IFS= read -r a; do
+    [ -n "$a" ] || continue
+    [ "$size" -gt "$bound" ] || break
+    s="${a%.tar.gz}.sha256"
+    sz="$(du -sk "$a" "$s" 2>/dev/null | awk '{ t += $1 } END { print t + 0 }')"
+    rm -f "$a" "$s" || continue
+    size=$((size - sz)); freed=$((freed + sz)); removed=$((removed + 1))
+  done <<EOF
+$(find "$level" -name '.*' -prune -o -type f -name '*.tar.gz' -exec ls -1tr {} + 2>/dev/null)
+EOF
+  row "$level" "$(human "$size")" "reduced — the build cache: $removed archive(s) removed, $(human "$freed") freed"
+  tgt_reclaimed=$((tgt_reclaimed + 1)); tgt_freed=$((tgt_freed + freed))
+}
+
 # ------------------------------------------------------------------------------- report
 
 before="$(free_kb "$ROOT")"
@@ -640,6 +751,8 @@ if [ "$DO_TARGETS" -eq 1 ]; then
   if [ "$DO_SERVERS" -eq 1 ]; then echo; fi
   PHASE="examining build output"
   reap_targets
+  PHASE="examining the build cache"
+  reap_build_cache
   TGT_REACHED=1
 fi
 PHASE="summarising"

@@ -595,6 +595,15 @@ pub struct ExecutionPolicy {
     /// on another host; see [`ExecutionPolicy::admits_remote`].
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub signed_input: bool,
+    /// Whether only a caller on this machine may read it.
+    ///
+    /// A read that shows the mesh — its sessions, claims, handovers, nodes and journal — is
+    /// not the repository's to publish: a server reachable from another host would hand every
+    /// trusted node's working state to anyone who asked (ADR 0220 decision 4). Such a read
+    /// answers a loopback caller only; a node reads the mesh through its own server, which the
+    /// journal already brings up to date. See [`ExecutionPolicy::admits_remote`].
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub local_only: bool,
 }
 
 impl ExecutionPolicy {
@@ -619,6 +628,7 @@ impl ExecutionPolicy {
                 cancellable: false,
                 concurrency: Concurrency::Unrestricted,
                 signed_input: false,
+                local_only: false,
             },
             // it changes this process's memory, so two of them are made to take turns
             CapabilityKind::Command => ExecutionPolicy {
@@ -626,6 +636,7 @@ impl ExecutionPolicy {
                 cancellable: false,
                 concurrency: Concurrency::Serial,
                 signed_input: false,
+                local_only: false,
             },
         }
     }
@@ -690,6 +701,24 @@ impl ExecutionPolicy {
         }
     }
 
+    /// The same policy, for a read only a caller on this machine may make.
+    ///
+    /// The fourth documented addition, and a narrowing: a query or resource whose answer is
+    /// the mesh's working state rather than the repository's (ADR 0220 decision 4).
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{CapabilityKind, Effect, ExecutionPolicy};
+    /// let p = ExecutionPolicy::classify(CapabilityKind::Query).reads_only_locally();
+    /// assert!(p.local_only && !p.admits_remote());
+    /// assert_eq!(p.effect, Effect::Read);
+    /// ```
+    pub fn reads_only_locally(self) -> Self {
+        ExecutionPolicy {
+            local_only: true,
+            ..self
+        }
+    }
+
     /// May a caller on another host run this?
     ///
     /// A request that arrives from an address that is not loopback has proved nothing about
@@ -704,9 +733,10 @@ impl ExecutionPolicy {
     /// assert!(ExecutionPolicy::classify(CapabilityKind::Query).admits_remote());
     /// assert!(!ExecutionPolicy::classify(CapabilityKind::Command).admits_remote());
     /// assert!(!ExecutionPolicy::classify(CapabilityKind::Command).writes_repository().admits_remote());
+    /// assert!(!ExecutionPolicy::classify(CapabilityKind::Query).reads_only_locally().admits_remote());
     /// ```
     pub fn admits_remote(self) -> bool {
-        matches!(self.effect, Effect::Read) || self.signed_input
+        !self.local_only && (matches!(self.effect, Effect::Read) || self.signed_input)
     }
 
     /// Should a client ask before running this? True for anything that changes something.

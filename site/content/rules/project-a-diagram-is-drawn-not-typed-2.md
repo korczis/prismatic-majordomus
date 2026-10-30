@@ -1,7 +1,7 @@
 +++
 title = "An architectural relationship in a published document is drawn, never typed in box art"
 description = "An architectural relationship in a published document is drawn, never typed in box art"
-weight = 67
+weight = 68
 [extra]
 kind = "rule"
 slug = "project-a-diagram-is-drawn-not-typed-2"

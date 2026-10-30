@@ -1,0 +1,42 @@
+id: I2962
+milestone: "development-runtime"
+title: "What the served surfaces change is said as the registry says it"
+slug: what-mutates-is-said-as-it-is
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Correct every published sentence that calls the server read-only or counts its writers by hand, to what the capability registry says each capability changes and to who may call it, and hold that with a case that compares the interfaces feature's list of repository writers with the registry and refuses the retired sentences."
+why: "Truth sweep 2026-10-18 (f6, S4-S8 and S12, verified). README.md:420 called `mcp` and `serve` read-only processes and README.md:470 said the layer is exposed read-only; .ai/repo/features/interfaces.md said 'all but two of the capabilities ... are reads', naming plan.transition and recover.orphans, 'counted off the registry rather than stated by hand'; docs/claims/mcp-stdio-surface.md called `majordomus mcp` 'the one command' that 'writes no file ... and listens on no port'; docs/claims/mcp-peers.md and docs/MCP.md:410 called peers.announce 'the one capability of kind command'; docs/claims/mesh-observation-not-authority.md said the advertised HTTP surface is read-only and mesh.register 'the one mutating mesh operation'. The registry (docs/generated/registry.json) has 202 capabilities: 171 read, 23 change the runtime's own state, 8 write the repository; 31 are commands and 13 mesh routes take POST. A remote caller is refused every non-read capability unless its input is signed by a linked node (capability/model.rs:708 admits_remote, http/router.rs:1028). README.md:333 promised that an exclusive claim on one machine refuses an overlapping one on another and that a crashed runtime expires everywhere; milestone mesh-journal-converges records exclusivity as local admission plus deterministic naming of the winner, with no fencing."
+current_state: "Corrected in this change: README (two lines and the mesh paragraph), the interfaces feature (summary and what it does not do), docs/MCP.md:13 and :410, and the three claims with their CLAIMS.yaml entries."
+desired_state: "No surface calls the server read-only or counts its writers by hand; the interfaces feature names the registry's repository_mutation set and case 3363 refuses a page whose list differs from the registry's, or any retired sentence in README, docs or the features."
+scope:
+  - "README.md"
+  - ".ai/repo/features/interfaces.md"
+  - "docs/MCP.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims/mcp-stdio-surface.md"
+  - "docs/claims/mcp-peers.md"
+  - "docs/claims/mesh-observation-not-authority.md"
+  - "test/cases/3363_what_mutates_is_said_as_it_is.sh"
+depends_on: []
+acceptance_criteria:
+  - "The interfaces feature names exactly the capabilities whose registry effect is repository_mutation, and a page that drops one is refused"
+  - "No retired read-only or one-command sentence remains in README, docs or the features"
+  - "README's mesh paragraph states exclusivity as the milestone records it"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_what_mutates_is_said_as_it_is"
+created_at: 2026-10-18
+updated_at: 2026-10-19T13:57:45Z
+started_at: 2026-10-19T13:57:27Z
+started_event: sha256:b94b46ee1132d3a129dd841ac0d52c390eb958717c1f8a8fa92ad04a292ea021
+completed_at: 2026-10-19T13:57:45Z
+completed_event: sha256:d7c9be6065fd07010f5f4f356ada95fe787cc82c81aa4aa3b9be14c25d26b5aa
+evidence:
+  - covers: case_what_mutates_is_said_as_it_is
+    type: test
+    command: "bash test/run.sh 3363_what_mutates_is_said_as_it_is"
+    result: "14 passed, 0 failed, 0 skipped on master dd4c0a87cba"
+    commit: dd4c0a87cba408222033c89f002ab2d63f48574c
+    recorded_at: 2026-10-19T13:57:40Z

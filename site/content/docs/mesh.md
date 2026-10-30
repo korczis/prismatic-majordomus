@@ -1,7 +1,7 @@
 +++
 title = "Majordomus Mesh"
 description = "the mesh: how running Majordomus instances discover each other — Ed25519 node identity, one signed bounded envelope over multicast, broadcast and rendezvous, one registry, deny-unknown trust, the off-by-default declaration, the threat model, and how to operate and extend it"
-weight = 63
+weight = 64
 [extra]
 source = "docs/MESH.md"
 +++
@@ -33,8 +33,9 @@ that disappears stops holding anything, everywhere, on its own.
 
 **It is not** a lock service with strong consistency (a partition lets both sides claim; the
 conflict is named after healing), a file synchroniser (git owns source), a remote execution
-facility (nothing a peer sends runs anything), an encrypted transport (there is no TLS in the
-executable), or a WAN federation (no NAT traversal; rendezvous and seeds need reachable
+facility (nothing a peer sends runs anything), an encrypted transport (only an `https://` hub
+or seed is reached over TLS; discovery and links to advertised addresses are cleartext, kept off
+public networks), or a WAN federation (no NAT traversal; rendezvous and seeds need reachable
 addresses).
 
 ## The shape
@@ -88,6 +89,13 @@ flowchart TD
 </div>
 
 
+A hosted hub has no disk that outlives a boot, so a key minted there would make it a new,
+untrusted node at every restart. `majordomus serve --node-seed-env VAR` takes the node key from
+the 64-hex-digit seed in that environment variable instead (a secret of the platform), writes
+nothing to `node.json`, and keeps one node id across every boot; with the variable unset or
+malformed the mesh stays off and its reason names the variable, never the value (ADR 0220,
+I3826). The seed's public key is what `trust.allow` lists for the hub.
+
 An address, a port, a host name or a PID is never identity. Two worktrees of one machine
 share the node key and are two runtimes; a restarted server keeps its runtime and changes
 its instance, so its peers list it once with `restarts` counted.
@@ -108,6 +116,25 @@ skip → trust policy) into one registry keyed by node and runtime. Envelopes ar
 bytes, signed, and carry the key, runtime, instance, endpoints, transports, repository
 identities and version; never a secret, a path or repository content.
 
+A tailnet is a discovery source too. When the declaration's `tailscale.enabled` is on (the
+default), the Tailscale provider reads `tailscale status --json` every `interval_seconds`
+(60) and asks every peer listed online as a rendezvous at
+`http://<tailnet address>:<port>` (port 8791 unless declared). What comes back is the same
+signed `mesh.register` answer a declared rendezvous gives, through the same verification
+path, so the provider proposes addresses and decides nothing: a machine that joins the
+tailnet is found with no address written by hand, and the trust list still decides what
+links. Without the Tailscale CLI the provider is listed `stopped` with the reason, which is
+no fault, so `mesh doctor` never fails a repository whose machines do not run Tailscale. A
+CLI that is there and answers an error is listed `failed`; the others run on either way.
+
+```yaml
+tailscale:
+  enabled: true        # the default
+  port: 8791           # where a peer's server answers mesh.register
+  interval_seconds: 60
+  command: tailscale   # the CLI to ask
+```
+
 Discovery protocol **2** added the runtime slot. A version-2 reader reads version 1 (as the
 node's unnamed runtime); a version-1 reader refuses version 2 and counts it as `version`, so
 a mixed fleet shows the mismatch instead of going quiet.
@@ -115,7 +142,11 @@ a mixed fleet shows the mismatch instead of going quiet.
 Multicast sockets are bound with `SO_REUSEADDR` and `SO_REUSEPORT`, so every runtime of a
 machine hears the group. A server bound to `0.0.0.0` advertises its interfaces' addresses,
 physical and overlay interfaces before container bridges; a server bound to loopback
-advertises loopback, which only its own machine can dial.
+advertises loopback, which only its own machine can dial. A server behind a platform's router
+dials nobody at its interface addresses, so `serve --advertise URL` advertises that one public
+URL instead; `mesh.status` lists what a node advertises as `advertised`. The Gigalixir
+deployment's generated Procfile passes both `--advertise` and `--node-seed-env` from the
+deployment object (ADR 0219, ADR 0220).
 
 ## Trust
 
@@ -184,9 +215,12 @@ admits it only if, in the order the code checks:
    another runtime of the repository is refused `misaddressed`;
 8. the peer's repository identity equals its own;
 9. the peer's key is trusted by its policy;
-10. the nonce has not been answered before. It is checked last on purpose: the replay cache
-    holds only nonces of trusted keys of this repository, so a stranger's hellos can neither
-    fill it nor evict a real peer's nonce.
+10. the hello is no older than the one that made the peer's live link, and its nonce has not
+    been answered before. Both are checked last on purpose: the replay cache holds only nonces
+    of trusted keys of this repository, so a stranger's hellos can neither fill it nor evict a
+    real peer's nonce. The age check is what the cache cannot be after a restart: a hello
+    captured before this runtime restarted, replayed within the skew window once the peer has
+    linked again, is refused `replay` rather than displacing that link.
 
 A hello without `to` — from a seed, a first contact, or a release before it — is still
 admitted, and is protected from replay to another runtime only by the per-runtime nonce cache
@@ -203,14 +237,23 @@ counted in `refused_in`/`refused_out` and listed with its detail on `mesh.cooper
 ## Transport
 
 The link protocol posts `Signed` messages through `LinkTransport`. The shared server's
-transport is plain HTTP/1.1 through the crate's one minimal client (ADR 0032: no HTTP client
-dependency, no TLS, no async runtime); unit tests put runtimes behind an in-process transport
-that runs the same protocol. Authenticity is the protocol's; confidentiality is the network's
-— run links on a private network or an overlay (a tailnet, WireGuard).
+transport is HTTP/1.1 through the crate's one minimal client (ADR 0032: no HTTP client
+dependency, no async runtime); unit tests put runtimes behind an in-process transport that runs
+the same protocol. An endpoint written `https://host[:port]` — a rendezvous hub or a seed, by
+host name or address — is reached over TLS (rustls with the ring provider), the certificate
+verified against the Mozilla roots compiled into the executable and the host name checked
+against it; a certificate that does not verify is refused naming the endpoint, before any byte
+of the request is sent. An `http://` endpoint, and an advertised `host:port` a link dials, is
+cleartext, and the client sends it only when every address the host resolves to is loopback,
+RFC 1918 private, link-local, `100.64.0.0/10` (a tailnet) or IPv6 unique-local: a public address
+is refused before the connection, with the correction `use https://` (ADR 0220). `mesh doctor`
+reports the same verdict for every declared hub and seed as its `transport` check, without
+dialing. Authenticity is the protocol's; confidentiality is TLS's for an `https://` endpoint and
+the network's otherwise — run links on a private network or an overlay (a tailnet, WireGuard).
 
 ## Presence, heartbeats and expiry
 
-Two layers, deliberately separate:
+Three layers, deliberately separate:
 
 - **Links** are this runtime's connections. Every heartbeat (`cooperation.heartbeat_seconds`,
   default 5) the dialer runs one sync round. A link is `connected` with an exchange within
@@ -226,12 +269,56 @@ Two layers, deliberately separate:
   never mint one, and the age it reports is clamped to the expiry. Freshness is computed on each runtime's own monotonic clock — no two
   machines' wall clocks are compared. A reloaded journal restores events but no freshness,
   so a restart resurrects nobody's ownership.
+- **Sessions** make progress while their worker does real work (I3990). A stream that beats
+  proves its runtime is up and nothing about the worker behind one of its sessions: a session
+  stuck on a permission dialog, hung or crashed behind a live server used to keep every
+  exclusive claim it held for as long as that server ran — the 5d executor held the
+  integration lease for hours and never answered (2026-10-22). Real work is an MCP request of
+  any method but `ping` and `notifications/*` (over stdio or plain HTTP alike), a board
+  announcement, a claim, or an explicit `majordomus mesh beat --session <id> --phase <text>
+  [--pid <n>]` (`mesh.beat`) from a long-running process; the stdio bridge pings every 20 s
+  whatever its client is doing, so a ping is never progress, while a phase that names a wait
+  (`waiting on CI run 123`) is — a process waiting on something outside itself is working.
+  While a board session (`board-<peer>`) holds a live claim and works, its runtime writes a
+  `session_beat` event carrying the session's ttl (`cooperation.session_ttl_seconds`, default
+  600, at least four heartbeats, at most 3600, `0` turns the rule off): at once when it
+  claims, then at most once a quarter of the ttl, and only after new work; `mesh beat` writes
+  one with its phase (redacted, one line), and a repeat inside a quarter of the ttl with the
+  same phase writes nothing. Every runtime ages the newest beat from the moment it stored it,
+  on its own clock — the holder against the ttl, every other runtime against the ttl plus the
+  expiry — and a held **exclusive** claim whose session's beat is older than that is
+  **suspended**: `its holder stopped making progress: no beat for over <ttl>s`. A suspended
+  claim refuses nobody and is counted and shown as such (`mesh.state`, `mesh.peers` with the
+  session's `progress_ms` and `phase`, the Cockpit, `/ui/mesh`); nothing is written to make it
+  so, the session stays open, an advisory claim is untouched, and the claim holds again at
+  its session's next beat. Suspension is advisory-first: it stops the refusal and says so, and
+  nothing more — no take-over, no fencing. A holder that resumes after another session was
+  admitted to its scope does not get it back: its next beat releases the suspended claim
+  instead of re-arming it (below); fencing a holder that goes on writing without beating
+  waits for an epoch (I3174). A session that never beat — a `mesh claim --session` from the command line that never runs `mesh beat`,
+  every session of a runtime older than this layer — keeps the stream rule alone, and a beat
+  with ttl `0` asks for exactly that. A runtime writes at most one beat per session a quarter of the ttl however
+  often `mesh beat` is called — a new phase inside the interval is held and shown, and the
+  next beat carries it — and at most `8 × ceil(3600 s / (ttl / 4))` beats an hour, sized for
+  eight exclusive holders at full rate; past that it withholds beats, the claims it cannot
+  beat for suspend, and it says so in its log and in `mesh doctor`'s `session_beats` check —
+  never silently. Only a session holding a live exclusive claim is beaten for: an advisory
+  claim refuses nobody and costs no beat. When a holder resumes after another session was
+  admitted over its suspended claim, its next beat does not re-arm the claim: its runtime
+  writes `claim_released` with the reason `suspended while its holder made no progress, and
+  another session was admitted to its scope`, and the holder claims again through admission
+  — so two sessions never both hold one scope. A restarted reader counts the beats its
+  journal reloads as stored at the restart, exactly as it counts a stream it relearns
+  (`learned_at`): a session silent before the restart reads as progressing for at most its
+  ttl plus the expiry after it. The key is left out of the repository's declaration on
+  purpose: an older executable refuses a key it does not know.
 
 ## Events, ordering and deduplication
 
 Everything cooperative is an event of the journal: `session_opened`, `session_closed`,
 `claim_acquired`, `claim_released`, `handover_published`, `handover_consumed`,
-`review_requested`, `review_answered`, `review_withdrawn`. A person or an agent reads the journal folded, not raw, through `majordomus monitor`
+`review_requested`, `review_answered`, `review_withdrawn`, `session_beat` (a working session's progress and phase, left out of `mesh events` unless `--beats` asks and never a monitor signal), and a node's offer of its build
+cache, `build_cache_offered` and `build_cache_withdrawn` ([Build-cache offers](#build-cache-offers)). A person or an agent reads the journal folded, not raw, through `majordomus monitor`
 (`docs/MONITOR.md`, ADR 0133). It drops a board session's unchanged re-projection on each
 heartbeat, marks what names the reader, and pages with the full causal key rather than the
 Lamport stamp alone. An event carries its stream, a dense sequence, a
@@ -316,9 +403,12 @@ A claim is a scope — repository-relative paths — held by a session, `exclusi
 or `advisory`. Paths meet by `peers::claims_meet`, the peer board's own predicate: `apps`
 meets `apps/majordomus-cli`; `app` does not.
 
-- A claim **holds** while it is unreleased, its session is open, and its stream's beat rose
+- A claim **holds** while it is unreleased, its session is open, its stream's beat rose
   within the expiry. That is the lease: it is renewed by the holder's heartbeat and expires on
-  every runtime on its own when the holder stops beating. There is no separate lease table.
+  every runtime on its own when the holder stops beating. An exclusive claim of a session that
+  ever beat is, in addition, **suspended** — still held, refusing nobody — while that
+  session's newest beat is older than its ttl (the holder) or its ttl and the expiry (everyone
+  else), and holds again at its next beat (I3990). There is no separate lease table.
 - **Admission:** `mesh.claim` refuses an exclusive claim that meets a live exclusive claim of
   another session known to this runtime — `claim_conflict`, naming the claims it meets.
 - **Concurrency:** two exclusive claims made where neither runtime could see the other (a
@@ -329,6 +419,17 @@ meets `apps/majordomus-cli`; `app` does not.
   holder's claim expires instead.
 - **Advisory** claims report overlaps and refuse nothing. The peer board's announcements are
   projected as advisory claims of the announcing MCP session.
+
+### Seats are claims
+
+The repository's way of working puts sessions in seats: the one that lands, the one that
+releases, the lanes that repair conflicting branches, and the workers. A seat is held by
+holding its exclusive claim, so it is subject to everything above: it is refused to a second
+session while it is held, it moves when the claim is released, and it falls vacant when its
+holder stops beating. Which seats there are and which scope each one claims is
+[rule `project.the-cooperation-model-is-the-owners-word`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md)
+(ADR 0167), the one record of it; this document does not copy the table. The Mesh screen of
+the UI (`/ui/mesh`) asks `mesh.state` for the live claims and draws who holds each seat now.
 
 ## Handovers
 
@@ -342,20 +443,58 @@ into that checkout's handovers directory — once, however often consumed — na
 repository and `mesh:<origin runtime>` as its worktree, so `majordomus handover --resolve` on
 the same branch finds it as another checkout's handover.
 
+## Build-cache offers
+
+A node that serves a shared build cache (ADR 0157) says so through the journal, not through
+a committed endpoint and not through the advertisement datagram, which is size-bound. The
+store is declared in the node's own file, `$XDG_CONFIG_HOME/majordomus/build-cache.json`
+(else `~/.config/majordomus/build-cache.json`), outside every repository: an endpoint is a
+fact about a running machine.
+
+- **Published while the store answers.** On every heartbeat, before it beats, the runtime
+  probes its store's readiness route (`mesh::build_cache::probe_health`, bounded at 500 ms).
+  A healthy store not offered yet, or offered differently, is written as a
+  `build_cache_offered` event: protocol, provider, scope, endpoint, bucket, priority,
+  headroom and a lifetime (the cooperation expiry). A store whose probe stops passing, or
+  that is no longer declared, is withdrawn with `build_cache_withdrawn` and a reason from a
+  fixed vocabulary. Nothing is written while nothing changed; a headroom that moves by less
+  than a tenth is not a change.
+- **Signed, and nothing secret.** The record is an ordinary event, signed by its node's key.
+  It has no field for a credential, and its endpoint is a scheme and an address only: user
+  information, a path, a query or a fragment is refused before signing, everywhere.
+- **Read only from trusted keys.** A reader verifies each record's signature against its
+  stream's key again and reads it only when the trust in force trusts that key; a key
+  withdrawn from the allowlist stops being read at once. Presence on a port is never trust.
+- **Expiring with the beat.** An offer is fresh while its stream's signed beat rose within
+  the offer's lifetime (and within the reader's own expiry) on the reader's monotonic clock.
+  A provider whose runtime stops is stale within its lifetime with nobody withdrawing it.
+  Each stream's newest record speaks for it; two servers of one machine make one offer, the
+  fresher.
+
+`mesh state` answers the reading under `build_cache`: the offers the selection
+(`mesh::build_cache::select`) takes, and every record that is not one, with why. An older
+runtime stores and relays both kinds without reading them.
+
 ## Compaction
 
 Every server restart is a new stream, so a journal that kept everything would grow without
 bound and a machine would fill its 64-stream quota by running. Compaction drops the streams
 nothing needs any more. Each runtime runs it on its own, every sixty heartbeats (five minutes
 at the defaults), and only when its journal holds more than 20 000 events or 768 streams or
-when one node holds 48 streams — then that node's streams alone are due. A stream can go only
+when one node holds 48 streams or 15 000 events — then that node's streams alone are due. A
+node's own crowding matters because the journal-wide bound is no larger than one node's quota
+of 20 000 events: a machine alone fills its quota before the journal is over its bound, and past
+the quota every event of that machine is refused, a claim's release among them. A stream can go only
 when it has been silent for longer than the expiry plus 15 minutes, measured on the local
 clock from the last beat heard or, for a stream never heard beating, from when the journal
 learned of it (so the streams a restart reloads are not taken for dead at once). A runtime
 never drops its own stream. Of the streams that could go, one stays while:
 
 - **it published a handover nobody has taken** — for at most a day past those 15 minutes
-  (`HANDOVER_RETENTION`). A handover is continuity meant to outlive the run that wrote it;
+  (`HANDOVER_RETENTION`), counted on the local clock or from the handover's signed
+  publication time, whichever lapses first: the local count restarts with every server, so on
+  its own a machine whose servers never live a day would keep a dead stream for ever. A
+  handover is continuity meant to outlive the run that wrote it;
   the day bounds how much of its node's quota a machine's untaken handovers can hold. A
   handover somebody has taken keeps nothing. A lapsed one is still its author's record, and
   `mesh handover publish` offers it again under the same id.
@@ -442,21 +581,42 @@ once. The id is the provider's own, so anything holding the provider's payload n
 same session. With no ready server, or a mesh that does not run, nothing is opened and the
 event is unaffected.
 
+A client that crashes or is killed never fires its end event, and its session would stay
+active, with every exclusive claim under it blocking, for as long as its runtime beats
+(I3810). So the start event opens the session with `--client-pid auto`: the executable walks
+up from itself past shells and Majordomus' launchers to the client that ran the hook, and the
+session carries that process's pid and start time (`client_pid`, `client_started`). About once
+a minute the runtime holding the session asks its own machine's process table whether that
+process still exists with that start time, and closes the session once when it does not — a pid
+the system has given to another process does not count as the client. Nothing is compared
+across machines: the process, the table and the clock are all the holding runtime's. A session
+opened without a client process (`mesh session open` by hand, a claim's implicit session) is
+left as before.
+
 A task is on the mesh while it works (I2288). `majordomus start` claims the task's scope as
 an advisory claim of the mesh session `task-<id>`, with the task's title as its intent and its
 issue, and keeps the claim's key on the task record as `mesh_claim`; `finish` closes that
 session, which ends its claims on every linked runtime. Every machine sees what the task works
-on and reports an overlap; an exclusive claim before building stays the worker's own act. With
-no server, or a mesh that does not run, nothing is claimed and `start` does not fail.
+on and reports an overlap; an exclusive claim before building stays the worker's own act. On
+a repository whose mesh declaration is enabled, `start` first ensures the checkout's shared
+server — a fresh linked worktree has none until something brings it up, since no provider
+start event fired there — with the same bounded `serve ensure` the start event and the shell
+entry run, under the same switches (`session.ensure_server_on_start`, `MAJORDOMUS_RUNTIME=off`),
+and says on stderr when it starts one. When the claim still does not happen (the runtime
+switched off, a stale or missing executable, a server that did not converge) `start` does not
+fail: it reports `WARN mesh` naming why and the repair. With no enabled mesh, `start` claims
+only through a server that already answers.
 
 That claim is enforced (I2289, rule `majordomus.task-on-the-mesh`). On a repository whose
 tracked declaration says `enabled: true`, `check` reports an active task whose record carries
 no `mesh_claim` under `mesh`, and `finish --outcome completed` refuses it, the refusal recorded
-with the rule named. `finish` claims the scope again first, so a server started after the task
-is all the task needs (`majordomus serve ensure`). `partial`, `blocked`, `no_match` and
-`failed` are not refused, and a repository with no enabled mesh is not judged.
+with the rule named. The state is repairable without ending the task: `majordomus serve
+ensure`, then `majordomus check`, which claims the running task's scope once a server answers
+and records the key; `finish` claims again first as well. `finish --check`, the pre-push gate,
+is a question and claims nothing. `partial`, `blocked`, `no_match` and `failed` are not
+refused, and a repository with no enabled mesh is not judged.
 
-An edit is asked for its claim before it happens (I2735). With `session.edits_require_claim:
+An edit can be asked for its claim before it happens (I2735). With `session.edits_require_claim:
 true` in the policy, the provider's pre-tool hook (`.claude/hooks/majordomus-edit-guard`, for
 Edit, Write, MultiEdit and NotebookEdit) runs `majordomus guard hook`, which exits 2 — the
 provider's refusal — when neither the active task's scope nor a live mesh claim of the writing
@@ -466,12 +626,25 @@ path and the remedy: `majordomus start "<task>" --scope <path>`, or `majordomus 
 session started in one checkout editing another's file is judged by the other's task and
 claims. Local state, a path outside the checkout, a repository with no enabled mesh and a
 server that does not answer are let through. The same judgement is `guard.edit` over MCP and
-HTTP. The hook is wired in the provider's configuration:
+HTTP.
+
+The hook is not wired yet, and until it is, the policy's `edits_require_claim` refuses nothing in
+Claude Code (I3010). `majordomus capture install` writes the UserPromptSubmit, SessionStart,
+SessionEnd and PreCompact entries of `.claude/settings.json`, and no PreToolUse entry; the hook
+script and `guard.edit` exist, but no edit reaches them. Wiring it (advisory first), and then
+refusing an unclaimed edit, are the generated-plugin work that follows the alpha. Until then a
+person who wants the guard wires it by hand: add this entry under `"hooks"` in
+`.claude/settings.json` (shared with everyone who works in the checkout) or in
+`.claude/settings.local.json` (this machine only), and start a new Claude Code session, which
+reads its hooks when it starts:
 
 ```json
 "PreToolUse": [ { "matcher": "Edit|Write|MultiEdit|NotebookEdit",
   "hooks": [ { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/majordomus-edit-guard" } ] } ]
 ```
+
+The hook asks `bin/majordomus-cli` and never builds it: where that executable is absent, every
+edit is let through.
 
 What a session shares is metadata — intent, issue, task, milestone, branch, head, dirtiness,
 a context revision identifier. Context bodies are not replicated; a handover is the
@@ -483,9 +656,12 @@ referenced artifact a peer materialises.
 
 | event | what each runtime does | what converges |
 |---|---|---|
+| a session's worker waits on a permission dialog, hangs or crashes while its server runs | the server keeps beating, and the bridge keeps pinging; neither is progress, so no `session_beat` is written; once its last beat is older than `session_ttl_seconds` on the holder's runtime (and the ttl and the expiry on every other), its exclusive claims read `suspended` and refuse nobody; its session and its advisory claims are untouched | the scope is admitted to the next claimant everywhere; when the worker works again its next beat makes the claim hold again — or, when another session was admitted over it meanwhile, releases it so the holder claims again through admission; no take-over and no fencing in this slice (I3990; the epoch is I3174) |
 | a peer's process is killed | its links go degraded → unreachable → expired; its stream stops beating; its sessions and claims expire | on restart it is the same runtime, new instance; it re-handshakes into one table row and syncs; its previous run's claims stay expired |
 | the network partitions | each side expires the other's streams and may claim what the other held | on healing, one round each way; concurrent exclusive claims resolve to one named winner; digests agree |
 | a peer restarts while linked | the answerer refuses the old link id as `unknown_link`; the dialer says hello again | the table row is kept, `restarts` counts |
+| one machine's dead streams fill its node's event quota | every later event of that machine is refused as `capacity` — claims, releases, closes; `mesh verify`'s `rejections` check fails naming `capacity`; the node is due for compaction at three quarters of its quota, and a dead stream's untaken handover lapses by its signed publication time, so a restart does not renew it | once the dead streams go, the refused events are offered again and accepted; the release arrives and the claim reads released everywhere (I2825) |
+| two processes speak for one checkout (a server older than v0.27.0 that never left the mesh when another took its lease) | every peer that hears both replaces one link with the other each round, and `unknown_link: … previous instance` repeats; `mesh verify`'s `instances` check fails naming both instances | stopping the process the lease does not name ends the flapping; the lease's holder is the checkout's one runtime |
 | a relay dies in a line A–B–C | A and C expire each other's streams through lost beats | when B returns, marks re-align and nothing is duplicated |
 | hostile or broken input | typed refusal, counted, listed; the runtime keeps serving | nothing enters the journal |
 | a crash tears the journal file, or the disk refuses an append | an append writes a missing newline first and syncs; a failed append is counted (`write_failures`) and its operation answers `"durability": "not_durable"` — never acknowledged as durable, and `mesh claim`, `mesh session open` and the other writes print `NOT DURABLE`; a line that does not read on reload is counted (`unreadable`), and `mesh doctor` fails its `journal` check; compaction writes a synced file and renames it over the old one; the file is the owner's alone (0600) | every complete event reloads, the event after a torn line reads, and an event that did not reach the disk is still replicated from memory and from peers |
@@ -509,19 +685,22 @@ What the mesh defends against, and how:
 | threat | answer |
 |---|---|
 | forged advertisement, hello, welcome, sync or event | Ed25519 over canonical bytes under per-message domains; the node id is derived from the key, never carried |
-| replayed hello or sync round | nonce cache; per-link rising counter; per-instance sequence for advertisements and events; a hello that names its recipient is refused `misaddressed` by every other runtime (I2132) |
+| replayed hello or sync round | nonce cache; per-link rising counter; per-instance sequence for advertisements and events; a hello that names its recipient is refused `misaddressed` by every other runtime, and a hello older than the one that made the peer's live link cannot replace it, even after a restart emptied the cache (I2132) |
 | a runtime of another repository | `repository_mismatch` at the handshake, `repository` rejection at ingest |
 | an unknown or untrusted key on the network | observed by discovery, refused `untrusted` at the handshake; its relayed events refused `untrusted` at ingest |
 | a key withdrawn from `trust.allow`, then a restart | the journal file is input: a reloaded event passes the checks and the trust decision a received one does, and what is refused is reported by reason (`untrusted`); only this machine's own key needs no allowing |
 | a relay that alters or invents events | the origin's signature fails at every consumer |
 | a trusted key stamping events at the end of the Lamport range | an event more than 2^32 ahead of the receiver's clock is refused `clock_ahead` (`MAX_LAMPORT_LEAD`), so the clock rises at most that much per stored event. A stamp set low to win a claim conflict is not refused: Lamport stamps are their writer's own assertion |
 | flooding | bounded datagrams and a bounded queue of them to the registry (1024; a flood beyond it is dropped and counted as `overflow` in `mesh.status`), messages (900 KiB), events, streams (1024, at most 64 per node), events per node (20 000), pending events (256 per stream, 4096 in all), peers (256), dial targets (8 per node, the present runtimes before the stopped ones), listed refusals (128), registry (256; only allowlisted records are never evicted) |
+| a peer or a rendezvous that answers too much, or too slowly | the dialer holds a link reply at most at one 900 KiB message in its wrapper (`MAX_LINK_REPLY`) and a register answer at most at 33 envelopes (`MAX_ANSWER_CANDIDATES`) and 81 KiB (`MAX_REGISTER_ANSWER`), counted without the whitespace the server pretty-prints, and refuses what is over before parsing it; a reply not whole within 20 s (link) or 15 s (rendezvous) is a failure however steadily it drips (I2704) |
 | a forged or replayed liveness report | beats are signed by their origin and only a higher signed beat counts; a relayed age is clamped to the expiry; a stream is created from a mark only when the mark verifies, its origin is trusted and its beat is fresh |
 | a branch or an uncommitted edit that adds a key, a hub, a seed or `tofu` | the declaration in force is the working tree's with every widening of the trunk's committed copy removed; `mesh doctor` names each ignored line (`trust-root`), and `mesh-check` refuses a committed `tofu` (I2135) |
 | a hostile handover consumed here | every front-matter field is single-line at ingest; the record's file name keeps only timestamp digits, hex and `[A-Za-z0-9_-]`, and a path outside the handovers directory is refused |
 | a host on the network posting claims, sessions, handovers or reviews for this node to sign | a request from an address that is not loopback runs only a capability that reads or whose input is a signed message (`mesh.link.hello`, `mesh.link.sync`, `mesh.register`); every other route answers 403 `forbidden` before its handler runs (ADR 0126) |
 | a web page driving the server (DNS rebinding) | a state-changing request from a browser is accepted only from the server's own origin and only when addressed by an IP literal or `localhost` |
-| a registration that maps the mesh | a refused registration is answered with the refusal alone; an admitted one learns the hub and the trusted nodes of its own repositories, never observed strangers or another repository (I2133) |
+| a registration that maps the mesh | a refused registration is answered with the refusal alone; an admitted one learns the hub and, only when its own key is trusted, the trusted nodes of its own repositories, never observed strangers or another repository (I2133, I3826) |
+| a remote reader of the mesh's working state | the capabilities that show it (`mesh.status`, `mesh.state`, `mesh.peers`, `mesh.peer`, `mesh.nodes`, `mesh.events`, `mesh.cooperation`, `mesh.doctor`, `mesh.firewall`, `peers.list`, `monitor.stream`) are declared local-only and answer 403 `forbidden` to a caller beyond loopback, and so do `/ui/mesh` and `/cockpit/{mesh,peers,monitor}`; liveness, the repository's reads, `mesh.identity` and the signed-input routes (`mesh.register`, `mesh.link.*`) stay open (ADR 0220 decision 4, I3826) |
+| a remote reader of what this process runs | the live channel's upgrade (`/events`), `executions.list`, `executions.get`, `executions.events`, `executions.demonstrate` and `/cockpit/executions` answer a caller beyond loopback 403 `forbidden`: an execution of a local-only read must not leak through the channel that reports it (I3842) |
 | a stranger's hellos | the replay cache and the refusal list hold only what a trusted key of this repository sent, or are capped |
 | a stale peer holding a scope forever | claims live only while the holder's beat rises |
 | publishing arbitrary files | handover publication reads only `.ai/local/state/handovers/` |
@@ -532,9 +711,10 @@ What the mesh defends against, and how:
 
 What it does not defend against: an observer on the network sees that a Majordomus runs, its
 advertisements and — for linked peers — session intents, claim scopes, review subjects and
-published handover bodies, because nothing is encrypted; run it on a private network or an
-overlay. A holder of an allowed node key is that node. A compromised trusted peer can publish
-misleading claims and handovers under its own identity — they are attributed to it and expire
+published handover bodies, because nothing but a request to an `https://` hub or seed is
+encrypted; run it on a private network or an overlay. A holder of an allowed node key is that
+node. A compromised trusted peer can publish misleading claims and handovers under its own
+identity — they are attributed to it and expire
 with it, but they are believed until then. The default — no declaration, or `enabled: false` —
 exists for environments where presence disclosure is unacceptable.
 
@@ -585,9 +765,10 @@ would be written into the other checkout.
 
 This repository runs its own mesh: `.ai/repo/mesh/majordomus.yaml` is committed with
 `enabled: true`, so every server of every worktree of it announces, listens and links. That is
-this repository's reviewed decision, not the tool's default: the skeleton a new repository
-starts from ships no declaration, and nothing opens there until its own operator commits one
-(the guarantee `mesh-off-by-default`).
+this repository's reviewed decision about who is listed. The tool's default is the same shape
+with an empty trust list: `majordomus init` seeds `mesh.yaml` in `.ai/repo/mesh/`, enabled and
+`deny_unknown`, so nothing opens until a machine runs `majordomus mesh enrol` and the change
+is committed (ADR 0137; the guarantee `mesh-off-by-default`).
 
 <div class="overflow-x-auto" tabindex="0">
 
@@ -623,9 +804,10 @@ answers requests, exactly as one with none (`mesh status` shows the `rendezvous`
 
 **What travels.** What the security model above says: advertisements on the local segment and
 to the hubs; to linked runtimes of the owner's machines, session metadata, claim scopes, review
-subjects and published handover bodies. Nothing is encrypted; every hub address is on the
-private network or the tailnet, and `test/cases/491_the_mesh_is_on_here.sh` refuses a
-declaration that names a public one.
+subjects and published handover bodies. Nothing is encrypted but a request to an `https://`
+hub; every hub address is on the private network or the tailnet, the client refuses cleartext
+to a public one, and `test/cases/491_the_mesh_is_on_here.sh` refuses a declaration that names
+a public one.
 
 **Adding a machine.** Run `majordomus mesh identity` there, add the key under `trust.allow` with
 a comment naming the machine and its node id to the trust row of the table above, and commit
@@ -648,6 +830,37 @@ the checkout a person works in already runs its own shared server and a second o
 The launchd agent of the same shape — `~/Library/LaunchAgents/dev.majordomus.hub.plist` with
 `RunAtLoad`, `KeepAlive` and those arguments — is the operator's to install, and an installer
 that writes either unit is still owed as a typed capability (ADR 0059).
+
+**The jetson hub.** jetson (`9d652b2c`: aarch64, Ubuntu 18.04, glibc 2.27) runs its hub as the
+systemd user unit `majordomus-hub.service`: `~/.local/bin/majordomus serve --repo
+~/dev/prismatic-majordomus-hub --host 0.0.0.0 --port 8791 --idle 0`, `Restart=always`. Two
+facts of that machine decide how it is upgraded. Its glibc is older than the
+`aarch64-unknown-linux-gnu` archive needs — the 1.0.0-alpha.5 executable asks for `GLIBC_2.32`
+and stops before it starts — while the installer picks the gnu archive on any glibc machine; so
+jetson runs the `aarch64-unknown-linux-musl` archive, verified against its digest, unpacked
+beside the older trees under `~/.local/share/majordomus/versions/`, with both launchers in
+`~/.local/bin` pointed at it. And an executable refuses a manifest newer than itself
+(1.0.0-alpha.5 against the trunk of 2026-10-25: `unknown key(s): lifecycle`), so a hub's
+checkout is never ahead of the executable that serves it: detached at the release's tag, which
+is the trunk when the release was cut from it. A hub left behind falls a protocol behind and
+links with nobody: on 2026-10-25 jetson served 0.26.0, mesh protocol 1, while every MacBook spoke
+protocol 2, and every other machine on its board read `expired`. That day every node and hub
+moved to 1.0.0-alpha.8, cut from the trunk at `2efeacea031`, and every hub checkout to that
+commit; the site published no `releases/v1.0.0-alpha.8.json` until later, so the archives were
+taken from the GitHub release and verified against its digests. jetson's `mesh doctor` held every
+check, and all four hubs listed all five machines live.
+
+jetson also serves a build-cache store (ADR 0157): MinIO on `100.92.246.32:9000`, the systemd
+unit `majordomus-build-cache.service`, bucket `majordomus-build-cache` with a 200 GiB hard quota,
+one client identity under the policy `mj-build-cache-rw` (object read, write and delete in that
+bucket, listing it), and the port admitted from loopback, the LAN and the tailnet only. Its node
+file declares the store under `provider`, and from 1.0.0-alpha.8 its runtime publishes the signed
+offer (`mesh state` reads it under `build_cache`, healthy, with its headroom); a client that
+also names it under `known` in its own node file, with the node id
+`9d652b2c7d06b12bfc5c3f8325e6618c`, still finds it when no runtime is reachable. Each client
+holds the identity in its credential file. On 2026-10-25 a MacBook so configured selected it,
+wrote a 15 KiB entry under `rust/aarch64-apple-darwin/`, and a second compile with an empty disk
+level hit it in 94 ms and backfilled the disk.
 
 **Hubs follow the release (ADR 0161).** A hub is a node like any other: with `follow: stable`
 it keeps its installed Majordomus at the version `releases/latest.json` names, restarts onto it
@@ -708,6 +921,49 @@ machines, and names a hub — so adding a machine is a key under `trust.allow` a
 that row, in one commit — and a disposable repository proves every briefing answer and exit 10
 through the start event. The hubs are started by hand; an installer that runs one as a service
 is owed as a typed capability or a Rhai workflow (ADR 0059).
+
+## The sccache client of a node
+
+`majordomus mesh build-cache env` prints the environment of the process that starts this
+machine's sccache server: the local disk as the first level and the store this node selected
+(ADR 0157) as the second. It reads this machine alone, never a repository, so a compile in any
+directory can ask it; `--format json` and the tool `majordomus_mesh_build_cache_env` give the
+whole answer with its reason. Nothing is written: `~/.cargo/config.toml` and the shell profile
+stay the user's.
+
+The second level is a start-up decision, because sccache fixes its chain when its server starts
+and fails the compile when an S3 level does not answer then (a store that stops while the server
+runs is only a miss). The store is added only when all of these hold at that moment, and the
+answer names the one that did not when it is left out:
+
+1. `sccache --version` answers;
+2. the node file `~/.config/majordomus/build-cache.json` (outside the repository) offers or
+   knows a store and selection chooses it, which needs the store to answer its readiness route
+   within 300 ms (an unknown is never healthy);
+3. the credential file `~/.config/mesh-build-cache/credentials` is a regular file of mode 0600
+   holding the profile `mesh-build-cache`;
+4. the installed sccache has the multi-level chain, measured by starting a throwaway server on a
+   private port, in a private home, with a chain level that does not exist: an sccache that knows
+   the chain refuses it by name, one that does not starts and is stopped again.
+
+The variables are `SCCACHE_MULTILEVEL_CHAIN=disk,s3`, `SCCACHE_MULTILEVEL_WRITE_ERROR_POLICY=l0`,
+`SCCACHE_BUCKET`, `SCCACHE_ENDPOINT`, `SCCACHE_REGION`, `SCCACHE_S3_USE_SSL`,
+`SCCACHE_S3_KEY_PREFIX=rust/<rustc host triple>/`, `AWS_SHARED_CREDENTIALS_FILE=<path>` and
+`AWS_PROFILE=mesh-build-cache`. A key is never exported: the environment of every compiler and
+build script would carry it, so only the credential file's path is named.
+
+`share/libexec/sccache-mesh` is the `RUSTC_WRAPPER` that uses it: when no sccache server listens
+on `SCCACHE_SERVER_PORT` (default 4226) it evaluates the script, and then runs sccache with its
+arguments unchanged. A running server ignores the environment, so nothing is asked then.
+`SCCACHE_MESH_OFF=1` keeps a build local-only; a missing `majordomus` changes nothing.
+
+What a second node can reuse is bounded by sccache's own key, measured on 2026-10-22 with sccache
+0.17.0: an entry is keyed by the absolute path of the cargo target directory, and a workspace
+crate also by the path of its checkout (`CARGO_MANIFEST_DIR`). Two compiles of one crate in one
+checkout with two different target directories both miss; two checkouts that use the same target
+directory path hit for registry crates and miss for the workspace's own crates. So reuse between
+nodes holds for registry dependencies when their target directory has the same path (not measured here
+for ADR 0139's shared build directory) and for workspace crates only at the same checkout path; `--remap-path-prefix` does not change that.
 
 ## The host firewall
 
@@ -792,17 +1048,19 @@ majordomus mesh doctor            # prerequisites, the host firewall, and the se
 majordomus mesh firewall          # what the host firewall must admit, whether it does, and the commands; exits 10 when it does not
 sudo majordomus mesh firewall apply   # admit it; needs root, refuses without
 majordomus mesh identity          # this machine's key, for trust.allow
+majordomus mesh enrol             # list this machine's key in trust.allow, once; then commit
 majordomus mesh status            # discovery: providers, tallies, refusals
 majordomus mesh nodes             # discovery: one row per node × runtime
 majordomus mesh peers             # machines → runtimes → active sessions, each link's state; --full for all
 majordomus mesh peer <runtime>    # one runtime; exits 10 when unknown
 majordomus mesh state             # counts, each runtime's newest claim, open reviews, untaken handovers, digest
 majordomus mesh state --full --live-claims   # every held claim; --after, --session, --runtime narrow
-majordomus mesh events --after 0  # the journal
+majordomus mesh events            # the journal from the beginning; --cursor <next> resumes; --beats includes the session beats
 majordomus mesh verify            # a live round with every dialed peer, convergence; exits 10 on failure
 majordomus mesh session open --session s1 --client codex --issue '#184'
 majordomus mesh claim apps/majordomus-cli --session s1 --issue '#184'   # exits 10 on claim_conflict
 majordomus mesh release <claim-key>
+majordomus mesh beat --session lander --phase waiting-on-ci   # keep lander's exclusive claims excluding while it waits
 majordomus mesh handover publish --issue '#184'
 majordomus mesh handover consume <id> --session s2
 majordomus mesh review request feature/x --session s1 --reviewer <runtime>
@@ -812,8 +1070,26 @@ majordomus mesh review withdraw <request-key> --session s1 --note 'superseded by
 
 Every command has `--format json`, which prints the capability's answer unchanged.
 
+**Paging the raw journal.** `mesh events` walks the journal by arrival. Each answer carries a
+`cursor`, `<instance>:<n>`: the run of the runtime that answered it and the arrival number
+of the last event it returned. The CLI prints it as `next --cursor …`. Passing it back as
+`cursor` returns what that run applied since then. A walk resumed from every answered cursor
+returns each event of the journal exactly once. That includes an event from a runtime that
+was partitioned away and kept stamping with its own Lamport clock: when the link returns,
+its event arrives stamped at or below a position the walk already passed, and is still
+returned once, however often it is delivered. Events are numbered when they are applied to
+their stream, never when received, and a duplicate is never applied twice. The test is
+`events_resume_across_partition_test` (`cargo test --lib mesh::journal`).
+
+A cursor is ~20 bytes whatever the journal holds, but it names positions of one run only. A
+restarted server refuses an older run's cursor as `stale_cursor`, and the reader walks again
+from the beginning. A stream that compaction drops leaves its numbers unanswered, never a
+short page. `after=<lamport>` is still accepted and walks by stamp, which never returns an
+event stamped at or below it that arrives later; `newest` answers the journal's last events
+and the cursor of everything held, from which a reader follows what comes next.
+
 **HTTP and OpenAPI.** `GET /api/v1/mesh`, `/nodes`, `/identity`, `/doctor`, `/firewall?port=`, `/cooperation`,
-`/peers`, `/peer?runtime=`, `/state`, `/events?after=&limit=`; `POST /api/v1/mesh/register`,
+`/peers`, `/peer?runtime=`, `/state`, `/events?cursor=&after=&limit=&newest=`; `POST /api/v1/mesh/register`,
 `/verify`, `/sessions`, `/sessions/close`, `/claims`, `/claims/release`, `/handovers`,
 `/handovers/consume`, `/reviews`, `/reviews/answer`, `/reviews/withdraw`, `/link/hello`, `/link/sync`. The schemas
 are in `/openapi.json`, generated from the capability declarations.

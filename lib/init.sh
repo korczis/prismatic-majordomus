@@ -139,6 +139,10 @@ H
   mkdir -p "$deployments_dir"
   mj_init_file "$MJ_SKELETON_DIR/ai/repo/deployments/README.md" "$deployments_dir/README.md"
   mj_init_file "$skel/ai/repo/project/README.md" "$MJ_PROJECT_DIR/README.md"
+  # The mesh: a declaration that is enabled and closed until a machine is enrolled. A
+  # machine whose key is not in trust.allow opens no socket (`mesh::manager::closed_to`), so
+  # shipping it enabled sends nothing anywhere; `majordomus mesh enrol` is the one step left.
+  mj_init_tree "$skel/ai/repo/mesh" "$MJ_AI_REPO_DIR/mesh" '*'
   # the checkout-local half: the state directories the durable commands write into, and
   # the two hand-editable stores, seeded from the tool's templates. Never tracked.
   mkdir -p "$MJ_STATE_DIR/handovers" "$MJ_STATE_DIR/checkpoints" "$MJ_AI_LOCAL_DIR/prompts" \
@@ -153,7 +157,7 @@ H
   [ -f "$MJ_STATE_DIR/open-questions.md" ] || cp "$skel/templates/open-questions.md" "$MJ_STATE_DIR/open-questions.md"
   if [ "$personal" = 1 ]; then
     MJ_INIT_CREATED="$MJ_INIT_CREATED $(mj_personal_exclude_file):/$ai_rel/"
-  else mj_init_gitignore; fi
+  else mj_init_gitignore; mj_init_readme; fi
 
   local rel; rel="${MJ_SELF:-$(cd "$MJ_BIN_DIR" && pwd)/majordomus}"
   if [ -n "$MJ_INIT_CREATED" ]; then
@@ -206,14 +210,14 @@ mj_init_hook_advice() {
   if [ "$tracked" = 0 ]; then
     cat <<OUT
 hooks are not installed by init; add these two lines yourself, doctor verifies them:
-  pre-commit: $rel doctor || exit \$?
+  pre-commit: MAJORDOMUS_DOCTOR_CONTEXT=commit $rel doctor || exit \$?
   pre-push:   $rel finish --check || exit \$?
 OUT
     return 0
   fi
   printf "hooks are not installed by init, and this repository's hooks are the project's (%s/ is tracked):\n" "$hookrel"
   for h in pre-commit pre-push; do
-    case "$h" in pre-commit) line="$rel doctor || exit \$?" ;; *) line="$rel finish --check || exit \$?" ;; esac
+    case "$h" in pre-commit) line="MAJORDOMUS_DOCTOR_CONTEXT=commit $rel doctor || exit \$?" ;; *) line="$rel finish --check || exit \$?" ;; esac
     if [ -d "$MJ_ROOT/$hookrel/$h.d" ]; then
       dropin="$hookrel/$h.d/majordomus-personal"
       mj_personal_cover "$dropin" || mj_die "$MJ_EX_INTERNAL" "cannot write $(mj_personal_exclude_file)"
@@ -353,4 +357,19 @@ mj_init_gitignore() {
     { [ -f "$gi" ] && [ -n "$(tail -c1 "$gi")" ] && printf '\n'; printf '%s\n' "$line"; } >> "$gi"
     MJ_INIT_CREATED="$MJ_INIT_CREATED .gitignore:$line"
   done
+}
+
+# the reader's way in: a README that does not name AGENTS.md is a FAIL of doctor's bootstrap
+# check (majordomus.bootstrap-integrity: a person reaches the layer through README.md and
+# AGENTS.md), so a shared init adds one paragraph that names it, once, to a README whose other
+# content is left alone. A README is not created where there is none, which that check does
+# not ask for, and a personal layer never reaches here: the README is the project's (I2941).
+mj_init_readme() {
+  local readme="$MJ_ROOT/README.md"
+  [ -f "$readme" ] || return 0
+  grep -q 'AGENTS\.md' "$readme" && return 0
+  { [ -n "$(tail -c1 "$readme")" ] && printf '\n'
+    printf '\n## AI agents\n\nThis repository is supervised by Majordomus. An agent starts at [AGENTS.md](AGENTS.md).\n'
+  } >> "$readme"
+  MJ_INIT_CREATED="$MJ_INIT_CREATED README.md:AGENTS.md"
 }

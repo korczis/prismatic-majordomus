@@ -1,0 +1,31 @@
+id: I3775
+milestone: derived-data-integrity
+title: "A page written by hand is never resolved as derived: the merge=derived globs name only what a generator writes"
+slug: a-hand-written-page-is-never-resolved-as-derived
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the merge=derived attribute true of every path it covers: each path .gitattributes resolves with scripts/merge-derived is one that scripts/derive or majordomus generate writes, and a page a person writes is merged as text, so a merge never drops one side of a hand edit."
+why: "Found on 2026-10-21 while splitting the campaign records into source and derived paths. site/content/roadmap.md is written by hand (no generator writes it and site/content-src holds no copy), yet the glob site/content/*.md marks it merge=derived. scripts/merge-derived resolves such a path to ours and only warns that it is stale, so a merge of two branches that both edit the roadmap prose keeps one side and drops the other without a conflict, and the next derive does not restore it because nothing derives it."
+current_state: "The .gitattributes line site/content/*.md merge=derived covers every top-level page. Most come from site/content-src through scripts/generate-site-data and _index.md is written by the generator, but site/content/roadmap.md has no source anywhere, and changelog.md, getting-started.md, limitations.md and policy.md have no site/content-src counterpart and are not yet traced. No gate compares the merge=derived set with the set a derive writes."
+desired_state: "Each merge=derived pattern matches only paths a derive writes, and a gate refuses a tracked path the attribute resolves as derived when a derive does not write it, naming the path. Hand-written pages either move to site/content-src, so the derive projects them, or are excluded from the glob."
+scope:
+  - ".gitattributes"
+  - "scripts/merge-derived"
+  - "scripts/ci/derived-attributes-check"
+  - "site/content/roadmap.md"
+  - "site/content-src"
+  - "test/cases/3725_a_hand_written_page_is_never_resolved_as_derived.sh"
+non_scope:
+  - "Changing how scripts/merge-derived resolves a path that is derived"
+  - "Moving the generated pages out of site/content"
+acceptance_criteria:
+  - "Every tracked path that git check-attr resolves as merge=derived is written by a derive run from a clean checkout"
+  - "site/content/roadmap.md is either projected from site/content-src or merged as text, and a merge of two branches that edit its prose differently conflicts instead of keeping one side"
+  - "Negative: a fixture checkout with a hand-written file under a merge=derived glob fails the gate, which names the file"
+validation:
+  - "bash test/run.sh 3725_a_hand_written_page_is_never_resolved_as_derived"
+  - "majordomus plan validate"
+evidence_required:
+  - "test_a_hand_written_page_is_never_resolved_as_derived"
+depends_on: []

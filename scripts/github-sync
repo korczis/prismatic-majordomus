@@ -67,8 +67,61 @@
 # Every mutation prints one line naming what it changed and why. A mutation GitHub refuses
 # is a FAIL line, the run goes on with the next record, and the exit is 13.
 #
+# Pull requests (--prs). The same projection, onto the other half of the collaboration: each
+# open pull request carries the metadata its canonical records imply, so a reader of GitHub
+# sees what it serves without asking.
+#
+#   scripts/github-sync --prs              this branch as the pull request it would open, offline
+#   scripts/github-sync --prs --check      every open pull request against the remote; exit 11 on drift
+#   scripts/github-sync --prs --apply      write what is owed
+#   scripts/github-sync --prs --pr <n> ... one pull request (what .github/workflows/pr-meta.yml runs,
+#                                          on pull_request_target, from the base's checkout)
+#   scripts/github-sync --prs --fields milestone,assignee,body --apply
+#                                          only those fields. A label added with a person's
+#                                          token is a `labeled` event, and validate.yml starts a
+#                                          run on every one; the workflow's token starts none,
+#                                          so a backfill from a clone leaves labels to it.
+#
+# What a pull request serves: the issue ids (I<digits>) in its title and in the subject line of
+# each of its commits, then the issue records its head changes, in that order. Its metadata
+# is projected from the trunk's records; an id whose record exists only in the head is named
+# by its id and carries no priority and no milestone, and an id no record carries is reported.
+#
+#   labels     type:<t> from the conventional title (feat fix perf refactor docs test chore ci
+#              style build), priority:<p>, the highest of the issues it serves, train on an
+#              integration/train-* head, records when it changes nothing outside the project
+#              records but their projections. These four families are the projection's: one
+#              it no longer derives is removed. Every other label is a person's (hold,
+#              collision:accepted, ci:yielded) and is never touched.
+#   milestone  the GitHub milestone of the first served issue's canonical milestone; left as
+#              it is when nothing is derived
+#   assignee   the pull request's author (MJ_GH_PR_ASSIGNEE overrides), only when nobody is
+#   body       a region between <!-- majordomus:pr-meta begin <hash> --> and
+#              <!-- majordomus:pr-meta end -->: `Refs #<n> (<id> — <title>)` per served issue
+#              and the canonical milestone, spliced as an issue body is, under the same rule:
+#              the begin marker carries the hash of what was written, and a region a person
+#              rewrote is reported `edited` and left alone without --force.
+#
+# A link is never a closing keyword. `Closes #N` in a merged pull request closes the GitHub
+# issue ahead of its canonical record, which is the projection running backwards (it happened
+# on 2026-10-03); the region refuses to be written if it would carry one, a `#<digit>` in a
+# title is written `# <digit>`, and one a person or a commit wrote is reported.
+#
+# The adapter's records are read from each pull request's own head (git show), so every
+# runner derives the same answer from the same head; the head is fetched when the clone does
+# not carry it. Unlike the issue projection, --prs --apply runs from any tree: what it writes
+# is the pull request's, not the trunk's plan. MJ_GH_FIXTURE_PRS names a file in the shape the
+# live read produces, as MJ_GH_FIXTURE_ISSUES does for issues.
+#
+# A title GitHub would refuse is refused here first. GitHub caps a milestone title at 255
+# characters and an issue title at 256, and the projected title is "<id> — <title>". --plan,
+# --render and --apply measure every title they would post, in characters rather than bytes,
+# and exit 14 naming each record over its limit, so the structure job (core-check runs --plan)
+# refuses the record before it merges. --check only reads, and does not measure.
+#
 # Exit: 0 done, 2 usage, 11 drift (--check), 12 cannot run, 13 a mutation failed,
-# 15 --apply refused (the reason and the command that reproduces it are printed).
+# 14 a projected title is over GitHub's limit, 15 --apply refused (the reason and the command
+# that reproduces it are printed).
 set -eu
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -79,9 +132,18 @@ export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
 # shellcheck source=../lib/project.sh
 . "$ROOT/lib/project.sh"
 
-MODE=plan; ONLY=""; FORCE=0; RENDER=""
+MODE=plan; ONLY=""; FORCE=0; RENDER=""; PRS=0; PR_ONLY=""; FIELDS="labels,milestone,assignee,body"
 while [ $# -gt 0 ]; do
   case "$1" in
+    --prs) PRS=1; shift ;;
+    --pr) [ $# -ge 2 ] || { echo "github-sync: --pr needs a number" >&2; exit 2; }
+          case "$2" in ''|*[!0-9]*) echo "github-sync: --pr needs a number, not '$2'" >&2; exit 2 ;; esac
+          PRS=1; PR_ONLY="$2"; shift 2 ;;
+    --fields) [ $# -ge 2 ] || { echo "github-sync: --fields needs a list" >&2; exit 2; }
+              for f in $(printf '%s' "$2" | tr ',' ' '); do
+                case "$f" in labels|milestone|assignee|body) ;; *) echo "github-sync: --fields knows labels, milestone, assignee and body, not '$f'" >&2; exit 2 ;; esac
+              done
+              FIELDS="$2"; shift 2 ;;
     --plan) MODE=plan; shift ;;
     --check) MODE=check; shift ;;
     --apply) MODE=apply; shift ;;
@@ -91,12 +153,501 @@ while [ $# -gt 0 ]; do
               while [ $# -gt 0 ]; do case "$1" in -*) break ;; esac; RENDER="$RENDER $1"; shift; done ;;
     --milestone) [ $# -ge 2 ] || { echo "github-sync: --milestone needs an id" >&2; exit 2; }; ONLY="$2"; shift 2 ;;
     --force) FORCE=1; shift ;;
-    -h|--help) sed -n '2,71p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,/^set -eu$/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "github-sync: unknown option $1" >&2; exit 2 ;;
   esac
 done
 
 mj_require_installed
+
+# ================================================================ shared by both projections
+GH_REMOTE="${MJ_GH_REMOTE:-origin}"
+apply_refused() {
+  printf 'github-sync: --apply refused: %s\n  reproduce: %s\n' "$1" "$2" >&2
+  exit 15
+}
+
+# One apply at a time. Two applies interleave their reads and writes — each lists the remote,
+# then creates what it found missing — so the second creates the records the first is
+# creating. A directory, because mkdir is the create-or-fail primitive; in the git common
+# directory, because every worktree of the repository shares it and none of them tracks it.
+# A held lock is refused, never waited on or broken: its owner line says who holds it, and
+# only a person can tell a live apply from one that was killed without its trap running.
+#   apply_lock <name> <head>
+APPLY_LOCK=""
+apply_lock() {
+  local common held
+  common="$(git -C "$MJ_ROOT" rev-parse --git-common-dir)"
+  case "$common" in /*) ;; *) common="$MJ_ROOT/$common" ;; esac
+  APPLY_LOCK="$(cd "$common" && pwd)/$1"
+  if ! mkdir "$APPLY_LOCK" 2>/dev/null; then
+    held="$(cat "$APPLY_LOCK/owner" 2>/dev/null)" || held="an owner it does not name"
+    apply_refused "another --apply holds $APPLY_LOCK ($held)" \
+      "cat $APPLY_LOCK/owner  # remove the directory only if that process is gone"
+  fi
+  printf 'host=%s pid=%s head=%s since=%s\n' "$(uname -n 2>/dev/null || printf unknown)" "$$" \
+    "$2" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$APPLY_LOCK/owner"
+}
+# releases only the lock this process took: a refusal exits before taking one
+apply_unlock() {
+  [ -n "${APPLY_LOCK:-}" ] || return 0
+  grep -q " pid=$$ " "$APPLY_LOCK/owner" 2>/dev/null || return 0
+  rm -f "$APPLY_LOCK/owner"; rmdir "$APPLY_LOCK" 2>/dev/null || true
+}
+
+DRIFT=0; FAILED=0
+note() {
+  printf '%-6s %-9s %s\n' "$1" "$2" "$3"
+  [ "$1" = DRIFT ] && DRIFT=$((DRIFT + 1))
+  [ "$1" = FAIL ] && FAILED=$((FAILED + 1))
+  return 0
+}
+
+# Every remote mutation goes through here: one line naming what changed and why, or a FAIL
+# line naming what GitHub refused and what it said. Close and reopen used to end in
+# `|| true` and a body or milestone edit in an `&&` chain, so a refused write printed nothing,
+# or printed `updated` over a write that never happened, and the run exited 0 over a remote
+# it had left half applied. A failure does not stop the run — the next record is independent
+# of this one, and the adapter is idempotent — but it decides the exit.
+#   applied <verb> <subject> <why> <command...>
+applied() {
+  local verb="$1" subject="$2" why="$3" err rc=0 said
+  shift 3
+  err="$(mktemp "${TMPDIR:-/tmp}/mj.err.XXXXXX")"
+  "$@" > /dev/null 2> "$err" || rc=$?
+  if [ "$rc" = 0 ]; then
+    note OK "$verb" "$subject — $why"
+  else
+    said="$(tr '\n' ' ' < "$err" | cut -c1-200)"
+    note FAIL "$verb" "$subject — $why: '$(printf '%s' "$*" | cut -c1-120)' exited $rc${said:+: $said}"
+  fi
+  rm -f "$err"
+  return 0
+}
+
+# A backfill is hundreds of mutations in a row, and GitHub answers that with a secondary
+# rate limit rather than a clean error. Pace them. MJ_GH_PACE overrides; 0 disables. The
+# adapter is idempotent, so a run that trips a limit and stops is resumed by running it
+# again — nothing is created twice, because identity travels with the record.
+PACE="${MJ_GH_PACE:-1}"
+pace() { [ "$MODE" = apply ] && [ "$PACE" != 0 ] && sleep "$PACE"; return 0; }
+
+# The remote's milestones and issues, one row each, in the shape a fixture carries too:
+#   milestones  number, title, state
+#   issues      number, title, state, body (base64), milestone title, record identity
+# The issues come from `gh issue list`, which reads GraphQL and carries no pull request.
+#
+# A listing that failed is not an empty remote. Read as empty, every record would be
+# reported missing, the gate would count a ratchet breach where it should say it cannot
+# read, and an apply would create every issue a second time.
+GH_MS_JQ='[(.number|tostring), .title, .state] | @tsv'
+GH_IS_JQ='[(.number|tostring), .title, (.state|ascii_downcase), (.body // "" | @base64), (.milestone.title // ""), ((.body // "") | [scan("majordomus:record ([A-Za-z0-9_.-]+)")] | if length > 0 then .[0][0] else "" end)] | @tsv'
+unreadable() {
+  echo "github-sync: could not list the $1 of $REPO; nothing was read and nothing was changed (reproduce: gh api repos/$REPO/$1)" >&2
+  exit 12
+}
+gh_list_remote() {
+  gh api --paginate "repos/$REPO/milestones?state=all" --jq ".[] | $GH_MS_JQ" > "$REMOTE_MS" 2>/dev/null \
+    || unreadable milestones
+  # gh issue list pages through GraphQL to the end. `gh api --paginate` over the REST issues
+  # endpoint stopped after four pages of issues and pull requests mixed (gh 2.98, 2026-10-22),
+  # so most issues read as missing and an --apply created 487 duplicates (I3920). A listing
+  # shorter than the repository's own count is therefore unreadable, never a set of absences.
+  gh issue list --repo "$REPO" --state all --limit 1000000 \
+    --json number,title,state,body,milestone \
+    --jq ".[] | $GH_IS_JQ" \
+    > "$REMOTE_IS" 2>/dev/null || unreadable issues
+  want_issues="$(gh api graphql -f owner="${REPO%%/*}" -f name="${REPO#*/}" \
+    -f query='query($owner:String!,$name:String!){repository(owner:$owner,name:$name){issues{totalCount}}}' \
+    --jq '.data.repository.issues.totalCount' 2>/dev/null)" || unreadable issues
+  [ "$(wc -l < "$REMOTE_IS" | tr -d ' ')" -ge "${want_issues:-1}" ] || unreadable issues
+}
+
+# One resolution for every question about a remote issue. A record is found by the identity
+# it carries in its own body; a record that carries none is found once by its title prefix,
+# which is how the issues projected before the marker existed are adopted rather than
+# duplicated. A record that carries an identity is never matched by title, so renaming it on
+# GitHub moves nothing, and a title a person rewrote cannot capture another record's slot.
+remote_issue_line() {
+  awk -F'\t' -v id="$1" -v p="$1 — " '
+    $6 == id            { print; found = 1; exit }
+    $6 == "" && index($2,p)==1 && !legacy { legacy = $0 }
+    END { if (!found && legacy != "") print legacy }' "$REMOTE_IS"
+}
+remote_milestone_number() { awk -F'\t' -v p="$1 — " 'index($2,p)==1 { print $1; exit }' "$REMOTE_MS"; }
+
+# ================================================================ pull requests (--prs)
+if [ "$PRS" = 1 ]; then
+  [ -z "$RENDER$ONLY" ] || { echo "github-sync: --prs takes neither --render nor --milestone" >&2; exit 2; }
+  field() { case ",$FIELDS," in *",$1,"*) return 0 ;; *) return 1 ;; esac; }
+  # The project model is not loaded: a pull request needs three fields of a handful of records,
+  # read from its own head, and loading every record of the trunk costs a minute on a busy
+  # machine for nothing this half reads.
+  PJ_REL="${MJ_PROJECT_DIR#"$MJ_ROOT/"}"
+  W="$(mktemp -d "${TMPDIR:-/tmp}/mj.prs.XXXXXX")"
+  trap 'rm -rf "$W"; apply_unlock; mj_cleanup' EXIT
+  mj_yaml_flatten "$MJ_PROJECT_DIR/project.yaml" > "$W/project.flat" 2>/dev/null \
+    || { echo "github-sync: $PJ_REL/project.yaml does not parse" >&2; exit 12; }
+  REPO="$(mj_yget "$W/project.flat" repository)"
+  TRUNK="$(mj_yget "$W/project.flat" default_branch)"; TRUNK="${TRUNK:-master}"
+  [ -n "$REPO" ] || { echo "github-sync: $PJ_REL/project.yaml names no repository" >&2; exit 12; }
+  # the assignee when a row names no author (the offline plan): the repository's owner
+  OWNER="${MJ_GH_PR_ASSIGNEE:-${REPO%%/*}}"
+  TRUNK_REF="refs/remotes/$GH_REMOTE/$TRUNK"
+  gitr() { git -C "$MJ_ROOT" "$@"; }
+
+  # A closing keyword as GitHub reads one: the verb, an optional colon, then #<n> or
+  # owner/repo#<n>. Matched case-insensitively and more loosely than GitHub does, because a
+  # false alarm costs a line and a miss closes an issue ahead of its record.
+  CLOSING_RE='(^|[^[:alnum:]])(close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)[[:space:]]*:?[[:space:]]*([[:alnum:]_.-]+/[[:alnum:]_.-]+)?#[0-9]+'
+  REGION_BEGIN_RE='^<!-- majordomus:pr-meta begin [0-9a-f]* -->$'
+  REGION_END='<!-- majordomus:pr-meta end -->'
+
+  # ---------------------------------------------------------------- the remote
+  # One row per pull request: number, title, head ref, head sha, base ref, labels, milestone
+  # title, assignees, body (base64), state, author. A fixture carries the same columns.
+  PR_JQ='[(.number|tostring), (.title|gsub("[\t\r\n]";" ")), .head.ref, .head.sha, .base.ref, ([.labels[].name]|join(",")), (.milestone.title // ""), ([.assignees[].login]|join(",")), (.body // "" | @base64), .state, (.user.login // "")] | @tsv'
+  PRS_TSV="$W/prs.tsv"; REMOTE_MS="$W/ms.tsv"; REMOTE_IS="$W/is.tsv"
+  : > "$PRS_TSV"; : > "$REMOTE_MS"; : > "$REMOTE_IS"
+  LIVE=0; OFFLINE_BRANCH=0
+  if [ -n "${MJ_GH_FIXTURE_PRS:-}" ]; then
+    [ "$MODE" = apply ] && { echo "github-sync: --apply refuses a fixture remote; unset MJ_GH_FIXTURE_*" >&2; exit 15; }
+    cat "$MJ_GH_FIXTURE_PRS" > "$PRS_TSV"
+    [ -z "${MJ_GH_FIXTURE_MILESTONES:-}" ] || cat "$MJ_GH_FIXTURE_MILESTONES" > "$REMOTE_MS"
+    [ -z "${MJ_GH_FIXTURE_ISSUES:-}" ] || cat "$MJ_GH_FIXTURE_ISSUES" > "$REMOTE_IS"
+  elif [ "$MODE" = plan ]; then
+    # Offline, with no remote to ask: this branch as the pull request it would open, titled by
+    # its oldest commit as `gh pr create --fill` titles it. Issue numbers come from a fixture
+    # when one is named; otherwise they are what --check and --apply resolve.
+    OFFLINE_BRANCH=1
+    [ -z "${MJ_GH_FIXTURE_MILESTONES:-}" ] || cat "$MJ_GH_FIXTURE_MILESTONES" > "$REMOTE_MS"
+    [ -z "${MJ_GH_FIXTURE_ISSUES:-}" ] || cat "$MJ_GH_FIXTURE_ISSUES" > "$REMOTE_IS"
+    h="$(gitr rev-parse -q --verify HEAD 2>/dev/null)" || { echo "github-sync: this tree has no commit to plan from" >&2; exit 12; }
+    b="$(gitr symbolic-ref -q --short HEAD 2>/dev/null)" || b="HEAD"
+    t=""
+    if gitr rev-parse -q --verify "$TRUNK_REF" >/dev/null 2>&1; then
+      t="$(gitr log --reverse --format=%s "$TRUNK_REF..$h" 2>/dev/null | head -n 1)"
+    fi
+    [ -n "$t" ] || t="$(gitr log -1 --format=%s "$h")"
+    printf -- '-\t%s\t%s\t%s\t%s\t\t\t\t\topen\t\n' "$(printf '%s' "$t" | tr '\t' ' ')" "$b" "$h" "$TRUNK" > "$PRS_TSV"
+  else
+    LIVE=1
+    command -v gh >/dev/null 2>&1 || { echo "github-sync: gh is required for --prs --$MODE" >&2; exit 12; }
+    gh auth status >/dev/null 2>&1 || { echo "github-sync: gh is not authenticated; --prs --$MODE needs it" >&2; exit 12; }
+    if [ -n "$PR_ONLY" ]; then
+      gh api "repos/$REPO/pulls/$PR_ONLY" --jq "$PR_JQ" > "$PRS_TSV" 2>/dev/null \
+        || { echo "github-sync: could not read pull request #$PR_ONLY of $REPO; nothing was changed (reproduce: gh api repos/$REPO/pulls/$PR_ONLY)" >&2; exit 12; }
+    else
+      gh api --paginate "repos/$REPO/pulls?state=open&per_page=100" --jq ".[] | $PR_JQ" > "$PRS_TSV" 2>/dev/null \
+        || { echo "github-sync: could not list the pull requests of $REPO; nothing was changed (reproduce: gh api repos/$REPO/pulls)" >&2; exit 12; }
+    fi
+    gh_list_remote
+  fi
+  if [ -n "$PR_ONLY" ] && [ "$OFFLINE_BRANCH" = 0 ]; then
+    awk -F'\t' -v n="$PR_ONLY" '$1 == n' "$PRS_TSV" > "$W/one.tsv"; mv "$W/one.tsv" "$PRS_TSV"
+    [ -s "$PRS_TSV" ] || { echo "github-sync: no pull request #$PR_ONLY" >&2; exit 12; }
+  fi
+
+  # ---------------------------------------------------------------- what a pull request serves
+  # The canonical record of an issue: R_TITLE, R_PRIO, R_MS, R_MS_TITLE, and R_SRC, `trunk`
+  # or `head`. The trunk's record is what is projected; a record only the head carries is
+  # named and nothing more, because it is not the plan until it lands. 1 when neither has one.
+  pr_record() { # <id> <head>
+    local src
+    for src in "$TRUNK_REF" "$2"; do
+      R_SRC="head"; [ "$src" != "$TRUNK_REF" ] || R_SRC="trunk"
+      gitr show "$src:$PJ_REL/issues/$1.yaml" > "$W/rec.yaml" 2>/dev/null || continue
+      mj_yaml_flatten "$W/rec.yaml" > "$W/rec.flat" 2>/dev/null || continue
+      [ "$(mj_yget "$W/rec.flat" id)" = "$1" ] || continue
+      R_TITLE="$(mj_yget "$W/rec.flat" title)"; R_PRIO="$(mj_yget "$W/rec.flat" priority)"
+      R_MS="$(mj_yget "$W/rec.flat" milestone)"; R_MS_TITLE=""
+      if [ -n "$R_MS" ] && gitr show "$src:$PJ_REL/milestones/$R_MS.yaml" > "$W/ms.yaml" 2>/dev/null \
+         && mj_yaml_flatten "$W/ms.yaml" > "$W/ms.flat" 2>/dev/null; then
+        R_MS_TITLE="$(mj_yget "$W/ms.flat" title)"
+      fi
+      return 0
+    done
+    return 1
+  }
+  # a title as the region writes it: `#<digit>` loses its link, so no title can smuggle a
+  # closing keyword into the region
+  pr_safe() { printf '%s' "$1" | sed 's/#\([0-9]\)/# \1/g'; }
+
+  # Everything the projection wants of one pull request, from its title, its head and the
+  # records; D_* and the region file $W/want.<n>. 1 when its head cannot be read.
+  pr_derive() { # <n> <title> <head ref> <head sha> <base ref>
+    local n="$1" title="$2" href="$3" head="$4" bref="$5" base="" mb="" id t best="" num line ms_num
+    D_IDS=""; D_SKIPPED=""; D_LABELS=""; D_MS=""; D_MS_NUM=""; D_MS_ID=""; D_MS_TITLE=""; D_MB=""
+    : > "$W/want.$n"; : > "$W/lines.$n"
+    if ! gitr cat-file -e "$head^{commit}" 2>/dev/null; then
+      [ "$LIVE" = 0 ] || gitr fetch -q --no-tags "$GH_REMOTE" "refs/pull/$n/head" >/dev/null 2>&1 || true
+      gitr cat-file -e "$head^{commit}" 2>/dev/null || return 1
+    fi
+    base="$(gitr rev-parse -q --verify "refs/remotes/$GH_REMOTE/$bref^{commit}" 2>/dev/null)" \
+      || base="$(gitr rev-parse -q --verify "$TRUNK_REF^{commit}" 2>/dev/null)" || base=""
+    [ -z "$base" ] || mb="$(gitr merge-base "$base" "$head" 2>/dev/null)" || mb=""
+    D_MB="$mb"
+    {
+      printf '%s\n' "$title"
+      [ -z "$mb" ] || gitr log --reverse --format=%s "$mb..$head"
+    } | awk '{ n = split($0, w, /[^A-Za-z0-9]+/)
+               for (i = 1; i <= n; i++) if (w[i] ~ /^I[0-9][0-9][0-9][0-9]+$/) print w[i] }' > "$W/ids.$n"
+    : > "$W/files.$n"
+    if [ -n "$mb" ]; then
+      gitr diff --name-only "$mb" "$head" > "$W/files.$n"
+      awk -v p="$PJ_REL/issues/" 'index($0, p) == 1 { f = substr($0, length(p) + 1)
+          if (f ~ /^I[0-9]+\.yaml$/) { sub(/\.yaml$/, "", f); print f } }' "$W/files.$n" \
+        | LC_ALL=C sort >> "$W/ids.$n"
+    fi
+    for id in $(awk '!seen[$0]++' "$W/ids.$n"); do
+      if ! pr_record "$id" "$head"; then D_SKIPPED="$D_SKIPPED $id"; continue; fi
+      D_IDS="$D_IDS $id"
+      if [ "$R_SRC" = head ]; then
+        printf -- '- %s (its record is in this pull request and not yet on the trunk)\n' "$id" >> "$W/lines.$n"
+        continue
+      fi
+      case "$R_PRIO" in p[0-9]) if [ -z "$best" ] || [ "${R_PRIO#p}" -lt "${best#p}" ]; then best="$R_PRIO"; fi ;; esac
+      num="$(remote_issue_line "$id" | cut -f1)"
+      if [ -n "$num" ]; then line="- Refs #$num ($id — $(pr_safe "$R_TITLE"))"
+      else line="- $id — $(pr_safe "$R_TITLE") (not on GitHub yet: the issue projection creates it once the record is on the trunk)"; fi
+      printf '%s\n' "$line" >> "$W/lines.$n"
+      # the milestone is the first served issue's; a later issue never moves it
+      if [ -z "$D_MS_ID" ] && [ -n "$R_MS" ]; then
+        D_MS_ID="$R_MS"; D_MS_TITLE="$R_MS_TITLE"
+        ms_num="$(remote_milestone_number "$R_MS")"
+        if [ -n "$ms_num" ]; then
+          D_MS_NUM="$ms_num"; D_MS="$(awk -F'\t' -v n="$ms_num" '$1 == n { print $2; exit }' "$REMOTE_MS")"
+        fi
+      fi
+    done
+    D_IDS="${D_IDS# }"; D_SKIPPED="${D_SKIPPED# }"
+    # labels: the four families this projection owns
+    t="$(printf '%s' "$title" | sed -n 's/^\([a-z][a-z]*\)\(([^)]*)\)\{0,1\}!\{0,1\}[:+].*/\1/p')"
+    {
+      case "$t" in feat|fix|perf|refactor|docs|test|chore|ci|style|build) printf 'type:%s\n' "$t" ;; esac
+      [ -z "$best" ] || printf 'priority:%s\n' "$best"
+      case "$href" in integration/train-*) printf 'train\n' ;; esac
+      # a records change commits the projections its derive wrote beside the records, and a
+      # projection is not a change of its own: a path git calls derived (merge=derived, as
+      # scripts/gitattributes declares it at the head) neither makes nor breaks the label
+      if [ -s "$W/files.$n" ]; then
+        gitr check-attr --source "$head" --stdin merge < "$W/files.$n" > "$W/attrs.$n" 2>/dev/null \
+          || : > "$W/attrs.$n"
+        if awk -v p="$PJ_REL/" '{ path = $0; sub(/: merge: [^:]*$/, "", path); a = $0; sub(/.*: merge: /, "", a)
+              if (index(path, p) == 1) rec = 1; else if (a != "derived") other = 1 }
+              END { exit !(rec && !other) }' "$W/attrs.$n"; then
+          printf 'records\n'
+        fi
+      fi
+    } | LC_ALL=C sort -u > "$W/labels.$n"
+    D_LABELS="$(tr '\n' ' ' < "$W/labels.$n" | sed 's/ $//')"
+    # the region: nothing at all when the pull request serves no recorded issue
+    if [ -s "$W/lines.$n" ]; then
+      {
+        printf '**Serves** (derived from the canonical records by `scripts/github-sync --prs`; a link, never a closing keyword)\n\n'
+        cat "$W/lines.$n"
+        if [ -n "$D_MS_ID" ]; then
+          printf '\n**Milestone:** `%s` — %s\n' "$D_MS_ID" "$(pr_safe "${D_MS_TITLE:-$D_MS_ID}")"
+        fi
+      } > "$W/want.$n"
+    fi
+    return 0
+  }
+
+  # The region a body carries, in $W/have.<n>; prints `none`, `malformed` or `found <hash>`.
+  pr_region_read() { # <body file> <n>
+    awk -v out="$W/have.$2" -v b="$REGION_BEGIN_RE" -v e="$REGION_END" '
+      BEGIN { printf "" > out }
+      $0 ~ b { nb++; if (nb == 1) { h = $4; inside = 1 } next }
+      $0 == e { ne++; if (inside) { inside = 0; closed = 1 } next }
+      inside { print > out }
+      END { if (!nb && !ne) print "none"
+            else if (nb != 1 || ne != 1 || !closed) print "malformed"
+            else print "found " h }' "$1"
+  }
+  # The body with its region replaced by <region file> under <hash>, or removed when the
+  # region file is empty; a body with no region gains one after a blank line.
+  pr_splice() { # <body file> <region file> <hash>
+    if grep -qE "$REGION_BEGIN_RE" "$1"; then
+      awk -v r="$2" -v h="$3" -v b="$REGION_BEGIN_RE" -v e="$REGION_END" '
+        $0 ~ b { if (h != "") { print "<!-- majordomus:pr-meta begin " h " -->"
+                   while ((getline l < r) > 0) print l
+                   close(r); print e }
+                 skip = 1; next }
+        $0 == e && skip { skip = 0; next }
+        !skip { print }' "$1"
+    else
+      awk '{ print } END { if (NR) print "" }' "$1"
+      printf '<!-- majordomus:pr-meta begin %s -->\n' "$3"; cat "$2"; printf '%s\n' "$REGION_END"
+    fi
+  }
+  hash16() { mj_sha256 "$1" | cut -c1-16; }
+
+  # ---------------------------------------------------------------- reconcile
+  HAVE_LABELS=""
+  if [ "$MODE" = apply ]; then
+    apply_lock majordomus-github-sync-prs.lock "$(gitr rev-parse -q --verify HEAD 2>/dev/null || printf none)"
+    HAVE_LABELS="$(gh label list --repo "$REPO" --limit 500 --json name --jq '.[].name' 2>/dev/null)" \
+      || { echo "github-sync: could not list the labels of $REPO; nothing was changed (reproduce: gh label list --repo $REPO)" >&2; exit 12; }
+  fi
+  # a label is created the first time a pull request needs it, never recoloured
+  ensure_label() {
+    local l="$1" d
+    printf '%s\n' "$HAVE_LABELS" | grep -qxF "$l" && return 0
+    case "$l" in
+      type:*)     d="Conventional type ${l#type:}, from the pull request title (scripts/github-sync --prs)" ;;
+      priority:*) d="Priority ${l#priority:}, from the canonical record" ;;
+      train)      d="An integration train head (integration/train-*), from its branch (scripts/github-sync --prs)" ;;
+      records)    d="Changes only the canonical project records (scripts/github-sync --prs)" ;;
+      *)          d="Derived from the canonical project model" ;;
+    esac
+    applied created "label $l" "a pull request needs it and $REPO has no such label" \
+      gh label create "$l" --repo "$REPO" --description "$d" --force
+    HAVE_LABELS="$(printf '%s\n%s' "$HAVE_LABELS" "$l")"
+  }
+
+  # the whole vocabulary on a run over every pull request, so the workflow's run for one
+  # finds the label it needs already there
+  if [ "$MODE" = apply ] && [ -z "$PR_ONLY" ]; then
+    for l in type:feat type:fix type:perf type:refactor type:docs type:test type:chore type:ci type:style type:build train records; do
+      ensure_label "$l"
+    done
+  fi
+
+  COUNT=0; CHANGED=0; UNREAD=0
+  # the rows arrive on their own descriptor, so nothing the loop runs can read them away
+  while IFS= read -r row <&3; do
+    [ -n "$row" ] || continue
+    { IFS= read -r p_n; IFS= read -r p_title; IFS= read -r p_href; IFS= read -r p_head; IFS= read -r p_base
+      IFS= read -r p_labels; IFS= read -r p_ms; IFS= read -r p_assignees; IFS= read -r p_body; IFS= read -r p_state
+      # the last column may be empty, and a command substitution drops a trailing empty line
+      IFS= read -r p_author || p_author=""
+    } <<EOF
+$(printf '%s\n' "$row" | tr '\t' '\n')
+EOF
+    COUNT=$((COUNT + 1))
+    subj="pr #$p_n"; [ "$p_n" = - ] && subj="this branch ($p_href)"
+    if [ -n "$p_state" ] && [ "$p_state" != open ]; then note SKIP "$p_state" "$subj is $p_state; only an open pull request is projected"; continue; fi
+    if ! pr_derive "$p_n" "$p_title" "$p_href" "$p_head" "$p_base"; then
+      UNREAD=$((UNREAD + 1))
+      note SKIP unread "$subj: its head ${p_head:0:12} is not in this clone and could not be fetched (reproduce: git fetch $GH_REMOTE refs/pull/$p_n/head)"
+      continue
+    fi
+    [ -z "$D_SKIPPED" ] || note SKIP named "$subj names $D_SKIPPED, which no record carries at its head or on $TRUNK"
+
+    want_hash=""; [ -s "$W/want.$p_n" ] && want_hash="$(hash16 "$W/want.$p_n")"
+    if grep -iqE "$CLOSING_RE" "$W/want.$p_n"; then
+      note FAIL closing "$subj: the region would carry a closing keyword; nothing is written ($(grep -ioE "$CLOSING_RE" "$W/want.$p_n" | head -n 1))"
+      continue
+    fi
+
+    if [ "$MODE" = plan ]; then
+      printf '%s%s at %s (base %s)\n' "$subj" "$([ "$p_n" = - ] || printf ' %s' "$p_href")" "${p_head:0:12}" "$p_base"
+      printf '  title:     %s\n' "$p_title"
+      printf '  serves:    %s\n' "${D_IDS:-nothing recorded}"
+      printf '  labels:    %s\n' "${D_LABELS:-none}"
+      if [ -n "$D_MS" ]; then printf '  milestone: %s\n' "$D_MS"
+      elif [ -n "$D_MS_ID" ]; then printf '  milestone: %s (not on GitHub)\n' "$D_MS_ID"
+      else printf '  milestone: none\n'; fi
+      printf '  assignee:  %s, when nobody is assigned\n' "${MJ_GH_PR_ASSIGNEE:-${p_author:-$OWNER}}"
+      if [ -n "$want_hash" ]; then
+        printf '  region:    %s\n' "$want_hash"; sed 's/^/    | /' "$W/want.$p_n"
+      else printf '  region:    none\n'; fi
+      continue
+    fi
+
+    changed=0
+    # labels: the projection's four families, against what it derives
+    printf '%s\n' "$p_labels" | tr ',' '\n' | awk 'NF' | LC_ALL=C sort -u > "$W/hl.$p_n"
+    add="$(LC_ALL=C comm -13 "$W/hl.$p_n" "$W/labels.$p_n" | tr '\n' ' ' | sed 's/ $//')"
+    del="$(grep -E '^(type:.+|priority:.+|train|records)$' "$W/hl.$p_n" | LC_ALL=C comm -23 - "$W/labels.$p_n" | tr '\n' ' ' | sed 's/ $//')"
+    if ! field labels; then add=""; del=""; fi
+    if [ -n "$add$del" ]; then
+      changed=1
+      note DRIFT labels "$subj labels:$(for l in $add; do printf ' +%s' "$l"; done)$(for l in $del; do printf ' -%s' "$l"; done)"
+      if [ "$MODE" = apply ]; then
+        if [ -n "$add" ]; then
+          set --
+          for l in $add; do ensure_label "$l"; set -- "$@" -f "labels[]=$l"; done
+          applied updated "$subj labels" "added $add, derived from its title, head and records" \
+            gh api -X POST "repos/$REPO/issues/$p_n/labels" "$@"
+        fi
+        for l in $del; do
+          applied updated "$subj labels" "removed $l, which the records no longer derive" \
+            gh api -X DELETE "repos/$REPO/issues/$p_n/labels/$l"
+        done
+      fi
+    fi
+    # milestone: only when one is derived and it is on GitHub
+    if ! field milestone; then :
+    elif [ -n "$D_MS_ID" ] && [ -z "$D_MS_NUM" ]; then
+      note SKIP milestone "$subj serves milestone $D_MS_ID, which is not on GitHub yet"
+    elif [ -n "$D_MS" ] && [ "$p_ms" != "$D_MS" ]; then
+      changed=1
+      note DRIFT milestone "$subj is on '${p_ms:-no milestone}', canonically '$D_MS' (the milestone of ${D_IDS%% *})"
+      [ "$MODE" != apply ] || applied updated "$subj milestone" "set to '$D_MS', its first issue's canonical milestone" \
+        gh api -X PATCH "repos/$REPO/issues/$p_n" -F "milestone=$D_MS_NUM"
+    fi
+    # assignee: its author, only when nobody is
+    who="${MJ_GH_PR_ASSIGNEE:-${p_author:-$OWNER}}"
+    if field assignee && [ -z "$p_assignees" ] && [ -n "$who" ]; then
+      changed=1
+      note DRIFT assignee "$subj has no assignee; its author is $who"
+      [ "$MODE" != apply ] || applied updated "$subj assignee" "$who, because nobody was assigned" \
+        gh api -X POST "repos/$REPO/issues/$p_n/assignees" -f "assignees[]=$who"
+    fi
+    # body: the managed region, spliced; GitHub stores a body edited in its editor with CRLF
+    printf '%s' "$p_body" | base64 --decode 2>/dev/null | tr -d '\r' > "$W/body.$p_n" || : > "$W/body.$p_n"
+    read -r rstate rhash <<EOF
+$(pr_region_read "$W/body.$p_n" "$p_n")
+EOF
+    why=""
+    field body || rstate=unasked
+    case "$rstate" in
+      none)
+        if [ -n "$want_hash" ]; then why="region written"; note DRIFT missing "$subj body has no metadata region"; fi ;;
+      malformed)
+        note DRIFT malformed "$subj body has a broken metadata region (a marker repeated or unclosed); not touching it" ;;
+      found)
+        if [ "$(hash16 "$W/have.$p_n")" = "$rhash" ]; then
+          if [ "$rhash" != "$want_hash" ]; then
+            why="region behind the records"; note DRIFT behind "$subj metadata region is behind the records"
+          fi
+        else
+          note DRIFT edited "$subj has a hand-edited metadata region; not overwriting"
+          [ "$FORCE" = 0 ] || why="a hand-edited region overwritten under --force"
+        fi ;;
+    esac
+    if [ -n "$why" ]; then
+      changed=1
+      if [ "$MODE" = apply ]; then
+        pr_splice "$W/body.$p_n" "$W/want.$p_n" "$want_hash" > "$W/new.$p_n"
+        applied updated "$subj body" "$why" gh api -X PATCH "repos/$REPO/pulls/$p_n" -F "body=@$W/new.$p_n"
+      fi
+    fi
+    # a closing keyword a person or a commit wrote: the projection cannot remove it, and says so
+    pr_splice "$W/body.$p_n" /dev/null "" > "$W/outside.$p_n"
+    kw="$(grep -ioE "$CLOSING_RE" "$W/outside.$p_n" | head -n 1 | sed 's/^[^[:alpha:]]*//')" || kw=""
+    [ -z "$kw" ] || note WARN closing "$subj body says '$kw': merged, it closes that issue ahead of its record; write Refs instead"
+    if [ -n "$D_MB" ]; then
+      kw="$(gitr log --format=%B "$D_MB..$p_head" | grep -ioE "$CLOSING_RE" | head -n 1 | sed 's/^[^[:alpha:]]*//')" || kw=""
+      [ -z "$kw" ] || note WARN closing "$subj has a commit saying '$kw': merged, it closes that issue ahead of its record"
+    fi
+    if [ "$changed" = 1 ]; then CHANGED=$((CHANGED + 1)); pace
+    else note OK insync "$subj"; fi
+  done 3< "$PRS_TSV"
+
+  [ "$MODE" = plan ] && exit 0
+  printf '\ngithub-sync prs %s: %s pull request(s), %s with drift, %s drift finding(s)\n' "$MODE" "$COUNT" "$CHANGED" "$DRIFT"
+  if [ "$FAILED" -gt 0 ]; then
+    printf 'github-sync apply: %s mutation(s) failed (the FAIL lines above). Fix the cause and run --prs --apply again: it writes nothing twice.\n' "$FAILED" >&2
+    exit 13
+  fi
+  [ "$UNREAD" = 0 ] || { printf 'github-sync: %s pull request(s) could not be read; this is not a clean reading\n' "$UNREAD" >&2; exit 12; }
+  [ "$MODE" = check ] && [ "$DRIFT" -gt 0 ] && exit 11
+  exit 0
+fi
+
 mj_project_load || { echo "github-sync: no canonical project model in $MJ_ROOT" >&2; exit 12; }
 REPO="$(mj_pj_repository)"
 [ -n "$REPO" ] || { echo "github-sync: project.yaml names no repository" >&2; exit 12; }
@@ -169,6 +720,43 @@ selected_milestones() { if [ -n "$ONLY" ]; then printf '%s\n' "$ONLY"; else mj_p
 # shellcheck source=../lib/plan.sh
 . "$ROOT/lib/plan.sh"
 
+# ---------------------------------------------------------------- what GitHub accepts
+# A milestone title of 282 characters passed plan validate and every offline step, and GitHub
+# answered the projection on master with 422: the milestone never existed, so every pull
+# request's structure job was red on it until an admin landing broke the deadlock. The limits
+# are GitHub's; the count is of characters, which is what GitHub counts: a UTF-8 continuation
+# byte (0x80-0xBF) is deleted before the bytes are counted, so the em dash of the projected
+# title and a Czech letter are one each, in any locale. One pass over the model, not one
+# process per record, because --render is asked for every record at once.
+GH_MILESTONE_TITLE_MAX=255
+GH_ISSUE_TITLE_MAX=256
+forge_title_limits() {
+  local over
+  # a model that cannot be read measures nothing, and must not pass as if it measured
+  [ -r "$MJ_PJ/model.tsv" ] || { echo "github-sync: the loaded model has no model.tsv to measure" >&2; exit 12; }
+  over="$(awk -F'\t' -v only=" $* " '
+      ($1 == "M" || $1 == "I") && (only == "  " || index(only, " " $2 " ")) {
+        t = ($1 == "M") ? $6 : $9; print $1 "\t" $2 "\t" $2 " — " t }' "$MJ_PJ/model.tsv" \
+    | LC_ALL=C tr -d '\200-\277' \
+    | LC_ALL=C awk -F'\t' -v mm="$GH_MILESTONE_TITLE_MAX" -v im="$GH_ISSUE_TITLE_MAX" '
+      { n = length($3); max = ($1 == "M") ? mm : im
+        if (n > max) printf "%s\t%s\t%d\t%d\n", ($1 == "M") ? "milestone" : "issue", $2, n, max }')"
+  [ -n "$over" ] || return 0
+  while IFS="$MJ_TAB" read -r kind id n max; do
+    printf 'github-sync: %s %s: projected title is %s characters, GitHub refuses over %s %s\n' \
+      "$kind" "$id" "$n" "$max" "(.ai/repo/project/${kind}s/$id.yaml)" >&2
+  done <<< "$over"
+  printf 'github-sync: %s projected title(s) over GitHub'"'"'s limit; nothing was projected. Shorten the canonical title.\n' \
+    "$(printf '%s\n' "$over" | wc -l | tr -d ' ')" >&2
+  exit 14
+}
+if [ "$MODE" = render ]; then
+  # shellcheck disable=SC2086  # one argument per record id
+  forge_title_limits $RENDER
+elif [ "$MODE" = plan ] || [ "$MODE" = apply ]; then
+  forge_title_limits
+fi
+
 if [ "$MODE" = render ]; then
   # every id is resolved before anything is printed, so a missing record never leaves a
   # partial rendering behind it; the bodies follow in the order they were asked for
@@ -219,11 +807,6 @@ fi
 # the reason and the command that shows it. The tracking ref is this checkout's memory of the
 # remote and can be stale, so the tip is asked of the remote as well: an old master is a tree
 # that was never the trunk's current plan either.
-GH_REMOTE="${MJ_GH_REMOTE:-origin}"
-apply_refused() {
-  printf 'github-sync: --apply refused: %s\n  reproduce: %s\n' "$1" "$2" >&2
-  exit 15
-}
 if [ "$MODE" = apply ]; then
   trunk_ref="$(git -C "$MJ_ROOT" symbolic-ref -q "refs/remotes/$GH_REMOTE/HEAD" 2>/dev/null)" || trunk_ref=""
   [ -n "$trunk_ref" ] || apply_refused \
@@ -274,74 +857,16 @@ if [ "$MODE" = apply ]; then
     "$GH_REMOTE/$trunk is at ${live:0:12} on the remote and this tree is at ${head:0:12}; the local view of the trunk is stale" \
     "git -C $MJ_ROOT ls-remote $GH_REMOTE refs/heads/$trunk  # then: git fetch $GH_REMOTE && git merge --ff-only $GH_REMOTE/$trunk"
 
-  # One apply at a time. Two applies interleave their reads and writes — each lists the remote,
-  # then creates what it found missing — so the second creates the records the first is
-  # creating. A directory, because mkdir is the create-or-fail primitive; in the git common
-  # directory, because every worktree of the repository shares it and none of them tracks it.
-  # A held lock is refused, never waited on or broken: its owner line says who holds it, and
-  # only a person can tell a live apply from one that was killed without its trap running.
-  common="$(git -C "$MJ_ROOT" rev-parse --git-common-dir)"
-  case "$common" in /*) ;; *) common="$MJ_ROOT/$common" ;; esac
-  APPLY_LOCK="$(cd "$common" && pwd)/majordomus-github-sync.lock"
-  if ! mkdir "$APPLY_LOCK" 2>/dev/null; then
-    held="$(cat "$APPLY_LOCK/owner" 2>/dev/null)" || held="an owner it does not name"
-    apply_refused "another --apply holds $APPLY_LOCK ($held)" \
-      "cat $APPLY_LOCK/owner  # remove the directory only if that process is gone"
-  fi
-  printf 'host=%s pid=%s head=%s since=%s\n' "$(uname -n 2>/dev/null || printf unknown)" "$$" \
-    "$head" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$APPLY_LOCK/owner"
+  apply_lock majordomus-github-sync.lock "$head"
   printf 'github-sync apply: %s at %s (%s/%s), %s\n' "$REPO" "${head:0:12}" "$GH_REMOTE" "$trunk" \
     "lock $APPLY_LOCK"
 fi
-# releases only the lock this process took: a refusal above exits before taking one
-apply_unlock() {
-  [ -n "${APPLY_LOCK:-}" ] || return 0
-  grep -q " pid=$$ " "$APPLY_LOCK/owner" 2>/dev/null || return 0
-  rm -f "$APPLY_LOCK/owner"; rmdir "$APPLY_LOCK" 2>/dev/null || true
-}
 trap 'apply_unlock; mj_cleanup' EXIT
 
 if [ "$FIXTURE" = 0 ]; then
   command -v gh >/dev/null 2>&1 || { echo "github-sync: gh is required for --$MODE" >&2; exit 12; }
   gh auth status >/dev/null 2>&1 || { echo "github-sync: gh is not authenticated; --$MODE needs it" >&2; exit 12; }
 fi
-
-DRIFT=0; FAILED=0
-note() {
-  printf '%-6s %-9s %s\n' "$1" "$2" "$3"
-  [ "$1" = DRIFT ] && DRIFT=$((DRIFT + 1))
-  [ "$1" = FAIL ] && FAILED=$((FAILED + 1))
-  return 0
-}
-
-# Every remote mutation goes through here: one line naming what changed and why, or a FAIL
-# line naming what GitHub refused and what it said. Close and reopen used to end in
-# `|| true` and a body or milestone edit in an `&&` chain, so a refused write printed nothing,
-# or printed `updated` over a write that never happened, and the run exited 0 over a remote
-# it had left half applied. A failure does not stop the run — the next record is independent
-# of this one, and the adapter is idempotent — but it decides the exit.
-#   applied <verb> <subject> <why> <command...>
-applied() {
-  local verb="$1" subject="$2" why="$3" err rc=0 said
-  shift 3
-  err="$(mktemp "${TMPDIR:-/tmp}/mj.err.XXXXXX")"
-  "$@" > /dev/null 2> "$err" || rc=$?
-  if [ "$rc" = 0 ]; then
-    note OK "$verb" "$subject — $why"
-  else
-    said="$(tr '\n' ' ' < "$err" | cut -c1-200)"
-    note FAIL "$verb" "$subject — $why: '$(printf '%s' "$*" | cut -c1-120)' exited $rc${said:+: $said}"
-  fi
-  rm -f "$err"
-  return 0
-}
-
-# A backfill is hundreds of mutations in a row, and GitHub answers that with a secondary
-# rate limit rather than a clean error. Pace them. MJ_GH_PACE overrides; 0 disables. The
-# adapter is idempotent, so a run that trips a limit and stops is resumed by running it
-# again — nothing is created twice, because identity travels with the record.
-PACE="${MJ_GH_PACE:-1}"
-pace() { [ "$MODE" = apply ] && [ "$PACE" != 0 ] && sleep "$PACE"; return 0; }
 
 REMOTE_MS="$(mktemp "${TMPDIR:-/tmp}/mj.ms.XXXXXX")"
 REMOTE_IS="$(mktemp "${TMPDIR:-/tmp}/mj.is.XXXXXX")"
@@ -351,33 +876,9 @@ if [ "$FIXTURE" = 1 ]; then
   [ -n "${MJ_GH_FIXTURE_ISSUES:-}" ] && cat "$MJ_GH_FIXTURE_ISSUES" > "$REMOTE_IS"
   true
 else
-  # A listing that failed is not an empty remote. Read as empty, every record would be
-  # reported missing, the gate would count a ratchet breach where it should say it cannot
-  # read, and an apply would create every issue a second time.
-  unreadable() {
-    echo "github-sync: could not list the $1 of $REPO; nothing was read and nothing was changed (reproduce: gh api repos/$REPO/$1)" >&2
-    exit 12
-  }
-  gh api --paginate "repos/$REPO/milestones?state=all" \
-    --jq '.[] | [(.number|tostring), .title, .state] | @tsv' > "$REMOTE_MS" 2>/dev/null \
-    || unreadable milestones
-  gh api --paginate "repos/$REPO/issues?state=all&per_page=100" \
-    --jq '.[] | select(has("pull_request")|not) | [(.number|tostring), .title, .state, (.body // "" | @base64), (.milestone.title // ""), ((.body // "") | [scan("majordomus:record ([A-Za-z0-9_.-]+)")] | if length > 0 then .[0][0] else "" end)] | @tsv' \
-    > "$REMOTE_IS" 2>/dev/null || unreadable issues
+  gh_list_remote
 fi
 
-# One resolution for every question about a remote issue. A record is found by the identity
-# it carries in its own body; a record that carries none is found once by its title prefix,
-# which is how the issues projected before the marker existed are adopted rather than
-# duplicated. A record that carries an identity is never matched by title, so renaming it on
-# GitHub moves nothing, and a title a person rewrote cannot capture another record's slot.
-remote_issue_line() {
-  awk -F'\t' -v id="$1" -v p="$1 — " '
-    $6 == id            { print; found = 1; exit }
-    $6 == "" && index($2,p)==1 && !legacy { legacy = $0 }
-    END { if (!found && legacy != "") print legacy }' "$REMOTE_IS"
-}
-remote_milestone_number() { awk -F'\t' -v p="$1 — " 'index($2,p)==1 { print $1; exit }' "$REMOTE_MS"; }
 remote_issue_number()     { remote_issue_line "$1" | cut -f1; }
 remote_issue_state()      { remote_issue_line "$1" | cut -f3; }
 remote_issue_body()       { remote_issue_line "$1" | cut -f4 | base64 --decode 2>/dev/null || true; }
@@ -499,8 +1000,7 @@ done
 # A milestone created a moment ago is not in the listing this run started with, and an issue
 # cannot be assigned to a milestone the adapter does not know the title of. Re-read.
 if [ "$MODE" = apply ] && [ "$FIXTURE" = 0 ]; then
-  gh api --paginate "repos/$REPO/milestones?state=all" \
-    --jq '.[] | [(.number|tostring), .title, .state] | @tsv' > "$REMOTE_MS" 2>/dev/null \
+  gh api --paginate "repos/$REPO/milestones?state=all" --jq ".[] | $GH_MS_JQ" > "$REMOTE_MS" 2>/dev/null \
     || { echo "github-sync: could not list the milestones of $REPO again after writing them; no issue was touched (reproduce: gh api repos/$REPO/milestones)" >&2; exit 12; }
 fi
 
