@@ -1,45 +1,45 @@
 id: I4460
 milestone: a-bounded-task-is-carried-to-accepted-work
-title: "An obligation whose inputs name no file in the repository is never a freshness proof: check reports it unknown and a completed finish refuses it, by one judgement both engines share"
-slug: an-obligation-over-no-file-is-never-fresh
+title: "A gate run over an input set that selects no file is never a freshness proof: both gate judges read it unknown and a completed finish refuses it"
+slug: gate-evidence-over-no-file-is-never-fresh
 priority: p1
 profile: implementation
 parallel_safe: true
-objective: "When the inputs share/obligations.yaml declares for a token resolve to no tracked file in the repository, evidence recorded for that token can be judged neither fresh nor stale, and the judgement says so instead of comparing an empty hash with an empty hash. The shell judge (mj_obligation_judge, lib/evidence.sh:457-459) and the Rust judge (apps/majordomus-cli/src/capability/builtin/obligations.rs:683) return the same reading for that case: unknown, with the detail `the obligation <token> names no file in this repository (inputs <globs>); its evidence cannot be judged fresh` and a remedy that names what would give it inputs. unknown is mapped onto the vocabulary each engine already has, never onto pass: the shell judge reports it in its unmet column with that reason, and the Rust judge does not return Divergence::Exact for it. The outcome decides as it does for every other shortfall (mj_obl_verdict): a completed finish refuses, partial and blocked report it. The rule an empty input set obeys is written once: one table of cases (inputs that resolve to files, inputs that resolve to none, a token with no inputs, a recorded empty hash, a recorded non-empty hash) that a parity case runs through both engines, so the two judgements cannot drift apart again."
-why: "Observed in session 98's stranger fixture on 2026-10-30 (installed 1.0.0-alpha.8, pass 2, scenario N4). A task was started with `--requires tests,commit`, evidence was recorded with `evidence --covers tests --type test --command \"python3 -m unittest -q\"`, calc/__init__.py was then edited, and `check` printed `OK obligation tests — discharged over inputs \"\"`. The tests token is discharged by `usecase impact` and its inputs (share/obligations.yaml:49) are lib/**, bin/majordomus, share/**, apps/majordomus-cli/src/** and test/cases/**, paths of this repository; in a repository that has none of them the input set is empty, the recorded hash is empty, the current hash is empty, and the two are equal. Stale-evidence protection, which mission section 9 requires (a change of the relevant inputs must invalidate the evidence or demand a new verification, and unknown must never mean passed), does not exist for an adopter. The shell comment at lib/evidence.sh:426-429 says a second implementation is how check and a gate come to disagree, and the empty-set rule is implemented twice; mission section 12 requires local and CI enforcement to share one implementation of an invariant."
-current_state: "At master 51b38035a71: mj_obligation_inputs_hash (lib/evidence.sh:74-83) prints an empty string when the token declares no inputs (:77) or none of them is tracked (:80); mj_obligation_judge compares the recorded and current hashes with `[ \"$ih_rec\" = \"$ih_now\" ]` (lib/evidence.sh:458) and prints pass `discharged over inputs ` for two empty strings. apps/majordomus-cli/src/capability/builtin/obligations.rs:683 compares `hash_now.as_deref().unwrap_or(\"\") == ev.inputs_hash`, so a current hash of None equals a recorded empty one and the judgement is Divergence::Exact. share/obligations.yaml:45-50 declares the tests token's inputs as this repository's own paths. Case 103 (test/cases/103_obligations.sh:65-79) proves staleness only over lib/a, a path the inputs name; no case records evidence over an input set that resolves to nothing."
-desired_state: "Evidence over an empty input set never discharges an obligation: check names it unknown with the reason and the inputs, finish --outcome completed refuses it, an honest partial or blocked finish reports it, and both engines answer the same for the same tree. An adopter whose repository matches none of a token's inputs is told so instead of being shown a pass. Enforced by case 4460, by case 103 unchanged, and by a mutation that restores the empty-equals-empty pass and turns case 4460 red."
+objective: "When a gate's inputs (Model::inputs_of, mj_gate_inputs) are empty or select no tracked file, a run recorded for it can be judged neither fresh nor stale, and the judgement says so instead of comparing an empty hash with an empty hash. Both Rust gate judges, judge_one (apps/majordomus-cli/src/gates/judge.rs:359-385), which gates.completion answers, and standing_of (apps/majordomus-cli/src/gates/state.rs:142-188), which gate state answers, return unknown for that case with the detail `the gate <id> selects no file in this repository (inputs <specs>); its run cannot be judged fresh` and a remedy naming the class paths that would give it inputs; neither returns pass for a recorded \"\" against a current \"\". The shell recorder (mj_gate_inputs_hash, lib/gates.sh:97-106) keeps writing the empty hash it writes today, so the ledger is unchanged and the decision is the judges' alone; mj_validate_completion_gates already maps unknown onto a refusal of completed and a named skip otherwise (lib/gates.sh:150-151, mj_gate_unknown). The rule is written once, as one table of cases (inputs that select files, inputs that select none, a gate no class names, an always gate, a recorded empty hash, a recorded non-empty hash) that a parity case drives through the shell recorder and both Rust judges, so the recorded hash and the two readings cannot drift apart."
+why: "Found beside F11 of the integration map on 2026-10-30. The obligation judge's \"\" == \"\" pass (lib/evidence.sh:457-459, obligations.rs:683) is the obligation judge, I4434 / #2751, which the landing seat carries; the gate judges have the same shape and nothing owns it. At 51b38035a71, gate_hashes (apps/majordomus-cli/src/capability/builtin/gates.rs:382-395) hands Some(\"\") to a gate whose inputs are empty (:388), inputs_hash_with (obligations.rs:519-523) returns Some(\"\") when the specs select no tracked file, mj_gate_inputs_hash returns \"\" in both cases (lib/gates.sh:100 and :103), and judge.rs:367 and state.rs:159 compare the recorded hash with the current one, so two empty strings are equal and an exit-0 run reads pass (judge.rs:377, state.rs:172) however the tree changed. In an adopter whose class paths name none of its files, every gate that is not always: true is in that state, and the stale-run protection mission section 9 requires (a change of the relevant inputs invalidates the evidence; unknown never means passed) does not exist there. Mission section 12 asks that local and CI enforcement share one implementation of an invariant: today one rule is spelled in two Rust judges and a shell recorder."
+current_state: "At 51b38035a71: judge.rs:359 takes `hash_now.unwrap_or(\"\")`, :360 reads None as unknown, :367 compares `r.inputs_hash != now_hash` and :377 passes an exit-0 run, so a recorded \"\" against a current Some(\"\") is pass `exit 0 at <head> over inputs `. standing_of (state.rs:151-172) does the same for gate state. gate_hashes (gates.rs:382-395) and its unit test a_gate_with_inputs_is_hashed_from_them_and_one_without_hashes_to_nothing (gates.rs:878) fix the empty string as the hash of a gate with no inputs. An always: true gate has inputs `*` (model.rs:429-432, lib/gates.sh:80) and is hashed over every tracked file, so it is not in this state. Case 131 (test/cases/131_completion_gates.sh:127-135) proves staleness only over a gate whose class paths select files; no case records a run over a gate whose inputs select nothing."
+desired_state: "A gate run over an empty input set never discharges its gate: gates.completion and gate state both read it unknown with the reason and the specs, check names it, finish --outcome completed refuses it through mj_gate_unknown, an honest partial or blocked finish reports it, and an always gate and a gate whose paths select files are judged exactly as today. Enforced by case 4460, by cases 131 and 3059 unchanged, and by a mutation that restores the empty-equals-empty pass in either judge and turns case 4460 red."
 scope:
   - ".ai/repo/project/issues/I4460.yaml"
-  - "lib/evidence.sh"
-  - "apps/majordomus-cli/src/capability/builtin/obligations.rs"
-  - "share/standard/majordomus/rules/obligation-closure.v1.md"
-  - ".ai/repo/rules/vendor/majordomus/rules/obligation-closure.v1.md"
-  - "docs/CLI.md"
-  - "test/cases/103_obligations.sh"
-  - "test/cases/4460_an_obligation_over_no_file_is_never_fresh.sh"
+  - "apps/majordomus-cli/src/gates/judge.rs"
+  - "apps/majordomus-cli/src/gates/state.rs"
+  - "apps/majordomus-cli/src/capability/builtin/gates.rs"
+  - "lib/gates.sh"
+  - "docs/CI.md"
+  - "test/cases/131_completion_gates.sh"
+  - "test/cases/4460_gate_evidence_over_no_file_is_never_fresh.sh"
 non_scope:
-  - "Declaring an adopter's own inputs for the tests token, or deriving them from the task's scope: the empty set is reported and refused here, never guessed"
-  - "Remote obligations (push, target, pages, deploy), which are judged by commit, not by inputs hash (lib/evidence.sh:449-456)"
-  - "The attribution of evidence to the calling episode: I4292, which also edits lib/evidence.sh and is merged around, not absorbed"
+  - "The obligation judge, I4434 / #2751: the same \"\" == \"\" shape in mj_obligation_judge (lib/evidence.sh:457-459) and obligations.rs:683, fixed there and merged around, never absorbed here"
+  - "Declaring an adopter's own class paths in .ai/repo/ci/gates.yaml, or deriving them from the task's scope: the empty set is reported and refused here, never guessed"
+  - "Changing what the shell recorder writes to the ledger: a run over no file keeps recording the empty hash, so existing ledgers read the same"
 depends_on: []
 serves: []
 acceptance_criteria:
-  - "Case 4460, in a fixture repository with no path any of the tests token's inputs name: a task started with `--requires tests`, evidence recorded for tests, then a tracked file edited; `majordomus check` exits 0 and its line for tests says unknown and `names no file in this repository`, and never `discharged over inputs`"
-  - "Case 4460: in the same state `majordomus finish --outcome completed` exits 10 and names the tests obligation and the reason; `finish --outcome partial` with a note exits 0 and reports it"
-  - "Case 4460: the Rust judgement (the obligations capability, through the executable) gives the same state and reason for the same fixture as the shell's check line, asserted in one parity table over: inputs resolving to files, inputs resolving to none, a token declaring no inputs, a recorded empty hash and a recorded non-empty hash"
-  - "Case 4460: with the fixture given a file the inputs name, evidence recorded and that file then changed, the line reads stale exactly as case 103 asserts today"
-  - "Mutation: restoring `[ \"$ih_rec\" = \"$ih_now\" ]` as a pass for two empty strings, or the `unwrap_or(\"\") ==` comparison, turns case 4460 red at its first assertion; the case's header names both mutations"
-  - "Case 103 passes unchanged"
+  - "Case 4460, in a fixture repository with a CI model whose class paths select none of its tracked files: a task started, a run recorded with `evidence --gate <id> --exit 0`, then a tracked file edited; `majordomus check` exits 0 and names the gate unknown with `selects no file in this repository`, and never `exit 0 at` for it"
+  - "Case 4460: in the same state `majordomus finish --outcome completed` exits 10 and names the gate and the reason; `finish --outcome partial` with a note exits 0 and reports it"
+  - "Case 4460: one parity table, run through the shell recorder (the inputs_hash it writes), gates.completion and gate state for the same fixture, gives the same hash and the same state and reason over: class paths that select files, class paths that select none, a gate no class names, an always gate, a recorded empty hash and a recorded non-empty hash"
+  - "Case 4460: with the fixture given a file the class paths select, a run recorded and that file then changed, the gate reads stale exactly as case 131 asserts today, and an always gate's run is judged as today"
+  - "Mutation: restoring the pass for a recorded \"\" against a current \"\" in judge.rs or in state.rs turns case 4460 red at its first assertion for that judge; the case's header names both mutations"
+  - "Cases 131 and 3059 pass unchanged"
   - "Before the change, case 4460 fails at its first assertion"
 validation:
-  - "MJ_TEST_JOBS=4 bash test/run.sh 4460_an_obligation_over_no_file_is_never_fresh 103_obligations"
-  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::obligations"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 4460_gate_evidence_over_no_file_is_never_fresh 131_completion_gates 3059_gate_state_is_answerable"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib gates"
   - "bin/majordomus shell check"
   - "bin/majordomus doctor"
   - "bin/majordomus plan validate"
 evidence_required:
-  - "empty_input_set_case"
-risk: "Every repository whose layout matches none of a token's inputs starts seeing unknown where it saw OK, and a completed finish that declared that token is refused; the line has to say which inputs matched nothing so the reader knows the refusal is about the declaration, not about the work."
+  - "empty_gate_input_set_case"
+risk: "Every adopter whose class paths select none of its files starts seeing unknown where it saw pass for each gate that is not always: true, and a completed finish is refused until the CI model's paths are its own; the line has to name the specs that matched nothing so the reader knows the refusal is about the model, not about the work."
 created_at: 2026-10-30
 updated_at: 2026-10-30

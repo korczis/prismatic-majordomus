@@ -45055,7 +45055,7 @@
             "apps/majordomus-cli/src/capability/builtin/release.rs",
             "scripts/ci/release-check",
             "docs/RELEASE.md",
-            "test/cases/3341_a_release_carries_its_own_changelog.sh"
+            "test/cases"
           ],
           "slug": "a-release-carries-its-own-changelog",
           "updated_at": "2026-10-17",
@@ -58882,7 +58882,7 @@
             "apps/majordomus-cli/tests/ui_links.rs",
             "lib/knowledge.awk",
             "apps/majordomus-cli/src/entity.rs",
-            "test/cases/3318_a_notes_references_agree_on_every_surface.sh"
+            "test/cases"
           ],
           "slug": "decisions-and-knowledge-are-read-on-the-ui",
           "updated_at": "2026-10-30",
@@ -74387,40 +74387,40 @@
         "id": "majordomus://issue/I4460",
         "kind": "issue",
         "label": "I4460",
-        "summary": "An obligation whose inputs name no file in the repository is never a freshness proof: check reports it unknown and a completed finish refuses it, by one judgement both engines share",
+        "summary": "A gate run over an input set that selects no file is never a freshness proof: both gate judges read it unknown and a completed finish refuses it",
         "route": "/cockpit/objects/issue/i4460",
         "source": ".ai/repo/project/issues/I4460.yaml",
         "facts": {
           "created_at": "2026-10-30",
           "depends_on": [],
           "evidence_required": [
-            "empty_input_set_case"
+            "empty_gate_input_set_case"
           ],
           "milestone": "a-bounded-task-is-carried-to-accepted-work",
           "non_scope": [
-            "Declaring an adopter's own inputs for the tests token, or deriving them from the task's scope: the empty set is reported and refused here, never guessed",
-            "Remote obligations (push, target, pages, deploy), which are judged by commit, not by inputs hash (lib/evidence.sh:449-456)",
-            "The attribution of evidence to the calling episode: I4292, which also edits lib/evidence.sh and is merged around, not absorbed"
+            "The obligation judge, I4434 / #2751: the same \\\"\\\" == \\\"\\\" shape in mj_obligation_judge (lib/evidence.sh:457-459) and obligations.rs:683, fixed there and merged around, never absorbed here",
+            "Declaring an adopter's own class paths in .ai/repo/ci/gates.yaml, or deriving them from the task's scope: the empty set is reported and refused here, never guessed",
+            "Changing what the shell recorder writes to the ledger: a run over no file keeps recording the empty hash, so existing ledgers read the same"
           ],
           "parallel_safe": true,
           "priority": "p1",
           "profile": "implementation",
           "scope": [
             ".ai/repo/project/issues/I4460.yaml",
-            "lib/evidence.sh",
-            "apps/majordomus-cli/src/capability/builtin/obligations.rs",
-            "share/standard/majordomus/rules/obligation-closure.v1.md",
-            ".ai/repo/rules/vendor/majordomus/rules/obligation-closure.v1.md",
-            "docs/CLI.md",
-            "test/cases/103_obligations.sh",
-            "test/cases/4460_an_obligation_over_no_file_is_never_fresh.sh"
+            "apps/majordomus-cli/src/gates/judge.rs",
+            "apps/majordomus-cli/src/gates/state.rs",
+            "apps/majordomus-cli/src/capability/builtin/gates.rs",
+            "lib/gates.sh",
+            "docs/CI.md",
+            "test/cases/131_completion_gates.sh",
+            "test/cases/4460_gate_evidence_over_no_file_is_never_fresh.sh"
           ],
           "serves": [],
-          "slug": "an-obligation-over-no-file-is-never-fresh",
+          "slug": "gate-evidence-over-no-file-is-never-fresh",
           "updated_at": "2026-10-30",
           "validation": [
-            "MJ_TEST_JOBS=4 bash test/run.sh 4460_an_obligation_over_no_file_is_never_fresh 103_obligations",
-            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::obligations",
+            "MJ_TEST_JOBS=4 bash test/run.sh 4460_gate_evidence_over_no_file_is_never_fresh 131_completion_gates 3059_gate_state_is_answerable",
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib gates",
             "bin/majordomus shell check",
             "bin/majordomus doctor",
             "bin/majordomus plan validate"

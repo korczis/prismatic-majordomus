@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "461605ca3fa4e827076d647627a4274e7ef8db8fa4ffb1e0b630e850f9179b6f",
+    "fingerprint": "248582d92989ff5192a5708496298624c0b7688b8c13dd2484caab5e5c3a33ca",
     "summary": {
       "total": 3643,
       "builtin": 220,
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "605a8c13480edfd8b0067ad9b4e05be4f7d4fd15213b8398d23631394ee1feba",
+    "fingerprint": "ac4ed47cf62befa6928313c0063eda4e668f75a65d7150ed2167e5b0040dd04c",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -108564,7 +108564,7 @@
         "path": ".ai/repo/project/issues/I2826.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2304
+        "bytes": 2260
       },
       {
         "uri": "majordomus://issue/I2827",
@@ -111996,7 +111996,7 @@
         "path": ".ai/repo/project/issues/I3318.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3913
+        "bytes": 3863
       },
       {
         "uri": "majordomus://issue/I3319",
@@ -115643,12 +115643,12 @@
         "uri": "majordomus://issue/I4460",
         "kind": "issue",
         "identity": "I4460",
-        "title": "An obligation whose inputs name no file in the repository is never a freshness proof: check reports it unknown and a completed finish refuses it, by one judgement both engines share",
-        "description": "When the inputs share/obligations.yaml declares for a token resolve to no tracked file in the repository, evidence recorded for that token can be judged neither fresh nor stale, and the judgement says so instead of comparing an empty hash with an empty hash. The shell judge (mj_obligation_judge, lib/evidence.sh:457-459) and the Rust judge (apps/majordomus-cli/src/capability/builtin/obligations.rs:683) return the same reading for that case: unknown, with the detail `the obligation <token> names no file in this repository (inputs <globs>); its evidence cannot be judged fresh` and a remedy that names what would give it inputs. unknown is mapped onto the vocabulary each engine already has, never onto pass: the shell judge reports it in its unmet column with that reason, and the Rust judge does not return Divergence::Exact for it. The outcome decides as it does for every other shortfall (mj_obl_verdict): a completed finish refuses, partial and blocked report it. The rule an empty input set obeys is written once: one table of cases (inputs that resolve to files, inputs that resolve to none, a token with no inputs, a recorded empty hash, a recorded non-empty hash) that a parity case runs through both engines, so the two judgements cannot drift apart again.",
+        "title": "A gate run over an input set that selects no file is never a freshness proof: both gate judges read it unknown and a completed finish refuses it",
+        "description": "When a gate's inputs (Model::inputs_of, mj_gate_inputs) are empty or select no tracked file, a run recorded for it can be judged neither fresh nor stale, and the judgement says so instead of comparing an empty hash with an empty hash. Both Rust gate judges, judge_one (apps/majordomus-cli/src/gates/judge.rs:359-385), which gates.completion answers, and standing_of (apps/majordomus-cli/src/gates/state.rs:142-188), which gate state answers, return unknown for that case with the detail `the gate <id> selects no file in this repository (inputs <specs>); its run cannot be judged fresh` and a remedy naming the class paths that would give it inputs; neither returns pass for a recorded \\\"\\\" against a current \\\"\\\". The shell recorder (mj_gate_inputs_hash, lib/gates.sh:97-106) keeps writing the empty hash it writes today, so the ledger is unchanged and the decision is the judges' alone; mj_validate_completion_gates already maps unknown onto a refusal of completed and a named skip otherwise (lib/gates.sh:150-151, mj_gate_unknown). The rule is written once, as one table of cases (inputs that select files, inputs that select none, a gate no class names, an always gate, a recorded empty hash, a recorded non-empty hash) that a parity case drives through the shell recorder and both Rust judges, so the recorded hash and the two readings cannot drift apart.",
         "path": ".ai/repo/project/issues/I4460.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 7122
+        "bytes": 7383
       },
       {
         "uri": "majordomus://issue/I4461",
@@ -116733,7 +116733,7 @@
         "path": ".ai/repo/project/milestones/a-bounded-task-is-carried-to-accepted-work.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 11374
+        "bytes": 12216
       },
       {
         "uri": "majordomus://milestone/a-change-is-judged-in-minutes",
