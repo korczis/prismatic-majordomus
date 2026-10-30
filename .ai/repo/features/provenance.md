@@ -13,7 +13,6 @@ featured: true
 areas: [observability, cost]
 audiences: [enterprise, engineering-lead]
 commands: [history, session, capture, watch]
-kinds: [session]
 rules: [majordomus.ledger-integrity, project.never-author-identity, majordomus.session-records, majordomus.retention-caps]
 docs: [docs/CONTINUITY.md, docs/ECONOMICS.md]
 adrs: [adr-0009, adr-0014]

@@ -3,16 +3,22 @@
 # owns those files; the repository's own sources are declared in its AI layer, under the
 # knowledge section (.ai/repo/knowledge/sources.yaml), and are read first.
 #
-# Nothing here is a recursive walk. Each class lists one directory or file under the
-# state directory Majordomus owns, and nowhere else — no hidden directory is scanned
+# Nothing here is a recursive walk. Each `state` class lists one directory or file under
+# the state directory Majordomus owns, and nowhere else — no hidden directory is scanned
 # because it happens to exist. Every class here is operational: this checkout's working
-# record, never part of a shared projection.
+# record, never part of a shared projection — including `closed-session`, whose files are
+# tracked (closing one is how the record becomes a shared object of the layer, ADR 0014)
+# but whose knowledge node still carries operational detail (who touched what, when) that
+# a shared projection must not surface (I0813).
 #
 # fields:
 #   id          the class, unique; also the order sources are reported in
 #   kind        the node kind every source in this class produces
-#   discovery   state — a listing of one directory or file under the state directory
-#   pathspec    one path, relative to the state directory
+#   discovery   state — a listing of one directory or file under the state directory;
+#               vcs — the tracked files matching the pathspec (a tracked file whose node
+#               is still operational, not a repository source: only closed-session today)
+#   pathspec    for state, one path relative to the state directory; for vcs, one pathspec
+#               relative to the repository root, under the `:(glob)` prefix
 #   required    true when a class discovering nothing is a finding rather than a silence
 version: 1
 
@@ -21,6 +27,12 @@ sources:
     kind: session
     discovery: state
     pathspec: sessions
+    required: false
+
+  - id: closed-session
+    kind: session
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/sessions/*.md'
     required: false
 
   - id: handover
