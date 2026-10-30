@@ -27,6 +27,8 @@ CALLS="$T/calls.log"
 # $FAKE_MODE says. `exec sleep` so that the process the function stops is the one waiting.
 cat > "$FAKE/cargo" <<'SH'
 #!/bin/sh
+# no build: what the floor's refusal asks to name the largest build directories (I2713)
+[ "$1" = metadata ] && exit 1
 printf 'dir=%s args=%s\n' "${CARGO_BUILD_BUILD_DIR:-shared}" "$*" >> "$FAKE_CALLS"
 blocked() { printf '    Blocking waiting for file lock on build directory\n' >&2; }
 case "$FAKE_MODE" in
@@ -41,12 +43,15 @@ SH
 chmod +x "$FAKE/cargo"
 
 # run <mode> <bound> [VAR=value ...] -- the function under a stand-in cargo; sets RC, ERR
+# The sweep of idle incremental sessions a build makes first (I2713) is switched off: it asks
+# cargo where the build directory is, which the stand-in would count as a build. It is
+# proved in test/cases/3080_idle_incremental_sessions_are_pruned.sh.
 run() {
   mode="$1"; bound="$2"; shift 2
   : > "$CALLS"
   RC=0
   ERR="$(env PATH="$FAKE:$PATH" FAKE_MODE="$mode" FAKE_CALLS="$CALLS" CARGO_HOME="$T/cargo-home" \
-        MAJORDOMUS_BUILD_LOCK_WAIT="$bound" MAJORDOMUS_MIN_FREE_MB=0 "$@" \
+        MAJORDOMUS_BUILD_LOCK_WAIT="$bound" MAJORDOMUS_MIN_FREE_MB=0 MAJORDOMUS_INCREMENTAL_IDLE_MIN=0 "$@" \
         sh -c '. "$1"; mj_cargo_bounded "$2" build --quiet --locked' sh "$LIB" "$T" 2>&1 >/dev/null)" || RC=$?
 }
 calls() { wc -l < "$CALLS" | tr -d ' '; }
@@ -93,7 +98,7 @@ printf '%s\n' "$ERR" | grep -q 'nowhere else to build' || { echo "    the stop w
 # ---------------------------------------------------------------- the disk floor is asked first
 : > "$CALLS"; RC=0
 ERR="$(env -u CARGO_BUILD_BUILD_DIR PATH="$FAKE:$PATH" FAKE_MODE=held FAKE_CALLS="$CALLS" CARGO_HOME="$T/cargo-home" \
-      MAJORDOMUS_BUILD_LOCK_WAIT=1 MAJORDOMUS_MIN_FREE_MB=999999999 \
+      MAJORDOMUS_BUILD_LOCK_WAIT=1 MAJORDOMUS_MIN_FREE_MB=999999999 MAJORDOMUS_INCREMENTAL_IDLE_MIN=0 \
       sh -c '. "$1"; mj_cargo_bounded "$2" build --quiet' sh "$LIB" "$T" 2>&1 >/dev/null)" || RC=$?
 [ "$RC" = 12 ] || { echo "    a private build below the disk floor returned $RC, expected 12: $ERR"; exit 1; }
 [ "$(calls)" = 1 ] || { echo "    a private build started below the disk floor: $(cat "$CALLS")"; exit 1; }

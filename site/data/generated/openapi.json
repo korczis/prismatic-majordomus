@@ -65,11 +65,13 @@
     "op-executions-get": "docs/api/executions/",
     "op-executions-list": "docs/api/executions/",
     "op-executions-protocol": "docs/api/executions/",
+    "op-executions-report": "docs/api/executions/",
     "op-executions-start": "docs/api/executions/",
     "op-gates-completion": "docs/api/gates/",
     "op-gates-model": "docs/api/gates/",
     "op-graph-get": "docs/api/graph/",
     "op-graph-list": "docs/api/graph/",
+    "op-guard-edit": "docs/api/guard/",
     "op-health-live": "docs/api/health/",
     "op-health-ready": "docs/api/health/",
     "op-health-report": "docs/api/health/",
@@ -138,6 +140,9 @@
     "op-peers-announce": "docs/api/peers/",
     "op-peers-list": "docs/api/peers/",
     "op-perf-counters": "docs/api/perf/",
+    "op-plan-delivery": "docs/api/plan/",
+    "op-plan-drift": "docs/api/plan/",
+    "op-plan-flight": "docs/api/plan/",
     "op-plan-issues": "docs/api/plan/",
     "op-plan-model": "docs/api/plan/",
     "op-plan-next": "docs/api/plan/",
@@ -194,6 +199,8 @@
     "op-worktree-migration_plan": "docs/api/worktree/",
     "op-worktree-status": "docs/api/worktree/",
     "op-worktree-topology": "docs/api/worktree/",
+    "op-worktree-trunk": "docs/api/worktree/",
+    "op-worktree-uncommitted": "docs/api/worktree/",
     "schema-ActiveTask": "docs/api/shared/",
     "schema-Actor": "docs/api/executions/",
     "schema-ActorKind": "docs/api/executions/",
@@ -374,7 +381,16 @@
     "schema-DashboardSource": "docs/api/dashboard/",
     "schema-Declaration": "docs/api/repository/",
     "schema-Deduplicated": "docs/api/devcontext/",
+    "schema-DeliveryBranch": "docs/api/plan/",
+    "schema-DeliveryDeployment": "docs/api/plan/",
+    "schema-DeliveryMerge": "docs/api/plan/",
+    "schema-DeliveryObservation": "docs/api/plan/",
+    "schema-DeliveryPullRequest": "docs/api/plan/",
+    "schema-DeliveryReading": "docs/api/plan/",
+    "schema-DeliveryRelease": "docs/api/plan/",
     "schema-DeliveryReport": "docs/api/delivery/",
+    "schema-DeliverySource": "docs/api/plan/",
+    "schema-DeliveryStage": "docs/api/plan/",
     "schema-DeliveryState": "docs/api/delivery/",
     "schema-DeliveryTallies": "docs/api/delivery/",
     "schema-DeliveryVerdict": "docs/api/delivery/",
@@ -415,6 +431,7 @@
     "schema-DisagreementView": "docs/api/reasoning/",
     "schema-Discovery": "docs/api/devcontext/",
     "schema-Disposition": "docs/api/convergence/",
+    "schema-Distance": "docs/api/shared/",
     "schema-DistributionReport": "docs/api/distribution/",
     "schema-Divergence": "docs/api/shared/",
     "schema-DocRef": "docs/api/product/",
@@ -425,10 +442,18 @@
     "schema-DomainMember": "docs/api/product/",
     "schema-DomainRef": "docs/api/product/",
     "schema-DoneQuestion": "docs/api/gates/",
+    "schema-DriftClass": "docs/api/plan/",
+    "schema-DriftFinding": "docs/api/plan/",
+    "schema-DriftGate": "docs/api/plan/",
+    "schema-DriftProof": "docs/api/plan/",
+    "schema-DriftReport": "docs/api/plan/",
+    "schema-DriftVerdict": "docs/api/plan/",
+    "schema-DriftWindow": "docs/api/plan/",
     "schema-DriftedObject": "docs/api/objects/",
     "schema-DropReason": "docs/api/pack/",
     "schema-DroppedFile": "docs/api/pack/",
     "schema-DryRunProof": "docs/api/integration/",
+    "schema-Durability": "docs/api/mesh/",
     "schema-EconomicsCheck": "docs/api/economics/",
     "schema-EconomicsCheckReport": "docs/api/economics/",
     "schema-EconomicsClass": "docs/api/economics/",
@@ -458,6 +483,7 @@
     "schema-EconomicsVerdict": "docs/api/economics/",
     "schema-Edge": "docs/api/graph/",
     "schema-EdgeRule": "docs/api/devcontext/",
+    "schema-EditVerdict": "docs/api/guard/",
     "schema-EditorAdapter": "docs/api/editors/",
     "schema-EditorCapability": "docs/api/editors/",
     "schema-EditorDerivation": "docs/api/editors/",
@@ -548,6 +574,9 @@
     "schema-FirewallReport": "docs/api/mesh/",
     "schema-FirewallRule": "docs/api/mesh/",
     "schema-Fixtures": "docs/api/repository/",
+    "schema-FlightIssue": "docs/api/plan/",
+    "schema-FlightMilestone": "docs/api/plan/",
+    "schema-FlightRelease": "docs/api/plan/",
     "schema-Fonts": "docs/api/design/",
     "schema-Freshness": "docs/api/shared/",
     "schema-GapCondition": "docs/api/intents/",
@@ -583,6 +612,7 @@
     "schema-HistoryReport": "docs/api/commit/",
     "schema-Holding": "docs/api/convergence/",
     "schema-HoldingKind": "docs/api/convergence/",
+    "schema-HooksPath": "docs/api/worktree/",
     "schema-HttpExposure": "docs/api/capabilities/",
     "schema-HttpMethod": "docs/api/capabilities/",
     "schema-Identity": "docs/api/design/",
@@ -591,6 +621,7 @@
     "schema-IdentityReport": "docs/api/session-domain/",
     "schema-Implementation": "docs/api/delivery/",
     "schema-ImpliedObligation": "docs/api/gates/",
+    "schema-InFlight": "docs/api/plan/",
     "schema-Inference": "docs/api/models/",
     "schema-InspectReport": "docs/api/worktree/",
     "schema-InstallCheck": "docs/api/distribution/",
@@ -648,6 +679,8 @@
     "schema-IntentWorkRef": "docs/api/intent-realization/",
     "schema-IntentWorkUnit": "docs/api/intent-realization/",
     "schema-Interface": "docs/api/deploy/",
+    "schema-IssueDelivery": "docs/api/plan/",
+    "schema-IssueDeliveryReport": "docs/api/plan/",
     "schema-IssueOrigin": "docs/api/intents/",
     "schema-IssuePurpose": "docs/api/intents/",
     "schema-IssueTrace": "docs/api/trace/",
@@ -771,6 +804,7 @@
     "schema-ObservedDeployment": "docs/api/deploy/",
     "schema-ObservedDeployments": "docs/api/deploy/",
     "schema-ObservedRelease": "docs/api/deploy/",
+    "schema-OpenEpisode": "docs/api/worktree/",
     "schema-OpenSession": "docs/api/continuity/",
     "schema-OperationParity": "docs/api/quality/",
     "schema-Origin": "docs/api/repository/",
@@ -803,6 +837,7 @@
     "schema-PlanEdge": "docs/api/plan/",
     "schema-PlanFinding": "docs/api/plan/",
     "schema-PlanFingerprint": "docs/api/commit/",
+    "schema-PlanFlight": "docs/api/plan/",
     "schema-PlanIssue": "docs/api/plan/",
     "schema-PlanIssueList": "docs/api/plan/",
     "schema-PlanItem": "docs/api/continuity/",
@@ -846,6 +881,7 @@
     "schema-ProjectionState": "docs/api/environment/",
     "schema-ProjectionView": "docs/api/design/",
     "schema-PromptSource": "docs/api/product/",
+    "schema-Proof": "docs/api/plan/",
     "schema-ProofState": "docs/api/shared/",
     "schema-ProofStep": "docs/api/integration/",
     "schema-Proposed": "docs/api/intents/",
@@ -932,6 +968,7 @@
     "schema-ReleasePolicy": "docs/api/release/",
     "schema-ReleasePolicyMode": "docs/api/release/",
     "schema-ReleaseProducedBy": "docs/api/release/",
+    "schema-ReleaseReading": "docs/api/plan/",
     "schema-ReleaseReference": "docs/api/release/",
     "schema-ReleaseSection": "docs/api/release/",
     "schema-ReleaseSeverity": "docs/api/release/",
@@ -943,6 +980,8 @@
     "schema-ReleaseVersionReport": "docs/api/release/",
     "schema-ReleaseView": "docs/api/distribution/",
     "schema-ReleasesReport": "docs/api/distribution/",
+    "schema-ReportAnswer": "docs/api/executions/",
+    "schema-ReportInput": "docs/api/executions/",
     "schema-RepositoryEnvironment": "docs/api/environment/",
     "schema-RepositoryIdentity": "docs/api/environment/",
     "schema-RepositoryInfo": "docs/api/repository/",
@@ -1108,6 +1147,7 @@
     "schema-TestEvidence": "docs/api/evidence/",
     "schema-TestSubjects": "docs/api/rules/",
     "schema-ThemeView": "docs/api/design/",
+    "schema-Threshold": "docs/api/worktree/",
     "schema-Tier": "docs/api/devcontext/",
     "schema-TierRule": "docs/api/devcontext/",
     "schema-TierSpend": "docs/api/devcontext/",
@@ -1131,11 +1171,17 @@
     "schema-Transition": "docs/api/session-domain/",
     "schema-TransitionView": "docs/api/session-domain/",
     "schema-Transport": "docs/api/peers/",
+    "schema-TrunkDistance": "docs/api/shared/",
     "schema-TrunkSource": "docs/api/worktree/",
+    "schema-TrunkStanding": "docs/api/shared/",
+    "schema-TrunkThresholds": "docs/api/shared/",
     "schema-TrunkView": "docs/api/worktree/",
     "schema-Trust": "docs/api/continuity/",
     "schema-TrustState": "docs/api/mesh/",
     "schema-UnattachedPrep": "docs/api/integration/",
+    "schema-UncommittedReport": "docs/api/worktree/",
+    "schema-UncommittedTallies": "docs/api/worktree/",
+    "schema-UncommittedWorktree": "docs/api/worktree/",
     "schema-UpstreamState": "docs/api/worktree/",
     "schema-UseCaseRef": "docs/api/product/",
     "schema-ValidationOutcome": "docs/api/reasoning/",
@@ -1149,6 +1195,7 @@
     "schema-ViolationCode": "docs/api/quality/",
     "schema-Vocabulary": "docs/api/obligations/",
     "schema-WaiverReason": "docs/api/capabilities/",
+    "schema-WorkStanding": "docs/api/worktree/",
     "schema-WorkflowCatalogue": "docs/api/environment/",
     "schema-WorkflowDescriptor": "docs/api/environment/",
     "schema-WorkflowEntrypoint": "docs/api/environment/",
@@ -1183,6 +1230,7 @@
     "tag-executions": "docs/api/executions/",
     "tag-gates": "docs/api/gates/",
     "tag-graph": "docs/api/graph/",
+    "tag-guard": "docs/api/guard/",
     "tag-health": "docs/api/health/",
     "tag-integration": "docs/api/integration/",
     "tag-intent_realization": "docs/api/intent-realization/",
@@ -1219,9 +1267,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 194,
-    "schemas": 965,
-    "tags": 57
+    "operations": 201,
+    "schemas": 1005,
+    "tags": 58
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1250,7 +1298,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 0.26.0",
+  "generated_by": "majordomus-cli 0.30.2",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -1259,7 +1307,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "0.26.0"
+    "version": "0.30.2"
   },
   "infrastructure": [
     {
@@ -1377,11 +1425,13 @@
     "executions.get": "executions",
     "executions.list": "executions",
     "executions.protocol": "executions",
+    "executions.report": "executions",
     "executions.start": "executions",
     "gates.completion": "gates",
     "gates.model": "gates",
     "graph.get": "graph",
     "graph.list": "graph",
+    "guard.edit": "guard",
     "health.live": "health",
     "health.ready": "health",
     "health.report": "health",
@@ -1450,6 +1500,9 @@
     "peers.announce": "peers",
     "peers.list": "peers",
     "perf.counters": "perf",
+    "plan.delivery": "plan",
+    "plan.drift": "plan",
+    "plan.flight": "plan",
     "plan.issues": "plan",
     "plan.model": "plan",
     "plan.next": "plan",
@@ -1505,7 +1558,9 @@
     "worktree.inspect": "worktree",
     "worktree.migration_plan": "worktree",
     "worktree.status": "worktree",
-    "worktree.topology": "worktree"
+    "worktree.topology": "worktree",
+    "worktree.trunk": "worktree",
+    "worktree.uncommitted": "worktree"
   },
   "openapi": "3.1.0",
   "schema": 1,
@@ -1690,7 +1745,16 @@
     "DashboardSource": "dashboard",
     "Declaration": "repository",
     "Deduplicated": "devcontext",
+    "DeliveryBranch": "plan",
+    "DeliveryDeployment": "plan",
+    "DeliveryMerge": "plan",
+    "DeliveryObservation": "plan",
+    "DeliveryPullRequest": "plan",
+    "DeliveryReading": "plan",
+    "DeliveryRelease": "plan",
     "DeliveryReport": "delivery",
+    "DeliverySource": "plan",
+    "DeliveryStage": "plan",
     "DeliveryState": "delivery",
     "DeliveryTallies": "delivery",
     "DeliveryVerdict": "delivery",
@@ -1731,6 +1795,7 @@
     "DisagreementView": "reasoning",
     "Discovery": "devcontext",
     "Disposition": "convergence",
+    "Distance": "shared",
     "DistributionReport": "distribution",
     "Divergence": "shared",
     "DocRef": "product",
@@ -1741,10 +1806,18 @@
     "DomainMember": "product",
     "DomainRef": "product",
     "DoneQuestion": "gates",
+    "DriftClass": "plan",
+    "DriftFinding": "plan",
+    "DriftGate": "plan",
+    "DriftProof": "plan",
+    "DriftReport": "plan",
+    "DriftVerdict": "plan",
+    "DriftWindow": "plan",
     "DriftedObject": "objects",
     "DropReason": "pack",
     "DroppedFile": "pack",
     "DryRunProof": "integration",
+    "Durability": "mesh",
     "EconomicsCheck": "economics",
     "EconomicsCheckReport": "economics",
     "EconomicsClass": "economics",
@@ -1774,6 +1847,7 @@
     "EconomicsVerdict": "economics",
     "Edge": "graph",
     "EdgeRule": "devcontext",
+    "EditVerdict": "guard",
     "EditorAdapter": "editors",
     "EditorCapability": "editors",
     "EditorDerivation": "editors",
@@ -1864,6 +1938,9 @@
     "FirewallReport": "mesh",
     "FirewallRule": "mesh",
     "Fixtures": "repository",
+    "FlightIssue": "plan",
+    "FlightMilestone": "plan",
+    "FlightRelease": "plan",
     "Fonts": "design",
     "Freshness": "shared",
     "GapCondition": "intents",
@@ -1899,6 +1976,7 @@
     "HistoryReport": "commit",
     "Holding": "convergence",
     "HoldingKind": "convergence",
+    "HooksPath": "worktree",
     "HttpExposure": "capabilities",
     "HttpMethod": "capabilities",
     "Identity": "design",
@@ -1907,6 +1985,7 @@
     "IdentityReport": "session-domain",
     "Implementation": "delivery",
     "ImpliedObligation": "gates",
+    "InFlight": "plan",
     "Inference": "models",
     "InspectReport": "worktree",
     "InstallCheck": "distribution",
@@ -1964,6 +2043,8 @@
     "IntentWorkRef": "intent-realization",
     "IntentWorkUnit": "intent-realization",
     "Interface": "deploy",
+    "IssueDelivery": "plan",
+    "IssueDeliveryReport": "plan",
     "IssueOrigin": "intents",
     "IssuePurpose": "intents",
     "IssueTrace": "trace",
@@ -2087,6 +2168,7 @@
     "ObservedDeployment": "deploy",
     "ObservedDeployments": "deploy",
     "ObservedRelease": "deploy",
+    "OpenEpisode": "worktree",
     "OpenSession": "continuity",
     "OperationParity": "quality",
     "Origin": "repository",
@@ -2119,6 +2201,7 @@
     "PlanEdge": "plan",
     "PlanFinding": "plan",
     "PlanFingerprint": "commit",
+    "PlanFlight": "plan",
     "PlanIssue": "plan",
     "PlanIssueList": "plan",
     "PlanItem": "continuity",
@@ -2162,6 +2245,7 @@
     "ProjectionState": "environment",
     "ProjectionView": "design",
     "PromptSource": "product",
+    "Proof": "plan",
     "ProofState": "shared",
     "ProofStep": "integration",
     "Proposed": "intents",
@@ -2248,6 +2332,7 @@
     "ReleasePolicy": "release",
     "ReleasePolicyMode": "release",
     "ReleaseProducedBy": "release",
+    "ReleaseReading": "plan",
     "ReleaseReference": "release",
     "ReleaseSection": "release",
     "ReleaseSeverity": "release",
@@ -2259,6 +2344,8 @@
     "ReleaseVersionReport": "release",
     "ReleaseView": "distribution",
     "ReleasesReport": "distribution",
+    "ReportAnswer": "executions",
+    "ReportInput": "executions",
     "RepositoryEnvironment": "environment",
     "RepositoryIdentity": "environment",
     "RepositoryInfo": "repository",
@@ -2424,6 +2511,7 @@
     "TestEvidence": "evidence",
     "TestSubjects": "rules",
     "ThemeView": "design",
+    "Threshold": "worktree",
     "Tier": "devcontext",
     "TierRule": "devcontext",
     "TierSpend": "devcontext",
@@ -2447,11 +2535,17 @@
     "Transition": "session-domain",
     "TransitionView": "session-domain",
     "Transport": "peers",
+    "TrunkDistance": "shared",
     "TrunkSource": "worktree",
+    "TrunkStanding": "shared",
+    "TrunkThresholds": "shared",
     "TrunkView": "worktree",
     "Trust": "continuity",
     "TrustState": "mesh",
     "UnattachedPrep": "integration",
+    "UncommittedReport": "worktree",
+    "UncommittedTallies": "worktree",
+    "UncommittedWorktree": "worktree",
     "UpstreamState": "worktree",
     "UseCaseRef": "product",
     "ValidationOutcome": "reasoning",
@@ -2465,6 +2559,7 @@
     "ViolationCode": "quality",
     "Vocabulary": "obligations",
     "WaiverReason": "capabilities",
+    "WorkStanding": "worktree",
     "WorkflowCatalogue": "environment",
     "WorkflowDescriptor": "environment",
     "WorkflowEntrypoint": "environment",
@@ -2620,6 +2715,13 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "The process that ran it, for an execution another process ran and reported to this\none: the work happened there, and this process holds what it was told about it.",
+          "name": "pid",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
         }
       ],
       "type": "object",
@@ -2651,7 +2753,7 @@
           "value": "mcp"
         },
         {
-          "description": "The command line of this process.",
+          "description": "A command line: this process's own, or `majordomus run` in another process of the\nsame checkout that reported its execution to this server, with its pid.",
           "value": "cli"
         },
         {
@@ -12281,6 +12383,326 @@
       "variants": []
     },
     {
+      "description": "A branch that names the issue.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "DeliveryBranch",
+      "properties": [
+        {
+          "description": "The ref, short: `feature/x`, or `origin/feature/x` for a remote-tracking one.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit it points at.",
+          "name": "head",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "True for a remote-tracking ref.",
+          "name": "remote",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "How the name names the issue: `id` or `slug`.",
+          "name": "via",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When the refs were read.",
+          "name": "observed_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IssueDelivery"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The published release pointer that covers the issue's release.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "DeliveryDeployment",
+      "properties": [
+        {
+          "description": "The version `latest.json` names.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where that `latest.json` was read: `<commit>:site/static/releases/latest.json`, the\ncommit the observed Pages deployment published.",
+          "name": "latest_json",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When the publication was observed.",
+          "name": "observed_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IssueDelivery"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The newest commit in the trunk's history that names the issue: a merge, by its pull\nrequest's title or its branch, or a commit whose subject names it the way this\nrepository's commits do (`type(scope): description (I2740)`).",
+      "home": "plan",
+      "is_enum": false,
+      "name": "DeliveryMerge",
+      "properties": [
+        {
+          "description": "The commit: a merge commit, or a commit whose subject names the issue.",
+          "name": "commit",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The pull request it merged, when its subject names one.",
+          "name": "pull_request",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The branch it merged, when its subject names one.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The pull request's title, when the merge carries one, or the commit's subject.",
+          "name": "title",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How it names the issue: `title_or_branch` or `slug` for a merge, `subject` for a\ncommit, `forge_title` for a merged pull request's title as the forge recorded it.",
+          "name": "via",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When it was committed, RFC 3339.",
+          "name": "merged_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many commits in the history name the issue; this one is the newest.",
+          "name": "merges",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "When the history was read.",
+          "name": "observed_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IssueDelivery"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where and when the answer was observed.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "DeliveryObservation",
+      "properties": [
+        {
+          "description": "`live`, or `at` a named commit.",
+          "name": "mode",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The history read: the trunk ref in live mode, the commit asked for otherwise.",
+          "name": "trunk",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit that history ends at.",
+          "name": "commit",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When: the clock in live mode, the commit's committer time at a commit.",
+          "name": "observed_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DriftReport",
+        "IssueDeliveryReport",
+        "PlanFlight"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "An open pull request that names the issue.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "DeliveryPullRequest",
+      "properties": [
+        {
+          "description": "The number.",
+          "name": "number",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The branch it asks to merge.",
+          "name": "head_ref",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "True for a draft.",
+          "name": "draft",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "How it names the issue: `title_or_branch` or `slug`.",
+          "name": "via",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When the forge was observed.",
+          "name": "observed_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IssueDelivery"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether one source of the answer was read.",
+      "home": "plan",
+      "is_enum": true,
+      "name": "DeliveryReading",
+      "properties": [],
+      "type": "\"read\" | \"unread\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "DeliverySource",
+        "DriftWindow",
+        "ReleaseReading"
+      ],
+      "values": [
+        {
+          "description": "It was read; what it holds is in the answer.",
+          "value": "read"
+        },
+        {
+          "description": "It was not read, and `reason` says why. Nothing it could have proved is claimed or\ndenied.",
+          "value": "unread"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The first release that contains the issue's newest merge.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "DeliveryRelease",
+      "properties": [
+        {
+          "description": "The tag: `v0.27.0`.",
+          "name": "tag",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit the tag names.",
+          "name": "commit",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When the releases were read.",
+          "name": "observed_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IssueDelivery"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Every feature of the layer against the delivery invariant.",
       "home": "delivery",
       "is_enum": false,
@@ -12334,6 +12756,95 @@
       ],
       "used_by_schemas": [],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "One source the answer is built from, and whether it was read.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "DeliverySource",
+      "properties": [
+        {
+          "description": "`branches`, `forge`, `history`, `releases` or `publication`.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Read or unread.",
+          "name": "state",
+          "refs": [
+            "DeliveryReading"
+          ],
+          "required": true,
+          "type": "DeliveryReading"
+        },
+        {
+          "description": "What was read, or why nothing was: the ref, the file, the command that would record\nit.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When what was read was observed, RFC 3339, when it was read.",
+          "name": "observed_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DriftReport",
+        "IssueDeliveryReport",
+        "PlanFlight"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How far one issue's work has travelled, in order: each stage implies every one before it\nhas been passed through, so the furthest one proved is the issue's stage.",
+      "home": "plan",
+      "is_enum": true,
+      "name": "DeliveryStage",
+      "properties": [],
+      "type": "\"none\" | \"branch\" | \"pr_open\" | \"merged\" | \"released\" | \"deployed\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "DriftFinding",
+        "FlightIssue",
+        "IssueDelivery",
+        "IssueDeliveryReport"
+      ],
+      "values": [
+        {
+          "description": "Nothing that was read names the issue.",
+          "value": "none"
+        },
+        {
+          "description": "A branch names it.",
+          "value": "branch"
+        },
+        {
+          "description": "An open pull request names it.",
+          "value": "pr_open"
+        },
+        {
+          "description": "A merge in the trunk's history names it.",
+          "value": "merged"
+        },
+        {
+          "description": "A `v*` release contains its newest merge.",
+          "value": "released"
+        },
+        {
+          "description": "The published `latest.json` names that release or a later one.",
+          "value": "deployed"
+        }
+      ],
       "variants": []
     },
     {
@@ -14446,6 +14957,7 @@
       "used_by": [],
       "used_by_schemas": [
         "MigrationStep",
+        "UncommittedWorktree",
         "WorktreeState"
       ],
       "values": [],
@@ -14626,6 +15138,35 @@
           "value": "uncommitted"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "How many commits two refs have that the other lacks.\n\n```\nuse majordomus_cli::worktree::trunk::Distance;\nlet d = Distance { behind: 779, ahead: 0 };\nassert_eq!(serde_json::to_value(d).unwrap(), serde_json::json!({\"behind\": 779, \"ahead\": 0}));\n```",
+      "home": "shared",
+      "is_enum": false,
+      "name": "Distance",
+      "properties": [
+        {
+          "description": "Commits of the remote trunk this ref lacks.",
+          "name": "behind",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Commits of this ref the remote trunk lacks.",
+          "name": "ahead",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "TrunkDistance"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -15188,6 +15729,445 @@
       "variants": []
     },
     {
+      "description": "One kind of contradiction between the stamps and the work.",
+      "home": "plan",
+      "is_enum": true,
+      "name": "DriftClass",
+      "properties": [],
+      "type": "\"merged_not_recorded\" | \"active_without_work\" | \"done_without_trace\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "DriftFinding",
+        "DriftReport"
+      ],
+      "values": [
+        {
+          "description": "READY, BLOCKED or ACTIVE, with merged work and no open pull request naming it.",
+          "value": "merged_not_recorded"
+        },
+        {
+          "description": "ACTIVE since before the window, with no branch, pull request, merge or mesh claim.",
+          "value": "active_without_work"
+        },
+        {
+          "description": "DONE with no merge naming it. Advisory: record-only issues exist.",
+          "value": "done_without_trace"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One contradiction between an issue's stamps and its delivery.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "DriftFinding",
+      "properties": [
+        {
+          "description": "The issue id.",
+          "name": "issue",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its milestone.",
+          "name": "milestone",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its declared status.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its inferred delivery stage.",
+          "name": "stage",
+          "refs": [
+            "DeliveryStage"
+          ],
+          "required": true,
+          "type": "DeliveryStage"
+        },
+        {
+          "description": "The contradiction.",
+          "name": "class",
+          "refs": [
+            "DriftClass"
+          ],
+          "required": true,
+          "type": "DriftClass"
+        },
+        {
+          "description": "True for a class that never refuses.",
+          "name": "advisory",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "What proves it.",
+          "name": "proof",
+          "refs": [
+            "DriftProof"
+          ],
+          "required": true,
+          "type": "DriftProof"
+        },
+        {
+          "description": "Since when the contradiction holds: the merge for `merged_not_recorded`, the start\nstamp for `active_without_work`.",
+          "name": "since",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Seconds from `since` to the observation.",
+          "name": "age_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Whether that is longer than the window; absent when either is unknown.",
+          "name": "past_window",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "True when no unread source could have dissolved it.",
+          "name": "settled",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The sources that were not read and could have dissolved it.",
+          "name": "unread",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The command that settles it.",
+          "name": "remedy",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the gate made of it, when a gate was asked.",
+          "name": "verdict",
+          "refs": [
+            "DriftVerdict"
+          ],
+          "required": false,
+          "type": "DriftVerdict | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DriftReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Which tree a `plan.drift` gate judges.\n\n```\nuse majordomus_cli::capability::builtin::plan::DriftGate;\nassert_eq!(serde_json::to_value(DriftGate::Trunk).unwrap(), \"trunk\");\nassert_eq!(serde_json::from_str::<DriftGate>(r#\"\"head\"\"#).unwrap(), DriftGate::Head);\n```",
+      "home": "plan",
+      "is_enum": true,
+      "name": "DriftGate",
+      "properties": [],
+      "type": "\"head\" | \"trunk\"",
+      "used_by": [
+        "plan.drift"
+      ],
+      "used_by_schemas": [
+        "DriftReport"
+      ],
+      "values": [
+        {
+          "description": "A head: not the shared plan, so every merged_not_recorded is pending.",
+          "value": "head"
+        },
+        {
+          "description": "The trunk: merged work unrecorded past the window is refused.",
+          "value": "trunk"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The objects that prove a finding.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "DriftProof",
+      "properties": [
+        {
+          "description": "The pull request the newest merge naming the issue merged.",
+          "name": "pull_request",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The newest commit in the trunk's history that names the issue.",
+          "name": "merge_commit",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When that commit was made.",
+          "name": "merged_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How it names the issue (`title_or_branch`, `slug`, `subject`, `forge_title`).",
+          "name": "via",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The first release that contains it.",
+          "name": "release",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When execution was recorded to have begun, for `active_without_work`.",
+          "name": "started_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DriftFinding"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Every contradiction between the plan's stamps and its delivery, and, when a gate was\nasked, its verdict.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "DriftReport",
+      "properties": [
+        {
+          "description": "The version of this shape.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Where and when the delivery was observed.",
+          "name": "observed",
+          "refs": [
+            "DeliveryObservation"
+          ],
+          "required": true,
+          "type": "DeliveryObservation"
+        },
+        {
+          "description": "The declared window.",
+          "name": "window",
+          "refs": [
+            "DriftWindow"
+          ],
+          "required": true,
+          "type": "DriftWindow"
+        },
+        {
+          "description": "The tree a gate judged, when one was asked.",
+          "name": "gate",
+          "refs": [
+            "DriftGate"
+          ],
+          "required": false,
+          "type": "DriftGate | null"
+        },
+        {
+          "description": "Every source, read or not: the delivery's, and the mesh claims.",
+          "name": "sources",
+          "refs": [
+            "DeliverySource"
+          ],
+          "required": true,
+          "type": "array of DeliverySource"
+        },
+        {
+          "description": "The class vocabulary, in order.",
+          "name": "classes",
+          "refs": [
+            "DriftClass"
+          ],
+          "required": true,
+          "type": "array of DriftClass"
+        },
+        {
+          "description": "How many findings of each class, keyed by every class.",
+          "name": "tallies",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "The findings, in issue order, then class order.",
+          "name": "findings",
+          "refs": [
+            "DriftFinding"
+          ],
+          "required": true,
+          "type": "array of DriftFinding"
+        },
+        {
+          "description": "How many findings the gate refused.",
+          "name": "refused",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many it reported as pending.",
+          "name": "pending",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Whether a refusal fails the gate (`drift.enforcement: blocking`).",
+          "name": "enforced",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "`report` (no gate), `clean`, `pending`, `advisory` (refusals not enforced),\n`refused`, or `unjudged` (no window).",
+          "name": "verdict",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The exit code the gate ends with: 0, `EXIT_REFUSED` or `EXIT_UNJUDGED`.",
+          "name": "exit_code",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint8)"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "plan.drift"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a gate made of one finding.",
+      "home": "plan",
+      "is_enum": true,
+      "name": "DriftVerdict",
+      "properties": [],
+      "type": "\"refused\" | \"pending\" | \"reported\" | \"advisory\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "DriftFinding"
+      ],
+      "values": [
+        {
+          "description": "Refused: merged work the trunk has carried unrecorded past the window.",
+          "value": "refused"
+        },
+        {
+          "description": "Reported and not refused: on a head, or inside the window.",
+          "value": "pending"
+        },
+        {
+          "description": "Reported; this class never refuses.",
+          "value": "reported"
+        },
+        {
+          "description": "Advisory; this class never refuses (`done_without_trace`).",
+          "value": "advisory"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The declared window, or why there is none.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "DriftWindow",
+      "properties": [
+        {
+          "description": "The file it is declared in.",
+          "name": "model",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Read, or unread with `detail` saying why.",
+          "name": "state",
+          "refs": [
+            "DeliveryReading"
+          ],
+          "required": true,
+          "type": "DeliveryReading"
+        },
+        {
+          "description": "The seconds the trunk may carry merged work the plan has not recorded.",
+          "name": "seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "`advisory` (refusals are reported, the gate passes) or `blocking`.",
+          "name": "enforcement",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What was read, or why nothing was.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DriftReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One file of the layer that is no longer what the index read.",
       "home": "objects",
       "is_enum": false,
@@ -15397,6 +16377,37 @@
       ],
       "used_by_schemas": [],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether an event this runtime wrote reached this machine's disk: what an append\nacknowledges, and the only thing a caller may say about it.\n\n```\nuse majordomus_cli::mesh::journal::Durability;\nassert_eq!(serde_json::to_value(Durability::NotDurable).unwrap(), \"not_durable\");\nassert_eq!(Durability::default(), Durability::Unknown, \"an answer that did not say\");\nassert!(Durability::Synced.is_on_disk() && !Durability::NotDurable.is_on_disk());\n```",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "Durability",
+      "properties": [],
+      "type": "\"synced\" | \"memory\" | \"not_durable\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Written"
+      ],
+      "values": [
+        {
+          "description": "Appended to the journal file and synced (`fsync` of its data) before the append\nreturned.",
+          "value": "synced"
+        },
+        {
+          "description": "The journal has no file: it lives in memory and its peers, by configuration.",
+          "value": "memory"
+        },
+        {
+          "description": "The write to the journal file failed. The event is held in memory and replicated to\npeers, and is lost to this machine when the runtime restarts unless a peer still holds\nit. It is not acknowledged as durable.",
+          "value": "not_durable"
+        },
+        {
+          "description": "Not reported: an answer from an executable that predates this field.",
+          "value": "unknown"
+        }
+      ],
       "variants": []
     },
     {
@@ -17240,6 +18251,56 @@
       "variants": []
     },
     {
+      "description": "The answer to one edit: whether it may proceed, the one word it was decided on, the\nsentence a person reads and, for a refusal, what would allow it. `guard.edit` returns it\nas it is; `guard hook` turns it into an exit code.\n\n```\nuse majordomus_cli::guard::{judge_facts, ClaimSource, EditFacts, EditVerdict};\n\nlet facts = EditFacts {\n    required: Ok(false),\n    mesh_enabled: true,\n    task: None,\n    session: None,\n    claims: ClaimSource::Claims(vec![]),\n};\nlet v: EditVerdict = judge_facts(\"a.md\", Some(\"a.md\"), facts);\nassert!(v.allowed);\nassert_eq!(v.ground, \"off\");\nlet json = serde_json::to_value(&v).unwrap();\nassert!(json.get(\"remedy\").is_none(), \"an allowed edit carries no remedy\");\n```",
+      "home": "guard",
+      "is_enum": false,
+      "name": "EditVerdict",
+      "properties": [
+        {
+          "description": "Whether the edit may proceed.",
+          "name": "allowed",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The path asked about, repository-relative when it is inside the checkout.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why, as one word: `off`, `outside`, `local`, `no_mesh`, `task`, `claim`,\n`undecided` or `unclaimed`. Only `unclaimed` refuses.",
+          "name": "ground",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The sentence a person reads.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What makes the edit allowed, when it is refused.",
+          "name": "remedy",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "guard.edit"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One adapter: the product, the version its claims were verified against, its capabilities.",
       "home": "editors",
       "is_enum": false,
@@ -18913,11 +19974,13 @@
         "executions.events",
         "executions.get",
         "executions.protocol",
+        "executions.report",
         "executions.start",
         "gates.model",
         "gates.completion",
         "graph.get",
         "graph.list",
+        "guard.edit",
         "health.report",
         "intents.list",
         "intents.binding",
@@ -18978,6 +20041,9 @@
         "peers.announce",
         "perf.counters",
         "plan.model",
+        "plan.delivery",
+        "plan.drift",
+        "plan.flight",
         "plan.issues",
         "plan.next",
         "plan.record",
@@ -19040,7 +20106,9 @@
         "worktree.topology",
         "worktree.inspect",
         "worktree.migration_plan",
-        "worktree.status"
+        "worktree.status",
+        "worktree.trunk",
+        "worktree.uncommitted"
       ],
       "used_by_schemas": [],
       "values": [],
@@ -20545,7 +21613,8 @@
       "type": "one of 12 variants",
       "used_by": [],
       "used_by_schemas": [
-        "EventHistory"
+        "EventHistory",
+        "ReportInput"
       ],
       "values": [],
       "variants": [
@@ -21227,7 +22296,8 @@
       ],
       "used_by_schemas": [
         "CancelReport",
-        "ExecutionList"
+        "ExecutionList",
+        "ReportAnswer"
       ],
       "values": [],
       "variants": []
@@ -22489,6 +23559,187 @@
       "used_by": [],
       "used_by_schemas": [
         "Out"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One issue: its declared status beside its inferred stage, and what proves the stage.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "FlightIssue",
+      "properties": [
+        {
+          "description": "The issue id.",
+          "name": "issue",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its declared status, from the stamps.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its inferred delivery stage, from `plan.delivery`.",
+          "name": "stage",
+          "refs": [
+            "DeliveryStage"
+          ],
+          "required": true,
+          "type": "DeliveryStage"
+        },
+        {
+          "description": "True when no unread source could have proved a further stage.",
+          "name": "settled",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The sources that were not read and could have moved it further.",
+          "name": "unread",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Why it is in flight; empty for an issue that is not.",
+          "name": "in_flight",
+          "refs": [
+            "InFlight"
+          ],
+          "required": true,
+          "type": "array of InFlight"
+        },
+        {
+          "description": "The objects that prove the stage (and the claims that put it in flight), in stage\norder.",
+          "name": "proofs",
+          "refs": [
+            "Proof"
+          ],
+          "required": true,
+          "type": "array of Proof"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "FlightMilestone"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One milestone with the issues an answer shows of it.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "FlightMilestone",
+      "properties": [
+        {
+          "description": "The milestone id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its declared status.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its issues: the ones in flight for a milestone of `now`, every one for the inspected\nmilestone.",
+          "name": "issues",
+          "refs": [
+            "FlightIssue"
+          ],
+          "required": true,
+          "type": "array of FlightIssue"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PlanFlight"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The latest release, and every source that was asked for it.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "FlightRelease",
+      "properties": [
+        {
+          "description": "The highest stable version any read source names; absent when none names one.",
+          "name": "latest",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The source that named it (the first in `records`, `tags`, `publication` order when\nseveral agree).",
+          "name": "source",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Where it can be seen on the forge.",
+          "name": "href",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The version of the executable that answered.",
+          "name": "executable",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "True when the executable's own version is tagged `v<version>`; the latest release is\nthen never older than it.",
+          "name": "executable_tagged",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Every source, read or not.",
+          "name": "readings",
+          "refs": [
+            "ReleaseReading"
+          ],
+          "required": true,
+          "type": "array of ReleaseReading"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PlanFlight"
       ],
       "values": [],
       "variants": []
@@ -24299,6 +25550,148 @@
       "variants": []
     },
     {
+      "description": "What became of the hooks directory of a worktree that was just created, found or moved.\n\nIt travels in the JSON of `worktree create`, `ensure`, `migrate` and `repair`, tagged by\n`outcome`, so a reader branches on one word rather than parsing the line:\n\n```\nuse majordomus_cli::worktree::HooksPath;\n\nlet set = HooksPath::Set {\n    path: \"/r-wt/fix/x/.githooks\".into(),\n    enabled: vec![],\n};\nlet json = serde_json::to_value(&set).unwrap();\nassert_eq!(json[\"outcome\"], \"set\");\nassert_eq!(json[\"path\"], \"/r-wt/fix/x/.githooks\");\nlet back: HooksPath = serde_json::from_value(json).unwrap();\nassert_eq!(back, set);\n```",
+      "home": "worktree",
+      "is_enum": false,
+      "name": "HooksPath",
+      "properties": [],
+      "type": "one of 6 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "MigrationStep"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "The repository's configuration sets no `core.hooksPath`: git's own hooks directory\nin the common directory (or a value of the user's) serves every worktree, and there\nis no tracked directory to follow.",
+          "properties": [
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"not_configured\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Git already resolves this worktree's hooks to its own directory; nothing was set.",
+          "properties": [
+            {
+              "description": "The directory git runs the hooks from.",
+              "name": "path",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"own\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "This worktree's `core.hooksPath` was set, per worktree, to its own directory.",
+          "properties": [
+            {
+              "description": "The directory it now runs the hooks from.",
+              "name": "path",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "Repository settings switched on so that a per-worktree value is honoured, as\n`key=value`; empty when they were on already.",
+              "name": "enabled",
+              "refs": [],
+              "required": true,
+              "type": "array of string"
+            },
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"set\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The hooks directory is outside the primary checkout — one directory shared on\npurpose — and every worktree runs it; nothing was set.",
+          "properties": [
+            {
+              "description": "The directory every worktree runs the hooks from.",
+              "name": "path",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"shared\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The primary checkout's hooks directory has no counterpart in this worktree's tree,\nso the worktree keeps running the primary's: pointing it at a directory that does\nnot exist would switch its hooks off.",
+          "properties": [
+            {
+              "description": "The directory that would be the worktree's own, and is not there.",
+              "name": "missing",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The directory the worktree runs the hooks from instead.",
+              "name": "runs",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"untracked\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Git was asked and refused, or could not be run; the message is its own.",
+          "properties": [
+            {
+              "description": "What went wrong.",
+              "name": "message",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"failed\""
+            }
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    {
       "description": "How a capability appears over HTTP. `GET` binds every top-level input property as a\nquery parameter; `POST` binds the input as the JSON request body. Paths are absolute\nand live under `HttpExposure::PREFIX`.",
       "home": "capabilities",
       "is_enum": false,
@@ -24658,6 +26051,33 @@
         "Completion"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Why an issue is in flight.",
+      "home": "plan",
+      "is_enum": true,
+      "name": "InFlight",
+      "properties": [],
+      "type": "\"pr_open\" | \"claim\" | \"active\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "FlightIssue"
+      ],
+      "values": [
+        {
+          "description": "An open pull request names it.",
+          "value": "pr_open"
+        },
+        {
+          "description": "A live mesh claim was made for it.",
+          "value": "claim"
+        },
+        {
+          "description": "Its declared status is ACTIVE.",
+          "value": "active"
+        }
+      ],
       "variants": []
     },
     {
@@ -25580,6 +27000,13 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "Whether the repository's merge settings went unread (the forge's answer carried none\nof them): `merge_method` is then `None` because nothing is known, not because a merge\ncommit is refused, and a held pull request says `merge_settings_unread` (I2966). Absent\nin a policy recorded before it was read, which read them.",
+          "name": "merge_settings_unread",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
         },
         {
           "description": "Whether the base requires a branch to be up to date before it merges (the\nprotection's `required_status_checks.strict`, or a ruleset's): the forge-side half of\nthe guard against a merge onto a master nobody tested with the change. The executor's\nhalf is its parent check after every merge. `Some(false)` is the owner's to change\n(decision D8) and decides no disposition; `None` when unread.",
@@ -27809,6 +29236,189 @@
       "variants": []
     },
     {
+      "description": "One issue's delivery.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "IssueDelivery",
+      "properties": [
+        {
+          "description": "The issue id.",
+          "name": "issue",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its milestone.",
+          "name": "milestone",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its declared status, as the plan derives it from the stamps: the other half of the\ncomparison this answer exists for.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The furthest stage proved.",
+          "name": "stage",
+          "refs": [
+            "DeliveryStage"
+          ],
+          "required": true,
+          "type": "DeliveryStage"
+        },
+        {
+          "description": "True when no unread source could have proved a further stage.",
+          "name": "settled",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The sources that were not read and could have proved a further stage.",
+          "name": "unread",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The branch that names it, local first.",
+          "name": "branch",
+          "refs": [
+            "DeliveryBranch"
+          ],
+          "required": false,
+          "type": "DeliveryBranch | null"
+        },
+        {
+          "description": "The open pull request that names it, newest first.",
+          "name": "pr_open",
+          "refs": [
+            "DeliveryPullRequest"
+          ],
+          "required": false,
+          "type": "DeliveryPullRequest | null"
+        },
+        {
+          "description": "The newest merge that names it.",
+          "name": "merged",
+          "refs": [
+            "DeliveryMerge"
+          ],
+          "required": false,
+          "type": "DeliveryMerge | null"
+        },
+        {
+          "description": "The first release containing that merge.",
+          "name": "released",
+          "refs": [
+            "DeliveryRelease"
+          ],
+          "required": false,
+          "type": "DeliveryRelease | null"
+        },
+        {
+          "description": "The publication that covers that release.",
+          "name": "deployed",
+          "refs": [
+            "DeliveryDeployment"
+          ],
+          "required": false,
+          "type": "DeliveryDeployment | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IssueDeliveryReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Every issue's delivery, with what it was read from.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "IssueDeliveryReport",
+      "properties": [
+        {
+          "description": "The version of this shape.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Where and when.",
+          "name": "observed",
+          "refs": [
+            "DeliveryObservation"
+          ],
+          "required": true,
+          "type": "DeliveryObservation"
+        },
+        {
+          "description": "The stage vocabulary, in order.",
+          "name": "stages",
+          "refs": [
+            "DeliveryStage"
+          ],
+          "required": true,
+          "type": "array of DeliveryStage"
+        },
+        {
+          "description": "Every source, read or not.",
+          "name": "sources",
+          "refs": [
+            "DeliverySource"
+          ],
+          "required": true,
+          "type": "array of DeliverySource"
+        },
+        {
+          "description": "How many issues are at each stage, keyed by every stage of the vocabulary.",
+          "name": "tallies",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "How many issues an unread source could have moved further.",
+          "name": "unsettled",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The issues, in id order.",
+          "name": "issues",
+          "refs": [
+            "IssueDelivery"
+          ],
+          "required": true,
+          "type": "array of IssueDelivery"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "plan.delivery"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Why an issue exists: because it serves a criterion, because it is maintenance under a\nmilestone no intent names, or because nobody said — which is a failure under an intent.\n\n```\nuse majordomus_cli::intent_plan::IssueOrigin;\nassert_eq!(serde_json::to_string(&IssueOrigin::Maintenance).unwrap(), \"\\\"maintenance\\\"\");\n// work under no intent is legitimate and says so; it is never given an invented intent\nassert_ne!(IssueOrigin::Maintenance, IssueOrigin::Unexplained);\n```",
       "home": "intents",
       "is_enum": true,
@@ -28041,6 +29651,13 @@
         {
           "description": "Lines of the journal file the last reload could not read: torn, corrupt, or written\nby something that is not this journal. Counted, never silently dropped.",
           "name": "unreadable",
+          "refs": [],
+          "required": false,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Bytes of the journal file the last reload left unread because they lie beyond\n`MAX_RELOAD_BYTES`: on disk and kept by compaction, and not in memory. Nonzero fails\n`mesh doctor`.",
+          "name": "unread_bytes",
           "refs": [],
           "required": false,
           "type": "integer (uint64)"
@@ -31973,6 +33590,15 @@
           ],
           "required": false,
           "type": "EnvrcApproval | null"
+        },
+        {
+          "description": "Which hooks it runs at its new path: a per-worktree `core.hooksPath` names the old\none, so a moved worktree is bound again to its own tree's (I2718). Only on a moved\nstep.",
+          "name": "hooks",
+          "refs": [
+            "HooksPath"
+          ],
+          "required": false,
+          "type": "HooksPath | null"
         }
       ],
       "type": "object",
@@ -34658,6 +36284,42 @@
       "variants": []
     },
     {
+      "description": "An open episode in a work tree, as far as holding its work goes: it holds the work only\nwhile `stranded` is `Some(false)`; a stranded or unjudgeable one holds nothing.\n\n```\nuse majordomus_cli::worktree::OpenEpisode;\nlet unjudged = OpenEpisode {\n    id: \"s-20260101000000-0a0a\".into(),\n    last_sign_of_life: None,\n    stranded: None,\n};\nlet wire = serde_json::to_value(&unjudged).unwrap();\nassert!(wire.get(\"stranded\").is_none(), \"what could not be judged is absent, not false\");\nlet back: OpenEpisode = serde_json::from_value(wire).unwrap();\nassert_eq!(back, unjudged);\n```",
+      "home": "worktree",
+      "is_enum": false,
+      "name": "OpenEpisode",
+      "properties": [
+        {
+          "description": "The episode.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its newest sign of life, RFC 3339 in UTC.",
+          "name": "last_sign_of_life",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Silent longer than the threshold. Absent when that cannot be judged — no threshold,\nor no readable sign of life — and then it holds nothing.",
+          "name": "stranded",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "UncommittedWorktree"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The open episode this checkout points at, when there is one.\n\nOne execution episode belongs to one provider session, and several can be open in one\ncheckout at once — two windows of the same provider are two workers. What is read here\nis `state/session-current.yaml`, the pointer to the episode of this checkout; a worker\nthat knows its own provider session resolves its own episode instead, which is what\n`mj_session_here_file` in `lib/common.sh` does and what stamps each ledger line.",
       "home": "continuity",
       "is_enum": false,
@@ -36467,6 +38129,87 @@
       "variants": []
     },
     {
+      "description": "Where the work is: the answer of `plan.flight`.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "PlanFlight",
+      "properties": [
+        {
+          "description": "The version of this shape.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Where and when the delivery half was observed.",
+          "name": "observed",
+          "refs": [
+            "DeliveryObservation"
+          ],
+          "required": true,
+          "type": "DeliveryObservation"
+        },
+        {
+          "description": "The milestones with work in flight, in the plan's order.",
+          "name": "now",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The first open milestone the graph allows once the work in flight lands.",
+          "name": "next",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The milestones of `now`, each with its issues in flight.",
+          "name": "milestones",
+          "refs": [
+            "FlightMilestone"
+          ],
+          "required": true,
+          "type": "array of FlightMilestone"
+        },
+        {
+          "description": "The milestone asked for with `milestone`, with every one of its issues.",
+          "name": "inspected",
+          "refs": [
+            "FlightMilestone"
+          ],
+          "required": false,
+          "type": "FlightMilestone | null"
+        },
+        {
+          "description": "The latest release.",
+          "name": "release",
+          "refs": [
+            "FlightRelease"
+          ],
+          "required": true,
+          "type": "FlightRelease"
+        },
+        {
+          "description": "Every source, read or not: `plan.delivery`'s, then `mesh`.",
+          "name": "sources",
+          "refs": [
+            "DeliverySource"
+          ],
+          "required": true,
+          "type": "array of DeliverySource"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "plan.flight"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One issue, as its record declares it and as the graph derives it.",
       "home": "plan",
       "is_enum": false,
@@ -36744,11 +38487,18 @@
           "type": "string"
         },
         {
-          "description": "The release the milestone belongs to, when it declares one.",
-          "name": "version",
+          "description": "The last accepted issue of a DONE milestone: its DONE issue with the latest\n`completed_at`, the greater id on a tie. Empty for a milestone that is not DONE, or\nthat is DONE with no issue (its evidence finished it). Which release carried it is\n`released_in`'s to answer.",
+          "name": "last_accepted",
           "refs": [],
-          "required": true,
+          "required": false,
           "type": "string"
+        },
+        {
+          "description": "The release that carried the milestone — the first release record whose commit\ncontains the merge of its last accepted issue (or, with no issue, the commit that\nrecorded its latest evidence), else `unreleased` — when the reader\nasked for it\n(`released_in`); the roadmap always does. Never a typed field (ADR 0166).",
+          "name": "released_in",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         },
         {
           "description": "Its layer in the milestone graph: what orders the roadmap.",
@@ -36994,7 +38744,7 @@
       "name": "PlanRoadmap",
       "properties": [
         {
-          "description": "The milestones ordered by rank, then order, then id. The sequence is derived from\nthe milestone graph; no list of versions is maintained anywhere.",
+          "description": "The milestones ordered by rank, then order, then id, each with the release that\ncarried it (`released_in`). The sequence is derived from the milestone graph and the\nrelease from the release records; no list of versions is maintained anywhere.",
           "name": "milestones",
           "refs": [
             "PlanMilestone"
@@ -38436,6 +40186,42 @@
           "value": "none"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "One object that proves where an issue's work stands.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "Proof",
+      "properties": [
+        {
+          "description": "`branch`, `pull_request`, `merge`, `release`, `publication` or `claim`.",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What a reader is shown: `#1298`, a short commit, a tag, a branch.",
+          "name": "label",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where the object is, on the forge; absent for an object only this clone holds (a\nlocal branch, a mesh claim), so a link is never drawn to nothing.",
+          "name": "href",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "FlightIssue"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -43976,6 +45762,58 @@
       "variants": []
     },
     {
+      "description": "One source's answer to \"what is the latest release\".",
+      "home": "plan",
+      "is_enum": false,
+      "name": "ReleaseReading",
+      "properties": [
+        {
+          "description": "`records`, `tags` or `publication`.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Read or unread.",
+          "name": "state",
+          "refs": [
+            "DeliveryReading"
+          ],
+          "required": true,
+          "type": "DeliveryReading"
+        },
+        {
+          "description": "The version it names, when it was read and names one.",
+          "name": "version",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What was read (`.ai/repo/releases/v0.27.0.yaml`, `refs/tags/v0.27.0`,\n`<commit>:site/static/releases/latest.json`), or why nothing was.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it can be seen on the forge, when it can.",
+          "name": "href",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "FlightRelease"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it.\n\n```\nuse majordomus_cli::release::model::Reference;\nlet r = Reference {\n    kind: \"issue\".into(),\n    id: \"I1305\".into(),\n    title: \"An observed contract has a fingerprint\".into(),\n    route: Some(\"/plan/i1305/\".into()),\n};\nlet json = serde_json::to_value(&r).unwrap();\nassert_eq!(json[\"id\"], \"I1305\");\nassert_eq!(json[\"route\"], \"/plan/i1305/\");\n// a reference the site has no page for carries no route rather than an invented one\nlet bare = Reference { route: None, ..r };\nassert!(serde_json::to_value(&bare).unwrap().get(\"route\").is_none());\n```",
       "home": "release",
       "is_enum": false,
@@ -44652,6 +46490,117 @@
       "type": "object",
       "used_by": [
         "distribution.releases"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `executions.report`.",
+      "home": "executions",
+      "is_enum": false,
+      "name": "ReportAnswer",
+      "properties": [
+        {
+          "description": "How many of the reported events were applied.",
+          "name": "applied",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The reporter's sequence this server holds everything up to: the next report sends\nthe events after it, so a lost or repeated report costs nothing.",
+          "name": "through",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether somebody asked this server to stop the execution. The reporter runs it, so\nthe reporter cancels it.",
+          "name": "cancel_requested",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The execution as this server now holds it.",
+          "name": "execution",
+          "refs": [
+            "ExecutionView"
+          ],
+          "required": true,
+          "type": "ExecutionView"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "executions.report"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The input of `executions.report`: what a process that runs an execution says about it to\nthe server serving the same checkout.",
+      "home": "executions",
+      "is_enum": false,
+      "name": "ReportInput",
+      "properties": [
+        {
+          "description": "The execution's id, as the reporting process minted it.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The capability it runs, by its canonical id.",
+          "name": "capability",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "That capability's title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The input it was given, as the reporting process stored it: already redacted there,\nand redacted again here by this registry's schema when this registry knows it.",
+          "name": "input",
+          "refs": [],
+          "required": false,
+          "type": "any"
+        },
+        {
+          "description": "Whether the capability stops when asked. When it does, a cancel asked of this server\nreaches the reporter in the answer to its next report.",
+          "name": "cancellable",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "description": "The process that runs it.",
+          "name": "pid",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Its events after the last sequence this server answered `through`, in its own\nsequence, oldest first; at most 500. Empty is a heartbeat.",
+          "name": "events",
+          "refs": [
+            "ExecutionEvent"
+          ],
+          "required": false,
+          "type": "array of ExecutionEvent"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "executions.report"
       ],
       "used_by_schemas": [],
       "values": [],
@@ -49110,7 +51059,7 @@
       "variants": []
     },
     {
-      "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```",
+      "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None, trunk: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```",
       "home": "server",
       "is_enum": false,
       "name": "ServerStatus",
@@ -49175,6 +51124,15 @@
           ],
           "required": false,
           "type": "ConnectionCounts | null"
+        },
+        {
+          "description": "How far the tree this checkout serves is from the remote trunk, judged against the\npolicy's `checkout.trunk_distance`: a server of a checkout 779 commits behind answers\nevery session from a tree that no longer exists, and this is where that is said.\nAbsent only from an answer that predates the field.",
+          "name": "trunk",
+          "refs": [
+            "TrunkDistance"
+          ],
+          "required": false,
+          "type": "TrunkDistance | null"
         }
       ],
       "type": "object",
@@ -51571,6 +53529,15 @@
           "refs": [],
           "required": true,
           "type": "integer (uint)"
+        },
+        {
+          "description": "How far this work tree and the local trunk are from the remote trunk, judged against\nthe policy's `checkout.trunk_distance`: what it would serve, and how old that is.",
+          "name": "trunk_distance",
+          "refs": [
+            "TrunkDistance"
+          ],
+          "required": true,
+          "type": "TrunkDistance"
         }
       ],
       "type": "object",
@@ -53539,6 +55506,42 @@
       "variants": []
     },
     {
+      "description": "The age past which uncommitted work nothing holds is abandoned, and where it came from.\n\nIt is reported with every reading, so a reader can see what the verdicts were judged\nagainst; a threshold nothing declares is carried as absent, not filled in.\n\n```\nuse majordomus_cli::worktree::Threshold;\nlet declared = Threshold::resolve(Some(\"12h\"), None).unwrap();\nlet wire = serde_json::to_value(&declared).unwrap();\nassert_eq!(wire[\"declared\"], \"12h\");\nassert_eq!(wire[\"seconds\"], 43_200);\nlet absent: Threshold =\n    serde_json::from_value(serde_json::json!({\"source\": \"absent\"})).unwrap();\nassert_eq!((absent.declared, absent.seconds), (None, None), \"absent is not a default\");\n```",
+      "home": "worktree",
+      "is_enum": false,
+      "name": "Threshold",
+      "properties": [
+        {
+          "description": "The value as written (`12h`). Absent when nothing declares one.",
+          "name": "declared",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The same value, in seconds.",
+          "name": "seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "`THRESHOLD_KEY`, `older_than` when the caller named one, or `absent`.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "UncommittedReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Where an entry sits in the order the budget spends in.\n\nThe order is this repository's own: `lib/context.sh` assembles its sections \"in\nauthority order, highest first, because a worker that runs out of budget must lose the\nleast reliable evidence rather than the most: git, then the task and its policy, then\nblockers, then authored records, then event history.\" These six tiers are that\nsentence, applied to objects instead of to sections.\n\nThe derived `Ord` is load-bearing: the variants are declared in authority order, so\n`<` means \"spent before\" and \"harder to drop\", and the budget's ordering is a plain\n`sort` rather than a table mapping tiers to ranks. A variant added in the wrong place\nwould silently re-rank the whole answer, which is why the declaration order is the one\nthing about this enum to be careful with.\n\n```\nuse majordomus_cli::devcontext::Tier;\n\n// the declaration order *is* the order the budget spends in\nlet mut sorted = Tier::ORDER.to_vec();\nsorted.sort();\nassert_eq!(sorted, Tier::ORDER.to_vec());\n\n// so the strongest authority is the smallest, and it is the one never dropped\nassert_eq!(Tier::ORDER.iter().copied().min(), Some(Tier::Task));\nassert!(Tier::Task < Tier::Governance && Tier::Governance < Tier::History);\n\n// and the serialised word is the lowercase one the report is read under\nassert_eq!(\n    serde_json::to_value(Tier::Governance).unwrap(),\n    serde_json::json!(Tier::Governance.as_str()),\n);\n```",
       "home": "devcontext",
       "is_enum": true,
@@ -54959,6 +56962,125 @@
       "variants": []
     },
     {
+      "description": "A checkout's distance from the remote trunk, judged.\n\n```\nuse majordomus_cli::worktree::trunk::{Distance, TrunkDistance, TrunkStanding};\nlet d: TrunkDistance = serde_json::from_value(serde_json::json!({\n    \"standing\": \"stale\", \"local_trunk_standing\": \"stale\",\n    \"worktree\": \"/repo\", \"on_trunk\": true,\n    \"checkout\": {\"behind\": 779, \"ahead\": 0},\n    \"thresholds\": {\"warn_behind\": 50, \"fail_behind\": 300},\n    \"message\": \"779 commits behind origin/master\",\n})).unwrap();\nassert_eq!(d.standing, TrunkStanding::Stale);\nassert_eq!(d.checkout, Some(Distance { behind: 779, ahead: 0 }));\n// what is absent stays absent in the answer\nassert!(serde_json::to_value(&d).unwrap().get(\"remedy\").is_none());\n```",
+      "home": "shared",
+      "is_enum": false,
+      "name": "TrunkDistance",
+      "properties": [
+        {
+          "description": "Where the checkout stands: its `HEAD` — with the commit a merge in progress brings\nin — judged against the thresholds. This is what its server serves.",
+          "name": "standing",
+          "refs": [
+            "TrunkStanding"
+          ],
+          "required": true,
+          "type": "TrunkStanding"
+        },
+        {
+          "description": "Where the local trunk branch stands, judged the same way: what a branch made from it\nstarts from. The same as `standing` when the checkout holds the trunk.",
+          "name": "local_trunk_standing",
+          "refs": [
+            "TrunkStanding"
+          ],
+          "required": true,
+          "type": "TrunkStanding"
+        },
+        {
+          "description": "The work tree measured.",
+          "name": "worktree",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The work tree holds the trunk branch itself.",
+          "name": "on_trunk",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The trunk branch, short.",
+          "name": "trunk",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The remote-tracking trunk counted against (`origin/master`).",
+          "name": "remote_trunk",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The commit the remote-tracking trunk names.",
+          "name": "remote_head",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The checkout's `HEAD` against the remote trunk. While a merge is in progress, the\ncommits it brings in count as present: the commit being made will hold them, so the\nmerge that brings a checkout current is never judged by the tree it is replacing.",
+          "name": "checkout",
+          "refs": [
+            "Distance"
+          ],
+          "required": false,
+          "type": "Distance | null"
+        },
+        {
+          "description": "The local trunk branch against the remote trunk: what a branch made from the local\ntrunk starts from.",
+          "name": "local_trunk",
+          "refs": [
+            "Distance"
+          ],
+          "required": false,
+          "type": "Distance | null"
+        },
+        {
+          "description": "When the repository last fetched (the time of `FETCH_HEAD`), RFC 3339: the moment\nthis answer is true as of. Absent when it never fetched.",
+          "name": "fetched_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The thresholds judged against, as `checkout.trunk_distance` declares them.",
+          "name": "thresholds",
+          "refs": [
+            "TrunkThresholds"
+          ],
+          "required": true,
+          "type": "TrunkThresholds"
+        },
+        {
+          "description": "What the standing means here, in one line.",
+          "name": "message",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commands that bring the checkout and the local trunk current, when either is\nbehind. Suggested, never run.",
+          "name": "remedy",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "worktree.trunk"
+      ],
+      "used_by_schemas": [
+        "ServerStatus",
+        "StatusReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Where the trunk was learned from, in the order it is looked for.",
       "home": "worktree",
       "is_enum": true,
@@ -54991,6 +57113,70 @@
           "value": "unknown"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "Where a checkout stands against the remote trunk.\n\n```\nuse majordomus_cli::worktree::trunk::TrunkStanding;\nlet s: TrunkStanding = serde_json::from_str(r#\"\"lagging\"\"#).unwrap();\nassert_eq!(s, TrunkStanding::Lagging);\nassert_eq!(serde_json::to_value(TrunkStanding::Unmeasured).unwrap(), \"unmeasured\");\n```",
+      "home": "shared",
+      "is_enum": true,
+      "name": "TrunkStanding",
+      "properties": [],
+      "type": "\"current\" | \"lagging\" | \"stale\" | \"unjudged\" | \"unmeasured\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "TrunkDistance"
+      ],
+      "values": [
+        {
+          "description": "Behind by less than the warn threshold, or not behind at all.",
+          "value": "current"
+        },
+        {
+          "description": "At or past the warn threshold: what it serves is old enough to mislead.",
+          "value": "lagging"
+        },
+        {
+          "description": "At or past the fail threshold: what it serves is the wrong tree.",
+          "value": "stale"
+        },
+        {
+          "description": "Behind, and the policy declares no threshold to judge the distance by.",
+          "value": "unjudged"
+        },
+        {
+          "description": "The distance could not be measured: no trunk, no remote-tracking trunk, no `HEAD`.",
+          "value": "unmeasured"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The thresholds `checkout.trunk_distance` declares, in commits behind the remote trunk.\nAbsent is absent: the reader supplies no default, and a distance with nothing to judge\nit against is reported as `unjudged`.\n\n```\nuse majordomus_cli::worktree::trunk::TrunkThresholds;\nlet t: TrunkThresholds = serde_json::from_str(r#\"{\"warn_behind\": 50, \"fail_behind\": 300}\"#).unwrap();\nassert_eq!((t.warn_behind, t.fail_behind), (Some(50), Some(300)));\nassert_eq!(TrunkThresholds::default().warn_behind, None, \"absent is not a default\");\n```",
+      "home": "shared",
+      "is_enum": false,
+      "name": "TrunkThresholds",
+      "properties": [
+        {
+          "description": "At or past this many commits behind, the checkout is `lagging`: a warning.",
+          "name": "warn_behind",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "At or past this many commits behind, the checkout is `stale`: a failure.",
+          "name": "fail_behind",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "TrunkDistance"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -55164,6 +57350,238 @@
       "used_by": [],
       "used_by_schemas": [
         "TrainsView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Every linked work tree holding uncommitted work, with what holds it: the answer of\n`worktree.uncommitted` on every surface, and what `doctor` renders.\n\n```\nuse majordomus_cli::worktree::uncommitted::UNCOMMITTED_SCHEMA;\nuse majordomus_cli::worktree::{Threshold, UncommittedReport, WorktreeService};\nlet dir = tempfile::tempdir().unwrap();\nlet init = std::process::Command::new(\"git\")\n    .args([\"init\", \"-q\"])\n    .current_dir(dir.path())\n    .status()\n    .unwrap();\nassert!(init.success());\n// a repository with no linked work tree, and a policy that declares no threshold\nlet threshold = Threshold::resolve(None, None).unwrap();\nlet report: UncommittedReport =\n    WorktreeService::open(dir.path()).unwrap().uncommitted(&threshold).unwrap();\nassert_eq!(report.schema, UNCOMMITTED_SCHEMA);\nassert!(report.worktrees.is_empty());\nassert_eq!(report.tallies.measured, 0);\nassert_eq!(report.findings.len(), 1, \"a missing threshold is said, not assumed\");\n```",
+      "home": "worktree",
+      "is_enum": false,
+      "name": "UncommittedReport",
+      "properties": [
+        {
+          "description": "`UNCOMMITTED_SCHEMA`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When the reading was taken, RFC 3339 in UTC.",
+          "name": "observed_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The threshold it was judged against.",
+          "name": "threshold",
+          "refs": [
+            "Threshold"
+          ],
+          "required": true,
+          "type": "Threshold"
+        },
+        {
+          "description": "Every linked work tree with uncommitted work, abandoned first, then oldest first.",
+          "name": "worktrees",
+          "refs": [
+            "UncommittedWorktree"
+          ],
+          "required": true,
+          "type": "array of UncommittedWorktree"
+        },
+        {
+          "description": "The counts.",
+          "name": "tallies",
+          "refs": [
+            "UncommittedTallies"
+          ],
+          "required": true,
+          "type": "UncommittedTallies"
+        },
+        {
+          "description": "What could not be read or judged, in words.",
+          "name": "findings",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "worktree.uncommitted"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The counts of an `UncommittedReport`: how many linked work trees were read, how many\nhold uncommitted work, and how those split into held, recent and abandoned. The three\nstandings always add up to `uncommitted`; `doctor` reads `abandoned` to decide whether it\nhas anything to warn about.\n\n```\nuse majordomus_cli::worktree::UncommittedTallies;\nlet wire = serde_json::json!(\n    {\"measured\": 4, \"uncommitted\": 3, \"held\": 1, \"recent\": 1, \"abandoned\": 1}\n);\nlet t: UncommittedTallies = serde_json::from_value(wire.clone()).unwrap();\nassert_eq!(t.held + t.recent + t.abandoned, t.uncommitted);\nassert_eq!(serde_json::to_value(&t).unwrap(), wire, \"the shape doctor's jq reads\");\nassert_eq!(UncommittedTallies::default().abandoned, 0, \"nothing read, nothing abandoned\");\n```",
+      "home": "worktree",
+      "is_enum": false,
+      "name": "UncommittedTallies",
+      "properties": [
+        {
+          "description": "Linked work trees whose status was read.",
+          "name": "measured",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Of those, the ones holding uncommitted work: every entry of the listing.",
+          "name": "uncommitted",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Held by a task, an episode or a process.",
+          "name": "held",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Held by nothing, younger than the threshold.",
+          "name": "recent",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Held by nothing, older than the threshold.",
+          "name": "abandoned",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "UncommittedReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One linked work tree holding uncommitted work: how much, how old, what holds it, the\nverdict, and the command that would preserve it. A listing is in canonical order —\nabandoned first, then recent, then held, the oldest first inside each.\n\n```\nuse majordomus_cli::worktree::{DirtyState, UncommittedWorktree, WorkStanding};\nlet entry = |path: &str, standing: WorkStanding, age: u64| UncommittedWorktree {\n    path: path.into(),\n    branch: None,\n    label: path.into(),\n    work: DirtyState { staged: 1, ..DirtyState::default() },\n    paths: 1,\n    oldest_change: None,\n    age_seconds: Some(age),\n    age: None,\n    task: None,\n    episodes: Vec::new(),\n    process_inside: None,\n    held_by: Vec::new(),\n    standing,\n    remedy: String::new(),\n};\nlet mut listing = vec![\n    entry(\"/wt/held-old\", WorkStanding::Held, 900_000),\n    entry(\"/wt/young\", WorkStanding::Abandoned, 50_000),\n    entry(\"/wt/older\", WorkStanding::Abandoned, 90_000),\n];\nmajordomus_cli::order::canonical(&mut listing);\nlet paths: Vec<&str> = listing.iter().map(|w| w.path.as_str()).collect();\nassert_eq!(paths, [\"/wt/older\", \"/wt/young\", \"/wt/held-old\"]);\n```",
+      "home": "worktree",
+      "is_enum": false,
+      "name": "UncommittedWorktree",
+      "properties": [
+        {
+          "description": "Absolute, as git holds it.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The branch checked out there. Absent when detached.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The branch, or `detached/<short commit>`.",
+          "name": "label",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The counts, as `worktree status` gives them.",
+          "name": "work",
+          "refs": [
+            "DirtyState"
+          ],
+          "required": true,
+          "type": "DirtyState"
+        },
+        {
+          "description": "Every changed path: staged, unstaged, untracked and conflicted together.",
+          "name": "paths",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "When the oldest change was made: the earliest modification time among the changed\npaths, the index file's standing in for a path that no longer exists. RFC 3339.",
+          "name": "oldest_change",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Seconds since then.",
+          "name": "age_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The same, for a person (`3d`, `5h`, `40m`).",
+          "name": "age",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The active task recorded there.",
+          "name": "task",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The episodes open there.",
+          "name": "episodes",
+          "refs": [
+            "OpenEpisode"
+          ],
+          "required": true,
+          "type": "array of OpenEpisode"
+        },
+        {
+          "description": "A process has its working directory inside it. Absent when that could not be read.",
+          "name": "process_inside",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "What holds it, in words; empty when nothing does.",
+          "name": "held_by",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The verdict.",
+          "name": "standing",
+          "refs": [
+            "WorkStanding"
+          ],
+          "required": true,
+          "type": "WorkStanding"
+        },
+        {
+          "description": "The command that would put this work on a remote ref. Suggested, never run.",
+          "name": "remedy",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "UncommittedReport"
       ],
       "values": [],
       "variants": []
@@ -55784,6 +58202,33 @@
       "variants": []
     },
     {
+      "description": "What a work tree's uncommitted work is, judged: held by something, recent, or abandoned.\n`judge` is the one place it is decided, and `doctor` warns only on `abandoned`.\n\n```\nuse majordomus_cli::worktree::uncommitted::{judge, WorkStanding};\nlet standing = judge(false, Some(90_000), Some(43_200));\nassert_eq!(standing, WorkStanding::Abandoned);\nassert_eq!(serde_json::to_value(standing).unwrap(), \"abandoned\");\n```",
+      "home": "worktree",
+      "is_enum": true,
+      "name": "WorkStanding",
+      "properties": [],
+      "type": "\"held\" | \"recent\" | \"abandoned\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "UncommittedWorktree"
+      ],
+      "values": [
+        {
+          "description": "A task, an episode or a process holds it.",
+          "value": "held"
+        },
+        {
+          "description": "Nothing holds it, and it is younger than the threshold.",
+          "value": "recent"
+        },
+        {
+          "description": "Nothing holds it, and it is older than the threshold — or its age cannot be read.",
+          "value": "abandoned"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "The workflows a person can run here, as the workflow runner itself describes them.",
       "home": "environment",
       "is_enum": false,
@@ -56315,7 +58760,7 @@
       "variants": []
     },
     {
-      "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n#### use std::sync::Arc;\n#### use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n#### use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n#### use majordomus_cli::mesh::identity::NodeIdentity;\n#### use majordomus_cli::mesh::link::HttpTransport;\n#### use majordomus_cli::mesh::registry::MeshRegistry;\n#### use majordomus_cli::mesh::repository::of_root_commits;\n#### let cooperation = Cooperation::new(CooperationSetup {\n####     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n####     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n####     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n####     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n####     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n#### }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
+      "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n#### use std::sync::Arc;\n#### use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n#### use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n#### use majordomus_cli::mesh::identity::NodeIdentity;\n#### use majordomus_cli::mesh::link::HttpTransport;\n#### use majordomus_cli::mesh::registry::MeshRegistry;\n#### use majordomus_cli::mesh::repository::of_root_commits;\n#### let cooperation = Cooperation::new(CooperationSetup {\n####     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n####     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n####     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n####     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n####     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n#### }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, Durability, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\nassert_eq!(written.durability, Durability::Memory, \"this journal has no file\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
       "home": "mesh",
       "is_enum": false,
       "name": "Written",
@@ -56340,6 +58785,15 @@
           "refs": [],
           "required": true,
           "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether the event reached this machine's disk: `synced`, `memory` (a journal with no\nfile, by configuration), or `not_durable` — held and replicated to peers, not on disk\nhere, and not acknowledged as durable. `unknown` from an executable that predates it.",
+          "name": "durability",
+          "refs": [
+            "Durability"
+          ],
+          "required": false,
+          "type": "Durability"
         }
       ],
       "type": "object",
@@ -60580,7 +63034,7 @@
       "slug": "evidence"
     },
     {
-      "description": "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. In memory; an execution does not outlive the process that accepted it.",
+      "description": "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. One plane per checkout: `majordomus run` executes in its own process and reports the execution to the server already serving the checkout, so that server lists it beside its own; with no server it says that nothing else can see the run. In memory; an execution does not outlive the server that holds it.",
       "name": "executions",
       "operations": [
         {
@@ -60592,7 +63046,7 @@
           "cache_detail": "",
           "cli": "executions list",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/executions?limit=50\"",
-          "description": "Every execution this process remembers, newest first, narrowed by state or by capability. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question.",
+          "description": "Every execution this process remembers, newest first, narrowed by state or by capability: the ones it ran and the ones `majordomus run` in another process of the checkout reported to it, each with who started it. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question.",
           "home": "executions",
           "id": "executions.list",
           "kind": "query",
@@ -61008,6 +63462,65 @@
           "summary": "The live channel's contract"
         },
         {
+          "benchmark": "waived",
+          "benchmark_reason": "transient_state",
+          "body_examples": [],
+          "body_schema": "ReportInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/executions/report\" -H \"content-type: application/json\" -d '{}'",
+          "description": "What `majordomus run` posts while it runs a capability in its own process and a server already serves the checkout: the execution's description and its events after the last sequence this server took. The server holds it as an execution started by the command line, with the pid, in the same store, listing, Cockpit pages and live channel as its own; applies each event once and in order, answering where the next report starts; tells the reporter when somebody asked it to stop; and fails it with `unavailable` once the reporter has been silent for 30 s. Nothing runs here. Changes this process's memory only.",
+          "home": "executions",
+          "id": "executions.report",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/executions/report",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::executions",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Report an execution another process runs: the result.",
+              "schema": "ReportAnswer",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ReportAnswer",
+          "stability": "behaviorally_verified",
+          "summary": "Report an execution another process runs"
+        },
+        {
           "benchmark": "required",
           "benchmark_reason": "",
           "body_examples": [
@@ -61021,7 +63534,7 @@
           "cache_detail": "",
           "cli": "run",
           "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/executions/start\" -H \"content-type: application/json\" -d '{\"capability\":\"executions.demonstrate\",\"input\":{\"steps\":1,\"delay_ms\":0}}'",
-          "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything.",
+          "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.",
           "home": "executions",
           "id": "executions.start",
           "kind": "command",
@@ -61393,6 +63906,96 @@
         }
       ],
       "slug": "graph"
+    },
+    {
+      "description": "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim.",
+      "name": "guard",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/guard/edit?path=docs%2FMESH.md&session=claude-code-bench\"",
+          "description": "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; refused as unclaimed otherwise, with the remedy. What cannot be read — the policy, the mesh — is let through and named, never refused.",
+          "home": "guard",
+          "id": "guard.edit",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_guard_edit",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The path about to be written: absolute, or relative to the repository root.",
+              "examples": [
+                {
+                  "case": "in-repository",
+                  "value": "\"docs/MESH.md\""
+                },
+                {
+                  "case": "outside",
+                  "value": "\"/nonexistent/outside.txt\""
+                }
+              ],
+              "name": "path",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The writing session's id on the mesh (`claude-code-<session id>` for Claude Code);\nwithout it only the active task's scope can cover the write.",
+              "examples": [
+                {
+                  "case": "in-repository",
+                  "value": "\"claude-code-bench\""
+                }
+              ],
+              "name": "session",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/guard/edit",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::guard",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Judge one edit: the result.",
+              "schema": "EditVerdict",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "EditVerdict",
+          "stability": "experimental",
+          "summary": "Judge one edit"
+        }
+      ],
+      "slug": "guard"
     },
     {
       "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own.",
@@ -66074,6 +68677,243 @@
           "benchmark_reason": "",
           "body_examples": [],
           "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "plan delivery",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/plan/delivery?issue=I0001&at=HEAD\"",
+          "description": "For every issue (or one), the furthest delivery stage proved — none, branch, pr_open, merged, released, deployed — each with the object that proved it and when it was observed: the branch that names the issue (by id, the I1405 rule, or by its slug), the open pull request in the recorded forge observation, the newest commit in the trunk's history that names it (a merge by its pull-request title or branch, any other commit by its subject, never by its body), the first release record (`.ai/repo/releases/v*.yaml`) whose commit contains that merge, and the published `latest.json` that names that release or a later one. Beside it, the issue's declared status, so a contradiction between the stamps and the work is one comparison away. Live by default: the trunk this clone knows, every branch, the forge observation `majordomus prs refresh` recorded, the release records, and the `latest.json` of the commit the last Pages deployment published. With `at`, the merges of that commit's history and the tree's release records and nothing live — every branch, forge and deployment source is reported unread — so only merged and released can be proved and the answer is a function of the commit alone. A source that was not read is reported unread with its reason, never as none: an issue it could have moved further is not settled and names it. Inferred on every call and stored nowhere; it never writes a stamp.",
+          "home": "plan",
+          "id": "plan.delivery",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_plan_delivery",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "One issue id (`I2740`). Default: every issue of the plan. An id the plan does not\ndeclare is not found, never answered as `none`.",
+              "examples": [
+                {
+                  "case": "one-issue-at-head",
+                  "value": "\"I0001\""
+                }
+              ],
+              "name": "issue",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Observe as of this commit (`HEAD`, a sha, a ref): its history and the tree's release\nrecords, and nothing live — no branch, forge, deployment or clock. Default: live.",
+              "examples": [
+                {
+                  "case": "one-issue-at-head",
+                  "value": "\"HEAD\""
+                }
+              ],
+              "name": "at",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/plan/delivery",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::plan",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "How far each issue's work has travelled: the result.",
+              "schema": "IssueDeliveryReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "IssueDeliveryReport",
+          "stability": "experimental",
+          "summary": "How far each issue's work has travelled"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "plan drift",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/plan/drift?issue=I0001&at=HEAD&gate=trunk\"",
+          "description": "Every contradiction between an issue's declared status and its delivery (plan.delivery), each with the objects that prove it: `merged_not_recorded` — READY, BLOCKED or ACTIVE, with a merge on the trunk naming it (pull request, merge commit, release) and no open pull request naming it; `active_without_work` — ACTIVE since before the window, with no branch, pull request, merge or live mesh claim naming it; `done_without_trace` — DONE with no merge naming it, advisory because record-only issues exist. Each finding carries its age, whether it is past the window `.ai/repo/ci/plan.yaml` declares (`drift.window`, seconds), the sources that were not read and could have dissolved it, and the command that settles it (`majordomus plan verify|done <id>`). With `gate`, judged as a gate: on a `head` every merged_not_recorded is pending; on the `trunk` one merged longer than the window ago is refused and a younger one pending; the other classes never refuse; a missing or unreadable window refuses (exit 12); refusals fail the gate (exit 10) only under `drift.enforcement: blocking`, and are reported with exit 0 under `advisory`. Observed live, or `at` a commit as plan.delivery is. Inferred on every call; it never writes a stamp.",
+          "home": "plan",
+          "id": "plan.drift",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_plan_drift",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "One issue id. Default: every issue of the plan.",
+              "examples": [
+                {
+                  "case": "one-issue-at-head-as-trunk-gate",
+                  "value": "\"I0001\""
+                }
+              ],
+              "name": "issue",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Observe as of this commit, as `plan.delivery` does. Default: live.",
+              "examples": [
+                {
+                  "case": "one-issue-at-head-as-trunk-gate",
+                  "value": "\"HEAD\""
+                }
+              ],
+              "name": "at",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Judge as a gate on a `head` or on the `trunk`. Default: report only, exit 0.",
+              "examples": [
+                {
+                  "case": "one-issue-at-head-as-trunk-gate",
+                  "value": "\"trunk\""
+                }
+              ],
+              "name": "gate",
+              "required": false,
+              "type": "DriftGate | null"
+            }
+          ],
+          "path": "/api/v1/plan/drift",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::plan",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Where the plan's stamps contradict the delivered work: the result.",
+              "schema": "DriftReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "DriftReport",
+          "stability": "experimental",
+          "summary": "Where the plan's stamps contradict the delivered work"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/plan/flight?milestone=M000\"",
+          "description": "The milestones with work in flight, the one the graph allows next, and the latest release as the releases themselves say it, read live on every call (ADR 0166, decision 4). Now is every open milestone holding an open issue with an open pull request that names it (`plan.delivery`'s `pr_open`), a live mesh claim made for it, or a declared ACTIVE status, each with those issues, why they are in flight, their declared status beside their inferred stage, and the objects that prove it (branch, pull request, merge commit, release tag, published `latest.json`, claim), linked on the forge where the forge has them. Next is the first open milestone in the plan's order that is not now and whose unfinished prerequisites are all now. The latest release is the highest stable version among the release records, the `v*` tags of this clone and the `latest.json` the last successful Pages deployment published, so a release whose record merged after its tag is not shown older than it is; `executable_tagged` says whether the answering executable's own version is tagged. `milestone` adds that milestone with every one of its issues. A source that was not read (the forge, the publication, the mesh outside a server) is named with its reason, never treated as empty.",
+          "home": "plan",
+          "id": "plan.flight",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_plan_flight",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "A milestone id: the answer then carries it, with every one of its issues, as\n`inspected`. An id the plan does not declare is not found.",
+              "examples": [
+                {
+                  "case": "one-milestone-inspected",
+                  "value": "\"M000\""
+                }
+              ],
+              "name": "milestone",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/plan/flight",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::plan",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Where the work is now: the result.",
+              "schema": "PlanFlight",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "PlanFlight",
+          "stability": "experimental",
+          "summary": "Where the work is now"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
           "cache": "generation",
           "cache_detail": "max_entries=16",
           "cli": "",
@@ -67871,7 +70711,7 @@
           "method": "GET",
           "parameters": [
             {
-              "description": "The trunk the landing raises from; `origin/master` when absent.",
+              "description": "The trunk the landing raises from; when absent, the remote-tracking ref of the trunk\nthis repository names (its remote's default branch, else its own trunk).",
               "examples": [],
               "name": "base",
               "required": false,
@@ -68522,7 +71362,7 @@
           "cache_detail": "",
           "cli": "serve status",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/server?checkouts=repository\"",
-          "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+          "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
           "home": "server",
           "id": "server.status",
           "kind": "query",
@@ -69934,6 +72774,140 @@
           "result_schema": "StatusReport",
           "stability": "behaviorally_verified",
           "summary": "Where this is, and whether that is where it belongs"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "worktree trunk",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/worktrees/trunk?path=.\"",
+          "description": "The checkout's `HEAD` and the local trunk branch, each counted against the remote-tracking trunk — commits behind and ahead, a merge in progress counting what it brings in — as of the last fetch, whose time is part of the answer; judged against the policy's `checkout.trunk_distance` as `current`, `lagging`, `stale`, `unjudged` (no threshold declared) or `unmeasured` (no remote trunk), with the commands that bring it current. What doctor renders and what `server.status` and the MCP instructions say about the tree a server serves (`project.a-checkout-serves-the-current-trunk`). Fetches nothing and writes nothing.",
+          "home": "worktree",
+          "id": "worktree.trunk",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_worktree_trunk",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "A directory inside one of this repository's worktrees; the answer is about that\nworktree. Relative to the primary checkout when relative (`.` is the primary\ncheckout itself). Default: the repository the server was started for. A path in\nanother repository is refused: the topology answers only about its own.",
+              "examples": [
+                {
+                  "case": "primary-checkout",
+                  "value": "\".\""
+                }
+              ],
+              "name": "path",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/worktrees/trunk",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::worktree",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "How far a checkout is from the remote trunk: the result.",
+              "schema": "TrunkDistance",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "TrunkDistance",
+          "stability": "behaviorally_verified",
+          "summary": "How far a checkout is from the remote trunk"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "worktree uncommitted",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/worktrees/uncommitted?older_than=1h\"",
+          "description": "Every linked worktree whose index or working tree holds changes no commit carries: how many paths (staged, unstaged, untracked, conflicted), when the oldest change was made (the earliest modification time among the changed paths, the index file's standing in for a deleted one), and what holds the work — an active task record, an open episode that is not stranded, or a process whose working directory is inside. Work nothing holds and older than the threshold is `abandoned`, with the command that would put it on a remote `rescue/` ref; it is suggested, never run. The threshold is the policy's `session.stranded_after` unless `older_than` names another. Reads every worktree and writes none: every status runs without optional locks, so no index is refreshed.",
+          "home": "worktree",
+          "id": "worktree.uncommitted",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_worktree_uncommitted",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The age past which work nothing holds is abandoned, as a person writes it (`90s`,\n`30m`, `12h`, `1d`). Default: the policy's `session.stranded_after`, which is also\nhow long an open episode may be silent and still hold the work.",
+              "examples": [
+                {
+                  "case": "one-hour",
+                  "value": "\"1h\""
+                }
+              ],
+              "name": "older_than",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/worktrees/uncommitted",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::worktree",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Uncommitted work in the linked worktrees, and what holds it: the result.",
+              "schema": "UncommittedReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "UncommittedReport",
+          "stability": "behaviorally_verified",
+          "summary": "Uncommitted work in the linked worktrees, and what holds it"
         }
       ],
       "slug": "worktree"

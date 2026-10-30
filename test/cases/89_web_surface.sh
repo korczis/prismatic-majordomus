@@ -151,8 +151,10 @@ while read -r l; do
   [ -n "$under" ] || { echo "    the page links $l, which is in no public surface: a hand-written link"; exit 1; }
 done < "$S/page_links.txt"
 
-# the page carries no absolute self-link: it must survive a port, a host and a proxy prefix
-if grep -o 'href="http[^"]*"' "$S/home.html" | grep -qv 'github.com'; then
+# the page carries no absolute self-link: it must survive a port, a host and a proxy prefix.
+# The site's navbar (src/ui/navbar.rs) leads to majordomus.dev at its own address; that is
+# the site's page, not this process's.
+if grep -o 'href="http[^"]*"' "$S/home.html" | grep -v 'github.com' | grep -qv '^href="https://majordomus\.dev/'; then
   echo "    the page hard-codes an absolute URL to itself"; grep -o 'href="http[^"]*"' "$S/home.html"; exit 1
 fi
 

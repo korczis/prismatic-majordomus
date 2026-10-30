@@ -10,6 +10,12 @@
 # script asks `majordomus distribution artifact` and packs what it is told.
 #
 #   --no-build   use the executable already at target/<triple>/release/majordomus
+#   --names-from FILE   read the name and the root from FILE, the build matrix generated from
+#                the model (docs/generated/distribution-matrix.json), instead of asking the
+#                executable. The release workflow passes it: its plan job holds that file to
+#                the model (`generate distribution --check`) before any build, and asking the
+#                executable cost a full debug build on every runner ahead of the release
+#                build, nine of the twenty-four minutes of v0.26.0's macOS Intel package.
 #   MAJORDOMUS_BIN   an executable to pack instead of building one (cross builds elsewhere)
 #
 # Exit codes: 0 ok · 2 usage · 10 the model refuses the target · 12 a missing prerequisite.
@@ -27,6 +33,7 @@ target=""
 tag=""
 out="$ROOT/dist"
 build=1
+names_from=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -34,7 +41,8 @@ while [ $# -gt 0 ]; do
     --tag) tag="${2:-}"; shift 2 ;;
     --out) out="${2:-}"; shift 2 ;;
     --no-build) build=0; shift ;;
-    -h|--help) sed -n '2,16p' "$0"; exit 0 ;;
+    --names-from) names_from="${2:-}"; shift 2 ;;
+    -h|--help) sed -n '2,22p' "$0"; exit 0 ;;
     *) die "unknown option: $1" 2 ;;
   esac
 done
@@ -42,14 +50,22 @@ done
 [ -n "$tag" ] || die "--tag is required" 2
 case "$tag" in v[0-9]*) ;; *) die "--tag must be v followed by a version, not '$tag'" 2 ;; esac
 
-# The names come from the model. `distribution artifact` is the one place they are derived.
-mj="${MAJORDOMUS_DIST_BIN:-$(mj_cargo_target_dir "$CRATE" ask-cargo)/debug/majordomus}"
-if [ ! -x "$mj" ]; then
-  command -v cargo >/dev/null 2>&1 || die "the distribution model needs the executable; build it or set MAJORDOMUS_DIST_BIN"
-  RUSTFLAGS='' mj_cargo_bounded "$ROOT" build --quiet --locked --manifest-path "$CRATE/Cargo.toml" 1>&2
+# The names come from the model. `distribution artifact` is the one place they are derived,
+# and the build matrix is its generated projection.
+if [ -n "$names_from" ]; then
+  [ -f "$names_from" ] || die "no build matrix at $names_from"
+  command -v jq >/dev/null 2>&1 || die "--names-from needs jq"
+  names="$(jq -r --arg target "$target" --arg tag "$tag" -f "$ROOT/scripts/lib/distribution-names.jq" "$names_from")" \
+    || die "$names_from is not a build matrix" 10
+else
+  mj="${MAJORDOMUS_DIST_BIN:-$(mj_cargo_target_dir "$CRATE" ask-cargo)/debug/majordomus}"
+  if [ ! -x "$mj" ]; then
+    command -v cargo >/dev/null 2>&1 || die "the distribution model needs the executable; build it or set MAJORDOMUS_DIST_BIN"
+    RUSTFLAGS='' mj_cargo_bounded "$ROOT" build --quiet --locked --manifest-path "$CRATE/Cargo.toml" 1>&2
+  fi
+  names="$("$mj" distribution --repo "$ROOT" artifact --target "$target" --tag "$tag" --format text 2>/dev/null)" \
+    || die "the distribution model does not publish '$target'" 10
 fi
-names="$("$mj" distribution --repo "$ROOT" artifact --target "$target" --tag "$tag" --format text 2>/dev/null)" \
-  || die "the distribution model does not publish '$target'" 10
 archive="$(printf '%s\n' "$names" | sed -n '1p')"
 rootdir="$(printf '%s\n' "$names" | sed -n '2p')"
 [ -n "$archive" ] && [ -n "$rootdir" ] || die "the model answered no artifact name for '$target'" 10

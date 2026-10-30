@@ -1,7 +1,7 @@
 +++
 title = "Public API quality"
 description = "what the Rust crate's exported surface is held to: documentation that says more than the signature, an executable example on everything that carries behaviour, a module boundary something exercises, and every command of the command line accounted for against the capability registry — the codes, the ratchet, and the golden path for adding a command"
-weight = 71
+weight = 72
 [extra]
 source = "docs/QUALITY.md"
 +++
@@ -29,6 +29,12 @@ majordomus quality report --path apps/majordomus-cli/src/web
 Exit `0` when nothing stands outside the baseline, `10` otherwise — the code every unmet
 contract in this executable uses. The JSON and the terminal rendering are two readings of
 one execution, so they cannot disagree about the outcome.
+
+The structure job's `rust-quality` gate runs the first line, and so does
+`scripts/rust-check`: first in its default mode, before format, lints and tests, and alone
+with `scripts/rust-check --quality`. A change that adds or widens an exported item runs the
+latter before it is pushed, and meets the finding the structure job would print there, on
+its own machine, rather than at the end of a CI run.
 
 The same measurement answers at `GET /api/v1/quality`, as the MCP tool `majordomus_quality`
 and the resource `majordomus://quality`, and on the Cockpit's **Quality** page. It is a

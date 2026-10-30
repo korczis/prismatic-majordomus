@@ -1,0 +1,25 @@
+id: I2967
+milestone: "development-runtime"
+title: "The site's own pages name the layout in force"
+slug: a-page-names-the-layout-in-force
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Correct the site pages that name the retired `.majordomus/` layout as current, and hold every top-level page, the site's hand-written data and its templates to the `.ai/` layout with a case, leaving the retired path to the migration and plan pages where it is history."
+why: "Truth sweep 2026-10-18 (f6, S10, verified): the published https://majordomus.dev/policy/ (site/content/policy.md:6, hand-written) said '`.majordomus/policy.yaml` is the source of truth for how AI workers operate in a repository'. The policy is .ai/repo/policy.yaml (README.md:68) and every command refuses the .majordomus/ layout (README.md:131). site/content/roadmap.md:6 declared `source = \".majordomus/project/milestones/\"` (not rendered)."
+current_state: "Corrected in this change: site/content/policy.md and site/content/roadmap.md name .ai/repo/."
+desired_state: "No top-level site page, site data file or template names .majordomus/; case 3364 refuses one that does and holds the policy page to .ai/repo/policy.yaml."
+scope:
+  - "site/content/policy.md"
+  - "site/content/roadmap.md"
+  - "test/cases/3364_a_page_names_the_layout_in_force.sh"
+depends_on: []
+acceptance_criteria:
+  - "The policy page names .ai/repo/policy.yaml as the source of truth"
+  - "No top-level site page, site data file or template names .majordomus/, and case 3364 refuses one that does"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_a_page_names_the_layout_in_force"
+created_at: 2026-10-18
+updated_at: 2026-10-18

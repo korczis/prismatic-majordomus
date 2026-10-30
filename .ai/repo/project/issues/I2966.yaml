@@ -1,0 +1,35 @@
+id: I2966
+milestone: "development-runtime"
+title: "A forge setting that could not be read is unknown, never \"allows nothing\""
+slug: an-unread-forge-setting-is-unknown
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Read the repository's merge settings as unknown when the forge's answer does not carry them, and say so in the integration policy, in each held pull request's reason and evidence and in the queue's diagnostics, instead of reporting that the repository allows no merge commit."
+why: "Truth sweep 2026-10-18 (f6, S1, verified): the published https://majordomus.dev/cockpit/integration/ and /cockpit/trains/ said 'korczis/prismatic-majordomus allows no merge commit (it allows: nothing): the executor never squashes or rebases, so no pull request can be ready', holding every pull request as merge_commit_not_allowed, while `gh api repos/korczis/prismatic-majordomus` answers allow_merge_commit, allow_squash_merge and allow_rebase_merge all true. integration/forge.rs read each setting with `.and_then(Value::as_bool).unwrap_or(false)`, so a token that may not read them (the Pages workflow's) turned an absent setting into a refusal. This is the alpha-visible instance of 3e's class I2846 (unknown is never healthy)."
+current_state: "Fixed in this change: ForgeObservation.merge_methods is None when the answer carries none of the three settings; IntegrationPolicy.merge_settings_unread is set from it; a held pull request reads merge_settings_unread with disposition unknown and repository_settings evidence saying the settings could not be read; the diagnostic names the unread settings and never says 'allows nothing'."
+desired_state: "An unread merge setting is unknown on every surface that shows the queue; a read `false` still holds as merge_commit_not_allowed; recorded observations that carry the array read as before."
+scope:
+  - "apps/majordomus-cli/src/integration/forge.rs"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "apps/majordomus-cli/src/integration/classify.rs"
+  - "apps/majordomus-cli/src/integration/model.rs"
+  - "apps/majordomus-cli/src/integration/tests.rs"
+  - "apps/majordomus-cli/src/integration/train.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "docs/INTEGRATION.md"
+depends_on: []
+acceptance_criteria:
+  - "A forge answer without the merge settings yields no merge methods (unknown), and one with them yields what they allow"
+  - "A pull request held for unread settings reads merge_settings_unread with disposition unknown, and nothing merges"
+  - "The queue's diagnostic says the merge settings could not be read and never that the repository allows nothing"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "unread_merge_settings_are_unknown_and_never_allow_nothing"
+created_at: 2026-10-18
+updated_at: 2026-10-18

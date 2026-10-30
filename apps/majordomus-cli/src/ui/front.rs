@@ -40,6 +40,10 @@ pub struct Process<'a> {
     pub revision: Option<&'a str>,
     /// The one-line description of what this is.
     pub summary: &'a str,
+    /// The line naming the checkout that answered, as the plain page draws it
+    /// ([`crate::web::home::Checkout::line`]): markup this process made, every value escaped,
+    /// so that a front door read in a browser says whose answers it holds (I1031).
+    pub checkout: String,
 }
 
 /// A tile of the hero for a fact the process holds itself, cited as such.
@@ -235,6 +239,7 @@ pub fn screen(ctx: &Context, process: &Process<'_>, sections: &[(Category, Vec<E
         el("div")
             .class("mj-ui-stack")
             .child(top)
+            .raw(process.checkout.clone())
             .child(screens)
             .child(served),
     )
@@ -280,6 +285,7 @@ mod tests {
             repository: "fixture",
             revision: Some("0123456789abcdef"),
             summary: "What this is.",
+            checkout: String::from("<p class=\"mj-checkout\">checkout 0123456789ab</p>"),
         };
         let html = screen(&ctx, &process, &sections()).main.render();
         for s in SCREENS {

@@ -192,7 +192,7 @@ pub fn inspector(ctx: &Context, answer: &Answer, id: &str) -> El {
                 nothing("Nothing it names has changed since its proof.")
             } else {
                 el("ul")
-                    .class("mj-ui-list")
+                    .class("mj-ui-prose-list")
                     .children(changed.into_iter().map(|p| el("li").child(mono(p))))
             })
             .child(
@@ -246,7 +246,7 @@ mod tests {
             source: Source::of("evidence.claim"),
             route: Some("GET /api/v1/evidence/claim".into()),
             exposure: Exposure::default(),
-            value,
+            value: value.map(Into::into),
             took: Duration::from_millis(1),
             standing: crate::ui::source::Standing::NOW,
         }

@@ -83,13 +83,16 @@ mj_decision_titles() {
     /^## / { t = $0; sub(/^## [^ ]+ — /, "", t); print t }' "$1"
 }
 
-# print entries, newest first. mj_decision_entries FILE [TASK] [LIMIT]
+# print entries, newest first. mj_decision_entries FILE [TASK] [LIMIT] [superseded]
+# With the fourth argument `superseded`, print instead the title of every entry a later one
+# superseded, oldest first, one per line: the same judgement `list` marks, for a reader that
+# must leave a replaced decision out (the knowledge deriver, I1985).
 # An entry a later one superseded says so under its heading: the file is append-only, so
 # the record itself never changes, and without the mark a reader of `list` could not tell
 # a replaced decision from a standing one. A later entry's `Supersedes:` is the replaced
 # title; one recorded before titles were required may be any part of it.
 mj_decision_entries() {
-  awk -v want="${2:-}" -v limit="${3:-0}" '
+  awk -v want="${2:-}" -v limit="${3:-0}" -v mode="${4:-}" '
     /<!--/ { c=1 } /-->/ { c=0; next }
     c { next }
     /^## / { n++; head[n]=$0; body[n]=""; task[n]=""; sup[n]=""
@@ -104,6 +107,7 @@ mj_decision_entries() {
         for (i=1; i<j; i++) if (title[i]==sup[j]) { by[i]=title[j]; exact=1 }
         if (!exact) for (i=1; i<j; i++) if (index(title[i], sup[j])>0) by[i]=title[j]
       }
+      if (mode=="superseded") { for (i=1; i<=n; i++) if (by[i]!="") print title[i]; exit }
       shown=0
       for (i=n; i>=1; i--) {
         if (want!="" && task[i]!=want) continue
@@ -115,6 +119,13 @@ mj_decision_entries() {
       }
       if (shown==0) print "(none)"
     }' "$1"
+}
+
+# The title of every recorded decision a later one superseded, one per line; nothing when
+# the store is absent (a fresh clone has recorded nothing).
+mj_decision_superseded_titles() {
+  [ -f "${1:-}" ] || return 0
+  mj_decision_entries "$1" "" 0 superseded
 }
 
 mj_decision_list() {
