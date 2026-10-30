@@ -9,7 +9,8 @@
 #
 # Four things must agree: share/events.yaml, the mj_ledger_append call sites, the rendering
 # in lib/history.sh, and the table in docs/SCHEMAS.md. Any one of them moving alone is the
-# drift this case exists to catch.
+# drift this case exists to catch. The foreign adoption workflow, which times its steps from
+# the ledger, is held to the same vocabulary and to the time field the ledger stamps.
 . "$ROOT/test/lib.sh"
 MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_BIN_DIR MJ_LIB_DIR
 # shellcheck source=../../lib/common.sh
@@ -146,5 +147,79 @@ mj_ledger_append question.opened '"task_id":"x","question":"real"'
 PROBE
 expect_exit 0 bash "$probe"
 expect_grep '"event":"question.opened".*"question":"real"' .ai/local/state/ledger.jsonl
+
+# 5. the foreign adoption workflow times its steps from this ledger, so what it says about
+#    the ledger is held to what the commands write. It once read a ledger time from `at`, a
+#    field no ledger line has carried, and said a refused check writes no line as if a
+#    passing one wrote some.
+LEDGER=.ai/local/state/ledger.jsonl
+lines() { wc -l < "$LEDGER" | tr -d ' '; }
+clock() { date -u +%Y-%m-%dT%H:%M:%SZ; }
+# a plain check writes nothing, passing or refused; check --checkpoint writes one line
+rm -f "$probe"   # outside the task's scope, so a check would refuse over it
+n="$(lines)"
+expect_exit 0 "$MJ" check
+[ "$(lines)" = "$n" ] || { echo "    a passing check wrote: $(tail -n 1 "$LEDGER")"; exit 1; }
+echo x > outside && git add outside
+expect_exit 10 "$MJ" check
+[ "$(lines)" = "$n" ] || { echo "    a refused check wrote: $(tail -n 1 "$LEDGER")"; exit 1; }
+git rm -qf --cached outside && rm -f outside
+"$MJ" check --checkpoint >/dev/null
+[ "$(lines)" = $((n + 1)) ] && tail -n 1 "$LEDGER" | grep -q '"event":"task.checkpoint"' \
+  || { echo "    check --checkpoint did not write one task.checkpoint line"; exit 1; }
+# each ledger step's line is stamped inside the run clock read around its command, under the
+# key the workflow must name; the key is read off the line, not assumed
+timed() {   # <event> <command...>
+  local ev="$1" before after line stamp was; shift
+  was="$(lines)"; before="$(clock)"; "$@" >/dev/null; after="$(clock)"
+  [ "$(lines)" -gt "$was" ] || { echo "    $* wrote no ledger line"; exit 1; }
+  line="$(grep "\"event\":\"$ev\"" "$LEDGER" | tail -n 1)"
+  key="$(printf '%s' "$line" | sed -n 's/^{"\([a-z_]*\)":"[0-9-]\{10\}T[0-9:]\{8\}Z".*/\1/p')"
+  stamp="$(printf '%s' "$line" | sed -n 's/^{"[a-z_]*":"\([^"]*\)".*/\1/p')"
+  [ -n "$key" ] || { echo "    the $ev line starts with no UTC time: $line"; exit 1; }
+  [[ "$stamp" < "$before" || "$stamp" > "$after" ]] && {
+    echo "    $ev is stamped $stamp, outside the run clock $before..$after"; exit 1; }
+  return 0
+}
+note() { printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n'; }
+note | "$MJ" handover >/dev/null
+timed task.finished "$MJ" finish --outcome completed --verify-command "test -d .ai"
+timed task.started "$MJ" start "t2" --scope lib
+timed projections.updated "$MJ" update
+expect_no_grep '"at":' "$LEDGER"
+
+# the workflow names that key, and each event its ledger rows name is registered and written
+# by the command of that row
+adoption_claims() {   # <workflow file>
+  local f="$1" field row cmd ev esc i by
+  field="$(tr '\n' ' ' < "$f" \
+    | sed -nE "s/.*A ledger time is the (line|event)'s own \`([a-z_]+)\`.*/\2/p")"
+  [ "$field" = "$key" ] || {
+    echo "    $f reads a ledger time from '${field:-nothing}'; the ledger stamps it as '$key'"
+    return 1; }
+  grep -E '^\| [^|]+ \| `majordomus [a-z]+[^|]*\| ledger: ' "$f" > "$T/ledger-rows" \
+    || { echo "    $f names no ledger step"; return 1; }
+  while IFS= read -r row; do
+    cmd="$(printf '%s' "$row" | sed -n 's/^| [^|]* | `majordomus \([a-z]*\).*/\1/p')"
+    for ev in $(printf '%s' "$row" | awk -F'|' '{print $4}' | grep -oE '`[a-z][a-z._]*`' \
+                | tr -d '`'); do
+      esc="$(printf '%s' "$ev" | sed 's/\./\\./g')"
+      i="$(sed -n "s/^events\.\([0-9]*\)\.id=$esc\$/\1/p" "$FLAT")"
+      [ -n "$i" ] || { echo "    $f names the event '$ev', which is not registered"; return 1; }
+      by="$(sed -n "s/^events\.$i\.emitted_by=//p" "$FLAT")"
+      [ "$by" = "$cmd" ] || {
+        echo "    $f times '$cmd' by '$ev', which '$by' writes"; return 1; }
+    done
+  done < "$T/ledger-rows"
+}
+ADOPT="$ROOT/.ai/repo/workflows/foreign-repository-adoption.md"
+adoption_claims "$ADOPT"
+# ... and the check tells a wrong field and a misattributed event from the real text
+sed 's/the line'"'"'s own `ts`/the line'"'"'s own `at`/' "$ADOPT" > "$T/adopt-at.md"
+expect_exit 1 adoption_claims "$T/adopt-at.md"
+expect_grep "reads a ledger time from 'at'"
+sed 's/| ledger: `task.started` |/| ledger: `task.finished` |/' "$ADOPT" > "$T/adopt-by.md"
+expect_exit 1 adoption_claims "$T/adopt-by.md"
+expect_grep "times 'start' by 'task.finished', which 'finish' writes"
 
 printf '    %s registered events, written, rendered and documented\n' "$(printf '%s\n' "$registered" | wc -w | tr -d ' ')"

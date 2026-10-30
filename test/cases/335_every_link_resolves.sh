@@ -115,6 +115,13 @@ printf '{"schema": "trends/v1", "runs": [{"run_id": 887}, {"run_id": 888}]}\n' >
 break_with trendother "<a href=\"$REPO/actions/runs/999\">x</a>"
 printf '{"schema": "trends/v1", "runs": [{"run_id": 888}]}\n' > "$F/site/data/trends.json"
 expect_finding 10 'FAIL refused .*actions/runs/999: a actions link cannot be decided offline' 'a run trends.json does not name'
+# only the series `scripts/pages trends` writes decides a run (I4207): the same runs in a file of
+# another shape were read by nobody, so they decide nothing
+break_with trendschema "<a href=\"$REPO/actions/runs/888\">x</a>"
+printf '{"schema": "trends/v0", "runs": [{"run_id": 888}]}\n' > "$F/site/data/trends.json"
+expect_finding 10 'FAIL refused .*actions/runs/888: a actions link cannot be decided offline' 'a run named by a series of another schema'
+printf '[{"run_id": 888}]\n' > "$F/site/data/trends.json"
+expect_finding 10 'FAIL refused .*actions/runs/888: a actions link cannot be decided offline' 'a run named by a series with no schema'
 
 # ---------------------------------------------------------------- the composed surface
 fresh composed; run
