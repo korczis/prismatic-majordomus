@@ -1,0 +1,41 @@
+id: I2713
+milestone: development-runtime
+title: "A build never lets idle incremental sessions fill the disk"
+slug: idle-incremental-sessions-are-pruned
+priority: p0
+profile: implementation
+parallel_safe: true
+depends_on: []
+objective: "Make the repository's own build entry points keep a build directory's incremental cache bounded, so that concurrent sessions building on one machine cannot run the disk out."
+why: "2026-10-14 16:20-17:57Z: free disk on the shared Mac fell from 71 GiB to 4 GiB; derive refused (\"4935MB free, floor 5120MB\") and every session's chain stopped. One private build directory had grown from 21 to 47 GiB, 24 GiB of it debug/incremental: 574 session directories of which one was live. Deleting the idle ones by hand gave back 16 GiB with a compile still running. The owner: \"tohle se nesmi stavat\"."
+current_state: "lib/rust_bin.sh's bounded build refuses below a free-space floor but never reclaims; cargo keeps every finished incremental session until a clean."
+desired_state: "Before a build starts (mj_cargo_bounded and every script that builds through it), idle incremental session directories of its build directory older than a declared age are removed (never one ending in -working, never another tree's build directory), what was reclaimed is said on stderr, and when free space is still under the declared floor the build refuses with the largest build directories named."
+scope:
+  - lib/rust_bin.sh
+  - scripts/derive
+  - docs/DEVELOPMENT_RUNTIME.md
+  - .ai/repo/policy.yaml
+  - test/cases
+non_scope:
+  - "Deleting another worktree's build output or any target directory"
+acceptance_criteria:
+  - "A build prunes idle incremental sessions of its own build directory and says how much it reclaimed"
+  - "A live (-working) session and other build directories are never touched"
+  - "Under the floor after pruning, the refusal names the largest build directories"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "idle_sessions_are_pruned_case"
+created_at: 2026-10-14
+updated_at: 2026-10-17T09:23:35Z
+started_at: 2026-10-17T09:23:02Z
+started_event: sha256:1a4e365de0c9130feaed2da04eff06eca8d9a04224d08f7c1d56e080dd07bec3
+verified_at: 2026-10-17T09:23:19Z
+verified_event: sha256:2fd71e9839232a02785977863f0178c5d5248850b34b5c415a512e51178d6c23
+evidence:
+  - covers: idle_sessions_are_pruned_case
+    type: test
+    command: "bash test/run.sh 3080_idle_incremental_sessions_are_pruned 3196_stale_crate_artifacts_are_pruned_under_cargos_lock"
+    result: "ok 3080, ok 3196 (2 passed); 3196 fails with the lock or the process check removed"
+    commit: ed7a00045e6d114cb86b6813bb368d414a1c48ce
+    recorded_at: 2026-10-17T09:23:35Z

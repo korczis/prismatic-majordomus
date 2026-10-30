@@ -213,6 +213,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "writes the UI's snapshot surface, one file per screen and panel read in-process, which is a producer of the web root rather than a reading of it.",
     },
     LocalCommand {
+        command: "web report cockpit-snapshot",
+        reason: LocalReason::WritesRepository,
+        note: "writes the Cockpit's snapshot surface, one file per page read in-process, and leads the UI snapshot's links to those pages, which is a producer of the web root rather than a reading of it.",
+    },
+    LocalCommand {
         command: "prs",
         reason: LocalReason::Alias("prs status"),
         note: "with no subcommand it answers `prs status`, the ranked integration queue.",
@@ -334,6 +339,11 @@ pub const LOCAL: &[LocalCommand] = &[
         command: "offload hosts",
         reason: LocalReason::RendersCapability("objects.get"),
         note: "prints the derive-offload declaration, the object objects.get serves as majordomus://derive-offload/<id>, with its defaults filled in.",
+    },
+    LocalCommand {
+        command: "guard hook",
+        reason: LocalReason::RendersCapability("guard.edit"),
+        note: "answers guard.edit for the path a provider's pre-tool payload on stdin names, without building the index because it runs before every edit, and says the answer as the exit code the provider reads: 2 refuses the tool.",
     },
     LocalCommand {
         command: "mesh status",

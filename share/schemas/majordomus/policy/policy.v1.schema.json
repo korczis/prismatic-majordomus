@@ -129,6 +129,10 @@
           "type": "boolean",
           "description": "Install the provider mod that keeps a session briefed on what surrounds it: the one-line `majordomus brief` as its status line, the full brief put before the model once per interval, and a prompt of its own when the session is idle, so that it reports on itself without being asked; and have the start event tell the session how to keep itself awake. `capture install` converges on the value: only true installs the mod, and anything else removes a mod it wrote. Absent means off, for the reason handover_on_fill gives; the skeleton declares true (ADR 0136)."
         },
+        "edits_require_claim": {
+          "type": "boolean",
+          "description": "Refuse a provider's tool that writes a file of the checkout unless a claim covers it: the active task's scope, or a live mesh claim of the writing session. Judged by `majordomus guard hook`, which the provider's pre-tool hook runs; only on a repository whose mesh is declared enabled, and what cannot be read is let through. Absent means off: it refuses edits, and a repository that never asked for that must not find its workers stopped by an upgrade (I2735)."
+        },
         "brief_interval_minutes": {
           "type": "integer",
           "minimum": 1,
@@ -188,6 +192,15 @@
         "push_record_on_end": {
           "type": "boolean",
           "description": "Publish the record commit, as a fast-forward only and through the pre-push hook like any other push. That hook asks whether the task may be published, so the push often will not go out and the record travels with the worker's next push instead."
+        },
+        "retention_max_files": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How many closed session records the sessions section holds before `doctor` and `watch` report it over its cap. The count is the section's own records; the ones `majordomus session archive` moved under its archive directory are not counted, and nothing is ever deleted to get under the cap."
+        },
+        "archive": {
+          "type": "boolean",
+          "description": "Whether `majordomus session archive` may move the oldest records beyond `retention_max_files` into the section's archive directory. Archiving happens only when that command is run; false makes it refuse and write nothing."
         }
       }
     },
@@ -510,6 +523,30 @@
         }
       }
     },
+    "checkout": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "What a checkout is held to against the remote trunk (project.a-checkout-serves-the-current-trunk). A checkout far behind the trunk serves a tree that no longer exists \u2014 its shared server answers every session from it, and a branch made from its local trunk starts there. Doctor, worktree status, server.status and the MCP initialize instructions report the distance and judge it against these numbers.",
+      "properties": {
+        "trunk_distance": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Commits behind the remote-tracking trunk, counted for the checkout's HEAD and for the local trunk branch, the larger judged. Absent declares nothing, and a distance is then reported as unjudged.",
+          "properties": {
+            "warn_behind": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "At or past this many commits behind, the checkout is lagging: doctor warns."
+            },
+            "fail_behind": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "At or past this many commits behind, the checkout is stale: doctor fails, and with it the commit hook that runs doctor."
+            }
+          }
+        }
+      }
+    },
     "server": {
       "type": "object",
       "additionalProperties": false,
@@ -539,6 +576,11 @@
           "type": "integer",
           "minimum": 1,
           "description": "How long the shared server lets a connection go without a request read in full on it — waiting for a head, kept alive between requests, or reading a body — before it closes the connection and counts it in server.status. A connection whose request is being answered is never closed by it."
+        },
+        "idle_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How long a server started for a checkout no client owns — by `serve ensure` or by a shell entering the checkout — outlives its last peer before it stops by itself. Absent means 900. `--idle` on the command line overrides it."
         }
       }
     }

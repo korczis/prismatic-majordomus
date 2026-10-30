@@ -1,11 +1,11 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.23.0
+# Generator: majordomus-cli 0.30.2
 openapi: "3.1.0"
 jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
 info:
   title: Majordomus
-  version: "0.23.0"
+  version: "0.30.2"
   summary: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry."
   description: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 403 `forbidden` (a caller beyond loopback asking for anything but a read or a signed mesh message), 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document."
   license:
@@ -64,11 +64,13 @@ tags:
   - name: evidence
     description: "What actually ran, against which commit, and whether it still proves anything. The claims matrix binds a claim to a test by path; the ledger under .ai/repo/evidence records the latest execution of every test with the commit, the tree state, the digest of the test's own source, the time, the origin and the command that runs it again. Joining the two answers, per claim, whether the repository can honestly call it proven — and distinguishes a run recorded against this very commit from one whose inputs merely have not changed since, because collapsing those two is how a green badge stops meaning anything."
   - name: executions
-    description: "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. In memory; an execution does not outlive the process that accepted it."
+    description: "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. One plane per checkout: `majordomus run` executes in its own process and reports the execution to the server already serving the checkout, so that server lists it beside its own; with no server it says that nothing else can see the run. In memory; an execution does not outlive the server that holds it."
   - name: gates
     description: "Completion as a state the repository decides rather than a claim a worker makes: the validation gates this repository declares in its CI model, which of them a task's own change set selects, what each one last reported, whether that verdict still describes the tree it was taken over, and therefore whether the task may be called finished. A gate that has never reported is `queued` and not `pass`, a run whose files have changed since is `stale` and refuses exactly as a failure does, and a gate the change cannot affect is `exempt` rather than unknown."
   - name: graph
     description: "The graphs derived from the registry and the index: the executable's own capability registry, the shape of the layer, the rule dependencies, the decisions and what they put in force, and the use cases and what they exercise. Canonical nodes and edges; a rendering library is a consumer, never the shape."
+  - name: guard
+    description: "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim."
   - name: health
     description: "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own."
   - name: integration
@@ -93,6 +95,8 @@ tags:
     description: "The declarative objects of the repository's AI layer: rules, prompts, profiles, policy, documents, milestones, issues, claims, and whatever kinds the repository adds; listed, read by URI, and searched."
   - name: obligations
     description: "What a task owes before it may be called completed, and whether the evidence that discharged each obligation still describes this tree. The vocabulary is data the distribution ships and answers in any clone; the closure is read from the local half of the layer, which this process serves to the worker in front of it and never publishes. Read, never written: `majordomus evidence` records, and a second writer for one ledger would be a second account of the same events."
+  - name: observatory
+    description: "What the Observatory may carry to a place where no mesh runs: the mesh scenes this process has live, pseudonymized for publication, and the recording the repository carries, which the published Observatory replays and labels as a replay."
   - name: pack
     description: "The tracked tree as a few token-bounded Markdown shards a language model's file search can index, with an index that orients the reader and a manifest that proves afterwards what left the machine: the git index's blobs only, never the working tree, and never a binary, a gitlink or worktree, a symbolic link, build output or a credential, whatever the index holds."
   - name: peers
@@ -4077,7 +4081,7 @@ paths:
     get:
       operationId: executions.list
       summary: List executions
-      description: "Every execution this process remembers, newest first, narrowed by state or by capability. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question."
+      description: "Every execution this process remembers, newest first, narrowed by state or by capability: the ones it ran and the ones `majordomus run` in another process of the checkout reported to it, each with who started it. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question."
       tags:
         - executions
       parameters:
@@ -4496,11 +4500,74 @@ paths:
           uri: majordomus://executions/protocol
           name: execution-protocol
       x-majordomus-cli: executions protocol
+  "/api/v1/executions/report":
+    post:
+      operationId: executions.report
+      summary: Report an execution another process runs
+      description: "What `majordomus run` posts while it runs a capability in its own process and a server already serves the checkout: the execution's description and its events after the last sequence this server took. The server holds it as an execution started by the command line, with the pid, in the same store, listing, Cockpit pages and live channel as its own; applies each event once and in order, answering where the next report starts; tells the reporter when somebody asked it to stop; and fails it with `unavailable` once the reporter has been silent for 30 s. Nothing runs here. Changes this process's memory only."
+      tags:
+        - executions
+      requestBody:
+        required: true
+        description: "The input of `executions.report`."
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ReportInput"
+      responses:
+        "200":
+          description: "Report an execution another process runs: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ReportAnswer"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "422":
+          description: "`refused`: The command was understood and turned down for the reason the message gives."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: executions.report
+      x-majordomus-kind: command
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::executions
+      x-majordomus-benchmark:
+        policy: waived
+        reason: transient_state
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: process_state
   "/api/v1/executions/start":
     post:
       operationId: executions.start
       summary: Start a capability as an execution
-      description: "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything."
+      description: "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server."
       tags:
         - executions
       requestBody:
@@ -4844,6 +4911,78 @@ paths:
         resource:
           uri: majordomus://graphs
           name: graphs
+  "/api/v1/guard/edit":
+    get:
+      operationId: guard.edit
+      summary: Judge one edit
+      description: "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; refused as unclaimed otherwise, with the remedy. What cannot be read — the policy, the mesh — is let through and named, never refused."
+      tags:
+        - guard
+      parameters:
+        - name: path
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "The path about to be written: absolute, or relative to the repository root."
+          examples:
+            in-repository:
+              value: docs/MESH.md
+            outside:
+              value: /nonexistent/outside.txt
+        - name: session
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "The writing session's id on the mesh (`claude-code-<session id>` for Claude Code);\nwithout it only the active task's scope can cover the write."
+          examples:
+            in-repository:
+              value: claude-code-bench
+      responses:
+        "200":
+          description: "Judge one edit: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/EditVerdict"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: guard.edit
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::guard
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_guard_edit
   "/api/v1/health":
     get:
       operationId: health.report
@@ -5554,7 +5693,7 @@ paths:
           description: "The record id, as the file name and `majordomus://knowledge/<id>` carry it."
           examples:
             first-record:
-              value: start-here
+              value: a-commit-stood-behind-a-build-lock
       responses:
         "200":
           description: "One knowledge record: the result."
@@ -6376,6 +6515,12 @@ paths:
           examples:
             default:
               value: 100
+        - name: newest
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: "The newest `limit` events above `after` instead of the first ones: what a reader who\nwants the journal as it stands now asks for. Still in Lamport order, and `lamport` is\nthen the newest stamp the journal holds, so resuming after it reads only what comes\nnext. Without it the journal is read forward from `after`, a page at a time."
       responses:
         "200":
           description: "The cooperation journal: the result."
@@ -8243,6 +8388,184 @@ paths:
         resource:
           uri: majordomus://obligations/closure
           name: obligation-closure
+  "/api/v1/observatory/capture":
+    get:
+      operationId: observatory.capture
+      summary: Observatory capture
+      description: "The mesh scenes of the Observatory as this process has them live, fit for publication: machines, runtimes, sessions and events by ordinal, an event by its kind, logical clock and time only. Writes nothing; committing the answer to .ai/repo/observatory/recording.json is what publishes it."
+      tags:
+        - observatory
+      parameters: []
+      responses:
+        "200":
+          description: "Observatory capture: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ObservatoryRecording"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: observatory.capture
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::observatory
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_observatory_capture
+  "/api/v1/observatory/events":
+    get:
+      operationId: observatory.events
+      summary: Observatory events
+      description: "The events of the mesh journal above a cursor, as the Observatory's activity scene draws them: identity, kind, node, logical clock and time, newest first, at most a page. The answer's cursor is the next request's `after`; a cursor this journal never reached is expired, and the reader takes a fresh projection. Without a cursor, the newest page."
+      tags:
+        - observatory
+      parameters:
+        - name: after
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint64
+            minimum: 0
+          description: "The cursor: only events whose logical clock is above it. Absent is the newest page."
+          examples:
+            "after a cursor":
+              value: 0
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint64
+            minimum: 0
+          description: "At most this many (default 200, at most 1000)."
+          examples:
+            "after a cursor":
+              value: 50
+      responses:
+        "200":
+          description: "Observatory events: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ObservatoryEvents"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: observatory.events
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::observatory
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_observatory_events
+  "/api/v1/observatory/replay":
+    get:
+      operationId: observatory.replay
+      summary: Observatory replay
+      description: "The recording of the mesh scenes the repository carries at .ai/repo/observatory/recording.json, which the Observatory draws, labelled as a replay, where no mesh runs. Absent is present: false; a file that cannot be read is an error."
+      tags:
+        - observatory
+      parameters: []
+      responses:
+        "200":
+          description: "Observatory replay: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ObservatoryReplay"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: observatory.replay
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::observatory
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_observatory_replay
   "/api/v1/pack/plan":
     get:
       operationId: pack.plan
@@ -8606,6 +8929,220 @@ paths:
         resource:
           uri: majordomus://plan
           name: plan
+  "/api/v1/plan/delivery":
+    get:
+      operationId: plan.delivery
+      summary: "How far each issue's work has travelled"
+      description: "For every issue (or one), the furthest delivery stage proved — none, branch, pr_open, merged, released, deployed — each with the object that proved it and when it was observed: the branch that names the issue (by id, the I1405 rule, or by its slug), the open pull request in the recorded forge observation, the newest commit in the trunk's history that names it (a merge by its pull-request title or branch, any other commit by its subject, never by its body), the first release record (`.ai/repo/releases/v*.yaml`) whose commit contains that merge, and the published `latest.json` that names that release or a later one. Beside it, the issue's declared status, so a contradiction between the stamps and the work is one comparison away. Live by default: the trunk this clone knows, every branch, the forge observation `majordomus prs refresh` recorded, the release records, and the `latest.json` of the commit the last Pages deployment published. With `at`, the merges of that commit's history and the tree's release records and nothing live — every branch, forge and deployment source is reported unread — so only merged and released can be proved and the answer is a function of the commit alone. A source that was not read is reported unread with its reason, never as none: an issue it could have moved further is not settled and names it. Inferred on every call and stored nowhere; it never writes a stamp."
+      tags:
+        - plan
+      parameters:
+        - name: issue
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "One issue id (`I2740`). Default: every issue of the plan. An id the plan does not\ndeclare is not found, never answered as `none`."
+          examples:
+            one-issue-at-head:
+              value: I0001
+        - name: at
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Observe as of this commit (`HEAD`, a sha, a ref): its history and the tree's release\nrecords, and nothing live — no branch, forge, deployment or clock. Default: live."
+          examples:
+            one-issue-at-head:
+              value: HEAD
+      responses:
+        "200":
+          description: "How far each issue's work has travelled: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/IssueDeliveryReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: plan.delivery
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::plan
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_plan_delivery
+      x-majordomus-cli: plan delivery
+  "/api/v1/plan/drift":
+    get:
+      operationId: plan.drift
+      summary: "Where the plan's stamps contradict the delivered work"
+      description: "Every contradiction between an issue's declared status and its delivery (plan.delivery), each with the objects that prove it: `merged_not_recorded` — READY, BLOCKED or ACTIVE, with a merge on the trunk naming it (pull request, merge commit, release) and no open pull request naming it; `active_without_work` — ACTIVE since before the window, with no branch, pull request, merge or live mesh claim naming it; `done_without_trace` — DONE with no merge naming it, advisory because record-only issues exist. Each finding carries its age, whether it is past the window `.ai/repo/ci/plan.yaml` declares (`drift.window`, seconds), the sources that were not read and could have dissolved it, and the command that settles it (`majordomus plan verify|done <id>`). With `gate`, judged as a gate: on a `head` every merged_not_recorded is pending; on the `trunk` one merged longer than the window ago is refused and a younger one pending; the other classes never refuse; a missing or unreadable window refuses (exit 12); refusals fail the gate (exit 10) only under `drift.enforcement: blocking`, and are reported with exit 0 under `advisory`. Observed live, or `at` a commit as plan.delivery is. Inferred on every call; it never writes a stamp."
+      tags:
+        - plan
+      parameters:
+        - name: issue
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "One issue id. Default: every issue of the plan."
+          examples:
+            one-issue-at-head-as-trunk-gate:
+              value: I0001
+        - name: at
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Observe as of this commit, as `plan.delivery` does. Default: live."
+          examples:
+            one-issue-at-head-as-trunk-gate:
+              value: HEAD
+        - name: gate
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - "$ref": "#/components/schemas/DriftGate"
+              - type: "null"
+          description: "Judge as a gate on a `head` or on the `trunk`. Default: report only, exit 0."
+          examples:
+            one-issue-at-head-as-trunk-gate:
+              value: trunk
+      responses:
+        "200":
+          description: "Where the plan's stamps contradict the delivered work: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/DriftReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: plan.drift
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::plan
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_plan_drift
+      x-majordomus-cli: plan drift
+  "/api/v1/plan/flight":
+    get:
+      operationId: plan.flight
+      summary: Where the work is now
+      description: "The milestones with work in flight, the one the graph allows next, and the latest release as the releases themselves say it, read live on every call (ADR 0166, decision 4). Now is every open milestone holding an open issue with an open pull request that names it (`plan.delivery`'s `pr_open`), a live mesh claim made for it, or a declared ACTIVE status, each with those issues, why they are in flight, their declared status beside their inferred stage, and the objects that prove it (branch, pull request, merge commit, release tag, published `latest.json`, claim), linked on the forge where the forge has them. Next is the first open milestone in the plan's order that is not now and whose unfinished prerequisites are all now. The latest release is the highest stable version among the release records, the `v*` tags of this clone and the `latest.json` the last successful Pages deployment published, so a release whose record merged after its tag is not shown older than it is; `executable_tagged` says whether the answering executable's own version is tagged. `milestone` adds that milestone with every one of its issues. A source that was not read (the forge, the publication, the mesh outside a server) is named with its reason, never treated as empty."
+      tags:
+        - plan
+      parameters:
+        - name: milestone
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "A milestone id: the answer then carries it, with every one of its issues, as\n`inspected`. An id the plan does not declare is not found."
+          examples:
+            one-milestone-inspected:
+              value: M000
+      responses:
+        "200":
+          description: "Where the work is now: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/PlanFlight"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: plan.flight
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::plan
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_plan_flight
   "/api/v1/plan/issues":
     get:
       operationId: plan.issues
@@ -10246,7 +10783,7 @@ paths:
     get:
       operationId: reasoning.check
       summary: Check that reasoning stays provider-independent
-      description: "The executable half of the rules advisors-are-optional and review-is-recorded-not-claimed: the advisor catalogue resolves against the provider table and the model catalogue; every adapter it names has its transport module; no provider-independent source names an advisor; no CI workflow or gate names a model credential; no document asserts a refused claim; every stored consultation names an advisor its plan selected, and every conclusion's review matches what it cites."
+      description: "The executable half of the rules advisors-are-optional and review-is-recorded-not-claimed: the advisor catalogue resolves against the provider table and the model catalogue; every adapter it names has its transport module; no provider-independent source names an advisor; no CI workflow or gate names a model credential; no document asserts a refused claim; every stored consultation names an advisor its plan selected, and every conclusion's review matches what it cites. The CI and claims checks judge what this repository's own workflows and documents say, so they apply only where the rule advisors-are-optional is declared; an adopter is held to what it adopted."
       tags:
         - reasoning
       parameters: []
@@ -10658,7 +11195,7 @@ paths:
           required: false
           schema:
             type: string
-          description: "The trunk the landing raises from; `origin/master` when absent."
+          description: "The trunk the landing raises from; when absent, the remote-tracking ref of the trunk\nthis repository names (its remote's default branch, else its own trunk)."
         - name: head
           in: query
           required: false
@@ -11320,7 +11857,7 @@ paths:
     get:
       operationId: server.status
       summary: "The shared server, and every server of the repository"
-      description: "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes."
+      description: "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes."
       tags:
         - server
       parameters:
@@ -12624,6 +13161,130 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_worktree_status
       x-majordomus-cli: worktree status
+  "/api/v1/worktrees/trunk":
+    get:
+      operationId: worktree.trunk
+      summary: How far a checkout is from the remote trunk
+      description: "The checkout's `HEAD` and the local trunk branch, each counted against the remote-tracking trunk — commits behind and ahead, a merge in progress counting what it brings in — as of the last fetch, whose time is part of the answer; judged against the policy's `checkout.trunk_distance` as `current`, `lagging`, `stale`, `unjudged` (no threshold declared) or `unmeasured` (no remote trunk), with the commands that bring it current. What doctor renders and what `server.status` and the MCP instructions say about the tree a server serves (`project.a-checkout-serves-the-current-trunk`). Fetches nothing and writes nothing."
+      tags:
+        - worktree
+      parameters:
+        - name: path
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "A directory inside one of this repository's worktrees; the answer is about that\nworktree. Relative to the primary checkout when relative (`.` is the primary\ncheckout itself). Default: the repository the server was started for. A path in\nanother repository is refused: the topology answers only about its own."
+          examples:
+            primary-checkout:
+              value: "."
+      responses:
+        "200":
+          description: "How far a checkout is from the remote trunk: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/TrunkDistance"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: worktree.trunk
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::worktree
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_worktree_trunk
+      x-majordomus-cli: worktree trunk
+  "/api/v1/worktrees/uncommitted":
+    get:
+      operationId: worktree.uncommitted
+      summary: "Uncommitted work in the linked worktrees, and what holds it"
+      description: "Every linked worktree whose index or working tree holds changes no commit carries: how many paths (staged, unstaged, untracked, conflicted), when the oldest change was made (the earliest modification time among the changed paths, the index file's standing in for a deleted one), and what holds the work — an active task record, an open episode that is not stranded, or a process whose working directory is inside. Work nothing holds and older than the threshold is `abandoned`, with the command that would put it on a remote `rescue/` ref; it is suggested, never run. The threshold is the policy's `session.stranded_after` unless `older_than` names another. Reads every worktree and writes none: every status runs without optional locks, so no index is refreshed."
+      tags:
+        - worktree
+      parameters:
+        - name: older_than
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "The age past which work nothing holds is abandoned, as a person writes it (`90s`,\n`30m`, `12h`, `1d`). Default: the policy's `session.stranded_after`, which is also\nhow long an open episode may be silent and still hold the work."
+          examples:
+            one-hour:
+              value: 1h
+      responses:
+        "200":
+          description: "Uncommitted work in the linked worktrees, and what holds it: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/UncommittedReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: worktree.uncommitted
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::worktree
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_worktree_uncommitted
+      x-majordomus-cli: worktree uncommitted
 components:
   schemas:
     ActiveTask:
@@ -12695,6 +13356,13 @@ components:
             - string
             - "null"
           description: "The peer id, for a call that arrived through an MCP session."
+        pid:
+          type:
+            - integer
+            - "null"
+          format: uint32
+          minimum: 0
+          description: "The process that ran it, for an execution another process ran and reported to this\none: the work happened there, and this process holds what it was told about it."
       required:
         - kind
       description: "Who asked, and which peer they are when this process knows."
@@ -12708,7 +13376,7 @@ components:
           description: An MCP client attached to this process.
         - type: string
           const: cli
-          description: The command line of this process.
+          description: "A command line: this process's own, or `majordomus run` in another process of the\nsame checkout that reported its execution to this server, with its pid."
         - type: string
           const: internal
           description: "This executable's own tests and benchmarks."
@@ -15443,7 +16111,7 @@ components:
         reasons:
           type: array
           items:
-            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `version_unallocated:VERSION`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `carries_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
+            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `merge_settings_unread`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `version_unallocated:VERSION`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `carries_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
             type: string
           description: "The evidence, as reason codes."
         action:
@@ -18019,6 +18687,170 @@ components:
         - detail
         - paths
       description: "Two names, one thing. The compiler keeps one entry and records the collapse here, so\nthat \"why is this ADR listed once when four things point at it\" has an answer that is\nstate rather than a log line.\n\nOne type covers two different collapses, and `dropped` is how a reader tells them apart.\n**Structural** collapse is the same identifier reached several ways: nothing was\ndiscarded, so `dropped` is empty and `paths` is the count that makes the row worth\nprinting — this is the record that four things pointing at one ADR produced one entry.\n**Semantic** collapse is two different identifiers standing for one thing, one file\nindexed under two kinds or one rule at two versions: there `dropped` names what lost,\nbecause something really was discarded and a reader is entitled to know what.\n\n```\nuse majordomus_cli::devcontext::Deduplicated;\nuse serde_json::json;\n\n// structural: one identifier, four ways in, nothing discarded\nlet structural: Deduplicated = serde_json::from_value(json!({\n    \"kept\": \"majordomus://adr/0052\",\n    \"dropped\": [],\n    \"key\": \"uri\",\n    \"detail\": \"one object reached by 4 discovery path(s)\",\n    \"paths\": 4,\n})).unwrap();\nassert!(structural.dropped.is_empty(), \"nothing lost; this is a record, not a decision\");\nassert!(structural.paths > 1, \"which is what makes the row worth printing\");\nassert_eq!(structural.key, \"uri\");\n\n// semantic: two identifiers for one rule, and the older version lost\nlet semantic: Deduplicated = serde_json::from_value(json!({\n    \"kept\": \"majordomus://rule/project.x@2\",\n    \"dropped\": [\"majordomus://rule/project.x@1\"],\n    \"key\": \"identity\",\n    \"detail\": \"one rule at two versions; the newer is in the answer\",\n    \"paths\": 1,\n})).unwrap();\nassert_eq!(semantic.dropped, [\"majordomus://rule/project.x@1\"]);\nassert_ne!(semantic.kept, semantic.dropped[0], \"two names, and one of them lost\");\n```"
+    DeliveryBranch:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The ref, short: `feature/x`, or `origin/feature/x` for a remote-tracking one."
+        head:
+          type: string
+          description: The commit it points at.
+        remote:
+          type: boolean
+          description: True for a remote-tracking ref.
+        via:
+          type: string
+          description: "How the name names the issue: `id` or `slug`."
+        observed_at:
+          type: string
+          description: When the refs were read.
+      required:
+        - name
+        - head
+        - remote
+        - via
+        - observed_at
+      description: A branch that names the issue.
+    DeliveryDeployment:
+      type: object
+      properties:
+        version:
+          type: string
+          description: "The version `latest.json` names."
+        latest_json:
+          type: string
+          description: "Where that `latest.json` was read: `<commit>:site/static/releases/latest.json`, the\ncommit the observed Pages deployment published."
+        observed_at:
+          type: string
+          description: When the publication was observed.
+      required:
+        - version
+        - latest_json
+        - observed_at
+      description: "The published release pointer that covers the issue's release."
+    DeliveryMerge:
+      type: object
+      properties:
+        commit:
+          type: string
+          description: "The commit: a merge commit, or a commit whose subject names the issue."
+        pull_request:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "The pull request it merged, when its subject names one."
+        branch:
+          type:
+            - string
+            - "null"
+          description: "The branch it merged, when its subject names one."
+        title:
+          type:
+            - string
+            - "null"
+          description: "The pull request's title, when the merge carries one, or the commit's subject."
+        via:
+          type: string
+          description: "How it names the issue: `title_or_branch` or `slug` for a merge, `subject` for a\ncommit, `forge_title` for a merged pull request's title as the forge recorded it."
+        merged_at:
+          type: string
+          description: "When it was committed, RFC 3339."
+        merges:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many commits in the history name the issue; this one is the newest.
+        observed_at:
+          type: string
+          description: When the history was read.
+      required:
+        - commit
+        - via
+        - merged_at
+        - merges
+        - observed_at
+      description: "The newest commit in the trunk's history that names the issue: a merge, by its pull\nrequest's title or its branch, or a commit whose subject names it the way this\nrepository's commits do (`type(scope): description (I2740)`)."
+    DeliveryObservation:
+      type: object
+      properties:
+        mode:
+          type: string
+          description: "`live`, or `at` a named commit."
+        trunk:
+          type: string
+          description: "The history read: the trunk ref in live mode, the commit asked for otherwise."
+        commit:
+          type: string
+          description: The commit that history ends at.
+        observed_at:
+          type: string
+          description: "When: the clock in live mode, the commit's committer time at a commit."
+      required:
+        - mode
+        - trunk
+        - commit
+        - observed_at
+      description: Where and when the answer was observed.
+    DeliveryPullRequest:
+      type: object
+      properties:
+        number:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: The number.
+        title:
+          type: string
+          description: The title.
+        head_ref:
+          type: string
+          description: The branch it asks to merge.
+        draft:
+          type: boolean
+          description: True for a draft.
+        via:
+          type: string
+          description: "How it names the issue: `title_or_branch` or `slug`."
+        observed_at:
+          type: string
+          description: When the forge was observed.
+      required:
+        - number
+        - title
+        - head_ref
+        - draft
+        - via
+        - observed_at
+      description: An open pull request that names the issue.
+    DeliveryReading:
+      oneOf:
+        - type: string
+          const: read
+          description: It was read; what it holds is in the answer.
+        - type: string
+          const: unread
+          description: "It was not read, and `reason` says why. Nothing it could have proved is claimed or\ndenied."
+      description: Whether one source of the answer was read.
+    DeliveryRelease:
+      type: object
+      properties:
+        tag:
+          type: string
+          description: "The tag: `v0.27.0`."
+        commit:
+          type: string
+          description: The commit the tag names.
+        observed_at:
+          type: string
+          description: When the releases were read.
+      required:
+        - tag
+        - commit
+        - observed_at
+      description: "The first release that contains the issue's newest merge."
     DeliveryReport:
       type: object
       properties:
@@ -18047,6 +18879,49 @@ components:
         - tallies
         - features
       description: Every feature of the layer against the delivery invariant.
+    DeliverySource:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "`branches`, `forge`, `history`, `releases` or `publication`."
+        state:
+          "$ref": "#/components/schemas/DeliveryReading"
+          description: Read or unread.
+        detail:
+          type: string
+          description: "What was read, or why nothing was: the ref, the file, the command that would record\nit."
+        observed_at:
+          type:
+            - string
+            - "null"
+          description: "When what was read was observed, RFC 3339, when it was read."
+      required:
+        - name
+        - state
+        - detail
+      description: "One source the answer is built from, and whether it was read."
+    DeliveryStage:
+      oneOf:
+        - type: string
+          const: none
+          description: Nothing that was read names the issue.
+        - type: string
+          const: branch
+          description: A branch names it.
+        - type: string
+          const: pr_open
+          description: An open pull request names it.
+        - type: string
+          const: merged
+          description: "A merge in the trunk's history names it."
+        - type: string
+          const: released
+          description: "A `v*` release contains its newest merge."
+        - type: string
+          const: deployed
+          description: "The published `latest.json` names that release or a later one."
+      description: "How far one issue's work has travelled, in order: each stage implies every one before it\nhas been passed through, so the furthest one proved is the issue's stage."
     DeliveryState:
       oneOf:
         - type: object
@@ -19234,6 +20109,23 @@ components:
           const: uncommitted
           description: "Not committed at all: files in a work tree, or a stash entry."
       description: "Where the work a holding carries can be reached from.\n\nThe order is the order of safety: everything above `Disposition::LocalOnly` is\nreachable by somebody who is not the worker that made it.\n\n```\nuse majordomus_cli::convergence::Disposition;\n\n// declared in the order of safety, so the derived order says which is worse\nassert!(Disposition::Integrated < Disposition::Published);\nassert!(Disposition::Published < Disposition::LocalOnly);\nassert_eq!(serde_json::to_string(&Disposition::LocalOnly).unwrap(), \"\\\"local_only\\\"\");\n```"
+    Distance:
+      type: object
+      properties:
+        behind:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Commits of the remote trunk this ref lacks.
+        ahead:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Commits of this ref the remote trunk lacks.
+      required:
+        - behind
+        - ahead
+      description: "How many commits two refs have that the other lacks.\n\n```\nuse majordomus_cli::worktree::trunk::Distance;\nlet d = Distance { behind: 779, ahead: 0 };\nassert_eq!(serde_json::to_value(d).unwrap(), serde_json::json!({\"behind\": 779, \"ahead\": 0}));\n```"
     DistributionReport:
       type: object
       properties:
@@ -19549,6 +20441,257 @@ components:
         - source
         - remediation
       description: "```\nuse majordomus_cli::gates::{DoneQuestion, GateStatus};\n\nlet q = DoneQuestion {\n    id: \"pushed\".into(),\n    question: \"Has the commit reached the remote?\".into(),\n    status: GateStatus::Queued,\n    evidence: \"the obligation is owed\".into(),\n    source: \"obligation push (obligations.closure)\".into(),\n    remediation: \"git push\".into(),\n};\n// every question names what answered it and what would settle it: a question with\n// neither is a checklist line, which is the artifact this type exists instead of\nassert!(!q.source.is_empty() && !q.remediation.is_empty());\nassert!(q.status.unverified());\n```\nOne question of the done invariant, and what answered it."
+    DriftClass:
+      oneOf:
+        - type: string
+          const: merged_not_recorded
+          description: "READY, BLOCKED or ACTIVE, with merged work and no open pull request naming it."
+        - type: string
+          const: active_without_work
+          description: "ACTIVE since before the window, with no branch, pull request, merge or mesh claim."
+        - type: string
+          const: done_without_trace
+          description: "DONE with no merge naming it. Advisory: record-only issues exist."
+      description: One kind of contradiction between the stamps and the work.
+    DriftFinding:
+      type: object
+      properties:
+        issue:
+          type: string
+          description: The issue id.
+        title:
+          type: string
+          description: Its title.
+        milestone:
+          type: string
+          description: Its milestone.
+        status:
+          type: string
+          description: Its declared status.
+        stage:
+          "$ref": "#/components/schemas/DeliveryStage"
+          description: Its inferred delivery stage.
+        class:
+          "$ref": "#/components/schemas/DriftClass"
+          description: The contradiction.
+        advisory:
+          type: boolean
+          description: True for a class that never refuses.
+        proof:
+          "$ref": "#/components/schemas/DriftProof"
+          description: What proves it.
+        since:
+          type:
+            - string
+            - "null"
+          description: "Since when the contradiction holds: the merge for `merged_not_recorded`, the start\nstamp for `active_without_work`."
+        age_seconds:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "Seconds from `since` to the observation."
+        past_window:
+          type:
+            - boolean
+            - "null"
+          description: Whether that is longer than the window; absent when either is unknown.
+        settled:
+          type: boolean
+          description: True when no unread source could have dissolved it.
+        unread:
+          type: array
+          items:
+            type: string
+          description: The sources that were not read and could have dissolved it.
+        remedy:
+          type: string
+          description: The command that settles it.
+        verdict:
+          anyOf:
+            - "$ref": "#/components/schemas/DriftVerdict"
+            - type: "null"
+          description: "What the gate made of it, when a gate was asked."
+      required:
+        - issue
+        - title
+        - milestone
+        - status
+        - stage
+        - class
+        - advisory
+        - proof
+        - settled
+        - unread
+        - remedy
+      description: "One contradiction between an issue's stamps and its delivery."
+    DriftGate:
+      oneOf:
+        - type: string
+          const: head
+          description: "A head: not the shared plan, so every merged_not_recorded is pending."
+        - type: string
+          const: trunk
+          description: "The trunk: merged work unrecorded past the window is refused."
+      description: "Which tree a `plan.drift` gate judges.\n\n```\nuse majordomus_cli::capability::builtin::plan::DriftGate;\nassert_eq!(serde_json::to_value(DriftGate::Trunk).unwrap(), \"trunk\");\nassert_eq!(serde_json::from_str::<DriftGate>(r#\"\"head\"\"#).unwrap(), DriftGate::Head);\n```"
+    DriftProof:
+      type: object
+      properties:
+        pull_request:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: The pull request the newest merge naming the issue merged.
+        merge_commit:
+          type:
+            - string
+            - "null"
+          description: "The newest commit in the trunk's history that names the issue."
+        merged_at:
+          type:
+            - string
+            - "null"
+          description: When that commit was made.
+        via:
+          type:
+            - string
+            - "null"
+          description: "How it names the issue (`title_or_branch`, `slug`, `subject`, `forge_title`)."
+        release:
+          type:
+            - string
+            - "null"
+          description: The first release that contains it.
+        started_at:
+          type:
+            - string
+            - "null"
+          description: "When execution was recorded to have begun, for `active_without_work`."
+      description: The objects that prove a finding.
+    DriftReport:
+      type: object
+      properties:
+        schema:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: The version of this shape.
+        observed:
+          "$ref": "#/components/schemas/DeliveryObservation"
+          description: Where and when the delivery was observed.
+        window:
+          "$ref": "#/components/schemas/DriftWindow"
+          description: The declared window.
+        gate:
+          anyOf:
+            - "$ref": "#/components/schemas/DriftGate"
+            - type: "null"
+          description: "The tree a gate judged, when one was asked."
+        sources:
+          type: array
+          items:
+            "$ref": "#/components/schemas/DeliverySource"
+          description: "Every source, read or not: the delivery's, and the mesh claims."
+        classes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/DriftClass"
+          description: "The class vocabulary, in order."
+        tallies:
+          type: object
+          additionalProperties:
+            type: integer
+            format: uint
+            minimum: 0
+          description: "How many findings of each class, keyed by every class."
+        findings:
+          type: array
+          items:
+            "$ref": "#/components/schemas/DriftFinding"
+          description: "The findings, in issue order, then class order."
+        refused:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many findings the gate refused.
+        pending:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many it reported as pending.
+        enforced:
+          type: boolean
+          description: "Whether a refusal fails the gate (`drift.enforcement: blocking`)."
+        verdict:
+          type: string
+          description: "`report` (no gate), `clean`, `pending`, `advisory` (refusals not enforced),\n`refused`, or `unjudged` (no window)."
+        exit_code:
+          type: integer
+          format: uint8
+          minimum: 0
+          maximum: 255
+          description: "The exit code the gate ends with: 0, `EXIT_REFUSED` or `EXIT_UNJUDGED`."
+      required:
+        - schema
+        - observed
+        - window
+        - sources
+        - classes
+        - tallies
+        - findings
+        - refused
+        - pending
+        - enforced
+        - verdict
+        - exit_code
+      description: "Every contradiction between the plan's stamps and its delivery, and, when a gate was\nasked, its verdict."
+    DriftVerdict:
+      oneOf:
+        - type: string
+          const: refused
+          description: "Refused: merged work the trunk has carried unrecorded past the window."
+        - type: string
+          const: pending
+          description: "Reported and not refused: on a head, or inside the window."
+        - type: string
+          const: reported
+          description: Reported; this class never refuses.
+        - type: string
+          const: advisory
+          description: "Advisory; this class never refuses (`done_without_trace`)."
+      description: What a gate made of one finding.
+    DriftWindow:
+      type: object
+      properties:
+        model:
+          type: string
+          description: The file it is declared in.
+        state:
+          "$ref": "#/components/schemas/DeliveryReading"
+          description: "Read, or unread with `detail` saying why."
+        seconds:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: The seconds the trunk may carry merged work the plan has not recorded.
+        enforcement:
+          type:
+            - string
+            - "null"
+          description: "`advisory` (refusals are reported, the gate passes) or `blocking`."
+        detail:
+          type: string
+          description: "What was read, or why nothing was."
+      required:
+        - model
+        - state
+        - detail
+      description: "The declared window, or why there is none."
     DriftedObject:
       type: object
       properties:
@@ -19659,6 +20802,21 @@ components:
         - after
         - classification
       description: "The verdict: what was compared, what moved, and what the cycle observed."
+    Durability:
+      oneOf:
+        - type: string
+          const: synced
+          description: "Appended to the journal file and synced (`fsync` of its data) before the append\nreturned."
+        - type: string
+          const: memory
+          description: "The journal has no file: it lives in memory and its peers, by configuration."
+        - type: string
+          const: not_durable
+          description: "The write to the journal file failed. The event is held in memory and replicated to\npeers, and is lost to this machine when the runtime restarts unless a peer still holds\nit. It is not acknowledged as durable."
+        - type: string
+          const: unknown
+          description: "Not reported: an answer from an executable that predates this field."
+      description: "Whether an event this runtime wrote reached this machine's disk: what an append\nacknowledges, and the only thing a caller may say about it.\n\n```\nuse majordomus_cli::mesh::journal::Durability;\nassert_eq!(serde_json::to_value(Durability::NotDurable).unwrap(), \"not_durable\");\nassert_eq!(Durability::default(), Durability::Unknown, \"an answer that did not say\");\nassert!(Durability::Synced.is_on_disk() && !Durability::NotDurable.is_on_disk());\n```"
     EconomicsCheck:
       type: object
       properties:
@@ -20780,6 +21938,32 @@ components:
         - reason
         - refused
       description: "One edge of the composed graph, and what the compiler does with it.\n\nEvery edge kind the graph declares gets a row, followed or not, which is the property\nthat makes this projection worth reading: an edge added to the graph and not to the\ntraversal table appears here as `refused` with a reason saying the compiler has no rule\nfor it, rather than being silently unfollowed. A table that only listed the edges it\nfollowed could not tell you what it was ignoring.\n\n`forward` and `reverse` are absent rather than zero when the edge is not followed that\nway, so \"not followed\" is one representation and not two. `means` is the graph's own\naccount of the relation; `reason` is this compiler's account of why it is or is not\ncontext, in both directions.\n\n```\nuse majordomus_cli::devcontext::{edge_policy, policy, EdgeRule};\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules = policy(&ctx).unwrap();\n\n// one row per edge kind the graph declares, followed or refused\nlet edges: &[EdgeRule] = &rules.edges;\nassert!(!edges.is_empty(), \"the graph declares edges\");\nfor e in edges {\n    // the row always says what the relation is and what was decided about it\n    assert!(!e.means.is_empty() && !e.reason.is_empty(), \"{}\", e.edge);\n\n    if e.refused {\n        // not followed in either direction, and absent rather than zero\n        assert!(e.forward.is_none() && e.reverse.is_none(), \"{}\", e.edge);\n        assert!(edge_policy(&e.edge).is_none(), \"{} is refused and in the table\", e.edge);\n    } else {\n        // followed at least one way, at a weight the table declares\n        assert!(e.forward.is_some() || e.reverse.is_some(), \"{}\", e.edge);\n        let p = edge_policy(&e.edge).expect(\"a followed edge has a policy\");\n        assert_eq!(e.forward, (p.forward > 0.0).then_some(p.forward));\n        assert_eq!(e.reverse, (p.reverse > 0.0).then_some(p.reverse));\n    }\n}\n```"
+    EditVerdict:
+      type: object
+      properties:
+        allowed:
+          type: boolean
+          description: Whether the edit may proceed.
+        path:
+          type: string
+          description: "The path asked about, repository-relative when it is inside the checkout."
+        ground:
+          type: string
+          description: "Why, as one word: `off`, `outside`, `local`, `no_mesh`, `task`, `claim`,\n`undecided` or `unclaimed`. Only `unclaimed` refuses."
+        detail:
+          type: string
+          description: The sentence a person reads.
+        remedy:
+          type:
+            - string
+            - "null"
+          description: "What makes the edit allowed, when it is refused."
+      required:
+        - allowed
+        - path
+        - ground
+        - detail
+      description: "The answer to one edit: whether it may proceed, the one word it was decided on, the\nsentence a person reads and, for a refusal, what would allow it. `guard.edit` returns it\nas it is; `guard hook` turns it into an exit code.\n\n```\nuse majordomus_cli::guard::{judge_facts, ClaimSource, EditFacts, EditVerdict};\n\nlet facts = EditFacts {\n    required: Ok(false),\n    mesh_enabled: true,\n    task: None,\n    session: None,\n    claims: ClaimSource::Claims(vec![]),\n};\nlet v: EditVerdict = judge_facts(\"a.md\", Some(\"a.md\"), facts);\nassert!(v.allowed);\nassert_eq!(v.ground, \"off\");\nlet json = serde_json::to_value(&v).unwrap();\nassert!(json.get(\"remedy\").is_none(), \"an allowed edit carries no remedy\");\n```"
     EditorAdapter:
       type: object
       properties:
@@ -23567,6 +24751,106 @@ components:
       required:
         - max_bytes
       description: "The `fixtures` category: where fixtures live and how large one may be."
+    FlightIssue:
+      type: object
+      properties:
+        issue:
+          type: string
+          description: The issue id.
+        title:
+          type: string
+          description: Its title.
+        status:
+          type: string
+          description: "Its declared status, from the stamps."
+        stage:
+          "$ref": "#/components/schemas/DeliveryStage"
+          description: "Its inferred delivery stage, from `plan.delivery`."
+        settled:
+          type: boolean
+          description: True when no unread source could have proved a further stage.
+        unread:
+          type: array
+          items:
+            type: string
+          description: The sources that were not read and could have moved it further.
+        in_flight:
+          type: array
+          items:
+            "$ref": "#/components/schemas/InFlight"
+          description: Why it is in flight; empty for an issue that is not.
+        proofs:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Proof"
+          description: "The objects that prove the stage (and the claims that put it in flight), in stage\norder."
+      required:
+        - issue
+        - title
+        - status
+        - stage
+        - settled
+        - unread
+        - in_flight
+        - proofs
+      description: "One issue: its declared status beside its inferred stage, and what proves the stage."
+    FlightMilestone:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The milestone id.
+        title:
+          type: string
+          description: Its title.
+        status:
+          type: string
+          description: Its declared status.
+        issues:
+          type: array
+          items:
+            "$ref": "#/components/schemas/FlightIssue"
+          description: "Its issues: the ones in flight for a milestone of `now`, every one for the inspected\nmilestone."
+      required:
+        - id
+        - title
+        - status
+        - issues
+      description: One milestone with the issues an answer shows of it.
+    FlightRelease:
+      type: object
+      properties:
+        latest:
+          type:
+            - string
+            - "null"
+          description: The highest stable version any read source names; absent when none names one.
+        source:
+          type:
+            - string
+            - "null"
+          description: "The source that named it (the first in `records`, `tags`, `publication` order when\nseveral agree)."
+        href:
+          type:
+            - string
+            - "null"
+          description: Where it can be seen on the forge.
+        executable:
+          type: string
+          description: The version of the executable that answered.
+        executable_tagged:
+          type: boolean
+          description: "True when the executable's own version is tagged `v<version>`; the latest release is\nthen never older than it."
+        readings:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ReleaseReading"
+          description: "Every source, read or not."
+      required:
+        - executable
+        - executable_tagged
+        - readings
+      description: "The latest release, and every source that was asked for it."
     Fonts:
       type: object
       additionalProperties: false
@@ -24388,6 +25672,9 @@ components:
         status:
           "$ref": "#/components/schemas/HealthStatus"
           description: "The worst check's status."
+        repository:
+          "$ref": "#/components/schemas/HealthStatus"
+          description: "The worst status among the dimensions that describe the repository at this commit:\nevery check but the ones in `PROCESS_DIMENSIONS`. A process that is no server —\nthe command line, or the reader of a published snapshot (ADR 0141) — cannot decide\nwho is attached or what the mesh runtime did, and says `unknown` for them; this is\nthe verdict that is the same whichever process read the repository, and it is what a\npublication shows first."
         tallies:
           type: object
           additionalProperties:
@@ -24407,6 +25694,7 @@ components:
           description: "When the state a check decided on was read, by check id: the freshness contract\n(`crate::index::AnswerObservation`). A check absent here decided live, during this call.\n`layer` and `git` are here because they judge the picture the index took, which is\nas old as the index."
       required:
         - status
+        - repository
         - tallies
         - checks
       description: The health of what this process serves.
@@ -24567,6 +25855,87 @@ components:
           const: stash
           description: "An entry of `git stash`."
       description: "What kind of thing is holding the work.\n\n```\nuse majordomus_cli::convergence::HoldingKind;\n\n// the word a report and a persisted record use; renaming a variant must not rename it\nassert_eq!(HoldingKind::Worktree.as_str(), \"worktree\");\nassert_eq!(serde_json::to_string(&HoldingKind::Stash).unwrap(), \"\\\"stash\\\"\");\n```"
+    HooksPath:
+      oneOf:
+        - type: object
+          properties:
+            outcome:
+              type: string
+              const: not_configured
+          required:
+            - outcome
+          description: "The repository's configuration sets no `core.hooksPath`: git's own hooks directory\nin the common directory (or a value of the user's) serves every worktree, and there\nis no tracked directory to follow."
+        - type: object
+          properties:
+            path:
+              type: string
+              description: The directory git runs the hooks from.
+            outcome:
+              type: string
+              const: own
+          required:
+            - outcome
+            - path
+          description: "Git already resolves this worktree's hooks to its own directory; nothing was set."
+        - type: object
+          properties:
+            path:
+              type: string
+              description: The directory it now runs the hooks from.
+            enabled:
+              type: array
+              items:
+                type: string
+              description: "Repository settings switched on so that a per-worktree value is honoured, as\n`key=value`; empty when they were on already."
+            outcome:
+              type: string
+              const: set
+          required:
+            - outcome
+            - path
+            - enabled
+          description: "This worktree's `core.hooksPath` was set, per worktree, to its own directory."
+        - type: object
+          properties:
+            path:
+              type: string
+              description: The directory every worktree runs the hooks from.
+            outcome:
+              type: string
+              const: shared
+          required:
+            - outcome
+            - path
+          description: "The hooks directory is outside the primary checkout — one directory shared on\npurpose — and every worktree runs it; nothing was set."
+        - type: object
+          properties:
+            missing:
+              type: string
+              description: "The directory that would be the worktree's own, and is not there."
+            runs:
+              type: string
+              description: The directory the worktree runs the hooks from instead.
+            outcome:
+              type: string
+              const: untracked
+          required:
+            - outcome
+            - missing
+            - runs
+          description: "The primary checkout's hooks directory has no counterpart in this worktree's tree,\nso the worktree keeps running the primary's: pointing it at a directory that does\nnot exist would switch its hooks off."
+        - type: object
+          properties:
+            message:
+              type: string
+              description: What went wrong.
+            outcome:
+              type: string
+              const: failed
+          required:
+            - outcome
+            - message
+          description: "Git was asked and refused, or could not be run; the message is its own."
+      description: "What became of the hooks directory of a worktree that was just created, found or moved.\n\nIt travels in the JSON of `worktree create`, `ensure`, `migrate` and `repair`, tagged by\n`outcome`, so a reader branches on one word rather than parsing the line:\n\n```\nuse majordomus_cli::worktree::HooksPath;\n\nlet set = HooksPath::Set {\n    path: \"/r-wt/fix/x/.githooks\".into(),\n    enabled: vec![],\n};\nlet json = serde_json::to_value(&set).unwrap();\nassert_eq!(json[\"outcome\"], \"set\");\nassert_eq!(json[\"path\"], \"/r-wt/fix/x/.githooks\");\nlet back: HooksPath = serde_json::from_value(json).unwrap();\nassert_eq!(back, set);\n```"
     HttpExposure:
       type: object
       properties:
@@ -24752,6 +26121,18 @@ components:
         - reason
         - remediation
       description: "```\nuse majordomus_cli::gates::ImpliedObligation;\n\nlet owed = ImpliedObligation {\n    id: \"tests\".into(),\n    title: \"The cases the change obliges were run\".into(),\n    applicable: true,\n    declared: false,\n    reason: \"lib/check.sh is an input of this obligation\".into(),\n    because: vec![\"lib/check.sh\".into()],\n    remediation: \"majordomus start --requires tests\".into(),\n};\n// applicable and undeclared is the gap nothing else reports: the change owes it and\n// the task promised nothing, so no validator holds anybody to it\nassert!(owed.applicable && !owed.declared);\n```\nOne obligation the change set implies, and whether the task promised it.\n\nApplicability is derived and nothing else: a token's own `inputs` in\n`share/obligations.yaml` name the files it is about, so a change to one of them is what\nmakes the token owed. A token with no `inputs` names a fact outside the tree — a push, a\npublication, a deployment — which no change to a tree can imply, so those are owed when\nthe task declares them and reported as not applicable when it does not."
+    InFlight:
+      oneOf:
+        - type: string
+          const: pr_open
+          description: An open pull request names it.
+        - type: string
+          const: claim
+          description: A live mesh claim was made for it.
+        - type: string
+          const: active
+          description: Its declared status is ACTIVE.
+      description: Why an issue is in flight.
     Inference:
       oneOf:
         - type: string
@@ -25064,7 +26445,7 @@ components:
         reasons:
           type: array
           items:
-            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `version_unallocated:VERSION`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `carries_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
+            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `merge_settings_unread`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `version_unallocated:VERSION`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `carries_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
             type: string
           description: "The decision's reasons; a code an older executor wrote reads back verbatim."
         detail:
@@ -25285,6 +26666,10 @@ components:
             - string
             - "null"
           description: "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise."
+        merge_settings_unread:
+          type: boolean
+          description: "Whether the repository's merge settings went unread (the forge's answer carried none\nof them): `merge_method` is then `None` because nothing is known, not because a merge\ncommit is refused, and a held pull request says `merge_settings_unread` (I2966). Absent\nin a policy recorded before it was read, which read them."
+          default: false
         up_to_date_required:
           type:
             - boolean
@@ -26509,6 +27894,113 @@ components:
           const: all
           description: "Every interface. A hosted process needs it and a local one never does; stating it\nis the intent that replaces suppressing the bind warning."
       description: Which interface a process listens on.
+    IssueDelivery:
+      type: object
+      properties:
+        issue:
+          type: string
+          description: The issue id.
+        title:
+          type: string
+          description: Its title.
+        milestone:
+          type: string
+          description: Its milestone.
+        status:
+          type: string
+          description: "Its declared status, as the plan derives it from the stamps: the other half of the\ncomparison this answer exists for."
+        stage:
+          "$ref": "#/components/schemas/DeliveryStage"
+          description: The furthest stage proved.
+        settled:
+          type: boolean
+          description: True when no unread source could have proved a further stage.
+        unread:
+          type: array
+          items:
+            type: string
+          description: The sources that were not read and could have proved a further stage.
+        branch:
+          anyOf:
+            - "$ref": "#/components/schemas/DeliveryBranch"
+            - type: "null"
+          description: "The branch that names it, local first."
+        pr_open:
+          anyOf:
+            - "$ref": "#/components/schemas/DeliveryPullRequest"
+            - type: "null"
+          description: "The open pull request that names it, newest first."
+        merged:
+          anyOf:
+            - "$ref": "#/components/schemas/DeliveryMerge"
+            - type: "null"
+          description: The newest merge that names it.
+        released:
+          anyOf:
+            - "$ref": "#/components/schemas/DeliveryRelease"
+            - type: "null"
+          description: The first release containing that merge.
+        deployed:
+          anyOf:
+            - "$ref": "#/components/schemas/DeliveryDeployment"
+            - type: "null"
+          description: The publication that covers that release.
+      required:
+        - issue
+        - title
+        - milestone
+        - status
+        - stage
+        - settled
+        - unread
+      description: "One issue's delivery."
+    IssueDeliveryReport:
+      type: object
+      properties:
+        schema:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: The version of this shape.
+        observed:
+          "$ref": "#/components/schemas/DeliveryObservation"
+          description: Where and when.
+        stages:
+          type: array
+          items:
+            "$ref": "#/components/schemas/DeliveryStage"
+          description: "The stage vocabulary, in order."
+        sources:
+          type: array
+          items:
+            "$ref": "#/components/schemas/DeliverySource"
+          description: "Every source, read or not."
+        tallies:
+          type: object
+          additionalProperties:
+            type: integer
+            format: uint
+            minimum: 0
+          description: "How many issues are at each stage, keyed by every stage of the vocabulary."
+        unsettled:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many issues an unread source could have moved further.
+        issues:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IssueDelivery"
+          description: "The issues, in id order."
+      required:
+        - schema
+        - observed
+        - stages
+        - sources
+        - tallies
+        - unsettled
+        - issues
+      description: "Every issue's delivery, with what it was read from."
     IssueOrigin:
       oneOf:
         - type: string
@@ -26653,6 +28145,12 @@ components:
           format: uint64
           minimum: 0
           description: "Lines of the journal file the last reload could not read: torn, corrupt, or written\nby something that is not this journal. Counted, never silently dropped."
+          default: 0
+        unread_bytes:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "Bytes of the journal file the last reload left unread because they lie beyond\n`MAX_RELOAD_BYTES`: on disk and kept by compaction, and not in memory. Nonzero fails\n`mesh doctor`."
           default: 0
       required:
         - streams
@@ -28766,6 +30264,11 @@ components:
             - "$ref": "#/components/schemas/EnvrcApproval"
             - type: "null"
           description: "What became of its `.envrc` under direnv once it was at its new path: the primary\ncheckout's approval carried there, or why it was not. Only on a moved step."
+        hooks:
+          anyOf:
+            - "$ref": "#/components/schemas/HooksPath"
+            - type: "null"
+          description: "Which hooks it runs at its new path: a per-worktree `core.hooksPath` names the old\none, so a moved worktree is bound again to its own tree's (I2718). Only on a moved\nstep."
       required:
         - branch
         - from
@@ -30088,6 +31591,82 @@ components:
         - reason
         - at
       description: "One observation of one deployment, as recorded: what was asked, what was served, what\nwas judged and when. Everything needed to judge it again later is in the record, which\nis what lets `Observation::rejudge` answer without probing.\n\n```\nuse majordomus_cli::served::{observe, Fetch, Fetched, GitAncestry, Observation, OBSERVATION_SCHEMA};\nuse std::{path::Path, time::SystemTime};\nstruct None_;\nimpl Fetch for None_ {\n    fn fetch(&self, _: &str) -> Fetched { Fetched::Unreachable(\"no route\".into()) }\n}\nlet git = GitAncestry { root: Path::new(env!(\"CARGO_MANIFEST_DIR\")) };\nlet o: Observation = observe(\"pages\", \"https://s\", \"build.json\", &\"a\".repeat(40), &None_,\n                              &git, SystemTime::UNIX_EPOCH);\nassert_eq!(o.schema, OBSERVATION_SCHEMA);\nassert_eq!(o.url, \"https://s/build.json\");\nassert_eq!(o.at, \"1970-01-01T00:00:00Z\");\n```"
+    ObservatoryEvents:
+      type: object
+      properties:
+        active:
+          type: boolean
+          description: Whether a mesh runs in this process; without one there is no journal to follow.
+        after:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "The cursor that was asked, when one was."
+        cursor:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "The cursor to ask next: the logical clock of the newest event read, or the journal's\nnewest clock when the cursor had expired."
+        expired:
+          type: boolean
+          description: "The cursor names a clock this journal never reached (another runtime's journal, or one\nthat restarted): nothing above it can be read, and the reader takes a fresh projection."
+        events:
+          type: array
+          items: true
+          description: "The events above the cursor, newest first, as marks: identity, kind, node, logical\nclock and time, never a body."
+      required:
+        - active
+        - cursor
+        - expired
+        - events
+      description: "The Observatory's events above a cursor, as the activity scene draws them.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryEvents;\nlet e: ObservatoryEvents = serde_json::from_value(serde_json::json!({\n    \"active\": true, \"after\": 9, \"cursor\": 12, \"expired\": false, \"events\": [{ \"id\": \"s:3\" }],\n})).unwrap();\nassert!(e.cursor > e.after.unwrap(), \"the next request resumes past what was read\");\n```"
+    ObservatoryRecording:
+      type: object
+      properties:
+        schema:
+          type: string
+          description: "`RECORDING_SCHEMA`."
+        recorded_at:
+          type: string
+          description: When the scenes were read.
+        revision:
+          type:
+            - string
+            - "null"
+          description: "The commit the recording process stood at, short; absent when it could not say."
+        scenes:
+          type: object
+          additionalProperties: true
+          description: "Each recorded scene's model, by scene id; a scene the process had nothing live for is\nabsent, never empty."
+        manifest:
+          "$ref": "#/components/schemas/RecordingManifest"
+          description: "What the recording is a record of, and what it leaves out."
+      required:
+        - schema
+        - recorded_at
+        - scenes
+        - manifest
+      description: "The mesh scenes of one process at one moment, fit for publication.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryRecording;\nlet r: ObservatoryRecording = serde_json::from_value(serde_json::json!({\n    \"schema\": \"observatory-recording/v1\", \"recorded_at\": \"2026-10-14T05:00:00Z\", \"scenes\": {},\n    \"manifest\": { \"sources\": [], \"removed\": [] },\n})).unwrap();\nassert!(r.scenes.is_empty() && r.revision.is_none());\n```"
+    ObservatoryReplay:
+      type: object
+      properties:
+        present:
+          type: boolean
+          description: Whether the repository carries a recording.
+        path:
+          type: string
+          description: The file it is read from.
+        recording:
+          anyOf:
+            - "$ref": "#/components/schemas/ObservatoryRecording"
+            - type: "null"
+          description: The recording.
+      required:
+        - present
+        - path
+      description: "The recording the repository carries, or that it carries none.\n\n```\nuse majordomus_cli::capability::builtin::observatory::{replay_at, ObservatoryReplay, RECORDING};\nlet dir = tempfile::tempdir().unwrap();\nlet none: ObservatoryReplay = replay_at(dir.path()).unwrap();\nassert!(!none.present && none.recording.is_none());\nassert_eq!(none.path, RECORDING);\n```"
     ObservedClassification:
       type: object
       properties:
@@ -30235,6 +31814,25 @@ components:
         - prerelease
         - draft
       description: One release the forge published.
+    OpenEpisode:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The episode.
+        last_sign_of_life:
+          type:
+            - string
+            - "null"
+          description: "Its newest sign of life, RFC 3339 in UTC."
+        stranded:
+          type:
+            - boolean
+            - "null"
+          description: "Silent longer than the threshold. Absent when that cannot be judged — no threshold,\nor no readable sign of life — and then it holds nothing."
+      required:
+        - id
+      description: "An open episode in a work tree, as far as holding its work goes: it holds the work only\nwhile `stranded` is `Some(false)`; a stranded or unjudgeable one holds nothing.\n\n```\nuse majordomus_cli::worktree::OpenEpisode;\nlet unjudged = OpenEpisode {\n    id: \"s-20260101000000-0a0a\".into(),\n    last_sign_of_life: None,\n    stranded: None,\n};\nlet wire = serde_json::to_value(&unjudged).unwrap();\nassert!(wire.get(\"stranded\").is_none(), \"what could not be judged is absent, not false\");\nlet back: OpenEpisode = serde_json::from_value(wire).unwrap();\nassert_eq!(back, unjudged);\n```"
     OpenSession:
       type: object
       properties:
@@ -31242,6 +32840,53 @@ components:
         - head
         - changes
       description: "What a plan was derived from.\n\nCompared, never trusted: a plan whose fingerprint differs from the tree in front of it\ndescribes a tree that no longer exists.\n```\nuse majordomus_cli::commit::{PlanFingerprint, WorkingTreeState};\nlet f = PlanFingerprint::of(\"/repo/.git\", \"/repo\", &WorkingTreeState::default());\nassert_eq!(f.head, \"unborn\", \"a repository with no commits says so\");\n```"
+    PlanFlight:
+      type: object
+      properties:
+        schema:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: The version of this shape.
+        observed:
+          "$ref": "#/components/schemas/DeliveryObservation"
+          description: Where and when the delivery half was observed.
+        now:
+          type: array
+          items:
+            type: string
+          description: "The milestones with work in flight, in the plan's order."
+        next:
+          type:
+            - string
+            - "null"
+          description: The first open milestone the graph allows once the work in flight lands.
+        milestones:
+          type: array
+          items:
+            "$ref": "#/components/schemas/FlightMilestone"
+          description: "The milestones of `now`, each with its issues in flight."
+        inspected:
+          anyOf:
+            - "$ref": "#/components/schemas/FlightMilestone"
+            - type: "null"
+          description: "The milestone asked for with `milestone`, with every one of its issues."
+        release:
+          "$ref": "#/components/schemas/FlightRelease"
+          description: The latest release.
+        sources:
+          type: array
+          items:
+            "$ref": "#/components/schemas/DeliverySource"
+          description: "Every source, read or not: `plan.delivery`'s, then `mesh`."
+      required:
+        - schema
+        - observed
+        - now
+        - milestones
+        - release
+        - sources
+      description: "Where the work is: the answer of `plan.flight`."
     PlanIssue:
       type: object
       properties:
@@ -31399,9 +33044,14 @@ components:
         slug:
           type: string
           description: "The slug, when the record carries one."
-        version:
+        last_accepted:
           type: string
-          description: "The release the milestone belongs to, when it declares one."
+          description: "The last accepted issue of a DONE milestone: its DONE issue with the latest\n`completed_at`, the greater id on a tie. Empty for a milestone that is not DONE, or\nthat is DONE with no issue (its evidence finished it). Which release carried it is\n`released_in`'s to answer."
+        released_in:
+          type:
+            - string
+            - "null"
+          description: "The release that carried the milestone — the first release record whose commit\ncontains the merge of its last accepted issue (or, with no issue, the commit that\nrecorded its latest evidence), else `unreleased` — when the reader\nasked for it\n(`released_in`); the roadmap always does. Never a typed field (ADR 0166)."
         rank:
           type: integer
           format: uint32
@@ -31445,7 +33095,6 @@ components:
         - priority
         - title
         - slug
-        - version
         - rank
         - depends_on
         - blocked_by
@@ -31566,7 +33215,7 @@ components:
           type: array
           items:
             "$ref": "#/components/schemas/PlanMilestone"
-          description: "The milestones ordered by rank, then order, then id. The sequence is derived from\nthe milestone graph; no list of versions is maintained anywhere."
+          description: "The milestones ordered by rank, then order, then id, each with the release that\ncarried it (`released_in`). The sequence is derived from the milestone graph and the\nrelease from the release records; no list of versions is maintained anywhere."
         now:
           type:
             - string
@@ -32333,6 +33982,24 @@ components:
           const: none
           description: It does not. Nothing this tool can do makes the prompt observable.
       description: "Whether the person's raw prompt can be captured below the model for one provider.\n\nThere is no `connection` here and there must not be: an MCP server is handed tool calls,\nnever the prompt that produced them. Prompt capture is provider-specific and the\ndeclaration says so rather than pretending the connection can stand in for it.\n\n```\nuse majordomus_cli::share::PromptSource;\nassert_eq!(serde_json::from_str::<PromptSource>(\"\\\"hook\\\"\").unwrap(), PromptSource::Hook);\nassert!(serde_json::from_str::<PromptSource>(\"\\\"connection\\\"\").is_err(),\n        \"no connection can observe a prompt\");\nassert_eq!(PromptSource::default(), PromptSource::None);\n```"
+    Proof:
+      type: object
+      properties:
+        kind:
+          type: string
+          description: "`branch`, `pull_request`, `merge`, `release`, `publication` or `claim`."
+        label:
+          type: string
+          description: "What a reader is shown: `#1298`, a short commit, a tag, a branch."
+        href:
+          type:
+            - string
+            - "null"
+          description: "Where the object is, on the forge; absent for an object only this clone holds (a\nlocal branch, a mesh claim), so a link is never drawn to nothing."
+      required:
+        - kind
+        - label
+      description: "One object that proves where an issue's work stands."
     ProofState:
       oneOf:
         - type: string
@@ -32851,7 +34518,7 @@ components:
         reasons:
           type: array
           items:
-            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `version_unallocated:VERSION`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `carries_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
+            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `merge_settings_unread`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `version_unallocated:VERSION`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `carries_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
             type: string
           description: "Machine-readable reasons, one for every failing gate's every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready."
         gates:
@@ -34553,6 +36220,67 @@ components:
         - spelling
         - writer
       description: "One store's spelling of one subject.\nWhich half of the layer wrote it, what wrote it, and the value it would have here.\n\n```\nuse majordomus_cli::session::{RecordedSpelling, Spelling};\n\nlet local = RecordedSpelling {\n    spelling: Spelling::Local,\n    writer: \"mj_git_repo_id (lib/common.sh)\".into(),\n    value: \"/src/repo/.git\".into(),\n};\n// knowing which half a string came from is what stops a path being compared with a URL\nassert_eq!(local.spelling.as_str(), \"local\");\nassert!(local.value.starts_with('/'));\n```"
+    RecordingManifest:
+      type: object
+      properties:
+        sources:
+          type: array
+          items:
+            type: string
+          description: The capabilities whose answers the recorded scenes were projected from.
+        window:
+          anyOf:
+            - "$ref": "#/components/schemas/RecordingWindow"
+            - type: "null"
+          description: "The first and last event the recording holds, by time and by logical clock; absent\nwhen it holds none."
+        removed:
+          type: array
+          items:
+            type: string
+          description: "Every kind of thing removed before publication, and why."
+      required:
+        - sources
+        - removed
+      description: "What a recording is a record of: the capabilities read, the window of events it holds,\nand what was removed from what they answered, with the reason.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingManifest;\nlet m: RecordingManifest = serde_json::from_value(serde_json::json!({\n    \"sources\": [\"mesh.events\"], \"removed\": [\"event bodies\"],\n})).unwrap();\nassert!(m.window.is_none(), \"a recording that holds no event has no window\");\n```"
+    RecordingWindow:
+      type: object
+      properties:
+        events:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many events.
+        from_at:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "The earliest event's time, in seconds since the epoch."
+        to_at:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "The latest event's time, in seconds since the epoch."
+        from_lamport:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: The smallest logical clock.
+        to_lamport:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: The largest logical clock.
+      required:
+        - events
+      description: "The events a recording holds, from first to last.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingWindow;\nlet w = RecordingWindow { events: 2, from_at: Some(100), to_at: Some(160), from_lamport: Some(9), to_lamport: Some(10) };\nassert_eq!(w.to_at.unwrap() - w.from_at.unwrap(), 60, \"a minute of the journal\");\n```"
     Records:
       type: object
       properties:
@@ -34672,9 +36400,12 @@ components:
           const: external
           description: "Vouched for by the ledger, the task store or git: a session, a task, a decision, a commit."
         - type: string
+          const: historical
+          description: "A `file:` or `test:` the tree no longer holds and git history does: cited before the\nfile was deleted, or pinned as `file:<path>@<commit>`. The `target` is the blob that\nanswers, `<commit>:<path>`, which `git show` reads."
+        - type: string
           const: missing
           description: "Nothing answers to it. A dangling reference is the integrity validator's finding."
-      description: "How a typed reference resolved.\n\nThree words and no fourth: a reference names an object of the index, or something only\nthe ledger and git can vouch for, or nothing. `external` is not a weaker `object` — a\ncommit or a task is exactly as real as a rule — it says which reader answered.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::ReferenceResolution;\nlet r: ReferenceResolution = serde_json::from_str(r#\"\"external\"\"#).unwrap();\nassert_eq!(r, ReferenceResolution::External);\nassert!(r.resolves(), \"vouched for by the ledger or git is resolved\");\nassert!(!ReferenceResolution::Missing.resolves());\n```"
+      description: "How a typed reference resolved.\n\nFour words and no fifth: a reference names an object of the index, or something only\nthe ledger and git can vouch for, or a file the tree no longer holds and git history\ndoes, or nothing. `external` is not a weaker `object` — a commit or a task is exactly as\nreal as a rule — it says which reader answered; `historical` resolves as well, and is\nnamed apart so a reader sees which provenance outlived its file (I1987).\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::ReferenceResolution;\nlet r: ReferenceResolution = serde_json::from_str(r#\"\"external\"\"#).unwrap();\nassert_eq!(r, ReferenceResolution::External);\nassert!(r.resolves(), \"vouched for by the ledger or git is resolved\");\nassert!(!ReferenceResolution::Missing.resolves());\n```"
     Refusal:
       type: object
       properties:
@@ -35392,6 +37123,33 @@ components:
       required:
         - capability
       description: "Which capability answered with this document, and where that capability is projected.\n\nThe document carries its own provenance so that a reader — a person on the site, a client\nover MCP — can find the same value elsewhere without anything having to enumerate the\nroutes. A page that listed them would be declaring them a second time, which is the\nfailure `site-check`'s `registry` and `cli` assertions exist to catch; it caught this one.\n\n```\nuse majordomus_cli::release::model::ProducedBy;\nlet by = ProducedBy {\n    capability: \"release.changelog\".into(),\n    cli: Some(\"majordomus release changelog\".into()),\n    http: Some(\"/api/v1/changelog\".into()),\n    mcp_tool: None,\n    mcp_resource: Some(\"majordomus://changelog\".into()),\n};\nlet json = serde_json::to_value(&by).unwrap();\nassert_eq!(json[\"capability\"], \"release.changelog\");\n// a surface the capability is not projected on is absent, not null\nassert!(json.get(\"mcp_tool\").is_none());\nassert_eq!(ProducedBy::default().capability, \"\");\n```"
+    ReleaseReading:
+      type: object
+      properties:
+        source:
+          type: string
+          description: "`records`, `tags` or `publication`."
+        state:
+          "$ref": "#/components/schemas/DeliveryReading"
+          description: Read or unread.
+        version:
+          type:
+            - string
+            - "null"
+          description: "The version it names, when it was read and names one."
+        detail:
+          type: string
+          description: "What was read (`.ai/repo/releases/v0.27.0.yaml`, `refs/tags/v0.27.0`,\n`<commit>:site/static/releases/latest.json`), or why nothing was."
+        href:
+          type:
+            - string
+            - "null"
+          description: "Where it can be seen on the forge, when it can."
+      required:
+        - source
+        - state
+        - detail
+      description: "One source's answer to \"what is the latest release\"."
     ReleaseReference:
       type: object
       properties:
@@ -35754,6 +37512,68 @@ components:
         - count
         - releases
       description: "The releases this repository recorded, and the one an unpinned installation resolves to."
+    ReportAnswer:
+      type: object
+      properties:
+        applied:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many of the reported events were applied.
+        through:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "The reporter's sequence this server holds everything up to: the next report sends\nthe events after it, so a lost or repeated report costs nothing."
+        cancel_requested:
+          type: boolean
+          description: "Whether somebody asked this server to stop the execution. The reporter runs it, so\nthe reporter cancels it."
+        execution:
+          "$ref": "#/components/schemas/ExecutionView"
+          description: The execution as this server now holds it.
+      required:
+        - applied
+        - through
+        - cancel_requested
+        - execution
+      description: "The answer of `executions.report`."
+    ReportInput:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          description: "The execution's id, as the reporting process minted it."
+        capability:
+          type: string
+          description: "The capability it runs, by its canonical id."
+        title:
+          type: string
+          description: "That capability's title."
+        input:
+          description: "The input it was given, as the reporting process stored it: already redacted there,\nand redacted again here by this registry's schema when this registry knows it."
+          default: null
+        cancellable:
+          type: boolean
+          description: "Whether the capability stops when asked. When it does, a cancel asked of this server\nreaches the reporter in the answer to its next report."
+          default: false
+        pid:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: The process that runs it.
+        events:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ExecutionEvent"
+          description: "Its events after the last sequence this server answered `through`, in its own\nsequence, oldest first; at most 500. Empty is a heartbeat."
+          default: []
+      required:
+        - id
+        - capability
+        - title
+        - pid
+      description: "The input of `executions.report`: what a process that runs an execution says about it to\nthe server serving the same checkout."
     RepositoryEnvironment:
       type: object
       properties:
@@ -38240,12 +40060,17 @@ components:
             - "$ref": "#/components/schemas/ConnectionCounts"
             - type: "null"
           description: "What this process's HTTP server did to connections that held it without a request:\nthe read deadline it applies, the connections that deadline closed, and the requests\nrefused because every handler was busy. Absent when this process serves no HTTP."
+        trunk:
+          anyOf:
+            - "$ref": "#/components/schemas/TrunkDistance"
+            - type: "null"
+          description: "How far the tree this checkout serves is from the remote trunk, judged against the\npolicy's `checkout.trunk_distance`: a server of a checkout 779 commits behind answers\nevery session from a tree that no longer exists, and this is where that is said.\nAbsent only from an answer that predates the field."
       required:
         - checkout_id
         - desired
         - standing
         - servers
-      description: "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```"
+      description: "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None, trunk: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```"
     ServerView:
       type: object
       properties:
@@ -39507,6 +41332,9 @@ components:
           format: uint
           minimum: 0
           description: How many error-level diagnostics the whole topology carries.
+        trunk_distance:
+          "$ref": "#/components/schemas/TrunkDistance"
+          description: "How far this work tree and the local trunk are from the remote trunk, judged against\nthe policy's `checkout.trunk_distance`: what it would serve, and how old that is."
       required:
         - schema
         - repository
@@ -39515,6 +41343,7 @@ components:
         - worktree
         - canonical
         - repository_errors
+        - trunk_distance
       description: "The answer to \"where am I, and is that where I belong\"."
     StepOutcome:
       oneOf:
@@ -40587,6 +42416,27 @@ components:
         - storage_key
         - bootstrap
       description: The theme contract as a client reads it.
+    Threshold:
+      type: object
+      properties:
+        declared:
+          type:
+            - string
+            - "null"
+          description: "The value as written (`12h`). Absent when nothing declares one."
+        seconds:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "The same value, in seconds."
+        source:
+          type: string
+          description: "`THRESHOLD_KEY`, `older_than` when the caller named one, or `absent`."
+      required:
+        - source
+      description: "The age past which uncommitted work nothing holds is abandoned, and where it came from.\n\nIt is reported with every reading, so a reader can see what the verdicts were judged\nagainst; a threshold nothing declares is carried as absent, not filled in.\n\n```\nuse majordomus_cli::worktree::Threshold;\nlet declared = Threshold::resolve(Some(\"12h\"), None).unwrap();\nlet wire = serde_json::to_value(&declared).unwrap();\nassert_eq!(wire[\"declared\"], \"12h\");\nassert_eq!(wire[\"seconds\"], 43_200);\nlet absent: Threshold =\n    serde_json::from_value(serde_json::json!({\"source\": \"absent\"})).unwrap();\nassert_eq!((absent.declared, absent.seconds), (None, None), \"absent is not a default\");\n```"
     Tier:
       oneOf:
         - type: string
@@ -41453,6 +43303,70 @@ components:
           const: http
           description: "MCP over HTTP at `/mcp`: a `majordomus mcp` bridge, or a client speaking it directly."
       description: How a peer reached the server.
+    TrunkDistance:
+      type: object
+      properties:
+        standing:
+          "$ref": "#/components/schemas/TrunkStanding"
+          description: "Where the checkout stands: its `HEAD` — with the commit a merge in progress brings\nin — judged against the thresholds. This is what its server serves."
+        local_trunk_standing:
+          "$ref": "#/components/schemas/TrunkStanding"
+          description: "Where the local trunk branch stands, judged the same way: what a branch made from it\nstarts from. The same as `standing` when the checkout holds the trunk."
+        worktree:
+          type: string
+          description: The work tree measured.
+        on_trunk:
+          type: boolean
+          description: The work tree holds the trunk branch itself.
+        trunk:
+          type:
+            - string
+            - "null"
+          description: "The trunk branch, short."
+        remote_trunk:
+          type:
+            - string
+            - "null"
+          description: "The remote-tracking trunk counted against (`origin/master`)."
+        remote_head:
+          type:
+            - string
+            - "null"
+          description: The commit the remote-tracking trunk names.
+        checkout:
+          anyOf:
+            - "$ref": "#/components/schemas/Distance"
+            - type: "null"
+          description: "The checkout's `HEAD` against the remote trunk. While a merge is in progress, the\ncommits it brings in count as present: the commit being made will hold them, so the\nmerge that brings a checkout current is never judged by the tree it is replacing."
+        local_trunk:
+          anyOf:
+            - "$ref": "#/components/schemas/Distance"
+            - type: "null"
+          description: "The local trunk branch against the remote trunk: what a branch made from the local\ntrunk starts from."
+        fetched_at:
+          type:
+            - string
+            - "null"
+          description: "When the repository last fetched (the time of `FETCH_HEAD`), RFC 3339: the moment\nthis answer is true as of. Absent when it never fetched."
+        thresholds:
+          "$ref": "#/components/schemas/TrunkThresholds"
+          description: "The thresholds judged against, as `checkout.trunk_distance` declares them."
+        message:
+          type: string
+          description: "What the standing means here, in one line."
+        remedy:
+          type:
+            - string
+            - "null"
+          description: "The commands that bring the checkout and the local trunk current, when either is\nbehind. Suggested, never run."
+      required:
+        - standing
+        - local_trunk_standing
+        - worktree
+        - on_trunk
+        - thresholds
+        - message
+      description: "A checkout's distance from the remote trunk, judged.\n\n```\nuse majordomus_cli::worktree::trunk::{Distance, TrunkDistance, TrunkStanding};\nlet d: TrunkDistance = serde_json::from_value(serde_json::json!({\n    \"standing\": \"stale\", \"local_trunk_standing\": \"stale\",\n    \"worktree\": \"/repo\", \"on_trunk\": true,\n    \"checkout\": {\"behind\": 779, \"ahead\": 0},\n    \"thresholds\": {\"warn_behind\": 50, \"fail_behind\": 300},\n    \"message\": \"779 commits behind origin/master\",\n})).unwrap();\nassert_eq!(d.standing, TrunkStanding::Stale);\nassert_eq!(d.checkout, Some(Distance { behind: 779, ahead: 0 }));\n// what is absent stays absent in the answer\nassert!(serde_json::to_value(&d).unwrap().get(\"remedy\").is_none());\n```"
     TrunkSource:
       oneOf:
         - type: string
@@ -41471,6 +43385,42 @@ components:
           const: unknown
           description: Nothing said; the trunk is unknown and every check that needs it says so.
       description: "Where the trunk was learned from, in the order it is looked for."
+    TrunkStanding:
+      oneOf:
+        - type: string
+          const: current
+          description: "Behind by less than the warn threshold, or not behind at all."
+        - type: string
+          const: lagging
+          description: "At or past the warn threshold: what it serves is old enough to mislead."
+        - type: string
+          const: stale
+          description: "At or past the fail threshold: what it serves is the wrong tree."
+        - type: string
+          const: unjudged
+          description: "Behind, and the policy declares no threshold to judge the distance by."
+        - type: string
+          const: unmeasured
+          description: "The distance could not be measured: no trunk, no remote-tracking trunk, no `HEAD`."
+      description: "Where a checkout stands against the remote trunk.\n\n```\nuse majordomus_cli::worktree::trunk::TrunkStanding;\nlet s: TrunkStanding = serde_json::from_str(r#\"\"lagging\"\"#).unwrap();\nassert_eq!(s, TrunkStanding::Lagging);\nassert_eq!(serde_json::to_value(TrunkStanding::Unmeasured).unwrap(), \"unmeasured\");\n```"
+    TrunkThresholds:
+      type: object
+      properties:
+        warn_behind:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "At or past this many commits behind, the checkout is `lagging`: a warning."
+        fail_behind:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "At or past this many commits behind, the checkout is `stale`: a failure."
+      description: "The thresholds `checkout.trunk_distance` declares, in commits behind the remote trunk.\nAbsent is absent: the reader supplies no default, and a distance with nothing to judge\nit against is reported as `unjudged`.\n\n```\nuse majordomus_cli::worktree::trunk::TrunkThresholds;\nlet t: TrunkThresholds = serde_json::from_str(r#\"{\"warn_behind\": 50, \"fail_behind\": 300}\"#).unwrap();\nassert_eq!((t.warn_behind, t.fail_behind), (Some(50), Some(300)));\nassert_eq!(TrunkThresholds::default().warn_behind, None, \"absent is not a default\");\n```"
     TrunkView:
       type: object
       properties:
@@ -41557,6 +43507,149 @@ components:
         - sha
         - open
       description: A prepared head whose pull request is no link of any train.
+    UncommittedReport:
+      type: object
+      properties:
+        schema:
+          type: string
+          description: "`UNCOMMITTED_SCHEMA`."
+        observed_at:
+          type: string
+          description: "When the reading was taken, RFC 3339 in UTC."
+        threshold:
+          "$ref": "#/components/schemas/Threshold"
+          description: The threshold it was judged against.
+        worktrees:
+          type: array
+          items:
+            "$ref": "#/components/schemas/UncommittedWorktree"
+          description: "Every linked work tree with uncommitted work, abandoned first, then oldest first."
+        tallies:
+          "$ref": "#/components/schemas/UncommittedTallies"
+          description: The counts.
+        findings:
+          type: array
+          items:
+            type: string
+          description: "What could not be read or judged, in words."
+      required:
+        - schema
+        - observed_at
+        - threshold
+        - worktrees
+        - tallies
+        - findings
+      description: "Every linked work tree holding uncommitted work, with what holds it: the answer of\n`worktree.uncommitted` on every surface, and what `doctor` renders.\n\n```\nuse majordomus_cli::worktree::uncommitted::UNCOMMITTED_SCHEMA;\nuse majordomus_cli::worktree::{Threshold, UncommittedReport, WorktreeService};\nlet dir = tempfile::tempdir().unwrap();\nlet init = std::process::Command::new(\"git\")\n    .args([\"init\", \"-q\"])\n    .current_dir(dir.path())\n    .status()\n    .unwrap();\nassert!(init.success());\n// a repository with no linked work tree, and a policy that declares no threshold\nlet threshold = Threshold::resolve(None, None).unwrap();\nlet report: UncommittedReport =\n    WorktreeService::open(dir.path()).unwrap().uncommitted(&threshold).unwrap();\nassert_eq!(report.schema, UNCOMMITTED_SCHEMA);\nassert!(report.worktrees.is_empty());\nassert_eq!(report.tallies.measured, 0);\nassert_eq!(report.findings.len(), 1, \"a missing threshold is said, not assumed\");\n```"
+    UncommittedTallies:
+      type: object
+      properties:
+        measured:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Linked work trees whose status was read.
+        uncommitted:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Of those, the ones holding uncommitted work: every entry of the listing."
+        held:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Held by a task, an episode or a process."
+        recent:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Held by nothing, younger than the threshold."
+        abandoned:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Held by nothing, older than the threshold."
+      required:
+        - measured
+        - uncommitted
+        - held
+        - recent
+        - abandoned
+      description: "The counts of an `UncommittedReport`: how many linked work trees were read, how many\nhold uncommitted work, and how those split into held, recent and abandoned. The three\nstandings always add up to `uncommitted`; `doctor` reads `abandoned` to decide whether it\nhas anything to warn about.\n\n```\nuse majordomus_cli::worktree::UncommittedTallies;\nlet wire = serde_json::json!(\n    {\"measured\": 4, \"uncommitted\": 3, \"held\": 1, \"recent\": 1, \"abandoned\": 1}\n);\nlet t: UncommittedTallies = serde_json::from_value(wire.clone()).unwrap();\nassert_eq!(t.held + t.recent + t.abandoned, t.uncommitted);\nassert_eq!(serde_json::to_value(&t).unwrap(), wire, \"the shape doctor's jq reads\");\nassert_eq!(UncommittedTallies::default().abandoned, 0, \"nothing read, nothing abandoned\");\n```"
+    UncommittedWorktree:
+      type: object
+      properties:
+        path:
+          type: string
+          description: "Absolute, as git holds it."
+        branch:
+          type:
+            - string
+            - "null"
+          description: The branch checked out there. Absent when detached.
+        label:
+          type: string
+          description: "The branch, or `detached/<short commit>`."
+        work:
+          "$ref": "#/components/schemas/DirtyState"
+          description: "The counts, as `worktree status` gives them."
+        paths:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Every changed path: staged, unstaged, untracked and conflicted together."
+        oldest_change:
+          type:
+            - string
+            - "null"
+          description: "When the oldest change was made: the earliest modification time among the changed\npaths, the index file's standing in for a path that no longer exists. RFC 3339."
+        age_seconds:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: Seconds since then.
+        age:
+          type:
+            - string
+            - "null"
+          description: "The same, for a person (`3d`, `5h`, `40m`)."
+        task:
+          type:
+            - string
+            - "null"
+          description: The active task recorded there.
+        episodes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/OpenEpisode"
+          description: The episodes open there.
+        process_inside:
+          type:
+            - boolean
+            - "null"
+          description: A process has its working directory inside it. Absent when that could not be read.
+        held_by:
+          type: array
+          items:
+            type: string
+          description: "What holds it, in words; empty when nothing does."
+        standing:
+          "$ref": "#/components/schemas/WorkStanding"
+          description: The verdict.
+        remedy:
+          type: string
+          description: "The command that would put this work on a remote ref. Suggested, never run."
+      required:
+        - path
+        - label
+        - work
+        - paths
+        - episodes
+        - held_by
+        - standing
+        - remedy
+      description: "One linked work tree holding uncommitted work: how much, how old, what holds it, the\nverdict, and the command that would preserve it. A listing is in canonical order —\nabandoned first, then recent, then held, the oldest first inside each.\n\n```\nuse majordomus_cli::worktree::{DirtyState, UncommittedWorktree, WorkStanding};\nlet entry = |path: &str, standing: WorkStanding, age: u64| UncommittedWorktree {\n    path: path.into(),\n    branch: None,\n    label: path.into(),\n    work: DirtyState { staged: 1, ..DirtyState::default() },\n    paths: 1,\n    oldest_change: None,\n    age_seconds: Some(age),\n    age: None,\n    task: None,\n    episodes: Vec::new(),\n    process_inside: None,\n    held_by: Vec::new(),\n    standing,\n    remedy: String::new(),\n};\nlet mut listing = vec![\n    entry(\"/wt/held-old\", WorkStanding::Held, 900_000),\n    entry(\"/wt/young\", WorkStanding::Abandoned, 50_000),\n    entry(\"/wt/older\", WorkStanding::Abandoned, 90_000),\n];\nmajordomus_cli::order::canonical(&mut listing);\nlet paths: Vec<&str> = listing.iter().map(|w| w.path.as_str()).collect();\nassert_eq!(paths, [\"/wt/older\", \"/wt/young\", \"/wt/held-old\"]);\n```"
     UpstreamState:
       type: object
       properties:
@@ -41897,6 +43990,18 @@ components:
           const: published_history
           description: "The capability answers about what this repository has *published*, so its input is a\nrelease: a version tag, the commit it points at, and the projection committed there.\nA benchmark fixture is a repository that has published nothing, and the honest answer\nin one is a refusal — so the case would time an error path and call it coverage.\nDistinct from `WaiverReason::ExternalDependency`: nothing outside this process is\nconsulted, and distinct from `WaiverReason::TransientState`: the history is durable,\nit simply does not exist yet where the benchmark runs."
       description: "Why an executable capability is not benchmarked. Typed, so that a waiver is a\nreviewable statement and never a convenience; `not_executable` is the registry's own\nreason for resources and is never written by hand."
+    WorkStanding:
+      oneOf:
+        - type: string
+          const: held
+          description: "A task, an episode or a process holds it."
+        - type: string
+          const: recent
+          description: "Nothing holds it, and it is younger than the threshold."
+        - type: string
+          const: abandoned
+          description: "Nothing holds it, and it is older than the threshold — or its age cannot be read."
+      description: "What a work tree's uncommitted work is, judged: held by something, recent, or abandoned.\n`judge` is the one place it is decided, and `doctor` warns only on `abandoned`.\n\n```\nuse majordomus_cli::worktree::uncommitted::{judge, WorkStanding};\nlet standing = judge(false, Some(90_000), Some(43_200));\nassert_eq!(standing, WorkStanding::Abandoned);\nassert_eq!(serde_json::to_value(standing).unwrap(), \"abandoned\");\n```"
     WorkflowCatalogue:
       type: object
       properties:
@@ -42203,13 +44308,17 @@ components:
           format: uint64
           minimum: 0
           description: "The event's Lamport stamp."
+        durability:
+          "$ref": "#/components/schemas/Durability"
+          description: "Whether the event reached this machine's disk: `synced`, `memory` (a journal with no\nfile, by configuration), or `not_durable` — held and replicated to peers, not on disk\nhere, and not acknowledged as durable. `unknown` from an executable that predates it."
+          default: unknown
       required:
         - key
         - event
         - lamport
-      description: "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```"
+      description: "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, Durability, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\nassert_eq!(written.durability, Durability::Memory, \"this journal has no file\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```"
 x-majordomus:
-  generator: majordomus-cli 0.23.0
+  generator: majordomus-cli 0.30.2
   infrastructure:
     - id: home
       path: /
@@ -42258,4 +44367,4 @@ x-majordomus:
       code: internal
       reason: The capability failed for a reason of its own; the message names it.
 x-majordomus-generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical Majordomus capability registry; regenerate with `majordomus generate`"
-x-majordomus-generator: majordomus-cli 0.23.0
+x-majordomus-generator: majordomus-cli 0.30.2

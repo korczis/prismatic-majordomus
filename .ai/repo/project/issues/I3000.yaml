@@ -1,0 +1,31 @@
+id: I3000
+milestone: idd-reads-at-a-glance
+title: "The workspace's record texts are drawn as prose"
+slug: the-record-texts-are-drawn-as-prose
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Draw every record text on the workspace (statement, why, criteria, standing sentences, drift) through ui::prose, so code spans, strong words and links render and an id is linked only when the plan holds it; ui/idd.rs's own id linking goes."
+why: "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: texts show raw backticks and markdown; ui::prose already renders them and only milestone.rs uses it."
+serves:
+  - the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance
+current_state: "Raw text and a second id linker."
+desired_state: "One renderer for every record text."
+scope:
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - "apps/majordomus-cli/src/ui/prose.rs"
+  - "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
+  - ".ai/repo/project"
+  - "docs"
+  - "site"
+depends_on: []
+acceptance_criteria:
+  - "A backticked path in a criterion renders as code"
+  - "ui/idd.rs carries no id linker of its own"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --lib ui::"
+  - "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
+evidence_required: []
+created_at: 2026-10-18
+updated_at: 2026-10-18

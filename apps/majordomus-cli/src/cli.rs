@@ -85,6 +85,8 @@ pub enum Command {
     Executions(ExecutionsArgs),
     /// The context a development session should be given, compiled from the repository: for an issue, a milestone, an intent or a set of paths, what is selected and why, what was left out and why, what collapsed into what, and the budget
     Devcontext(DevcontextArgs),
+    /// The edit guard: whether a provider's tool may write a file of this checkout now, judged from the active task's scope and the writing session's live mesh claims
+    Guard(GuardArgs),
     /// The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone
     Mesh(MeshArgs),
     /// Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked
@@ -103,6 +105,8 @@ pub enum Command {
     Intent(IntentArgs),
     /// Whether each product feature exists: on master, deployed, publicly verified, tested, its evidence published and linked — every dimension computed, unknown never a pass
     Delivery(DeliveryArgs),
+    /// How far each issue's work has travelled: none, branch, pr_open, merged, released or deployed, each with the object that proved it; the plan's records are read and moved by the shell tool's `plan`
+    Plan(PlanArgs),
     /// Token economics, measured: matched runs with and without Majordomus, every metric with its measurement class and sample size, the statement the evidence allows, and the check that refuses an unsupported savings claim
     Economics(EconomicsArgs),
     /// Every object of the layer as an addressable node: the kinds and their routes, and one entity with its references, its backlinks, the surfaces that answer for it and the state of what it names
@@ -643,6 +647,67 @@ pub struct ModelsRouteArgs {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus guard`: the edit guard (I2735).
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, GuardArgs, GuardCommand};
+/// use clap::Parser;
+///
+/// let cli = Cli::try_parse_from(["majordomus", "guard", "hook", "--provider", "claude-code"]).unwrap();
+/// let Command::Guard(guard) = cli.command else { panic!("expected `guard`") };
+/// let GuardArgs { command: GuardCommand::Hook(hook) } = guard;
+/// assert_eq!(hook.provider, "claude-code");
+///
+/// // the group has no behaviour of its own
+/// assert!(Cli::try_parse_from(["majordomus", "guard"]).is_err());
+/// ```
+pub struct GuardArgs {
+    #[command(subcommand)]
+    /// `hook`.
+    pub command: GuardCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// The `guard` subcommands: one today, `hook`, which a provider's pre-tool hook runs before
+/// every write; an unknown subcommand is refused rather than read as a path.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, GuardCommand};
+/// use clap::Parser;
+///
+/// let cli = Cli::try_parse_from(["majordomus", "guard", "hook"]).unwrap();
+/// let Command::Guard(guard) = cli.command else { panic!("expected `guard`") };
+/// assert!(matches!(guard.command, GuardCommand::Hook(_)));
+/// assert!(Cli::try_parse_from(["majordomus", "guard", "docs/a.md"]).is_err());
+/// ```
+pub enum GuardCommand {
+    /// Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise
+    Hook(GuardHookArgs),
+}
+
+#[derive(Debug, Args)]
+/// `guard hook`: the provider whose payload stdin carries, and the repository.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, GuardCommand, GuardHookArgs};
+/// use clap::Parser;
+///
+/// let cli = Cli::try_parse_from(["majordomus", "guard", "hook"]).unwrap();
+/// let Command::Guard(guard) = cli.command else { panic!("expected `guard`") };
+/// let GuardCommand::Hook(GuardHookArgs { provider, repo }) = guard.command;
+/// assert_eq!(provider, "claude-code", "the provider whose payload shape is known");
+/// assert_eq!(repo, None);
+/// ```
+pub struct GuardHookArgs {
+    /// The provider whose payload stdin carries; its session id on the mesh is `<provider>-<session_id>`
+    #[arg(long, default_value = "claude-code")]
+    pub provider: String,
+    /// Where a relative path in the payload is resolved from (default: the current directory); the checkout judged is the one the written file belongs to
+    #[arg(long, value_name = "PATH")]
+    pub repo: Option<PathBuf>,
+}
+
+#[derive(Debug, Args)]
 /// `majordomus mesh`.
 pub struct MeshArgs {
     #[command(subcommand)]
@@ -821,6 +886,13 @@ pub struct MeshPeerArgs {
 /// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
 /// let MeshCommand::Events(events) = mesh.command else { panic!("expected `events`") };
 /// assert_eq!((events.after, events.limit), (None, None));
+/// assert!(!events.newest);
+///
+/// // the journal as it stands now: its newest events
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "events", "--newest"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Events(events) = mesh.command else { panic!("expected `events`") };
+/// assert!(events.newest);
 /// ```
 pub struct MeshEventsArgs {
     /// Only events whose Lamport stamp is above this
@@ -829,6 +901,9 @@ pub struct MeshEventsArgs {
     /// At most this many (default 100, at most 1000)
     #[arg(long)]
     pub limit: Option<u64>,
+    /// The newest events instead of the first ones after `--after`
+    #[arg(long)]
+    pub newest: bool,
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
@@ -1773,9 +1848,10 @@ pub enum ReleaseCommand {
     },
     /// The version a landing of HEAD onto the trunk allocates, and why: the trunk's version, the measured movement, the policy floor and any exemption (ADR 0134)
     Next {
-        /// The trunk the landing raises from
-        #[arg(long, value_name = "REF", default_value = "origin/master")]
-        base: String,
+        /// The trunk the landing raises from; when absent, the remote-tracking ref of the trunk
+        /// this repository names
+        #[arg(long, value_name = "REF")]
+        base: Option<String>,
         /// What lands
         #[arg(long, value_name = "REF", default_value = "HEAD")]
         head: String,
@@ -2638,6 +2714,104 @@ pub enum DeliveryCommand {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus plan`, the executable's half: the inferences over the plan that need git and
+/// the forge cache. The records themselves are read and moved by the shell tool's `plan`,
+/// which hands `plan delivery` to this one.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, PlanArgs, PlanCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "plan", "delivery", "I2740", "--at", "HEAD", "--format", "json"])
+///     .unwrap();
+/// let args: PlanArgs = match cli.command {
+///     Command::Plan(args) => args,
+///     other => panic!("expected `plan`, parsed {other:?}"),
+/// };
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// assert!(matches!(
+///     args.command,
+///     PlanCommand::Delivery { issue: Some(ref i), at: Some(ref at) } if i == "I2740" && at == "HEAD"
+/// ));
+/// // the group runs nothing of its own
+/// assert!(Cli::try_parse_from(["majordomus", "plan"]).is_err());
+/// ```
+pub struct PlanArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `delivery`. Required: the group runs nothing of its own.
+    pub command: PlanCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus plan` this executable answers: the command line of
+/// `plan.delivery`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, PlanCommand};
+///
+/// fn parse(args: &[&str]) -> PlanCommand {
+///     let Command::Plan(args) = Cli::try_parse_from(args.iter().copied()).unwrap().command
+///     else { panic!("plan") };
+///     args.command
+/// }
+/// assert!(matches!(parse(&["majordomus", "plan", "delivery"]), PlanCommand::Delivery { issue: None, at: None }));
+/// assert!(matches!(
+///     parse(&["majordomus", "plan", "drift", "--gate", "trunk"]),
+///     PlanCommand::Drift { issue: None, at: None, gate: Some(majordomus_cli::cli::DriftGateArg::Trunk) }
+/// ));
+/// assert!(matches!(
+///     parse(&["majordomus", "plan", "delivery", "I0001"]),
+///     PlanCommand::Delivery { issue: Some(ref i), at: None } if i == "I0001"
+/// ));
+/// ```
+pub enum PlanCommand {
+    /// Every issue's furthest delivery stage, with the object that proved it and its declared status beside it
+    Delivery {
+        /// One issue; default every issue of the plan
+        issue: Option<String>,
+        /// Observe as of this commit: its history and the tree's release records, nothing live (no branch, forge, deployment or clock)
+        #[arg(long, value_name = "REV")]
+        at: Option<String>,
+    },
+    /// Every contradiction between an issue's declared status and its delivery — merged_not_recorded, active_without_work, done_without_trace — each with its proof; with --gate, judged against the window .ai/repo/ci/plan.yaml declares
+    Drift {
+        /// One issue; default every issue of the plan
+        issue: Option<String>,
+        /// Observe as of this commit, as `plan delivery --at` does
+        #[arg(long, value_name = "REV")]
+        at: Option<String>,
+        /// Judge as a gate: on a `head` merged work is pending, on the `trunk` past the window it is refused (exit 10 under blocking enforcement); a missing window exits 12
+        #[arg(long, value_enum, value_name = "TREE")]
+        gate: Option<DriftGateArg>,
+    },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+/// The tree `majordomus plan drift --gate` judges.
+///
+/// ```
+/// use clap::ValueEnum;
+/// use majordomus_cli::cli::DriftGateArg;
+/// assert_eq!(DriftGateArg::from_str("trunk", false), Ok(DriftGateArg::Trunk));
+/// assert!(DriftGateArg::from_str("main", false).is_err(), "only a head or the trunk");
+/// ```
+pub enum DriftGateArg {
+    /// A head: merged work the plan has not recorded is pending
+    Head,
+    /// The trunk: merged work unrecorded past the window is refused
+    Trunk,
+}
+
+#[derive(Debug, Args)]
 /// `majordomus served`: what a deployment serves, observed from outside and judged against
 /// a commit. `ServedArgs` carries the repository the question is asked of, the subcommand
 /// and the output shape.
@@ -3215,6 +3389,18 @@ pub enum ReportCommand {
         #[arg(long, default_value_t = crate::web::report::snapshot::DEFAULT_BUDGET_SECONDS)]
         budget_seconds: u64,
     },
+    /// The Cockpit itself, read once at this commit and written as static pages a
+    /// publication carries at /cockpit (ADR 0147)
+    CockpitSnapshot {
+        /// The most pages to write: every static route first, then the pages the UI's
+        /// snapshot links to, then what those link to
+        #[arg(long, default_value_t = crate::web::report::snapshot::DEFAULT_LIMIT)]
+        limit: usize,
+        /// The most seconds to spend on the pages the static routes link to; the routes
+        /// themselves are written whatever they cost
+        #[arg(long, default_value_t = crate::web::report::snapshot::DEFAULT_BUDGET_SECONDS)]
+        budget_seconds: u64,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -3668,7 +3854,7 @@ pub enum WorktreeCommand {
         /// The branch, full name
         branch: String,
     },
-    /// Create the canonical worktree of a branch, creating the branch from --base (default: the trunk) when it does not exist. The path is derived; none may be given
+    /// Create the canonical worktree of a branch. A branch that does not exist here is fetched from the trunk's remote and taken up when the remote has it; otherwise it is created from --base, else from the remote's trunk fetched now (the local trunk only when the remote cannot be read, and then said, with how far behind). The path is derived; none may be given
     Create {
         /// The branch, full name (`feature/improve-cli`)
         #[arg(value_name = "BRANCH", required_unless_present = "issue")]
@@ -3746,6 +3932,14 @@ pub enum WorktreeCommand {
         #[arg(long)]
         remove: bool,
     },
+    /// Every linked worktree holding uncommitted work: how many paths, how old the oldest change, what holds it (an active task, an open episode, a process inside) and whether it is abandoned, with the command that would put it on a remote ref. Reads every worktree and writes none
+    Uncommitted {
+        /// Judge against this age instead of the policy's session.stranded_after (90s, 30m, 12h, 1d)
+        #[arg(long, value_name = "DURATION")]
+        older_than: Option<String>,
+    },
+    /// How far this checkout and the local trunk are from the remote trunk, as of the last fetch, judged against the policy's checkout.trunk_distance: current, lagging, stale, unjudged or unmeasured, with the commands that bring it current. Fetches nothing; exit 10 when stale
+    Trunk,
     /// Every local branch, one per line, for a shell completion that wants the live set
     Branches {
         /// Only branches with no worktree
@@ -3784,14 +3978,70 @@ pub struct McpArgs {
     #[arg(long, value_name = "HOST")]
     pub http_host: Option<String>,
 
-    /// Port the shared server binds when this process starts it; when it is taken, a free
-    /// port is used instead and the URL is logged on stderr either way
-    #[arg(long, default_value_t = DEFAULT_PORT, value_name = "PORT")]
-    pub http_port: u16,
+    /// Port the shared server binds when this process starts it; without it, the port this
+    /// checkout derives (8741 for the primary checkout). When it is taken, a free port is
+    /// used instead and the URL is logged on stderr either way
+    #[arg(long, value_name = "PORT")]
+    pub http_port: Option<u16>,
 }
 
-/// The default port of the HTTP projection: `serve`, and the shared server `mcp` starts.
+/// The port of the HTTP projection a repository's primary checkout asks for: `serve`, and the
+/// shared server `mcp` starts. A linked worktree asks for one of its own ([`checkout_port`]).
 pub const DEFAULT_PORT: u16 = 8741;
+
+/// The first port a linked worktree may derive, and how many there are: the block right
+/// above [`DEFAULT_PORT`], so a worktree's address reads as a sibling of its repository's.
+const LINKED_PORT_BASE: u16 = DEFAULT_PORT + 1;
+const LINKED_PORT_SPAN: u16 = 999;
+
+/// The port this checkout's server asks for first, the same on every start (I2702).
+///
+/// The primary checkout asks for [`DEFAULT_PORT`]. A linked worktree asks for a port derived
+/// from its own identity ([`crate::repository::identity`]) within the block above it, so
+/// that two checkouts of one repository ask for different ports and neither depends on which
+/// started first. A port that is taken is still replaced by a free one and both are logged
+/// (`http::server::bind_or_fallback`); the derivation decides what is asked, not what is had.
+/// A checkout git cannot describe is treated as primary.
+///
+/// ```
+/// use majordomus_cli::cli::{checkout_port, linked_port, DEFAULT_PORT};
+/// let dir = tempfile::tempdir().unwrap();
+/// // not a git checkout at all: the documented default
+/// assert_eq!(checkout_port(dir.path()), DEFAULT_PORT);
+/// // a linked worktree's port is a function of its identity alone
+/// let a = linked_port("0123456789abcdef0123456789abcdef");
+/// assert_eq!(a, linked_port("0123456789abcdef0123456789abcdef"));
+/// assert_ne!(a, linked_port("fedcba9876543210fedcba9876543210"));
+/// assert!(a > DEFAULT_PORT && a < DEFAULT_PORT + 1000);
+/// ```
+pub fn checkout_port(root: &std::path::Path) -> u16 {
+    match crate::repository::git_identity(root) {
+        Some(git) if git.linked => linked_port(&crate::repository::identity(root)),
+        _ => DEFAULT_PORT,
+    }
+}
+
+/// The port a linked worktree with this identity asks for: the identity's leading 32 bits,
+/// reduced into the block above [`DEFAULT_PORT`].
+///
+/// ```
+/// use majordomus_cli::cli::{linked_port, DEFAULT_PORT};
+/// // the leading 32 bits choose the port: the rest of the identity does not move it
+/// assert_eq!(linked_port("00000001"), DEFAULT_PORT + 2);
+/// assert_eq!(linked_port("00000001ffffffff"), DEFAULT_PORT + 2);
+/// // the block wraps rather than leaving it
+/// assert!(linked_port("ffffffff") < DEFAULT_PORT + 1000);
+/// // an identity with no leading hexadecimal word asks for the block's first port
+/// assert_eq!(linked_port("not-hex"), DEFAULT_PORT + 1);
+/// ```
+pub fn linked_port(identity: &str) -> u16 {
+    let lead = identity
+        .get(..8)
+        .and_then(|h| u32::from_str_radix(h, 16).ok())
+        .unwrap_or(0);
+    // the remainder is below LINKED_PORT_SPAN, which fits a u16
+    LINKED_PORT_BASE + u16::try_from(lead % u32::from(LINKED_PORT_SPAN)).unwrap_or(0)
+}
 
 /// The interface a local server binds when nothing says otherwise.
 pub const LOOPBACK_HOST: &str = "127.0.0.1";
@@ -3821,6 +4071,9 @@ pub enum HostOrigin {
     Environment,
     /// Neither: [`LOOPBACK_HOST`].
     Default,
+    /// [`HTTP_HOST_ENV`] named one, and the checkout is a linked worktree, which does not
+    /// take it: [`LOOPBACK_HOST`] ([`checkout_http_host`]).
+    LinkedWorktree,
 }
 
 /// The interface a local server binds: the flag when one was given, else what
@@ -3879,6 +4132,75 @@ pub fn local_http_host(flag: Option<&str>) -> (String, HostOrigin) {
     (host, origin)
 }
 
+/// The machine's interface for one checkout: a linked worktree does not take the one
+/// [`HTTP_HOST_ENV`] names. The variable is the machine's face on its network, and that
+/// face is the repository's primary server — the one other machines dial and whose mesh
+/// the worktrees cooperate through; a worktree's own server serves its own sessions, and
+/// a variable inherited by every shell would otherwise put each of them on the network
+/// beside it. A flag still binds where it says, because a person typed it.
+///
+/// ```
+/// use majordomus_cli::cli::{checkout_http_host, HostOrigin};
+/// // a directory that is not a linked worktree reads the machine's resolution unchanged
+/// let plain = tempfile::tempdir().unwrap();
+/// assert_eq!(
+///     checkout_http_host(Some("10.0.0.1"), plain.path()),
+///     ("10.0.0.1".to_string(), HostOrigin::Flag)
+/// );
+/// ```
+pub fn checkout_http_host(flag: Option<&str>, root: &std::path::Path) -> (String, HostOrigin) {
+    let environment = std::env::var(HTTP_HOST_ENV).ok();
+    let linked = crate::repository::git_identity(root).is_some_and(|g| g.linked);
+    let (host, origin) = resolve_checkout_http_host(flag, environment.as_deref(), linked);
+    match origin {
+        HostOrigin::Environment => tracing::info!(
+            host = %host,
+            "binding {host}: {HTTP_HOST_ENV} names it for this machine"
+        ),
+        HostOrigin::LinkedWorktree => tracing::info!(
+            "binding {LOOPBACK_HOST}: {HTTP_HOST_ENV} names the machine's interface, and a \
+             linked worktree leaves it to the primary checkout's server (--host binds one)"
+        ),
+        _ => {}
+    }
+    (host, origin)
+}
+
+/// [`resolve_http_host`] for a checkout that is, or is not, a linked worktree: an
+/// environment's interface becomes loopback in a linked worktree; a flag never changes.
+///
+/// ```
+/// use majordomus_cli::cli::{resolve_checkout_http_host, HostOrigin};
+/// assert_eq!(
+///     resolve_checkout_http_host(None, Some("0.0.0.0"), true),
+///     ("127.0.0.1".to_string(), HostOrigin::LinkedWorktree)
+/// );
+/// assert_eq!(
+///     resolve_checkout_http_host(None, Some("0.0.0.0"), false),
+///     ("0.0.0.0".to_string(), HostOrigin::Environment)
+/// );
+/// assert_eq!(
+///     resolve_checkout_http_host(Some("0.0.0.0"), None, true),
+///     ("0.0.0.0".to_string(), HostOrigin::Flag)
+/// );
+/// assert_eq!(
+///     resolve_checkout_http_host(None, None, true),
+///     ("127.0.0.1".to_string(), HostOrigin::Default)
+/// );
+/// ```
+pub fn resolve_checkout_http_host(
+    flag: Option<&str>,
+    environment: Option<&str>,
+    linked: bool,
+) -> (String, HostOrigin) {
+    match resolve_http_host(flag, environment) {
+        (_, HostOrigin::Environment) if linked => {
+            (LOOPBACK_HOST.to_string(), HostOrigin::LinkedWorktree)
+        }
+        resolved => resolved,
+    }
+}
+
 #[derive(Debug, Args)]
 /// `majordomus serve`.
 pub struct ServeArgs {
@@ -3895,9 +4217,10 @@ pub struct ServeArgs {
     #[arg(long, value_name = "HOST")]
     pub host: Option<String>,
 
-    /// Port to bind; 0 picks a free one and the address is logged on stderr
-    #[arg(long, default_value_t = DEFAULT_PORT)]
-    pub port: u16,
+    /// Port to bind; without it, the port this checkout derives (8741 for the primary
+    /// checkout); 0 picks a free one and the address is logged on stderr
+    #[arg(long)]
+    pub port: Option<u16>,
 
     /// When the port is taken, bind a free one instead and log both; without this a taken port is an error
     #[arg(long)]
@@ -3916,7 +4239,9 @@ pub struct ServeArgs {
 
 /// How long a server started by `serve ensure` outlives its last peer, in seconds: long
 /// enough that an agent's next attach finds it, short enough that a checkout nobody works
-/// in does not keep a process.
+/// in does not keep a process. The default of `server.idle_seconds:` in
+/// `.ai/repo/policy.yaml`, which a repository may declare beside the other server timings
+/// (`lease::Timings::idle`); `--idle` on the command line overrides both (I2701).
 pub const DEFAULT_IDLE_SECONDS: u64 = 900;
 
 #[derive(Debug, Subcommand)]
@@ -3928,16 +4253,19 @@ pub const DEFAULT_IDLE_SECONDS: u64 = 900;
 /// ```
 /// use clap::Parser;
 /// use majordomus_cli::capability::builtin::Checkouts;
-/// use majordomus_cli::cli::{Cli, Command, ServeCommand, DEFAULT_IDLE_SECONDS};
+/// use majordomus_cli::cli::{Cli, Command, ServeCommand};
 ///
 /// let cli = Cli::try_parse_from(["majordomus", "serve", "ensure", "--idle", "5"]).unwrap();
 /// let Command::Serve(args) = cli.command else { panic!("serve") };
-/// assert!(matches!(args.command, Some(ServeCommand::Ensure { idle: 5, .. })));
+/// assert!(matches!(args.command, Some(ServeCommand::Ensure { idle: Some(5), .. })));
 ///
-/// // without a subcommand, `serve` serves; the defaults are the documented ones
+/// // without `--idle`, `ensure` names no idle life: the declared `server.idle_seconds:`
+/// // decides, and `DEFAULT_IDLE_SECONDS` when nothing is declared (I2701)
 /// let cli = Cli::try_parse_from(["majordomus", "serve", "ensure"]).unwrap();
 /// let Command::Serve(args) = cli.command else { panic!("serve") };
-/// assert!(matches!(args.command, Some(ServeCommand::Ensure { idle, .. }) if idle == DEFAULT_IDLE_SECONDS));
+/// assert!(matches!(args.command, Some(ServeCommand::Ensure { idle: None, .. })));
+///
+/// // without a subcommand, `serve` serves; the defaults are the documented ones
 /// let cli = Cli::try_parse_from(["majordomus", "serve"]).unwrap();
 /// let Command::Serve(args) = cli.command else { panic!("serve") };
 /// assert!(args.command.is_none() && args.idle == 0 && !args.fallback);
@@ -3964,12 +4292,14 @@ pub enum ServeCommand {
     },
     /// Make sure a ready server serves this checkout: start one when there is none or the lease is stale, wait for one that is starting, and report where it stands
     Ensure {
-        /// The port the started server asks for first; a taken one is replaced by a free one
-        #[arg(long, default_value_t = DEFAULT_PORT)]
-        port: u16,
-        /// The started server stops when no peer has been attached for this many seconds
-        #[arg(long, value_name = "SECONDS", default_value_t = DEFAULT_IDLE_SECONDS)]
-        idle: u64,
+        /// The port the started server asks for first, without it the one this checkout
+        /// derives (8741 for the primary checkout); a taken one is replaced by a free one
+        #[arg(long)]
+        port: Option<u16>,
+        /// The started server stops when no peer has been attached for this many seconds;
+        /// without it, the policy's declared `server.idle_seconds`, 900 when none is declared
+        #[arg(long, value_name = "SECONDS")]
+        idle: Option<u64>,
         /// How long to wait for a server to become ready before reporting what stands
         #[arg(long, value_name = "SECONDS", default_value_t = 20)]
         wait: u64,
@@ -4983,6 +5313,48 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "plan delivery",
+        examples: &[
+            ExampleDoc {
+                id: "plan-delivery-json",
+                title: "How far every issue's work has travelled",
+                description: "The same answer `GET /api/v1/plan/delivery` and the MCP tool `majordomus_plan_delivery` return: every issue with its declared status and the furthest stage proved — none, branch, pr_open, merged, released, deployed — each stage with the branch, pull request, merge commit, tag or `latest.json` that proved it. A checkout that never observed the forge says the forge is unread, and an issue it could have moved further is not settled.",
+                argv: &["plan", "delivery", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/observed/commit", "/tallies/none", "/issues/0/stage", "/sources"]),
+            },
+            ExampleDoc {
+                id: "plan-delivery-at",
+                title: "One issue, as of a commit",
+                description: "`--at` reads the merges in that commit's history and the tree's release records, and nothing live — no branch, no forge, no deployment, no clock — so it proves only merged and released and the answer is a function of the commit alone. That is what `scripts/generate-site-data` writes to `site/data/generated/delivery.json` and reproduces under `--check`.",
+                argv: &["plan", "delivery", "I0001", "--at", "HEAD"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["I0001", "none", "unread"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "plan drift",
+        examples: &[
+            ExampleDoc {
+                id: "plan-drift-json",
+                title: "Where the plan's stamps contradict the delivered work",
+                description: "The same answer `GET /api/v1/plan/drift` and the MCP tool `majordomus_plan_drift` return: every merged_not_recorded, active_without_work and done_without_trace finding with the pull request, merge commit and release that prove it, its age against the window `.ai/repo/ci/plan.yaml` declares, and the command that settles it.",
+                argv: &["plan", "drift", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/observed/commit", "/window/model", "/tallies/merged_not_recorded", "/verdict"]),
+            },
+            ExampleDoc {
+                id: "plan-drift-at",
+                title: "As of a commit",
+                description: "`--at` reads that commit's history and the tree's records only, as `plan delivery --at` does, so the open pull requests are unread and a finding says it is not settled. `--gate head|trunk` judges the answer as `scripts/ci/plan-drift-check` does: on a head merged work the plan has not recorded is pending; on the trunk one merged longer than the window ago is refused, naming `majordomus plan verify|done <id>`, and a missing window refuses with exit 12.",
+                argv: &["plan", "drift", "--at", "HEAD"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["plan drift", "window"]),
+            },
+        ],
+    },
+    CommandExamples {
         command: "entity kinds",
         examples: &[ExampleDoc {
             id: "entity-kinds-json",
@@ -5659,6 +6031,28 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "worktree uncommitted",
+        examples: &[ExampleDoc {
+            id: "worktree-uncommitted-none",
+            title: "Work no commit carries, and whether anything holds it",
+            description: "Every linked worktree holding staged, unstaged, untracked or conflicted paths, with the count, the age of the oldest change, the task, episode or process that holds it, and `abandoned` when nothing does and it is older than the policy's session.stranded_after. A repository with no linked worktree has nothing to list; the reading writes nothing either way.",
+            argv: &["worktree", "uncommitted"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["0 with uncommitted work", "nothing was changed"]),
+        }],
+    },
+    CommandExamples {
+        command: "worktree trunk",
+        examples: &[ExampleDoc {
+            id: "worktree-trunk-unmeasured",
+            title: "How far this checkout is from the remote trunk",
+            description: "The checkout's HEAD and the local trunk counted against the remote-tracking trunk, as of the last fetch, and judged against the policy's checkout.trunk_distance. A repository with no remote has nothing to be measured against and says so — `unmeasured`, never `current`; nothing is fetched either way.",
+            argv: &["worktree", "trunk"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["unmeasured", "no remote-tracking branch"]),
+        }],
+    },
+    CommandExamples {
         command: "worktree branches",
         examples: &[ExampleDoc {
             id: "worktree-branches-list",
@@ -5908,6 +6302,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["web", "report", "ui-snapshot", "--limit", "20"],
             setup: &[],
             expect: Expect::StdoutContains(&["web report", "ui-snapshot"]),
+        }],
+    },
+    CommandExamples {
+        command: "web report cockpit-snapshot",
+        examples: &[ExampleDoc {
+            id: "web-report-cockpit-snapshot",
+            title: "Read the Cockpit once and write it as the pages a publication carries at /cockpit",
+            description: "Asks the Cockpit in-process for every static route except the one page about this machine, then for the pages the UI's snapshot links to, then, one page per family in turn until `--limit` pages or `--budget-seconds` are reached, for the pages those link to, and writes each as a file under target/web/cockpit-snapshot. Links between them are relative; a link into the UI leads to the UI's snapshot when that holds the page; a form, a query or a page past the bound leads to the snapshot's page about the live Cockpit; no page carries a script, because the Cockpit's scripts talk to a process; and every page is stamped with the commit, the time and the executable that read it.",
+            argv: &["web", "report", "cockpit-snapshot", "--limit", "12"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["web report", "cockpit-snapshot"]),
         }],
     },
     CommandExamples {
@@ -6804,6 +7209,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["offload", "derive", "."],
             setup: &[],
             expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "guard hook",
+        examples: &[ExampleDoc {
+            id: "guard-hook",
+            title: "Judge the edit a provider's pre-tool payload names",
+            description: "What a provider's pre-tool hook runs before an edit: the payload arrives on stdin, and the command exits 2 with the reason and the remedy when no claim covers the path it names, 0 otherwise. Here stdin is empty, so it names no path, and the command lets the tool run.",
+            argv: &["guard", "hook", "--provider", "claude-code"],
+            setup: &[],
+            expect: Expect::Success,
         }],
     },
     CommandExamples {

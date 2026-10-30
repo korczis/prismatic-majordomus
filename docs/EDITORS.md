@@ -9,7 +9,9 @@ the code is `apps/majordomus-cli/src/editors/`.
 | source | projection | read by |
 |---|---|---|
 | `.ai/repo/skills/<id>/SKILL.md` | `.agents/skills/<id>/SKILL.md` | Zed and Antigravity |
+| `.ai/repo/skills/<id>/SKILL.md` | `.claude/skills/<id>/SKILL.md` | Claude Code |
 | a capability that declares `.skill(alias, argument)` | `.claude/skills/<alias>/SKILL.md` | Claude Code |
+| every module of the registry with a public MCP tool | `.claude/skills/mj-<module>/SKILL.md` | Claude Code |
 | `justfile`, `.just/*.just` | `.zed/tasks.json` | Zed |
 | `.ai/repo/policy.yaml` | `AGENTS.md` (`generate providers`) | both |
 
@@ -29,7 +31,13 @@ the justfile, or a capability that declares a skill appears in the projection at
 
 - **Skills.** One `SKILL.md` per active skill with the `name` and `description` both products
   require, the generated-file banner after the front matter, and a link to the definition. The
-  procedure is never copied: the agent is sent to the canonical file.
+  procedure is never copied: the agent is sent to the canonical file. It is written twice,
+  because the products look in two places: under `.agents/skills/` for Zed and Antigravity and
+  under `.claude/skills/` for Claude Code, which reads no other directory, so that `/<id>`
+  there reaches the layer's definition and not a command of the same name a person keeps in
+  their own settings. The two files differ in the directory they name and in nothing else. A
+  skill whose name a capability's command already has is written once, as the command, and
+  the pair is a finding.
 - **Commands.** One `SKILL.md` per capability whose declaration says `.skill(alias, argument)`,
   so that `/<alias> <text>` in Claude Code calls that capability once with the text in the
   named input field, verbatim. The file names the capability, its MCP tool and its command
@@ -39,7 +47,16 @@ the justfile, or a capability that declares a skill appears in the projection at
   another way. The registry refuses an alias that is malformed, reserved by an agent product
   or taken, and an argument that is not a string field of the input or leaves another field
   required. Today: `/intent`, which is `intents.propose`. Every other capability is reached by
-  its MCP tool and needs no file.
+  its MCP tool, and is listed in its domain's skill.
+- **Domains.** One `SKILL.md` per module of the capability registry that offers a public
+  capability with an MCP tool ([ADR 165](../.ai/repo/adrs/0165-a-skill-is-derived-for-every-domain-of-the-registry.md)),
+  named `mj-<module>` with underscores as hyphens. Its description is the module and its
+  capabilities' own titles, cut at a word to 300 characters; its body is a table of those
+  capabilities with their MCP tool, command line and effect. The model may load it on its own,
+  because loading it changes nothing; a capability marked *changes* runs only when the person
+  asked for that change. A domain whose name a command or a workflow skill has is not written.
+  The site's skills section (`/skills/`) and the UI's Skills screen (`/ui/skills`) list every
+  Claude Code skill from the same projection; the rule is `project.every-domain-is-a-skill`.
 - **Tasks.** Every public recipe of the tracked justfile that has no `[confirm]` and needs no
   argument, as `just <recipe>` from the project root, tagged with its group, in the order the
   justfile declares its groups. The local command-graph bridge the justfile also imports is
@@ -76,6 +93,6 @@ which Antigravity discards.
 
 ## Updating an adapter
 
-Each adapter module (`editors/zed.rs`, `editors/antigravity.rs`) names the release its claims
+Each adapter module (`editors/zed.rs`, `editors/antigravity.rs`, `editors/claude.rs`) names the release its claims
 were verified against and the sources. When a product changes a format, change its module,
 bump `editors::PROJECTION_VERSION` if the bytes change, and regenerate.

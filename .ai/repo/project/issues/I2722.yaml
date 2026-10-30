@@ -1,0 +1,34 @@
+id: I2722
+milestone: safe-self-update
+title: "A hub activates a new version under its service manager, checks its health and rolls back by itself"
+slug: a-hub-activates-and-rolls-back
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Make a hub that has installed a newer release restart onto it through its systemd user unit or launchd agent when no session is attached or after a bounded grace, pass a readiness and mesh verify check, and otherwise rename the launcher back, keep serving the previous version and put a rollout failed entry on the board."
+why: "ADR 0161. Hubs run unattended (docs/MESH.md, The hubs as services); the launchd agent is the operator's to install and an installer that writes either unit is owed as a typed capability (ADR 0059)."
+current_state: "Updating a hub is a fetch, a build and a service restart by hand; the macOS hub is started by hand."
+desired_state: "A typed capability writes the hub's systemd user unit or launchd agent from the mesh declaration; after self update installs a newer version the hub restarts onto it under the rules above; the previous versioned tree is kept until the health check passes; a failed version is not retried on that node until a newer one is published."
+scope:
+  - "apps/majordomus-cli/src/mesh"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/lease.rs"
+  - "share/install"
+  - "docs/MESH.md"
+  - "test/cases"
+non_scope:
+  - "Checkout servers' hand-off, which I2163 and I2127 carry"
+depends_on:
+  - "I2720"
+acceptance_criteria:
+  - "A hub with a newer installed version ends serving it, with no session lost that was attached before the grace"
+  - "A version whose readiness or mesh verify fails is rolled back within the grace and the board names node, version and failed check"
+  - "The hub service unit is written by a capability, not by hand"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "hub_activates_new_version_test"
+  - "hub_rolls_back_failed_version_test"
+created_at: 2026-10-14
+updated_at: 2026-10-14

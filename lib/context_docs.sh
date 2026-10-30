@@ -459,12 +459,24 @@ mj_ctxd_cycles() {
 # one and not to the other: it is read as a file in its parent, as an existing file is,
 # unless it is written with a trailing slash. MJ_CTXD_TARGET_NEW says it was not there.
 MJ_CTXD_TARGET=""; MJ_CTXD_TARGET_DIR=""; MJ_CTXD_TARGET_NEW=0
-mj_ctxd_target() {
-  local p="$1" real root near
+# mj_ctxd_judge PATH: the same judgement without the exit. MJ_CTXD_REFUSAL is empty when the
+# path is a target, and the reason (`refused-path ...`) when it is not; MJ_CTXD_JUDGED is the
+# normalised path and MJ_CTXD_TARGET_NEW whether it does not exist yet. `start` asks it of
+# every scope entry before recording one, and `context` of every recorded entry before
+# resolving it, so that a path refused here is refused once, in one wording (I2760).
+MJ_CTXD_REFUSAL=""; MJ_CTXD_JUDGED=""
+mj_ctxd_judge() {
+  local p="$1" norm real root near
+  MJ_CTXD_REFUSAL=""; MJ_CTXD_JUDGED=""; MJ_CTXD_TARGET_NEW=0
   case "$p" in "$MJ_ROOT"|"$MJ_ROOT"/*) p="${p#"$MJ_ROOT"}"; p="${p#/}" ;; esac
   [ -n "$p" ] || p="."
-  if [ "$p" != "." ] && ! p="$(mj_norm_path "$p")"; then mj_die "$MJ_EX_REFUSED" "context: refused-path '$1' (absolute, or leaves the repository)"; fi
-  MJ_CTXD_TARGET_NEW=0
+  if [ "$p" != "." ]; then
+    # not into `p`: the helper's own local of that name would take the value
+    mj_norm_path_into norm "$p" || {
+      MJ_CTXD_REFUSAL="refused-path '$1' (absolute, or leaves the repository)"; return 1
+    }
+    p="$norm"
+  fi
   near="$p"
   while [ "$near" != "." ] && [ ! -e "$MJ_ROOT/$near" ] && [ ! -L "$MJ_ROOT/$near" ]; do
     MJ_CTXD_TARGET_NEW=1
@@ -472,7 +484,16 @@ mj_ctxd_target() {
   done
   real="$(cd "$MJ_ROOT/$near" 2>/dev/null && pwd -P || (cd "$(dirname "$MJ_ROOT/$near")" && pwd -P))"
   root="$(cd "$MJ_ROOT" && pwd -P)"
-  case "$real" in "$root"|"$root"/*) ;; *) mj_die "$MJ_EX_REFUSED" "context: refused-path '$p' resolves outside the repository ($real)" ;; esac
+  case "$real" in "$root"|"$root"/*) ;; *)
+    MJ_CTXD_REFUSAL="refused-path '$p' resolves outside the repository ($real)"; return 1 ;;
+  esac
+  MJ_CTXD_JUDGED="$p"
+  return 0
+}
+mj_ctxd_target() {
+  local p
+  mj_ctxd_judge "$1" || mj_die "$MJ_EX_REFUSED" "context: $MJ_CTXD_REFUSAL"
+  p="$MJ_CTXD_JUDGED"
   MJ_CTXD_TARGET="$p"
   if [ -d "$MJ_ROOT/$p" ] || { [ "$MJ_CTXD_TARGET_NEW" = 1 ] && case "$1" in */) true ;; *) false ;; esac; }; then MJ_CTXD_TARGET_DIR="$p"
   else MJ_CTXD_TARGET_DIR="${p%/*}"; [ "$MJ_CTXD_TARGET_DIR" != "$p" ] || MJ_CTXD_TARGET_DIR="."; fi
@@ -508,9 +529,13 @@ mj_ctxd_resolve() {
     else
       [ "$dir" = "$tree" ] && [ "$scope" = subtree ] && reason="the tree root; the target is outside $tree/"
       if [ -z "$reason" ]; then
+        # A directory target takes the documents of the files it holds, but the repository
+        # root is not such a directory: since `.` contains every path (case 3190), it would
+        # take every document that tracks anything, and its chain is the layer's alone (case 69).
         for p in $(mj_ctxd_list "$i" tracks); do
           for v in $(mj_git ls-files -- "$p" 2>/dev/null); do
-            if mj_path_contains "$MJ_CTXD_TARGET" "$v" || mj_path_contains "$v" "$MJ_CTXD_TARGET"; then reason="tracks $p"; break; fi
+            if { [ "$MJ_CTXD_TARGET" != . ] && mj_path_contains "$MJ_CTXD_TARGET" "$v"; } \
+              || mj_path_contains "$v" "$MJ_CTXD_TARGET"; then reason="tracks $p"; break; fi
           done
           [ -n "$reason" ] && break
         done

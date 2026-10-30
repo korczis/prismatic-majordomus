@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.23.0 -->
+     Generator: majordomus-cli 0.30.2 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 196 | 166 | 0 | 30 |
-| http | 191 | 166 | 0 | 25 |
-| mcp | 187 | 162 | 0 | 25 |
+| direct | 206 | 175 | 0 | 31 |
+| http | 201 | 175 | 0 | 26 |
+| mcp | 196 | 171 | 0 | 25 |
 | system | 14 | 14 | 0 | 0 |
-| total | 588 | 508 | 0 | 80 |
+| total | 617 | 535 | 0 | 82 |
 
 ## Capabilities
 
@@ -86,11 +86,13 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `executions.get` | executions | query | — | waived | waived | waived | — |
 | `executions.list` | executions | query | — | covered | covered | covered | `recent` |
 | `executions.protocol` | executions | query | — | covered | covered | covered | `default` |
+| `executions.report` | executions | command | — | waived | — | waived | — |
 | `executions.start` | executions | command | — | covered | covered | covered | `demonstrate` |
 | `gates.completion` | gates | query | — | covered | covered | covered | `this-task`, `one-source-file`, `a-document`, `everything-on-demand` |
 | `gates.model` | gates | query | process, 4 entries, 5s | covered | covered | covered | `default` |
 | `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases`, `why`, `product`, `composed` |
 | `graph.list` | graph | query | — | covered | covered | covered | `default` |
+| `guard.edit` | guard | query | — | covered | covered | covered | `in-repository`, `outside` |
 | `health.live` | health | query | — | covered | — | covered | `default` |
 | `health.ready` | health | query | — | covered | — | covered | `default` |
 | `health.report` | health | query | process, 4 entries, 5s | covered | covered | covered | `default` |
@@ -152,11 +154,17 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `objects.verify` | objects | query | — | covered | covered | covered | `bounded` |
 | `obligations.closure` | obligations | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `obligations.vocabulary` | obligations | query | process, 2 entries | covered | covered | covered | `default` |
+| `observatory.capture` | observatory | query | — | covered | covered | covered | `default` |
+| `observatory.events` | observatory | query | — | covered | covered | covered | `newest`, `after a cursor` |
+| `observatory.replay` | observatory | query | — | covered | covered | covered | `default` |
 | `pack.plan` | pack | query | — | covered | covered | covered | `default-profile`, `chatgpt` |
 | `pack.verify` | pack | query | — | covered | covered | covered | `absent` |
 | `peers.announce` | peers | command | — | covered | covered | covered | `default` |
 | `peers.list` | peers | query | — | covered | covered | covered | `default` |
 | `perf.counters` | perf | query | — | covered | covered | covered | `default` |
+| `plan.delivery` | plan | query | — | covered | covered | covered | `every-issue`, `one-issue-at-head` |
+| `plan.drift` | plan | query | — | covered | covered | covered | `every-issue`, `one-issue-at-head-as-trunk-gate` |
+| `plan.flight` | plan | query | — | covered | covered | covered | `where-the-work-is`, `one-milestone-inspected` |
 | `plan.issues` | plan | query | process, 16 entries, per generation | covered | covered | covered | `all`, `ready`, `one-milestone` |
 | `plan.model` | plan | query | — | covered | covered | covered | `default` |
 | `plan.next` | plan | query | process, 16 entries, per generation | covered | covered | covered | `whole-plan`, `one-milestone` |
@@ -215,6 +223,8 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `worktree.migration_plan` | worktree | query | — | covered | covered | covered | `default` |
 | `worktree.status` | worktree | query | — | covered | covered | covered | `default`, `primary-checkout` |
 | `worktree.topology` | worktree | query | — | covered | covered | covered | `default` |
+| `worktree.trunk` | worktree | query | — | covered | covered | covered | `default`, `primary-checkout` |
+| `worktree.uncommitted` | worktree | query | — | covered | covered | covered | `policy-threshold`, `one-hour` |
 
 ## System targets
 
@@ -243,32 +253,41 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 |---|---|---|---|
 | `system.http.ui.index` | `/ui` | pinned | — |
 | `system.http.ui.command` | `/ui/command` | pinned | — |
+| `system.http.ui.idd` | `/ui/idd` | pinned | — |
 | `system.http.ui.roadmap` | `/ui/roadmap` | pinned | — |
 | `system.http.ui.work` | `/ui/work` | pinned | — |
 | `system.http.ui.issues` | `/ui/issues` | pinned | — |
 | `system.http.ui.prs` | `/ui/prs` | pinned | — |
 | `system.http.ui.capabilities` | `/ui/capabilities` | pinned | — |
+| `system.http.ui.skills` | `/ui/skills` | pinned | — |
 | `system.http.ui.mesh` | `/ui/mesh` | pinned | — |
 | `system.http.ui.delivery` | `/ui/delivery` | pinned | — |
 | `system.http.ui.deployments` | `/ui/deployments` | pinned | — |
 | `system.http.ui.evidence` | `/ui/evidence` | pinned | — |
+| `system.http.ui.knowledge` | `/ui/knowledge` | pinned | — |
 | `system.http.ui.docs` | `/ui/docs` | pinned | — |
 | `system.http.ui.governance` | `/ui/governance` | pinned | — |
+| `system.http.ui.observatory` | `/ui/observatory` | pinned | — |
 | `system.http.live.ui.index` | `/ui` | live | — |
 | `system.http.live.ui.command` | `/ui/command` | live | — |
+| `system.http.live.ui.idd` | `/ui/idd` | live | — |
 | `system.http.live.ui.roadmap` | `/ui/roadmap` | live | — |
 | `system.http.live.ui.work` | `/ui/work` | live | — |
 | `system.http.live.ui.issues` | `/ui/issues` | live | — |
 | `system.http.live.ui.prs` | `/ui/prs` | live | — |
 | `system.http.live.ui.capabilities` | `/ui/capabilities` | live | — |
+| `system.http.live.ui.skills` | `/ui/skills` | live | — |
 | `system.http.live.ui.mesh` | `/ui/mesh` | live | — |
 | `system.http.live.ui.delivery` | `/ui/delivery` | live | — |
 | `system.http.live.ui.deployments` | `/ui/deployments` | live | — |
 | `system.http.live.ui.evidence` | `/ui/evidence` | live | — |
+| `system.http.live.ui.knowledge` | `/ui/knowledge` | live | — |
 | `system.http.live.ui.docs` | `/ui/docs` | live | — |
 | `system.http.live.ui.governance` | `/ui/governance` | live | — |
+| `system.http.live.ui.observatory` | `/ui/observatory` | live | — |
 | `system.http.ui.panels.pull_requests` | `/ui/panels/pull-requests` | pinned | yes |
 | `system.http.ui.panels.delivery` | `/ui/panels/delivery` | pinned | yes |
 | `system.http.ui.panels.drain` | `/ui/panels/drain` | pinned | yes |
+| `system.http.ui.panels.standing` | `/ui/panels/standing` | pinned | yes |
 
 Cache modes: a cached capability is measured cold (the cache cleared before every sample) and warm (the same input repeated); the direct transport reports the handler invocations of each. Evidence: `.ai/local/benchmarks/` for local runs, `.ai/repo/benchmarks/rust/` for the accepted baselines and the regression policy.

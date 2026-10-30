@@ -610,6 +610,7 @@ fn doc(results: Vec<(&str, CacheMode, f64)>, fingerprint: &str) -> ResultDocumen
             version: "0".into(),
             registry_fingerprint: fingerprint.into(),
             host: "testhost/1".into(),
+            load: "0.50".into(),
         },
         results: results
             .into_iter()
@@ -624,6 +625,80 @@ fn doc(results: Vec<(&str, CacheMode, f64)>, fingerprint: &str) -> ResultDocumen
             })
             .collect(),
     }
+}
+
+/// I2068: on 2026-10-08 one cold sample read 9 -> 23 ms on a saturated runner and failed a
+/// change that ran none of the measured code. One sample over a threshold is a `WARN` that
+/// names its sample count and does not fail; two agreeing samples are a `FAIL`, as before;
+/// and the report names the runner and the load average every verdict was measured under.
+#[test]
+fn a_single_cold_sample_is_a_warning_and_two_are_a_verdict() {
+    let policy = Policy::default();
+    let base = doc(vec![("v|cold", CacheMode::Cold, 9000.0)], "fp1");
+    let with_samples = |ms: &[u64]| {
+        let mut run = doc(vec![("v|cold", CacheMode::Cold, 0.0)], "fp1");
+        run.results[0].stats = Statistics::of(
+            &ms.iter()
+                .map(|m| Duration::from_millis(*m))
+                .collect::<Vec<_>>(),
+        );
+        run
+    };
+    let p50 = |check: &Check| {
+        check
+            .lines
+            .iter()
+            .find(|l| l.metric == "p50")
+            .cloned()
+            .unwrap()
+    };
+
+    // one cold sample, +155% over a 25% allowance: reported, not a regression
+    let check = Check::compare(&with_samples(&[23]), Some(&base), &policy);
+    let line = p50(&check);
+    assert_eq!(line.verdict, "WARN", "{line:?}");
+    assert_eq!((line.agreeing, line.samples), (1, 1), "{line:?}");
+    assert!(!check.failed(), "one sample must not fail the run");
+    let text = check.render();
+    assert!(text.contains("  WARN") && text.contains("1/1"), "{text}");
+    assert!(
+        text.contains("not a regression until they agree"),
+        "the warning says what to do: {text}"
+    );
+    assert!(
+        text.contains("within policy (runner testhost/1, load 0.50; baseline recorded on testhost/1, load 0.50)"),
+        "the verdict names the runner and its load: {text}"
+    );
+
+    // two samples, both over: the regression stands, as it did before
+    let check = Check::compare(&with_samples(&[23, 22]), Some(&base), &policy);
+    let line = p50(&check);
+    assert_eq!(line.verdict, "FAIL", "{line:?}");
+    assert_eq!((line.agreeing, line.samples), (2, 2), "{line:?}");
+    assert!(check.failed());
+    assert!(check
+        .render()
+        .contains("regression(s) found (runner testhost/1, load 0.50;"));
+
+    // five samples, one slow: the median is not moved, and the one slow sample cannot fail
+    // the p99 it alone decides even where a policy gates p99 on five samples
+    let mut strict = policy.clone();
+    strict.regression.insert(
+        "p99".into(),
+        Threshold {
+            relative: 0.5,
+            minimum_samples: 0,
+        },
+    );
+    let check = Check::compare(&with_samples(&[9, 9, 9, 9, 23]), Some(&base), &strict);
+    let median = p50(&check);
+    assert!(
+        matches!(median.verdict.as_str(), "PASS" | "NOISE"),
+        "{median:?}"
+    );
+    let p99 = check.lines.iter().find(|l| l.metric == "p99").unwrap();
+    assert_eq!(p99.verdict, "WARN", "{p99:?}");
+    assert!(!check.failed());
 }
 
 #[test]

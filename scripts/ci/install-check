@@ -32,7 +32,9 @@
 #   scripts/ci/install-check --wait N     let the metadata appear within N seconds first
 #   scripts/ci/install-check --keep       leave the temporary tree for inspection
 #   scripts/ci/install-check --expect TAG the metadata must name this release (the release
-#                                         smoke, which installs exactly the tag it published)
+#                                         smoke, which installs exactly the tag it published);
+#                                         a pre-release tag is read from its own tag file,
+#                                         installed pinned, and must not be the latest release
 #
 # Exit: 0 the advertised command works, 10 it does not, 12 this machine cannot judge.
 set -eu
@@ -55,7 +57,7 @@ while [ $# -gt 0 ]; do
     --wait) WAIT="${2:-0}"; shift 2 ;;
     --keep) KEEP=1; shift ;;
     --expect) EXPECT="${2:-}"; shift 2 ;;
-    -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,39p' "$0"; exit 0 ;;
     *) echo "install-check: unknown option $1" >&2; exit 2 ;;
   esac
 done
@@ -100,8 +102,19 @@ if [ -n "$BASE" ]; then
   env_for_base="MAJORDOMUS_RELEASE_BASE_URL=$BASE"
   case "$BASE" in https://*) ;; *) env_for_base="$env_for_base MAJORDOMUS_INSECURE_BASE_URL=1" ;; esac
 fi
-printf 'install-check: command   %s\n' "$command_line"
-printf 'install-check: metadata  %s\n' "$latest_url"
+# A pre-release (vX.Y.Z-alpha.N, -beta.N or -rc.N, and no other suffix) is never the latest
+# release: the release smoke that expects one reads its own tag file, installs it pinned, and
+# requires latest.json to name another release (I2829). The same pattern is in
+# scripts/site-deploy, scripts/ci/release-check and release.yml; site/static/install.sh refuses
+# any pre-release suffix it was not asked for by name.
+meta_url="$latest_url"
+pin_env=""
+if [ -n "$EXPECT" ] && printf 'v%s\n' "${EXPECT#v}" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+-(alpha|beta|rc)\.[0-9]+$'; then
+  meta_url="${latest_url%latest.json}v${EXPECT#v}.json"
+  pin_env="MAJORDOMUS_VERSION=v${EXPECT#v}"
+fi
+printf 'install-check: command   %s%s\n' "$command_line" "${pin_env:+ (with $pin_env)}"
+printf 'install-check: metadata  %s\n' "$meta_url"
 
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/mj-install-check.XXXXXX")"
 if [ "$KEEP" = 1 ]; then
@@ -118,33 +131,43 @@ fetch() { curl -fsSL --retry 3 --retry-delay 5 --max-time 120 "$1"; }
 
 # ---------------------------------------------------------------- 1. the metadata
 latest="$WORK/latest.json"
-if [ "$WAIT" -gt 0 ] && ! fetch "$latest_url" > "$latest" 2>/dev/null; then
+if [ "$WAIT" -gt 0 ] && ! fetch "$meta_url" > "$latest" 2>/dev/null; then
   printf 'install-check: the metadata is not there yet; waiting up to %ss for the deployment\n' "$WAIT"
   waited=0
   while [ "$waited" -lt "$WAIT" ]; do
     sleep 15
     waited=$((waited + 15))
-    if fetch "$latest_url" > "$latest" 2>/dev/null; then
+    if fetch "$meta_url" > "$latest" 2>/dev/null; then
       printf 'install-check: the metadata appeared after %ss\n' "$waited"
       break
     fi
   done
 fi
-if ! fetch "$latest_url" > "$latest" 2>"$WORK/latest.err"; then
-  fail "the metadata the installer resolves is not served: $latest_url"
+if ! fetch "$meta_url" > "$latest" 2>"$WORK/latest.err"; then
+  fail "the metadata the installer resolves is not served: $meta_url"
   fail "a reader of the README runs the advertised command and is told no release is published"
   sed 's/^/                    /' "$WORK/latest.err" >&2
   printf 'install-check: %s finding(s)\n' "$findings" >&2
   exit 10
 fi
 tag="$(sed -n 's/.*"tag": "\([^"]*\)".*/\1/p' "$latest" | head -n 1)"
-[ -n "$tag" ] || { fail "the metadata at $latest_url names no release"; printf 'install-check: %s finding(s)\n' "$findings" >&2; exit 10; }
+[ -n "$tag" ] || { fail "the metadata at $meta_url names no release"; printf 'install-check: %s finding(s)\n' "$findings" >&2; exit 10; }
 version="${tag#v}"
 ok "the metadata names $tag"
 if [ -n "$EXPECT" ] && [ "$tag" != "v${EXPECT#v}" ]; then
   fail "the metadata names $tag, not the release this run was asked to check (v${EXPECT#v})"
   printf 'install-check: %s finding(s)\n' "$findings" >&2
   exit 10
+fi
+if [ -n "$pin_env" ]; then
+  stable="$(fetch "$latest_url" 2>/dev/null | sed -n 's/.*"tag": "\([^"]*\)".*/\1/p' | head -n 1)"
+  case "$stable" in
+    *-alpha.[0-9]*|*-beta.[0-9]*|*-rc.[0-9]*)
+      fail "$latest_url names the pre-release $stable; a pre-release is never the latest release"
+      printf 'install-check: %s finding(s)\n' "$findings" >&2
+      exit 10 ;;
+  esac
+  ok "the latest release is ${stable:-not served}, not the pre-release $tag"
 fi
 
 # ---------------------------------------------------------------- 2. the installer
@@ -159,9 +182,10 @@ ok "the installer is served and parses ($(wc -c < "$script" | tr -d ' ') bytes)"
 # works when the script is a file and not when it is a stream is a broken promise too. The
 # home directory is this run's own, so the PATH hint, the prefix and the launchers all land
 # inside $WORK and nothing on this machine is written to or replaced.
-# env_for_base is a deliberate list of NAME=VALUE words, empty unless --base was given
+# env_for_base is a deliberate list of NAME=VALUE words, empty unless --base was given, and
+# pin_env one word, empty unless a pre-release is expected
 # shellcheck disable=SC2086
-if ! out="$(env HOME="$HOMEDIR" $env_for_base sh -c "$command_line" 2>&1)"; then
+if ! out="$(env HOME="$HOMEDIR" $env_for_base $pin_env sh -c "$command_line" 2>&1)"; then
   fail "the advertised command failed on this machine"
   printf '%s\n' "$out" | sed 's/^/                    /'
   printf 'install-check: %s finding(s)\n' "$findings" >&2
@@ -220,7 +244,7 @@ frame() { printf '{"jsonrpc":"2.0","id":%s,"method":"%s"%s}\n' "$1" "$2" "${3:+,
 if [ -x "$BIN/majordomus-mcp" ] && [ -f "${repo:-}/.ai/repo/policy.yaml" ]; then
   served_ok=1
   mkfifo "$WORK/mcp.in"
-  ( cd "$repo" && exec env HOME="$HOMEDIR" MAJORDOMUS_NO_BUILD=1 "$BIN/majordomus-mcp" --http-port 0 \
+  ( cd "$repo" && exec env HOME="$HOMEDIR" MAJORDOMUS_NO_BUILD=1 "$BIN/majordomus-mcp" --http-host 127.0.0.1 --http-port 0 \
       < "$WORK/mcp.in" > "$WORK/mcp.out" 2> "$WORK/mcp.log" ) &
   mcp_pid=$!
   exec 3> "$WORK/mcp.in"

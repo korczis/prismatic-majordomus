@@ -1,21 +1,29 @@
-//! The frame every screen of the UI is drawn in: the sidebar, the top bar, and the screen.
+//! The frame every screen of the UI is drawn in: the site's bar, the sidebar, the tool bar,
+//! and the screen.
 //!
-//! The sidebar is the product's: the brand, [`super::SCREENS`] and nothing else as its
+//! The bar at the top is majordomus.dev's, the reference the product's look is taken from
+//! (`project.the-ui-wears-the-sites-navbar`): the brand, the version, the site's four
+//! questions, its search, its theme toggle and its call to action, as the site renders them
+//! ([`super::navbar`]). The UI adds nothing to it and changes nothing in it but the version it
+//! names and the entry that leads to the UI itself.
+//!
+//! Beneath it the UI's own: the sidebar, [`super::SCREENS`] and nothing else as its
 //! navigation, and at its foot the version card, read from `distribution.releases` like any
-//! other value. The top bar holds the search and the links to the other surfaces of the
+//! other value. The tool bar holds the search and the links to the other surfaces of the
 //! process — the documentation and the API — named by the constants of the modules that
 //! declare them, and the Cockpit as the technical reference. On a narrow screen the sidebar
 //! is a menu that opens without JavaScript (a checkbox and its label).
 
 use crate::capability::Context;
-use crate::cockpit::html::{document, el, El};
+use crate::cockpit::html::{document_on, el, El};
 use crate::cockpit::view::{alert, theme_bootstrap};
 use crate::design::DesignSystem;
 
 use super::icons::icon;
+use super::navbar;
 use super::source::{ask, Reading, Source};
 use super::view::{day, shown};
-use super::{PREFIX, SCREENS};
+use super::{PREFIX, SCREENS, SURFACE};
 
 /// The canonical mark, the same file the Cockpit's top bar and the favicons are written from.
 pub const MARK: &str = include_str!("../cockpit/logo-mark.svg");
@@ -51,9 +59,18 @@ pub struct Frame<'a> {
     pub favicon: String,
     /// The script URL, with its digest.
     pub script: String,
+    /// The site's own scripts the bar's behaviours are written in — its menus, then its theme
+    /// toggle — served from the UI's files, with their digests.
+    pub bar_scripts: Vec<String>,
     /// The graph library's URL, with its digest: loaded by the script only on a screen that
     /// draws a graph.
     pub graph_lib: String,
+    /// The module that wires an issue's moves (the Cockpit's `moves.js`), with its digest:
+    /// loaded by the script only on a screen that renders a move form (I2781).
+    pub moves_lib: String,
+    /// The Cockpit's one WebSocket client (`socket.js`), with its digest: loaded by the script
+    /// only on a screen that follows the executions this server runs (I2783).
+    pub socket_lib: String,
     /// Whether the distribution has the UI's asset directory at all.
     pub assets_present: bool,
     /// The executable's version.
@@ -62,7 +79,7 @@ pub struct Frame<'a> {
 
 /// One whole page: the frame around a screen.
 pub fn page(ctx: &Context, frame: &Frame<'_>, view: &View) -> String {
-    let head = vec![
+    let head: Vec<El> = vec![
         el("link")
             .attr("rel", "stylesheet")
             .attr("href", frame.stylesheet.clone()),
@@ -76,8 +93,25 @@ pub fn page(ctx: &Context, frame: &Frame<'_>, view: &View) -> String {
             .attr("type", "module")
             .attr("src", frame.script.clone())
             .flag("defer"),
-    ];
+    ]
+    .into_iter()
+    .chain(
+        frame
+            .bar_scripts
+            .iter()
+            .map(|src| el("script").attr("src", src.clone()).flag("defer")),
+    )
+    .collect();
     let design = DesignSystem::compiled().ok();
+    // the theme contract on the root too, where the site's theme script reads it
+    let root: Vec<(&str, String)> = design
+        .map(|d| {
+            vec![
+                ("data-theme-key", d.theme.storage_key.clone()),
+                ("data-theme-class", d.theme.class.clone()),
+            ]
+        })
+        .unwrap_or_default();
     let body = el("body")
         .class("mj-body mj-ui")
         .attr_if(
@@ -87,12 +121,16 @@ pub fn page(ctx: &Context, frame: &Frame<'_>, view: &View) -> String {
         .attr_if("data-theme-class", design.map(|d| d.theme.class.clone()))
         .attr_if("data-design", design.map(|d| d.short_fingerprint()))
         .attr("data-graph-lib", frame.graph_lib.clone())
+        .attr("data-moves-lib", frame.moves_lib.clone())
+        .attr("data-socket-lib", frame.socket_lib.clone())
+        .attr("data-events", crate::http::events::PATH)
         .child(
             el("a")
                 .class("mj-skip")
                 .attr("href", "#main")
                 .text("Skip to content"),
         )
+        .raw(navbar::render(frame.version, &[(SURFACE, PREFIX)]))
         .child(
             el("input")
                 .class("mj-ui-menu-toggle")
@@ -122,10 +160,15 @@ pub fn page(ctx: &Context, frame: &Frame<'_>, view: &View) -> String {
                         ),
                 ),
         );
-    document(&format!("{} · majordomus ui", view.title), head, body)
+    document_on(
+        &format!("{} · majordomus ui", view.title),
+        &root,
+        head,
+        body,
+    )
 }
 
-/// The sidebar: the brand, the screens, and the version card.
+/// The sidebar: the screens, and the version card.
 fn sidebar(ctx: &Context, frame: &Frame<'_>) -> El {
     let screens = el("ul")
         .class("mj-ui-nav-list")
@@ -141,26 +184,10 @@ fn sidebar(ctx: &Context, frame: &Frame<'_>) -> El {
                     .child(el("span").class("mj-ui-label").text(s.title)),
             )
         }));
+    // no brand of its own: the bar above carries the site's
     el("aside")
         .class("mj-ui-sidebar")
         .attr("aria-label", "majordomus ui")
-        .child(
-            el("a")
-                .class("mj-ui-brand")
-                .attr("href", PREFIX)
-                .child(
-                    el("span")
-                        .class("mj-ui-mark")
-                        .attr("aria-hidden", "true")
-                        .raw(MARK),
-                )
-                .child(
-                    el("span")
-                        .class("mj-ui-brand-text")
-                        .child(el("span").class("mj-ui-brand-name").text("Majordomus"))
-                        .child(el("span").class("mj-ui-brand-sub").text("majordomus ui")),
-                ),
-        )
         .child(
             el("nav")
                 .class("mj-ui-nav")
@@ -215,8 +242,8 @@ fn release_line(latest: &Reading, published: &Reading, commit: &Reading) -> Stri
     format!("Latest release {} · {day_of} · {short}", shown(latest))
 }
 
-/// The top bar: the menu button of a narrow screen, the search, the other surfaces, the
-/// theme toggle the script reveals.
+/// The tool bar beneath the site's: the menu button of a narrow screen, the search, the other
+/// surfaces. The theme toggle is the site's, in the bar above.
 fn topbar(read_at: &str) -> El {
     el("header")
         .class("mj-ui-topbar")
@@ -263,7 +290,10 @@ fn topbar(read_at: &str) -> El {
                                 .attr("datetime", read_at)
                                 .text(read_at.replace('T', " ")),
                         ),
-                ),
+                )
+                // what the channel a following screen holds is doing, written by the script
+                // from the socket's own state and hidden until it has one (I2783)
+                .child(el("span").attr("data-live-state", "").flag("hidden")),
         )
         .child(
             el("nav")
@@ -271,17 +301,7 @@ fn topbar(read_at: &str) -> El {
                 .attr("aria-label", "Other surfaces")
                 .child(tool(crate::web::discover::DOCS_MOUNT, "book", "Docs"))
                 .child(tool(crate::http::swagger::SWAGGER_PATH, "code", "API"))
-                .child(tool(crate::cockpit::PREFIX, "terminal", "Cockpit"))
-                .child(
-                    el("button")
-                        .class("mj-ui-tool mj-ui-theme")
-                        .attr("type", "button")
-                        .attr("data-theme-toggle", "")
-                        .attr("aria-label", "Switch between light and dark")
-                        .flag("hidden")
-                        .child(icon("eye"))
-                        .child(el("span").class("mj-ui-label").text("Theme")),
-                ),
+                .child(tool(crate::cockpit::PREFIX, "terminal", "Cockpit")),
         )
 }
 
@@ -326,7 +346,13 @@ mod tests {
             stylesheet: "/ui/assets/ui.css?v=1".into(),
             favicon: "/ui/assets/favicon.svg?v=1".into(),
             script: "/ui/assets/ui.js?v=1".into(),
+            bar_scripts: vec![
+                "/ui/assets/nav.js?v=1".into(),
+                "/ui/assets/theme.js?v=1".into(),
+            ],
             graph_lib: "/ui/assets/vendor/cytoscape.min.js?v=1".into(),
+            moves_lib: "/cockpit/assets/moves.js?v=1".into(),
+            socket_lib: "/cockpit/assets/socket.js?v=1".into(),
             assets_present: true,
             version: "0.0.0",
         }
@@ -344,7 +370,8 @@ mod tests {
                 "version": "0.20.0",
                 "published_at": "2026-10-10T16:38:00Z",
                 "commit": "c8f0e4c50123456789",
-            }})),
+            }})
+            .into()),
             took: std::time::Duration::ZERO,
             standing: crate::ui::source::Standing::NOW,
         };
@@ -418,6 +445,32 @@ mod tests {
         assert_eq!(html.matches("<script>").count(), 1, "{html}");
         assert!(html.contains("for=\"mj-ui-menu\""));
         assert!(crate::cockpit::csp().contains("script-src 'self' 'sha256-"));
+    }
+
+    /// Every page wears the site's bar above the UI's own frame: the site's landmark, its
+    /// theme toggle and its menus, the executable's version in the badge, the entry for the
+    /// product leading to the UI itself, and the theme contract on the root where the site's
+    /// script reads it. The UI draws no theme toggle and no brand of its own beside it.
+    #[test]
+    fn every_page_wears_the_sites_bar() {
+        let html = render(PREFIX);
+        assert_eq!(html.matches("aria-label=\"Main\"").count(), 1, "{html}");
+        assert!(html.find("aria-label=\"Main\"") < html.find("mj-ui-frame"));
+        assert!(html.contains("id=\"theme-toggle\""));
+        assert!(html.contains(">v0.0.0<"), "the badge names the executable");
+        assert!(
+            html.contains("href=\"/ui\" data-nav-primary=\"ui\""),
+            "{html}"
+        );
+        assert!(!html.contains("data-theme-toggle"), "a second theme toggle");
+        assert!(!html.contains("mj-ui-brand"), "a second brand");
+        assert!(
+            html.contains("<html lang=\"en\" data-theme-key=\""),
+            "{html}"
+        );
+        for s in ["/ui/assets/nav.js?v=1", "/ui/assets/theme.js?v=1"] {
+            assert!(html.contains(&format!("<script src=\"{s}\" defer>")), "{s}");
+        }
     }
 
     /// A route nobody answers is a 404 that leads back.

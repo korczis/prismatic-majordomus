@@ -1,7 +1,7 @@
 +++
 title = "The program that writes into the checkout says what it wrote, and whoever measures the tree reads that"
 description = "The program that writes into the checkout says what it wrote, and whoever measures the tree reads that"
-weight = 69
+weight = 73
 [extra]
 kind = "rule"
 slug = "project-a-producer-declares-what-it-writes-1"

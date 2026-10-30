@@ -1,7 +1,7 @@
 +++
 title = "GitHub Pages architecture"
 description = "how the website is derived from the repository and checked for drift"
-weight = 70
+weight = 71
 [extra]
 source = "docs/GITHUB_PAGES_ARCHITECTURE.md"
 +++
@@ -45,11 +45,11 @@ being maintained separately from the repository that backs it.
 | derived content | canonical Markdown with generated front matter; one page per profile, claim, status, responsibility, command, doctrine, use case, application, milestone, issue, case study, skill, module and capability | `site/content/{docs,profiles,guarantees,supervises,commands,doctrines,use-cases,applications,plan,why,registry,skills}/`, `render-test.md`, `architecture.md` | never |
 | derived routes and links for the executable | one route per module and per capability, the executable's pages, the API anchor, the source on GitHub, the claims attached to each surface | `site/data/generated/executable.json` | never |
 | the native command line, as the site renders it | the command tree flattened, each command with its route, usage, arguments, children and executed examples | `site/data/generated/cli.json` (from `docs/generated/cli.json`, via `scripts/lib/cli-site.jq`) | never |
-| build provenance | the commit and its cleanliness, the site's input hash, the registry and index fingerprints, and each composed surface with the commit its producer declared | `site/data/build.json`, served as `/build.json` | never — `scripts/site-build`, not committed |
+| build provenance | the commit, its time and its cleanliness, the site's input hash, the registry and index fingerprints, and each composed surface with the commit its producer declared | `site/data/build.json`, served as `/build.json` | never — `scripts/site-build`, not committed |
 | the crate's reference | the rustdoc pages of `apps/majordomus-cli`, composed at `/rustdoc` ([`RUSTDOC.md`](@/docs/rustdoc.md)) | `target/web/rustdoc/`, with the `surface.json` that declares what it was built from | never — `scripts/rust-check --doc`, not committed |
 | presentation | Zola templates and Tera 2 components | `site/templates/**` | yes |
 | styling entry | Tailwind v4 + Flowbite v4 directives | `site/tailwind.css` | yes |
-| behaviour | theme toggle, Mermaid init | `site/theme.js`, `site/diagrams.js` | yes |
+| behaviour | theme toggle, the diagram viewer, the chart component | `site/theme.js`, `site/diagrams.js`, `site/charts.js` | yes |
 | output | the static site | `site/public/**` | never |
 
 </div>
@@ -327,7 +327,7 @@ components, on the derived copy only:
 
 | in the canonical file | on the site |
 |---|---|
-| ` ```mermaid ` fence | `<pre class="mermaid">`, rendered client-side; the source stays visible without JavaScript |
+| ` ```mermaid ` fence | `<pre class="mermaid">`, named, linked and given its controls by the build, drawn client-side in the viewer ([`DIAGRAMS.md`](@/docs/diagrams.md)); the source stays visible without JavaScript |
 | `> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]` | Flowbite alert |
 | a pipe table | wrapped in `overflow-x-auto` so wide tables scroll inside their container |
 
@@ -345,12 +345,21 @@ themes `ayu-light` and `ayu-dark`). Zola writes the two theme stylesheets into `
 
 Client-side, from the pinned npm package, vendored to `static/js/mermaid.min.js` at build.
 Chosen over build-time SVG because the Mermaid CLI needs a headless browser in CI and the
-site must stay reproducible from bash, Node and Zola alone. `site/diagrams.js` initialises
-with `securityLevel: 'strict'`, a restrained palette for light and dark, and re-renders on
-the theme toggle. Four diagrams are projected from data, never drawn by hand: the task
-lifecycle from the outcome vocabulary, the policy-to-instruction-file graph from the policy's
-projections, the site pipeline from the generator's input list, and the core model from the
-README. A failed diagram leaves its source visible and never breaks the page.
+site must stay reproducible from bash, Node and Zola alone. No page loads the build with a
+script tag: `site/diagrams.js` is deferred and fetches it once the page has been parsed.
+It initialises with `securityLevel: 'strict'`, takes its colours from the page's design
+tokens, and draws again when the theme changes. Four diagrams are projected from data, never
+drawn by hand: the task lifecycle from the outcome vocabulary, the policy-to-instruction-file
+graph from the policy's projections, the site pipeline from the generator's input list, and
+the core model from the README. A failed diagram leaves its source visible and never breaks
+the page.
+
+After Zola, `scripts/site-build` runs `scripts/lib/diagrams.mjs` over the built pages: every
+diagram gets an id (`diagram-<name>`), the list of its nodes, the viewer's toolbar and a
+list of the links inferred from the identities in `site/data/generated`. The viewer, the
+address scheme and the chart component, which draws a table the page already renders with
+the vendored Apache ECharts build, are described in [`DIAGRAMS.md`](@/docs/diagrams.md)
+(ADR 0152).
 
 ## Zola structure
 
@@ -616,6 +625,13 @@ and the deploy job waits for both. After `scripts/pages check` and before the pu
 job places the snapshot at the mount its own `surface.json` declares. It refuses a snapshot
 that is absent, one read at another commit, and a mount the site itself already built.
 
+The Cockpit is published the same way at `/cockpit/` (ADR 0147). The same job runs
+`majordomus web report cockpit-snapshot` after the UI's, because the Cockpit's snapshot reads
+first what the UI's links to and then leads those links to its own pages; both directories
+are uploaded once that step is over. The deploy job places every snapshot the model declares
+at the mount the topology gives it, and after the push
+`scripts/pages verify-ui --surface cockpit` asks the public site for it.
+
 The snapshot is a generated surface, known only where its producer ran, so it is not in the
 committed topology and `scripts/site-build` does not compose it: a local build of the site has
 no `/ui/` unless that step is repeated by hand. The site's checks do not judge its pages.
@@ -744,9 +760,9 @@ proves a missing path or an untested guaranteed claim fails the generator;
 their sources and that none embeds the commit it lands in.
 
 The commit a page was built from is not a derived file's business: `scripts/site-build`
-writes `site/data/build.json` (for the footer and the architecture page) and
-`site/static/build.json`, served at `/build.json`, with the commit, whether the tree was
-dirty, the site's input hash, the registry and index fingerprints, and under `surfaces` each
+writes `site/data/build.json` (for the footer, the architecture page and the roadmap's "observed
+at") and `site/static/build.json`, served at `/build.json`, with the commit, that commit's time
+(`commit_time`, never the build's clock), whether the tree was dirty, the site's input hash, the registry and index fingerprints, and under `surfaces` each
 composed surface with the commit its producer declared; `scripts/site-check` proves the served
 file names HEAD and the data the site was built from, and that every composed surface was built
 from that same commit, so a deployment can be verified from outside against the commit that was
