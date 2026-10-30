@@ -76,7 +76,7 @@ fn main() {
     // The decision is build_identity's, compiled in here and tested there; this only reads
     // what the build was handed and lends it git, from the crate's directory (cargo runs a
     // build script there), so the dirty flag is the crate's and not the whole repository's.
-    let declared_commit = declared_commit(
+    let declared_commit = build_identity::declared_commit(
         std::env::var("MAJORDOMUS_BUILD_COMMIT").ok().as_deref(),
         std::env::var("SOURCE_VERSION").ok().as_deref(),
     );
@@ -100,24 +100,6 @@ fn main() {
         .and_then(|lock| locked_version(&lock, "tiktoken-rs"))
         .unwrap_or_else(|| "unknown".to_string());
     println!("cargo:rustc-env=MAJORDOMUS_TIKTOKEN_VERSION={tokenizer}");
-}
-
-/// The commit the build was handed: `MAJORDOMUS_BUILD_COMMIT` when it names one (neither
-/// empty nor `unknown`), else the provider's `SOURCE_VERSION` when that is a full 40-hex
-/// commit, else whatever `MAJORDOMUS_BUILD_COMMIT` held, which `build_identity` then judges
-/// exactly as before. A `SOURCE_VERSION` that is not a commit (a branch name, a short sha)
-/// is ignored rather than compiled in as one.
-fn declared_commit(majordomus: Option<&str>, source_version: Option<&str>) -> Option<String> {
-    let names_one = |v: &str| !v.trim().is_empty() && v.trim() != "unknown";
-    if let Some(v) = majordomus.filter(|v| names_one(v)) {
-        return Some(v.to_string());
-    }
-    let is_commit = |v: &str| v.len() == 40 && v.bytes().all(|b| b.is_ascii_hexdigit());
-    source_version
-        .map(str::trim)
-        .filter(|v| is_commit(v))
-        .map(str::to_string)
-        .or_else(|| majordomus.map(str::to_string))
 }
 
 /// The version `Cargo.lock` records for the package `name`: the `version` line that follows
