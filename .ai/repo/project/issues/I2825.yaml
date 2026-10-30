@@ -1,0 +1,32 @@
+id: I2825
+milestone: mesh-journal-converges
+title: "A claim released on one runtime is released on every runtime that holds it, and a link to a restarted peer recovers"
+slug: a-released-claim-reaches-every-runtime
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Find why a release event accepted on one runtime of this machine never reached the runtime whose stream holds the claim, fix it, and make the mesh say so when replicas stop converging: links to a peer's previous instance re-handshake instead of being refused indefinitely, and a rejection storm is reported rather than counted silently."
+why: "Measured 2026-10-17 on v0.28.0 by two sessions. The release seat released its leftover exclusive claim 641bdb94dae9f62268abf5ca73c11e15-b10f19aa2cd888a6-8241af227eccef89/c-c6b0b61f0813 (scope .ai/repo/project/milestones and eleven more paths) at about 14:05Z; its runtime reads the claim released (release event .../409, lamport 116044). The runtime of the primary checkout (641bdb94dae9f62268abf5ca73c11e15-b10f19aa2cd888a6), whose own stream holds the claim, still reads it exclusive and held at 14:20Z and refused a new exclusive claim on .ai/repo/project/milestones/local-inference.yaml with claim_conflict naming it. mesh_verify on that runtime at the same time: 0 of its peers converged, including the two whose sync round was signed both ways (641bdb94...-4ab11c0b4ae0a30e and 641bdb94...-7cd6629d6dbc4dc5, both converged false); 5 local links refused with 'unknown_link: the link belongs to a previous instance: say hello' (641bdb94...-4a22a29ec24865ff, -4a8d4a5d233c540e, -5afdc32087b73ba3, -5e889aa64e75bc59, -7e36cdfc3c10b84a); the journal counts 12603248 rejected events against 1793 received, 3772 duplicates absorbed and 0 pending. Whether the release was never sent, sent and rejected, or accepted and not folded is not established, and establishing it is the first step. I2704 bounds and measures the unknown_link retry rate; it does not make a stale link recover or a release converge."
+current_state: "A release written through one runtime can stay unseen on the runtime that holds the claim, so an exclusive claim nobody owns keeps refusing others; links to a restarted peer sit refused as a previous instance; rejected events are counted, not explained."
+desired_state: "A released claim reads released on every linked runtime within one sync round of the release reaching it; a link refused as a previous instance re-handshakes once and then converges or reports why; mesh_verify fails, naming the cause, when rejected events grow while received events do not."
+scope:
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/mesh/state.rs"
+  - "apps/majordomus-cli/src/mesh/link.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "docs/MESH.md"
+depends_on: []
+acceptance_criteria:
+  - "Two runtimes of one node, a claim admitted on the first and released through the second: after one sync round both read it released, and a new exclusive claim on its scope is admitted on the first"
+  - "A peer restarted under a new instance is linked again after its first refusal as a previous instance, without a restart of the dialer"
+  - "mesh_verify reports a failing check, with the dominant rejection reason, when rejected events rise and no event is received across a sync round"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mesh_cooperation"
+evidence_required:
+  - "release_converges_test"
+  - "stale_link_recovers_test"
+  - "rejection_storm_reported_test"
+created_at: 2026-10-17
+updated_at: 2026-10-17

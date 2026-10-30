@@ -32,7 +32,7 @@ view of what a screen read (ADR 0135), and in the frame:
 - the technical view of an object a screen names and the UI has no screen of its own for (a
   document, a test, a declaring file, a feature's or a deployment's record), to the Cockpit's
   page for that object;
-- the Cockpit entry among the other surfaces in the top bar, and the top bar's search, which
+- the Cockpit entry among the other surfaces in the tool bar, and the tool bar's search, which
   is the Cockpit's search (`/cockpit/search`) until the UI has a search of its own.
 
 Both surfaces are projections (ADR 0012): they hold no data, they compose capabilities
@@ -46,18 +46,20 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 |---|---|---|
 | Dashboard | `/ui` | `repository.info`, `health.report`, `release.version`, `distribution.releases`, `plan.status`, `plan.roadmap`, `mesh.peers`; the queue on its own route |
 | Command | `/ui/command` | `commands.list` (its `origin` filter is the screen's tabs), `executions.list`; `capabilities.list` for the capability a command is |
+| Intent workspace | `/ui/idd` | `intents.list`, `plan.roadmap`, `plan.issues`, `plan.waves`, `plan.next`: one intent (`?intent=`, else the first `intents.list` reports executing, then verifying, planned, declared — the rule is printed) with its inspector, the milestones it names in the roadmap's order with what each waits for, every issue of those milestones or naming the intent by wave with its status, priority, blockers and the move its status allows; `?issue=` opens that issue's move panel on the screen itself, the form the Cockpit's issue page renders, wired by the one module both surfaces load (`share/cockpit/moves.js`, named by the page as `data-moves-lib`) and made by `plan.transition` as an execution, which refuses a move the plan does not allow and names why, the waves those issues occupy with the scope conflicts that serialise them, and their dependency graph over a table of the same edges. Why the intent stands where it stands is asked on its own route (`/ui/panels/standing?intent=`, `intent_realization.explain`, which takes seconds): the sentences its stage and verdict rest on, each unmet criterion with its evidence state, the command that reproduces it and the issues serving it, the work realising the intent with each link's provenance, and its drift. `executions.list` gives every `plan.transition` this server ran on the intent's issues, newest first, each leading to its execution on the Cockpit. The screen reads itself again when an execution of its server ends on `/events`, and says what that channel is doing (below). It decides no status, wave or membership of its own |
 | Roadmap | `/ui/roadmap` | `plan.roadmap`, `plan.status`, `intents.list`; one milestone (`?milestone=`) in the inspector, with `plan.issues`: its issues, what can start, its critical path and its neighbours; one intent (`?intent=`) in its inspector: its statement, invariants and criteria with their evidence, and the milestones and issues that serve it |
 | Issues & PRs | `/ui/work` | `plan.status`, `plan.issues`; the queue on its own route, one pull request (`?pr=`) in its detail |
 | Issues | `/ui/issues` | `plan.issues`, `plan.status`, `plan.roadmap`: every issue, narrowed by `?status=` (the plan's own statuses as tabs), `?milestone=`, `?priority=` and `?q=`, each leading to its inspector |
-| PR Drain | `/ui/prs` | `plan.status`, `plan.issues` (one issue, `?issue=`); `integration.queue` and `integration.events` on its own route (`/ui/panels/drain`), narrowed by `?disposition=`, `?lane=` and `?q=`, one pull request (`?pr=`) in the inspector with what the executor did to it, the lane's recent activity, and its merges per day over the fortnight the trail ends on |
+| PR Drain | `/ui/prs` | `plan.issues` (one issue, `?issue=`); `integration.queue` (one count per lane it counted) and `integration.events` on its own route (`/ui/panels/drain`), narrowed by `?disposition=`, `?lane=` and `?q=`, one pull request (`?pr=`) in the inspector with what the executor did to it, the lane's recent activity, and its merges per day over the fortnight the trail ends on |
 | Capabilities | `/ui/capabilities` | `repository.info`, `capabilities.list` by kind; one capability (`?id=`) from `capabilities.describe` |
-| Mesh | `/ui/mesh` | `mesh.peers`, `mesh.events`; one machine (`?node=`) in the inspector |
+| Mesh | `/ui/mesh` | `mesh.peers`, `mesh.events`, `mesh.state` (live claims); one machine (`?node=`) in the inspector, and who holds each seat of [rule `project.the-cooperation-model-is-the-owners-word`](../.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md) read from the claims |
 | CI/CD & Releases | `/ui/delivery` | `distribution.releases`, `release.version`, `deploy.list`, `gates.model`, `integration.timings` (each check's median, 90th percentile and longest run, and the open heads that waited longest, each leading to its pull request) |
 | Deployments | `/ui/deployments` | `deploy.list` (what the layer declares); `deploy.observed` (what the forge recorded: where each environment stands, every deployment to every environment — GitHub Pages among them — and every release, each commit, ref, environment, run and release a link); `delivery.report` on its own route |
 | Evidence | `/ui/evidence` | `evidence.report`; one claim (`?claim=`) in its inspector from `evidence.claim`: what settles it, its last run, what changed since, how to reproduce it, and the claims its test also proves |
 | Knowledge | `/ui/knowledge` | `knowledge_base.status`, `knowledge_base.candidates`: the candidates awaiting review, newest first and bounded with what is left out counted, the subjects they are about, and whether the deriver is still writing. The review's commands are named as text; the screen promotes and rejects nothing |
 | Documentation | `/ui/docs` | `objects.list` (features, documents), `web.surfaces` |
 | Governance | `/ui/governance` | `rules.report`, each rule named and leading to its inspector; one rule (`?rule=`) from `rules.show`: what it states, how it is enforced, the tests that prove it, what is missing, and the rules around it |
+| Observatory | `/ui/observatory`, and `/ui/kiosk` as its preset | `mesh.peers`, `mesh.events`, `mesh.state`, `plan.roadmap`, `distribution.releases`, `release.version`, `health.report`, `economics.runs`, `repository.info`, `rules.report`, `evidence.report`, `quality.report`, `plan.waves`, `distribution.status`, `capabilities.list`: fifteen scenes, each drawn from what its sources answered or named as unavailable with the source's reason ([The Observatory](#the-observatory)) |
 
 The navigation is `SCREENS` in `apps/majordomus-cli/src/ui/mod.rs` and nothing else. A test
 compares it with the dispatcher's arms, so a screen without a route, or a route without a
@@ -68,9 +70,44 @@ Every screen has the same shape:
 - a hero band, with the screen's glyph, title, tagline and lead, the brand mark lit behind
   them, and a row of KPI tiles;
 - a grid of panels;
-- the frame around both: the sidebar of screens with the version card at its foot, and the top
-  bar with the search, the time the screen was read, and the other surfaces (documentation,
-  API, Cockpit).
+- the frame around both: at the top the site's navbar ([below](#the-navbar-comes-from-the-site)),
+  beneath it the sidebar of screens with the version card at its foot, and the tool bar with
+  the search, the time the screen was read, and the other surfaces (documentation, API,
+  Cockpit).
+
+## The navbar comes from the site
+
+majordomus.dev is the reference for how the product looks, and the bar at the top of every
+screen — and of every page of the Cockpit — is the site's own navbar (`project.the-ui-wears-the-sites-navbar`), not a bar drawn
+after it: the brand and the version, the site's four questions as menus, the search, the theme
+toggle, the product, GitHub and the call to action.
+
+```mermaid
+flowchart LR
+  nav["site/data/nav.toml<br>the declaration"] --> partial["site/templates/partials/navbar.html<br>the one renderer"]
+  partial --> built["site/public/404.html<br>the built bar"]
+  built -->|"scripts/ui navbar --write"| copy["apps/majordomus-cli/src/ui/navbar.html<br>compiled in"]
+  copy --> shell["ui/shell.rs<br>every screen"]
+  copy -->|"@source"| css["share/ui/ui.css<br>the same utilities"]
+  sitejs["site/nav.js, site/theme.js"] -->|"scripts/cockpit-assets"| uijs["share/ui/nav.js, theme.js"]
+```
+
+| What | Where it comes from |
+|---|---|
+| the markup | the site's partial over `site/data/nav.toml`, cut out of the built site by `scripts/ui navbar --write` into `apps/majordomus-cli/src/ui/navbar.html` and compiled in ([`ui/navbar.rs`](../apps/majordomus-cli/src/ui/navbar.rs)) |
+| the styles | the utilities that file names, compiled into `share/ui/ui.css` and `share/cockpit/cockpit.css` from the same Tailwind, Flowbite theme and design sheets as the site's `app.css` |
+| the menus and the theme toggle | the site's `nav.js` and `theme.js`, served from `share/ui/` and `share/cockpit/` as byte copies `scripts/cockpit-assets` writes and `--check` holds; the theme contract is on `<html>`, where the site's script reads it |
+| the search button | the surface's: on the UI it, `/` and Ctrl/Cmd+K lead to the tool bar's search; on the Cockpit it opens the palette |
+| the version in the badge | the executable's, where the site names the release it offers |
+| the product entry | the UI itself, where the site leads to its published snapshot |
+| every other link | the site, at its own address |
+
+To change the bar, change the site — the declaration or the partial — then rebuild and let
+the copy follow: `scripts/site-build && scripts/ui navbar --write && scripts/cockpit-assets`.
+`scripts/ui navbar`, which `scripts/ui audit` runs first in the `ui` job, refuses a copy that
+is not the built bar, and then compares the bar a browser draws on the site's front page with
+the ones it draws on `/ui` and `/cockpit`: every element, its box and its computed styles, in both themes, at
+every width the design declares, with the bar closed and with a menu open.
 
 KPI tiles lead to the screen that explains them. A panel whose whole is on another screen
 says "View all". A milestone row leads to that milestone on the Roadmap, where the row it
@@ -204,10 +241,20 @@ queue (`integration.queue`) is `/ui/panels/pull-requests`:
 - without JavaScript the placeholder is a link to the same route.
 
 While a screen is visible, `ui.js` asks the server for it again every minute, puts the new
-rendering in place, and updates the time in the top bar. That time is when the page was
+rendering in place, and updates the time in the tool bar. That time is when the page was
 rendered; each source line says when its own reading is older. This is a refresh and is said
-as one; nothing claims a live stream. A streamed page and one stream of changed readings
-replace it in I2487.
+as one. A streamed page and one stream of changed readings replace it in I2487.
+
+The intent workspace also follows the executions its server runs (I2783). Its screen carries
+`data-follows-executions`, and the page names the channel (`data-events`, `/events`) and the
+Cockpit's one WebSocket client (`share/cockpit/socket.js`, `data-socket-lib`). When an execution
+ends there (completed, failed or cancelled), `ui.js` reads the screen again within seconds, once
+for a burst and at most every two seconds. It does the same after a reconnect or a gap, which
+may have missed an end. After the read time, the top bar says what that channel is doing:
+`executions live`, `reconnecting` or `offline`, taken from the socket's own state. The channel
+only signals when to read again; the screen still says only what its sources answer. It
+carries only this server's executions, so a move another process makes still shows at the
+next minute.
 
 How fast is measured, not written here. `majordomus bench` derives a target from every
 screen in `SCREENS` and every panel in `PANELS`, cold and warm:
@@ -250,11 +297,121 @@ Cytoscape, loaded only by a screen that has a graph, draws them:
 The table of the same edges stays beneath the graph, and it is what a reader without
 JavaScript, or without the library, reads. Only nodes that take part in an edge are drawn.
 
+## The Observatory
+
+The other screens are rows for a person who came to decide something. The Observatory is the
+same facts as a picture, for a display nobody is sitting at (ADR 0158). It is one screen and it
+adds no capability:
+
+| Route | What it is |
+|---|---|
+| `/ui/observatory` | the screen, inside the application's frame |
+| `/ui/kiosk` | the same screen, projection and script, filling the window over the frame, for a display left running |
+| `/ui/screensaver` | a permanent redirect to `/ui/kiosk`, its better name |
+| `/ui/obsrvatory` | a permanent redirect to `/ui/observatory` |
+
+The scenes are one list, `SCENES` in `apps/majordomus-cli/src/ui/observatory.rs`. Each
+declares its label, the capabilities it requires, what its marks mean, the screen that shows
+the same facts as rows, how long it stays, and its character:
+- a **semantic** scene binds marks to records: a machine, an event, a milestone, a release;
+- an **ambient** scene is decoration, is labelled as decoration, and stands for no fact.
+
+| Scene | Label | Requires | Its rows |
+|---|---|---|---|
+| `mesh` | Mesh Cosmos | `mesh.peers` | Mesh |
+| `activity` | Event River | `mesh.events` | Mesh |
+| `intents` | Intent Nebula | `plan.roadmap` | Roadmap |
+| `tokens` | Token Spectrum | `economics.runs` | Evidence |
+| `heartbeat` | System Pulse | `health.report` | Dashboard |
+| `delivery` | Delivery Tree | `distribution.releases` | CI/CD & Releases |
+| `coop` | Cooperation Choreography | `mesh.state` | Mesh |
+| `proof` | Proof Lattice | `rules.report` | Governance |
+| `claims` | Claim Ledger | `evidence.report` | Evidence |
+| `surface` | Surface Atlas | `quality.report` | Capabilities |
+| `waves` | Wave Front | `plan.waves` | Roadmap |
+| `matrix` | Release Matrix | `distribution.status` | CI/CD & Releases |
+| `registry` | Registry Treemap | `capabilities.list` | Capabilities |
+| `ladder` | Milestone Ladder | `plan.roadmap` | Roadmap |
+| `ambient` | Ambient Intelligence | nothing: it is decoration | Dashboard |
+
+The table is a reading aid; the list in the module is what the page, the script and case 3011
+read, and the page prints each scene's own `requires`.
+
+The last seven (`proof` to `ladder`, ADR 0160) read what the repository proves and need no
+mesh, so they are drawn on the public site too. They are counted, never estimated: a mark is a
+rule, a kind of claim, a measured count, a wave or a check, and where a source reports more
+items than a display holds the scene groups them and says how many it drew. They are drawn with
+p5 in instance mode onto a surface of their own that the director composes onto its stage, from
+`share/ui/observatory-kiosk.js`; p5 is the pinned library `scripts/cockpit-assets` copies into
+`share/ui/vendor/`, is not committed, and is loaded only when one of these scenes is shown. A
+checkout built without it says "p5 is not built here" on the stage and keeps the same facts in the
+table below it.
+
+The page carries its whole projection as one document, `observatory/v1`, in the
+`data-observatory` attribute of its section: when it was observed, the revision, every source
+asked with the state it answered in (`answered` or `failed`, with the reason and the time
+taken), and every scene with its model. The rule of the screen is in that document:
+
+| A scene's sources | The scene |
+|---|---|
+| answered, with something to draw | `available`, with a model |
+| answered with nothing to draw, or could not answer | unavailable: no model, the source's own reason, and the script does not rotate to it |
+
+A scene is never drawn empty, never drawn with stand-in marks and never replaced by a picture
+of health. An event of the mesh is projected as its identity (stream and sequence), its kind,
+its node, its logical time and its wall time, and never as its body.
+
+The status word says how the page was read:
+- `LIVE`: read again within 90 seconds. The script asks for its own page every 60 seconds, and
+  between those readings follows the mesh journal from a cursor every 3 seconds through
+  `observatory.events`, which answers only the events above the cursor, projected exactly as
+  the scene projects them. An event delivered twice is one mark, the river holds at most 200,
+  and both readers back off to 120 seconds when the server does not answer;
+- `RESYNCED`: for ten seconds after the cursor named a clock the journal never reached (another
+  runtime's journal, or one that restarted); the page was read again at once;
+- `STALE`: not read again within the bound;
+- `REPLAY`: a scene of the mesh drawn from the repository's recording, with the time it was
+  recorded;
+- `SNAPSHOT`: the public site, which reads nothing again and names its revision.
+
+Without JavaScript the same projection is a table: one row per scene, with its state in words
+(`available`, `decorative` or `unavailable`), its meaning or its reason, what it requires and
+the link to its rows.
+
+A reader's choice of a scene holds for five minutes, then the rotation resumes. New events of
+the journal interrupt the rotation for the river once the scene shown has had 12 seconds, and
+at most once every 120 seconds, so a busy journal cannot hold the display; a reader's choice is
+never interrupted. A scene whose
+renderer throws is quarantined for the rest of the display's life: the rotation skips it, the
+others go on, and the scene says `QUARANTINED` with what failed when a reader asks for it.
+Nothing on the screen starts work or writes a record.
+
+The display's own state is readable for an inspector or an evidence run: the section's
+`observatory` property answers `data()` (the projection it is drawing now), `quarantined()`
+and `trace()` (the last 24 choices of the rotation with their reasons). The evidence of the
+gates is taken through it by `scripts/lib/ui-observatory.mjs`.
+
+On the public site the process that takes the snapshot runs no mesh. There `mesh`, `activity`
+and `coop` draw the recording the repository carries (`.ai/repo/observatory/recording.json`,
+read by `observatory.replay`), and the status says `REPLAY` with the time it was recorded and
+`not live`. A scene the recording does not carry is unavailable and says why; a recording that
+cannot be read is a failed source, never a scene. `tokens` is unavailable while no run is
+recorded.
+
+The recording is the answer of `observatory.capture` on a server that runs the mesh, saved as
+it came and committed. It names nothing by its identity: machines are `machine 1`, `machine 2`
+in the order the mesh listed them, runtimes and sessions are ordinals, and an event keeps its
+kind, its logical clock and its time. Its manifest names the capabilities it was read from,
+the window of events it holds (first and last time and logical clock) and what was removed
+and why; `observatory.replay` refuses a recording with an event that lacks its kind, clock or
+time, naming the event. A recording is a moment; it is replaced by capturing again. What is still open is in [What it does not do yet](#what-it-does-not-do-yet).
+
 ## Without JavaScript
 
 Every screen is complete HTML, and the menu of a narrow screen opens with a checkbox and its
 label. `share/ui/ui.js` is the only script of the UI's own: it pulls in slow panels, refreshes
-the screen, draws graphs and reveals the theme toggle. The one inline script is the theme
+the screen, draws graphs, reveals the bar's search button and keeps the sidebar beneath the
+bar. The bar's menus and theme toggle run on the site's own two scripts. The one inline script is the theme
 statement the policy allows by its digest, the same one the Cockpit ships. A served test
 asserts that the UI and the Cockpit carry one identical policy.
 
@@ -265,8 +422,9 @@ The UI's files live in `share/ui/`.
 | File | How it is made | Committed |
 |---|---|---|
 | `ui.css` | compiled from `share/ui/src/ui.css` by `scripts/cockpit-assets`, beside the Cockpit's stylesheet; `--check` fails when either is stale | yes |
+| `nav.js`, `theme.js` | copied byte for byte from `site/nav.js` and `site/theme.js` by `scripts/cockpit-assets`; `--check` fails when either differs | yes |
 | `favicon.svg` | written from the canonical mark by `majordomus generate` | yes |
-| `vendor/cytoscape.min.js` | copied from the pinned npm package by `scripts/cockpit-assets` | no |
+| `vendor/cytoscape.min.js` | copied from the pinned npm package by `scripts/cockpit-assets`; a distribution without it is never asked for it, and each graph's table stands instead (I2900) | no |
 
 The `ui` class of the CI model (`.ai/repo/ci/gates.yaml`) selects the asset check, the probe,
 the design gate and the UI audit whenever a file under `share/ui/` or
@@ -275,7 +433,8 @@ the design gate and the UI audit whenever a file under `share/ui/` or
 The stylesheet imports the tokens, the status vocabulary, the primitives and the kit from
 `share/design/`, where the site and the Cockpit import the same files. Every colour is a role,
 a status or a tone; none is a literal. The markup names what a thing is, never a utility
-class, because the stylesheet compiles only what is written in it. The icons are the kit's,
+class, because the stylesheet compiles only what is written in it — except the site's bar,
+which is the site's markup and is compiled from its copy. The icons are the kit's,
 declared once in `site/data/kit/icons.toml` and compiled into the crate by `majordomus
 generate` (`apps/majordomus-cli/src/ui/icons.toml`); a test holds the two equal.
 
@@ -326,13 +485,20 @@ they cost. It renders nothing itself. What it changes is only what a file cannot
 | a link to a page of the Cockpit: the "technical view" of a source or of an object | that page of the Cockpit's own snapshot at `/cockpit/` when it holds it (ADR 0147), and the page about the live UI when it does not |
 | a link to a surface a publication holds (`/rustdoc`, `/openapi.json`) | unchanged |
 | a link into the served documentation (`/docs/…`) | the same page of the published site |
-| the script reads the screen again every minute and pulls in slow panels | it does neither: the body carries `data-snapshot` |
-| "Read at" in the top bar | also a notice on every page: the commit, the time, the executable, and a link to the live UI |
+| the script reads the screen again every minute and follows the executions of its server | it does neither: the body carries `data-snapshot` |
+| a slow panel is a placeholder (`data-panel-src`) the script fills once the screen has painted | the panel itself, already read: the snapshot asks every page with the `X-Majordomus-Snapshot` header and the UI puts each panel where its placeholder stood |
+| "Read at" in the tool bar | also a notice on every page: the commit, the time, the executable, and a link to the live UI |
 
 A snapshot knows what the UI could read where it was taken. A Pages runner has no mesh, no
 recorded forge observation and no running execution, so those panels read `none`, `unknown`
 or `not answered`, never zero. A snapshot is not evidence of the live state of anything: for
 that, run `majordomus serve` in a checkout and open `/ui`.
+
+**Evidence is the exception.** A Pages runner does have a record of the tests: the `evidence`
+artifact the validation of the same commit, or of its nearest ancestor, recorded. The snapshot
+job puts that run's ledger in place before the UI is read. A publication whose evidence screen
+would still show more claims as not run than the declared baseline is refused
+(`scripts/pages published-evidence`, rule `project.published-evidence-is-what-ci-recorded`).
 
 The directory declares itself (`surface.json`) as the surface `ui-snapshot`, mounted at `/ui`,
 `published-only`, built from the commit it was read at. A process serves the UI at `/ui` and a
@@ -358,6 +524,15 @@ it left out; one that is missing, names an older commit or does not say what end
 reading fails. `docs/GITHUB_PAGES_ARCHITECTURE.md` has the details and
 `test/cases/2983_the_published_ui_is_the_trunks.sh` holds them.
 
+The first screen leads only with figures the reader of a snapshot can decide. That process is
+no server, so `health.report` says `unknown` for the attached clients and the mesh runtime and
+therefore for the whole report. The Dashboard's health figure is the report's `repository`
+verdict instead: the worst of the dimensions that describe the repository and not the process
+serving it. The Health panel below it still lists every dimension with its own word. Where no
+mesh runtime is active the mesh figure reads `Mesh active: no` and counts no machines. The
+probe refuses a published first screen with an undecided figure, and
+`test/cases/1092_the_ui_snapshot_holds_every_screen.sh` holds the snapshot to the same.
+
 ## What it does not do yet
 
 - `majordomus ui` as a command, which ensures the shared server and opens this surface, is
@@ -370,3 +545,8 @@ reading fails. `docs/GITHUB_PAGES_ARCHITECTURE.md` has the details and
   forge observation (`integration.timings`); there is no history of runs yet, so no trend is
   drawn.
 - Milestones carry no dates, so the roadmap is a sequence and a graph, never a calendar.
+- The Observatory's replay on the public site is as old as the last capture that was
+  committed; nothing captures one on a schedule. Between readings of its page it follows the
+  journal by asking for the events above its cursor; nothing is pushed to it. Its gates and
+  the measurements behind them are in `.ai/repo/benchmarks/observatory/manifest.json`; a
+  frame rate there is headless Chromium's on the machine it names, not a panel's.

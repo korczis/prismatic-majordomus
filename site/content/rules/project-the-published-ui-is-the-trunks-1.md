@@ -1,7 +1,7 @@
 +++
 title = "The UI the site publishes is the trunk's, and a UI that is missing, older or cut short without saying so is a failed publication"
 description = "The UI the site publishes is the trunk's, and a UI that is missing, older or cut short without saying so is a failed publication"
-weight = 163
+weight = 172
 [extra]
 kind = "rule"
 slug = "project-the-published-ui-is-the-trunks-1"
@@ -79,6 +79,15 @@ crate's reference). The stage after the producer is owned now.
    it of the published commit as section 2c; a UI that is absent, another commit's or not
    whole is exit `10`, and one that could not be judged is exit `12` with the half named in
    the verdict line, never a pass.
+7. **The first screen is decided.** The figures the UI's first screen leads with are what a
+   visitor reads the product by, and the process that reads a snapshot is no server: it holds
+   no peer board and runs no mesh. So the screen leads only with what that process can
+   decide. Its health figure is `health.report`'s `repository` verdict, the worst of the
+   dimensions that are not the serving process's (`PROCESS_DIMENSIONS`: the server, its
+   board, its mesh runtime), and where no mesh runtime is active the mesh figure says so and
+   counts no machines. A first screen that shows the unknown badge or a source that did not
+   answer in one of those figures is a finding of the probe, of the snapshot's own case, and
+   therefore of the deployment.
 
 ## Failure behaviour
 
@@ -90,6 +99,8 @@ crate's reference). The stage after the producer is owned now.
   commit's or not whole — one `FAIL` line per finding on stderr, each ending with the command
   that shows it again — and `12` when the site never answered or no commit could be read to
   hold the UI to.
+- `scripts/pages verify-ui` also exits `10` when the landing page leads with an undecided
+  figure; the `FAIL` line names each figure.
 - In `.github/workflows/pages.yml` it is the step `the UI it publishes`; a failure fails the
   deployment. In `scripts/ci/pages-check` it is section 2c of the `pages-live` gate, which
   `finish` asks (`at-finish`) and the scheduled pages run asks every thirty minutes, deploying

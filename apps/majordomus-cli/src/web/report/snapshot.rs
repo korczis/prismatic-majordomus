@@ -19,6 +19,9 @@
 //! - **the script** is told it is in a snapshot (`data-snapshot` on the body), so it reads
 //!   nothing again and fetches no panel: a static page that refreshed itself would replace
 //!   what was read with whatever the host answers for a query it ignores;
+//! - **a slow panel** a screen defers to its script is read by the UI before the page is
+//!   written, because every page is asked with [`crate::ui::SNAPSHOT_HEADER`]: the published
+//!   screen shows what the live one shows once its script has run, not a link to it;
 //! - **every page says what it is**: read at which commit, when, and by which executable,
 //!   and how to see it live.
 //!
@@ -71,6 +74,10 @@ pub struct Subject {
     /// that renders it and not about the repository. Such a route is no page of the
     /// snapshot, so it is never read, and a link to it leads to the live page.
     pub withheld: &'static [&'static str],
+    /// Names the process answers with a redirect, each with the route it leads to. A file
+    /// cannot redirect, so the snapshot writes one page per name that sends a reader on, and
+    /// only when the page it leads to is in the snapshot: never a redirect to nothing.
+    pub redirects: &'static [(&'static str, &'static str)],
 }
 
 /// The UI's snapshot (ADR 0141).
@@ -86,6 +93,7 @@ pub const UI: Subject = Subject {
     fragment: crate::ui::FRAGMENT,
     scripts: true,
     withheld: &[],
+    redirects: crate::ui::observatory::REDIRECTS,
 };
 
 /// The Cockpit's snapshot (ADR 0147).
@@ -104,6 +112,7 @@ pub const COCKPIT: Subject = Subject {
     // checkout, which name a disk. It is the one page of the Cockpit with no counterpart in
     // a publication (ADR 0014, docs/COCKPIT.md).
     withheld: &["/cockpit/continuity"],
+    redirects: &[],
 };
 
 /// Every subject there is a snapshot of.
@@ -149,6 +158,9 @@ pub struct Snapshot {
     pub budget_seconds: u64,
     /// What ended the reading: `complete` (every linked page was written), `limit` or `budget`.
     pub stopped_by: &'static str,
+    /// The pages written for a name the process redirects, as the name and the file: each
+    /// sends its reader to a page of [`Snapshot::pages`] and is no page of the surface itself.
+    pub redirects: BTreeMap<String, String>,
 }
 
 /// Read a surface and write it under the generated web root, with the declaration that makes
@@ -217,7 +229,12 @@ pub fn render(
             continue;
         };
         let asked = std::time::Instant::now();
-        let response = handle(&Request::parse_target("GET", &target, Vec::new()));
+        // asked as a snapshot: a screen answers with its slow panels already in place
+        let mut request = Request::parse_target("GET", &target, Vec::new());
+        request
+            .headers
+            .push((crate::ui::SNAPSHOT_HEADER.to_string(), "1".to_string()));
+        let response = handle(&request);
         tracing::debug!(target = %target, ms = asked.elapsed().as_millis() as u64, status = response.status, "snapshot page");
         if response.status != 200 {
             continue;
@@ -286,6 +303,20 @@ pub fn render(
     let live = live_page(subject, frame.as_deref(), &origin);
     write(&dir, LIVE_PAGE, &live)?;
 
+    // a name the process redirects is a page that sends its reader on, when the snapshot
+    // holds the page it leads to
+    let mut redirects: BTreeMap<String, String> = BTreeMap::new();
+    for (name, to) in subject.redirects {
+        let (Some(file), Some(target)) = (subject.page_file(name), written.get(*to)) else {
+            continue;
+        };
+        if written.values().any(|f| *f == file) {
+            continue;
+        }
+        write(&dir, &file, &redirect_page(subject, &file, target, to))?;
+        redirects.insert((*name).to_string(), file);
+    }
+
     let snapshot = Snapshot {
         dir: dir.clone(),
         origin,
@@ -296,6 +327,7 @@ pub fn render(
         limit,
         budget_seconds,
         stopped_by,
+        redirects,
     };
     write_json(&dir, "snapshot.json", &snapshot)?;
     declare(subject, &dir, &snapshot.origin)?;
@@ -667,7 +699,8 @@ impl Subject {
 }
 
 /// The attributes whose value is a URL a reader or the script follows.
-const URL_ATTRIBUTES: &str = "href|src|action|data-graph-lib|data-panel-src";
+const URL_ATTRIBUTES: &str = "href|src|action|data-graph-lib|data-observatory-lib|\
+     data-observatory-companion|data-p5-lib|data-panel-src";
 
 fn attribute_pattern() -> regex::Regex {
     regex::Regex::new(&format!(r#"\b({URL_ATTRIBUTES})="([^"]*)""#))
@@ -856,6 +889,27 @@ fn banner(origin: &Origin, live: &str) -> crate::cockpit::html::El {
 
 /// The one page about the live surface: what a link to a running process meant, and how to
 /// get one. Drawn in the surface's own frame, taken from the first page the snapshot read.
+/// The page a redirected name is in a publication: it sends the reader to `target`, the file
+/// of the route the process redirects that name to, by a refresh a browser follows without a
+/// script, and says so in a link for a reader whose browser does not.
+fn redirect_page(subject: &Subject, file: &str, target: &str, to: &str) -> String {
+    let href = format!("{}{target}", up(file));
+    let head = vec![
+        el("meta")
+            .attr("http-equiv", "refresh")
+            .attr("content", format!("0; url={href}")),
+        el("link")
+            .attr("rel", "canonical")
+            .attr("href", href.clone()),
+    ];
+    let body = el("body").child(
+        el("p")
+            .text(format!("This address of the {} is now ", subject.name))
+            .child(el("a").attr("href", href).text(to)),
+    );
+    crate::cockpit::html::document(&format!("{to} · {}", subject.name), head, body)
+}
+
 fn live_page(subject: &Subject, frame: Option<&str>, origin: &Origin) -> String {
     let body = el("div")
         .class("mj-ui-stack")

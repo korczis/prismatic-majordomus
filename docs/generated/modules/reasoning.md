@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `reasoning` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.24.0 -->
+     Generator: majordomus-cli 0.30.2 -->
 # Module `reasoning` — Reasoning
 
 Provider-independent reasoning (ADR 0098): which optional advisors can be asked and what they offer, what a material uncertainty calls for, the session's typed reasoning records — assessments, plans, consultations, disagreements, resolutions, conclusions, validations, attempts — and the state, timeline and provenance they derive. Nothing here talks to an advisor, and nothing here needs one: with none available, the plan is a structured local review and the session concludes on its own evidence.
@@ -30,7 +30,7 @@ Output: `AdvisorsReport`.
 
 ## `reasoning.check` — Check that reasoning stays provider-independent
 
-The executable half of the rules advisors-are-optional and review-is-recorded-not-claimed: the advisor catalogue resolves against the provider table and the model catalogue; every adapter it names has its transport module; no provider-independent source names an advisor; no CI workflow or gate names a model credential; no document asserts a refused claim; every stored consultation names an advisor its plan selected, and every conclusion's review matches what it cites.
+The executable half of the rules advisors-are-optional and review-is-recorded-not-claimed: the advisor catalogue resolves against the provider table and the model catalogue; every adapter it names has its transport module; no provider-independent source names an advisor; no CI workflow or gate names a model credential; no document asserts a refused claim; every stored consultation names an advisor its plan selected, and every conclusion's review matches what it cites. The CI and claims checks judge what this repository's own workflows and documents say, so they apply only where the rule advisors-are-optional is declared; an adopter is held to what it adopted.
 
 | | |
 |---|---|

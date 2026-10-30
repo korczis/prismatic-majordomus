@@ -296,7 +296,7 @@
     {
       "id": "claim:no-network",
       "kind": "claim",
-      "label": "Nothing performs a network call, evaluates generated text, or deletes recursively",
+      "label": "The shell tool performs no network call, evaluates no generated text and deletes nothing recursively; its one declared request is the loopback peer probe",
       "status": "guaranteed",
       "route": "/guarantees/no-network/",
       "external": false,
@@ -989,7 +989,7 @@
     {
       "id": "claim:mcp-stdio-surface",
       "kind": "claim",
-      "label": "The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout",
+      "label": "The Rust executable serves the repository's AI layer to an MCP client over stdio, with protocol frames alone on stdout",
       "status": "guaranteed",
       "route": "/guarantees/mcp-stdio-surface/",
       "external": false,
@@ -1102,6 +1102,33 @@
       "route": "/guarantees/mcp-client-autostart/",
       "external": false,
       "note": ".mcp.json (Claude Code), .gemini/settings.json (Gemini CLI) and .codex/config.toml (Codex) name the same launcher, which writes nothing to stdout and passes every argument to majordomus mcp; MAJORDOMUS_BIN, MAJORDOMUS_BUILD_PROFILE and MAJORDOMUS_NO_BUILD control the build."
+    },
+    {
+      "id": "claim:mcp-client-always-served",
+      "kind": "claim",
+      "label": "A client that starts the MCP server from a checkout with no executable to run, or none it can build, is served by the installed release and told so, instead of being turned away",
+      "status": "guaranteed",
+      "route": "/guarantees/mcp-client-always-served/",
+      "external": false,
+      "note": "Only `mcp` falls back; every other command still exits 12. The fallback runs after a build that could succeed was tried, or without one when there is no cargo or less free space than the floor, and it names the release and the reason on stderr. A file inside the repository, and one that does not answer --version, is never taken for the installed release. MAJORDOMUS_MCP_BUILD=1 restores the build for a contributor. The 2026-10-16 session that began as the only worker of a repository (ADR 0156) began here, with exit 12 on 4.5GB free against a 5120MB floor."
+    },
+    {
+      "id": "claim:session-start-prompt",
+      "kind": "claim",
+      "label": "A bare claude in a supervised repository starts with the repository's session-start prompt as its first message, and a run with an argument, outside such a repository, with the opt-out, or with a prompt that cannot be rendered is left exactly as it was",
+      "status": "guaranteed",
+      "route": "/guarantees/session-start-prompt/",
+      "external": false,
+      "note": "Proved in bash and zsh against stubs of claude and majordomus; the real claude takes the prompt as its positional argument (claude --help). Only Claude Code is wrapped; Codex and Gemini are not claimed until each is proved against the real tool. The installer does not source the file, because it touches nothing outside its prefix."
+    },
+    {
+      "id": "claim:release-prerelease-channel",
+      "kind": "claim",
+      "label": "A tag with a pre-release part is published as a prerelease, recorded on the prerelease channel, and never resolved as the stable release, so an unpinned installer and a node that follows stable keep the highest stable version",
+      "status": "guaranteed",
+      "route": "/guarantees/release-prerelease-channel/",
+      "external": false,
+      "note": "Held at three places that must agree. scripts/release-record derives the channel from the tag and refuses stable on a suffixed tag; release.yml passes --prerelease --latest=false for it; Release::is_stable_candidate refuses any version with a pre-release part whatever its record says, and Release::findings reports the mislabel. The resolution and the semver precedence (alpha.2 before alpha.10, build metadata ignored) are proved by the crate's distribution tests, which the case does not run. Found by the audit before v1.0.0-alpha.1, when the pipeline would have published the alpha as the stable release."
     },
     {
       "id": "claim:mcp-uri-resolution",
@@ -1662,6 +1689,15 @@
       "note": "the_dashboard_is_served_at_ui_under_the_cockpits_policy starts a real server on a fixture repository and asserts that the page links /cockpit/capabilities/<id> for each of health.report, release.version, distribution.releases, plan.status, plan.roadmap and mesh.peers, carries the Cockpit's content-security policy, and pulls the queue from /ui/panels/pull-requests rather than citing integration.queue; the_queue_panel_is_a_page_and_a_fragment proves the queue's own route."
     },
     {
+      "id": "claim:observatory-draws-nothing-it-did-not-read",
+      "kind": "claim",
+      "label": "The Observatory at /ui/observatory and /ui/kiosk shows a scene only when the capabilities it requires answered with something to draw, or, for a scene of the mesh where no mesh runs, when the repository carries a recording of it, which it labels a replay; a scene without either carries no model and states the source's reason, on a server and in the published snapshot alike",
+      "status": "guaranteed",
+      "route": "/guarantees/observatory-draws-nothing-it-did-not-read/",
+      "external": false,
+      "note": "The case starts a server over a freshly initialised repository and takes a UI snapshot of it, and on both reads the projection the page carries: eight scenes in the declared order, every source named with its state and a failed one with a reason, an available scene with a model and an unavailable one with none and a reason, the three mesh scenes unavailable where no mesh runs, the kiosk carrying the same scenes, the two redirects, and the snapshot holding the page and its script. It reads the projection, not the canvas: what the script paints from an available scene's model is not claimed here."
+    },
+    {
       "id": "claim:deployment-contract-refuses-by-name",
       "kind": "claim",
       "label": "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named",
@@ -1781,7 +1817,7 @@
     {
       "id": "claim:evidence-navigates-both-ways",
       "kind": "claim",
-      "label": "Every claim names the test that proves it and every test names the claims it proves, from one derivation",
+      "label": "Every claim names the test meant to settle it and every test names the claims it is meant to settle, from one derivation",
       "status": "guaranteed",
       "route": "/guarantees/evidence-navigates-both-ways/",
       "external": false,
@@ -1907,7 +1943,7 @@
     {
       "id": "claim:mesh-observation-not-authority",
       "kind": "claim",
-      "label": "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown",
+      "label": "A discovered node gains no execution and no authorization from being heard; only signed traffic from a linked node may change mesh state, and trust labels records under an explicit policy that defaults to deny_unknown",
       "status": "guaranteed",
       "route": "/guarantees/mesh-observation-not-authority/",
       "external": false,
@@ -2218,6 +2254,15 @@
       "route": "/guarantees/the-closing-question-is-measured/",
       "external": false,
       "note": "the readings are the repository's, not one worker's; the case adds an entry to a baseline, creates a branch and a worktree, and breaks the task's starting commit to see unknown instead of pass."
+    },
+    {
+      "id": "claim:a-diagram-is-named-linked-and-addressable",
+      "kind": "claim",
+      "label": "Every Mermaid diagram of the built site gets an id (diagram-<name>), the list of its nodes, the viewer's controls and a link for each node that is the identity of an object the site has a page for, all derived at build; a link to",
+      "status": "guaranteed",
+      "route": "/guarantees/a-diagram-is-named-linked-and-addressable/",
+      "external": false,
+      "note": "the case builds a fixture site, runs the pass and scripts/ci/link-check over it, and plants an undeclared node, another diagram's node, an absent diagram and a duplicate declared name; the viewer's behaviour in a browser is the diagram spec of scripts/interaction-probe, which this claim does not cover."
     },
     {
       "id": "impl:.github/workflows/pages.yml",
@@ -2654,6 +2699,13 @@
       "external": false
     },
     {
+      "id": "impl:apps/majordomus-cli/src/ui/observatory.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/ui/observatory.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:apps/majordomus-cli/src/web/discover.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/web/discover.rs",
@@ -2692,6 +2744,13 @@
       "id": "impl:bin/majordomus",
       "kind": "implementation",
       "label": "bin/majordomus",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:bin/majordomus-cli",
+      "kind": "implementation",
+      "label": "bin/majordomus-cli",
       "route": null,
       "external": false
     },
@@ -3039,6 +3098,13 @@
       "external": false
     },
     {
+      "id": "impl:scripts/lib/diagrams.mjs",
+      "kind": "implementation",
+      "label": "scripts/lib/diagrams.mjs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:scripts/lib/executable-site.jq",
       "kind": "implementation",
       "label": "scripts/lib/executable-site.jq",
@@ -3119,6 +3185,13 @@
       "id": "impl:share/providers.yaml",
       "kind": "implementation",
       "label": "share/providers.yaml",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:share/shell/session-start.sh",
+      "kind": "implementation",
+      "label": "share/shell/session-start.sh",
       "route": null,
       "external": false
     },
@@ -3281,6 +3354,13 @@
       "kind": "source",
       "label": "docs/DESIGN.md",
       "route": "/docs/design/",
+      "external": false
+    },
+    {
+      "id": "source:docs/DIAGRAMS.md",
+      "kind": "source",
+      "label": "docs/DIAGRAMS.md",
+      "route": "/docs/diagrams/",
       "external": false
     },
     {
@@ -3879,6 +3959,20 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/29_prompt_capture.sh"
     },
     {
+      "id": "test:test/cases/3006_diagrams_are_interactive_and_linkable.sh",
+      "kind": "test",
+      "label": "test/cases/3006_diagrams_are_interactive_and_linkable.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/3006_diagrams_are_interactive_and_linkable.sh"
+    },
+    {
+      "id": "test:test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
+      "kind": "test",
+      "label": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh"
+    },
+    {
       "id": "test:test/cases/30_command_registry.sh",
       "kind": "test",
       "label": "test/cases/30_command_registry.sh",
@@ -3886,11 +3980,32 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/30_command_registry.sh"
     },
     {
+      "id": "test:test/cases/3177_a_client_always_gets_a_server.sh",
+      "kind": "test",
+      "label": "test/cases/3177_a_client_always_gets_a_server.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/3177_a_client_always_gets_a_server.sh"
+    },
+    {
+      "id": "test:test/cases/3179_a_prerelease_is_never_published_as_stable.sh",
+      "kind": "test",
+      "label": "test/cases/3179_a_prerelease_is_never_published_as_stable.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/3179_a_prerelease_is_never_published_as_stable.sh"
+    },
+    {
       "id": "test:test/cases/31_command_coverage.sh",
       "kind": "test",
       "label": "test/cases/31_command_coverage.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/31_command_coverage.sh"
+    },
+    {
+      "id": "test:test/cases/3221_a_bare_session_start_joins_the_cluster.sh",
+      "kind": "test",
+      "label": "test/cases/3221_a_bare_session_start_joins_the_cluster.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/3221_a_bare_session_start_joins_the_cluster.sh"
     },
     {
       "id": "test:test/cases/33_event_registry.sh",
@@ -5109,6 +5224,21 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:mcp-client-always-served",
+      "target": "source:docs/MCP.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:session-start-prompt",
+      "target": "source:docs/MCP.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:release-prerelease-channel",
+      "target": "source:docs/DISTRIBUTION.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:mcp-uri-resolution",
       "target": "source:docs/MCP.md",
       "kind": "specified_by"
@@ -5415,6 +5545,11 @@
     },
     {
       "source": "claim:ui-dashboard-cites-its-sources",
+      "target": "source:docs/MAJORDOMUS_UI.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:observatory-draws-nothing-it-did-not-read",
       "target": "source:docs/MAJORDOMUS_UI.md",
       "kind": "specified_by"
     },
@@ -5726,6 +5861,11 @@
     {
       "source": "claim:the-closing-question-is-measured",
       "target": "source:docs/CLI.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:a-diagram-is-named-linked-and-addressable",
+      "target": "source:docs/DIAGRAMS.md",
       "kind": "specified_by"
     },
     {
@@ -6279,6 +6419,21 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:mcp-client-always-served",
+      "target": "impl:bin/majordomus-cli",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:session-start-prompt",
+      "target": "impl:share/shell/session-start.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:release-prerelease-channel",
+      "target": "impl:scripts/release-record",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:mcp-uri-resolution",
       "target": "impl:apps/majordomus-cli/src/capability/builtin/objects.rs",
       "kind": "implemented_by"
@@ -6581,6 +6736,11 @@
     {
       "source": "claim:ui-dashboard-cites-its-sources",
       "target": "impl:apps/majordomus-cli/src/ui/dashboard.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:observatory-draws-nothing-it-did-not-read",
+      "target": "impl:apps/majordomus-cli/src/ui/observatory.rs",
       "kind": "implemented_by"
     },
     {
@@ -6891,6 +7051,11 @@
     {
       "source": "claim:the-closing-question-is-measured",
       "target": "impl:apps/majordomus-cli/src/gates/closing.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:a-diagram-is-named-linked-and-addressable",
+      "target": "impl:scripts/lib/diagrams.mjs",
       "kind": "implemented_by"
     },
     {
@@ -7444,6 +7609,21 @@
       "kind": "proved_by"
     },
     {
+      "source": "claim:mcp-client-always-served",
+      "target": "test:test/cases/3177_a_client_always_gets_a_server.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:session-start-prompt",
+      "target": "test:test/cases/3221_a_bare_session_start_joins_the_cluster.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:release-prerelease-channel",
+      "target": "test:test/cases/3179_a_prerelease_is_never_published_as_stable.sh",
+      "kind": "proved_by"
+    },
+    {
       "source": "claim:mcp-uri-resolution",
       "target": "test:apps/majordomus-cli/tests/http_serve.rs",
       "kind": "proved_by"
@@ -7746,6 +7926,11 @@
     {
       "source": "claim:ui-dashboard-cites-its-sources",
       "target": "test:apps/majordomus-cli/tests/ui_surface.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:observatory-draws-nothing-it-did-not-read",
+      "target": "test:test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
       "kind": "proved_by"
     },
     {
@@ -8056,6 +8241,11 @@
     {
       "source": "claim:the-closing-question-is-measured",
       "target": "test:test/cases/1037_the_closing_question_is_measured.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:a-diagram-is-named-linked-and-addressable",
+      "target": "test:test/cases/3006_diagrams_are_interactive_and_linkable.sh",
       "kind": "proved_by"
     }
   ]

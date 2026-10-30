@@ -1,7 +1,7 @@
 +++
 title = "Portable shell"
 description = "Portable shell"
-weight = 136
+weight = 143
 [extra]
 kind = "rule"
 slug = "project-portable-shell-1"

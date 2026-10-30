@@ -1,0 +1,28 @@
+id: I2915
+milestone: idd-reads-at-a-glance
+title: "The workspace speaks in plain words"
+slug: the-workspace-speaks-plainly
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Rename the workspace's labels to plain words (\"Next issue to start\", \"What is missing\", \"Work serving it\") and keep capability ids only in the source lines."
+why: "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: labels are internal names such as \"Plan's next issue\" and capability ids in panel headings."
+serves:
+  - the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance
+current_state: "Internal names."
+desired_state: "Plain words."
+scope:
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
+  - ".ai/repo/project"
+  - "docs"
+  - "site"
+depends_on: []
+acceptance_criteria:
+  - "No panel heading on /ui/idd names a capability id"
+validation:
+  - "majordomus plan validate"
+  - "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
+evidence_required: []
+created_at: 2026-10-18
+updated_at: 2026-10-18

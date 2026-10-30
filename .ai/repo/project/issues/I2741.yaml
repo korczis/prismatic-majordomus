@@ -1,0 +1,48 @@
+id: I2741
+milestone: truthful-plan-surfaces
+title: "Merged work the plan has not recorded is drift, and on the trunk past a window it is red"
+slug: merged-work-unrecorded-is-drift
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Add plan.drift over plan.delivery with the classes merged_not_recorded, active_without_work and done_without_trace (advisory), and a gate scripts/ci/plan-drift-check that refuses merged_not_recorded older than a window declared in .ai/repo/ci/plan.yaml on the trunk, naming majordomus plan verify|done <id>."
+why: "ADR 0166 decision 2. Nothing compares declared status with merged work; the drift is what made the public roadmap a parallel universe."
+current_state: "No drift report exists between an issue's stamps and its delivery."
+desired_state: "majordomus plan drift [--json] lists every contradiction with its proof; the gate runs in validate, reports PENDING on a head and inside the window, and refuses past it; a missing or unreadable window refuses."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "apps/majordomus-cli/src/plan"
+  - "apps/majordomus-cli/tests/plan_drift.rs"
+  - "scripts/ci/plan-drift-check"
+  - ".ai/repo/ci/plan.yaml"
+  - ".ai/repo/ci/README.md"
+  - ".github/workflows/validate.yml"
+  - ".ai/repo/automation/inventory.jsonl"
+  - "docs/PLANNING.md"
+  - "test/cases/3101_merged_work_unrecorded_is_drift.sh"
+depends_on: [I2740]
+acceptance_criteria:
+  - "A READY issue whose merged pull request names it is reported merged_not_recorded with the pull request and merge commit"
+  - "The trunk's gate refuses it past the window and passes it inside the window, naming the settling command"
+  - "done_without_trace never refuses"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_drift"
+  - "bash test/run.sh 3101_merged_work_unrecorded_is_drift"
+evidence_required:
+  - "drift_case"
+  - "mutations_fail_the_case"
+created_at: 2026-10-16
+updated_at: 2026-10-16T16:07:33Z
+evidence:
+  - covers: drift_case
+    type: test
+    command: "bash test/run.sh 3101_merged_work_unrecorded_is_drift"
+    result: "ok 3101: merged_not_recorded with PR and merge commit, forge-title proof, trunk gate exit 10 past window / 0 inside / head pending / advisory 0, missing or unreadable window exit 12, done_without_trace never refuses"
+    commit: ee02079b1bc9224657b2c46563ff9aa68befba69
+    recorded_at: 2026-10-16T16:07:29Z
+  - covers: mutations_fail_the_case
+    type: test
+    command: "6 code mutations of plan/drift.rs and plan/delivery.rs, one at a time, then bash test/run.sh 3101_merged_work_unrecorded_is_drift"
+    result: "6 of 6 killed: never-merged, ignore-open-pr, no-forge-titles, trunk-never-refuses, done-refuses, no-window-judged"
+    commit: ee02079b1bc9224657b2c46563ff9aa68befba69
+    recorded_at: 2026-10-16T16:07:33Z

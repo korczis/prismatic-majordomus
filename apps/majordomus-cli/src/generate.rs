@@ -732,6 +732,34 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
         // three are compared by `generate --check`.
         let mut log =
             crate::release::compose_published(app.repository.root(), &app.context.index.objects);
+        // A repository without the history of a release — an exported fixture, a shallow
+        // clone — cannot compose what that release changed, and composing it anyway wrote a
+        // changelog of empty sections and called the committed one stale (I1409). What such
+        // a release changed is kept as committed, and said, rather than judged on history
+        // this repository does not have.
+        let unreadable = crate::release::changelog::unreadable_releases(
+            app.repository.root(),
+            &app.context.index.objects,
+        );
+        if !unreadable.is_empty() {
+            let committed =
+                std::fs::read_to_string(app.repository.root().join(OUT_DIR).join("changelog.json"))
+                    .ok()
+                    .and_then(|text| {
+                        serde_json::from_str::<crate::release::model::Changelog>(&text).ok()
+                    });
+            let kept = committed
+                .map(|c| crate::release::changelog::keep_committed(&mut log, &c, &unreadable))
+                .unwrap_or_default();
+            if let (Some(newest), Some(oldest)) = (kept.first(), kept.last()) {
+                tracing::warn!(
+                    "{OUT_DIR}/changelog.*: what {} release(s) changed ({newest} back to \
+                     {oldest}) is kept as committed and not judged: their history is not in \
+                     this repository's object database",
+                    kept.len()
+                );
+            }
+        }
         // The committed document names its producer the way the served one does, so a page
         // rendering either can find the same value on every other surface without a route
         // or an id of its own.
@@ -1060,7 +1088,9 @@ pub(crate) fn design_artifacts(app: &App) -> Result<Vec<Artifact>> {
         ArtifactFormat::Yaml,
         None,
         source,
-        comment_banner(source, version) + &text,
+        // `.as_str()` rather than `&text`: with rhai linked, `String + &String` has more than
+        // one `Add` implementation to choose from and no longer coerces (ADR 0069)
+        comment_banner(source, version) + text.as_str(),
     ));
 
     // the brand: one canonical file per mark under share/design/brand, and every copy a
@@ -1473,6 +1503,20 @@ pub fn forbidden_in(content: &str) -> Option<(&'static str, &'static str)> {
 /// and is quietly short of one edge. [`crate::graph::unresolved_relations`] is the verdict
 /// that already decides it — this is the consumer its own contract names.
 pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
+    graph_document_of(
+        ctx,
+        version,
+        crate::graph::composed_complete(&ctx.registry, &ctx.index),
+    )
+}
+
+/// [`graph_document`] over a composition already made, so the refusal of one that stopped
+/// at a bound is reached by a test as it would be by a bound that comes back.
+fn graph_document_of(
+    ctx: &Context,
+    version: &str,
+    composed: crate::graph::Graph,
+) -> Result<String> {
     let unresolved = crate::graph::unresolved_relations(&ctx.registry, &ctx.index.objects);
     if !unresolved.is_empty() {
         return Err(Error::UnresolvedRelation {
@@ -1489,7 +1533,7 @@ pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
     }
     // whole: the site's entity pages and its catalogue counts are read off this document,
     // and a prefix of the repository would drop what sorts past MAX_NODES without a word
-    let graph = crate::graph::composed_complete(&ctx.registry, &ctx.index);
+    let graph = committed_graph(composed)?;
     let doc = serde_json::json!({
         "schema": GRAPH_SCHEMA,
         "generated": format!("{HEADER}; source: the capability registry and every object of the index; regenerate with `majordomus generate`"),
@@ -1507,6 +1551,14 @@ pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
         });
     }
     Ok(rendered)
+}
+
+/// The composed graph as it may be committed: a graph that stopped at a bound is refused
+/// with the count it held and the bound, and nothing is written, as an unresolved relation
+/// is refused before it. The composition has no bound today; this is what keeps one that
+/// comes back from committing a prefix that still reads as whole (I1966).
+fn committed_graph(graph: crate::graph::Graph) -> Result<crate::graph::Graph> {
+    crate::graph::whole(graph).map_err(|reason| Error::Refused { code: 10, reason })
 }
 
 /// The schema of the composed graph, generated from the types that define it rather than
@@ -3219,6 +3271,43 @@ mod tests {
     }
 
     #[test]
+    fn a_composed_graph_that_stopped_at_a_bound_is_refused_and_not_committed() {
+        use crate::graph::{Builder, Node};
+        let thing = |id: &str| Node {
+            id: id.into(),
+            kind: "thing".into(),
+            label: id.into(),
+            summary: None,
+            route: None,
+            source: None,
+            status: None,
+            external: false,
+            facts: Default::default(),
+        };
+        let mut b = Builder::new("composed", "Everything", "two things, room for one", "test")
+            .node_kind("thing", "a thing")
+            .limit(1);
+        b.node(thing("a"));
+        b.node(thing("b"));
+        let err = committed_graph(b.finish()).expect_err("a prefix is not committed");
+        assert_eq!(err.exit_code(), 10);
+        let message = err.to_string();
+        assert!(message.contains("stopped at 1 nodes"), "{message}");
+        assert!(
+            message.contains(&crate::graph::MAX_NODES.to_string()),
+            "{message}"
+        );
+
+        let mut whole = Builder::new("composed", "Everything", "one thing", "test")
+            .node_kind("thing", "a thing");
+        whole.node(thing("a"));
+        assert!(
+            committed_graph(whole.finish()).is_ok(),
+            "a graph that stopped nowhere is committed"
+        );
+    }
+
+    #[test]
     fn a_graph_of_repository_relative_sources_is_publishable() {
         let safe = r#"{"nodes":[{"id":"majordomus://rule/a","source":".ai/repo/rules/a.md"}]}"#;
         assert!(forbidden_in(safe).is_none());
@@ -3347,5 +3436,176 @@ mod tests {
             .modified()
             .unwrap();
         assert_eq!(before, after);
+    }
+
+    /// A repository holding one release record and none of its history, as an exported
+    /// fixture does: its index, and the app that plans over it.
+    fn released_without_history() -> (crate::synthetic::SyntheticRepository, crate::cli::RepoArgs) {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let sources = repo.root().join(".ai/repo/knowledge/sources.yaml");
+        let mut text = std::fs::read_to_string(&sources).unwrap();
+        text.push_str(
+            "  - id: release\n    kind: release-record\n    discovery: vcs\n    \
+             pathspec: ':(glob).ai/repo/releases/*.yaml'\n    required: false\n",
+        );
+        std::fs::write(&sources, text).unwrap();
+        let manifest = repo.root().join(".ai/manifest.yaml");
+        let mut text = std::fs::read_to_string(&manifest).unwrap();
+        text.push_str("  releases: repo/releases\n");
+        std::fs::write(&manifest, text).unwrap();
+        let releases = repo.root().join(".ai/repo/releases");
+        std::fs::create_dir_all(&releases).unwrap();
+        std::fs::write(
+            releases.join("v1.0.0.yaml"),
+            "schema: release/v1\nversion: \"1.0.0\"\ntag: v1.0.0\nchannel: stable\n\
+             commit: 1111111111111111111111111111111111111111\n\
+             published_at: \"2026-10-01T00:00:00Z\"\nartifacts:\n  - target: linux-x86_64-gnu\n    \
+             name: majordomus-v1.0.0-x86_64-unknown-linux-gnu.tar.gz\n    \
+             url: https://github.com/example/synthetic/releases/download/v1.0.0/\
+             majordomus-v1.0.0-x86_64-unknown-linux-gnu.tar.gz\n    \
+             sha256: 3333333333333333333333333333333333333333333333333333333333333333\n    \
+             size: 1\n",
+        )
+        .unwrap();
+        let args = crate::cli::RepoArgs {
+            repo: Some(repo.root().to_path_buf()),
+            share: Some(crate::synthetic::crate_share()),
+            discovery: crate::cli::DiscoveryMode::Filesystem,
+            ..Default::default()
+        };
+        (repo, args)
+    }
+
+    fn planned_changelog(args: &crate::cli::RepoArgs) -> crate::release::model::Changelog {
+        let app = crate::app::App::load(args).unwrap();
+        let plan = plan(&app, &[Target::Changelog]).unwrap();
+        let json = plan
+            .iter()
+            .find(|a| a.path == format!("{OUT_DIR}/changelog.json"))
+            .expect("the changelog is planned");
+        serde_json::from_str(&json.content).unwrap()
+    }
+
+    /// A release whose history is not in the repository keeps what the committed changelog
+    /// says it changed; with nothing committed, or with a committed changelog that cannot
+    /// be read, there is nothing to keep and the composed section stands as composed.
+    #[test]
+    fn a_release_without_its_history_keeps_what_the_committed_changelog_says() {
+        use crate::release::model::{Change, ChangeGroup, ChangeKind};
+        let (repo, args) = released_without_history();
+        let app = crate::app::App::load(&args).unwrap();
+        assert!(
+            app.context
+                .index
+                .objects
+                .iter()
+                .any(|o| o.kind == crate::release::changelog::RELEASE_KIND),
+            "the fixture's release record is indexed: {:?}",
+            app.context.index.diagnostics
+        );
+        assert_eq!(
+            crate::release::changelog::unreadable_releases(
+                app.repository.root(),
+                &app.context.index.objects
+            ),
+            ["1.0.0"],
+            "the fixture's release must be one whose history is absent"
+        );
+
+        // nothing committed: the section is composed from the history it does not have
+        let composed = planned_changelog(&args);
+        let section = composed
+            .sections
+            .iter()
+            .find(|s| s.version == "1.0.0")
+            .expect("the release has a section");
+        assert!(section.groups.is_empty(), "{section:?}");
+
+        // a committed changelog that does not parse is not a source of anything
+        let out = repo.root().join(OUT_DIR);
+        std::fs::create_dir_all(&out).unwrap();
+        std::fs::write(out.join("changelog.json"), "{ not json").unwrap();
+        let unparsed = planned_changelog(&args);
+        assert_eq!(unparsed.sections, composed.sections);
+
+        // a committed changelog naming the same release at the same commit is kept
+        let mut committed = composed.clone();
+        let kept = Change {
+            kind: ChangeKind::Fix,
+            scope: None,
+            subject: "what the committed changelog said".into(),
+            breaking: false,
+            commit: "2222222222222222222222222222222222222222".into(),
+            url: None,
+            references: Vec::new(),
+        };
+        for s in committed
+            .sections
+            .iter_mut()
+            .filter(|s| s.version == "1.0.0")
+        {
+            s.groups = vec![ChangeGroup {
+                kind: ChangeKind::Fix,
+                heading: "Fixed".into(),
+                rank: 1,
+                changes: vec![kept.clone()],
+            }];
+        }
+        std::fs::write(
+            out.join("changelog.json"),
+            serde_json::to_string(&committed).unwrap(),
+        )
+        .unwrap();
+        // the warning that names what is kept is formatted only where a subscriber listens
+        // at warn, so the plan is made under one: its count and its range are executed
+        let subscriber = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::WARN)
+            .with_writer(std::io::sink)
+            .finish();
+        let planned = tracing::subscriber::with_default(subscriber, || planned_changelog(&args));
+        let section = planned
+            .sections
+            .iter()
+            .find(|s| s.version == "1.0.0")
+            .unwrap();
+        assert_eq!(section.groups.len(), 1, "{section:?}");
+        assert_eq!(section.groups[0].changes, [kept]);
+    }
+
+    /// The composed graph of a repository whose every reference resolves is the committed
+    /// document: its schema, its generator, and the graph composed whole.
+    #[test]
+    fn the_graph_document_of_a_whole_repository_is_committed() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let rendered = graph_document(&ctx, "9.9.9").unwrap();
+        let doc: serde_json::Value = serde_json::from_str(&rendered).unwrap();
+        assert_eq!(doc["schema"], GRAPH_SCHEMA);
+        assert_eq!(doc["generator"], "majordomus-cli 9.9.9");
+        assert_eq!(doc["graph"]["metadata"]["truncated"], false);
+        let nodes = doc["graph"]["nodes"].as_array().expect("graph nodes");
+        assert!(
+            nodes
+                .iter()
+                .any(|n| n["id"].as_str() == Some("capability:worktree.status")),
+            "the registry is composed into the graph"
+        );
+    }
+
+    /// A composition that stopped at a bound is refused, and nothing is rendered: committing
+    /// it would publish a prefix of the repository that still reads as whole (I1966).
+    #[test]
+    fn a_graph_that_stopped_at_a_bound_is_not_committed() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let mut composed = crate::graph::composed_complete(&ctx.registry, &ctx.index);
+        composed.metadata.truncated = true;
+        match graph_document_of(&ctx, "9.9.9", composed) {
+            Err(Error::Refused { code, reason }) => {
+                assert_eq!(code, 10);
+                assert!(reason.contains("stopped at"), "{reason}");
+            }
+            other => panic!("{other:?}"),
+        }
     }
 }

@@ -1,0 +1,36 @@
+id: I2733
+milestone: mesh-journal-converges
+title: "A resumed mesh.events walk returns every event exactly once, across partitions"
+slug: a-resumed-walk-misses-a-partitioned-event
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "A reader that walks mesh.events page by page and resumes from the cursor each page answers receives every event the runtime accepts, exactly once, including an event from a writer that was partitioned from the mesh and stamped it at or below a position the walk already passed."
+why: "Leaf M02.5.1 (PR #1207, I2140) proved that a walk resumed from each page's lamport returns every event once while the reader's own events, and peers' events stamped above the walk's position, keep arriving (unit tests paging_by_stamp_returns_every_event_exactly_once and paging_while_events_arrive_returns_every_event_exactly_once), and documented in docs/MESH.md, under 'Paging the raw journal', the one arrival outside that walk: a runtime partitioned away keeps writing with its own Lamport clock, and when the link returns its events arrive stamped at or below the reader's cursor. events_after filters lamport > after (apps/majordomus-cli/src/mesh/journal.rs:2367-2385), so those events are never returned to the resumed walk; they reach only mesh state's fold or a walk restarted from an earlier after. A Lamport stamp is its writer's, not the reader's arrival order, so no single-stamp cursor can fix this; the cursor itself has to change."
+current_state: "mesh.events answers lamport, the stamp of the last event on the page, as the next after (apps/majordomus-cli/src/capability/builtin/mesh.rs:754-786), and a page never ends inside a run of equal stamps. An event that arrives after the walk passed its stamp is silently missing from the walk, with no signal to the reader. Sync between runtimes already exchanges per-stream high-water marks (Journal::marks, marks_for, missing_for in apps/majordomus-cli/src/mesh/journal.rs:1765-1974); paging does not use them."
+desired_state: "The cursor mesh.events answers, and mesh events --after and /events?after= accept, names every event already returned, so a resumed walk returns a late event below the reader's position once and never repeats one; docs/MESH.md states the guarantee and drops the stated gap. The design is chosen when this issue is taken, recorded with its evidence, and not here. Candidates: (a) a per-writer cursor, the last (stream, seq) returned per stream, so a page returns each stream's events above its own seq; (b) a version vector over streams, the same marks sync already exchanges, carried as an opaque token; (c) per-runtime high-water marks of arrival, a local arrival sequence the reader resumes from, which keeps the token small but is valid only against the runtime that issued it. Each must state its token size bound, how it behaves after compaction drops events below a mark, and whether the scalar lamport after stays accepted for existing readers."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/cli/local.rs"
+  - "apps/majordomus-cli/tests/mesh.rs"
+  - "docs/MESH.md"
+non_scope:
+  - "mesh state's fold and digest, which already converge on any delivery order"
+  - "The sync protocol and its marks budget, which the milestone's other issues own"
+  - "A global order of events across runtimes; the walk is complete and duplicate-free, not linearizable"
+depends_on:
+  - "I2140"
+acceptance_criteria:
+  - "A test reproduces the gap before the fix: two runtimes, A and B, linked; a reader walks A's mesh.events with a small limit past B's stamp; the link is cut, B appends an event whose lamport is at or below the reader's cursor, the link is restored and A accepts it; resuming the walk from the last answered cursor returns that event"
+  - "The same test, with the walk resumed repeatedly and with the late event also delivered twice, returns every event of the journal exactly once over the whole walk"
+  - "The cursor the schema documents is the cursor the next page accepts on the command line, over HTTP and over MCP"
+  - "docs/MESH.md 'Paging the raw journal' states the guarantee across partitions and names the test"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mesh"
+  - "cargo test --lib mesh::journal"
+evidence_required:
+  - "events_resume_across_partition_test"
+created_at: 2026-10-15
+updated_at: 2026-10-15

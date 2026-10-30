@@ -13,6 +13,15 @@
 #                             refuses a tree whose crate it was not built from (exit 15).
 #   MAJORDOMUS_BUILD_PROFILE  debug (default) or release
 #   MAJORDOMUS_NO_BUILD=1     refuse to build; exit 12 when the executable is missing
+#   MAJORDOMUS_MCP_BUILD=1    `mcp` builds this checkout's executable like every other command
+#   MAJORDOMUS_INSTALLED_BIN  the installed release `mcp` falls back to (lib/rust_bin.sh)
+#
+# `mcp` is the command a client spawns and then waits on: a client that gets no handshake
+# in time reports the server as failed and the session goes on without it, silently, as the
+# only worker of the repository (ADR 0156, ADR 0172). So `mcp` never waits on a build it can
+# avoid: when this checkout has no executable, or has one that cannot be rebuilt (no cargo,
+# too little free space, a failed build), it runs the installed release and says so on
+# stderr. A stale executable that CAN be rebuilt is rebuilt, as for every other command.
 #
 # Exit codes are the executable's; 12 when it is missing and cannot be built.
 set -eu
@@ -32,17 +41,33 @@ if [ -n "$share" ]; then
   MAJORDOMUS_SHARE="$share"; export MAJORDOMUS_SHARE
 fi
 
+# `mcp` only: run the installed release instead of failing (exit 12) or building under a
+# client that is waiting. Returns when there is none, so the caller reports as before.
+use_installed_for_mcp() {
+  [ "${1:-}" = mcp ] || return 0
+  [ -z "${MAJORDOMUS_BIN:-}" ] || return 0
+  [ "${MAJORDOMUS_MCP_BUILD:-0}" != 1 ] || return 0
+  mj_ui_reason="$2"; shift 2
+  mj_ui_bin="$(mj_rust_installed "$root")" || return 0
+  printf 'majordomus-cli: %s; serving this client from the installed release %s (%s)\n' \
+    "$mj_ui_reason" "$mj_ui_bin" "$("$mj_ui_bin" --version 2>/dev/null)" >&2
+  exec "$mj_ui_bin" "$@"
+}
+
 # Is the executable missing, or older than any source, manifest or lock file? Decided in
 # lib/rust_bin.sh, so that this script and the one `.envrc` calls cannot disagree about it.
 stale=0
 mj_rust_stale "$root" "$bin" && stale=1
 
 if [ "$stale" = 1 ] && [ -z "${MAJORDOMUS_BIN:-}" ]; then
+  [ -x "$bin" ] || use_installed_for_mcp "${1:-}" "$bin is missing" "$@"
   if [ "${MAJORDOMUS_NO_BUILD:-0}" = 1 ]; then
+    use_installed_for_mcp "${1:-}" "the build is forbidden (MAJORDOMUS_NO_BUILD)" "$@"
     printf 'majordomus-cli: %s is missing or stale and MAJORDOMUS_NO_BUILD is set; run: cargo build --manifest-path %s/Cargo.toml\n' "$bin" "$crate" >&2
     exit 12
   fi
   if ! command -v cargo >/dev/null 2>&1; then
+    use_installed_for_mcp "${1:-}" "cargo is not installed" "$@"
     printf 'majordomus-cli: %s is missing or stale and cargo is not installed; install a Rust toolchain (rustup) or set MAJORDOMUS_BIN\n' "$bin" >&2
     exit 12
   fi
@@ -50,13 +75,20 @@ if [ "$stale" = 1 ] && [ -z "${MAJORDOMUS_BIN:-}" ]; then
   # the floor it does not start, because a build that fills the volume takes every other
   # session on the machine with it. Decided in lib/rust_bin.sh, so that this launcher and
   # every other caller that builds cannot disagree about the floor.
-  mj_rust_space_check "$root" "the build of the executable" || exit 12
+  if ! mj_rust_space_check "$root" "the build of the executable"; then
+    use_installed_for_mcp "${1:-}" "there is not room to build" "$@"
+    exit 12
+  fi
   printf 'majordomus-cli: building the executable (%s profile) ...\n' "$profile" >&2
   flags=""
   [ "$profile" = release ] && flags="--release"
   # a machine-wide rustflags profile can make a dev build refuse to link; the crate sets none
   # shellcheck disable=SC2086
-  if ! RUSTFLAGS='' cargo build --quiet --locked --manifest-path "$crate/Cargo.toml" $flags 1>&2; then
+  # bounded: a build that stands behind another worktree's lock says so and builds in its own
+  # directory at the bound (lib/rust_bin.sh, mj_cargo_bounded)
+  # shellcheck disable=SC2086
+  if ! RUSTFLAGS='' mj_cargo_bounded "$root" build --quiet --locked --manifest-path "$crate/Cargo.toml" $flags 1>&2; then
+    use_installed_for_mcp "${1:-}" "the build failed" "$@"
     printf 'majordomus-cli: the build failed; see above\n' >&2
     exit 12
   fi

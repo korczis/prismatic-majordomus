@@ -116,19 +116,21 @@ fn fetch_now(program: &str, root: &Path) -> Fetch {
 /// One call of `program`, bounded by [`BUDGET`], its stdout parsed as JSON; every failure is
 /// reported as `gh`'s, because `gh` is the only program asked in earnest.
 fn run(program: &str, root: &Path, args: &[&str]) -> Result<Value, (MonitorSourceHealth, String)> {
-    let mut child = Command::new(program)
-        .args(args)
-        .current_dir(root)
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| {
-            (
-                MonitorSourceHealth::Absent,
-                format!("gh could not be started: {e}"),
-            )
-        })?;
+    let mut child = crate::process::retrying_busy(|| {
+        Command::new(program)
+            .args(args)
+            .current_dir(root)
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+    })
+    .map_err(|e| {
+        (
+            MonitorSourceHealth::Absent,
+            format!("gh could not be started: {e}"),
+        )
+    })?;
     let deadline = Instant::now() + BUDGET;
     let status = loop {
         match child.try_wait() {

@@ -13,7 +13,7 @@
   var sec = $('graf'), raw = $('data-graphdb');
   if (!sec || !raw) return;
   var GH = 'https://github.com/korczis/prismatic-majordomus';
-  var ARTIFACT = 'https://claude.ai/artifact/CBgdBRrXSimNAgQZuxt5JU';
+  var ARTIFACT = 'https://claude.ai/artifact/XgCzwV1MFNDL1ssJHstPQ1';
   var CDN = 'https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js';
   var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   function cssv(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }

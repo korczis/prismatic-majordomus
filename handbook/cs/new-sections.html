@@ -3,12 +3,12 @@
   <p>Majordomus je supervizní vrstva pro repozitář, ve kterém pracují AI agenti. Nevolá model a nespouští nástroje agenta. Drží to, co má přežít konkrétní session a konkrétní nástroj: pravidla, rozhodnutí, znalosti, rozdělanou práci a kritéria hotového. Všechno ukládá jako malé typované záznamy ve vrstvě <code>.ai/</code> uvnitř repa a z jedné deklarace servíruje přes příkazovou řádku, MCP, HTTP a webové rozhraní.</p>
   <p>Příručka spojuje tři dřívější stránky (harness, paměť a pravidla, mesh) a přidává k nim mapu problémů, celkovou stavbu, slovník a referenci příkazů. Každá kapitola odkazuje na související kapitoly v rámečku <em>Souvisí</em> a skoro každý pojem ve slovníku vede na místo, kde je vysvětlený.</p>
   <div class="facts">
-    <div><b>191</b><span>deklarovaných capabilities v 55 modulech</span></div>
-    <div><b>244</b><span>veřejných garancí, 226 z nich s testem</span></div>
-    <div><b>95</b><span>architektonických rozhodnutí (ADR)</span></div>
-    <div><b>74</b><span>CI gates v <code>gates.yaml</code></span></div>
+    <div><b>%%caps%%</b><span>deklarovaných capabilities v %%modules%% modulech</span></div>
+    <div><b>%%claims%%</b><span>veřejných garancí, %%tested%% z nich s testem</span></div>
+    <div><b>%%adrs%%</b><span>architektonických rozhodnutí (ADR)</span></div>
+    <div><b>%%gates%%</b><span>CI gates v <code>gates.yaml</code></span></div>
   </div>
-  <p class="small">Počty platí pro <code>origin/master</code> repozitáře Majordomusu k 12. 10. 2026, verze 0.21.0. Podrobnosti jsou v <a href="#pruzkumnik">průzkumníku</a> a v části <a href="#cisla-tempo">Repozitář v číslech</a>.</p>
+  <p class="small">Počty platí pro <code>origin/master</code> repozitáře Majordomusu k %%asof%%, verze %%version%%. Podrobnosti jsou v <a href="#pruzkumnik">průzkumníku</a> a v části <a href="#cisla-tempo">Repozitář v číslech</a>.</p>
 </section>
 
 <section id="problemy">
@@ -198,7 +198,7 @@
 
         <rect x="236" y="96" width="196" height="94" rx="6" fill="var(--panel)" stroke="var(--accent)" stroke-width="1.5"/>
         <text x="250" y="122" font-size="13" font-weight="600" class="ink">Registr</text>
-        <text x="250" y="142" font-size="11.5" class="ink">191 deklarací, 55 modulů</text>
+        <text x="250" y="142" font-size="11.5" class="ink">%%caps%% deklarací, %%modules%% modulů</text>
         <text x="250" y="160" font-size="11" class="mut">jeden executor,</text>
         <text x="250" y="176" font-size="11" class="mut">jedno schéma vstupu a výstupu</text>
 
@@ -226,6 +226,71 @@
   <p>Stejný princip platí o patro výš. Instrukce pro providery jsou projekce policy (<a href="#h-bootstrap">bootstrap</a>), anotace MCP nástrojů jsou projekce deklarovaného efektu (<a href="#h-server">sdílený server</a>) a commit hook, CI i MCP nástroj se ptají stejného soudce (<a href="#h-git">git hooky</a>).</p>
 </section>
 
+<section id="mj-way">
+  <h2>MJ way: jak se tu věci dělají</h2>
+  <p>„Udělej to MJ way“ je zkratka, která se v zadáních tohoto repozitáře objevuje často. Není to příkaz ani jedno pravidlo. Je to jméno pro pracovní postup, který pravidla repozitáře vynucují kus po kusu: fakt se zapíše jednou, všechno ostatní se z něj odvodí, a co se tvrdí, to něco spouští a dokazuje. Kapitola nepřidává nic nového. Skládá do jednoho sledu to, co ostatní kapitoly popisují jednotlivě.</p>
+  <figure>
+    <div class="fig">
+      <svg viewBox="0 0 720 150" role="img" aria-label="Sedm kroků MJ way v řadě: deklaruj jednou, odvoď, vynuť, dokaž, zaber si práci, doruč do masteru, pouč se. Z posledního kroku vede šipka zpět k prvnímu: poučení se stává novou deklarací.">
+        <defs>
+          <marker id="mw-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mut"/></marker>
+        </defs>
+        <g font-size="11.5" class="ink">
+          <rect x="8" y="30" width="88" height="44" rx="6" fill="var(--panel)" stroke="var(--accent)" stroke-width="1.5"/><text x="52" y="49" text-anchor="middle" font-weight="600">Deklaruj</text><text x="52" y="64" text-anchor="middle" class="mut" font-size="10.5">jednou</text>
+          <rect x="110" y="30" width="88" height="44" rx="6" class="box" stroke-width="1"/><text x="154" y="49" text-anchor="middle" font-weight="600">Odvoď</text><text x="154" y="64" text-anchor="middle" class="mut" font-size="10.5">nepiš ručně</text>
+          <rect x="212" y="30" width="88" height="44" rx="6" class="box" stroke-width="1"/><text x="256" y="49" text-anchor="middle" font-weight="600">Vynuť</text><text x="256" y="64" text-anchor="middle" class="mut" font-size="10.5">něco to volá</text>
+          <rect x="314" y="30" width="88" height="44" rx="6" class="box" stroke-width="1"/><text x="358" y="49" text-anchor="middle" font-weight="600">Dokaž</text><text x="358" y="64" text-anchor="middle" class="mut" font-size="10.5">test, příkaz</text>
+          <rect x="416" y="30" width="88" height="44" rx="6" class="box" stroke-width="1"/><text x="460" y="49" text-anchor="middle" font-weight="600">Zaber si</text><text x="460" y="64" text-anchor="middle" class="mut" font-size="10.5">board, větve</text>
+          <rect x="518" y="30" width="88" height="44" rx="6" class="box" stroke-width="1"/><text x="562" y="49" text-anchor="middle" font-weight="600">Doruč</text><text x="562" y="64" text-anchor="middle" class="mut" font-size="10.5">malé, do masteru</text>
+          <rect x="620" y="30" width="92" height="44" rx="6" class="box" stroke-width="1"/><text x="666" y="49" text-anchor="middle" font-weight="600">Pouč se</text><text x="666" y="64" text-anchor="middle" class="mut" font-size="10.5">incident → pravidlo</text>
+        </g>
+        <g stroke="var(--muted)" stroke-width="1.15" fill="none" marker-end="url(#mw-arrow)">
+          <path d="M96 52H108"/><path d="M198 52H210"/><path d="M300 52H312"/><path d="M402 52H414"/><path d="M504 52H516"/><path d="M606 52H618"/>
+          <path d="M666 74V110H52V76"/>
+        </g>
+        <text x="360" y="128" text-anchor="middle" font-size="11" class="mut">poučení se vrací jako nová deklarace: pravidlo, gate a test</text>
+      </svg>
+    </div>
+    <figcaption>Sedm kroků v pořadí, v jakém na ně změna narazí. První čtyři říkají, jak má změna vypadat, další dva, jak se dostane mezi ostatní, a poslední, co se stane, když se něco pokazí.</figcaption>
+  </figure>
+  <h3>Sedm kroků</h3>
+  <div class="table-wrap"><table class="hub">
+    <thead><tr><th>Krok</th><th>Co to znamená</th><th>Co to drží</th><th>Kapitoly</th></tr></thead>
+    <tbody>
+      <tr><td>Deklaruj jednou</td><td>fakt má jedno kanonické místo: deklarace capability, policy, tokeny designu, model CI</td><td>ADR 0004; opakovaná definice téhož je vada návrhu</td><td><a href="#projekce">Jeden fakt, mnoho rozhraní</a>, <a href="#x-registry">Registr</a></td></tr>
+      <tr><td>Odvoď, nepiš ručně</td><td>všechno ostatní je projekce: CLI, MCP, OpenAPI, dokumentace, instrukce pro providery, čísla v textu. Zobrazují se skutečná data repozitáře, žádná ukázková</td><td><code>majordomus generate</code> a pravidlo <code>project.derived-files-regenerated</code>: projekce, která se liší od modelu, shodí build</td><td><a href="#stav">Šest druhů stavu</a>, <a href="#h-bootstrap">Bootstrap</a></td></tr>
+      <tr><td>Vynuť, nedoporučuj</td><td>pravidlo jmenuje, co ho spouští: validátor, gate nebo test. Věta v Markdownu, kterou nic nevolá, je přání</td><td><code>project.rule-is-a-doctrine</code>; řetěz pravidlo → kontrola prochází <code>doctor</code></td><td><a href="#h-vynuceni">Pravidlo musí něco volat</a>, <a href="#p-pravidla">Pravidla</a>, <a href="#h-ci">CI gates</a></td></tr>
+      <tr><td>Dokaž</td><td>tvrzení o produktu má test, „hotovo“ má příkaz, který se dá spustit znovu, a důkaz je vázaný na strom, o kterém mluví</td><td><code>project.no-claim-without-test</code>; <code>finish</code> práci bez důkazu odmítne</td><td><a href="#h-finish">Finish contract</a>, <a href="#x-evidence">Důkazy</a>, <a href="#x-claims">Garance</a></td></tr>
+      <tr><td>Zaber si práci, než ji postavíš</td><td>před novým modulem, příkazem nebo číslem ADR se podívej na board a do větví a ohlas záměr i cesty</td><td><code>project.work-is-claimed-before-it-is-built</code>; rozsah tasku odmítne změnu mimo něj</td><td><a href="#koordinace">Kruhy koordinace</a>, <a href="#h-server">Board</a>, <a href="#m-claims">Claims</a>, <a href="#h-scope">Scope</a></td></tr>
+      <tr><td>Doruč malé a často</td><td>větev žije ve svém worktree, brzy se pushuje a do masteru jde po jedné. Zveřejněné je to, co je v masteru, a nic jiného</td><td><code>project.worktree-topology</code>, <code>project.land-and-publish</code></td><td><a href="#x-worktree">Worktrees</a>, <a href="#h-git">Git hooky</a>, <a href="#x-release">Verze a vydání</a></td></tr>
+      <tr><td>Pouč se trvale</td><td>incident nekončí poznámkou. Končí pravidlem, kontrolou, která by ho příště chytila, a testem té kontroly</td><td>znalost povyšuje člověk s důkazem; pravidlo bez volajícího neprojde</td><td><a href="#x-lessons">Poučení z provozu</a>, <a href="#p-znalosti">Knowledge base</a></td></tr>
+    </tbody>
+  </table></div>
+  <h3>Jak vypadá jedna změna</h3>
+  <p>Stejný sled pro novou operaci, opravu i kapitolu této příručky. Liší se jen to, co je kanonický zdroj.</p>
+  <div class="code"><button type="button">Kopírovat</button><pre><code>majordomus context                               <span class="c"># co repozitář už ví: task, handover, board</span>
+scripts/collision-check --new &lt;cesty&gt;            <span class="c"># nenese ty cesty už jiná větev?</span>
+majordomus worktree create &lt;větev&gt;               <span class="c"># vlastní worktree, vlastní server</span>
+majordomus start "&lt;úkol&gt;" --scope &lt;cesty&gt;        <span class="c"># task s rozsahem, který něco odmítne</span>
+<span class="c"># ... změna kanonického zdroje, nikdy jeho projekce ...</span>
+majordomus generate                              <span class="c"># projekce se přepočítají z deklarace</span>
+majordomus check                                 <span class="c"># dřív, než řekneš, že to postupuje</span>
+majordomus finish --outcome completed --verify-command "&lt;příkaz&gt;"</code></pre></div>
+  <h3>Jak poznat, že to MJ way není</h3>
+  <ul>
+    <li><strong>Číslo napsané rukou.</strong> Počet, verze nebo datum v textu, které nikdo nepřepočítává. Zastará při první změně a nic to neohlásí.</li>
+    <li><strong>Dvě definice téhož.</strong> Seznam příkazů v dokumentaci vedle seznamu v kódu. Jeden z nich je projekce a má se generovat.</li>
+    <li><strong>Úprava projekce.</strong> Ruční zásah do generovaného souboru nebo do textu mezi značkami <code>majordomus:begin</code> a <code>majordomus:end</code>. Příští generování ho přepíše.</li>
+    <li><strong>Pravidlo bez volajícího.</strong> Deklarované, nikdo ho nespouští a nikdo se nedívá.</li>
+    <li><strong>„Hotovo“ bez příkazu.</strong> Tvrzení, které se nedá spustit znovu na stejném stromě.</li>
+    <li><strong>Ukázková data.</strong> Panel nebo graf, který vypadá živě a nečte repozitář.</li>
+    <li><strong>Práce, o které nikdo neví.</strong> Větev, která nikdy neopustila disk, a záměr, který nebyl na boardu.</li>
+    <li><strong>Poučení jen v hlavě.</strong> Nebo jen v paměti jednoho nástroje, kam ostatní nevidí.</li>
+  </ul>
+  <h3>Příručka jako příklad i jako výjimka</h3>
+  <p>Tahle příručka se staví stejně: próza kapitol je psaná ručně, čítárna, graf, průzkumník a každé číslo včetně data a verze v patičce se počítají při sestavení ze stromu, který příručka popisuje. Kapitola deklaruje, o co se opírá, a sestavení selže, když ten dokument, pravidlo nebo rozhodnutí z repozitáře zmizí (pravidlo <code>project.the-handbook-is-built-from-the-tree</code>).</p>
+  <div class="note"><p><strong>Kde to zatím neplatí.</strong> Kopie příručky publikovaná jako artifact se sama neaktualizuje. Je to snímek jednoho sestavení: stránka v artifactu nemá přístup k síti ani k repozitáři a publikuje ji ručně session, která příručku přestavěla. Mezi dvěma publikacemi zaostává za masterem. Patička říká, ke kterému commitu a dni snímek patří. Trvalý domov odvozených pohledů je web, který se staví z masteru při každém sloučení; příručka na něm zatím není.</p></div>
+</section>
 <section id="kudy">
   <h2>Kudy číst</h2>
   <div class="three">

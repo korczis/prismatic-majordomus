@@ -1,0 +1,40 @@
+id: I2697
+milestone: development-runtime
+title: "The public snapshot carries the p5 library, or says which scenes it cannot draw"
+slug: ui-snapshot-carries-p5
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "The kiosk on the public site draws the proof scenes with p5, from the one reading taken at the published commit."
+why: "A published UI snapshot (ADR 0141) must serve vendor/p5.min.js beside the scenes script, or the kiosk there draws the new scenes as unavailable."
+current_state: "ADR 0160 proposes the scenes; the Observatory of ADR 0158 has eight."
+desired_state: "The kiosk on the public site draws the proof scenes with p5, from the one reading taken at the published commit."
+scope:
+  - "scripts/site-build"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+non_scope:
+  - "Stating a frame rate or a figure that was not measured"
+depends_on: []
+acceptance_criteria:
+  - "The snapshot lists vendor/p5.min.js among its assets"
+  - "The snapshot status word is SNAPSHOT on every new scene"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "observatory_proof_scenes"
+created_at: 2026-10-14
+updated_at: 2026-10-16T16:54:05Z
+started_at: 2026-10-16T16:53:48Z
+started_event: sha256:84a51666c15609fc5c00a2c646f896168031b74b62cca865686bc291a97aae3f
+verified_at: 2026-10-16T16:53:54Z
+verified_event: sha256:9d9da6056c869b760f6b6da90f447f451e4a6fbe59050984b915765e6245519a
+completed_at: 2026-10-16T16:54:05Z
+completed_event: sha256:43b4609a42b915d276cbe62fc192b14c06275757af849b8244e34cb16dd2def1
+evidence:
+  - covers: observatory_proof_scenes
+    type: artifact
+    command: "git show origin/gh-pages:ui/snapshot.json | jq -c .assets; node <scratch>/scenes.mjs (playwright chromium) reading [data-state] on https://majordomus.dev/ui/observatory/_scene/<scene>/"
+    result: "published gh-pages 73a02db2f36 (master d11626680361): snapshot assets list assets/vendor/p5.min.js; on 2026-10-16T16:5xZ the seven ADR 0160 scenes proof, claims, surface, waves, matrix, registry, ladder each read 'SNAPSHOT · read once at d11626680361' with window.p5 loaded (the replayed ADR 0158 scenes activity, mesh, coop read REPLAY by design); case 3014_the_kiosk_draws_what_the_repository_proves ok at 09c334079f5"
+    artifact: "origin/gh-pages@73a02db2f36:ui/snapshot.json"
+    commit: 09c334079f57de3429ce4e707d4bb4297d589245
+    recorded_at: 2026-10-16T16:54:01Z
