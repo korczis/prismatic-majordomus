@@ -1416,3 +1416,889 @@ fn the_summary_does_not_depend_on_the_order_runs_are_found_in() {
     assert_eq!(sa.metrics, sb.metrics);
     assert_eq!(sa.verdict, sb.verdict);
 }
+
+// ---------------------------------------------------------------- the proof plan
+
+mod proof_plan {
+    use super::common::Fixture;
+    use super::DIR;
+    use majordomus_cli::economics::proof::{self, ProofCount, ProofStamp};
+    use majordomus_cli::metadata::yaml;
+    use serde_json::{json, Value};
+
+    const CLAIMS: &str = "version: 1\nclaims:\n  - id: proof-t1\n    claim: c\n    status: planned\n  - id: proof-t2\n    claim: c\n    status: planned\n  - id: proof-t3\n    claim: c\n    status: planned\n  - id: proof-t4\n    claim: c\n    status: planned\n";
+
+    /// A live suite carrying a registration block, as I3367 will type it, and a context
+    /// suite with none.
+    const PILOT: &str = "schema: economics-suite/v1\nid: pilot\nversion: 1\nkind: live\ntitle: Pilot\nfreshness_inputs:\n  - .ai/repo/benchmarks/economics/methodology.yaml\nregistration:\n  primary_outcome: accepted\n  seed: 7\n";
+    const CONTEXT: &str = "schema: economics-suite/v1\nid: context\nversion: 1\nkind: context\ntitle: Context\nfreshness_inputs:\n  - .ai/repo/benchmarks/economics/methodology.yaml\n";
+
+    fn registration() -> Value {
+        yaml::parse_mapping(PILOT).unwrap()["registration"].clone()
+    }
+
+    fn protocol(decision: Value) -> Value {
+        json!({
+            "version": 1,
+            "registered_at": "2026-10-20T00:00:00Z",
+            "changes": [{ "version": 1, "why": "The first protocol." }],
+            "decision": decision,
+        })
+    }
+
+    fn test(id: &str, claim: &str, dimension: &str, protocol: Option<Value>) -> Value {
+        let mut t = json!({
+            "id": id, "title": id, "question": "Does it?", "settles": [claim],
+            "dimension": dimension, "value_words": ["fewer"],
+            "instrument": { "status": "planned", "issues": ["I3353"] },
+        });
+        if let Some(p) = protocol {
+            t["protocol"] = p;
+        }
+        t
+    }
+
+    /// A plan with one test of each decision kind and one with no protocol yet.
+    fn plan() -> Value {
+        json!({
+            "schema": "proof-plan/v1",
+            "tests": [
+                test("t1-paired", "proof-t1", "accepted_results", Some(protocol(json!({
+                    "kind": "paired", "suite": "pilot",
+                    "registration_digest": proof::digest(&registration()),
+                })))),
+                test("t2-trials", "proof-t2", "onboarding", Some(protocol(json!({
+                    "kind": "trials",
+                    "fields": [
+                        { "name": "minutes_to_first_finish", "class": "observed" },
+                        { "name": "refusals", "class": "counted" },
+                    ],
+                    "min_trials": 3, "min_successes": 2, "all_must_pass": false,
+                })))),
+                test("t3-window", "proof-t3", "human_interventions", Some(protocol(json!({
+                    "kind": "window",
+                    "period": { "from": "2026-10-20T00:00:00Z", "until": "2026-11-19T00:00:00Z" },
+                    "admits": "every task finished in this repository",
+                    "bounds": [{ "field": "interventions", "max_not_observed_bp": 2000 }],
+                })))),
+                test("t4-later", "proof-t4", "recovery", None),
+            ],
+        })
+    }
+
+    /// Set every protocol's `registered_digest` to the digest of what it says now.
+    fn stamp(mut plan: Value) -> Value {
+        let tests = plan.get_mut("tests").and_then(Value::as_array_mut);
+        for t in tests.into_iter().flatten() {
+            if let Some(p) = t.get_mut("protocol").filter(|p| p.is_object()) {
+                let d = proof::protocol_digest(p);
+                p["registered_digest"] = json!(d);
+            }
+        }
+        plan
+    }
+
+    fn fixture(plan: &Value) -> Fixture {
+        let f = Fixture::plain_dir();
+        f.write("docs/CLAIMS.yaml", CLAIMS);
+        f.write(&format!("{DIR}/suites/pilot.yaml"), PILOT);
+        f.write(&format!("{DIR}/suites/context.yaml"), CONTEXT);
+        f.write(&format!("{DIR}/suites/README.md"), "# not a suite\n");
+        f.write(proof::PLAN, &yaml::render(plan));
+        f
+    }
+
+    fn kinds(f: &Fixture) -> Vec<(String, String)> {
+        match proof::load(&f.root()) {
+            Ok(_) => Vec::new(),
+            Err(findings) => findings.into_iter().map(|x| (x.kind, x.detail)).collect(),
+        }
+    }
+
+    /// The one finding a fixture yields, with its detail.
+    fn refused(f: &Fixture, kind: &str, detail: &str) {
+        let found = kinds(f);
+        assert!(
+            found.iter().any(|(k, d)| k == kind && d.contains(detail)),
+            "expected {kind} containing {detail:?}, found {found:?}"
+        );
+    }
+
+    fn mutated(edit: impl FnOnce(&mut Value)) -> Value {
+        let mut p = plan();
+        edit(&mut p);
+        stamp(p)
+    }
+
+    #[test]
+    fn test_proof_plan_validated() {
+        // all three decision kinds, and a test registered before its protocol
+        let f = fixture(&stamp(plan()));
+        let loaded = proof::load(&f.root()).unwrap_or_else(|e| panic!("{e:?}"));
+        assert_eq!(loaded.tests.len(), 4);
+        let kinds_of: Vec<_> = loaded
+            .tests
+            .iter()
+            .map(|t| t.protocol.as_ref().map(|p| p.decision.kind()))
+            .collect();
+        assert_eq!(
+            kinds_of,
+            [Some("paired"), Some("trials"), Some("window"), None]
+        );
+
+        // an absent plan is a finding, never an empty valid plan
+        f.remove(proof::PLAN);
+        refused(&f, "no_plan", "no proof plan is registered");
+
+        // each refusal of the objective, with its own fixture and finding text
+        let t = |i: usize| format!("/tests/{i}");
+        let cases: Vec<(Value, &str, &str)> = vec![
+            (
+                mutated(|p| p.pointer_mut(&t(0)).unwrap()["dimension"] = json!("happiness")),
+                "dimension_unknown",
+                "test t1-paired: dimension \"happiness\" is not one of accepted_results",
+            ),
+            (
+                mutated(|p| {
+                    p.pointer_mut(&t(1)).unwrap()["protocol"]["decision"]["kind"] = json!("bayes")
+                }),
+                "decision_unknown",
+                "test t2-trials: decision kind \"bayes\" is not one of paired, trials, window",
+            ),
+            (
+                mutated(|p| {
+                    let copy = p["tests"][3].clone();
+                    p["tests"].as_array_mut().unwrap().push(copy);
+                }),
+                "test_duplicate",
+                "test t4-later is registered twice",
+            ),
+            (
+                mutated(|p| p.pointer_mut(&t(3)).unwrap()["settles"] = json!(["proof-t9"])),
+                "claim_unknown",
+                "test t4-later: it settles proof-t9, which docs/CLAIMS.yaml does not declare",
+            ),
+            (
+                mutated(|p| {
+                    p.pointer_mut(&t(0)).unwrap()["protocol"]["decision"]["suite"] = json!("gone")
+                }),
+                "paired_suite_unknown",
+                "names suite gone, which is not declared",
+            ),
+            (
+                mutated(|p| {
+                    p.pointer_mut(&t(0)).unwrap()["protocol"]["decision"]["suite"] =
+                        json!("context")
+                }),
+                "paired_registration_absent",
+                "suite context has no registration block",
+            ),
+            (
+                mutated(|p| {
+                    p.pointer_mut(&t(0)).unwrap()["protocol"]["decision"]["registration_digest"] =
+                        json!("sha256:0")
+                }),
+                "paired_registration_mismatch",
+                "it names registration sha256:0 of suite pilot",
+            ),
+            (
+                mutated(|p| p.pointer_mut(&t(2)).unwrap()["protocol"]["version"] = json!(2)),
+                "version_unchanged",
+                "protocol version 2 has no changes entry for version 2",
+            ),
+            (
+                mutated(|p| p.pointer_mut(&t(2)).unwrap()["protocol"]["version"] = json!(0)),
+                "version_unchanged",
+                "protocol version 0",
+            ),
+        ];
+        for (plan, kind, detail) in cases {
+            refused(&fixture(&plan), kind, detail);
+        }
+
+        // the refusals the objective implies, each with its own text
+        let more: Vec<(Value, &str, &str)> = vec![
+            (
+                mutated(|p| p["schema"] = json!("proof-plan/v0")),
+                "schema_unknown",
+                "write proof-plan/v1",
+            ),
+            (
+                mutated(|p| p["tests"] = json!([])),
+                "no_tests",
+                "the plan registers no test",
+            ),
+            (
+                mutated(|p| {
+                    p.as_object_mut().unwrap().remove("tests");
+                }),
+                "no_tests",
+                "a plan is the list of tests it registers",
+            ),
+            (
+                mutated(|p| p.pointer_mut(&t(3)).unwrap()["owner"] = json!("someone")),
+                "test_malformed",
+                "test t4-later: unknown field `owner`",
+            ),
+            (
+                mutated(|p| {
+                    p.pointer_mut(&t(3))
+                        .unwrap()
+                        .as_object_mut()
+                        .unwrap()
+                        .remove("id");
+                }),
+                "test_malformed",
+                "test #4: missing field `id`",
+            ),
+            (
+                mutated(|p| p.pointer_mut(&t(3)).unwrap()["settles"] = json!([])),
+                "settles_nothing",
+                "test t4-later: it settles no claim",
+            ),
+            (
+                mutated(|p| p.pointer_mut(&t(3)).unwrap()["instrument"]["status"] = json!("maybe")),
+                "instrument_unknown",
+                "instrument status \"maybe\" is not built or planned",
+            ),
+            (
+                mutated(|p| p.pointer_mut(&t(3)).unwrap()["instrument"]["issues"] = json!([])),
+                "instrument_unplanned",
+                "names no issue that builds it",
+            ),
+            (
+                mutated(|p| {
+                    p.pointer_mut(&t(2)).unwrap()["protocol"]["registered_at"] = json!("tomorrow")
+                }),
+                "registered_at_invalid",
+                "registered_at \"tomorrow\"",
+            ),
+            (
+                mutated(|p| {
+                    let d = &mut p.pointer_mut(&t(1)).unwrap()["protocol"]["decision"];
+                    d["min_successes"] = json!(4);
+                    d["fields"] = json!([
+                        { "name": "minutes", "class": "estimated" },
+                        { "name": "minutes", "class": "observed" },
+                    ]);
+                }),
+                "trials_invalid",
+                "field minutes is estimated, and a trial records only observed, counted or \
+                 derived numbers; field minutes is declared twice; min_successes 4 of \
+                 min_trials 3",
+            ),
+            (
+                mutated(|p| {
+                    let d = &mut p.pointer_mut(&t(1)).unwrap()["protocol"]["decision"];
+                    d["min_trials"] = json!(0);
+                    d["min_successes"] = json!(0);
+                    d["fields"] = json!([]);
+                }),
+                "trials_invalid",
+                "it declares no record field; min_successes 0 of min_trials 0",
+            ),
+            (
+                mutated(|p| {
+                    let d = &mut p.pointer_mut(&t(1)).unwrap()["protocol"]["decision"];
+                    d["all_must_pass"] = json!(true);
+                }),
+                "trials_invalid",
+                "all_must_pass with min_successes 2 of min_trials 3",
+            ),
+            (
+                mutated(|p| {
+                    let d = &mut p.pointer_mut(&t(2)).unwrap()["protocol"]["decision"];
+                    d["period"]["until"] = json!("2026-10-01T00:00:00Z");
+                    d["admits"] = json!(" ");
+                    d["bounds"] = json!([
+                        { "field": "spend", "max_not_observed_bp": 10001 },
+                        { "field": "spend", "max_not_observed_bp": 0 },
+                    ]);
+                }),
+                "window_invalid",
+                "is not two YYYY-MM-DDTHH:MM:SSZ times in order; it admits no work; field \
+                 spend allows 10001 basis points not observed, more than all of it; field \
+                 spend is bounded twice",
+            ),
+            (
+                mutated(|p| {
+                    p.pointer_mut(&t(2)).unwrap()["protocol"]["decision"]["bounds"] = json!([])
+                }),
+                "window_invalid",
+                "it bounds no field",
+            ),
+        ];
+        for (plan, kind, detail) in more {
+            refused(&fixture(&plan), kind, detail);
+        }
+
+        // the inputs the checks read are refused when they cannot be read
+        let f = fixture(&stamp(plan()));
+        f.write("docs/CLAIMS.yaml", "claims:\n\t- id: x\n");
+        refused(&f, "claims_unreadable", "tab character");
+        f.remove("docs/CLAIMS.yaml");
+        refused(&f, "claim_unknown", "it settles proof-t1");
+        let f = fixture(&stamp(plan()));
+        f.write(&format!("{DIR}/suites/broken.yaml"), "id:\tbroken\n");
+        refused(&f, "suite_unreadable", "tab character");
+        std::fs::create_dir_all(f.path(&format!("{DIR}/suites/folder.yaml"))).unwrap();
+        let found = kinds(&f);
+        let folder = found
+            .iter()
+            .find(|(k, d)| k == "suite_unreadable" && !d.contains("tab"));
+        assert!(
+            folder.is_some(),
+            "a suite that cannot be read is named: {found:?}"
+        );
+        f.write(proof::PLAN, "schema:\tproof-plan/v1\n");
+        refused(&f, "plan_unreadable", "tab character");
+        f.remove(proof::PLAN);
+        std::fs::create_dir_all(f.path(proof::PLAN)).unwrap();
+        assert_eq!(
+            kinds(&f)[0].0,
+            "plan_unreadable",
+            "a directory is not a missing plan"
+        );
+
+        // the plan is a freshness input of no suite, read as git ls-files reads a pathspec
+        for spec in [
+            ".ai/repo/benchmarks",
+            ".ai/repo/benchmarks/proof-plan.yaml",
+            ".",
+            "./.ai/repo/benchmarks/",
+            ".ai/repo/benchmarks/*.yaml",
+            ".ai/*",
+            ".ai/repo/bench*",
+            ".ai/repo/benchmarks/proof-plan.y?ml",
+            ".ai/repo/benchmarks/[a-z]roof-plan.yaml",
+            ":(glob).ai/**",
+            ":(glob).ai/**/proof-plan.yaml",
+            ":(icase).AI/Repo",
+            ":/.ai/repo",
+            ":(top).ai",
+        ] {
+            let f = fixture(&stamp(plan()));
+            f.write(&format!("{DIR}/suites/context.yaml"), &with_inputs(&[spec]));
+            refused(&f, "plan_is_freshness_input", &format!("{spec:?} reaches"));
+        }
+        // a list that includes nothing selects every tracked file, the plan with them
+        for specs in [&[][..], &[":!docs"][..], &[":(exclude)docs/*.md"][..]] {
+            let f = fixture(&stamp(plan()));
+            f.write(&format!("{DIR}/suites/context.yaml"), &with_inputs(specs));
+            refused(&f, "plan_is_freshness_input", "no including pathspec");
+        }
+        // what does not reach the plan, or excludes it by name, is not refused
+        for specs in [
+            &[".ai/repo/benchmarks/economics/*.yaml"][..],
+            &["docs/*.md", ":(literal).ai/*"][..],
+            &[".ai/repo/benchmarks/[0-9]roof-plan.yaml"][..],
+            &[".AI/repo/benchmarks/economics"][..],
+            &[".", ":!.ai/repo/benchmarks"][..],
+            &[".ai", ":^.ai/repo/benchmarks/proof-plan.yaml"][..],
+        ] {
+            let f = fixture(&stamp(plan()));
+            f.write(&format!("{DIR}/suites/context.yaml"), &with_inputs(specs));
+            assert_eq!(kinds(&f), Vec::new(), "{specs:?} does not reach the plan");
+        }
+
+        // two suite files declaring one id, or a suite with none, resolve nothing
+        let f = fixture(&stamp(plan()));
+        f.write(&format!("{DIR}/suites/twin.yaml"), PILOT);
+        refused(&f, "suite_duplicate", "it declares suite pilot, which");
+        let f = fixture(&stamp(plan()));
+        f.write(
+            &format!("{DIR}/suites/anonymous.yaml"),
+            "schema: economics-suite/v1\n",
+        );
+        refused(&f, "suite_unreadable", "it has no id");
+
+        // an unknown decision kind does not hide what else is wrong with the test
+        let f = fixture(&mutated(|p| {
+            let t = p.pointer_mut("/tests/1").unwrap();
+            t["protocol"]["decision"]["kind"] = json!("bayes");
+            t["dimension"] = json!("happiness");
+        }));
+        refused(
+            &f,
+            "decision_unknown",
+            "test t2-trials: decision kind \"bayes\"",
+        );
+        refused(
+            &f,
+            "dimension_unknown",
+            "test t2-trials: dimension \"happiness\"",
+        );
+        assert!(!kinds(&f).iter().any(|(k, _)| k == "test_malformed"));
+    }
+
+    /// The context suite with exactly these freshness inputs.
+    fn with_inputs(specs: &[&str]) -> String {
+        let head = CONTEXT.split("freshness_inputs:").next().unwrap();
+        let list: String = specs.iter().map(|s| format!("  - \"{s}\"\n")).collect();
+        match specs {
+            [] => format!("{head}freshness_inputs: []\n"),
+            _ => format!("{head}freshness_inputs:\n{list}"),
+        }
+    }
+
+    #[test]
+    fn test_protocol_digest_is_per_test() {
+        let registered = stamp(plan());
+        let f = fixture(&registered);
+        let first = proof::load(&f.root()).unwrap();
+        let t2 = first.test("t2-trials").unwrap();
+        let digest = t2.protocol.as_ref().unwrap().registered_digest.clone();
+        let records = [
+            ProofStamp {
+                protocol_digest: digest.clone(),
+                recorded_at: "2026-10-21T00:00:00Z".into(),
+            },
+            ProofStamp {
+                protocol_digest: digest.clone(),
+                recorded_at: "2026-10-20T00:00:00Z".into(),
+            },
+            ProofStamp {
+                protocol_digest: "sha256:other".into(),
+                recorded_at: "2026-10-21T00:00:00Z".into(),
+            },
+            ProofStamp {
+                protocol_digest: digest.clone(),
+                recorded_at: "yesterday".into(),
+            },
+        ];
+        let before: Vec<ProofCount> = records
+            .iter()
+            .map(|r| proof::counts_toward(r, t2))
+            .collect();
+        assert!(before[0].counts());
+        assert!(matches!(before[1], ProofCount::BeforeRegistration { .. }));
+        assert!(matches!(before[2], ProofCount::OtherProtocol { .. }));
+        assert!(matches!(before[3], ProofCount::UnreadableTime { .. }));
+        for c in &before[1..] {
+            assert!(c.reason().is_some(), "{c:?} says why it does not count");
+        }
+        // a record of a test with no protocol counts toward nothing
+        let later = first.test("t4-later").unwrap();
+        assert_eq!(
+            proof::counts_toward(&records[0], later),
+            ProofCount::NoProtocol
+        );
+        assert!(ProofCount::NoProtocol
+            .reason()
+            .unwrap()
+            .contains("no registered protocol"));
+
+        // registering a second test's protocol leaves every record of the first as it was
+        let mut second = registered.clone();
+        second["tests"][3]["protocol"] = protocol(json!({
+            "kind": "trials", "fields": [{ "name": "recovered", "class": "counted" }],
+            "min_trials": 5, "min_successes": 5, "all_must_pass": true,
+        }));
+        let second = stamp(second);
+        f.write(proof::PLAN, &yaml::render(&second));
+        let after_plan = proof::load(&f.root()).unwrap_or_else(|e| panic!("{e:?}"));
+        let t2_after = after_plan.test("t2-trials").unwrap();
+        assert_eq!(
+            t2_after.protocol.as_ref().unwrap().registered_digest,
+            digest
+        );
+        let after: Vec<ProofCount> = records
+            .iter()
+            .map(|r| proof::counts_toward(r, t2_after))
+            .collect();
+        assert_eq!(before, after);
+
+        // changing one field of a registered protocol without a new digest is refused,
+        // naming the test and both digests
+        let mut edited = registered.clone();
+        edited["tests"][1]["protocol"]["decision"]["min_trials"] = json!(4);
+        let computed = proof::protocol_digest(&edited["tests"][1]["protocol"]);
+        f.write(proof::PLAN, &yaml::render(&edited));
+        refused(
+            &f,
+            "digest_mismatch",
+            &format!(
+                "test t2-trials: the protocol registers {digest} and its canonical form \
+                 digests to {computed}"
+            ),
+        );
+        assert_ne!(computed, digest);
+        // the time of a protocol a validated plan never carries is still read, not trusted
+        let mut unread = t2.clone();
+        unread.protocol.as_mut().unwrap().registered_at = "soon".into();
+        let c = proof::counts_toward(&records[0], &unread);
+        assert_eq!(
+            c,
+            ProofCount::UnreadableTime {
+                time: "soon".into()
+            }
+        );
+        assert!(c.reason().unwrap().contains("\"soon\" is not a time"));
+    }
+}
+
+// ---------------------------------------------------------------- each task's delivery economics (I3376)
+
+/// One ledger line, as `mj_ledger_append` writes it.
+fn ledger_line(ts: &str, event: &str, session: &str, task: &str, extra: &str) -> String {
+    format!(
+        r#"{{"ts":"{ts}","event":"{event}","head":"0000000","branch":"work","by":"tester","session":"{session}","task_id":"{task}"{extra}}}"#
+    )
+}
+
+fn ledger(lines: &[String]) -> String {
+    lines.join("\n") + "\n"
+}
+
+/// Started, refused twice and finished: the wall time runs from the start to the finish and
+/// both refusals are counted; lines carried by two sessions are two episodes. A task with no
+/// finish reads open. Every record carries the four fields nothing observes yet, each with its
+/// reason; the window filters by start. The command line, MCP and HTTP answer the same reading.
+#[test]
+fn test_task_economics_per_task() {
+    use majordomus_cli::economics::tasks::{self, TaskEconomicsQuery, TaskEconomicsState};
+    let f = Fixture::new();
+    f.write(
+        ".ai/local/state/ledger.jsonl",
+        &ledger(&[
+            ledger_line(
+                "2026-10-21T10:00:00Z",
+                "task.started",
+                "s-1",
+                "t-done",
+                r#","issue":"I3376","intent":"proof""#,
+            ),
+            ledger_line(
+                "2026-10-21T10:10:00Z",
+                "task.refused",
+                "s-1",
+                "t-done",
+                r#","outcome":"completed","unmet":1"#,
+            ),
+            ledger_line(
+                "2026-10-21T10:20:00Z",
+                "task.refused",
+                "s-2",
+                "t-done",
+                r#","outcome":"completed","unmet":2"#,
+            ),
+            ledger_line(
+                "2026-10-21T11:00:00Z",
+                "task.finished",
+                "s-2",
+                "t-done",
+                r#","outcome":"completed""#,
+            ),
+            ledger_line("2026-10-21T12:00:00Z", "task.started", "s-3", "t-open", ""),
+            "not a ledger line".to_string(),
+        ]),
+    );
+    let list = tasks::tasks(&f.root(), &TaskEconomicsQuery::default());
+    assert_eq!(list.count, 2, "{list:#?}");
+    assert_eq!(list.tasks.len(), list.count);
+    let done = &list.tasks[0];
+    assert_eq!(done.task_id, "t-done");
+    assert_eq!(done.state, TaskEconomicsState::Finished);
+    assert_eq!(done.outcome, "completed");
+    assert_eq!(done.wall_seconds, Some(3600), "start to finish");
+    assert_eq!(done.refusals, 2);
+    assert_eq!(done.issue.as_deref(), Some("I3376"));
+    assert_eq!(done.intent.as_deref(), Some("proof"));
+    let sessions: Vec<&str> = done.episodes.iter().map(|e| e.session.as_str()).collect();
+    assert_eq!(
+        sessions,
+        ["s-1", "s-2"],
+        "two session stamps are two episodes"
+    );
+    assert_eq!(
+        (
+            done.episodes[1].first_at.as_str(),
+            done.episodes[1].last_at.as_str()
+        ),
+        ("2026-10-21T10:20:00Z", "2026-10-21T11:00:00Z")
+    );
+    let open = &list.tasks[1];
+    assert_eq!(open.task_id, "t-open");
+    assert_eq!(
+        open.state,
+        TaskEconomicsState::Open,
+        "no finish reads open, never finished"
+    );
+    assert_eq!(open.wall_seconds, None);
+    for t in &list.tasks {
+        for (name, field) in [
+            ("interventions", &t.interventions),
+            ("ci_reruns", &t.ci_reruns),
+            ("spend", &t.spend),
+            ("accepted", &t.accepted),
+        ] {
+            let v = serde_json::to_value(field).unwrap();
+            assert_eq!(v["status"], "not_observed", "{} {name}", t.task_id);
+            assert!(
+                v["reason"].as_str().is_some_and(|r| r.contains('I')),
+                "{} {name} names no supplier: {v}",
+                t.task_id
+            );
+        }
+    }
+    assert_eq!(list.ledgers.len(), 1);
+    assert_eq!((list.ledgers[0].lines, list.ledgers[0].skipped), (5, 1));
+
+    // the window filters by task.started
+    let late = tasks::tasks(
+        &f.root(),
+        &TaskEconomicsQuery {
+            since: Some("2026-10-21T11:30:00Z".into()),
+            until: None,
+        },
+    );
+    let ids: Vec<&str> = late.tasks.iter().map(|t| t.task_id.as_str()).collect();
+    assert_eq!(ids, ["t-open"]);
+
+    // one reading on every surface
+    let library = serde_json::to_value(&list).unwrap();
+    let (code, out, err) = run_in(&f.root(), &["economics", "tasks", "--format", "json"], "");
+    assert_eq!(code, 0, "{err}");
+    let cli: Value = serde_json::from_str(&out).unwrap();
+    assert_eq!(cli, library, "the command line");
+    let mcp = mcp_call(&f, "majordomus_economics_tasks", json!({}));
+    assert_eq!(mcp, library, "MCP");
+    let mut served = Served::start(&f.root(), &[]);
+    let (status, http) = served.get("/api/v1/economics/tasks");
+    assert_eq!(status, 200);
+    assert_eq!(http, library, "HTTP");
+    served.stop();
+}
+
+/// The ledgers of every checkout are read, a rotated archive included, and a task met in
+/// several of them is one record; a checkout with no ledger is listed as not read.
+#[test]
+fn test_task_economics_reads_every_checkout() {
+    use majordomus_cli::economics::tasks::{self, TaskEconomicsQuery};
+    let f = Fixture::new();
+    // the root checkout: an archive a rotation left, then the live ledger
+    f.write(
+        ".ai/local/state/ledger.20261020T000000Z.jsonl.archived",
+        &ledger(&[ledger_line(
+            "2026-10-20T09:00:00Z",
+            "task.started",
+            "s-1",
+            "t-archived",
+            "",
+        )]),
+    );
+    f.write(
+        ".ai/local/state/ledger.jsonl",
+        &ledger(&[
+            ledger_line(
+                "2026-10-20T10:00:00Z",
+                "task.finished",
+                "s-1",
+                "t-archived",
+                r#","outcome":"completed""#,
+            ),
+            ledger_line("2026-10-21T08:00:00Z", "task.started", "s-1", "t-root", ""),
+        ]),
+    );
+    // a second checkout with a ledger of its own, and a third with none
+    let second = f.parent().join("repo-wt").join("second");
+    let third = f.parent().join("repo-wt").join("third");
+    f.git(&[
+        "worktree",
+        "add",
+        "-q",
+        "-b",
+        "second",
+        second.to_str().unwrap(),
+    ]);
+    f.git(&[
+        "worktree",
+        "add",
+        "-q",
+        "-b",
+        "third",
+        third.to_str().unwrap(),
+    ]);
+    std::fs::create_dir_all(second.join(".ai/local/state")).unwrap();
+    std::fs::write(
+        second.join(".ai/local/state/ledger.jsonl"),
+        ledger(&[
+            ledger_line(
+                "2026-10-21T09:00:00Z",
+                "task.started",
+                "s-9",
+                "t-second",
+                "",
+            ),
+            ledger_line(
+                "2026-10-21T09:30:00Z",
+                "task.finished",
+                "s-9",
+                "t-second",
+                r#","outcome":"completed""#,
+            ),
+        ]),
+    )
+    .unwrap();
+
+    let list = tasks::tasks(&f.root(), &TaskEconomicsQuery::default());
+    let ids: Vec<&str> = list.tasks.iter().map(|t| t.task_id.as_str()).collect();
+    assert_eq!(ids, ["t-archived", "t-root", "t-second"], "{list:#?}");
+    assert_eq!(list.count, 3, "one record per distinct task id");
+    let archived = &list.tasks[0];
+    assert_eq!(
+        archived.wall_seconds,
+        Some(3600),
+        "the start in the archive, the finish in the live ledger"
+    );
+    let second_task = &list.tasks[2];
+    assert!(
+        second_task.checkout.ends_with("second"),
+        "{}",
+        second_task.checkout
+    );
+    let paths: Vec<&str> = list.ledgers.iter().map(|l| l.path.as_str()).collect();
+    assert!(
+        paths.contains(&".ai/local/state/ledger.20261020T000000Z.jsonl.archived"),
+        "{paths:?}"
+    );
+    assert_eq!(
+        list.ledgers.len(),
+        3,
+        "the archive, the root ledger and the second checkout's"
+    );
+    assert_eq!(list.unread.len(), 1, "{:?}", list.unread);
+    assert!(list.unread[0].checkout.ends_with("third"));
+    assert!(list.unread[0].reason.contains("no ledger"));
+}
+
+/// The text reading names each task with its state, outcome, wall time, refusals, episodes
+/// and issue, then every checkout it did not read and why (one with no ledger, one git marks
+/// prunable), then what nothing observes yet.
+#[test]
+fn test_task_economics_text_names_every_task_and_every_unread_checkout() {
+    use majordomus_cli::economics::tasks::{self, TaskEconomicsQuery};
+    let f = Fixture::new();
+    f.write(
+        ".ai/local/state/ledger.jsonl",
+        &ledger(&[
+            // each episode names its provider at its start, as every episode does since ADR 0075
+            ledger_line(
+                "2026-10-21T09:59:00Z",
+                "session.started",
+                "s-1",
+                "",
+                r#","provider":"claude-code""#,
+            ),
+            ledger_line(
+                "2026-10-21T11:59:00Z",
+                "session.started",
+                "s-2",
+                "",
+                r#","provider":"codex""#,
+            ),
+            ledger_line(
+                "2026-10-21T10:00:00Z",
+                "task.started",
+                "s-1",
+                "t-done",
+                r#","issue":"I3376""#,
+            ),
+            ledger_line(
+                "2026-10-21T11:00:00Z",
+                "task.finished",
+                "s-1",
+                "t-done",
+                r#","outcome":"completed""#,
+            ),
+            ledger_line("2026-10-21T12:00:00Z", "task.started", "s-2", "t-open", ""),
+        ]),
+    );
+    let empty = f.parent().join("repo-wt").join("empty");
+    let gone = f.parent().join("repo-wt").join("gone");
+    for (branch, path) in [("empty", &empty), ("gone", &gone)] {
+        f.git(&[
+            "worktree",
+            "add",
+            "-q",
+            "-b",
+            branch,
+            path.to_str().unwrap(),
+        ]);
+    }
+    std::fs::remove_dir_all(&gone).unwrap();
+
+    let list = tasks::tasks(&f.root(), &TaskEconomicsQuery::default());
+    let unread: Vec<(&str, &str)> = list
+        .unread
+        .iter()
+        .map(|u| (u.checkout.as_str(), u.reason.as_str()))
+        .collect();
+    assert_eq!(unread.len(), 2, "{unread:?}");
+    assert!(
+        unread
+            .iter()
+            .any(|(c, r)| c.ends_with("gone") && r.starts_with("git marks it prunable: ")),
+        "{unread:?}"
+    );
+    assert!(
+        unread
+            .iter()
+            .any(|(c, r)| c.ends_with("empty") && *r == "no ledger under .ai/local/state"),
+        "{unread:?}"
+    );
+
+    let (code, out, err) = run_in(&f.root(), &["economics", "tasks"], "");
+    assert_eq!(code, 0, "{err}");
+    let lines: Vec<String> = out
+        .lines()
+        .map(|l| l.split_whitespace().collect::<Vec<_>>().join(" "))
+        .collect();
+    assert_eq!(lines.len(), 6, "{out}");
+    assert_eq!(lines[0], "2 task(s) from 1 ledger file(s)");
+    assert_eq!(
+        lines[1],
+        "t-done finished completed 3600s 0 refusal(s) 1 episode(s) I3376"
+    );
+    assert_eq!(
+        lines[2], "t-open open active — 0 refusal(s) 1 episode(s)",
+        "an open task has no wall time and names no issue"
+    );
+    assert!(
+        lines[3..5].iter().all(|l| l.starts_with("NOT READ ")),
+        "{out}"
+    );
+    assert!(lines[3..5].iter().any(|l| l.contains("prunable")), "{out}");
+    assert!(lines[5].starts_with("interventions, CI reruns, spend and acceptance"));
+}
+
+/// The command fails rather than printing an empty reading: outside a repository it names
+/// the missing repository, and a standard output nobody reads is a transport failure, never
+/// a success with the answer lost.
+#[test]
+fn test_task_economics_command_fails_outside_a_repository_and_on_a_closed_output() {
+    let elsewhere = Fixture::plain_dir();
+    let (code, out, err) = run_in(&elsewhere.root(), &["economics", "tasks"], "");
+    assert_eq!(code, 12, "{err}");
+    assert!(out.is_empty(), "{out}");
+
+    let f = Fixture::new();
+    for format in ["json", "text"] {
+        let (reader, writer) = std::io::pipe().unwrap();
+        drop(reader);
+        let status = common::majordomus()
+            .args(["economics", "tasks", "--format", format])
+            .current_dir(f.root())
+            .env("MAJORDOMUS_SHARE", common::dist_share())
+            .stdin(Stdio::null())
+            .stdout(writer)
+            .stderr(Stdio::null())
+            .status()
+            .unwrap();
+        assert_eq!(
+            status.code(),
+            Some(13),
+            "a broken pipe is a transport error ({format})"
+        );
+    }
+}

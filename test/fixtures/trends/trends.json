@@ -1,0 +1,73 @@
+{
+  "schema": "trends/v1",
+  "generated_from": [9001, 9002, 9003, 9004],
+  "runs": [
+    {
+      "run_id": 9001,
+      "head_sha": "1111111aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "started_at": "2026-10-19T08:00:00Z",
+      "conclusion": "success",
+      "wall_seconds": 1800,
+      "queued_seconds_total": 120,
+      "jobs": [
+        { "name": "rust", "queued_s": 60, "run_s": 1500, "conclusion": "success" },
+        { "name": "lint", "queued_s": 60, "run_s": 30, "conclusion": "success" }
+      ],
+      "coverage": {
+        "lines": { "covered": 7000, "total": 10000 },
+        "functions": { "covered": 450, "total": 500 },
+        "regions": { "covered": 600, "total": 800 }
+      }
+    },
+    {
+      "run_id": 9002,
+      "head_sha": "2222222bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "started_at": "2026-10-20T08:00:00Z",
+      "conclusion": "failure",
+      "wall_seconds": 2100,
+      "queued_seconds_total": 600,
+      "jobs": [
+        { "name": "rust", "queued_s": 600, "run_s": 1700, "conclusion": "failure" }
+      ],
+      "coverage": null
+    },
+    {
+      "run_id": 9003,
+      "head_sha": "3333333ccccccccccccccccccccccccccccccccc",
+      "started_at": "2026-10-21T08:00:00Z",
+      "conclusion": "success",
+      "wall_seconds": 2400,
+      "queued_seconds_total": 300,
+      "jobs": [
+        { "name": "rust", "queued_s": 300, "run_s": 1900, "conclusion": "success" }
+      ],
+      "coverage": {
+        "lines": { "covered": 7500, "total": 10000 },
+        "functions": { "covered": 460, "total": 500 },
+        "regions": { "covered": 640, "total": 800 }
+      }
+    },
+    {
+      "run_id": 9004,
+      "head_sha": "4444444ddddddddddddddddddddddddddddddddd",
+      "started_at": "2026-10-22T08:00:00Z",
+      "conclusion": "success",
+      "wall_seconds": 3000,
+      "queued_seconds_total": 60,
+      "jobs": [
+        { "name": "rust", "queued_s": 60, "run_s": 2400, "conclusion": "success" }
+      ],
+      "coverage": {
+        "lines": { "covered": 8000, "total": 10000 },
+        "functions": { "covered": 470, "total": 500 },
+        "regions": { "covered": 700, "total": 800 }
+      }
+    }
+  ],
+  "job_medians": [
+    { "name": "lint", "runs": 4, "median_run_s": 30, "median_queued_s": 20 },
+    { "name": "site", "runs": 4, "median_run_s": 600, "median_queued_s": 45 },
+    { "name": "rust", "runs": 4, "median_run_s": 1800.5, "median_queued_s": 180 },
+    { "name": "suite", "runs": 3, "median_run_s": 900, "median_queued_s": null }
+  ]
+}

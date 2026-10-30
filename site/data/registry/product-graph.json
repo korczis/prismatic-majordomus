@@ -416,7 +416,7 @@
       "id": "feature:interfaces",
       "kind": "feature",
       "label": "Interfaces",
-      "summary": "The Rust executable serves the layer read-only over stdio MCP, MCP over HTTP, routes under /api/v1/, an OpenAPI document with a Swagger UI, and a command line, all derived from the capability registry; one shared server per repository, and every attached client is a peer the others can see.",
+      "summary": "The Rust executable serves the layer over stdio MCP, MCP over HTTP, routes under /api/v1/, an OpenAPI document with a Swagger UI, and a command line, all derived from the capability registry, which names what each capability changes; one shared server per repository, and every attached client is a peer the others can see.",
       "route": "/features/interfaces/",
       "source": ".ai/repo/features/interfaces.md",
       "status": "stable"
@@ -542,7 +542,7 @@
       "id": "kind:adr",
       "kind": "kind",
       "label": "adr",
-      "summary": "115 object(s) of the layer",
+      "summary": "167 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -570,7 +570,7 @@
       "id": "kind:claim",
       "kind": "kind",
       "label": "claim",
-      "summary": "247 object(s) of the layer",
+      "summary": "250 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -591,7 +591,7 @@
       "id": "kind:critique",
       "kind": "kind",
       "label": "critique",
-      "summary": "3 object(s) of the layer",
+      "summary": "38 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -619,7 +619,7 @@
       "id": "kind:document",
       "kind": "kind",
       "label": "document",
-      "summary": "348 object(s) of the layer",
+      "summary": "353 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -640,28 +640,28 @@
       "id": "kind:gap",
       "kind": "kind",
       "label": "gap",
-      "summary": "3 object(s) of the layer",
+      "summary": "5 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
       "id": "kind:intent",
       "kind": "kind",
       "label": "intent",
-      "summary": "4 object(s) of the layer",
+      "summary": "44 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
       "id": "kind:issue",
       "kind": "kind",
       "label": "issue",
-      "summary": "442 object(s) of the layer",
+      "summary": "1124 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
       "id": "kind:knowledge",
       "kind": "kind",
       "label": "knowledge",
-      "summary": "4 object(s) of the layer",
+      "summary": "60 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -675,7 +675,7 @@
       "id": "kind:milestone",
       "kind": "kind",
       "label": "milestone",
-      "summary": "40 object(s) of the layer",
+      "summary": "113 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -703,21 +703,21 @@
       "id": "kind:prompt",
       "kind": "kind",
       "label": "prompt",
-      "summary": "4 object(s) of the layer",
+      "summary": "5 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
       "id": "kind:release-record",
       "kind": "kind",
       "label": "release-record",
-      "summary": "28 object(s) of the layer",
+      "summary": "38 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
       "id": "kind:rule",
       "kind": "kind",
       "label": "rule",
-      "summary": "184 object(s) of the layer",
+      "summary": "192 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -731,7 +731,7 @@
       "id": "kind:session",
       "kind": "kind",
       "label": "session",
-      "summary": "90 object(s) of the layer",
+      "summary": "91 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -3203,6 +3203,11 @@
     },
     {
       "source": "module:deploy",
+      "target": "surface:cli",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:deploy",
       "target": "surface:cockpit",
       "kind": "exposed_through"
     },
@@ -3753,6 +3758,11 @@
     },
     {
       "source": "module:plan",
+      "target": "surface:cli",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:plan",
       "target": "surface:cockpit",
       "kind": "exposed_through"
     },
@@ -4059,13 +4069,13 @@
   ],
   "metadata": {
     "nodes": 153,
-    "edges": 548,
+    "edges": 550,
     "acyclic": false,
     "truncated": false
   },
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the features, what they are made of, and the interfaces that follow, as the derived `product` graph; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.28.0"
+    "version": "1.0.0-alpha.9"
   }
 }

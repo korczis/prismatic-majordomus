@@ -3,9 +3,9 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.28.0"
+    "version": "1.0.0-alpha.9"
   },
-  "fingerprint": "bd004b0cf356c51e929686d0897d949d968ae52b093424bb5023e132e32b46f7",
+  "fingerprint": "935d6a5145f8b7a17283cd235a9d9945ae3fa4653bbb0cde4ddd0debe2d78cef",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -13,7 +13,7 @@
     "features_all": 29,
     "featured": 16,
     "providers": 6,
-    "modules": 58,
+    "modules": 60,
     "modules_covered": 58,
     "commands": 30,
     "commands_covered": 30,
@@ -999,7 +999,7 @@
         },
         {
           "id": "mesh-observation-not-authority",
-          "claim": "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown",
+          "claim": "A discovered node gains no execution and no authorization from being heard; only signed traffic from a linked node may change mesh state, and trust labels records under an explicit policy that defaults to deny_unknown",
           "status": "guaranteed",
           "test": "apps/majordomus-cli/tests/mesh.rs"
         },
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 73,
+        "capabilities": 83,
         "moments": 17
       },
       "evidence": {
@@ -1995,7 +1995,7 @@
         },
         {
           "id": "evidence-navigates-both-ways",
-          "claim": "Every claim names the test that proves it and every test names the claims it proves, from one derivation",
+          "claim": "Every claim names the test meant to settle it and every test names the claims it is meant to settle, from one derivation",
           "status": "guaranteed",
           "test": "test/cases/124_evidence.sh"
         },
@@ -2146,7 +2146,7 @@
         "use_cases": 4,
         "rules": 13,
         "enforced_rules": 10,
-        "capabilities": 10,
+        "capabilities": 11,
         "moments": 19
       },
       "evidence": {
@@ -2569,7 +2569,7 @@
         "use_cases": 8,
         "rules": 12,
         "enforced_rules": 10,
-        "capabilities": 4,
+        "capabilities": 6,
         "moments": 31
       },
       "evidence": {
@@ -3045,7 +3045,7 @@
         },
         {
           "id": "mcp-client-autostart",
-          "claim": "An MCP client opened in the repository starts the server itself, building the executable when it must, through the client configurations at the root and bin/majordomus-mcp",
+          "claim": "An MCP client opened in the repository starts the server itself, through the client configurations at the root and bin/majordomus-mcp, without ever building the executable",
           "status": "guaranteed",
           "test": "test/cases/90_mcp_shared_server.sh"
         },
@@ -3075,7 +3075,7 @@
         },
         {
           "id": "mcp-stdio-surface",
-          "claim": "The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout",
+          "claim": "The Rust executable serves the repository's AI layer to an MCP client over stdio, with protocol frames alone on stdout",
           "status": "guaranteed",
           "test": "test/cases/72_rust_mcp.sh"
         },
@@ -3087,7 +3087,7 @@
         },
         {
           "id": "no-network",
-          "claim": "Nothing performs a network call, evaluates generated text, or deletes recursively",
+          "claim": "The shell tool performs no network call, evaluates no generated text and deletes nothing recursively; its one declared request is the loopback peer probe",
           "status": "guaranteed",
           "test": "test/cases/08_no_forbidden_constructs.sh"
         },
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 134,
+        "capabilities": 149,
         "moments": 38
       },
       "evidence": {
@@ -3509,7 +3509,7 @@
         },
         {
           "name": "claim",
-          "objects": 247
+          "objects": 250
         }
       ],
       "rule_refs": [
@@ -3782,11 +3782,11 @@
       "counts": {
         "capabilities": 12,
         "mcp_tools": 12,
-        "mcp_resources": 320,
+        "mcp_resources": 323,
         "http_routes": 12,
         "cli_paths": 11,
         "commands": 2,
-        "objects": 313,
+        "objects": 316,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -3814,7 +3814,7 @@
       "title": "One registry over the command line, HTTP, OpenAPI, Swagger UI and MCP",
       "short_title": "Interfaces",
       "headline": "Every agent, script and person reads the same repository through the interface it already speaks, and none of the interfaces is maintained by hand.",
-      "summary": "The Rust executable serves the layer read-only over stdio MCP, MCP over HTTP, routes under /api/v1/, an OpenAPI document with a Swagger UI, and a command line, all derived from the capability registry; one shared server per repository, and every attached client is a peer the others can see.",
+      "summary": "The Rust executable serves the layer over stdio MCP, MCP over HTTP, routes under /api/v1/, an OpenAPI document with a Swagger UI, and a command line, all derived from the capability registry, which names what each capability changes; one shared server per repository, and every attached client is a peer the others can see.",
       "status": "stable",
       "weight": 20,
       "featured": false,
@@ -4284,7 +4284,7 @@
       "claim_refs": [
         {
           "id": "mcp-stdio-surface",
-          "claim": "The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout",
+          "claim": "The Rust executable serves the repository's AI layer to an MCP client over stdio, with protocol frames alone on stdout",
           "status": "guaranteed",
           "test": "test/cases/72_rust_mcp.sh"
         },
@@ -4314,7 +4314,7 @@
         },
         {
           "id": "mcp-client-autostart",
-          "claim": "An MCP client opened in the repository starts the server itself, building the executable when it must, through the client configurations at the root and bin/majordomus-mcp",
+          "claim": "An MCP client opened in the repository starts the server itself, through the client configurations at the root and bin/majordomus-mcp, without ever building the executable",
           "status": "guaranteed",
           "test": "test/cases/90_mcp_shared_server.sh"
         },
@@ -4811,6 +4811,15 @@
               "cli": "majordomus worktree topology"
             },
             {
+              "id": "worktree.trunk",
+              "title": "How far a checkout is from the remote trunk",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_worktree_trunk",
+              "route": "GET /api/v1/worktrees/trunk",
+              "cli": "majordomus worktree trunk"
+            },
+            {
               "id": "worktree.uncommitted",
               "title": "Uncommitted work in the linked worktrees, and what holds it",
               "kind": "query",
@@ -5184,11 +5193,11 @@
         "worktrees"
       ],
       "counts": {
-        "capabilities": 17,
-        "mcp_tools": 17,
+        "capabilities": 18,
+        "mcp_tools": 18,
         "mcp_resources": 2,
-        "http_routes": 17,
-        "cli_paths": 11,
+        "http_routes": 18,
+        "cli_paths": 12,
         "commands": 3,
         "objects": 0,
         "rules": 5,
@@ -5321,6 +5330,15 @@
               "cli": "majordomus worktree topology"
             },
             {
+              "id": "worktree.trunk",
+              "title": "How far a checkout is from the remote trunk",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_worktree_trunk",
+              "route": "GET /api/v1/worktrees/trunk",
+              "cli": "majordomus worktree trunk"
+            },
+            {
               "id": "worktree.uncommitted",
               "title": "Uncommitted work in the linked worktrees, and what holds it",
               "kind": "query",
@@ -5450,11 +5468,11 @@
         "planning"
       ],
       "counts": {
-        "capabilities": 6,
-        "mcp_tools": 6,
+        "capabilities": 7,
+        "mcp_tools": 7,
         "mcp_resources": 2,
-        "http_routes": 6,
-        "cli_paths": 6,
+        "http_routes": 7,
+        "cli_paths": 7,
         "commands": 0,
         "objects": 0,
         "rules": 2,
@@ -5556,6 +5574,46 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
           "capabilities": [
             {
+              "id": "mesh.beat",
+              "title": "Say a session is making progress",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_beat",
+              "route": "POST /api/v1/mesh/beats"
+            },
+            {
+              "id": "mesh.build_cache.ensure",
+              "title": "Restore an install before its command, and save it after",
+              "kind": "command",
+              "stability": "experimental",
+              "cli": "majordomus mesh build-cache ensure"
+            },
+            {
+              "id": "mesh.build_cache.env",
+              "title": "The sccache client configuration for the store this node selected",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_build_cache_env",
+              "route": "GET /api/v1/mesh/build-cache/env",
+              "cli": "majordomus mesh build-cache env"
+            },
+            {
+              "id": "mesh.build_cache.key",
+              "title": "What every dependency install and build directory is cached under",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_build_cache_key",
+              "route": "GET /api/v1/mesh/build-cache/key",
+              "cli": "majordomus mesh build-cache key"
+            },
+            {
+              "id": "mesh.build_cache.provision",
+              "title": "Provision this node as a mesh build cache provider",
+              "kind": "command",
+              "stability": "experimental",
+              "cli": "majordomus mesh build-cache provision"
+            },
+            {
               "id": "mesh.claim",
               "title": "Claim a scope across the mesh",
               "kind": "command",
@@ -5579,6 +5637,15 @@
               "tool": "majordomus_mesh_doctor",
               "route": "GET /api/v1/mesh/doctor",
               "cli": "majordomus mesh doctor"
+            },
+            {
+              "id": "mesh.enrol",
+              "title": "Enrol this machine in the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_enrol",
+              "route": "POST /api/v1/mesh/enrol",
+              "cli": "majordomus mesh enrol"
             },
             {
               "id": "mesh.events",
@@ -5835,7 +5902,7 @@
         },
         {
           "id": "mesh-observation-not-authority",
-          "claim": "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown",
+          "claim": "A discovered node gains no execution and no authorization from being heard; only signed traffic from a linked node may change mesh state, and trust labels records under an explicit policy that defaults to deny_unknown",
           "status": "guaranteed",
           "test": "apps/majordomus-cli/tests/mesh.rs"
         },
@@ -5867,11 +5934,11 @@
         "reasoning"
       ],
       "counts": {
-        "capabilities": 24,
-        "mcp_tools": 21,
+        "capabilities": 30,
+        "mcp_tools": 25,
         "mcp_resources": 2,
-        "http_routes": 23,
-        "cli_paths": 4,
+        "http_routes": 27,
+        "cli_paths": 9,
         "commands": 0,
         "objects": 1,
         "rules": 2,
@@ -6160,6 +6227,15 @@
               "resource": "majordomus://economics",
               "route": "GET /api/v1/economics",
               "cli": "majordomus economics summary"
+            },
+            {
+              "id": "economics.tasks",
+              "title": "Each task's delivery economics",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_economics_tasks",
+              "route": "GET /api/v1/economics/tasks",
+              "cli": "majordomus economics tasks"
             }
           ]
         }
@@ -6212,11 +6288,11 @@
       "moments": [],
       "backlinks": [],
       "counts": {
-        "capabilities": 4,
-        "mcp_tools": 4,
+        "capabilities": 5,
+        "mcp_tools": 5,
         "mcp_resources": 1,
-        "http_routes": 4,
-        "cli_paths": 4,
+        "http_routes": 5,
+        "cli_paths": 5,
         "commands": 0,
         "objects": 0,
         "rules": 0,
@@ -6866,11 +6942,11 @@
       "kind_refs": [
         {
           "name": "session",
-          "objects": 90
+          "objects": 91
         },
         {
           "name": "prompt",
-          "objects": 4
+          "objects": 5
         }
       ],
       "rule_refs": [
@@ -7220,11 +7296,11 @@
       "counts": {
         "capabilities": 20,
         "mcp_tools": 20,
-        "mcp_resources": 99,
+        "mcp_resources": 101,
         "http_routes": 20,
         "cli_paths": 8,
         "commands": 7,
-        "objects": 94,
+        "objects": 96,
         "rules": 8,
         "enforced_rules": 7,
         "docs": 2,
@@ -7442,15 +7518,15 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 115
+          "objects": 167
         },
         {
           "name": "knowledge",
-          "objects": 4
+          "objects": 60
         },
         {
           "name": "document",
-          "objects": 348
+          "objects": 353
         }
       ],
       "rule_refs": [
@@ -7723,11 +7799,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 470,
+        "mcp_resources": 583,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 467,
+        "objects": 580,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -7962,7 +8038,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 184
+          "objects": 192
         }
       ],
       "rule_refs": [
@@ -8008,11 +8084,11 @@
         },
         {
           "id": "project.english-only",
-          "identity": "project.english-only@3",
+          "identity": "project.english-only@4",
           "title": "English only",
           "class": "blocking",
           "enforced": true,
-          "path": ".ai/repo/rules/project/english-only.v3.md"
+          "path": ".ai/repo/rules/project/english-only.v4.md"
         },
         {
           "id": "project.finding-carries-reproduce",
@@ -8338,11 +8414,11 @@
       "counts": {
         "capabilities": 7,
         "mcp_tools": 5,
-        "mcp_resources": 186,
+        "mcp_resources": 194,
         "http_routes": 7,
         "cli_paths": 4,
         "commands": 5,
-        "objects": 184,
+        "objects": 192,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -8439,6 +8515,24 @@
               "tool": "majordomus_gates",
               "resource": "majordomus://gates",
               "route": "GET /api/v1/gates"
+            },
+            {
+              "id": "gates.policy",
+              "title": "The completion policy",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_completion_policy",
+              "resource": "majordomus://gates/policy",
+              "route": "GET /api/v1/gates/policy"
+            },
+            {
+              "id": "gates.state",
+              "title": "How each gate last went",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_gate_state",
+              "resource": "majordomus://gates/state",
+              "route": "GET /api/v1/gates/state"
             }
           ]
         }
@@ -8476,10 +8570,10 @@
       "moments": [],
       "backlinks": [],
       "counts": {
-        "capabilities": 2,
-        "mcp_tools": 2,
-        "mcp_resources": 2,
-        "http_routes": 2,
+        "capabilities": 4,
+        "mcp_tools": 4,
+        "mcp_resources": 4,
+        "http_routes": 4,
         "cli_paths": 0,
         "commands": 0,
         "objects": 0,
@@ -8608,6 +8702,24 @@
               "tool": "majordomus_gates",
               "resource": "majordomus://gates",
               "route": "GET /api/v1/gates"
+            },
+            {
+              "id": "gates.policy",
+              "title": "The completion policy",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_completion_policy",
+              "resource": "majordomus://gates/policy",
+              "route": "GET /api/v1/gates/policy"
+            },
+            {
+              "id": "gates.state",
+              "title": "How each gate last went",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_gate_state",
+              "resource": "majordomus://gates/state",
+              "route": "GET /api/v1/gates/state"
             }
           ]
         },
@@ -8957,10 +9069,10 @@
         "planning"
       ],
       "counts": {
-        "capabilities": 4,
-        "mcp_tools": 4,
-        "mcp_resources": 4,
-        "http_routes": 4,
+        "capabilities": 6,
+        "mcp_tools": 6,
+        "mcp_resources": 6,
+        "http_routes": 6,
         "cli_paths": 0,
         "commands": 4,
         "objects": 0,
@@ -9543,6 +9655,46 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
           "capabilities": [
             {
+              "id": "mesh.beat",
+              "title": "Say a session is making progress",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_beat",
+              "route": "POST /api/v1/mesh/beats"
+            },
+            {
+              "id": "mesh.build_cache.ensure",
+              "title": "Restore an install before its command, and save it after",
+              "kind": "command",
+              "stability": "experimental",
+              "cli": "majordomus mesh build-cache ensure"
+            },
+            {
+              "id": "mesh.build_cache.env",
+              "title": "The sccache client configuration for the store this node selected",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_build_cache_env",
+              "route": "GET /api/v1/mesh/build-cache/env",
+              "cli": "majordomus mesh build-cache env"
+            },
+            {
+              "id": "mesh.build_cache.key",
+              "title": "What every dependency install and build directory is cached under",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_build_cache_key",
+              "route": "GET /api/v1/mesh/build-cache/key",
+              "cli": "majordomus mesh build-cache key"
+            },
+            {
+              "id": "mesh.build_cache.provision",
+              "title": "Provision this node as a mesh build cache provider",
+              "kind": "command",
+              "stability": "experimental",
+              "cli": "majordomus mesh build-cache provision"
+            },
+            {
               "id": "mesh.claim",
               "title": "Claim a scope across the mesh",
               "kind": "command",
@@ -9566,6 +9718,15 @@
               "tool": "majordomus_mesh_doctor",
               "route": "GET /api/v1/mesh/doctor",
               "cli": "majordomus mesh doctor"
+            },
+            {
+              "id": "mesh.enrol",
+              "title": "Enrol this machine in the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_enrol",
+              "route": "POST /api/v1/mesh/enrol",
+              "cli": "majordomus mesh enrol"
             },
             {
               "id": "mesh.events",
@@ -9745,6 +9906,32 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
           "capabilities": [
             {
+              "id": "plan.delivery",
+              "title": "How far each issue's work has travelled",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_delivery",
+              "route": "GET /api/v1/plan/delivery",
+              "cli": "majordomus plan delivery"
+            },
+            {
+              "id": "plan.drift",
+              "title": "Where the plan's stamps contradict the delivered work",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_drift",
+              "route": "GET /api/v1/plan/drift",
+              "cli": "majordomus plan drift"
+            },
+            {
+              "id": "plan.flight",
+              "title": "Where the work is now",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_flight",
+              "route": "GET /api/v1/plan/flight"
+            },
+            {
               "id": "plan.issues",
               "title": "The issues, filtered by what the graph derived",
               "kind": "query",
@@ -9898,6 +10085,14 @@
               "route": "GET /api/v1/changelog"
             },
             {
+              "id": "release.currency",
+              "title": "Whether the trunk's landed work is released",
+              "kind": "query",
+              "stability": "implemented",
+              "tool": "majordomus_release_currency",
+              "route": "GET /api/v1/release/currency"
+            },
+            {
               "id": "release.next",
               "title": "The version a landing allocates, and why",
               "kind": "query",
@@ -9990,6 +10185,15 @@
               "resource": "majordomus://economics",
               "route": "GET /api/v1/economics",
               "cli": "majordomus economics summary"
+            },
+            {
+              "id": "economics.tasks",
+              "title": "Each task's delivery economics",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_economics_tasks",
+              "route": "GET /api/v1/economics/tasks",
+              "cli": "majordomus economics tasks"
             }
           ]
         },
@@ -10244,11 +10448,11 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 58,
-        "mcp_tools": 51,
+        "capabilities": 69,
+        "mcp_tools": 60,
         "mcp_resources": 9,
-        "http_routes": 55,
-        "cli_paths": 17,
+        "http_routes": 64,
+        "cli_paths": 25,
         "commands": 0,
         "objects": 1,
         "rules": 2,
@@ -10441,6 +10645,14 @@
               "route": "GET /api/v1/changelog"
             },
             {
+              "id": "release.currency",
+              "title": "Whether the trunk's landed work is released",
+              "kind": "query",
+              "stability": "implemented",
+              "tool": "majordomus_release_currency",
+              "route": "GET /api/v1/release/currency"
+            },
+            {
               "id": "release.next",
               "title": "The version a landing allocates, and why",
               "kind": "query",
@@ -10519,6 +10731,32 @@
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
           "capabilities": [
+            {
+              "id": "plan.delivery",
+              "title": "How far each issue's work has travelled",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_delivery",
+              "route": "GET /api/v1/plan/delivery",
+              "cli": "majordomus plan delivery"
+            },
+            {
+              "id": "plan.drift",
+              "title": "Where the plan's stamps contradict the delivered work",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_drift",
+              "route": "GET /api/v1/plan/drift",
+              "cli": "majordomus plan drift"
+            },
+            {
+              "id": "plan.flight",
+              "title": "Where the work is now",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_flight",
+              "route": "GET /api/v1/plan/flight"
+            },
             {
               "id": "plan.issues",
               "title": "The issues, filtered by what the graph derived",
@@ -10675,6 +10913,46 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
           "capabilities": [
             {
+              "id": "mesh.beat",
+              "title": "Say a session is making progress",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_beat",
+              "route": "POST /api/v1/mesh/beats"
+            },
+            {
+              "id": "mesh.build_cache.ensure",
+              "title": "Restore an install before its command, and save it after",
+              "kind": "command",
+              "stability": "experimental",
+              "cli": "majordomus mesh build-cache ensure"
+            },
+            {
+              "id": "mesh.build_cache.env",
+              "title": "The sccache client configuration for the store this node selected",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_build_cache_env",
+              "route": "GET /api/v1/mesh/build-cache/env",
+              "cli": "majordomus mesh build-cache env"
+            },
+            {
+              "id": "mesh.build_cache.key",
+              "title": "What every dependency install and build directory is cached under",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_build_cache_key",
+              "route": "GET /api/v1/mesh/build-cache/key",
+              "cli": "majordomus mesh build-cache key"
+            },
+            {
+              "id": "mesh.build_cache.provision",
+              "title": "Provision this node as a mesh build cache provider",
+              "kind": "command",
+              "stability": "experimental",
+              "cli": "majordomus mesh build-cache provision"
+            },
+            {
               "id": "mesh.claim",
               "title": "Claim a scope across the mesh",
               "kind": "command",
@@ -10698,6 +10976,15 @@
               "tool": "majordomus_mesh_doctor",
               "route": "GET /api/v1/mesh/doctor",
               "cli": "majordomus mesh doctor"
+            },
+            {
+              "id": "mesh.enrol",
+              "title": "Enrol this machine in the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_enrol",
+              "route": "POST /api/v1/mesh/enrol",
+              "cli": "majordomus mesh enrol"
             },
             {
               "id": "mesh.events",
@@ -10942,7 +11229,7 @@
         {
           "id": "deploy",
           "title": "Deployment",
-          "description": "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation is a read: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.",
+          "description": "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation over HTTP and MCP is a read; the one command, assembling the tree a provider receives, writes outside the checkout and is a command line only: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.",
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
           "capabilities": [
@@ -10978,6 +11265,13 @@
               "stability": "behaviorally_verified",
               "tool": "majordomus_deployments_observed",
               "route": "GET /api/v1/deployments/observed"
+            },
+            {
+              "id": "deploy.slug",
+              "title": "Assemble the tree a provider receives",
+              "kind": "command",
+              "stability": "behaviorally_verified",
+              "cli": "majordomus deploy slug"
             }
           ]
         },
@@ -11005,6 +11299,13 @@
               "tool": "majordomus_delivery",
               "route": "GET /api/v1/delivery",
               "cli": "majordomus delivery report"
+            },
+            {
+              "id": "delivery.trends",
+              "title": "How CI runs trend",
+              "kind": "query",
+              "stability": "experimental",
+              "route": "GET /api/v1/delivery/trends"
             }
           ]
         },
@@ -11032,6 +11333,24 @@
               "tool": "majordomus_gates",
               "resource": "majordomus://gates",
               "route": "GET /api/v1/gates"
+            },
+            {
+              "id": "gates.policy",
+              "title": "The completion policy",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_completion_policy",
+              "resource": "majordomus://gates/policy",
+              "route": "GET /api/v1/gates/policy"
+            },
+            {
+              "id": "gates.state",
+              "title": "How each gate last went",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_gate_state",
+              "resource": "majordomus://gates/state",
+              "route": "GET /api/v1/gates/state"
             }
           ]
         },
@@ -11609,11 +11928,11 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 97,
-        "mcp_tools": 89,
-        "mcp_resources": 16,
-        "http_routes": 94,
-        "cli_paths": 41,
+        "capabilities": 111,
+        "mcp_tools": 99,
+        "mcp_resources": 18,
+        "http_routes": 105,
+        "cli_paths": 49,
         "commands": 0,
         "objects": 0,
         "rules": 3,
@@ -12120,7 +12439,7 @@
       "kind_refs": [
         {
           "name": "session",
-          "objects": 90
+          "objects": 91
         }
       ],
       "rule_refs": [
@@ -12353,11 +12672,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 90,
+        "mcp_resources": 91,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 4,
-        "objects": 90,
+        "objects": 91,
         "rules": 4,
         "enforced_rules": 4,
         "docs": 2,
@@ -12540,6 +12859,14 @@
               "route": "GET /api/v1/changelog"
             },
             {
+              "id": "release.currency",
+              "title": "Whether the trunk's landed work is released",
+              "kind": "query",
+              "stability": "implemented",
+              "tool": "majordomus_release_currency",
+              "route": "GET /api/v1/release/currency"
+            },
+            {
               "id": "release.next",
               "title": "The version a landing allocates, and why",
               "kind": "query",
@@ -12591,7 +12918,7 @@
         },
         {
           "name": "release-record",
-          "objects": 28
+          "objects": 38
         }
       ],
       "rule_refs": [
@@ -12701,7 +13028,7 @@
         },
         {
           "id": "no-network",
-          "claim": "Nothing performs a network call, evaluates generated text, or deletes recursively",
+          "claim": "The shell tool performs no network call, evaluates no generated text and deletes nothing recursively; its one declared request is the loopback peer probe",
           "status": "guaranteed",
           "test": "test/cases/08_no_forbidden_constructs.sh"
         },
@@ -12757,13 +13084,13 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 9,
-        "mcp_tools": 9,
-        "mcp_resources": 30,
-        "http_routes": 9,
+        "capabilities": 10,
+        "mcp_tools": 10,
+        "mcp_resources": 40,
+        "http_routes": 10,
         "cli_paths": 5,
         "commands": 4,
-        "objects": 29,
+        "objects": 39,
         "rules": 4,
         "enforced_rules": 4,
         "docs": 3,
@@ -12914,6 +13241,32 @@
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
           "capabilities": [
+            {
+              "id": "plan.delivery",
+              "title": "How far each issue's work has travelled",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_delivery",
+              "route": "GET /api/v1/plan/delivery",
+              "cli": "majordomus plan delivery"
+            },
+            {
+              "id": "plan.drift",
+              "title": "Where the plan's stamps contradict the delivered work",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_drift",
+              "route": "GET /api/v1/plan/drift",
+              "cli": "majordomus plan drift"
+            },
+            {
+              "id": "plan.flight",
+              "title": "Where the work is now",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_flight",
+              "route": "GET /api/v1/plan/flight"
+            },
             {
               "id": "plan.issues",
               "title": "The issues, filtered by what the graph derived",
@@ -13128,23 +13481,23 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 40
+          "objects": 113
         },
         {
           "name": "issue",
-          "objects": 442
+          "objects": 1124
         },
         {
           "name": "intent",
-          "objects": 4
+          "objects": 44
         },
         {
           "name": "gap",
-          "objects": 3
+          "objects": 5
         },
         {
           "name": "critique",
-          "objects": 3
+          "objects": 38
         }
       ],
       "rule_refs": [
@@ -13340,13 +13693,13 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 23,
-        "mcp_tools": 23,
-        "mcp_resources": 495,
-        "http_routes": 23,
-        "cli_paths": 11,
+        "capabilities": 26,
+        "mcp_tools": 26,
+        "mcp_resources": 1327,
+        "http_routes": 26,
+        "cli_paths": 13,
         "commands": 1,
-        "objects": 492,
+        "objects": 1324,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -14710,7 +15063,7 @@
         },
         {
           "id": "evidence-navigates-both-ways",
-          "claim": "Every claim names the test that proves it and every test names the claims it proves, from one derivation",
+          "claim": "Every claim names the test meant to settle it and every test names the claims it is meant to settle, from one derivation",
           "status": "guaranteed",
           "test": "test/cases/124_evidence.sh"
         },
@@ -15410,7 +15763,7 @@
       "title": "A deployment is one canonical object, and every artifact built from it is generated from it",
       "short_title": "Deployments",
       "headline": "The port, the routes and the build inputs of the executable's container image are stated once, and the image definition and its ignore file are projections that cannot drift from it.",
-      "summary": "One deployment object per deployment of the executable, validated against the registry this process built; the container image definition and its ignore file are generated from it and checked for drift.",
+      "summary": "One deployment object per deployment of the executable, validated against the registry this process built; the container image definition, its ignore file and the files of the provider it names are generated from it and checked for drift.",
       "status": "draft",
       "weight": 200,
       "featured": false,
@@ -15459,7 +15812,7 @@
         {
           "id": "deploy",
           "title": "Deployment",
-          "description": "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation is a read: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.",
+          "description": "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation over HTTP and MCP is a read; the one command, assembling the tree a provider receives, writes outside the checkout and is a command line only: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.",
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
           "capabilities": [
@@ -15495,6 +15848,13 @@
               "stability": "behaviorally_verified",
               "tool": "majordomus_deployments_observed",
               "route": "GET /api/v1/deployments/observed"
+            },
+            {
+              "id": "deploy.slug",
+              "title": "Assemble the tree a provider receives",
+              "kind": "command",
+              "stability": "behaviorally_verified",
+              "cli": "majordomus deploy slug"
             }
           ]
         },
@@ -15522,6 +15882,13 @@
               "tool": "majordomus_delivery",
               "route": "GET /api/v1/delivery",
               "cli": "majordomus delivery report"
+            },
+            {
+              "id": "delivery.trends",
+              "title": "How CI runs trend",
+              "kind": "query",
+              "stability": "experimental",
+              "route": "GET /api/v1/delivery/trends"
             }
           ]
         }
@@ -15536,11 +15903,11 @@
       "rule_refs": [
         {
           "id": "majordomus.deployment-contract",
-          "identity": "majordomus.deployment-contract@1",
+          "identity": "majordomus.deployment-contract@2",
           "title": "A deployment is described once, and every artifact built from it is generated from it",
           "class": "blocking",
           "enforced": true,
-          "path": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md"
+          "path": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v2.md"
         }
       ],
       "doc_refs": [
@@ -15560,7 +15927,7 @@
       "claim_refs": [
         {
           "id": "deployment-contract-refuses-by-name",
-          "claim": "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named",
+          "claim": "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a provider the contract does not know or a provider address that is not https, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named",
           "status": "guaranteed",
           "test": "test/cases/84_deployment_contract.sh"
         }
@@ -15571,11 +15938,11 @@
       "moments": [],
       "backlinks": [],
       "counts": {
-        "capabilities": 6,
+        "capabilities": 8,
         "mcp_tools": 6,
         "mcp_resources": 2,
-        "http_routes": 6,
-        "cli_paths": 2,
+        "http_routes": 7,
+        "cli_paths": 3,
         "commands": 0,
         "objects": 1,
         "rules": 1,
@@ -16493,6 +16860,11 @@
         ]
       },
       {
+        "id": "blackboard",
+        "title": "The peer blackboard",
+        "features": []
+      },
+      {
         "id": "brief",
         "title": "The session brief",
         "features": [
@@ -16708,6 +17080,11 @@
         "features": [
           "knowledge"
         ]
+      },
+      {
+        "id": "layout",
+        "title": "Layer layout",
+        "features": []
       },
       {
         "id": "lifecycle",
@@ -17150,7 +17527,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (115)",
+        "title": "adr (167)",
         "features": [
           "knowledge"
         ]
@@ -17178,7 +17555,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (247)",
+        "title": "claim (250)",
         "features": [
           "declare-once"
         ]
@@ -17199,7 +17576,7 @@
       },
       {
         "id": "critique",
-        "title": "critique (3)",
+        "title": "critique (38)",
         "features": [
           "planning"
         ]
@@ -17241,28 +17618,28 @@
       },
       {
         "id": "gap",
-        "title": "gap (3)",
+        "title": "gap (5)",
         "features": [
           "planning"
         ]
       },
       {
         "id": "intent",
-        "title": "intent (4)",
+        "title": "intent (44)",
         "features": [
           "planning"
         ]
       },
       {
         "id": "issue",
-        "title": "issue (442)",
+        "title": "issue (1124)",
         "features": [
           "planning"
         ]
       },
       {
         "id": "knowledge",
-        "title": "knowledge (4)",
+        "title": "knowledge (60)",
         "features": [
           "knowledge"
         ]
@@ -17276,7 +17653,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (40)",
+        "title": "milestone (113)",
         "features": [
           "planning"
         ]
@@ -17304,21 +17681,21 @@
       },
       {
         "id": "prompt",
-        "title": "prompt (4)",
+        "title": "prompt (5)",
         "features": [
           "continuity"
         ]
       },
       {
         "id": "release-record",
-        "title": "release-record (28)",
+        "title": "release-record (38)",
         "features": [
           "install"
         ]
       },
       {
         "id": "rule",
-        "title": "rule (184)",
+        "title": "rule (192)",
         "features": [
           "doctrine"
         ]
@@ -17332,7 +17709,7 @@
       },
       {
         "id": "session",
-        "title": "session (90)",
+        "title": "session (91)",
         "features": [
           "continuity",
           "provenance"
@@ -17385,7 +17762,13 @@
         "episode": "none",
         "episode_evidence": "not a product but a class of tools defined by the file they read (agents.md). A convention has no process and no events; the concrete tool's own entry in this file is what says what it can do.",
         "prompts": "none",
-        "prompts_evidence": "as above: a convention hands nothing to anything."
+        "prompts_evidence": "as above: a convention hands nothing to anything.",
+        "browser": "none",
+        "browser_evidence": "as above: a convention drives nothing; the concrete tool reading AGENTS.md has its own row, and that row says whether it drives a browser.",
+        "usage": [
+          "none"
+        ],
+        "usage_evidence": "as above: a convention runs no model and reports no usage; the concrete tool reading AGENTS.md has its own row, and that row says how it reports usage."
       }
     },
     {
@@ -17406,7 +17789,13 @@
         "episode": "none",
         "episode_evidence": "no conversation-lifecycle hook is published. Searched 2026-09-11: getbb.app; github.com/get-bb/bb docs/ (25 files), plugins/ (31 plugins), README.md; docs/configuration.md ('Repository worktree hooks') and docs/cli-guide-and-skill.md document only .bb-env-setup.sh / .bb-env-teardown.sh, which fire on environment provisioning and removal. docs/provider-plugin-api.md names an internal system/interaction/lifecycle event stream with no external-command contract. The @get-bb/plugin-sdk surface is rendered in-app and not published, so this is an absence of documentation, not a documented absence. ADR 0024 reached the same conclusion: the agent bb runs keeps the hook.",
         "prompts": "none",
-        "prompts_evidence": "same search, same date, same caveat: nothing published hands a prompt to an external command before the model runs. Because bb runs Claude Code and Codex as child processes, each child's own prompt hook fires underneath it — the coverage is the agent's, never bb's."
+        "prompts_evidence": "same search, same date, same caveat: nothing published hands a prompt to an external command before the model runs. Because bb runs Claude Code and Codex as child processes, each child's own prompt hook fires underneath it — the coverage is the agent's, never bb's.",
+        "browser": "none",
+        "browser_evidence": "bb itself ships no browser bridge (searched 2026-10-21: the same docs/ and plugins/ as above name none). The agent bb runs keeps its own: Claude Code under bb has its bridge when the person enabled it, and that is the agent's row, never bb's.",
+        "usage": [
+          "none"
+        ],
+        "usage_evidence": "bb runs Claude Code and Codex as child processes and publishes no usage stream of its own (searched 2026-10-22: getbb.app and the github.com/get-bb/bb docs/ and plugins/ named above document no usage, token or telemetry export). Each child reports through its own row's seam; the usage is the agent's, never bb's."
       }
     },
     {
@@ -17431,7 +17820,16 @@
         "episode": "hooks",
         "episode_evidence": "https://code.claude.com/docs/en/hooks — SessionStart (source: startup, resume, clear, compact, fork), SessionEnd (reason: clear, resume, logout, prompt_input_exit, other), PreCompact and PostCompact (trigger: manual, auto). Verified 2026-09-11. This repository's shims are .claude/hooks/majordomus-session-{start,end,compact}.",
         "prompts": "hook",
-        "prompts_evidence": "https://code.claude.com/docs/en/hooks — UserPromptSubmit, 'When you submit a prompt, before Claude processes it'; the raw text arrives as prompt_text. Verified 2026-09-11. The shim is .claude/hooks/majordomus-capture."
+        "prompts_evidence": "https://code.claude.com/docs/en/hooks — UserPromptSubmit, 'When you submit a prompt, before Claude processes it'; the raw text arrives as prompt_text. Verified 2026-09-11. The shim is .claude/hooks/majordomus-capture.",
+        "browser": "bridge",
+        "browser_evidence": "https://code.claude.com/docs/en/chrome — Claude Code connects to the Claude in Chrome extension with `claude --chrome` or `/chrome`, and the browser tools arrive in the same session as mcp__claude-in-chrome__* beside this repository's server from .mcp.json; `/chrome` → Enabled by default makes it the default, and a project cannot turn it on (CLAUDE_CODE_ENABLE_CFC in a project's settings is ignored). The first enable writes the native messaging host com.anthropic.claude_code_browser_extension. Verified 2026-10-21; docs/MCP.md, Claude in the browser.",
+        "browser_host": "com.anthropic.claude_code_browser_extension",
+        "browser_setup": "in Claude Code: /chrome, choose Enabled by default, sign the extension in to the organization /status names, then restart Chrome",
+        "usage": [
+          "otel",
+          "stream-json"
+        ],
+        "usage_evidence": "https://code.claude.com/docs/en/monitoring-usage — opt-in with CLAUDE_CODE_ENABLE_TELEMETRY=1 and OTEL_LOGS_EXPORTER/OTEL_METRICS_EXPORTER; the event claude_code.api_request is 'Logged for each API request to Claude' with model, cost_usd ('Estimated cost in USD'), input_tokens ('excluding tokens read from or written to the prompt cache'), output_tokens, cache_read_tokens and cache_creation_tokens, and the metric claude_code.token.usage carries type input, output, cacheRead, cacheCreation. https://code.claude.com/docs/en/headless — with --output-format json or stream-json the run reports usage and total_cost_usd in its final result message, and the docs call both figures 'client-side estimates' that 'can differ from your actual bill'. Verified 2026-10-22. Cost is an estimate on both seams, never a bill."
       }
     },
     {
@@ -17445,7 +17843,13 @@
         "episode": "hooks",
         "episode_evidence": "https://learn.chatgpt.com/docs/hooks (canonical; developers.openai.com/codex/hooks 308-redirects to it) — SessionStart (source: startup, resume, clear, compact), SessionEnd, PreCompact and PostCompact; PreCompact can block with continue:false. Configured in ~/.codex/hooks.json or an inline [hooks] table in .codex/config.toml. Verified 2026-09-11. The `notify` key is NOT this: https://learn.chatgpt.com/docs/config-file/config-advanced says it fires 'whenever Codex emits supported events (currently only agent-turn-complete)' — after a turn, never at a session boundary.",
         "prompts": "hook",
-        "prompts_evidence": "https://learn.chatgpt.com/docs/hooks — UserPromptSubmit, 'Runs when a user submits a prompt, before model invocation, and can block the prompt'; the raw text arrives as `prompt` (not `prompt_text`, as Claude Code sends it). Verified 2026-09-11."
+        "prompts_evidence": "https://learn.chatgpt.com/docs/hooks — UserPromptSubmit, 'Runs when a user submits a prompt, before model invocation, and can block the prompt'; the raw text arrives as `prompt` (not `prompt_text`, as Claude Code sends it). Verified 2026-09-11.",
+        "browser": "none",
+        "browser_evidence": "not verified either way, and declared none until it is: on 2026-10-21 OpenAI's ChatGPT for Chrome extension registered a native messaging host on the owner's machine (com.openai.codexextension), but no vendor page was read saying its tools arrive in a Codex CLI session beside a project MCP server. Searching learn.chatgpt.com for that is the open re-verification.",
+        "usage": [
+          "app-server"
+        ],
+        "usage_evidence": "github.com/openai/codex at 9a8a85bc5393 (2026-10-22), codex-rs/app-server-protocol/schema/json/ServerNotification.json — the notification thread/tokenUsage/updated carries ThreadTokenUsage {total, last, modelContextWindow}, each a TokenUsageBreakdown of inputTokens, cachedInputTokens, cacheWriteInputTokens, outputTokens, reasoningOutputTokens and totalTokens: `total` is cumulative, so it is never summed with `last`. Verified 2026-10-22. Codex's own OpenTelemetry export is NOT declared and stays unadapted: https://learn.chatgpt.com/docs/config-file/config-advanced says it is 'Disabled by default; opt in via [otel]' and puts token counts only on codex.sse_event's response.completed, but says nothing on whether it covers interactive sessions the person starts or only codex exec, so no seam is claimed until that is read."
       }
     },
     {
@@ -17465,7 +17869,13 @@
         "episode": "hooks",
         "episode_evidence": "https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md and https://geminicli.com/docs/hooks/ — SessionStart (source: startup, resume, clear), SessionEnd (reason: exit, clear, logout, prompt_input_exit, other), PreCompress (trigger: auto, manual). Configured as a hooks block in settings.json. Tracker github.com/google-gemini/gemini-cli/issues/9070 'Comprehensive Hooking System' is closed, 34 of 34. Verified 2026-09-11. Two caveats an adapter must carry: the CLI does not wait for SessionEnd, and PreCompress is advisory and cannot block.",
         "prompts": "hook",
-        "prompts_evidence": "https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md — BeforeAgent, 'Fires after a user submits a prompt, but before the agent begins planning'; the raw text arrives as `prompt`. BeforeModel fires later, on the assembled request. Verified 2026-09-11."
+        "prompts_evidence": "https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md — BeforeAgent, 'Fires after a user submits a prompt, but before the agent begins planning'; the raw text arrives as `prompt`. BeforeModel fires later, on the assembled request. Verified 2026-09-11.",
+        "browser": "none",
+        "browser_evidence": "not searched: no Gemini CLI browser bridge was looked for on 2026-10-21, when this axis was added for Claude Code. Declared none so that no surface implies one; the search is the open re-verification.",
+        "usage": [
+          "otel"
+        ],
+        "usage_evidence": "https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/telemetry.md — telemetry is enabled in .gemini/settings.json (or its environment variable); the log event gemini_cli.api_response carries input_token_count, output_token_count, cached_content_token_count, thoughts_token_count, tool_token_count and total_token_count, and the metric gemini_cli.token.usage the same by type. Verified 2026-10-22."
       }
     },
     {
@@ -17478,7 +17888,13 @@
         "episode": "connection",
         "episode_evidence": "ADR 0103 and this repository's own implementation: the episode is opened by episodes.attach over the shared MCP server, kept alive by the client's own traffic, and closed on disconnect or after the idle timeout. Proven end to end over the real transport by test/cases/200_generic_mcp_episode.sh.",
         "prompts": "none",
-        "prompts_evidence": "no vendor documentation is involved: a worker with no convention of its own exposes no event, and the MCP connection cannot stand in. An MCP server receives initialize, tool calls and notifications; the person's prompt is never among them, in any version of the protocol (modelcontextprotocol.io/specification). Declared none rather than left blank so that no surface can imply otherwise."
+        "prompts_evidence": "no vendor documentation is involved: a worker with no convention of its own exposes no event, and the MCP connection cannot stand in. An MCP server receives initialize, tool calls and notifications; the person's prompt is never among them, in any version of the protocol (modelcontextprotocol.io/specification). Declared none rather than left blank so that no surface can imply otherwise.",
+        "browser": "none",
+        "browser_evidence": "no vendor documentation is involved: a worker with no convention of its own is known only through the MCP connection, and an MCP server cannot drive the client's browser (modelcontextprotocol.io/specification: a server is handed tool calls, it makes none on the client's behalf). Declared none rather than left blank.",
+        "usage": [
+          "none"
+        ],
+        "usage_evidence": "no vendor documentation is involved: a worker with no convention of its own is known only through the MCP connection, and MCP carries no usage report (modelcontextprotocol.io/specification: a server receives initialize, tool calls and notifications, never the client's token counts). Declared none rather than left blank, so its sessions read not observed with this reason."
       }
     }
   ],
@@ -17885,11 +18301,11 @@
     },
     {
       "id": "project.english-only",
-      "identity": "project.english-only@3",
+      "identity": "project.english-only@4",
       "title": "English only",
       "class": "blocking",
       "enforced": true,
-      "path": ".ai/repo/rules/project/english-only.v3.md"
+      "path": ".ai/repo/rules/project/english-only.v4.md"
     },
     {
       "id": "project.finding-carries-reproduce",
@@ -18276,50 +18692,50 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2528,
-    "builtin": 202,
-    "declarative": 2326,
-    "modules": 58,
-    "mcp_tools": 192,
-    "mcp_resources": 2381,
-    "http_routes": 197,
-    "cli_commands": 206,
+    "capabilities": 3655,
+    "builtin": 220,
+    "declarative": 3435,
+    "modules": 60,
+    "mcp_tools": 206,
+    "mcp_resources": 3492,
+    "http_routes": 212,
+    "cli_commands": 220,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2326,
+    "objects": 3435,
     "by_kind": {
-      "adr": 115,
+      "adr": 167,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 247,
+      "claim": 250,
       "command": 31,
       "context": 39,
-      "critique": 3,
+      "critique": 38,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 348,
+      "document": 353,
       "domain": 6,
       "feature": 29,
-      "gap": 3,
+      "gap": 5,
       "implementation": 52,
-      "intent": 4,
-      "issue": 442,
-      "knowledge": 4,
+      "intent": 44,
+      "issue": 1124,
+      "knowledge": 60,
       "mesh-declaration": 1,
-      "milestone": 40,
+      "milestone": 113,
       "moment": 38,
       "policy": 1,
       "profile": 4,
-      "prompt": 4,
-      "release-record": 28,
-      "rule": 184,
+      "prompt": 5,
+      "release-record": 38,
+      "rule": 192,
       "scope": 1,
-      "session": 90,
+      "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 519,
+      "test": 660,
       "use-case": 49,
       "workspace": 1
     },
@@ -18337,7 +18753,7 @@
       "executions": 14,
       "newest": "2026-09-17T01:14:59Z"
     },
-    "declared": 229,
+    "declared": 232,
     "supported": 0,
     "claims": {
       "a-candidate-is-routed-by-what-it-is-about": {
@@ -19084,6 +19500,12 @@
         "label": "not run",
         "supported": false
       },
+      "mcp-client-always-served": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
       "mcp-client-autostart": {
         "status": "guaranteed",
         "state": "not-run",
@@ -19480,6 +19902,12 @@
         "label": "not run",
         "supported": false
       },
+      "release-prerelease-channel": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
       "reproduce-command": {
         "status": "guaranteed",
         "state": "not-run",
@@ -19643,6 +20071,12 @@
         "supported": false
       },
       "session-records": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "session-start-prompt": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",

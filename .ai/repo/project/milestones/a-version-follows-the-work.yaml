@@ -1,0 +1,29 @@
+id: a-version-follows-the-work
+title: "Landed work is released as a measured version, and how long it has waited is a finding"
+slug: a-version-follows-the-work
+order: 342
+priority: p1
+problem: "The owner's order of 2026-10-19 is a new measured version of majordomus.dev after every session and every milestone, as often as possible, enforced. The cooperation model already says the release seat releases whenever master holds landed work past the last tag (project.the-cooperation-model-is-the-owners-word, rule 4), and the version is measured from the public contract (ADR 0051). Nothing measures that rule, though. Master can hold a day of landed work past the last release while every check, the brief, doctor and the delivery screen stay green. publication-currency asks whether the site serves the trunk, not whether the trunk was released."
+outcome: "One capability, release.currency, answers how much landed work the trunk holds past the last release, since when, and which version the contract requires for it. The brief, doctor and /ui/delivery read it. A task holding the release seat cannot finish completed once that work has waited past its threshold. project.land-and-publish names the capability's case as its proof."
+scope:
+  - "apps/majordomus-cli/src/release"
+  - "apps/majordomus-cli/src/capability/builtin/release.rs"
+  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
+  - "apps/majordomus-cli/src/ui/delivery.rs"
+  - "lib/doctor.sh"
+  - ".ai/repo/rules/project/land-and-publish.v1.md"
+  - "docs/RELEASE.md"
+non_scope:
+  - "Cutting releases: that stays the release seat's act, through the pipeline it already runs"
+  - "Committing the answer into site data: it reads refs, and committed derived data must not"
+acceptance_criteria:
+  - "release.currency answers the last release, the landed commits past it with the oldest one's age, and the version the contract requires, on the command line, HTTP and MCP"
+  - "The brief and doctor warn once landed work is past the last release and warn harder past the threshold; /ui/delivery shows the same answer"
+  - "finish refuses completed to a task holding the release seat while landed work has waited past the threshold, and counts a pushed tag whose release run is in progress as released"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 3470_the_release_follows_the_work"
+evidence_required: []
+depends_on: []
+created_at: 2026-10-19
+updated_at: 2026-10-19

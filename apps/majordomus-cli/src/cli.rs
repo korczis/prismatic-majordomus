@@ -39,6 +39,8 @@ pub enum Command {
     Mcp(McpArgs),
     /// Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/
     Serve(ServeArgs),
+    /// The UI in one step: ensure this checkout's shared server the way `serve ensure` does, print the address of `/ui` (or of `/ui/<screen>`) and open it in a browser
+    Ui(UiArgs),
     /// Introspect the capability registry: what exists, where it came from, how it is exposed
     Capabilities(CapabilitiesArgs),
     /// Write the committed projections of the registry (docs/generated), or check that they are current
@@ -99,24 +101,32 @@ pub enum Command {
     Evidence(EvidenceArgs),
     /// Whether a deployment serves the commit it was meant to: observe the build identity it serves, judged by commit containment, and read each deployment's recorded standing against a commit
     Served(ServedArgs),
+    /// The tree a deployment's provider receives, assembled outside the checkout from the deployment object at one commit: its build inputs, the provider's generated files, the buildpack line and the executable built at that commit
+    Deploy(DeployArgs),
     /// Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about
     Rules(RulesArgs),
     /// What must become true above the milestones: every intent with its stage derived from the plan and its satisfaction from the recorded evidence, one intent, the model's own validation, and which intent a piece of work serves
     Intent(IntentArgs),
     /// Whether each product feature exists: on master, deployed, publicly verified, tested, its evidence published and linked — every dimension computed, unknown never a pass
     Delivery(DeliveryArgs),
+    /// How far each issue's work has travelled: none, branch, pr_open, merged, released or deployed, each with the object that proved it; the plan's records are read and moved by the shell tool's `plan`
+    Plan(PlanArgs),
     /// Token economics, measured: matched runs with and without Majordomus, every metric with its measurement class and sample size, the statement the evidence allows, and the check that refuses an unsupported savings claim
     Economics(EconomicsArgs),
     /// Every object of the layer as an addressable node: the kinds and their routes, and one entity with its references, its backlinks, the surfaces that answer for it and the state of what it names
     Entity(EntityArgs),
     /// The repository's shell automation against the tracked migration inventory: every shell unit declared with an exemption, and every exemption naming a unit the tree still has
     Shell(ShellArgs),
+    /// The boundary between the layer's tracked and local halves, checked against the layouts their contracts declare: every path a contract excludes, named with the contract
+    Layout(LayoutArgs),
     /// The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output
     Pack(PackArgs),
     /// The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it
     Dashboard(DashboardArgs),
     /// What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout's lease
     Brief(BriefArgs),
+    /// Who works on what in this repository, on every board and every linked machine: each worker with its client, intent, checkout, branch and claims, the claims that meet, the reviews and handovers that wait, typed relations verified only by an explicit identifier, and whether every source could be read — asked of the server holding this checkout's lease
+    Blackboard(BlackboardArgs),
     /// Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans
     Skills(SkillsArgs),
     /// What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion, one record by id with every reference it names resolved, and the derivation status of this checkout judged against the policy's freshness thresholds
@@ -259,6 +269,42 @@ pub struct DashboardArgs {
     pub command: DashboardCommand,
 
     #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus blackboard`: the `blackboard.snapshot` capability on the command line (ADR 0176).
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{BlackboardArgs, Cli, Command, OutputFormat};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "blackboard", "--this-checkout", "--for", "1b"]).unwrap();
+/// let Command::Blackboard(args) = cli.command else { panic!("not the blackboard command") };
+/// let args: BlackboardArgs = args;
+/// assert!(args.this_checkout);
+/// assert_eq!(args.reader.as_deref(), Some("1b"));
+/// assert!(matches!(args.format, OutputFormat::Text));
+/// ```
+pub struct BlackboardArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long = "this-checkout")]
+    /// Read this checkout's board alone instead of every checkout's
+    pub this_checkout: bool,
+
+    #[arg(long = "for", value_name = "NAMES")]
+    /// Comma-separated names of the reader, so that the signals addressed to it are marked for it
+    pub reader: Option<String>,
+
+    #[arg(long, value_name = "LIST")]
+    /// The monitor sources the signals are read from, a comma-separated subset of mesh, executor and github (default: mesh,executor)
+    pub sources: Option<String>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
     /// Output shape
     pub format: OutputFormat,
 }
@@ -426,6 +472,54 @@ pub enum ShellCommand {
         #[arg(long)]
         canonical: bool,
     },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus layout`. The output shape is global, so it reads the way a person writes it.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, LayoutArgs, LayoutCommand, OutputFormat};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "layout", "check", "--format", "json"]).unwrap();
+/// let Command::Layout(args) = cli.command else { panic!("not the layout command") };
+/// let args: LayoutArgs = args;
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// assert!(matches!(args.command, LayoutCommand::Check));
+/// ```
+pub struct LayoutArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `check`. Required: the group runs nothing of its own.
+    pub command: LayoutCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus layout`: `check` judges both halves of the layer against
+/// the layouts their contracts declare (I2871). `check` takes no arguments: what it judges
+/// is what the contracts declare, never what a caller names.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, LayoutCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "layout", "check"]).unwrap();
+/// let Command::Layout(args) = cli.command else { panic!("not the layout command") };
+/// assert!(matches!(args.command, LayoutCommand::Check));
+/// // no path to judge is accepted, and the group runs nothing of its own
+/// assert!(Cli::try_parse_from(["majordomus", "layout", "check", ".ai/local"]).is_err());
+/// assert!(Cli::try_parse_from(["majordomus", "layout"]).is_err());
+/// ```
+pub enum LayoutCommand {
+    /// Refuse every path a declared layout excludes, naming the contract; exit 10 on a finding, 12 when the halves cannot be read
+    Check,
 }
 
 #[derive(Debug, Args)]
@@ -722,6 +816,8 @@ pub enum MeshCommand {
     Nodes(MeshQueryArgs),
     /// This machine's node identity, public half only; absent is an answer, not an error
     Identity(MeshQueryArgs),
+    /// Add this machine's public key to the mesh declaration's trust list, once; commit it to join
+    Enrol(MeshQueryArgs),
     /// Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall
     Doctor(MeshQueryArgs),
     /// What the host firewall must admit for the declared mesh and whether it does; `apply` admits it, as root
@@ -740,12 +836,153 @@ pub enum MeshCommand {
     Claim(MeshClaimArgs),
     /// Release a claim this server's current run holds
     Release(MeshReleaseArgs),
+    /// Say a session is making progress, and what it is doing, so its exclusive claims keep excluding
+    Beat(MeshBeatArgs),
     /// Open, update or close a session on the mesh
     Session(MeshSessionArgs),
     /// Publish a handover of this checkout to the mesh, or consume one another runtime published
     Handover(MeshHandoverArgs),
     /// Ask the mesh for a review, or answer a request
     Review(MeshReviewArgs),
+    /// The mesh build cache: what each dependency install and build directory is cached under
+    BuildCache(MeshBuildCacheArgs),
+}
+
+#[derive(Debug, Args)]
+/// `mesh build-cache`: the shared build cache of ADR 0157 as this repository and machine
+/// see it. `key` names what every lockfile the repository tracks is cached under.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshBuildCacheArgs, MeshBuildCacheCommand, MeshCommand};
+/// use majordomus_cli::mesh::build_cache::key::Kind;
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "build-cache", "key", "--kind", "npm-modules"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::BuildCache(cache) = mesh.command else { panic!("expected `build-cache`") };
+/// let cache: MeshBuildCacheArgs = cache;
+/// let MeshBuildCacheCommand::Key(key) = cache.command else { panic!("expected `key`") };
+/// assert_eq!(key.kind, Some(Kind::NpmModules));
+/// ```
+pub struct MeshBuildCacheArgs {
+    #[command(subcommand)]
+    /// What to ask of the build cache.
+    pub command: MeshBuildCacheCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// The `mesh build-cache` subcommands: `key` names what every tracked lockfile is cached under
+/// and writes nothing; `ensure` restores an install before its command and saves it after;
+/// `env` answers this machine's sccache client configuration and writes nothing; `provision`
+/// plans (and, as root with `--apply`, applies) a cache provider's host layer.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshBuildCacheCommand, MeshCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "build-cache", "key"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::BuildCache(cache) = mesh.command else { panic!("expected `build-cache`") };
+/// assert!(matches!(cache.command, MeshBuildCacheCommand::Key(_)));
+/// ```
+pub enum MeshBuildCacheCommand {
+    /// Every lockfile the repository tracks, with the key its install or build directory is cached under: schema version, platform, toolchain and input digest
+    Key(MeshBuildCacheKeyArgs),
+    /// Restore a dependency install or a cold cargo build directory from the local level or this node's store, verified by its digest; on a miss run the command and save what it left. MAJORDOMUS_BUILD_CACHE=off bypasses every level
+    Ensure(MeshBuildCacheEnsureArgs),
+    /// The sccache client configuration for the store this node selected, as a script `eval` reads: local disk first, the store second only when it is healthy now, the credential by file path only
+    Env(MeshBuildCacheEnvArgs),
+    /// Plan what this host still owes as a cache provider, or with --apply bring it there as root; idempotent, no secret reported
+    Provision(MeshProvisionArgs),
+}
+
+#[derive(Debug, Args)]
+/// `mesh build-cache ensure`: restore an install or a build directory before the command that
+/// would make it, run the command on a miss and save what it left. The exit code is the
+/// command's.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshBuildCacheCommand, MeshBuildCacheEnsureArgs, MeshCommand};
+/// use majordomus_cli::mesh::build_cache::key::Kind;
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "build-cache", "ensure", "npm-modules", "--dir", "site", "--", "npm", "ci",
+/// ]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::BuildCache(cache) = mesh.command else { panic!("expected `build-cache`") };
+/// let MeshBuildCacheCommand::Ensure(e) = cache.command else { panic!("expected `ensure`") };
+/// let e: MeshBuildCacheEnsureArgs = e;
+/// assert_eq!((e.kind, e.dir.as_deref()), (Kind::NpmModules, Some("site")));
+/// assert_eq!(e.command, ["npm", "ci"]);
+/// ```
+pub struct MeshBuildCacheEnsureArgs {
+    #[arg(value_enum)]
+    /// What is cached: npm-modules, mix-deps or cargo-build-dir
+    pub kind: crate::mesh::build_cache::key::Kind,
+    #[arg(long)]
+    /// The directory holding the lockfile, relative to the repository (default: the only one, or the current one)
+    pub dir: Option<String>,
+    #[arg(last = true)]
+    /// The install or build command, after `--`: run on a miss (and for mix and cargo on every run)
+    pub command: Vec<String>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh build-cache env`: the sccache environment of this machine, for the process that
+/// starts the sccache server. It reads this machine alone, not a repository, so a compile in
+/// any directory can ask it.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshBuildCacheCommand, MeshBuildCacheEnvArgs, MeshCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "build-cache", "env", "--sccache", "/opt/sccache"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::BuildCache(cache) = mesh.command else { panic!("expected `build-cache`") };
+/// let MeshBuildCacheCommand::Env(env) = cache.command else { panic!("expected `env`") };
+/// let env: MeshBuildCacheEnvArgs = env;
+/// assert_eq!(env.sccache.as_deref(), Some("/opt/sccache"));
+/// ```
+pub struct MeshBuildCacheEnvArgs {
+    #[arg(long)]
+    /// The sccache executable to ask (a name on PATH or a path); `sccache` when unset
+    pub sccache: Option<String>,
+    #[arg(long)]
+    /// The node file that names the store this node offers or knows; `~/.config/majordomus/build-cache.json` when unset
+    pub node_file: Option<std::path::PathBuf>,
+    #[arg(long)]
+    /// The AWS-format credential file, mode 0600, profile `mesh-build-cache`; `~/.config/mesh-build-cache/credentials` when unset
+    pub credentials: Option<std::path::PathBuf>,
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// `text` is the script an `eval` reads; `json` is the full answer, with its reason
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Args)]
+/// `mesh build-cache key`: one kind with `--kind`, every kind without it.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshBuildCacheCommand, MeshBuildCacheKeyArgs, MeshCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "build-cache", "key", "--format", "json"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::BuildCache(cache) = mesh.command else { panic!("expected `build-cache`") };
+/// let MeshBuildCacheCommand::Key(key) = cache.command else { panic!("expected `key`") };
+/// let key: MeshBuildCacheKeyArgs = key;
+/// assert_eq!(key.kind, None);
+/// ```
+pub struct MeshBuildCacheKeyArgs {
+    #[arg(long, value_enum)]
+    /// Only this kind
+    pub kind: Option<crate::mesh::build_cache::key::Kind>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
 }
 
 #[derive(Debug, Args)]
@@ -834,6 +1071,39 @@ pub struct MeshFirewallApplyArgs {
 }
 
 #[derive(Debug, Args)]
+/// `mesh build-cache provision`: a plan by default (`--dry-run` says so explicitly), `--apply`
+/// to carry it out. `--root` is a staging directory for the host's paths: files only, no
+/// privilege, no command.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshBuildCacheCommand, MeshCommand, MeshProvisionArgs};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "build-cache", "provision", "--apply", "--root", "/tmp/x"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::BuildCache(cache) = mesh.command else { panic!("expected `build-cache`") };
+/// let MeshBuildCacheCommand::Provision(p) = cache.command else { panic!("expected `provision`") };
+/// let p: MeshProvisionArgs = p;
+/// assert!(p.apply && p.root.as_deref() == Some("/tmp/x"));
+/// // planning and applying are not both asked for
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "build-cache", "provision", "--apply", "--dry-run"]).is_err());
+/// ```
+pub struct MeshProvisionArgs {
+    #[arg(long, conflicts_with = "apply")]
+    /// Only plan (the default)
+    pub dry_run: bool,
+    #[arg(long)]
+    /// Carry the plan out; needs root on the real root
+    pub apply: bool,
+    #[arg(long)]
+    /// Read and write the host's paths under this directory instead of `/`
+    pub root: Option<String>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
 /// `mesh peer`: which single runtime of the mesh to describe. The runtime key is
 /// `<node>-<runtime>`, and a bare node id is accepted as a shorthand for that node's first
 /// runtime, because a machine running one server is the common case and spelling its
@@ -861,11 +1131,25 @@ pub struct MeshPeerArgs {
 }
 
 #[derive(Debug, Args)]
-/// `mesh events`: a window onto the cooperation journal, in Lamport order. `--after` is a
-/// resume point rather than a timestamp, so a caller that remembers the last stamp it saw
-/// reads each event exactly once however the clocks of the machines involved disagree;
-/// `--limit` bounds one answer. Both are optional, and saying neither asks for the newest
-/// page under the server's own default.
+/// `mesh events`: a window onto the cooperation journal, in Lamport order. `--cursor` is the
+/// resume point each answer prints: a walk that passes it back reads every event exactly
+/// once, an event a partitioned runtime delivered late included. `--after` is the older
+/// resume point, a Lamport stamp, which never returns an event stamped at or below it that
+/// arrives later. `--limit` bounds one answer. All are optional, and saying none walks from
+/// the beginning under the server's own default page.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand};
+///
+/// let cursor = "0123456789abcdef:7";
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "events", "--cursor", cursor]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Events(events) = mesh.command else { panic!("expected `events`") };
+/// assert_eq!(events.cursor.as_deref(), Some(cursor));
+/// let both = ["majordomus", "mesh", "events", "--cursor", cursor, "--after", "3"];
+/// assert!(Cli::try_parse_from(both).is_err(), "two walks at once");
+/// ```
 ///
 /// ```
 /// use clap::Parser;
@@ -894,14 +1178,20 @@ pub struct MeshPeerArgs {
 /// ```
 pub struct MeshEventsArgs {
     /// Only events whose Lamport stamp is above this
-    #[arg(long)]
+    #[arg(long, conflicts_with = "cursor")]
     pub after: Option<u64>,
+    /// Resume after the cursor the previous answer printed: every event exactly once
+    #[arg(long)]
+    pub cursor: Option<String>,
     /// At most this many (default 100, at most 1000)
     #[arg(long)]
     pub limit: Option<u64>,
     /// The newest events instead of the first ones after `--after`
     #[arg(long)]
     pub newest: bool,
+    /// Include the session beats a working session's runtime writes, hidden by default
+    #[arg(long)]
+    pub beats: bool,
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
@@ -1089,6 +1379,42 @@ pub struct MeshReleaseArgs {
 }
 
 #[derive(Debug, Args)]
+/// `mesh beat`: a long-running process says its session is making progress, and what it is
+/// doing (I3990). A session that has beaten lives by its beats — its exclusive claims are
+/// suspended, refusing nobody, once no beat arrives within the declared progress ttl — so a
+/// lander waiting on a CI run beats with `--phase "waiting on CI run 123"` while it waits.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshBeatArgs};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "beat", "--session", "lander",
+///     "--phase", "waiting on CI", "--pid", "4242"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Beat(beat) = mesh.command else { panic!("expected `beat`") };
+/// assert_eq!(beat.session, "lander");
+/// assert_eq!(beat.phase.as_deref(), Some("waiting on CI"));
+/// assert_eq!(beat.pid, Some(4242));
+///
+/// // a beat speaks for a named session
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "beat"]).is_err());
+/// ```
+pub struct MeshBeatArgs {
+    /// The session making progress, as it was claimed under
+    #[arg(long)]
+    pub session: String,
+    /// What it is doing, one line: `waiting on CI run 123`
+    #[arg(long)]
+    pub phase: Option<String>,
+    /// The running process of this machine the beat speaks for
+    #[arg(long)]
+    pub pid: Option<u32>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
 /// `mesh session`: the group that carries a session's lifecycle on the mesh. The group
 /// itself runs nothing — every runnable path under it is `open` or `close` — so it refuses
 /// to be invoked bare rather than guessing which half of a lifecycle was meant.
@@ -1113,11 +1439,14 @@ pub struct MeshSessionArgs {
     pub command: MeshSessionCommand,
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Subcommand)]
 /// The two ends of a session's life on the mesh: `open`, which announces a session and
 /// updates what it says about itself, and `close`, which ends it and with it every claim
 /// it held on every linked runtime. There is no third verb, because everything a session
-/// does between those two ends is a claim, a handover or a review.
+/// does between those two ends is a claim, a handover or a review. `open` carries every
+/// field a session says and `close` only its id; the value is parsed once per process, so
+/// the larger variant is not boxed for the smaller one's sake.
 ///
 /// ```
 /// use clap::Parser;
@@ -1164,6 +1493,17 @@ pub enum MeshSessionCommand {
 /// assert_eq!(open.worker.as_deref(), Some("documenter"));
 /// assert_eq!(open.branch.as_deref(), Some("feature/mesh-cooperation"));
 /// assert_eq!(open.task, None, "what the session does not say stays unsaid");
+/// assert_eq!(open.client_pid, None, "and a session names its client only when asked to");
+///
+/// // a session hook names the client that ran it, so its end closes the session (I3810)
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "session", "open", "--session", "s2", "--client-pid", "auto",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Session(session) = mesh.command else { panic!("expected `session`") };
+/// let MeshSessionCommand::Open(open) = session.command else { panic!("expected `open`") };
+/// assert_eq!(open.client_pid.as_deref(), Some("auto"));
 ///
 /// // a session without an id is not a session
 /// assert!(Cli::try_parse_from(["majordomus", "mesh", "session", "open"]).is_err());
@@ -1196,6 +1536,10 @@ pub struct MeshSessionOpenArgs {
     /// The head commit
     #[arg(long)]
     pub head: Option<String>,
+    /// The client process the session belongs to: a pid, or `auto` for the nearest
+    /// ancestor that is not a shell. The runtime closes the session once it has ended
+    #[arg(long, value_name = "PID|auto")]
+    pub client_pid: Option<String>,
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
@@ -1552,6 +1896,9 @@ pub struct MonitorArgs {
     /// Start after this cursor (a page's `cursor`), instead of the newest signals
     #[arg(long)]
     pub after: Option<String>,
+    /// Keep the cursor in this file: start after the one it holds (unless `--after` is given) and write each page's cursor back, so a restarted watcher repeats nothing
+    #[arg(long, value_name = "FILE")]
+    pub cursor_file: Option<std::path::PathBuf>,
     /// At most this many signals per page (default 50, at most 500)
     #[arg(long)]
     pub limit: Option<u64>,
@@ -1846,9 +2193,10 @@ pub enum ReleaseCommand {
     },
     /// The version a landing of HEAD onto the trunk allocates, and why: the trunk's version, the measured movement, the policy floor and any exemption (ADR 0134)
     Next {
-        /// The trunk the landing raises from
-        #[arg(long, value_name = "REF", default_value = "origin/master")]
-        base: String,
+        /// The trunk the landing raises from; when absent, the remote-tracking ref of the trunk
+        /// this repository names
+        #[arg(long, value_name = "REF")]
+        base: Option<String>,
         /// What lands
         #[arg(long, value_name = "REF", default_value = "HEAD")]
         head: String,
@@ -2065,6 +2413,8 @@ pub enum EconomicsCommand {
     Runs(EconomicsRunsArgs),
     /// Refuse an unsupported savings claim: quantities next to the economics vocabulary in hand-written prose, and bound claims whose evidence does not stand
     Check(EconomicsCheckArgs),
+    /// Each task's wall time, refusals and episodes, from every checkout's ledger; the fields nothing observes yet are named as not observed
+    Tasks(EconomicsTasksArgs),
     /// Run a deterministic suite (no model is called) and record its measurement
     Measure(EconomicsMeasureArgs),
     /// Run a live suite: real harness sessions with and without Majordomus, recorded as raw usage and gate verdicts. Spends provider usage
@@ -2197,6 +2547,40 @@ pub struct EconomicsRunsArgs {
     /// Only this variant
     #[arg(long)]
     pub variant: Option<String>,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus economics tasks`. Both bounds are optional and filter by each task's
+/// `task.started` time; a task outside the window is not answered, and a ledger is read in full
+/// whatever the window.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, EconomicsCommand, EconomicsTasksArgs, OutputFormat};
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "economics", "tasks", "--since", "2026-10-19T00:00:00Z",
+/// ])
+/// .unwrap();
+/// let Command::Economics(e) = cli.command else { panic!("economics") };
+/// let EconomicsCommand::Tasks(t) = e.command else { panic!("tasks") };
+/// let t: EconomicsTasksArgs = t;
+/// assert_eq!(t.since.as_deref(), Some("2026-10-19T00:00:00Z"));
+/// assert!(t.until.is_none());
+/// assert_eq!(t.format, OutputFormat::Text);
+/// ```
+pub struct EconomicsTasksArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// Output shape
+    pub format: OutputFormat,
+    /// Only tasks started at or after this time (YYYY-MM-DDTHH:MM:SSZ)
+    #[arg(long)]
+    pub since: Option<String>,
+    /// Only tasks started before this time (YYYY-MM-DDTHH:MM:SSZ)
+    #[arg(long)]
+    pub until: Option<String>,
 }
 
 #[derive(Debug, Args)]
@@ -2711,6 +3095,104 @@ pub enum DeliveryCommand {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus plan`, the executable's half: the inferences over the plan that need git and
+/// the forge cache. The records themselves are read and moved by the shell tool's `plan`,
+/// which hands `plan delivery` to this one.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, PlanArgs, PlanCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "plan", "delivery", "I2740", "--at", "HEAD", "--format", "json"])
+///     .unwrap();
+/// let args: PlanArgs = match cli.command {
+///     Command::Plan(args) => args,
+///     other => panic!("expected `plan`, parsed {other:?}"),
+/// };
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// assert!(matches!(
+///     args.command,
+///     PlanCommand::Delivery { issue: Some(ref i), at: Some(ref at) } if i == "I2740" && at == "HEAD"
+/// ));
+/// // the group runs nothing of its own
+/// assert!(Cli::try_parse_from(["majordomus", "plan"]).is_err());
+/// ```
+pub struct PlanArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `delivery`. Required: the group runs nothing of its own.
+    pub command: PlanCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus plan` this executable answers: the command line of
+/// `plan.delivery`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, PlanCommand};
+///
+/// fn parse(args: &[&str]) -> PlanCommand {
+///     let Command::Plan(args) = Cli::try_parse_from(args.iter().copied()).unwrap().command
+///     else { panic!("plan") };
+///     args.command
+/// }
+/// assert!(matches!(parse(&["majordomus", "plan", "delivery"]), PlanCommand::Delivery { issue: None, at: None }));
+/// assert!(matches!(
+///     parse(&["majordomus", "plan", "drift", "--gate", "trunk"]),
+///     PlanCommand::Drift { issue: None, at: None, gate: Some(majordomus_cli::cli::DriftGateArg::Trunk) }
+/// ));
+/// assert!(matches!(
+///     parse(&["majordomus", "plan", "delivery", "I0001"]),
+///     PlanCommand::Delivery { issue: Some(ref i), at: None } if i == "I0001"
+/// ));
+/// ```
+pub enum PlanCommand {
+    /// Every issue's furthest delivery stage, with the object that proved it and its declared status beside it
+    Delivery {
+        /// One issue; default every issue of the plan
+        issue: Option<String>,
+        /// Observe as of this commit: its history and the tree's release records, nothing live (no branch, forge, deployment or clock)
+        #[arg(long, value_name = "REV")]
+        at: Option<String>,
+    },
+    /// Every contradiction between an issue's declared status and its delivery — merged_not_recorded, active_without_work, done_without_trace — each with its proof; with --gate, judged against the window .ai/repo/ci/plan.yaml declares
+    Drift {
+        /// One issue; default every issue of the plan
+        issue: Option<String>,
+        /// Observe as of this commit, as `plan delivery --at` does
+        #[arg(long, value_name = "REV")]
+        at: Option<String>,
+        /// Judge as a gate: on a `head` merged work is pending, on the `trunk` past the window it is refused (exit 10 under blocking enforcement); a missing window exits 12
+        #[arg(long, value_enum, value_name = "TREE")]
+        gate: Option<DriftGateArg>,
+    },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+/// The tree `majordomus plan drift --gate` judges.
+///
+/// ```
+/// use clap::ValueEnum;
+/// use majordomus_cli::cli::DriftGateArg;
+/// assert_eq!(DriftGateArg::from_str("trunk", false), Ok(DriftGateArg::Trunk));
+/// assert!(DriftGateArg::from_str("main", false).is_err(), "only a head or the trunk");
+/// ```
+pub enum DriftGateArg {
+    /// A head: merged work the plan has not recorded is pending
+    Head,
+    /// The trunk: merged work unrecorded past the window is refused
+    Trunk,
+}
+
+#[derive(Debug, Args)]
 /// `majordomus served`: what a deployment serves, observed from outside and judged against
 /// a commit. `ServedArgs` carries the repository the question is asked of, the subcommand
 /// and the output shape.
@@ -2772,10 +3254,10 @@ pub enum ServedCommand {
         /// The commit expected to be served (default HEAD)
         #[arg(long)]
         commit: Option<String>,
-        /// The site's base URL (default: base_url of site/config.toml)
+        /// The base URL (default: the provider URL of the deployment object --deployment names, else base_url of site/config.toml)
         #[arg(long)]
         url: Option<String>,
-        /// The identity file under the base (default build.json)
+        /// The identity under the base (default: that object's liveness route, else build.json)
         #[arg(long)]
         identity: Option<String>,
         /// The name the observation is recorded under (default pages)
@@ -2798,6 +3280,81 @@ pub enum ServedCommand {
         /// Only this deployment
         #[arg(long)]
         deployment: Option<String>,
+    },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus deploy`: the command line of the deployment module's one command. Every read of
+/// a deployment (`deploy.list`, `deploy.get`, `deploy.check`, `deploy.observed`) is answered over
+/// HTTP and MCP; what is here writes, outside the checkout, and is a command line only.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, DeployArgs, DeployCommand};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "deploy", "slug", "--executable", "target/majordomus", "--out", "/tmp/slug",
+/// ])
+/// .unwrap();
+/// let Command::Deploy(args) = cli.command else { panic!("deploy") };
+/// let _: &DeployArgs = &args;
+/// assert!(matches!(
+///     args.command,
+///     DeployCommand::Slug { deployment: None, commit: None, ref out, .. } if out == "/tmp/slug"
+/// ));
+/// // the executable and the out directory are what a slug cannot be assembled without
+/// assert!(Cli::try_parse_from(["majordomus", "deploy", "slug", "--out", "/tmp/slug"]).is_err());
+/// assert!(Cli::try_parse_from(["majordomus", "deploy"]).is_err());
+/// ```
+pub struct DeployArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `slug`. Required: the group runs nothing of its own.
+    pub command: DeployCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus deploy`: `slug` is the command line of `deploy.slug`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, DeployCommand};
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "deploy", "slug", "--deployment", "majordomus", "--commit", "HEAD~1",
+///     "--executable", "e", "--out", "o",
+/// ])
+/// .unwrap();
+/// let Command::Deploy(args) = cli.command else { panic!("deploy") };
+/// assert!(matches!(
+///     args.command,
+///     DeployCommand::Slug { deployment: Some(d), commit: Some(c), .. } if d == "majordomus" && c == "HEAD~1"
+/// ));
+/// ```
+pub enum DeployCommand {
+    /// Assemble the tree a provider receives into a directory outside the checkout
+    Slug {
+        /// The deployment (default: the one deployment that names a provider)
+        #[arg(long)]
+        deployment: Option<String>,
+        /// The commit every file is read at (default HEAD)
+        #[arg(long)]
+        commit: Option<String>,
+        /// The executable built at that commit
+        #[arg(long)]
+        executable: String,
+        /// The directory the slug is written into: outside the checkout, absent or empty
+        #[arg(long)]
+        out: String,
+        /// The site built at that commit, required when the deployment declares build.site
+        #[arg(long)]
+        site: Option<String>,
     },
 }
 
@@ -3753,7 +4310,7 @@ pub enum WorktreeCommand {
         /// The branch, full name
         branch: String,
     },
-    /// Create the canonical worktree of a branch, creating the branch from --base (default: the trunk) when it does not exist. The path is derived; none may be given
+    /// Create the canonical worktree of a branch. A branch that does not exist here is fetched from the trunk's remote and taken up when the remote has it; otherwise it is created from --base, else from the remote's trunk fetched now (the local trunk only when the remote cannot be read, and then said, with how far behind). The path is derived; none may be given
     Create {
         /// The branch, full name (`feature/improve-cli`)
         #[arg(value_name = "BRANCH", required_unless_present = "issue")]
@@ -3837,6 +4394,8 @@ pub enum WorktreeCommand {
         #[arg(long, value_name = "DURATION")]
         older_than: Option<String>,
     },
+    /// How far this checkout and the local trunk are from the remote trunk, as of the last fetch, judged against the policy's checkout.trunk_distance: current, lagging, stale, unjudged or unmeasured, with the commands that bring it current. Fetches nothing; exit 10 when stale
+    Trunk,
     /// Every local branch, one per line, for a shell completion that wants the live set
     Branches {
         /// Only branches with no worktree
@@ -4132,6 +4691,19 @@ pub struct ServeArgs {
     /// the object's, not this command line's
     #[arg(long, value_name = "ID", conflicts_with_all = ["host", "port"])]
     pub deployment: Option<String>,
+
+    /// The environment variable holding this node's mesh key, a 64-hex seed: a hosted hub
+    /// keeps one key across restarts on a disk that does not survive them, and without the
+    /// variable its mesh stays off rather than minting a key nobody trusts (ADR 0220). The
+    /// value is read, never printed. What a deployment's generated start command passes
+    #[arg(long, value_name = "VAR")]
+    pub node_seed_env: Option<String>,
+
+    /// The one endpoint this node advertises to the mesh, instead of the addresses of the
+    /// interface it binds: the public URL a hosted hub answers on (ADR 0220). What a
+    /// deployment's generated start command passes
+    #[arg(long, value_name = "URL")]
+    pub advertise: Option<String>,
 }
 
 /// How long a server started by `serve ensure` outlives its last peer, in seconds: long
@@ -4210,6 +4782,56 @@ pub enum ServeCommand {
         #[arg(long, value_name = "SECONDS", default_value_t = 10)]
         wait: u64,
     },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus ui`: the primary surface in one step (ADR 0135). It is `serve ensure` and
+/// the address of a screen, with no server and no mode of its own: `serve status` and
+/// `serve stop` answer for the server it ensured.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, UiArgs};
+///
+/// // without a screen, the dashboard; the browser is opened unless asked not to
+/// let cli = Cli::try_parse_from(["majordomus", "ui"]).unwrap();
+/// let Command::Ui(args) = cli.command else { panic!("ui") };
+/// let args: UiArgs = args;
+/// assert!(args.screen.is_none() && !args.no_open && args.idle.is_none());
+///
+/// let cli = Cli::try_parse_from(["majordomus", "ui", "roadmap", "--no-open"]).unwrap();
+/// let Command::Ui(args) = cli.command else { panic!("ui") };
+/// assert_eq!((args.screen.as_deref(), args.no_open), (Some("roadmap"), true));
+/// ```
+pub struct UiArgs {
+    #[command(flatten)]
+    /// Where the repository is found, and the layer options a server it starts is given.
+    pub repo: RepoArgs,
+
+    /// The screen to open, by the last word of its route (`roadmap` is /ui/roadmap);
+    /// without it, the dashboard
+    #[arg(value_name = "SCREEN")]
+    pub screen: Option<String>,
+
+    /// Print the address and open no browser
+    #[arg(long)]
+    pub no_open: bool,
+
+    /// The port a server this call starts asks for first, as for `serve ensure`
+    #[arg(long)]
+    pub port: Option<u16>,
+
+    /// The idle life of a server this call starts, in seconds, as for `serve ensure`
+    #[arg(long, value_name = "SECONDS")]
+    pub idle: Option<u64>,
+
+    /// How long to wait for a server to become ready
+    #[arg(long, value_name = "SECONDS", default_value_t = 20)]
+    pub wait: u64,
+
+    /// Output shape
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    pub format: OutputFormat,
 }
 
 #[derive(Debug, Args)]
@@ -4320,6 +4942,8 @@ pub enum GenerateTarget {
     Deployment,
     /// docs/generated/graph.json and its schema: the composed graph as data
     Graph,
+    /// docs/generated/entities.json: the site's entity projection of the composed graph
+    Entities,
     /// The design system's projections, from share/design/tokens.yaml: the stylesheets
     /// both Tailwind builds import, the tokens and the declaration compiled into the crate,
     /// every copy of the brand, site/data/registry/design.json and docs/generated/design.*
@@ -4661,7 +5285,7 @@ pub enum DevcontextCommand {
 ///     "majordomus", "devcontext", "compile",
 ///     "--path", "apps/majordomus-cli/src", "--path", "lib",
 ///     "--uri", "majordomus://adr/0052",
-///     "--floor", "0.4", "--all-blocking-rules",
+///     "--floor", "0.4", "--all-blocking-rules", "--source-ranges",
 /// ]);
 ///
 /// // repeated singular flags accumulate into the set the compiler seeds from
@@ -4669,6 +5293,7 @@ pub enum DevcontextCommand {
 /// assert_eq!(compiling.uris, ["majordomus://adr/0052"]);
 /// assert_eq!(compiling.floor, Some(0.4));
 /// assert!(compiling.all_blocking_rules);
+/// assert!(compiling.source_ranges);
 ///
 /// // the same flags reach `explain`, after its positional identifier
 /// let explaining = request_of(&[
@@ -4680,6 +5305,7 @@ pub enum DevcontextCommand {
 /// let silent = request_of(&["majordomus", "devcontext", "compile"]);
 /// assert!(silent.issue.is_none() && silent.paths.is_empty());
 /// assert!(!silent.all_blocking_rules && silent.floor.is_none());
+/// assert!(!silent.source_ranges, "reading source is asked for, never assumed");
 /// ```
 pub struct DevcontextRequest {
     /// An issue id (`I0301`) or its canonical identifier
@@ -4709,6 +5335,10 @@ pub struct DevcontextRequest {
     /// Every blocking rule of the layer, not only the ones the work reaches
     #[arg(long)]
     pub all_blocking_rules: bool,
+    /// Outline the Rust source under the work's paths into ranges (path, lines, symbol,
+    /// reason, cost), spent by the budget beside the layer's objects
+    #[arg(long)]
+    pub source_ranges: bool,
 }
 
 // ------------------------------------------------------------------ the command line as data
@@ -5210,6 +5840,48 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "plan delivery",
+        examples: &[
+            ExampleDoc {
+                id: "plan-delivery-json",
+                title: "How far every issue's work has travelled",
+                description: "The same answer `GET /api/v1/plan/delivery` and the MCP tool `majordomus_plan_delivery` return: every issue with its declared status and the furthest stage proved — none, branch, pr_open, merged, released, deployed — each stage with the branch, pull request, merge commit, tag or `latest.json` that proved it. A checkout that never observed the forge says the forge is unread, and an issue it could have moved further is not settled.",
+                argv: &["plan", "delivery", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/observed/commit", "/tallies/none", "/issues/0/stage", "/sources"]),
+            },
+            ExampleDoc {
+                id: "plan-delivery-at",
+                title: "One issue, as of a commit",
+                description: "`--at` reads the merges in that commit's history and the tree's release records, and nothing live — no branch, no forge, no deployment, no clock — so it proves only merged and released and the answer is a function of the commit alone. That is what `scripts/generate-site-data` writes to `site/data/generated/delivery.json` and reproduces under `--check`.",
+                argv: &["plan", "delivery", "I0001", "--at", "HEAD"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["I0001", "none", "unread"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "plan drift",
+        examples: &[
+            ExampleDoc {
+                id: "plan-drift-json",
+                title: "Where the plan's stamps contradict the delivered work",
+                description: "The same answer `GET /api/v1/plan/drift` and the MCP tool `majordomus_plan_drift` return: every merged_not_recorded, active_without_work and done_without_trace finding with the pull request, merge commit and release that prove it, its age against the window `.ai/repo/ci/plan.yaml` declares, and the command that settles it.",
+                argv: &["plan", "drift", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/observed/commit", "/window/model", "/tallies/merged_not_recorded", "/verdict"]),
+            },
+            ExampleDoc {
+                id: "plan-drift-at",
+                title: "As of a commit",
+                description: "`--at` reads that commit's history and the tree's records only, as `plan delivery --at` does, so the open pull requests are unread and a finding says it is not settled. `--gate head|trunk` judges the answer as `scripts/ci/plan-drift-check` does: on a head merged work the plan has not recorded is pending; on the trunk one merged longer than the window ago is refused, naming `majordomus plan verify|done <id>`, and a missing window refuses with exit 12.",
+                argv: &["plan", "drift", "--at", "HEAD"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["plan drift", "window"]),
+            },
+        ],
+    },
+    CommandExamples {
         command: "entity kinds",
         examples: &[ExampleDoc {
             id: "entity-kinds-json",
@@ -5256,6 +5928,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["rules", "report", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/rules", "/states", "/coverage/rules", "/findings"]),
+        }],
+    },
+    CommandExamples {
+        command: "blackboard",
+        examples: &[ExampleDoc {
+            id: "blackboard-json",
+            title: "Who works on what, with what could not be read",
+            description: "The same answer `GET /api/v1/blackboard` and the MCP tool `majordomus_blackboard` return: every worker of the boards read and of the mesh, the claims that meet, the reviews and handovers that wait, the typed relations and the newest signals, with each source and how it was read. The command line asks the server holding this checkout's lease, which holds the board and the mesh; this fixture has no server, so the answer is composed here and its sources say what that left unread.",
+            argv: &["blackboard", "--this-checkout", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/complete", "/sources", "/workers", "/conflicts", "/cursor"]),
         }],
     },
     CommandExamples {
@@ -5322,6 +6005,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["shell", "check", "--format", "json"],
             setup: &[],
             expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "layout check",
+        examples: &[ExampleDoc {
+            id: "layout-check-json",
+            title: "Both halves of the layer against their declared layouts",
+            description: "How many paths were judged and every path a declared layout excludes, each named with the contract it violates, as `/checked`, `/findings` and `/passes`. The exit code is the verdict: 0 when the boundary holds, 10 on a finding, and 12 when the halves could not be read, which is not a pass. Only what a contract declares is judged, so a repository whose contracts declare no layout passes with nothing found.",
+            argv: &["layout", "check", "--format", "json"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["\"checked\"", "\"findings\"", "\"passes\""]),
         }],
     },
     CommandExamples {
@@ -5476,6 +6170,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["evidence", "stamp", "--producer", "suite", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/producer", "/commit", "/working_tree", "/recorder", "/host"]),
+        }],
+    },
+    CommandExamples {
+        command: "deploy slug",
+        examples: &[ExampleDoc {
+            id: "deploy-slug-no-provider",
+            title: "A repository whose deployments name no provider has no tree to assemble",
+            description: "Nothing hosts a deployment that names no provider, so there is no slug: refused with exit 15, and nothing is written. Where a deployment names one, `--commit <sha> --executable <built at that commit> --out <a directory outside the checkout>` writes its build inputs at that commit, the provider's generated files at the slug's root, the buildpack line, the executable and `.majordomus/SOURCE.json` — the tree the provider workflow pushes.",
+            argv: &["deploy", "slug", "--executable", "majordomus", "--out", "/nonexistent/slug"],
+            setup: &[],
+            expect: Expect::ExitCode(15),
         }],
     },
     CommandExamples {
@@ -5894,6 +6599,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["worktree", "uncommitted"],
             setup: &[],
             expect: Expect::StdoutContains(&["0 with uncommitted work", "nothing was changed"]),
+        }],
+    },
+    CommandExamples {
+        command: "worktree trunk",
+        examples: &[ExampleDoc {
+            id: "worktree-trunk-unmeasured",
+            title: "How far this checkout is from the remote trunk",
+            description: "The checkout's HEAD and the local trunk counted against the remote-tracking trunk, as of the last fetch, and judged against the policy's checkout.trunk_distance. A repository with no remote has nothing to be measured against and says so — `unmeasured`, never `current`; nothing is fetched either way.",
+            argv: &["worktree", "trunk"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["unmeasured", "no remote-tracking branch"]),
         }],
     },
     CommandExamples {
@@ -6506,6 +7222,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "ui",
+        examples: &[ExampleDoc {
+            id: "ui-unknown-screen",
+            title: "A screen the UI does not have is refused before a server is started",
+            description: "`majordomus ui` ensures this checkout's shared server as `serve ensure` does, prints the address of /ui (or of /ui/<screen>) and opens it in a browser; `--no-open` only prints it. A screen is named by the last word of its route, and one the navigation does not hold is refused with exit 2 and every screen listed, before the repository is read or anything is started.",
+            argv: &["ui", "nowhere", "--no-open"],
+            setup: &[],
+            expect: Expect::ExitCode(2),
+        }],
+    },
+    CommandExamples {
         command: "serve status",
         examples: &[ExampleDoc {
             id: "serve-status",
@@ -6936,6 +7663,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "economics tasks",
+        examples: &[ExampleDoc {
+            id: "economics-tasks-json",
+            title: "Each task's wall time and episodes",
+            description: "One record per task from every checkout's ledger, with the fields nothing observes yet named as not observed. A repository with no ledger answers no task and lists its checkout as not read.",
+            argv: &["economics", "tasks", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/count", "/tasks", "/ledgers", "/unread"]),
+        }],
+    },
+    CommandExamples {
         command: "economics check",
         examples: &[ExampleDoc {
             id: "economics-check",
@@ -7089,6 +7827,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "mesh enrol",
+        examples: &[ExampleDoc {
+            id: "mesh-enrol",
+            title: "Enrol this machine in the repository's mesh",
+            description: "Adds this machine's public key to trust.allow under a comment naming the machine, once; a listed key changes nothing. A repository that declares no mesh is refused (exit 13) before an identity is created or a file is touched: `majordomus init --extend` seeds the declaration.",
+            argv: &["mesh", "enrol"],
+            setup: &[],
+            expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
         command: "mesh identity",
         examples: &[ExampleDoc {
             id: "mesh-identity",
@@ -7097,6 +7846,39 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["mesh", "identity"],
             setup: &[],
             expect: Expect::StdoutContains(&["present"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh build-cache key",
+        examples: &[ExampleDoc {
+            id: "mesh-build-cache-key",
+            title: "What each lockfile's install is cached under",
+            description: "Every lockfile the repository tracks becomes a cacheable thing with a key: a schema version, the platform, the toolchain as its executables state it, and the digest of its inputs. `--kind` narrows it to one kind; a repository with no lockfile of that kind says nothing here is cacheable, and a kind whose toolchain is absent says why it has no key.",
+            argv: &["mesh", "build-cache", "key", "--kind", "mix-deps"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["platform"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh build-cache ensure",
+        examples: &[ExampleDoc {
+            id: "mesh-build-cache-ensure",
+            title: "Run an install through the build cache",
+            description: "The command after `--` is what the install would run anyway. With the lockfile's key already in place nothing runs; a hit is restored from the local level or this node's store after its SHA-256 matches, and npm's install is then not run; a miss runs the command and saves what it left. A repository that tracks no such lockfile runs the command uncached and says why, as here; MAJORDOMUS_BUILD_CACHE=off bypasses every level. The exit code is the command's.",
+            argv: &["mesh", "build-cache", "ensure", "npm-modules", "--", "true"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["source     uncached"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh build-cache env",
+        examples: &[ExampleDoc {
+            id: "mesh-build-cache-env",
+            title: "The sccache client of this node, derived",
+            description: "The environment the process that starts the sccache server should have: local disk first and the selected store second, only when sccache has the chain, a credential file of mode 0600 exists and the store answers now; otherwise nothing, and the comment line says which condition did not hold. The credential is a file path, never a key. `--format json` gives the whole answer.",
+            argv: &["mesh", "build-cache", "env", "--sccache", "no-such-sccache"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["build cache: local-only"]),
         }],
     },
     CommandExamples {
@@ -7130,6 +7912,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["mesh", "firewall", "apply"],
             setup: &[],
             expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh build-cache provision",
+        examples: &[ExampleDoc {
+            id: "mesh-build-cache-provision",
+            title: "What this host still owes as a mesh build cache provider",
+            description: "The plan of the provider's host layer against what this machine holds: the disk guard and its timer, the always-restart service drop-ins, the bounded journal and container log, the identity and credential of every node and the rustc wrapper, each file marked missing, different, wrong mode or current, and the commands an apply would run. It plans only and names no secret; `--apply` as root brings the host to it, and a second apply changes nothing.",
+            argv: &["mesh", "build-cache", "provision", "--dry-run"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["disk-guard", "plan"]),
         }],
     },
     CommandExamples {
@@ -7233,6 +8026,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             title: "Release a claim this server holds",
             description: "Only the holder's current run releases a claim; a dead holder's claim expires instead. Without a running server there is nothing to release, and the command exits 10.",
             argv: &["mesh", "release", "stream/c-000000000000"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh beat",
+        examples: &[ExampleDoc {
+            id: "mesh-beat",
+            title: "Keep a waiting session's exclusive claims excluding",
+            description: "A process that waits on something outside itself says so; its session's exclusive claims hold while it beats within the progress ttl and are suspended when it stops. The beat goes to the running server whose journal replicates it; without one the command exits 10 and says so.",
+            argv: &["mesh", "beat", "--session", "lander", "--phase", "waiting-on-ci"],
             setup: &[],
             expect: Expect::ExitCode(10),
         }],

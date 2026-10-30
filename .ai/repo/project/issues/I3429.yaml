@@ -1,0 +1,30 @@
+id: I3429
+milestone: an-entity-says-how-it-is-known-and-what-it-affects
+title: "One entity reads the same on the command line, REST, MCP and the Cockpit: identity, kind, class, evidence, observation envelope and edge order"
+slug: every-surface-reads-one-entity
+priority: p2
+profile: implementation
+objective: "Extend the Cockpit integration test with one test that reads four surfaces for one entity of every kind the index holds: majordomus entity show as JSON, GET /api/v1/entity, majordomus_entity over MCP and the Cockpit entity page model. It compares uri, id, kind, epistemic class, evidence state, the observed envelope and the order of relations."
+why: "The owner's 2026-10-19 Cognitive Fabric pack requires cross-surface tests asserting the same identity, classification, deterministic order and freshness semantics (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/05_SURFACES.md, and the verification/ACCEPTANCE.md row on CLI, API, MCP and UI)."
+current_state: "tests/properties.rs compares MCP with HTTP for GET routes only, and never the command line (apps/majordomus-cli/tests/properties.rs:290-300). tests/cockpit.rs compares the Cockpit entity page with GET /api/v1/entity (apps/majordomus-cli/tests/cockpit.rs:187-245). No test covers entity.show on all four surfaces."
+desired_state: "A divergence in any compared field on any surface fails one named test."
+scope:
+  - "apps/majordomus-cli/tests/cockpit.rs"
+non_scope:
+  - "Extending the registry-wide property to writers (milestone surfaces-never-disagree)"
+  - "Comparing rendered HTML text"
+depends_on:
+  - "I3427"
+  - "I3428"
+serves:
+  - "a-change-reconciles-what-it-affects#every-surface-reads-one-entity"
+acceptance_criteria:
+  - "The test covers one entity of every kind entity.kinds reports"
+  - "Changing the class or the relation order on one surface in a fixture fails it, naming the surface and the field"
+  - "It runs without network and without the checkout's .ai/local"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test cockpit"
+evidence_required:
+  - "entity_surfaces_agree"
+created_at: 2026-10-19
+updated_at: 2026-10-19

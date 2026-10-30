@@ -1,7 +1,7 @@
 +++
 title = "How Majordomus derives its surfaces"
 description = "how the system fits together: canonical state, discovery, typed registries, derived models, governance and evidence, and every surface projected from them — what is authored, discovered, derived, observed and inferred, a capability and a rule traced end to end, the generation matrix, a claim audit with file references, and the architecture debt that remains"
-weight = 45
+weight = 46
 [extra]
 source = "docs/SURFACES.md"
 +++
@@ -542,10 +542,11 @@ the weakest of its parts [C23].
   shows this; it has not been observed in data (**debt** F-9) [C26].
 
 `project.never-reported-is-not-green` shows the whole problem in one rule. Its statement
-is "a check that has not reported is unknown, never passing". It is `class: advisory`, has
-no `x-majordomus` block, and says it is decided "by review and by the record, not by a
-gate". The proof graph reports it as `unproven`, and that is not a finding, because an
-advisory rule owes no proof. The rule exists, its ideas shaped `evidence-check` (see
+is "a check that has not reported is unknown, never passing". It is `class: advisory`, and
+its `x-majordomus` block declares, under `reviewed_because`, that it is decided "by review
+and by the record, not by a gate". The proof graph reports it as `reviewed`: a reader
+enforces it, which is weaker than any gate and is counted apart, and that is not a finding.
+The rule exists, its ideas shaped `evidence-check` (see
 `EVIDENCE.md`), and it is not mechanically enforced. The graph says exactly that.
 
 To measure it yourself:
@@ -1041,7 +1042,7 @@ flowchart TD
 | worktrees | `worktree topology / status / inspect / migrate …` | `majordomus_worktrees`, … | `/api/v1/worktrees*` | `/cockpit/worktrees` | `WORKTREES.md` |
 | peers | none | `majordomus_peers`, `majordomus_announce` | `/api/v1/peers`, `/peers/announce` | none | `MCP.md` |
 | mesh | `mesh identity / doctor / status / nodes` | `majordomus_mesh*` | `/api/v1/mesh*` | `/cockpit/mesh` | `MESH.md` |
-| gates and completion | shell `check`, `finish` | `majordomus_gates`, `majordomus_completion` | `/api/v1/gates`, `/gates/completion` | generic pages | `CI.md` |
+| gates and completion | shell `check`, `finish`; `majordomus-cli run gates.state` | `majordomus_gates`, `majordomus_completion_policy`, `majordomus_completion`, `majordomus_gate_state` | `/api/v1/gates`, `/gates/policy`, `/gates/completion`, `/gates/state` | generic pages | `CI.md` |
 
 </div>
 

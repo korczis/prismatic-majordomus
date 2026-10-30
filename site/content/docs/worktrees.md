@@ -1,7 +1,7 @@
 +++
 title = "Worktrees"
 description = "the branch-to-worktree topology: `<repo>-wt/<branch>` derived from git identity and never registered, the standings and diagnostic codes, the commands, the lifecycle, the layered enforcement, the fingerprint-verified migration, failure modes and recovery"
-weight = 60
+weight = 61
 [extra]
 source = "docs/WORKTREES.md"
 +++
@@ -198,7 +198,7 @@ majordomus worktree cleanup --remove           # removes those worktrees, refusi
 | `worktree root` | the container, one path | |
 | `worktree path <branch>` | the canonical path of a branch, one path; the branch need not exist | the name is invalid |
 | `worktree inspect <branch>` | canonical path, whether the branch exists, what occupies the path, what stands in the way | |
-| `worktree create <branch> [--base REF] [--issue ID]` | the canonical worktree, the branch created from the trunk when new | occupied, checked out elsewhere, invalid |
+| `worktree create <branch> [--base REF] [--issue ID]` | the canonical worktree; a branch the trunk's remote has is taken up and tracks it, a new one starts at the remote's trunk fetched now, and the line names the exact commit | occupied, checked out elsewhere, invalid |
 | `worktree ensure <branch>` | the same, answering an existing canonical worktree instead of refusing | checked out elsewhere |
 | `worktree migrate [--plan] [--only B]… [--allow-copy] [--include-ephemeral]` | bring misplaced worktrees home, fingerprint-verified | a step was blocked or failed |
 | `worktree validate` / `worktree doctor` | the errors, or every diagnostic | an error stands |
@@ -208,6 +208,7 @@ majordomus worktree cleanup --remove           # removes those worktrees, refusi
 | `worktree cleanup` | branches merged into the trunk, or into the remote-tracking branch the trunk follows, whose worktree is clean or absent, with the commands that would remove them. A primary checkout nobody has pulled does not hide what has already landed. | |
 | `worktree cleanup --remove` | removes those worktrees, each re-measured first; refuses a branch ahead of its remote, a worktree something is working in, uncommitted work, or a reading it could not take | |
 | `worktree uncommitted [--older-than D]` | every linked worktree holding uncommitted work: paths, age of the oldest change, what holds it, `abandoned` or not, and the command that would put it on a remote ref; writes nothing | |
+| `worktree trunk` | how far this checkout and the local trunk are from the remote trunk, as of the last fetch, judged against `checkout.trunk_distance`, with the commands that bring it current; fetches nothing | the checkout is stale |
 | `worktree branches [--without-worktree]` | every local branch, one per line | |
 
 </div>
@@ -229,7 +230,7 @@ Shell completion of the branch arguments reads the live set rather than a list:
 ```bash
 # zsh
 _mj_wt_branches() { compadd -- ${(f)"$(majordomus worktree branches 2>/dev/null)"} }
-compdef '_arguments "1:sub:(status list topology root path inspect create ensure migrate validate doctor guard repair remove cleanup uncommitted branches)" "2:branch:_mj_wt_branches"' majordomus-worktree
+compdef '_arguments "1:sub:(status list topology root path inspect create ensure migrate validate doctor guard repair remove cleanup uncommitted trunk branches)" "2:branch:_mj_wt_branches"' majordomus-worktree
 ```
 
 ## Lifecycle
@@ -253,6 +254,37 @@ flowchart TD
 A handover records the branch and the worktree; a session resumed elsewhere derives the
 worktree from the branch rather than trusting the recorded path, because the path is
 ephemeral and the branch is not.
+
+### Where a new branch starts
+
+The primary checkout hosts the trunk, and nothing advances it: on 2026-10-16 its local
+`master` was 779 commits behind `origin/master`. A branch cut from it carried none of that
+work, the report said `(new, from master)` as if that were current, and every worker reset
+the new worktree to `origin/master` by hand. A branch that existed only on the remote was
+worse: it was started again from that stale `master` rather than taken up.
+
+So `create` and `ensure`, for a branch that does not exist here, ask the trunk's remote —
+the remote whose HEAD names the trunk, else the one `branch.<trunk>.remote` names — with two
+quiet, bounded fetches (`--no-tags`, no prompt, killed after 60 seconds) of the trunk and of
+the branch into their remote-tracking refs. The local trunk is never moved.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| the remote | the branch starts | the report |
+|---|---|---|
+| has the branch | where the remote's branch stands, tracking it | `branch  fix/x (from origin/fix/x at <sha>, tracking it)` |
+| answers, has no such branch | at the remote's trunk as fetched now, tracking nothing until its first push | `branch  feature/x (new, from origin/master at <sha>)` |
+| cannot be read | at the local trunk, or at the remote's branch as last fetched when one is known | the same line from `master`, and a `warning` line naming the remote, git's reason, how many commits the local trunk is behind the remote's trunk as last fetched, and the reset to run once it answers |
+| there is none | at the local trunk; nothing is fetched and nothing is said | `branch  feature/x (new, from master at <sha>)` |
+
+</div>
+
+
+`--base REF` is taken as given and never fetched. The JSON carries the decision as `start`
+(`from`: `remote_trunk`, `remote_branch`, `local_trunk`, `given`, `head`, with the remote,
+the reason and the distance) and the commit read back from the new worktree as
+`start_commit`. This is the one place a worktree command reaches the network; every other
+read and decision works offline.
 
 ### The `.envrc` of a new path
 
@@ -407,7 +439,9 @@ says where to `cd`.
 | `direnv: error .envrc is blocked` in a worktree | `envrc   differs …` or `envrc   the primary checkout's is not approved …` on the create or migrate report | read the file, then `direnv allow` there; approve the primary checkout's first when that is what the report names. A worktree older than the report: `majordomus worktree ensure <branch>` carries the approval now |
 | a commit in a worktree judged by stale hooks | `FAIL wiring hooks-path … runs <primary>/.githooks, not its own` from `doctor` | the command doctor prints, or `majordomus worktree repair`, which binds every linked worktree to its own `.githooks` |
 | the primary checkout on a feature branch | `worktree.primary_on_non_trunk`; the guard refuses | when clean, `git switch <trunk>`; then `worktree create <branch>` |
+| a new worktree started behind the remote | `warning could not fetch <trunk> from <remote> (…): started from the local <trunk>, N commits behind …` on the create report | once the remote answers, the `git fetch` and `git reset --hard` the warning prints, in the new worktree, before its first commit |
 | a scratch checkout of a session on a branch | `worktree.ephemeral`; the guard refuses | `git switch --detach` there and continue in the canonical worktree, or `migrate --include-ephemeral --only <branch>` |
+| a task in a fresh worktree off the mesh | `WARN mesh … not claimed on it` from `start`, then `FAIL mesh … never claimed on it` from the pre-push `finish --check` | `start` ensures the worktree's own server before it claims, so this appears only when it could not (`MAJORDOMUS_RUNTIME=off`, a stale executable, a server that did not converge): `majordomus serve ensure`, then `majordomus check`, which claims the running task's scope. No partial finish and second start (`docs/MESH.md`) |
 | a move that crossed devices | `worktree.cross_device` on the step, or a refusal | `migrate --allow-copy` |
 | a fingerprint mismatch | `worktree.migration_verification_failed`, the differences listed | inspect the worktree where git registers it before touching anything; a rename cannot lose content, so something wrote to it during the move |
 | a built executable that was there a minute ago | `MAJORDOMUS_BIN is not an executable`, or a test failing on a branch that was green | an environment event, not a defect in the branch under test: another worker reclaimed the build directory. Rebuild in **your own** worktree and re-measure. `project.reclaim-only-what-you-own` says whose it was |
@@ -480,6 +514,63 @@ trunk *and* carrying a commit its remote has never seen. What changes *after* th
 commit, a deleted remote branch, a file written — is planted by the unit tests of the reclaim
 in `apps/majordomus-cli/src/commands/worktree.rs`. A missing `lsof` is not planted anywhere.
 
+## A checkout and its distance from the trunk
+
+On 2026-10-16 the primary checkout was 779 commits behind `origin/master`, with uncommitted
+changes nobody could attribute. Its shared server answered every session's plan questions
+from that tree, and its local `master` was the base new branches were made from. Every
+reading said the server was ready; none said the tree it served was not the trunk.
+`project.a-checkout-serves-the-current-trunk` makes that distance a reading.
+
+`worktree::trunk::measure` counts, for the checkout's `HEAD` and for the local trunk branch,
+the commits of the remote-tracking trunk each lacks (`behind`) and the commits each has that
+the trunk lacks (`ahead`). The remote trunk is the trunk's upstream, else the remote whose
+`HEAD` names the trunk, else the first remote with a branch of that name. Nothing is fetched:
+the answer holds as of the last fetch, and `fetched_at` (the time of `FETCH_HEAD`) says when
+that was. While a merge is in progress its incoming commits count as present, so the merge
+that brings a branch current is never judged by the tree it is replacing.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| standing | when | doctor |
+|---|---|---|
+| `current` | behind by less than `warn_behind`, or not behind | `OK clone trunk` |
+| `lagging` | at or past `checkout.trunk_distance.warn_behind` | `WARN`, with the remedy |
+| `stale` | at or past `checkout.trunk_distance.fail_behind` | `FAIL`, so the commit hook refuses |
+| `unjudged` | behind, and the policy declares no threshold | `INFO` |
+| `unmeasured` | no trunk, or no remote-tracking branch carries it | `INFO` |
+
+</div>
+
+
+The thresholds are the policy's (`.ai/repo/policy.yaml`, `checkout.trunk_distance`), and
+nothing reads a default when they are absent. The standing of the checkout is what its
+server serves; the standing of the local trunk (`local_trunk_standing`) is what a branch
+made from it starts from. In a linked worktree the local trunk is another checkout's to
+move, so doctor reports it as `WARN clone local-trunk` and never fails that worktree's
+commits for it.
+
+The same reading appears wherever a tree is served:
+
+- `majordomus worktree trunk` (`worktree.trunk`, `majordomus_worktree_trunk`,
+  `GET /api/v1/worktrees/trunk`) answers it alone, and exits 10 when the checkout is stale;
+- `majordomus worktree status` prints a `currency` line and returns `trunk_distance`;
+- `server.status` (`majordomus serve status`, `majordomus_server`, `GET /api/v1/server`)
+  carries it as `trunk` for the checkout the server serves;
+- the MCP `initialize` instructions add one sentence — "This server serves a tree N
+  commit(s) behind origin/master" — when the distance is lagging, stale or unjudged;
+- `majordomus doctor` renders it under `clone`.
+
+The remedy each reading names brings the checkout current: a fast-forward of the trunk
+checkout, a merge of the remote trunk into a feature branch (a pushed branch is never
+rewritten), and a fast-forward of the local trunk where it is checked out. Uncommitted work
+is rescued first — `git stash create`, `git update-ref refs/rescue/<checkout>-<timestamp>`
+with that commit, the untracked files copied beside it. A typed `majordomus worktree update`
+that performs exactly that, and refuses while a process stands in the checkout, is the next
+slice of the rule. `test/cases/3176_a_checkout_serves_the_current_trunk.sh` holds the
+distances, the standings, doctor's verdicts and the merge-in-progress case against a fixture
+remote.
+
 ## Uncommitted work nobody holds
 
 A branch whose commits reach no remote is named by `doctor` (`clone unpushed`). Work that
@@ -551,4 +642,180 @@ the tree's own directory and is never replaced. The rule is
 `project.a-build-never-waits-in-silence-on-anothers-lock`; `scripts/liveness-check` refuses
 a tracked script that calls cargo any other way, and
 `test/cases/3002_a_build_never_waits_in_silence.sh` proves each row above.
+
+## Idle incremental sessions in the shared build directory
+
+rustc keeps a crate's incremental state as session directories under
+`<build-dir>/<profile>/incremental/<crate>-<hash>/`, and only a later compile of the same crate
+removes a finished one. A crate that stops being compiled leaves its last session behind, and in
+the build directory every worktree shares that means every worktree's leftovers. On 2026-10-16
+the shared directory held 79 GB of them in 454 sessions, five of them live, with 6.9 GiB of the
+disk left free.
+
+So before a build starts, `mj_cargo_bounded` and the disk floor's check (`lib/rust_bin.sh`)
+remove the idle sessions of the build directory that build uses:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| what | what happens |
+|---|---|
+| a finished session (`s-*`, not `-working`) unwritten for over `MAJORDOMUS_INCREMENTAL_IDLE_MIN` minutes (default 30) | removed, after its age and size are printed; then one line says how many were removed, what du counted in them, and the volume's free space before and after |
+| a `-working` session, a younger one, the lock files beside them | never touched |
+| another build directory, a target directory, a profile directory that is a symlink out of the build directory | never touched |
+| cargo does not say where the build directory is, it carries no mark of cargo's, or a listing cannot be read whole | nothing is removed, and one line says why |
+| free space is still under the floor after that | the build refuses, and the refusal names the five largest build directories with their sizes |
+
+</div>
+
+
+The build directory is the one `cargo metadata` reports, asked from inside the crate so that
+the pinned toolchain answers. `MAJORDOMUS_INCREMENTAL_IDLE_MIN=0` removes nothing.
+`test/cases/3080_idle_incremental_sessions_are_pruned.sh` proves each row against a fixture
+build directory.
+
+## Stale crate artifacts, and no sweep under a running build
+
+Every build of `majordomus-cli` writes its library, its executable, every test and bench binary
+and, on macOS, one object file per codegen unit into `<build-dir>/<profile>/deps`, named
+`<target>-<hash>`. The hash is the unit's metadata, so a generation that stops being built — a
+dependency bumped, a profile setting changed, a test renamed — stays there for good, and in the
+shared build directory that is every worktree's leftovers. On 2026-10-16 the shared `deps` held
+204 GB; the next morning the volume reached zero and every session on the machine stopped.
+
+So the same sweep that removes idle incremental sessions (`mj_rust_prune_build_dir` in
+`lib/rust_bin.sh`, asked by `mj_cargo_bounded` and the disk floor's check before every build)
+also removes this crate's stale generations, in every profile of the build directory — debug,
+release, each target triple's and a coverage run's `llvm-cov-target/debug`:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| what | what happens |
+|---|---|
+| a generation of this crate's own units (library, executables, tests, benches) no file of which was written for over `MAJORDOMUS_DEPS_IDLE_MIN` minutes (default 120), none of them open | removed whole; one line says how many generations and files and what du counted, the twelve largest by file count are listed, and one line gives the volume's free space before and after |
+| a generation with one recent file, or one file some process holds open (lsof) | never touched |
+| another crate's artifact, a name with no unit hash, a lock, a directory of cargo's own | never touched |
+| a profile a build holds cargo's lock on | not swept, and one line says so |
+| a profile some process names in its command line — a test binary, a doctest's rustdoc, a compiler | not swept, and one line names the process |
+| no `flock(1)` or no `lsof` | nothing is removed, and one line says why |
+
+</div>
+
+
+The lock is the one cargo itself holds for the whole of a build,
+`<profile>/.cargo-build-lock` (flock(2); `.cargo-lock` in a target directory of an older cargo),
+taken without waiting. It is not enough on its own, and the second condition exists because of
+what it misses: `cargo test` releases the lock when compiling ends, before the binaries and
+doctests it built run, and a doctest reads the crate's rlib from `deps`. On 2026-10-16 rlibs
+vanished under a running build while a sweep judged by age alone. Each condition is asked again
+the moment before anything is removed. A generation removed too early costs one compile: cargo
+rebuilds a unit whose output is missing. `test/cases/3196_stale_crate_artifacts_are_pruned_under_cargos_lock.sh`
+proves each row, and that removing the lock or the process check makes it fail.
+
+## The bound, while builds run
+
+The sweeps above remove what is old and ask nothing about the size of what remains. On
+2026-10-23 the shared build directory held 102 GB against its 6144MB bound
+(`MAJORDOMUS_SHARED_BUILD_CAP_MB`, ADR 0139), and at 16:30Z its `debug/deps` held 51 GB in
+eleven generations of this crate, every one of them younger than the deps sweep's 120 minutes.
+`scripts/reap-orphans` reduced it only as a whole and only when no `cargo` or `rustc` ran
+anywhere on the machine, which with nine sessions building was never.
+
+So the bound is applied between builds, by the builds: `mj_rust_bound_build_dir` in
+`lib/rust_bin.sh` runs after the sweeps above before a build, after a bounded build has finished
+(`mj_rust_bound_after_build`, at most once every two minutes per build directory), and from
+`scripts/reap-orphans` when a build is running. While the directory is over its bound it evicts
+whole stale units, oldest first, until it is under it:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| unit | when it is stale | order |
+|---|---|---|
+| a coverage run's `llvm-cov-target` | no file in it written within `MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN` minutes (default 60) | first |
+| a dependency's generation (its `deps` files, fingerprint and build-script output, by unit hash) | its crate version, read from the generation's dep-info, is named by no worktree's `Cargo.lock`, and it is idle as above | first |
+| a finished incremental session | idle as above | by age |
+| a generation of this crate's own units | idle as above | by age |
+
+</div>
+
+
+Each profile's units are evicted only inside cargo's own lock on that profile. A unit is asked
+again inside it: one written since, one with a file some process holds open, and every unit of
+a profile some process names (a test binary, a doctest) are kept, and each is said. The pass
+before a build takes only a lock that is free. Measured on 2026-10-23 with four cargo processes
+running, the shared debug profile's lock was held at 40 of 40 probes in a minute, so the pass
+after a build, when the directory is over its bound, waits for each profile's lock in the
+background, bounded by `MAJORDOMUS_SHARED_BUILD_EVICT_LOCK_WAIT` seconds (default 900; 0 waits
+for none). There is one waiter per build directory, and its log and pid are kept under
+`~/.cache/majordomus/bound-<cksum>.{log,pid}`. The build that finished does not wait.
+
+The hour is the age for a volume with room. When the volume has less free than the reclaim
+mark (`MAJORDOMUS_RECLAIM_BELOW_MB`, default 51200), a unit idle for
+`MAJORDOMUS_SHARED_BUILD_PRESSURE_IDLE_MIN` minutes (default 10; 0 keeps the hour) is stale,
+and the bound says so with the free space it measured. A free space it cannot read keeps the
+hour. On 2026-10-25 about ten worktrees built inside one hour. Every pass took the lock, evicted
+what was older than the hour and stayed over the bound, and the volume fell from 44 GiB to
+16 GiB free in half an hour (I4230).
+
+What it cannot evict it says: a bound smaller than one generation cannot hold the newest
+generations of the trees building now, and a dependency some `Cargo.lock` names is never a
+candidate. `scripts/reap-orphans --targets` while a build runs is the dry run: it lists every
+unit it would evict, with its size, idle minutes and whether its profile is locked now.
+`MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN=0` evicts nothing.
+`test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh` proves each row.
+
+## Private build directories
+
+A build that waits `MAJORDOMUS_BUILD_LOCK_WAIT` seconds behind another worktree's lock builds
+again in `~/.cargo/build-private/<cksum of the tree's root>` (`mj_cargo_private_dir`; nothing
+in `~/.cargo/config.toml` makes these — `mj_cargo_bounded` does, by exporting
+`CARGO_BUILD_BUILD_DIR`). Each one is a cold build of every dependency, a few GiB, and on a
+machine where many sessions build, most builds wait that long, so nearly every worktree that
+ever built left one. On 2026-10-17 they held 178 GiB in 35 directories, 25 of them idle for
+over two hours, and the volume reached 3.9 GiB.
+
+The disk floor's check therefore also runs `mj_rust_reclaim_private`, at most once per ten
+minutes per machine:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| what | what happens |
+|---|---|
+| a private directory carrying cargo's mark, nothing in it written for over `MAJORDOMUS_PRIVATE_BUILD_IDLE_MIN` minutes (default 120), no profile lock held, no process naming it | renamed out of cargo's reach, then removed whole; one line names what was removed and the free space before and after |
+| one with a recent file, a held lock or a process naming it; one with no mark of cargo's; a symlink; the one this shell builds in | kept |
+| a listing that cannot be read whole | kept |
+
+</div>
+
+
+`test/cases/3197_idle_private_build_dirs_are_reclaimed.sh` proves each row.
+
+All three sweeps and the bound's eviction are off in the test suite (`test/run.sh` sets
+`MAJORDOMUS_INCREMENTAL_IDLE_MIN`, `MAJORDOMUS_DEPS_IDLE_MIN`, `MAJORDOMUS_PRIVATE_BUILD_IDLE_MIN`
+and `MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN` to 0): a case must not act on
+the machine it measures. `scripts/ci/backlog-check` refuses a tree in which a build no longer
+sweeps before it starts, a sweep no longer takes cargo's lock or asks the process table, or the
+runner leaves them on (rule `project.accumulation-is-measured`).
+
+## What the sweeps do not see
+
+The floor, its refusal and the three sweeps measure build output only. On 2026-10-19 the
+volume fell to 17 GiB free while the worktrees' build directories were small: one session's
+scratch directory held 12 GB, `$TMPDIR` 9.6 GB and swap 5 GB. When the floor refuses and the
+five directories it names do not add up to what is missing, measure the rest before removing
+anything: `du -sh "$TMPDIR"`, each agent session's scratch directory, and `sysctl vm.swapusage`.
+A session's scratch directory is that session's: it is emptied by the session or after the
+session has ended, never under a live one. Swap shrinks only as memory is given back. Teaching
+the floor's refusal to name these is a tool change of its own.
+
+## A path crate another worktree built
+
+Sharing the build directory shares every unit cargo names by its path relative to the
+workspace, so the same path crate compiled from two worktrees is one slot. `majordomus-cli`'s
+build script reruns on `MAJORDOMUS_BUILD_TREE` (`.cargo/config.toml`), which makes its slot
+stale in any tree but the one that wrote it. A path crate without that build script does not
+get it: on 2026-10-17 batch 71b's build reused a `majordomus-core` another worktree had compiled
+against different dependency versions and failed with "multiple different versions of crate
+serde_json". Touching that crate's `src/lib.rs` forced the rebuild. Every path crate of the
+workspace needs the same `cargo:rerun-if-env-changed=MAJORDOMUS_BUILD_TREE` in a build script
+of its own.
 {% endraw %}
