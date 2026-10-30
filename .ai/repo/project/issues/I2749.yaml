@@ -30,11 +30,13 @@ validation:
 evidence_required:
   - "planning_commit_is_not_delivery"
 created_at: 2026-10-16
-updated_at: 2026-10-25T21:09:39Z
+updated_at: 2026-10-28T23:37:35Z
 started_at: 2026-10-25T20:03:20Z
 started_event: sha256:67a989a3496cf18eed747bc7539e6a1d3c3a32b6b766aec363b163eccc800ac1
 verified_at: 2026-10-25T21:09:39Z
 verified_event: sha256:daa7f3ba23aa4e7fc20c2ab6bf9e9fcc5299fc74ccc0dc561960dbb92d456069
+completed_at: 2026-10-28T23:37:35Z
+completed_event: sha256:830375688143134c3b58d7d942b5a5c2b937b51ba7a166ff233965ef39673f07
 evidence:
   - covers: planning_commit_is_not_delivery
     type: test
@@ -43,3 +45,10 @@ evidence:
     artifact: "apps/majordomus-cli/tests/plan_delivery.rs"
     commit: 2efeacea03158615db2b497117a8da35b264909b
     recorded_at: 2026-10-25T21:09:30Z
+  - covers: planning_commit_is_not_delivery
+    type: ci
+    command: "gh run view 40676150754 --log (validate on master 81ef931a3e1)"
+    result: "master 81ef931a3e1 validate 40676150754: rust (3) a_commit_that_only_plans_an_issue_is_not_its_delivery ok; rust (2) plan::delivery::tests::a_commit_that_only_plans_the_issue_is_passed_over_and_said_so ok; suite-shard (1) 3100_an_issue_delivery_is_inferred ok, 3101_merged_work_unrecorded_is_drift ok. The run is red only on 103_release_projection (alpha.9 release record, #2626) and pages, neither this issue's"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40676150754"
+    commit: 81ef931a3e156907f1784c64c509884f565c17f0
+    recorded_at: 2026-10-28T23:35:58Z

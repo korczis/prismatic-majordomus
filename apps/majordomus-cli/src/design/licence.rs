@@ -59,7 +59,7 @@
 //! fingerprints only, and the capability's description says so.
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
-use std::io::{BufRead, BufReader, Read, Write};
+use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
@@ -337,6 +337,17 @@ impl Fingerprint {
     }
 }
 
+impl Write for Fingerprint {
+    fn write(&mut self, chunk: &[u8]) -> std::io::Result<usize> {
+        self.update(chunk);
+        Ok(chunk.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
 fn first64(digest: &[u8]) -> u64 {
     u64::from_be_bytes(digest[..8].try_into().expect("a sha256 digest is 32 bytes"))
 }
@@ -361,6 +372,9 @@ pub struct Tree {
 /// The answer for one tree. `evidence` is `None` when the machine holds none; `scan` finds
 /// the matches, and is called only when a public tree is judged against held evidence, so
 /// a tree that owes nothing is never read.
+/// Why a tree that declares no kit is not judged.
+const NO_KIT: &str = "no kit declared (ui.kit is empty)";
+
 pub fn judge(
     tree: &Tree,
     evidence: Option<&Evidence>,
@@ -368,7 +382,7 @@ pub fn judge(
 ) -> Licence {
     if !tree.declares_kit {
         return Licence::Inactive {
-            why: "no kit declared (ui.kit is empty)".into(),
+            why: NO_KIT.into(),
         };
     }
     let Some(ev) = evidence else {
@@ -450,12 +464,19 @@ impl UiPolicy {
 
     /// The `ui:` block of a repository's policy.
     pub fn load(repository: &Repository) -> Result<UiPolicy, LicenceError> {
-        let rel = repository
-            .section_path(POLICY_SECTION)
-            .ok_or_else(|| LicenceError::Policy("the manifest names no policy section".into()))?;
-        let text = std::fs::read_to_string(repository.root().join(&rel))
-            .map_err(|e| LicenceError::Policy(format!("{rel}: {e}")))?;
-        UiPolicy::parse(&text).map_err(|e| LicenceError::Policy(format!("{rel}: ui: {e}")))
+        UiPolicy::load_from(repository.root(), repository.section_path(POLICY_SECTION))
+    }
+
+    /// The `ui:` block of the policy at `rel` under `root`; `None` when the manifest names
+    /// no policy section.
+    fn load_from(root: &Path, rel: Option<String>) -> Result<UiPolicy, LicenceError> {
+        let Some(rel) = rel else {
+            return Err(LicenceError::Policy("the manifest names no policy section".into()));
+        };
+        std::fs::read_to_string(root.join(&rel))
+            .map_err(|e| format!("{rel}: {e}"))
+            .and_then(|text| UiPolicy::parse(&text).map_err(|e| format!("{rel}: ui: {e}")))
+            .map_err(LicenceError::Policy)
     }
 }
 
@@ -522,12 +543,10 @@ pub fn assess(
     home: Option<&Path>,
     visibility_env: Option<&str>,
 ) -> Result<LicenceReport, LicenceError> {
+    // every failure of load is the block's own, and so is answered, never raised
     let ui = match UiPolicy::load(repository) {
         Ok(ui) => ui,
-        Err(LicenceError::Policy(why)) => {
-            return Ok(unusable(&UiPolicy::default(), visibility_env, why))
-        }
-        Err(e) => return Err(e),
+        Err(e) => return Ok(unusable(&UiPolicy::default(), visibility_env, e.to_string())),
     };
     match judge_tree(repository.root(), &ui, evidence, home, visibility_env) {
         Err(LicenceError::Policy(why)) => Ok(unusable(&ui, visibility_env, why)),
@@ -598,12 +617,7 @@ fn judge_tree(
     let declares_kit = !ui.kit.trim().is_empty();
     let mut report = report_for(ui, visibility);
     if !declares_kit {
-        let tree = Tree {
-            visibility,
-            declares_kit,
-            has_ui: false,
-        };
-        return Ok(finish(report, judge(&tree, None, |_| Vec::new())));
+        return Ok(finish(report, Licence::Inactive { why: NO_KIT.into() }));
     }
     for dir in &ui.publish {
         if !is_safe_relative(dir) {
@@ -771,7 +785,7 @@ fn entries(out: &[u8], oid_col: usize) -> Vec<Entry> {
             let (meta, path) = record.split_once('\t')?;
             let cols: Vec<&str> = meta.split(' ').collect();
             Some(Entry {
-                mode: cols.first()?.to_string(),
+                mode: cols[0].to_string(),
                 oid: cols.get(oid_col)?.to_string(),
                 path: path.to_string(),
             })
@@ -924,18 +938,11 @@ fn scan(
 }
 
 fn fingerprint_file(path: &Path) -> Option<(u64, u64)> {
-    let mut file = std::fs::File::open(path).ok()?;
     let mut f = Fingerprint::default();
-    let mut chunk = vec![0u8; 64 * 1024];
-    loop {
-        match file.read(&mut chunk) {
-            Ok(0) => break,
-            Ok(n) => f.update(&chunk[..n]),
-            Err(e) if e.kind() == std::io::ErrorKind::Interrupted => {}
-            Err(_) => return None,
-        }
-    }
-    Some(f.finish())
+    std::fs::File::open(path)
+        .and_then(|mut file| std::io::copy(&mut file, &mut f))
+        .ok()
+        .map(|_| f.finish())
 }
 
 /// The fingerprint of each object, streamed through one `git cat-file --batch`; `None`
@@ -948,20 +955,15 @@ fn fingerprint_objects(
         return Ok(HashMap::new());
     }
     let tree = |e: std::io::Error| LicenceError::Tree(format!("git cat-file --batch: {e}"));
-    let mut child = Command::new("git")
-        .arg("-C")
-        .arg(root)
+    let mut child = git(root)
         .args(["cat-file", "--batch"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
         .spawn()
-        .map_err(|e| LicenceError::Tree(format!("git could not start: {e}")))?;
-    let (Some(mut stdin), Some(stdout)) = (child.stdin.take(), child.stdout.take()) else {
-        return Err(LicenceError::Tree(
-            "git cat-file --batch has no pipes".into(),
-        ));
-    };
+        .map_err(tree)?;
+    let mut stdin = child.stdin.take().expect("stdin is piped");
+    let stdout = child.stdout.take().expect("stdout is piped");
     // written beside the reading, so neither pipe fills while the other waits
     let asked = oids.clone();
     let writer = std::thread::spawn(move || -> std::io::Result<()> {
@@ -971,16 +973,12 @@ fn fingerprint_objects(
         Ok(())
     });
     let read = read_batch(&mut BufReader::new(stdout), oids.len());
-    let wrote = writer
-        .join()
-        .unwrap_or_else(|_| Err(std::io::Error::other("the writer stopped")));
-    let status = child.wait().map_err(tree)?;
-    let prints = read.map_err(tree)?;
+    let wrote = writer.join().expect("the writer writes and never panics");
+    let exited = child.wait();
     wrote.map_err(tree)?;
-    if !status.success() {
-        return Err(LicenceError::Tree(format!(
-            "git cat-file --batch failed: {status}"
-        )));
+    let prints = read.map_err(tree)?;
+    if !exited.is_ok_and(|s| s.success()) {
+        return Err(LicenceError::Tree("git cat-file --batch failed".into()));
     }
     Ok(oids.into_iter().zip(prints).collect())
 }
@@ -1019,11 +1017,22 @@ fn read_batch(r: &mut impl BufRead, n: usize) -> std::io::Result<Vec<Option<(u64
     Ok(out)
 }
 
+thread_local! {
+    /// The program the tree is listed and read with: `git`. A test puts a stand-in here that
+    /// fails the way a broken or missing git does; nothing else sets it.
+    static GIT: std::cell::RefCell<std::ffi::OsString> = std::cell::RefCell::new("git".into());
+}
+
+/// A command for the tree's git, run at `root`.
+fn git(root: &Path) -> Command {
+    let mut cmd = Command::new(GIT.with(|g| g.borrow().clone()));
+    cmd.arg("-C").arg(root);
+    cmd
+}
+
 /// What git prints for `args` at `root`.
 fn git_out(root: &Path, args: &[&str]) -> Result<Vec<u8>, LicenceError> {
-    let out = Command::new("git")
-        .arg("-C")
-        .arg(root)
+    let out = git(root)
         .args(args)
         .output()
         .map_err(|e| LicenceError::Tree(format!("git could not start: {e}")))?;
@@ -1039,9 +1048,7 @@ fn git_out(root: &Path, args: &[&str]) -> Result<Vec<u8>, LicenceError> {
 
 /// Whether git succeeds at `args`, saying nothing.
 fn git_ok(root: &Path, args: &[&str]) -> bool {
-    Command::new("git")
-        .arg("-C")
-        .arg(root)
+    git(root)
         .args(args)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
@@ -1061,6 +1068,7 @@ fn git_paths(root: &Path, args: &[&str]) -> Result<Vec<String>, LicenceError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io::Read;
 
     const LICENSED: &[u8] = b"<div class=\"examplekit-shell\">\n  <nav>pro</nav>\n</div>\n";
 
@@ -1337,5 +1345,512 @@ mod tests {
         std::fs::remove_dir_all(&dir).ok();
         assert!(err.starts_with("the-evidence-file: line 1:"), "{err}");
         assert!(!err.contains("SECRET"), "{err}");
+    }
+
+    // ------------------------------------------------------------------ a whole tree
+
+    /// A git repository and, beside it, a directory the owner's evidence lives in; both are
+    /// removed when dropped. The judgement runs against the real git listing of the tree.
+    struct Fixture {
+        repo: tempfile::TempDir,
+        side: tempfile::TempDir,
+    }
+
+    impl Fixture {
+        fn new() -> Fixture {
+            let f = Fixture {
+                repo: tempfile::tempdir().unwrap(),
+                side: tempfile::tempdir().unwrap(),
+            };
+            f.git(&["init", "-q"]);
+            std::fs::write(
+                f.side.path().join("ev.tsv"),
+                format!(
+                    "# kit-evidence/v1\n{}\t{}\tblocks/shell.html\n",
+                    hex(LICENSED),
+                    hex(&normalise(LICENSED))
+                ),
+            )
+            .unwrap();
+            f
+        }
+
+        fn root(&self) -> &Path {
+            self.repo.path()
+        }
+
+        fn evidence(&self) -> String {
+            self.side.path().join("ev.tsv").to_string_lossy().into_owned()
+        }
+
+        fn git(&self, args: &[&str]) {
+            let ok = Command::new("git")
+                .arg("-C")
+                .arg(self.root())
+                .args(["-c", "user.email=t@example.invalid", "-c", "user.name=t"])
+                .args(["-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null"])
+                .args(args)
+                .status()
+                .unwrap()
+                .success();
+            assert!(ok, "git {}", args.join(" "));
+        }
+
+        fn write(&self, rel: &str, bytes: &[u8]) {
+            let p = self.root().join(rel);
+            std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+            std::fs::write(p, bytes).unwrap();
+        }
+
+        fn commit(&self) {
+            self.git(&["add", "-A"]);
+            self.git(&["commit", "-qm", "c", "--allow-empty"]);
+        }
+
+        fn judged(&self, ui: &UiPolicy, evidence: Option<&str>) -> LicenceReport {
+            judge_tree(self.root(), ui, evidence, Some(self.side.path()), None).unwrap()
+        }
+    }
+
+    fn ui(kit: &str, visibility: Visibility, publish: &[&str]) -> UiPolicy {
+        UiPolicy {
+            kit: kit.into(),
+            visibility,
+            publish: publish.iter().map(|s| s.to_string()).collect(),
+            evidence: Vec::new(),
+        }
+    }
+
+    fn only_match(r: &LicenceReport) -> (&str, MatchKind) {
+        assert_eq!(r.verdict, Verdict::Refused, "{r:?}");
+        assert!(r.fails);
+        assert_eq!(r.matches.len(), 1, "{r:?}");
+        (r.matches[0].path.as_str(), r.matches[0].kind)
+    }
+
+    #[test]
+    fn a_tracked_licensed_file_is_refused_and_every_content_is_counted() {
+        let f = Fixture::new();
+        f.write("web/shell.html", LICENSED);
+        f.write("web/index.html", b"<p>own page</p>\n");
+        f.commit();
+        let r = f.judged(&ui("examplekit", Visibility::Public, &[]), Some(&f.evidence()));
+        assert_eq!(only_match(&r), ("web/shell.html", MatchKind::Exact));
+        assert_eq!(r.matches[0].source.as_deref(), Some("blocks/shell.html"));
+        assert!(r.has_ui);
+        assert_eq!((r.fingerprints, r.evidence.len()), (1, 1));
+        assert!(r.files >= 2, "{r:?}");
+    }
+
+    #[test]
+    fn a_reformatted_copy_staged_but_never_committed_is_refused() {
+        let f = Fixture::new();
+        f.write("web/index.html", b"<p>own</p>\n");
+        f.commit();
+        f.write("web/shell.html", b"<div class=\"examplekit-shell\">\r\n\t<nav>pro</nav>\r\n</div>\r\n");
+        f.git(&["add", "web/shell.html"]);
+        let r = f.judged(&ui("examplekit", Visibility::Public, &[]), Some(&f.evidence()));
+        assert_eq!(only_match(&r), ("web/shell.html", MatchKind::Normalised));
+    }
+
+    #[test]
+    fn a_licensed_file_committed_then_overwritten_is_still_refused() {
+        let f = Fixture::new();
+        f.write("web/shell.html", LICENSED);
+        f.commit();
+        f.write("web/shell.html", b"<p>rewritten in the working tree</p>\n");
+        let ev = f.evidence();
+        let unstaged = f.judged(&ui("examplekit", Visibility::Public, &[]), Some(&ev));
+        assert_eq!(only_match(&unstaged).0, "web/shell.html");
+        f.git(&["add", "web/shell.html"]);
+        let staged = f.judged(&ui("examplekit", Visibility::Public, &[]), Some(&ev));
+        assert_eq!(only_match(&staged).0, "web/shell.html");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_published_directory_is_read_as_the_deploy_archives_it() {
+        let f = Fixture::new();
+        f.write(".gitignore", b"dist/\nnode_modules/\n");
+        f.write("web/index.html", b"<p>own</p>\n");
+        f.commit();
+        let ev = f.evidence();
+        let publish = ui("examplekit", Visibility::Public, &["dist"]);
+
+        // an ignored, untracked file under the publish directory
+        f.write("dist/vendor/shell.html", LICENSED);
+        assert_eq!(only_match(&f.judged(&publish, Some(&ev))).0, "dist/vendor/shell.html");
+        std::fs::remove_dir_all(f.root().join("dist")).unwrap();
+
+        // a symbolic link from it into an ignored node_modules, and a dangling one
+        f.write("node_modules/kit/shell.html", LICENSED);
+        std::fs::create_dir_all(f.root().join("dist")).unwrap();
+        std::os::unix::fs::symlink("../node_modules/kit", f.root().join("dist/link")).unwrap();
+        std::os::unix::fs::symlink("../absent", f.root().join("dist/dangling")).unwrap();
+        assert_eq!(only_match(&f.judged(&publish, Some(&ev))).0, "dist/link/shell.html");
+        std::fs::remove_dir_all(f.root().join("dist")).unwrap();
+
+        // a nested repository the directory is, as a gh-pages checkout is
+        f.write("dist/page/shell.html", LICENSED);
+        let nested = Command::new("git")
+            .arg("-C")
+            .arg(f.root().join("dist"))
+            .args(["init", "-q"])
+            .status()
+            .unwrap();
+        assert!(nested.success());
+        assert_eq!(only_match(&f.judged(&publish, Some(&ev))).0, "dist/page/shell.html");
+    }
+
+    #[test]
+    fn a_clean_public_tree_is_active_and_a_private_one_is_never_scanned() {
+        let f = Fixture::new();
+        f.write("web/index.html", b"<p>own</p>\n");
+        f.commit();
+        let ev = f.evidence();
+        let clean = f.judged(&ui("examplekit", Visibility::Public, &[]), Some(&ev));
+        assert_eq!((clean.verdict, clean.fails), (Verdict::Active, false));
+        assert!(clean.files >= 1);
+
+        f.write("web/shell.html", LICENSED);
+        f.commit();
+        let private = f.judged(&ui("examplekit", Visibility::Private, &[]), Some(&ev));
+        assert_eq!((private.verdict, private.files), (Verdict::Active, 0));
+        // the environment tightens a private declaration back to public
+        let tightened = judge_tree(
+            f.root(),
+            &ui("examplekit", Visibility::Private, &[]),
+            Some(&ev),
+            None,
+            Some("public"),
+        )
+        .unwrap();
+        assert_eq!(only_match(&tightened).0, "web/shell.html");
+    }
+
+    #[test]
+    fn without_evidence_a_public_ui_is_not_judged_and_the_rest_is_inactive() {
+        let f = Fixture::new();
+        f.write("README.md", b"# no interface here\n");
+        f.commit();
+        let no_ui = f.judged(&ui("examplekit", Visibility::Public, &[]), None);
+        assert_eq!((no_ui.verdict, no_ui.has_ui), (Verdict::Inactive, false));
+
+        f.write("web/PAGE.HTML", b"<p>upper-case extension</p>\n");
+        f.commit();
+        let owed = f.judged(&ui("examplekit", Visibility::Public, &[]), None);
+        assert_eq!((owed.verdict, owed.fails), (Verdict::NotJudged, true));
+        assert!(owed.reason.unwrap().contains("no licence evidence"));
+
+        let private = f.judged(&ui("examplekit", Visibility::Private, &[]), None);
+        assert_eq!(private.verdict, Verdict::Inactive);
+        let no_kit = f.judged(&ui("", Visibility::Public, &[]), None);
+        assert_eq!(no_kit.verdict, Verdict::Inactive);
+        assert!(no_kit.reason.unwrap().contains("no kit declared"));
+    }
+
+    #[test]
+    fn the_policy_evidence_under_home_judges_as_a_given_file_does() {
+        let f = Fixture::new();
+        f.write("web/shell.html", LICENSED);
+        f.commit();
+        std::fs::copy(f.side.path().join("ev.tsv"), f.side.path().join("ev2.tsv")).unwrap();
+        let mut declared = ui("examplekit", Visibility::Public, &[]);
+        declared.evidence = vec!["~/ev.tsv".into(), "~/ev2.tsv".into(), "~/absent.tsv".into()];
+        let r = f.judged(&declared, None);
+        assert_eq!(only_match(&r).0, "web/shell.html");
+        assert_eq!(r.evidence, ["~/ev.tsv", "~/ev2.tsv"]);
+    }
+
+    #[test]
+    fn an_unusable_block_a_bad_file_and_an_unlistable_tree_are_answered_by_name() {
+        let f = Fixture::new();
+        f.write("web/index.html", b"<p>own</p>\n");
+        f.commit();
+        // an absolute publish entry is a policy error, which assess answers not judged
+        let bad = judge_tree(
+            f.root(),
+            &ui("examplekit", Visibility::Public, &["/srv/www"]),
+            Some(&f.evidence()),
+            None,
+            None,
+        );
+        let Err(LicenceError::Policy(why)) = bad else {
+            panic!("an absolute ui.publish entry must be a policy error: {bad:?}");
+        };
+        let answered = unusable(&ui("examplekit", Visibility::Private, &[]), None, why);
+        assert_eq!((answered.verdict, answered.fails), (Verdict::NotJudged, true));
+        assert!(answered.reason.unwrap().starts_with("the policy's ui: block cannot be used"));
+
+        // evidence that is not there, or not text, is an evidence error naming the file
+        let missing = f.judged_err(Some("/nonexistent/ev.tsv"));
+        assert!(matches!(missing, LicenceError::Evidence(m) if m.starts_with("/nonexistent/ev.tsv")));
+        std::fs::write(f.side.path().join("bin.tsv"), [0xff, 0xfe, 0x00]).unwrap();
+        let binary = f.side.path().join("bin.tsv").to_string_lossy().into_owned();
+        let not_text = f.judged_err(Some(&binary)).to_string();
+        assert!(not_text.contains("the file is not text"), "{not_text}");
+
+        // a directory git cannot list is no answer at all
+        let plain = tempfile::tempdir().unwrap();
+        let unlisted = judge_tree(
+            plain.path(),
+            &ui("examplekit", Visibility::Public, &[]),
+            Some(&f.evidence()),
+            None,
+            None,
+        );
+        assert!(matches!(unlisted, Err(LicenceError::Tree(m)) if m.starts_with("git ")));
+    }
+
+    #[test]
+    fn evidence_with_no_fingerprint_and_a_malformed_policy_file_are_named() {
+        let f = Fixture::new();
+        f.write("web/index.html", b"<p>own</p>\n");
+        f.commit();
+        std::fs::write(f.side.path().join("empty.tsv"), "# kit-evidence/v1\n").unwrap();
+        let empty = f.side.path().join("empty.tsv").to_string_lossy().into_owned();
+        let msg = f.judged_err(Some(&empty)).to_string();
+        // a file with no fingerprint names no line: there is none to point at
+        assert!(msg.contains("no fingerprint") && !msg.contains(": line "), "{msg}");
+
+        std::fs::write(f.side.path().join("bad.tsv"), "zz\tyy\n").unwrap();
+        let mut declared = ui("examplekit", Visibility::Public, &[]);
+        declared.evidence = vec!["~/bad.tsv".into()];
+        let got = judge_tree(f.root(), &declared, None, Some(f.side.path()), None).unwrap_err();
+        assert!(matches!(got, LicenceError::Evidence(m) if m.starts_with("~/bad.tsv: line 1:")));
+
+        declared.evidence = vec!["/abs/ev.tsv".into()];
+        let got = judge_tree(f.root(), &declared, None, Some(f.side.path()), None).unwrap_err();
+        assert!(matches!(got, LicenceError::Policy(_)));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_tracked_link_under_a_publish_directory_is_followed_and_an_unborn_head_is_read() {
+        let f = Fixture::new();
+        f.write(".gitignore", b"node_modules/\n");
+        f.write("node_modules/kit/shell.html", LICENSED);
+        f.write("site/index.html", b"<p>own</p>\n");
+        std::os::unix::fs::symlink("../node_modules/kit", f.root().join("site/kit")).unwrap();
+        // staged, never committed: HEAD is unborn and only the index is listed
+        f.git(&["add", "-A"]);
+        let publish = ui("examplekit", Visibility::Public, &["site"]);
+        let r = f.judged(&publish, Some(&f.evidence()));
+        assert_eq!(only_match(&r).0, "site/kit/shell.html");
+    }
+
+    #[test]
+    fn a_public_tree_that_tracks_nothing_is_active_with_nothing_compared() {
+        let f = Fixture::new();
+        f.commit();
+        let r = f.judged(&ui("examplekit", Visibility::Public, &[]), Some(&f.evidence()));
+        assert_eq!((r.verdict, r.files, r.has_ui), (Verdict::Active, 0, false));
+    }
+
+    #[test]
+    fn a_listing_record_without_its_columns_is_skipped() {
+        let got = entries(b"no-tab-here\x00100644 aa\tshort\x00100644 bb 0\tok.html\0", 1);
+        assert_eq!(got.len(), 2, "{got:?}");
+        assert_eq!(got.last().unwrap().path, "ok.html");
+        assert!(entries(b"100644\tpath\0", 2).is_empty());
+    }
+
+    // ------------------------------------------------------------------ a git that fails
+
+    /// Runs `body` with the tree read by `program` instead of git, on this thread only.
+    fn with_git<T>(program: &Path, body: impl FnOnce() -> T) -> T {
+        GIT.with(|g| *g.borrow_mut() = program.as_os_str().to_owned());
+        let out = body();
+        GIT.with(|g| *g.borrow_mut() = "git".into());
+        out
+    }
+
+    /// A stand-in for git: the real git for every subcommand except `broken`, which runs
+    /// `instead` (a shell fragment) — the way a git that fails half-way behaves.
+    fn fake_git(dir: &Path, broken: &str, instead: &str) -> PathBuf {
+        let real = String::from_utf8(
+            Command::new("sh").args(["-c", "command -v git"]).output().unwrap().stdout,
+        )
+        .unwrap();
+        let path = dir.join(format!("git-{}", broken.replace(' ', "-")));
+        std::fs::write(
+            &path,
+            format!(
+                "#!/bin/sh\n# $1 $2 is -C <root>\nREAL={}\ncase \"$*\" in\n  *\"{broken}\"*) {instead} ;;\nesac\nexec \"$REAL\" \"$@\"\n",
+                real.trim()
+            ),
+        )
+        .unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755)).unwrap();
+        }
+        path
+    }
+
+    fn tree_error(r: Result<LicenceReport, LicenceError>, says: &str) {
+        match r {
+            Err(LicenceError::Tree(m)) => assert!(m.contains(says), "{m}"),
+            other => panic!("expected a tree error saying {says}: {other:?}"),
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_git_that_fails_half_way_is_no_answer_never_a_clean_tree() {
+        let f = Fixture::new();
+        f.write(".gitignore", b"dist/\n");
+        f.write("web/shell.html", LICENSED);
+        f.commit();
+        f.write("web/shell.html", b"<p>changed</p>\n");
+        let ev = f.evidence();
+        let publish = ui("examplekit", Visibility::Public, &["dist"]);
+        let bin = tempfile::tempdir().unwrap();
+        let judge_with = |program: PathBuf| {
+            with_git(&program, || judge_tree(f.root(), &publish, Some(&ev), None, None))
+        };
+        // git missing altogether
+        tree_error(judge_with(bin.path().join("absent")), "git could not start");
+        // each listing fails
+        for step in ["ls-tree -r", "diff -z", "ls-files -z --others"] {
+            let program = fake_git(bin.path(), step, "echo broken >&2; exit 1");
+            tree_error(judge_with(program), "failed");
+        }
+        // cat-file says nothing and exits: the read ends early
+        let silent = fake_git(bin.path(), "cat-file --batch", "cat >/dev/null; exit 0");
+        tree_error(judge_with(silent), "git cat-file --batch");
+        // cat-file answers every object and then fails
+        let failing = fake_git(bin.path(), "cat-file --batch", "\"$REAL\" \"$@\"; exit 1");
+        tree_error(judge_with(failing), "git cat-file --batch failed");
+        // cat-file answers that every object is missing: nothing is compared, nothing leaks
+        let missing = fake_git(
+            bin.path(),
+            "cat-file --batch",
+            "while read oid; do echo \"$oid missing\"; done; exit 0",
+        );
+        let none = judge_with(missing).unwrap();
+        assert_eq!(none.verdict, Verdict::Active, "{none:?}");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_cat_file_that_stops_reading_fails_the_write() {
+        let f = Fixture::new();
+        // more object names than a pipe holds, so the writer meets the closed pipe
+        for i in 0..2500 {
+            f.write(&format!("web/p{i}.html"), format!("<p>{i}</p>\n").as_bytes());
+        }
+        f.commit();
+        let bin = tempfile::tempdir().unwrap();
+        let deaf = fake_git(bin.path(), "cat-file --batch", "exec 0<&-; exit 0");
+        let oids: Vec<String> = entries(&git_out(f.root(), &["ls-files", "-z", "-s"]).unwrap(), 1)
+            .into_iter()
+            .map(|e| e.oid)
+            .collect();
+        let got = with_git(&deaf, || fingerprint_objects(f.root(), oids));
+        assert!(matches!(got, Err(LicenceError::Tree(m)) if m.starts_with("git cat-file --batch")));
+        // and a git that cannot start is named too
+        let gone = bin.path().join("gone");
+        let got = with_git(&gone, || fingerprint_objects(f.root(), vec!["aa".into()]));
+        assert!(matches!(got, Err(LicenceError::Tree(_))));
+    }
+
+    #[test]
+    fn a_batch_stream_that_breaks_is_an_error() {
+        struct Broken;
+        impl Read for Broken {
+            fn read(&mut self, _: &mut [u8]) -> std::io::Result<usize> {
+                Err(std::io::Error::other("the pipe broke"))
+            }
+        }
+        assert!(read_batch(&mut BufReader::new(Broken), 1).is_err());
+        assert!(read_batch(&mut std::io::Cursor::new(Vec::new()), 1).is_err());
+        let no_feed = format!("aa blob {}\n", LICENSED.len()).into_bytes();
+        let mut no_feed = [no_feed, LICENSED.to_vec()].concat();
+        assert!(read_batch(&mut std::io::Cursor::new(no_feed.clone()), 1).is_err());
+        no_feed.push(b'\n');
+        assert!(read_batch(&mut std::io::Cursor::new(no_feed), 1).unwrap()[0].is_some());
+    }
+
+    #[test]
+    fn what_cannot_be_read_now_is_not_compared() {
+        let dir = tempfile::tempdir().unwrap();
+        assert_eq!(fingerprint_file(&dir.path().join("deleted")), None);
+        assert_eq!(fingerprint_file(dir.path()), None);
+        let gone = vec![("gone.html".to_string(), Bytes::Disk(dir.path().join("gone.html")))];
+        let (n, found) = scan(dir.path(), &gone, &full_evidence()).unwrap();
+        assert_eq!((n, found.len()), (0, 0));
+        // a walk of nothing publishes nothing, and a directory reached twice is walked once
+        let mut all = BTreeSet::new();
+        let mut seen = HashSet::new();
+        walk(dir.path().join("absent"), "absent".into(), &mut all, &mut seen);
+        std::fs::write(dir.path().join("a.html"), "<p/>").unwrap();
+        walk(dir.path().to_path_buf(), "d".into(), &mut all, &mut seen);
+        walk(dir.path().to_path_buf(), "again".into(), &mut all, &mut seen);
+        assert_eq!(all.len(), 1);
+    }
+
+    #[test]
+    fn a_policy_that_names_no_section_or_cannot_be_read_is_the_blocks_failure() {
+        let dir = tempfile::tempdir().unwrap();
+        let none = UiPolicy::load_from(dir.path(), None).unwrap_err();
+        assert_eq!(none.to_string(), "the manifest names no policy section");
+        let unread = UiPolicy::load_from(dir.path(), Some("absent.yaml".into())).unwrap_err();
+        assert!(matches!(unread, LicenceError::Policy(m) if m.starts_with("absent.yaml: ")));
+        std::fs::write(dir.path().join("p.yaml"), "ui:\n  visibility: internal\n").unwrap();
+        let bad = UiPolicy::load_from(dir.path(), Some("p.yaml".into())).unwrap_err();
+        assert!(bad.to_string().starts_with("p.yaml: ui: "), "{bad}");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn an_unreadable_directory_and_a_deleted_file_are_not_compared() {
+        use std::os::unix::fs::PermissionsExt;
+        let f = Fixture::new();
+        f.write("web/shell.html", LICENSED);
+        f.write("web/gone.html", b"<p>tracked, then deleted in the working tree</p>\n");
+        f.commit();
+        std::fs::remove_file(f.root().join("web/gone.html")).unwrap();
+        let r = f.judged(&ui("examplekit", Visibility::Public, &[]), Some(&f.evidence()));
+        assert_eq!(only_match(&r).0, "web/shell.html");
+        // a published directory the walk may enter but not list publishes nothing
+        let locked = f.side.path().join("locked");
+        std::fs::create_dir_all(&locked).unwrap();
+        std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o000)).unwrap();
+        let (mut all, mut seen) = (BTreeSet::new(), HashSet::new());
+        walk(locked.clone(), "locked".into(), &mut all, &mut seen);
+        std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o755)).unwrap();
+        assert!(all.is_empty());
+    }
+
+    #[test]
+    fn a_fingerprint_is_a_writer_and_every_error_reads_as_its_message() {
+        let mut f = Fingerprint::default();
+        f.write_all(LICENSED).unwrap();
+        f.flush().unwrap();
+        let mut whole = Fingerprint::default();
+        whole.update(LICENSED);
+        assert_eq!(f.finish(), whole.finish());
+        for e in [
+            LicenceError::Evidence("e".into()),
+            LicenceError::Policy("p".into()),
+            LicenceError::Tree("t".into()),
+        ] {
+            assert_eq!(e.to_string().len(), 1);
+        }
+    }
+
+    impl Fixture {
+        fn judged_err(&self, evidence: Option<&str>) -> LicenceError {
+            judge_tree(
+                self.root(),
+                &ui("examplekit", Visibility::Public, &[]),
+                evidence,
+                None,
+                None,
+            )
+            .unwrap_err()
+        }
     }
 }
