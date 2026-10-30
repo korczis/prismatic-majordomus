@@ -1,0 +1,43 @@
+id: I4300
+milestone: a-review-is-published-at-its-commit
+title: "A cargo-deny gate judges the crate's advisories, licences, bans and sources, every npm devDependency is pinned exactly, and the verdict is published"
+slug: dependencies-are-judged-by-a-gate
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Add a cargo-deny configuration at the repository root that judges advisories, licences (an allow list that admits the crate's present licences and refuses copyleft ones such as EUPL-1.2 and GPL), bans and sources for apps/majordomus-cli; declare a gate in .ai/repo/ci/gates.yaml that runs cargo deny check, with cargo-deny installed at a pinned version by .github/workflows/validate.yml beside the job's other tools (shellcheck at .github/workflows/validate.yml:320); add to scripts/site-check, beside its no-CDN rule (scripts/site-check:1020), a rule that refuses any non-exact version in package.json and fix cytoscape's caret pin; and publish the gate's last verdict at the build commit beside the conformance report on the /quality/ page I4299 adds, through scripts/generate-site-data and site/templates/quality.html, or not observed."
+why: "codex (consultation d37ae1) and f3 named dependency, security and licence evidence as what a due-diligence reader asks first, and f3 asked that it join the first slice; the conclusion adds cargo-deny to slice one. No cargo-deny or cargo-audit configuration exists on 81ef931a3e1, and clippy runs only its default set (scripts/rust-check:384). The licence ban is also how code-is-highlighted-inside-its-licence-boundary is held: giallo is EUPL-1.2 (verified by the conclusion against crates.io) and must not enter the executable. f3 also found the vendored JavaScript unjudged: package.json:18 pins cytoscape with a caret while every other library is exact."
+current_state: "On 81ef931a3e1 apps/majordomus-cli/Cargo.toml has no [lints] table and the repository has no deny configuration; package.json pins cytoscape as ^3.33.1; .ai/repo/ci/gates.yaml has no dependency gate."
+desired_state: "A deny configuration at the root, a gate in .ai/repo/ci/gates.yaml running cargo deny check with a cargo-deny version pinned where .github/workflows/validate.yml installs it, an exact-pin rule over package.json in scripts/site-check (no new shell unit, ADR 0069), cytoscape pinned exactly, and the gate's verdict at the build commit on the quality page or not observed."
+scope:
+  - ".ai/repo/project/issues/I4300.yaml"
+  - "deny.toml"
+  - ".ai/repo/ci/gates.yaml"
+  - "package.json"
+  - "package-lock.json"
+  - "scripts/site-check"
+  - ".github/workflows/validate.yml"
+  - "scripts/generate-site-data"
+  - "site/templates/quality.html"
+non_scope:
+  - "Upgrading or replacing any dependency the gate flags: each finding becomes its own issue"
+  - "A network fetch during the site build: the advisory database is read by the gate in CI, never by the site build"
+  - "Clippy lints (I4302)"
+  - "The handbook's CDN loads (handbook/cs/extras10.js:6-13): I2747 removes the CDN highlighter, and the first review (I4305) records the markdown-it, dompurify, mermaid and ECharts 5.5.0 loads as a finding with its resolution issue"
+depends_on:
+  - "I4299"
+serves:
+  - "a-review-is-seen-at-its-commit#dependencies-are-judged"
+acceptance_criteria:
+  - "cargo deny check passes on master's crate with the configuration as written, or every exception it needs is listed with its reason"
+  - "A planted dependency with a disallowed licence fails the gate, naming the crate and the licence"
+  - "A planted caret version in package.json fails the exact-pin rule, naming the package"
+  - "The quality page shows the gate's verdict and the commit it judged, or not observed when no verdict for the build commit exists"
+validation:
+  - "cargo deny --manifest-path apps/majordomus-cli/Cargo.toml check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "dependency_gate_refuses_a_planted_licence"
+risk: "Medium. The CI runners must carry a pinned cargo-deny, and the advisory database is a network read inside the gate; an advisory that appears overnight turns master red without a change, which the gate must report as an advisory finding rather than a build fault."
+created_at: 2026-10-28
+updated_at: 2026-10-28
