@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "da31b40589f677a60c83f92eedaa4d77ca560c96663b428da48f11686010cce8",
+    "fingerprint": "ca0411408f7df498d83cab999c218f4f503df5c8f368fceefcd4807d85acc8f7",
     "summary": {
-      "total": 3633,
+      "total": 3635,
       "builtin": 220,
-      "declarative": 3413,
+      "declarative": 3415,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3413
+        "resource": 3415
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3423
+        "implemented": 3425
       },
       "mcp_tools": 206,
-      "mcp_resources": 3470,
+      "mcp_resources": 3472,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -33037,6 +33037,13 @@
                   "null"
                 ],
                 "description": "Plan at this tier of the model's `tiers` (ADR 0186): a gate whose lane the tier does\nnot run is left out, and nothing implies or requires it back. Absent plans every lane.\nA model that declares no tiers, or a tier it does not declare, is refused as invalid\ninput, in the words `scripts/ci-plan --tier` refuses it with."
+              },
+              "live": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "description": "Settle the obligations something can establish — a commit, a push, the trunk, the\npublished site the task declared — live, at HEAD, before the ledger is read\n(`obligations.closure`'s `live`). On by default; a report that passes `false`, such\nas a handover written at an episode's end, reads the ledger alone and says a live\ntoken is owed, never proven."
               }
             },
             "description": "```\nuse majordomus_cli::capability::builtin::gates::CompletionInput;\n\n// the default asks about the active task's own change set\nlet mine = CompletionInput::default();\nassert!(mine.changed.is_none() && mine.base.is_none());\n\n// and a caller may name the change instead, which is how a test drives it\nlet named = CompletionInput {\n    changed: Some(vec![\"docs/CLI.md\".into()]),\n    ..Default::default()\n};\nassert_eq!(named.changed.unwrap(), [\"docs/CLI.md\"]);\n```\nWhich change to judge completion over.",
@@ -60102,12 +60109,21 @@
         "title": "What this task still owes",
         "description": "Every obligation the active task declared, joined with what the vocabulary says about it and with the evidence that does or does not discharge it: what is owed, what is discharged, and what has gone stale — with the recorded input hash and the tree's current one, or the recorded commit and its label, so a reader can see against what. The judgement is the one `finish` applies, reproduced rather than re-decided, and the staleness words are the repository's only four. A checkout with no task reports that, rather than reporting nothing owed.",
         "input": {
-          "name": "Empty",
+          "name": "ClosureInput",
           "schema": {
             "type": "object",
             "additionalProperties": false,
-            "description": "No input.",
-            "title": "Empty"
+            "properties": {
+              "live": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "description": "Settle every token whose fact something can establish — a commit, a push, the\ntrunk, the published site, the deployed surfaces — live, at HEAD, before reading\nthe ledger. On by default: a page rendered from a cache may pass `false` to read\nthe ledger alone, and such a report says a live token is owed rather than proven."
+              }
+            },
+            "description": "```\nuse majordomus_cli::capability::builtin::obligations::ClosureInput;\n// the default settles every establishable token live, at HEAD\nassert!(ClosureInput::default().live.is_none());\n```\nHow the closure is judged. The one choice a caller makes is whether the tokens\nsomething can establish are settled live before the ledger is read; the judgement of\neach token is the same whichever a caller chooses, and a report that skipped the live\npass says a live token is owed rather than proven.",
+            "title": "ClosureInput"
           }
         },
         "output": {
@@ -60268,6 +60284,11 @@
                   "id": {
                     "type": "string",
                     "description": "The token, as the task's `requires` names it."
+                  },
+                  "declared": {
+                    "type": "boolean",
+                    "description": "True when the task's `requires` names it. An establishable token the task did not\ndeclare is judged here too, live, so that the completion report can answer for it\nwhen the change implies it; it never counts toward `closed`.",
+                    "default": true
                   },
                   "title": {
                     "type": "string",
@@ -60583,6 +60604,10 @@
                   "note": {
                     "type": "string",
                     "description": "What the vocabulary says about the token beyond its summary."
+                  },
+                  "established_by": {
+                    "type": "string",
+                    "description": "What settles the fact without asking a worker: `git` for a fact git already holds,\na command for one a command already answers, `none` (or absent) for one nothing\ncan settle. A token that names something is decided live, at HEAD, and its recorded\nevidence is consulted only where the live answer is undecidable."
                   }
                 },
                 "required": [
@@ -91383,7 +91408,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1102,
+        "capabilities": 1103,
         "capability_ids": []
       },
       {
@@ -91981,7 +92006,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 660,
+        "capabilities": 661,
         "capability_ids": []
       },
       {
@@ -92073,7 +92098,7 @@
     ]
   },
   "index": {
-    "fingerprint": "1b1c1dbd708b0f93cdad0785ca9f66c5d1ce7915fa55817e723dcd6354675f6f",
+    "fingerprint": "aef50b32e13d9bde8581e79352a28c1d35283a519e0c59b53ea8c614ef29ffae",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92113,7 +92138,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 44,
-      "issue": 1102,
+      "issue": 1103,
       "knowledge": 60,
       "mesh-declaration": 1,
       "milestone": 113,
@@ -92127,7 +92152,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 660,
+      "test": 661,
       "use-case": 49,
       "workspace": 1
     },
@@ -97658,7 +97683,7 @@
         "description": "The repository's architecture decisions as objects: list, show, ask for the next free identity, propose one with provenance, and validate the whole set against this tree and every other ref.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/archive",
@@ -97668,7 +97693,7 @@
         "description": "Take a snapshot of the tracked tree that can be read, or checked, somewhere else.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/bench",
@@ -97678,7 +97703,7 @@
         "description": "Time every public command of the registry, cold and warm, and compare with the baseline.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/capture",
@@ -97688,7 +97713,7 @@
         "description": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, reconcile and prune the archive, and report what each provider actually does here.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/check",
@@ -97698,7 +97723,7 @@
         "description": "Is the current task still consistent with its policy, its scope and this checkout?",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/checkpoint",
@@ -97708,7 +97733,7 @@
         "description": "Record compact progress inside the active task, so the next worker does not start over.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/context",
@@ -97718,7 +97743,7 @@
         "description": "What the next worker needs to know now, in authority order and within a budget.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/decision",
@@ -97728,7 +97753,7 @@
         "description": "Record a decision that was made between real alternatives, with its reason, and read them back.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/doctor",
@@ -97738,7 +97763,7 @@
         "description": "It checks governance only: is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/doctrine",
@@ -97748,7 +97773,7 @@
         "description": "What rules are enforced, by what, and whether each one is actually wired.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/evidence",
@@ -97758,7 +97783,7 @@
         "description": "Record evidence against the active task: one obligation it declared, discharged, or one validation gate of the CI model that has reported — each as a ledger line carrying the hash of the files it was taken over.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/finish",
@@ -97768,7 +97793,7 @@
         "description": "Evaluate the finish contract and refuse the outcome if any line of it is unmet.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/handover",
@@ -97778,7 +97803,7 @@
         "description": "Write an append-only continuation record, and resolve the most relevant prior one.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/help",
@@ -97788,7 +97813,7 @@
         "description": "Print the usage text, which is the list of every public command.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/history",
@@ -97798,7 +97823,7 @@
         "description": "Read the append-only ledger back, filtered by task, event or time.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/init",
@@ -97808,7 +97833,7 @@
         "description": "Create the .ai/ layer in this repository, and refuse to overwrite an existing one.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/knowledge",
@@ -97818,7 +97843,7 @@
         "description": "The compiled index over what this repository states, and the candidate records it derives from what an episode did.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/migrate",
@@ -97828,7 +97853,7 @@
         "description": "Move pre-.ai project data from .majordomus/ into .ai/, explicitly and backed up.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/plan",
@@ -97838,7 +97863,7 @@
         "description": "The milestone and issue model — validate it, read it, and move one issue through it.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/prompt",
@@ -97848,7 +97873,7 @@
         "description": "List, show and render the repository's own prompt assets, substituting known tokens only.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/question",
@@ -97858,7 +97883,7 @@
         "description": "Open a question that blocks acceptance, resolve it, and list what is still open.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/recover",
@@ -97868,7 +97893,7 @@
         "description": "Close episodes nobody ended, fold duplicate records, classify the stores' stray files.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/rules",
@@ -97878,7 +97903,7 @@
         "description": "The effective rule set, vendored baseline plus project rules.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/search",
@@ -97888,7 +97913,7 @@
         "description": "Find a durable record without reading all of them, in authority order.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/session",
@@ -97898,7 +97923,7 @@
         "description": "Open, inspect and close one execution episode.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/skills",
@@ -97908,7 +97933,7 @@
         "description": "The repository's skills — provider-neutral procedures under the skills section — listed, shown and checked from the one catalogue every surface reads.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/start",
@@ -97918,7 +97943,7 @@
         "description": "Begin one scoped task under a profile, and refuse while another is active.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/update",
@@ -97928,7 +97953,7 @@
         "description": "Regenerate every provider instruction file from the one policy, deterministically.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/usecase",
@@ -97938,7 +97963,7 @@
         "description": "The executable use cases: list, show, validate, run against the real tool, coverage, impact, scaffold.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/version",
@@ -97948,7 +97973,7 @@
         "description": "Print the version, without needing a repository or an installation.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://command/watch",
@@ -97958,7 +97983,7 @@
         "description": "What has drifted since the last update — policy, projections, state, retention.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35543
       },
       {
         "uri": "majordomus://context/ai.layer",
@@ -99171,7 +99196,7 @@
         "title": "CLI specification — `majordomus`",
         "path": "docs/CLI.md",
         "source_class": "document",
-        "bytes": 144350
+        "bytes": 146532
       },
       {
         "uri": "majordomus://document/docs/COCKPIT.md",
@@ -99585,7 +99610,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 982448
+        "bytes": 982734
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -102766,7 +102791,7 @@
         "identity": "lib/derive.sh",
         "path": "lib/derive.sh",
         "source_class": "library",
-        "bytes": 34007
+        "bytes": 36115
       },
       {
         "uri": "majordomus://implementation/lib/doctor.sh",
@@ -102790,7 +102815,7 @@
         "identity": "lib/evidence.sh",
         "path": "lib/evidence.sh",
         "source_class": "library",
-        "bytes": 29815
+        "bytes": 33332
       },
       {
         "uri": "majordomus://implementation/lib/finish.sh",
@@ -102798,7 +102823,7 @@
         "identity": "lib/finish.sh",
         "path": "lib/finish.sh",
         "source_class": "library",
-        "bytes": 16230
+        "bytes": 16613
       },
       {
         "uri": "majordomus://implementation/lib/gates.sh",
@@ -102806,7 +102831,7 @@
         "identity": "lib/gates.sh",
         "path": "lib/gates.sh",
         "source_class": "library",
-        "bytes": 21440
+        "bytes": 23695
       },
       {
         "uri": "majordomus://implementation/lib/handover.sh",
@@ -103030,7 +103055,7 @@
         "identity": "lib/usecase.sh",
         "path": "lib/usecase.sh",
         "source_class": "library",
-        "bytes": 75068
+        "bytes": 75825
       },
       {
         "uri": "majordomus://implementation/lib/watch.sh",
@@ -115647,6 +115672,17 @@
         "bytes": 5755
       },
       {
+        "uri": "majordomus://issue/I4433",
+        "kind": "issue",
+        "identity": "I4433",
+        "title": "Where the policy says completed means complete, finish refuses completed until the completion report is complete, and every finish records the stage it stopped at",
+        "description": "Port the second slice of pull request 821 fresh onto master: verification.completed_means_complete (schema, allow-list, skeleton off with the reason); lib/gates.sh prints the derived stage on check and, with the key on, refuses finish completed naming each question still owed; lib/finish.sh records stage and complete on task.finished; evidence --run-gates runs the selected gates through scripts/ci/run-plan, which records each exit (MJ_GATE_RECORD); an obligation the change implies is declared by discharging it; obligations.closure and gates.completion settle commit, push and target live at HEAD (live, on by default) and the published site only when declared; the handover's derived Completion section, masked in recorded evidence.",
+        "path": ".ai/repo/project/issues/I4433.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3601
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -127951,6 +127987,14 @@
         "bytes": 4987
       },
       {
+        "uri": "majordomus://test/test/cases/880_completion_is_proved.sh",
+        "kind": "test",
+        "identity": "test/cases/880_completion_is_proved.sh",
+        "path": "test/cases/880_completion_is_proved.sh",
+        "source_class": "case",
+        "bytes": 10360
+      },
+      {
         "uri": "majordomus://test/test/cases/884_a_declared_kind_is_a_kind_the_graph_knows.sh",
         "kind": "test",
         "identity": "test/cases/884_a_declared_kind_is_a_kind_the_graph_knows.sh",
@@ -129265,7 +129309,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1102
+      "objects": 1103
     },
     {
       "name": "knowledge",
@@ -129427,7 +129471,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 660
+      "objects": 661
     },
     {
       "name": "use-case",
@@ -166190,7 +166234,7 @@
           "idempotent": true,
           "open_world": false
         },
-        "input": "Empty",
+        "input": "ClosureInput",
         "output": "Closure"
       },
       {
@@ -173666,31 +173710,60 @@
         "route": "GET /api/v1/objects/verify"
       },
       {
-        "key": "obligations.closure|direct|default",
+        "key": "obligations.closure|direct|live",
         "kind": "capability",
         "transport": "direct",
         "id": "obligations.closure",
         "module": "obligations",
-        "case": "default",
+        "case": "live",
         "cached": true
       },
       {
-        "key": "obligations.closure|mcp|default",
+        "key": "obligations.closure|direct|recorded-only",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "obligations.closure",
+        "module": "obligations",
+        "case": "recorded-only",
+        "cached": true
+      },
+      {
+        "key": "obligations.closure|mcp|live",
         "kind": "capability",
         "transport": "mcp",
         "id": "obligations.closure",
         "module": "obligations",
-        "case": "default",
+        "case": "live",
         "cached": true,
         "tool": "majordomus_obligation_closure"
       },
       {
-        "key": "obligations.closure|http|default",
+        "key": "obligations.closure|mcp|recorded-only",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "obligations.closure",
+        "module": "obligations",
+        "case": "recorded-only",
+        "cached": true,
+        "tool": "majordomus_obligation_closure"
+      },
+      {
+        "key": "obligations.closure|http|live",
         "kind": "capability",
         "transport": "http",
         "id": "obligations.closure",
         "module": "obligations",
-        "case": "default",
+        "case": "live",
+        "cached": true,
+        "route": "GET /api/v1/obligations/closure"
+      },
+      {
+        "key": "obligations.closure|http|recorded-only",
+        "kind": "capability",
+        "transport": "http",
+        "id": "obligations.closure",
+        "module": "obligations",
+        "case": "recorded-only",
         "cached": true,
         "route": "GET /api/v1/obligations/closure"
       },
@@ -180071,21 +180144,21 @@
           "module": "obligations",
           "transport": "direct",
           "state": "covered",
-          "cases": 1
+          "cases": 2
         },
         {
           "subject": "obligations.closure",
           "module": "obligations",
           "transport": "mcp",
           "state": "covered",
-          "cases": 1
+          "cases": 2
         },
         {
           "subject": "obligations.closure",
           "module": "obligations",
           "transport": "http",
           "state": "covered",
-          "cases": 1
+          "cases": 2
         },
         {
           "subject": "obligations.vocabulary",

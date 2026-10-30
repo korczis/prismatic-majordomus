@@ -34,6 +34,11 @@ selects a gate whose runner is unavailable is a plan whose verdict never arrives
 not run is left out, and nothing implies or requires it back. Absent plans every lane.
 A model that declares no tiers, or a tier it does not declare, is refused as invalid
 input, in the words `scripts/ci-plan --tier` refuses it with. |
+| `live` | boolean or null | no | Settle the obligations something can establish — a commit, a push, the trunk, the
+published site the task declared — live, at HEAD, before the ledger is read
+(`obligations.closure`'s `live`). On by default; a report that passes `false`, such
+as a handover written at an episode's end, reads the ledger alone and says a live
+token is owed, never proven. |
 
 Output: `Completion`.
 
