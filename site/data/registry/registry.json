@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "0d0a12a10de105478e4a6bbb568960b5f8307c7d5f0aef127ede340a83ac0faf",
+    "fingerprint": "8f2ac1fe285e76e80ff1107268eeea855270e8be792863483980dde07498a29b",
     "summary": {
-      "total": 3686,
+      "total": 3688,
       "builtin": 220,
-      "declarative": 3466,
+      "declarative": 3468,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3466
+        "resource": 3468
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3476
+        "implemented": 3478
       },
       "mcp_tools": 206,
-      "mcp_resources": 3523,
+      "mcp_resources": 3525,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91407,7 +91407,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1124,
+        "capabilities": 1126,
         "capability_ids": []
       },
       {
@@ -92097,7 +92097,7 @@
     ]
   },
   "index": {
-    "fingerprint": "91b0178db4961906fb7de708e8b7dbacf8341a031c2dbfe68a321e3156af4f82",
+    "fingerprint": "edd84f4218684c89f53f000ca464fb4b9b45957c864e0879d1da59b454364f35",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92137,7 +92137,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 44,
-      "issue": 1124,
+      "issue": 1126,
       "knowledge": 86,
       "mesh-declaration": 1,
       "milestone": 113,
@@ -99609,7 +99609,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 1023460
+        "bytes": 1028596
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -115913,6 +115913,28 @@
         "bytes": 10765
       },
       {
+        "uri": "majordomus://issue/I4523",
+        "kind": "issue",
+        "identity": "I4523",
+        "title": "The lander judges the candidate it would merge even when the forge cannot list every open pull request",
+        "description": "When the forge cannot answer the whole open list with its rollups, `majordomus prs drain` still judges the one candidate it would land: a pull request named by a new `--pr N`, or else the newest open `integration/train-*` head found by an open list that asks no rollup (number, head, labels, draft). That candidate is read by number, alone, with its whole rollup and its own cross-references (DECLARATIONS_OF_QUERY). It is decided by the same rules, observed again and landed by the same fast-forward as on a whole observation. The queue view it leaves behind says it is partial, with the read that failed, instead of the drain refusing everything. When even the candidate cannot be read, the refusal names each read that failed (the full list, the paged list, the candidate) with the forge's own words.",
+        "path": ".ai/repo/project/issues/I4523.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 7959
+      },
+      {
+        "uri": "majordomus://issue/I4524",
+        "kind": "issue",
+        "identity": "I4524",
+        "title": "Telemetry does not run for a validate run that was cancelled",
+        "description": "The export job of .github/workflows/telemetry.yml carries `if: github.event.workflow_run.conclusion != 'cancelled'`. A validate run that was cancelled then starts no telemetry job and takes no hosted runner slot: the workflow run is recorded as skipped and no runner is assigned. The model .ai/repo/ci/telemetry.yaml declares the same condition (trigger.skip_conclusions: [cancelled]), and the workflow stays its adapter. Case 4524 reads the workflow and the model and fails when the job has no such condition or when the two disagree. docs/CI.md, section Telemetry, says a cancelled run is not exported, and why.",
+        "path": ".ai/repo/project/issues/I4524.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4525
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -129967,7 +129989,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1124
+      "objects": 1126
     },
     {
       "name": "knowledge",
