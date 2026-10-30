@@ -2119,6 +2119,68 @@ mod tests {
         assert_eq!(harness_version(&h).unwrap(), "1.2.3");
     }
 
+    /// A session whose program cannot be started is answered at once with the reason, and
+    /// not asked again: only a busy file is waited for.
+    #[test]
+    fn a_session_that_cannot_start_is_an_error_naming_why() {
+        let e = spawn_group(&mut Command::new("/nonexistent/harness"))
+            .err()
+            .expect("an absent program does not start");
+        assert_eq!(e.kind(), std::io::ErrorKind::NotFound);
+    }
+
+    /// A run whose harness cannot answer `--version` at the start runs no session and is
+    /// not recorded: its reason names the harness.
+    #[test]
+    fn a_run_whose_harness_cannot_start_is_not_recorded() {
+        let (repo, work, probe) = (
+            tempfile::tempdir().unwrap(),
+            tempfile::tempdir().unwrap(),
+            tempfile::tempdir().unwrap(),
+        );
+        repository(repo.path(), "t");
+        let decl = declarations(
+            suite("live", &["t"], None),
+            vec![task("t", "test -f solved")],
+        );
+        let mut opts = options(repo.path(), work.path());
+        opts.harness = probe.path().join("absent");
+        let (written, failed) = run(&opts, &decl, &|_| {}).unwrap();
+        assert!(written.is_empty(), "{written:?}");
+        assert_eq!(failed.len(), 1, "{failed:?}");
+        assert!(failed[0].contains("absent --version"), "{}", failed[0]);
+        assert!(!record_path(repo.path(), "pilot", "t--baseline--r1").exists());
+        assert!(
+            !work.path().join("pilot").exists(),
+            "no session was started"
+        );
+    }
+
+    /// A harness that answered `--version` at the start and cannot be started at the end
+    /// leaves the run unrecorded: the version at the end is an error, never `unknown`.
+    #[test]
+    fn a_run_whose_harness_is_gone_at_the_end_is_not_recorded() {
+        let (repo, work, probe) = (
+            tempfile::tempdir().unwrap(),
+            tempfile::tempdir().unwrap(),
+            tempfile::tempdir().unwrap(),
+        );
+        repository(repo.path(), "t");
+        let decl = declarations(
+            suite("live", &["t"], None),
+            vec![task("t", "test -f solved")],
+        );
+        let mut opts = options(repo.path(), work.path());
+        opts.session_timeout = Duration::from_secs(60);
+        opts.harness = harness(probe.path(), "echo yes > solved; rm -f \"$0\"", SUCCESS);
+        let (written, failed) = run(&opts, &decl, &|_| {}).unwrap();
+        assert!(!opts.harness.exists(), "the session removed its harness");
+        assert!(written.is_empty(), "{written:?}");
+        assert_eq!(failed.len(), 1, "{failed:?}");
+        assert!(failed[0].contains("harness --version"), "{}", failed[0]);
+        assert!(!record_path(repo.path(), "pilot", "t--baseline--r1").exists());
+    }
+
     /// Hold `program` open for writing, as a child forked by another test thread holds a
     /// file this process has just written, and let go after `hold`.
     #[cfg(target_os = "linux")]

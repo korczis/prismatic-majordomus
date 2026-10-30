@@ -73625,6 +73625,44 @@
         }
       },
       {
+        "id": "majordomus://issue/I4339",
+        "kind": "issue",
+        "label": "I4339",
+        "summary": "Renumbered to I4360: monitor reports a GitHub run queued past its bound",
+        "route": "/cockpit/objects/issue/i4339",
+        "source": ".ai/repo/project/issues/I4339.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "majordomus commit history judges ab447585c29 without commit.unresolved_reference for I4339"
+          ],
+          "cancelled": true,
+          "created_at": "2026-10-28",
+          "current_state": "No record holds I4339; I4360 on docs/the-evolve-skill-harvests-what-sessions-only-remembered carries the objective, the criteria and the no-runner-online cause.",
+          "depends_on": [],
+          "desired_state": "I4339 resolves to this cancelled record, which names I4360 as the issue that carries the work; nothing is planned under I4339.",
+          "evidence_required": [
+            "ci"
+          ],
+          "milestone": "the-runtime-supervises-itself",
+          "non_scope": [
+            "Any of I4360's work: apps/majordomus-cli/src/monitor/github.rs and docs/MONITOR.md are I4360's scope"
+          ],
+          "objective": "Hold the identity I4339 that commit ab447585c29 named for the queued-run monitor issue, so that the commit's reference resolves; the work itself is planned and tracked as I4360.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4339.yaml"
+          ],
+          "slug": "monitor-reports-a-queued-run-renumbered",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "majordomus plan validate",
+            "scripts/ci/commit-policy"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4340",
         "kind": "issue",
         "label": "I4340",
@@ -74727,6 +74765,44 @@
           "validation": [
             "env -u MAJORDOMUS_SHARE bash test/run.sh 1051_a_followed_stream_can_be_waited_on",
             "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4364",
+        "kind": "issue",
+        "label": "I4364",
+        "summary": "Duplicate of I4365: a promoted knowledge note cites only references a clean clone resolves",
+        "route": "/cockpit/objects/issue/i4364",
+        "source": ".ai/repo/project/issues/I4364.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "majordomus commit history judges 5a4942c3a57 without commit.unresolved_reference for I4364"
+          ],
+          "cancelled": true,
+          "created_at": "2026-10-29",
+          "current_state": "No record holds I4364; I4365 on pull request 2677 (chore/a-promoted-record-cites-no-local-episode-is-planned) carries the objective and the criteria.",
+          "depends_on": [],
+          "desired_state": "I4364 resolves to this cancelled record, which names I4365 as the issue that carries the work; nothing is planned under I4364.",
+          "evidence_required": [
+            "ci"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Any of I4365's work: knowledge promote's provenance rewrite and its case are I4365's scope"
+          ],
+          "objective": "Hold the identity I4364 that commit 5a4942c3a57 named for the promoted-note defect, so that the commit's reference resolves; the work itself is planned and tracked as I4365.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4364.yaml"
+          ],
+          "slug": "a-promoted-note-cites-what-a-clone-resolves",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "majordomus plan validate",
+            "scripts/ci/commit-policy"
           ]
         }
       },
@@ -139147,6 +139223,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4339",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4339",
+        "target": "majordomus://milestone/the-runtime-supervises-itself",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4340",
         "target": "kind:issue",
         "kind": "is_a"
@@ -139474,6 +139560,16 @@
       {
         "source": "majordomus://issue/I4363",
         "target": "majordomus://milestone/the-runtime-supervises-itself",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4364",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4364",
+        "target": "majordomus://milestone/development-runtime",
         "kind": "belongs_to"
       },
       {
@@ -151543,8 +151639,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4148,
-      "edges": 9550,
+      "nodes": 4150,
+      "edges": 9554,
       "acyclic": false,
       "truncated": false
     }
