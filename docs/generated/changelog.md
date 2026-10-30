@@ -2261,7 +2261,7 @@ Current version: **1.0.0-alpha.9**
 - **ADR-0075** Which work realises an intent is a join over the records the lifecycle already keeps, and closed work does not outrank evidence _(proposed)_
 - **ADR-0073** An issue names the intent criterion it serves, and the coverage of every criterion is derived from the plan _(proposed)_
 - **ADR-0070** An intent is a typed record, and its stage and satisfaction are derived from the plan and the evidence _(proposed)_
-- **ADR-0091** Knowledge is derived at the episode boundary, from the ledger and git, and a person promotes it _(proposed)_
+- **ADR-0091** Knowledge is derived at the episode boundary, from the ledger and git, and a person promotes it _(accepted)_
 - **ADR-0046** A working context is derived and a closed record is composed; neither is a document somebody must remember to write _(proposed)_
 
 ### Added

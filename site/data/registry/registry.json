@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "da31b40589f677a60c83f92eedaa4d77ca560c96663b428da48f11686010cce8",
+    "fingerprint": "248582d92989ff5192a5708496298624c0b7688b8c13dd2484caab5e5c3a33ca",
     "summary": {
-      "total": 3633,
+      "total": 3643,
       "builtin": 220,
-      "declarative": 3413,
+      "declarative": 3423,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3413
+        "resource": 3423
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3423
+        "implemented": 3433
       },
       "mcp_tools": 206,
-      "mcp_resources": 3470,
+      "mcp_resources": 3480,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91083,7 +91083,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 353,
+        "capabilities": 352,
         "capability_ids": []
       },
       {
@@ -91383,7 +91383,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1102,
+        "capabilities": 1112,
         "capability_ids": []
       },
       {
@@ -91522,7 +91522,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 113,
+        "capabilities": 114,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "1b1c1dbd708b0f93cdad0785ca9f66c5d1ce7915fa55817e723dcd6354675f6f",
+    "fingerprint": "ac4ed47cf62befa6928313c0063eda4e668f75a65d7150ed2167e5b0040dd04c",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92107,16 +92107,16 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 353,
+      "document": 352,
       "domain": 6,
       "feature": 29,
       "gap": 5,
       "implementation": 52,
       "intent": 44,
-      "issue": 1102,
+      "issue": 1112,
       "knowledge": 60,
       "mesh-declaration": 1,
-      "milestone": 113,
+      "milestone": 114,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -92131,7 +92131,9 @@
       "use-case": 49,
       "workspace": 1
     },
-    "diagnostics": {},
+    "diagnostics": {
+      "warning": 1
+    },
     "objects": [
       {
         "uri": "majordomus://adr/adr-0001",
@@ -93371,7 +93373,7 @@
         "path": ".ai/repo/adrs/0091-knowledge-is-derived-at-the-episode-boundary-and-a-person-promotes-it.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 28001,
+        "bytes": 28262,
         "tags": [
           "knowledge",
           "sessions",
@@ -99579,15 +99581,6 @@
         "bytes": 46386
       },
       {
-        "uri": "majordomus://document/docs/PLAN_STATUS.md",
-        "kind": "document",
-        "identity": "docs/PLAN_STATUS.md",
-        "title": "Plan status",
-        "path": "docs/PLAN_STATUS.md",
-        "source_class": "document",
-        "bytes": 982448
-      },
-      {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
         "kind": "document",
         "identity": "docs/PREFLIGHT.md",
@@ -104347,7 +104340,7 @@
         "path": ".ai/repo/project/issues/I0828.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1204
+        "bytes": 1452
       },
       {
         "uri": "majordomus://issue/I0829",
@@ -106283,7 +106276,7 @@
         "path": ".ai/repo/project/issues/I1980.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2545
+        "bytes": 2868
       },
       {
         "uri": "majordomus://issue/I1981",
@@ -106492,7 +106485,7 @@
         "path": ".ai/repo/project/issues/I2001.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3035
+        "bytes": 3350
       },
       {
         "uri": "majordomus://issue/I2002",
@@ -106598,11 +106591,11 @@
         "kind": "issue",
         "identity": "I2114",
         "title": "A task's scope admits what its derive writes",
-        "description": "Stop the pre-push scope check from refusing a branch for the projections its own derive wrote, and give a task one supported command to widen its scope.",
+        "description": "Stop the pre-push scope check from refusing a branch for the projections its own derive wrote. The command that widens a running task's scope is I4260's scope add, not this issue's.",
         "path": ".ai/repo/project/issues/I2114.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2884
+        "bytes": 2716
       },
       {
         "uri": "majordomus://issue/I2115",
@@ -108571,7 +108564,7 @@
         "path": ".ai/repo/project/issues/I2826.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2304
+        "bytes": 2260
       },
       {
         "uri": "majordomus://issue/I2827",
@@ -109953,11 +109946,11 @@
         "kind": "issue",
         "identity": "I3117",
         "title": "The README and the launch page say only what master does about model invocation, doctrine dispatch and overrides",
-        "description": "Reconcile the model-invocation clause of README.md:20-21 ('never invokes a model') and docs/LAUNCH.md:44 and :61 with master, where scripts/advisor-consult carries questions to advisor CLIs, and state that an expedited landing is a recorded override. Qualify README.md:207-212 as the doctrine dispatch of lib/doctrine.sh and lib/check.sh, distinct from the CI ratchet baselines. Add each corrected sentence to docs/CLAIMS.yaml so claim-proof-check holds it to a test.",
+        "description": "Reconcile the model-invocation clause of README.md:20-21 ('never invokes a model') and docs/LAUNCH.md:44 and :61 with master, where scripts/advisor-consult carries questions to advisor CLIs, and state that an expedited landing is a recorded override. Add each corrected sentence to docs/CLAIMS.yaml so claim-proof-check holds it to a test.",
         "path": ".ai/repo/project/issues/I3117.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3963
+        "bytes": 3859
       },
       {
         "uri": "majordomus://issue/I3118",
@@ -110078,7 +110071,7 @@
         "path": ".ai/repo/project/issues/I3128.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4177
+        "bytes": 4527
       },
       {
         "uri": "majordomus://issue/I3129",
@@ -110485,7 +110478,7 @@
         "path": ".ai/repo/project/issues/I3166.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3393
+        "bytes": 4046
       },
       {
         "uri": "majordomus://issue/I3167",
@@ -111585,7 +111578,7 @@
         "path": ".ai/repo/project/issues/I3280.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4042
+        "bytes": 4349
       },
       {
         "uri": "majordomus://issue/I3281",
@@ -111794,7 +111787,7 @@
         "path": ".ai/repo/project/issues/I3299.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2156
+        "bytes": 2429
       },
       {
         "uri": "majordomus://issue/I3300",
@@ -112003,7 +111996,7 @@
         "path": ".ai/repo/project/issues/I3318.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3019
+        "bytes": 3863
       },
       {
         "uri": "majordomus://issue/I3319",
@@ -115006,7 +114999,7 @@
         "path": ".ai/repo/project/issues/I4265.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1406
+        "bytes": 1703
       },
       {
         "uri": "majordomus://issue/I4290",
@@ -115645,6 +115638,116 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 5755
+      },
+      {
+        "uri": "majordomus://issue/I4460",
+        "kind": "issue",
+        "identity": "I4460",
+        "title": "A gate run over an input set that selects no file is never a freshness proof: both gate judges read it unknown and a completed finish refuses it",
+        "description": "When a gate's inputs (Model::inputs_of, mj_gate_inputs) are empty or select no tracked file, a run recorded for it can be judged neither fresh nor stale, and the judgement says so instead of comparing an empty hash with an empty hash. Both Rust gate judges, judge_one (apps/majordomus-cli/src/gates/judge.rs:359-385), which gates.completion answers, and standing_of (apps/majordomus-cli/src/gates/state.rs:142-188), which gate state answers, return unknown for that case with the detail `the gate <id> selects no file in this repository (inputs <specs>); its run cannot be judged fresh` and a remedy naming the class paths that would give it inputs; neither returns pass for a recorded \\\"\\\" against a current \\\"\\\". The shell recorder (mj_gate_inputs_hash, lib/gates.sh:97-106) keeps writing the empty hash it writes today, so the ledger is unchanged and the decision is the judges' alone; mj_validate_completion_gates already maps unknown onto a refusal of completed and a named skip otherwise (lib/gates.sh:150-151, mj_gate_unknown). The rule is written once, as one table of cases (inputs that select files, inputs that select none, a gate no class names, an always gate, a recorded empty hash, a recorded non-empty hash) that a parity case drives through the shell recorder and both Rust judges, so the recorded hash and the two readings cannot drift apart.",
+        "path": ".ai/repo/project/issues/I4460.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 7383
+      },
+      {
+        "uri": "majordomus://issue/I4461",
+        "kind": "issue",
+        "identity": "I4461",
+        "title": "handover --resolve judges the working tree as well as HEAD, and never says exact over changes made since the handover",
+        "description": "A handover records a fingerprint of the working tree it was written over, and resolving it compares that fingerprint as well as the head and branch. The writer adds `tree: <id>` to the record's front matter, computed by mj_worktree_tree_id (lib/common.sh:68), the same tree id finish already records for its verification. mj_handover_resolve (lib/handover.sh:143) keeps its `Git state` line as mj_git_label computes it for the head, and prints a `Working tree` line beside it: `unchanged since the handover` when the current tree id equals the recorded one, `changed since the handover` with the paths whose status differs from the record's changed_files when it does not, and `unknown: the record has no tree` for a record written before this change, never unchanged. The session briefing (lib/derive.sh:577, which resolves the same record) prints the same word. No new label is added to mj_git_label's vocabulary and no other caller of it changes.",
+        "path": ".ai/repo/project/issues/I4461.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4764
+      },
+      {
+        "uri": "majordomus://issue/I4462",
+        "kind": "issue",
+        "identity": "I4462",
+        "title": "Use-case coverage of none of its targets never prints OK: doctor reports 0 of N covered as a finding that names the policy that allowed it",
+        "description": "One change to mj_validate_use_case_coverage (lib/usecase.sh:988-1008). When the tally has targets and covers none of them (covered 0, total above 0), the closing line is not mj_doctrine_ok: it is an INFO finding that reads `use-case 0 of <N> target(s) covered — the policy requires none (use_cases.coverage: <class>=<value>, ...)` with the remedy `majordomus usecase scaffold` or `majordomus usecase coverage`, so a reader sees zero coverage as zero and sees which policy entry made it acceptable. With at least one target covered and no required gap, the OK line stays as it is; a required gap still fails as it does now; a manifest with no use-cases section still skips. The JSON form of `usecase coverage` is unchanged.",
+        "path": ".ai/repo/project/issues/I4462.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3821
+      },
+      {
+        "uri": "majordomus://issue/I4463",
+        "kind": "issue",
+        "identity": "I4463",
+        "title": "plan validate flags an open issue named as a blocker in another issue's current_state and absent from its depends_on, and plan next does not propose the issue it blocks",
+        "description": "Both engines of the plan read one more thing from an issue's current_state: an open issue id that the text names as what the issue waits on. The phrases that make a mention a blocker are declared once, as data both engines read (beside the plan schema in share/, not as a constant in either engine): `completes when <ids> ... land`, `blocked by <id>`, `blocked on <id>`, `waits for <id>`, `waits on <id>`, `after <id> lands`, `until <id> lands`. When such an id names an issue that is neither DONE nor CANCELLED and is not in the issue's depends_on, plan validate emits a WARN finding on the issue: `current_state names <id> as a blocker and depends_on does not; add it to depends_on, or reword current_state`. The derived status treats that mention as an open dependency for readiness, so the issue is not READY, and plan next and plan start never propose it while the named blocker is open; plan show names the blocker as the reason. A mention that is not in one of the declared phrases is not read, so citing another issue in prose stays free.",
+        "path": ".ai/repo/project/issues/I4463.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5002
+      },
+      {
+        "uri": "majordomus://issue/I4464",
+        "kind": "issue",
+        "identity": "I4464",
+        "title": "plan next says when the ready issue needs a build the machine cannot start, and proposes a ready issue that needs none first, never hiding either",
+        "description": "The plan derivation stays a walk of the records (apps/majordomus-cli/src/plan.rs says it opens no file and starts no process); the machine's capacity is read where the answer is projected, once per call: by plan next, by the `next ready issue` line of plan start (lib/plan.sh:263, :514) and by the Rust plan.next capability. An issue needs a build when its scope names a path that matches a build input the repository declares: a new optional policy key, build.inputs (a list of globs; absent: no issue is known to need a build, and every answer is as today), admitted through the policy schema and its generated allow-list. The floor is the one the build itself enforces, MAJORDOMUS_MIN_FREE_MB with its default (lib/rust_bin.sh:461-470, :551), so the plan and the build cannot disagree about it. When the free space of the checkout's volume is below that floor, plan next takes the first ready issue in today's ranking that needs no build, and prints, for each better-ranked issue it passed over, `<id> needs a build: <free> free, below the <floor> floor`; when every ready issue needs a build it still names the first, with the same line, and never answers none. plan ready lists every READY issue as today and marks those that need a build. At or above the floor nothing changes.",
+        "path": ".ai/repo/project/issues/I4464.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5375
+      },
+      {
+        "uri": "majordomus://issue/I4465",
+        "kind": "issue",
+        "identity": "I4465",
+        "title": "Every enforced rule names the principle it rests on, doctrine show prints it, doctrine status counts the rules that name none, and a rule's class is called its binding level",
+        "description": "Four changes. First, the loader of lib/doctrine.sh derives each enforced rule's principle instead of reading a field no rule has: the principles are the rules of the effective set tagged `principle` (ten, under share/standard/majordomus/rules/principle-*.v1.md), and a rule's principle is every principle reached through its depends_on, transitively, with the version suffix dropped, comma-joined in the order reached. The awk pass that builds doctrines.N (lib/doctrine.sh:40-61), whose key list at :42 has no principle, records it as doctrines.N.principle, so the existing `principle` line of `doctrine show` (lib/doctrine.sh:301) prints it. A rule that reaches none prints `principle   none — no principle in its depends_on`. Second, `doctrine status` adds one count, `enforced rules naming no principle: <n>`, of the enforced rules whose own depends_on names no principle, and `doctrine status --json` the ids; it is reported, never a refusal. Third, the 13 dispatched rules of the shipped package that name no principle in their depends_on each name, as an exact id@version, the principle they rest on, so README.md:195 and :205-206 ('every enforced rule names the principle it rests on', at :206 'in `depends_on`') become true; the package manifest is rewritten by scripts/rules-package write and the vendored copy by `majordomus rules vendor update`, never by hand. Fourth, a rule's `class` is its binding level (what a violation means: blocking or advisory), and it stops being called an enforcement class: docs/DOCTRINE.md says so where it defines the field and in its section on the two classes, and apps/majordomus-cli/src/graph.rs:734 no longer says 'enforcement class'; how a rule is enforced (its validator, its mode, its proof) stays derived apart, and no schema changes.",
+        "path": ".ai/repo/project/issues/I4465.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 10439
+      },
+      {
+        "uri": "majordomus://issue/I4466",
+        "kind": "issue",
+        "identity": "I4466",
+        "title": "A mesh review answer names the head and the base it reviewed, and a verdict whose head or base has moved reads stale wherever reviews are shown",
+        "description": "The mesh review events carry the revision they are about, and every reader of a review compares it with the subject now. ReviewRequested (apps/majordomus-cli/src/mesh/journal.rs:638-659) gains optional head and base: when its subject names a branch or a commit the requesting runtime's checkout can resolve, the runtime records the subject's head commit and its merge base with the trunk (the trunk crate::delivery::revision::trunk_ref resolves, apps/majordomus-cli/src/delivery/revision.rs:96), from git, never from the requester's text. ReviewAnswered (journal.rs:661-671) gains the same two optional fields, filled by the answering runtime the same way, and, when it cannot resolve the subject, copied from the request and marked `as_requested`. The mesh.review.answer capability (apps/majordomus-cli/src/capability/builtin/mesh.rs:1579-1606) takes an optional head that the answerer may state and refuses one that differs from what its own git resolves, naming both. A reader (mesh state, the mesh page, the monitor's review lines) gives each answered review one standing: `current` when the subject's head and base are the recorded ones, `stale: head moved <old>..<new>` or `stale: base moved <old>..<new>` when either differs, `unbound` for an answer written before this change, and `unknown: <reason>` when the reading runtime cannot resolve the subject; unbound and unknown never read as current. Both fields are listed in .ai/repo/ci/mesh-event-fields.yaml as clear (commit ids are not secrets), so the mesh check admits them.",
+        "path": ".ai/repo/project/issues/I4466.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6502
+      },
+      {
+        "uri": "majordomus://issue/I4467",
+        "kind": "issue",
+        "identity": "I4467",
+        "title": "A handover records the work its writer delegated to subagents and peers, and resolving it says where each piece stands now",
+        "description": "`majordomus handover` takes a repeatable `--delegated <ref>`, and the record keeps what the writer handed to others beside its own task. A ref is one of: a task id (t-...), a branch, a mesh review (<stream>/<review>), or anything else, kept verbatim. The writer names the ref; the tool, never the writer, resolves where it stands from its authority at write time: a task from the task record of whichever worktree of the repository holds it (its outcome and worktree) or from the ledger's task.finished; a branch from git (its head and whether the trunk contains it); a review from the executable's mesh state when the mesh is enabled (open, answered with its verdict, withdrawn). What cannot be resolved is recorded as `unknown: <reason>`, never as done. The front matter (lib/handover.sh:74, mj_record_front_matter) carries a `delegated:` list, one `<kind> <ref> <standing>` per item; `handover --derive` adds a `# Delegated` section listing them. `handover --resolve` and the session briefing print each item with its standing then and its standing now, resolved again the same way, so a resumed coordinator sees which delegated work finished, which is still open and where, and which it can no longer find.",
+        "path": ".ai/repo/project/issues/I4467.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5193
+      },
+      {
+        "uri": "majordomus://issue/I4468",
+        "kind": "issue",
+        "identity": "I4468",
+        "title": "Every exemption is written in one grammar (scope, rule, reason, approver, an expiry or a removal condition, shrink-only) that generate inlines into each existing shape, and the README describes declared exemptions instead of denying them",
+        "description": "Declare the grammar of an exemption once, under share/schemas/majordomus/exemption/, with six fields: scope (the paths, units, ids or lines it covers), rule (the exact rule id@version it exempts from), reason, approver (who accepted it), expires_at or removal (a date, or the condition whose truth removes it; one of the two is required), and shrink_only (whether the covered set may only shrink without a new approval). `majordomus generate` inlines that grammar into each of the eleven existing exemption shapes, in the form each shape already has (a schema's properties, a JSONL object's keys, a baseline file's header, a marker's arguments), and `generate --check` refuses a shape that drifted from it. Each shape's existing reader then refuses an entry that lacks a required field, reports an entry past its expires_at, and refuses growth of a shrink_only set that carries no new approval. No new store: every exemption stays where it is written today. A ratchet baseline file is one exemption, declared in its header; its lines are its scope. The eleven shapes, at master 51b38035a71: (1) intent-binding exemption classes, .ai/repo/policy.yaml:39-53, given as `start --exempt <class> --because` and recorded as bound_exemption (lib/handover.sh:67); (2) release version-floor exemptions by path, .ai/repo/policy.yaml:61-70; (3) a directory contract's `children.exempt` (.ai/repo/rules/README.md:14-17 and :35-38); (4) a reviewed rule's `x-majordomus.reviewed_because` (share/schemas/majordomus/rule/rule.v1.proto:92, share/allow/rule.txt:21); (5) the 157 shell-unit exemptions of .ai/repo/automation/inventory.jsonl, each with a why and a removal; (6) a capability's benchmark WaiverReason (apps/majordomus-cli/src/capability/model.rs:181-207); (7) the ratchet baselines, the 16 .ai/repo/*-baseline.txt files plus .ai/repo/ci/case-numbers-baseline.txt, .ai/repo/ci/gate-list-baseline.txt, .ai/repo/ci/github-drift-baseline.txt and .ai/repo/evidence/published-not-run.txt; (8) english-only's name, fixture and translation declarations, scripts/ci/english-only-allow.txt with its grammar at scripts/ci/english-only-check:30-36; (9) an unrun documented command's `<!-- majordomus:unrun <reason> -->` marker (scripts/ci/doc-command-check:32-35); (10) the version-label history, .ai/repo/version-label-history.txt (apps/majordomus-cli/src/release/version.rs:86); (11) the design check's path exemptions, written as reasons inside scripts/ci/design-check:36-57. Then README.md:211-213 says what master does: a doctrine is blocking or advisory, and what does not yet meet a rule is a declared exemption under that grammar, named, approved, bounded and shrink-only, rather than 'no baseline, and no override'.",
+        "path": ".ai/repo/project/issues/I4468.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 9165
+      },
+      {
+        "uri": "majordomus://issue/I4469",
+        "kind": "issue",
+        "identity": "I4469",
+        "title": "A knowledge record may say where it holds, in an optional typed holds_for (subsystem, version, environment), and a task's context matches it against the task's scope",
+        "description": "Add one optional field to knowledge/v1, `holds_for`, a typed object with three optional members: subsystem (repository paths or path prefixes, the same spelling a task's scope uses), version (a version range of the tool or the repository the lesson was learnt on) and environment (named conditions such as an operating system, a CI host or a provider). A record without holds_for means what it means today. The field is declared in share/schemas/majordomus/knowledge/knowledge.v1.proto, projected into knowledge.v1.schema.json by `majordomus generate`, and admitted by share/allow/knowledge.txt. The readers that compile a task's context (devcontext and the briefing's knowledge pointers) match a note's holds_for.subsystem against the task's scope with the same path matching the task's scope uses, select a matching note before an unmatched one, leave out a note whose holds_for names a version or an environment that the task's state contradicts, and print why a note was selected or left out. knowledge validate refuses a holds_for member of the wrong type or an unknown key.",
+        "path": ".ai/repo/project/issues/I4469.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4742
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -116620,6 +116723,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 4617
+      },
+      {
+        "uri": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "milestone",
+        "identity": "a-bounded-task-is-carried-to-accepted-work",
+        "title": "A bounded task is carried to accepted work: one integration map of the cycle, each break owned by an existing issue and closed by a case",
+        "description": "Every row reads wired with its proof run: each break is closed in the owner it names by the smallest change that unblocks its user step, with a case that fails before the change, and the stranger fixture and the in-repo pass, run again, reach acceptance with no hand-written state and no step outside its budget.",
+        "path": ".ai/repo/project/milestones/a-bounded-task-is-carried-to-accepted-work.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 12216
       },
       {
         "uri": "majordomus://milestone/a-change-is-judged-in-minutes",
@@ -129208,7 +129322,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 353
+      "objects": 352
     },
     {
       "name": "domain",
@@ -129265,7 +129379,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1102
+      "objects": 1112
     },
     {
       "name": "knowledge",
@@ -129295,7 +129409,7 @@
       "identity": [
         "id"
       ],
-      "objects": 113
+      "objects": 114
     },
     {
       "name": "moment",
