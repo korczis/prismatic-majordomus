@@ -62,9 +62,11 @@ mj_rust_sweep_profile() { :; }
 mj_rust_prune_build_dir() { :; }
 MJ_SHARED_BUILD_CAP_MB_DEFAULT=
 MJ_EVICT_IDLE_MIN_DEFAULT=
+MJ_EVICT_PRESSURE_IDLE_MIN_DEFAULT=
 MJ_BOUND_SWEEP_EVERY_S=
 MJ_EVICT_LOCK_WAIT_DEFAULT=
 mj_rust_bound_state() { :; }
+mj_rust_pressure_idle() { :; }
 mj_rust_bound_due() { :; }
 mj_rust_named_versions() { :; }
 mj_rust_deps_generations() { :; }

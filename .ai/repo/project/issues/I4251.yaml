@@ -1,0 +1,26 @@
+id: I4251
+milestone: a-second-adopter-is-served
+title: "capture install writes no Markdown link that leaves the adopting repository"
+slug: a-mod-links-nothing-outside-the-repository
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Link the brief mod's README to the published page of the session brief instead of `../../../../docs/BRIEF.md`, and prove that every Markdown link a mod writes resolves inside the repository it is installed into."
+why: "An adopter's field report (a private Python client repository adopted from the v1.0.0-alpha.8 release on 2026-10-27) found `.claude/skills/majordomus-brief/README.md`, written by `majordomus capture install --provider claude-code`, linking four directories up: inside the tool's checkout that is docs/BRIEF.md, inside an adopter it is outside the repository, and the adopter's own link check failed on a file the adopter never wrote."
+current_state: "share/mods/claude-code/majordomus-brief/README.md links `../../../../docs/BRIEF.md`."
+desired_state: "The README links https://majordomus.dev/docs/brief/; case 4251 refuses any packaged or installed mod link that leaves its root."
+scope:
+  - ".ai/repo/project/issues/I4251.yaml"
+  - "share/mods/claude-code/majordomus-brief/README.md"
+  - "test/cases/4251_a_mod_links_nothing_outside_the_repository.sh"
+depends_on: []
+acceptance_criteria:
+  - "Every relative link in every Markdown file capture install writes resolves inside the repository"
+  - "Every relative link of every mod under share/mods stays inside the mod's directory"
+  - "The case fails on master's brief README and on a mod copy with an escaping link"
+validation:
+  - "bash test/run.sh 4251_a_mod_links_nothing_outside_the_repository"
+evidence_required:
+  - "case_mod_links_stay_inside"
+created_at: 2026-10-27
+updated_at: 2026-10-27
