@@ -1,0 +1,48 @@
+id: I4503
+milestone: a-profile-is-resolved-once-and-enforced
+title: "The lifecycle reads the resolver: start, check --explain, context, finish and doctor take a profile from one answer, and no shell function reads a profile's keys"
+slug: the-lifecycle-reads-the-resolver
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Make the shell lifecycle a consumer of the resolver: each command that reads a profile today asks profile.resolve and acts on its answer, mj_load_profile is removed, and the regression-test predicate exists once."
+why: "campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md, PROMPT 01 exit gate (no consumer invents a second version of resolution) and invariant 1 (one truth). After I4502 there are two readers of a profile: the resolver, and mj_load_profile with the six commands that call it. They agree only as long as somebody keeps them agreeing, and gates/done.rs already repeats finish's regression-test predicate in Rust with a comment naming the shell function it copies. ADR 0069 says new automation is a typed capability and not shell."
+current_state: "Measured at 51b38035a71, where no commit since 3491f35cab has touched the profile schema, share/allow/profile.txt, .ai/repo/profiles, share/skeleton/profiles or the claim pages. lib/common.sh mj_load_profile flattens .ai/repo/profiles/<name>.yaml into MJ_PRO_FLAT and mj_pro reads a key. Callers: lib/start.sh (existence), lib/context.sh (context.* toggles, checkpoint_interval, the PROFILE section), lib/check.sh (--explain, the checkpoint interval), lib/finish.sh (verification.* in mj_validate_profile_requirements and the verify-command requirement), lib/doctor.sh (validation), and lib/update.sh mj_build_fragments, whose PROFILE_TABLE no shipped provider template includes and the Rust provider renderer refuses. apps/majordomus-cli/src/gates/done.rs holds is_test_path, the same predicate as finish."
+desired_state: "A single shell function asks the executable for the effective profile of the active task once per command and exposes its fields; the six callers read that. check --explain prints the resolver's explain rows followed by the policy sections it prints today. doctor's profile findings come from profile.validate. The regression-test predicate is the Rust one, called by finish. mj_load_profile and MJ_PRO_FLAT are gone, and a scan in an existing structure gate refuses a shell read of a file under the profiles directory. Where the executable is absent, the commands refuse with the message the launcher already gives for a missing executable; they do not fall back to reading the file."
+scope:
+  - "lib/common.sh"
+  - "lib/start.sh"
+  - "lib/context.sh"
+  - "lib/check.sh"
+  - "lib/finish.sh"
+  - "lib/doctor.sh"
+  - "lib/update.sh"
+  - "apps/majordomus-cli/src/gates/done.rs"
+  - "apps/majordomus-cli/src/profile"
+  - "scripts/ci"
+  - "test/cases/16_profiles.sh"
+  - "docs/claims/profile-validate.md"
+  - "docs/claims/profile-axes.md"
+  - ".ai/repo/project/issues/I4503.yaml"
+non_scope:
+  - "Moving start, context or finish themselves into Rust"
+  - "Changing what any profile requires: the same tasks are accepted and refused as before"
+depends_on:
+  - I4502
+acceptance_criteria:
+  - "Case 16_profiles passes with its assertions on check --explain updated only for the added provenance, and every refusal of finish it asserts is unchanged"
+  - "For each shipped profile, the context a task is given before and after the change is identical"
+  - "A search of lib for a read of the profiles directory finds the one function that calls the executable, and the gate fails when a second appears"
+  - "The time of start and of check under a shipped profile is within the baseline I4500 recorded, by the tolerance the entry budgets in the policy use"
+  - "lib/update.sh mj_build_fragments no longer builds a PROFILE_TABLE of its own: the fragment is removed or read from the resolver"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 16_profiles 01_init"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib gates::"
+  - "bin/majordomus shell check"
+evidence_required:
+  - "case_16_profiles"
+  - "context_identical_before_after"
+  - "no_shell_profile_reader_gate"
+created_at: 2026-10-30
+updated_at: 2026-10-30

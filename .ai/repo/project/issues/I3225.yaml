@@ -5,7 +5,7 @@ slug: a-capability-runs-from-the-ui
 priority: p1
 profile: implementation
 objective: "Move the Cockpit's schema-generated capability form and its execution start path (share/cockpit/executions.js installStartButton, data-mj-start, data-mj-confirm, followed through share/cockpit/socket.js) into the module both surfaces import (ADR 0135), and offer it on /ui/capabilities?id=: the run is an execution of the shared executor; confirmation is asked exactly when ExecutionPolicy::needs_confirmation is true; a refusal is the executor's, verbatim; the run's events follow on the page through the execution's links.events and links.websocket, its full page at links.cockpit. The direct-route runner (runner.js's Run) is not offered on /ui."
-why: "The owner asked from 2026-09-10 onwards to run and manage everything from the UI; ChatGPT's 2026-10-06 two-layer design (a generic capability UI under curated workflows) was accepted in conversation. docs/MAJORDOMUS_UI.md says nothing on the UI starts work yet; I2781 (2b) covers issue moves only. The live channel is 5a's in-flight share/ui/socket.js and live.js work (I2982/I2983). Those records are not on master or in this tree, so plan validate refuses them as depends_on ids, and this issue must not start before they are on origin/master. I3139's mesh action (another intent) is expected to reuse this start, confirm and follow path and to depend on I3225. Sources: chatgpt-majordomus:c187#8, chatgpt-majordomus:c125#1, chatgpt-majordomus:c225#2, chatgpt-majordomus:c245#2."
+why: "The owner asked from 2026-09-10 onwards to run and manage everything from the UI; ChatGPT's 2026-10-06 two-layer design (a generic capability UI under curated workflows) was accepted in conversation. docs/MAJORDOMUS_UI.md says nothing on the UI starts work yet; I2781 (2b) covers issue moves only. The live channel is 5a's in-flight share/ui/socket.js and live.js work (I2982/I2983). Those records are not on master or in this tree, so plan validate refuses them as depends_on ids, and this issue must not start before they are on origin/master. I3139's mesh action (another intent) is expected to reuse this start, confirm and follow path and to depend on I3225. Sources: chatgpt-majordomus:c187#8, chatgpt-majordomus:c125#1, chatgpt-majordomus:c225#2, chatgpt-majordomus:c245#2. The owner's pack asks for the same in campaigns/majordomus-intent-ui-pack/02-ACTION-PLANE.md; PR #1058 planned it as I2537, which never landed, and the criteria of that record this one did not hold were folded in on 2026-10-30."
 current_state: "The Cockpit runs any capability from a generated form; /ui/capabilities reads capabilities.describe and runs nothing."
 desired_state: "One form and execution start path in shared code, two surfaces, no per-capability markup, no run on /ui that is not an execution; I2810's JSON editor field is the form's JSON control when it lands; every run-and-confirm control on /ui uses this one path."
 scope:
@@ -40,6 +40,9 @@ acceptance_criteria:
   - "The first commit adds apps/majordomus-cli/tests/ui_capability_run.rs and rewrites criterion a-capability-runs-from-the-ui to `evidence: test`, `ref: apps/majordomus-cli/tests/ui_capability_run.rs`, wording the confirmation as needs_confirmation and without the dry-run clause; `cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_capability_run` passes and is this issue's evidence"
   - "The generated form, the confirmation and the followed run fit 390 px with no horizontal scroll (scripts/ui audit at phone width)"
   - "docs/MAJORDOMUS_UI.md no longer says nothing on the UI or on the screen starts work (both the :377 and :529 passages) and describes running a capability from /ui"
+  - "A capability that is not executable, or has no HTTP exposure, shows that reason on its inspector and draws no control"
+  - "With scripts off, the inspector shows the command line and the API route of the capability and no button"
+  - "A run started from the inspector lands on the UI execution inspector I4483 adds, once it exists"
 validation:
   - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::capabilities"
   - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test cockpit"
@@ -47,4 +50,4 @@ validation:
 evidence_required:
   - "apps/majordomus-cli/tests/ui_capability_run.rs"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-30
