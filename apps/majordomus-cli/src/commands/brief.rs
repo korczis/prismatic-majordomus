@@ -49,6 +49,15 @@ fn answer(ctx: &Context, args: &BriefArgs, out: &mut impl Write) -> Result<()> {
         })?;
         input["background"] = tasks;
     }
+    if let Some(p) = &args.previous_json {
+        let previous: serde_json::Value = serde_json::from_str(p)
+            .ok()
+            .filter(serde_json::Value::is_object)
+            .ok_or_else(|| Error::Protocol {
+                reason: "--previous-json is not a JSON object of section fingerprints".into(),
+            })?;
+        input["previous"] = previous;
+    }
     let v = ctx.execute(&id, input).map_err(|e| Error::Protocol {
         reason: e.to_string(),
     })?;
@@ -81,9 +90,15 @@ fn render(out: &mut impl Write, v: &serde_json::Value, args: &BriefArgs) -> std:
             .unwrap_or(0);
         writeln!(
             out,
-            "majordomus brief  {}  {}{}  ({:.1} s)  report {} #{}",
+            "majordomus brief  {}{}  {}{}  ({:.1} s)  report {} #{}",
             text("/at"),
-            text("/answered_by/process"),
+            // the composing host's own clock beside UTC, when it was read
+            match text("/at_local") {
+                "" => String::new(),
+                l => format!(" ({l})"),
+            },
+            // the JSON's word (`this_process`) in the person's words (`this process`)
+            text("/answered_by/process").replace('_', " "),
             match text("/answered_by/url") {
                 "" => String::new(),
                 u => format!(" {u}"),
@@ -142,6 +157,32 @@ mod tests {
             "Keep yourself awake.\nNow: I1 @main | peers 1/1b | mesh off | prs ?\n"
         );
         assert_eq!(rendered(&v, &["--report"]), "Majordomus report owed: x\n");
+        let headed = json!({
+            "at": "2026-10-30T04:20:20Z",
+            "answered_by": { "process": "this_process", "elapsed_ms": 3100 },
+            "report": { "contract": "brief-report/v1", "fingerprint": "3398aa56f184" },
+            "lines": ["derive       [current] lock free"],
+        });
+        assert_eq!(
+            rendered(&headed, &[]),
+            "majordomus brief  2026-10-30T04:20:20Z  this process  (3.1 s)  report \
+             brief-report/v1 #3398aa56f184\nderive       [current] lock free\n",
+            "the header says who answered in words, never the JSON's identifier"
+        );
+        let mut local = headed.clone();
+        local["at_local"] = json!("2026-10-30T05:20:20+01:00 CET");
+        assert!(
+            rendered(&local, &[]).starts_with(
+                "majordomus brief  2026-10-30T04:20:20Z (2026-10-30T05:20:20+01:00 CET)  this process"
+            ),
+            "the header names the host's clock beside UTC"
+        );
+        assert_eq!(
+            args(&["--previous-json", "{\"peers\":\"abc\"}"])
+                .previous_json
+                .as_deref(),
+            Some("{\"peers\":\"abc\"}")
+        );
         let json_out = rendered(&v, &["--format", "json"]);
         let back: serde_json::Value = serde_json::from_str(&json_out).expect("one JSON document");
         assert_eq!(back, v);

@@ -75,11 +75,13 @@ pol_set brief_interval_minutes 7
 brief() { "$RB" brief --repo . --this-checkout "$@" 2>/dev/null || fail "brief $* failed"; }
 LAST_OUT="$(brief --line)"
 [ "$(printf '%s\n' "$LAST_OUT" | wc -l | tr -d ' ')" = 1 ] || fail "the one-line brief is not one line: $LAST_OUT"
-expect_grep '\| mesh off \| peers 0/1b \|'
+expect_grep '\| mesh inactive \| peers 0 \|'
+# no question mark stands for a fact anywhere in the line (2026-10-30: `session ?`, `disk ?`)
+expect_no_grep '(^| )\?( |$)'
 LAST_OUT="$(brief --keep-awake)"
 expect_grep '^Report on yourself every 7 minutes without being asked \(brief-report/v1 #[0-9a-f]{12}, ADR 0136\)'
 expect_grep '/loop 7m /mj-brief'
-expect_grep 'A brief in which only times and ages moved is owed no report'
+expect_grep 'A brief whose section fingerprints did not move is owed no report'
 expect_no_grep 'two to four lines'
 expect_grep '^Now: '
 LAST_OUT="$(brief --report)"
@@ -88,17 +90,24 @@ expect_grep '^Rules:$'
 expect_no_grep 'two to four lines'
 expect_no_grep 'a board that could not be read, a superseded server'
 LAST_OUT="$(brief)"
-expect_grep '^majordomus brief  [0-9T:-]+Z  this_process'
+expect_grep '^majordomus brief  [0-9T:-]+Z  this process  '
 for section in attention session work peers mesh integration ci machine release derive; do
   expect_grep "^$section +"
 done
-expect_grep '^answered by  this_process \(no server answers for this checkout'
-expect_grep '^ci +unread: not the leaseholder'
+expect_grep '^answered by  this process — no server answers for this checkout'
+expect_grep '^ci +\[unread\] not the leaseholder'
+expect_no_grep '^[a-z ]{12} unread'
+expect_no_grep '@\?'
 LAST_OUT="$(brief --format json)"
 expect_grep '"interval_minutes": 7'
 expect_grep '"contract": "brief-report/v1"'
 printf '%s' "$LAST_OUT" | jq -e '(.attention | type) == "array" and (.report.prompt | startswith("Majordomus report owed")) and (.fingerprints | length) == 9' >/dev/null \
   || fail 'the JSON brief carries no attention array, no report.prompt or not nine section fingerprints'
+# every remedy runs as written: no `<task>` or `<paths>` to fill in, no question mark
+printf '%s' "$LAST_OUT" | jq -e '[.attention[] | .remedy | select(test("<[a-z]|(^| )[?]( |$)"))] | length == 0' >/dev/null \
+  || fail "an attention remedy is a template: $(printf '%s' "$LAST_OUT" | jq -c '[.attention[].remedy]')"
+printf '%s' "$LAST_OUT" | jq -e '[.attention[] | select(.report_section == "")] | length == 0' >/dev/null \
+  || fail 'an attention entry names no report section'
 
 # ---------------------------------------------------------------- installed where it is switched on
 # This repository switches the brief on, so its own tracked copy is the distribution's, file for

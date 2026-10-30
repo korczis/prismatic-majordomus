@@ -29,10 +29,19 @@ export const LEGACY_MARKER = 'Majordomus brief: since the last report,';
 
 export type Brief = {
   at: string;
+  at_local?: string;
   line: string;
   lines: string[];
   interval_minutes: number;
-  attention?: { id: string; section: string; word: string; fact: string; remedy: string; actor: string }[];
+  attention?: {
+    id: string;
+    section: string;
+    report_section?: string;
+    word: string;
+    fact: string;
+    remedy: string;
+    actor: string;
+  }[];
   report?: {
     contract: string;
     fingerprint: string;
@@ -40,9 +49,14 @@ export type Brief = {
     prompt: string;
     reminder: string;
     since?: string | null;
+    changed?: string[] | null;
   };
   fingerprints?: Record<string, string>;
 };
+
+// What a section read past its budget carries for a fingerprint: its facts were not read,
+// so it is never said to have changed (LATE in brief.rs).
+const LATE = 'late';
 
 // ---------------------------------------------------------------- what counts as a change
 
@@ -75,7 +89,10 @@ export const changedSections = (before: Brief, after: Brief): string[] => {
     return fingerprint(before) === fingerprint(after) ? [] : ['brief'];
   }
   const names = [...new Set([...Object.keys(after.fingerprints), ...Object.keys(before.fingerprints)])];
-  return names.filter(k => before.fingerprints?.[k] !== after.fingerprints?.[k]);
+  return names.filter(k => {
+    const [b, a] = [before.fingerprints?.[k], after.fingerprints?.[k]];
+    return b !== LATE && a !== LATE && b !== a;
+  });
 };
 
 // ---------------------------------------------------------------- what is submitted
@@ -103,9 +120,17 @@ export const isOwn = (text: string, b: Brief | undefined): boolean =>
 
 // The session's state. A reload starts it over, as the new process measures anew.
 let last: Brief | undefined;
-// The brief the session was last told, by the start event or by this mod, and when.
+// When `last` was read, on the engine's clock.
+let lastAt = 0;
+// Why the latest read failed, when it did; cleared by the next read that answers.
+let failure: string | undefined;
+// The brief the session was last told, by the start event, a report or a reminder, and when:
+// what the change test compares against.
 let told: Brief | undefined;
 let shownAt = 0;
+// The instant of the last report this mod submitted: what `--since` names, so that a
+// reminder (which asks for no report) never moves the start of what "Delivered" covers.
+let reportedAt: string | undefined;
 let queued = false;
 const supervised = new Map<string, boolean>();
 
@@ -128,11 +153,14 @@ const executable = async ($: EngineInterface): Promise<string> => {
   return 'majordomus';
 };
 
-// The brief as JSON, or nothing. Never builds: a status line is not where a compiler starts.
-// The instant the session was last told goes with it, so that the report says what was
-// delivered since. The provider's background tasks are not passed: this engine does not
-// expose them, and the brief says so rather than this module guessing.
-const read = async ($: EngineInterface): Promise<Brief | undefined> => {
+// The brief as JSON, or why it was not read. Never builds: a status line is not where a
+// compiler starts. The instant of the last report goes with it, so that the report says
+// what was delivered since, and the fingerprints of the brief the session was last told, so
+// that the report says which sections changed and which are unchanged. The provider's
+// background tasks are not passed: this engine does not expose them, and the brief says so
+// rather than this module guessing.
+type Read = { brief: Brief } | { why: string };
+const read = async ($: EngineInterface): Promise<Read> => {
   try {
     const argv = [
       await executable($),
@@ -142,17 +170,39 @@ const read = async ($: EngineInterface): Promise<Brief | undefined> => {
       '--session',
       await $.session.id(),
     ];
-    if (told !== undefined) argv.push('--since', told.at);
+    if (reportedAt !== undefined) argv.push('--since', reportedAt);
+    if (told?.fingerprints !== undefined) argv.push('--previous-json', JSON.stringify(told.fingerprints));
     const ran = await $.process.run(argv, {
       env: { MAJORDOMUS_NO_BUILD: '1' },
       timeoutMs: CALL_TIMEOUT_MS,
     });
-    if (ran.exitCode !== 0) return undefined;
-    const brief = JSON.parse(ran.stdout) as Brief;
-    return typeof brief.line === 'string' && Array.isArray(brief.lines) ? brief : undefined;
-  } catch {
-    return undefined;
+    if (ran.exitCode !== 0) {
+      const first = (ran.stderr ?? '').split('\n').find(l => l.trim() !== '')?.trim();
+      return { why: `exit ${ran.exitCode}${first ? ` — ${first}` : ''}` };
+    }
+    let brief: Brief;
+    try {
+      brief = JSON.parse(ran.stdout) as Brief;
+    } catch {
+      return { why: 'its answer is not JSON' };
+    }
+    return typeof brief.line === 'string' && Array.isArray(brief.lines)
+      ? { brief }
+      : { why: 'its answer is not a brief' };
+  } catch (e) {
+    const text = e instanceof Error ? e.message : String(e);
+    return {
+      why: /time/i.test(text) ? `timed out after ${CALL_TIMEOUT_MS / 1000} s` : text || 'it did not run',
+    };
   }
+};
+
+// `45 s`, `17 min`, `3 h`: how long ago, as the brief says it.
+const ago = (ms: number): string => {
+  const s = Math.max(0, Math.round(ms / 1000));
+  if (s < 120) return `${s} s`;
+  if (s < 7200) return `${Math.floor(s / 60)} min`;
+  return `${Math.floor(s / 3600)} h`;
 };
 
 const intervalMs = (b: Brief | undefined): number =>
@@ -163,39 +213,57 @@ const intervalMs = (b: Brief | undefined): number =>
 // now is what the start event's briefing said, and becomes what was told.
 const owed = (b: Brief, now: number): boolean => {
   if (told === undefined) {
+    // what the start event said is the first report: what is delivered counts from it
     told = b;
+    reportedAt ??= b.at;
     return false;
   }
   return now - shownAt >= intervalMs(b) && changedSections(told, b).length > 0;
 };
 
-// One refresh: the status line, and the report when it is owed.
+// One refresh: the status line, and the report when it is owed. A read that fails says why
+// and how old the last answer is, never only "not answered".
 const tick = async ($: EngineInterface): Promise<void> => {
-  const b = await read($);
-  if (b === undefined) {
-    $.ui.status('majordomus brief: not answered');
+  const r = await read($);
+  const now = await $.clock.now();
+  if ('why' in r) {
+    failure = r.why;
+    $.ui.status(
+      last === undefined
+        ? `majordomus brief [unread]: ${r.why}`
+        : `majordomus brief [unread]: ${r.why}; last answer ${ago(now - lastAt)} ago`,
+    );
     return;
   }
+  const b = r.brief;
   last = b;
+  lastAt = now;
+  failure = undefined;
   $.ui.status(b.line);
-  const now = await $.clock.now();
   if (!queued && owed(b, now)) {
-    const before = told as Brief;
+    const [before, beforeAt] = [told as Brief, shownAt];
     queued = true;
     told = b;
     shownAt = now;
     // Queued: it starts a turn of its own once the session is idle, never inside a running one.
     void $.prompt
       .submit({ text: selfReport(b) })
+      .then(() => {
+        // a report was made: what it delivered is counted from here on
+        reportedAt = b.at;
+      })
       .catch(() => {
         // not delivered, so not told: the change is owed again at the next interval
-        if (told === b) told = before;
+        if (told === b) [told, shownAt] = [before, beforeAt];
       })
       .finally(() => {
         queued = false;
       });
   }
 };
+
+// A reminder read from a refresh older than two refreshes is not today's: it is not sent.
+const fresh = (now: number): boolean => lastAt > 0 && now - lastAt <= 2 * REFRESH_MS;
 
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
@@ -205,6 +273,9 @@ export const register: Register = on => {
       // told; the first report is owed no sooner than one interval from now.
       told = undefined;
       last = undefined;
+      lastAt = 0;
+      failure = undefined;
+      reportedAt = undefined;
       shownAt = await $.clock.now();
       await tick($);
       $.clock.every(REFRESH_MS, () => void tick($));
@@ -214,10 +285,17 @@ export const register: Register = on => {
 
   // A prompt the person sends once the interval has passed carries the reminder when a fact
   // in the brief changed, read from the last refresh so that the prompt never waits for a
-  // process.
+  // process, and only while that refresh is fresh: a reminder from a brief many minutes old
+  // would be presented as now. A reminder asks for no report, so `reportedAt` stays.
   on('prompt.submit', async ($, e, next) => {
     const now = await $.clock.now();
-    if (last !== undefined && !isOwn(e.text, last) && (await isSupervised($)) && owed(last, now)) {
+    if (
+      last !== undefined &&
+      !isOwn(e.text, last) &&
+      fresh(now) &&
+      (await isSupervised($)) &&
+      owed(last, now)
+    ) {
       told = last;
       shownAt = now;
       await $.session.append({

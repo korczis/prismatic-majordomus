@@ -581,21 +581,57 @@ fn age_words(waited: Duration) -> String {
     }
 }
 
-fn git(root: &Path, args: &[&str]) -> String {
-    Command::new("git")
+/// How long one git call of the currency may take. A brief asks the currency on every
+/// status-line tick of every session, and a call that hangs at a load average of 90 held a
+/// thread nobody joins; past this it is stopped, and the currency reads what it did not get
+/// as empty, which leaves its stance unknown rather than wrong.
+const GIT_BOUND: Duration = Duration::from_secs(5);
+
+/// One git call, bounded by [`GIT_BOUND`]: its exit status and standard output, or None when
+/// it could not start or did not end in time (it is then killed).
+fn bounded(root: &Path, args: &[&str]) -> Option<(bool, String)> {
+    use std::io::Read as _;
+    let mut child = Command::new("git")
         .current_dir(root)
         .args(args)
-        .output()
-        .map(|out| String::from_utf8_lossy(&out.stdout).into_owned())
-        .unwrap_or_default()
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::null())
+        .spawn()
+        .ok()?;
+    let mut out = child.stdout.take()?;
+    let reader = std::thread::spawn(move || {
+        let mut s = Vec::new();
+        let _ = out.read_to_end(&mut s);
+        s
+    });
+    let deadline = std::time::Instant::now() + GIT_BOUND;
+    let status = loop {
+        match child.try_wait() {
+            Ok(Some(st)) => break st,
+            _ if std::time::Instant::now() < deadline => {
+                std::thread::sleep(Duration::from_millis(5))
+            }
+            _ => {
+                let _ = child.kill();
+                let _ = child.wait();
+                return None;
+            }
+        }
+    };
+    let bytes = reader.join().unwrap_or_default();
+    Some((
+        status.success(),
+        String::from_utf8_lossy(&bytes).into_owned(),
+    ))
+}
+
+fn git(root: &Path, args: &[&str]) -> String {
+    bounded(root, args).map(|(_, out)| out).unwrap_or_default()
 }
 
 fn succeeds(root: &Path, args: &[&str]) -> bool {
-    Command::new("git")
-        .current_dir(root)
-        .args(args)
-        .output()
-        .is_ok_and(|out| out.status.success())
+    bounded(root, args).is_some_and(|(ok, _)| ok)
 }
 
 #[cfg(test)]
