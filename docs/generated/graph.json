@@ -68090,6 +68090,8 @@
             "On a branch the audit is skipped after a failed earlier step; on integration/* it runs unless the job was cancelled",
             "Every case that reads .github/workflows/validate.yml passes"
           ],
+          "completed_at": "2026-10-30T19:05:17Z",
+          "completed_event": "sha256:dee6b0ff1e4d79ed97754d26b4b91ea8e2f3f7afc26a693e465f9e96e0303546",
           "created_at": "2026-10-22",
           "current_state": "The ui job runs the warm-screen budget, then `scripts/ui audit --report`, which checks the bar, audits every page, and fails at the end when the bar is stale.",
           "depends_on": [],
@@ -68110,7 +68112,9 @@
             ".ai/repo/project/issues/I3931.yaml"
           ],
           "slug": "the-ui-bar-is-judged-before-the-audit",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-10-30T19:04:38Z",
+          "started_event": "sha256:43d41922b310a80b5af36d4b838c96d6f9f083524b5a3c3b3eb3cd462330e6fd",
+          "updated_at": "2026-10-30T19:05:17Z",
           "validation": [
             "bash test/run.sh $(grep -lE 'validate\\\\.yml' test/cases/*.sh | sed 's#test/cases/##; s/\\\\.sh$//')",
             "actionlint .github/workflows/validate.yml"
@@ -68304,6 +68308,8 @@
             "Every case that reads .github/workflows/validate.yml passes, and actionlint is clean",
             "The next master run's pages-live passes without a rerun, or names a deploy that is slower than the heavy jobs"
           ],
+          "completed_at": "2026-10-30T19:06:30Z",
+          "completed_event": "sha256:da8ec428ee3ddd1ed1b3a5bdb6d4e9991fe2675c8be3d0804b7fcfb5fc6c3391",
           "created_at": "2026-10-22",
           "current_state": "The pages job needs only plan, so it starts in the first wave beside about nineteen jobs and its wait expires while the deploy is still queued behind them.",
           "depends_on": [],
@@ -68325,7 +68331,9 @@
             ".ai/repo/project/issues/I3936.yaml"
           ],
           "slug": "the-pages-gate-waits-behind-the-heavy-jobs",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-10-30T19:05:43Z",
+          "started_event": "sha256:79e6d53ebeb92e5f0409dbe15f3690a621ff432d497d8a9d0978fce092c2d5d1",
+          "updated_at": "2026-10-30T19:06:30Z",
           "validation": [
             "actionlint .github/workflows/validate.yml"
           ]
