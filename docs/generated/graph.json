@@ -63977,11 +63977,6 @@
         "route": "/cockpit/objects/issue/i3448",
         "source": ".ai/repo/project/issues/I3448.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "A fixture gh-pages carrying releases/v9.9.9-alpha.1.json and a build without it: after an ordinary deploy the file is still there, byte-identical, and the deploy names it as kept",
-            "Negative: a releases/<tag>.json the build itself holds is replaced by the build's copy, not kept from gh-pages",
-            "latest.json behaves as before: kept when it names a newer stable release than the build, replaced otherwise"
-          ],
           "depends_on": [],
           "evidence_required": [
             "test_a_deploy_keeps_every_pre_release_it_serves"
@@ -63989,14 +63984,18 @@
           "milestone": "M004",
           "non_scope": [
             "Which release latest.json names, which stays the newest stable release",
-            "Publishing a pre-release's metadata from master before its record lands"
+            "Publishing a pre-release's metadata from master before its record lands",
+            "Making ui-snapshot degrade (I4380, #2687) and the deploy that downloads an artifact that was not uploaded (I3761)"
           ],
           "parallel_safe": true,
-          "priority": "p1",
+          "priority": "p0",
           "profile": "implementation",
           "scope": [
             "scripts/site-deploy",
-            "docs/RELEASE.md"
+            "docs/RELEASE.md",
+            "scripts/pages",
+            "test/cases",
+            ".ai/repo/project/issues/I3448.yaml"
           ],
           "slug": "a-deploy-keeps-every-pre-release-it-serves",
           "validation": [
@@ -72987,7 +72986,10 @@
           "non_scope": [
             "Changing the default discovery mode",
             "Files outside .ai/repo, and files a class pathspec does not match",
-            "A critique or gap that is tracked but fails its schema: I4321"
+            "A critique or gap that is tracked but fails its schema: I4321",
+            "A new --include-untracked flag: it would be a second spelling of --discovery filesystem",
+            "A --drafts <dir> outside the layer: a draft lives where its class pathspec looks",
+            "Changing bin/majordomus beyond letting a leading global `--discovery <mode>` reach the executable, or refusing it with a message naming the form after the subcommand"
           ],
           "parallel_safe": true,
           "priority": "p1",
@@ -72998,7 +73000,9 @@
             "apps/majordomus-cli/src/discovery/mod.rs",
             "apps/majordomus-cli/src/intent.rs",
             "docs/PLANNING.md",
-            "test/cases/4322_one_discovery_rule_for_the_project_model.sh"
+            "test/cases/4322_one_discovery_rule_for_the_project_model.sh",
+            "bin/majordomus",
+            "docs/CAPABILITIES.md"
           ],
           "serves": [],
           "slug": "one-discovery-rule-for-the-project-model",
@@ -73058,15 +73062,7 @@
         "route": "/cockpit/objects/issue/i4324",
         "source": ".ai/repo/project/issues/I4324.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "In a fixture with `landing: squash`, a clean worktree whose branch was squash-merged is listed by `worktree cleanup` as eligible",
-            "A kept finished worktree with an ignored node_modules/ and target/ is listed by `cleanup --build-output` with each size, and `--remove` deletes both and leaves every tracked file and the branch",
-            "A node_modules/ that is not ignored, or holds a tracked file, is listed as kept with the reason and is never removed",
-            "A directory that is a process's cwd, or was written within the idle window, is kept",
-            "Before the change the case fails on the squash-merged worktree missing from the eligible list"
-          ],
           "created_at": "2026-10-28",
-          "current_state": "On master 81ef931a3e1, a squash-merged worktree is never cleanup-eligible, and no command reclaims the node_modules/ or target/ of a worktree that is kept.",
           "depends_on": [
             "I4333"
           ],
@@ -73077,9 +73073,12 @@
           "non_scope": [
             "The landed predicate: I4333",
             "The container runtime's cache and cargo's private build directories (I3833)",
-            "Removing whole worktrees beyond today's guards (I3832)",
+            "Removing a worktree past the guards other than the gone-upstream one this issue relaxes (I3832 owns the rest)",
             "Other build output (dist/, .next/, caches): a later list, once an adopter asks for it",
-            "Doctor's report of a full disk: I4323"
+            "Doctor's report of a full disk: I4323",
+            "An automatic reduction triggered by a budget at the provider's events: PR #1056 (ADR 0150)",
+            "A new `worktree prune` verb: the capability is `worktree cleanup` and its `--build-output` listing, one named command the owner allows by name (I3832)",
+            "Removing a worktree with no upstream whose head the trunk contains: it keeps today's refusal"
           ],
           "parallel_safe": true,
           "priority": "p2",
@@ -73088,14 +73087,16 @@
             "apps/majordomus-cli/src/worktree",
             "apps/majordomus-cli/src/commands/worktree.rs",
             "docs/WORKTREES.md",
-            "test/cases"
+            "test/cases/4324_finished_worktrees_give_back_their_build_output.sh",
+            "lib/doctor.sh"
           ],
           "serves": [],
           "slug": "finished-worktrees-give-back-their-build-output",
-          "updated_at": "2026-10-28",
+          "updated_at": "2026-10-29",
           "validation": [
             "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib worktree::",
-            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+            "MJ_TEST_JOBS=4 bash test/run.sh 4324_finished_worktrees_give_back_their_build_output",
+            "bin/majordomus doctor"
           ]
         }
       },
@@ -74240,14 +74241,6 @@
         "route": "/cockpit/objects/issue/i4357",
         "source": ".ai/repo/project/issues/I4357.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "Case 4357 against a stub forge answering 201 once and 422 after: two concurrent reservations of n give one success and one n+1",
-            "Case 4357: a reservation runs no hook work: no `finish --check`, case-numbers or run-plan is invoked, and a push of only refs/ids/* through .githooks/pre-push exits 0 without them",
-            "Case 4357: a replay of #2605 (a second I4251.yaml) exits 11 from the identifier job, with no build job run",
-            "Case 566: the identifier job's needs are a subset of {plan} and it carries no first-red self-cancel",
-            "Case 560 passes, and the rule's identifier half is class blocking",
-            "I3974 records that its survey approach is superseded by this reservation"
-          ],
           "created_at": "2026-10-29",
           "depends_on": [],
           "evidence_required": [
@@ -74255,7 +74248,8 @@
           ],
           "milestone": "merging-and-referencing-are-enforced",
           "non_scope": [
-            "Renumbering ids that already collided"
+            "Renumbering ids that already collided",
+            "A validate pass across untracked draft directories: I4322 (OSCILLA finding 3)"
           ],
           "parallel_safe": true,
           "priority": "p1",
@@ -74272,7 +74266,9 @@
             "test/cases/566_the_collision_guard_has_a_caller.sh",
             "test/cases/4357_a_number_is_reserved_at_origin.sh",
             ".ai/repo/project/issues/I3974.yaml",
-            ".ai/repo/rules/project/work-is-claimed-before-it-is-built.v1.md"
+            ".ai/repo/rules/project/work-is-claimed-before-it-is-built.v1.md",
+            "lib/plan.sh",
+            "docs/CLI.md"
           ],
           "serves": [
             "merging-and-referencing-are-enforced#one-allocator"
@@ -74396,6 +74392,430 @@
             "bash test/run.sh 4359_no_ci_routes_to_an_undeclared_runner_host",
             "bin/majordomus mesh runner-routing",
             "bin/majordomus shell check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4410",
+        "kind": "issue",
+        "label": "I4410",
+        "summary": "plan evidence records the trunk commit it is given with --commit, and refuses one the trunk does not reach",
+        "route": "/cockpit/objects/issue/i4410",
+        "source": ".ai/repo/project/issues/I4410.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "named_trunk_commit_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Resolving or re-stamping a branch commit after a squash landing, and plan validate's judgement of existing entries: I4320",
+            "The landed predicate and a declared landing mode: I4333",
+            "Warning or refusing at evidence time when HEAD is a branch commit and --commit is absent",
+            "The Rust plan.transition capability (apps/majordomus-cli/src/capability/builtin/plan.rs): plan evidence stays a command-line operation there (:27-28)",
+            "The whole-token match of --covers (I4235, #2582), which edits the same function and is merged around, not absorbed"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4410.yaml",
+            "lib/plan.sh",
+            "lib/common.sh",
+            "docs/PLANNING.md",
+            "docs/CLI.md",
+            "test/cases/4410_plan_evidence_records_a_named_trunk_commit.sh"
+          ],
+          "serves": [],
+          "slug": "plan-evidence-records-a-named-trunk-commit",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "bash test/run.sh 4410_plan_evidence_records_a_named_trunk_commit",
+            "bin/majordomus shell check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4411",
+        "kind": "issue",
+        "label": "I4411",
+        "summary": "check and finish name the head they judged beside the task's start, and the scope line counts the layer's own paths instead of reporting them as none",
+        "route": "/cockpit/objects/issue/i4411",
+        "source": ".ai/repo/project/issues/I4411.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "test",
+            "finish_line_names_both_heads_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Changing which commits mj_git_touched walks: the first-parent, no-merges, foreign-trunk rule of lib/common.sh:470-525 stays as cases 108 and 108b prove it",
+            "Refusing layer paths outside the scope: they stay admitted",
+            "Recording an explicit commit for plan evidence (item 1 of the same OSCILLA list)",
+            "OSCILLA itself: it is the evidence, read only"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/check.sh",
+            "lib/common.sh",
+            "docs/claims/finish-contract.md",
+            "docs/claims/consistency-check.md",
+            "docs/claims/divergence-label.md",
+            "site/content/guarantees",
+            "test/cases/4411_finish_names_the_head_it_judged_and_counts_the_layers_paths.sh"
+          ],
+          "serves": [],
+          "slug": "finish-names-the-head-it-judged-and-counts-the-layers-paths",
+          "updated_at": "2026-10-29"
+        }
+      },
+      {
+        "id": "majordomus://issue/I4413",
+        "kind": "issue",
+        "label": "I4413",
+        "summary": "A failed verification is run again over the trunk commit the work is built on, and its refusal says which failures were already there, so one red test of the trunk does not read as every task's defect",
+        "route": "/cockpit/objects/issue/i4413",
+        "source": ".ai/repo/project/issues/I4413.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "failed_verification_origin_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4413.yaml",
+            "lib/finish.sh",
+            "lib/common.sh",
+            "share/allow/policy.txt",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/events.yaml",
+            "share/standard/majordomus/rules/verification-integrity.v1.md",
+            ".ai/repo/rules/vendor/majordomus/rules/verification-integrity.v1.md",
+            "docs/CLI.md",
+            "docs/SCHEMAS.md",
+            "test/cases/06_finish.sh",
+            "test/cases/4413_a_failed_verification_says_whether_the_trunk_fails_too.sh"
+          ],
+          "serves": [],
+          "slug": "a-failed-verification-says-whether-the-trunk-fails-too",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "MJ_TEST_JOBS=4 bash test/run.sh 4413_a_failed_verification_says_whether_the_trunk_fails_too 06_finish 572_verification_records_the_tree_it_proved",
+            "bin/majordomus shell check",
+            "bin/majordomus doctor",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4414",
+        "kind": "issue",
+        "label": "I4414",
+        "summary": "A repository whose runs wait while another repository of the same account holds the Actions jobs is told so, and the landing seat is advised to hold new train runs while it lasts",
+        "route": "/cockpit/objects/issue/i4414",
+        "source": ".ai/repo/project/issues/I4414.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I4326"
+          ],
+          "evidence_required": [
+            "test",
+            "rust"
+          ],
+          "milestone": "the-runtime-supervises-itself",
+          "non_scope": [
+            "Account-wide starvation where no repository starts any job, and the per-repository queue reads themselves (I4326)",
+            "Cancelling, preempting or re-running any run because of the signal (I3903, I4353, scripts/ci/release-path)",
+            "Raising the account's Actions concurrency limit or adding self-hosted runners (owner-side)",
+            "An adopter's own CI configuration or scripts, which may read the capability once it exists"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4414.yaml",
+            "apps/majordomus-cli/src/monitor",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/capability/builtin/monitor.rs",
+            ".ai/repo/policy.yaml",
+            "share/schemas",
+            "docs/MESH.md",
+            "docs/MONITOR.md",
+            "test/cases/4414_a_share_starved_repository_is_told_so.sh"
+          ],
+          "serves": [
+            "nothing-in-the-mesh-waits-on-something-dead#states-are-classified"
+          ],
+          "slug": "a-share-starved-repository-is-told-so",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib monitor::",
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::mesh",
+            "bash test/run.sh 4414_a_share_starved_repository_is_told_so",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4415",
+        "kind": "issue",
+        "label": "I4415",
+        "summary": "finish names the load its verification ran under, waits below a declared load bound before it runs, and retries a failure under load only as policy allows, recording every attempt",
+        "route": "/cockpit/objects/issue/i4415",
+        "source": ".ai/repo/project/issues/I4415.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "verification_under_load_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Keeping the verify command's output tail and admitting verify commands by policy: I3123",
+            "Classifying refusals as caught, unanswered or downgraded: I3131, which reads the verify.not_run this issue records",
+            "A machine-wide slot for heavy work (I4006) or for CI capacity across repositories (OSCILLA candidate 5)",
+            "Lowering the machine's load: finish measures and waits, and never stops another process"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4415.yaml",
+            "lib/finish.sh",
+            "lib/common.sh",
+            "lib/bench.sh",
+            "share/allow/policy.txt",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/events.yaml",
+            "share/standard/majordomus/rules/verification-integrity.v1.md",
+            ".ai/repo/rules/vendor/majordomus/rules/verification-integrity.v1.md",
+            "docs/CLI.md",
+            "docs/SCHEMAS.md",
+            "test/cases/06_finish.sh",
+            "test/cases/4415_a_verification_under_load_says_so.sh"
+          ],
+          "serves": [],
+          "slug": "a-verification-under-load-says-so",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "MJ_TEST_JOBS=4 bash test/run.sh 4415_a_verification_under_load_says_so 06_finish 572_verification_records_the_tree_it_proved",
+            "bin/majordomus doctor",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4416",
+        "kind": "issue",
+        "label": "I4416",
+        "summary": "The session briefing says how old the task is and never calls a finished one active, an abandoned task is closed as interrupted only by `recover tasks`, and doctor's stranded-episode FAIL names `recover episodes --check`",
+        "route": "/cockpit/objects/issue/i4416",
+        "source": ".ai/repo/project/issues/I4416.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "stale_task_briefing_and_recovery_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Closing stranded episodes: `majordomus recover episodes`, unchanged",
+            "Another worktree's stale task claim in the overlap report of start and check: I4328, whose landed predicate is I4333",
+            "Closing, finishing or rewriting any task without a person running `recover tasks`: the briefing, doctor and the hooks only report",
+            "A task held in another checkout: `recover tasks` refuses it and names that checkout; I4328 qualifies it",
+            "The open episodes of refused tasks and the origin of a failed verification: I4413",
+            "Changing session.stranded_after or giving it a default"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4416.yaml",
+            "lib/derive.sh",
+            "lib/recover.sh",
+            "lib/doctor.sh",
+            "lib/finish.sh",
+            "lib/common.sh",
+            "share/schemas/majordomus/current/current.v1.schema.json",
+            "share/allow/current.txt",
+            "share/events.yaml",
+            "apps/majordomus-cli/src/cockpit/pages.rs",
+            "docs/CLI.md",
+            "test/cases/130_lifecycle_survives_a_stale_task.sh",
+            "test/cases/4416_a_stale_task_reads_as_stale_and_is_recovered_on_purpose.sh"
+          ],
+          "serves": [],
+          "slug": "a-stale-task-reads-as-stale-and-is-recovered-on-purpose",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "MJ_TEST_JOBS=4 bash test/run.sh 4416_a_stale_task_reads_as_stale_and_is_recovered_on_purpose 130_lifecycle_survives_a_stale_task 60_session_lifecycle 135_session_store_recovery",
+            "bin/majordomus shell check",
+            "bin/majordomus doctor",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4417",
+        "kind": "issue",
+        "label": "I4417",
+        "summary": "A knowledge class a repository script generates declares its generator and inputs, is reported stale when its inputs moved, and the issue, intent and rule ids its records carry are edges",
+        "route": "/cockpit/objects/issue/i4417",
+        "source": ".ai/repo/project/issues/I4417.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "test",
+            "rust",
+            "generated_knowledge_class_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Running the adopter's generator from Majordomus (doctor, derive, a hook or a capability): the repository's script runs it; an adopter capability that does is I3157's",
+            "Typed provenance of the artifacts majordomus generate writes: I1103",
+            "Widening `context resolve` beyond the context documents of a path, or adding per-object entries to the `why` catalogue: an object of a repository kind is reached through objects, entity and trace",
+            "Discovering untracked or draft records (item 3 of the same report)",
+            "Pull requests in the traceability join (scripts/traceability)",
+            "OSCILLA's registry itself, its schema and its build step"
+          ],
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4417.yaml",
+            "apps/majordomus-cli/src/discovery/mod.rs",
+            "apps/majordomus-cli/src/metadata/mod.rs",
+            "apps/majordomus-cli/src/index.rs",
+            "apps/majordomus-cli/src/graph.rs",
+            "apps/majordomus-cli/src/entity.rs",
+            "apps/majordomus-cli/src/capability/builtin/trace.rs",
+            "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+            "lib/knowledge.sh",
+            "share/kinds.yaml",
+            "docs/KNOWLEDGE.md",
+            "docs/CAPABILITIES.md",
+            "docs/ADOPTION.md",
+            "test/cases/4417_a_generated_knowledge_class_declares_its_generator.sh"
+          ],
+          "serves": [],
+          "slug": "a-generated-knowledge-class-declares-its-generator",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib discovery::",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib metadata::",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib graph::",
+            "bash test/run.sh 4417_a_generated_knowledge_class_declares_its_generator",
+            "bin/majordomus shell check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4418",
+        "kind": "issue",
+        "label": "I4418",
+        "summary": "serve ensure fast-forwards a clean trunk checkout that is strictly behind its remote trunk, or offers to, and majordomus init declares checkout.trunk_distance, so a shared server does not answer from an old tree unjudged",
+        "route": "/cockpit/objects/issue/i4418",
+        "source": ".ai/repo/project/issues/I4418.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "clean_trunk_fast_forward_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4418.yaml",
+            "apps/majordomus-cli/src/commands/serve.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/worktree/trunk.rs",
+            "apps/majordomus-cli/src/mcp/protocol.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/allow/policy.txt",
+            "lib/doctor.sh",
+            ".ai/repo/policy.yaml",
+            ".ai/repo/rules/project/a-checkout-serves-the-current-trunk.v1.md",
+            "docs/WORKTREES.md",
+            "docs/generated/cli.md",
+            "docs/generated/cli.json",
+            "docs/generated/cli.yaml",
+            "test/cases/3176_a_checkout_serves_the_current_trunk.sh",
+            "test/cases/4418_a_clean_trunk_checkout_is_fast_forwarded_by_serve_ensure.sh"
+          ],
+          "serves": [],
+          "slug": "a-clean-trunk-checkout-is-fast-forwarded-by-serve-ensure",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "MJ_TEST_JOBS=4 bash test/run.sh 4418_a_clean_trunk_checkout_is_fast_forwarded_by_serve_ensure 3176_a_checkout_serves_the_current_trunk",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- worktree::trunk commands::serve mcp::protocol policy",
+            "bin/majordomus shell check",
+            "bin/majordomus doctor",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4419",
+        "kind": "issue",
+        "label": "I4419",
+        "summary": "A release that waits behind a starved forge says so: release.currency keeps its stance and names the forge as the cause, and doctor's remedy stops telling the seat to release now",
+        "route": "/cockpit/objects/issue/i4419",
+        "source": ".ai/repo/project/issues/I4419.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I3070",
+            "I4326"
+          ],
+          "evidence_required": [
+            "a_release_held_by_a_starved_forge_names_it"
+          ],
+          "milestone": "a-version-follows-the-work",
+          "non_scope": [
+            "Deriving the forge_starved signal and reading queued runs: I4326",
+            "Changing the stance, the six-hour threshold, or the release seat's finish refusal (I3072)",
+            "Suppressing or downgrading the release warning while the forge is starved",
+            "Fair-share scheduling of CI across repositories, or holding trains for another repository (item 5 of the same OSCILLA list)",
+            "OSCILLA's own release script and its bounds"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/release/currency.rs",
+            "apps/majordomus-cli/src/capability/builtin/release.rs",
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "lib/doctor.sh",
+            "docs/RELEASE.md",
+            "test/cases/4419_a_release_held_by_a_starved_forge_names_it.sh"
+          ],
+          "serves": [
+            "a-version-follows-every-session#measured"
+          ],
+          "slug": "a-release-held-by-a-starved-forge-names-it",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib release::currency::",
+            "MJ_TEST_JOBS=4 bash test/run.sh 4419_a_release_held_by_a_starved_forge_names_it",
+            "MJ_TEST_JOBS=4 bash test/run.sh 3470_the_release_follows_the_work",
             "bin/majordomus plan validate"
           ]
         }
@@ -137823,6 +138243,111 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4410",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4410",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4411",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4411",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4413",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4413",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4414",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4414",
+        "target": "majordomus://issue/I4326",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4414",
+        "target": "majordomus://milestone/the-runtime-supervises-itself",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4415",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4415",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4416",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4416",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4417",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4417",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4418",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4418",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4419",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4419",
+        "target": "majordomus://issue/I3070",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4419",
+        "target": "majordomus://issue/I4326",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4419",
+        "target": "majordomus://milestone/a-version-follows-the-work",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -149509,8 +150034,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4097,
-      "edges": 9459,
+      "nodes": 4106,
+      "edges": 9480,
       "acyclic": false,
       "truncated": false
     }

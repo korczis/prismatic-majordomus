@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "da31b40589f677a60c83f92eedaa4d77ca560c96663b428da48f11686010cce8",
+    "fingerprint": "54dddc9465743c46ec41d826932cabc78a22c7ff2c8ca2747c47e06a6a84a180",
     "summary": {
-      "total": 3633,
+      "total": 3642,
       "builtin": 220,
-      "declarative": 3413,
+      "declarative": 3422,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3413
+        "resource": 3422
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3423
+        "implemented": 3432
       },
       "mcp_tools": 206,
-      "mcp_resources": 3470,
+      "mcp_resources": 3479,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91383,7 +91383,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1102,
+        "capabilities": 1111,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "1b1c1dbd708b0f93cdad0785ca9f66c5d1ce7915fa55817e723dcd6354675f6f",
+    "fingerprint": "8763e266a3c297e3d8da0b1b0815ec19e2fe2d87bda15977fa4695d016fcd0db",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92113,7 +92113,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 44,
-      "issue": 1102,
+      "issue": 1111,
       "knowledge": 60,
       "mesh-declaration": 1,
       "milestone": 113,
@@ -99585,7 +99585,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 982448
+        "bytes": 1038412
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -113136,7 +113136,7 @@
         "path": ".ai/repo/project/issues/I3448.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2483
+        "bytes": 3934
       },
       {
         "uri": "majordomus://issue/I3449",
@@ -115321,11 +115321,11 @@
         "kind": "issue",
         "identity": "I4322",
         "title": "plan validate and intent validate read the project through one discovery rule, and a record left untracked is named",
-        "description": "The shell plan model enumerates .ai/repo/project the way the executable's Index does: through `git ls-files` when the policy declares discovery vcs, and through the work tree otherwise. Today lib/project.sh:50-56 always uses `ls -1` of the work tree. After the change, `majordomus plan validate|status|list` and the plan.validate capability count the same records on every projection (CLI, MCP majordomus_plan_validate, HTTP /api/v1/plan/validate). Under vcs discovery, a file under .ai/repo that matches a class pathspec but is not tracked yields one diagnostic, untracked_record. plan validate, intent validate and doctor print it as `INFO untracked_record <path> — skipped until tracked (git add <path>)`.",
+        "description": "The shell plan model enumerates .ai/repo/project the way the executable's Index does: through `git ls-files` when the policy declares discovery vcs, and through the work tree otherwise. Today lib/project.sh:50-56 always uses `ls -1` of the work tree. After the change, `majordomus plan validate|status|list` and the plan.validate capability count the same records on every projection (CLI, MCP majordomus_plan_validate, HTTP /api/v1/plan/validate). Under vcs discovery, a file under .ai/repo that matches a class pathspec but is not tracked yields one diagnostic, untracked_record. plan validate, intent validate and doctor print it as `INFO untracked_record <path> — skipped until tracked (git add <path>)`. The untracked_record line names both remedies: `git add <path>` to make the record part of the layer, or a rerun with `--discovery filesystem` to validate drafts in place without staging them. Under that option, `intent validate` and the plan.validate capability count and check untracked records exactly as tracked ones. docs/PLANNING.md documents this draft workflow.",
         "path": ".ai/repo/project/issues/I4322.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4653
+        "bytes": 7358
       },
       {
         "uri": "majordomus://issue/I4323",
@@ -115343,11 +115343,11 @@
         "kind": "issue",
         "identity": "I4324",
         "title": "A finished worktree's build output is reclaimed, node_modules and target/ included, whether its branch landed by merge or by squash",
-        "description": "Two changes to `majordomus worktree cleanup`. First, a worktree whose branch has landed by the predicate of I4333 is cleanup-eligible, so a branch squash-merged under `landing: squash` is offered, as one merged by merge commit is today. Second, a finished worktree that cleanup keeps (its branch landed, or it is idle past the sweep window, but its status is not empty) is offered for build-output reclaim: `majordomus worktree cleanup --build-output` lists, and with `--remove` deletes, its node_modules/ and target/ directories (any depth). A directory is reclaimed only when `git check-ignore` reports it ignored and git tracks no file under it. Reclaim runs under the guards I3832 already gives the removal: no process cwd, open file or command line inside, not named by the derive lock or a live mesh claim, idle past MAJORDOMUS_WORKTREE_SWEEP_IDLE_MIN, and under every cargo lock in a target/. The listing gives each directory's size, and the answer gives the total reclaimed. The worktree, its branch and every tracked or unignored file stay.",
+        "description": "Three changes to `majordomus worktree cleanup`, and one reading of doctor. First, a worktree whose branch has landed by the predicate of I4333 is cleanup-eligible, so a branch squash-merged under `landing: squash` is offered, as one merged by merge commit is today. Second, a finished worktree that cleanup keeps (its branch landed, or it is idle past the sweep window, but its status is not empty) is offered for build-output reclaim: `majordomus worktree cleanup --build-output` lists, and with `--remove` deletes, its node_modules/ and target/ directories (any depth). A directory is reclaimed only when `git check-ignore` reports it ignored and git tracks no file under it. Reclaim runs under the guards I3832 already gives the removal: no process cwd, open file or command line inside, not named by the derive lock or a live mesh claim, idle past MAJORDOMUS_WORKTREE_SWEEP_IDLE_MIN, and under every cargo lock in a target/. The listing gives each directory's size, and the answer gives the total reclaimed. The worktree, its branch and every tracked or unignored file stay. Third, the removal refusal of `worktree cleanup --remove` (apps/majordomus-cli/src/commands/worktree.rs:751-780) stops refusing a gone upstream on its own: a clean worktree whose upstream is gone and whose HEAD is an ancestor of the trunk's remote-tracking branch (git merge-base --is-ancestor, read at the moment of removal like every other reading there) is removed, because every commit it holds is on the remote through the trunk. A worktree whose HEAD carries a commit that remote trunk lacks is still refused, naming the count, whether its upstream is gone or it never had one, and so are uncommitted work, a process inside, and an ancestry git cannot decide. Fourth, doctor reads the same listing, read-only: when the build output reclaimable by `worktree cleanup --build-output`, plus the worktrees `worktree cleanup` lists as eligible, exceed a floor stated beside the check (overridable through an environment variable), it prints one `WARN disk — <n> finished worktrees hold <size> of reclaimable build output` whose remedy is `majordomus worktree cleanup --build-output` (then `--remove`). Doctor never deletes. Under the pre-commit context (MAJORDOMUS_DOCTOR_CONTEXT=commit) the reading is left out, as the per-worktree uncommitted-work reading already is, so the hook stays within its latency budget.",
         "path": ".ai/repo/project/issues/I4324.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4620
+        "bytes": 9438
       },
       {
         "uri": "majordomus://issue/I4325",
@@ -115618,11 +115618,11 @@
         "kind": "issue",
         "identity": "I4357",
         "title": "Issue, ADR and case numbers are reserved atomically at origin and checked at landing",
-        "description": "`next --kind issue|adr|case --reserve` reserves a number by creating refs/ids/<kind>/<n> on the forge (`gh api repos/{owner}/{repo}/git/refs -f ref=refs/ids/<kind>/<n> -f sha=<commit>`), which fails atomically with 422 when the ref exists and runs no local hook, and takes the next number on that refusal; .githooks/pre-push skips refs/ids/* as it skips refs/majordomus/*, so a reservation that does reach origin through git does no hook work; a required landing check refuses an id that is already on master or reserved under different content; the identifier gates (collision-check, adr-collision, case-numbers) run in a job that needs only plan, is exempt from the first-red cancel and checks out blobless.",
+        "description": "`next --kind issue|adr|case --reserve` reserves a number by creating refs/ids/<kind>/<n> on the forge (`gh api repos/{owner}/{repo}/git/refs -f ref=refs/ids/<kind>/<n> -f sha=<commit>`), which fails atomically with 422 when the ref exists and runs no local hook, and takes the next number on that refusal; .githooks/pre-push skips refs/ids/* as it skips refs/majordomus/*, so a reservation that does reach origin through git does no hook work; a required landing check refuses an id that is already on master or reserved under different content; the identifier gates (collision-check, adr-collision, case-numbers) run in a job that needs only plan, is exempt from the first-red cancel and checks out blobless. The issue kind is reachable to an adopter as `majordomus plan reserve <prefix> [--count N]` in the shipped tree (lib/ or the plan capability), with the series prefix and the zero-padded width derived from the plan's existing ids, never hard-coded to I.",
         "path": ".ai/repo/project/issues/I4357.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4112
+        "bytes": 6173
       },
       {
         "uri": "majordomus://issue/I4358",
@@ -115645,6 +115645,105 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 5755
+      },
+      {
+        "uri": "majordomus://issue/I4410",
+        "kind": "issue",
+        "identity": "I4410",
+        "title": "plan evidence records the trunk commit it is given with --commit, and refuses one the trunk does not reach",
+        "description": "`majordomus plan evidence <id> --covers <token> ... --commit <rev>` writes the named commit into the entry's commit: instead of HEAD. The revision is resolved with `git rev-parse --verify <rev>^{commit}` to its full 40-hex name, and is accepted only when the trunk's remote-tracking branch (mj_git_trunk_ref, lib/common.sh:540-549) reaches it, judged by mj_commit_in_history (lib/common.sh:761-769) against that ref. A commit the trunk does not reach is refused with exit 15 and a message naming the commit and the trunk ref. A clone that cannot decide (shallow, or the object is missing: mj_commit_in_history returns 2) and a repository with no known trunk (no refs/remotes/<remote>/HEAD) are refused with a message that says which, never recorded unjudged. The ledger event plan_evidence carries the recorded commit and whether it was named or taken from HEAD. Without --commit nothing changes: the entry records HEAD, as today. So any number of evidence entries for already-landed work can be recorded on one branch, in one pull request, each naming the trunk commit that landed its work.",
+        "path": ".ai/repo/project/issues/I4410.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5926
+      },
+      {
+        "uri": "majordomus://issue/I4411",
+        "kind": "issue",
+        "identity": "I4411",
+        "title": "check and finish name the head they judged beside the task's start, and the scope line counts the layer's own paths instead of reporting them as none",
+        "description": "Two lines of `majordomus check` and `majordomus finish` say what they measured. The state line names the task's recorded start head and the HEAD it compared against it, with the distance: `advanced from 3e89654 to 4e6f74e (1 commit)`, not `advanced (head 3e89654)`, which prints only the start head. The scope line counts every path mj_git_touched returned. A path under the layer (.ai/) that the task's scope names is counted as within scope. A layer path the scope does not name is counted separately as admitted because it is the layer's: `0 touched file(s) within scope, and 54 of the layer (.ai/) admitted`. When the walk since the start head finds commits but returns no path, because every commit was a merge or a trunk commit not made here, the line says so: `0 touched file(s): 2 commit(s) since 3e89654 are merges or trunk commits this checkout did not make`. The existing prefix `N touched file(s), all within scope` stays for a task with no layer paths, so cases 108, 108b, 1073 and 25 still match.",
+        "path": ".ai/repo/project/issues/I4411.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6192
+      },
+      {
+        "uri": "majordomus://issue/I4413",
+        "kind": "issue",
+        "identity": "I4413",
+        "title": "A failed verification is run again over the trunk commit the work is built on, and its refusal says which failures were already there, so one red test of the trunk does not read as every task's defect",
+        "description": "Two changes to mj_validate_verification in lib/finish.sh, none of which changes a repository that declares nothing. First, a policy key verification.failure_pattern (an extended regular expression with one group, absent: none): when it is declared, the verify command's output is written to a temporary file instead of /dev/null, the group's text on every matching line is a failure id, and the sorted, unique ids (at most 50, with their count) go into the refusal line and into a verify object that task.refused now carries (verify.failures); the output file is removed afterwards. Second, a policy key verification.base_rerun (boolean, absent: false), overridable per invocation by `finish --no-base-rerun`: when the verify command failed, finish exports the base commit with `git archive` into a temporary directory (never a linked worktree, so no worktree is registered and no hook runs), runs verification.base_prepare there when declared (for example `npm ci`), runs the same verify command there with the same environment, and removes the directory on every exit path. The base is the merge base of HEAD and the trunk's remote-tracking branch (mj_git_trunk_ref, lib/common.sh:540-549), and the task's start head (mj_cur head) when no trunk is known; the record says which (base_source: trunk or start). The verification is classified in the vocabulary I3313 defines for session records: introduced when the base run passes, or when a failure id of this run is absent from the base run's ids (only those ids are listed as introduced); pre-existing only when the base run fails, a failure_pattern is declared and every failure id of this run is among the base run's; unknown when the base run fails with no failure_pattern declared, or the base could not be exported, prepared or resolved (a shallow clone, a missing object), with the reason. unknown is never shown as pre-existing. The classification never accepts the task: a red verification stays a refusal whatever its class, as majordomus.verification-integrity requires. A pre-existing refusal reads `npm test — exit 1, 412s; pre-existing at 3e89654 (trunk): 1 of 1 failure fails there too: studio perf budget`, and its remedy names re-running finish once the trunk's failure is fixed and `finish --outcome blocked` with that reason, instead of a re-run of the same command over the same tree. task.refused records verify.origin with base, base_source, base_exit, base_seconds, class, failures, base_failures and, for unknown, reason. The rule majordomus.verification-integrity states that the base run classifies a refusal and never turns it into a pass.",
+        "path": ".ai/repo/project/issues/I4413.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 9887
+      },
+      {
+        "uri": "majordomus://issue/I4414",
+        "kind": "issue",
+        "identity": "I4414",
+        "title": "A repository whose runs wait while another repository of the same account holds the Actions jobs is told so, and the landing seat is advised to hold new train runs while it lasts",
+        "description": "Three steps on top of I4326's per-repository queue reads. (1) A typed capability mesh.ci_load (`majordomus mesh ci-load`, MCP and HTTP from the same capability! declaration) reports, for every repository of the checkouts this host serves plus any the policy lists, its queued runs, its in-progress jobs (jobs, not runs: GitHub's account concurrency limit counts jobs), the age of its oldest queued run, and its share of the account's in-progress jobs, against the account's concurrency limit declared in policy. (2) From the same reads the monitor derives a share_starved signal: one repository has queued runs older than a bound and at most a floor of in-progress jobs while another repository of the account holds at least a declared share of the account's in-progress jobs, for longer than the bound. Bound, floor and share are stated beside the signal in policy. The signal names the starved repository, the holding repository and both counts. It is kept apart from I4326's forge_starved, where no repository starts any job. (3) While share_starved names this repository as the holder, `majordomus mesh ci-load` exits with a declared non-zero code and says `hold new train runs: <repo> starved since <time>`. The brief and the monitor carry the same line. docs/MESH.md states the convention that the landing seat pushes no new combined top while the advice holds and announces the hold on the board with majordomus_announce. The advice cancels nothing.",
+        "path": ".ai/repo/project/issues/I4414.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6142
+      },
+      {
+        "uri": "majordomus://issue/I4415",
+        "kind": "issue",
+        "identity": "I4415",
+        "title": "finish names the load its verification ran under, waits below a declared load bound before it runs, and retries a failure under load only as policy allows, recording every attempt",
+        "description": "Three changes to mj_validate_verification in lib/finish.sh, none of which changes a repository that declares nothing. First, every verification run reads the host's 1-minute load average and core count before and after it, through one helper in lib/common.sh that lib/bench.sh's mj_bench_load then calls, and the result line says so on pass and on fail: `npm test — exit 1, 412s, load 77.3 -> 93.1 on 12 cores`. The same fields (load_start, load_end, cores) go into the verify object of task.finished, and task.refused gains that verify object, which it does not carry today. Second, a policy key verification.load_max_per_core (absent: no gate) with verification.load_wait_seconds (default 600), overridable per invocation by MAJORDOMUS_VERIFY_LOAD_MAX: before the command starts, finish waits while the load is above the bound, saying on stderr what it waits for and how long it has waited, and past the wait it does not run the command; the verification line fails as `not run: load <x> above <bound> for <n>s`, and task.refused records verify.not_run: load, so I3131's aggregate can tell a refusal of the work from a refusal of the machine. Under CI (CI or GITHUB_ACTIONS set) there is no gate, as in OSCILLA's suites and I4006. Third, a policy key verification.verify_retries (integer 0-2, default 0): a failed attempt is retried only when that attempt started or ended above the load bound and the tree id is the one the failed attempt ran over; a failure on a quiet machine, or with no bound declared, is never retried, so a deterministic failure cannot be retried into a pass. Every attempt is recorded (verify.attempts: exit, seconds, load_start, load_end, tree), and a pass after a failed attempt reads `exit 0 on attempt 2 of 3 (attempt 1: exit 1, load 81.0)`, never as a plain pass. The rule majordomus.verification-integrity states the attempt record and the conditions under which a retry is admitted.",
+        "path": ".ai/repo/project/issues/I4415.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 7625
+      },
+      {
+        "uri": "majordomus://issue/I4416",
+        "kind": "issue",
+        "identity": "I4416",
+        "title": "The session briefing says how old the task is and never calls a finished one active, an abandoned task is closed as interrupted only by `recover tasks`, and doctor's stranded-episode FAIL names `recover episodes --check`",
+        "description": "Three changes, none of which closes anything a person did not ask to close. First, the task line of the session briefing (mj_derive_briefing_body, lib/derive.sh:548-552) states the record as it is. A task whose outcome is active reads `Active task <id> (active, profile <p>, started <age> ago, checkpoint <age> ago): <task>`. A task whose outcome is anything else (completed, partial, blocked, no_match, failed, handed_over, interrupted) reads `Last task <id> (<outcome>, closed <age> ago, profile <p>): <task>`, and the word Active is never printed for it. An active task whose checkpoint_at is older than the policy's session.stranded_after gains `stale: no checkpoint for <age>, over the <threshold> session.stranded_after; review it: majordomus recover tasks --check`. Ages come from mj_age_minutes and mj_age_human, as `majordomus context` already renders them (lib/context.sh:190-200), and the threshold is read with mj_pol_req as lib/recover.sh:94 reads it, with no default invented. Second, a new subject `majordomus recover tasks [--check] [--older-than <duration>]` in lib/recover.sh, beside episodes, records and orphans, and included in `recover status` and `recover all`. It reads only this checkout's current.yaml and refuses a foreign one (mj_task_is_foreign) with the worktree it belongs to. An active task whose checkpoint_at is older than the threshold is a candidate; --check prints the task id, its started and checkpoint ages, the threshold and `close with outcome interrupted`, and writes nothing. Without --check, the candidate's current.yaml gets outcome: interrupted and a task.interrupted ledger line carrying task_id, checkpoint_at, age, threshold and source recover; nothing else is rewritten. A task inside the threshold, or one already closed, is named with why it is not a candidate and left byte-for-byte unchanged. The outcome interrupted is admitted by the current.v1 schema and its generated allow-list, and finish answers it as it answers any closed outcome (`already interrupted; run majordomus start for new work`). Third, the remedy column of doctor's lifecycle rows (mj_validate_lifecycle, lib/doctor.sh:1028): the episodes FAIL (lib/doctor.sh:1106-1109) names `majordomus recover episodes --check` instead of `majordomus session list`, and the checkpoints and handovers FAILs (lib/doctor.sh:1056-1075) name it too when the same run counted stranded episodes, because an episode nobody closed is the one that never wrote its handover; with no stranded episode they keep `majordomus <record> --list`.",
+        "path": ".ai/repo/project/issues/I4416.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 10107
+      },
+      {
+        "uri": "majordomus://issue/I4417",
+        "kind": "issue",
+        "identity": "I4417",
+        "title": "A knowledge class a repository script generates declares its generator and inputs, is reported stale when its inputs moved, and the issue, intent and rule ids its records carry are edges",
+        "description": "A class of .ai/repo/knowledge/sources.yaml may carry an optional `generator:` block: `command` (an argv list run from the repository root, never through a shell), `inputs` (one or more `:(glob)` pathspecs of tracked files) and `stamp` (the top-level field each generated file carries, default `inputs_digest`). Its kind is declared in .ai/repo/knowledge/kinds.yaml with `lifecycle: derived`, and a class with a generator whose kind is not derived is refused. The digest is sha256 over the sorted (path, git blob id) pairs of the tracked files the inputs match, and `majordomus knowledge digest <class>` prints it so that the repository's own script stamps its output. Discovery compares each file's stamp with the current digest and emits a warning diagnostic `derived_source_stale` naming the class, the file, both digests and the declared command as the remedy; Majordomus never runs the generator itself, so doctor and every read stay free of side effects. A kind entry may also declare `references:`, a map from a metadata field to a target kind among issue, milestone, intent, rule and adr; the graph resolves those fields as it resolves its built-in relations, so an object of the repository's kind shows an outgoing edge in `majordomus entity show`, the issue, intent or rule it names shows the backlink, trace.issue (majordomus_trace_issue, GET /api/v1/trace/issue) lists the objects that reference the issue, and a reference that resolves to nothing is the existing dangling-reference finding. docs/KNOWLEDGE.md and docs/ADOPTION.md describe a derived knowledge source end to end.",
+        "path": ".ai/repo/project/issues/I4417.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 9212
+      },
+      {
+        "uri": "majordomus://issue/I4418",
+        "kind": "issue",
+        "identity": "I4418",
+        "title": "serve ensure fast-forwards a clean trunk checkout that is strictly behind its remote trunk, or offers to, and majordomus init declares checkout.trunk_distance, so a shared server does not answer from an old tree unjudged",
+        "description": "Two changes. Neither moves a checkout that holds anything to lose, and neither supplies a threshold that no policy wrote. First, `majordomus serve ensure` (and through it the start event's mj_capture_ensure_server, lib/capture.sh:1679-1699) measures the trunk distance (worktree::trunk::measure) before it converges, and decides whether the checkout can be fast-forwarded. It can only when all of the following hold: HEAD is the trunk branch; the checkout is strictly behind the remote-tracking trunk as last fetched (behind > 0, ahead 0); no tracked file is staged or modified; no merge, rebase, cherry-pick, revert or bisect is in progress; and no index.lock exists. A new policy key checkout.fast_forward (off | offer | apply, absent: offer) decides what happens to an eligible checkout. With offer, the ensure answer (the human line and the JSON EnsureReport, which today carries no trunk field) gains `trunk` with standing, behind, eligible and the command `majordomus serve ensure --fast-forward`; the remedy in the MCP initialize trunk sentence names the same command. With apply, and with `--fast-forward` on any policy but off, ensure runs `git merge --ff-only <remote trunk>` in the checkout before it converges, never fetches, and reports the old and new heads as trunk.fast_forwarded {from, to}. A checkout that is not eligible is never moved. The answer says which condition failed (not the trunk branch, ahead of the remote trunk, uncommitted tracked changes, an operation in progress, or no remote trunk) and keeps today's remedy with its rescue step. A `git merge --ff-only` that refuses, for example over an untracked file it would overwrite, is reported with git's message and the checkout is left unchanged. The server's standing and its exit code are decided exactly as today. Second, share/skeleton/policy.yaml declares a checkout: block, trunk_distance with warn_behind 20 and fail_behind 200, plus fast_forward: offer, each commented, so a repository made by `majordomus init` judges its distance with numbers written in its own policy. Doctor's unjudged INFO (lib/doctor.sh:760) names the block to add, taken from the skeleton, instead of only `majordomus worktree trunk`. The reader still supplies no default threshold: a policy without trunk_distance stays unjudged, as project.a-checkout-serves-the-current-trunk requires.",
+        "path": ".ai/repo/project/issues/I4418.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 11070
+      },
+      {
+        "uri": "majordomus://issue/I4419",
+        "kind": "issue",
+        "identity": "I4419",
+        "title": "A release that waits behind a starved forge says so: release.currency keeps its stance and names the forge as the cause, and doctor's remedy stops telling the seat to release now",
+        "description": "release.currency reads the forge_starved signal that I4326 derives (each served repository's queued and in-progress workflow runs, and the time since the account last started a job). It reads the last observation the monitor holds, or makes one bounded read when the shared server holds none. While the signal holds for the measured repository, the answer keeps its stance (owed or overdue: the landed work does wait) and gains a field, held_by, carrying the signal's start and this repository's queued and in-progress counts. The summary appends `; the forge has started no job since <time> (<repo>: <n> queued, 0 in progress), so the release waits with the work it would ship`. lib/doctor.sh prints that summary under its existing WARN, and the remedy names the wait (`the release waits for the forge: majordomus monitor`) instead of `the release seat releases it now: majordomus run release.currency`. The brief's release part reads `release OVERDUE <n> (forge starved)`. With no observation (no token, offline, never observed) or a signal that does not hold, the answer is byte for byte today's, and it says nothing about the forge. Nothing is suppressed: the stance, the count, the wait and the threshold stay what I3070 measures.",
+        "path": ".ai/repo/project/issues/I4419.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6329
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -129265,7 +129364,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1102
+      "objects": 1111
     },
     {
       "name": "knowledge",
