@@ -88,6 +88,14 @@ accumulation:
 to run it. A new repository gets `report`. A policy without the block watches nothing and
 removes nothing.
 
+A reduction sees a worktree's branch, its files and the processes standing in it. It does
+not see who owns it. A worktree made for a verification run at the trunk's tip, or the
+worktree of a branch that has just landed, is "landed, clean, nobody inside" between two of
+its owner's commands, and a reduction removes it with its ignored build output. That
+happened in this repository on 2026-10-13, to two worktrees of other sessions, and this
+repository's policy says `report` since. Declare `reduce` only where one worker uses the
+repository, or run `majordomus accumulation --reduce` yourself when nobody else is working.
+
 ## The commands
 
 ```bash

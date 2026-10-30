@@ -180,9 +180,17 @@ knowledge:
 # inside is kept and named), then the names of landed branches nothing has checked out, each
 # deleted only while it still points where it was read and never when it stands at the
 # trunk's own tip. `act: report` says it and names the command, and removes nothing.
+#
+# This repository says `report`. On 2026-10-13, with `reduce` declared on the branch that
+# built the watch, a reduction started by that worktree's own events removed two worktrees
+# other sessions were using between two commands: a verification worktree at the trunk's tip
+# and the worktree of a branch that had just landed, with their ignored build output. Both
+# were "landed, clean, nobody inside", which is all a reduction can see: it does not know a
+# worktree a session owns and is not standing in. Until it does, unattended removal is not
+# consented to in a repository several sessions share; a person runs `--reduce`.
 accumulation:
   watch: true                            # the episode events read the quantities
-  act: reduce                            # report | reduce
+  act: report                            # report | reduce — see the note above
   worktrees_max: 60                      # registered worktrees, the primary among them
   merged_branches_max: 20                # local branches the trunk already reaches
   disk_free_min_mb: 51200                # 50 GiB: ten times the build floor, so that the
