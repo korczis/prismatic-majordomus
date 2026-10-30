@@ -152,6 +152,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "starts the HTTP server for this checkout as a process of its own when none answers, and waits until it is ready.",
     },
     LocalCommand {
+        command: "ui",
+        reason: LocalReason::ProcessLifecycle,
+        note: "ensures this checkout's server as `serve ensure` does and opens a browser on the invoking user's desktop, which no capability served by that server could do.",
+    },
+    LocalCommand {
         command: "serve stop",
         reason: LocalReason::ProcessLifecycle,
         note: "ends the server this checkout's lease names by signalling the process, which nothing served by that process could do to itself.",
@@ -211,6 +216,11 @@ pub const LOCAL: &[LocalCommand] = &[
         command: "web report ui-snapshot",
         reason: LocalReason::WritesRepository,
         note: "writes the UI's snapshot surface, one file per screen and panel read in-process, which is a producer of the web root rather than a reading of it.",
+    },
+    LocalCommand {
+        command: "web report cockpit-snapshot",
+        reason: LocalReason::WritesRepository,
+        note: "writes the Cockpit's snapshot surface, one file per page read in-process, and leads the UI snapshot's links to those pages, which is a producer of the web root rather than a reading of it.",
     },
     LocalCommand {
         command: "prs",
@@ -336,6 +346,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "prints the derive-offload declaration, the object objects.get serves as majordomus://derive-offload/<id>, with its defaults filled in.",
     },
     LocalCommand {
+        command: "guard hook",
+        reason: LocalReason::RendersCapability("guard.edit"),
+        note: "answers guard.edit for the path a provider's pre-tool payload on stdin names, without building the index because it runs before every edit, and says the answer as the exit code the provider reads: 2 refuses the tool.",
+    },
+    LocalCommand {
         command: "mesh status",
         reason: LocalReason::RendersCapability("mesh.status"),
         note: "asks this checkout's running server for mesh.status and renders it: the mesh lives in the server's memory, so an in-process answer would truthfully say only that this process runs no mesh.",
@@ -384,6 +399,11 @@ pub const LOCAL: &[LocalCommand] = &[
         command: "mesh release",
         reason: LocalReason::RendersCapability("mesh.release"),
         note: "runs mesh.release on this checkout's running server, the only process that holds the claim.",
+    },
+    LocalCommand {
+        command: "mesh beat",
+        reason: LocalReason::RendersCapability("mesh.beat"),
+        note: "runs mesh.beat on this checkout's running server, whose journal carries the session's beat to every linked runtime.",
     },
     LocalCommand {
         command: "mesh session open",

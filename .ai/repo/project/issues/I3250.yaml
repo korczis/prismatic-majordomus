@@ -1,0 +1,29 @@
+id: I3250
+milestone: an-unmet-criterion-is-drafted-into-work
+title: "Before drafting work the planner says whether a criterion is met, met but unproven, or unmet, and drafts proof-only work where only proof is missing"
+slug: proof-only-work-is-drafted
+priority: p3
+profile: implementation
+objective: "Classify each criterion before drafting: met (current evidence), unproven (implementation reachable from its ref, evidence not_run or stale), unmet; an unproven criterion drafts one issue whose only scope is the evidence it lacks."
+why: "2026-10-08 critique: without this, intent-driven becomes issue-driven with a costlier ritual. Proposed in ADR 0192 (Replanning is bounded, idempotent and never weakens its intent) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c198#11."
+current_state: "IntentEvidenceState distinguishes current, stale, failing, not_run, not_derivable, unresolved; drafting does not exist."
+desired_state: "The draft says per criterion which class it is in and why."
+scope:
+  - "apps/majordomus-cli/src/intent_plan.rs"
+  - "apps/majordomus-cli/src/intent.rs"
+  - "apps/majordomus-cli/src/evidence/freshness.rs"
+  - "apps/majordomus-cli/src/intent_realization.rs"
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "apps/majordomus-cli/tests/intent_plan.rs"
+depends_on:
+  - "I3246"
+acceptance_criteria:
+  - "A criterion with a stale passing test drafts a proof-only issue whose scope is that test"
+  - "A met criterion drafts nothing"
+validation:
+  - "majordomus plan validate"
+  - "majordomus intent validate"
+evidence_required:
+  - "test_proof_only_work_is_drafted"
+created_at: 2026-10-18
+updated_at: 2026-10-18

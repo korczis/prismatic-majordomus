@@ -1,0 +1,22 @@
+id: a-browser-computes-what-the-server-verifies
+title: A browser computes for a project with the same code the server runs, and nothing it returns is trusted until the server has recomputed it
+statement: "A person who opens a Majordomus-powered page can lend their browser's computing to the project: the browser runs, as WebAssembly, the very functions the server runs natively, and every result it returns is checked by the server computing the same function on the same input — so that a browser can help without ever being trusted, holding a secret, or joining the mesh as a peer."
+invariants:
+  - One implementation per computation, in the portable core; the browser runs it as wasm32 and the executable links it, and an executed fixture decides whether they agree
+  - A browser's result is a claim; only the server's recomputation verifies it, and agreement among browsers is never proof
+  - A browser holds no mesh key, takes no claim, appends nothing to the journal and writes nothing until an authentication the owner accepts exists (ADR 0126, ADR 0170)
+  - Participation is opt-in, revocable and visible; nothing computes in a page a person did not ask to compute
+non_goals:
+  - A second mesh, a browser-specific scheduler or a second capability registry
+  - Arbitrary code from a peer; only the core's own functions run
+milestones:
+  - browser-compute
+satisfaction:
+  - id: core-agrees-everywhere
+    criterion: The portable core's canonical JSON and digest reproduce every row of the shared fixture on the host, in the executable that links it, and in the wasm32 module executed through the C ABI a browser calls
+    evidence: test
+    ref: apps/majordomus-cli/tests/portable_core.rs
+governance:
+  - adr:adr-0170
+  - adr:adr-0126
+  - rule:project.derived-once

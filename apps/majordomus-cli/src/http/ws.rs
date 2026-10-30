@@ -13,7 +13,9 @@
 //! the stream this module writes is one-way by design: everything a client wants to say —
 //! which executions to follow, and from which sequence — it says in the request target,
 //! and the server ignores whatever the client sends afterwards. A client that goes away is
-//! noticed by the next write failing, which the heartbeat guarantees will happen.
+//! noticed by a non-blocking look at the connection's socket on each quiet interval, which
+//! drains and drops what the client sent (`super::events::LOOK`), and failing that by the
+//! next write failing, which the heartbeat guarantees will happen.
 
 use std::io::Write;
 

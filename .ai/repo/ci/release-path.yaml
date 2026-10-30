@@ -1,0 +1,56 @@
+version: 1
+
+# ---------------------------------------------------------------- what this workflow is for
+# The release path goes first on the runner pool every workflow of this repository shares
+# (I2710). The pool is first come, first served, and on 2026-10-14 at 19:07Z v0.26.0 was
+# published while its record's verdict (validate run 38620987044, dispatched on
+# release/record-v0.26.0) and the Pages deploy that publishes it (pages run 38620990702) sat
+# queued: the pull-request validates of #897 and #946 held all twenty job slots. The site
+# went on offering 0.25.0, the landing HOLD could not be lifted, and a person cancelled #897
+# by hand to free the slots.
+#
+# The rule, enforced by scripts/ci/release-path with this file as its data:
+#
+#   1. While a run of the release path is queued or running, a pull request's validate run
+#      yields: the first step of its plan job asks, and when the answer is busy it labels its
+#      pull request `label`, says on the pull request which run it yielded to, and cancels
+#      itself (validate.yml, plan job, "the release path goes first").
+#   2. A tag push preempts: .github/workflows/release-path.yml starts on the same push as the
+#      release and cancels every pull-request validate already queued or running, labelling
+#      and telling each one the same way, so the release's own jobs, its record's verdict and
+#      its deploy find the slots those runs held.
+#   3. A run that yielded is re-requested once the release path is clear, without a person:
+#      `resume` reruns the newest validate run of each labelled pull request's head when that
+#      run is the cancelled one, and removes the label. It is asked at the end of every
+#      validate run that is not a pull request's (the record's dispatched reading is one), and by the
+#      schedule below, so the longest a yielded run waits after the path clears is one tick.
+#   4. Nothing of the release path is ever cancelled by this, and neither is master's own
+#      validate: only runs whose event is pull_request, of the verdict workflow, on a branch
+#      that is not a record branch, are candidates — and a run yields only itself.
+#
+# The release path is detected from outside the release workflow, by the runs GitHub lists,
+# so nothing here depends on the release workflow saying anything.
+release_path:
+  # the release pipeline itself, from the tag push to its smoke
+  release: .github/workflows/release.yml
+  # the verdict workflow; on a record branch its runs are the release's: the early reading the
+  # release dispatches there, and the record pull request's own run (docs/DISTRIBUTION.md)
+  verdict: .github/workflows/validate.yml
+  record_branch_prefix: release/record-
+  # the deploy the release asks for: a pages run of the trunk dispatched by the release's token
+  pages: .github/workflows/pages.yml
+  pages_dispatched_by: github-actions[bot]
+  trunk: master
+
+yield:
+  # the mark a pull request carries while its run waits for the release path; added and
+  # removed with the job's token, so neither starts a workflow
+  label: ci:yielded
+  # how long `yield` waits for its own cancellation to land before it lets the run proceed
+  cancel_wait_seconds: 60
+
+trigger:
+  # the tag push that starts a release starts the preemption beside it
+  tags: 'v*'
+  # resume's safety net: a yielded run is re-requested within one tick of the path clearing
+  schedule: '7,22,37,52 * * * *'

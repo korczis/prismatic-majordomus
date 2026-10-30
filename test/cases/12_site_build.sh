@@ -25,7 +25,8 @@ done
 # Two defined columns (slice E): what is declared with a test, and what a recorded run supports;
 # the ambiguous "proven" header is gone, and each column is defined in the page's legend.
 expect_grep '>declared [+] test<' "$P/features/matrix/index.html"
-expect_grep '>supported by a run<' "$P/features/matrix/index.html"
+# the second column is the committed ledger's verdict and says so (I4317)
+expect_grep '>supported in the ledger<' "$P/features/matrix/index.html"
 expect_grep 'id="declared-with-test"' "$P/features/matrix/index.html"
 expect_grep 'id="supported-by-a-run"' "$P/features/matrix/index.html"
 pr="$(jq -r '[.matrix.rows[] | select(.proven != null)] | length' "$PD")"

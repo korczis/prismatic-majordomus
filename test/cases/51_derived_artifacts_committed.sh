@@ -71,6 +71,10 @@ git clone -q --no-local "$ROOT" "$W" 2>/dev/null || { echo "    could not clone 
 (cd "$W" && git config user.email t@example.com && git config user.name t) \
   || { echo "    could not configure the clone"; exit 1; }
 printf "\n" >> "$W/docs/PLAN_STATUS.md"
+# the clone has no executable and no ordinary command builds one (ADR 0224): without this
+# tree's, --check exits 12 for the missing tool and never judges the hand edit
+RB="$(rust_bin)" || rust_bin_exit $?
+MAJORDOMUS_BIN="$RB"; export MAJORDOMUS_BIN
 rc=0; "$W/scripts/generate-site-data" --check >/dev/null 2>&1 || rc=$?
 [ "$rc" = 10 ] || { echo "    --check did not report a hand edit to a generated document"; exit 1; }
 "$W/scripts/generate-site-data" >/dev/null 2>&1

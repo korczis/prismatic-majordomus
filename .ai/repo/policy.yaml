@@ -121,6 +121,13 @@ session:
   # leaving it in the working tree is the same as not writing it.
   commit_record_on_end: true
   push_record_on_end: true
+  # The cap on the closed records the sessions section holds, and whether the oldest beyond
+  # it may be moved aside. A record is history and is never deleted: `majordomus session
+  # archive` moves the oldest over the cap into the section's archive/ directory, only when
+  # it is run, and refuses to overwrite a record already there. Over the cap, `doctor` fails
+  # and `watch` drifts, the way they do for checkpoints and handovers.
+  retention_max_files: 500
+  archive: true
   briefing_budget_lines: 60              # cap on what the start event injects, per episode
   checkpoint_on_compact: true            # also the checkpoint the close records, for the
                                          # same reason: both are moments at which what the
@@ -131,6 +138,8 @@ session:
   brief_on_interval: true                # keep the session briefed on what surrounds it, as
                                          # its status line and on an interval (ADR 0136)
   brief_interval_minutes: 20             # how often a session reports on itself unasked
+  edits_require_claim: true              # refuse an edit no claim covers: the active task's
+                                         # scope or a live mesh claim of the session (I2735)
   knowledge_on_end: true                 # the evidence the episode produced is about to stop
                                          # being reachable; derive what it says as the
                                          # episode closes, on every close path
@@ -160,6 +169,13 @@ knowledge:
   candidates_max_files: 40               # more candidates than this awaiting review is a WARN
   candidate_max_age_minutes: 20160       # 14d: a candidate this old was not reviewed, it was
                                          # ignored; doctor names it
+
+# Rebuildable caches under .ai/local/cache/, which no commit carries. Each parsed YAML file
+# is kept under cache/flat/ and served only to a file with exactly the bytes it was parsed
+# from, so a command on unchanged files reads them instead of parsing them again. Past the
+# cap the oldest written go first; 0 is no cache.
+cache:
+  flatten_max_entries: 2000
 
 # `majordomus bench` samples every public command this many times after the warm-up runs;
 # `bench --check` refuses a regression larger than these fractions of the baseline's
@@ -283,15 +299,33 @@ enforcement:
     path: bin/majordomus
     args: [finish, --check]
     wired_by: git-hook:pre-push
+  # What CI would find, found first: the plan's structure gates that CI recorded as cheap and
+  # that reach no network, and the suite's fast cases, within a stated bound
+  # (rule project.a-push-runs-what-ci-would-find-first). Doctor finds a clone whose hook
+  # stops calling it; the commit hook reports that and CI's core-check refuses it.
+  - name: structure-gates-on-push
+    path: scripts/ci/run-plan
+    args: [--before-push]
+    wired_by: git-hook:pre-push
   # .gitattributes marks the derived artifacts `merge=derived`, but the driver that name
   # resolves to is declared per clone and per worktree. Git says nothing when it is missing:
   # it falls back to the default text merge and conflicts on every generated file, which is
-  # the state this repository was in. Declaring it here is what makes doctor — and therefore
-  # the pre-commit hook — refuse a clone that has not run `just derive-merge-driver`.
+  # the state this repository was in. Declaring it here is what makes doctor name a clone
+  # that has not run `just derive-merge-driver`; the pre-commit hook prints doctor's findings
+  # and does not refuse on them (I3830).
   - name: derived-merge-driver
     path: scripts/merge-derived
     args: []
     wired_by: git-config:merge.derived.driver
+  # `scripts/derive` builds the Rust executable, and with it everything that regenerates
+  # derived data: the pre-commit gate, `majordomus prs repair --apply`, the integration
+  # executor. On a machine without the pinned toolchain each of them fails late, after the
+  # merge and the lock, naming `cargo` and nothing about this repository. Declaring it here
+  # makes doctor name that clone before it starts, in the line the pre-commit hook prints.
+  - name: derive-toolchain
+    path: scripts/derive
+    args: []
+    wired_by: toolchain:rust-toolchain.toml
   - name: prompt-capture
     path: bin/majordomus
     args: [capture, prompt]
@@ -344,6 +378,30 @@ commit:
   reference_unresolved: error
   breaking_unexplained: error
 
+# ---------------------------------------------------------------- a checkout and its trunk
+# How far a checkout may drift from the remote trunk (project.a-checkout-serves-the-current-trunk).
+# On 2026-10-16 the primary checkout was 779 commits behind origin/master, its shared server
+# answered every session from that tree, and its local master was the base `worktree create`
+# branched from; nothing reported it. The distance is counted for the checkout's HEAD and for
+# the local trunk branch, as of the last fetch, and judged here: lagging warns, stale fails
+# doctor — and so the commit hook — while a merge that brings the checkout current counts
+# what it brings in. Read by worktree status, server.status, the MCP initialize
+# instructions and doctor; nothing reads a default when these are absent.
+checkout:
+  trunk_distance:
+    warn_behind: 100                     # about a day of this trunk's commits
+    fail_behind: 400                     # several days: what it serves is not the trunk
+
+# ---------------------------------------------------------------- the build cache's local level
+# `majordomus mesh build-cache ensure` keeps every npm, mix and cargo build-directory archive it
+# restores or saves under ~/.cache/majordomus/build-cache, shared by every checkout of the
+# machine (ADR 0157 decision 13, I3952). It is held under this bound, oldest archive first,
+# whenever an archive is added, and scripts/reap-orphans measures it and reduces it to the same
+# bound. 20 GiB is several lockfiles' worth of each kind: a cargo build directory archive was
+# measured at about 1 GB compressed (2.9 GB uncompressed) on 2026-10-22.
+build_cache:
+  local_max_gib: 20
+
 # ---------------------------------------------------------------- the shared server's lease
 # One server serves a checkout, and a lease file decides which process owns it. These four
 # numbers are what a contest between two processes is judged by, and until 2026-09-15 all
@@ -358,12 +416,16 @@ commit:
 # The values below are the constants they replace, so declaring them changed no behaviour.
 # Changing them here changes behaviour, and test/cases holds that it does — otherwise this
 # would be a constant moved to another file rather than a value the model owns.
+#
+# `idle_seconds` is how long a server started for a checkout no client owns (`serve ensure`,
+# a shell entering the checkout) outlives its last peer; `serve --idle` overrides it (I2701).
 server:
   probe_timeout_seconds: 2
   bind_grace_seconds: 15
   join_timeout_seconds: 20
   busy_grace_seconds: 10
   read_deadline_seconds: 30
+  idle_seconds: 900
 
 projections:
   - provider: agents
@@ -371,5 +433,7 @@ projections:
     always_loaded: true
   - provider: claude-code
     target: CLAUDE.md
+  - provider: gemini
+    target: GEMINI.md
   - provider: bb
     target: .bb/AGENTS.md

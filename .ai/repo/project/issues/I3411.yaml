@@ -1,0 +1,35 @@
+id: I3411
+milestone: a-prompt-reaches-the-work-it-serves
+title: "A task records the captured prompt it followed, so the join from prompt to task is a recorded fact rather than a time adjacency"
+slug: a-task-names-the-prompt-it-followed
+priority: p2
+profile: implementation
+objective: "When majordomus start writes task.started (lib/start.sh:158), add an optional prompt key. It holds the provider and provider prompt id of the newest capture record that the starting episode captured before the start. The record is found through a helper in lib/capture.sh over the same two day-globs I3406 bounds. Write no key when the episode captured nothing, and never any prompt text. Document the optional key in share/events.yaml's note for task.started, and leave requires unchanged."
+why: "The owner's 2026-10-19 Cognitive Fabric pack (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/00_MASTER.md, contracts/EVENT_CONTRACT.md) requires that an event reach the existing task identity and change validated state through its canonical owner, with a causal parent. The task lifecycle is that owner, and the ledger is its record."
+current_state: "When the binding was asked, task.started carries task_id, profile, owner, scope and requires, plus issue, intent, exemption, binding and plan_revision (lib/start.sh:158-160). A capture record names its episode (lib/capture.sh:583-586), and nothing links it to a task. The ledger is .ai/local/state/ledger.jsonl, which is gitignored and machine-local (lib/common.sh:1657)."
+desired_state: "Every task started after a captured prompt names that prompt's identity. The prompt to task join reads as recorded; it is inferred only for lines written before this change."
+scope:
+  - "lib/start.sh"
+  - "lib/capture.sh"
+  - "share/events.yaml"
+  - "test/cases/960_a_task_starts_bound_to_what_it_serves.sh"
+non_scope:
+  - "Any prompt text in the ledger"
+  - "Matching the prompt inside start"
+  - "Changing session.started (I3142)"
+depends_on:
+  - "I3406"
+serves:
+  - "a-change-reconciles-what-it-affects#a-task-names-the-prompt-it-followed"
+acceptance_criteria:
+  - "A start after a captured prompt of the same episode writes task.started with that prompt's provider and id"
+  - "A start in an episode with no capture writes no prompt key"
+  - "A capture from another episode is never named"
+  - "The line carries no prompt text, and majordomus history --event task.started still reads older lines"
+validation:
+  - "bash test/run.sh 960_a_task_starts_bound_to_what_it_serves 29_prompt_capture"
+  - "majordomus shell check"
+evidence_required:
+  - "case_a_task_names_the_prompt_it_followed (an assertion block added to test/cases/960_a_task_starts_bound_to_what_it_serves.sh)"
+created_at: 2026-10-19
+updated_at: 2026-10-19

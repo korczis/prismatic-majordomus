@@ -1,0 +1,38 @@
+id: I3406
+milestone: a-prompt-reaches-the-work-it-serves
+title: "A prompt delivered again, concurrently, on the next day or after a resumed session is still one record, and capture status counts every identity that more than one record holds"
+slug: a-replayed-prompt-is-one-record
+priority: p1
+profile: implementation
+objective: "Key prompt-capture idempotence on provider plus provider prompt id. Take the existing mj_lock_take (lib/common.sh:1406) around the check-then-write, under a lock path derived from that key, so that concurrent deliveries converge. Check the record's UTC day and the day before, so the hook scans at most two day-globs. Write a payload whose key is known but whose text differs, and count it as a key collision. Make capture status report, over the whole archive and off the hook path, the identities more than one record holds and the key collisions. Delete no record."
+why: "The owner's 2026-10-19 Cognitive Fabric pack (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/02_EVENTS_INTENTS.md, contracts/EVENT_CONTRACT.md) asks for an idempotency key built from stable source-native identity plus a namespace. It also asks for idempotency at the level of outcomes, with concurrent writers of one key converging. The archive already shows repeats across the day boundary."
+current_state: "lib/capture.sh:563-570 dedups by grepping only the current UTC day's files for the bare prompt id, without the provider and without a lock, and states that a later redelivery is not covered. test/cases/29_prompt_capture.sh:207-213 proves only sequential dedup on the same day. The wave-02 audit found provider prompt ids that more than one record holds, mostly on consecutive UTC days (recount with grep -h '\"id\":' .ai/local/prompts/*.json | sort | uniq -d | wc -l). Their cause is not established."
+desired_state: "The key is provider plus prompt id, and writes for one key are serialised by the existing bounded lock. A redelivery on the same or the next UTC day writes nothing. A known key with different text is written and counted. capture status prints both counts. No record is deleted, and no file is left beside the archive."
+scope:
+  - "lib/capture.sh"
+  - "test/cases/29_prompt_capture.sh"
+  - "test/cases/280_capture_status_states_its_denominator.sh"
+non_scope:
+  - "Deleting or merging existing duplicate records"
+  - "A new field in the capture/v1 schema"
+  - "An index file beside the archive"
+  - "A doctor finding for records captured before this change"
+  - "The hook latency budget (I3304)"
+serves:
+  - "a-change-reconciles-what-it-affects#a-replayed-event-is-one-change"
+acceptance_criteria:
+  - "The same payload delivered 100 times in sequence leaves one record"
+  - "The same payload delivered 10 times concurrently leaves one record and no lock directory"
+  - "A payload whose prompt id was recorded on the previous UTC day writes no second record"
+  - "The same prompt id from two providers writes two records"
+  - "A payload with a known key and different text is still written and counted as a key collision, never dropped"
+  - "capture status --json reports identities held by more than one record and key collisions over the whole archive, zero on a clean fixture, and counts a delivery three days late"
+  - "The hook's time over the largest day of the primary archive is measured before and after and reported in the pull request, not asserted"
+validation:
+  - "bash test/run.sh 29_prompt_capture 280_capture_status_states_its_denominator"
+  - "majordomus shell check"
+  - "majordomus capture status --json"
+evidence_required:
+  - "case_a_replayed_prompt_is_one_record (an assertion block added to test/cases/29_prompt_capture.sh)"
+created_at: 2026-10-19
+updated_at: 2026-10-19

@@ -1,0 +1,37 @@
+id: I3912
+milestone: landing-survives-any-session
+title: "A seat whose holder stopped beating is reported vacant and offered to live sessions by capability"
+slug: a-vacant-seat-is-reported-and-offered
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "A claim on a seat scope (the landing seat, the release seat) whose stream stopped beating is reported as a vacant seat by mesh.state and by majordomus monitor within one expiry, with the evidence I3182 classifies it on: a missing heartbeat is reported as such and is not declared a dead worker. The vacancy is offered by capability to live sessions through I3198's fenced offer; a session that accepts holds the seat under a new fencing epoch (I3174) and consumes the newest handover published for that seat. A runtime never takes a seat by itself: only a session that can do the seat's work accepts it."
+why: "On 2026-10-22 the restart of machine 641bdb94 expired the a3 and 9c seat claims; nothing reported the vacancy (the monitor folds claim_acquired and claim_released only) and nothing offered the seats until a person started a new session hours later. A review of this plan noted that a runtime claiming a seat would hold it as a phantom, since the mesh executes no work (I3198 non_scope)."
+current_state: "mesh/state.rs marks claims of a silent stream Expired by liveness, never as an event (state.rs:735-745); ui/mesh.rs draws a seat as vacant; no code reports or offers a seat."
+desired_state: "Stopping the runtime that holds the landing seat makes mesh.state and the monitor report it vacant within one expiry and offers it to live sessions that declare the capability; the one that accepts holds it under a new epoch and has consumed the seat's handover."
+scope:
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/mesh/state.rs"
+  - "apps/majordomus-cli/src/monitor"
+  - "apps/majordomus-cli/tests/mesh_cooperation.rs"
+  - "docs/MESH.md"
+  - "docs/MONITOR.md"
+  - ".ai/repo/project/issues/I3912.yaml"
+acceptance_criteria:
+  - "A seat claim whose stream stopped beating is reported vacant in mesh.state and the monitor within one expiry, naming the evidence (case a_vacant_seat_is_reported_and_offered)"
+  - "The vacancy is offered only to sessions that declare the seat's capability, and exactly one acceptance holds it under a new epoch"
+  - "A holder returning under the old epoch is refused"
+validation:
+  - "bin/majordomus plan validate"
+  - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- mesh::"
+  - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_cooperation"
+evidence_required:
+  - "vacant_seat_is_taken"
+depends_on:
+  - "I3174"
+  - "I3182"
+  - "I3198"
+serves:
+  - "landing-survives-any-session#vacant-seat-is-taken"
+created_at: 2026-10-22
+updated_at: 2026-10-22

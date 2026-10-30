@@ -1,6 +1,6 @@
 [package]
 name = "majordomus-cli"
-version = "0.23.0"
+version = "1.0.0-alpha.9"
 edition = "2021"
 rust-version = "1.85"
 description = "Majordomus control-plane CLI: a data-driven stdio MCP server over the repository's .ai/ layer"
@@ -21,6 +21,9 @@ path = "src/lib.rs"
 clap = { version = "4.5", features = ["derive"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order", "raw_value"] }
+# The portable core (ADR 0170): canonical JSON and its digest, the same code a browser runs
+# as wasm32. It takes nothing this crate does not already take.
+majordomus-core = { path = "../majordomus-core" }
 # No YAML crate: the layer's YAML is the small subset docs/SCHEMAS.md defines, read by
 # src/metadata/yaml.rs exactly as the shell tool reads it.
 thiserror = "2"
@@ -58,11 +61,28 @@ getrandom = "0.2"
 # apply with grep; the crate applies the same file rather than a translation of it. Already
 # in the build through jsonschema, with the same features, so it adds no code.
 regex = "1"
+# rhai: a capability may be scripted (ADR 0069). Repository automation that used to be shell
+# is a Rhai script calling typed capabilities, run by this executable, so a user needs no
+# Bash, no Rust toolchain and no second interpreter. `sync`: the shared server runs handlers
+# on threads. `serde`: values cross the boundary through the schemas that already describe
+# them. `metadata`: the functions a script may call are introspectable. `no_time`: time
+# reaches a script through its context, never a hidden clock. Default features are off so
+# hashing is not seeded at random per run; `unchecked` stays off, because its limits are the
+# sandbox (src/script/mod.rs).
+rhai = { version = "1.26", default-features = false, features = ["std", "sync", "serde", "metadata", "no_time"] }
 # tiktoken-rs: the economics subsystem counts context in tokens of a named, pinned
 # tokenizer (o200k_base, vocabulary embedded, no network) rather than dividing bytes by
 # four. It is not the tokenizer of every model, and every count it produces says which one
 # it is; provider-reported usage is recorded as the provider reported it and never recounted.
 tiktoken-rs = "=0.12.0"
+# rustls + webpki-roots: the mesh client reaches an `https://` rendezvous endpoint or seed over
+# TLS (ADR 0220, decision 1), with the certificate and the host name verified. The crypto
+# provider is ring, the only one enabled (no aws-lc: it needs cmake and a C toolchain the musl
+# release builds would have to carry); the roots are Mozilla's, compiled in, so a scratch or
+# musl runtime needs no system store. No async runtime and no HTTP client come with it: the
+# request is the crate's own few lines (src/mcp/bridge.rs) over a rustls stream.
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+webpki-roots = "1"
 
 [build-dependencies]
 # sha2: build.rs takes the generation — the digest of the crate sources this build read —
@@ -76,6 +96,9 @@ criterion = { version = "0.8", default-features = false }
 # equivalence, projection determinism, duplicate detection), strategies derived per
 # capability from its benchmark cases.
 proptest = { version = "1", default-features = false, features = ["std"] }
+# rcgen: the TLS tests mint a certificate authority and a server certificate in memory, so a
+# round trip over TLS is proved against a local server with no network and no fixture key.
+rcgen = { version = "0.14", default-features = false, features = ["crypto", "ring"] }
 
 [[bench]]
 name = "projections"
@@ -103,3 +126,15 @@ harness = false
 
 [profile.release]
 strip = true
+
+# The dependencies are optimised in the debug build that every derive, hook, case and CI job
+# runs; this crate itself is not, so an edit to it compiles as fast as before. Unoptimised,
+# dependency code was the largest part of `generate --check` (2026-10-15, sampled): syn
+# parsing every source file for the rustdoc module routes, sha2's software SHA-256 over the
+# index, the crate's generation and every artifact, serde_json reading the schemas. Optimised,
+# `generate site --check` used 5.3 s of CPU instead of 10.0 and `generate --check` 21.0 s
+# instead of 28.1 (medians, crate at opt-level 0), with byte-identical output. The
+# dependencies compile once per build directory and again only when Cargo.lock moves. Proc
+# macros and build scripts keep the build-override profile, so the derives compile as before.
+[profile.dev.package."*"]
+opt-level = 2

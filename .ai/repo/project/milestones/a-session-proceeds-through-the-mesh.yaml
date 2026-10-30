@@ -1,0 +1,40 @@
+id: a-session-proceeds-through-the-mesh
+title: "A session proceeds through the mesh: it finds the work, claims it once, runs it watched and stops when the intent is met"
+slug: a-session-proceeds-through-the-mesh
+order: 520
+priority: p1
+problem: "Realising an intent is still a sequence a person runs: /proceed names work but nothing claims it, starts it exactly once, fans it out, reports it or schedules the next step; a stuck or dead loop is found by a person; heavy work starves on one lock; idle servers and deleting pushes cost the machine minutes. The pieces exist as unpushed stacks (I2972-I2976, I3040, ADR 0177) and as Mission Control findings B1 to B6, and none of them is one path."
+outcome: "A session asks /proceed what to do, receives one idempotent work order derived from intent_realization and the claim-aware plan, takes it under a mesh claim held by the run, starts it once, reports it and schedules its own next step until the intent is met; /watchdog wakes, hands over and reaps a stalled loop from deadlines; heavy work shares the machine through one slot."
+current_state: "Planned only. Records I4000 to I4009 and cases 4000 to 4009 exist as plan; no code is written by this milestone's planning pull request."
+desired_state: "Every satisfaction criterion of the intent is proved by its case; no new store, scheduler, journal kind or registry exists; every projection is generated."
+scope:
+  - "apps/majordomus-cli/src"
+  - "share/skills"
+  - "share/schemas"
+  - "docs"
+  - ".githooks"
+  - "test/cases"
+  - ".ai/repo/project"
+non_scope:
+  - "Push assignment of work to peers before I3198"
+  - "Changing a profile automatically from inferred routing"
+  - "Editing a person's .claude/settings.json or personal commands"
+acceptance_criteria:
+  - "a fresh session in a supervised repository is told by /proceed which admissible work to take, derived from intent_realization and the claim-aware plan.next, with no question asked of a person"
+  - "two sessions asking for work at once never receive the same item: the item's mesh claim is taken in the handler before any worker starts, an overlap is refused with a reason, and the claim is released when the run ends"
+  - "a proceeding loop that stopped is detected from deadlines and events, woken, its handover published and resumed by another session, and reaped only by its owner or a seat after assess-before-deleting"
+  - "a stuck or silent session is signalled by a phase deadline and a liveness event, never by polling, and the signal names the claim, the holder and the overdue phase"
+  - "heavy work (pre-push, coverage, builds) takes one of N machine-wide slots with the disk floor read from rule data; a full queue answers a bounded wait naming its holders, and an idle serve and a deleting push cost the machine nothing"
+  - "a /proceed step on an intent whose realisation is met answers that it is done and schedules no next step"
+  - "an implement request runs once: a repeated executions.start with the same idempotency key answers the same execution id and a double click never starts two executions (Mission Control)"
+validation:
+  - "majordomus plan validate"
+  - "majordomus intent validate"
+  - "majordomus generate --check"
+evidence_required: []
+depends_on: []
+risks:
+  - "The liveness substrate I3990-I3994 and the fencing epoch I3174 are other sessions' work; I4004 and I4009 name them and write none of them."
+  - "The /proceed stack I2972-I2976 and I3040 is unpushed or unmerged; I4005 must build on it, and waits for it to land if it has not."
+created_at: 2026-10-23
+updated_at: 2026-10-23

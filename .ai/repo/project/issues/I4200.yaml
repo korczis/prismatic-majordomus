@@ -1,0 +1,58 @@
+id: I4200
+milestone: M004
+title: "A warm UI screen borrows what its sources answered and writes its page once, so a plan of any size is not copied per request"
+slug: a-warm-screen-copies-nothing-per-request
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Make the warm request path of /ui copy nothing it already holds: read the intents, issues, waves and scope pairs through view::items (borrowed) instead of view::list (a deep copy) in ui/issues.rs, ui/idd.rs (screen, render, choice, wave_panel) and ui/intent.rs's inspector; move a screen's tree into its page in ui/shell.rs::page instead of cloning it; and escape text and attribute values straight into the page buffer in cockpit/html.rs instead of through a new String each."
+why: "Train 5's ui-checks step 'every warm screen of the UI is within its budget' failed on #2403: system.http.ui.idd warm p95 108.3 ms and system.http.ui.issues 106.6 ms against 100 ms, and both sat at 95-110% of the budget on every runner. The data comes from cached readings, so warm cost equalled cold cost: every request deep-copied the whole intents list (four times on /ui/idd), every issue of the plan, the whole waves answer with every scope pair of the plan (79% of /ui/idd's render once the first copies were gone), and then the screen's entire element tree again to place it in the page, which on /ui/issues is a ~970 KB page of 976 rows."
+current_state: "Measured on d078fb2309e, both builds made the same way here (debug, RUSTFLAGS=''), `majordomus bench <id> --transport system --profile ci`, warm p95: system.http.ui.idd 17.9 ms and system.http.ui.issues 35.8 ms. view::list is `items(answer, pointer).to_vec()`; shell::page took &View and did `.child(view.main.clone())`; cockpit::html::El::write called escape(), which returns a new String, for every text and every attribute value."
+desired_state: "Warm p95 on the same build: system.http.ui.idd 6.4 ms (-64%) and system.http.ui.issues 22.2 ms (-38%), with every screen's output unchanged byte for byte, so both screens sit well inside the 100 ms budget on CI's runners without raising it."
+scope:
+  - ".ai/repo/project/issues/I4200.yaml"
+  - "apps/majordomus-cli/src/ui/issues.rs"
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - "apps/majordomus-cli/src/ui/intent.rs"
+  - "apps/majordomus-cli/src/ui/shell.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/src/cockpit/html.rs"
+non_scope:
+  - "Raising any warm budget"
+  - "Paginating /ui/issues, which would change what the screen shows"
+acceptance_criteria:
+  - "The ui and cockpit::html unit tests pass unchanged, so every screen renders the same bytes"
+  - "bench system.http.ui.idd and system.http.ui.issues warm p95 fall by at least a third against a build of the same commit without the change"
+  - "ui-checks' warm-budget step passes on CI without a rerun"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- cockpit::html ui::"
+  - "majordomus bench system.http.ui.idd --transport system --profile ci --no-write"
+  - "majordomus bench system.http.ui.issues --transport system --profile ci --no-write"
+evidence_required:
+  - "warm_screens_copy_nothing"
+  - "warm_budget_passes_on_ci"
+depends_on: []
+serves: []
+created_at: 2026-10-24
+updated_at: 2026-10-28T12:24:04Z
+started_at: 2026-10-28T12:22:41Z
+started_event: sha256:1960e8ae8a5e1e493aaa04ef42b506e249bd4483cfa88c4d6539dd975af1e487
+verified_at: 2026-10-28T12:23:17Z
+verified_event: sha256:2a1a53468ea5ec96fb810f63c0cbace53e125472add9ae66514ff258db5b0d3b
+completed_at: 2026-10-28T12:24:04Z
+completed_event: sha256:e3552ce091968db5c4823d83717c68a14d9cc0f3345acacd5829f9a4e96327d7
+evidence:
+  - covers: warm_screens_copy_nothing
+    type: test
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- cockpit::html ui:: (validate rust shards); same-build bench A/B recorded in commit 43f1acecb4e"
+    result: "cockpit::html and ui::idd unit tests ok unchanged in master validate https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939 at 6c79dcf68cf (rust (1) lib suite 2434 passed, 0 failed); the same-build A/B is the author's, inherited from the commit body of 43f1acecb4e and not re-run today: ui.idd warm p95 17.9 -> 5.6 ms, ui.issues 35.8 -> 22.8 ms (-36%); CI across commits corroborates it: run 40062559599 before (ui.idd 108.3 ms, ui.issues 106.6 ms) and https://github.com/korczis/prismatic-majordomus/actions/runs/40447094163 after (38.9 ms, 46.8 ms)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939"
+    commit: 81ef931a3e156907f1784c64c509884f565c17f0
+    recorded_at: 2026-10-28T12:23:43Z
+  - covers: warm_budget_passes_on_ci
+    type: ci
+    command: "ui-checks step 'every warm screen of the UI is within its budget' (bench system.http. --check)"
+    result: "attempt 1 (no rerun) of master validate https://github.com/korczis/prismatic-majordomus/actions/runs/40447094163 at 5c24edb4c3b, which contains 43f1acecb4e: job ui-checks 122006729898 success, ui.idd warm p95 38.9 ms and ui.issues 46.8 ms against 100 ms"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40447094163/job/122006729898"
+    commit: 81ef931a3e156907f1784c64c509884f565c17f0
+    recorded_at: 2026-10-28T12:23:55Z

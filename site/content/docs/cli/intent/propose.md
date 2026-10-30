@@ -1,7 +1,7 @@
 +++
 title = "majordomus intent propose"
 description = "Write a new, unplanned intent: what must become true (ADR 0144)"
-weight = 191
+weight = 206
 [extra]
 route = "/docs/cli/intent/propose/"
 command = "majordomus intent propose"

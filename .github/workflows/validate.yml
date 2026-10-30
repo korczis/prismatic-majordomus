@@ -51,6 +51,15 @@ permissions:
   # scripts/ci/github-check reads the repository's issues and milestones to prove the
   # canonical project model and its GitHub projection still agree.
   issues: read
+  # `gh run cancel` of this run's own id, the last step of every gate job: a run on a branch
+  # ends at its first red (I2664, see `concurrency` below). The plan job's first step cancels
+  # its own run too when the release path holds the runners, and the ci job of a run that is
+  # not a pull request's re-requests the runs that yielded (I2710, scripts/ci/release-path).
+  actions: write
+  # I2710: a pull request whose run yields to the release path is labelled ci:yielded and told
+  # which run it yielded to, and the label is removed when the run is re-requested. Both are
+  # made with this token, so neither starts a workflow.
+  pull-requests: write
 
 # One run of a pull request at a time, and a started run reaches its verdict. A newer commit
 # waits in the group and replaces any commit still waiting there, so a burst of pushes costs
@@ -60,6 +69,23 @@ permissions:
 # was cancelled four times in a row without ever producing the verdict a merge is decided
 # on. Every other run (master, the schedule, a dispatch) is its own group: it neither waits
 # for nor cancels another; only deployments queue, in the pages job's own group.
+#
+# What ends a pull request's run early is its own first red, never a newer commit (I2664).
+# Once one job of a branch's run has failed the run cannot be green, and the jobs still going
+# decide nothing about that head while they hold the runners the trunk's run and the
+# deployments wait for; on 2026-10-13 a run with two failed jobs kept nine more running for
+# twenty minutes. So the last step of every gate job, `if: failure()` on a pull_request event
+# alone, cancels the run by its own id: the jobs that `if: always()` (ci, evidence, the suite's
+# union) still run and report it red. A run of master, the schedule or a dispatch (which is how
+# the release pipeline asks for its record's verdict) is never cancelled this way: the
+# trunk's other jobs are the only reading of its other lanes. Case 3019 holds every job to it.
+#
+# A combined top is the exception: a pull request whose head is an `integration/*` branch runs
+# to the end, and the step only says so. A top carries many heads and is judged once for all of
+# them; on 2026-10-15 the grand top (#1183, integration/68-top-20261015) took three full cycles
+# because each run showed only its first red, and the job that held it read as cancelled. One
+# run of a top shows every red. The step reads $GITHUB_HEAD_REF rather than `if:`, so it stays
+# the last step of every job; case 3019 holds every job to the exemption too.
 concurrency:
   group: validate-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
   cancel-in-progress: false
@@ -96,10 +122,12 @@ jobs:
       intent_check: ${{ steps.plan.outputs.intent_check }}
       intent_realization: ${{ steps.plan.outputs.intent_realization }}
       release_record_cases: ${{ steps.plan.outputs.release_record_cases }}
+      plan_record_cases: ${{ steps.plan.outputs.plan_record_cases }}
       cockpit_assets: ${{ steps.plan.outputs.cockpit_assets }}
       cockpit_probe: ${{ steps.plan.outputs.cockpit_probe }}
       site_build: ${{ steps.plan.outputs.site_build }}
       site_probe: ${{ steps.plan.outputs.site_probe }}
+      site_languages: ${{ steps.plan.outputs.site_languages }}
       ui_audit: ${{ steps.plan.outputs.ui_audit }}
       interaction_probe: ${{ steps.plan.outputs.interaction_probe }}
       macos: ${{ steps.plan.outputs.macos }}
@@ -108,9 +136,43 @@ jobs:
       pages_live: ${{ steps.plan.outputs.pages_live }}
       rustdoc: ${{ steps.plan.outputs.rustdoc }}
     steps:
+      # I4338: a pull request labelled hold is a train member. Its train's top runs the validate
+      # that judges it, and it lands only with that top, so its own run decides nothing and only
+      # holds a slot of the one validate the pool runs at a time: on 2026-10-28 twelve member
+      # runs queued ahead of trains 10a and 10b. It gives the slot back before any job asks for a
+      # runner, as the release path does below, and since it never reaches ci it can never read
+      # green and land on its own. A cancel that does not take hold fails the step instead.
+      - name: a held member yields to its train
+        if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'hold')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          {
+            echo "## held"; echo
+            echo "Pull request #$PR_NUMBER carries the hold label: it is a train member, judged by its train's top, and lands with it. This run gives its runners back (I4338)."
+          } >> "$GITHUB_STEP_SUMMARY"
+          gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY"
+          sleep 120
+          echo "::error::the run was not cancelled; a held member's run must not go on"
+          exit 1
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
+      # I2710: the release path goes first. While a release run, its record's verdict or the
+      # deploy it asked for is queued or running, a pull request's run gives its slots back:
+      # it labels its pull request, says which run it yielded to, and cancels itself, before
+      # any job of its own has asked for a runner. `release-path resume` runs it again once
+      # the path is clear. Never on master, the schedule or a dispatch, and never on a record
+      # branch; a reading that cannot be made lets the run proceed. Model and enforcer:
+      # .ai/repo/ci/release-path.yaml, scripts/ci/release-path; case 3027.
+      - name: the release path goes first
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: scripts/ci/release-path yield --event "$GITHUB_EVENT_NAME" --pr "$PR_NUMBER" --branch "$HEAD_REF" --self "$GITHUB_RUN_ID"
       - id: plan
         env:
           EVENT: ${{ github.event_name }}
@@ -152,6 +214,97 @@ jobs:
           name: ci-plan
           path: plan.json
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
+
+  # ------------------------------------------------------------------ build
+  # The executable and the crate's rustdoc surface, each built ONCE per run, right after the
+  # plan, and downloaded by the jobs that drive them (I3939). Before this, eight jobs built the
+  # same debug executable (about 4.5 minutes each) and seven the same surface (about 2.3), and
+  # the majordomus-cli artifact of the rust job's lane 3 was uploaded and never read. The jobs
+  # download through ./.github/actions/majordomus-bin, which checks the provenance below
+  # against its own checkout and builds the old way when an artifact is missing or is another
+  # commit's: a producer that failed, or was not planned, slows its consumers and never stops
+  # them. The `if:` of each producer is the union of its consumers' (test/cases/3939): a plan
+  # that selects a consumer selects its producer, and a plan that selects neither skips both.
+  # A consumer that runs on every plan makes its producer run on every plan, with no `if:`.
+  #   build             -> structure (every plan), site, suite-shard, evidence, ui-shard,
+  #                        ui-checks, ui, mesh-lab
+  #   rustdoc-surface   -> suite-shard, ui-shard, ui-checks
+  # No gate builds (ADR 0224), so the structure and site jobs, whose gates and generator run the
+  # executable, take this one rather than building their own. The macos job keeps its own build
+  # (another target), and the site job its own rustdoc: it would wait for this one and finish
+  # later, not sooner. The artifact is `majordomus-exe`, not the rust job's
+  # `majordomus-cli-<triple>`: upload-artifact@v4 refuses a name twice in one run. Its
+  # provenance carries the fields scripts/rust-check --artifact writes.
+  build:
+    needs: plan
+    timeout-minutes: 45
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: rust
+        uses: ./.github/actions/setup-rust
+      - name: the executable
+        run: RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
+      # what a consumer needs in order to know it is the one it expects: the commit, the target,
+      # the toolchain, the lock file (the fields of scripts/rust-check --artifact)
+      - name: the executable and its provenance
+        run: |
+          mkdir -p dist
+          cp apps/majordomus-cli/target/debug/majordomus dist/majordomus
+          jq -n --arg commit "$(git rev-parse HEAD)" \
+            --arg target "$(rustc -vV | sed -n 's/^host: //p')" \
+            --arg rustc "$(rustc -V)" \
+            --arg lock "$(sha256sum apps/majordomus-cli/Cargo.lock | cut -d' ' -f1)" \
+            --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{schema: 1, name: "majordomus", profile: "debug", commit: $commit, target: $target, rustc: $rustc, cargo_lock_sha256: $lock, built_at: $at}' > dist/majordomus-cli.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: majordomus-exe
+          path: dist
+          if-no-files-found: error
+          retention-days: 1
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
+
+  # The rustdoc surface (target/web/rustdoc, with the surface.json that names the commit it was
+  # built from), produced by the one action that produces it everywhere (ADR 0086) and handed to
+  # the jobs that compose it into a site.
+  rustdoc-surface:
+    needs: plan
+    if: needs.plan.outputs.shell_suite == 'true' || needs.plan.outputs.ui_audit == 'true'
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: the crate's Rust API reference
+        uses: ./.github/actions/rustdoc
+      - name: the surface, packed
+        run: tar -C target/web -czf rustdoc-surface.tgz rustdoc
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rustdoc-surface
+          path: rustdoc-surface.tgz
+          if-no-files-found: error
+          retention-days: 1
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ------------------------------------------------------------------ structure
   # The cheap, deterministic gates every plan runs: the shell syntax and shellcheck, then
@@ -163,7 +316,7 @@ jobs:
   # (run 38214783248): 55 minutes until the structure gates are made cheaper (#972 takes
   # about 8 minutes off), which is the fix this bound is waiting for.
   structure:
-    needs: plan
+    needs: [plan, build]
     timeout-minutes: 55
     runs-on: ubuntu-latest
     env:
@@ -176,9 +329,21 @@ jobs:
       # depth-1 checkout with no tags gives it neither, so the gate failed for want of the
       # data rather than for anything about the tree, on every run it has ever had. The
       # suite job already checks out in full, for the same class of reason.
+      # Every full-history checkout of this file carries a bound of its own, smaller than its
+      # job's (scripts/ci/step-bound-check): they take 95 to 212 s (2026-10-20), and the one
+      # that did not return that day waited out the coverage job's 55 minutes and read as
+      # cancelled, with nothing measured (run 39438896504).
+      # On 2026-10-28 (I4296) the full fetch of 533 heads and 190 tags took 216 to 488 s and
+      # hit the old 10-minute bound in 6 of 11 runs here and 4 in suite-shard (train 10a run
+      # 40733537887), so every full-history checkout of this file is bounded at 20 minutes.
+      # This one also keeps its history to commits and trees (blob:none): its gates read history
+      # as object ids, merge bases and paths, and the one file of the past they read, the
+      # release's registry, is fetched on demand, as pages.yml already does for its link check.
       - uses: actions/checkout@v4
+        timeout-minutes: 20
         with:
           fetch-depth: 0
+          filter: blob:none
       - run: sudo apt-get install -y shellcheck >/dev/null
       # `generation-converges` runs the generator, and the editor projection is one of its
       # targets: it reads the tracked justfile's recipes through `just --dump` (ADR 0140) and
@@ -195,6 +360,19 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: ci-plan
+      # No gate builds (ADR 0224), so every gate and script that asks bin/majordomus-cli gets
+      # the build job's executable (I3939), with MAJORDOMUS_BIN and the commit it was built
+      # from. Six of this job's gates and the scripts several others call run it; each used to
+      # reach it through `cargo run` or a launcher that built, and waited on the build lock.
+      # The pinned toolchain is set up all the same: core-check's derive-toolchain wiring
+      # refuses a job whose cargo lacks it, since a derive there would fetch it mid-merge.
+      - id: rust
+        uses: ./.github/actions/setup-rust
+      - name: the executable every gate runs
+        uses: ./.github/actions/majordomus-bin
+        with:
+          exe: "true"
+          setup: "false"
       # Every gate the model assigns to this job, in its order, as the plan selected them:
       # shell-lint, ui-check and core-check on every plan, and the structural gates a change
       # needs — site-basepath, rust-command, worktree-topology, providers-data. Dispatched
@@ -215,15 +393,23 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-structure
+          name: ci-receipts-structure-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ------------------------------------------------------------------ suite
   # Every behavioural case (test/run.sh), four at a time, in a disposable repository each.
-  # The Rust cases drive the executable built here once (MAJORDOMUS_BIN); the two that are
-  # cargo's own gates (the crate's HTTP and projection suites, the doc examples, the
+  # The Rust cases drive the executable the build job built once (MAJORDOMUS_BIN, downloaded
+  # through ./.github/actions/majordomus-bin, which builds here only when the download cannot
+  # be trusted; I3939); the two that are cargo's own gates (the crate's HTTP and projection suites, the doc examples, the
   # benchmark build) keep cargo, warm from the cache. Zola and the site dependencies are
   # present so the site cases run rather than skip.
   # Four shards of the suite on four runners, each running its cases four at a time. Which
@@ -233,7 +419,7 @@ jobs:
   # because 24,879 case-seconds were dealt to four workers; dealt to sixteen, the critical
   # path is the longest single case (~35 min). The suite job below proves the union.
   suite-shard:
-    needs: plan
+    needs: [plan, build, rustdoc-surface]
     if: needs.plan.outputs.shell_suite == 'true'
     strategy:
       fail-fast: false
@@ -264,6 +450,7 @@ jobs:
       # the whole history: a case that clones this checkout into a fixture and pushes
       # (96_site_deploy does, to a bare repository of its own) cannot push a shallow clone
       - uses: actions/checkout@v4
+        timeout-minutes: 20
         with:
           fetch-depth: 0
       - id: site
@@ -272,10 +459,16 @@ jobs:
         uses: ./.github/actions/setup-rust
       # The crate's reference, which scripts/site-build composes into every build and refuses
       # to build without (ADR 0086): the cases that build the site (09, 12, 96, 97) build it
-      # here. The toolchain and cache are the step above's, so it sets up nothing of its own.
-      - name: the crate's Rust API reference
-        uses: ./.github/actions/rustdoc
+      # here. The rustdoc-surface job built it once, and the executable is the build
+      # job's: both are downloaded, checked against this commit, and built here only when the
+      # download cannot be trusted. The toolchain and cache stay: the cases that are cargo's
+      # own gates, and `just`, are this job's.
+      - id: bin
+        name: the crate's Rust API reference and the executable, built once for every case
+        uses: ./.github/actions/majordomus-bin
         with:
+          exe: "true"
+          rustdoc: "true"
           setup: "false"
       # `just` is a subject of this suite, not a convenience: 77_rust_evidence asks whether a
       # person running `just test` reaches the same gates CI runs, and 90 and 102 read the
@@ -286,10 +479,6 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: just
-      - name: the executable, built once for every case
-        run: |
-          RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
-          echo "MAJORDOMUS_BIN=$PWD/apps/majordomus-cli/target/debug/majordomus" >> "$GITHUB_ENV"
       # The one canonical validation surface. Every behavioural, negative and integration
       # case runs here; nothing is skipped, and no failure is swallowed. test/run.sh exits
       # non-zero when any case fails, and this step has no `|| true` to hide it.
@@ -303,6 +492,8 @@ jobs:
           MJ_TEST_JOBS: 4
           MJ_TEST_SHARD: ${{ matrix.shard }}/4
           MJ_TEST_REPORT: suite.tsv
+          # outside the checkout, so the tree the suite ran in stays the tree it ran in
+          MJ_TEST_FAILURES: ${{ runner.temp }}/suite-failures.log
         run: bash test/run.sh --no-skips
       # The tree the suite ran in, measured here, right after its run: the evidence job records
       # the suite's report against this measurement, never against its own fresh checkout
@@ -332,6 +523,22 @@ jobs:
           name: suite-shard-${{ matrix.shard }}
           path: suite.tsv
           retention-days: 3
+      # what each failed case said, beside the verdict: the reason a case gave is otherwise
+      # only in this job's log, and a failure counted later is a name without it (I4223)
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: suite-failures-${{ matrix.shard }}
+          path: ${{ runner.temp }}/suite-failures.log
+          if-no-files-found: ignore
+          retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # The suite's one verdict, over every shard: the four reports joined, every case under
   # test/cases/ present exactly once (test/run.sh --verify-report, so a shard that lost or
@@ -392,14 +599,25 @@ jobs:
         run: scripts/ci/summary --job suite --report suite.tsv
       # What the run cost, against what .ai/repo/ci/suite.yaml says it may cost: the whole
       # suite's case-seconds and its slowest case, never a shard's share of them.
+      # It also names the cases the deal's record lacks or under-weighs, and writes the record
+      # this run measured as its own artifact, so refreshing it is a download, not a re-measure.
       - name: the suite finishes inside its bound
         if: always()
-        run: scripts/ci/suite-budget --report suite.tsv
+        run: scripts/ci/suite-budget --report suite.tsv --write-durations suite-durations.tsv
       - if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ci-metrics-suite
           path: suite.tsv
+          retention-days: 14
+      # Its own artifact, not a ci-metrics-* one: scripts/ci/metrics folds every TSV of those
+      # into ci-metrics.tsv, and the record's two columns are not a metrics row.
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-suite-durations
+          path: suite-durations.tsv
+          if-no-files-found: ignore
           retention-days: 14
       - name: every shard passed
         id: shards
@@ -413,10 +631,17 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-suite
+          name: ci-receipts-suite-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ------------------------------------------------------------------ rust
   # The Rust executable through scripts/rust-check: every gate (--ci: format, lints as
@@ -426,7 +651,7 @@ jobs:
   # executable is the artifact majordomus-cli-<target> for a later job or a later phase.
   rust:
     needs: plan
-    if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true' || needs.plan.outputs.projection_closure == 'true' || needs.plan.outputs.web_topology == 'true' || needs.plan.outputs.command_graph == 'true' || needs.plan.outputs.version_surface == 'true' || needs.plan.outputs.rustdoc == 'true' || needs.plan.outputs.intent_check == 'true' || needs.plan.outputs.intent_realization == 'true' || needs.plan.outputs.release_record_cases == 'true'
+    if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true' || needs.plan.outputs.projection_closure == 'true' || needs.plan.outputs.web_topology == 'true' || needs.plan.outputs.command_graph == 'true' || needs.plan.outputs.version_surface == 'true' || needs.plan.outputs.rustdoc == 'true' || needs.plan.outputs.intent_check == 'true' || needs.plan.outputs.intent_realization == 'true' || needs.plan.outputs.release_record_cases == 'true' || needs.plan.outputs.plan_record_cases == 'true'
     # The bound. 30 minutes was set on 2026-09-09 from the observed maximum of twenty runs
     # plus headroom, and the work grew into it: of the 110 rust jobs that reached a verdict
     # from 2026-09-20 to 09-28 the slowest took 29.9 minutes (feature/mesh-cooperation, runs
@@ -447,7 +672,13 @@ jobs:
     # those, the ~50% doctrine the suite job's bound follows (.ai/repo/ci/suite.yaml): a
     # slow runner still reaches a verdict, and a hang still fails inside the hour. Raise it
     # again from a run that measured the whole job, not from this estimate.
-    timeout-minutes: 60
+    #
+    # Measured (top 70, run 38960010919, lane 3, 2026-10-16): rust-check ran 20:27-21:07
+    # (40 min), the plan's rust gates up to release-record-cases to 21:18 (11 min), and the
+    # plan-record-cases gate (#1185, ~50 cases at MJ_TEST_JOBS=4) was killed by the old bound
+    # at 21:28 after 10 of its minutes. 90 leaves that gate about 25 minutes and a slow runner
+    # its margin; lanes 1 and 2 finish far inside it.
+    timeout-minutes: 90
     runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
@@ -472,6 +703,7 @@ jobs:
       # document it is required to write. The gate then reported the committed artifact stale
       # for a reason no branch had caused. A check reads its inputs; this job now fetches them.
       - uses: actions/checkout@v4
+        timeout-minutes: 20
         with:
           fetch-depth: 0
       - id: rust
@@ -548,6 +780,12 @@ jobs:
       # only two skipped here.
       - name: the rust gates of the plan
         if: matrix.lane == 3
+        env:
+          # The case gates of this job (release-record-cases, plan-record-cases) drive the
+          # executable rust-check's `cargo test` built, as the suite shards do: without it a
+          # case takes the shell path, and `knowledge validate` warns that it could not ask
+          # the index (case 3075, top 70 run 38980212746).
+          MAJORDOMUS_BIN: ${{ github.workspace }}/apps/majordomus-cli/target/debug/majordomus
         run: MJ_CI_TIMINGS=timings.tsv scripts/ci/run-plan --plan plan.json --job rust --skip rust-check,rust-integration
       - id: target
         if: matrix.lane == 3
@@ -587,10 +825,17 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-rust-${{ matrix.lane }}
+          name: ci-receipts-rust-${{ matrix.lane }}-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ------------------------------------------------------------------ coverage
   # Line, function and region coverage of the crate, measured over the code that is under
@@ -618,16 +863,42 @@ jobs:
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
+      # The measurement's own totals as data: the variable `rust-coverage --summary-json` sets,
+      # so every step that measures or reads the export writes the same file from the same
+      # tallies, and a reader of coverage over time (scripts/pages trends, I3933) takes the
+      # crate's covered/total pairs from here rather than counting a second time. Set for the
+      # job rather than on the measure step, whose line I3932 changes. --changed ignores it.
+      SUMMARY_JSON: ${{ github.workspace }}/coverage-summary.json
     defaults:
       run:
         working-directory: apps/majordomus-cli
     steps:
+      # One commit deep. Until 2026-10-20 this was the whole history, every head and every tag,
+      # for the differential's base alone, and on run 39438896504 that fetch did not return: it
+      # waited out the job's 55 minutes and read as cancelled, with nothing measured. The
+      # differential needs one more commit, not the history (next step).
       - uses: actions/checkout@v4
-        with:
-          # The differential gate diffs against the merge-base with the trunk. A shallow
-          # clone has no merge-base, and this gate answers UNKNOWN rather than passing
-          # silently, so the history it reads has to be here.
-          fetch-depth: 0
+        timeout-minutes: 5
+      # The base the differential diffs against, and nothing else. `rust-coverage --changed`
+      # diffs that commit's tree against the working tree, so on a pull request the base
+      # commit itself is enough. Without a base (a push, the schedule, a dispatch) the gate
+      # takes the merge-base of HEAD and origin/master: when HEAD is origin/master's tip, as on
+      # every master run, that is HEAD and nothing is fetched; otherwise master's history is
+      # fetched, still without tags or other heads. A base git cannot resolve stays UNKNOWN
+      # (exit 13), never a pass.
+      - name: the differential's base
+        if: needs.plan.outputs.coverage_differential == 'true'
+        timeout-minutes: 10
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ -n "$BASE" ]; then
+            git fetch --no-tags --depth=1 origin "$BASE"
+          elif [ "$(git rev-parse HEAD)" = "$(git rev-parse --verify --quiet refs/remotes/origin/master)" ]; then
+            echo "HEAD is origin/master's tip: the differential's base is HEAD itself, and nothing is fetched"
+          else
+            git fetch --no-tags --unshallow origin +refs/heads/master:refs/remotes/origin/master
+          fi
       - id: rust
         uses: ./.github/actions/setup-rust
         with:
@@ -666,12 +937,33 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-coverage
+          name: ci-receipts-coverage-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # The summary above, kept for the coverage series the site draws (I3933): scripts/pages
+      # trends reads it from each master run at publish time, so its retention is the series'
+      # reach. 90 days, the forge's maximum, against the 14 of every other artifact here: the
+      # summary is small where the raw export beside it in ci-metrics-coverage is the whole
+      # llvm-cov JSON, which stays at 14 because nothing reads it later. A run whose
+      # summary has expired enters the series with its CI cost and coverage null, never zero.
+      # Never a pull request's run: the series is master's, and no reader asks for one.
+      - if: always() && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-summary
+          path: coverage-summary.json
+          if-no-files-found: ignore
+          retention-days: 90
       - if: always()
         run: ../../scripts/ci/summary --job coverage --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "crate threshold=$(cat ../../scripts/rust-coverage-threshold)" --fact "session domain threshold=$(cat ../../scripts/session-coverage-threshold)"
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ------------------------------------------------------------------ evidence
   # What this run proved, kept where it happened (docs/EVIDENCE.md, ADR 68 as ADR 0087 amends
@@ -683,14 +975,19 @@ jobs:
   # The reports and the result live under the runner's temporary directory, never in the
   # checkout the report is derived in. It is not a gate and the verdict does not need it: it
   # reads jobs that have already decided, and a red suite is exactly the evidence worth
-  # keeping. It runs whenever the suite or the crate produced anything, whatever they concluded.
+  # keeping. It runs whenever the plan ran the suite or the crate's tests (shell_suite,
+  # rust_check), whatever they concluded. A plan of records alone runs neither: its rust lanes
+  # build the executable and run the registry checks (rust_integration), which write no test
+  # output, so the job is skipped there rather than failing at evidence-collect's "no report to
+  # record" (#1745, #1746 and #1749 were red for that alone; I3013, case 3402). A planned lane
+  # that left no report is still refused.
   #
   # On master, when this commit is still the tip, it then dispatches the pages workflow, so the
   # site that was published at once with the nearest older evidence (labelled stale) republishes
   # with the evidence of the commit it shows. pages.yml stays triggered by the push alone.
   evidence:
-    needs: [plan, suite, rust, coverage]
-    if: always() && (needs.suite.result == 'success' || needs.suite.result == 'failure' || needs.rust.result == 'success' || needs.rust.result == 'failure')
+    needs: [plan, suite, rust, coverage, build]
+    if: always() && ((needs.plan.outputs.shell_suite == 'true' && (needs.suite.result == 'success' || needs.suite.result == 'failure')) || (needs.plan.outputs.rust_check == 'true' && (needs.rust.result == 'success' || needs.rust.result == 'failure')))
     timeout-minutes: 30
     runs-on: ubuntu-latest
     permissions:
@@ -703,14 +1000,14 @@ jobs:
     steps:
       # the whole history: the report compares each execution's commit with the tree
       - uses: actions/checkout@v4
+        timeout-minutes: 20
         with:
           fetch-depth: 0
-      - id: rust
-        uses: ./.github/actions/setup-rust
+      # the build job's executable, downloaded; the toolchain is set up only if it has to be built
       - name: the executable
-        run: |
-          RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
-          echo "MAJORDOMUS_BIN=$PWD/apps/majordomus-cli/target/debug/majordomus" >> "$GITHUB_ENV"
+        uses: ./.github/actions/majordomus-bin
+        with:
+          exe: "true"
       - uses: actions/download-artifact@v4
         with:
           pattern: '{ci-metrics-suite,ci-metrics-coverage,ci-evidence-suite-tree}'
@@ -767,8 +1064,11 @@ jobs:
       - uses: actions/checkout@v4
       - id: rust
         uses: ./.github/actions/setup-rust
+      # the explicit build, then the gate's own line through the launcher (ADR 0224)
+      - name: the executable, built for the benchmark
+        run: RUSTFLAGS='' cargo build --quiet --locked
       - id: bench
-        run: cargo run --quiet -- bench --profile ci --check --no-write
+        run: ../../bin/majordomus-cli bench --profile ci --check --no-write
       - if: always()
         run: ../../scripts/ci/summary --job bench --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}"
       - name: the bench receipt
@@ -777,23 +1077,38 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-bench
+          name: ci-receipts-bench-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ------------------------------------------------------------------ site
   # The site built once: the derived data current, the build, every static check over the
   # output, then every route at every width in a real browser (four at a time). On master
   # the same bytes become the Pages artifact the deploy job publishes; nothing rebuilds them.
   site:
-    needs: plan
+    needs: [plan, build]
     # Every gate this job carries, not only the first: the build is a prerequisite of the
     # probe, so a plan that asks for the probe or the Cockpit stylesheet and not for
     # site-build must still open the job — otherwise the gate is planned and the job that
-    # would run it never starts. The UI audit is the ui job's, not this one's.
-    if: needs.plan.outputs.site_build == 'true' || needs.plan.outputs.cockpit_assets == 'true' || needs.plan.outputs.site_probe == 'true'
-    timeout-minutes: 50
+    # would run it never starts. The UI audit is the ui job's, not this one's. The interaction
+    # probe's shards drive this job's build, so a plan that asks for them opens it too (I3602).
+    if: needs.plan.outputs.site_build == 'true' || needs.plan.outputs.cockpit_assets == 'true' || needs.plan.outputs.site_probe == 'true' || needs.plan.outputs.site_languages == 'true' || needs.plan.outputs.interaction_probe == 'true'
+    # measured 2026-10-17 on batch 71a: 46, 47.5 and 50.4 min (the last one cancelled at 50);
+    # the browser probe grows with the site, so the bound keeps a quarter's headroom. The
+    # site-languages probe (ADR 0218) adds every page of every language copy: 5090 pages and
+    # 967900 links in 4 min 42 s at 4 jobs on 2026-10-19, so ten minutes are added for it. The
+    # browser probe itself took 43 min of its 45 on 2026-10-19 (39231800834) and ran past it
+    # on the next head (39317142394): its bound is 60 min; the steps before it now take 25 min
+    # with the Czech copy built, so the job is 105
+    timeout-minutes: 105
     runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
@@ -803,10 +1118,17 @@ jobs:
       # commit is in the history being published, and refuses to report clean from a shallow
       # clone that cannot say.
       - uses: actions/checkout@v4
+        timeout-minutes: 20
         with:
           fetch-depth: 0
       - id: site
         uses: ./.github/actions/setup-site
+      # The generator reads the plan, the registry and the delivery through the executable, and
+      # no ordinary command builds it (ADR 0224): the build job's, downloaded (I3939).
+      - name: the executable the generator runs
+        uses: ./.github/actions/majordomus-bin
+        with:
+          exe: "true"
       # One generation for the whole job. This step is the gate — it stages a fresh generation
       # from the canonical sources and diffs it against what is committed, which is the only
       # thing that proves the two agree — and the build and the check then read the committed
@@ -830,13 +1152,62 @@ jobs:
         with:
           timings: timings.tsv
       - name: build the site
+        id: build
         run: scripts/ci/timed --bound 2700 site-build site-build timings.tsv scripts/site-build --no-data
+      # What the browser probe's own Zola build needs and the checkout does not hold: every file
+      # the build generated under site/static that git ignores (the compiled stylesheets, the
+      # vendored scripts, the graphs, build.json; listed by git, never by hand), and the public
+      # assets the probe copies over its build (scripts/site-probe). About 10 MB, handed to the
+      # site-probe-shard jobs before this job's checks, so the probe measures what was built
+      # even when a check later in this job is red.
+      - name: pack the probe's inputs
+        id: probe-inputs
+        if: always() && needs.plan.outputs.site_probe == 'true' && steps.build.outcome == 'success'
+        run: |
+          git ls-files --others --ignored --exclude-standard -- site/static > probe-inputs.list
+          printf '%s\n' site/public/app.css site/public/giallo-light.css site/public/giallo-dark.css site/public/js site/public/images >> probe-inputs.list
+          tar -cf probe-inputs.tar -T probe-inputs.list
+          echo "$(wc -l < probe-inputs.list | tr -d ' ') path(s), $(du -h probe-inputs.tar | cut -f1)"
+      - if: always() && steps.probe-inputs.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-probe-inputs
+          path: probe-inputs.tar
+          if-no-files-found: error
+          retention-days: 1
+      # The built site the interaction-probe-shard jobs drive (I3602), without the composed
+      # surfaces: their controls are their producers' to answer for, and the probe never opens
+      # them. The mounts are the topology's (lib/common.sh), never named here. About 26 MB
+      # compressed, where each shard building the site again would cost it the whole build.
+      - name: pack the built site for the interaction probe
+        id: site-public
+        if: always() && needs.plan.outputs.interaction_probe == 'true' && steps.build.outcome == 'success'
+        run: |
+          . lib/common.sh
+          set --
+          for m in $(mj_web_composed "$PWD" mounts); do set -- "$@" "--exclude=site/public$m"; done
+          tar "$@" -czf site-public.tar.gz site/public
+          echo "composed and left out: $(mj_web_composed "$PWD" mounts | tr '\n' ' ')$(du -h site-public.tar.gz | cut -f1)"
+      - if: always() && steps.site-public.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: interaction-probe-site
+          path: site-public.tar.gz
+          if-no-files-found: error
+          retention-days: 1
       # Metadata and landmarks on every route, no unrendered template delimiter, every
       # internal link resolving, no remote asset, no credential, and the generated data
       # still matching its canonical sources.
       - name: check the site
         if: needs.plan.outputs.site_build == 'true'
         run: scripts/ci/timed --bound 2700 site-build site-check timings.tsv scripts/site-check --no-sync
+      # Every link of every page in every language the site declares lands, stays in its copy's
+      # language, and the switch and the alternates lead to every copy (ADR 0218). It reads the
+      # build as site-build left it, before any case or probe touches site/public. Timed, so it
+      # leaves the receipt the ci verdict asks gate site-languages for (run 39379416881).
+      - name: every language of the site
+        if: needs.plan.outputs.site_languages == 'true'
+        run: CHROME_BIN=google-chrome scripts/ci/timed --bound 1800 site-languages site-languages timings.tsv node scripts/lib/site-i18n-probe.mjs site/public "$(sed -n 's/^base_url = "\(.*\)"/\1/p' site/config.toml)" --jobs 4
       # The cases whose subject is the built site, which the suite runners do not have when they
       # run: each declares "# majordomus-skip-runs-in: site" and is excused there only because it
       # is held here, after the build, with no skip excused.
@@ -844,13 +1215,6 @@ jobs:
         id: site-cases
         if: needs.plan.outputs.site_build == 'true'
         run: bash test/run.sh --no-skips --runs-in site
-      # Browser-measured: no horizontal overflow at 320/390/1280 on every route, the mobile
-      # menu, the dropdowns, the theme toggle, Mermaid rendering. The full sweep, deliberately:
-      # every overflow this site has produced came from canonical data rendered into a shared
-      # template, which no sample of one route per template can see.
-      - name: probe the site in a browser
-        if: needs.plan.outputs.site_probe == 'true'
-        run: CHROME_BIN=google-chrome SITE_PROBE_JOBS=4 scripts/ci/timed --bound 2700 site-probe site-probe timings.tsv scripts/site-probe
       - name: manifest
         run: cat site/data/generated/source.json
       - if: always()
@@ -868,57 +1232,217 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-site
+          name: ci-receipts-site-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
+
+  # ----------------------------------------------------------------- site-probe
+  # Browser-measured: no horizontal overflow at 320/390/1280 on every route, the mobile menu,
+  # the dropdowns, the theme toggle, Mermaid rendering. The full sweep, deliberately: every
+  # overflow this site has produced came from canonical data rendered into a shared template,
+  # which no sample of one route per template can see. Split in six (I2841): as one step of
+  # the site job it took 35-37 minutes and held that job at 46-50 of its 50 minutes (runs
+  # 39034132446, 39039860066, cancelled at its bound in 39049547899). Each shard is a stride of
+  # the sorted route list (scripts/site-probe SITE_PROBE_SHARD), runs its own Zola build with
+  # the site job's compiled assets, and reports the routes it measured; the fan-in below
+  # proves the reports are the whole sweep, each route once, before the gate's receipt.
+  site-probe-shard:
+    needs: [plan, site]
+    if: always() && needs.plan.outputs.site_probe == 'true' && needs.site.result != 'skipped'
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6]
+    # a sixth of a sweep that no longer fits 45 minutes (the Czech copies doubled the routes:
+    # run 39317142394 stopped the single step at its 2700 s bound), plus the build and setup
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: site
+        uses: ./.github/actions/setup-site
+      - uses: actions/download-artifact@v4
+        with:
+          name: site-probe-inputs
+      - name: the site job's generated inputs
+        run: tar -xf probe-inputs.tar && rm probe-inputs.tar
+      - name: probe this shard in a browser
+        env:
+          CHROME_BIN: google-chrome
+          SITE_PROBE_JOBS: 4
+          SITE_PROBE_SHARD: ${{ matrix.shard }}/6
+          SITE_PROBE_REPORT: site-probe-routes.txt
+        run: scripts/ci/timed --bound 1500 site-probe "site-probe-${{ matrix.shard }}" timings.tsv scripts/site-probe
+      - if: always()
+        run: scripts/ci/summary --job site-probe --timings timings.tsv --fact "shard=${{ matrix.shard }}/6" --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-probe-shard-${{ matrix.shard }}
+          path: site-probe-routes.txt
+          if-no-files-found: ignore
+          retention-days: 3
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-site-probe-${{ matrix.shard }}
+          path: timings.tsv
+          retention-days: 14
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
+
+  site-probe:
+    needs: [plan, site-probe-shard]
+    if: always() && needs.plan.outputs.site_probe == 'true'
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    env:
+      MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: site-probe-shard-*
+          path: shards
+      - name: every route, exactly once
+        id: union
+        run: scripts/site-probe --verify-report shards
+      - name: every shard passed
+        id: shards
+        if: always()
+        run: |
+          echo "the shards concluded: ${{ needs.site-probe-shard.result }}"
+          [ "${{ needs.site-probe-shard.result }}" = success ]
+      - name: the probe's receipt
+        if: always()
+        run: printf '%s\t%s\tsite-probe/union\n%s\t%s\tsite-probe/shards\n' "site-probe" "${{ steps.union.outcome }}" "site-probe" "${{ steps.shards.outcome }}" >> "$MJ_CI_RECEIPTS"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-receipts-site-probe-a${{ github.run_attempt }}
+          path: receipts.tsv
+          if-no-files-found: ignore
+          retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's upload has run;
+      # never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ----------------------------------------------------------------- interactions
   # Every interactive control on every page of the built site, exercised in a real browser by the behaviour spec
   # that claims it (project.every-link-and-control-is-tested). Its own job: the site job's browser steps already
   # run to that job's bound, and a gate in a job that never finishes enforces nothing. The installed Chrome drives
   # it; a missing browser under CI is a failure, never a skip.
+  #
+  # Split in six (I3602), as the site probe is (I2841). As one job it rebuilt the site and drove every page: it
+  # reached page 1850 of 1865 at a 2400 s bound on 2026-10-12 (run 38202851612), and once the Czech copies doubled
+  # the pages run 39317142394 stopped it at its 3300 s bound. Each shard now drives a stride of the sorted pages of
+  # the site job's own build (scripts/site-probe --partition, the one rule for both probes) and reports the pages it
+  # drove; the interactions job below proves the reports are every page once before the gate's receipt.
+  interaction-probe-shard:
+    needs: [plan, site]
+    if: always() && needs.plan.outputs.interaction_probe == 'true' && needs.site.result != 'skipped'
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6]
+    # a sixth of a probe that no longer fits 55 minutes, plus the setup; the slowest shard ran
+    # 1450-1527 s of its former 1500 s bound on every run of 2026-10-21/22, so the bound is 1800 s
+    timeout-minutes: 36
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: site
+        uses: ./.github/actions/setup-site
+      - uses: actions/download-artifact@v4
+        with:
+          name: interaction-probe-site
+      - name: the site job's build
+        run: tar -xzf site-public.tar.gz && rm site-public.tar.gz
+      - name: exercise every control of this shard
+        env:
+          CHROME_BIN: google-chrome
+          MJ_PROBE_JOBS: 4
+          MJ_PROBE_SHARD: ${{ matrix.shard }}/6
+          MJ_PROBE_REPORT: interaction-probe-routes.txt
+        run: scripts/ci/timed --bound 1800 interaction-probe "interaction-probe-${{ matrix.shard }}" timings.tsv scripts/interaction-probe
+      - if: always()
+        run: scripts/ci/summary --job interactions --timings timings.tsv --fact "shard=${{ matrix.shard }}/6" --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: interaction-probe-shard-${{ matrix.shard }}
+          path: interaction-probe-routes.txt
+          if-no-files-found: ignore
+          retention-days: 3
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-interactions-${{ matrix.shard }}
+          path: timings.tsv
+          retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
+
   interactions:
-    needs: plan
-    if: needs.plan.outputs.interaction_probe == 'true'
-    # the full probe measured 599 s on a 4-job local run over every page with a control; a hosted runner is slower,
-    # and a job killed at its bound reports cancelled, which the verdict counts as red. The probe grows with the
-    # site: on 2026-10-12 (run 38202851612, the v0.21.0 top) it reached page 1850 of 1865 at its 2400 s bound, so
-    # the step's bound is 3300 s and the job's 65 minutes; selecting only the pages a change can reach is the fix
-    # that lets these come down again, not a larger runner.
-    timeout-minutes: 65
+    needs: [plan, interaction-probe-shard]
+    if: always() && needs.plan.outputs.interaction_probe == 'true'
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
       - uses: actions/checkout@v4
-      - id: site
-        uses: ./.github/actions/setup-site
-      # the build refuses without the crate's reference, which it composes at /rustdoc
-      - name: the crate's Rust API reference
-        uses: ./.github/actions/rustdoc
+      - uses: actions/download-artifact@v4
         with:
-          timings: timings.tsv
-      - name: build the site
-        run: scripts/ci/timed --bound 2400 interaction-probe site-build timings.tsv scripts/site-build --no-data
-      - name: exercise every control
-        run: CHROME_BIN=google-chrome MJ_PROBE_JOBS=4 scripts/ci/timed --bound 3300 interaction-probe interaction-probe timings.tsv scripts/interaction-probe
-      - if: always()
-        run: scripts/ci/summary --job interactions --timings timings.tsv --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}"
-      - if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ci-metrics-interactions
-          path: timings.tsv
-          retention-days: 14
+          pattern: interaction-probe-shard-*
+          path: shards
+      - name: every page, exactly once
+        id: union
+        run: scripts/site-probe --verify-report shards
+      - name: every shard passed
+        id: shards
+        if: always()
+        run: |
+          echo "the shards concluded: ${{ needs.interaction-probe-shard.result }}"
+          [ "${{ needs.interaction-probe-shard.result }}" = success ]
+      - name: the probe's receipt
+        if: always()
+        run: printf '%s\t%s\tinteractions/union\n%s\t%s\tinteractions/shards\n' "interaction-probe" "${{ steps.union.outcome }}" "interaction-probe" "${{ steps.shards.outcome }}" >> "$MJ_CI_RECEIPTS"
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-interactions
+          name: ci-receipts-interactions-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's upload has run;
+      # never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ----------------------------------------------------------------- ui
   # Every discovered page at every width the compiled theme implies, in a browser, against the
@@ -930,12 +1454,92 @@ jobs:
   # so it needs the executable; the Rust cache makes that a restore in nearly every run.
   # It grew with the site: on #723's run (int/batch-j be9f675f16) the audit took 2,345 s over
   # 5,902 visits of 1,740 pages at 4 jobs, 55 s inside its 2,400 s bound, and on master's run of
-  # the same tree (37087514909) it was stopped at 2,400 s mid-audit. The bound is 3,600 s and
-  # the job's 75 minutes, so a third more site still finishes and reports.
-  ui:
-    needs: plan
+  # the same tree (37087514909) it was stopped at 2,400 s mid-audit. It grew again: on batch
+  # 71b2 the audit took 3,581 s (run 39087400247, f17855bf9de) and was stopped at its 3,600 s
+  # bound at visit 7,850 with no finding (run 39097403850, bc782b40f28).
+  #
+  # Split in four (I3940), as the two probes are (I2841, I3602). As one serial job it was the
+  # longest pole of a full run: about 13 minutes of setup, then 57-80 minutes of audit (runs
+  # 39762797718 and 39780445745). The visits are independent, so each of the four ui-shard jobs
+  # builds the site and the executable and drives a stride of the plan's visits (MJ_UI_SHARD,
+  # scripts/lib/ui-shard.mjs; the stride scripts/site-probe --partition cuts routes by) and
+  # writes a results document that says which visits it drove. Three jobs, then:
+  #   ui-shard   the audit, four times side by side; the audit alone, so a shard judges no bar
+  #   ui-checks  what is judged once: the warm-screen budget, the bar of the UI, and the cases
+  #              that drive the UI in a browser
+  #   ui         the gate's job: joins the shards (scripts/ui union) and refuses a set that is
+  #              not the whole audit with each visit once, renders the report from the joined
+  #              document, and is red when any shard or ui-checks was
+  ui-shard:
+    needs: [plan, build, rustdoc-surface]
     if: needs.plan.outputs.ui_audit == 'true'
-    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    # about 13 minutes of setup and a build of the site that is bounded at 40, then the audit step's
+    # 35 minutes: the step is the one that runs out of time, never the job
+    timeout-minutes: 70
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: site
+        uses: ./.github/actions/setup-site
+      # before the build, which composes the crate's reference at /rustdoc and refuses without
+      # it. The reference and the executable the audit drives are the rustdoc-surface and build
+      # jobs', downloaded (I3939); this job's toolchain and cache are set up once, for the
+      # fallback that builds them here and for the rest of the job
+      - id: rust
+        uses: ./.github/actions/setup-rust
+      - name: the crate's Rust API reference and the executable the audit drives
+        uses: ./.github/actions/majordomus-bin
+        with:
+          exe: "true"
+          rustdoc: "true"
+          setup: "false"
+          timings: timings.tsv
+      - name: build the site
+        run: scripts/ci/timed --bound 2400 ui-audit site-build timings.tsv scripts/site-build --no-data
+      # A quarter of the visits: the single audit measured 3,420-4,800 s (57-80 minutes), a shard
+      # about 855-1,200 s, plus the crawl of the Cockpit's routes and the server's start that each
+      # shard repeats. 2,100 s is 1.75 times the slowest shard of the slowest run, as much
+      # headroom as the single audit's 5,400 s had over its slowest run (1.1 times its 80 minutes
+      # and growing); a shard that outgrows it is a reason for a fifth shard, not for a longer wait.
+      # The `if` is I3931's: on a branch an earlier red ends the run anyway; an integration top
+      # audits after one so that every red of it is shown, and never a cancelled job.
+      - name: audit this shard of the UI in a browser
+        if: success() || (!cancelled() && startsWith(github.head_ref, 'integration/'))
+        env:
+          MJ_UI_SHARD: ${{ matrix.shard }}/4
+        run: scripts/ci/timed --bound 2100 ui-audit "ui-audit-${{ matrix.shard }}" timings.tsv scripts/ui audit --out "run-ui-shard-${{ matrix.shard }}.json"
+      - if: always()
+        run: scripts/ci/summary --job ui --timings timings.tsv --fact "shard=${{ matrix.shard }}/4" --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}" --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-audit-shard-${{ matrix.shard }}
+          path: run-ui-shard-${{ matrix.shard }}.json
+          if-no-files-found: ignore
+          retention-days: 3
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-ui-shard-${{ matrix.shard }}
+          path: timings.tsv
+          retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
+
+  ui-checks:
+    needs: [plan, build, rustdoc-surface]
+    if: needs.plan.outputs.ui_audit == 'true'
+    # the bounded steps add up to 40 + 10 + 10 + 15 minutes, and the setup is about 13
+    timeout-minutes: 90
     runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
@@ -944,28 +1548,105 @@ jobs:
       - uses: actions/checkout@v4
       - id: site
         uses: ./.github/actions/setup-site
-      # before the build, which composes the crate's reference at /rustdoc and refuses without
-      # it; one toolchain and one cache for the reference and the executable below
       - id: rust
         uses: ./.github/actions/setup-rust
-      - name: the crate's Rust API reference
-        uses: ./.github/actions/rustdoc
+      - name: the crate's Rust API reference and the executable the checks drive
+        uses: ./.github/actions/majordomus-bin
         with:
+          exe: "true"
+          rustdoc: "true"
           setup: "false"
           timings: timings.tsv
       - name: build the site
         run: scripts/ci/timed --bound 2400 ui-audit site-build timings.tsv scripts/site-build --no-data
-      - name: the executable the audit drives
-        run: |
-          RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
-          echo "MAJORDOMUS_BIN=$PWD/apps/majordomus-cli/target/debug/majordomus" >> "$GITHUB_ENV"
       # before the browser: a screen that computes on the request is a failure the audit cannot
       # see, and this one is told in seconds (I2489, project.no-screen-waits-for-a-source). No
       # baseline exists for this platform, so only the policy's budgets are judged here.
       - name: every warm screen of the UI is within its budget
         run: scripts/ci/timed --bound 600 ui-audit ui-budget timings.tsv "$MAJORDOMUS_BIN" bench system.http. --transport system --profile ci --no-write --check
-      - name: audit the UI in a browser
-        run: scripts/ci/timed --bound 3600 ui-audit ui-audit timings.tsv scripts/ui audit --report
+      # The bar is a derived copy, so a stale one is told in about a minute here; the audit's
+      # shards do not judge it, and a single audit that did spent 80 minutes to report `FAIL ui
+      # navbar` on four runs from 2026-10-21 to 10-22 (39780445745 among them; I3931). Once, not
+      # per shard. A branch stops at the first red; an integration top goes on, so that every
+      # red of it is shown (the `if` is I3931's).
+      - name: the UI wears the bar the site renders
+        if: success() || (!cancelled() && startsWith(github.head_ref, 'integration/'))
+        run: scripts/ci/timed --bound 600 ui-audit ui-navbar timings.tsv scripts/ui navbar
+      # The cases whose subject is the live UI driven in a browser, which the suite runners do
+      # not have: each declares "# majordomus-skip-runs-in: ui" and is excused there only
+      # because it is held here, against the executable this job built, with no skip excused
+      # (3220, the IDD loop walked end to end).
+      - name: the cases that drive the UI in a browser
+        if: success() || (!cancelled() && startsWith(github.head_ref, 'integration/'))
+        run: scripts/ci/timed --bound 900 ui-audit ui-cases timings.tsv bash test/run.sh --no-skips --runs-in ui
+      - if: always()
+        run: scripts/ci/summary --job ui --timings timings.tsv --fact "checks=once" --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}" --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-ui-checks
+          path: timings.tsv
+          retention-days: 14
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-receipts-ui-checks-a${{ github.run_attempt }}
+          path: receipts.tsv
+          if-no-files-found: ignore
+          retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
+
+  ui:
+    needs: [plan, ui-shard, ui-checks]
+    if: always() && needs.plan.outputs.ui_audit == 'true'
+    # the join is seconds; the report needs the executable, which the Rust cache restores
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    env:
+      # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
+      MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ui-audit-shard-*
+          path: shards
+      # Every visit of the plan, driven by exactly one of the four shards, and the verdict the
+      # single audit gave: any finding fails. Needs no browser and no build, so a shard that
+      # failed or never ran is told here, by name, whatever else happened.
+      - name: every visit of the audit, exactly once
+        id: union
+        run: scripts/ci/timed --bound 600 ui-audit ui-union timings.tsv scripts/ui union --from shards
+      - name: every shard and every check passed
+        id: jobs
+        if: always()
+        run: |
+          echo "the shards concluded: ${{ needs.ui-shard.result }}; the checks: ${{ needs.ui-checks.result }}"
+          [ "${{ needs.ui-shard.result }}" = success ] && [ "${{ needs.ui-checks.result }}" = success ]
+      - name: the audit's receipt
+        if: always()
+        run: printf '%s\t%s\tui/shards\n' "ui-audit" "${{ steps.jobs.outcome }}" >> "$MJ_CI_RECEIPTS"
+      # The report is rendered from the joined document, as the single audit rendered its own,
+      # and a document with findings is rendered too.
+      # The executable is the build job's. This job does not list it in `needs` (case 3940 pins
+      # the three it waits for), and need not: ui-shard needs build, so the artifact is there
+      # before the shards are done, and a build that failed or never ran leaves it missing,
+      # which the action answers by building here.
+      - id: rust
+        name: the executable the report is rendered by
+        if: always() && hashFiles('target/web/run-ui.json') != ''
+        uses: ./.github/actions/majordomus-bin
+        with:
+          exe: "true"
+      - name: the report of the audit
+        if: always() && hashFiles('target/web/run-ui.json') != ''
+        run: scripts/ci/timed --bound 600 ui-audit ui-report timings.tsv "$MAJORDOMUS_BIN" web report ui --from target/web/run-ui.json --repo "$PWD"
       - if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -975,7 +1656,7 @@ jobs:
             target/web/tests/ui
           retention-days: 14
       - if: always()
-        run: scripts/ci/summary --job ui --timings timings.tsv --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}" --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}"
+        run: scripts/ci/summary --job ui --timings timings.tsv --fact "union=4 shards" --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}"
       - if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -985,10 +1666,17 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-ui
+          name: ci-receipts-ui-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ----------------------------------------------------------------- cockpit
   # The Cockpit measured against a server this job starts: every route the server serves
@@ -999,7 +1687,10 @@ jobs:
   cockpit:
     needs: plan
     if: needs.plan.outputs.cockpit_probe == 'true'
-    timeout-minutes: 25
+    # the probe crawls every route the server answers: 1048 s of its 1200 s bound on
+    # 2026-10-19 (39285861377), then over it as the routes grew a fifth (6554 -> 7699 crawled);
+    # the bound and the job keep a third's headroom
+    timeout-minutes: 35
     runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
@@ -1017,7 +1708,7 @@ jobs:
       - name: vendor the lazy-loaded libraries the probe expects to find
         run: scripts/ci/timed --bound 900 cockpit-probe cockpit-assets timings.tsv scripts/cockpit-assets
       - name: probe the Cockpit
-        run: CHROME_BIN=google-chrome scripts/ci/timed --bound 1200 cockpit-probe cockpit-probe timings.tsv scripts/cockpit-probe
+        run: CHROME_BIN=google-chrome scripts/ci/timed --bound 1800 cockpit-probe cockpit-probe timings.tsv scripts/cockpit-probe
       - if: always()
         run: scripts/ci/summary --job cockpit --timings timings.tsv --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}" --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}"
       - if: always()
@@ -1029,10 +1720,17 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-cockpit
+          name: ci-receipts-cockpit-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ------------------------------------------------------------------ mesh-lab
   # Mesh cooperation over a real network (test/mesh-lab/run, claim mesh-network-acceptance):
@@ -1042,7 +1740,7 @@ jobs:
   # and copied into the node image, so the lab tests exactly what the crate builds; the
   # evidence file is kept as an artifact.
   mesh-lab:
-    needs: plan
+    needs: [plan, build]
     if: needs.plan.outputs.mesh_lab == 'true'
     timeout-minutes: 30
     runs-on: ubuntu-latest
@@ -1052,9 +1750,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - id: rust
-        uses: ./.github/actions/setup-rust
-      - name: the executable the nodes run
-        run: RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml --bin majordomus
+        name: the executable the nodes run
+        uses: ./.github/actions/majordomus-bin
+        with:
+          exe: "true"
       - name: the lab
         run: MESH_LAB_BIN="$PWD/apps/majordomus-cli/target/debug/majordomus" scripts/ci/timed --bound 1500 mesh-lab mesh-lab timings.tsv test/mesh-lab/run
       # The lab does not judge itself: this reads the record it wrote and refuses anything
@@ -1082,10 +1781,17 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-mesh-lab
+          name: ci-receipts-mesh-lab-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ------------------------------------------------------------------ macos
   # The behaviour that depends on the platform: the suite under the stock macOS shell
@@ -1102,6 +1808,7 @@ jobs:
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
       - uses: actions/checkout@v4
+        timeout-minutes: 20
         with:
           fetch-depth: 0
       - id: site
@@ -1143,10 +1850,17 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-macos
+          name: ci-receipts-macos-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ------------------------------------------------------------------ install
   # The advertised command, from the published site, on two of the platforms it claims to
@@ -1182,10 +1896,17 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-install-${{ matrix.runner }}
+          name: ci-receipts-install-${{ matrix.runner }}-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ------------------------------------------------------------------ pages
   # Is what GitHub Pages serves a projection of this branch at all? One runner, because the
@@ -1199,10 +1920,20 @@ jobs:
   # and the build of it is GitHub's, and the gate reads that build's own status rather than
   # inferring it from the symptom. The whole history is needed, so `fetch-depth: 0` stays: the
   # gate walks master back to the published commit to decide whether a deploy is owed.
+  #
+  # It starts behind `evidence`, not beside the first wave (I3936). The deploy it waits for is
+  # pages.yml's run of the same push, which queues behind this run's own jobs for the runners:
+  # on master 2034d4a3f0b that run was created at 13:13Z and served at 14:21Z, while this job,
+  # started at 13:49Z, gave up its 1200 s at 14:18Z — and so went eight master runs from
+  # 2026-10-17 to 10-22, each rerun by hand. Behind the heavy jobs the deploy has had their
+  # time; `evidence` also dispatches pages.yml on master's tip. A run whose plan skips
+  # `evidence` judges pages as soon as the plan allows, as before.
   pages:
-    needs: plan
-    if: needs.plan.outputs.pages_live == 'true'
-    timeout-minutes: 10
+    needs: [plan, evidence]
+    if: ${{ !cancelled() && needs.plan.outputs.pages_live == 'true' && needs.evidence.result != 'cancelled' }}
+    # pages-check's bounded wait for the deploy of this commit (PAGES_CHECK_DEPLOY_WAIT, twenty
+    # minutes), its five-minute wait for gh-pages' head to be served, and the checks after them
+    timeout-minutes: 35
     runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
@@ -1210,25 +1941,41 @@ jobs:
     permissions:
       contents: read
       pages: read
+      # its last step cancels a branch's run that this job turned red, as every gate job's does
+      actions: write
     steps:
       - uses: actions/checkout@v4
+        timeout-minutes: 20
         with:
           fetch-depth: 0
+      # --for: this job runs beside the deploy of its own commit, and judging the site before
+      # that deploy is served judges the previous one (I2711: run 38600347235 went red on
+      # 2026-10-14 while the deploy of ff38297096 was in flight, and passed on a rerun). So it
+      # first waits, bounded and saying so every poll, until production serves this commit or
+      # a newer one; it refuses early only when production serves an older commit and no
+      # deployment is in flight. A pull request's merge commit is not on master: no wait.
       - name: the published site came from master, is current, and is being served
         id: pages
         env:
           GH_TOKEN: ${{ github.token }}
-        run: scripts/ci/pages-check
+        run: scripts/ci/pages-check --for "$GITHUB_SHA"
       - name: the pages receipt
         if: always()
         run: printf '%s\t%s\tpages\n' "pages-live" "${{ steps.pages.outcome }}" >> "$MJ_CI_RECEIPTS"
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-pages
+          name: ci-receipts-pages-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ------------------------------------------------------------------ ci
   # The one status to require: green only when planning succeeded, every selected gate's job
@@ -1242,7 +1989,7 @@ jobs:
   # setting and is not made here; until it is required, this is a verdict a person can read
   # and not one the merge obeys.
   ci:
-    needs: [plan, structure, suite, rust, coverage, bench, site, interactions, ui, cockpit, mesh-lab, macos, install, pages]
+    needs: [plan, build, rustdoc-surface, structure, suite, rust, coverage, bench, site, site-probe, interactions, ui, cockpit, mesh-lab, macos, install, pages]
     if: always()
     timeout-minutes: 15
     runs-on: ubuntu-latest
@@ -1276,3 +2023,12 @@ jobs:
             needs.json
             ci-metrics.tsv
           retention-days: 90
+      # I2710: the pull requests whose runs yielded to the release path run again once it is
+      # clear. Asked at the end of every run that is not a pull request's — the record's
+      # verdict is one, and so is master's — and by .github/workflows/release-path.yml's
+      # schedule; it touches nothing while any run of the release path is queued or running.
+      - name: the runs that yielded to the release path run again
+        if: always() && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/release-path resume --self "$GITHUB_RUN_ID"

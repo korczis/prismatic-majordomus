@@ -1,0 +1,36 @@
+id: I2521
+milestone: a-derive-does-only-the-work-its-inputs-changed
+title: "What a derive costs is measured per stage and per kind of change, and every file a stage reads is listed"
+slug: a-derive-is-measured-before-it-is-changed
+priority: p1
+profile: deep-work
+parallel_safe: false
+objective: "Measure the present derive on a named commit, stage by stage, for the kinds of change the incremental design is meant to make cheap, and establish which files each stage reads, so that every later issue of this milestone is judged against a recorded baseline and a known input set."
+why: "campaigns/majordomus-incremental-derive-prompt-pack/01_01_AUDIT_BASELINE.md asks for a read-only audit of the producers and a reproducible baseline before anything is built, and 00_00_MASTER_ORCHESTRATOR.md forbids a claim of time saved without measurements. The repository holds no such record: scripts/derive prints whole seconds per stage on stderr and keeps none of them, docs/OFFLOAD.md states about ten minutes idle and up to an hour under load without a commit or a sample count, and I1409 notes that two timings taken twenty minutes apart on one machine disagreed sixfold. scripts/generate-site-data declares its inputs as one list (--inputs), and nothing verifies that the list is everything the script reads."
+current_state: "scripts/derive records every derive since I2521's second slice (train 2, 2026-10-21): one JSON line per run in ~/.local/state/majordomus/derive-timings.jsonl with the commit, branch, load, build mode, total, lock wait and each stage in milliseconds (case 3247). Ten train derives on one machine on 2026-10-21 spent 62-78% of their total in stage B. The observed-reads half is held by case 3246 (I2847): every file scripts/generate-site-data reads by a literal path is a declared input. No committed record holds any of these numbers, and docs/PERFORMANCE.md says it carries none on purpose because they go stale; the record therefore belongs beside baseline.json under .ai/repo/benchmarks/, not in the document."
+desired_state: "A script turns the derive timings of one commit into a committed .ai/repo/benchmarks/derive-<commit>.json: commit, machine, load, sample count, build and per-stage durations and lock wait, with the stage that is the largest share named from the samples. docs/PERFORMANCE.md describes that record and how it is produced, and quotes none of its numbers. The eight controlled scenarios measured cold are I2865 (an offload host); the per-node metrics are I2866 (src/bench). Re-scoped on 2026-10-21 by 3e with a3: PERFORMANCE.md's own rule against numbers in the document wins over the 2026-10-18 amendment."
+scope:
+  - "docs/PERFORMANCE.md"
+  - "scripts/derive"
+  - ".ai/repo/benchmarks"
+  - ".ai/repo/project/issues/I2521.yaml"
+non_scope:
+  - "Changing what any generator writes"
+  - "A cold measurement taken by cleaning a build directory other worktrees share; cold runs happen in a disposable checkout with a build directory of its own"
+  - "Budgets or gates on the measured durations"
+depends_on: []
+acceptance_criteria:
+  - "A committed .ai/repo/benchmarks/derive-<commit>.json is produced by a script from the recorded timings, never by hand, and states the commit, machine, load and sample count of every duration it carries"
+  - "The record names the stage that is the largest share of the derives it summarises, from the samples and not from an estimate"
+  - "Every file scripts/generate-site-data reads by a literal path is a declared input (case 3246)"
+  - "docs/PERFORMANCE.md describes the derive record and quotes none of its numbers"
+  - "No tracked generated file differs before and after a measurement"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 10_site_data 51_derived_artifacts_committed"
+  - "scripts/derive-check"
+evidence_required:
+  - "derive_baseline_measurements"
+  - "stage_b_observed_reads"
+created_at: 2026-10-13
+updated_at: 2026-10-21

@@ -912,6 +912,17 @@ relation reached through a weak or multi-hop edge, and the authority tier is sor
 relevance. The shell `context` command does not use
 it yet.
 
+Asked with `--source-ranges` (input `source_ranges`), the compiler also reads the Rust files git
+tracks under the work's paths and offers one range per definition (`devcontext/source.rs`): the
+path, the lines, the symbol, how it was reached and what reading it costs, spent by the same
+budget in the source tier. Each outlined file carries the digest of the bytes parsed and what
+reading it whole would cost, so the saving is a number in the answer. The parser is `syn`: syntax
+only, with no macro expansion, no `cfg` evaluation and no name resolution, so a range says where
+a definition is written, never what calls it. Links, files outside the repository scope,
+oversized files and files that do not parse are named with the reason; other languages are
+counted, not outlined. It is off by default because `economics measure` counts the files a
+context names, and its methodology does not yet count ranges.
+
 Context is generated because it must be rebuildable. A context that exists only inside an earlier
 prompt is lost with that prompt; a context compiled from repository state can be compiled again
 by the next worker and explained item by item.

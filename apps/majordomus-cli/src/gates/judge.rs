@@ -185,6 +185,18 @@ pub struct GateRun {
 /// The newest `task.gate` line per gate for one task. A line that is not JSON is skipped
 /// and counted: a ledger that has grown one bad line still holds the rest.
 pub(crate) fn runs_for(ledger: &Path, task: &str) -> (BTreeMap<String, GateRun>, usize) {
+    runs_where(ledger, Some(task))
+}
+
+/// The newest `task.gate` line per gate, whichever task recorded it: the last word this
+/// checkout's ledger holds about each gate. What `gates.state` reads, because the state of
+/// a gate is not a property of the task that happens to be open.
+pub(crate) fn latest_runs(ledger: &Path) -> (BTreeMap<String, GateRun>, usize) {
+    runs_where(ledger, None)
+}
+
+/// The newest `task.gate` line per gate, of one task or of every task.
+fn runs_where(ledger: &Path, task: Option<&str>) -> (BTreeMap<String, GateRun>, usize) {
     let Ok(text) = std::fs::read_to_string(ledger) else {
         return (BTreeMap::new(), 0);
     };
@@ -201,7 +213,7 @@ pub(crate) fn runs_for(ledger: &Path, task: &str) -> (BTreeMap<String, GateRun>,
                 .unwrap_or_default()
                 .to_string()
         };
-        if s("event") != GATE_EVENT || s("task") != task {
+        if s("event") != GATE_EVENT || task.is_some_and(|t| s("task") != t) {
             continue;
         }
         let gate = s("gate");
@@ -567,7 +579,7 @@ classes:
     #[test]
     fn a_planned_gate_nothing_reported_is_queued_and_not_unknown() {
         let m = model();
-        let p = plan(&m, &["apps/x.rs".into()], false);
+        let p = plan(&m, &["apps/x.rs".into()], false, None);
         let g = judge(
             &m,
             &p,
@@ -589,7 +601,7 @@ classes:
     #[test]
     fn a_failing_run_refuses_and_a_passing_one_does_not() {
         let m = model();
-        let p = plan(&m, &["apps/x.rs".into()], false);
+        let p = plan(&m, &["apps/x.rs".into()], false, None);
         let mut runs = BTreeMap::new();
         runs.insert("build".to_string(), run(1, "aaaa"));
         let g = judge(&m, &p, &runs, &hashes(&m, "aaaa"), Some("t-1"), "now");
@@ -609,7 +621,7 @@ classes:
     #[test]
     fn a_passing_run_goes_stale_when_the_files_that_select_it_change() {
         let m = model();
-        let p = plan(&m, &["apps/x.rs".into()], false);
+        let p = plan(&m, &["apps/x.rs".into()], false, None);
         let mut runs = BTreeMap::new();
         runs.insert("build".to_string(), run(0, "aaaa"));
         // the same run, judged against a tree that has moved on
@@ -623,7 +635,7 @@ classes:
     #[test]
     fn a_gate_whose_prerequisite_failed_is_blocked_rather_than_queued() {
         let m = model();
-        let p = plan(&m, &["site/index.md".into()], false);
+        let p = plan(&m, &["site/index.md".into()], false, None);
         let mut runs = BTreeMap::new();
         runs.insert("site".to_string(), run(2, "aaaa"));
         let g = judge(&m, &p, &runs, &hashes(&m, "aaaa"), Some("t-1"), "now");
@@ -640,7 +652,7 @@ classes:
     #[test]
     fn nothing_can_be_judged_without_a_task_and_that_is_unknown() {
         let m = model();
-        let p = plan(&m, &["apps/x.rs".into()], false);
+        let p = plan(&m, &["apps/x.rs".into()], false, None);
         let g = judge(&m, &p, &BTreeMap::new(), &hashes(&m, "aaaa"), None, "now");
         let build = g.iter().find(|g| g.id == "build").unwrap();
         assert_eq!(build.status, GateStatus::Unknown);
@@ -650,7 +662,7 @@ classes:
     #[test]
     fn a_run_that_cannot_be_hashed_here_is_unknown_and_never_a_pass() {
         let m = model();
-        let p = plan(&m, &["apps/x.rs".into()], false);
+        let p = plan(&m, &["apps/x.rs".into()], false, None);
         let mut runs = BTreeMap::new();
         runs.insert("build".to_string(), run(0, "aaaa"));
         let mut h: BTreeMap<String, Option<String>> = BTreeMap::new();
@@ -687,12 +699,22 @@ classes:
         assert_eq!(build.exit, 0, "the newest line wins");
         assert_eq!(build.inputs_hash, "bbbb");
         assert_eq!(runs.len(), 1, "another task's run is not this task's");
+
+        // and read without a task, the last word about the gate is whoever said it last
+        let (latest, skipped) = latest_runs(&path);
+        assert_eq!(skipped, 1);
+        let build = latest.get("build").expect("the newest line of any task");
+        assert_eq!(
+            build.exit, 1,
+            "a later failure of another task is the gate's state"
+        );
+        assert_eq!(build.inputs_hash, "cccc");
     }
 
     #[test]
     fn what_refuses_first_is_reported_first() {
         let m = model();
-        let p = plan(&m, &["site/index.md".into()], false);
+        let p = plan(&m, &["site/index.md".into()], false, None);
         let mut runs = BTreeMap::new();
         runs.insert("site".to_string(), run(2, "aaaa"));
         let mut g = judge(&m, &p, &runs, &hashes(&m, "aaaa"), Some("t-1"), "now");

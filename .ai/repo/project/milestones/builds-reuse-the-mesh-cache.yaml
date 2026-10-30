@@ -1,0 +1,40 @@
+id: builds-reuse-the-mesh-cache
+title: "Builds reuse the mesh cache: compiled Rust, the cargo build directory, mix deps and npm packages, keyed by platform, toolchain and inputs"
+slug: builds-reuse-the-mesh-cache
+order: 181
+priority: p0
+problem: "On 2026-10-22 lundra, the build and deploy host, reached zero free bytes: 185 GB of GitLab runner volumes duplicated a cache MinIO already held, and every machine compiled, fetched and installed the same dependencies from a cold cache of its own. ADR 0157 (proposed 2026-10-13) designed a shared compiler cache; only its model (I2670, #1118) was ever written, and dependency installs (mix deps.get, npm install, the shared cargo build directory) were never in it. Lundra's own disk is held by its host layer (a systemd disk guard, bounded runner volumes, MinIO bucket quotas), which I2674 turns into a provisioning capability; this milestone does not by itself free lundra's disk."
+outcome: "Majordomus derives a key for every dependency install and compilation from the repository and the machine, restores it from the local level and then a trusted node's store before the work, saves it after, and is invisible when the store is absent; every local build path of the repository goes through it, and a gate refuses a new bypass."
+current_state: "Measured on master 2034d4a3f0b on 2026-10-22: every node runs sccache with a local disk level only (rustc-wrapper in ~/.cargo/config.toml or RUSTC_WRAPPER in a shell profile); lundra serves MinIO on :9000 to the tailnet and LAN (ufw), holding only the GitLab cache bucket; the crate has no S3 client and no key derivation; the shared build directory lives under {cargo-cache-home}, which asdf sets per toolchain; the tree has no mix project and its one npm ci runs on GitHub behind actions/cache."
+desired_state: "majordomus mesh build-cache key|status|ensure|env on every surface, the store found through a trusted node's signed offer, the local build paths routed through it, and a second node's reuse measured."
+scope:
+  - "apps/majordomus-cli/src/mesh/build_cache.rs"
+  - "apps/majordomus-cli/src/mesh/build_cache"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/commands/mesh.rs"
+  - "lib/rust_bin.sh"
+  - "scripts/reap-orphans"
+  - "scripts/ci/build-cache-check"
+  - ".ai/repo/adrs/0157-the-mesh-offers-a-shared-build-cache.md"
+  - ".ai/repo/policy.yaml"
+  - "docs/BUILD_CACHE.md"
+  - "docs/CLI.md"
+non_scope:
+  - "Distributed compilation"
+  - "Public exposure of the store"
+  - "A second provider beside the first"
+acceptance_criteria:
+  - "Every criterion of intent a-build-reuses-what-the-mesh-already-built has its proof in the tree"
+validation:
+  - "majordomus plan validate"
+  - "majordomus intent validate"
+evidence_required: []
+depends_on:
+  - "development-runtime"
+risks:
+  - "MinIO publishes no binaries since 2025 (ADR 0157): the provider is a field of the offer, not an assumption"
+  - "A shared cargo build directory carries each tree's absolute path in its fingerprints (ADR 0139): measured (I3955), dependencies stay Fresh on a second node and only a tree at another path recompiles its own crate"
+  - "I2670 (#1118) is the model every issue here builds on; it lands first"
+created_at: 2026-10-22
+updated_at: 2026-10-22
