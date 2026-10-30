@@ -2,10 +2,10 @@
 <html lang="cs" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
 <title>I3972 — plan validate names every issue held only by its milestone gate, and an issue may declare it needs nothing from the milestone&#39;s dependencies — Prismatic Majordomus</title>
 <meta name="description" content="The milestone gate (plan.rs:1110-1130) holds every issue of a milestone whose depends_on is not DONE, whatever the issue itself needs. Make it explainable and narrowable: plan validate emits a warning held_only_by_milestone naming every BLOCKED issue whose own depends_on are all DONE and whose blocked_by holds only milestone:&lt;id&gt; entries, with the milestone that holds it; and an issue may declare milestone_gate: own (schema issue.v1, default all), which keeps it out of the gate so it is held only by its own depends_on. The opt-out reaches every consequence of the gate in both engines: the issue-level premature_execution check (plan.rs:1118-1135, project.awk:311) skips an opted-out issue, and the milestone-level milestone_premature check (plan.rs:1080-1086, project.awk:287) does not fail a blocked milestone whose only ACTIVE, VERIFY or DONE issues are opted out; such a milestone keeps the derived status BLOCKED, with the opted-out work reported beside it. Both engines, plan.rs and lib/project.awk, derive the same, held equal by case 99_plan_capabilities. A milestone keeps ordering the roadmap exactly as now. I3757 rewrites the same gate code to name what holds a milestone and lands first.">
-<link rel="canonical" href="https://majordomus.dev/cs/plan/i3972/"><meta name="robots" content="noindex">
+<link rel="canonical" href="https://majordomus.dev/cs/plan/i3972/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
 <meta property="og:title" content="I3972 — plan validate names every issue held only by its milestone gate, and an issue may declare it needs nothing from the milestone&#39;s dependencies — Prismatic Majordomus">
@@ -215,7 +215,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Tato tři pole, důkazy výše a stav závislostí jsou vše, z čeho se stav skládá. Neexistuje žádné pole stavu, které by s nimi mohlo být v rozporu.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/.ai/repo/project/issues/I3972.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I3972.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I3972</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/6b30ede2d133e702e0a796e3d83b2257c7174c7a/.ai/repo/project/issues/I3972.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I3972.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I3972</code>.</p>
 </div>
 
 </div>
@@ -265,9 +265,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6b30ede2d133e702e0a796e3d83b2257c7174c7a/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6b30ede2d133e702e0a796e3d83b2257c7174c7a/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6b30ede2d133e702e0a796e3d83b2257c7174c7a/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -275,7 +275,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/51b38035a7162332304aef58fed25b98761f412b" class="font-mono underline">51b3803</a> · inputs <span class="font-mono">1f1d151d5ed2</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6b30ede2d133e702e0a796e3d83b2257c7174c7a" class="font-mono underline">6b30ede</a> · inputs <span class="font-mono">a5ec81e229eb</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

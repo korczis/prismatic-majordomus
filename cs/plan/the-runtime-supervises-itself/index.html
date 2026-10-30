@@ -2,10 +2,10 @@
 <html lang="cs" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
 <title>the-runtime-supervises-itself — Runtime říká, co postupuje, čeká nebo uvázlo, a opravuje jen to, co je bezpečné — Prismatic Majordomus</title>
 <meta name="description" content="Jedna čtecí schopnost klasifikuje práci runtime; omezená opravná smyčka jedná jen přes ensure, recovery, leasy a reaper.">
-<link rel="canonical" href="https://majordomus.dev/cs/plan/the-runtime-supervises-itself/"><meta name="robots" content="noindex">
+<link rel="canonical" href="https://majordomus.dev/cs/plan/the-runtime-supervises-itself/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
 <meta property="og:title" content="the-runtime-supervises-itself — Runtime říká, co postupuje, čeká nebo uvázlo, a opravuje jen to, co je bezpečné — Prismatic Majordomus">
@@ -173,15 +173,15 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
   <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOKOVÁNO</span>
-<span class="text-sm text-body">0 z 6 úkolů hotovo</span></p>
+<span class="text-sm text-body">0 z 8 úkolů hotovo</span></p>
 
   <dl class="mt-8 grid grid-cols-2 gap-4 border-y border-default py-6 sm:grid-cols-5">
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">připraveno</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blokováno</dt><dd class="mt-1 text-2xl font-semibold text-heading">6</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blokováno</dt><dd class="mt-1 text-2xl font-semibold text-heading">8</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">aktivní</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verify</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">hotovo</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">zrušeno</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">zrušeno</dt><dd class="mt-1 text-2xl font-semibold text-heading">1</dd></div>
   </dl>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Problém</h2>
@@ -253,12 +253,36 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           <td class="px-4 py-2 text-heading">The monitor sees queued workflow runs, and a forge that has stopped starting jobs is one signal that integration waits name</td>
         </tr>
         <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/plan/i4339/" class="text-fg-brand hover:underline">I4339</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--cancelled relative" data-status="cancelled"><span aria-hidden="true">!</span>ZRUŠENO</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">Renumbered to I4360: monitor reports a GitHub run queued past its bound</td>
+        </tr>
+        <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/plan/i4348/" class="text-fg-brand hover:underline">I4348</a></td>
           <td class="px-4 py-2"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOKOVÁNO</span>
 </td>
           <td class="px-4 py-2 font-mono text-xs text-body">2</td>
           <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/cs/plan/i4347/" class="text-fg-brand hover:underline">I4347</a>, <a href="https://majordomus.dev/cs/plan/i3903/" class="text-fg-brand hover:underline">I3903</a></td>
           <td class="px-4 py-2 text-heading">Rule: a superseded or duplicate run never holds a pull request&#39;s validate group</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/plan/i4360/" class="text-fg-brand hover:underline">I4360</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOKOVÁNO</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">2</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/cs/plan/i3903/" class="text-fg-brand hover:underline">I3903</a></td>
+          <td class="px-4 py-2 text-heading">monitor reports a GitHub run queued past its bound, not only the runs that completed</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/plan/i4363/" class="text-fg-brand hover:underline">I4363</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOKOVÁNO</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">A parked monitor --follow waits on its source instead of spinning: under 1 s of CPU in 10 s</td>
         </tr>
       </tbody>
     </table>
@@ -268,16 +292,20 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   
 <figure class="not-format my-6 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
   <figcaption class="flex flex-wrap items-baseline justify-between gap-2 border-b border-default px-4 py-2"><span class="text-sm font-medium text-heading">Graf závislostí the-runtime-supervises-itself</span><span class="font-mono text-xs text-body-subtle">z .ai/repo/project</span></figcaption>
-  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0" id="diagram-the-runtime-supervises-itself" data-diagram="the-runtime-supervises-itself" data-nodes="I3182 I3183 I3902 I3903 I4326 I4348">flowchart LR
+  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0" id="diagram-the-runtime-supervises-itself" data-diagram="the-runtime-supervises-itself" data-nodes="I3182 I3183 I3902 I3903 I4326 I4339 I4348 I4360 I4363">flowchart LR
     I3182[&quot;I3182&lt;br/&gt;One read says which work is progressing, waiting, stalled, failed or orphaned, and on what evidence&quot;]:::blocked
     I3183[&quot;I3183&lt;br/&gt;A safe repair runs once per cause through ensure, recovery, leases and the reaper, and a repeated failure escalates&quot;]:::blocked
     I3902[&quot;I3902&lt;br/&gt;A hung Pages build is replaced by a declared bound, and the right tree is rebuilt, never redeployed&quot;]:::blocked
     I3903[&quot;I3903&lt;br/&gt;A stuck or superseded CI run is found and stopped by a declared bound, by a typed capability on a schedule&quot;]:::blocked
     I4326[&quot;I4326&lt;br/&gt;The monitor sees queued workflow runs, and a forge that has stopped starting jobs is one signal that integration waits name&quot;]:::blocked
+    I4339[&quot;I4339&lt;br/&gt;Renumbered to I4360: monitor reports a GitHub run queued past its bound&quot;]:::cancelled
     I4348[&quot;I4348&lt;br/&gt;Rule: a superseded or duplicate run never holds a pull request&#39;s validate group&quot;]:::blocked
+    I4360[&quot;I4360&lt;br/&gt;monitor reports a GitHub run queued past its bound, not only the runs that completed&quot;]:::blocked
+    I4363[&quot;I4363&lt;br/&gt;A parked monitor --follow waits on its source instead of spinning: under 1 s of CPU in 10 s&quot;]:::blocked
     I3182 --&gt; I3183
     I3902 --&gt; I3903
     I3903 --&gt; I4348
+    I3903 --&gt; I4360
     classDef done stroke:#16a34a,fill:#dcfce7,color:#14532d,stroke-width:2px
     classDef active stroke:#2563eb,fill:#eff6ff,color:#1e3a8a,stroke-width:2px
     classDef verify stroke:#7c3aed,fill:#f5f3ff,color:#4c1d95,stroke-width:2px
@@ -285,11 +313,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     classDef planned stroke:#0891b2,fill:#ecfeff,color:#164e63,stroke-width:2px
     classDef blocked stroke:#b45309,fill:#fffbeb,color:#78350f,stroke-width:2px
     classDef cancelled stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px
-    classDef superseded stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram the-runtime-supervises-itself" aria-controls="diagram-the-runtime-supervises-itself" data-diagram-bar="diagram-the-runtime-supervises-itself" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Oddálit" title="Oddálit">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Přiblížit" title="Přiblížit">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Přizpůsobit diagram rámu" title="Přizpůsobit diagram rámu">Přizpůsobit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Zobrazit na celou obrazovku" title="Zobrazit na celou obrazovku">Rozbalit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Stáhnout SVG" title="Stáhnout SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Odkaz: zkopírovat adresu tohoto diagramu" title="Odkaz: zkopírovat adresu tohoto diagramu">Odkaz</button><span class="mj-diagram-status" role="status"></span></div><details class="mj-diagram-links" data-diagram-links="diagram-the-runtime-supervises-itself"><summary>Odkazuje z tohoto diagramu (6)</summary><ul><li><a href="https://majordomus.dev/cs/plan/i3182/" data-node="I3182" data-kind="issue">I3182 Jedno čtení říká, která práce postupuje, čeká, uvázla, selhala nebo osiřela, a na jakých důkazech</a></li><li><a href="https://majordomus.dev/cs/plan/i3183/" data-node="I3183" data-kind="issue">I3183 Bezpečná oprava běží jednou na příčinu přes ensure, recovery, lease a reaper a opakované selhání eskaluje</a></li><li><a href="https://majordomus.dev/cs/plan/i3902/" data-node="I3902" data-kind="issue">I3902 A hung Pages build is replaced by a declared bound, and the right tree is rebuilt, never redeployed</a></li><li><a href="https://majordomus.dev/cs/plan/i3903/" data-node="I3903" data-kind="issue">I3903 A stuck or superseded CI run is found and stopped by a declared bound, by a typed capability on a schedule</a></li><li><a href="https://majordomus.dev/cs/plan/i4326/" data-node="I4326" data-kind="issue">I4326 The monitor sees queued workflow runs, and a forge that has stopped starting jobs is one signal that integration waits name</a></li><li><a href="https://majordomus.dev/cs/plan/i4348/" data-node="I4348" data-kind="issue">I4348 Rule: a superseded or duplicate run never holds a pull request's validate group</a></li></ul></details></div>
+    classDef superseded stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram the-runtime-supervises-itself" aria-controls="diagram-the-runtime-supervises-itself" data-diagram-bar="diagram-the-runtime-supervises-itself" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Oddálit" title="Oddálit">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Přiblížit" title="Přiblížit">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Přizpůsobit diagram rámu" title="Přizpůsobit diagram rámu">Přizpůsobit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Zobrazit na celou obrazovku" title="Zobrazit na celou obrazovku">Rozbalit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Stáhnout SVG" title="Stáhnout SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Odkaz: zkopírovat adresu tohoto diagramu" title="Odkaz: zkopírovat adresu tohoto diagramu">Odkaz</button><span class="mj-diagram-status" role="status"></span></div><details class="mj-diagram-links" data-diagram-links="diagram-the-runtime-supervises-itself"><summary>Odkazuje z tohoto diagramu (9)</summary><ul><li><a href="https://majordomus.dev/cs/plan/i3182/" data-node="I3182" data-kind="issue">I3182 Jedno čtení říká, která práce postupuje, čeká, uvázla, selhala nebo osiřela, a na jakých důkazech</a></li><li><a href="https://majordomus.dev/cs/plan/i3183/" data-node="I3183" data-kind="issue">I3183 Bezpečná oprava běží jednou na příčinu přes ensure, recovery, lease a reaper a opakované selhání eskaluje</a></li><li><a href="https://majordomus.dev/cs/plan/i3902/" data-node="I3902" data-kind="issue">I3902 A hung Pages build is replaced by a declared bound, and the right tree is rebuilt, never redeployed</a></li><li><a href="https://majordomus.dev/cs/plan/i3903/" data-node="I3903" data-kind="issue">I3903 A stuck or superseded CI run is found and stopped by a declared bound, by a typed capability on a schedule</a></li><li><a href="https://majordomus.dev/cs/plan/i4326/" data-node="I4326" data-kind="issue">I4326 The monitor sees queued workflow runs, and a forge that has stopped starting jobs is one signal that integration waits name</a></li><li><a href="https://majordomus.dev/cs/plan/i4339/" data-node="I4339" data-kind="issue">I4339 Renumbered to I4360: monitor reports a GitHub run queued past its bound</a></li><li><a href="https://majordomus.dev/cs/plan/i4348/" data-node="I4348" data-kind="issue">I4348 Rule: a superseded or duplicate run never holds a pull request's validate group</a></li><li><a href="https://majordomus.dev/cs/plan/i4360/" data-node="I4360" data-kind="issue">I4360 monitor reports a GitHub run queued past its bound, not only the runs that completed</a></li><li><a href="https://majordomus.dev/cs/plan/i4363/" data-node="I4363" data-kind="issue">I4363 A parked monitor --follow waits on its source instead of spinning: under 1 s of CPU in 10 s</a></li></ul></details></div>
 </figure>
 
 
-  <p class="mt-8 text-sm text-body">Kanonický záznam: <a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/.ai/repo/project/milestones/the-runtime-supervises-itself.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/the-runtime-supervises-itself.yaml</a>. Zpět jej přečtete pomocí <code class="font-mono text-heading">majordomus plan show the-runtime-supervises-itself</code>.</p>
+  <p class="mt-8 text-sm text-body">Kanonický záznam: <a href="https://github.com/korczis/prismatic-majordomus/blob/6b30ede2d133e702e0a796e3d83b2257c7174c7a/.ai/repo/project/milestones/the-runtime-supervises-itself.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/the-runtime-supervises-itself.yaml</a>. Zpět jej přečtete pomocí <code class="font-mono text-heading">majordomus plan show the-runtime-supervises-itself</code>.</p>
 </div>
 
 </div>
@@ -339,9 +367,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6b30ede2d133e702e0a796e3d83b2257c7174c7a/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6b30ede2d133e702e0a796e3d83b2257c7174c7a/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6b30ede2d133e702e0a796e3d83b2257c7174c7a/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -349,7 +377,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/51b38035a7162332304aef58fed25b98761f412b" class="font-mono underline">51b3803</a> · inputs <span class="font-mono">1f1d151d5ed2</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6b30ede2d133e702e0a796e3d83b2257c7174c7a" class="font-mono underline">6b30ede</a> · inputs <span class="font-mono">a5ec81e229eb</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

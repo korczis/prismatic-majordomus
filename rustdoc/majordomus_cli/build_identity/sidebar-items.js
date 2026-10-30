@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["HEAD_ARGS","STATUS_ARGS"],"fn":["identify"]};
+window.SIDEBAR_ITEMS = {"constant":["HEAD_ARGS","STATUS_ARGS"],"fn":["declared_commit","identify"]};

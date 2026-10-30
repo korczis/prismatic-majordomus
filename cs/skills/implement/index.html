@@ -177,7 +177,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <code class="font-mono text-heading">majordomus://skill/implement</code>
       <span class="mj-badge mj-badge--active relative" data-status="active"><span aria-hidden="true">•</span>aktivní</span>
 
-      <span class="font-mono text-xs text-body-subtle">verze 1</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">implementace</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">evidence</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">invarianty</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">drift</span>
+      <span class="font-mono text-xs text-body-subtle">verze 2</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">implementace</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">evidence</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">invarianty</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">drift</span>
     </div>
     <div class="mb-8 grid gap-4 sm:grid-cols-2">
       <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
@@ -198,10 +198,34 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <p>Procházejte fázemi v pořadí; každá vytvoří něco, co čte další. Zaznamenejte invariant, pozorovatelné chování a plán důkazů dřív, než napíšete mechanismus, do checkpointu nebo předávky úlohy, aby je další worker (nebo tentýž po přerušení) neodvozoval znovu.</p>
 <h3 id="1-establish-the-scope"><a class="zola-anchor" href="#1-establish-the-scope" aria-label="Odkaz na kotvu: 1-establish-the-scope">1. Stanovte rozsah</a></h3>
 <p>Uveďte požadovaný výsledek jednou větou, výslovná kritéria přijetí a kritéria, která pravidla repozitáře přidávají implicitně. Klasifikujte změnu (defekt, funkce, refaktoring, výkon, dokumentace, generovaná data, migrace, integrace poskytovatele, CI, architektura) a odpovězte: mění se veřejné chování, mění se sémantika persistence nebo stavu, jsou dotčeny generované projekce, je zapojen poskytovatel, záleží na kompatibilitě. Deklarujte cesty, kterých se práce smí dotknout (<code>majordomus start --scope</code>), a nerozšiřujte je potichu; lze-li požadavek splnit bez nového subsystému, splňte jej bez něj. Pokud požadované chování už existuje, ověřte je místo jeho opětovného budování.</p>
+<p>Four refusals came back more than once in one session on 2026-10-28. Each costs a round
+trip at its gate and nothing here, so meet them before the first edit:</p>
+<ul>
+<li>A command-line change edits <code>apps/majordomus-cli/src/cli.rs</code>, the definitions and their
+<code>EXAMPLES</code> table alike, so name that file in the scope; a scope without it is refused at
+<code>check</code> and at <code>finish</code>.</li>
+<li>A new command owes its <code>EXAMPLES</code> entry in the same change; the derive refuses a command
+without one.</li>
+<li>In a linked worktree, run the tool as <code>env -u MAJORDOMUS_SHARE majordomus ...</code>: a
+<code>MAJORDOMUS_SHARE</code> inherited from the primary checkout's environment reads that
+checkout's <code>share/</code>, and the commit hook then refuses the artifacts as stale.</li>
+<li>A commit subject is at most 100 characters (phase 17); <code>commit.validate</code> refuses a longer
+one in the commit-msg hook.</li>
+</ul>
 <h3 id="2-load-the-applicable-context"><a class="zola-anchor" href="#2-load-the-applicable-context" aria-label="Odkaz na kotvu pro: 2-load-the-applicable-context">2. Načtěte příslušný kontext</a></h3>
 <p>Čtěte to, co se vztahuje na cesty v rozsahu, a nic víc: kořenové instrukce, platná pravidla (<code>majordomus rules list</code>, s poznámkou, která jsou vynucována strojově), dokumenty s rozsahem od kořene dolů (<code>majordomus context resolve &lt;path&gt;</code>), architektonická rozhodnutí dotýkající se subsystému, existující testy, okolní implementaci a veřejnou dokumentaci, která o chování činí tvrzení.</p>
 <h3 id="3-inspect-before-mutating"><a class="zola-anchor" href="#3-inspect-before-mutating" aria-label="Odkaz na kotvu pro: 3-inspect-before-mutating">3. Prozkoumat před mutací</a></h3>
 <p>Přečtěte si aktuální implementaci, její volající, sousední abstrakce, testy, veřejná rozhraní, generované konzumenty jejího výstupu, konfiguraci a diagnostiku. Přečtěte si historii souborů tam, kde mění rozhodnutí: proč abstrakce existuje, zda je kód přechodný, zda už dřívější oprava řešila stejnou vadu, zda je podezřelý vzor záměrný. Historii nečtěte pro ceremonii; čtěte ji tam, kde mění, co byste udělali.</p>
+<p>Read it one path at a time (<code>git log -- &lt;path&gt;</code>, <code>git log -L</code>) on the branch you work
+from. What other branches hold is asked of their tips, never of all their history:
+whether one already carries a path is <code>scripts/collision-check --new &lt;path&gt;</code>, one pass
+over every branch tip, and whether an issue id is taken is the tip check and the
+date-bounded message search in <code>.ai/repo/project/issues/README.md</code>. A content search
+across every ref — <code>git log --all -S</code> or <code>-G</code>, <code>git grep</code> over every remote branch — has
+no bound on a repository with two thousand refs, and the machine is shared: on 2026-10-28
+three of them from one session's workflow agents held it at load 92 and the shared server
+stopped answering until they were stopped. When no bounded form answers the question,
+bound the search by <code>--since</code> and by the refs that matter before running it.</p>
 <h3 id="4-name-the-canonical-truth"><a class="zola-anchor" href="#4-name-the-canonical-truth" aria-label="Kotevní odkaz pro: 4-name-the-canonical-truth">4. Pojmenujte kanonickou pravdu</a></h3>
 <p>U každého artefaktu, kterého se změna dotýká, řekněte, co to je: kanonický, generovaná projekce, cache, stav za běhu, perzistovaný stav, externí stav, dokumentace nebo testovací fixture. Před úpravou najděte zdroj každého odvozeného artefaktu a nikdy neopravujte generovaný drift úpravou generovaného souboru. Dva soupeřící kanonické zdroje jsou architektonická vada; opravte směr odvozování, místo abyste kopie ručně sjednocovali.</p>
 <h3 id="5-state-the-invariant"><a class="zola-anchor" href="#5-state-the-invariant" aria-label="Odkaz na kotvu pro: 5-state-the-invariant">5. Uveďte invariant</a></h3>
@@ -247,7 +271,11 @@ of another crate tree (<code>REFUSED</code>, 15); the remedy is a build, never a
 <h3 id="16-review-the-diff"><a class="zola-anchor" href="#16-review-the-diff" aria-label="Odkaz na kotvu: 16-review-the-diff">16. Zrevidujte diff</a></h3>
 <p>Přečti celý diff tak, jak by ho četl recenzent, podle kontrolního seznamu <code>repo-review</code>: správnost, invariant, chování při selhání, kanonický vs. generovaný stav, duplicitní pravda, ruční registrace tam, kde existuje odvození, únik poskytovatele, kvalita testů, diagnostika, tvrzení v dokumentaci, drift, regrese výkonu, zbytečná abstrakce a rozsah, který se rozlezl. Oprav, co je podstatné, než budeš pokračovat.</p>
 <h3 id="17-commit-coherent-work"><a class="zola-anchor" href="#17-commit-coherent-work" aria-label="Odkaz na kotvu: 17-commit-coherent-work">17. Commitujte souvislou práci</a></h3>
-<p>Jeden commit na nezávisle srozumitelnou, ověřenou změnu, v konvenci zpráv repozitáře; ani jeden commit na všechno, ani commit na každý úhoz. Před každým commitem procházejí příslušné testy, formátovač a linter, generované projekce jsou sladěné a není přítomen žádný nevysvětlený soubor.</p>
+<p>One commit per independently understandable, verified change, in the repository's
+message convention, with a subject of at most 100 characters; neither one commit for
+everything nor a commit per keystroke. Before
+each commit the relevant tests pass, the formatter and linter pass, generated
+projections are reconciled and no unexplained file is present.</p>
 <h3 id="18-stop"><a class="zola-anchor" href="#18-stop" aria-label="Odkaz na kotvu: 18-stop">18. Stop</a></h3>
 <p>Přestaňte rozšiřovat, když je požadované chování pozorovatelné, invariant platí, důkazy projdou, projekce souhlasí a dokumentace je přesná. Možné vylepšení, neelegantní soused nebo nesouvisející položka plánu rozvoje se zaznamená jako otázka nebo úkol, ne implementuje „když už tu jsem“.</p>
 <h3 id="19-report"><a class="zola-anchor" href="#19-report" aria-label="Kotvový odkaz na: 19-report">19. Report</a></h3>
@@ -329,9 +357,9 @@ of another crate tree (<code>REFUSED</code>, 15); the remedy is a build, never a
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Odkud to pochází</h2>
     <dl class="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
-      <dt class="text-body-subtle">kanonický soubor</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/.ai/repo/skills/implement/SKILL.md">.ai/repo/skills/implement/SKILL.md</a></dd>
-      <dt class="text-body-subtle">hash obsahu</dt><dd class="min-w-0 break-all font-mono text-heading">77f17470f7af7fc3aaf4902d2c47aaba4231de95f0fea430bf3fb242efb11fc7</dd>
-      <dt class="text-body-subtle">kontrakt</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/share/schemas/majordomus/skill/skill.v1.schema.json">share/schemas/majordomus/skill/skill.v1.schema.json</a></dd>
+      <dt class="text-body-subtle">kanonický soubor</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/6b30ede2d133e702e0a796e3d83b2257c7174c7a/.ai/repo/skills/implement/SKILL.md">.ai/repo/skills/implement/SKILL.md</a></dd>
+      <dt class="text-body-subtle">hash obsahu</dt><dd class="min-w-0 break-all font-mono text-heading">b784bae9f56b38f01878ef2c5c0341a7093a080d607afda1559d4c7351effa63</dd>
+      <dt class="text-body-subtle">kontrakt</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/6b30ede2d133e702e0a796e3d83b2257c7174c7a/share/schemas/majordomus/skill/skill.v1.schema.json">share/schemas/majordomus/skill/skill.v1.schema.json</a></dd>
       <dt class="text-body-subtle">dostupné také jako</dt><dd class="min-w-0 font-mono text-heading">Zdroj MCP <code>majordomus://skill/implement</code> · <code>majordomus skills show implement</code></dd>
     </dl>
     <p class="mt-3 text-sm text-body">Tato stránka je vygenerována z výše uvedeného souboru pomocí <code class="font-mono text-heading">scripts/generate-site-data</code>; úprava stránky nic nezmění, úprava souboru změní všechny povrchy.</p>
@@ -386,9 +414,9 @@ of another crate tree (<code>REFUSED</code>, 15); the remedy is a build, never a
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6b30ede2d133e702e0a796e3d83b2257c7174c7a/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6b30ede2d133e702e0a796e3d83b2257c7174c7a/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6b30ede2d133e702e0a796e3d83b2257c7174c7a/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -396,7 +424,7 @@ of another crate tree (<code>REFUSED</code>, 15); the remedy is a build, never a
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/51b38035a7162332304aef58fed25b98761f412b" class="font-mono underline">51b3803</a> · inputs <span class="font-mono">1f1d151d5ed2</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6b30ede2d133e702e0a796e3d83b2257c7174c7a" class="font-mono underline">6b30ede</a> · inputs <span class="font-mono">a5ec81e229eb</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

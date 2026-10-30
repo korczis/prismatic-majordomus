@@ -2,10 +2,10 @@
 <html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
 <title>I4333 — Whether a branch has landed is one predicate that also holds after a squash merge, and a repository declares how it lands — Prismatic Majordomus</title>
 <meta name="description" content="One function decides whether a branch, or a head commit, has landed on the trunk, and says how it decided. There are three ways. By ancestry, which is today&#39;s rule. By the forge: a pull request from this repository whose head is that tip is MERGED and its merge commit is in the trunk. integration/forge.rs merged_branches_of and deploy/observed.rs ObservedMergedPullRequest already read this. Offline: the patch-id (`git patch-id --stable`) of the branch&#39;s combined diff from its merge base equals the patch-id of one trunk commit after that merge base. That works only while the clone still holds the branch&#39;s commits. After the branch is deleted, the forge is the only rule that can still decide. policy.yaml gains `landing: merge | squash` (policy.v1 schema), with merge as the default. Under merge only ancestry is asked, so nothing changes. Under squash the forge and patch-id rules are asked too. A check that needs the forge and cannot read it answers &#39;not judged&#39;, never &#39;not landed&#39;. Every reader that decides &#39;landed&#39; today calls this function: worktree cleanup and topology (worktree/state.rs:514-536 merged_into, which runs `git branch --merged`, read by worktree/service.rs:835-840 cleanup_eligible), convergence (convergence/mod.rs:358, Disposition::Integrated), and the fallback of the release an issue landed in (plan.rs:1454 and lib/project.sh:191, `git log --merges --grep`). integration/relation.rs:139 patches_upstream adds the combined patch-id as a second test beside `git cherry`. The issues that need this predicate depend on it: I4320 (evidence commits), I4324 (finished worktrees) and I4328 (task claims).">
-<link rel="canonical" href="https://majordomus.dev/plan/i4333/"><meta name="robots" content="noindex">
+<link rel="canonical" href="https://majordomus.dev/plan/i4333/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
 <meta property="og:title" content="I4333 — Whether a branch has landed is one predicate that also holds after a squash merge, and a repository declares how it lands — Prismatic Majordomus">
@@ -230,7 +230,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Those three fields, the evidence above and the state of the dependencies are all the status is made of. There is no status field to disagree with them.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/.ai/repo/project/issues/I4333.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I4333.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I4333</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/6b30ede2d133e702e0a796e3d83b2257c7174c7a/.ai/repo/project/issues/I4333.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I4333.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I4333</code>.</p>
 </div>
 
 </div>
@@ -280,9 +280,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6b30ede2d133e702e0a796e3d83b2257c7174c7a/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6b30ede2d133e702e0a796e3d83b2257c7174c7a/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6b30ede2d133e702e0a796e3d83b2257c7174c7a/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -290,7 +290,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/51b38035a7162332304aef58fed25b98761f412b" class="font-mono underline">51b3803</a> · inputs <span class="font-mono">1f1d151d5ed2</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6b30ede2d133e702e0a796e3d83b2257c7174c7a" class="font-mono underline">6b30ede</a> · inputs <span class="font-mono">a5ec81e229eb</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

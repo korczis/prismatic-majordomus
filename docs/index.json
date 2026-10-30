@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "51b38035a7162332304aef58fed25b98761f412b",
+  "commit": "6b30ede2d133e702e0a796e3d83b2257c7174c7a",
   "source_version": "1.0.0-alpha.9",
-  "registry_fingerprint": "da31b40589f677a60c83f92eedaa4d77ca560c96663b428da48f11686010cce8"
+  "registry_fingerprint": "0d0a12a10de105478e4a6bbb568960b5f8307c7d5f0aef127ede340a83ac0faf"
  },
  "counts": {
-  "pages": 6128,
-  "capabilities": 3633,
+  "pages": 6176,
+  "capabilities": 3686,
   "cli_commands": 120,
   "http_routes": 212,
   "mcp_tools": 206,
-  "mcp_resources": 3470,
+  "mcp_resources": 3523,
   "modules": 94
  },
  "kinds": [
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 1102
+   "count": 1124
   },
   {
    "kind": "knowledge",
@@ -166,7 +166,7 @@
    "route": null,
    "title": null,
    "reason": "Curated knowledge is written for the worker reading the layer, not for a visitor: it is the orientation a session starts from, and it changes with the work rather than with the product.",
-   "count": 60
+   "count": 86
   },
   {
    "kind": "mesh-declaration",
@@ -246,7 +246,7 @@
    "route": "/sessions/",
    "title": null,
    "reason": null,
-   "count": 91
+   "count": 93
   },
   {
    "kind": "skill",
@@ -270,7 +270,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 660
+   "count": 663
   },
   {
    "kind": "use-case",
@@ -11251,8 +11251,8 @@
   },
   {
    "route": "/cs/plan/i2901/",
-   "title": "I2901 — Jedna gramatika pojmenovává id úkolu a čte ji každý povrch",
-   "description": "Deklarovat gramatiku id úkolu jednou: vzor ve schématu úkolu (nebo generovaný z jedné konstanty v Rustu) a jedno plan::is_issue_id, které čtou ui/prs.rs, ui/idd.rs, případ 3220 a JS ve share/ui, aby si ji žádný povrch nezapisoval po svém.",
+   "title": "I2901 — One grammar names a record id, and every surface reads it: a capital letter and three or more digits that name a record file of the tree read",
+   "description": "Declare the record id grammar once. The issue schema's id pattern is `^[A-Z][0-9]{3,}$` (a capital letter followed by three or more digits), which this repository's I and four digits and an adopter's V603, R022 or M048 all satisfy, and plan validate refuses an issue whose id does not match it. One predicate, plan::is_record_id(word, tree), decides whether a word names a record: the word has that shape, and `<word>.yaml` exists under .ai/repo/project/issues/ or .ai/repo/project/milestones/ of the tree read, which also says whether it is an issue or a milestone. Shape alone is never enough, so H264, v3.13.0 or V999 with no V999.yaml name nothing. Slug milestones (this repository's `work-graph-github` and the like) never have that shape, so they are never a candidate on any surface, as today. Every surface that tests a word against a shape today calls the predicate instead and none spells the grammar its own way: ui/prs.rs is_issue_id and issues_named (and so plan/delivery.rs named_by, which wraps it), release/commits.rs record_candidates and its issue-or-milestone test (:149), capability/builtin/brief.rs:1003 task_label, the JS pattern `/(?<![\\\\/\\\\w-])I\\\\d{4}\\\\b/` in test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh:154, the awk pattern `I[0-9][0-9][0-9][0-9]+` in scripts/ci/audit-plan-check:56, and scripts/github-sync at :394 (`^I[0-9][0-9][0-9][0-9]+$`), :399 (`^I[0-9]+\\\\.yaml$`) and :1126 (the sed title claim `^\\\\([MI][0-9][0-9]*\\\\) — `). The shell and JS callers, and plan validate's refusal, take the answer from one typed subcommand of the executable (for example `majordomus plan ids --json`, the declared ids of the tree with their kind and whether each has the shape), never from a second pattern. The same subcommand answers which ids a text names: `majordomus plan ids --named-by --title <t> --branch <b> --json` returns the ids the title and the branch name, by the same predicate and the same scan as issues_named, so shell and JS callers, and the forge adapter of I4370, never spell a pattern. Which text a surface scans does not change: delivery and the PR Drain read a title, a subject and a branch; the changelog's references() keeps scanning a commit's subject and body together (release/commits.rs:79, documented at :130-133), because a commit that explains itself in its body is the one worth linking.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -14838,9 +14838,27 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/plan/i4337/",
+   "title": "I4337 — The evolve skill harvests what sessions only remembered, links what is in flight, and takes a number on the board first",
+   "description": "The ten lessons of 2026-10-28 and one met while reviewing them are each recorded with `majordomus knowledge observe`, derived, and decided; each promoted one is put where its kind lives or linked to the issue or pull request already fixing it. The evolve skill (version 2) gathers in step 1 what providers' memories and the peers' announcements and handovers hold since the last evolve, read as data; checks in step 2 for a lesson already in flight and links rather than duplicates; says in step 3 that a number is taken on the board first; and in step 7 evolves its own procedure when a run of it met friction. The implement skill (version 2) names the four refusals one session met more than once.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/plan/i4338/",
    "title": "I4338 — A pull request labelled hold gives its validate slot back to its train and never reads green on its own",
    "description": "A validate run of a pull request that carries the hold label cancels itself in the plan job's first step, before any job asks for a runner, writes why to the step summary, and fails if the cancel does not take hold, so a train member never holds the one validate slot its train needs and never reaches a green ci that would let it land outside its train.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4339/",
+   "title": "I4339 — Renumbered to I4360: monitor reports a GitHub run queued past its bound",
+   "description": "Hold the identity I4339 that commit ab447585c29 named for the queued-run monitor issue, so that the commit's reference resolves; the work itself is planned and tracked as I4360.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4340/",
+   "title": "I4340 — The reaper bounds the shared build directory although cargo writes no CACHEDIR.TAG into a build-dir",
+   "description": "scripts/reap-orphans applies the shared build directory's size bound by evicting its stale units, under cargo's lock, whenever the directory is over its bound and either a build is running or it carries no CACHEDIR.TAG; only the removal of the whole directory still asks for the tag.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -14898,9 +14916,21 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/plan/i4350/",
+   "title": "I4350 — plan validate refuses a scope that names a directory holding a file another issue plans, so its warnings never publish a path nobody has written",
+   "description": "When a runnable issue's scope entry is a directory and another runnable issue of the same wave plans a file under it that does not exist yet, plan validate reports an error naming both issues and the directory, instead of the scope_conflict warning that names the planned file.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/plan/i4351/",
    "title": "I4351 — A tracked derived file over 1 MB is declared with a delta budget, written to delta well, or built rather than committed",
    "description": "Stop the history's growth from derived files: site/data/registry/registry.json, docs/generated/graph.json, site/data/generated/plan.json, docs/generated/registry.json, docs/generated/registry.yaml and the three openapi copies (site/data/generated/openapi.json, docs/generated/openapi.json, docs/generated/openapi.yaml) each either leave git (built where they are served) or are written to delta well (stable key order, one record per line, no volatile body fields), and each one that stays carries a max_delta_bytes in .ai/repo/policy.yaml; scripts/derive-check refuses an undeclared tracked derived file over 1 MB. A file that leaves git is built by its producer (scripts/generate-site-data or `majordomus generate`) where its readers (scripts/site-build, scripts/site-deploy, scripts/pages, scripts/ci/homepage-check) need it, and is listed in .gitignore. Which file takes which road is decided first in an ADR whose number is taken on the board when the work starts.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4352/",
+   "title": "I4352 — The build host provisions its CI runners, and its disk guard covers the runners' homes",
+   "description": "The build host provisions its CI runners (restart always, start limit off) and its disk guard covers the runner homes; a host that owes provisioning is reported. The declared policy names the runner homes and the runner unit patterns; `mesh build-cache provision` renders the disk guard's homes from it, installs a drop-in for every observed runner unit and starts the runners, and `mesh doctor` on the build host warns with the number of owed changes and the command to run. A runner home is written by CI jobs, so under it the root guard renames and deletes only as the home's owner and never takes a home, a directory directly in one, a directory reached through a symlink, or one holding a runner installation or a source tree; an aside that came into use after the idle check is given back, never deleted.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -14943,6 +14973,108 @@
    "route": "/cs/plan/i4359/",
    "title": "I4359 — Rule: no CI runs on a host whose runner layer is undeclared or whose guard is not observed live, and the runner layer is documented",
    "description": "A blocking project rule, no-ci-routes-to-an-undeclared-runner-host, held at two points. In the repository, a typed capability, mesh.runner_routing (`majordomus mesh runner-routing`), run as a gate in structure, fails when a self-hosted label reachable from a workflow or from a repository variable's default names no policy node that declares its runner units, their homes, their caps and the guard, observation and watchdog timers. On the host, the build host policy installs a runner job-started hook (apps/majordomus-cli/assets/mesh-cache-provider/runner-job-started, set as ACTIONS_RUNNER_HOOK_JOB_STARTED in the runner units' drop-in) that fails the job at its start, naming the failing item, while the host's latest observation (/var/lib/majordomus/build-host.json, written every five minutes by I4343) is missing, failing or older than 15 minutes; so a host whose guard has stopped takes no CI, and the refusal does not wait for anyone to ask. docs/CI.md gains a section 'Self-hosted runners' with the runbook of the 2026-10-28 recovery.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4360/",
+   "title": "I4360 — monitor reports a GitHub run queued past its bound, not only the runs that completed",
+   "description": "`workflow_run` in apps/majordomus-cli/src/monitor/github.rs turns a run whose status is queued, waiting or in_progress and whose age is past the bound I3903 declares for it into one warning moment naming the run, its workflow, its head branch and the age, raised once per run; a completed run is read as before. When the run waits for a self-hosted label and no runner of the repository is online (`actions/runners`), the moment names \\\"no runner online\\\" as the cause, so a watcher does not wait or re-run into a queue nothing serves.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4362/",
+   "title": "I4362 — adr next and case-numbers next answer within a declared bound in a linked worktree",
+   "description": "`majordomus adr next` (lib/adr.sh) and `scripts/case-numbers next` declare the bound of their survey and keep it in a linked worktree of a repository with hundreds of refs and worktrees: past the bound each answers with what it surveyed, names every source it did not finish (the refs, the sibling worktrees, the board) and exits non-zero, rather than waiting without an end. The first step measures where the time goes in a linked worktree and records it in this issue before the code changes.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4363/",
+   "title": "I4363 — A parked monitor --follow waits on its source instead of spinning: under 1 s of CPU in 10 s",
+   "description": "`majordomus monitor --follow` (and with `--until` or `--for`) that has nothing new to print blocks on its server's stream or sleeps on a declared interval between asks, so a follower parked for 10 s uses less than 1 s of CPU. The first step finds the loop that spins (apps/majordomus-cli/src/commands/monitor.rs and apps/majordomus-cli/src/monitor) and records it in this issue before the code changes.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4364/",
+   "title": "I4364 — Duplicate of I4365: a promoted knowledge note cites only references a clean clone resolves",
+   "description": "Hold the identity I4364 that commit 5a4942c3a57 named for the promoted-note defect, so that the commit's reference resolves; the work itself is planned and tracked as I4365.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4365/",
+   "title": "I4365 — A promoted record cites no local episode or task: knowledge promote rewrites its provenance to what resolves in a clean clone, or refuses",
+   "description": "When knowledge promote moves a candidate into the tracked curated store, replace every provenance.derived_from reference that names only this machine's local state (session:<episode>, task:<task>) with references that resolve in any clone: the observation's subject and evidence (file:, test:, commit:, issue:, claim:). Refuse the promotion, writing nothing, when nothing resolvable is left. A case runs doctor and knowledge check on a promoted record with .ai/local moved aside.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4366/",
+   "title": "I4366 — A merge whose subject is its pull request's title is read as that pull request, and an adopter's lower-case branch names its upper-case record",
+   "description": "Two readings that I2901's grammar does not fix. (1) worktree/state.rs issue_of compares a branch component with a declared id ASCII-case-insensitively, keeping its rule otherwise (the component equals the id, or begins with the id followed by `-`), and still returns the declared id, so feat/v603-timeline-pinch names V603. Every caller inherits it: delivery's branch_names, integration/mod.rs:1154, capability/builtin/devtask.rs:180, worktree/trace.rs:612, worktree/service.rs:669 and :861, and intent_realization.rs:508. issues_named and named_by keep finding an id anywhere in the branch bounded by non-alphanumerics, as they do today. (2) plan/delivery.rs merge_subject reads a two-parent commit whose subject ends in ` (#N)`, which GitHub appends to a merge commit titled by its pull request (merge_commit_title=PR_TITLE), as the merge of pull request N, with the subject minus that suffix as its title; the body is not read for this form, because under merge_commit_message=PR_BODY its first line is the pull request's body, not its title. A two-parent commit with no trailing ` (#N)` and no `Merge pull request #`, `Merge branch '` or `Merge remote-tracking branch '` prefix stays what it is today: a merge with no pull request, branch or title. This repository's derived merges ('merge: master (6c79dcf68cf) into I4241, derived') are therefore never read as pull requests. Under PR_TITLE plus PR_BODY a merge commit carries no branch, so in an answer at a commit a pull request that named its id only in its branch cannot be attributed. The delivery report then lists such a merge under a new report-level `unattributed` list (commit, pull request, title, reason): the merge carries no branch, and the live answer reads the pull request's branch from the forge's merged-pull-request observation. It is never dropped silently. A merge the live answer attributes through the forge is not listed. The merge-subject reader is one shared function, merge_subject in plan/delivery.rs or a module both callers use: it is the only code that reads a pull request, branch or title from a merge subject, and the first-parent changelog of I4368 calls it rather than matching subjects of its own.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4367/",
+   "title": "I4367 — The merged pull requests' observation records the machine-written Refs region, and the live delivery answer reads the region and never the prose around it",
+   "description": "`majordomus served forge` asks, for each merged pull request, its body. ObservedMergedPullRequest keeps the state of the managed region between `<!-- majordomus:pr-meta begin <hash> -->` and `<!-- majordomus:pr-meta end -->`: none, malformed (a marker repeated or unclosed), edited (the hash does not verify) or verified. Only for a verified region does it keep record ids, and only the leading id of each list line github-sync writes (`- Refs #<n> (<id> — <title>)`, `- <id> — <title> (not on GitHub yet ...)`, `- <id> (its record is in this pull request ...)`, github-sync:406-412), never an id inside a title or on the `**Milestone:**` line, each decided by I2901's plan::is_record_id. The body is reduced to that state and those ids before the observation is recorded, so no prose is stored. SCHEMA moves to 2, and load (deploy/observed.rs:416-436, which today refuses every schema but 1) still reads a schema 1 record, with the region unread. The hash contract is github-sync's, reproduced exactly: carriage returns stripped from the decoded body (github-sync:600); the region is the lines strictly between the one begin line and the one end line, each ending in a newline, as pr_region_read (github-sync:457-467) extracts them; hash16 (github-sync:484) is the first 16 hex characters of the sha256 of those bytes, compared with the begin marker's hash as github-sync:611-619 does. The Rust reader is held to a golden body github-sync wrote. plan.delivery adds the edge `projected_region` beside title_or_branch, slug, subject and forge_title, under forge_title's landing rule (plan/delivery.rs:1016-1052): it counts only when the pull request's merge commit or head is in the history read, at that commit's time, and a merge that only plans is judged as forge_title's is. It exists only in the live answer, like the forge's merged titles (plan/delivery.rs:1001-1015); an answer at a commit reads that commit's history only and reports the region source unread with its reason. An edited or malformed region names nothing, and the delivery source that reads the regions names each such pull request by number and state, in github-sync's words.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4368/",
+   "title": "I4368 — An adopter's changelog links into its own repository and trunk, and a repository that declares first-parent history is listed by its pull requests",
+   "description": "release/changelog.rs takes its forge base from the repository's .ai/repo/project/project.yaml `repository` (https://github.com/<repository>) and its trunk from `default_branch`, falling back to CARGO_PKG_REPOSITORY and master only where there is no project.yaml (the project schema requires both keys). Every link it builds reads that base and trunk: the unreleased compare and tree links (today `...master` and `tree/master`), the notes, compare, tree and commit links of each release, and each decision's `blob/<trunk>/<path>` link (today `blob/master`). How the release window is read is something a repository declares: an optional project.yaml key `history: first-parent`, added to the project schema. Where nothing is declared, release/commits.rs keeps `git log --no-merges` exactly as today. With first-parent declared, it reads the window with --first-parent, and each first-parent commit is one change. A merge commit whose subject ends in ` (#N)` (merge_commit_title=PR_TITLE) is read by its subject without that suffix; one whose subject is the forge's `Merge pull request #N from ...` is read by its body's first line; a squash or direct commit whose subject ends in ` (#N)` is read as today. The first-parent mode reads a merge's pull request and title by calling I4366's shared merge-subject reader (merge_subject), and release/commits.rs keeps no ` (#` or `Merge pull request #` matcher of its own. Each of the three carries pull request N in a new optional Change field, linked to <base>/pull/N; outside first-parent mode the field stays empty. With first-parent declared, no changelog line begins with 'Merge pull request'. This repository declares nothing, so `majordomus release changelog` and its page docs/generated/changelog.{md,json,yaml} are byte-identical, although it too lands mostly by merge commits (313 of the last 400 first-parent commits on master).",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4369/",
+   "title": "I4369 — A record renamed with `replaces:` keeps its GitHub issue or milestone, and an issue whose record was renamed without one stays unmanaged, names the commit that removed its record, and is never closed or reused",
+   "description": "The issue and milestone schemas gain a key `replaces`, a list of former ids, with share/allow/issue.txt and share/allow/milestone.txt regenerated by `majordomus generate`. plan validate, in both engines (lib/project.awk and apps/majordomus-cli/src/plan.rs, compared by case 99), refuses a `replaces` entry that names a record still present, or a former id claimed by two records. scripts/github-sync, and so the forge command that packages it (I4370), resolves an issue projected for a replaced id as the replacing record's issue: it moves the identity marker to the replacing record and retitles the issue, so one GitHub number survives the rename, and --check reports the replacing record `behind`, not `missing`, and the old issue not `unmanaged`. A milestone, which github-sync finds by its `<id> — ` title prefix (github-sync:277), is found by a replaced id's prefix the same way and retitled, so its number and its issues' assignment survive. When both the old and the new id already have an issue, --apply closes the old one as not planned with the comment 'superseded by #<n>', and from then on --check does not report it unmanaged. Without `replaces:`, nothing new is invented: the old issue stays `unmanaged` (github-sync:1121-1130), --check exits 11 on it (:1138), and --apply never closes it, never reuses its number and never rewrites its marker. The unmanaged finding gains one fact when git history holds the record (`git log --diff-filter=D` on its path): the commit that removed it, so a forgotten `replaces:` is told apart from an id that was never a record here; where the history cannot be read (a shallow clone) the finding says so instead of reading as never a record. `next --kind issue` (I4357) counts replaced ids as taken, and the identifier landing check refuses a new record whose id a `replaces` entry names.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4370/",
+   "title": "I4370 — The pull-request and plan projection ships in the release as `majordomus forge`, reads an adopter's own models and facts, and writes only what they declare",
+   "description": "`majordomus forge render|check|apply [--prs [--pr <n>]] [--plan-records [--milestones-only]] [--labels] [--budget <n>] [--out <file>] [--from <file>]` is the release's projection command. bin/majordomus dispatches it (a public command: share/commands.yaml, the usage text, its page and coverage, cases 30 and 31) to the adapter scripts/github-sync, shipped in the release archive under share/libexec/ and resolving its lib/ from the installed tree rather than from a checkout. share/libexec/ is already shipped whole (release-package:95 copies share/), but release-package:98 sets every file under share/ to 0644; the installed-archive case proves that the shipped adapter runs. The derivation and the writes can run in separate jobs: `forge render --prs --pr <n> --out <file>` writes a versioned JSON document, schema majordomus.forge-plan/v1 (share/schemas/majordomus/forge-plan/forge-plan.v1.schema.json), holding the facts it read and the writes it owes, and `forge apply --from <file>` applies exactly those writes, derives nothing, reads no record and never runs the `facts:` command. lib/forge.sh and share/libexec/github-sync are new shell units, so each gets a record in .ai/repo/automation/inventory.jsonl with an exemption (platform adaptor over gh), or `majordomus shell check` refuses them (ADR 0069). It reads the adopter's .ai/repo/project/project.yaml (repository, default_branch), .ai/repo/ci/pr-meta.yaml (actor, including `actor.login`, the GitHub login the projection writes as; trigger, permissions, the label families it owns, and an optional `facts:` command) and .ai/repo/ci/github.yaml (apply window, and `apply.budget`, the write budget per run, which `--budget` overrides for one run). A pull request's ids come from the typed subcommand I2901 adds, over its title, its commits' subjects, the records its head changes and its head branch, the branch read case-insensitively as I4366 defines. github-sync --prs reads no branch today. When pr-meta.yaml declares `facts:`, the pull request's facts come from that command's JSON in the declared schema majordomus.pr-facts/v1, shipped as share/schemas/majordomus/pr-facts/pr-facts.v1.schema.json and named by its validator in lib/ (doctor reports a schema nothing in lib/ or the Rust source names as applied by nothing, lib/doctor.sh:1652-1655): served ids with title, milestone and priority, conventional level and breaking flag, role (release, release-record or train), and landing method. Without `facts:`, they come from the adapter's own derivation. The `facts:` command is the default branch's: it runs only from the default-branch checkout, in the read-only job, and a `facts:` declaration that the pull request's head changes is ignored and reported. Type labels: an adopter's declared families override release/model.rs's commit types for that adopter, so OSCILLA's train(...) titles can carry a type. github-sync's own list is hard-coded today (header :90-91), not read from model.rs. I3979's equality test is amended to match: this repository's declaration still equals model.rs:23-43, and an adopter's declaration may add types. Where the pull-request vocabulary lives (the type and label families) is this issue's decision, which OSCILLA's owner left to this repository (C7): it is made before the implementation, recorded as a `majordomus decision` or in the ADR this command owes, and that record names the one file that holds the vocabulary; forge, I4371 and I4372 read it from that file and no second declaration exists. Identity markers (<!-- majordomus:record <id> -->), the six body states plus unmanaged, the managed pr-meta region and the closing-keyword refusal stay as github-sync has them. Exit codes, each an MJ_EX_* constant of lib/common.sh and declared on the `forge` entry of share/commands.yaml: 0 in sync or applied; 2 usage; 10 a declaration or a forge-plan file this version cannot read; 11 drift; 12 cannot run, or the reading is incomplete (gh unauthenticated, a pull request unread, a listing shorter than its totalCount; I4372 adds a declared repository field read UNKNOWN under `forge check --repo`); 13 a mutation failed; 14 a title over GitHub's limit; 15 apply refused; 16 the write budget is spent, nothing is half-written, and the next run resumes. A projection-owned `release-freeze` label family is added, declared in the pull-request vocabulary and in integration/classify.rs LABEL_POLICY. classify holds a pull request on it only when the observation shows that the login pr-meta.yaml declares as `actor.login` set it. To know that, integration/forge.rs reads, for an open pull request that carries release-freeze, the actor of its latest `labeled` event (one bounded issue-events read, inside ADR 0101's existing exception). A release-freeze set by any other login is ignored and reported, and `hold` stays a person's. Every workflow that writes with GITHUB_TOKEN writes as the same login, so a projection that uses GITHUB_TOKEN cannot be told apart from any other workflow of the repository; the documentation recommends a dedicated bot account or app token for the projection actor. The hold acts only on landings by `prs drain`: an adopter that merges with GitHub auto-merge, as OSCILLA does, gets no effect from release-freeze, and the documentation says so. The adapter in share/libexec reaches the forge through gh, so it is a network call by 'the tool itself' as github-sync's header defines it (bin/, lib/, share/, test/). That overrides work-graph-github's non-scope 'Moving network calls into the tool itself, which test/cases/08 forbids'. An ADR records the override; it is accepted by the owner's act before the pull request lands, and SECURITY.md and .ai/repo/project/milestones/work-graph-github.yaml cite it by number. SECURITY.md's 'Local only' promise (SECURITY.md:13-24, 'Nothing leaves the machine', one loopback request) is amended to name the adapter as the one request of the shell tool that leaves the machine, and the adapter joins the mesh (ADR 0067) and pull-request integration (ADR 0101) as the declared exceptions that reach the network, the second that reaches the forge. Case 08 adds share/libexec/* to the files it scans, recognises gh as a network client (it names none today), admits gh only in the declared adapter, and states how it treats share/libexec/sccache-mesh, whose loopback `nc -z` probe and `eval` of derived exports its existing patterns refuse. scripts/github-sync in this repository becomes the wrapper the release ships, so cases 3970, 894 and 45 keep passing. The trunk projection's prove phase, which today runs scripts/ci/github-check (.ai/repo/ci/github.yaml phases, github.yml:152) and is not shipped either, becomes `majordomus forge check` for an adopter.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4371/",
+   "title": "I4371 — An adopter's pull-request and trunk projection workflows are rendered from the tool by `majordomus update`, pinned to a release digest written into the workflow, with a read-only derive job apart from the writing one",
+   "description": "A new projection kind, a workflow, is declared in the adopter's .ai/repo/policy.yaml `projections` list beside the provider bootstraps (for example `- workflow: github-pr-meta` with `target: .github/workflows/pr-meta.yml`); the policy schema and its generated allow-list admit the key, and an entry carries exactly one of provider and workflow. Its templates ship in the tool under share/ci/github/{pr-meta,projection}.yml.tmpl, which the release archive already carries because scripts/release-package copies share/ whole. `majordomus update` renders them from the adopter's .ai/repo/ci/pr-meta.yaml and .ai/repo/ci/github.yaml (trigger, concurrency, actor bound, default branch) and stamps them with a `#` comment, since the provider stamp is an HTML comment that is not YAML, so that `majordomus doctor` reports a hand edit, and a rendering that differs from what the current template and models produce, as drift. A rendered workflow installs the release that pr-meta.yaml `install.version` names, for the runner target `install.target`. The archive's sha256, a 64-hex digest, is written into the workflow text by `majordomus update`. It is taken from a declaration (pr-meta.yaml `install.sha256`, the line of that release's SHA256SUMS for the runner's archive), never fetched at run time, and update renders no workflow while the version or the digest is missing or the digest is not 64 hex. The install step downloads with `curl --fail --retry <n> --connect-timeout <s>`, runs `sha256sum -c` against the pinned digest in the same step before the binary runs, checks that the installed version is the pinned one, carries `timeout-minutes`, and never pipes a download to a shell or substitutes one into a command. The pull-request workflow runs on pull_request_target with the default branch checked out; it fetches the head and reads it as data with git, and never executes it. Its workflow-level permissions are empty, and it has two jobs, whose permissions the pr-meta.yaml model declares per job (`jobs.derive.permissions` and `jobs.project.permissions`; `actor.job` stays project). `derive` (permissions contents: read, pull-requests: read, issues: read, the issue read being what finds each record's GitHub number) runs the forge command's read-only verb, `majordomus forge render --prs --pr <n> --out <file>`, including any declared `facts:` command, and uploads that majordomus.forge-plan/v1 file of facts and owed writes as an artifact (I4370's hand-off). `project` (permissions contents: read, pull-requests: write, issues: read) needs derive, downloads that artifact and runs `majordomus forge apply --from <file>` on it, which derives nothing and executes no `facts:` command. The trunk workflow runs on push to the default branch with contents: read and issues: write, and its phases are github.yaml's owed, apply and prove, where prove is `majordomus forge check`, never scripts/ci/github-check, which is not shipped. Every job and every network step carries its own timeout and a bounded retry, and no step uses continue-on-error.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4372/",
+   "title": "I4372 — A repository's merge methods, merge-commit message settings and required checks are compared with a declared block, and a drift is a report that names the command that repairs it",
+   "description": "A `repository:` block declares the allowed merge methods (merge, squash, rebase), merge_commit_title, merge_commit_message, squash_merge_commit_title, squash_merge_commit_message, delete_branch_on_merge, allow_auto_merge and the required status checks with strict. It lives in the file I4370's decision on where the pull-request vocabulary lives names (C7), beside that vocabulary. The forge observation (ForgeObservation, integration/forge.rs:49) already reads repos/{repo} (forge.rs:1493) for the allowed merge methods (merge_methods_of, forge.rs:418-434, I2966) and delete_branch_on_merge (:1494-1496), and keeps strict as up_to_date_required (:75). This issue extends that same reading with merge_commit_title, merge_commit_message, squash_merge_commit_title, squash_merge_commit_message and allow_auto_merge, each an Option that is None when the answer leaves it out, and keeps the required checks the observation already takes from the classic protection (:1517) and the rulesets (:1539), the readings I3113 and I3200 build on. One comparison in Rust, read by `prs status` and doctor, sets the declaration against the observation. A difference is reported with the idempotent `gh api -X PATCH repos/{repo} -f <field>=<value>` (or the protection command I3113 names) that repairs it. A declared field absent from the repos/{repo} answer reads UNKNOWN, never a pass, as merge_methods_of already treats an answer without the allow_* fields. An observation whose required checks are unread (None: a 403 or other refusal on the classic protection or on the rulesets, :1552-1559) reads the declared required checks and strict UNKNOWN. `majordomus forge check --repo`, a mode this issue adds to the forge command of I4370, prints the same comparison, read from the executable rather than recomputed in shell, and exits 0 in agreement, 11 on drift, and 12 when any declared field reads UNKNOWN, I4370's code for an incomplete reading. It is report only: nothing is changed on the forge.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4373/",
+   "title": "I4373 — The economics runner starts a freshly written harness once it is free, and a harness that cannot start has no version",
+   "description": "apps/majordomus-cli/src/economics/runner.rs starts the harness and the treatment's majordomus through crate::process::retrying_busy (spawn_group, harness_version, run_quiet), and harness_version returns the start error instead of the version `unknown`, so a transient ETXTBSY neither drops a run nor reads as the harness changing under it.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4374/",
+   "title": "I4374 — A commit that changes the plan's records reports intent validate before it leaves the machine",
+   "description": ".githooks/pre-commit runs `bin/majordomus intent validate` when the staged change touches .ai/repo/project/, reports its failures in the hook's report mode, and names them in the commit's output, so a records change whose issues serve no criterion is seen at the commit and not first by master's CI.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4375/",
+   "title": "I4375 — An offload's fetch into the host's checkout waits its turn instead of failing the derive",
+   "description": "The host's prepare step of `majordomus offload derive` (apps/majordomus-cli/src/offload/run.rs PREPARE) asks a refused fetch again, bounded by MJ_OFFLOAD_FETCH_TRIES (default 5) with MJ_OFFLOAD_FETCH_BACKOFF seconds times the attempt between tries (default 3), so two offloads that reach one host together both prepare their worktrees, and one that never wins still fails with git's refusal in its reason.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4380/",
+   "title": "I4380 — An optional step of the Pages publication never stops the deploy",
+   "description": "A step of pages.yml that is written to degrade (`|| echo \\\"::warning ...\\\"`) degrades when it runs out of time instead of being killed: its command is bounded inside the step's own timeout-minutes, and scripts/ci/step-bound-check refuses one that is not. The trends reading reads its runs eight at a time with every forge call bounded, and `majordomus prs refresh` reads the open pull requests in GraphQL pages of 25 when the forge times out `gh pr list`'s page of a hundred (a gateway 504, GraphQL's own \\\"may be the result of a timeout\\\", or a body cut off on its way, \\\"unexpected end of JSON input\\\"). The ui-snapshot's forge observation is two degrading steps, each bounded from measured runs: a healthy forge is always observed, and a forge that cannot be asked leaves the PR Drain and Deployments screens saying the forge was not observed, and the site is still published.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4381/",
+   "title": "I4381 — The structure job fits in half its bound: shellcheck stops re-reading lib/rust_bin.sh for every case, and the network gates run in a second job",
+   "description": "Bring the structure job of validate.yml under 50% of its 55-minute bound (1650 s) at p90, and drop no gate. First, put `# shellcheck source=test/lib/rust_bin.functions.sh` above the two `. \\\"$ROOT/lib/rust_bin.sh\\\"` lines of test/lib.sh (168 and 175), a declarations file of one stub per function and one empty assignment per global of lib/rust_bin.sh that a case holds to rust_bin.sh's own names. Then shellcheck -x stops re-reading the 1942 lines of lib/rust_bin.sh once for each of the 654 cases and still knows the names are shell functions (SC2033), and lib/rust_bin.sh is still linted on its own with -x as part of shell-lint's lib/ set. Second, move github-projection and worktree-topology to a new job, structure-b, through the `job:` field of .ai/repo/ci/gates.yaml. structure-b runs `run-plan --plan plan.json --job structure-b` and uploads its own timings and receipts, and the ci job lists it in `needs`. Third, add a gate that fails when the p90 wall time of either job over the committed baseline window passes 50% of that job's `timeout-minutes`. The gate names the job and its three most expensive gates. Finally, refresh .ai/repo/ci/structure-durations.tsv so that its figures are the ones measured now.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -18795,6 +18927,18 @@
    "route": "/cs/sessions/s-20261020233257-5779/",
    "title": "s-20261020233257-5779 — Sessions",
    "description": "closed on chore/the-merged-issues-of-open-milestones-are-recorded, closed 2026-10-20T23:42:14Z",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/sessions/s-20261028215445-b7a3/",
+   "title": "s-20261028215445-b7a3 — Sessions",
+   "description": "closed on chore/the-sessions-lessons-of-2026-10-28-are-reviewed, closed 2026-10-28T22:06:59Z",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/sessions/s-20261029014409-5302/",
+   "title": "s-20261029014409-5302 — Sessions",
+   "description": "closed on chore/evolve-20261029, closed 2026-10-29T01:49:06Z",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -27529,8 +27673,8 @@
   },
   {
    "route": "/plan/i2901/",
-   "title": "I2901 — One grammar names an issue id, and every surface reads it",
-   "description": "Declare the issue id grammar once: a pattern in the issue schema (or generated from one Rust const) and one plan::is_issue_id, read by ui/prs.rs, ui/idd.rs, case 3220 and share/ui JS, so no surface spells it its own way.",
+   "title": "I2901 — One grammar names a record id, and every surface reads it: a capital letter and three or more digits that name a record file of the tree read",
+   "description": "Declare the record id grammar once. The issue schema's id pattern is `^[A-Z][0-9]{3,}$` (a capital letter followed by three or more digits), which this repository's I and four digits and an adopter's V603, R022 or M048 all satisfy, and plan validate refuses an issue whose id does not match it. One predicate, plan::is_record_id(word, tree), decides whether a word names a record: the word has that shape, and `<word>.yaml` exists under .ai/repo/project/issues/ or .ai/repo/project/milestones/ of the tree read, which also says whether it is an issue or a milestone. Shape alone is never enough, so H264, v3.13.0 or V999 with no V999.yaml name nothing. Slug milestones (this repository's `work-graph-github` and the like) never have that shape, so they are never a candidate on any surface, as today. Every surface that tests a word against a shape today calls the predicate instead and none spells the grammar its own way: ui/prs.rs is_issue_id and issues_named (and so plan/delivery.rs named_by, which wraps it), release/commits.rs record_candidates and its issue-or-milestone test (:149), capability/builtin/brief.rs:1003 task_label, the JS pattern `/(?<![\\\\/\\\\w-])I\\\\d{4}\\\\b/` in test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh:154, the awk pattern `I[0-9][0-9][0-9][0-9]+` in scripts/ci/audit-plan-check:56, and scripts/github-sync at :394 (`^I[0-9][0-9][0-9][0-9]+$`), :399 (`^I[0-9]+\\\\.yaml$`) and :1126 (the sed title claim `^\\\\([MI][0-9][0-9]*\\\\) — `). The shell and JS callers, and plan validate's refusal, take the answer from one typed subcommand of the executable (for example `majordomus plan ids --json`, the declared ids of the tree with their kind and whether each has the shape), never from a second pattern. The same subcommand answers which ids a text names: `majordomus plan ids --named-by --title <t> --branch <b> --json` returns the ids the title and the branch name, by the same predicate and the same scan as issues_named, so shell and JS callers, and the forge adapter of I4370, never spell a pattern. Which text a surface scans does not change: delivery and the PR Drain read a title, a subject and a branch; the changelog's references() keeps scanning a commit's subject and body together (release/commits.rs:79, documented at :130-133), because a commit that explains itself in its body is the one worth linking.",
    "section": "The plan"
   },
   {
@@ -31116,9 +31260,27 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i4337/",
+   "title": "I4337 — The evolve skill harvests what sessions only remembered, links what is in flight, and takes a number on the board first",
+   "description": "The ten lessons of 2026-10-28 and one met while reviewing them are each recorded with `majordomus knowledge observe`, derived, and decided; each promoted one is put where its kind lives or linked to the issue or pull request already fixing it. The evolve skill (version 2) gathers in step 1 what providers' memories and the peers' announcements and handovers hold since the last evolve, read as data; checks in step 2 for a lesson already in flight and links rather than duplicates; says in step 3 that a number is taken on the board first; and in step 7 evolves its own procedure when a run of it met friction. The implement skill (version 2) names the four refusals one session met more than once.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i4338/",
    "title": "I4338 — A pull request labelled hold gives its validate slot back to its train and never reads green on its own",
    "description": "A validate run of a pull request that carries the hold label cancels itself in the plan job's first step, before any job asks for a runner, writes why to the step summary, and fails if the cancel does not take hold, so a train member never holds the one validate slot its train needs and never reaches a green ci that would let it land outside its train.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4339/",
+   "title": "I4339 — Renumbered to I4360: monitor reports a GitHub run queued past its bound",
+   "description": "Hold the identity I4339 that commit ab447585c29 named for the queued-run monitor issue, so that the commit's reference resolves; the work itself is planned and tracked as I4360.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4340/",
+   "title": "I4340 — The reaper bounds the shared build directory although cargo writes no CACHEDIR.TAG into a build-dir",
+   "description": "scripts/reap-orphans applies the shared build directory's size bound by evicting its stale units, under cargo's lock, whenever the directory is over its bound and either a build is running or it carries no CACHEDIR.TAG; only the removal of the whole directory still asks for the tag.",
    "section": "The plan"
   },
   {
@@ -31176,9 +31338,21 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i4350/",
+   "title": "I4350 — plan validate refuses a scope that names a directory holding a file another issue plans, so its warnings never publish a path nobody has written",
+   "description": "When a runnable issue's scope entry is a directory and another runnable issue of the same wave plans a file under it that does not exist yet, plan validate reports an error naming both issues and the directory, instead of the scope_conflict warning that names the planned file.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i4351/",
    "title": "I4351 — A tracked derived file over 1 MB is declared with a delta budget, written to delta well, or built rather than committed",
    "description": "Stop the history's growth from derived files: site/data/registry/registry.json, docs/generated/graph.json, site/data/generated/plan.json, docs/generated/registry.json, docs/generated/registry.yaml and the three openapi copies (site/data/generated/openapi.json, docs/generated/openapi.json, docs/generated/openapi.yaml) each either leave git (built where they are served) or are written to delta well (stable key order, one record per line, no volatile body fields), and each one that stays carries a max_delta_bytes in .ai/repo/policy.yaml; scripts/derive-check refuses an undeclared tracked derived file over 1 MB. A file that leaves git is built by its producer (scripts/generate-site-data or `majordomus generate`) where its readers (scripts/site-build, scripts/site-deploy, scripts/pages, scripts/ci/homepage-check) need it, and is listed in .gitignore. Which file takes which road is decided first in an ADR whose number is taken on the board when the work starts.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4352/",
+   "title": "I4352 — The build host provisions its CI runners, and its disk guard covers the runners' homes",
+   "description": "The build host provisions its CI runners (restart always, start limit off) and its disk guard covers the runner homes; a host that owes provisioning is reported. The declared policy names the runner homes and the runner unit patterns; `mesh build-cache provision` renders the disk guard's homes from it, installs a drop-in for every observed runner unit and starts the runners, and `mesh doctor` on the build host warns with the number of owed changes and the command to run. A runner home is written by CI jobs, so under it the root guard renames and deletes only as the home's owner and never takes a home, a directory directly in one, a directory reached through a symlink, or one holding a runner installation or a source tree; an aside that came into use after the idle check is given back, never deleted.",
    "section": "The plan"
   },
   {
@@ -31221,6 +31395,108 @@
    "route": "/plan/i4359/",
    "title": "I4359 — Rule: no CI runs on a host whose runner layer is undeclared or whose guard is not observed live, and the runner layer is documented",
    "description": "A blocking project rule, no-ci-routes-to-an-undeclared-runner-host, held at two points. In the repository, a typed capability, mesh.runner_routing (`majordomus mesh runner-routing`), run as a gate in structure, fails when a self-hosted label reachable from a workflow or from a repository variable's default names no policy node that declares its runner units, their homes, their caps and the guard, observation and watchdog timers. On the host, the build host policy installs a runner job-started hook (apps/majordomus-cli/assets/mesh-cache-provider/runner-job-started, set as ACTIONS_RUNNER_HOOK_JOB_STARTED in the runner units' drop-in) that fails the job at its start, naming the failing item, while the host's latest observation (/var/lib/majordomus/build-host.json, written every five minutes by I4343) is missing, failing or older than 15 minutes; so a host whose guard has stopped takes no CI, and the refusal does not wait for anyone to ask. docs/CI.md gains a section 'Self-hosted runners' with the runbook of the 2026-10-28 recovery.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4360/",
+   "title": "I4360 — monitor reports a GitHub run queued past its bound, not only the runs that completed",
+   "description": "`workflow_run` in apps/majordomus-cli/src/monitor/github.rs turns a run whose status is queued, waiting or in_progress and whose age is past the bound I3903 declares for it into one warning moment naming the run, its workflow, its head branch and the age, raised once per run; a completed run is read as before. When the run waits for a self-hosted label and no runner of the repository is online (`actions/runners`), the moment names \\\"no runner online\\\" as the cause, so a watcher does not wait or re-run into a queue nothing serves.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4362/",
+   "title": "I4362 — adr next and case-numbers next answer within a declared bound in a linked worktree",
+   "description": "`majordomus adr next` (lib/adr.sh) and `scripts/case-numbers next` declare the bound of their survey and keep it in a linked worktree of a repository with hundreds of refs and worktrees: past the bound each answers with what it surveyed, names every source it did not finish (the refs, the sibling worktrees, the board) and exits non-zero, rather than waiting without an end. The first step measures where the time goes in a linked worktree and records it in this issue before the code changes.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4363/",
+   "title": "I4363 — A parked monitor --follow waits on its source instead of spinning: under 1 s of CPU in 10 s",
+   "description": "`majordomus monitor --follow` (and with `--until` or `--for`) that has nothing new to print blocks on its server's stream or sleeps on a declared interval between asks, so a follower parked for 10 s uses less than 1 s of CPU. The first step finds the loop that spins (apps/majordomus-cli/src/commands/monitor.rs and apps/majordomus-cli/src/monitor) and records it in this issue before the code changes.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4364/",
+   "title": "I4364 — Duplicate of I4365: a promoted knowledge note cites only references a clean clone resolves",
+   "description": "Hold the identity I4364 that commit 5a4942c3a57 named for the promoted-note defect, so that the commit's reference resolves; the work itself is planned and tracked as I4365.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4365/",
+   "title": "I4365 — A promoted record cites no local episode or task: knowledge promote rewrites its provenance to what resolves in a clean clone, or refuses",
+   "description": "When knowledge promote moves a candidate into the tracked curated store, replace every provenance.derived_from reference that names only this machine's local state (session:<episode>, task:<task>) with references that resolve in any clone: the observation's subject and evidence (file:, test:, commit:, issue:, claim:). Refuse the promotion, writing nothing, when nothing resolvable is left. A case runs doctor and knowledge check on a promoted record with .ai/local moved aside.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4366/",
+   "title": "I4366 — A merge whose subject is its pull request's title is read as that pull request, and an adopter's lower-case branch names its upper-case record",
+   "description": "Two readings that I2901's grammar does not fix. (1) worktree/state.rs issue_of compares a branch component with a declared id ASCII-case-insensitively, keeping its rule otherwise (the component equals the id, or begins with the id followed by `-`), and still returns the declared id, so feat/v603-timeline-pinch names V603. Every caller inherits it: delivery's branch_names, integration/mod.rs:1154, capability/builtin/devtask.rs:180, worktree/trace.rs:612, worktree/service.rs:669 and :861, and intent_realization.rs:508. issues_named and named_by keep finding an id anywhere in the branch bounded by non-alphanumerics, as they do today. (2) plan/delivery.rs merge_subject reads a two-parent commit whose subject ends in ` (#N)`, which GitHub appends to a merge commit titled by its pull request (merge_commit_title=PR_TITLE), as the merge of pull request N, with the subject minus that suffix as its title; the body is not read for this form, because under merge_commit_message=PR_BODY its first line is the pull request's body, not its title. A two-parent commit with no trailing ` (#N)` and no `Merge pull request #`, `Merge branch '` or `Merge remote-tracking branch '` prefix stays what it is today: a merge with no pull request, branch or title. This repository's derived merges ('merge: master (6c79dcf68cf) into I4241, derived') are therefore never read as pull requests. Under PR_TITLE plus PR_BODY a merge commit carries no branch, so in an answer at a commit a pull request that named its id only in its branch cannot be attributed. The delivery report then lists such a merge under a new report-level `unattributed` list (commit, pull request, title, reason): the merge carries no branch, and the live answer reads the pull request's branch from the forge's merged-pull-request observation. It is never dropped silently. A merge the live answer attributes through the forge is not listed. The merge-subject reader is one shared function, merge_subject in plan/delivery.rs or a module both callers use: it is the only code that reads a pull request, branch or title from a merge subject, and the first-parent changelog of I4368 calls it rather than matching subjects of its own.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4367/",
+   "title": "I4367 — The merged pull requests' observation records the machine-written Refs region, and the live delivery answer reads the region and never the prose around it",
+   "description": "`majordomus served forge` asks, for each merged pull request, its body. ObservedMergedPullRequest keeps the state of the managed region between `<!-- majordomus:pr-meta begin <hash> -->` and `<!-- majordomus:pr-meta end -->`: none, malformed (a marker repeated or unclosed), edited (the hash does not verify) or verified. Only for a verified region does it keep record ids, and only the leading id of each list line github-sync writes (`- Refs #<n> (<id> — <title>)`, `- <id> — <title> (not on GitHub yet ...)`, `- <id> (its record is in this pull request ...)`, github-sync:406-412), never an id inside a title or on the `**Milestone:**` line, each decided by I2901's plan::is_record_id. The body is reduced to that state and those ids before the observation is recorded, so no prose is stored. SCHEMA moves to 2, and load (deploy/observed.rs:416-436, which today refuses every schema but 1) still reads a schema 1 record, with the region unread. The hash contract is github-sync's, reproduced exactly: carriage returns stripped from the decoded body (github-sync:600); the region is the lines strictly between the one begin line and the one end line, each ending in a newline, as pr_region_read (github-sync:457-467) extracts them; hash16 (github-sync:484) is the first 16 hex characters of the sha256 of those bytes, compared with the begin marker's hash as github-sync:611-619 does. The Rust reader is held to a golden body github-sync wrote. plan.delivery adds the edge `projected_region` beside title_or_branch, slug, subject and forge_title, under forge_title's landing rule (plan/delivery.rs:1016-1052): it counts only when the pull request's merge commit or head is in the history read, at that commit's time, and a merge that only plans is judged as forge_title's is. It exists only in the live answer, like the forge's merged titles (plan/delivery.rs:1001-1015); an answer at a commit reads that commit's history only and reports the region source unread with its reason. An edited or malformed region names nothing, and the delivery source that reads the regions names each such pull request by number and state, in github-sync's words.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4368/",
+   "title": "I4368 — An adopter's changelog links into its own repository and trunk, and a repository that declares first-parent history is listed by its pull requests",
+   "description": "release/changelog.rs takes its forge base from the repository's .ai/repo/project/project.yaml `repository` (https://github.com/<repository>) and its trunk from `default_branch`, falling back to CARGO_PKG_REPOSITORY and master only where there is no project.yaml (the project schema requires both keys). Every link it builds reads that base and trunk: the unreleased compare and tree links (today `...master` and `tree/master`), the notes, compare, tree and commit links of each release, and each decision's `blob/<trunk>/<path>` link (today `blob/master`). How the release window is read is something a repository declares: an optional project.yaml key `history: first-parent`, added to the project schema. Where nothing is declared, release/commits.rs keeps `git log --no-merges` exactly as today. With first-parent declared, it reads the window with --first-parent, and each first-parent commit is one change. A merge commit whose subject ends in ` (#N)` (merge_commit_title=PR_TITLE) is read by its subject without that suffix; one whose subject is the forge's `Merge pull request #N from ...` is read by its body's first line; a squash or direct commit whose subject ends in ` (#N)` is read as today. The first-parent mode reads a merge's pull request and title by calling I4366's shared merge-subject reader (merge_subject), and release/commits.rs keeps no ` (#` or `Merge pull request #` matcher of its own. Each of the three carries pull request N in a new optional Change field, linked to <base>/pull/N; outside first-parent mode the field stays empty. With first-parent declared, no changelog line begins with 'Merge pull request'. This repository declares nothing, so `majordomus release changelog` and its page docs/generated/changelog.{md,json,yaml} are byte-identical, although it too lands mostly by merge commits (313 of the last 400 first-parent commits on master).",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4369/",
+   "title": "I4369 — A record renamed with `replaces:` keeps its GitHub issue or milestone, and an issue whose record was renamed without one stays unmanaged, names the commit that removed its record, and is never closed or reused",
+   "description": "The issue and milestone schemas gain a key `replaces`, a list of former ids, with share/allow/issue.txt and share/allow/milestone.txt regenerated by `majordomus generate`. plan validate, in both engines (lib/project.awk and apps/majordomus-cli/src/plan.rs, compared by case 99), refuses a `replaces` entry that names a record still present, or a former id claimed by two records. scripts/github-sync, and so the forge command that packages it (I4370), resolves an issue projected for a replaced id as the replacing record's issue: it moves the identity marker to the replacing record and retitles the issue, so one GitHub number survives the rename, and --check reports the replacing record `behind`, not `missing`, and the old issue not `unmanaged`. A milestone, which github-sync finds by its `<id> — ` title prefix (github-sync:277), is found by a replaced id's prefix the same way and retitled, so its number and its issues' assignment survive. When both the old and the new id already have an issue, --apply closes the old one as not planned with the comment 'superseded by #<n>', and from then on --check does not report it unmanaged. Without `replaces:`, nothing new is invented: the old issue stays `unmanaged` (github-sync:1121-1130), --check exits 11 on it (:1138), and --apply never closes it, never reuses its number and never rewrites its marker. The unmanaged finding gains one fact when git history holds the record (`git log --diff-filter=D` on its path): the commit that removed it, so a forgotten `replaces:` is told apart from an id that was never a record here; where the history cannot be read (a shallow clone) the finding says so instead of reading as never a record. `next --kind issue` (I4357) counts replaced ids as taken, and the identifier landing check refuses a new record whose id a `replaces` entry names.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4370/",
+   "title": "I4370 — The pull-request and plan projection ships in the release as `majordomus forge`, reads an adopter's own models and facts, and writes only what they declare",
+   "description": "`majordomus forge render|check|apply [--prs [--pr <n>]] [--plan-records [--milestones-only]] [--labels] [--budget <n>] [--out <file>] [--from <file>]` is the release's projection command. bin/majordomus dispatches it (a public command: share/commands.yaml, the usage text, its page and coverage, cases 30 and 31) to the adapter scripts/github-sync, shipped in the release archive under share/libexec/ and resolving its lib/ from the installed tree rather than from a checkout. share/libexec/ is already shipped whole (release-package:95 copies share/), but release-package:98 sets every file under share/ to 0644; the installed-archive case proves that the shipped adapter runs. The derivation and the writes can run in separate jobs: `forge render --prs --pr <n> --out <file>` writes a versioned JSON document, schema majordomus.forge-plan/v1 (share/schemas/majordomus/forge-plan/forge-plan.v1.schema.json), holding the facts it read and the writes it owes, and `forge apply --from <file>` applies exactly those writes, derives nothing, reads no record and never runs the `facts:` command. lib/forge.sh and share/libexec/github-sync are new shell units, so each gets a record in .ai/repo/automation/inventory.jsonl with an exemption (platform adaptor over gh), or `majordomus shell check` refuses them (ADR 0069). It reads the adopter's .ai/repo/project/project.yaml (repository, default_branch), .ai/repo/ci/pr-meta.yaml (actor, including `actor.login`, the GitHub login the projection writes as; trigger, permissions, the label families it owns, and an optional `facts:` command) and .ai/repo/ci/github.yaml (apply window, and `apply.budget`, the write budget per run, which `--budget` overrides for one run). A pull request's ids come from the typed subcommand I2901 adds, over its title, its commits' subjects, the records its head changes and its head branch, the branch read case-insensitively as I4366 defines. github-sync --prs reads no branch today. When pr-meta.yaml declares `facts:`, the pull request's facts come from that command's JSON in the declared schema majordomus.pr-facts/v1, shipped as share/schemas/majordomus/pr-facts/pr-facts.v1.schema.json and named by its validator in lib/ (doctor reports a schema nothing in lib/ or the Rust source names as applied by nothing, lib/doctor.sh:1652-1655): served ids with title, milestone and priority, conventional level and breaking flag, role (release, release-record or train), and landing method. Without `facts:`, they come from the adapter's own derivation. The `facts:` command is the default branch's: it runs only from the default-branch checkout, in the read-only job, and a `facts:` declaration that the pull request's head changes is ignored and reported. Type labels: an adopter's declared families override release/model.rs's commit types for that adopter, so OSCILLA's train(...) titles can carry a type. github-sync's own list is hard-coded today (header :90-91), not read from model.rs. I3979's equality test is amended to match: this repository's declaration still equals model.rs:23-43, and an adopter's declaration may add types. Where the pull-request vocabulary lives (the type and label families) is this issue's decision, which OSCILLA's owner left to this repository (C7): it is made before the implementation, recorded as a `majordomus decision` or in the ADR this command owes, and that record names the one file that holds the vocabulary; forge, I4371 and I4372 read it from that file and no second declaration exists. Identity markers (<!-- majordomus:record <id> -->), the six body states plus unmanaged, the managed pr-meta region and the closing-keyword refusal stay as github-sync has them. Exit codes, each an MJ_EX_* constant of lib/common.sh and declared on the `forge` entry of share/commands.yaml: 0 in sync or applied; 2 usage; 10 a declaration or a forge-plan file this version cannot read; 11 drift; 12 cannot run, or the reading is incomplete (gh unauthenticated, a pull request unread, a listing shorter than its totalCount; I4372 adds a declared repository field read UNKNOWN under `forge check --repo`); 13 a mutation failed; 14 a title over GitHub's limit; 15 apply refused; 16 the write budget is spent, nothing is half-written, and the next run resumes. A projection-owned `release-freeze` label family is added, declared in the pull-request vocabulary and in integration/classify.rs LABEL_POLICY. classify holds a pull request on it only when the observation shows that the login pr-meta.yaml declares as `actor.login` set it. To know that, integration/forge.rs reads, for an open pull request that carries release-freeze, the actor of its latest `labeled` event (one bounded issue-events read, inside ADR 0101's existing exception). A release-freeze set by any other login is ignored and reported, and `hold` stays a person's. Every workflow that writes with GITHUB_TOKEN writes as the same login, so a projection that uses GITHUB_TOKEN cannot be told apart from any other workflow of the repository; the documentation recommends a dedicated bot account or app token for the projection actor. The hold acts only on landings by `prs drain`: an adopter that merges with GitHub auto-merge, as OSCILLA does, gets no effect from release-freeze, and the documentation says so. The adapter in share/libexec reaches the forge through gh, so it is a network call by 'the tool itself' as github-sync's header defines it (bin/, lib/, share/, test/). That overrides work-graph-github's non-scope 'Moving network calls into the tool itself, which test/cases/08 forbids'. An ADR records the override; it is accepted by the owner's act before the pull request lands, and SECURITY.md and .ai/repo/project/milestones/work-graph-github.yaml cite it by number. SECURITY.md's 'Local only' promise (SECURITY.md:13-24, 'Nothing leaves the machine', one loopback request) is amended to name the adapter as the one request of the shell tool that leaves the machine, and the adapter joins the mesh (ADR 0067) and pull-request integration (ADR 0101) as the declared exceptions that reach the network, the second that reaches the forge. Case 08 adds share/libexec/* to the files it scans, recognises gh as a network client (it names none today), admits gh only in the declared adapter, and states how it treats share/libexec/sccache-mesh, whose loopback `nc -z` probe and `eval` of derived exports its existing patterns refuse. scripts/github-sync in this repository becomes the wrapper the release ships, so cases 3970, 894 and 45 keep passing. The trunk projection's prove phase, which today runs scripts/ci/github-check (.ai/repo/ci/github.yaml phases, github.yml:152) and is not shipped either, becomes `majordomus forge check` for an adopter.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4371/",
+   "title": "I4371 — An adopter's pull-request and trunk projection workflows are rendered from the tool by `majordomus update`, pinned to a release digest written into the workflow, with a read-only derive job apart from the writing one",
+   "description": "A new projection kind, a workflow, is declared in the adopter's .ai/repo/policy.yaml `projections` list beside the provider bootstraps (for example `- workflow: github-pr-meta` with `target: .github/workflows/pr-meta.yml`); the policy schema and its generated allow-list admit the key, and an entry carries exactly one of provider and workflow. Its templates ship in the tool under share/ci/github/{pr-meta,projection}.yml.tmpl, which the release archive already carries because scripts/release-package copies share/ whole. `majordomus update` renders them from the adopter's .ai/repo/ci/pr-meta.yaml and .ai/repo/ci/github.yaml (trigger, concurrency, actor bound, default branch) and stamps them with a `#` comment, since the provider stamp is an HTML comment that is not YAML, so that `majordomus doctor` reports a hand edit, and a rendering that differs from what the current template and models produce, as drift. A rendered workflow installs the release that pr-meta.yaml `install.version` names, for the runner target `install.target`. The archive's sha256, a 64-hex digest, is written into the workflow text by `majordomus update`. It is taken from a declaration (pr-meta.yaml `install.sha256`, the line of that release's SHA256SUMS for the runner's archive), never fetched at run time, and update renders no workflow while the version or the digest is missing or the digest is not 64 hex. The install step downloads with `curl --fail --retry <n> --connect-timeout <s>`, runs `sha256sum -c` against the pinned digest in the same step before the binary runs, checks that the installed version is the pinned one, carries `timeout-minutes`, and never pipes a download to a shell or substitutes one into a command. The pull-request workflow runs on pull_request_target with the default branch checked out; it fetches the head and reads it as data with git, and never executes it. Its workflow-level permissions are empty, and it has two jobs, whose permissions the pr-meta.yaml model declares per job (`jobs.derive.permissions` and `jobs.project.permissions`; `actor.job` stays project). `derive` (permissions contents: read, pull-requests: read, issues: read, the issue read being what finds each record's GitHub number) runs the forge command's read-only verb, `majordomus forge render --prs --pr <n> --out <file>`, including any declared `facts:` command, and uploads that majordomus.forge-plan/v1 file of facts and owed writes as an artifact (I4370's hand-off). `project` (permissions contents: read, pull-requests: write, issues: read) needs derive, downloads that artifact and runs `majordomus forge apply --from <file>` on it, which derives nothing and executes no `facts:` command. The trunk workflow runs on push to the default branch with contents: read and issues: write, and its phases are github.yaml's owed, apply and prove, where prove is `majordomus forge check`, never scripts/ci/github-check, which is not shipped. Every job and every network step carries its own timeout and a bounded retry, and no step uses continue-on-error.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4372/",
+   "title": "I4372 — A repository's merge methods, merge-commit message settings and required checks are compared with a declared block, and a drift is a report that names the command that repairs it",
+   "description": "A `repository:` block declares the allowed merge methods (merge, squash, rebase), merge_commit_title, merge_commit_message, squash_merge_commit_title, squash_merge_commit_message, delete_branch_on_merge, allow_auto_merge and the required status checks with strict. It lives in the file I4370's decision on where the pull-request vocabulary lives names (C7), beside that vocabulary. The forge observation (ForgeObservation, integration/forge.rs:49) already reads repos/{repo} (forge.rs:1493) for the allowed merge methods (merge_methods_of, forge.rs:418-434, I2966) and delete_branch_on_merge (:1494-1496), and keeps strict as up_to_date_required (:75). This issue extends that same reading with merge_commit_title, merge_commit_message, squash_merge_commit_title, squash_merge_commit_message and allow_auto_merge, each an Option that is None when the answer leaves it out, and keeps the required checks the observation already takes from the classic protection (:1517) and the rulesets (:1539), the readings I3113 and I3200 build on. One comparison in Rust, read by `prs status` and doctor, sets the declaration against the observation. A difference is reported with the idempotent `gh api -X PATCH repos/{repo} -f <field>=<value>` (or the protection command I3113 names) that repairs it. A declared field absent from the repos/{repo} answer reads UNKNOWN, never a pass, as merge_methods_of already treats an answer without the allow_* fields. An observation whose required checks are unread (None: a 403 or other refusal on the classic protection or on the rulesets, :1552-1559) reads the declared required checks and strict UNKNOWN. `majordomus forge check --repo`, a mode this issue adds to the forge command of I4370, prints the same comparison, read from the executable rather than recomputed in shell, and exits 0 in agreement, 11 on drift, and 12 when any declared field reads UNKNOWN, I4370's code for an incomplete reading. It is report only: nothing is changed on the forge.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4373/",
+   "title": "I4373 — The economics runner starts a freshly written harness once it is free, and a harness that cannot start has no version",
+   "description": "apps/majordomus-cli/src/economics/runner.rs starts the harness and the treatment's majordomus through crate::process::retrying_busy (spawn_group, harness_version, run_quiet), and harness_version returns the start error instead of the version `unknown`, so a transient ETXTBSY neither drops a run nor reads as the harness changing under it.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4374/",
+   "title": "I4374 — A commit that changes the plan's records reports intent validate before it leaves the machine",
+   "description": ".githooks/pre-commit runs `bin/majordomus intent validate` when the staged change touches .ai/repo/project/, reports its failures in the hook's report mode, and names them in the commit's output, so a records change whose issues serve no criterion is seen at the commit and not first by master's CI.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4375/",
+   "title": "I4375 — An offload's fetch into the host's checkout waits its turn instead of failing the derive",
+   "description": "The host's prepare step of `majordomus offload derive` (apps/majordomus-cli/src/offload/run.rs PREPARE) asks a refused fetch again, bounded by MJ_OFFLOAD_FETCH_TRIES (default 5) with MJ_OFFLOAD_FETCH_BACKOFF seconds times the attempt between tries (default 3), so two offloads that reach one host together both prepare their worktrees, and one that never wins still fails with git's refusal in its reason.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4380/",
+   "title": "I4380 — An optional step of the Pages publication never stops the deploy",
+   "description": "A step of pages.yml that is written to degrade (`|| echo \\\"::warning ...\\\"`) degrades when it runs out of time instead of being killed: its command is bounded inside the step's own timeout-minutes, and scripts/ci/step-bound-check refuses one that is not. The trends reading reads its runs eight at a time with every forge call bounded, and `majordomus prs refresh` reads the open pull requests in GraphQL pages of 25 when the forge times out `gh pr list`'s page of a hundred (a gateway 504, GraphQL's own \\\"may be the result of a timeout\\\", or a body cut off on its way, \\\"unexpected end of JSON input\\\"). The ui-snapshot's forge observation is two degrading steps, each bounded from measured runs: a healthy forge is always observed, and a forge that cannot be asked leaves the PR Drain and Deployments screens saying the forge was not observed, and the site is still published.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4381/",
+   "title": "I4381 — The structure job fits in half its bound: shellcheck stops re-reading lib/rust_bin.sh for every case, and the network gates run in a second job",
+   "description": "Bring the structure job of validate.yml under 50% of its 55-minute bound (1650 s) at p90, and drop no gate. First, put `# shellcheck source=test/lib/rust_bin.functions.sh` above the two `. \\\"$ROOT/lib/rust_bin.sh\\\"` lines of test/lib.sh (168 and 175), a declarations file of one stub per function and one empty assignment per global of lib/rust_bin.sh that a case holds to rust_bin.sh's own names. Then shellcheck -x stops re-reading the 1942 lines of lib/rust_bin.sh once for each of the 654 cases and still knows the names are shell functions (SC2033), and lib/rust_bin.sh is still linted on its own with -x as part of shell-lint's lib/ set. Second, move github-projection and worktree-topology to a new job, structure-b, through the `job:` field of .ai/repo/ci/gates.yaml. structure-b runs `run-plan --plan plan.json --job structure-b` and uploads its own timings and receipts, and the ci job lists it in `needs`. Third, add a gate that fails when the p90 wall time of either job over the committed baseline window passes 50% of that job's `timeout-minutes`. The gate names the job and its three most expensive gates. Finally, refresh .ai/repo/ci/structure-durations.tsv so that its figures are the ones measured now.",
    "section": "The plan"
   },
   {
@@ -35090,7 +35366,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 1.0.0-alpha.9 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 1.0.0-alpha.9, built from commit 51b38035a7162332304aef58fed25b98761f412b: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 1.0.0-alpha.9, built from commit 6b30ede2d133e702e0a796e3d83b2257c7174c7a: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 1.0.0-alpha.9 — Rust API reference"
   },
   {
@@ -37233,6 +37509,18 @@
    "route": "/sessions/s-20261020233257-5779/",
    "title": "s-20261020233257-5779 — Sessions",
    "description": "closed on chore/the-merged-issues-of-open-milestones-are-recorded, closed 2026-10-20T23:42:14Z",
+   "section": "Sessions"
+  },
+  {
+   "route": "/sessions/s-20261028215445-b7a3/",
+   "title": "s-20261028215445-b7a3 — Sessions",
+   "description": "closed on chore/the-sessions-lessons-of-2026-10-28-are-reviewed, closed 2026-10-28T22:06:59Z",
+   "section": "Sessions"
+  },
+  {
+   "route": "/sessions/s-20261029014409-5302/",
+   "title": "s-20261029014409-5302 — Sessions",
+   "description": "closed on chore/evolve-20261029, closed 2026-10-29T01:49:06Z",
    "section": "Sessions"
   },
   {

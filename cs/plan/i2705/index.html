@@ -2,10 +2,10 @@
 <html lang="cs" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
 <title>I2705 — Klíč uzlu lze rotovat, peery následují nový klíč a starý je odmítnut — Prismatic Majordomus</title>
 <meta name="description" content="Nabídnout rotaci klíče uzlu, kterou mohou peery, jež důvěřovaly starému klíči, následovat k novému, po níž se hello starého klíče odmítne, a vyčistit události staženého klíče z běžícího žurnálu bez čekání na restart.">
-<link rel="canonical" href="https://majordomus.dev/cs/plan/i2705/"><meta name="robots" content="noindex">
+<link rel="canonical" href="https://majordomus.dev/cs/plan/i2705/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
 <meta property="og:title" content="I2705 — Klíč uzlu lze rotovat, peery následují nový klíč a starý je odmítnut — Prismatic Majordomus">
@@ -172,12 +172,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>PŘIPRAVENO</span>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>HOTOVO</span>
 <span class="text-sm text-body">vlna 1 · p0 · profil implementation · běží samostatně</span></p>
   <p class="mt-3 text-sm text-body">Součást <a href="https://majordomus.dev/cs/plan/runtime-trust/" class="text-fg-brand underline">runtime-trust — Runtime je bezpečné zpřístupnit z jiného stroje a připojení k mesh nikomu nevěří omylem</a>.</p>
-  <div class="mt-6 rounded-base border border-default bg-neutral-primary-soft p-4">
-    <p class="text-sm text-body">Připraveno. Všechny závislosti jsou hotové, takže <code class="font-mono text-heading">majordomus plan start I2705</code> bude přijato.</p>
-  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cíl</h2>
   <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Nabídnout rotaci klíče uzlu, kterou peeři, kteří důvěřovali starému klíči, mohou následovat k novému, po níž se hello starého klíče odmítne, a vyčistit události stažených klíčů z běžícího žurnálu bez čekání na restart.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Proč</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Odděleno od I2134 dne 2026-10-14. I2134 zařídil, že klíč stažený z trust.allow ztratí své odkazy bez restartu (Cooperation::retrust), a jeho desired_state říkal „Tady neděláno“ o rotaci klíče uzlu a o vymazání událostí staženého klíče z běžícího žurnálu, zatímco jeho kritéria přijetí rotaci stále vyžadovala, takže nikdy nemohl být uzavřen. Kompromitovaný klíč lze nyní odříznout živě, ale nelze ho nahradit: neexistuje tok rotace (hrozba T11). Výchozí audit z 2026-10-09 na master 1fb8d6be44, mezera meshe 6 a řádek identity.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Aktuální stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Identita uzlu se vytvoří jednou a načítá se ze souboru klíče (apps/majordomus-cli/src/mesh/identity.rs); nic ji nenahrazuje a žádná zpráva neříká peerovi, že klíč, kterému důvěřuje, nahrazuje jiný. Cooperation::retrust (apps/majordomus-cli/src/mesh/cooperation.rs), volaný z živého znovunačtení (apps/majordomus-cli/src/live.rs) přes capability::builtin::mesh::retrust, ukončuje spojení klíčů, kterým se už nedůvěřuje; události staženého klíče zůstávají v běžícím žurnálu, dokud znovunačtení po dalším restartu neuplatní platnou důvěru (I2124). Soubor klíče se zapisuje s režimem podle umask a poté se chmoduje na 0600 (apps/majordomus-cli/src/mesh/identity.rs); relace prismatic-majordomus-6e to opravuje přesně v této podobě na své větvi a není to práce tohoto úkolu.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cílový stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Příkaz rotuje klíč tohoto uzlu: novou identitu podepisuje stará, peeři, kteří starému klíči důvěřovali, přijmou nástupnictví a připojí se k novému klíči a další hello starého klíče se odmítne. Klíči staženému z platné důvěry se jeho události vyřadí z běžícího žurnálu při reloadu, který jej stáhl. docs/MESH.md popisuje rotaci a co peer při ní dělá.</p>
@@ -204,17 +201,22 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">key_rotation_test</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Důkazy</h2>
-  <p class="mt-2 text-sm text-body">Nic nezaznamenáno. Za každým tokenem výše musí stát příkaz nebo artefakt, než lze tento úkol dokončit; vyprávění se odmítá.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[34rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">pokrývá</th><th scope="col" class="px-4 py-2">typ</th><th scope="col" class="px-4 py-2">command</th><th scope="col" class="px-4 py-2">výsledek</th><th scope="col" class="px-4 py-2">u commitu</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">key_rotation_test</td><td class="px-4 py-2 font-mono text-xs text-body">ci</td><td class="px-4 py-2 font-mono text-xs text-body break-words">cargo test --lib mesh:: (validate rust (2))</td><td class="px-4 py-2 text-body">ok in master validate rust (2), 4189 lib tests passed, 0 failed: mesh::identity a_rotation_is_signed_by_the_old_key_and_countersigned_by_the_new, a_rotation_to_the_same_key_is_refused_and_writes_nothing, a_rotation_that_cannot_write_keeps_the_old_key; mesh::trust a_successor_is_trusted_only_while_its_predecessor_is (peers follow the new key; the old key is not trusted once succeeded), a_key_change_under_one_node_id_is_rejected_with_successions_in_hand; mesh::cooperation a_withdrawn_key_loses_its_link_without_a_restart (AC2). Landed by #1225. validate 40676150754 ran at 81ef931a3e1; master 5370ee63d19 differs from it only in plan records (#2653), no code. The run is red only on 103_release_projection (alpha.9 release record, #2626) and pages, neither this issue&#39;s</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">5370ee6</td></tr></tbody>
+    </table>
+  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Časová osa</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">zahájeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ověřeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">dokončeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">zahájeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-29T00:46:17Z</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ověřeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-29T00:46:35Z</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">dokončeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-29T00:48:34Z</dd></div>
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Tato tři pole, důkazy výše a stav závislostí jsou vše, z čeho se stav skládá. Neexistuje žádné pole stavu, které by s nimi mohlo být v rozporu.</p>
 
-  <p class="mt-8 text-sm text-body">Kanonický záznam: <a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/.ai/repo/project/issues/I2705.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I2705.yaml</a>. Přečtěte jej zpět přes <code class="font-mono text-heading">majordomus plan show I2705</code>.</p>
+  <p class="mt-8 text-sm text-body">Kanonický záznam: <a href="https://github.com/korczis/prismatic-majordomus/blob/6b30ede2d133e702e0a796e3d83b2257c7174c7a/.ai/repo/project/issues/I2705.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I2705.yaml</a>. Přečtěte jej zpět přes <code class="font-mono text-heading">majordomus plan show I2705</code>.</p>
 </div>
 
 </div>
@@ -264,9 +266,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6b30ede2d133e702e0a796e3d83b2257c7174c7a/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6b30ede2d133e702e0a796e3d83b2257c7174c7a/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6b30ede2d133e702e0a796e3d83b2257c7174c7a/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -274,7 +276,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/51b38035a7162332304aef58fed25b98761f412b" class="font-mono underline">51b3803</a> · inputs <span class="font-mono">1f1d151d5ed2</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6b30ede2d133e702e0a796e3d83b2257c7174c7a" class="font-mono underline">6b30ede</a> · inputs <span class="font-mono">a5ec81e229eb</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
