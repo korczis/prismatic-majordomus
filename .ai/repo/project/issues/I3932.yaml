@@ -1,0 +1,35 @@
+id: I3932
+milestone: measurements-are-tracked-over-time
+title: Coverage is exported as LCOV and Cobertura from its one measurement, and uploaded to Coveralls and Codecov when their secrets exist
+slug: coverage-is-exported-from-its-one-measurement
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "scripts/rust-coverage writes LCOV and Cobertura from the same post-processed measurement its gates read, the coverage job keeps both beside coverage.json and uploads LCOV to Coveralls and Codecov only when COVERALLS_REPO_TOKEN and CODECOV_TOKEN exist."
+why: "The measurement existed only as a 14-day JSON artifact, in no format another tool reads, so coverage could not be tracked, compared or graphed. A raw `cargo llvm-cov report --lcov` would count test code that rust-coverage excludes and publish a second number, which docs/COVERAGE.md forbids."
+current_state: "rust-coverage writes coverage.json; validate.yml keeps it 14 days; nothing is uploaded."
+desired_state: "`--lcov FILE` and `--cobertura FILE` write the one measurement; case 3932 proves their totals equal rust-coverage's own and that test code is absent; the coverage job uploads both in ci-metrics-coverage and to Coveralls and Codecov when the secrets exist, skipped and never failing otherwise; docs/COVERAGE.md says so."
+scope:
+  - scripts/rust-coverage
+  - .github/workflows/validate.yml
+  - docs/COVERAGE.md
+  - test/cases/3932_the_coverage_export_is_its_one_measurement.sh
+  - .ai/repo/project/issues/I3932.yaml
+  - .ai/repo/project/milestones/measurements-are-tracked-over-time.yaml
+non_scope:
+  - The scanner I3919 changes in scripts/rust-coverage
+  - Adding the repository secrets, which the owner does
+depends_on:
+  - I3919
+acceptance_criteria:
+  - LCOV and Cobertura line totals equal rust-coverage's for the same export, and a test-code line is absent from both
+  - The coverage job keeps both files and uploads them only when the matching secret exists, never failing the job
+  - docs/COVERAGE.md names the exports and the two secrets
+validation:
+  - bash test/run.sh 3932_the_coverage_export_is_its_one_measurement
+  - scripts/ci/shell-lint
+evidence_required:
+  - suite
+risk: "An upload action that changes its inputs fails silently; continue-on-error keeps the verdict, and the artifact keeps the files whatever the service does."
+created_at: 2026-10-22
+updated_at: 2026-10-22

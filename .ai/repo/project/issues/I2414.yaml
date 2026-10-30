@@ -1,0 +1,53 @@
+id: I2414
+milestone: the-mesh-works-out-of-the-box
+title: "mesh.state and mesh.peers answer a filtered summary that fits one tool answer"
+slug: mesh-reads-are-filtered
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give mesh.state and mesh.peers inputs that narrow and summarise: a kind (sessions, claims, handovers, reviews), open-only, mine-only, a scope or PR substring and a limit, with a counts-only summary by default."
+why: "Both take no input (apps/majordomus-cli/src/capability/builtin/mesh.rs:1184-1216). Measured on 2026-10-10: mesh.state 449 kB and mesh.peers 313 kB on this Mac's server at 23:50Z (165 claims, 126 sessions, 133 overlaps, 15 handovers, 30 reviews; the live items alone about 150 kB), and one 80-event page of mesh.events came to 83k characters. Every MCP client's tool-result limit is exceeded, so every read went through a saved file and jq."
+current_state: "Whole-state answers only; mesh.events is the only paged read."
+desired_state: "A default answer under 16 kB with counts and the newest items; filters that return exactly the asked slice; the full state still available on request."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/src/mesh/state.rs"
+  - "apps/majordomus-cli/src/mesh/page.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/commands/mesh.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/src/integration/exclusive.rs"
+  - "apps/majordomus-cli/tests/mesh_cooperation.rs"
+  - "apps/majordomus-cli/tests/integration_across_machines.rs"
+  - "apps/majordomus-cli/tests/reasoning_mesh.rs"
+  - "scripts/lib/advisors/mesh-review.mjs"
+  - "scripts/lib/advisors/contract.test.mjs"
+  - "docs/claims/mesh-liveness-expiry.md"
+  - "docs/claims/mesh-three-runtime-convergence.md"
+  - "docs/MESH.md"
+acceptance_criteria:
+  - "mesh.state with no input answers under 16 kB on a journal of 20 000 events"
+  - "Each filter returns exactly the matching items, proved on a fixture state"
+  - "The full answer is still available with an explicit input"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib capability::builtin::mesh"
+  - "cargo test --lib mesh::page"
+  - "cargo test --test mesh_cooperation"
+evidence_required:
+  - "mesh_state_filtered_test"
+created_at: 2026-10-10
+updated_at: 2026-10-17T12:00:18Z
+started_at: 2026-10-17T11:59:31Z
+started_event: sha256:a76c5d6ead5c1ced8e3563f07455ac426c68b1373a1d5dda339600e984ded32e
+verified_at: 2026-10-17T12:00:04Z
+verified_event: sha256:7a74ca529fa368205eb80afeb0b1e892db90b89e2be767589a8ccc16f148523a
+completed_at: 2026-10-17T12:00:18Z
+completed_event: sha256:56bf95226efc4bdd487d3e049e94ae72d4bbad27f5af22ef4fcb56369c888c79
+evidence:
+  - covers: mesh_state_filtered_test
+    type: test
+    command: "cargo test --lib -- mesh::page mesh::state capability::builtin::mesh; cargo test --test mesh_cooperation"
+    result: "36 passed, 0 failed; mesh_cooperation 7 passed, 0 failed (code on master since 1eb8d5fa89b; re-run at master 01227a0)"
+    commit: 01227a0f74ab9de734edd3672dcc9d8d3a2d666c
+    recorded_at: 2026-10-17T11:59:52Z

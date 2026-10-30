@@ -27,6 +27,13 @@
 //! trail, a notifier or a second protocol something that subscribes rather than something
 //! that has to be threaded through the engine.
 //!
+//! One plane per checkout, not one per process. `majordomus run` executes in its own
+//! process, and when a server already serves the checkout it reports the execution there
+//! ([`ExecutionStore::adopt`], [`ExecutionStore::report`]), so the server's listing, the
+//! Cockpit and the live channel show it with the pid that ran it; a server that stops
+//! hearing from it fails it rather than showing it running for ever. With no server, the
+//! run says on stderr that nothing else can see it. A run never starts a server.
+//!
 //! What it is not: a job system. There is no durable queue, no retry, no schedule and no
 //! execution that outlives the process that accepted it. The store says so — its limits
 //! are typed and its behaviour at each limit is defined — and [`store::Limits`] is where a
@@ -47,4 +54,7 @@ pub use model::{
 };
 pub use redact::redact;
 pub use sink::Progress;
-pub use store::{CancelOutcome, Delivery, EventPage, ExecutionStore, Filter, Limits};
+pub use store::{
+    AdoptError, CancelOutcome, Delivery, EventPage, ExecutionStore, Filter, Limits, ReportOutcome,
+    Seed, REPORT_HEARTBEAT, REPORT_SILENCE,
+};

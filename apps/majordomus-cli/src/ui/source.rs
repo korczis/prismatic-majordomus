@@ -18,11 +18,12 @@
 //! reading is on its way. A reading that is not current is shown as what it is.
 
 use std::collections::BTreeMap;
+use std::sync::Arc;
 use std::time::Duration;
 
 use serde_json::Value;
 
-use crate::capability::readings::{Freshness, Latest};
+use crate::capability::readings::{read_shared, Freshness, Latest, Patience};
 use crate::capability::Context;
 
 /// One capability asked with one input.
@@ -60,7 +61,7 @@ pub struct Answer {
     /// Every other way to ask the same question, as the capability declares it.
     pub exposure: Exposure,
     /// The answer, or why there is none.
-    pub value: Result<Value, String>,
+    pub value: Result<Arc<Value>, String>,
     /// How long the executor took to answer.
     pub took: Duration,
     /// How the answer stands against the repository as it is now.
@@ -87,7 +88,7 @@ impl Standing {
         refreshing: false,
     };
 
-    fn of(latest: &Latest) -> Standing {
+    fn of<V>(latest: &Latest<V>) -> Standing {
         Standing {
             age: latest.age,
             freshness: latest.freshness,
@@ -145,7 +146,7 @@ impl Answer {
 
     /// The whole answer, when there is one.
     pub fn ok(&self) -> Option<&Value> {
-        self.value.as_ref().ok()
+        self.value.as_deref().ok()
     }
 
     /// One line naming the source: what was asked, over which route, how long it took.
@@ -266,7 +267,7 @@ fn joined(ctx: &Context, source: Source, thread: std::thread::Result<Answer>) ->
 /// executor like any other source. The source line names the capability; the input is the
 /// reader's, so it is not a constant of the screen.
 pub fn ask_input(ctx: &Context, capability: &'static str, input: Value) -> Answer {
-    let latest = ctx.read(capability, input);
+    let latest = read_shared(ctx, capability, input, Patience::of_process());
     let (route, exposure) = describe(ctx, capability);
     Answer {
         source: Source::of(capability),
@@ -291,7 +292,7 @@ pub fn ask(ctx: &Context, source: Source) -> Answer {
             Standing::NOW,
         ),
         Ok(input) => {
-            let latest = ctx.read(source.capability, input);
+            let latest = read_shared(ctx, source.capability, input, Patience::of_process());
             let standing = Standing::of(&latest);
             (latest.value, latest.took, standing)
         }
@@ -402,7 +403,7 @@ mod tests {
             source: Source::of("health.report"),
             route: Some("GET /api/v1/health".into()),
             exposure: Exposure::default(),
-            value,
+            value: value.map(Into::into),
             took: Duration::from_millis(12),
             standing: Standing::NOW,
         }

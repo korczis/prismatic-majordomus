@@ -65,21 +65,24 @@ events:
     title: Decision recorded
     summary: A choice between real alternatives was recorded with its reason.
     emitted_by: decision
-    requires: [task_id, decision]
+    requires: [decision]
+    note: The task_id is present only when the caller episode opened that task (ADR 0164).
     public: true
 
   - id: question.opened
     title: Question opened
-    summary: A question that blocks acceptance was opened against a task.
+    summary: A question that blocks acceptance was recorded, with a task relation when attributable.
     emitted_by: question
-    requires: [task_id, question]
+    requires: [question]
+    note: The task_id is present only when the caller episode opened that task (ADR 0164).
     public: true
 
   - id: question.resolved
     title: Question resolved
     summary: An open question was answered and no longer blocks acceptance.
     emitted_by: question
-    requires: [task_id, question, answer]
+    requires: [question, answer]
+    note: The optional task_id names the attributable resolving task, not the question's original task.
     public: true
 
   - id: projections.updated

@@ -216,6 +216,33 @@ pub struct BriefIntegrationSection {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// Whether the trunk's landed work is released, as `release.currency` says it (I3070).
+pub struct BriefReleaseSection {
+    /// `read` when it was measured, `unread` when it could not be, with the summary saying why.
+    pub state: BriefSectionState,
+    /// Current, owed, overdue or unknown, when the capability answered.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stance: Option<crate::release::currency::Stance>,
+    /// Landed commits past the last release.
+    #[serde(default)]
+    pub landed: usize,
+    /// The section in words.
+    pub summary: String,
+}
+
+impl Default for BriefReleaseSection {
+    /// What a brief composed by a server older than this section carries: nothing measured.
+    fn default() -> Self {
+        BriefReleaseSection {
+            state: BriefSectionState::Unread,
+            stance: None,
+            landed: 0,
+            summary: "the server that composed this brief does not measure the release".into(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 /// The machine's derive queue: its lock and its priority marker (`lib/machine_lock.sh`).
 pub struct BriefDeriveSection {
     /// `undeclared` when the repository ships no derive lock.
@@ -262,6 +289,10 @@ pub struct SessionBrief {
     pub mesh: BriefMeshSection,
     /// The integration queue.
     pub integration: BriefIntegrationSection,
+    /// Whether the trunk's landed work is released. Absent from the answer of a server older
+    /// than this section, which leaves it unread rather than failing the whole brief.
+    #[serde(default)]
+    pub release: BriefReleaseSection,
     /// The derive queue.
     pub derive: BriefDeriveSection,
 }
@@ -322,6 +353,7 @@ fn brief(ctx: &Context, input: BriefInput) -> Result<SessionBrief, CapabilityErr
     let peers = peers_section(ctx, input.checkouts, superseded.then_some(url).flatten());
     let mesh = mesh_section(ctx);
     let integration = integration_section(&root);
+    let release = release_section(ctx);
     let derive = derive_section(&root);
     let interval_minutes = interval_minutes(&root);
     Ok(compose(
@@ -332,6 +364,7 @@ fn brief(ctx: &Context, input: BriefInput) -> Result<SessionBrief, CapabilityErr
         peers,
         mesh,
         integration,
+        release,
         derive,
     ))
 }
@@ -531,11 +564,7 @@ fn peers_section(
     } else {
         BriefSectionState::Partial
     };
-    let mut summary = format!(
-        "{} attached on {} board(s)",
-        attached.len(),
-        list.boards.len()
-    );
+    let mut summary = format!("{} attached on {} board(s)", attached.len(), list.covered);
     if !list.overlaps.is_empty() {
         summary.push_str(&format!(
             "; {} overlapping claim(s): majordomus_peers",
@@ -557,7 +586,9 @@ fn peers_section(
     BriefPeersSection {
         state,
         attached: attached.len(),
-        boards: list.boards.len(),
+        // every checkout covered, listed or counted: the summary lists only the ones that
+        // hold a board (peers::PeerView), and a checkout with none is still covered
+        boards: list.covered,
         unread,
         overlaps: list.overlaps.len(),
         superseded,
@@ -578,7 +609,16 @@ fn peer_line(p: &Peer) -> String {
         .as_ref()
         .map(|a| clip(&a.intent, INTENT_CHARS))
         .unwrap_or_else(|| "announced nothing".into());
-    format!("{} {} @{branch}: {intent}", p.id.as_str(), p.client.name)
+    match &p.address {
+        // the address that reaches the worker, when its client exposed one (I3956)
+        Some(a) => format!(
+            "{} {} @{branch} [{}]: {intent}",
+            p.id.as_str(),
+            p.client.name,
+            a.line()
+        ),
+        None => format!("{} {} @{branch}: {intent}", p.id.as_str(), p.client.name),
+    }
 }
 
 fn mesh_section(ctx: &Context) -> BriefMeshSection {
@@ -689,6 +729,30 @@ fn integration_section(root: &Path) -> BriefIntegrationSection {
         None => BriefIntegrationSection {
             state: BriefSectionState::Undeclared,
             summary: "this checkout never observed the forge: majordomus prs status".into(),
+        },
+    }
+}
+
+/// Whether the trunk is released (`release.currency`, I3070), without the version: a brief is
+/// composed at every session's start, and the version reads the last release's registry.
+fn release_section(ctx: &Context) -> BriefReleaseSection {
+    let answer: Result<crate::release::currency::Currency, String> = ctx
+        .execute(super::release::CURRENCY_ID, json!({ "next": false }))
+        .map_err(|e| e.to_string())
+        .and_then(|v| serde_json::from_value(v).map_err(|e| e.to_string()));
+    match answer {
+        Ok(a) => BriefReleaseSection {
+            state: match a.stance {
+                crate::release::currency::Stance::Unknown => BriefSectionState::Unread,
+                _ => BriefSectionState::Read,
+            },
+            stance: Some(a.stance),
+            landed: a.landed,
+            summary: a.summary,
+        },
+        Err(why) => BriefReleaseSection {
+            summary: format!("release.currency did not answer: {why}"),
+            ..BriefReleaseSection::default()
         },
     }
 }
@@ -829,9 +893,10 @@ fn compose(
     peers: BriefPeersSection,
     mesh: BriefMeshSection,
     integration: BriefIntegrationSection,
+    release: BriefReleaseSection,
     derive: BriefDeriveSection,
 ) -> SessionBrief {
-    let line = one_line(&session, &peers, &mesh, &integration, &derive);
+    let line = one_line(&session, &peers, &mesh, &integration, &release, &derive);
     let mut lines = vec![
         format!("session      {}", session.summary),
         format!("peers        {}", peers.summary),
@@ -839,6 +904,7 @@ fn compose(
     lines.extend(peers.named.iter().map(|n| format!("             {n}")));
     lines.push(format!("mesh         {}", mesh.summary));
     lines.push(format!("integration  {}", integration.summary));
+    lines.push(format!("release      {}", release.summary));
     lines.push(format!("derive       {}", derive.summary));
     if let Some(n) = &answered_by.note {
         lines.push(format!("answered by  {} ({n})", answered_by.process));
@@ -854,6 +920,7 @@ fn compose(
         peers,
         mesh,
         integration,
+        release,
         derive,
     }
 }
@@ -864,6 +931,7 @@ fn one_line(
     peers: &BriefPeersSection,
     mesh: &BriefMeshSection,
     integration: &BriefIntegrationSection,
+    release: &BriefReleaseSection,
     derive: &BriefDeriveSection,
 ) -> String {
     let who = match (&session.task_id, &session.episode) {
@@ -916,7 +984,17 @@ fn one_line(
                 .unwrap_or_default()
         )),
     };
-    let mut parts = vec![s, p, m, i];
+    let r = match (release.state, release.stance) {
+        (BriefSectionState::Read, Some(crate::release::currency::Stance::Owed)) => {
+            format!("release owed {}", release.landed)
+        }
+        (BriefSectionState::Read, Some(crate::release::currency::Stance::Overdue)) => {
+            format!("release OVERDUE {}", release.landed)
+        }
+        (BriefSectionState::Read, _) => "release current".into(),
+        _ => "release ?".into(),
+    };
+    let mut parts = vec![s, p, m, i, r];
     parts.extend(d);
     parts.join(" | ")
 }
@@ -1001,6 +1079,7 @@ pub fn module() -> ModuleDescriptor {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::release::currency::Stance;
 
     fn session(task: Option<&str>) -> BriefSessionSection {
         BriefSessionSection {
@@ -1075,12 +1154,17 @@ mod tests {
             peers(0, false),
             mesh_off(),
             integration,
+            release(Stance::Owed, 2),
             derive,
         );
         assert_eq!(
             b.line,
-            "I2399 @feature/x | peers 3/5b | mesh off | prs 52 open, next #902"
+            "I2399 @feature/x | peers 3/5b | mesh off | prs 52 open, next #902 | release owed 2"
         );
+        assert!(b
+            .lines
+            .iter()
+            .any(|l| l.starts_with("release      2 landed")));
         assert!(b.lines[0].starts_with("session      episode s-1"));
         assert!(b.lines[1].starts_with("peers        3 attached"));
         assert!(b.lines[2].contains("p1 claude-code @master"));
@@ -1115,8 +1199,10 @@ mod tests {
             peers(2, true),
             mesh_off(),
             integration,
+            BriefReleaseSection::default(),
             derive_from(false, None, None),
         );
+        assert!(b.line.contains("release ?"), "{}", b.line);
         assert!(b
             .line
             .starts_with("s-1 @feature/x | peers 3/5b (2 unread) SUPERSEDED"));
@@ -1170,6 +1256,7 @@ mod tests {
                 state: BriefSectionState::Undeclared,
                 summary: String::new(),
             },
+            &BriefReleaseSection::default(),
             &held,
         );
         assert!(
@@ -1549,6 +1636,7 @@ mod tests {
         at["worktree"] = json!("/elsewhere");
         at["this_checkout"] = json!(false);
         list["boards"].as_array_mut().unwrap().push(unread);
+        list["covered"] = json!(2);
 
         let repo = SyntheticRepository::small().expect("a repository");
         let ctx = canned_context(&repo);
@@ -1703,8 +1791,112 @@ mod tests {
                 state: BriefSectionState::Undeclared,
                 summary: "never observed".into(),
             },
+            BriefReleaseSection::default(),
             derive_from(false, None, None),
         )
+    }
+
+    /// A release section as `release.currency` would make it.
+    fn release(stance: Stance, landed: usize) -> BriefReleaseSection {
+        BriefReleaseSection {
+            state: BriefSectionState::Read,
+            stance: Some(stance),
+            landed,
+            summary: format!("{landed} landed commit(s) wait past v0.1.0"),
+        }
+    }
+
+    /// The line says the release in two words, whatever the stance.
+    #[test]
+    fn the_release_is_said_in_the_line() {
+        let line = |r: BriefReleaseSection| {
+            compose(
+                "t".into(),
+                20,
+                origin(),
+                session(None),
+                peers(0, false),
+                mesh_off(),
+                BriefIntegrationSection {
+                    state: BriefSectionState::Undeclared,
+                    summary: "never observed".into(),
+                },
+                r,
+                derive_from(false, None, None),
+            )
+            .line
+        };
+        assert!(line(release(Stance::Overdue, 4)).ends_with("release OVERDUE 4"));
+        assert!(line(release(Stance::Current, 0)).ends_with("release current"));
+        assert!(line(release(Stance::Owed, 1)).ends_with("release owed 1"));
+    }
+
+    fn canned_owed(_: &Context, _: Anything) -> Result<serde_json::Value, CapabilityError> {
+        Ok(json!({
+            "stance": "owed", "summary": "3 landed commit(s) wait", "landed": 3, "landings": 1,
+            "overdue_after_seconds": 21600,
+        }))
+    }
+
+    fn canned_unreadable(_: &Context, _: Anything) -> Result<serde_json::Value, CapabilityError> {
+        Ok(json!({ "stance": "nowhere" }))
+    }
+
+    /// A context whose `release.currency` answers through `handler`.
+    fn currency_context(
+        repo: &SyntheticRepository,
+        handler: fn(&Context, Anything) -> Result<serde_json::Value, CapabilityError>,
+    ) -> Context {
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_builtin(vec![capability! {
+                id: "release.currency", title: "Currency", description: "Canned.",
+                input: Anything, output: serde_json::Value,
+                stability: Stability::Experimental, exposure: Exposure::default(), tags: [],
+                handler: handler,
+            }])
+            .build()
+            .expect("a registry of one stand-in");
+        Context::new(
+            std::sync::Arc::new(repo.index().expect("an index")),
+            std::sync::Arc::new(registry),
+        )
+    }
+
+    /// The release section is what `release.currency` answered, without the version; a
+    /// capability that is not there, or an answer of another shape, leaves it unread with why.
+    #[test]
+    fn the_release_section_is_what_release_currency_answered() {
+        let repo = SyntheticRepository::small().expect("a repository");
+        let measured = release_section(&repo.context().expect("a context"));
+        assert_eq!(
+            (measured.state, measured.stance),
+            (BriefSectionState::Unread, Some(Stance::Unknown)),
+            "{}",
+            measured.summary
+        );
+        let owed = release_section(&currency_context(&repo, canned_owed));
+        assert_eq!(
+            (owed.state, owed.stance, owed.landed),
+            (BriefSectionState::Read, Some(Stance::Owed), 3)
+        );
+        for broken in [
+            bare_context(&repo),
+            currency_context(&repo, canned_unreadable),
+        ] {
+            let section = release_section(&broken);
+            assert_eq!(section.state, BriefSectionState::Unread);
+            assert!(
+                section
+                    .summary
+                    .starts_with("release.currency did not answer:"),
+                "{}",
+                section.summary
+            );
+        }
+        assert_eq!(
+            BriefReleaseSection::default().state,
+            BriefSectionState::Unread
+        );
     }
 
     #[test]
@@ -1993,7 +2185,7 @@ mod tests {
                 required_checks: Some(vec!["ci".into()]),
                 review_policy: Some(Default::default()),
                 up_to_date_required: Some(true),
-                merge_methods: vec!["merge".into()],
+                merge_methods: Some(vec!["merge".into()]),
                 pull_requests: Vec::new(),
                 resolved: Default::default(),
                 delete_branch_on_merge: None,
@@ -2087,11 +2279,12 @@ mod tests {
                 state: BriefSectionState::Unread,
                 summary: String::new(),
             },
+            &BriefReleaseSection::default(),
             &free,
         );
         assert_eq!(
             line,
-            "session ? | peers ? | mesh 1/2 +3 for you | prs ? | derive free"
+            "session ? | peers ? | mesh 1/2 +3 for you | prs ? | release ? | derive free"
         );
         // a mesh that is read and addresses nothing here shows its links alone
         m.reviews_for_you = 0;
@@ -2102,6 +2295,7 @@ mod tests {
             &peers(0, false),
             &m,
             &a_brief().integration,
+            &a_brief().release,
             &free,
         );
         assert!(line.contains("| mesh 1/2 |"), "{line}");

@@ -1,0 +1,45 @@
+id: I3372
+milestone: a-registered-corpus-judges-majordomus
+title: "The registered corpus is run in both arms, its records are committed, and its verdict is published with its losses and its origin"
+slug: the-registered-corpus-is-run-and-published
+priority: p1
+profile: implementation
+objective: "With the owner's recorded consent to the ceiling, dry-run the suite, rehearse one pair to confirm a live run records end to end, then run every declared job in the registered order with the pinned release, commit the run records under .ai/repo/benchmarks/economics/runs/corpus, regenerate the economics reports, and publish the T2 verdict whatever it is, stating that the corpus is one synthetic fixture written by the treatment's builders."
+why: "T2 of the owner's report of 2026-10-19 asks for the comparison to be run; no live run has ever been committed. Under ADR 0082 no run is overwritten or dropped and an unfavourable result is shown."
+current_state: "git ls-files .ai/repo/benchmarks/economics/runs lists only runs/context; branch feature/economics-pilot-runs raised pilot repetitions and committed no run."
+desired_state: "runs/corpus holds every attempted run; the T2 row reads a computed status with its losses."
+scope:
+  - ".ai/repo/benchmarks/economics/runs"
+  - "docs/generated/economics.json"
+  - "docs/generated/economics.md"
+  - "docs/generated/economics.yaml"
+  - "site/data/generated/economics.json"
+non_scope:
+  - "Editing the registration or methodology during the runs"
+  - "Re-running or excluding a run to change a verdict"
+  - "Changing the calculator; a runner defect becomes its own issue"
+depends_on:
+  - "I3370"
+  - "I3371"
+  - "I3354"
+serves:
+  - "the-product-proves-it-pays#the-corpus-verdict-is-published-with-its-losses"
+acceptance_criteria:
+  - "The consent decision is recorded before the first live session"
+  - "economics run --suite corpus --dry-run lists every job in the registered order"
+  - "Every declared pair is attempted, and each missing or invalid pair is named with its reason"
+  - "Every run within a pair reports the same harness version, model, fixture digest and pinned release"
+  - "The published result states the corpus origin"
+  - "majordomus economics check and majordomus generate --check pass"
+validation:
+  - "majordomus economics summary"
+  - "majordomus economics proof"
+  - "majordomus economics check"
+  - "majordomus generate --check"
+  - "bash test/run.sh 431_economics_claims_gated"
+evidence_required:
+  - "corpus_run_records"
+  - "corpus_verdict_published"
+  - "budget_consent_decision"
+created_at: 2026-10-19
+updated_at: 2026-10-19

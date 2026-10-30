@@ -93,6 +93,34 @@ mj_validate_deployments() {
       esac
     done
 
+    # A provider is optional (ADR 0219); a named one is one the contract knows, states the
+    # application, stack and https address it runs at, and hosts a process that binds every
+    # interface. Its credential is never a field: the allow-list has no key for one.
+    local provider; provider="$(mj_yget "$flat" provider.name)"
+    if [ -n "$provider" ] || grep -q '^provider\.' "$flat"; then
+      case "$provider" in
+        gigalixir) ;;
+        *) mj_doctrine_fail deployment "$(basename "$f")" \
+             "provider.name '$provider' is not a provider the contract knows (gigalixir)" "grep -n -A4 'provider:' $(mj_rel "$f")"; bad=1 ;;
+      esac
+      for key in provider.app provider.stack provider.url; do
+        [ -n "$(mj_yget "$flat" "$key")" ] || {
+          mj_doctrine_fail deployment "$(basename "$f")" "lacks $key, which a named provider states" "grep -n -A4 'provider:' $(mj_rel "$f")"
+          bad=1
+        }
+      done
+      case "$(mj_yget "$flat" provider.url)" in
+        https://*|"") ;;
+        *) mj_doctrine_fail deployment "$(basename "$f")" \
+             "provider.url '$(mj_yget "$flat" provider.url)' is not an https URL" "grep -n 'url:' $(mj_rel "$f")"; bad=1 ;;
+      esac
+      [ "$(mj_yget "$flat" listen.interface)" = loopback ] && {
+        mj_doctrine_fail deployment "$(basename "$f")" \
+          "listen.interface is loopback and provider $provider hosts it; a hosted process states interface: all" "grep -n 'interface:' $(mj_rel "$f")"
+        bad=1
+      }
+    fi
+
     # No credential belongs in the layer. The contract has no field for one, so this
     # catches a value smuggled into a field that does exist.
     local secret; secret="$(awk -F= '$2 ~ /(^|[^A-Za-z0-9])(fo1_|fm1[ar]_|FlyV1|gh[pousr]_)/ { print $1 }' "$flat" | head -n 3 | tr '\n' ' ')"

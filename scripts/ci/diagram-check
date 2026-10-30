@@ -9,7 +9,7 @@
 # diagram wide enough to be useful on a desktop is a horizontal scrollbar on a phone.
 #
 # So the rule is: an architectural relationship in a document this repository publishes is a
-# ```mermaid block. `project.a-diagram-is-a-projection` states it; this gate decides it.
+# ```mermaid block. `project.a-diagram-is-drawn-not-typed@2` states it; this gate decides it.
 #
 # # What this gate examines
 #
@@ -22,6 +22,16 @@
 #                         finding reported there names a file an author cannot fix.
 #   `site/templates/**`   the markup those pages are rendered through — the homepage
 #                         included, which is the most-published document in the repository
+#   `.ai/repo/adrs/**`    the decisions, published as /adrs/ and read in the handbook
+#   `.ai/repo/rules/**`   the rules, published as /rules/ and read in the handbook
+#   `handbook/**`         the handbook's chapters and the page they are assembled into
+#   `apps/majordomus-cli/src/ui/**`, `share/ui/**`
+#                         what `majordomus ui` renders: the markdown in its Rust sources
+#                         (doc comments and strings, rustdoc included) and its scripts
+#
+# `campaigns/**` is not read: those are operator prompt packs kept byte for byte as
+# provenance (campaigns/MANIFEST.sha256), never published and never rewritten. That is
+# a declared exemption of project.a-diagram-is-drawn-not-typed@2, not an oversight.
 #
 # and in each of them, a ```fenced block or an HTML `<pre>`/`<code>` block. The second form
 # is why this gate was blind for its first weeks: it read markdown fences only, so box art
@@ -75,7 +85,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --list) LIST=1; shift ;;
     --update) UPDATE=1; shift ;;
-    -h|--help) sed -n '2,64p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,76p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "diagram-check: unknown option $1" >&2; exit 2 ;;
   esac
 done
@@ -89,14 +99,30 @@ import re, os, sys
 # Where a reader meets these: the documents the site publishes, the content written straight
 # into it, and the templates it is rendered through. A diagram in a shell script's comments
 # is read in a terminal, which is the one place box art is the right answer.
-ROOTS = ["docs", "site/content-src", "site/templates"]
-EXTENSIONS = (".md", ".html")
+# Each root with the files a block can be written in there. `site/content/**` is a projection
+# of docs/ and site/content-src/ and is never read: a finding there names a file nobody can fix.
+ROOTS = [
+    ("docs", (".md", ".html")),
+    ("site/content-src", (".md", ".html")),
+    ("site/templates", (".md", ".html")),
+    (".ai/repo/adrs", (".md",)),
+    (".ai/repo/rules", (".md",)),
+    ("handbook", (".md", ".html", ".tmpl")),
+    ("apps/majordomus-cli/src/ui", (".rs", ".md", ".html")),
+    ("share/ui", (".js", ".md", ".html")),
+]
 
 FENCE = re.compile(r'^([ \t]*)```([A-Za-z0-9_-]*)[ \t]*$')
 BOX   = re.compile(r'[─│└┌┐┘├┤┬┴┼━┃╭╮╰╯]')
-FLOW  = re.compile(r'(-->|──>|──►|─►|→|▶|<--|<─)')
+FLOW  = re.compile(r'(-->|──>|──►|─►|→|←|↓|↑|▶|▼|▲|◀|►|◄|<--|<─)')
 PLUS  = re.compile(r'^\s*\+[-=]{2,}', re.M)
 TREE  = re.compile(r'[├└][─━]{2}')
+# In a listing every glyph is in a line's indentation, before the entry's name: `│   ├── lib/`.
+# A glyph after a name — `executor ──┬── MCP`, `└────┬───` closing a box — connects two
+# things, and that is a drawing however tree-like its left margin looks.
+TREE_PREFIX = re.compile(r'^[ \t│├└─━┃┣┗]*')
+# A Rust doc comment is markdown with a prefix; rustdoc publishes it.
+DOC_COMMENT = re.compile(r'^([ \t]*)//[/!] ?', re.M)
 # An arrow that is only ever inside an HTML comment is quoted file content, not a flow.
 COMMENT = re.compile(r'<!--.*?-->', re.S)
 # A trailing `# …` on a tree line is an annotation a person wrote, and an arrow inside it is
@@ -218,11 +244,22 @@ def html_blocks(text):
 
 def blocks(path, text):
     """Every block in a file, whichever of the two forms it is written in."""
-    if path.endswith(".md"):
+    if path.endswith((".rs", ".js")):
+        # Markdown in source: a doc comment with its `///`/`//!` taken off, or a string whose
+        # lines are already bare. Read as markdown, so a fence or a <pre> in either is a block.
+        text = DOC_COMMENT.sub(r"\1", text)
+    if path.endswith((".md", ".rs", ".js")):
         yield from fenced_blocks(text)
         yield from html_blocks(mask_fences(text))
     else:
         yield from html_blocks(text)
+
+
+def is_listing(body):
+    """Whether every glyph of a block sits in an entry's indentation and no arrow is drawn."""
+    if FLOW.search(body):
+        return False
+    return not any(BOX.search(TREE_PREFIX.sub("", line)) for line in body.split("\n"))
 
 
 def is_drawn(lang, body):
@@ -232,15 +269,15 @@ def is_drawn(lang, body):
     has_box, has_flow = bool(BOX.search(stripped)), bool(FLOW.search(stripped))
     if PLUS.search(stripped):
         return True                            # +---+ boxes are never anything else
-    if TREE.search(stripped) and not FLOW.search(ANNOTATION.sub("", stripped)):
+    if TREE.search(stripped) and is_listing(ANNOTATION.sub("", stripped)):
         return False                           # a listing, not an architecture
     return has_box or has_flow
 
 found = []
-for root in ROOTS:
+for root, extensions in ROOTS:
     for dirpath, _, names in os.walk(root):
         for n in sorted(names):
-            if not n.endswith(EXTENSIONS):
+            if not n.endswith(extensions):
                 continue
             p = os.path.join(dirpath, n)
             try:

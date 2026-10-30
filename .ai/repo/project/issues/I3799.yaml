@@ -1,0 +1,29 @@
+id: I3799
+milestone: M004
+title: "The Pages publication budgets are re-derived from the runs that publish the language copies"
+slug: the-pages-budgets-are-re-derived
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Re-derive the per-row budgets and the controlled total in .ai/repo/ci/pages.yaml from the timing rows of the Pages runs since the Czech copy landed (2026-10-20), the way suite.yaml's budgets are re-derived from the suite's measured durations: each budget a stated multiple of a cited measurement, the runs named, and nothing raised to fit a single run."
+why: "Pages run 39485870985 (master 91c0b5d5658, 2026-10-20) warned 'controlled path 1007 s against a budget of 210 s' (rustdoc 175/90, build 269/8, check 489/60, publish 54/28). Validate 39485870890's pages job failed at its 1200 s wait bound while that deploy was still running. The budgets were measured before the site doubled its pages with the Czech copy, so every publication now warns, and a warning that always fires says nothing."
+current_state: ".ai/repo/ci/pages.yaml budget: controlled 210 (and 465 on the other path), with per-row budgets measured before 2026-10-20 and a comment table of the runs they came from."
+desired_state: "Every budget in pages.yaml is derived from the timing rows of at least three named Pages runs since 2026-10-20, with the multiple stated in the comment table beside it; a regular publication is under its budget; and the validate pages job's wait bound is checked against the new controlled total."
+scope:
+  - ".ai/repo/ci/pages.yaml"
+  - "scripts/pages"
+  - "docs/CI.md"
+non_scope:
+  - "Making the publication faster, which is the rest of M004; this issue makes its budgets true"
+depends_on: []
+acceptance_criteria:
+  - "Every budget row in pages.yaml cites the Pages runs it was derived from, at least three since 2026-10-20, and the multiple applied"
+  - "The next regular master publication reports its controlled path under the new budget"
+  - "The validate pages job's wait bound is at least the new controlled total plus the queue allowance the file declares"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/pages report --check"
+evidence_required:
+  - "pages_budgets_rederived"
+created_at: 2026-10-20
+updated_at: 2026-10-20

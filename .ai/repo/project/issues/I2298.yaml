@@ -46,4 +46,21 @@ evidence_required:
   - "stacked_head_carries_master_case"
   - "decision_recorded"
 created_at: 2026-10-10
-updated_at: 2026-10-10
+updated_at: 2026-10-14T08:00:21Z
+started_at: 2026-10-14T08:00:13Z
+started_event: sha256:cf22697199f4bccaedba1e042aafde3fd7635c8a715cc94cca15d9169fece75c
+completed_at: 2026-10-14T08:00:21Z
+completed_event: sha256:8ce70d7e6d00544c522f9c5c057416fd0815bb362fcbbbdf81a2824c07bf9e0a
+evidence:
+  - covers: stacked_head_carries_master_case
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 1040_a_stacked_head_lands_on_the_verdict_it_has"
+    result: "tests: 1 passed, 0 failed, 0 skipped (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T08:00:17Z
+  - covers: decision_recorded
+    type: artifact
+    result: "ADR 0129, status proposed, on master ce5959db59"
+    artifact: ".ai/repo/adrs/0129-a-train-of-pull-requests-lands-in-one-run-of-the-required-check.md"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T08:00:19Z

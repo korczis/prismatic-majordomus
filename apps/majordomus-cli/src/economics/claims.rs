@@ -127,7 +127,7 @@ const STAMPS: &[&str] = &[
 ];
 
 /// The claims matrix, whose claim sentences are prose too.
-const CLAIMS: &str = "docs/CLAIMS.yaml";
+pub(crate) const CLAIMS: &str = "docs/CLAIMS.yaml";
 
 /// One thing the check refuses. `detail` names the remedy, so a finding can be acted on
 /// without reading the methodology. A finding about a claim or a file rather than a line
@@ -959,6 +959,13 @@ struct Claim {
 struct Matrix {
     claims: Vec<Claim>,
     lines: BTreeMap<String, Vec<usize>>,
+}
+
+/// The claim ids `docs/CLAIMS.yaml` declares: `Ok(None)` when there is no claims matrix, an
+/// error when there is one and it cannot be read or parsed. The proof plan checks the claims
+/// its tests settle against it.
+pub(crate) fn claim_ids(root: &Path) -> Result<Option<BTreeSet<String>>, String> {
+    Ok(read_claims(root)?.map(|m| m.claims.into_iter().map(|c| c.id).collect()))
 }
 
 /// Read `docs/CLAIMS.yaml`: `Ok(None)` when there is no claims matrix, an error when there is

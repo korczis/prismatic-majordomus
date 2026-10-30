@@ -1,0 +1,47 @@
+id: I3409
+milestone: a-prompt-reaches-the-work-it-serves
+title: "An episode answers, for each prompt it captured, the intent it matched, the task that recorded it, that task's outcome and the evidence of the criterion it serves, with the same identities on every surface and after any replay"
+slug: a-prompt-reaches-its-task
+priority: p2
+profile: implementation
+objective: "Extend intents.matched with an episode mode that derives the vertical slice on read. For each prompt the episode captured, it answers six things. First, the prompt identity and the match verdict. Second, the task whose task.started names that prompt (I3411), labelled recorded; for a line without the key it answers the next task the episode started, labelled inferred. Third, that task's bound issue and intent from task.started and intents.binding. Fourth, its task.finished outcome and verify command, from the recorded contract. Fifth, the evidence state of the criterion the issue serves, from intent_realization. Sixth, an agreement verdict: agrees, differs or no task. The live intent inspector lists the open episodes' prompts that matched the intent, by identity only. It re-reads on the frame I3431 emits, and to a viewer beyond loopback it says the list is answered on this machine only."
+why: "The owner's 2026-10-19 Cognitive Fabric pack names this vertical slice and asks that replaying the stream leave the same identities and state (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/00_MASTER.md, prompts/02_EVENTS_INTENTS.md, the verification examples of contracts/EVENT_CONTRACT.md, and the verification/ACCEPTANCE.md row on CLI, API, MCP and UI)."
+current_state: "A capture record names its episode (lib/capture.sh:583-586), but no task or intent. task.started carries issue and intent once the binding is asked (lib/start.sh:158-160). intents.binding resolves a task to its intent at start (lib/intent_binding.sh:30-60). No read model joins them, and /ui refreshes on a 60 s poll (share/ui/ui.js:228,404)."
+desired_state: "One declaration answers the slice with identical identities on the command line, loopback HTTP, MCP and the live /ui. Replaying the episode's events, or shuffling the arrival of independent ones, gives a byte-identical answer. Every join names how it is known, and no snapshot carries it (I3433)."
+scope:
+  - "apps/majordomus-cli/src/devcontext"
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "apps/majordomus-cli/src/ui/intent.rs"
+  - "apps/majordomus-cli/tests/intent.rs"
+  - "docs/generated/registry.json"
+  - "docs/generated/registry.yaml"
+  - "docs/generated/openapi.json"
+  - "docs/generated/openapi.yaml"
+  - "docs/generated/modules/intents.md"
+  - "site/data/generated/openapi.json"
+  - "site/data/registry/registry.json"
+non_scope:
+  - "Writing a link record (the slice is derived, not stored)"
+  - "Monitor or mesh publication of matches"
+  - "Changing the session domain (I3142)"
+depends_on:
+  - "I3408"
+  - "I3411"
+  - "I3433"
+  - "I3431"
+serves:
+  - "a-change-reconciles-what-it-affects#the-slice-is-one-identity"
+acceptance_criteria:
+  - "A fixture episode with one prompt, a task.started naming it, its binding and a task.finished answers matched, the task (recorded), the issue, the outcome, the verify command, the criterion's evidence state and agrees"
+  - "The same fixture without the prompt key answers the task labelled inferred"
+  - "The fixture with the capture hook replayed 100 times and its independent ledger lines read in shuffled order answers byte-identically"
+  - "The command line, loopback HTTP and MCP answers for the fixture are equal, and the live intent inspector lists the prompt identity"
+  - "A request from beyond loopback is refused, and the snapshot written for publication contains no prompt identity or match"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test intent"
+  - "bin/majordomus-cli generate --check"
+  - "majordomus capabilities describe intents.matched"
+evidence_required:
+  - "test_a_prompt_reaches_its_task"
+created_at: 2026-10-19
+updated_at: 2026-10-19

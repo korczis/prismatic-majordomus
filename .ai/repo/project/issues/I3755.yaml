@@ -1,0 +1,37 @@
+id: "I3755"
+milestone: "truthful-plan-surfaces"
+title: "/roadmap/ opens with now, next and a status summary, shows each milestone's priority, and keeps its issue groups collapsed"
+slug: "the-roadmap-opens-with-now-next-and-a-summary"
+priority: "p2"
+profile: "implementation"
+parallel_safe: false
+objective: "Make /roadmap/ answer 'where is the work and what comes next' before a reader scrolls: it names now and next from the one derivation every other plan surface reads (I3439), states how many milestones stand in each status, shows each milestone's declared priority on its card, and draws every issue group collapsed so the page reads as a list of milestones rather than 799 open rows."
+why: "Found on 2026-10-20 by the owner-ordered audit of /roadmap/ (campaign defects D3 and D19; roadmap findings F3 and F16). The CLI, /ui/roadmap/ and /roadmap/ give three different answers to now and next, and /roadmap/ gives none at all, although its description promises what comes next. The page opens 144 issue groups by default, carries no summary and no priority although 16 milestones are p0, and its largest word on 94 cards is 'unreleased'. I3439 makes now and next one derivation but names only /ui, the Overview, the observatory and the shell as its readers; the public page is left out."
+current_state: "site/content/roadmap.md:3 describes the page as 'What comes next', yet site/templates/roadmap.html names no now and no next milestone anywhere: its observed block (roadmap.html:30-43) states the commit, the milestone count (roadmap.html:36-37) and the delivery source only. site/data/generated/roadmap.json carries schema and milestones and no now or next; on origin/master the plan holds 100 milestones (39 BLOCKED, 29 PLANNED, 26 ACTIVE, 6 DONE) and nothing on the page counts them. plan.json's milestones carry priority (16 p0, 61 p1, 16 p2, 7 p3), and roadmap.html:51-56 draws none of it. roadmap.html:80 opens every issue group whose status is neither DONE nor CANCELLED, 144 groups on origin/master's data. roadmap.html:53 draws released_in in the card's largest type, so 94 cards lead with 'unreleased'. The page is built from data scripts/site-build writes beside the committed data (site/data/build.json, git-ignored at .gitignore:43), the same route a build-time now and next can take."
+desired_state: "scripts/site-build writes site/data/flight.json (git-ignored beside build.json) from plan.flight's single now-and-next answer at the build commit, and /roadmap/ opens with a block naming the milestones in flight (now), the next milestone with the rule it was chosen by, and a summary row counting milestones by status, each count linking to a filtered anchor list; without flight.json the block says now and next are not part of this build and names none. Each card shows its priority beside its status; the release label is drawn at the size of the id, and an unreleased milestone carries no release label at all. Every issue group is a closed details element, its summary naming the status and the count. check 13h holds the built now and next to flight.json."
+scope:
+  - "site/templates/roadmap.html"
+  - "scripts/site-build"
+  - "scripts/site-check"
+  - ".gitignore"
+  - "test/cases/3728_the_roadmap_opens_with_now_next_and_a_summary.sh"
+non_scope:
+  - "How now and next are derived, which I3439 decides and this issue only reads"
+  - "A client-side status filter or search on /roadmap/"
+  - "Reducing the page weight below a budget, which collapsing does not change by itself"
+  - "Dates on the roadmap: I3768; progress bars: I3773"
+  - "The /ui roadmap table: I3441"
+acceptance_criteria:
+  - "On a fixture plan with one milestone in flight, the built /roadmap/ names that milestone as now and the same next milestone plan.flight answers for the fixture, and the summary row's counts equal roadmap.json's counts by status"
+  - "Every card on the built page shows the milestone's priority from plan.json, and no card of an unreleased milestone contains the word 'unreleased' in its header"
+  - "The built page contains no issue-group details element with the open attribute"
+  - "Negative: a build without flight.json names no now and no next milestone and states that they are not part of this build, and scripts/site-check --roadmap over a page whose stated next differs from flight.json exits non-zero naming both"
+validation:
+  - "bash test/run.sh 3728_the_roadmap_opens_with_now_next_and_a_summary 3103_the_roadmap_draws_every_milestone"
+  - "scripts/site-build && scripts/site-check && scripts/ci/link-check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test_the_roadmap_opens_with_now_next_and_a_summary"
+depends_on:
+  - "I3751"
+  - "I3439"

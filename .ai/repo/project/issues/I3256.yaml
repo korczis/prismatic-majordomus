@@ -1,0 +1,26 @@
+id: I3256
+milestone: command-and-deployment-criteria-are-judged
+title: "A deployment criterion is met only by a recorded observation of that deployment serving a build that contains the criterion's newest change"
+slug: a-deployment-criterion-is-judged
+priority: p1
+profile: implementation
+objective: "Revive I2221 (origin/chore/the-owner-packs-are-planned (ec37317fe7c, 2026-10-10, never landed)) and I2506 (origin/chore/seven-owner-packs-are-tracked-and-planned (689021d6ce2, 2026-10-15, never landed)): a deployment criterion reads current when a recorded observation of that deployment served a build containing the newest commit that changed the criterion's serving scope; unreachable, malformed or undecided observations never read current."
+why: "2026-10-09: a verified deploy must be able to close a criterion; the owner's rule that what is not deployed and verified does not exist (2026-09-15). Sources: chatgpt-majordomus:c205#2."
+current_state: "intent.rs returns NotDerivable for a deployment that resolves; deployments are observed by deploy/observed.rs (I2827 lands in 73)."
+desired_state: "Deployment criteria are judged from the observation records the served/deployments capabilities already keep."
+scope:
+  - "apps/majordomus-cli/src/intent.rs"
+  - "apps/majordomus-cli/src/deploy"
+  - "apps/majordomus-cli/tests/intent.rs"
+depends_on:
+  - "I3255"
+acceptance_criteria:
+  - "An observation of a build that contains the change reads current"
+  - "An older build, an unreachable answer or a dirty build reads stale or not_run with the reason"
+validation:
+  - "majordomus plan validate"
+  - "majordomus intent validate"
+evidence_required:
+  - "test_a_deployment_criterion_is_judged"
+created_at: 2026-10-18
+updated_at: 2026-10-18

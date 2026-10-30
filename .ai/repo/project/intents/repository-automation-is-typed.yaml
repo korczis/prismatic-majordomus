@@ -1,0 +1,42 @@
+id: repository-automation-is-typed
+title: "Repository automation is typed capabilities that Rhai orchestrates, and domain-logic shell only shrinks"
+statement: "A person, CI and an agent run the same repository automation through one executable with an embedded Rhai engine and typed Rust capabilities; just recipes are derived from the command graph and the commit hook is one call of the executable; shell remains only at declared OS, bootstrap and provider boundaries, and the domain logic left in shell only shrinks; and every migrated unit proved it behaves as its predecessor before the predecessor was deleted."
+invariants:
+  - "No function takes a shell command string (ADR 0069)"
+  - "A script reaches the repository only through capabilities, under its declared effect ceiling"
+  - "One registry; no second workflow engine (rule project.no-new-nouns)"
+  - "Progress is measured by logic removed, never by counting .sh files"
+non_goals:
+  - "Transliterating .sh files into .rhai"
+  - "Removing direnv, just or CI compatibility"
+  - "A plugin marketplace or native dynamic-library plugins"
+  - "A new shell interpreter"
+milestones:
+  - "repository-automation-is-typed"
+satisfaction:
+  - id: scripted-capability-runs
+    criterion: "A scripted capability declared in the layer runs through majordomus run and appears on every projection with no edit elsewhere (planned proof: I1801's in-tree case and case_adopter_scripted_capability (I3157 writes it))"
+    evidence: command
+    ref: "majordomus intent explain repository-automation-is-typed"
+  - id: domain-shell-ratchet
+    criterion: "Neither the class-A unit count nor the class-A line count, derived from the tree, rises against the merge base, and a record relabelled away from A without a reason is refused; the shell check says so (planned proof: case_domain_shell_only_shrinks (I3155 writes it))"
+    evidence: command
+    ref: "majordomus intent explain repository-automation-is-typed"
+  - id: one-executable-per-command
+    criterion: "Every command path (program plus its full word sequence) resolves to one implementing executable, and a path both executables implement outside a declared delegation is a finding (planned proof: test_one_executable_per_command (I3156 writes it))"
+    evidence: command
+    ref: "majordomus intent explain repository-automation-is-typed"
+  - id: just-is-derived
+    criterion: "Every just recipe is a recipe of the generated, untracked command-graph bridge or a hand-written recipe with its inventory record, a hand-written duplicate of a bridged recipe is refused, and regeneration is byte-identical (planned proof: case_just_is_derived (I3154 writes it))"
+    evidence: command
+    ref: "majordomus intent explain repository-automation-is-typed"
+  - id: parity-before-deletion
+    criterion: "A class A or B shell unit is deleted only when its parity case has a recorded pass for the head being judged; otherwise the shell check refuses the deletion and names the missing case (planned proof: case_parity_before_deletion (I3159 writes it))"
+    evidence: command
+    ref: "majordomus intent explain repository-automation-is-typed"
+  - id: the-commit-hook-is-one-call
+    criterion: "The commit hook is one call of a command path the Rust executable owns, every enforcement entry wired by it is still proven invoked, and it reports its time per component against its budget (planned proof: case_commit_hook_is_one_call (I3161 writes it))"
+    evidence: command
+    ref: "majordomus intent explain repository-automation-is-typed"
+created_at: 2026-10-18
+updated_at: 2026-10-18

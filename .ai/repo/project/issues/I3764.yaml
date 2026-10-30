@@ -1,0 +1,44 @@
+# Draft for the 2026-10-20 records sweep. The id, the case number (placeholder I3764 in case names) and the dates are
+# allocated from the granted id block when the coordinator records it; current_state was read
+# on origin/master 91c0b5d5658.
+# rehomed from a-visitor-understands-and-checks-majordomus: that milestone derives PLANNED, and the campaign covers ACTIVE milestones only (O1); truthful-plan-surfaces is the ACTIVE milestone that holds the homepage's plan view (I2851) and the landing page reading one plan derivation
+id: "I3764"
+milestone: "truthful-plan-surfaces"
+title: "The homepage's plan card says what each status means, links each to its issues, draws progress, and invites the roadmap"
+slug: "the-plan-card-says-what-each-status-means"
+priority: "p2"
+profile: "implementation"
+parallel_safe: false
+objective: "In the homepage hero card, label each declared issue status with a plain phrase declared in site/data/marketing.toml (blocked reads as waiting on a dependency), link each status count to a place that lists exactly the issues with that status, say in one declared line why the history's released count and the records' done count differ, draw a progress bar of done issues over the issues that are not cancelled from the same counts the card already shows, and place a visible roadmap link beside the changelog link outside any disclosure."
+why: "The largest figure in the hero is the blocked count, a raw lowercase status word a visitor cannot read, and every count opens the same unfiltered page, so the card shows numbers a visitor cannot act on. The only labelled roadmap link sits inside a collapsed disclosure in the proof section, although the roadmap is where the plan's work is followed. The owner decided on 2026-10-20 that every plan surface shows progress bars and dates, and withdrew the position that a bar would be untrue, so the card's own no-bar rationale goes. Found by the landing audit (L-P2-2, L-P2-6; campaign defect D25). Related: I3224. index.html and marketing.toml sit under a stale claim of I2745, which is completed; ask its holder to release it before claiming."
+current_state: "site/templates/index.html:108-117 is the card's header comment, which at :114-116 says there is no progress bar because /roadmap/ explains why it has none; :130 sets one roadmap_href, /roadmap/ with no fragment; :133-140 draws the delivery stages, each linking /roadmap/#delivery; :141-146 draws one figure per status of plan.statuses.issue, labelled with the enum lowercased (st | lower) and linking roadmap_href for every status; :148-154 names the newest release record and its date and ends with the only link of the card, 'Every change, release by release', to /changelog/. The labelled roadmap link 'The milestones, in the order their graph derives' is at :470, inside the warning-styled details element of :445-474. site/templates/plan-section.html:69 heads its per-milestone table with one column per status (data-series) and carries no per-status anchor. site/data/marketing.toml [hero] (:6-19) declares no status label and no roadmap link copy."
+desired_state: "marketing.toml declares a label for each issue status and the released-against-done line, and the card reads them; a status with no declared label fails the build rather than falling back to the enum. Each status count links to a fragment that exists and lists that status's issues (an anchor per status added to plan-section.html, or the roadmap's equivalent if N7 has landed one, decided at claim time and recorded in the PR). The card draws one progress bar, done over total minus cancelled, from plan.json, with its numerator and denominator as text beside it, and the header comment no longer claims a bar would mislead. A roadmap link with declared copy sits beside the changelog link. homepage-check gains a plan-card check holding all of this."
+scope:
+  - "site/templates/index.html"
+  - "site/templates/plan-section.html"
+  - "site/data/marketing.toml"
+  - "scripts/ci/homepage-check"
+  - "test/cases/3737_the_plan_card_says_what_each_status_means.sh"
+  - ".ai/repo/project/issues/I3764.yaml"
+non_scope:
+  - "The roadmap page's own summary, filters and collapsed groups (I3755) and its prose (I3751)"
+  - "Release dates and the last delivery per open milestone on /roadmap/ and /ui (I3768)"
+  - "The per-milestone progress bars of /roadmap/, the milestone pages and /ui (I3773); this card's one bar uses the same done-over-required rule"
+  - "Which commit the delivery stages are observed at (I3769)"
+  - "Czech translations of the new labels; the translation memory is I3753's and is exported after this lands"
+acceptance_criteria:
+  - "Every status the card draws carries its declared label, and no rendered label equals a status id lowercased"
+  - "Every status count links to a fragment that exists in the built site and lists exactly that many issues of that status"
+  - "The card draws a progress bar whose done and total figures equal plan.json's done count and its non-cancelled count, and shows both as text"
+  - "A roadmap link outside any details element sits in the card beside the changelog link"
+  - "homepage-check fails when a status the plan declares has no label in marketing.toml, naming the status (negative case)"
+  - "homepage-check fails when a status count links to a fragment the built site does not carry, or to one listing another number, naming the status, the link and both numbers (negative case)"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3737_the_plan_card_says_what_each_status_means"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 333_homepage_narrative 3105_the_homepage_states_no_present_it_does_not_read"
+  - "scripts/site-build && scripts/site-check && scripts/ci/homepage-check && scripts/ci/link-check"
+evidence_required:
+  - "every_plan_status_on_the_homepage_has_a_declared_label"
+  - "every_plan_status_count_links_to_its_issues"
+  - "the_plan_card_draws_progress_from_the_plan"
+depends_on: []

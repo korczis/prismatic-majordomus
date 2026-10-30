@@ -1,0 +1,25 @@
+id: I3797
+milestone: one-kit-on-every-surface
+title: "A command shown outside the shell block is refused by the audit"
+slug: a-bare-command-is-refused
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Add a ui-audit rule over every surface that fails a command rendered outside I3796's shell block (a sh, bash or console fence, a bare monospace reproduce line), naming the page and the element, so the one shell block stays the only one."
+why: "Without a rule the next page shows a command its own way, as /ui did on 2026-10-20; the owner asked that the kit stay one automatically."
+current_state: "No rule distinguishes a command from other monospace text."
+desired_state: "ui-audit rule shell.bare-command; the shell block's marker class is the one the rule and the copy control read."
+scope:
+  - "scripts/lib/ui-audit.mjs"
+  - "scripts/lib/ui.test.mjs"
+depends_on: [I3796]
+acceptance_criteria:
+  - "ui-audit fails a page showing a command outside the shell block, naming the page and the element"
+  - "Every surface passes on master"
+validation:
+  - "bin/majordomus plan validate"
+  - "node scripts/lib/ui.test.mjs"
+evidence_required:
+  - "shell_bare_command_rule_test"
+created_at: 2026-10-20
+updated_at: 2026-10-20

@@ -1,0 +1,51 @@
+id: I3438
+milestone: public-proof
+title: "A translation records the digest of its source, and site-check refuses one its source has moved past"
+slug: a-translation-keeps-up-with-its-source
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "A translation names its source and the digest of the source it was made from, [extra] translated_from = \"route/\" and source_digest = the SHA-256 of the source's bytes after its closing front-matter fence; site-check recomputes the digest and refuses a stale or missing one, printing the file, its source and the digest to record once re-synced, and refuses a digest on an original and a source outside the group. The check never rewrites a digest."
+why: "The owner asked on 2026-10-19 that language versions be kept in sync automatically. A translation silently trails an original edited after it, and nothing could tell; the re-sync is the translator's act, so the check makes the drift loud rather than hiding it by restamping. It belongs to public-proof with I3436 and I3437, whose check it extends."
+current_state: "No front matter key names the page a translation was made from, and nothing compares a translation with its source: site/content-src/dokumentace-kterou-lze-odmitnout.md and site/content-src/proof-carrying-documentation.md name each other by alternate only, so either may change without the other."
+desired_state: "Check 21 emits each translated_from row, recomputes the source's body digest with lib/sha256.sh, passes a match, and refuses a mismatch or an absent digest with the new digest in the message; an edit to the source's front matter alone leaves the digest fresh; case 3503 holds a fresh, a stale and a missing digest and proves the translation file is left untouched."
+scope:
+  - "scripts/site-check"
+  - "test/cases/3503_a_translation_group_agrees_and_keeps_up_with_its_source.sh"
+  - ".ai/repo/project/issues/I3438.yaml"
+acceptance_criteria:
+  - "A translation whose source_digest matches its source's body passes"
+  - "A source whose body changed after the digest fails naming the translation, its source and the digest to record, and the translation file is unchanged"
+  - "A translated_from without a digest, a digest without translated_from and a source outside the group each fail naming the file"
+  - "An edit to the source's front matter alone does not make its translations stale"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3503_a_translation_group_agrees_and_keeps_up_with_its_source"
+evidence_required:
+  - "stale_translation_is_refused"
+  - "fresh_translation_passes"
+depends_on:
+  - "I3436"
+serves: []
+created_at: 2026-10-19
+updated_at: 2026-10-20T22:32:37Z
+started_at: 2026-10-20T22:29:02Z
+started_event: sha256:bcd89a61e28c918380fd95f930e5545451a33ce17b1b7e499fbf9ad10b61f7f4
+verified_at: 2026-10-20T22:29:33Z
+verified_event: sha256:f378f39a6cb9c12844245ebb784d4bd94d536f87faa5cb13962ad49a8f12f374
+completed_at: 2026-10-20T22:32:37Z
+completed_event: sha256:c2f7a60f44c11c89f2a0166493af04a1b5ecc304af499e3b4cc34a6b83bdc0bb
+evidence:
+  - covers: stale_translation_is_refused
+    type: ci
+    command: "bash test/run.sh 3503_a_translation_group_agrees_and_keeps_up_with_its_source"
+    result: "passed in master validate 39438896504 (9a5a9b77520), suite job"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39438896504"
+    commit: 573df967bb5bc30cf23e542b8d0dff03d3bf5ee0
+    recorded_at: 2026-10-20T22:32:03Z
+  - covers: fresh_translation_passes
+    type: ci
+    command: "bash test/run.sh 3503_a_translation_group_agrees_and_keeps_up_with_its_source"
+    result: "passed in master validate 39438896504 (9a5a9b77520), suite job"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39438896504"
+    commit: 573df967bb5bc30cf23e542b8d0dff03d3bf5ee0
+    recorded_at: 2026-10-20T22:32:20Z

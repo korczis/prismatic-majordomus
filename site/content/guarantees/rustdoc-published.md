@@ -1,7 +1,7 @@
 +++
 title = "The crate's rustdoc is published at /rustdoc with the site, built from the commit the site names, and is never committed"
 description = "https://majordomus.dev/rustdoc/ serves the crate's reference as rustdoc rendered it, from the"
-weight = 184
+weight = 187
 [extra]
 claim_id = "rustdoc-published"
 status = "guaranteed"

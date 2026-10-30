@@ -25,4 +25,15 @@ evidence_required:
   - unbuilt_checkout_gets_a_useful_answer
 risk: "Low."
 created_at: 2026-09-11
-updated_at: 2026-09-11
+updated_at: 2026-10-14T07:58:59Z
+started_at: 2026-10-14T07:58:52Z
+started_event: sha256:94ae7bf3f07a741a23bd47ed7b564f55f69237928fbde9ca75aa9923078a7274
+completed_at: 2026-10-14T07:58:59Z
+completed_event: sha256:0bd1c890168ed38b02f3044b09c0d1bb9f8a7b50bbd0ffc386426af84d54f60a
+evidence:
+  - covers: unbuilt_checkout_gets_a_useful_answer
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib a_surface_whose_producer_has_not_run_says_what_to_run"
+    result: "test result: ok. 1 passed; 0 failed (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T07:58:56Z

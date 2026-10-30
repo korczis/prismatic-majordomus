@@ -1,7 +1,7 @@
 +++
 title = "The session brief"
 description = "the session brief: `majordomus brief` and `brief.session` — one line and a few about what surrounds a session (its episode and task, the peers of every board, the mesh, the integration queue, the derive lock), who composes it, the policy switch, and the Claude Code mod that keeps a session briefed and awake"
-weight = 62
+weight = 63
 [extra]
 source = "docs/BRIEF.md"
 +++
@@ -57,6 +57,7 @@ is what a forwarded request says, and a person never needs it.
 | `peers` | `peers.list` | attached workers across the boards read, every board that could not be read with its reason, overlapping claims, and up to eight workers by name with what they announced |
 | `mesh` | the mesh runtime | links connected and failing, claims held and this runtime's share, and what the journal addresses to this runtime: open reviews naming it, handovers nobody consumed, overlaps with its claims |
 | `integration` | `majordomus prs brief` | the queue as the last observation of the forge left it, or that this checkout never observed it |
+| `release` | `release.currency` | whether the trunk's landed work is released: current, owed with the count and the age of the oldest landing, overdue past six hours, or unread with why (I3070) |
 | `derive` | the derive lock | its holder, whether that process runs, how long it has held the lock, and the priority marker; `undeclared` in a repository that ships no lock |
 
 </div>

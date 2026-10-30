@@ -1,0 +1,39 @@
+id: I4229
+milestone: development-runtime
+title: "The image's build stage carries every file the crate embeds"
+slug: the-build-stage-carries-every-embedded-file
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Fail validate, not the image build, when the executable embeds a file the image's compiling stages do not copy: a unit test of the Dockerfile renderer walks the package's non-test sources, resolves every include_str! and include_bytes! against the file that names it, and requires each to fall under a path the deps or build stage copies."
+why: "Train 6 (I2674) embedded share/mesh-cache-provider/* in mesh/cache_provision.rs while the image's build stage copied apps/majordomus-cli alone, and master's docker-image job failed (run 40189935629 on 71857dbb609: couldn't read share/mesh-cache-provider/policy.json). A pull request builds the image only when the image's own definition changes, so the defect reached master unseen. Train 7 moved the payload under apps/majordomus-cli/assets/, which the build stage copies; #2523 wrote this guard alongside a COPY share fix that the move made unnecessary."
+current_state: "On 2efeacea031 nothing short of building the image checks that an embedded file reaches the build context."
+desired_state: "deploy::render::tests::the_build_stage_carries_every_file_the_package_embeds passes on master's layout and fails, naming the file and the path, when a source embeds a file outside what the deps and build stages copy."
+scope:
+  - ".ai/repo/project/issues/I4229.yaml"
+  - "apps/majordomus-cli/src/deploy/render.rs"
+non_scope:
+  - "Changing what the image copies: master's layout already carries every embedded file"
+  - "Embeds written through concat! or env!, which name no literal path"
+acceptance_criteria:
+  - "The test passes on master's sources"
+  - "A source that embeds ../../../share/advisors.yaml fails the test, naming that source and that path"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib deploy::render::tests::the_build_stage_carries_every_file_the_package_embeds"
+evidence_required:
+  - "embedded_files_reach_the_build_stage"
+depends_on: []
+serves: []
+created_at: 2026-10-25
+updated_at: 2026-10-28T12:21:51Z
+started_at: 2026-10-28T12:21:13Z
+started_event: sha256:5b94084682b89e2a8ee5e316d419ed92d0fd167ea7b54c69a934555e364f328e
+completed_at: 2026-10-28T12:21:51Z
+completed_event: sha256:696786b194b53fd1b252a9c86113ee65a360c836caee55219213f16bd2b885e7
+evidence:
+  - covers: embedded_files_reach_the_build_stage
+    type: test
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib deploy::render::tests::"
+    result: "18 passed, 0 failed: the_build_stage_carries_every_file_the_package_embeds passes on master's sources; an_embed_the_build_stage_does_not_copy_is_named_with_its_source_and_path names src/advisors.rs: ../../../share/advisors.yaml, and fails (left: []) when the guard is mutated to report nothing"
+    commit: 81ef931a3e156907f1784c64c509884f565c17f0
+    recorded_at: 2026-10-28T12:21:39Z

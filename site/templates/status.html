@@ -4,7 +4,10 @@
 {%- set st = page.extra.status -%}
 {%- set rows = [c for c in caps.claims if c.status == st] -%}
 {%- set ev_model = load_data(path="data/registry/product.json") -%}{%- set ev = ev_model.evidence -%}
-<p class="mb-6 flex flex-wrap items-center gap-3">{%- set status = st -%}{%- set status_kind = "claim" -%}{% include "partials/status-badge.html" %}<span class="font-mono text-sm text-body-subtle">{{ rows | length }} claims declared</span>{% if st == "guaranteed" %}<span class="text-sm text-body">{% if ev.available %}<span class="font-mono font-bold text-heading">{{ ev.supported }}</span> supported by a recorded run{% else %}support by a recorded run: unknown, no evidence is recorded{% endif %}</span>{% endif %}</p>
+{#- the two figures /guarantees/ shows, each saying what it counts (I4317) -#}
+{%- set ci = load_data(path="data/evidence.json", required=false) -%}
+{%- set ci_figure %}{% include "partials/run-figure.html" %}{% endset -%}{%- set ci_figure = ci_figure | trim -%}
+<p class="mb-6 flex flex-wrap items-center gap-3">{%- set status = st -%}{%- set status_kind = "claim" -%}{% include "partials/status-badge.html" %}<span class="font-mono text-sm text-body-subtle">{{ rows | length }} claims declared</span>{% if st == "guaranteed" %}{%- set sf_tag = "span" -%}{%- set sf_class = "text-sm text-body" -%}{%- set sf_links = true -%}{% include "partials/supported-figure.html" %}<span class="text-sm text-body" data-ledger-supported="{% if ev.available %}{{ ev.supported }}{% else %}unknown{% endif %}">{% if ev.available %}<span class="font-mono font-bold text-heading">{{ ev.supported }}</span> supported by the runs the committed ledger records, the verdict each claim below shows{% else %}support by the runs the committed ledger records: unknown, no evidence is recorded{% endif %}</span>{% endif %}</p>
 <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
   {%- for c in rows -%}
   <li class="min-w-0"><a href="{{ get_url(path="/guarantees/" ~ c.id ~ "/", trailing_slash=true) }}" class="block h-full min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">

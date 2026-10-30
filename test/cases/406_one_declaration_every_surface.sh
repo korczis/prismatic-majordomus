@@ -5,9 +5,10 @@
 #
 # What is proved: a conforming tree reports OK; each of these reports FAIL, with a finding that
 # names it — a capability the registry's order does not put first, a surface that drifted from the
-# registry, a picker that offers a capability the registry does not have, a picker missing one it
-# has, a published slice that lags the registry, no slice published, no block rendered, and a tree
-# without the registry. Rule: project.homepage-tells-a-declared-story.
+# registry, a picker that inlines options besides the one it shows (I3759: it fetches the rest),
+# a picker that draws nothing from the slice, a published slice that lags the registry, no slice
+# published, no block rendered, and a tree without the registry. Rule:
+# project.homepage-tells-a-declared-story.
 . "$ROOT/test/lib.sh"
 CHECK="$ROOT/scripts/ci/homepage-check"
 [ -x "$CHECK" ] || { echo "    scripts/ci/homepage-check is missing or not executable"; exit 1; }
@@ -42,7 +43,7 @@ JSON
 <html><head><title>home</title></head><body><main>
 <section id="hero"><a href="/x/">x</a>
 <div class="c" data-surfaces x-data="{}">
-<label>capability <select data-surface-picker><option value="alpha.list">alpha.list</option><option value="beta.show" selected>beta.show</option><option value="gamma.run">gamma.run</option></select></label>
+<label>capability <select data-surface-picker><option value="beta.show" selected>beta.show</option><template x-for="c in (list || []).filter((c) => c.id !== 'beta.show')" x-bind:key="c.id"><option x-bind:value="c.id" x-text="c.id"></option></template></select></label>
 <dl>
 <div><dt>declared as</dt><dd><a data-surface-id="beta.show" x-bind:data-surface-id="cap ? cap.id : 'beta.show'" href="/r/">beta.show</a></dd></div>
 <div><dt>command line</dt><dd data-surface="cli">majordomus beta show</dd></div>
@@ -74,11 +75,11 @@ expect_fail "beta.show's http reads 'GET /api/v1/other', the registry says 'GET 
 fresh; sed -i.bak 's#data-surface="mcp">majordomus_beta#data-surface="mcp">majordomus_typed#' "$F/site/public/index.html"
 expect_fail "beta.show's mcp reads 'majordomus_typed'" "a drifted MCP tool"
 
-# --- the picker offers exactly the registry's capabilities
-fresh; sed -i.bak 's#<option value="gamma.run">gamma.run</option>#<option value="gamma.run">gamma.run</option><option value="typed.in">typed.in</option>#' "$F/site/public/index.html"
-expect_fail "not in the registry typed.in" "a capability typed into the picker"
-fresh; sed -i.bak 's#<option value="alpha.list">alpha.list</option>##' "$F/site/public/index.html"
-expect_fail "missing alpha.list" "a capability the picker leaves out"
+# --- the picker ships the one capability it shows and draws the rest from the slice (I3759)
+fresh; sed -i.bak 's#<option value="beta.show" selected>beta.show</option>#<option value="alpha.list">alpha.list</option><option value="beta.show" selected>beta.show</option>#' "$F/site/public/index.html"
+expect_fail "the picker ships 2 option\\(s\\) \\(alpha.list, beta.show\\)" "a picker that inlines the registry again"
+fresh; sed -i.bak 's#<template x-for[^<]*<option[^<]*</option></template>##' "$F/site/public/index.html"
+expect_fail "draws no options from the slice it fetches" "a picker with nothing to draw from"
 fresh; sed -i.bak 's#<select data-surface-picker>#<select>#' "$F/site/public/index.html"
 expect_fail "offers no data-surface-picker" "no picker"
 

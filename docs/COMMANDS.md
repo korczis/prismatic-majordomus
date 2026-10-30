@@ -24,20 +24,24 @@ carried a fourth copy. Every one of those lists was correct on the day it was wr
 
 The graph replaces the lists with one composition and a set of projections.
 
-```text
-   clap tree            share/commands.yaml         just --dump
-   (the executable)     (the shell tool)            (the workflows)
-         │                     │                          │
-         └──────────┬──────────┴──────────┬───────────────┘
-                    ▼                     ▼
-              contributors          capability registry
-                    └──────────┬──────────┘
-                               ▼
-                        CommandGraph  ── fingerprint
-                               │
-    ┌──────────┬───────────────┼───────────────┬──────────────┐
-    ▼          ▼               ▼               ▼              ▼
-  bridge   completion      MCP · HTTP       Cockpit         docs
+```mermaid
+flowchart TD
+  subgraph contributors["contributors"]
+    clap["clap tree<br/><small>the executable</small>"]
+    yaml["share/commands.yaml<br/><small>the shell tool</small>"]
+    dump["just --dump<br/><small>the workflows</small>"]
+  end
+  registry["capability registry<br/>capabilities.list"]
+  commandGraph["CommandGraph<br/>commands.graph"]
+  fingerprint["fingerprint"]
+  contributors --> commandGraph
+  registry --> commandGraph
+  commandGraph --- fingerprint
+  commandGraph --> bridge["workflow bridge<br/>majordomus commands bridge"]
+  commandGraph --> completion["completion<br/>majordomus completion query"]
+  commandGraph --> api["MCP · HTTP"]
+  commandGraph --> cockpit["Cockpit"]
+  commandGraph --> docs["docs"]
 ```
 
 Nothing registers with the graph. Every node is *read* from a declaration that already

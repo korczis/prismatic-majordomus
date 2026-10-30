@@ -1,0 +1,31 @@
+id: I3247
+milestone: an-unmet-criterion-is-drafted-into-work
+title: "Work is drafted for each criterion nothing serves, under a key derived from the intent, the criterion and the gap, so a second draft drafts the same work"
+slug: work-is-drafted-for-each-unmet-criterion
+priority: p1
+profile: implementation
+objective: "Revive I2218 from origin/chore/the-owner-packs-are-planned (ec37317fe7c, 2026-10-10, never landed): intents.draft_plan prints one issue draft per criterion no live issue serves and the gap did not observe satisfied, plus one per gap work item naming no issue, each with serves, scope from the criterion's reference, acceptance naming the criterion's evidence and a draft key derived from (intent id, criterion id, gap kind)."
+why: "Coverage already refuses a criterion nothing serves (criterion_uncovered, intent_plan.rs:522) and stops there. The owner's demand that the loop not file duplicate issues on every evaluation (2026-09-15, 2026-10-08) needs the identity to be derived rather than remembered. Proposed in ADR 0191 (A plan drafted from an intent is a proposal, checked by the plan's own validators before any record is written); ADR 0192 (Replanning is bounded, idempotent and never weakens its intent) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c141#1, chatgpt-majordomus:c196#3, chatgpt-majordomus:c198#15, chatgpt-majordomus:c221#2, chatgpt-majordomus:c270#4."
+current_state: "No draft of work exists; criterion_uncovered names the criterion and stops; intents.propose writes only an intent with no milestone or criterion (ADR 0144)."
+desired_state: "draft_plan is pure over the intent, the plan, the gap and the critique; the draft key is stable across runs and is how a later reconcile recognises the item."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "apps/majordomus-cli/src/intent_plan.rs"
+  - "apps/majordomus-cli/src/intent_review.rs"
+  - "apps/majordomus-cli/src/commands/intent.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/tests/intent_plan.rs"
+  - "docs/PLANNING.md"
+depends_on:
+  - "I3246"
+acceptance_criteria:
+  - "An intent with one uncovered criterion drafts exactly one issue serving it; adding a live issue that serves it drafts none"
+  - "A criterion the gap observed satisfied drafts nothing"
+  - "Two drafts at one commit carry the same keys in the same order"
+validation:
+  - "majordomus plan validate"
+  - "majordomus intent validate"
+evidence_required:
+  - "test_work_is_drafted_once_per_unmet_criterion"
+created_at: 2026-10-18
+updated_at: 2026-10-18

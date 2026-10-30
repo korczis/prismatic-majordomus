@@ -1,0 +1,35 @@
+id: I3179
+milestone: runtime-lifecycle
+title: "The runtime reports one typed state, with how it got there, and every surface shows it"
+slug: the-runtime-has-one-state
+priority: p2
+profile: implementation
+objective: "Extend ServerStanding into one runtime state per checkout (keeping absent, starting, ready, outdated and stale, adding building, mesh attaching, operational, degraded, stopping, stopped and failed) derived from the lease, the readiness report and the mesh doctor, with the time and reason of the last transition, and serve it through server status, the briefing and /ui."
+why: "The 10-12 bootstrap design asked for readiness to be discoverable and honest; I2157 made 'ready' strict, but a client still assembles the state from three reads, and 'building' is not a state anyone can see. Critique 10-18: server.status already serves ServerStanding, and shells compare its words, so this issue extends it rather than competing with it. A dead server cannot record its own transition. It stays in milestone runtime-lifecycle beside I3180, which produces 'building', and serves no criterion of nothing-in-the-mesh-waits-on-something-dead: I3182 classifies servers from ServerStanding as server.status serves it, without this issue. Sources: chatgpt-majordomus:c233#2, chatgpt-majordomus:c096#4."
+current_state: "Verified: server.status already serves ServerStanding {absent, starting, ready, outdated, stale} from the lease (capability/builtin/server.rs), and shells compare its words; I2157 DONE (ready means ready); health readiness and mesh doctor are separate reads; no 'building' state exists; .envrc watches .ai/local/state/mcp/server.json."
+desired_state: "server.status carries the extended ServerStanding and its last transition, persisted under .ai/local/state/runtime/ only when it changes, so direnv does not reload in a loop."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/server.rs"
+  - "apps/majordomus-cli/src/lease.rs"
+  - "apps/majordomus-cli/src/capability/builtin/health.rs"
+  - "docs/MCP.md"
+  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
+  - "apps/majordomus-cli/src/ui/dashboard.rs"
+  - "apps/majordomus-cli/src/commands/serve.rs"
+  - "scripts/reap-orphans"
+non_scope:
+  - "A state machine that drives the server; the state is read, not commanded"
+  - "Replacing ServerStanding or renaming any of its words"
+acceptance_criteria:
+  - "Each state has a test that produces it"
+  - "An unchanged state writes nothing"
+  - "The state extends ServerStanding. The words and JSON values absent, starting, ready, outdated and stale are unchanged and pinned by a test. building, mesh_attaching, operational, degraded, stopping, stopped and failed are added variants."
+  - "Transitions are persisted in a record under .ai/local/state/runtime/, never in .ai/local/state/mcp/server.json, so .envrc's watch_file does not reload when a transition is written."
+  - "Each writer is named: the serving process records its own starting, ready and stopping transitions; the reader that finds a lease stale (serve ensure, scripts/reap-orphans or server.status) records stopped or failed for a process that is gone; a record is written only when the state changes."
+validation:
+  - "majordomus plan validate"
+  - "cargo test --lib capability::builtin::server"
+evidence_required:
+  - "test_runtime_state_transitions"
+created_at: 2026-10-18
+updated_at: 2026-10-18

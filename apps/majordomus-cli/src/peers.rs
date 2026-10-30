@@ -138,6 +138,19 @@ pub enum Transport {
     Http,
 }
 
+/// The most characters [`PeerBoard::summary`] keeps of one claim's intent.
+pub const SUMMARY_INTENT: usize = 60;
+
+/// The most characters [`PeerBoard::summary`] keeps of a client's name or a claim's name.
+pub const SUMMARY_NAME: usize = 32;
+
+/// The most claims [`PeerBoard::summary`] names for one peer; the rest are counted.
+pub const SUMMARY_CLAIMS: usize = 3;
+
+/// The most characters [`PeerBoard::summary`] spends on the whole board, before the peers
+/// that do not fit are counted rather than named.
+pub const SUMMARY_LINE: usize = 600;
+
 /// One claim a peer has made: what it is working on, and where.
 ///
 /// A peer may hold several. The `name` is what tells them apart and what makes announcing
@@ -225,6 +238,13 @@ pub struct Peer {
     pub connected_at: String,
     /// Seconds since its last message.
     pub last_seen_seconds_ago: u64,
+    /// Seconds since it last did real work — a request other than `ping`, or an
+    /// announcement — or absent when it has done none (I3990). `last_seen_seconds_ago`
+    /// counts a keep-alive ping as a message, so a session stuck on a permission dialog
+    /// behind a bridge that pings every 20 s looks seen forever; this is the number its
+    /// mesh claims live by.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub progress_seconds_ago: Option<u64>,
     /// Whether the session is still attached. A peer that announced something and then
     /// went away is kept and listed with `attached: false`: what it said it was working on
     /// outlives the connection that said it, because the work does.
@@ -254,6 +274,12 @@ pub struct Peer {
     /// which checkout's server it asked.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub checkout: Option<PeerCheckout>,
+    /// Where the worker behind this peer can be reached from outside its connection: its
+    /// machine, its process, its provider session and the socket other sessions message it
+    /// on; see [`PeerAddress`]. Derived when the peer attached, never announced by hand.
+    /// Absent for a client that exposes none of it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub address: Option<PeerAddress>,
 }
 
 /// Two peers that claimed the same ground.
@@ -336,12 +362,196 @@ pub fn claims_meet(a: &str, b: &str) -> bool {
     a == b || b.starts_with(&format!("{a}/")) || a.starts_with(&format!("{b}/"))
 }
 
+// ---------------------------------------------------------------- the address (I3956)
+
+/// Where the worker behind a peer can be reached from outside its MCP connection.
+///
+/// A board row named a client and a version, and nothing a person or another session could
+/// act on: on 2026-10-22 the session running a 33-minute remote `cargo test --doc` could be
+/// found only by walking an ssh client's parent chain to a provider pid, its messaging
+/// socket, and a start time matched by hand. Every one of those facts is in the environment
+/// the provider hands the processes it starts — the MCP server among them — so the address
+/// is read from there when the peer attaches, and never asked of the model.
+///
+/// The provider's messaging *token* is a credential and is never read: the address is where
+/// to knock, not the key.
+///
+/// ```
+/// use majordomus_cli::peers::PeerAddress;
+/// // a client that exposes nothing still has a machine and a parent process
+/// let bare = PeerAddress::from_env(|_| None, Some(4242), "lundra").unwrap();
+/// assert_eq!((bare.host.as_str(), bare.pid), ("lundra", Some(4242)));
+/// assert!(bare.provider.is_none() && bare.mesh_session().is_none());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct PeerAddress {
+    /// The provider whose session this is (`claude-code`), when its environment says so.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub provider: Option<String>,
+    /// The machine the worker runs on.
+    pub host: String,
+    /// The worker's own process: the provider's pid, not the MCP bridge it started.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pid: Option<u32>,
+    /// The provider's id for the session, the one its lifecycle hooks are given.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub session: Option<String>,
+    /// The socket other sessions on the same machine message this one through.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub socket: Option<String>,
+}
+
+/// The `_meta` key a bridge carries the address under in the `initialize` it forwards.
+pub(crate) const ADDRESS_META: &str = "dev.majordomus/address";
+
+impl PeerAddress {
+    /// The address an environment describes. `env` answers a variable by name; `parent` is
+    /// the pid of the process that started this one, used when the provider names no pid of
+    /// its own; `host` is the machine. `None` only when there is no host to name.
+    ///
+    /// ```
+    /// use majordomus_cli::peers::PeerAddress;
+    /// let env = |k: &str| match k {
+    ///     "CLAUDE_CODE_SESSION_ID" => Some("s-1".to_string()),
+    ///     "CLAUDE_CODE_MESSAGING_TOKEN" => Some("secret".to_string()),
+    ///     _ => None,
+    /// };
+    /// let a = PeerAddress::from_env(env, Some(7), "mac").unwrap();
+    /// assert_eq!(a.provider.as_deref(), Some("claude-code"));
+    /// assert_eq!(a.pid, Some(7), "no provider pid: the parent is the worker");
+    /// assert!(!serde_json::to_string(&a).unwrap().contains("secret"));
+    /// ```
+    pub fn from_env(
+        env: impl Fn(&str) -> Option<String>,
+        parent: Option<u32>,
+        host: &str,
+    ) -> Option<PeerAddress> {
+        let host = host.trim();
+        if host.is_empty() {
+            return None;
+        }
+        let read = |k: &str| {
+            env(k)
+                .map(|v| v.trim().to_string())
+                .filter(|v| !v.is_empty())
+        };
+        let session = read("CLAUDE_CODE_SESSION_ID");
+        let socket = read("CLAUDE_CODE_MESSAGING_SOCKET");
+        let claude = session.is_some() || socket.is_some() || read("CLAUDECODE").is_some();
+        let pid = read("CLAUDE_PID")
+            .and_then(|p| p.parse::<u32>().ok())
+            .filter(|p| *p > 1)
+            .or(parent.filter(|p| *p > 1));
+        Some(PeerAddress {
+            provider: claude.then(|| "claude-code".to_string()),
+            host: host.to_string(),
+            pid,
+            session,
+            socket,
+        })
+    }
+
+    /// The address of the worker that started this process: its environment, its parent
+    /// and this machine.
+    pub(crate) fn of_this_process() -> Option<PeerAddress> {
+        Self::from_env(
+            |k| std::env::var(k).ok(),
+            Some(std::os::unix::process::parent_id()),
+            &crate::integration::drain::host(),
+        )
+    }
+
+    /// The address a bridge carried in `initialize` params, under
+    /// `_meta["dev.majordomus/address"]`.
+    ///
+    /// ```
+    /// use majordomus_cli::peers::PeerAddress;
+    /// let params = serde_json::json!({ "_meta": { "dev.majordomus/address": { "host": "mac", "pid": 9 } } });
+    /// assert_eq!(PeerAddress::from_initialize(&params).unwrap().pid, Some(9));
+    /// assert!(PeerAddress::from_initialize(&serde_json::json!({})).is_none());
+    /// ```
+    pub fn from_initialize(params: &serde_json::Value) -> Option<PeerAddress> {
+        serde_json::from_value(params.get("_meta")?.get(ADDRESS_META)?.clone()).ok()
+    }
+
+    /// The id this provider session has on the mesh, the one the edit guard judges its
+    /// claims under (`<provider>-<session>`): what joins a board row to a mesh session.
+    /// `None` unless both the provider and its session id are known.
+    ///
+    /// ```
+    /// use majordomus_cli::peers::PeerAddress;
+    /// let env = |k: &str| (k == "CLAUDE_CODE_SESSION_ID").then(|| "s1".to_string());
+    /// let a = PeerAddress::from_env(env, Some(7), "mac").unwrap();
+    /// assert_eq!(a.mesh_session().as_deref(), Some("claude-code-s1"));
+    /// let bare = PeerAddress::from_env(|_| None, Some(7), "mac").unwrap();
+    /// assert_eq!(bare.mesh_session(), None);
+    /// ```
+    pub fn mesh_session(&self) -> Option<String> {
+        Some(format!(
+            "{}-{}",
+            self.provider.as_ref()?,
+            self.session.as_ref()?
+        ))
+    }
+
+    /// One line a person can act on: `claude-code pid 85501 on mac, /tmp/cc-socks/85501.sock`.
+    ///
+    /// ```
+    /// use majordomus_cli::peers::PeerAddress;
+    /// let a = PeerAddress::from_env(|_| None, Some(12), "lundra").unwrap();
+    /// assert_eq!(a.line(), "pid 12 on lundra");
+    /// ```
+    pub fn line(&self) -> String {
+        let mut out = String::new();
+        if let Some(p) = &self.provider {
+            out.push_str(p);
+            out.push(' ');
+        }
+        if let Some(pid) = self.pid {
+            out.push_str(&format!("pid {pid} "));
+        }
+        out.push_str(&format!("on {}", self.host));
+        if let Some(socket) = &self.socket {
+            out.push_str(&format!(", {socket}"));
+        }
+        out
+    }
+}
+
+/// Put the address of the worker that started this process into an `initialize` message's
+/// params, under `_meta["dev.majordomus/address"]`, unless the client already put one there.
+///
+/// ```
+/// use majordomus_cli::peers::{with_address, PeerAddress};
+/// let a = PeerAddress::from_env(|_| None, Some(3), "mac").unwrap();
+/// let mut init = serde_json::json!({ "method": "initialize", "params": { "clientInfo": { "name": "x" } } });
+/// with_address(&mut init, &a);
+/// assert_eq!(PeerAddress::from_initialize(&init["params"]), Some(a));
+/// ```
+pub fn with_address(message: &mut serde_json::Value, address: &PeerAddress) {
+    let Some(params) = message.get_mut("params").and_then(|p| p.as_object_mut()) else {
+        return;
+    };
+    let meta = params
+        .entry("_meta")
+        .or_insert_with(|| serde_json::Value::Object(Default::default()));
+    // an address always serialises (string keys, plain values); a `_meta` that is not an
+    // object is left as the client sent it
+    if let (Some(meta), Ok(v)) = (meta.as_object_mut(), serde_json::to_value(address)) {
+        meta.entry(ADDRESS_META).or_insert(v);
+    }
+}
+
 struct Slot {
     client: ClientInfo,
     transport: Transport,
     connected_at: SystemTime,
     last_seen: Instant,
+    /// When it last did real work: see [`Peer::progress_seconds_ago`].
+    last_progress: Option<Instant>,
     departed: bool,
+    /// Where the worker can be reached, once its client said so (I3956).
+    address: Option<PeerAddress>,
     /// The peer's claims, by [`claim_key`]. A `BTreeMap` rather than a `Vec` because
     /// announcing under a name a peer already used must replace that claim and not append
     /// a second one — idempotence is the map, not a search.
@@ -407,10 +617,13 @@ impl PeerBoard {
                 transport,
                 connected_at: SystemTime::now(),
                 last_seen: Instant::now(),
+                last_progress: None,
                 departed: false,
+                address: None,
                 claims: BTreeMap::new(),
             },
         );
+        crate::change::BLACKBOARD.advance();
         PeerId::new(seq)
     }
 
@@ -418,7 +631,40 @@ impl PeerBoard {
     pub fn identify(&self, id: &PeerId, client: ClientInfo) {
         if let Some(s) = self.lock().get_mut(&id.seq()) {
             s.client = client;
+            crate::change::BLACKBOARD.advance();
             s.last_seen = Instant::now();
+        }
+    }
+
+    /// Where the worker behind a peer can be reached, derived when it attached (I3956).
+    ///
+    /// ```
+    /// use majordomus_cli::peers::{PeerAddress, PeerBoard, Transport};
+    /// let board = PeerBoard::new();
+    /// let id = board.attach(Transport::Http);
+    /// let env = |k: &str| match k {
+    ///     "CLAUDE_CODE_SESSION_ID" => Some("877e4b89-549b".to_string()),
+    ///     "CLAUDE_CODE_MESSAGING_SOCKET" => Some("/tmp/cc-socks/85501.sock".to_string()),
+    ///     "CLAUDE_PID" => Some("85501".to_string()),
+    ///     _ => None,
+    /// };
+    /// board.locate(&id, PeerAddress::from_env(env, None, "mac").unwrap());
+    /// let listed = board.get(&id).unwrap();
+    /// let address = listed.address.expect("the board row carries the address");
+    /// assert_eq!(address.socket.as_deref(), Some("/tmp/cc-socks/85501.sock"));
+    /// assert_eq!(address.mesh_session().as_deref(), Some("claude-code-877e4b89-549b"));
+    /// ```
+    pub fn locate(&self, id: &PeerId, address: PeerAddress) {
+        if let Some(s) = self.lock().get_mut(&id.seq()) {
+            s.address = Some(address);
+        }
+    }
+
+    /// [`PeerBoard::locate`] when there is an address: a process whose machine has no name
+    /// ([`PeerAddress::of_this_process`] answers `None`) leaves the row as it is.
+    pub(crate) fn locate_known(&self, id: &PeerId, address: Option<PeerAddress>) {
+        if let Some(address) = address {
+            self.locate(id, address);
         }
     }
 
@@ -427,6 +673,44 @@ impl PeerBoard {
         if let Some(s) = self.lock().get_mut(&id.seq()) {
             s.last_seen = Instant::now();
         }
+    }
+
+    /// This peer did real work: a request that is not a keep-alive (I3990). It is what the
+    /// peer's mesh claims live by, and it is never set by a `ping` — a bridge pings every
+    /// 20 s whether or not anybody is answering the dialog in front of its client.
+    ///
+    /// ```
+    /// use majordomus_cli::peers::{PeerBoard, Transport};
+    /// let board = PeerBoard::new();
+    /// let p = board.attach(Transport::Http);
+    /// board.touch(&p);
+    /// assert_eq!(board.get(&p).unwrap().progress_seconds_ago, None, "seen is not progress");
+    /// assert!(board.progressed_at(&p).is_none());
+    /// board.progress(&p);
+    /// assert_eq!(board.get(&p).unwrap().progress_seconds_ago, Some(0));
+    /// assert!(board.progressed_at(&p).is_some());
+    /// ```
+    pub fn progress(&self, id: &PeerId) {
+        if let Some(s) = self.lock().get_mut(&id.seq()) {
+            let now = Instant::now();
+            s.last_seen = now;
+            s.last_progress = Some(now);
+        }
+    }
+
+    /// When this peer last did real work, on this process's clock; `None` for a peer that
+    /// has done none, or is not on the board.
+    ///
+    /// ```
+    /// use majordomus_cli::peers::{PeerBoard, Transport};
+    /// let board = PeerBoard::new();
+    /// let p = board.attach(Transport::Http);
+    /// assert!(board.progressed_at(&p).is_none(), "attached is not progress");
+    /// board.progress(&p);
+    /// assert!(board.progressed_at(&p).is_some());
+    /// ```
+    pub fn progressed_at(&self, id: &PeerId) -> Option<Instant> {
+        self.lock().get(&id.seq()).and_then(|s| s.last_progress)
     }
 
     /// Record a peer's unnamed claim, and answer with who else is on that ground.
@@ -483,6 +767,23 @@ impl PeerBoard {
         intent: &str,
         scope: Vec<String>,
     ) -> Option<Announced> {
+        let announced = self.announce_locked(id, claim, intent, scope);
+        if announced.is_some() {
+            if claim.is_some() {
+                self.drop_repeated_departures(id);
+            }
+            crate::change::BLACKBOARD.advance();
+        }
+        announced
+    }
+
+    fn announce_locked(
+        &self,
+        id: &PeerId,
+        claim: Option<&str>,
+        intent: &str,
+        scope: Vec<String>,
+    ) -> Option<Announced> {
         let mut slots = self.lock();
         if !slots.contains_key(&id.seq()) {
             return None;
@@ -491,6 +792,8 @@ impl PeerBoard {
         let key = claim_key(claim);
         let s = slots.get_mut(&id.seq())?;
         s.last_seen = Instant::now();
+        // saying what one is doing is doing something: an announcement is progress (I3990)
+        s.last_progress = Some(s.last_seen);
         s.departed = false;
         let released = s
             .claims
@@ -556,6 +859,11 @@ impl PeerBoard {
     /// assert_eq!(listed[0].announcement.as_ref().unwrap().intent, "the ordering rule");
     /// ```
     pub fn detach(&self, id: &PeerId) {
+        self.detach_locked(id);
+        crate::change::BLACKBOARD.advance();
+    }
+
+    fn detach_locked(&self, id: &PeerId) {
         let mut slots = self.lock();
         match slots.get_mut(&id.seq()) {
             Some(s) if !s.claims.is_empty() => s.departed = true,
@@ -577,6 +885,37 @@ impl PeerBoard {
         }
     }
 
+    /// Drop the departed slots that `id` has just made redundant by announcing (I4227).
+    ///
+    /// A client that re-attaches on a timer and announces the same named claim each time
+    /// (the ChatGPT bridge, every ten minutes) is one worker, but it left a departed slot
+    /// behind at every reconnect: on 2026-10-25 all [`RETAINED`] slots of the primary
+    /// checkout's board were copies of that one bridge, so every real session that
+    /// departed lost its retained announcement at once — the very thing retention keeps.
+    ///
+    /// A departed slot is the same worker when it has the announcer's client name and
+    /// address (both absent counts as the same), and it is redundant when every one of its
+    /// claims is a named claim the announcer now holds under the same name. A slot that
+    /// says anything more — an unnamed claim, or a name the announcer does not hold — is
+    /// kept, and so is another session that happens to use the same claim name, because
+    /// its address differs.
+    fn drop_repeated_departures(&self, id: &PeerId) {
+        let mut slots = self.lock();
+        let Some(me) = slots.get(&id.seq()) else {
+            return;
+        };
+        let (client, address) = (me.client.name.clone(), me.address.clone());
+        let held: Vec<String> = me.claims.keys().cloned().collect();
+        slots.retain(|seq, s| {
+            let repeats = *seq != id.seq()
+                && s.departed
+                && s.client.name == client
+                && s.address == address
+                && s.claims.keys().all(|k| !k.is_empty() && held.contains(k));
+            !repeats
+        });
+    }
+
     /// Every peer, in attachment order.
     pub fn list(&self) -> Vec<Peer> {
         self.lock().iter().map(|(seq, s)| peer(*seq, s)).collect()
@@ -594,31 +933,62 @@ impl PeerBoard {
         self.len() == 0
     }
 
-    /// The names of every peer, one line, for a log or the `initialize` instructions.
+    /// The peers, one bounded line, for a log or the `initialize` instructions.
+    ///
+    /// Bounded because a client cuts the instructions it is handed: on 2026-10-22 five
+    /// peers with twenty claims made this line about 6 kB, Claude Code cut the
+    /// instructions inside it, and the sentences after it — the ones about the caller
+    /// itself — never reached the caller. Each claim keeps its name and the first
+    /// [`SUMMARY_INTENT`] characters of its intent, each peer at most [`SUMMARY_CLAIMS`]
+    /// claims, and the line at most [`SUMMARY_LINE`] characters; what is past a bound is
+    /// counted, and `majordomus_peers` carries every word of it.
     pub fn summary(&self) -> String {
+        use crate::environment::text::truncate;
         let peers = self.list();
         if peers.is_empty() {
             return "none".into();
         }
-        peers
-            .iter()
-            .map(|p| {
-                if p.claims.is_empty() {
-                    return format!("{} {} ({:?})", p.id, p.client.name, p.transport);
-                }
-                let claims = p
+        let mut line = String::new();
+        for (i, p) in peers.iter().enumerate() {
+            // a client and a claim name are the peer's own words too, and cut like them
+            let client = truncate(&p.client.name, SUMMARY_NAME);
+            let entry = if p.claims.is_empty() {
+                format!("{} {client} ({:?})", p.id, p.transport)
+            } else {
+                let mut claims = p
                     .claims
                     .iter()
-                    .map(|a| match &a.name {
-                        Some(n) => format!("{n}: {}", a.intent),
-                        None => a.intent.clone(),
+                    .take(SUMMARY_CLAIMS)
+                    .map(|a| {
+                        let intent = truncate(a.intent.trim(), SUMMARY_INTENT);
+                        match &a.name {
+                            Some(n) => format!("{}: {intent}", truncate(n, SUMMARY_NAME)),
+                            None => intent,
+                        }
                     })
-                    .collect::<Vec<_>>()
-                    .join(" | ");
-                format!("{} {} ({:?}: {claims})", p.id, p.client.name, p.transport)
-            })
-            .collect::<Vec<_>>()
-            .join("; ")
+                    .collect::<Vec<_>>();
+                if p.claims.len() > SUMMARY_CLAIMS {
+                    claims.push(format!("{} more", p.claims.len() - SUMMARY_CLAIMS));
+                }
+                format!(
+                    "{} {client} ({:?}: {})",
+                    p.id,
+                    p.transport,
+                    claims.join(" | ")
+                )
+            };
+            let sep = if line.is_empty() { "" } else { "; " };
+            if line.chars().count() + sep.len() + entry.chars().count() > SUMMARY_LINE {
+                line.push_str(&format!(
+                    "{sep}{} more peer(s), every claim in full: majordomus_peers",
+                    peers.len() - i
+                ));
+                break;
+            }
+            line.push_str(sep);
+            line.push_str(&entry);
+        }
+        line
     }
 
     fn lock(&self) -> std::sync::MutexGuard<'_, BTreeMap<u64, Slot>> {
@@ -633,12 +1003,14 @@ fn peer(seq: u64, s: &Slot) -> Peer {
         transport: s.transport,
         connected_at: rfc3339(s.connected_at),
         last_seen_seconds_ago: s.last_seen.elapsed().as_secs(),
+        progress_seconds_ago: s.last_progress.map(|t| t.elapsed().as_secs()),
         attached: !s.departed,
         claims: s.claims(),
         announcement: s.latest(),
         // a board does not know which checkout it is the board of; whoever gathered this
         // peer stamps it (`peers.list`), because that is the reader that asked a server
         checkout: None,
+        address: s.address.clone(),
     }
 }
 
@@ -871,6 +1243,153 @@ pub fn epoch_seconds(ts: &str) -> Option<i64> {
 mod tests {
     use super::*;
 
+    /// The address is read from what the provider hands its processes (I3956): the session,
+    /// the socket and the provider's pid, and never its messaging token. A provider pid that
+    /// cannot be parsed, or names init, gives way to the parent; with neither there is no pid.
+    #[test]
+    fn an_address_is_derived_from_the_providers_environment_and_never_carries_its_token() {
+        let env = |k: &str| match k {
+            "CLAUDECODE" => Some("1".to_string()),
+            "CLAUDE_CODE_SESSION_ID" => Some(" 877e4b89 ".to_string()),
+            "CLAUDE_CODE_MESSAGING_SOCKET" => Some("/tmp/cc-socks/24025.sock".to_string()),
+            "CLAUDE_CODE_MESSAGING_TOKEN" => Some("never-on-the-board".to_string()),
+            "CLAUDE_PID" => Some("24025".to_string()),
+            _ => None,
+        };
+        let a = PeerAddress::from_env(env, Some(99), "mac").unwrap();
+        assert_eq!(a.provider.as_deref(), Some("claude-code"));
+        assert_eq!(a.session.as_deref(), Some("877e4b89"), "trimmed");
+        assert_eq!(a.pid, Some(24025), "the provider's pid, not the parent's");
+        assert_eq!(a.mesh_session().as_deref(), Some("claude-code-877e4b89"));
+        assert_eq!(
+            a.line(),
+            "claude-code pid 24025 on mac, /tmp/cc-socks/24025.sock"
+        );
+        let text = serde_json::to_string(&a).unwrap();
+        assert!(!text.contains("never-on-the-board"), "{text}");
+        assert!(!text.contains("TOKEN"), "{text}");
+
+        let garbled = |k: &str| (k == "CLAUDE_PID").then(|| "not-a-pid".to_string());
+        assert_eq!(
+            PeerAddress::from_env(garbled, Some(5), "h").unwrap().pid,
+            Some(5)
+        );
+        let init = |k: &str| (k == "CLAUDE_PID").then(|| "1".to_string());
+        assert_eq!(PeerAddress::from_env(init, Some(1), "h").unwrap().pid, None);
+        assert!(PeerAddress::from_env(|_| None, Some(5), "  ").is_none());
+    }
+
+    /// A located peer is listed with its address, keeps it when it departs (the work it
+    /// announced outlives the connection, and so must the way to reach whoever did it), and
+    /// the address survives the wire a sibling board is read over.
+    #[test]
+    fn a_located_peer_is_listed_with_its_address_and_keeps_it_when_it_departs() {
+        let board = PeerBoard::new();
+        let unlocated = board.attach(Transport::Http);
+        let located = board.attach(Transport::Http);
+        let address = PeerAddress::from_env(|_| None, Some(4242), "lundra").unwrap();
+        board.locate(&located, address.clone());
+        board.locate(&PeerId::new(77), address.clone());
+        board.announce(&located, "a remote derive", vec!["apps".into()]);
+        let listed = board.list();
+        assert_eq!(listed.len(), 2, "locating an unknown peer adds nobody");
+        assert!(listed[0].address.is_none());
+        let text = serde_json::to_string(&listed[0]).unwrap();
+        assert!(!text.contains("address"), "{text}");
+        assert_eq!(listed[1].address.as_ref(), Some(&address));
+        board.detach(&unlocated);
+        board.detach(&located);
+        let gone = &board.list()[0];
+        assert!(!gone.attached);
+        assert_eq!(gone.address.as_ref(), Some(&address));
+        let back: Peer = serde_json::from_str(&serde_json::to_string(gone).unwrap()).unwrap();
+        assert_eq!(&back, gone);
+    }
+
+    /// A process that has no address (its machine has no name) leaves its row unlocated; one
+    /// that has one is located as `locate` would.
+    #[test]
+    fn locating_with_no_address_leaves_the_row_as_it_is() {
+        let board = PeerBoard::new();
+        let peer = board.attach(Transport::Stdio);
+        board.locate_known(&peer, None);
+        assert!(board.list()[0].address.is_none());
+        let address = PeerAddress::from_env(|_| None, Some(9), "mac").unwrap();
+        board.locate_known(&peer, Some(address.clone()));
+        assert_eq!(board.list()[0].address.as_ref(), Some(&address));
+        assert_eq!(PeerAddress::from_env(|_| None, Some(9), "  "), None);
+    }
+
+    /// The address a bridge carries is put into `initialize` params once: a client that
+    /// already carried one keeps its own, and params that are not an object are left alone.
+    #[test]
+    fn with_address_stamps_initialize_params_once() {
+        let mine = PeerAddress::from_env(|_| None, Some(3), "mac").unwrap();
+        let theirs = PeerAddress::from_env(|_| None, Some(4), "other").unwrap();
+        let mut init = serde_json::json!({ "method": "initialize", "params": {} });
+        with_address(&mut init, &theirs);
+        with_address(&mut init, &mine);
+        assert_eq!(PeerAddress::from_initialize(&init["params"]), Some(theirs));
+        let mut odd = serde_json::json!({ "method": "initialize", "params": [1] });
+        with_address(&mut odd, &mine);
+        assert_eq!(odd["params"], serde_json::json!([1]));
+        let mut bare = serde_json::json!({ "method": "initialize" });
+        with_address(&mut bare, &mine);
+        assert!(bare.get("params").is_none());
+        let wrong = serde_json::json!({ "_meta": { "dev.majordomus/address": "a string" } });
+        assert!(PeerAddress::from_initialize(&wrong).is_none());
+    }
+
+    /// The machine's own address is derived from this process, never empty.
+    #[test]
+    fn this_process_has_an_address() {
+        let a = PeerAddress::of_this_process().expect("a host");
+        assert!(!a.host.is_empty());
+        assert!(a.pid.is_some(), "a test runs under some parent");
+    }
+
+    /// An address names only what it knows: with no provider or no session there is no mesh
+    /// session to join, and its line leaves out the provider, the pid and the socket it lacks.
+    #[test]
+    fn an_address_without_a_provider_session_pid_or_socket_says_only_what_it_has() {
+        let bare = PeerAddress {
+            provider: None,
+            host: "mac".into(),
+            pid: None,
+            session: Some("s1".into()),
+            socket: None,
+        };
+        assert_eq!(bare.mesh_session(), None, "no provider, no mesh session");
+        assert_eq!(bare.line(), "on mac");
+        let sessionless = PeerAddress {
+            provider: Some("claude-code".into()),
+            session: None,
+            ..bare.clone()
+        };
+        assert_eq!(
+            sessionless.mesh_session(),
+            None,
+            "no session, no mesh session"
+        );
+        assert_eq!(sessionless.line(), "claude-code on mac");
+    }
+
+    /// An `initialize` carries an address only under `_meta["dev.majordomus/address"]`: no
+    /// `_meta`, or a `_meta` without the key, is no address; and a `_meta` that is not an
+    /// object is left as it is rather than replaced.
+    #[test]
+    fn an_address_is_read_and_written_only_under_its_meta_key() {
+        assert!(PeerAddress::from_initialize(&serde_json::json!({})).is_none());
+        assert!(
+            PeerAddress::from_initialize(&serde_json::json!({ "_meta": { "other": 1 } })).is_none()
+        );
+        let mine = PeerAddress::from_env(|_| None, Some(3), "mac").unwrap();
+        let mut odd = serde_json::json!({ "method": "initialize", "params": { "_meta": 5 } });
+        with_address(&mut odd, &mine);
+        assert_eq!(odd["params"]["_meta"], serde_json::json!(5));
+        assert!(PeerAddress::from_initialize(&odd["params"]).is_none());
+    }
+
     /// A board is now read back off the wire: `peers.list` gathers a sibling checkout's
     /// board from that checkout's own server, and `serde` parses the answer into these
     /// types. Every shape a board can serialise must therefore parse again — including the
@@ -1048,6 +1567,18 @@ mod tests {
         let quiet = board.attach(Transport::Http);
         board.detach(&quiet);
         assert!(board.list().is_empty(), "a connection is not news");
+    }
+
+    /// Progress is recorded for a peer on the board alone: a late request of one that left
+    /// without a word puts nothing back and gives nobody's claims anything to live by (I3990).
+    #[test]
+    fn progress_of_a_peer_no_longer_on_the_board_records_nothing() {
+        let board = PeerBoard::new();
+        let gone = board.attach(Transport::Http);
+        board.detach(&gone);
+        board.progress(&gone);
+        assert!(board.progressed_at(&gone).is_none());
+        assert!(board.list().is_empty(), "progress brings nobody back");
     }
 
     #[test]
@@ -1296,5 +1827,122 @@ mod tests {
         let line = board.summary();
         assert!(line.contains("the whole mandate"), "{line}");
         assert!(line.contains("worker-a: the guard"), "{line}");
+    }
+
+    /// The board measured on 2026-10-22 — five peers, twenty claims, intents of several
+    /// hundred characters — made a 6 kB line, and a client cut the instructions inside it.
+    /// However large the board, the line stays within its bound, every peer that does not
+    /// fit is counted rather than dropped, and the reader is pointed at the full answer.
+    #[test]
+    fn the_summary_stays_bounded_however_large_the_board() {
+        let board = PeerBoard::new();
+        let long = "ID BLOCK TAKEN by a seat for a mission whose intent runs on and on ".repeat(6);
+        // a claim's name is the peer's own words too: a long one must not cost the line
+        let named = format!("a-claim-name-that-goes-on-{}", "x".repeat(200));
+        for _ in 0..12 {
+            let peer = board.attach(Transport::Http);
+            for c in 0..5 {
+                board.announce_claim(&peer, Some(&format!("{named}-{c}")), &long, vec![]);
+            }
+        }
+        let line = board.summary();
+        assert!(
+            !line.contains(&named),
+            "a claim name is cut, never carried whole: {line}"
+        );
+        let room = SUMMARY_LINE + "; 12 more peer(s), every claim in full: majordomus_peers".len();
+        assert!(
+            line.chars().count() <= room,
+            "{} chars: {line}",
+            line.chars().count()
+        );
+        assert!(line.starts_with("p1 "), "the first peer is named: {line}");
+        assert!(
+            line.contains("2 more |") || line.contains("2 more)"),
+            "{line}"
+        );
+        assert!(
+            line.contains("more peer(s), every claim in full: majordomus_peers"),
+            "{line}"
+        );
+        assert!(
+            !line.contains(&long),
+            "an intent is cut, never carried whole: {line}"
+        );
+    }
+
+    /// A client that re-attaches on a timer and announces the same named claim keeps one
+    /// row, not one per reconnect, so the departed slots stay free for the sessions that
+    /// really left; another session using the same claim name, and a departed slot that
+    /// said more, are kept (I4227).
+    #[test]
+    fn a_departed_peer_that_a_later_announce_repeats_is_not_kept() {
+        let bridge = |board: &PeerBoard| {
+            let p = board.attach(Transport::Http);
+            board.identify(
+                &p,
+                ClientInfo::from_initialize(&serde_json::json!({
+                    "clientInfo": { "name": "codex-chatgpt-mesh-coordinator", "version": "1" }
+                })),
+            );
+            p
+        };
+        let board = PeerBoard::new();
+        let left = board.attach(Transport::Stdio);
+        board.announce(&left, "a session that really left", vec!["docs".into()]);
+        board.detach(&left);
+        let said_more = bridge(&board);
+        board.announce(&said_more, "the bridge's own note", vec![]);
+        board.announce_claim(&said_more, Some("chatgpt-bridge"), "relay", vec![]);
+        board.detach(&said_more);
+        let elsewhere = bridge(&board);
+        board.locate(
+            &elsewhere,
+            PeerAddress::from_env(|_| None, Some(4242), "lundra").unwrap(),
+        );
+        board.announce_claim(&elsewhere, Some("chatgpt-bridge"), "relay", vec![]);
+        board.detach(&elsewhere);
+        for _ in 0..RETAINED + 4 {
+            let again = bridge(&board);
+            board.announce_claim(&again, Some("chatgpt-bridge"), "relay", vec![]);
+            board.detach(&again);
+        }
+        let now = bridge(&board);
+        board.announce_claim(&now, Some("chatgpt-bridge"), "relay", vec![]);
+        let listed = board.list();
+        let intents: Vec<&str> = listed
+            .iter()
+            .flat_map(|p| p.claims.iter().map(|c| c.intent.as_str()))
+            .collect();
+        assert!(
+            intents.contains(&"a session that really left"),
+            "the departure that matters is still retained: {intents:?}"
+        );
+        assert!(intents.contains(&"the bridge's own note"), "{intents:?}");
+        let bridges: Vec<&Peer> = listed
+            .iter()
+            .filter(|p| p.client.name == "codex-chatgpt-mesh-coordinator")
+            .collect();
+        assert_eq!(
+            bridges.len(),
+            3,
+            "the slot that said more, the other address, and the attached one: {bridges:?}"
+        );
+        assert!(bridges.iter().any(|p| p.address.is_some() && !p.attached));
+        assert_eq!(bridges.iter().filter(|p| p.attached).count(), 1);
+    }
+
+    /// An id the board no longer holds drops nothing: an announce that raced its own detach
+    /// leaves every retained departure where it was (I4227).
+    #[test]
+    fn an_id_the_board_does_not_hold_drops_no_departure() {
+        let board = PeerBoard::new();
+        let left = board.attach(Transport::Stdio);
+        board.announce_claim(&left, Some("relay"), "a session that left", vec![]);
+        board.detach(&left);
+        board.drop_repeated_departures(&PeerId::new(99));
+        let listed = board.list();
+        assert_eq!(listed.len(), 1, "{listed:?}");
+        assert!(!listed[0].attached, "{listed:?}");
     }
 }

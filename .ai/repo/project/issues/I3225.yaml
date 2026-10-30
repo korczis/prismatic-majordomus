@@ -1,0 +1,50 @@
+id: I3225
+milestone: the-ui-runs-and-explains
+title: "A capability is run from /ui through the form its input schema generates, confirmed when its effect writes, and followed as an execution"
+slug: a-capability-runs-from-the-ui
+priority: p1
+profile: implementation
+objective: "Move the Cockpit's schema-generated capability form and its execution start path (share/cockpit/executions.js installStartButton, data-mj-start, data-mj-confirm, followed through share/cockpit/socket.js) into the module both surfaces import (ADR 0135), and offer it on /ui/capabilities?id=: the run is an execution of the shared executor; confirmation is asked exactly when ExecutionPolicy::needs_confirmation is true; a refusal is the executor's, verbatim; the run's events follow on the page through the execution's links.events and links.websocket, its full page at links.cockpit. The direct-route runner (runner.js's Run) is not offered on /ui."
+why: "The owner asked from 2026-09-10 onwards to run and manage everything from the UI; ChatGPT's 2026-10-06 two-layer design (a generic capability UI under curated workflows) was accepted in conversation. docs/MAJORDOMUS_UI.md says nothing on the UI starts work yet; I2781 (2b) covers issue moves only. The live channel is 5a's in-flight share/ui/socket.js and live.js work (I2982/I2983). Those records are not on master or in this tree, so plan validate refuses them as depends_on ids, and this issue must not start before they are on origin/master. I3139's mesh action (another intent) is expected to reuse this start, confirm and follow path and to depend on I3225. Sources: chatgpt-majordomus:c187#8, chatgpt-majordomus:c125#1, chatgpt-majordomus:c225#2, chatgpt-majordomus:c245#2."
+current_state: "The Cockpit runs any capability from a generated form; /ui/capabilities reads capabilities.describe and runs nothing."
+desired_state: "One form and execution start path in shared code, two surfaces, no per-capability markup, no run on /ui that is not an execution; I2810's JSON editor field is the form's JSON control when it lands; every run-and-confirm control on /ui uses this one path."
+scope:
+  - "apps/majordomus-cli/src/ui/capabilities.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "share/ui/ui.js"
+  - "docs/MAJORDOMUS_UI.md"
+  - "share/cockpit/executions.js"
+  - "share/cockpit/socket.js"
+  - ".ai/repo/project/intents"
+non_scope:
+  - "Running anything from the published site"
+  - "A shell or free-text endpoint"
+  - "UI presentation metadata in OpenAPI (open question Q11)"
+  - "Moving or changing share/cockpit/runner.js's direct-route Run on /cockpit"
+  - "The direct-route runner (share/cockpit/runner.js's Run, which calls the capability's route and is not an execution) on /ui"
+  - "A dry-run preview: the capability descriptor declares none, and a per-capability list would be per-capability markup"
+  - "A links.ui field on ExecutionLinks or a /ui execution view: the run is followed in place and its full page is links.cockpit"
+depends_on:
+  - "I3221"
+serves:
+  - "the-ui-runs-and-explains-the-work#a-capability-runs-from-the-ui"
+acceptance_criteria:
+  - "A fixture capability added to the registry is runnable from /ui with no UI edit"
+  - "Confirmation is not skipped for a capability whose ExecutionPolicy::needs_confirmation is true"
+  - "The refusal shown equals the CLI's for the same input"
+  - "The snapshot's /ui/capabilities says the run is live only"
+  - "Any run-and-confirm control another issue put on /ui before this one lands (I3139's /ui/mesh action included) is moved onto this shared start, confirm and follow path in this PR, so /ui keeps one such path whichever lands first"
+  - "The shared module both surfaces import is executions.js's start path (installStartButton, data-mj-start, data-mj-confirm) and socket.js's follow; /ui offers no run that bypasses the executor"
+  - "A run started from /ui appears in executions.list, and its events follow on /ui/capabilities through the execution's links.events and links.websocket, with links.cockpit for the full history"
+  - "Confirmation is asked exactly when ExecutionPolicy::needs_confirmation is true, ProcessState included; the test covers one Read, one ProcessState and one RepositoryMutation capability on /ui and on /cockpit, and the UI never classifies an effect itself"
+  - "The first commit adds apps/majordomus-cli/tests/ui_capability_run.rs and rewrites criterion a-capability-runs-from-the-ui to `evidence: test`, `ref: apps/majordomus-cli/tests/ui_capability_run.rs`, wording the confirmation as needs_confirmation and without the dry-run clause; `cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_capability_run` passes and is this issue's evidence"
+  - "The generated form, the confirmation and the followed run fit 390 px with no horizontal scroll (scripts/ui audit at phone width)"
+  - "docs/MAJORDOMUS_UI.md no longer says nothing on the UI or on the screen starts work (both the :377 and :529 passages) and describes running a capability from /ui"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::capabilities"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test cockpit"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_capability_run"
+evidence_required:
+  - "apps/majordomus-cli/tests/ui_capability_run.rs"
+created_at: 2026-10-18
+updated_at: 2026-10-18

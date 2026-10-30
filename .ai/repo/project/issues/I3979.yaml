@@ -1,0 +1,39 @@
+id: I3979
+milestone: merging-and-referencing-are-enforced
+title: "Every label, branch prefix and commit type is declared once, projected to GitHub, described in CONTRIBUTING and checked"
+slug: conventions-are-declared-once
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "One tracked declaration under .ai/repo/ci (beside github.yaml) names every label with its colour, description and actor (projected from records, set by the pull request projection, or set by a person: hold, collision:accepted, ci:yielded), the area labels allowed from commit scopes, and the branch prefixes (feature, fix, docs, chore, refactor, integration/train). It does not become a second source of what already has one: the commit types stay declared in release/model.rs:23-43 and the hold label names in integration/classify.rs LABEL_POLICY (classify.rs:110-118), and a library test holds the declaration equal to both, so a type or hold label added in one place and not the other fails. github-sync creates and updates every declared label (today it creates only labels labels_of emits and never updates one); CONTRIBUTING.md gains a section generated from the declaration and from those two sources between majordomus markers; and a check refuses a label named by code, a workflow or a projection that is not declared, and reports a declared label missing on GitHub."
+why: "Labels the executor and gates read (hold in integration/classify.rs, collision:accepted in scripts/ci/collision-gate, ci:yielded) exist on the repository only because someone created them by hand; hold was missing until 2026-10-22, so the hold policy existed for 18 days with no label to apply. The pull request projection of I3970 needs one vocabulary to project from."
+current_state: "Verified at 355a0cee79a: github-sync creates missing labels derived from labels_of (github-sync:439-465) and leaves existing ones alone; commit types are declared in release/model.rs:23-43 and hold labels in classify.rs:110-118; no file declares the label set; CONTRIBUTING.md states conventions in prose; gh label list on 2026-10-22 shows accessibility, bug, documentation, duplicate, enhancement, good first issue, help wanted, invalid, question and wontfix beside the projected labels."
+desired_state: "The declaration is the one source of labels and conventions; the projection makes GitHub agree; CONTRIBUTING's section is generated; the check fails on any drift."
+scope:
+  - ".ai/repo/ci/github.yaml"
+  - "scripts/github-sync"
+  - "scripts/ci/github-check"
+  - "CONTRIBUTING.md"
+  - "apps/majordomus-cli/src/commit/scopes.rs"
+  - "apps/majordomus-cli/src/release/model.rs"
+  - "apps/majordomus-cli/src/integration/classify.rs"
+  - "test/cases/97_github_gate.sh"
+  - ".ai/repo/project/issues/I3979.yaml"
+non_scope:
+  - "Deleting GitHub's default labels a person may still use; undeclared labels on GitHub are reported, not removed"
+acceptance_criteria:
+  - "A fixture workflow applying a label the declaration does not hold is refused naming the file and the label (case an_undeclared_label_is_refused)"
+  - "A library test fails when a commit type in release/model.rs or a hold label in classify.rs is missing from the declaration, or the reverse"
+  - "github-sync --apply against a scripted forge creates a declared label that is missing and updates one whose description differs"
+  - "CONTRIBUTING.md's generated section matches the declaration, and editing the declaration without regenerating fails the check"
+validation:
+  - "bin/majordomus plan validate"
+  - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::classify release::model"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 97_github_gate"
+evidence_required:
+  - "conventions_declared_once"
+depends_on: []
+serves:
+  - "merging-and-referencing-are-enforced#conventions-declared-once"
+created_at: 2026-10-22
+updated_at: 2026-10-22

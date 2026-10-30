@@ -13,7 +13,9 @@ use crate::cockpit::html::{el, El};
 use crate::cockpit::view::word_badge;
 
 use super::source::{ask_input, Answer};
-use super::view::{more, nothing, object_if, panel, state, table, text, unanswered, value};
+use super::view::{
+    command, more, nothing, object_if, panel, state, table, text, unanswered, value,
+};
 
 /// A claim id as the matrix spells them (`a-finding-names-how-to-see-it-again`): letters,
 /// digits, `-`, `_` and `.`, and nothing a link could carry anything else in.
@@ -179,7 +181,7 @@ pub fn inspector(ctx: &Context, answer: &Answer, id: &str) -> El {
                         if reproduce.is_empty() {
                             el("span").class("mj-ui-dim").text("none")
                         } else {
-                            el("code").class("mj-ui-mono").text(reproduce)
+                            command(&reproduce)
                         },
                     )),
             )
@@ -192,7 +194,7 @@ pub fn inspector(ctx: &Context, answer: &Answer, id: &str) -> El {
                 nothing("Nothing it names has changed since its proof.")
             } else {
                 el("ul")
-                    .class("mj-ui-list")
+                    .class("mj-ui-prose-list")
                     .children(changed.into_iter().map(|p| el("li").child(mono(p))))
             })
             .child(
@@ -246,7 +248,7 @@ mod tests {
             source: Source::of("evidence.claim"),
             route: Some("GET /api/v1/evidence/claim".into()),
             exposure: Exposure::default(),
-            value,
+            value: value.map(Into::into),
             took: Duration::from_millis(1),
             standing: crate::ui::source::Standing::NOW,
         }

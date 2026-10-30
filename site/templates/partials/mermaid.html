@@ -1,5 +1,7 @@
-{#- Client-side Mermaid, pinned via npm and vendored to static/js at build. Progressive: without JS the
-    <pre class="mermaid"> shows its source. securityLevel strict; theme follows the .dark class and
-    re-renders on toggle. Included only by pages that carry diagrams. -#}
-<script src="{{ get_url(path="js/mermaid.min.js") }}"></script>
-<script src="{{ get_url(path="js/diagrams.js") }}"></script>
+{#- The diagram viewer (site/diagrams.js, ADR 0152). Mermaid itself is pinned via npm and vendored to
+    static/js at build; it is the heaviest file on the site, so no page loads it with a script tag:
+    the viewer is deferred and fetches the build named here once the page has been parsed.
+    Progressive: without JS the <pre class="mermaid"> shows its source and the links the build
+    inferred beside it. securityLevel strict; the theme follows the page's and the diagrams are
+    drawn again on toggle. Included only by pages that carry diagrams. -#}
+<script defer src="{{ get_url(path="js/diagrams.js") }}" data-mermaid-src="{{ get_url(path="js/mermaid.min.js") }}"></script>

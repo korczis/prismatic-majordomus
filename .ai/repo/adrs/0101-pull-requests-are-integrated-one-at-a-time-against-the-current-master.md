@@ -402,6 +402,70 @@ the backlog through `majordomus prs`.
 - **Merge every green pull request in sequence from one list.** Every merge invalidates the
   list. The second merge would be decided against a master that no longer exists.
 - **Batches.** They trade attribution for throughput, and a red batch costs a person a
-  bisection. They remain a person's decision, not the executor's.
+  bisection. They remain a person's decision, not the executor's. On 2026-10-16 the owner
+  took that decision: the landing seat lands combined tops (ADR 0167), and the executor
+  described here is unchanged.
 - **Merge with `--admin`.** The branch protection's refusal is the answer, not an obstacle.
 - **Close pull requests by age or similarity.** Neither is evidence that the work landed.
+
+## Amendment, 2026-10-15: a merge GitHub makes is guarded by checks, not by `strict` (I1409)
+
+D8 left `required_status_checks.strict` to the owner and named it the forge's half of the
+guard. I1409 asked the narrower question that leaves open: when the forge makes a merge onto
+a master that moved after the pull request's `ci` ran, what refuses a stale derived tree
+before it is published? Measured on 2026-10-15, the protection requires `ci` with
+`strict: false` and `enforce_admins: false`. The answer is three checks, each on the tree it
+judges, and none of them is `strict`.
+
+1. **Before the merge, the required `ci`.** A pull request's run checks out
+   `refs/pull/<n>/merge`, the merge the forge would make at that moment, and its `site` job
+   runs `scripts/generate-site-data --check` and its `rust` job runs `majordomus generate
+   --check` there (`.github/workflows/validate.yml`, job `site`, step `derived site data in
+   sync`).
+2. **Between that run and the merge, the forge's own text merge.** The forge runs no
+   custom merge driver. With `merge.derived` undefined, git falls back to the text merge,
+   which is what `.gitattributes` says it does. Every derived tree records one `source_hash`
+   in `site/data/generated/source.json`, and that hash covers the declared site inputs:
+   1497 paths, including the registry projections `docs/generated/{registry,graph,openapi,
+   cli,web,changelog}.json`. Two sides that each changed a canonical input each changed that
+   line, so the forge reports the pull request as conflicting and does not merge it. A
+   bare repository with no driver configured shows it: `git merge-tree --write-tree` of
+   master `c0e3585dc8` with the heads of #1159 and #1149, both CONFLICTING on GitHub, lists
+   `site/data/generated/source.json` among the conflicts. If only one side changed canonical
+   inputs, the merged inputs are that side's inputs and its derived data is their
+   projection (case 3048 holds the unrelated merge current).
+3. **After the merge, before publication, the merged commit.** A push to master runs
+   `validate.yml` on the merge commit, with the same `site` and `rust` checks, and
+   `pages.yml`, whose `deploy` job runs `scripts/pages build`. That command exits 10 on
+   stale site data (`cmd_current`), and the job runs it before its `publish` step. The
+   master merge `c0e3585dc8` was committed by GitHub. On it, validate run 38635619021 (job
+   116098148462) passed `derived site data in sync`, and pages run 38635619039 (job
+   116105040387) ran `build` at 21:07:39Z and `publish` at 21:09:30Z. Stale site data is
+   refused at `build`, so gh-pages keeps the last current commit and the `pages-live` gate
+   names the owed publication.
+
+**Decision.** The guard on the server-side merge path is the ci-time freshness gate, at
+the three points above. It is not `strict` required checks, and it is not a new merge-time
+check. The documents claim exactly that: `.githooks/pre-commit` guards a merge a person
+commits, and the checks above guard one the forge commits. No document may claim the hook
+guards a GitHub merge.
+
+Rejected:
+
+- **`strict: true` as the guard.** It is a repository setting and the owner's act (D8,
+  I1409 non-scope). It would re-run `ci` for every open pull request whenever master moves,
+  which is the throughput this record already prices at one landing per run. It would also
+  not cover an `--admin` merge, since admins are not enforced.
+- **A merge queue.** It is the "later decision" of the Consequences above. It needs this
+  ADR's evidence first and is not owed for derived data, because point 2 already makes the
+  forge refuse the only combination a text merge could get wrong for the site.
+- **Re-deriving in the Pages build.** I1409 non-scope: generation is not deterministic per
+  tree, so the build would produce a third answer.
+
+**Residual, stated rather than claimed away.** A derived artifact outside the declared site
+inputs, such as a generated region of `AGENTS.md` or a skill under `.claude/skills/`, can be
+changed by two pull requests that touch different lines, and the forge can text-merge those
+changes cleanly into a result that is not a projection. Point 1 cannot see that merge, and
+point 2 does not cover those files. Point 3's `generate --check` on the push run is the
+first thing that refuses it: master goes red before any person relies on it. None of those
+bytes is published by the site.

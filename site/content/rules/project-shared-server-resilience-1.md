@@ -1,7 +1,7 @@
 +++
 title = "Nothing a client leaves behind locks another client out"
 description = "Nothing a client leaves behind locks another client out"
-weight = 155
+weight = 164
 [extra]
 kind = "rule"
 slug = "project-shared-server-resilience-1"
@@ -52,6 +52,12 @@ Under `apps/majordomus-cli/`:
   rebuilt the executable. What it must never do is take on a client that could have had
   the real one: that client gets a peer board, an execution history and a generation of the
   layer no other client of the checkout can see, with nothing in any answer saying so.
+- The launcher a client spawns (`bin/majordomus-cli mcp`) never turns a client away for want
+  of an executable it could have run. When this checkout has none, or cannot build one (no
+  cargo, less free space than the build floor, a failed build), it runs the installed
+  release and names the release and the reason on stderr; any other command keeps its exit
+  12, a stale executable that can be rebuilt is rebuilt, and a file inside the repository or
+  one that does not answer `--version` is never taken for the installed release (ADR 0172).
 - A bind to an address that is not loopback is served with a warning naming what it
   exposes.
 - A bridged session and a restarted server answer byte for byte what a local session
@@ -72,6 +78,7 @@ and a claim page for `mcp-lease-resilience` whose test no longer names the behav
 
 `RUSTFLAGS='' cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test mcp_shared`,
 `RUSTFLAGS='' cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test lease_lost`,
-`bash test/run.sh 90_mcp_shared_server`, `scripts/rust-check`, and the claim
-`mcp-lease-resilience` in `docs/CLAIMS.yaml`.
+`bash test/run.sh 90_mcp_shared_server`, `bash test/run.sh 3177_a_client_always_gets_a_server`,
+`scripts/rust-check`, and the claims
+`mcp-lease-resilience` and `mcp-client-always-served` in `docs/CLAIMS.yaml`.
 {% endraw %}

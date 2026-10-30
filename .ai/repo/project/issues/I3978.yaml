@@ -1,0 +1,37 @@
+id: I3978
+milestone: merging-and-referencing-are-enforced
+title: "Each train member is judged on its merged tree, and a fix member joins only with a test and its changed-code coverage"
+slug: a-train-member-is-judged-on-its-merged-tree
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "The landing duties docs/INTEGRATION.md states as a table (merge master into the branch, commit, derive, then run the whole structure job, the library tests and the cases the change touches on that merged tree, naming the commit each ran on; search the tests for what reads the change) become a typed check the train composer of I3915 (commands/prs.rs) runs per member before the member joins a train: it merges the member onto the train head, runs the structure job, the library tests and the cases the change touches, and records each verdict with the merged commit. The cases a change touches are chosen by a selector this issue adds to the executable: every case whose covers header names a capability or command the change touches, and every case that names a changed path or the identifier of a changed record, the rule docs/INTEGRATION.md states as prose. A member whose head is a fix (conventional type fix) joins only when its diff carries a test and scripts/rust-coverage --changed <train head> reports its changed lines covered. A member that fails is left out of the train and reported with the failing step; nothing is forced in."
+why: "Train 3b and train 4 on 2026-10-21 and 2026-10-22 each needed rounds of fix commits for reds that the members' merged trees would have shown before composition (the a-combined-top-surfaces-cross-segment-defects and static-gates-before-a-patch lessons). The duty is prose a seat remembers; the owner asked for it to be mechanised."
+current_state: "Verified at 355a0cee79a: docs/INTEGRATION.md:575-585 lists the lander's duties as a table; no command runs them per member; trains are composed by hand (I3915 plans a typed composer from a tracked manifest)."
+desired_state: "Composing a train runs each member's merged-tree check and leaves out, with its reason, every member that fails or a fix member without a test and coverage."
+scope:
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "apps/majordomus-cli/src/integration/train.rs"
+  - "apps/majordomus-cli/tests/integration_executor.rs"
+  - "scripts/rust-coverage"
+  - "docs/INTEGRATION.md"
+  - ".ai/repo/project/issues/I3978.yaml"
+non_scope:
+  - "Landing the train, which is I3910's"
+acceptance_criteria:
+  - "A fixture member whose merged tree fails one touched case is left out of the composed train with that case named (case a_train_member_is_judged_on_its_merged_tree)"
+  - "The selector names, for a fixture change to one capability and one record, the cases whose covers header or text names them, and no other"
+  - "A fixture fix member without a test among its files is left out; with a test and changed lines covered by rust-coverage --changed it joins"
+  - "Every verdict names the merged commit it ran on"
+validation:
+  - "bin/majordomus plan validate"
+  - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::"
+  - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_executor"
+evidence_required:
+  - "merged_result_is_judged"
+depends_on:
+  - "I3915"
+serves:
+  - "merging-and-referencing-are-enforced#merged-result-is-judged"
+created_at: 2026-10-22
+updated_at: 2026-10-22

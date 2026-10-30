@@ -1,0 +1,38 @@
+id: I3117
+milestone: a-claim-stands-only-on-its-evidence
+title: "The README and the launch page say only what master does about model invocation, doctrine dispatch and overrides"
+slug: readme-states-what-master-does
+priority: p1
+profile: verification
+objective: "Reconcile the model-invocation clause of README.md:20-21 ('never invokes a model') and docs/LAUNCH.md:44 and :61 with master, where scripts/advisor-consult carries questions to advisor CLIs, and state that an expedited landing is a recorded override. Qualify README.md:207-212 as the doctrine dispatch of lib/doctrine.sh and lib/check.sh, distinct from the CI ratchet baselines. Add each corrected sentence to docs/CLAIMS.yaml so claim-proof-check holds it to a test."
+why: "The audit of 2026-10-08 (c193#1) named \"lightweight\", \"portable shell only\", \"never invokes a model\" and \"no baseline\" as false. Read again on master 707a04c on 2026-10-18: README.md:20-21 and docs/LAUNCH.md:44,61 still say the product never invokes or calls a model. The 'lightweight' line belongs to I3134, and the 'portable shell ... no server' clause to I2971 (in flight on branch docs/the-fleet-disk-is-watched, not yet on master). README.md:20-21 holds both I2971's shell clause and this issue's model clause, so whichever issue lands second merges onto the first instead of reverting it. The owner's rule since 2026-09-13 is that aspirations are never presented as current features. The issue is post-alpha and does not gate v1.0.0-alpha.1. On 2026-10-18 the session that owns the truth sweep (f6) settled the overlap on the mesh: I2962 and I2963 are committed fixes this issue builds on, and the README and launch-page work f6 had staged as I2971 is carried here instead. It extends milestone architecture-is-enforced. Sources: chatgpt-majordomus:c174#18, chatgpt-majordomus:c193#1, chatgpt-majordomus:c159#1, chatgpt-majordomus:c159#5, chatgpt-majordomus:c190#1."
+current_state: "README.md:20-21 \"runs entirely locally, in portable shell, and never invokes a model\". README.md:207-212 \"no third class, no severity ladder, no baseline, and no override\", which describes how lib/doctrine.sh and lib/check.sh dispatch a doctrine class. docs/LAUNCH.md:44 \"never calls a model\" and :61 \"it never invokes one\"."
+desired_state: "Each sentence in scope is true or removed, and docs/CLAIMS.yaml binds it to a case that would fail if it became false."
+scope:
+  - "README.md"
+  - "docs/LAUNCH.md"
+  - "docs/CLAIMS.yaml"
+  - ".ai/repo/project/intents"
+non_scope:
+  - "Marketing rewrite"
+  - "README.md:7 'lightweight', the product sentence and every page title (I3134)"
+  - "The 'portable shell ... no server' clause of README.md:20 and site/content/getting-started.md (I2971, in flight on another branch)"
+  - "A ratchet-baseline count in README (I3116's table is the projection)"
+depends_on:
+  - "I2962"
+  - "I2963"
+serves:
+  - "a-claim-stands-only-on-its-evidence#public-text-true"
+acceptance_criteria:
+  - "The issue edits only the model-invocation clause (README.md:20-21 'never invokes a model', docs/LAUNCH.md:44 'never calls a model', :61) and the override/expedited-landing sentence"
+  - "README.md:207-212 is qualified as the doctrine dispatch of lib/doctrine.sh and lib/check.sh, not replaced with a baseline count; a case fails if either library gains a baseline or override path"
+  - "No README or launch-page sentence contradicts master on model invocation or expedited landings"
+  - "claim-proof-check binds the corrected sentences"
+  - "A new case carrying evidence readme_claims_bound (its number from scripts/case-numbers next, announced on the board when the issue starts) binds each corrected sentence through docs/CLAIMS.yaml claim readme_claims_bound, and intent criterion public-text-true is rebound to that claim"
+validation:
+  - "scripts/ci/claim-proof-check"
+  - "scripts/ci/english-only-check"
+evidence_required:
+  - "readme_claims_bound"
+created_at: 2026-10-18
+updated_at: 2026-10-18

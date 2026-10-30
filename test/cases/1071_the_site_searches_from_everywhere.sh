@@ -33,6 +33,8 @@ trap 'rm -rf "$S"' EXIT
 mkdir -p "$S/site"
 cp -R "$ROOT/site/content" "$ROOT/site/content-src" "$ROOT/site/templates" "$ROOT/site/static" \
   "$ROOT/site/data" "$ROOT/site/config.toml" "$S/site/"
+# the layout reads the languages the site declares (site/i18n/languages.json, ADR 0218)
+mkdir -p "$S/site/i18n" && cp "$ROOT/site/i18n/languages.json" "$S/site/i18n/"
 # the stylesheets are Tailwind build products, ignored by git; the pages only link them
 [ -f "$S/site/static/app.css" ] || printf '/* fixture: no Tailwind build here. */\n' > "$S/site/static/app.css"
 [ -f "$S/site/static/kit.css" ] || printf '/* fixture: no Tailwind build here. */\n' > "$S/site/static/kit.css"

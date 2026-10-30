@@ -1,0 +1,32 @@
+id: I4290
+milestone: work-graph-github
+title: "The reconciliation names a record never created on GitHub apart from one deleted there"
+slug: never-created-is-not-deleted-remotely
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "scripts/github-sync tells two absences apart. A canonical record that was never projected reads never-created; a record whose identity marker GitHub once carried, and no longer serves, reads deleted-remotely. Each names what --apply would do before anything changes: create the first, refuse the second until a person decides. A case drives both against a fixture remote."
+why: "Criterion 4 of milestone work-graph-github asks the reconciliation vocabulary to distinguish never-created, deleted-remotely, edited-remotely, canonically-moved and conflicting, each naming what would change before anything changes. On master 81ef931a3e1, scripts/github-sync has six states: insync, behind, edited, conflict, adopt and missing. `missing` means no counterpart on GitHub at all, so a record deleted on GitHub is re-created by --apply as if it had never existed. No issue of the milestone carries this criterion. Found by the convergence audit of 2026-10-28, which checked the milestone's own criteria once I2844 and I3920 were recorded done; without this issue the milestone would read DONE with the criterion unmet."
+current_state: "scripts/github-sync lines 36-43 list six states. note DRIFT missing is emitted for a milestone (line 975) and an issue (line 1014) that GitHub does not serve, whether or not it was ever projected. Cases 45, 602, 894 and 1038 drive the adapter offline against fixtures; none has a record GitHub once served and no longer does."
+desired_state: "github-sync --check reports never-created and deleted-remotely as two states, each with the action --apply would take. --apply creates a never-created record and refuses a deleted-remotely one, naming it, until a person decides. A fixture case proves both and proves the refusal writes nothing."
+scope:
+  - "scripts/github-sync"
+  - "test/cases/45_github_projection.sh"
+  - "docs/PLANNING.md"
+  - ".ai/repo/project/issues/I4290.yaml"
+non_scope:
+  - "Restoring deleted GitHub issues, or deciding for a person whether a deleted record is re-created"
+  - "The other states of the vocabulary, which cases 45 and 602 already hold"
+depends_on: []
+acceptance_criteria:
+  - "A canonical record never projected reads never-created, and --check names that --apply would create it"
+  - "A record whose marker GitHub served and no longer serves reads deleted-remotely, and --apply refuses it, names it and writes nothing"
+  - "A fixture case drives both states offline, and fails if the two read as one"
+validation:
+  - "bin/majordomus plan validate"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 45_github_projection"
+evidence_required:
+  - "absences_told_apart_case"
+serves: []
+created_at: 2026-10-28
+updated_at: 2026-10-28

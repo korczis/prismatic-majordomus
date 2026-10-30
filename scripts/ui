@@ -6,6 +6,10 @@
 #   scripts/ui viewports [--json]  the widths every page is audited at, and where they came from
 #   scripts/ui check               the static invariants: markup a keyboard cannot use
 #   scripts/ui audit [OPTIONS]     visit every page in a browser and write the results document
+#   scripts/ui navbar [--write]    whether the bar of the UI is the site's (see below)
+#   scripts/ui union --from DIR [--out FILE] [--report]
+#                      join the results of the audit's shards under DIR into the one document a
+#                      single audit writes, and prove they are the whole audit (see MJ_UI_SHARD)
 #   scripts/ui test                the UI tooling's own tests
 #
 # Options of `audit`, and of `pages` and `viewports` where they apply:
@@ -18,6 +22,21 @@
 #   --report           render the results into the tests surface afterwards (/tests/ui)
 #
 #   MJ_UI_JOBS=N       how many pages are driven at once (default: the machine, 2-4)
+#   MJ_UI_SHARD=K/N    drive only shard K of N of the visits: those whose number in the plan's
+#                      order is K modulo N, the stride scripts/site-probe --partition cuts
+#                      routes by (I3940). The N shards together are the whole audit, each visit
+#                      in exactly one, and each writes its document to --out saying which it
+#                      drove; `union` joins them and refuses a set that is not the whole. A
+#                      shard does not judge the bar (see below): that is `navbar`, run once. A
+#                      malformed value is refused (exit 2) before anything is built or opened.
+#
+# `navbar` holds project.the-ui-wears-the-sites-navbar, and `audit` runs it first. The bar of
+# every UI screen is the site's bar as the built site renders it (scripts/lib/ui-navbar.mjs):
+# the bar cut out of site/public is compared with apps/majordomus-cli/src/ui/navbar.html, the
+# copy the executable compiles in, and then the bar a browser draws on the site's front page
+# is compared with the one it draws on /ui and on /cockpit — every element, its box and its computed styles,
+# in both themes, at every width the design declares, closed and with a menu open. `--write`
+# writes the copy from the built site instead, and starts nothing.
 #
 # Nothing here holds a list, and nothing here decides where a page is served from. The
 # surfaces come from `majordomus web list` — every surface the executable serves, with the
@@ -49,10 +68,10 @@ CSS="$ROOT/site/static/app.css"
 # cargo does not necessarily build into apps/majordomus-cli/target; ask it where
 MJ="${MAJORDOMUS_BIN:-$(mj_cargo_target_dir "$ROOT/apps/majordomus-cli" ask-cargo)/debug/majordomus}"
 
-usage() { sed -n '2,38p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,48p' "$0" | sed 's/^# \{0,1\}//'; }
 
 sub="${1:-pages}"; [ $# -gt 0 ] && shift || true
-json=0; only=""; limit=""; out="$ROOT/target/web/run-ui.json"; origin=""; render=0; port=8790; build=""
+json=0; only=""; limit=""; out="$ROOT/target/web/run-ui.json"; origin=""; render=0; port=8790; build=""; write=0; from=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --json) json=1 ;;
@@ -63,6 +82,8 @@ while [ $# -gt 0 ]; do
     --port) port="${2:?--port needs a number}"; shift ;;
     --no-build) build=0 ;;
     --report) render=1 ;;
+    --write) write=1 ;;
+    --from) from="${2:?--from needs a directory}"; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "ui: unknown option '$1'" >&2; usage >&2; exit 2 ;;
   esac
@@ -73,13 +94,117 @@ case "$sub" in
   -h|--help|help) usage; exit 0 ;;
   test) exec node "$ROOT/scripts/lib/ui.test.mjs" ;;
   check) ;;
-  pages|viewports|audit) ;;
+  pages|viewports|audit|navbar|union) ;;
   *) echo "ui: unknown subcommand '$sub'" >&2; usage >&2; exit 2 ;;
 esac
+
+# A malformed shard is the one thing that could make an audit quietly drive nothing, so it is
+# refused here, before the site is built, a server started or a browser opened. The rule is
+# ui-shard.mjs's, the one place it is written.
+if [ "$sub" = audit ] && [ -n "${MJ_UI_SHARD:-}" ]; then
+  node --input-type=module -e '
+import { parseShard } from "'"$ROOT"'/scripts/lib/ui-shard.mjs";
+try { parseShard(process.env.MJ_UI_SHARD); } catch (e) { console.error(`ui: ${e.message}`); process.exit(2); }
+' || exit 2
+fi
+
+# ------------------------------------------------------------------ the union of the shards
+# Needs no site, no server and no browser: only the documents the shards wrote. The verdict is
+# the one a single audit gives — any finding fails — and a set of shards that is not the whole
+# audit fails before it: a shard that did not run is a part of the site nobody measured.
+if [ "$sub" = union ]; then
+  [ -n "$from" ] && [ -d "$from" ] || { echo "ui union: --from needs a directory of the shards' results, got '$from'" >&2; exit 2; }
+  node --input-type=module -e '
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { unionResults } from "'"$ROOT"'/scripts/lib/ui-shard.mjs";
+import { write } from "'"$ROOT"'/scripts/lib/ui-results.mjs";
+const [from, out, root] = process.argv.slice(1);
+const files = [];
+const walk = (dir) => {
+  for (const e of readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
+    if (e.isDirectory()) walk(join(dir, e.name));
+    else if (/^run-ui.*\.json$/.test(e.name)) files.push(join(dir, e.name));
+  }
+};
+walk(from);
+const { problems, results } = unionResults(files.map((f) => JSON.parse(readFileSync(f, "utf8"))));
+for (const p of problems) console.log(`FAIL shards     ${p}`);
+if (!results) process.exit(10);
+for (const [rule, n] of Object.entries(results.rules)) console.log(`${String(n).padStart(5)}  ${rule}`);
+if (!problems.length) {
+  write(out, results);
+  console.log(`OK   shards     ${files.length} shard(s) drove all ${results.visits} visit(s) of ${results.pages} page(s), each once`);
+}
+const total = results.findings.length;
+console.log(`ui audit: ${results.pages} page(s), ${results.visits} visit(s), ${total} finding(s) over ${results.complete ? "every page" : "a selected part of the site"} in ${results.seconds}s at ${results.concurrency} job(s) -> ${out.replace(root + "/", "")}`);
+process.exit(problems.length || total ? 10 : 0);
+' "$from" "$out" "$ROOT" || status=$?
+  status="${status:-0}"
+  # the report is rendered from the joined document, so it is rendered only from a whole one
+  if [ "$render" = 1 ] && [ -f "$out" ] && [ "$status" != 12 ]; then
+    "$MJ" web report ui --from "$out" --repo "$ROOT" || status=$?
+  fi
+  exit "$status"
+fi
 
 # `audit` builds the documentation it is about to measure; asking what the page set is does
 # not rebuild the site behind the caller's back.
 [ -n "$build" ] || { [ "$sub" = audit ] && build=1 || build=0; }
+
+# ------------------------------------------------------------------------ the site's bar
+# The copy first: it needs only the built site, and `--write` stops there.
+PUB="$ROOT/site/public"
+NAVBAR="$ROOT/apps/majordomus-cli/src/ui/navbar.html"
+navbar_copy() { # write|check
+  [ -f "$PUB/404.html" ] || { echo "ui navbar: the site is not built ($PUB/404.html); run: scripts/site-build" >&2; return 12; }
+  node --input-type=module -e '
+import { readFileSync, writeFileSync } from "node:fs";
+import { fragmentOf } from "'"$ROOT"'/scripts/lib/ui-navbar.mjs";
+import { siteOrigin } from "'"$ROOT"'/scripts/lib/browser.mjs";
+const [mode, pub, file, root] = process.argv.slice(1);
+const want = fragmentOf(pub, siteOrigin(root));
+if (mode === "write") { writeFileSync(file, want); console.log(`ui navbar: wrote ${file.replace(root + "/", "")} from the built site`); process.exit(0); }
+let have = ""; try { have = readFileSync(file, "utf8"); } catch { /* absent */ }
+if (have !== want) {
+  console.log(`FAIL ui navbar: ${file.replace(root + "/", "")} is not the bar the site renders; run: scripts/site-build && scripts/ui navbar --write, then scripts/cockpit-assets`);
+  process.exit(10);
+}
+console.log("ui navbar: the executable compiles in the bar the site renders");
+' "$1" "$PUB" "$NAVBAR" "$ROOT"
+}
+# Then the browser: the site's front page against /ui and /cockpit, on the server this script
+# started.
+navbar_compare() {
+  [ -d "$ROOT/node_modules/playwright" ] || { echo "SKIP ui navbar: playwright is not installed; run: npm ci" >&2; return 13; }
+  node --input-type=module -e '
+import { readFileSync } from "node:fs";
+import { launch, serveSite, siteOrigin } from "'"$ROOT"'/scripts/lib/browser.mjs";
+import { run } from "'"$ROOT"'/scripts/lib/ui-navbar.mjs";
+const [root, pub, server] = process.argv.slice(1);
+const design = JSON.parse(readFileSync(`${root}/site/data/registry/design.json`, "utf8"));
+const browser = await launch();
+if (!browser) { console.log("SKIP ui navbar: no browser"); process.exit(process.env.CI === "true" ? 13 : 0); }
+const origin = siteOrigin(root);
+const foreign = new Set();
+const siteContext = async (opts) => { const c = await browser.newContext(opts); await serveSite(c, pub, origin, (u) => foreign.add(u)); return c; };
+const findings = []; let compared = 0;
+for (const page of ["/ui", "/cockpit"]) {
+  const r = await run(browser, { siteContext, siteUrl: `${origin}/`, uiUrl: `${server}${page}`, widths: design.viewports, themeKey: design.theme.storage_key });
+  compared += r.compared;
+  findings.push(...r.findings.map((f) => `${page} ${f}`));
+}
+await browser.close();
+for (const f of findings.slice(0, 60)) console.log(`FAIL ui navbar ${f}`);
+if (findings.length > 60) console.log(`     ... and ${findings.length - 60} more`);
+console.log(`ui navbar: ${compared} comparison(s) of the site bar with the bar of /ui and /cockpit at ${design.viewports.join(", ")} px, light and dark, closed and open: ${findings.length} difference(s)`);
+process.exit(findings.length ? 10 : 0);
+' "$ROOT" "$PUB" "$origin"
+}
+if [ "$sub" = navbar ] && [ "$write" = 1 ]; then
+  navbar_copy write
+  exit $?
+fi
 
 # ------------------------------------------------------------------- the static check
 # The check reads markup, so it reads files that *are* markup: every tracked .html of the
@@ -215,6 +340,16 @@ if [ "$build" = 1 ]; then
 fi
 
 start_server
+# A shard leaves the bar to `navbar`, which the workflow runs once: every shard would otherwise
+# compare the same bar again for the same verdict.
+if [ "$sub" = navbar ] || { [ "$sub" = audit ] && [ -z "${MJ_UI_SHARD:-}" ]; }; then
+  nb=0
+  navbar_copy check || nb=$?
+  [ "$nb" != 0 ] || navbar_compare || nb=$?
+  [ "$sub" = navbar ] && exit "$nb"
+  # the audit goes on, and ends with the bar's verdict if its own is clean
+  [ "$nb" = 0 ] || [ "$nb" = 13 ] || navbar_status="$nb"
+fi
 surf="$(mktemp "${TMPDIR:-/tmp}/mj-ui-surfaces.XXXXXX")"
 write_surfaces "$surf"
 [ -s "$surf" ] || { echo "ui: the executable serves no surface with pages; run: scripts/site-build --serve" >&2; exit 12; }
@@ -227,11 +362,13 @@ if [ "$sub" = audit ]; then
   node --input-type=module -e '
 import { readFileSync } from "node:fs";
 import { run, write } from "'"$ROOT"'/scripts/lib/ui-run.mjs";
+import { parseShard } from "'"$ROOT"'/scripts/lib/ui-shard.mjs";
 const surfaces = JSON.parse(readFileSync(process.argv[1], "utf8"));
 const only = "'"$only"'" || undefined;
 const limit = "'"$limit"'" ? Number("'"$limit"'") : undefined;
+const shard = process.env.MJ_UI_SHARD ? parseShard(process.env.MJ_UI_SHARD) : undefined;
 const results = await run("'"$origin"'", surfaces, "'"$CSS"'", {
-  select: only, limit,
+  select: only, limit, shard,
   onVisit: (visit, done) => {
     if (visit.findings.length || done % 50 === 0)
       process.stderr.write(`  ${String(done).padStart(4)}  ${visit.route} @${visit.width}  ${visit.findings.length} finding(s)\n`);
@@ -242,7 +379,7 @@ const total = results.findings.length;
 if ('"$json"') { console.log(JSON.stringify(results, null, 2)); }
 else {
   for (const [rule, n] of Object.entries(results.rules)) console.log(`${String(n).padStart(5)}  ${rule}`);
-  const scope = results.complete ? "every page" : "a selected part of the site";
+  const scope = results.shard ? `shard ${results.shard.index}/${results.shard.of} of ${results.shard.planned} visit(s)` : results.complete ? "every page" : "a selected part of the site";
   console.log(`ui audit: ${results.pages} page(s), ${results.visits} visit(s), ${total} finding(s) over ${scope} in ${results.seconds}s at ${results.concurrency} job(s) -> ${"'"$out"'".replace("'"$ROOT"'/", "")}`);
 }
 process.exitCode = total ? 10 : 0;
@@ -251,6 +388,7 @@ process.exitCode = total ? 10 : 0;
   if [ "$render" = 1 ]; then
     "$MJ" web report ui --from "$out" --repo "$ROOT"
   fi
+  [ "$status" != 0 ] || status="${navbar_status:-0}"
   exit "$status"
 fi
 

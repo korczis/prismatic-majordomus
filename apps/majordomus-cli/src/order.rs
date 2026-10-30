@@ -119,6 +119,23 @@ impl<'a> OrderKey<'a> {
     pub fn ranked(self, rank: i64) -> Self {
         Self { rank, ..self }
     }
+
+    /// The same key ranked by `n` descending: the largest first. What "newest first" is for
+    /// a collection whose items carry a counter that only grows — a pull request's number, a
+    /// commit's time — so the order is stated once, here, instead of as a `Reverse` beside
+    /// every renderer. A value beyond `i64::MAX` ranks with it, first.
+    ///
+    /// ```
+    /// use majordomus_cli::order::OrderKey;
+    ///
+    /// let newer = OrderKey::plain("b", "b").descending(12);
+    /// let older = OrderKey::plain("a", "a").descending(9);
+    /// assert!(newer < older, "the larger number comes first, whatever the label says");
+    /// assert_eq!(newer.rank, -12);
+    /// ```
+    pub fn descending(self, n: u64) -> Self {
+        self.ranked(i64::try_from(n).unwrap_or(i64::MAX).saturating_neg())
+    }
 }
 
 impl Ord for OrderKey<'_> {
@@ -207,6 +224,91 @@ pub fn numeric_samples(samples: &mut [Vec<f64>]) {
             .find(|o| o.is_ne())
             .unwrap_or_else(|| a.len().cmp(&b.len()))
     });
+}
+
+/// Compare two versions by precedence: the dot-separated numbers by value, then a release
+/// above any of its pre-releases (`1.0.0-rc.1` before `1.0.0`), pre-releases compared
+/// naturally (`rc.2` before `rc.10`). A leading `v` is not part of the version, so `v0.27.0`
+/// and `0.27.0` are equal. A string that is not a version precedes every version and equals
+/// every other non-version: it has no precedence to compare.
+///
+/// Equal is the right answer for one version spelled two ways — "is this release published
+/// yet" asks precedence, not spelling. [`versions`] adds the tie-breaker a sort needs.
+///
+/// ```
+/// use majordomus_cli::order::version_cmp;
+/// use std::cmp::Ordering;
+///
+/// assert_eq!(version_cmp("v0.9.1", "v0.10.0"), Ordering::Less);
+/// assert_eq!(version_cmp("v1.0.0-rc.1", "v1.0.0"), Ordering::Less);
+/// assert_eq!(version_cmp("v0.27.0", "0.27.0"), Ordering::Equal);
+/// assert_eq!(version_cmp("next", "v0.1.0"), Ordering::Less);
+/// ```
+pub fn version_cmp(a: &str, b: &str) -> Ordering {
+    match (version_parts(a), version_parts(b)) {
+        (Some(a), Some(b)) => a
+            .numbers
+            .cmp(&b.numbers)
+            .then_with(|| match (a.pre, b.pre) {
+                (Some(x), Some(y)) => natural_cmp(x, y),
+                (Some(_), None) => Ordering::Less,
+                (None, Some(_)) => Ordering::Greater,
+                (None, None) => Ordering::Equal,
+            }),
+        (Some(_), None) => Ordering::Greater,
+        (None, Some(_)) => Ordering::Less,
+        (None, None) => Ordering::Equal,
+    }
+}
+
+/// Whether `text` is a version [`version_cmp`] can order: dot-separated whole numbers, an
+/// optional leading `v` and an optional `-pre-release`.
+///
+/// ```
+/// use majordomus_cli::order::is_version;
+///
+/// assert!(is_version("v0.27.0") && is_version("1.0.0-rc.1"));
+/// assert!(!is_version("vnext") && !is_version("v") && !is_version("v1..2"));
+/// ```
+pub fn is_version(text: &str) -> bool {
+    version_parts(text).is_some()
+}
+
+/// Put a collection in version order, lowest first, in place: by [`version_cmp`] of what
+/// `version` reads from each item, then naturally by that text, so that one version spelled
+/// two ways still has one fixed place.
+///
+/// ```
+/// use majordomus_cli::order::versions;
+///
+/// let mut tags = vec![("v0.10.0", "c"), ("v0.10.0-rc.1", "b"), ("v0.9.0", "a")];
+/// versions(&mut tags, |t| t.0);
+/// assert_eq!(tags.iter().map(|t| t.1).collect::<String>(), "abc");
+/// ```
+pub fn versions<T>(items: &mut [T], version: impl Fn(&T) -> &str) {
+    items.sort_by(|a, b| {
+        let (a, b) = (version(a), version(b));
+        version_cmp(a, b).then_with(|| natural_cmp(a, b))
+    });
+}
+
+/// A version's parts: the numbers, and the pre-release when there is one.
+struct VersionParts<'a> {
+    numbers: Vec<u64>,
+    pre: Option<&'a str>,
+}
+
+fn version_parts(text: &str) -> Option<VersionParts<'_>> {
+    let v = text.strip_prefix('v').unwrap_or(text);
+    let (core, pre) = match v.split_once('-') {
+        Some((core, pre)) => (core, Some(pre)),
+        None => (v, None),
+    };
+    let numbers = core
+        .split('.')
+        .map(|n| n.parse::<u64>().ok())
+        .collect::<Option<Vec<u64>>>()?;
+    Some(VersionParts { numbers, pre })
 }
 
 /// Is this collection already in canonical order? What a validator asks of a projection it
@@ -464,6 +566,39 @@ mod tests {
         assert_eq!(natural_cmp("item-02", "item-2"), Ordering::Less);
         assert_eq!(natural_cmp("item-2", "item-02"), Ordering::Greater);
         assert_eq!(natural_cmp("item-2", "item-2"), Ordering::Equal);
+    }
+
+    #[test]
+    fn descending_puts_the_largest_first_and_saturates() {
+        let key = |n: u64| OrderKey::plain("x", "x").descending(n);
+        assert!(key(10) < key(9));
+        assert_eq!(key(0).rank, 0);
+        assert_eq!(
+            key(u64::MAX).rank,
+            -i64::MAX,
+            "beyond i64 ranks with its maximum"
+        );
+    }
+
+    #[test]
+    fn versions_order_by_precedence_and_a_release_above_its_prereleases() {
+        assert_eq!(version_cmp("v0.9.1", "v0.10.0"), Ordering::Less);
+        assert_eq!(version_cmp("v1.0.0", "v1.0.0-rc.1"), Ordering::Greater);
+        assert_eq!(version_cmp("v1.0.0-rc.1", "v1.0.0"), Ordering::Less);
+        assert_eq!(version_cmp("1.0.0-rc.2", "v1.0.0-rc.10"), Ordering::Less);
+        assert_eq!(version_cmp("v0.27.0", "0.27.0"), Ordering::Equal);
+        assert_eq!(version_cmp("v0.1.0", "next"), Ordering::Greater);
+        assert_eq!(version_cmp("next", "v0.1.0"), Ordering::Less);
+        assert_eq!(version_cmp("next", "later"), Ordering::Equal);
+        assert!(is_version("v0.27.0") && is_version("0.1") && is_version("v1.0.0-rc.1"));
+        assert!(!is_version("vnext") && !is_version("v") && !is_version("v1..2"));
+
+        let mut tags = vec!["v0.10.0", "0.9.0", "v0.10.0-rc.1", "v0.9.0", "other"];
+        versions(&mut tags, |t| *t);
+        assert_eq!(
+            tags,
+            ["other", "0.9.0", "v0.9.0", "v0.10.0-rc.1", "v0.10.0"]
+        );
     }
 
     #[test]

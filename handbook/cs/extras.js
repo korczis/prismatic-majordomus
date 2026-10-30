@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  var ARTIFACT = 'https://claude.ai/artifact/CBgdBRrXSimNAgQZuxt5JU';
+  var ARTIFACT = 'https://claude.ai/artifact/XgCzwV1MFNDL1ssJHstPQ1';
   function $(id) { return document.getElementById(id); }
   function el(tag, attrs, parent, text) {
     var e = document.createElement(tag);
@@ -73,7 +73,7 @@
     var tl = s.querySelector('.tldr p');
     index.push({ k: 'kapitola', t: title, c: tl ? tl.textContent.replace(/^TL;DR/, '').trim() : '', id: s.id });
     var n = 0;
-    s.querySelectorAll('h3').forEach(function (h3) {
+    s.querySelectorAll('h3:not(.h4)').forEach(function (h3) {
       if (!h3.id) h3.id = s.id + '--' + (++n);
       index.push({ k: 'oddíl', t: h3.textContent.trim(), c: title, id: h3.id });
     });

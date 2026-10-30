@@ -14,7 +14,7 @@
 majordomus start "fix auth" --scope lib/auth/,./test/auth
 # started t-…  profile=implementation  scope=lib/auth,test/auth
 majordomus start "second" --scope lib/other
-# majordomus: task t-… is active ('fix auth'); run majordomus handover or majordomus finish first
+# majordomus: task t-… is active ('fix auth'); run majordomus finish (or majordomus handover --close) first
 ```
 
 ## What it does not cover

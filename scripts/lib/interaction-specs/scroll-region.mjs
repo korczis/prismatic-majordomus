@@ -41,7 +41,9 @@ export default {
   id: 'scroll-region',
   title: 'a scroll region can be reached, takes focus, and scrolls from the keyboard when it overflows',
   width: 1280,
+  // a diagram's <pre> is a viewer's frame, not a scrolling box: the diagram spec holds it to its own keys
   claims: (el) => el.attrs.tabindex === '0' && el.tag !== 'a' && !['button', 'input', 'select', 'textarea', 'summary'].includes(el.tag)
+    && !(el.tag === 'pre' && /(^|\s)mermaid(\s|$)/.test(el.attrs.class || ''))
     && !Object.keys(el.attrs).some((k) => k.startsWith('x-on:') || k.startsWith('@') || k === 'x-model' || k.startsWith('data-graph-') || OTHER.test(k))
     && !['tab', 'switch', 'checkbox', 'radio', 'menuitem', 'slider', 'option'].includes(el.attrs.role),
   async exercise({ controls, page, fail }) {

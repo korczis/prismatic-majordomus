@@ -1,0 +1,30 @@
+id: I3822
+milestone: fly-deployment
+title: "A deployment that names a provider is observed at its own URL, and is active only while it serves master"
+slug: a-provider-deployment-is-observed-at-its-url
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "served.observe defaults its url to the deployment object's provider.url and its identity to the object's health.liveness route when --deployment names an object with a provider; the publishing workflow observes after every push; the object's status moves from declared to active only on an observation that judged it serving master, and a stale or unreachable observation is a finding. ADR 0219 decision 5."
+why: "Today served.observe defaults to the Pages site and build.json; nothing ties an observation to the deployment object, so the hosted application's currency cannot be judged and its status is a hand-set word."
+current_state: "served.observe takes --url or falls back to site/config.toml's base_url with identity build.json; /api/v1/live already answers commit and dirty; the object's status is declared."
+desired_state: "majordomus served observe --deployment majordomus reads provider.url and health.liveness, judges the answer against master by containment and records it; case 3822 serves a fixture liveness answer and proves served, stale and unreachable verdicts; the status is set to active by a recorded observation, not by hand."
+scope:
+  - "apps/majordomus-cli/src/served.rs"
+  - "apps/majordomus-cli/src/capability/builtin/served.rs"
+  - ".ai/repo/deployments"
+  - "test/cases/3822_a_provider_deployment_is_observed_at_its_url.sh"
+  - ".ai/repo/project/issues/I3822.yaml"
+acceptance_criteria:
+  - "An object with a provider is observed at its url and liveness route without --url"
+  - "A deployment answering master is served, one answering an older commit is stale, one not answering is unreachable"
+  - "The status is active only while the newest observation is served"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3822_a_provider_deployment_is_observed_at_its_url"
+evidence_required:
+  - "observed_at_provider_url"
+depends_on:
+  - "I3821"
+serves: []
+created_at: 2026-10-21
+updated_at: 2026-10-21

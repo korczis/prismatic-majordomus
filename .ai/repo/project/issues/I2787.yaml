@@ -1,0 +1,38 @@
+id: I2787
+milestone: development-runtime
+title: "A build never lets the shared build directory's crate artifacts fill the disk"
+slug: build-dir-deps-are-pruned
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Bound the shared build directory's debug/deps the way I2713 bounds debug/incremental: before a bounded build starts, remove the crate's own test binaries and libraries (majordomus_cli-*, libmajordomus_cli-*, and each tests/*.rs binary) of generations no live tree is building and older than a declared age, never a file a running process holds open, never another crate's dependency artifacts, and say on stderr what was reclaimed."
+why: "2026-10-16 ~22:50Z the shared Mac reached 238 MiB free and every session's build failed with ENOSPC. Idle incremental sessions (48 GiB, I2713's subject) were removed by hand; the landing seat then deleted 43 GiB of majordomus_cli-* test artifacts older than 3 h from build-shared/majordomus/debug/deps, which still held 41 GiB and 11026 majordomus_cli-* files afterwards: every worktree generation leaves one crate test binary and library behind, and nothing ever removes them short of a cargo clean that would wipe every live tree's build."
+current_state: "lib/rust_bin.sh refuses a build below a free-space floor; I2713 (#1279) prunes idle incremental sessions; nothing prunes debug/deps."
+desired_state: "mj_cargo_bounded prunes the crate's stale artifacts in debug/deps beside the incremental sweep, with the same age and liveness predicates asked again of each path before it is removed, and a case holds that a live or recent artifact survives and a stale one does not."
+scope:
+  - "lib/rust_bin.sh"
+  - "test/cases"
+  - "docs/WORKTREES.md"
+depends_on:
+  - "I2713"
+acceptance_criteria:
+  - "A stale crate artifact in debug/deps older than the declared age, held open by no process, is removed before a bounded build and named on stderr"
+  - "An artifact a running process holds open, a recent one, and a dependency crate's artifact all survive"
+  - "Free space stays above the declared floor through a day of concurrent sessions on the shared machine"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_deps_pruned"
+created_at: 2026-10-17
+updated_at: 2026-10-19T15:31:11Z
+started_at: 2026-10-19T15:30:54Z
+started_event: sha256:4e56e549088e3cefafce4c00d1fcecf04629c3ac6f8ad5b8ef27c0ca1eb3d26c
+completed_at: 2026-10-19T15:31:11Z
+completed_event: sha256:bb70a868358fd7ccd5dd6bbf28c658d72b662654f2f959c1cc49283271a1da96
+evidence:
+  - covers: case_deps_pruned
+    type: test
+    command: "bash test/run.sh 3196_stale_crate_artifacts_are_pruned_under_cargos_lock"
+    result: "3 passed, 0 failed, 0 skipped on master dd4c0a87cba (with 1060 and 2988); delivered by PR #1349 (36de9d12699, f6d28ada933), not by the plan commit cc536298674"
+    commit: dd4c0a87cba408222033c89f002ab2d63f48574c
+    recorded_at: 2026-10-19T15:31:06Z

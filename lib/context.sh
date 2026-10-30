@@ -55,7 +55,8 @@ usage: majordomus context [--for <provider>] [--prompt <name>] [--budget-lines <
        majordomus context list | resolve <path> | explain <path> | validate | affected | check-sync
   prints what a worker needs to know now: git identity, the task and its profile, the
   context documents that apply to its scope, open questions, the knowledge candidates
-  awaiting review on this branch, recent decisions, the newest checkpoint, the most
+  awaiting review on this branch, pointers to what the task's issue references (when the
+  profile sets context.knowledge), recent decisions, the newest checkpoint, the most
   relevant handover, recent history — as far as the policy's
   context.builder_budget_lines allows, in that order
   --for      wrap the same body for one provider named in the policy's projections
@@ -131,6 +132,16 @@ mj_ctx_briefing() {
   esac
 }
 
+# What a trunk episode staged and no branch has carried yet (ADR 0091, amendment of
+# 2026-10-15). Silent when the outbox is empty: it is the normal state.
+mj_ctx_outbox() {
+  local n s c
+  n="$(mj_outbox_counts)"; s="${n% *}"; c="${n#* }"
+  [ "$s" = 0 ] && [ "$c" = 0 ] && return 0
+  printf 'outbox       %s session record(s), %s knowledge candidate(s) in %s/, waiting for a branch episode to carry them\n' \
+    "$s" "$c" "$(mj_rel "$(mj_outbox_dir)")"
+}
+
 mj_context_sections() {
   local prompt_name="$1" no_prompt="$2"
   : > "$MJ_CTX_TMP/excluded"
@@ -158,6 +169,7 @@ mj_context_sections() {
       esac
     fi
     mj_ctx_briefing
+    mj_ctx_outbox
   } > "$MJ_CTX_TMP/10.git"
   MJ_CTX_LABEL="${label:-none}"
 
@@ -240,6 +252,9 @@ mj_context_sections() {
       { printf '## CONTEXT DOCUMENTS (for the scope, root first; majordomus context explain <path>)\n'
         for sp in $(mj_ylist "$MJ_CUR_FLAT" scope); do
           case " $seen " in *" $sp "*) continue ;; esac; seen="$seen $sp"
+          # a recorded entry this cannot resolve costs its own line, not the briefing: a
+          # record written by hand or by an older `start` reaches here unjudged (I2760)
+          if ! mj_ctxd_judge "$sp"; then printf '%s  refused: %s\n' "$sp" "$MJ_CTXD_REFUSAL"; continue; fi
           mj_ctxd_target "$sp"; mj_ctxd_resolve "" ""
           chain="$(while IFS="$MJ_CTXD_TAB" read -r i _; do mj_ctxd "$i" id; done < "$MJ_CTXD_CHAIN" | paste -sd, - | sed 's/,/, /g')"
           rm -f "$MJ_CTXD_CHAIN" "$MJ_CTXD_EXCLUDED"
@@ -273,6 +288,10 @@ mj_context_sections() {
   { printf '## KNOWLEDGE (candidates awaiting review on this branch; majordomus knowledge candidates)\n'
     mj_knowledge_briefing_section "$(mj_git_branch)"
   } > "$MJ_CTX_TMP/45.knowledge"
+
+  # 4c. knowledge pointers — a bounded slice of the knowledge graph, chosen from what the
+  #     task's issue already references (I0814). Only when the profile asks for it.
+  mj_context_pointers "$have_task" "$profile"
 
   # 5. decisions
   local dfile="$MJ_STATE_DIR/decisions.md" dmax
@@ -390,6 +409,135 @@ mj_ctx_verification() {
   printf '%s' "$v"
 }
 
+# ---------------------------------------------------------------- knowledge pointers
+# A bounded slice of the knowledge graph (I0814): pointers — id, kind, title and source
+# path — to what the task's issue already references, never the graph itself. Selection
+# follows edges a file states and nothing else, in this order, each tier in byte order of
+# the id, first appearance wins:
+#
+#   issue       the issue the task was started for
+#   depends_on  every issue it depends on
+#   milestone   the milestone it is part of
+#   claim       every claim that milestone declares
+#   scope       every node whose source is a path the task or the issue names in its scope
+#
+# Nothing is similar, nothing is searched: a document the issue does not reference is not
+# selected however close its words are. The list is cut at the profile's
+# context.knowledge_max_items (the policy's context.max_list_items when unset, and never
+# more), and what was cut is counted with the command that prints the rest.
+#
+# The graph is compiled on this read, from the version-control index, and only the kinds
+# and paths the selection can reach are compiled (mj_knowledge_nodes' keep list). When the
+# issue the task names is not a node — a record the index does not hold yet, or one the
+# schema refused — the section says the graph is stale and why, instead of vanishing.
+mj_context_pointers() {
+  local have_task="$1" profile="$2" issue on max maxi f p
+  # no task, no profile to ask: silent, as every task-bound section is without a task
+  [ "$have_task" = 1 ] || return 0
+  # an unknown profile is already named under EXCLUDED, with every toggle it would have set
+  [ -n "$profile" ] || return 0
+  on="$(mj_pro context.knowledge)"
+  case "$on" in
+    true) ;;
+    "") mj_ctx_excl "knowledge pointers" "profile $profile does not set context.knowledge"; return 0 ;;
+    *)  mj_ctx_excl "knowledge pointers" "profile $profile sets context.knowledge: $on"; return 0 ;;
+  esac
+  maxi="$(mj_pol_req context.max_list_items)"
+  max="$(mj_pro context.knowledge_max_items)"; [ -n "$max" ] || max="$maxi"
+  case "$max" in *[!0-9]*) max="$maxi" ;; esac
+  [ "$max" -le "$maxi" ] || max="$maxi"
+  if [ "$max" -eq 0 ]; then
+    mj_ctx_excl "knowledge pointers" "profile $profile sets context.knowledge_max_items: 0"; return 0
+  fi
+  issue="$(mj_cur issue)"
+  # A task with no issue has nothing explicit to follow. Said under EXCLUDED where the
+  # policy binds work to what it serves, as the INTENT section says it; where binding is off
+  # a task without an issue is the ordinary case, and a line on every briefing would be
+  # noise the budget pays for.
+  if [ -z "$issue" ]; then
+    [ "$(mj_binding_mode)" = off ] || \
+      mj_ctx_excl "knowledge pointers" "the task names no issue (start --issue <id>); pointers follow only what an issue references"
+    return 0
+  fi
+
+  local d="$MJ_CTX_TMP/pointers" ifile
+  mkdir -p "$d"
+  ifile="$MJ_PROJECT_DIR/issues/$issue.yaml"
+  # the paths the task and the issue name in their scope, as written
+  { mj_ylist "$MJ_CUR_FLAT" scope
+    [ -f "$ifile" ] && { mj_yaml_flatten "$ifile" > "$d/issue.flat" 2>/dev/null && mj_ylist "$d/issue.flat" scope; }
+  } | LC_ALL=C sort -u > "$d/scope"
+  # what to compile: the issue's record and the records of the issues it says it depends
+  # on (the plan keeps one record per issue at issues/<id>.yaml), every milestone, the
+  # claims, and the scope paths — not the other four hundred issues of a large plan
+  { printf 'kind:milestone\nkind:claim\npath:%s\n' "${ifile#"$MJ_ROOT/"}"
+    [ -f "$d/issue.flat" ] && mj_ylist "$d/issue.flat" depends_on | while IFS= read -r p; do
+      [ -n "$p" ] && printf 'path:%s\n' "${MJ_PROJECT_DIR#"$MJ_ROOT/"}/issues/$p.yaml"; done
+    while IFS= read -r p; do [ -n "$p" ] && printf 'path:%s\n' "$p"; done < "$d/scope"
+  } > "$d/keep"
+  printf 'issue:%s\n' "$issue" > "$MJ_CTX_TMP/46.knowledge-pointers.issue"
+  if ! mj_knowledge_nodes shared "$d/keep" > "$d/graph" 2>/dev/null; then
+    { printf '## KNOWLEDGE POINTERS (what issue %s references)\n' "$issue"
+      printf 'stale        the knowledge graph could not be compiled; run: majordomus knowledge nodes\n'
+    } > "$MJ_CTX_TMP/46.knowledge-pointers"
+    return 0
+  fi
+
+  # selection: tier <TAB> id <TAB> relation, then byte order within a tier, first wins
+  awk -F'\t' -v me="issue:$issue" '
+    NR == FNR { scope[$0] = 1; next }
+    $1 == "N" { if ($5 in scope) insc[$2] = 1; next }
+    $1 == "E" { n++; from[n] = $2; to[n] = $3; type[n] = $4 }
+    END {
+      printf "1\t%s\tissue\n", me
+      for (i = 1; i <= n; i++) if (from[i] == me) {
+        if (type[i] == "depends_on") printf "2\t%s\tdepends_on\n", to[i]
+        else if (type[i] == "part_of") { printf "3\t%s\tmilestone\n", to[i]; ms[to[i]] = 1 }
+      }
+      for (i = 1; i <= n; i++) if ((from[i] in ms) && type[i] == "declares") printf "4\t%s\tclaim\n", to[i]
+      for (id in insc) printf "5\t%s\tscope\n", id
+    }' "$d/scope" "$d/graph" | LC_ALL=C sort -t "$MJ_TAB" -k1,1n -k2,2 > "$d/selected"
+
+  # rendering: one pointer a line, the issue's own absence said as staleness, the graph's
+  # findings about what was selected said rather than swallowed, and the cut counted
+  awk -F'\t' -v me="issue:$issue" -v max="$max" -v ifile="${ifile#"$MJ_ROOT/"}" \
+      -v tracked="$( [ -f "$ifile" ] && mj_git ls-files --error-unmatch -- "$ifile" >/dev/null 2>&1 && echo 1 || echo 0)" \
+      -v present="$( [ -f "$ifile" ] && echo 1 || echo 0)" '
+    NR == FNR { if ($1 == "N") { kind[$2] = $3; src[$2] = $5; title[$2] = $7 }
+                else if ($1 == "X" && $2 != "INFO") { nx++; xl[nx] = $2; xc[nx] = $3; xs[nx] = $4; xm[nx] = $5 }
+                next }
+    ($2 in seen) { next }
+    { seen[$2] = 1; ns++; sid[ns] = $2; srel[ns] = $3 }
+    END {
+      if (!(me in kind)) {
+        if (!present) why = ifile " does not exist"
+        else if (!tracked) why = ifile " is not in the version-control index yet (git add it)"
+        else why = ifile " was refused or did not parse (majordomus knowledge nodes)"
+        printf "stale        %s is named by the task but is not in the knowledge graph: %s\n", me, why
+      }
+      shown = 0
+      for (i = 1; i <= ns && shown < max; i++) {
+        id = sid[i]
+        if (id == me && !(me in kind)) continue
+        if (id in kind) {
+          line = sprintf("%-10s %-14s %s  %s  %s", srel[i], kind[id], id, src[id], title[id])
+          sub(/[ ]+$/, "", line); print line
+        } else printf "%-10s %-14s %s  (not in the knowledge graph)\n", srel[i], "-", id
+        shown++; sel[id] = 1; sels[src[id]] = 1
+      }
+      rest = 0; for (; i <= ns; i++) if (!(sid[i] == me && !(me in kind))) rest++
+      if (rest > 0) printf "(%d more; majordomus knowledge related %s)\n", rest, me
+      if (shown == 0 && (me in kind) == 0) printf "(nothing selected)\n"
+      for (k = 1; k <= nx; k++)
+        if (xs[k] == "." || (xs[k] in sel) || (xs[k] in sels))
+          printf "finding      %s %s — %s\n", xl[k], xc[k], xm[k]
+    }' "$d/graph" "$d/selected" > "$d/body"
+
+  { printf '## KNOWLEDGE POINTERS (what issue %s references; majordomus knowledge related issue:%s)\n' "$issue" "$issue"
+    cat "$d/body"
+  } > "$MJ_CTX_TMP/46.knowledge-pointers"
+}
+
 # ---------------------------------------------------------------- assembly and budget
 # Sections are dropped in a fixed order, least reliable evidence first, and every drop is
 # named in EXCLUDED. Bodies of authored records degrade to a pointer rather than vanish.
@@ -399,8 +547,12 @@ mj_ctx_verification() {
 # right now outranks your own records the way git does, and it is dropped late for the same
 # reason — a collision in flight is worth more than history. `75.integration` is one line a
 # command away (`majordomus prs brief`), so it goes before any record body does.
-MJ_CTX_DROP_ORDER="90.history 16.monitor 75.integration 80.files 35.documents 45.knowledge 55.reasoning 50.decisions 60.checkpoint 70.handover 15.peers"
-MJ_CTX_ORDER="10.git 15.peers 16.monitor 20.task 30.profile 32.intent 35.documents 40.questions 45.knowledge 50.decisions 55.reasoning 60.checkpoint 70.handover 75.integration 80.files 90.history 95.prompt"
+# `46.knowledge-pointers` is a derived listing one command away (`majordomus knowledge
+# related`) and goes with the other derived listings, before the document chain: under a
+# tight budget it is lost before git, the task, the profile, the intent and the open
+# questions, none of which is ever dropped, and the drop is named with that command.
+MJ_CTX_DROP_ORDER="90.history 16.monitor 75.integration 80.files 46.knowledge-pointers 35.documents 45.knowledge 55.reasoning 50.decisions 60.checkpoint 70.handover 15.peers"
+MJ_CTX_ORDER="10.git 15.peers 16.monitor 20.task 30.profile 32.intent 35.documents 40.questions 45.knowledge 46.knowledge-pointers 50.decisions 55.reasoning 60.checkpoint 70.handover 75.integration 80.files 90.history 95.prompt"
 
 # Render the whole document, including its own header and trailer, into $1. The budget
 # governs what a worker actually receives, so the count must be of this file and not of
@@ -453,16 +605,23 @@ mj_peer_board() {
   bin="$(mj_rust_bin "$MJ_HOME")"
   [ -x "$bin" ] || return 1
   share="$(mj_rust_share "$MJ_HOME")"
-  # a subshell, so that the share this tool would use is the executable's and not exported
-  # into everything `context` runs after it
-  status="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
-               "$bin" serve status --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || return 1
   # this checkout's server if it has one, else the primary's: the order this function asked
-  # for before, now answered rather than guessed
-  url="$(printf '%s' "$status" | jq -r '
-    [ (.servers[]? | select(.this_checkout == true)),
-      (.servers[]? | select(.primary == true)) ]
-    | map(select((.lease.url // "") != "")) | .[0].lease.url // empty' 2>/dev/null)" || return 1
+  # for before, now answered rather than guessed. This checkout is asked alone first
+  # (`--checkouts this`: one lease, one probe), and every checkout only when it has no
+  # address, because the wide question probes every server of the repository and took more
+  # than ten seconds of every `context` and every doctor on a machine of many (I2995).
+  local which
+  for which in this repository; do
+    # a subshell, so that the share this tool would use is the executable's and not
+    # exported into everything `context` runs after it
+    status="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+                 "$bin" serve status --repo "$MJ_ROOT" --checkouts "$which" --format json ) 2>/dev/null )" || return 1
+    url="$(printf '%s' "$status" | jq -r '
+      [ (.servers[]? | select(.this_checkout == true)),
+        (.servers[]? | select(.primary == true)) ]
+      | map(select((.lease.url // "") != "")) | .[0].lease.url // empty' 2>/dev/null)" || return 1
+    [ -n "$url" ] && break
+  done
   [ -n "$url" ] || return 1
   # Nothing leaves this machine. SECURITY.md's "local only" carries exactly one exception
   # and this request is it, so the exception is only as wide as its guard: a lease naming
@@ -622,6 +781,9 @@ mj_context_emit() {
       35.documents)
         rm -f "$MJ_CTX_TMP/$d"; dropped="$dropped ${d#*.}"
         mj_ctx_excl "context documents" "context budget $budget lines; run: majordomus context resolve <path>" ;;
+      46.knowledge-pointers)
+        rm -f "$MJ_CTX_TMP/$d"; dropped="$dropped ${d#*.}"
+        mj_ctx_excl "knowledge pointers" "context budget $budget lines; run: majordomus knowledge related $(cat "$MJ_CTX_TMP/$d.issue")" ;;
       *)
         rm -f "$MJ_CTX_TMP/$d"; dropped="$dropped ${d#*.}"; mj_ctx_excl "${d#*.}" "context budget $budget lines" ;;
     esac
@@ -659,7 +821,7 @@ mj_context_json() {
   else printf ',"task":null'; fi
   printf ',"sections":['
   first=1
-  for d in 30.profile 32.intent 35.documents 40.questions 45.knowledge 50.decisions 60.checkpoint 70.handover 80.files 90.history 95.prompt; do
+  for d in 30.profile 32.intent 35.documents 40.questions 45.knowledge 46.knowledge-pointers 50.decisions 60.checkpoint 70.handover 80.files 90.history 95.prompt; do
     [ -f "$MJ_CTX_TMP/$d" ] || continue
     [ "$first" = 1 ] || printf ','
     printf '{"id":"%s","lines":%s,"text":"%s"}' "${d#*.}" "$(mj_lines "$MJ_CTX_TMP/$d")" "$(mj_json_file "$MJ_CTX_TMP/$d")"

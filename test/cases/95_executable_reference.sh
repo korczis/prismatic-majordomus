@@ -15,7 +15,7 @@
 # test derivation: the reference is projected from the manifest whether or not the use-case
 # scenarios are executed, `usecase validate` (which checks the use cases' tools against the
 # manifest) still runs, and the manifest is refused after the scenarios would have run, so
-# each of the seven generations here executed them all and nothing read the result —
+# each generation here executed them all and nothing read the result —
 # ~70% of a generation's time (652 of 924 s, measured 2026-10-12). 10_site_data and the
 # site job execute them over the real tree.
 # claims: executable-reference-derived
@@ -51,9 +51,18 @@ for pg in _index executable cli mcp benchmarks; do [ -f "$C/$pg.md" ] || { echo 
 [ "$(jq -r '.modules[] | select(.id=="objects") | .claims | length' "$G/executable.json")" -gt 0 ] || { echo "    no claim attached to the objects module (mcp-uri-resolution is implemented there)"; exit 1; }
 [ "$(jq -r '.capabilities[] | select(.id=="objects.get") | .claims | map(.id) | index("mcp-uri-resolution")' "$G/executable.json")" != null ] || { echo "    objects.get does not carry the claim implemented beside it"; exit 1; }
 
-# --- 1. a capability joins the manifest: its route, its links and its index entry appear,
-#        and nothing was edited to tell the site about it
-jq '.capabilities += [ (.capabilities[] | select(.id=="objects.search")) | .id = "objects.grep" | .title = "Grep objects" | .description = "ADDED CAPABILITY" | .exposure.http.path = "/api/v1/grep" | .exposure.mcp.tool = "majordomus_grep" ] | .modules |= map(if .id == "objects" then .capabilities += 1 else . end)' "$REG" > "$REG.new" && mv "$REG.new" "$REG"
+# --- 1. one capability joins the manifest and another leaves it, in one generation: the
+#        joiner gets its route, its links and its index entry, the leaver loses its page, and
+#        nothing was edited to tell the site about either. Both directions are one relation (the
+#        reference is the manifest's projection), so they share a generation rather than paying
+#        one each; every assertion either of them made stands below.
+#        The real capability removed is web.surfaces rather than objects.search: the generator
+#        validates this repository's use cases against the manifest, and a use case names
+#        majordomus_search, so removing that one would make the fixture describe a tool the
+#        catalogue requires. Nothing names majordomus_web_surfaces, which is what makes it
+#        removable without contradicting anything.
+[ -f "$C/capabilities/web-surfaces.md" ] || { echo "    web.surfaces had no page to lose"; exit 1; }
+jq '.capabilities += [ (.capabilities[] | select(.id=="objects.search")) | .id = "objects.grep" | .title = "Grep objects" | .description = "ADDED CAPABILITY" | .exposure.http.path = "/api/v1/grep" | .exposure.mcp.tool = "majordomus_grep" ] | del(.capabilities[] | select(.id=="web.surfaces")) | .modules |= map(if .id == "objects" then .capabilities += 1 elif .id == "web" then .capabilities -= 1 else . end)' "$REG" > "$REG.new" && mv "$REG.new" "$REG"
 expect_exit 0 "$T/scripts/generate-site-data" --no-scenarios
 [ -f "$C/capabilities/objects-grep.md" ] || { echo "    the added capability got no stub"; exit 1; }
 expect_grep '^description = "ADDED CAPABILITY"' "$C/capabilities/objects-grep.md"
@@ -64,23 +73,14 @@ expect_grep '^description = "ADDED CAPABILITY"' "$C/capabilities/objects-grep.md
 [ "$(jq -r '.capabilities[] | select(.id=="objects.grep") | .api_anchor' "$G/executable.json")" = "/docs/api/objects/#op-objects-grep" ] || { echo "    no API anchor for the added capability: $(jq -r '.capabilities[] | select(.id=="objects.grep") | .api_anchor' "$G/executable.json")"; exit 1; }
 [ "$(jq -r '.capabilities[] | select(.id=="objects.grep") | .tool' "$G/executable.json")" = "majordomus_grep" ] || { echo "    no tool for the added capability"; exit 1; }
 jq -e '.modules[] | select(.id=="objects") | .capabilities | map(.id) | index("objects.grep")' "$G/executable.json" >/dev/null || { echo "    the module index does not list the added capability"; exit 1; }
+[ ! -e "$C/capabilities/web-surfaces.md" ] || { echo "    a removed capability kept its stub"; exit 1; }
+jq -e '[.capabilities[].id] | index("web.surfaces") | not' "$G/executable.json" >/dev/null || { echo "    executable.json still lists the removed capability"; exit 1; }
+[ "$(jq '.counts.capabilities' "$G/executable.json")" = "$(jq '.capabilities | length' "$REG")" ] || { echo "    executable.json does not count the changed manifest"; exit 1; }
 [ "$(jq -r .source_hash "$G/source.json")" != "$(jq -r .source_hash "$T/before/source.json")" ] || { echo "    the input hash did not move with the manifest"; exit 1; }
 # the previous data is stale to --check: a manifest regenerated without the site is caught
 rm -rf "$G"; cp -R "$T/before" "$G"
 expect_exit 10 "$T/scripts/generate-site-data" --check --no-scenarios
 expect_grep 'STALE'
-
-# --- 2. a capability leaves the manifest: its page goes with it, no orphan stays.
-#        The real one removed here is web.surfaces rather than objects.search: the generator
-#        validates this repository's use cases against the manifest, and a use case names
-#        majordomus_search, so removing that one would make the fixture describe a tool the
-#        catalogue requires. Nothing names majordomus_web_surfaces, which is what makes it
-#        removable without contradicting anything.
-jq 'del(.capabilities[] | select(.id=="objects.grep" or .id=="web.surfaces")) | .modules |= map(if .id == "objects" then .capabilities -= 1 elif .id == "web" then .capabilities -= 1 else . end)' "$REG" > "$REG.new" && mv "$REG.new" "$REG"
-expect_exit 0 "$T/scripts/generate-site-data" --no-scenarios
-[ ! -e "$C/capabilities/objects-grep.md" ] && [ ! -e "$C/capabilities/web-surfaces.md" ] || { echo "    a removed capability kept its stub"; exit 1; }
-jq -e '[.capabilities[].id] | index("web.surfaces") | not' "$G/executable.json" >/dev/null || { echo "    executable.json still lists the removed capability"; exit 1; }
-[ "$(jq '.counts.capabilities' "$G/executable.json")" = "$((n - 1))" ]
 
 # --- 3. a broken reference is refused, loudly, and nothing is published
 cp -R "$G" "$T/good"

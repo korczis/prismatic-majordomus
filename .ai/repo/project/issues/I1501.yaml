@@ -31,4 +31,21 @@ evidence_required:
   - measured_while_in_flight
 risk: "Medium. Making `run` depend on a server changes the cost and the failure modes of the most-used command in the executable, and a checkout with no server must keep working. The safe shape is that the server is used when one is already serving this repository and never started for a run."
 created_at: 2026-09-11
-updated_at: 2026-09-11
+updated_at: 2026-10-14T16:47:12Z
+started_at: 2026-10-14T16:47:04Z
+started_event: sha256:010948b9443b764eb34755011574199405c1a3c7f7dd2e0a8205e9415854d461
+completed_at: 2026-10-14T16:47:12Z
+completed_event: sha256:2de75be2d181a8ab00c6c2bdc0851ea5ed72d899a8197d829d90c9e6405813b4
+evidence:
+  - covers: run_is_visible_to_the_server
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 3024_a_run_is_seen_by_the_server 100_execution_plane 100_environment"
+    result: "tests: 3 passed, 0 failed; case 3024 polls a real server while a CLI run is in flight and finds it, cancels it from the server, and reads the no-server line (run 2026-10-14 16:45Z on master ff3829709616e638596315d6ca42be64b570b74f plus this change)"
+    commit: ff3829709616e638596315d6ca42be64b570b74f
+    recorded_at: 2026-10-14T16:47:08Z
+  - covers: measured_while_in_flight
+    type: manual
+    command: "serve --port 0; run executions.demonstrate --input '{\"steps\":6,\"delay_ms\":500}' in the background; GET /api/v1/executions 1.5 s in"
+    result: "16:46:51Z with the run alive: count 1, active 1, state running, actor {kind: cli, pid: 28239}, progress 2 of 6; after it: succeeded, duration_ms 3203. Before this change the same reading was count 0, active 0 (the issue's own measurement)"
+    commit: ff3829709616e638596315d6ca42be64b570b74f
+    recorded_at: 2026-10-14T16:47:10Z

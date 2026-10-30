@@ -34,7 +34,8 @@ FIX="$T/fixture"; mkdir -p "$FIX/releases"
 start_http "$FIX" || skip "no python3 or node to serve a fixture release"
 trap 'stop_http' EXIT INT TERM HUP
 
-VERSION="$("$ROOT/scripts/release-version")"
+# the fixture serves the stable base of a pre-release tree (scripts/release-fixture)
+REAL_VERSION="$("$ROOT/scripts/release-version")"; VERSION="${REAL_VERSION%%-*}"
 MAJORDOMUS_DIST_BIN="$MJB" "$ROOT/scripts/release-fixture" --out "$FIX" --base-url "$HTTP_BASE" > "$T/fixture.log" 2>&1 \
   || { rc=$?; echo "    the fixture release could not be built (exit $rc)"; tail -20 "$T/fixture.log" | sed 's/^/      /'; exit 1; }
 expect_file "$FIX/releases/latest.json"

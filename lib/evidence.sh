@@ -222,6 +222,40 @@ usage: majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | -
 
   exit 0 recorded, 2 on usage, 11 when no task is active or the task did not promise it
 USAGE
+  mj_evidence_usage_executable
+}
+
+# The other half of `majordomus evidence`. Every argument this file understands is an
+# option; a word in the first position is a subcommand of the Rust executable, which holds
+# the ledger of what ran, and bin/majordomus hands it over before this file is sourced.
+# The words are read where the launcher reads them (mj_rust_subcommands) and never listed
+# here, so the help cannot name a subcommand the dispatch does not reach, or miss one it
+# does. Nothing is printed where the launcher is not the caller or the executable is not
+# there: a word would then reach the option parser, and the help must not promise it.
+mj_evidence_usage_executable() {
+  local words name about
+  declare -F mj_rust_subcommands >/dev/null 2>&1 || return 0
+  [ -x "$MJ_BIN_DIR/majordomus-cli" ] || return 0
+  words="$(mj_rust_subcommands evidence)"
+  [ -n "$words" ] || return 0
+  cat <<USAGE
+
+usage: majordomus evidence <$(awk -F '\t' 'NR > 1 { printf "|" } { printf "%s", $1 }' <<<"$words")> [options]
+
+  What actually ran and what it proves: the evidence ledger of the repository, which is
+  another record than the task's obligations above. These are subcommands of the Rust
+  executable; this command hands them to it with every argument unchanged, and its exit
+  codes are then the executable's own.
+
+USAGE
+  while IFS="$(printf '\t')" read -r name about; do
+    [ -n "$name" ] || continue
+    printf '  %-9s %s\n' "$name" "$about"
+  done <<<"$words"
+  cat <<USAGE
+
+  \`majordomus evidence <subcommand> --help\` says what each one takes.
+USAGE
 }
 
 # ---------------------------------------------------------------- establishing the fact

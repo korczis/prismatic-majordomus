@@ -6,7 +6,7 @@ carrying the provenance the run itself did not have; a ledger of the latest exec
 test; and one derivation that joins the two and says, per claim, exactly what can honestly
 be said about it. Behaviour as implemented; where this document and the executable
 disagree, the document is wrong and changes in the same commit. The decision is
-[ADR 40](../.ai/repo/adrs/0040-proof-is-a-recorded-execution-and-inputs-unchanged-is-not-proven.md);
+[ADR 41](../.ai/repo/adrs/0041-proof-is-a-recorded-execution-and-inputs-unchanged-is-not-proven.md);
 the rules it serves are `project.no-claim-without-test` and
 `project.never-reported-is-not-green` under
 [`.ai/repo/rules/project/`](../.ai/repo/rules/project/).
@@ -362,7 +362,7 @@ A run measures the checkout it left with `evidence stamp`, and `evidence record`
 the run wrote, carries that measurement into each result with the digest, the time and the
 origin, and merges it into the ledger.
 
-<!-- majordomus:unrun each pair follows a whole suite run and a whole crate run, which no documentation check repeats; case 505 runs `evidence stamp` and `evidence record --provenance` for both producers over a fixture report -->
+<!-- majordomus:unrun each pair follows a whole suite run and a whole crate run, which no documentation check repeats; case 505 runs `evidence stamp` and `evidence record --provenance` for both producers over a fixture report, and case 2998 runs these lines through the launcher of an installed layout -->
 ```sh
 MJ_TEST_REPORT=suite.tsv bash test/run.sh
 majordomus evidence stamp --producer suite --report suite.tsv --out suite.provenance.json
@@ -474,6 +474,19 @@ every surface is derived from it ([`CAPABILITIES.md`](CAPABILITIES.md)).
 | `evidence.test` | `majordomus evidence proves <id>` | `GET /api/v1/evidence/test` | tool `majordomus_evidence_test` |
 | `evidence.record` | `majordomus evidence record` | — | — |
 | `evidence.stamp` | `majordomus evidence stamp` | — | — |
+
+These five are subcommands of the Rust executable, and `majordomus` is the one program an
+installed tool puts on `PATH`. The shell tool has a command of the same name, which records
+what a task owes (`majordomus evidence --covers <token>`, `--gate <id>`;
+[`CLI.md`](CLI.md#majordomus-evidence)) and takes options only. So a word in the first
+position is never the shell tool's: the launcher hands `show`, `claim`, `proves`, `record`
+and `stamp` to the executable with every argument unchanged, the global `--repo` included
+on either side of the command, and the exit code is then the executable's. Which words
+those are is read from the executable's own declaration, never listed in the launcher, and
+`majordomus evidence --help` prints both halves. Through 0.22.0 the word reached the
+option parser instead, which answered `evidence: unknown option record`; case
+`2998_evidence_reaches_the_subcommands_the_executable_owns` holds every line this page
+prints against the launcher, from a checkout and from an installed layout.
 
 `evidence show` takes `--state`, `--status` and `--findings` as filters and `--check`,
 which exits `10` when any claim declares a guarantee the evidence does not support. The
@@ -796,15 +809,25 @@ and reads the manifest only to decide whether the run confirms it: a reason can 
 | unavailable | no retained artifact of this history, or one that cannot be read | UNKNOWN, with the reason |
 
 Whatever withholds `current` is listed under the sentence. None of the states stops a
-publication. When a master run's evidence is kept while its commit is still the tip, the job
+publication. What does stop one is the UI snapshot showing tests as not run (I2786):
+
+- **The run's ledger, in place.** The snapshot job first puts the same artifact's
+  `ledger.json` in the checkout's ledger path (`--ledger-out`), so the screens judge the run's
+  rows at the published commit. This is ADR 0087's 2026-10-17 amendment, until the recording
+  branch exists.
+- **The check.** `scripts/pages published-evidence` then asks `evidence.report` and refuses
+  with exit 10 when more claims read `not run` than `.ai/repo/evidence/published-not-run.txt`
+  declares. Rule `project.published-evidence-is-what-ci-recorded` holds this. When a master run's evidence is kept while its commit is still the tip, the job
 dispatches `pages.yml`, and that publication says current when the run confirms the report.
 When master has moved on, the newer publication already carries the evidence as stale and the
 newer run will refresh it.
 
-<!-- majordomus:unrun it fetches the workflow's retained artifacts with gh, which needs the network and a token; case 357 runs scripts/pages evidence --from over gathered fixture directories -->
+<!-- majordomus:unrun it fetches the workflow's retained artifacts with gh, which needs the network and a token; case 357 runs scripts/pages evidence --from over gathered fixture directories, and case 3178 runs --ledger-out and published-evidence -->
 ```sh
 scripts/pages evidence                          # this commit, fetched with gh
 scripts/pages evidence --from <dir> --out FILE  # a gathered directory, offline
+scripts/pages evidence --from <dir> --out FILE --ledger-out .ai/repo/evidence/ledger.json  # and its ledger, in place
+scripts/pages published-evidence --bin <majordomus>  # refuse a UI that would show tests as not run
 cat cargo-test-*.txt > cargo-test.txt   # the rust job's three lanes, joined
 scripts/ci/evidence-collect --out <dir> --suite suite.tsv --suite-tree suite-tree.json \
   --crate-output cargo-test.txt --crate-tree crate-tree.json --coverage coverage.json

@@ -1,0 +1,32 @@
+id: I2700
+milestone: runtime-lifecycle
+title: "A lease probe asks a cheap liveness route, and a server holding another lease token is not taken for the leaseholder"
+slug: the-lease-probe-compares-the-token
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Point the lease probe at a liveness route that answers without resolving the index and carries the repository id, the leaseholder and a digest of the lease token, and judge a process whose digest differs from the lease's not the leaseholder."
+why: "Split from I2126 on 2026-10-14. I2126 delivered the busy-pool half (every request answered on a thread of its own up to MAX_HANDLERS) and its desired_state said 'Not done here' of the liveness probe route and the token check, while its acceptance criteria still required both, so it could never close. The probe still asks GET /, the most expensive route, and compares name, repository_id and leaseholder but not the lease token, pid or started_at, so another process answering GET / for the same repository is taken for the leaseholder. Baseline audit of 2026-10-09 at master 1fb8d6be44, the fencing row."
+current_state: "lease::ask (apps/majordomus-cli/src/lease.rs, behind lease::probe, lease::probe_reply and lease::probe_patiently) sends GET / and compares the index document's name, repository_id and leaseholder key. The lease document carries a token (apps/majordomus-cli/src/lease.rs, LeaseDocument.token) that no answer exposes. /api/v1/live and /api/v1/ready exist (apps/majordomus-cli/src/capability/builtin/health.rs) and the probe uses neither."
+desired_state: "The lease probe asks a liveness route that answers without resolving the index; the answer carries the repository id, whether the process holds the lease, and a digest of the lease token it holds, never the token itself; a probe that hears a digest other than that of the lease it read judges the answerer not the leaseholder. docs/MCP.md names the route and the comparison."
+scope:
+  - "apps/majordomus-cli/src/lease.rs"
+  - "apps/majordomus-cli/src/http/router.rs"
+  - "apps/majordomus-cli/src/capability/builtin/health.rs"
+  - "apps/majordomus-cli/tests/lease_busy.rs"
+  - "test/cases"
+  - "docs/MCP.md"
+non_scope:
+  - "How requests are handed to handler threads and MAX_HANDLERS, which I2126 delivered"
+depends_on:
+  - I2126
+acceptance_criteria:
+  - "The lease probe asks a liveness route, not GET /, and the answer carries the repository id, leaseholder and a digest of the lease token"
+  - "A process that answers the probe with a token digest other than the lease's is judged not the leaseholder"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test lease_busy --test mcp_shared"
+evidence_required:
+  - "probe_compares_the_token_test"
+created_at: 2026-10-14
+updated_at: 2026-10-14

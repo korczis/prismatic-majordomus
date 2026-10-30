@@ -1,0 +1,29 @@
+id: I2748
+milestone: truthful-plan-surfaces
+title: "The drift already on the trunk is settled before the gate is made blocking"
+slug: the-drift-on-the-trunk-is-settled
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Run plan.drift on the trunk and, for every merged_not_recorded issue, either record it through plan verify|evidence|done with evidence actually run, or record why it is not done (a slice) by narrowing the issue or opening its remainder as a new issue; then make the drift gate blocking."
+why: "ADR 0166, consequence 3. On 2026-10-16 at least I2653, I2417, I2652, I2734, I2601, I2288, I2289 and I2735 had merged pull requests naming them while not DONE; a blocking gate over them would turn the trunk red at once."
+current_state: "Measured 2026-10-16 at origin/master d1162668036 with the executable of #1304: 23 merged_not_recorded with the forge unread, 16 with it read. Eight were delivered and are recorded DONE with evidence run at 09c334079f5 (I1800, I2417, I2482, I2652, I2653, I2697, I2718, I2734; I2417's 390 px criterion narrowed to what 239df858cb4 decided). Six are planning commits that name the issue without delivering it (I1302, I1305, I1900, I1962, I1980, I2484), which I2749 removes from the inference. Two (I2289, I2735) are BLOCKED behind I2288, whose open pull request #1288 still changes what it delivers. The trunk job reads no forge, which I2750 settles. The gate stays advisory until plan drift on the trunk reports zero."
+desired_state: "plan drift on the trunk reports no merged_not_recorded, and the gate is blocking."
+scope:
+  - ".ai/repo/project/issues"
+  - ".ai/repo/ci/plan.yaml"
+  - "docs/PLAN_STATUS.md"
+  - "docs/generated"
+  - "site/data/generated"
+  - "site/data/registry"
+depends_on: [I2741, I2749, I2750]
+acceptance_criteria:
+  - "plan drift on the trunk reports zero merged_not_recorded"
+  - "Every issue recorded DONE carries evidence from commands run at the recording commit"
+validation:
+  - "bin/majordomus plan drift --json"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "trunk_drift_zero"
+created_at: 2026-10-16
+updated_at: 2026-10-16

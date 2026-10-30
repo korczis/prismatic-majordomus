@@ -1,0 +1,30 @@
+id: I1804
+milestone: automation
+title: The first shell scripts become scripted capabilities over typed Rust
+slug: first-scripts-become-scripted-capabilities
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Migrate the baseline-ratchet logic copied into ten scripts/ci gates to one typed Rust capability, and the gates that use it to scripted capabilities that orchestrate it."
+why: "The ratchet is the largest piece of duplicated logic in scripts/ci and the audit classified it as domain logic; one typed implementation removes ten copies and proves the migration path of ADR 0069 on real gates."
+current_state: "Ten scripts/ci gates each carry their own copy of the baseline comparison."
+desired_state: "One Rust capability compares a finding set with its baseline; the migrated gates are scripted capabilities; their shell is deleted and the inventory updated."
+scope:
+  - apps/majordomus-cli
+  - scripts/ci
+  - share
+  - .ai/repo
+  - test
+non_scope:
+  - Gates whose logic is not the ratchet
+depends_on:
+  - I1801
+acceptance_criteria:
+  - the ratchet is one typed capability with tests
+  - each migrated gate produces the same verdict on the same tree as its shell predecessor
+validation:
+  - bash test/run.sh
+evidence_required:
+  - ratchet_is_one_capability
+created_at: 2026-09-15
+updated_at: 2026-09-15

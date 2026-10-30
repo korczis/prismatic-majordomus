@@ -12,6 +12,8 @@
 //! artifact carries a provenance header in the form its encoding allows, and
 //! [`manifest_document`] is the index of the whole set, itself generated.
 
+mod entities;
+
 use std::path::{Path, PathBuf};
 
 use schemars::JsonSchema;
@@ -124,6 +126,10 @@ pub enum Target {
     /// `docs/generated/graph.json`: the composed graph as data, and
     /// `docs/generated/graph.schema.json`: its schema, generated from the types.
     Graph,
+    /// `docs/generated/entities.json`: the site's entity projection of the composed graph
+    /// under `site/data/publication.toml` (I1007); nothing in a repository that declares no
+    /// publication.
+    Entities,
     /// Every projection of the design system (see `design::render`): the
     /// stylesheets both Tailwind builds import, the tokens and the declaration compiled
     /// into the crate, the mark the Cockpit's shell inlines, the copies of the brand every
@@ -154,6 +160,7 @@ impl Target {
         Target::Changelog,
         Target::Distribution,
         Target::Graph,
+        Target::Entities,
         Target::Deployment,
         Target::Economics,
         Target::Manifest,
@@ -191,6 +198,7 @@ impl Target {
             Target::Manifest => "manifest",
             Target::Deployment => "deployment",
             Target::Graph => "graph",
+            Target::Entities => "entities",
             Target::Design => "design",
             Target::Economics => "economics",
         }
@@ -646,6 +654,7 @@ pub fn artifacts(
             | Target::Distribution
             | Target::Deployment
             | Target::Graph
+            | Target::Entities
             | Target::Design
             | Target::Economics
             | Target::Manifest => {}
@@ -732,6 +741,34 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
         // three are compared by `generate --check`.
         let mut log =
             crate::release::compose_published(app.repository.root(), &app.context.index.objects);
+        // A repository without the history of a release — an exported fixture, a shallow
+        // clone — cannot compose what that release changed, and composing it anyway wrote a
+        // changelog of empty sections and called the committed one stale (I1409). What such
+        // a release changed is kept as committed, and said, rather than judged on history
+        // this repository does not have.
+        let unreadable = crate::release::changelog::unreadable_releases(
+            app.repository.root(),
+            &app.context.index.objects,
+        );
+        if !unreadable.is_empty() {
+            let committed =
+                std::fs::read_to_string(app.repository.root().join(OUT_DIR).join("changelog.json"))
+                    .ok()
+                    .and_then(|text| {
+                        serde_json::from_str::<crate::release::model::Changelog>(&text).ok()
+                    });
+            let kept = committed
+                .map(|c| crate::release::changelog::keep_committed(&mut log, &c, &unreadable))
+                .unwrap_or_default();
+            if let (Some(newest), Some(oldest)) = (kept.first(), kept.last()) {
+                tracing::warn!(
+                    "{OUT_DIR}/changelog.*: what {} release(s) changed ({newest} back to \
+                     {oldest}) is kept as committed and not judged: their history is not in \
+                     this repository's object database",
+                    kept.len()
+                );
+            }
+        }
         // The committed document names its producer the way the served one does, so a page
         // rendering either can find the same value on every other surface without a route
         // or an id of its own.
@@ -1060,7 +1097,9 @@ pub(crate) fn design_artifacts(app: &App) -> Result<Vec<Artifact>> {
         ArtifactFormat::Yaml,
         None,
         source,
-        comment_banner(source, version) + &text,
+        // `.as_str()` rather than `&text`: with rhai linked, `String + &String` has more than
+        // one `Add` implementation to choose from and no longer coerces (ADR 0069)
+        comment_banner(source, version) + text.as_str(),
     ));
 
     // the brand: one canonical file per mark under share/design/brand, and every copy a
@@ -1217,14 +1256,20 @@ pub fn context_artifacts(
         })?;
         out.extend(Document::new("economics", ECONOMICS_SCHEMA, source, value).artifacts(version));
     }
-    if targets.contains(&Target::Graph) {
+    // composed once for both targets that read it: the composition is the expensive part
+    let graph = if targets.contains(&Target::Graph) || targets.contains(&Target::Entities) {
+        Some(graph_document(ctx, version)?)
+    } else {
+        None
+    };
+    if let (true, Some(graph)) = (targets.contains(&Target::Graph), &graph) {
         out.push(Artifact::verbatim(
             format!("{OUT_DIR}/graph.json"),
             "graph",
             ArtifactFormat::Json,
             Some(GRAPH_SCHEMA.to_string()),
             "the composed graph of the registry and the index",
-            graph_document(ctx, version)?,
+            graph.clone(),
         ));
         out.push(Artifact::verbatim(
             format!("{OUT_DIR}/graph.schema.json"),
@@ -1234,6 +1279,19 @@ pub fn context_artifacts(
             "the schema of the composed graph, generated from its types",
             graph_schema_document(version),
         ));
+    }
+    if let (true, Some(graph)) = (targets.contains(&Target::Entities), &graph) {
+        let root = Path::new(&ctx.index.repository.root);
+        if let Some(content) = entities_document(root, graph, version)? {
+            out.push(Artifact::verbatim(
+                format!("{OUT_DIR}/entities.json"),
+                "entities",
+                ArtifactFormat::Json,
+                None,
+                "the composed graph under site/data/publication.toml",
+                content,
+            ));
+        }
     }
     Ok(out)
 }
@@ -1294,8 +1352,8 @@ pub fn providers_markdown(value: &Value) -> String {
     };
     let mut s = String::new();
     s.push_str("# Providers\n\n");
-    s.push_str("Every provider the tool ships an adapter for, and what this repository does with each. The set is the templates under `share/providers/`; the title, the client configuration a provider reads and the scratch roots it creates checkouts under are `share/providers.yaml`; the bootstraps are the policy's `projections[]`; whether a client configuration is present and which hooks are wired are facts of this tree. `majordomus product providers`, the MCP tool `majordomus_providers`, `GET /api/v1/product/providers` and the site's provider cards answer from the same value. A document that names providers points here rather than listing them (ADR 0024).\n\n");
-    s.push_str("| provider | title | bootstraps | client configuration | hooks | scratch roots |\n|---|---|---|---|---|---|\n");
+    s.push_str("Every provider the tool ships an adapter for, and what this repository does with each. The set is the templates under `share/providers/`; the title, the client configuration a provider reads and the scratch roots it creates checkouts under and whether its client drives a browser beside this repository's server (`offers.browser`, with the native messaging host a bridge registers) and the official seams through which it reports what a session consumed (`offers.usage`) are `share/providers.yaml`; the bootstraps are the policy's `projections[]`; whether a client configuration is present and which hooks are wired are facts of this tree. `majordomus product providers`, the MCP tool `majordomus_providers`, `GET /api/v1/product/providers` and the site's provider cards answer from the same value. A document that names providers points here rather than listing them (ADR 0024).\n\n");
+    s.push_str("| provider | title | bootstraps | client configuration | hooks | browser | usage | scratch roots |\n|---|---|---|---|---|---|---|---|\n");
     for p in value["providers"].as_array().into_iter().flatten() {
         let str_of = |k: &str| {
             p.get(k)
@@ -1303,8 +1361,27 @@ pub fn providers_markdown(value: &Value) -> String {
                 .unwrap_or_default()
                 .to_string()
         };
+        let offers = &p["offers"];
+        let browser = match (
+            offers.get("browser").and_then(Value::as_str),
+            offers.get("browser_host").and_then(Value::as_str),
+        ) {
+            (Some("bridge"), Some(host)) => format!("`bridge` (`{host}`)"),
+            (Some(word), _) => format!("`{word}`"),
+            (None, _) => "—".to_string(),
+        };
+        // the usage seams, as declared: a list, `none` alone, nothing at all when undeclared
+        let usage = match offers.get("usage").and_then(Value::as_array) {
+            Some(seams) if !seams.is_empty() => seams
+                .iter()
+                .filter_map(Value::as_str)
+                .map(|w| format!("`{w}`"))
+                .collect::<Vec<_>>()
+                .join(", "),
+            _ => "—".to_string(),
+        };
         s.push_str(&format!(
-            "| `{}` | {} | {} | {} | {} | {} |\n",
+            "| `{}` | {} | {} | {} | {} | {} | {} | {} |\n",
             str_of("id"),
             str_of("title"),
             cell(&p["bootstraps"]),
@@ -1313,6 +1390,8 @@ pub fn providers_markdown(value: &Value) -> String {
                 .map(|c| format!("`{c}`"))
                 .unwrap_or_else(|| "—".to_string()),
             cell(&p["hooks"]),
+            browser,
+            usage,
             cell(&p["scratch_roots"]),
         ));
     }
@@ -1473,6 +1552,87 @@ pub fn forbidden_in(content: &str) -> Option<(&'static str, &'static str)> {
 /// and is quietly short of one edge. [`crate::graph::unresolved_relations`] is the verdict
 /// that already decides it — this is the consumer its own contract names.
 pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
+    graph_document_of(
+        ctx,
+        version,
+        crate::graph::composed_complete(&ctx.registry, &ctx.index),
+    )
+}
+
+/// The site's entity projection of a rendered composed graph (`graph`, as
+/// [`graph_document`] wrote it) under the repository's publication declaration (I1007):
+/// the projection `scripts/generate-site-data` computed in the shell, with the provenance
+/// members every generated JSON document carries after its `source`. `None` when the
+/// repository declares no publication, which is every repository without a site.
+///
+/// Refused, as the graph is, when the projection carries anything from `FORBIDDEN`.
+///
+/// ```
+/// use majordomus_cli::generate::entities_document;
+/// let root = tempfile::tempdir().unwrap();
+/// let graph = r#"{"graph": {"nodes": [
+///     {"id": "adr:0001", "kind": "adr", "label": "adr-0001", "status": "accepted",
+///      "route": "/cockpit/objects/adr/adr-0001", "source": ".ai/repo/adrs/0001.md"}
+/// ], "edges": []}}"#;
+/// // no publication declaration: a repository without a site has no projection
+/// assert_eq!(entities_document(root.path(), graph, "1.0.0").unwrap(), None);
+///
+/// let declaration = "[[kinds]]\nkind = \"adr\"\nprojection = \"entity\"\nroute = \"/adrs/\"\n";
+/// std::fs::create_dir_all(root.path().join("site/data")).unwrap();
+/// std::fs::write(root.path().join("site/data/publication.toml"), declaration).unwrap();
+/// let doc = entities_document(root.path(), graph, "1.0.0").unwrap().unwrap();
+/// let doc: serde_json::Value = serde_json::from_str(&doc).unwrap();
+/// assert_eq!(doc["generator"], "majordomus-cli 1.0.0");
+/// assert_eq!(doc["kinds"][0]["count"], 1);
+/// assert_eq!(doc["entities"][0]["slug"], "adr-0001");
+/// // a node that would publish a machine's home directory refuses the whole document
+/// let leak = graph.replace(".ai/repo/adrs/0001.md", &format!("{}someone/0001.md", "/Users/"));
+/// assert!(entities_document(root.path(), &leak, "1.0.0").is_err());
+/// ```
+pub fn entities_document(root: &Path, graph: &str, version: &str) -> Result<Option<String>> {
+    let Ok(declaration) = std::fs::read_to_string(root.join(crate::entity::PUBLICATION)) else {
+        return Ok(None);
+    };
+    let graph: Value = serde_json::from_str(graph).map_err(|e| Error::Protocol {
+        reason: format!("the composed graph does not parse as JSON: {e}"),
+    })?;
+    let projection = entities::projection(&graph, &declaration)?;
+    let mut doc = Map::new();
+    for (key, value) in projection.as_object().into_iter().flatten() {
+        doc.insert(key.clone(), value.clone());
+        if key == "source" {
+            doc.insert(
+                "generated".into(),
+                Value::String(format!(
+                    "{HEADER}; source: docs/generated/graph.json and {}; regenerate with `majordomus generate`",
+                    crate::entity::PUBLICATION
+                )),
+            );
+            doc.insert(
+                "generator".into(),
+                Value::String(format!("majordomus-cli {version}")),
+            );
+        }
+    }
+    let rendered = entities::render(&Value::Object(doc));
+    if let Some((marker, what)) = forbidden_in(&rendered) {
+        return Err(Error::Http {
+            reason: format!(
+                "the entity projection carries {what} (`{marker}`) and would publish it; \
+                 find the node of the composed graph that holds it before regenerating"
+            ),
+        });
+    }
+    Ok(Some(rendered))
+}
+
+/// [`graph_document`] over a composition already made, so the refusal of one that stopped
+/// at a bound is reached by a test as it would be by a bound that comes back.
+fn graph_document_of(
+    ctx: &Context,
+    version: &str,
+    composed: crate::graph::Graph,
+) -> Result<String> {
     let unresolved = crate::graph::unresolved_relations(&ctx.registry, &ctx.index.objects);
     if !unresolved.is_empty() {
         return Err(Error::UnresolvedRelation {
@@ -1489,7 +1649,7 @@ pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
     }
     // whole: the site's entity pages and its catalogue counts are read off this document,
     // and a prefix of the repository would drop what sorts past MAX_NODES without a word
-    let graph = crate::graph::composed_complete(&ctx.registry, &ctx.index);
+    let graph = committed_graph(composed)?;
     let doc = serde_json::json!({
         "schema": GRAPH_SCHEMA,
         "generated": format!("{HEADER}; source: the capability registry and every object of the index; regenerate with `majordomus generate`"),
@@ -1507,6 +1667,14 @@ pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
         });
     }
     Ok(rendered)
+}
+
+/// The composed graph as it may be committed: a graph that stopped at a bound is refused
+/// with the count it held and the bound, and nothing is written, as an unresolved relation
+/// is refused before it. The composition has no bound today; this is what keeps one that
+/// comes back from committing a prefix that still reads as whole (I1966).
+fn committed_graph(graph: crate::graph::Graph) -> Result<crate::graph::Graph> {
+    crate::graph::whole(graph).map_err(|reason| Error::Refused { code: 10, reason })
 }
 
 /// The schema of the composed graph, generated from the types that define it rather than
@@ -3219,6 +3387,43 @@ mod tests {
     }
 
     #[test]
+    fn a_composed_graph_that_stopped_at_a_bound_is_refused_and_not_committed() {
+        use crate::graph::{Builder, Node};
+        let thing = |id: &str| Node {
+            id: id.into(),
+            kind: "thing".into(),
+            label: id.into(),
+            summary: None,
+            route: None,
+            source: None,
+            status: None,
+            external: false,
+            facts: Default::default(),
+        };
+        let mut b = Builder::new("composed", "Everything", "two things, room for one", "test")
+            .node_kind("thing", "a thing")
+            .limit(1);
+        b.node(thing("a"));
+        b.node(thing("b"));
+        let err = committed_graph(b.finish()).expect_err("a prefix is not committed");
+        assert_eq!(err.exit_code(), 10);
+        let message = err.to_string();
+        assert!(message.contains("stopped at 1 nodes"), "{message}");
+        assert!(
+            message.contains(&crate::graph::MAX_NODES.to_string()),
+            "{message}"
+        );
+
+        let mut whole = Builder::new("composed", "Everything", "one thing", "test")
+            .node_kind("thing", "a thing");
+        whole.node(thing("a"));
+        assert!(
+            committed_graph(whole.finish()).is_ok(),
+            "a graph that stopped nowhere is committed"
+        );
+    }
+
+    #[test]
     fn a_graph_of_repository_relative_sources_is_publishable() {
         let safe = r#"{"nodes":[{"id":"majordomus://rule/a","source":".ai/repo/rules/a.md"}]}"#;
         assert!(forbidden_in(safe).is_none());
@@ -3347,5 +3552,332 @@ mod tests {
             .modified()
             .unwrap();
         assert_eq!(before, after);
+    }
+
+    /// A repository holding one release record and none of its history, as an exported
+    /// fixture does: its index, and the app that plans over it.
+    fn released_without_history() -> (crate::synthetic::SyntheticRepository, crate::cli::RepoArgs) {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let sources = repo.root().join(".ai/repo/knowledge/sources.yaml");
+        let mut text = std::fs::read_to_string(&sources).unwrap();
+        text.push_str(
+            "  - id: release\n    kind: release-record\n    discovery: vcs\n    \
+             pathspec: ':(glob).ai/repo/releases/*.yaml'\n    required: false\n",
+        );
+        std::fs::write(&sources, text).unwrap();
+        let manifest = repo.root().join(".ai/manifest.yaml");
+        let mut text = std::fs::read_to_string(&manifest).unwrap();
+        text.push_str("  releases: repo/releases\n");
+        std::fs::write(&manifest, text).unwrap();
+        let releases = repo.root().join(".ai/repo/releases");
+        std::fs::create_dir_all(&releases).unwrap();
+        std::fs::write(
+            releases.join("v1.0.0.yaml"),
+            "schema: release/v1\nversion: \"1.0.0\"\ntag: v1.0.0\nchannel: stable\n\
+             commit: 1111111111111111111111111111111111111111\n\
+             published_at: \"2026-10-01T00:00:00Z\"\nartifacts:\n  - target: linux-x86_64-gnu\n    \
+             name: majordomus-v1.0.0-x86_64-unknown-linux-gnu.tar.gz\n    \
+             url: https://github.com/example/synthetic/releases/download/v1.0.0/\
+             majordomus-v1.0.0-x86_64-unknown-linux-gnu.tar.gz\n    \
+             sha256: 3333333333333333333333333333333333333333333333333333333333333333\n    \
+             size: 1\n",
+        )
+        .unwrap();
+        let args = crate::cli::RepoArgs {
+            repo: Some(repo.root().to_path_buf()),
+            share: Some(crate::synthetic::crate_share()),
+            discovery: crate::cli::DiscoveryMode::Filesystem,
+            ..Default::default()
+        };
+        (repo, args)
+    }
+
+    fn planned_changelog(args: &crate::cli::RepoArgs) -> crate::release::model::Changelog {
+        let app = crate::app::App::load(args).unwrap();
+        let plan = plan(&app, &[Target::Changelog]).unwrap();
+        let json = plan
+            .iter()
+            .find(|a| a.path == format!("{OUT_DIR}/changelog.json"))
+            .expect("the changelog is planned");
+        serde_json::from_str(&json.content).unwrap()
+    }
+
+    /// A release whose history is not in the repository keeps what the committed changelog
+    /// says it changed; with nothing committed, or with a committed changelog that cannot
+    /// be read, there is nothing to keep and the composed section stands as composed.
+    #[test]
+    fn a_release_without_its_history_keeps_what_the_committed_changelog_says() {
+        use crate::release::model::{Change, ChangeGroup, ChangeKind};
+        let (repo, args) = released_without_history();
+        let app = crate::app::App::load(&args).unwrap();
+        assert!(
+            app.context
+                .index
+                .objects
+                .iter()
+                .any(|o| o.kind == crate::release::changelog::RELEASE_KIND),
+            "the fixture's release record is indexed: {:?}",
+            app.context.index.diagnostics
+        );
+        assert_eq!(
+            crate::release::changelog::unreadable_releases(
+                app.repository.root(),
+                &app.context.index.objects
+            ),
+            ["1.0.0"],
+            "the fixture's release must be one whose history is absent"
+        );
+
+        // nothing committed: the section is composed from the history it does not have
+        let composed = planned_changelog(&args);
+        let section = composed
+            .sections
+            .iter()
+            .find(|s| s.version == "1.0.0")
+            .expect("the release has a section");
+        assert!(section.groups.is_empty(), "{section:?}");
+
+        // a committed changelog that does not parse is not a source of anything
+        let out = repo.root().join(OUT_DIR);
+        std::fs::create_dir_all(&out).unwrap();
+        std::fs::write(out.join("changelog.json"), "{ not json").unwrap();
+        let unparsed = planned_changelog(&args);
+        assert_eq!(unparsed.sections, composed.sections);
+
+        // a committed changelog naming the same release at the same commit is kept
+        let mut committed = composed.clone();
+        let kept = Change {
+            kind: ChangeKind::Fix,
+            scope: None,
+            subject: "what the committed changelog said".into(),
+            breaking: false,
+            commit: "2222222222222222222222222222222222222222".into(),
+            url: None,
+            references: Vec::new(),
+        };
+        for s in committed
+            .sections
+            .iter_mut()
+            .filter(|s| s.version == "1.0.0")
+        {
+            s.groups = vec![ChangeGroup {
+                kind: ChangeKind::Fix,
+                heading: "Fixed".into(),
+                rank: 1,
+                changes: vec![kept.clone()],
+            }];
+        }
+        std::fs::write(
+            out.join("changelog.json"),
+            serde_json::to_string(&committed).unwrap(),
+        )
+        .unwrap();
+        // the warning that names what is kept is formatted only where a subscriber listens
+        // at warn, so the plan is made under one: its count and its range are executed
+        let subscriber = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::WARN)
+            .with_writer(std::io::sink)
+            .finish();
+        let planned = tracing::subscriber::with_default(subscriber, || planned_changelog(&args));
+        let section = planned
+            .sections
+            .iter()
+            .find(|s| s.version == "1.0.0")
+            .unwrap();
+        assert_eq!(section.groups.len(), 1, "{section:?}");
+        assert_eq!(section.groups[0].changes, [kept]);
+    }
+
+    /// The composed graph of a repository whose every reference resolves is the committed
+    /// document: its schema, its generator, and the graph composed whole.
+    #[test]
+    fn the_graph_document_of_a_whole_repository_is_committed() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let rendered = graph_document(&ctx, "9.9.9").unwrap();
+        let doc: serde_json::Value = serde_json::from_str(&rendered).unwrap();
+        assert_eq!(doc["schema"], GRAPH_SCHEMA);
+        assert_eq!(doc["generator"], "majordomus-cli 9.9.9");
+        assert_eq!(doc["graph"]["metadata"]["truncated"], false);
+        let nodes = doc["graph"]["nodes"].as_array().expect("graph nodes");
+        assert!(
+            nodes
+                .iter()
+                .any(|n| n["id"].as_str() == Some("capability:worktree.status")),
+            "the registry is composed into the graph"
+        );
+    }
+
+    /// A composition that stopped at a bound is refused, and nothing is rendered: committing
+    /// it would publish a prefix of the repository that still reads as whole (I1966).
+    #[test]
+    fn a_graph_that_stopped_at_a_bound_is_not_committed() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let mut composed = crate::graph::composed_complete(&ctx.registry, &ctx.index);
+        composed.metadata.truncated = true;
+        match graph_document_of(&ctx, "9.9.9", composed) {
+            Err(Error::Refused { code, reason }) => {
+                assert_eq!(code, 10);
+                assert!(reason.contains("stopped at"), "{reason}");
+            }
+            other => panic!("{other:?}"),
+        }
+    }
+
+    /// A synthetic repository that publishes its rules as entity pages, with the arguments
+    /// an app is loaded from.
+    fn publishing_rules() -> (crate::synthetic::SyntheticRepository, crate::cli::RepoArgs) {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let declaration = repo.root().join(crate::entity::PUBLICATION);
+        std::fs::create_dir_all(declaration.parent().unwrap()).unwrap();
+        std::fs::write(
+            &declaration,
+            "[[kinds]]\nkind = \"rule\"\nprojection = \"entity\"\nroute = \"/rules/\"\n",
+        )
+        .unwrap();
+        let args = crate::cli::RepoArgs {
+            repo: Some(repo.root().to_path_buf()),
+            share: Some(crate::synthetic::crate_share()),
+            discovery: crate::cli::DiscoveryMode::Filesystem,
+            ..Default::default()
+        };
+        (repo, args)
+    }
+
+    /// The entities target alone plans the entity projection and not the graph it is read
+    /// from; a repository that declares no publication plans nothing for it.
+    #[test]
+    fn the_entities_target_plans_the_projection_and_not_the_graph() {
+        let (repo, args) = publishing_rules();
+        let app = crate::app::App::load(&args).unwrap();
+        let planned = plan(&app, &[Target::Entities]).unwrap();
+        let paths: Vec<&str> = planned.iter().map(|a| a.path.as_str()).collect();
+        assert!(!paths.contains(&"docs/generated/graph.json"), "{paths:?}");
+        let entities = planned
+            .iter()
+            .find(|a| a.path == format!("{OUT_DIR}/entities.json"))
+            .expect("the entity projection is planned");
+        assert_eq!(entities.document, "entities");
+        assert_eq!(entities.format, ArtifactFormat::Json);
+        let doc: serde_json::Value = serde_json::from_str(&entities.content).unwrap();
+        assert_eq!(doc["kinds"][0]["kind"], "rule");
+        assert_eq!(doc["kinds"][0]["count"], repo.shape.rules);
+
+        // a declaration that names no kind refuses the target rather than plan an empty one
+        std::fs::write(repo.root().join(crate::entity::PUBLICATION), "# no kind\n").unwrap();
+        let app = crate::app::App::load(&args).unwrap();
+        assert!(
+            plan(&app, &[Target::Entities]).is_err(),
+            "a declaration of no kind"
+        );
+
+        std::fs::remove_file(repo.root().join(crate::entity::PUBLICATION)).unwrap();
+        let app = crate::app::App::load(&args).unwrap();
+        let planned = plan(&app, &[Target::Entities]).unwrap();
+        assert!(
+            planned.iter().all(|a| a.document != "entities"),
+            "no declaration, no projection"
+        );
+    }
+
+    /// A rule that depends on a rule nobody declared refuses the entities target as it
+    /// refuses the graph: the projection is read off a graph short of that edge.
+    #[test]
+    fn an_unresolved_relation_refuses_the_entities_target() {
+        let (repo, args) = publishing_rules();
+        let rule = repo.root().join(".ai/repo/rules/project/rule-0.v1.md");
+        let text = std::fs::read_to_string(&rule).unwrap();
+        std::fs::write(
+            &rule,
+            text.replace("depends_on: []", "depends_on: [project.imaginary]"),
+        )
+        .unwrap();
+        let app = crate::app::App::load(&args).unwrap();
+        match plan(&app, &[Target::Entities]) {
+            Err(Error::UnresolvedRelation { findings }) => {
+                assert!(
+                    findings.iter().any(|f| f.contains("project.imaginary")),
+                    "{findings:?}"
+                );
+            }
+            other => panic!("{other:?}"),
+        }
+    }
+
+    /// The entity projection is absent without a declaration, refused over a graph that is
+    /// not JSON, a declaration of no kind or a machine path, and otherwise stamped after
+    /// its `source` with the header and the generator.
+    #[test]
+    fn the_entity_projection_is_stamped_after_its_source_or_refused() {
+        let root = tempfile::tempdir().unwrap();
+        // built with json! rather than a raw string: scripts/rust-coverage finds the end of a
+        // test module by its braces, and braces in a multi-line raw string misled it
+        let graph = serde_json::json!({"graph": {"nodes": [
+            {"id": "adr:0001", "kind": "adr", "label": "adr-0001", "status": "accepted",
+             "route": "/cockpit/objects/adr/adr-0001", "source": ".ai/repo/adrs/0001.md"}
+        ], "edges": []}})
+        .to_string();
+        let graph = graph.as_str();
+        assert_eq!(
+            entities_document(root.path(), graph, "9.9.9").unwrap(),
+            None
+        );
+
+        let declaration = root.path().join(crate::entity::PUBLICATION);
+        std::fs::create_dir_all(declaration.parent().unwrap()).unwrap();
+        std::fs::write(&declaration, "# no kind yet\n").unwrap();
+        let Err(Error::Protocol { reason }) = entities_document(root.path(), graph, "9.9.9") else {
+            panic!("a declaration of no kind was projected");
+        };
+        assert!(reason.contains("declares no kind"), "{reason}");
+
+        std::fs::write(
+            &declaration,
+            "[[kinds]]\nkind = \"adr\"\nprojection = \"entity\"\nroute = \"/adrs/\"\n",
+        )
+        .unwrap();
+        let Err(Error::Protocol { reason }) = entities_document(root.path(), "{", "9.9.9") else {
+            panic!("a graph that is not JSON was projected");
+        };
+        assert!(reason.contains("does not parse as JSON"), "{reason}");
+
+        let rendered = entities_document(root.path(), graph, "9.9.9")
+            .unwrap()
+            .expect("a declaration projects");
+        assert!(rendered.ends_with("}\n"), "rendered as jq prints it");
+        let doc: serde_json::Value = serde_json::from_str(&rendered).unwrap();
+        let keys: Vec<&str> = doc
+            .as_object()
+            .unwrap()
+            .keys()
+            .map(String::as_str)
+            .collect();
+        assert_eq!(
+            keys,
+            [
+                "schema",
+                "source",
+                "generated",
+                "generator",
+                "kinds",
+                "catalogue",
+                "entities"
+            ],
+            "the provenance follows the source"
+        );
+        assert_eq!(doc["generator"], "majordomus-cli 9.9.9");
+        assert!(doc["generated"]
+            .as_str()
+            .is_some_and(|g| g.contains(crate::entity::PUBLICATION)));
+
+        let leak = graph.replace(
+            ".ai/repo/adrs/0001.md",
+            &format!("{}someone/0001.md", "/Users/"),
+        );
+        let Err(Error::Http { reason }) = entities_document(root.path(), &leak, "9.9.9") else {
+            panic!("a machine path was projected");
+        };
+        assert!(reason.contains("/Users/"), "{reason}");
     }
 }

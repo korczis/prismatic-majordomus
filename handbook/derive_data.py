@@ -1,4 +1,4 @@
-"""Derive explorer-data.json, gates-data.json and repo-data.json from a git tree.
+"""Derive explorer-data.json, gates-data.json, repo-data.json and outlook-data.json from a git tree.
 
 Run as `python3 -I derive_data.py` (standard library only). Everything is read from one
 pinned commit of the repository through `git -C R show|ls-tree|log|tag`; the repository is
@@ -8,11 +8,15 @@ never written to and no working-tree file of it is read.
     python3 -I derive_data.py --rev <commit>  # another commit (used to prove the definitions)
     python3 -I derive_data.py --out <dir>     # write somewhere else, leave this directory alone
 
-The three files were hand-made snapshots whose generator was lost. Their shape is consumed by
-widgets.js, extras2.js, extras3.js, extras5.js and extras11.js, so it is held: the first run
-copies the files it is about to replace to shape/, every run compares the shape of what
-it derived with that baseline, writes derive-data-report.txt, and refuses (exit 1, nothing
-overwritten) when a key or a value type appeared or disappeared.
+The first three files were hand-made snapshots whose generator was lost. Their shape is
+consumed by widgets.js, extras2.js, extras3.js, extras5.js and extras11.js, so it is held: the
+first run copies the files it is about to replace to shape/, every run compares the shape of
+what it derived with that baseline, writes derive-data-report.txt, and refuses (exit 1,
+nothing overwritten) when a key or a value type appeared or disappeared. outlook-data.json was
+never a snapshot: its baseline in shape/ is its first derivation, and it is held the same way
+for the outlook chapters (extras15.js and the captions assemble.py fills). A list that becomes
+empty loses the keys of its entries, and that is a change of shape too: the day the economics
+verdict has no unmet condition left, the chapter that says so is rewritten in the same change.
 
 Field definitions, each proved by regenerating the snapshot's own commit (see the report):
 
@@ -53,6 +57,26 @@ repo-data.json (history of the pinned commit, merge commits excluded)
   proof       [state, rules]: the state `majordomus rules report` gives each rule, derived
               here from the tree (see rule_proof_states).
   jobs        [job, gates], most gates first.
+
+outlook-data.json (what the outlook chapters measure; every number in them comes from here)
+  integration  the history, merges included: commits, merges, and the same over the
+               WINDOW_DAYS ending on the newest author day (last, since, windowCommits,
+               windowMerges); weeks [Monday, commits, merges] by author date; windowTypes
+               [type, commits] of the window's non-merge commits ("other" for a header that is
+               not conventional).
+  plan         site/data/generated/plan.json: total issues, status [status, issues] and
+               milestones [status, milestones] in the plan's own order of statuses, the active
+               milestone and the next ready issue with their titles, and telemetry: the
+               TELEMETRY_MILESTONE with its status and its issues [id, status, title].
+  intents      .ai/repo/project/intents/*.yaml: id, t title, c criteria, m criteria met, st
+               [state, criteria] as crate::intent names the states, ms [milestone, status],
+               p path. A criterion is judged from the committed ledger (see derive_intents).
+  economics    docs/generated/economics.json: the verdict (publishable, statement, unmet), the
+               valid pairs recorded and the pairs publication asks for, the measured context
+               reduction with its interval in parts per million (JSON here carries no
+               fractions), its n, resamples, budget, candidate and selected tokens, the day it
+               was measured and the tokenizer; suites [id, runs, freshness], metrics
+               [id, status, n] and hypotheses [id, status].
 """
 import argparse
 import collections
@@ -102,6 +126,17 @@ FIRST_RELEASE = (0, 5, 0)
 # Rule proof, as apps/majordomus-cli/src/rules/mod.rs declares it: strongest to weakest.
 RULE_STATES = ["proven", "inputs unchanged", "stale", "gated", "failing", "not run", "reviewed",
                "unrunnable", "dangling", "unproven"]
+# What the outlook chapters read (outlook-data.json).
+PLAN_PATH = "site/data/generated/plan.json"
+ECONOMICS_PATH = "docs/generated/economics.json"
+INTENTS_DIR = ".ai/repo/project/intents/"
+# The milestone that would record what real sessions consume; the chapter is about it.
+TELEMETRY_MILESTONE = "execution-telemetry"
+CONTEXT_METRIC = "context_reduction_ratio"
+# The window the report's integration tax is read over, in days of author dates.
+WINDOW_DAYS = 30
+# An intent criterion's states, as crate::intent::IntentEvidenceState spells them.
+INTENT_STATES = ["current", "stale", "failing", "not_run", "not_derivable", "unresolved"]
 CASES_DIR = "test/cases/"
 CRATE_TESTS_DIR = "apps/majordomus-cli/tests/"
 CRATE_SRC_DIR = "apps/majordomus-cli/src/"
@@ -747,6 +782,56 @@ def test_identity(path):
     return None
 
 
+class LedgerJudge:
+    """What a run recorded in the committed evidence ledger is worth at the pinned tree, after
+    src/evidence/freshness.rs: the rule proof and the intents' criteria read it the same way."""
+
+    def __init__(self, tree):
+        self.tree = tree
+        self.ledger = json.loads(tree.text(LEDGER_PATH))["executions"] \
+            if tree.exists(LEDGER_PATH) else []
+        self.contained, self.whole = {}, {}
+
+    def latest(self, identity):
+        """The ledger's run of one test identity (`suite:<case>`), or None."""
+        return next((e for e in self.ledger if e["test"] == identity), None)
+
+    def contains(self, commit):
+        """Does the pinned commit contain the commit a run was recorded on? No too when this
+        repository does not have that commit at all."""
+        if commit not in self.contained:
+            try:
+                ahead = git("log", "-1", "--format=%H", "%s..%s" % (self.tree.commit, commit))
+                self.contained[commit] = not ahead.strip()
+            except DeriveError:
+                self.contained[commit] = False
+        return self.contained[commit]
+
+    def run_state(self, execution, source, subject):
+        tree = self.tree
+        outcome = execution["outcome"]
+        if outcome == "skip":
+            return "not run"
+        if outcome != "pass":
+            return "failing"
+        commit = execution["commit"]
+        if not self.contains(commit):
+            return "stale"
+        then = entries_of(commit, (source, subject))
+        inputs_changed = any(then.get(p) != tree.blobs.get(p) for p in (source, subject))
+        ran = execution["source"]
+        moved = ran in tree.blobs and \
+            "sha256:" + hashlib.sha256(tree.read([ran])[ran]).hexdigest() != execution["digest"]
+        if inputs_changed or moved:
+            return "stale"
+        if commit not in self.whole:
+            then = entries_of(commit)
+            self.whole[commit] = all(then.get(p) == tree.blobs.get(p)
+                                     for p in set(then) | set(tree.blobs) if p != LEDGER_PATH)
+        return "proven" if self.whole[commit] and execution["working_tree"] == "clean" \
+            else "inputs unchanged"
+
+
 def rule_proof_states(tree, rules, gates):
     """{rule path: state}: what `majordomus rules report` says of each rule, re-derived from
     the pinned tree after apps/majordomus-cli/src/rules/mod.rs (`report`) and
@@ -772,19 +857,7 @@ def rule_proof_states(tree, rules, gates):
     defined = [line.lstrip() for body in lib.values()
                for line in body.decode("utf-8", "replace").split("\n")
                if line.lstrip().startswith("mj_validate_")]
-    ledger = json.loads(tree.text(LEDGER_PATH))["executions"] if tree.exists(LEDGER_PATH) else []
-    contained, whole = {}, {}
-
-    def contains(commit):
-        """Does the pinned commit contain the commit a run was recorded on? No too when this
-        repository does not have that commit at all."""
-        if commit not in contained:
-            try:
-                ahead = git("log", "-1", "--format=%H", "%s..%s" % (tree.commit, commit))
-                contained[commit] = not ahead.strip()
-            except DeriveError:
-                contained[commit] = False
-        return contained[commit]
+    judge = LedgerJudge(tree)
 
     def unit_test_module(path):
         if not path.startswith(CRATE_SRC_DIR) or path.rsplit("/", 1)[-1] != "tests.rs" \
@@ -817,29 +890,6 @@ def rule_proof_states(tree, rules, gates):
                     break
         return False
 
-    def run_state(execution, source, subject):
-        outcome = execution["outcome"]
-        if outcome == "skip":
-            return "not run"
-        if outcome != "pass":
-            return "failing"
-        commit = execution["commit"]
-        if not contains(commit):
-            return "stale"
-        then = entries_of(commit, (source, subject))
-        inputs_changed = any(then.get(p) != tree.blobs.get(p) for p in (source, subject))
-        ran = execution["source"]
-        moved = ran in tree.blobs and \
-            "sha256:" + hashlib.sha256(tree.read([ran])[ran]).hexdigest() != execution["digest"]
-        if inputs_changed or moved:
-            return "stale"
-        if commit not in whole:
-            then = entries_of(commit)
-            whole[commit] = all(then.get(p) == tree.blobs.get(p)
-                                for p in set(then) | set(tree.blobs) if p != LEDGER_PATH)
-        return "proven" if whole[commit] and execution["working_tree"] == "clean" \
-            else "inputs unchanged"
-
     out = {}
     for path, meta in rules.items():
         block = meta.get("x-majordomus")
@@ -860,8 +910,8 @@ def rule_proof_states(tree, rules, gates):
             if not tree.exists(test):
                 state = "dangling"
             elif identity:
-                execution = next((e for e in ledger if e["test"] == identity[0]), None)
-                state = run_state(execution, identity[1], path) if execution else "not run"
+                execution = judge.latest(identity[0])
+                state = judge.run_state(execution, identity[1], path) if execution else "not run"
             else:
                 state = "gated" if is_gate else "unrunnable"
             parts.append((state, bool(identity) or is_gate))
@@ -880,6 +930,173 @@ def rule_proof_states(tree, rules, gates):
                 state = max(state, "not run", key=rank.get)
         out[path] = state
     return out
+
+
+# ------------------------------------------------------------------------------------ outlook
+
+def read_all_history(commit):
+    """(author day, merge) of every commit of the history, merges included."""
+    out = []
+    for line in git_text("log", "--date=short", "--format=%ad%x09%P", commit).split("\n"):
+        if line:
+            day, parents = line.split("\t", 1)
+            out.append((day, len(parents.split()) > 1))
+    if not out:
+        raise DeriveError("%s has no history" % commit)
+    return out
+
+
+def derive_integration(commit, history):
+    """Merge commits against all commits: over the history, over the WINDOW_DAYS that end on
+    the newest author day, and by ISO week (keyed by the week's Monday). The newest author
+    day is the end of the window, never the clock, so a commit derives the same figures on
+    any day it is read."""
+    everything = read_all_history(commit)
+    last = max(day for day, _ in everything)
+    since = (datetime.date.fromisoformat(last)
+             - datetime.timedelta(days=WINDOW_DAYS - 1)).isoformat()
+    window = [merge for day, merge in everything if day >= since]
+    weeks = collections.OrderedDict()
+    for day, merge in sorted(everything):
+        d = datetime.date.fromisoformat(day)
+        monday = (d - datetime.timedelta(days=d.weekday())).isoformat()
+        commits, merges = weeks.get(monday, (0, 0))
+        weeks[monday] = (commits + 1, merges + int(merge))
+    types = collections.Counter()
+    for day, subject in history:
+        if day >= since:
+            m = CONVENTIONAL.match(subject)
+            types[m.group(1) if m else OTHER_TYPES] += 1
+    return {"last": last, "since": since, "window": WINDOW_DAYS,
+            "commits": len(everything), "merges": sum(1 for _, m in everything if m),
+            "windowCommits": len(window), "windowMerges": sum(1 for m in window if m),
+            "weeks": [[monday, c, m] for monday, (c, m) in weeks.items()],
+            "windowTypes": [list(kv) for kv in sorted(types.items(),
+                                                      key=lambda kv: (-kv[1], kv[0]))]}
+
+
+def counted(items, key, order):
+    """[[value, how many]] of one key, in a declared order, then any value it does not name."""
+    tally = collections.Counter(i[key] for i in items)
+    return [[v, tally[v]] for v in order if tally[v]] + \
+        [[v, n] for v, n in sorted(tally.items()) if v not in order]
+
+
+def derive_plan(plan):
+    by_id = {m["id"]: m for m in plan["milestones"]}
+    issue_order = plan["statuses"]["issue"]
+    milestone_order = plan["statuses"]["milestone"]
+    issues = {i["id"]: i for i in plan["issues"]}
+    active = by_id.get(plan["active_milestone"], {})
+    nxt = issues.get(plan["next_ready"], {})
+    telemetry = by_id.get(TELEMETRY_MILESTONE)
+    if telemetry is None:
+        raise DeriveError("%s names no milestone %s" % (PLAN_PATH, TELEMETRY_MILESTONE))
+    chain = [i for i in plan["issues"] if i["milestone"] == TELEMETRY_MILESTONE]
+    return {"total": len(plan["issues"]), "status": counted(plan["issues"], "status", issue_order),
+            "milestones": counted(plan["milestones"], "status", milestone_order),
+            "active": plan["active_milestone"], "activeTitle": active.get("title", ""),
+            "next": plan["next_ready"], "nextTitle": nxt.get("title", ""),
+            "telemetry": {"id": TELEMETRY_MILESTONE, "status": telemetry["status"],
+                          "title": telemetry["title"],
+                          "issues": [[i["id"], i["status"], i["title"]] for i in chain]}}
+
+
+# The keys of an intent the outlook reads. The others (statement, invariants, non_goals, ...)
+# are prose the page never shows, so they are dropped before the subset reader sees the record:
+# a sentence it would refuse there (a backslash in a double-quoted scalar, I3011) cannot stop
+# the figures it does read.
+INTENT_KEYS = ("id", "title", "satisfaction", "milestones")
+
+
+def top_level_keys(text, keys):
+    """`text` with only the blocks of the top-level keys named in `keys`: a top-level key line and
+    every following indented, blank or comment line belong to it."""
+    kept, keep = [], False
+    for line in text.split("\n"):
+        if line and not line.startswith((" ", "#", "-")):
+            m = _YAML_KEY.match(line)
+            keep = bool(m) and m.group(1) in keys
+        if keep:
+            kept.append(line)
+    return "\n".join(kept)
+
+
+def derive_intents(tree, judge, plan):
+    """Each declared intent: its criteria and what the committed ledger says of each, judged
+    as `intent realization` judges it (crate::intent, IntentEvidenceState): a `test` whose run
+    is proven, or whose inputs are unchanged and whose run was on a clean tree, is current and
+    meets its criterion; another kind of evidence is not derivable from the ledger and never
+    meets one by itself. The local ledger under .ai/local/ is not part of a commit and is not
+    read, so a criterion proved only on somebody's machine reads not run here."""
+    status = {m["id"]: m["status"] for m in plan["milestones"]}
+    out = []
+    for path in tree.under(INTENTS_DIR, ".yaml", direct=True):
+        doc = parse_yaml(top_level_keys(tree.text(path), INTENT_KEYS), path)
+        states = []
+        for criterion in doc.get("satisfaction") or []:
+            kind, ref = criterion.get("evidence", ""), (criterion.get("ref") or "").strip()
+            if kind != "test":
+                states.append("not_derivable")
+                continue
+            if not ref or not tree.exists(ref):
+                states.append("unresolved")
+                continue
+            identity = test_identity(ref)
+            execution = judge.latest(identity[0]) if identity else None
+            if not execution:
+                states.append("not_run")
+                continue
+            state = judge.run_state(execution, identity[1], identity[1])
+            if state == "proven" or (state == "inputs unchanged"
+                                     and execution["working_tree"] == "clean"):
+                states.append("current")
+            else:
+                states.append({"failing": "failing", "not run": "not_run"}.get(state, "stale"))
+        out.append({"id": text_field(doc, "id", path), "t": text_field(doc, "title", path),
+                    "c": len(states), "m": states.count("current"),
+                    "st": [[s, states.count(s)] for s in INTENT_STATES if s in states],
+                    "ms": [[m, status.get(m, "unknown")] for m in list_field(doc, "milestones",
+                                                                             path)],
+                    "p": path})
+    return out
+
+
+def per_million(value):
+    return int(round(value * 1000000))
+
+
+def derive_economics(economics):
+    verdict = economics["verdict"]
+    metric = {m["id"]: m for m in economics["metrics"]}
+    context = metric.get(CONTEXT_METRIC)
+    if context is None or context.get("value") is None:
+        raise DeriveError("%s carries no measured %s" % (ECONOMICS_PATH, CONTEXT_METRIC))
+    interval = context.get("interval") or {}
+    measured = economics["context"]
+    pairs = sum(s["pairs"]["valid"] for s in economics["suites"])
+    return {"publishable": bool(verdict["publishable"]), "statement": verdict["statement"],
+            "unmet": list(verdict["unmet"]),
+            "validPairs": pairs, "minPairs": economics["publication"]["min_valid_pairs"],
+            "context": {"ppm": per_million(context["value"]),
+                        "lowPpm": per_million(interval.get("low", context["value"])),
+                        "highPpm": per_million(interval.get("high", context["value"])),
+                        "n": context["n"], "resamples": interval.get("resamples", 0),
+                        "budget": measured["budget_tokens"],
+                        "candidate": measured["candidate_tokens"],
+                        "selected": measured["selected_tokens"],
+                        "at": measured["measured_at"][:10],
+                        "tokenizer": measured["tokenizer"]["encoding"]},
+            "suites": [[s["id"], s["runs"], s["freshness"]] for s in economics["suites"]],
+            "metrics": [[m["id"], m["status"], m["n"]] for m in economics["metrics"]],
+            "hypotheses": [[h["id"], h["status"]] for h in economics["hypotheses"]]}
+
+
+def derive_outlook(tree, commit, history, judge):
+    plan = json.loads(tree.text(PLAN_PATH))
+    return {"integration": derive_integration(commit, history), "plan": derive_plan(plan),
+            "intents": derive_intents(tree, judge, plan),
+            "economics": derive_economics(json.loads(tree.text(ECONOMICS_PATH)))}
 
 
 # ------------------------------------------------------------------------------------ shape
@@ -938,6 +1155,18 @@ def counts_of(name, data):
            for key, value in data.items() if isinstance(value, (list, int))]
     if name == "explorer-data.json":
         out.append(("caps: modules", len({c["m"] for c in data["caps"]})))
+    elif name == "outlook-data.json":
+        out = [("integration: commits", data["integration"]["commits"]),
+               ("integration: merges", data["integration"]["merges"]),
+               ("integration: weeks", len(data["integration"]["weeks"])),
+               ("plan: issues", data["plan"]["total"]),
+               ("plan: milestones", sum(n for _, n in data["plan"]["milestones"])),
+               ("plan: telemetry issues", len(data["plan"]["telemetry"]["issues"])),
+               ("intents", len(data["intents"])),
+               ("intents: criteria", sum(i["c"] for i in data["intents"])),
+               ("intents: criteria met", sum(i["m"] for i in data["intents"])),
+               ("economics: unmet conditions", len(data["economics"]["unmet"])),
+               ("economics: context n", data["economics"]["context"]["n"])]
     elif name == "gates-data.json":
         out.append(("gates: always", sum(1 for g in data["gates"] if g["a"])))
         out.append(("classes: full", sum(1 for c in data["classes"] if c["g"] == "full")))
@@ -964,6 +1193,7 @@ FORMATS = {   # byte-for-byte the way each snapshot was written
     "explorer-data.json": lambda d: json.dumps(d, ensure_ascii=False),
     "gates-data.json": lambda d: json.dumps(d, ensure_ascii=False, separators=(",", ":")) + "\n",
     "repo-data.json": lambda d: json.dumps(d, ensure_ascii=False),
+    "outlook-data.json": lambda d: json.dumps(d, ensure_ascii=False),
 }
 
 
@@ -997,7 +1227,9 @@ def derive(commit, ignored):
         twice = sorted(k for k, n in collections.Counter(items).items() if n > 1)
         if twice:
             raise DeriveError("%s declared twice: %s" % (name, twice))
-    return {"explorer-data.json": explorer, "gates-data.json": gates, "repo-data.json": repo}
+    outlook = derive_outlook(tree, commit, history, LedgerJudge(tree))
+    return {"explorer-data.json": explorer, "gates-data.json": gates, "repo-data.json": repo,
+            "outlook-data.json": outlook}
 
 
 def main():
@@ -1084,7 +1316,7 @@ def main():
         with open(os.path.join(out_dir, name), "w", encoding="utf-8") as handle:
             handle.write(FORMATS[name](data))
 
-    explorer, gates, repo = (new[n] for n in new)
+    explorer, gates, repo, outlook = (new[n] for n in new)
     print("derive_data %s: adrs=%d rules=%d caps=%d (%d modules) claims=%d ucs=%d | gates=%d "
           "classes=%d on_demand=%d | commits=%d days=%d releases=%d scopes=%d proof=%s | "
           "shape identical"
@@ -1094,6 +1326,14 @@ def main():
              len(gates["on_demand"]), repo["typesTotal"], len(repo["daily"]),
              len(repo["releases"]), len(repo["scopes"]),
              ",".join("%s:%d" % (s.replace(" ", "-"), n) for s, n in repo["proof"])))
+    print("derive_data %s: outlook merges=%d/%d window=%d/%d issues=%d intents=%d criteria=%d/%d "
+          "telemetry=%d publishable=%s"
+          % (short, outlook["integration"]["merges"], outlook["integration"]["commits"],
+             outlook["integration"]["windowMerges"], outlook["integration"]["windowCommits"],
+             outlook["plan"]["total"], len(outlook["intents"]),
+             sum(i["m"] for i in outlook["intents"]), sum(i["c"] for i in outlook["intents"]),
+             len(outlook["plan"]["telemetry"]["issues"]),
+             str(outlook["economics"]["publishable"]).lower()))
 
 
 if __name__ == "__main__":

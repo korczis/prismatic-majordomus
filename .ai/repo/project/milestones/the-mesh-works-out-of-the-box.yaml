@@ -1,0 +1,41 @@
+id: "the-mesh-works-out-of-the-box"
+title: "The mesh works out of the box: trusted machines find each other by every means and their sessions cooperate from the first turn"
+order: 340
+priority: "p0"
+problem: "On 2026-10-10 the owner called mesh cooperation tragic and ordered it to work out of the box, by every discovery means, from the moment an LLM client, the MCP server or `majordomus serve` starts. A read of the code found six gaps that no existing milestone covers: no Tailscale discovery (the tailnet is reached only through 100.x addresses hand-written in .ai/repo/mesh/majordomus.yaml); a server binds and advertises 127.0.0.1 unless told otherwise, so two machines on default settings never dial each other (apps/majordomus-cli/src/cli.rs:3355-3362, mesh/address.rs:39-45); `majordomus init` ships no mesh declaration, so a fresh repository has no mesh at all; a linked worktree with no server of its own has no cooperation (`mesh handover publish` answered 'cooperation inactive'); mesh.state and mesh.peers return 56-134 kB with no filter; and a review request has no body, cannot be closed and never expires."
+outcome: "A trusted machine that starts any Majordomus surface in a repository with the mesh declared is linked to every other trusted machine on the LAN or tailnet without a hand-written address, every worktree takes part, and what the mesh holds can be read in one tool answer."
+slug: the-mesh-works-out-of-the-box
+current_state: "Multicast on one LAN segment and five hand-written rendezvous hubs; loopback-bound servers; no declaration in a fresh repository; worktrees and review requests outside the loop."
+desired_state: "Tailscale, multicast, broadcast and rendezvous discovery; a mesh-enabled server reachable on the tailnet and LAN under the trust list; init that declares the mesh and enrols the machine's key; worktrees that cooperate through the primary's runtime; bounded, filterable mesh reads; a review lifecycle that ends."
+scope:
+  - "apps/majordomus-cli/src/mesh"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/shared.rs"
+  - "apps/majordomus-cli/src/lease.rs"
+  - "apps/majordomus-cli/src/commands"
+  - "share/skeleton"
+  - "share/schemas/majordomus/mesh-declaration"
+  - "lib/capture.sh"
+  - "docs/MESH.md"
+  - "test/cases"
+non_scope:
+  - "Trusting a machine nobody listed: runtime-trust (I2261) keeps an unlisted clone off the mesh, and nothing here weakens it."
+  - "Session start, briefing and Codex/Gemini participation: every-session-joins-the-mesh (I2285-I2292)."
+  - "Assigning and executing work on a peer: mesh-peers-execute-assigned-work (I2332-I2336)."
+acceptance_criteria:
+  - "Two trusted machines on one tailnet, each with a fresh `majordomus init` plus enrolment, link with no address written by hand"
+  - "A server whose mesh is enabled is reachable from a trusted peer on the tailnet and refuses an untrusted one"
+  - "A worktree of a checkout whose primary runs a server publishes a handover and a claim"
+  - "mesh.state and mesh.peers answer a filtered summary under 16 kB"
+  - "A review request carries a body, and can be withdrawn or expire"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib mesh::"
+evidence_required:
+  - "two_machines_link_out_of_the_box"
+depends_on: []
+risks:
+  - "It builds on runtime-trust and on I2123 (PR #860), which are not on master yet: I2411 lands after them."
+  - "Binding beyond loopback widens what can reach a server: it waits for the remote-caller restrictions of runtime-trust (I2123, #860) and is refused for a node the trust list does not name."
+created_at: 2026-10-10

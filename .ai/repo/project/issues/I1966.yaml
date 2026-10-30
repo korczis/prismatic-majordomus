@@ -35,4 +35,32 @@ evidence_required:
   - size_budget_measured
 risk: "Raising the cap without a budget brings the problem back one size later, and graph.json is already 2.3 MB. Refusing outright makes every derive fail until the bound is settled, so the refusal and the new bound belong in one change."
 created_at: 2026-10-03
-updated_at: 2026-10-08
+updated_at: 2026-10-14T20:15:20Z
+started_at: 2026-10-14T20:13:37Z
+started_event: sha256:14eb8aad8a17b9492d66e2d147eb73cacccd1a43cabf846bbd4a999067020140
+verified_at: 2026-10-14T20:14:49Z
+verified_event: sha256:7b5a2478d2cd007c299e0c1b7e71c69de0bb13ec91159fe484a152aab0e4ddbe
+completed_at: 2026-10-14T20:15:20Z
+completed_event: sha256:b051d92f6ce5f09fb9f9df76971131b4bb26078facbd07fdd7747f8ea105b07e
+evidence:
+  - covers: composed_graph_complete_or_refused
+    type: test
+    command: "jq '.graph.metadata.truncated, (.graph.nodes|length), (.graph.edges|length)' docs/generated/graph.json; cargo test --lib -- graph:: generate::tests::a_composed_graph"
+    result: "ok at e8505a431d plus this change, on lundra: 89 passed, 0 failed. The committed docs/generated/graph.json holds 2795 nodes and 6128 edges with metadata.truncated false, past MAX_NODES 2000, because graph::composed_complete composes without a bound; generation now passes it through graph::whole, so a truncated composition exits 10 naming the count it held and the bound instead of being written. The implemented_by edge from majordomus://claim/mcp-uri-resolution to apps/majordomus-cli/src/capability/builtin/objects.rs is present"
+    artifact: "docs/generated/graph.json"
+    commit: e8505a431d552b9a9d6b7baebb91dfdee4451bbf
+    recorded_at: 2026-10-14T20:14:05Z
+  - covers: truncation_refusal_case
+    type: test
+    command: "cargo test --lib generate::tests::a_composed_graph_that_stopped_at_a_bound_is_refused_and_not_committed, then again with the refusal in graph::whole removed"
+    result: "ok as written: a composition bounded at one node is refused with exit 10 and a message naming 1 node and the bound 2000, and a whole one is accepted. With the refusal removed the same test FAILED, panicked at generate.rs:3248, so the test fails if the refusal is removed; the file was restored afterwards"
+    artifact: "apps/majordomus-cli/src/generate.rs"
+    commit: e8505a431d552b9a9d6b7baebb91dfdee4451bbf
+    recorded_at: 2026-10-14T20:14:19Z
+  - covers: size_budget_measured
+    type: artifact
+    command: "wc -c docs/generated/graph.json; jq '(.graph.nodes|length), (.graph.edges|length)' docs/generated/graph.json"
+    result: "measured at master 97c4521f91 and written beside graph::composed_complete: 2795 nodes, 6128 edges, 3,339,236 bytes. The committed artifact carries no bound, so no new constant was introduced; MAX_NODES stays the bound of a graph a person is shown"
+    artifact: "apps/majordomus-cli/src/graph.rs"
+    commit: e8505a431d552b9a9d6b7baebb91dfdee4451bbf
+    recorded_at: 2026-10-14T20:14:33Z

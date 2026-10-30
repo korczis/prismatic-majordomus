@@ -3,7 +3,7 @@ schema: adr/v1
 id: adr-0146
 kind: adr
 title: A capability is invoked by name through a generated skill
-status: proposed
+status: accepted
 date: 2026-10-12
 tags:
   - capabilities

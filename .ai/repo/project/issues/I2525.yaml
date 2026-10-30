@@ -1,0 +1,51 @@
+id: I2525
+milestone: a-derive-does-only-the-work-its-inputs-changed
+title: "An incremental derive runs only the nodes its plan marks, a no-op derive runs no generator, and the full derive stays as it is"
+slug: an-incremental-derive-runs-only-what-moved
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Execute the plan of I2524: run the producers of the nodes marked regenerate in graph order, leave the others untouched, record the keys of what succeeded, and keep the present full derive reachable and unchanged as the oracle. Opt-in; the default does not change here."
+why: "campaigns/majordomus-incremental-derive-prompt-pack/04_04_INCREMENTAL_EXECUTOR.md asks for an executor on the typed graph that keeps the lock, the preflight and the orphan safety, makes a warm no-op run neither the Rust generators nor generate-site-data, and keeps a full mode as the byte-correct fallback. scripts/derive today runs every stage on every call, and runs majordomus generate over all targets twice (stages A and C) because stage B writes documents the index reads; with nodes and edges, the second pass is only the nodes downstream of what stage B wrote."
+current_state: "scripts/derive has the modes --locked, --orphans and --preflight and one behaviour otherwise: build, A, B, C, D. Skipping exists only inside generate::write, which leaves a file whose bytes already match, after the whole plan has been computed."
+desired_state: "majordomus derive run takes the plan, runs each regenerate node's producer (a subset of targets of majordomus generate, a section of scripts/generate-site-data, scripts/gitattributes), verifies the node's declared outputs afterwards and records its key. Outputs of one node are staged and renamed so that an interrupted run leaves the previous files and no recorded key. scripts/derive --incremental calls it under the same lock and preflight, and scripts/derive with no flag and scripts/derive --full run the present sequence. Whether the cargo build can be skipped is decided by the generation guard: an executable of the tree's generation that already exists is used, any other is built."
+scope:
+  - "apps/majordomus-cli/src/derivation/run.rs"
+  - "apps/majordomus-cli/src/derivation/mod.rs"
+  - "apps/majordomus-cli/src/commands/derive.rs"
+  - "apps/majordomus-cli/src/commands/generate.rs"
+  - "apps/majordomus-cli/src/capability/builtin/derive.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/tests/derivation_run.rs"
+  - "scripts/derive"
+  - "docs/DERIVE.md"
+  - "test/cases"
+  - ".ai/repo/project/issues/I2525.yaml"
+non_scope:
+  - "Restoring outputs from a store: I2529. A node whose outputs are missing is regenerated"
+  - "Running nodes in parallel; ready nodes run one at a time"
+  - "Making the incremental path the default: I2533"
+  - "New shell logic in scripts/derive beyond passing the mode through; the decisions are the crate's (ADR 0069)"
+depends_on:
+  - "I2524"
+acceptance_criteria:
+  - "On a tree a full derive just produced, scripts/derive --incremental starts no producer, writes no file and exits 0"
+  - "After one declared input is edited, only the producers of that node and of its dependents run, and scripts/derive-check then exits 0"
+  - "A producer killed in the middle of a node leaves that node's previous outputs in place and no key recorded for it, and the next run regenerates it"
+  - "A deleted or altered output is regenerated although its node's key did not move"
+  - "scripts/derive and scripts/derive --full run the build and the stages A, B, C and D in order, as case 400 asserts today"
+  - "The exit codes 2, 10, 12, 15 and 75 of scripts/derive are returned for the same conditions in both modes"
+  - "The durations of a no-op and of a single-node change are recorded beside the baseline of I2521, on the same machine"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib derivation::run"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test derivation_run"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 400_derivation_is_one_graph 1018_one_derive_at_a_time_and_no_orphans 1020_a_derive_sees_what_the_commit_will"
+  - "MJ_TEST_JOBS=2 bash test/run.sh <the case this issue adds>"
+  - "scripts/derive-check"
+evidence_required:
+  - "warm_no_op_runs_no_generator"
+  - "interrupted_node_is_regenerated"
+  - "full_mode_unchanged"
+created_at: 2026-10-13
+updated_at: 2026-10-13

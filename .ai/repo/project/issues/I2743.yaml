@@ -1,0 +1,43 @@
+id: I2743
+milestone: truthful-plan-surfaces
+title: "The public roadmap draws every milestone in the graph's order, each issue with its inferred delivery"
+slug: the-roadmap-draws-every-milestone
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Rewrite site/templates/roadmap.html and site/content-src roadmap so /roadmap/ lists every milestone of the plan in the milestone graph's order (no filter on any hand field), shows released_in, each issue's declared status beside its inferred stage linked to the pull request, commit and tag that prove it, states the commit and time observed, and draws the milestone graph through the ADR 0152 viewer with nodes linked to milestone pages."
+why: "ADR 0166 decisions 4 and 6. The page lists 8 of 38 milestones and none of the work in flight; its front matter still names .majordomus/project/milestones/."
+current_state: "roadmap.html keeps milestones whose version is set; the issue counts are stamp-derived; nothing links a stage to its proof."
+desired_state: "One template over roadmap.json and delivery.json; scripts/site-check asserts that every milestone id of plan.json appears on /roadmap/."
+scope:
+  - "site/templates/roadmap.html"
+  - "site/templates/plan-section.html"
+  - "site/templates/milestone.html"
+  - "site/content-src"
+  - "site/content/roadmap.md"
+  - "scripts/site-check"
+  - "scripts/site-build"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
+  - "test/cases/3103_the_roadmap_draws_every_milestone.sh"
+depends_on: [I2740, I2742]
+acceptance_criteria:
+  - "Every milestone id in plan.json appears on the built /roadmap/, in the graph's order"
+  - "An issue with a merged pull request shows merged with a link to that pull request"
+  - "The page names the commit and time its data was observed"
+validation:
+  - "bash test/run.sh 12_site_build 3103_the_roadmap_draws_every_milestone"
+evidence_required:
+  - "roadmap_complete_case"
+created_at: 2026-10-16
+updated_at: 2026-10-23T16:40:44Z
+started_at: 2026-10-23T16:31:45Z
+started_event: sha256:22058abbe05d19520e6f6fc15b6f033b97e6157006284a1cea05c65d67f6f387
+completed_at: 2026-10-23T16:40:44Z
+completed_event: sha256:f1a63b93c6599eed6ed12218028844165943976ecf50eaaa649fa765018c6bea
+evidence:
+  - covers: roadmap_complete_case
+    type: test
+    command: "bash test/run.sh 3103_the_roadmap_draws_every_milestone"
+    result: "ok, 1 passed at 4d75789ea99: 13h green over the built page (39 milestones, 403 issues, graph order, observed commit), red over a dropped milestone, a reversed order and a wrong commit; delivery stage drawn only with delivery.json; mutations of the old filter and of the delivery path both turn it red"
+    commit: 4d75789ea99dd3bbdde8ef3324b259d96ada7dc0
+    recorded_at: 2026-10-16T19:11:27Z

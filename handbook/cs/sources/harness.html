@@ -641,7 +641,10 @@ gates:
         </tbody>
       </table></div>
       <p><code>majordomus doctor</code> pro každou doktrínu projde řetěz a nahlásí první přerušený článek:</p>
-      <div class="code"><pre><code>principle → doctrine → validator → enforcement point → exit code → test → CI → claim</code></pre></div>
+      <pre class="mermaid-src" data-lang="mermaid">flowchart LR
+  principle["principle"] --&gt; doctrine["doctrine"] --&gt; validator["validator"]
+  validator --&gt; point["enforcement point"] --&gt; exit["exit code"] --&gt; test["test"]
+  test --&gt; ci["CI"] --&gt; claim["claim"]</pre>
       <p>Čte přitom zdrojový kód, ne popis, který o sobě registr dává. Gate <code>rule-proof</code> navíc vyžaduje, aby každé blokující pravidlo jmenovalo validátor, test nebo důvod lidské kontroly. Pravidla bez důkazu jsou v ratchetu, který se smí jen zmenšovat. Řeší se zapojením vynucení, nikdy přeřazením pravidla do poradní třídy. Podrobněji ve stránce o paměti a pravidlech.</p>
     </section>
 

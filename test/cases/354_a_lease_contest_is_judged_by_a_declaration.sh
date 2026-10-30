@@ -45,7 +45,7 @@ if srv.get('additionalProperties') is not False:
           " be carried silently and read as absent")
     sys.exit(1)
 want = {'probe_timeout_seconds', 'bind_grace_seconds', 'join_timeout_seconds',
-        'busy_grace_seconds'}
+        'busy_grace_seconds', 'idle_seconds'}
 have = set(srv.get('properties', {}))
 missing = want - have
 if missing:
@@ -60,7 +60,7 @@ print("    the schema owns `server:` and every timing it may carry, each with it
 PY
 
 # --- 2. this repository declares them
-for k in probe_timeout_seconds bind_grace_seconds join_timeout_seconds busy_grace_seconds; do
+for k in probe_timeout_seconds bind_grace_seconds join_timeout_seconds busy_grace_seconds idle_seconds; do
   grep -qE "^  $k: [0-9]+$" "$POLICY" \
     || { echo "    .ai/repo/policy.yaml declares no server.$k; the code would fall back to the"
          echo "    compiled constant and nothing would say which value is in force"; exit 1; }

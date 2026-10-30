@@ -1,0 +1,35 @@
+id: I3774
+milestone: every-session-joins-the-mesh
+title: "Every completed step of a session is announced on the mesh by the step itself, and the board, the monitor and the UI show it"
+slug: every-completed-step-is-announced-on-the-mesh
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make a session's completed steps reach its peers without the session remembering to say so: a commit, a push, an opened pull request, a landing, a task finished and a release tagged each publish one event to the cooperation journal under the session that made it, the board shows the session's latest step beside its claims, majordomus monitor and /cockpit/monitor stream it, and /ui/mesh shows each seat's last step and its age."
+why: "Asked by the owner on 2026-10-20/21, repeatedly: after every completed step, consult and coordinate with the peers on the mesh, always and automatically, enforced, documented and visible in the UI and the dashboard. During that night the landing seat could not see that a records head was refused by a gate, a peer could not see that a follower had already landed a head, and steps were relayed by hand in messages that arrived minutes late. The peer board only carries what a session announces, and announcing is a step a busy session skips."
+current_state: "The board (peers.announce, majordomus_announce, POST /api/v1/peers/announce) holds what a session chose to announce, and an announcement needs an MCP session, so a hook or a script cannot post one. majordomus monitor streams sessions, claims, handovers, reviews, the executor's merges and GitHub's runs, but not a session's own commit, push, pull request or finish. The commit and pre-push hooks (.githooks) and majordomus finish write no cooperation event."
+desired_state: "A cooperation event kind 'step' (session, step kind, branch, commit, pull request, outcome, at) written by the post-commit and pre-push hooks, by finish, and by the landing and release paths, through the shared server when one serves the checkout and to the local journal otherwise, never blocking the step it reports. The board, the monitor and /ui/mesh read it; a seat whose last step is older than its claims' work reads stale there."
+scope:
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/src/ui/mesh.rs"
+  - ".githooks/post-commit"
+  - ".githooks/pre-push"
+  - "docs/MESH.md"
+  - "docs/MONITOR.md"
+  - "test/cases/3750_every_completed_step_is_announced_on_the_mesh.sh"
+non_scope:
+  - "Announcing work in progress, which stays the session's own announcement"
+  - "Replacing the board's claims, which stay what a session expects to touch"
+acceptance_criteria:
+  - "A commit in a fixture checkout with a shared server publishes one step event naming the session, the branch and the commit, and majordomus monitor prints it"
+  - "A push and an opened pull request each publish their step, and /ui/mesh shows the seat's last step and its age"
+  - "With no shared server the step is written to the local journal and the commit or push still succeeds, unchanged in time beyond its bound"
+  - "Negative: a failed commit or a refused push publishes a step whose outcome says refused, never success"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::"
+  - "bash test/run.sh 3750_every_completed_step_is_announced_on_the_mesh"
+  - "majordomus plan validate"
+evidence_required:
+  - "test_every_completed_step_is_announced_on_the_mesh"
+depends_on: []

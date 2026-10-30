@@ -1,7 +1,7 @@
 +++
 title = "Load minimum sufficient context"
 description = "Load minimum sufficient context"
-weight = 31
+weight = 32
 [extra]
 kind = "rule"
 slug = "majordomus-minimum-sufficient-context-1"

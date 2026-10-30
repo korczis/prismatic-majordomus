@@ -1,0 +1,36 @@
+id: I4347
+milestone: ci-critical-path
+title: "A labeled event starts a gate job only for ci:full, so opening a train with its label runs its head once"
+slug: a-labeled-event-starts-gates-only-for-ci-full
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "The first step of validate.yml's plan job yields when github.event.action == 'labeled' and the label is not ci:full, without replacing the `ci` conclusion an earlier run of the same head wrote; opening a pull request with its label produces one gate-running run per head."
+why: "Incidents 3 and 4 of 2026-10-28: trains 10a (#2630) and 10b (#2631) waited 73 and 108 minutes because each new run was pending in its own validate-<pr> group behind an older run of the same head. `labeled` starts validate with no label filter, so every train opened with `--label train` got two full runs of one head: 6 of 8 trains (#2631, #2630, #2593, #2592, #2591, #2501). This is the fifth occurrence of a superseded or duplicate run holding a pull request's group (2026-10-10, 10-22, 10-26 and twice on 10-28). I4338 (fix/a-held-member-runs-no-validate, not pushed) yields only a run labelled hold."
+current_state: "Measured at 81ef931a3e1: .github/workflows/validate.yml line 27 reads types: [opened, synchronize, reopened, labeled]; the group (line 90) is validate-<pull request number> with cancel-in-progress: false (line 91)."
+desired_state: "A labeled event other than ci:full requests no gate job and leaves the head's `ci` as it was; ci:full still reaches the full plan; opened, synchronize and reopened plan as before. Enforced by case 26 in the suite gate."
+scope:
+  - ".ai/repo/project/issues/I4347.yaml"
+  - ".github/workflows/validate.yml"
+  - "scripts/ci-plan"
+  - "test/cases/26_ci_wiring.sh"
+  - "docs/CI.md"
+non_scope:
+  - "Cancelling superseded or stuck runs (I3903, #2645)"
+  - "Yielding a held member's run (I4338)"
+acceptance_criteria:
+  - "Case 26: a labeled event with the label train requests no gate job and writes no `ci` conclusion"
+  - "Case 26: a labeled event with ci:full reaches the full plan"
+  - "Case 26: opened, synchronize and reopened plan exactly as before (case 94 passes unchanged)"
+  - "Case 26 replays the events of #2631, #2630, #2593, #2592, #2591 and #2501 and plans one gate-running run per head"
+  - "actionlint passes on .github/workflows/validate.yml"
+validation:
+  - "bash test/run.sh 26_ci_wiring 94_ci_plan"
+  - "actionlint .github/workflows/validate.yml"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+depends_on: []
+serves: []
+created_at: 2026-10-29
+updated_at: 2026-10-29

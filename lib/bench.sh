@@ -24,18 +24,23 @@ MJ_BASELINE_SCHEMA="majordomus/benchmark-baseline/v1"
 
 mj_bench_usage() {
   cat <<'USAGE'
-usage: majordomus bench [<command>...] [--samples <n>] [--warmup <n>] [--mode cold|warm|both]
-                        [--format text|json] [--no-save] [--list] [--check] [--write-baseline [--force]]
+usage: majordomus bench [<command>...] [--samples <n>] [--warmup <n>] [--cold-samples <n>]
+                        [--mode cold|warm|both] [--format text|json] [--no-save] [--list] [--check]
+                        [--write-baseline [--force]]
   every public command of the registry is a target; name one or more to benchmark only those
   --list            the targets, their scenario source and their class, and exit
   --samples <n>     warm samples per target (policy benchmark.samples)
   --warmup <n>      unsampled runs before the warm samples (policy benchmark.warmup)
+  --cold-samples <n>  cold samples of a read-only command, each in a fresh repository
+                    (default 1); a state-mutating command is cold on every one of --samples
   --mode            which distributions to record (default both)
   --format json     the run as one JSON document (schema majordomus/benchmark-result/v1)
   --no-save         do not write the run under .ai/local/benchmarks/
   --check           compare the run against .ai/repo/benchmarks/baseline.json; exit 10 on a
                     regression over benchmark.regression, 12 with no baseline, 15 when the
-                    baseline is not comparable
+                    baseline is not comparable. A regression needs two samples over the
+                    threshold; one is a WARN to re-measure. Every finding names the sample
+                    count, the runner and its load average
   --write-baseline  write the run as the baseline; refuses a dirty tree without --force
   exit codes: 0 ok · 2 usage · 10 regression · 12 no baseline · 13 a target failed to run · 15 refused
 USAGE
@@ -120,12 +125,43 @@ mj_bench_stats() {
       printf "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%.1f\t%.1f\n", n, v[1], pct(50), pct(90), pct(95), pct(99), v[n], mean, sqrt(var)
     }'
 }
+# the sample lines on stdin as one comma-separated field, in the order taken
+mj_bench_list() { awk 'NF { printf "%s%s", (n++ ? "," : ""), $1 }'; }
+
+# ---------------------------------------------------------------- the runner
+# A timing verdict is a statement about a machine as much as about a change: on 2026-10-08
+# one cold sample read `version` 9 -> 23 ms on a saturated runner and failed a pull request
+# that ran none of the measured code. So every finding names what it rests on: how many
+# samples, which runner, and the 1-minute load average when the run began and ended.
+mj_bench_runner() {
+  # the CI runner's own name when there is one, then the host as the Rust executable's
+  # benchmarks name it, `<cpu brand>/<logical cores>`, never the machine's network name: the
+  # environment travels into a tracked baseline
+  local brand="" cores
+  if [ -r /proc/cpuinfo ]; then brand="$(awk -F': *' '/^model name/ { print $2; exit }' /proc/cpuinfo)"
+  else brand="$(sysctl -n machdep.cpu.brand_string 2>/dev/null || true)"; fi
+  cores="$(getconf _NPROCESSORS_ONLN 2>/dev/null || true)"
+  printf '%s%s%s (%s-%s)' "${RUNNER_NAME:+$RUNNER_NAME, }" "${brand:-unidentified host}" "${cores:+/$cores}" "$(uname -s)" "$(uname -m)"
+}
+# the 1-minute load average: /proc/loadavg on Linux, vm.loadavg on macOS; "unknown" when
+# neither answers, never an empty field a reader would take for zero
+mj_bench_load() {
+  local l=""
+  if [ -r /proc/loadavg ]; then l="$(awk '{ print $1; exit }' /proc/loadavg)"
+  else l="$(sysctl -n vm.loadavg 2>/dev/null | tr -d '{}' | awk '{ print $1; exit }')"; fi
+  printf '%s' "${l:-unknown}"
+}
+# what every finding of a check ends with
+mj_bench_where() {
+  printf 'runner %s, load %s -> %s' "$MJ_BENCH_RUNNER" "$MJ_BENCH_LOAD_START" "${MJ_BENCH_LOAD_END:-$MJ_BENCH_LOAD_START}"
+}
 
 # ---------------------------------------------------------------- the run
 # MJ_BENCH_ROWS collects one line per target and mode:
 #   target <TAB> mode <TAB> class <TAB> scenario <TAB> status <TAB> count min p50 p90 p95 p99 max mean stddev (tab-separated)
-mj_bench_run_target() { # target, samples, warmup, mode
-  local t="$1" samples="$2" warmup="$3" mode="$4" cls scen w i ms cold="" warm="" status=ok
+#   <TAB> the samples, comma-separated: a check counts how many of them agree
+mj_bench_run_target() { # target, samples, warmup, mode, cold samples of a read-only command
+  local t="$1" samples="$2" warmup="$3" mode="$4" cold_samples="${5:-1}" cls scen w i ms cold="" warm="" status=ok
   cls="$(mj_bench_class "$t")"; scen="$(mj_bench_scenario "$t")"
   mj_bench_scenario_args "$t"
   local tmp; tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj.bench.XXXXXX")"
@@ -138,6 +174,16 @@ mj_bench_run_target() { # target, samples, warmup, mode
     i=0; while [ "$i" -lt "$warmup" ]; do mj_bench_once "$w" >/dev/null; i=$((i + 1)); done
     i=0; while [ "$i" -lt "$samples" ]; do warm="$warm$(mj_bench_once "$w")
 "; i=$((i + 1)); done
+    # every further cold sample is a first run in a repository of its own, prepared the same
+    # way: one cold sample is a measurement of the runner as much as of the command
+    i=1; while [ "$i" -lt "$cold_samples" ]; do
+      w="$tmp/cold$i"; mkdir -p "$w"
+      mj_bench_prepare "$t" "$w" || { status='setup-failed'; break; }
+      ms="$(mj_bench_once "$w")"; cold="$cold
+$ms"
+      [ "$MJ_BENCH_LAST_RC" = 0 ] || [ "$MJ_BENCH_LAST_RC" = 10 ] || [ "$MJ_BENCH_LAST_RC" = 11 ] || status="exit-$MJ_BENCH_LAST_RC"
+      rm -rf "$tmp/cold$i"; i=$((i + 1))
+    done
   else
     # a mutation changes what the next run would measure: every sample is its own repository,
     # every sample is cold, and warm is not a thing this command has
@@ -151,9 +197,9 @@ mj_bench_run_target() { # target, samples, warmup, mode
     done
   fi
   rm -rf "$tmp"
-  case "$mode" in cold|both) MJ_BENCH_ROWS="$MJ_BENCH_ROWS$t${MJ_TAB}cold${MJ_TAB}$cls${MJ_TAB}$scen${MJ_TAB}$status${MJ_TAB}$(printf '%s' "$cold" | mj_bench_stats)
+  case "$mode" in cold|both) MJ_BENCH_ROWS="$MJ_BENCH_ROWS$t${MJ_TAB}cold${MJ_TAB}$cls${MJ_TAB}$scen${MJ_TAB}$status${MJ_TAB}$(printf '%s' "$cold" | mj_bench_stats)${MJ_TAB}$(printf '%s\n' "$cold" | mj_bench_list)
 " ;; esac
-  case "$mode" in warm|both) [ -n "$warm" ] && MJ_BENCH_ROWS="$MJ_BENCH_ROWS$t${MJ_TAB}warm${MJ_TAB}$cls${MJ_TAB}$scen${MJ_TAB}$status${MJ_TAB}$(printf '%s' "$warm" | mj_bench_stats)
+  case "$mode" in warm|both) [ -n "$warm" ] && MJ_BENCH_ROWS="$MJ_BENCH_ROWS$t${MJ_TAB}warm${MJ_TAB}$cls${MJ_TAB}$scen${MJ_TAB}$status${MJ_TAB}$(printf '%s' "$warm" | mj_bench_stats)${MJ_TAB}$(printf '%s' "$warm" | mj_bench_list)
 " ;; esac
   [ "$status" = ok ]
 }
@@ -161,9 +207,11 @@ mj_bench_run_target() { # target, samples, warmup, mode
 mj_bench_json() { # samples, warmup, mode -> the run as JSON on stdout
   local samples="$1" warmup="$2" mode="$3" dirty="$MJ_BENCH_DIRTY"
   {
-    printf '{"schema":"%s","run_id":"%s","recorded_at":"%s","repository":{"commit":"%s","branch":"%s","dirty":%s},"environment":{"os":"%s","arch":"%s","bash":"%s","clock":"%s"},"profile":{"samples":%s,"warmup":%s,"mode":"%s"},"results":[' \
+    printf '{"schema":"%s","run_id":"%s","recorded_at":"%s","repository":{"commit":"%s","branch":"%s","dirty":%s},"environment":{"os":"%s","arch":"%s","bash":"%s","clock":"%s","runner":"%s","load_start":"%s","load_end":"%s"},"profile":{"samples":%s,"warmup":%s,"mode":"%s"},"results":[' \
       "$MJ_BENCH_SCHEMA" "$MJ_BENCH_RUN_ID" "$(mj_now)" "$(mj_git_head)" "$(mj_json_esc "$(mj_git_branch)")" "$dirty" \
-      "$(uname -s)" "$(uname -m)" "${BASH_VERSION%%(*}" "$MJ_TIMING_CLOCK" "$samples" "$warmup" "$mode"
+      "$(uname -s)" "$(uname -m)" "${BASH_VERSION%%(*}" "$MJ_TIMING_CLOCK" \
+      "$(mj_json_esc "$MJ_BENCH_RUNNER")" "$MJ_BENCH_LOAD_START" "${MJ_BENCH_LOAD_END:-$MJ_BENCH_LOAD_START}" \
+      "$samples" "$warmup" "$mode"
     printf '%s' "$MJ_BENCH_ROWS" | awk -F'\t' 'NF { printf "%s{\"command\":\"%s\",\"mode\":\"%s\",\"class\":\"%s\",\"scenario\":\"%s\",\"status\":\"%s\",\"samples\":%s,\"min_ms\":%s,\"p50_ms\":%s,\"p90_ms\":%s,\"p95_ms\":%s,\"p99_ms\":%s,\"max_ms\":%s,\"mean_ms\":%s,\"stddev_ms\":%s}", (n++ ? "," : ""), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14 }'
     printf ']}\n'
   }
@@ -205,13 +253,14 @@ mj_bench_write_baseline() { # samples warmup mode force
   printf 'wrote %s\n' "$(mj_rel "$b")"
 }
 # rows: command <TAB> mode <TAB> "p50/p95/p99" of the baseline <TAB> the same of this run
+#   <TAB> how many samples this run took <TAB> those samples, comma-separated
 mj_bench_compare_rows() { # baseline file
   # the baseline rows go through a file: BSD awk refuses a newline inside a -v value
   local bf; bf="$(mktemp "${TMPDIR:-/tmp}/mj.bbase.XXXXXX")"
   mj_bench_rows_of "$1" > "$bf"
   printf '%s' "$MJ_BENCH_ROWS" | awk -F'\t' -v bf="$bf" '
     FILENAME == bf { if (NF >= 5) b[$1 SUBSEP $2] = $3 "/" $4 "/" $5; next }
-    NF { k = $1 SUBSEP $2; printf "%s\t%s\t%s\t%s/%s/%s\n", $1, $2, (k in b ? b[k] : "-"), $8, $10, $11 }' "$bf" -
+    NF { k = $1 SUBSEP $2; printf "%s\t%s\t%s\t%s/%s/%s\t%s\t%s\n", $1, $2, (k in b ? b[k] : "-"), $8, $10, $11, $6, $15 }' "$bf" -
   rm -f "$bf"
 }
 # the baseline as rows: command mode p50 p95 p99, read with awk so that no jq is needed
@@ -231,19 +280,35 @@ mj_bench_check() {
   [ -f "$b" ] || { mj_fail bench baseline "no baseline at $(mj_rel "$b")" "majordomus bench --write-baseline"; return "$MJ_EX_MISSING"; }
   grep -q "\"schema\":\"$MJ_BASELINE_SCHEMA\"" "$b" \
     || { mj_fail bench baseline "$(mj_rel "$b") is not comparable: schema is not $MJ_BASELINE_SCHEMA" "head -c 200 $(mj_rel "$b")"; return "$MJ_EX_REFUSED"; }
-  local r50 r95 r99 bad=0 line c m base cur
+  # A metric over its threshold is a regression only when two samples agree: each sample is
+  # held to the same bound, baseline x (1 + threshold), and counted. One sample over it, the
+  # only cold sample of a read-only command or the one slow sample a small p95 rests on, is a
+  # WARN to re-measure: on a shared runner it says as much about the machine as the change.
+  local r50 r95 r99 bad=0 lines lvl msg c m base cur n list where
   r50="$(mj_pol_req benchmark.regression.p50)"; r95="$(mj_pol_req benchmark.regression.p95)"; r99="$(mj_pol_req benchmark.regression.p99)"
-  while IFS="$MJ_TAB" read -r c m base cur; do
+  MJ_BENCH_LOAD_END="${MJ_BENCH_LOAD_END:-$(mj_bench_load)}"
+  where="$(mj_bench_where)"
+  while IFS="$MJ_TAB" read -r c m base cur n list; do
     [ -n "$c" ] || continue
-    if [ "$base" = "-" ]; then mj_info bench "$c $m" "not in the baseline; no comparison" "majordomus bench --write-baseline"; continue; fi
-    line="$(printf '%s\t%s\n' "$base" "$cur" | awk -F'\t' -v r50="$r50" -v r95="$r95" -v r99="$r99" '
+    if [ "$base" = "-" ]; then mj_info bench "$c $m" "not in the baseline; no comparison; $n sample(s), $where" "majordomus bench --write-baseline"; continue; fi
+    lines="$(printf '%s\t%s\t%s\n' "$base" "$cur" "$list" | awk -F'\t' -v r50="$r50" -v r95="$r95" -v r99="$r99" '
       { split($1, b, "/"); split($2, x, "/"); split("p50 p95 p99", nm, " "); split(r50 " " r95 " " r99, th, " ")
+        ns = split($3, smp, ",")
         for (i = 1; i <= 3; i++) { d = x[i] - b[i]; rel = (b[i] > 0) ? d / b[i] : 0
-          if (rel > th[i] + 0) printf "%s %s -> %s ms (+%d%%, threshold %d%%)\n", nm[i], b[i], x[i], rel * 100, th[i] * 100 } }')"
-    if [ -n "$line" ]; then
-      printf '%s\n' "$line" | while IFS= read -r l; do mj_fail bench "$c $m" "regression: $l" "majordomus bench $c"; done
-      bad=1
-    else mj_ok bench "$c $m" "within thresholds ($base -> $cur ms p50/p95/p99)"; fi
+          if (rel > th[i] + 0) {
+            k = 0; for (j = 1; j <= ns; j++) if (b[i] > 0 && (smp[j] - b[i]) / b[i] > th[i] + 0) k++
+            printf "%s\t%s %s -> %s ms (+%d%%, threshold %d%%) on %d of %d sample(s)\n", (k >= 2 ? "FAIL" : "WARN"), nm[i], b[i], x[i], rel * 100, th[i] * 100, k, ns } } }')"
+    if [ -n "$lines" ]; then
+      while IFS="$MJ_TAB" read -r lvl msg; do
+        [ -n "$lvl" ] || continue
+        if [ "$lvl" = FAIL ]; then
+          mj_fail bench "$c $m" "regression: $msg; $where" "majordomus bench $c"; bad=1
+        else
+          mj_warn bench "$c $m" "one sample over: $msg; $where; not a regression until a second sample agrees" \
+            "majordomus bench $c --mode $m --samples 3 --cold-samples 3 --check"
+        fi
+      done <<<"$lines"
+    else mj_ok bench "$c $m" "within thresholds ($base -> $cur ms p50/p95/p99, $n sample(s); $where)"; fi
   done < <(mj_bench_compare_rows "$b")
   [ "$bad" = 0 ] || return "$MJ_EX_CONTRACT"
   return 0
@@ -251,7 +316,7 @@ mj_bench_check() {
 
 # ---------------------------------------------------------------- the command
 mj_cmd_bench() {
-  local samples warmup mode=both format=text save=1 list=0 check=0 write=0 force=0 targets="" a t rc=0 failed=0
+  local samples warmup cold_samples=1 mode=both format=text save=1 list=0 check=0 write=0 force=0 targets="" a t rc=0 failed=0
   # usage is answered before the installation is required: help that refuses outside an
   # initialised repository is help a newcomer cannot read
   for a in "$@"; do case "$a" in --help|-h) mj_bench_usage; return 0 ;; esac; done
@@ -263,6 +328,8 @@ mj_cmd_bench() {
     --samples=*) samples="${1#--samples=}"; shift ;;
     --warmup) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--warmup needs a number"; warmup="$2"; shift 2 ;;
     --warmup=*) warmup="${1#--warmup=}"; shift ;;
+    --cold-samples) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--cold-samples needs a number"; cold_samples="$2"; shift 2 ;;
+    --cold-samples=*) cold_samples="${1#--cold-samples=}"; shift ;;
     --mode) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--mode needs cold, warm or both"; mode="$2"; shift 2 ;;
     --mode=*) mode="${1#--mode=}"; shift ;;
     --format) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--format needs text or json"; format="$2"; shift 2 ;;
@@ -279,6 +346,8 @@ mj_cmd_bench() {
   [ "$MJ_JSON" = 1 ] && format=json
   case "$samples" in ''|*[!0-9]*) mj_die "$MJ_EX_USAGE" "bench: --samples must be a number" ;; esac
   case "$warmup" in ''|*[!0-9]*) mj_die "$MJ_EX_USAGE" "bench: --warmup must be a number" ;; esac
+  case "$cold_samples" in ''|*[!0-9]*) mj_die "$MJ_EX_USAGE" "bench: --cold-samples must be a number" ;; esac
+  [ "$cold_samples" -ge 1 ] || mj_die "$MJ_EX_USAGE" "bench: --cold-samples must be at least 1"
   case "$mode" in cold|warm|both) ;; *) mj_die "$MJ_EX_USAGE" "bench: --mode must be cold, warm or both" ;; esac
   case "$format" in text|json) ;; *) mj_die "$MJ_EX_USAGE" "bench: --format must be text or json" ;; esac
   [ "$samples" -ge 1 ] || mj_die "$MJ_EX_USAGE" "bench: --samples must be at least 1"
@@ -308,9 +377,11 @@ mj_cmd_bench() {
   # temporary file must not make the run it records look dirty
   MJ_BENCH_DIRTY=false; [ -z "$(mj_git status --porcelain 2>/dev/null)" ] || MJ_BENCH_DIRTY=true
   MJ_BENCH_ARGV="$(mktemp "${TMPDIR:-/tmp}/mj.bargv.XXXXXX")"; MJ_BENCH_STDIN=""; MJ_BENCH_LAST_RC=0
+  MJ_BENCH_RUNNER="$(mj_bench_runner)"; MJ_BENCH_LOAD_START="$(mj_bench_load)"; MJ_BENCH_LOAD_END=""
   for t in $targets; do
-    mj_bench_run_target "$t" "$samples" "$warmup" "$mode" || failed=$((failed + 1))
+    mj_bench_run_target "$t" "$samples" "$warmup" "$mode" "$cold_samples" || failed=$((failed + 1))
   done
+  MJ_BENCH_LOAD_END="$(mj_bench_load)"
   rm -f "$MJ_BENCH_ARGV"
 
   if [ "$write" = 1 ]; then mj_bench_write_baseline "$samples" "$warmup" "$mode" "$force"; fi

@@ -143,11 +143,10 @@ fn issue_table(
             .children(super::view::more(
                 (ROWS * 2).min(of_status.len()),
                 of_status.len(),
-                Some(&format!(
-                    "{}?status={}",
-                    super::issues::ROUTE,
-                    status.to_lowercase()
-                )),
+                // the status as the plan declares it: the issues page serves every status under
+                // that one spelling, and a lowercase link published a second page beside it that
+                // differs only in case (I3447)
+                Some(&format!("{}?status={}", super::issues::ROUTE, status)),
             ))
     })
 }
@@ -164,7 +163,7 @@ mod tests {
             source,
             route: None,
             exposure: Default::default(),
-            value: Ok(value),
+            value: Ok(value.into()),
             took: Duration::ZERO,
             standing: crate::ui::source::Standing::NOW,
         }
@@ -229,7 +228,7 @@ mod tests {
             "{html}"
         );
         assert!(
-            html.contains("4 more") && html.contains("href=\"/ui/issues?status=ready\""),
+            html.contains("4 more") && html.contains("href=\"/ui/issues?status=READY\""),
             "{html}"
         );
         let bare = issue_table(&issues, "ACTIVE", "none active").render();

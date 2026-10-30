@@ -27,4 +27,15 @@ evidence_required:
   - a_tag_does_not_freeze_the_queue
 risk: "Loosening the check by reading open pull requests makes a structure gate depend on the forge; proposing the record before the tag changes the release order every session follows."
 created_at: 2026-10-08
-updated_at: 2026-10-08
+updated_at: 2026-10-14T14:53:16Z
+started_at: 2026-10-14T14:52:51Z
+started_event: sha256:4489adabb0b77c33d8b5862f15d9989726249efca9fed2f9b7235f58092c9622
+completed_at: 2026-10-14T14:53:16Z
+completed_event: sha256:06a18d429b58a34f77ff729911dbb490f1ceb51d0dc35deed37db2c803f3cd41
+evidence:
+  - covers: a_tag_does_not_freeze_the_queue
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 3021_a_tag_does_not_freeze_the_queue 103_release_projection"
+    result: "tests: 2 passed, 0 failed; docs/DISTRIBUTION.md#releasing says the order and why (run 2026-10-14 14:52Z on master 0dff496d1c plus this change)"
+    commit: 0dff496d1c312ce4a8d37ac5d6667b522beb4905
+    recorded_at: 2026-10-14T14:53:08Z

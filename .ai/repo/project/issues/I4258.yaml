@@ -1,0 +1,25 @@
+id: I4258
+milestone: a-second-adopter-is-served
+title: "Documents below docs/ are knowledge without a hand-declared class each"
+slug: knowledge-discovers-documents-below-docs
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "The skeleton discovers every Markdown file below docs/ once, without claiming a file another class claims."
+why: "An adopter's field report (a private Python client repository adopted from the v1.0.0-alpha.8 release on 2026-10-27, with the plan model, project rules, knowledge, skills, Claude Code capture and a GitHub projection all in use) found: the document class discovers ':(glob)docs/*.md' only, so docs/spec/, docs/wiki/ and docs/references/ needed three hand-declared classes."
+current_state: "One level of docs/ is discovered."
+desired_state: "The skeleton discovers every Markdown file below docs/ once, without claiming a file another class claims."
+scope:
+  - ".ai/repo/project/issues/I4258.yaml"
+  - "share/skeleton/ai/repo/knowledge/sources.yaml"
+  - "test/cases/4258_documents_below_docs_are_discovered.sh"
+depends_on: []
+acceptance_criteria:
+  - "A fresh init discovers docs/a/b.md as a document"
+  - "No file is claimed by two classes"
+validation:
+  - "bash test/run.sh 4258_documents_below_docs_are_discovered"
+evidence_required:
+  - "case_knowledge_discovers_documents_below_docs"
+created_at: 2026-10-27
+updated_at: 2026-10-27

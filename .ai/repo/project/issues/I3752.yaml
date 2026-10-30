@@ -1,0 +1,42 @@
+# Draft for the 2026-10-20 records sweep. The id, the case number (placeholder I3752 in case names) and the dates are
+# allocated from the granted id block when the coordinator records it; current_state was read
+# on origin/master 91c0b5d5658.
+# rehomed from a-visitor-understands-and-checks-majordomus: that milestone derives PLANNED, and the campaign covers ACTIVE milestones only (O1); surfaces-never-disagree is the ACTIVE milestone whose outcome is that every surface projects the same state and none keeps a list of its own
+id: "I3752"
+milestone: "surfaces-never-disagree"
+title: "The UI is one of the product's surfaces, so every count of the interfaces agrees"
+slug: "the-ui-is-one-of-the-surfaces"
+priority: "p1"
+profile: "implementation"
+parallel_safe: true
+objective: "Add ui to the product model's surface vocabulary (apps/majordomus-cli/src/product.rs SURFACES) with a derived ui flag on Surfaces, decided like the other five from what a feature's references project, so the homepage hero figure, the evidence-chain node, the interface cards and the Surfaces domain headline all name the same set; regenerate the projections that carry the vocabulary."
+why: "One page says there are five ways to work with the product, shows six interface cards, and its Surfaces domain text names seven, because the vocabulary leaves out the UI that the cards include and the domain text adds the site. A visitor counting interfaces gets three answers, and the vocabulary's own comment says nothing else is a surface while the UI is served beside the Cockpit. Found by the landing audit of 2026-10-20 (L-P1-4; campaign defect D12)."
+current_state: "apps/majordomus-cli/src/product.rs:191-200 declares SURFACES with five entries (cli, api, mcp, cockpit, docs) under a doc comment saying five because the executable has five ways to be reached; :147-166 Surfaces has five bools, :168-188 present and has read the vocabulary; :1964-1974 derives the five flags from a feature's module, command, kind, cockpit and document references; the test at :2365-2378 asserts SURFACES.len() == 5. apps/majordomus-cli/src/graph.rs:1894 iterates SURFACES into the product graph. site/data/registry/product.json surfaces lists the five. site/data/generated/web.json declares the interface web surfaces cockpit, ui and home, and scripts/ci/homepage-check:670-697 renders the cards as the featured faces (ui, cockpit) plus every vocabulary surface not featured, six in all. site/templates/index.html:166 shows model.surfaces | length (5) as 'ways to work with it, from one source', site/templates/partials/evidence-chain.html:23 shows the same 5 with the five titles, and .ai/repo/features/domains/surfaces.md:6 names the command line, the HTTP API, MCP, the UI, the Cockpit, the documentation and this site. The UI pages declare what they read with Source::of (apps/majordomus-cli/src/ui/source.rs:40, called 71 times in apps/majordomus-cli/src/ui outside source.rs)."
+desired_state: "SURFACES carries ui with its title and documented route, Surfaces gains ui, and the flag is true when a capability of one of the feature's modules is a source a /ui page declares, or, if those declarations are not reachable from the product model, when the feature is the ui web surface's feature; the rule chosen is stated in the doc comment beside the others and measured in the PR. The doc comment counts what the vocabulary holds. The test names six ids in order. The domain headline names the six surfaces and says the site is a projection of them. After one derive the hero figure, the chain node and the card count are equal, with no template edit. The schema change of Surfaces is priced by the version surface as a change to the product model."
+scope:
+  - "apps/majordomus-cli/src/product.rs"
+  - ".ai/repo/features/domains/surfaces.md"
+  - "site/data/registry/product.json"
+  - "site/data/registry/product-graph.json"
+  - "docs/generated/graph.json"
+  - "test/cases/3725_the_ui_is_one_of_the_surfaces.sh"
+  - ".ai/repo/project/issues/I3752.yaml"
+non_scope:
+  - "The evidence-chain node sentences and figure links (I3760)"
+  - "Adding the public site itself to the vocabulary; it is a projection, not a way to reach the executable"
+  - "The features matrix template, which renders whatever columns the model gives"
+acceptance_criteria:
+  - "site/data/registry/product.json lists six surfaces, ui among them, and every stable feature carries a ui flag derived by the stated rule"
+  - "The built homepage's hero figure, its evidence-chain surfaces node and its count of interface cards are the same number"
+  - "The Surfaces domain headline names exactly the vocabulary's surfaces"
+  - "The case fails when the homepage renders an interface card whose id the product model's surfaces do not name, naming the card (negative case, planted by removing ui from the fixture's product.json)"
+  - "Surfaces has still refuses an id outside the vocabulary"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib product::"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3725_the_ui_is_one_of_the_surfaces"
+  - "majordomus product validate && majordomus generate --check && scripts/site-build && scripts/ci/homepage-check"
+evidence_required:
+  - "the_surface_vocabulary_is_closed_and_read_back_in_order"
+  - "the_ui_is_a_surface_of_the_features_it_reads"
+  - "every_interface_count_on_the_homepage_agrees"
+depends_on: []

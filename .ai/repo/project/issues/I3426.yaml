@@ -1,0 +1,31 @@
+id: I3426
+milestone: an-inference-names-its-source-and-budget
+title: "An advisor answer carrying instructions or record-shaped fields is kept as bounded text and changes no record"
+slug: an-advisor-answer-stays-data
+priority: p2
+profile: implementation
+objective: "Add two negative fixtures. The first is an answer that tells the executor to ignore governance or promote candidates. The second is an answer that carries status, verified, reviewed_by or independent_review_count fields. Both are normalised to the declared consultation fields only and bounded, and the writer refuses any extra field a caller forwards."
+why: "The owner's 2026-10-19 Cognitive Fabric pack lists a poisoned payload test (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/04_REASONING_MESH.md). verification/ACCEPTANCE.md requires a provider prompt injection to stay data."
+current_state: "scripts/lib/advisors/contract.mjs bounds lists to 400 characters and the conclusion to 1000 (contract.mjs:120,145). Records deny unknown fields (apps/majordomus-cli/src/reasoning/record.rs:413), and record.rs:981 refuses a review count typed by a caller. contract.test.mjs:88-105 covers structured, empty and malformed answers, but no answer that carries instructions or forges fields."
+desired_state: "Both fixtures pass through the real normalisation and writer. The stored consultation holds only declared fields, and no conclusion, candidate or count changes."
+scope:
+  - "scripts/lib/advisors/contract.test.mjs"
+  - "apps/majordomus-cli/src/reasoning/record.rs"
+non_scope:
+  - "Content moderation of answer text"
+  - "Changing normalisation bounds"
+serves:
+  - "a-change-reconciles-what-it-affects#an-advisor-answer-stays-data"
+acceptance_criteria:
+  - "An answer with forged fields normalises without those fields"
+  - "The writer refuses a consultation record that carries a forged field"
+  - "No record other than the consultation is written"
+validation:
+  - "node --test scripts/lib/advisors/contract.test.mjs"
+  - "bash test/run.sh 731_advisor_transport_contract"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib reasoning::record"
+evidence_required:
+  - "a_poisoned_answer_stays_data"
+  - "record.rs unit test refusing a forged consultation field"
+created_at: 2026-10-19
+updated_at: 2026-10-19

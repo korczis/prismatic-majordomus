@@ -1,0 +1,292 @@
+#!/usr/bin/env node
+// site-translate — fill the site's translation memory (ADR 0218).
+//
+//   scripts/site-translate status   [--lang cs]
+//   scripts/site-translate export   [--lang cs] --out DIR [--batch-chars 12000] [--min-pages N]
+//                                   [--route /path/]... [--max-batches N] [--offset N]
+//   scripts/site-translate import   [--lang cs] [--dry-run] FILE...
+//   scripts/site-translate reach    [--lang cs] [--against REV]
+//   scripts/site-translate rekey    [--lang cs] [--dry-run]
+//   scripts/site-translate run      [--lang cs] --advisor ID [--batch-chars 6000]
+//                                   [--concurrency 4] [--max-batches N] [--min-pages N]
+//
+// The build decides what is missing: scripts/site-build's i18n pass lists every segment of the
+// English pages its memory does not know in target/site-i18n/missing.json, with the number of
+// pages each appears on. This script only carries those segments to a translator and the
+// answers back into site/i18n/<lang>/memory/. `export` cuts them into batch files a translator
+// outside this process fills (a session's subagents); `run` asks one advisor of the catalogue
+// (`majordomus reasoning advisors`) through its adapter (scripts/lib/advisors/, ADR 0098);
+// `import` admits a filled batch.
+// Either way a translation is admitted only when it carries the placeholders of its English
+// exactly (site-i18n.mjs `admissible`), and the next build is what publishes it.
+//
+// Exit: 0 done, 2 bad arguments, 3 nothing to read (build first), 4 a batch was refused.
+
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+import { admissible, loadMemory, memoryChanges, reachOf, rekeyValues, saveMemory } from './lib/site-i18n.mjs';
+import { loadAdapter } from './lib/advisors/driver.mjs';
+
+const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const I18N = path.join(ROOT, 'site', 'i18n');
+const MISSING = path.join(ROOT, 'target', 'site-i18n', 'missing.json');
+// every key the English pages carry, with its pages: what a memory entry can reach (I3092)
+const REACH = path.join(ROOT, 'target', 'site-i18n', 'reach.json');
+
+function usage(error) {
+  const text = 'usage: scripts/site-translate status|export|import|run|reach|rekey [--lang LANG] ...';
+  if (error) {
+    process.stderr.write(`site-translate: ${error}\n${text}\n`);
+    process.exit(2);
+  }
+  process.stdout.write(`${text}\n`);
+  process.exit(0);
+}
+
+function parse(argv) {
+  const [cmd, ...rest] = argv;
+  const opts = { cmd, lang: 'cs', batchChars: 12000, minPages: 0, routes: [], files: [],
+    maxBatches: Infinity, offset: 0, concurrency: 4, dryRun: false, against: 'HEAD' };
+  for (let i = 0; i < rest.length; i += 1) {
+    const a = rest[i];
+    const next = () => {
+      if (i + 1 >= rest.length) usage(`${a} needs a value`);
+      i += 1;
+      return rest[i];
+    };
+    if (a === '--lang') opts.lang = next();
+    else if (a === '--out') opts.out = path.resolve(next());
+    else if (a === '--batch-chars') opts.batchChars = Number(next());
+    else if (a === '--min-pages') opts.minPages = Number(next());
+    else if (a === '--route') opts.routes.push(next());
+    else if (a === '--max-batches') opts.maxBatches = Number(next());
+    else if (a === '--offset') opts.offset = Number(next());
+    else if (a === '--advisor') opts.advisor = next();
+    else if (a === '--concurrency') opts.concurrency = Number(next());
+    else if (a === '--dry-run') opts.dryRun = true;
+    else if (a === '--against') opts.against = next();
+    else if (a === '-h' || a === '--help') usage();
+    else if (a.startsWith('--')) usage(`unknown argument ${a}`);
+    else opts.files.push(path.resolve(a));
+  }
+  if (!['status', 'export', 'import', 'run', 'reach', 'rekey'].includes(cmd)) usage(`unknown command ${cmd}`);
+  return opts;
+}
+
+const memoryDir = (lang) => path.join(I18N, lang, 'memory');
+
+function readMissing(lang) {
+  if (!existsSync(MISSING)) {
+    process.stderr.write('site-translate: no target/site-i18n/missing.json; run scripts/site-build first\n');
+    process.exit(3);
+  }
+  return JSON.parse(readFileSync(MISSING, 'utf8'))[lang] ?? [];
+}
+
+function guide(lang) {
+  const file = path.join(I18N, lang, 'guide.json');
+  return existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : {};
+}
+
+function select(opts) {
+  const memory = loadMemory(memoryDir(opts.lang));
+  let items = readMissing(opts.lang).filter((m) => !memory.has(m.k) && m.pages >= opts.minPages);
+  if (opts.routes.length) {
+    items = items.filter((m) => m.routes.some((r) => opts.routes.some((p) => r === p
+      || (p.endsWith('*') && r.startsWith(p.slice(0, -1))))));
+  }
+  return items;
+}
+
+function batches(items, chars) {
+  const out = [];
+  let cur = [];
+  let size = 0;
+  for (const it of items) {
+    if (cur.length && size + it.en.length > chars) { out.push(cur); cur = []; size = 0; }
+    cur.push({ k: it.k, en: it.en });
+    size += it.en.length;
+  }
+  if (cur.length) out.push(cur);
+  return out;
+}
+
+function readReach() {
+  return existsSync(REACH) ? JSON.parse(readFileSync(REACH, 'utf8')).keys : null;
+}
+
+function admit(lang, entries, dryRun = false) {
+  const memory = loadMemory(memoryDir(lang));
+  const known = new Map(readMissingSafe(lang).map((m) => [m.k, m.en]));
+  const reach = readReach();
+  let admitted = 0;
+  const refused = [];
+  for (const e of entries) {
+    // a key already in the memory may be translated again: its English is the memory's
+    const en = e.en ?? known.get(e.k) ?? memory.get(e.k)?.en;
+    const t = e[lang] ?? e.t;
+    if (!en || !admissible(en, t)) { refused.push(e.k); continue; }
+    // a key no English page carries is a translation nobody reads (I3092)
+    if (reach && !reach[e.k]) { refused.push(`${e.k} (reaches no page)`); continue; }
+    memory.set(e.k, { k: e.k, en, [lang]: t.replace(/\s+/g, ' ').trim() });
+    admitted += 1;
+  }
+  if (!dryRun) saveMemory(memoryDir(lang), memory);
+  return { admitted, refused, size: memory.size };
+}
+
+function readMissingSafe(lang) {
+  return existsSync(MISSING) ? (JSON.parse(readFileSync(MISSING, 'utf8'))[lang] ?? []) : [];
+}
+
+export function prompt(lang, items, g = guide(lang)) {
+  return [
+    `Translate the user-interface and documentation strings of a software product's website from English into ${g.language ?? lang}.`,
+    'Each item is one segment of a page. Placeholders like <t1>...</t1> wrap inline markup, <t2/> stands for code or an image, and <n1/> stands for a number the build fills in: keep every placeholder exactly once, keep their nesting, move them only where the grammar needs it, and never translate what they stand for. Inflect the word after <nK/> as most counts read (in Czech, the genitive plural).',
+    'Keep command names, flags, file paths, identifiers, product names and code exactly as written. Keep HTML entities such as &amp; as they are. Translate naturally, as a native technical writer would, not word for word.',
+    g.instructions ? `Style: ${g.instructions}` : '',
+    g.glossary ? `Glossary (English -> translation), use consistently: ${JSON.stringify(g.glossary)}` : '',
+    'Answer with one JSON object and nothing else: {"<k>": "<translation>", ...} with every k of the input.',
+    '',
+    JSON.stringify(items),
+  ].filter(Boolean).join('\n');
+}
+
+function parseAnswer(text) {
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start < 0 || end < start) return {};
+  try { return JSON.parse(text.slice(start, end + 1)); } catch { return {}; }
+}
+
+async function run(opts) {
+  if (!opts.advisor) usage('run needs --advisor ID (one of `majordomus reasoning advisors`)');
+  const cli = process.env.MAJORDOMUS_CLI || path.join(ROOT, 'bin', 'majordomus');
+  const catalogue = JSON.parse(execFileSync(cli, ['reasoning', 'advisors', '--format', 'json'],
+    { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }));
+  const advisor = (catalogue.advisors ?? catalogue).find((a) => a.id === opts.advisor);
+  if (!advisor) usage(`no advisor ${opts.advisor} in the catalogue`);
+  const adapter = await loadAdapter(advisor.adapter);
+  const all = batches(select(opts), opts.batchChars).slice(opts.offset, opts.offset
+    + opts.maxBatches);
+  let next = 0;
+  let admitted = 0;
+  let refused = 0;
+  const worker = async () => {
+    while (next < all.length) {
+      const i = next;
+      next += 1;
+      const batch = all[i];
+      try {
+        const { text } = await adapter.exchange(advisor, prompt(opts.lang, batch),
+          { timeoutMs: 600000 });
+        const answer = parseAnswer(text);
+        const r = admit(opts.lang, batch.map((b) => ({ k: b.k, en: b.en, t: answer[b.k] })),
+          opts.dryRun);
+        admitted += r.admitted;
+        refused += r.refused.length;
+        process.stdout.write(`  batch ${i + 1}/${all.length}: ${r.admitted} admitted, ${r.refused.length} refused (memory ${r.size})\n`);
+      } catch (error) {
+        process.stderr.write(`  batch ${i + 1}/${all.length}: ${error.status ?? 'error'}: ${error.diagnostic ?? error.message}\n`);
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.max(1, opts.concurrency) }, worker));
+  process.stdout.write(`site-translate: ${admitted} admitted, ${refused} refused over ${all.length} batch(es)\n`);
+}
+
+const opts = parse(process.argv.slice(2));
+if (opts.cmd === 'status') {
+  const items = readMissing(opts.lang);
+  const memory = loadMemory(memoryDir(opts.lang));
+  const open = items.filter((m) => !memory.has(m.k));
+  const chars = open.reduce((a, m) => a + m.en.length, 0);
+  process.stdout.write(`site-translate: ${opts.lang}: memory ${memory.size}, missing at the last build ${items.length}, still open ${open.length} (${chars} characters)\n`);
+} else if (opts.cmd === 'export') {
+  if (!opts.out) usage('export needs --out DIR');
+  mkdirSync(opts.out, { recursive: true });
+  const all = batches(select(opts), opts.batchChars).slice(opts.offset, opts.offset
+    + opts.maxBatches);
+  const g = guide(opts.lang);
+  all.forEach((items, i) => {
+    const file = path.join(opts.out, `batch-${String(i + 1).padStart(4, '0')}.json`);
+    writeFileSync(file, `${JSON.stringify({ schema: 'site-i18n-batch/v1', lang: opts.lang,
+      instructions: prompt(opts.lang, [], g).split('\n').slice(0, -2).join('\n'), items },
+    null, 1)}\n`);
+  });
+  process.stdout.write(`site-translate: ${all.length} batch(es) written to ${opts.out}\n`);
+} else if (opts.cmd === 'import') {
+  let failed = false;
+  for (const file of opts.files) {
+    let doc;
+    try {
+      doc = JSON.parse(readFileSync(file, 'utf8'));
+    } catch (error) {
+      process.stdout.write(`  ${path.basename(file)}: not JSON (${error.message}); skipped\n`);
+      failed = true;
+      continue;
+    }
+    const entries = Array.isArray(doc) ? doc : Array.isArray(doc.items) ? doc.items
+      : Object.entries(doc).map(([k, t]) => ({ k, t }));
+    const r = admit(opts.lang, entries, opts.dryRun);
+    if (r.refused.length) failed = true;
+    process.stdout.write(`  ${path.basename(file)}: ${r.admitted} admitted, ${r.refused.length} refused${r.refused.length ? ` (${r.refused.slice(0, 5).join(', ')}${r.refused.length > 5 ? ', ...' : ''})` : ''}\n`);
+  }
+  process.exit(failed ? 4 : 0);
+} else if (opts.cmd === 'run') {
+  await run(opts);
+} else if (opts.cmd === 'reach') {
+  // every memory entry changed since --against (default HEAD), with the pages its key reaches;
+  // one that reaches none fails the command (I3092)
+  const reach = readReach();
+  if (!reach) {
+    process.stderr.write('site-translate: no target/site-i18n/reach.json; run scripts/site-build first\n');
+    process.exit(3);
+  }
+  const rel = path.relative(ROOT, memoryDir(opts.lang));
+  const before = new Map();
+  const listed = execFileSync('git', ['-C', ROOT, 'ls-tree', '-r', '--name-only', opts.against, '--', rel],
+    { encoding: 'utf8' }).split('\n').filter((f) => f.endsWith('.jsonl'));
+  for (const f of listed) {
+    const text = execFileSync('git', ['-C', ROOT, 'show', `${opts.against}:${f}`], { encoding: 'utf8',
+      maxBuffer: 1 << 28 });
+    for (const line of text.split('\n')) if (line.trim()) { const e = JSON.parse(line); before.set(e.k, e); }
+  }
+  const after = loadMemory(memoryDir(opts.lang));
+  const rows = reachOf(memoryChanges(before, after, opts.lang), reach);
+  for (const r of rows) {
+    const en = JSON.stringify(after.get(r.k)?.en ?? '');
+    process.stdout.write(r.pages ? `  ${r.k} reaches ${r.pages} page(s): ${r.routes.join(' ')}  ${en}\n`
+      : `  ${r.k} reaches no page: no English page carries ${en}\n`);
+  }
+  const none = rows.filter((r) => !r.pages).length;
+  process.stdout.write(`site-translate: ${opts.lang}: ${rows.length} key(s) changed since ${opts.against}, ${none} reaching no page\n`);
+  process.exit(none ? 10 : 0);
+} else if (opts.cmd === 'rekey') {
+  // move every entry written before I3758 to the key the build now computes: a commit, version
+  // or date that is a whole element becomes a void placeholder in both languages. An entry whose
+  // translation does not carry the same value is named and left as it was.
+  const memory = loadMemory(memoryDir(opts.lang));
+  let moved = 0;
+  const refused = [];
+  const merged = [];
+  for (const e of [...memory.values()]) {
+    const r = rekeyValues(e, opts.lang);
+    if (!r) continue;
+    if (r.refused) { refused.push(`  ${e.k} keeps its key: the ${opts.lang} text lacks ${r.refused}`); continue; }
+    memory.delete(e.k);
+    const kept = memory.get(r.entry.k);
+    // two entries that differed only by the value are one sentence now: the first one loaded is
+    // kept, and a translation that read differently is named rather than dropped in silence
+    if (!kept) memory.set(r.entry.k, r.entry);
+    else if (kept[opts.lang] !== r.entry[opts.lang]) {
+      merged.push(`  ${r.entry.k} keeps ${JSON.stringify(kept[opts.lang])}, drops ${JSON.stringify(r.entry[opts.lang])}`);
+    }
+    moved += 1;
+  }
+  if (!opts.dryRun) saveMemory(memoryDir(opts.lang), memory);
+  if (refused.length) process.stdout.write(`${refused.join('\n')}\n`);
+  if (merged.length) process.stdout.write(`${merged.join('\n')}\n`);
+  process.stdout.write(`site-translate: ${opts.lang}: ${moved} entr(ies) re-keyed, ${merged.length} merged into another's key with a different translation, ${refused.length} left as they were${opts.dryRun ? ' (dry run)' : ''}\n`);
+}

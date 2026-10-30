@@ -32,4 +32,18 @@ evidence_required:
   - backfill_applied
 risk: "High and outward-facing. It publishes 172 issues to a public repository in one run and cannot be undone cheaply. It requires the operator's explicit confirmation and must run after I1401, or the pagination ceiling will corrupt it."
 created_at: 2026-09-09
-updated_at: 2026-10-08
+updated_at: 2026-10-14T19:49:23Z
+started_at: 2026-10-14T19:48:10Z
+started_event: sha256:d82aee5726a933064bce2b9fd69c726547235e4be39ccd151198fa8396dedd02
+verified_at: 2026-10-14T19:48:46Z
+verified_event: sha256:3beb6b9dc4112691daa24ec30a89cffd2d3a0b817eae4f7e42e2969c853f5ed9
+completed_at: 2026-10-14T19:49:23Z
+completed_event: sha256:f07995a5dced3349311f082c9b4455e8fb904e81f3d53d776622f78fd2272781
+evidence:
+  - covers: backfill_applied
+    type: artifact
+    command: "scripts/github-sync --plan; scripts/github-sync --check; scripts/ci/github-check --write-baseline; scripts/ci/github-check"
+    result: "2026-10-14 19:4xZ at master 97c4521f91: github-sync --plan exit 0 and --check exit 0 with 0 drift findings; 397 records insync (362 issues, 35 milestones), no record missing and none to adopt, so every canonical record holds the one GitHub number it was projected onto. The backfill itself was applied before 2026-10-08 (record's current state) and the records written since were projected by .github/workflows/github.yml on each landing. The ratchet .ai/repo/ci/github-drift-baseline.txt is lowered in this commit from missing 19 / adopt 0 to missing 0 / adopt 0, and scripts/ci/github-check then reports 0 missing and 0 adopt, at the baseline, exit 0."
+    artifact: ".ai/repo/ci/github-drift-baseline.txt"
+    commit: 97c4521f91a8e096d84eb9e552c9590b512309a5
+    recorded_at: 2026-10-14T19:48:30Z

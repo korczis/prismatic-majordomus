@@ -1,0 +1,944 @@
+{
+ "schema": "convergence-baseline/v1",
+ "pack": "campaigns/majordomus-convergence-pack-2026-10-14",
+ "repository": "korczis/prismatic-majordomus",
+ "recorded_at": "2026-10-14T20:19:50Z",
+ "master": {
+  "sha": "e8505a431d552b9a9d6b7baebb91dfdee4451bbf",
+  "committed_at": "2026-10-14T21:43:41+02:00",
+  "pack_historical_head": "97c4521f91a8e096d84eb9e552c9590b512309a5",
+  "commits_since_pack_head": 2
+ },
+ "worktrees_registered": 344,
+ "open_pull_requests": 43,
+ "classification": {
+  "partially-present": 1,
+  "unique": 12,
+  "blocked-by-failing-check": 29,
+  "unsafe": 1
+ },
+ "classifier": {
+  "source": "majordomus prs refresh + prs status (ADR 0101)",
+  "observed_at": "2026-10-14T19:46:22Z",
+  "tallies": {
+   "open": 43,
+   "by_disposition": {
+    "blocked": 1,
+    "conflicting": 16,
+    "draft": 1,
+    "needs_refresh": 10,
+    "needs_repair": 14,
+    "unsafe": 1
+   },
+   "by_lane": {
+    "held": 3,
+    "repair": 30,
+    "waiting": 10
+   }
+  },
+  "diagnostics": [
+   "auto-merge is armed on #1112: the forge would merge them on its own, outside the executor, so they are unsafe until it is disarmed (gh pr merge <n> --disable-auto)"
+  ]
+ },
+ "ci_on_master_head": [
+  {
+   "databaseId": 38627609480,
+   "workflowName": "queue",
+   "event": "schedule",
+   "status": "completed",
+   "conclusion": "success",
+   "createdAt": "2026-10-14T19:54:42Z"
+  },
+  {
+   "databaseId": 38626102499,
+   "workflowName": "validate",
+   "event": "push",
+   "status": "in_progress",
+   "conclusion": "",
+   "createdAt": "2026-10-14T19:43:44Z"
+  },
+  {
+   "databaseId": 38626102443,
+   "workflowName": "github-projection",
+   "event": "push",
+   "status": "completed",
+   "conclusion": "success",
+   "createdAt": "2026-10-14T19:43:44Z"
+  },
+  {
+   "databaseId": 38626102355,
+   "workflowName": "pages",
+   "event": "push",
+   "status": "in_progress",
+   "conclusion": "",
+   "createdAt": "2026-10-14T19:43:44Z"
+  }
+ ],
+ "local_gates": [
+  {
+   "gate": "campaigns-provenance",
+   "command": "scripts/ci/campaigns-check",
+   "exit": 0,
+   "seconds": 1.9,
+   "last_line": "campaigns-check: 52 pack(s), 821 file(s) hashed by sha256sum, every one the bytes the manifest recorded and every one in the index",
+   "head": "97c4521f91a8e096d84eb9e552c9590b512309a5",
+   "at": "2026-10-14T19:20:51Z"
+  },
+  {
+   "gate": "prompt-privacy",
+   "command": "scripts/ci/prompt-privacy",
+   "exit": 0,
+   "seconds": 6.4,
+   "last_line": "prompt-privacy: ok",
+   "head": "97c4521f91a8e096d84eb9e552c9590b512309a5",
+   "at": "2026-10-14T19:20:58Z"
+  },
+  {
+   "gate": "english-only",
+   "command": "scripts/ci/english-only-check",
+   "exit": 0,
+   "seconds": 90.0,
+   "last_line": "english-only-check: no new debt (0 file(s) known, 17 declared fixtures, 2 declared translations, 5579 file(s) measured)",
+   "head": "97c4521f91a8e096d84eb9e552c9590b512309a5",
+   "at": "2026-10-14T19:22:28Z"
+  },
+  {
+   "gate": "diagram-check",
+   "command": "scripts/ci/diagram-check",
+   "exit": 0,
+   "seconds": 0.6,
+   "last_line": "diagram-check: no hand-drawn diagram in the published documents",
+   "head": "97c4521f91a8e096d84eb9e552c9590b512309a5",
+   "at": "2026-10-14T19:22:28Z"
+  },
+  {
+   "gate": "case-numbers",
+   "command": "scripts/case-numbers check",
+   "exit": 0,
+   "seconds": 0.4,
+   "last_line": "ok  no case identity is newly shared: 481 files, 440 identities under test/cases/; 65 file(s) across 24 identit(ies) are accepted debt on .ai/repo/ci/case-numbers-baseline.txt",
+   "head": "97c4521f91a8e096d84eb9e552c9590b512309a5",
+   "at": "2026-10-14T19:22:29Z"
+  },
+  {
+   "gate": "adr-collision",
+   "command": "bin/majordomus adr check",
+   "exit": 0,
+   "seconds": 19.3,
+   "last_line": "0 identities added here, measured against origin/master and every other ref",
+   "head": "97c4521f91a8e096d84eb9e552c9590b512309a5",
+   "at": "2026-10-14T19:22:48Z"
+  },
+  {
+   "gate": "finding-reproduce",
+   "command": "scripts/ci/finding-reproduce-check",
+   "exit": 0,
+   "seconds": 2.6,
+   "last_line": "finding-reproduce-check: no new debt (0 file(s) known, 193 file(s) measured)",
+   "head": "97c4521f91a8e096d84eb9e552c9590b512309a5",
+   "at": "2026-10-14T19:22:51Z"
+  },
+  {
+   "gate": "claim-proof",
+   "command": "scripts/ci/claim-proof-check --strict",
+   "exit": 0,
+   "seconds": 2.9,
+   "last_line": "claim-proof-check: every guaranteed claim names a test that names it back",
+   "head": "97c4521f91a8e096d84eb9e552c9590b512309a5",
+   "at": "2026-10-14T19:22:54Z"
+  },
+  {
+   "gate": "rule-proof",
+   "command": "scripts/ci/rule-proof-check",
+   "exit": 0,
+   "seconds": 1.1,
+   "last_line": "rule-proof-check: no new debt (0 rule(s) known, 11 declared review-enforced, 153 blocking of 179 rule(s) measured)",
+   "head": "97c4521f91a8e096d84eb9e552c9590b512309a5",
+   "at": "2026-10-14T19:22:55Z"
+  },
+  {
+   "gate": "backlog-hygiene",
+   "command": "scripts/ci/backlog-check",
+   "exit": 0,
+   "seconds": 5.7,
+   "last_line": "backlog-check: clean",
+   "head": "97c4521f91a8e096d84eb9e552c9590b512309a5",
+   "at": "2026-10-14T19:23:00Z"
+  },
+  {
+   "gate": "mesh-check",
+   "command": "scripts/ci/mesh-check",
+   "exit": 0,
+   "seconds": 3.3,
+   "last_line": "mesh-check: OK   sockets, links and the journal under src/mesh/, one registry, capability-projected surfaces, declaration complete, no committed tofu",
+   "head": "97c4521f91a8e096d84eb9e552c9590b512309a5",
+   "at": "2026-10-14T19:23:04Z"
+  },
+  {
+   "gate": "order-check",
+   "command": "scripts/ci/order-check",
+   "exit": 0,
+   "seconds": 17.4,
+   "last_line": "order-check: clean",
+   "head": "97c4521f91a8e096d84eb9e552c9590b512309a5",
+   "at": "2026-10-14T19:23:21Z"
+  },
+  {
+   "gate": "worktree-topology",
+   "command": "scripts/ci/worktree-check",
+   "exit": "timeout",
+   "seconds": 420.0,
+   "last_line": "timed out after 420 s",
+   "head": "97c4521f91a8e096d84eb9e552c9590b512309a5",
+   "at": "2026-10-14T19:30:21Z"
+  },
+  {
+   "gate": "release-check",
+   "command": "scripts/ci/release-check",
+   "exit": 0,
+   "seconds": 1.7,
+   "last_line": "release-check: the release is a projection \u2014 authored once, the tool prints it, no kept changelog, every published tag recorded or its record proposed (1 pending)",
+   "head": "97c4521f91a8e096d84eb9e552c9590b512309a5",
+   "at": "2026-10-14T19:30:23Z"
+  },
+  {
+   "gate": "nav-check",
+   "command": "scripts/ci/nav-check",
+   "exit": 0,
+   "seconds": 0.5,
+   "last_line": "nav-check: the navigation is declared once in site/data/nav.toml, and every projection derives from it",
+   "head": "97c4521f91a8e096d84eb9e552c9590b512309a5",
+   "at": "2026-10-14T19:30:23Z"
+  },
+  {
+   "gate": "plan-validate",
+   "command": "bin/majordomus plan validate",
+   "exit": 0,
+   "seconds": 7.2,
+   "last_line": "plan validate: 35 milestone(s), 362 issue(s), 0 failure(s), 432 warning(s)",
+   "head": "97c4521f91a8e096d84eb9e552c9590b512309a5",
+   "at": "2026-10-14T19:30:31Z"
+  }
+ ],
+ "findings": [
+  {
+   "finding": "Durable ACK and bounded journal reload",
+   "priority": "P0",
+   "mission": "02",
+   "issue": "I2706",
+   "plan_status_on_master": "READY",
+   "disposition": "open (ready, no open PR names it)",
+   "matrix_refs": [
+    {
+     "number": 1137,
+     "kind": "issue",
+     "state": "open",
+     "title": "I2706 \u2014 An own event whose append failed is never acknowledged as durable, and a journal reload is bounded in size"
+    }
+   ],
+   "open_prs_naming_issue": [],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "DNS rebinding / UI script policy",
+   "priority": "P0",
+   "mission": "03",
+   "issue": "I2151",
+   "plan_status_on_master": "READY",
+   "disposition": "open (ready, no open PR names it)",
+   "matrix_refs": [
+    {
+     "number": 996,
+     "kind": "issue",
+     "state": "open",
+     "title": "I2151 \u2014 A page served beside the write routes runs only script it shipped, and a rebinding host reads nothing"
+    }
+   ],
+   "open_prs_naming_issue": [],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "Live key rotation and revocation",
+   "priority": "P0",
+   "mission": "02",
+   "issue": "I2705",
+   "plan_status_on_master": "BLOCKED",
+   "disposition": "open (blocked, no open PR names it)",
+   "matrix_refs": [
+    {
+     "number": 1136,
+     "kind": "issue",
+     "state": "open",
+     "title": "I2705 \u2014 A node key can be rotated, peers follow the new key, and the old key is refused"
+    }
+   ],
+   "open_prs_naming_issue": [],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "Trust revocation (with rotation)",
+   "priority": "P0",
+   "mission": "02",
+   "issue": "I2134",
+   "plan_status_on_master": "READY",
+   "disposition": "open (ready, no open PR names it)",
+   "matrix_refs": [
+    {
+     "number": 989,
+     "kind": "issue",
+     "state": "open",
+     "title": "I2134 \u2014 A key removed from the trust list loses its links without a restart, and a node key can be rotated"
+    }
+   ],
+   "open_prs_naming_issue": [],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "Mesh event schema/redaction",
+   "priority": "P0",
+   "mission": "02,03",
+   "issue": "I2708",
+   "plan_status_on_master": "READY",
+   "disposition": "open (ready, no open PR names it)",
+   "matrix_refs": [
+    {
+     "number": 1139,
+     "kind": "issue",
+     "state": "open",
+     "title": "I2708 \u2014 A mesh event field nobody listed fails the mesh check, and no log field or review body carries a credential the redactor knows"
+    }
+   ],
+   "open_prs_naming_issue": [],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "Dialer bounds/retry",
+   "priority": "P1",
+   "mission": "02",
+   "issue": "I2704",
+   "plan_status_on_master": "READY",
+   "disposition": "open (ready, no open PR names it)",
+   "matrix_refs": [
+    {
+     "number": 1135,
+     "kind": "issue",
+     "state": "open",
+     "title": "I2704 \u2014 A dialer reads no reply beyond the link bound and no more candidates than the bound, and a refusing peer is retried at a measured, jittered rate"
+    }
+   ],
+   "open_prs_naming_issue": [],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "Journal event pagination",
+   "priority": "P1",
+   "mission": "02",
+   "issue": "I2140",
+   "plan_status_on_master": "READY",
+   "disposition": "open (ready, no open PR names it)",
+   "matrix_refs": [
+    {
+     "number": 993,
+     "kind": "issue",
+     "state": "open",
+     "title": "I2140 \u2014 Paging mesh.events returns every event exactly once"
+    }
+   ],
+   "open_prs_naming_issue": [],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "Runtime lease holder",
+   "priority": "P1",
+   "mission": "04",
+   "issue": "I2700",
+   "plan_status_on_master": "READY",
+   "disposition": "open (ready, no open PR names it)",
+   "matrix_refs": [
+    {
+     "number": 1131,
+     "kind": "issue",
+     "state": "open",
+     "title": "I2700 \u2014 A lease probe asks a cheap liveness route, and a server holding another lease token is not taken for the leaseholder"
+    }
+   ],
+   "open_prs_naming_issue": [],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "Stable server address",
+   "priority": "P1",
+   "mission": "04",
+   "issue": "I2702",
+   "plan_status_on_master": "READY",
+   "disposition": "open (ready, no open PR names it)",
+   "matrix_refs": [
+    {
+     "number": 1133,
+     "kind": "issue",
+     "state": "open",
+     "title": "I2702 \u2014 A checkout keeps one address across restarts, because its server binds a port derived from the checkout"
+    }
+   ],
+   "open_prs_naming_issue": [],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "Idle server configuration",
+   "priority": "P2",
+   "mission": "04",
+   "issue": "I2701",
+   "plan_status_on_master": "READY",
+   "disposition": "open (ready, no open PR names it)",
+   "matrix_refs": [
+    {
+     "number": 1132,
+     "kind": "issue",
+     "state": "open",
+     "title": "I2701 \u2014 The idle timeout is declared beside the other server timings, and serve --idle overrides the declaration"
+    }
+   ],
+   "open_prs_naming_issue": [],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "Doctor stale runtime",
+   "priority": "P1",
+   "mission": "04",
+   "issue": "I2707",
+   "plan_status_on_master": "READY",
+   "disposition": "open (ready, no open PR names it)",
+   "matrix_refs": [
+    {
+     "number": 1138,
+     "kind": "issue",
+     "state": "open",
+     "title": "I2707 \u2014 majordomus doctor reports a stale server, or says plainly that it checks governance only"
+    }
+   ],
+   "open_prs_naming_issue": [],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "Server version compatibility",
+   "priority": "P1",
+   "mission": "04",
+   "issue": "I2163",
+   "plan_status_on_master": "BLOCKED",
+   "disposition": "open (blocked, no open PR names it)",
+   "matrix_refs": [
+    {
+     "number": 1000,
+     "kind": "issue",
+     "state": "open",
+     "title": "I2163 \u2014 A client never attaches to a server of another version without saying so, and a newer client replaces an older server"
+    }
+   ],
+   "open_prs_naming_issue": [],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "Red trunk ownership",
+   "priority": "P1",
+   "mission": "05,06",
+   "issue": "I2709",
+   "plan_status_on_master": "READY",
+   "disposition": "open (ready, no open PR names it)",
+   "matrix_refs": [
+    {
+     "number": 1144,
+     "kind": "issue",
+     "state": "open",
+     "title": "I2709 \u2014 A red on the trunk has one named carrier, and nobody else may land until it is paid"
+    }
+   ],
+   "open_prs_naming_issue": [],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "CI release runner contention",
+   "priority": "P1",
+   "mission": "06",
+   "issue": "I2662",
+   "plan_status_on_master": "READY",
+   "disposition": "in_progress",
+   "matrix_refs": [
+    {
+     "number": 1105,
+     "kind": "issue",
+     "state": "open",
+     "title": "I2662 \u2014 Validation leaves the deployment a runner: a branch's checks never hold the pool a publication or a release record needs"
+    }
+   ],
+   "open_prs_naming_issue": [
+    {
+     "pr": 1099,
+     "classification": "unique",
+     "checks": "",
+     "claimed_by": []
+    }
+   ],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "Publish artifact with build",
+   "priority": "P1",
+   "mission": "06",
+   "issue": "I2660",
+   "plan_status_on_master": "READY",
+   "disposition": "in_progress",
+   "matrix_refs": [
+    {
+     "number": 1103,
+     "kind": "issue",
+     "state": "open",
+     "title": "I2660 \u2014 The site is published as an artifact by the job that built it, so a ready site waits for no second workflow"
+    }
+   ],
+   "open_prs_naming_issue": [
+    {
+     "pr": 1101,
+     "classification": "unique",
+     "checks": "",
+     "claimed_by": []
+    },
+    {
+     "pr": 1099,
+     "classification": "unique",
+     "checks": "",
+     "claimed_by": []
+    }
+   ],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "Failed publish visible",
+   "priority": "P1",
+   "mission": "06",
+   "issue": "I2661",
+   "plan_status_on_master": "READY",
+   "disposition": "in_progress",
+   "matrix_refs": [
+    {
+     "number": 1104,
+     "kind": "issue",
+     "state": "open",
+     "title": "I2661 \u2014 A publication that did not arrive is a finding the next reader meets, never a green step"
+    }
+   ],
+   "open_prs_naming_issue": [
+    {
+     "pr": 1099,
+     "classification": "unique",
+     "checks": "",
+     "claimed_by": []
+    }
+   ],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "Published UI not rebuilt from nothing",
+   "priority": "P2",
+   "mission": "06",
+   "issue": "I2663",
+   "plan_status_on_master": "READY",
+   "disposition": "in_progress",
+   "matrix_refs": [
+    {
+     "number": 1106,
+     "kind": "issue",
+     "state": "open",
+     "title": "I2663 \u2014 The published UI is not read from nothing on every deployment"
+    }
+   ],
+   "open_prs_naming_issue": [
+    {
+     "pr": 1101,
+     "classification": "unique",
+     "checks": "",
+     "claimed_by": []
+    },
+    {
+     "pr": 1099,
+     "classification": "unique",
+     "checks": "",
+     "claimed_by": []
+    }
+   ],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "Branch protection provenance",
+   "priority": "P1",
+   "mission": "06",
+   "issue": "I2282",
+   "plan_status_on_master": "READY",
+   "disposition": "open (ready, no open PR names it)",
+   "matrix_refs": [
+    {
+     "number": 1001,
+     "kind": "issue",
+     "state": "open",
+     "title": "I2282 \u2014 The record pull request's dispatched verdict does not satisfy branch protection"
+    }
+   ],
+   "open_prs_naming_issue": [],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "HTTP stack performance",
+   "priority": "P2",
+   "mission": "08",
+   "issue": "I2488",
+   "plan_status_on_master": "READY",
+   "disposition": "open (ready, no open PR names it)",
+   "matrix_refs": [
+    {
+     "number": 1075,
+     "kind": "issue",
+     "state": "open",
+     "title": "I2488 \u2014 The HTTP stack is chosen by measurement: the same routes and several hundred open streams on tiny_http and on axum"
+    }
+   ],
+   "open_prs_naming_issue": [],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "UI live stream",
+   "priority": "P1",
+   "mission": "09",
+   "issue": "I2487",
+   "plan_status_on_master": "READY",
+   "disposition": "in_progress",
+   "matrix_refs": [
+    {
+     "number": 1074,
+     "kind": "issue",
+     "state": "open",
+     "title": "I2487 \u2014 A screen is streamed, and one stream tells an open page which readings changed"
+    }
+   ],
+   "open_prs_naming_issue": [
+    {
+     "pr": 1111,
+     "classification": "blocked-by-failing-check",
+     "checks": "cancelled:12,failure:3,skipped:4,success:3",
+     "claimed_by": []
+    }
+   ],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "UI route coverage",
+   "priority": "P1",
+   "mission": "09",
+   "issue": "I2482",
+   "plan_status_on_master": "READY",
+   "disposition": "open (ready, no open PR names it)",
+   "matrix_refs": [
+    {
+     "number": 1035,
+     "kind": "issue",
+     "state": "open",
+     "title": "I2482 \u2014 Every screen of the UI has a case, and no link on the UI is dead"
+    }
+   ],
+   "open_prs_naming_issue": [],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "UI server bootstrap",
+   "priority": "P2",
+   "mission": "04,09",
+   "issue": "I2484",
+   "plan_status_on_master": "READY",
+   "disposition": "open (ready, no open PR names it)",
+   "matrix_refs": [
+    {
+     "number": 1037,
+     "kind": "issue",
+     "state": "open",
+     "title": "I2484 \u2014 majordomus ui ensures the shared server and opens the UI's dashboard"
+    }
+   ],
+   "open_prs_naming_issue": [],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "Knowledge UI projection",
+   "priority": "P2",
+   "mission": "07,09",
+   "issue": "I2652",
+   "plan_status_on_master": "READY",
+   "disposition": "in_progress",
+   "matrix_refs": [
+    {
+     "number": 1091,
+     "kind": "issue",
+     "state": "open",
+     "title": "I2652 \u2014 The UI shows what the knowledge base holds: the candidates awaiting review and whether the deriver still writes, read and never acted on"
+    }
+   ],
+   "open_prs_naming_issue": [
+    {
+     "pr": 1101,
+     "classification": "unique",
+     "checks": "",
+     "claimed_by": []
+    },
+    {
+     "pr": 1099,
+     "classification": "unique",
+     "checks": "",
+     "claimed_by": []
+    }
+   ],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "Kiosk evidence scenes",
+   "priority": "P2",
+   "mission": "09",
+   "issue": null,
+   "plan_status_on_master": null,
+   "disposition": "in_progress",
+   "matrix_refs": [
+    {
+     "number": 1124,
+     "kind": "pr",
+     "state": "open",
+     "title": "feat(ui): the kiosk draws what the repository proves, with p5 where it is built (ADR 0160)",
+     "merged_at": null,
+     "classification": "blocked-by-failing-check",
+     "classifier": "conflicting",
+     "checks": "failure:11,skipped:3,success:8",
+     "claimed_by": [
+      "board-p1",
+      "board-p1/observatory-scenes"
+     ],
+     "head": "c288826997c6aee797f319e9ca373ccfc7effbcd"
+    }
+   ],
+   "open_prs_naming_issue": [],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "Cluster dashboard",
+   "priority": "P2",
+   "mission": "09",
+   "issue": null,
+   "plan_status_on_master": null,
+   "disposition": "in_progress",
+   "matrix_refs": [
+    {
+     "number": 1111,
+     "kind": "pr",
+     "state": "open",
+     "title": "feat(dashboard): the cluster is drawn once from its sources, on every surface (ADR 0159)",
+     "merged_at": null,
+     "classification": "blocked-by-failing-check",
+     "classifier": "conflicting",
+     "checks": "cancelled:12,failure:3,skipped:4,success:3",
+     "claimed_by": [],
+     "head": "6f66b31054376061e967271fb310028d746031eb"
+    }
+   ],
+   "open_prs_naming_issue": [],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "Shared build-cache typed offer",
+   "priority": "P2",
+   "mission": "08",
+   "issue": null,
+   "plan_status_on_master": null,
+   "disposition": "in_progress",
+   "matrix_refs": [
+    {
+     "number": 1118,
+     "kind": "pr",
+     "state": "open",
+     "title": "feat(mesh): a build-cache offer is a typed model and selection is a pure function",
+     "merged_at": null,
+     "classification": "unique",
+     "classifier": "needs_refresh",
+     "checks": "skipped:7,success:15",
+     "claimed_by": [
+      "claude-mac-aaba18ea"
+     ],
+     "head": "7216fc27fa22107cb50f6a2b705af37fb7a71157"
+    },
+    {
+     "number": 1101,
+     "kind": "pr",
+     "state": "open",
+     "title": "docs(adr): a mesh node may offer a shared build cache, never depended on (ADR 0157)",
+     "merged_at": null,
+     "classification": "unique",
+     "classifier": "needs_refresh",
+     "checks": "",
+     "claimed_by": [],
+     "head": "a28c54f278071a78aff33672141d2db4ab2d65d6"
+    }
+   ],
+   "open_prs_naming_issue": [],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "Landing page / customer narrative",
+   "priority": "P2",
+   "mission": "10",
+   "issue": null,
+   "plan_status_on_master": null,
+   "disposition": "in_progress",
+   "matrix_refs": [
+    {
+     "number": 1098,
+     "kind": "pr",
+     "state": "open",
+     "title": "feat(site): the landing page speaks to a buyer, and holds on every device",
+     "merged_at": null,
+     "classification": "blocked-by-failing-check",
+     "classifier": "needs_repair",
+     "checks": "failure:3,skipped:3,success:16",
+     "claimed_by": [],
+     "head": "bce111701e46a077528757dd5082a1a6884f5113"
+    }
+   ],
+   "open_prs_naming_issue": [],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "Second adopter findings",
+   "priority": "P1",
+   "mission": "10",
+   "issue": null,
+   "plan_status_on_master": null,
+   "disposition": "in_progress",
+   "matrix_refs": [
+    {
+     "number": 1089,
+     "kind": "pr",
+     "state": "open",
+     "title": "docs(plan): what a second adopter met on its first day, as 24 issues and a findings page",
+     "merged_at": null,
+     "classification": "blocked-by-failing-check",
+     "classifier": "needs_repair",
+     "checks": "cancelled:7,failure:4,skipped:7,success:4",
+     "claimed_by": [],
+     "head": "9f7a32d5d0c3ade47f85c928d0928ac7bef0860f"
+    },
+    {
+     "number": 1081,
+     "kind": "pr",
+     "state": "open",
+     "title": "fix(health): an adopting repository is not read as unknown",
+     "merged_at": null,
+     "classification": "blocked-by-failing-check",
+     "classifier": "conflicting",
+     "checks": "failure:2,skipped:3,success:17",
+     "claimed_by": [],
+     "head": "b74f73faf86534eeec1e60cfeb341d4c1048d563"
+    },
+    {
+     "number": 1082,
+     "kind": "pr",
+     "state": "open",
+     "title": "fix(init): a personal layer is seeded with a policy update can write",
+     "merged_at": null,
+     "classification": "unique",
+     "classifier": "needs_refresh",
+     "checks": "",
+     "claimed_by": [],
+     "head": "783e7cf7049d585220775e5a9a8ea114073db7ff"
+    },
+    {
+     "number": 1083,
+     "kind": "pr",
+     "state": "open",
+     "title": "fix(scope): a task answers for what changed after it started",
+     "merged_at": null,
+     "classification": "blocked-by-failing-check",
+     "classifier": "needs_repair",
+     "checks": "cancelled:11,failure:3,skipped:7,success:1",
+     "claimed_by": [],
+     "head": "8cbb4682cec920782c42235de364ef7f920559a3"
+    },
+    {
+     "number": 1092,
+     "kind": "pr",
+     "state": "open",
+     "title": "fix(evidence): the launcher hands evidence subcommands to the executable (I2601)",
+     "merged_at": null,
+     "classification": "unique",
+     "classifier": "needs_refresh",
+     "checks": "cancelled:13,skipped:6,success:1",
+     "claimed_by": [],
+     "head": "f0708103d2df6c6143087f73d944dcc16f725b02"
+    },
+    {
+     "number": 1094,
+     "kind": "pr",
+     "state": "open",
+     "title": "fix(doctor): judge only the generated region of a region projection as a bootstrap (I2588)",
+     "merged_at": null,
+     "classification": "blocked-by-failing-check",
+     "classifier": "needs_repair",
+     "checks": "cancelled:13,failure:1,skipped:7,success:1",
+     "claimed_by": [],
+     "head": "afb3a9f7a551cdd93eb5f362d5c7d5b9791cd98f"
+    }
+   ],
+   "open_prs_naming_issue": [],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "Release tag grace",
+   "priority": "P1",
+   "mission": "06",
+   "issue": null,
+   "plan_status_on_master": null,
+   "disposition": "delivered (PR merged into master)",
+   "matrix_refs": [
+    {
+     "number": 1145,
+     "kind": "pr",
+     "state": "closed",
+     "title": "fix(release): a tag no longer freezes the queue, and two adopter records hold",
+     "merged_at": "2026-10-14T16:42:20Z",
+     "merge_commit": "ff3829709616e638596315d6ca42be64b570b74f",
+     "in_master": true
+    }
+   ],
+   "open_prs_naming_issue": [],
+   "master_commits_naming_issue": []
+  },
+  {
+   "finding": "Board journal duplication",
+   "priority": "P1",
+   "mission": "02",
+   "issue": null,
+   "plan_status_on_master": null,
+   "disposition": "delivered (PR merged into master)",
+   "matrix_refs": [
+    {
+     "number": 922,
+     "kind": "pr",
+     "state": "closed",
+     "title": "fix(mesh): a board intent past the journal bound is projected once",
+     "merged_at": "2026-10-14T17:59:59Z",
+     "merge_commit": "97c4521f91a8e096d84eb9e552c9590b512309a5",
+     "in_master": true
+    }
+   ],
+   "open_prs_naming_issue": [],
+   "master_commits_naming_issue": []
+  }
+ ],
+ "limits": [
+  "Measured on a shared Mac at load 80-120; no cargo build or test ran here (not_run), CI on master's head is the code verdict.",
+  "worktree-topology gate timed out (420 s) on the loaded machine; not a verdict.",
+  "Classification is git-derived (rev-list, cherry, merge-tree, ancestry) plus the repository's own classifier; titles were not read for it.",
+  "Ownership is what the board and mesh claims said at recording time; a claim is advisory, not a lock."
+ ]
+}

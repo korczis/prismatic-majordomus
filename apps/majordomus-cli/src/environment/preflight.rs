@@ -60,7 +60,7 @@ use crate::capability::builtin::server::{standing_of, ServerStanding};
 use crate::evidence::Ledger;
 use crate::lease::{self, LeaseFile};
 use crate::policy::LoadedPolicy;
-use crate::rules::{RuleState, RulesReport};
+use crate::rules::{RuleState, RulesReport, RulesVerdict};
 
 use super::cache::{Cache, Entry};
 use super::{ProjectionState, RepositoryEnvironment, Resolution};
@@ -595,6 +595,11 @@ pub struct RulesTally {
     pub unproven: usize,
     /// Rules whose class their proof does not support.
     pub findings: usize,
+    /// The rules corpus verdict the report gave, `rules report`'s own (I1965): the
+    /// enforcement check is verified only when it is proven. Absent in a tally cached before
+    /// it was carried, which then verifies nothing.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub verdict: Option<RulesVerdict>,
 }
 
 impl RulesTally {
@@ -628,6 +633,7 @@ impl RulesTally {
             reviewed: count(RuleState::Reviewed),
             unproven: count(RuleState::Unproven),
             findings: report.findings.len(),
+            verdict: Some(report.verdict),
         }
     }
 }
@@ -720,12 +726,16 @@ pub enum LedgerObservation {
     Unreadable(String),
     /// The ledger, joined to HEAD.
     Read {
-        /// Recorded executions.
+        /// Recorded executions: the latest run of each test.
         total: usize,
-        /// Of those, made at HEAD on a clean tree, whose test still hashes as recorded.
+        /// Of those, proven at this tree by the freshness function `evidence show` judges
+        /// with (I1965): a pass recorded on a commit HEAD contains, on a clean tree, whose
+        /// test and its inputs are unchanged since.
         current: usize,
-        /// Of the current ones, those that did not pass.
+        /// Of those, a recorded failure, timeout or error, whatever commit it ran on.
         current_failing: usize,
+        /// Of those, a test that declined to run: a skip, which is not run, never a failure.
+        not_run: usize,
         /// The commit of the newest execution.
         newest_commit: String,
         /// When the newest execution was recorded.
@@ -960,6 +970,91 @@ pub struct Observations {
     pub projections: Vec<(String, ProjectionState)>,
     /// The deployment ref.
     pub deployment: DeploymentObservation,
+    /// The browser bridges of the providers this checkout is configured for. Empty when no
+    /// such provider declares one, and then nothing is said about a browser.
+    pub browser: Vec<BrowserObservation>,
+}
+
+/// One provider whose client drives a browser beside this repository's server, and whether
+/// this machine has the native messaging host its bridge needs.
+///
+/// The capability is the declaration's (`share/providers.yaml`, `offers.browser`); the host is
+/// this machine's, written once per person by the client itself (Claude Code's `/chrome`), and
+/// a project can neither write it nor turn the bridge on.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::{derive, BrowserObservation, Observations, Verdict};
+/// let mut o = Observations::empty("demo", 0);
+/// assert!(derive(&o).check("integration.browser").is_none(), "no bridge declared, nothing said");
+/// o.browser.push(BrowserObservation {
+///     provider: "claude-code".into(),
+///     title: "Claude Code".into(),
+///     host: "com.anthropic.claude_code_browser_extension".into(),
+///     setup: "in Claude Code: /chrome, Enabled by default".into(),
+///     manifest: None,
+/// });
+/// let c = derive(&o).check("integration.browser").unwrap().clone();
+/// assert_eq!(c.verdict, Verdict::Unavailable);
+/// assert!(c.next.unwrap().contains("/chrome"), "the remedy is the declaration's");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BrowserObservation {
+    /// The provider id.
+    pub provider: String,
+    /// The provider's title.
+    pub title: String,
+    /// The native messaging host its bridge registers with the browser.
+    pub host: String,
+    /// What the person does, once, to install it: the declaration's words.
+    pub setup: String,
+    /// The host's manifest on this machine, when there is one.
+    pub manifest: Option<std::path::PathBuf>,
+}
+
+/// The directories, under `home`, where a Chromium browser looks for a person's native
+/// messaging hosts: Chrome, Chromium, Edge and Brave, on macOS and on Linux. Both systems'
+/// paths are listed on both, because the one that does not apply never exists.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::native_host_dirs;
+/// let dirs = native_host_dirs(std::path::Path::new("/home/a"));
+/// assert!(dirs.iter().any(|d| d.ends_with("Google/Chrome/NativeMessagingHosts")));
+/// assert!(dirs.iter().any(|d| d.ends_with(".config/google-chrome/NativeMessagingHosts")));
+/// ```
+pub fn native_host_dirs(home: &Path) -> Vec<std::path::PathBuf> {
+    [
+        "Library/Application Support/Google/Chrome",
+        "Library/Application Support/Chromium",
+        "Library/Application Support/Microsoft Edge",
+        "Library/Application Support/BraveSoftware/Brave-Browser",
+        ".config/google-chrome",
+        ".config/chromium",
+        ".config/microsoft-edge",
+        ".config/BraveSoftware/Brave-Browser",
+    ]
+    .iter()
+    .map(|browser| home.join(browser).join("NativeMessagingHosts"))
+    .collect()
+}
+
+/// The first manifest of the native messaging host `host` under `home`, in the order
+/// [`native_host_dirs`] lists the browsers.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::native_host_manifest;
+/// let home = std::env::temp_dir().join(format!("mj-nmh-doc-{}", std::process::id()));
+/// assert_eq!(native_host_manifest(&home, "com.example.host"), None);
+/// let dir = home.join(".config/chromium/NativeMessagingHosts");
+/// std::fs::create_dir_all(&dir).unwrap();
+/// std::fs::write(dir.join("com.example.host.json"), "{}").unwrap();
+/// assert_eq!(native_host_manifest(&home, "com.example.host"), Some(dir.join("com.example.host.json")));
+/// std::fs::remove_dir_all(&home).unwrap();
+/// ```
+pub fn native_host_manifest(home: &Path, host: &str) -> Option<std::path::PathBuf> {
+    native_host_dirs(home)
+        .into_iter()
+        .map(|dir| dir.join(format!("{host}.json")))
+        .find(|manifest| manifest.is_file())
 }
 
 impl Observations {
@@ -991,6 +1086,7 @@ impl Observations {
             generation: GenerationObservation::Absent,
             projections: Vec::new(),
             deployment: DeploymentObservation::NoRef,
+            browser: Vec::new(),
         }
     }
 }
@@ -1043,13 +1139,16 @@ pub fn derive(o: &Observations) -> Preflight {
         Section {
             id: "integration".into(),
             title: "Integration".into(),
-            checks: vec![
+            checks: [
                 server_check(o),
                 surface_check(o, "mcp", "integration.mcp", "MCP"),
                 surface_check(o, "api", "integration.api", "API"),
                 surface_check(o, "cockpit", "integration.cockpit", "Cockpit"),
                 peers_check(o),
-            ],
+            ]
+            .into_iter()
+            .chain(browser_check(o))
+            .collect(),
         },
         Section {
             id: "verification".into(),
@@ -1679,6 +1778,74 @@ fn surface_check(o: &Observations, surface: &str, id: &str, title: &str) -> Chec
     }
 }
 
+/// Whether the browser bridge a configured provider declares can work on this machine. No
+/// check at all when none is declared: a provider without a bridge owes nothing here, and a
+/// row saying so on every machine would be noise.
+fn browser_check(o: &Observations) -> Option<Check> {
+    if o.browser.is_empty() {
+        return None;
+    }
+    let declared = |b: &BrowserObservation| {
+        Evidence::new(
+            "share/providers.yaml",
+            format!("{} offers.browser: bridge", b.provider),
+        )
+    };
+    let missing: Vec<&BrowserObservation> =
+        o.browser.iter().filter(|b| b.manifest.is_none()).collect();
+    if missing.is_empty() {
+        let names: Vec<&str> = o.browser.iter().map(|b| b.title.as_str()).collect();
+        let evidence = o
+            .browser
+            .iter()
+            .flat_map(|b| {
+                let manifest = b.manifest.as_deref().unwrap_or(Path::new(""));
+                [
+                    declared(b),
+                    Evidence::new(
+                        manifest.display().to_string(),
+                        format!("{} is installed", b.host),
+                    ),
+                ]
+            })
+            .collect();
+        return Some(Check::new(
+            "integration.browser",
+            "browser",
+            Verdict::Active,
+            format!(
+                "{} can drive a browser beside this server: the bridge's host is installed",
+                names.join(", ")
+            ),
+            evidence,
+        ));
+    }
+    let names: Vec<String> = missing
+        .iter()
+        .map(|b| format!("{} ({})", b.title, b.host))
+        .collect();
+    Some(
+        Check::new(
+            "integration.browser",
+            "browser",
+            Verdict::Unavailable,
+            format!(
+                "{} can drive a browser beside this server, and this machine has no bridge host \
+                 for it; a project cannot turn it on, the person does once",
+                names.join(", ")
+            ),
+            missing.iter().map(|b| declared(b)).collect(),
+        )
+        .next(
+            missing
+                .iter()
+                .map(|b| b.setup.as_str())
+                .collect::<Vec<_>>()
+                .join("; "),
+        ),
+    )
+}
+
 fn peers_check(o: &Observations) -> Check {
     match &o.peers {
         Ok(p) => {
@@ -1750,6 +1917,7 @@ fn tests_check(o: &Observations) -> Check {
             total,
             current,
             current_failing,
+            not_run,
             newest_commit,
             newest_at,
         } => {
@@ -1766,7 +1934,7 @@ fn tests_check(o: &Observations) -> Check {
                     "tests",
                     Verdict::Failed,
                     format!(
-                        "{current_failing} of the {current} run(s) recorded at HEAD did not pass"
+                        "{current_failing} of {total} test(s) failed in their latest recorded run"
                     ),
                     evidence,
                 )
@@ -1776,9 +1944,7 @@ fn tests_check(o: &Observations) -> Check {
                     "verification.tests",
                     "tests",
                     Verdict::Verified,
-                    format!(
-                        "all {total} recorded run(s) were made at HEAD on a clean tree and passed"
-                    ),
+                    format!("all {total} recorded test(s) are proven at this tree"),
                     evidence,
                 )
             } else {
@@ -1787,7 +1953,7 @@ fn tests_check(o: &Observations) -> Check {
                     "tests",
                     Verdict::Stale,
                     format!(
-                        "{current} of {total} recorded run(s) measured this tree; the rest prove another commit, a changed tree or a changed test"
+                        "{current} of {total} recorded test(s) are proven at this tree · {not_run} not run (a skip is not a failure); the rest prove another commit, a changed tree or a changed test"
                     ),
                     evidence,
                 )
@@ -1964,7 +2130,9 @@ fn enforcement_check(o: &Observations, head: Option<&str>, clean: Option<bool>) 
             format!("no rule owes an executable proof · {summary}"),
             evidence,
         )
-    } else if t.proven == owed && t.findings == 0 {
+    } else if t.verdict == Some(RulesVerdict::Proven) {
+        // the corpus verdict `rules report` gives, not a recount of its states: a blocking
+        // rule that is only inputs_unchanged leaves the corpus unproven (I1965)
         Check::new(
             "verification.enforcement",
             "enforcement",
@@ -2414,7 +2582,58 @@ pub fn observe(
             .map(|p| (p.id.clone(), p.state))
             .collect(),
         deployment: observe_deployment(root),
+        browser: observe_browser(root, std::env::var_os("HOME").map(std::path::PathBuf::from)),
     }
+}
+
+/// The browser bridges of the providers this checkout is configured for, from the share
+/// this checkout resolves. A share that cannot be read declares nothing here; its own
+/// diagnostics say why.
+fn observe_browser(root: &Path, home: Option<std::path::PathBuf>) -> Vec<BrowserObservation> {
+    crate::share::Share::locate(None, root)
+        .and_then(|s| s.providers())
+        .map(|d| browser_observations(root, &d, home.as_deref()))
+        .unwrap_or_default()
+}
+
+/// One observation per provider that declares `offers.browser: bridge` with its host and
+/// whose client configuration is in the checkout at `root`, with the host's manifest looked
+/// for under `home`.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::browser_observations;
+/// use majordomus_cli::share::Share;
+/// let repo = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+/// let declared = Share::locate(Some(&repo.join("share")), &repo).unwrap().providers().unwrap();
+/// let empty = std::env::temp_dir().join(format!("mj-browser-doc-{}", std::process::id()));
+/// // a checkout with no client configuration is configured for no provider
+/// assert!(browser_observations(&empty, &declared, None).is_empty());
+/// ```
+pub fn browser_observations(
+    root: &Path,
+    declarations: &crate::share::ProviderDeclarations,
+    home: Option<&Path>,
+) -> Vec<BrowserObservation> {
+    declarations
+        .providers
+        .iter()
+        .filter(|p| p.offers.browser == crate::share::BrowserSource::Bridge)
+        .filter(|p| {
+            p.client_config
+                .as_deref()
+                .is_some_and(|c| root.join(c).is_file())
+        })
+        .filter_map(|p| {
+            let host = p.offers.browser_host.clone()?;
+            Some(BrowserObservation {
+                manifest: home.and_then(|h| native_host_manifest(h, &host)),
+                setup: p.offers.browser_setup.clone().unwrap_or_default(),
+                provider: p.id.clone(),
+                title: p.title.clone(),
+                host,
+            })
+        })
+        .collect()
 }
 
 /// The flat `key: value` lines of a small state record, with quotes removed. The records
@@ -2588,19 +2807,25 @@ fn observe_ledger(
         Ok(l) => l,
         Err(e) => return LedgerObservation::Unreadable(e.to_string()),
     };
-    // What `evidence.report` calls proven, decided by its own comparison: the tree in front
-    // of you is byte for byte the tree the run measured, the ledger's own row excluded —
-    // recording dirties the tree and committing the record moves HEAD, so without that
-    // exclusion no run could ever be current. One comparison per distinct recorded commit,
-    // two git processes each — which is most of what entry would otherwise cost, so the
-    // answers are cached under everything they depend on: HEAD, every path git reports
-    // changed, and the ledger file.
+    // What `evidence show` calls proven, decided by the one freshness function it judges
+    // with (I1965): HEAD contains the recorded commit, and the tree in front of you is byte
+    // for byte the tree the run measured, the ledger's own row excluded — recording dirties
+    // the tree and committing the record moves HEAD, so without that exclusion no run could
+    // ever be current. One comparison per distinct recorded commit (a containment test and a
+    // diff), which is most of what entry would otherwise cost, so the answer — contained and
+    // unchanged, or not — is cached under everything it depends on: HEAD, every path git
+    // reports changed, the ledger file, and the meaning of the answer itself, so an answer
+    // cached before containment was asked misses.
     // Every changed path is stat'ed, not only named: an edit to a path already changed keeps
     // the set of names and moves the file's size or modification time.
     let fingerprint = tree.map(|t| {
         let mut paths = t.changed_paths.clone();
         paths.push(crate::evidence::ledger::LEDGER_PATH.to_string());
-        super::cache::fingerprint_of(root, &paths, &[t.head.as_deref().unwrap_or("")])
+        super::cache::fingerprint_of(
+            root,
+            &paths,
+            &[t.head.as_deref().unwrap_or(""), "contained-and-unchanged"],
+        )
     });
     let cache = use_cache.then(|| Cache::load(root, local));
     let cached = match (&cache, &fingerprint) {
@@ -2618,11 +2843,17 @@ fn observe_ledger(
             let mut answers: BTreeMap<String, bool> = BTreeMap::new();
             for e in &ledger.executions {
                 answers.entry(e.commit.clone()).or_insert_with(|| {
-                    crate::evidence::changed_since(root, &e.commit).is_some_and(|changed| {
-                        changed
-                            .iter()
-                            .all(|p| p == crate::evidence::ledger::LEDGER_PATH)
-                    })
+                    let c = crate::evidence::compare(
+                        root,
+                        &e.commit,
+                        &crate::evidence::Presented::WorkingTree,
+                    );
+                    c.containment == crate::git::Containment::Contains
+                        && c.changed.is_some_and(|changed| {
+                            changed
+                                .iter()
+                                .all(|p| p == crate::evidence::ledger::LEDGER_PATH)
+                        })
                 });
             }
             if let (true, Some(f)) = (use_cache, fingerprint) {
@@ -2638,20 +2869,43 @@ fn observe_ledger(
             answers
         }
     };
-    let current: Vec<_> = ledger
-        .executions
-        .iter()
-        .filter(|e| {
-            e.working_tree == "clean"
-                && unchanged.get(e.commit.as_str()) == Some(&true)
-                && e.digest_matches(root) == Some(true)
-        })
-        .collect();
+    // Each test's latest run, judged by the truth table `evidence show` uses: a skip is not
+    // run, a failure is failing whatever commit it ran on, and only a proven pass is current.
+    let (mut current, mut current_failing, mut not_run) = (0, 0, 0);
+    for e in &ledger.executions {
+        let contained_and_unchanged = unchanged.get(e.commit.as_str()) == Some(&true);
+        let comparison = crate::evidence::Comparison {
+            containment: if contained_and_unchanged {
+                crate::git::Containment::Contains
+            } else {
+                crate::git::Containment::DoesNotContain
+            },
+            changed: Some(Default::default()),
+        };
+        // the test's own source is the input this route declares
+        let source = e.source.clone();
+        let moved = e.outcome.proves() && e.digest_matches(root) == Some(false);
+        let judgement = crate::evidence::freshness(
+            crate::evidence::Recorded::Ran(e),
+            Some(std::slice::from_ref(&source)),
+            &source,
+            moved,
+            Some(&comparison),
+            crate::evidence::TreeState::Clean,
+        );
+        match judgement.state {
+            crate::evidence::ProofState::Proven => current += 1,
+            crate::evidence::ProofState::Failing => current_failing += 1,
+            crate::evidence::ProofState::NotRun => not_run += 1,
+            _ => {}
+        }
+    }
     let newest = ledger.executions.iter().max_by(|a, b| a.at.cmp(&b.at));
     LedgerObservation::Read {
         total: ledger.executions.len(),
-        current: current.len(),
-        current_failing: current.iter().filter(|e| !e.outcome.proves()).count(),
+        current,
+        current_failing,
+        not_run,
         newest_commit: newest.map(|e| e.commit.clone()).unwrap_or_default(),
         newest_at: newest.map(|e| e.at.clone()).unwrap_or_default(),
     }
@@ -3147,6 +3401,7 @@ mod tests {
             working_tree: "clean".into(),
             rules: 2,
             proven: 2,
+            verdict: Some(RulesVerdict::Proven),
             ..Default::default()
         });
         for c in derive(&o).sections.iter().flat_map(|s| &s.checks) {

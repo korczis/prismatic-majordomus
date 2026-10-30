@@ -1,0 +1,38 @@
+id: I4324
+milestone: a-second-adopter-is-served
+title: "A finished worktree's build output is reclaimed, node_modules and target/ included, whether its branch landed by merge or by squash"
+slug: finished-worktrees-give-back-their-build-output
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Two changes to `majordomus worktree cleanup`. First, a worktree whose branch has landed by the predicate of I4333 is cleanup-eligible, so a branch squash-merged under `landing: squash` is offered, as one merged by merge commit is today. Second, a finished worktree that cleanup keeps (its branch landed, or it is idle past the sweep window, but its status is not empty) is offered for build-output reclaim: `majordomus worktree cleanup --build-output` lists, and with `--remove` deletes, its node_modules/ and target/ directories (any depth). A directory is reclaimed only when `git check-ignore` reports it ignored and git tracks no file under it. Reclaim runs under the guards I3832 already gives the removal: no process cwd, open file or command line inside, not named by the derive lock or a live mesh claim, idle past MAJORDOMUS_WORKTREE_SWEEP_IDLE_MIN, and under every cargo lock in a target/. The listing gives each directory's size, and the answer gives the total reclaimed. The worktree, its branch and every tracked or unignored file stay."
+why: "Observed on 2026-10-28 on the shared Mac that runs OSCILLA (korczis/oscilla) worktrees under ~/dev/oscilla-wt, with majordomus 1.0.0-alpha.8. The disk filled (ENOSPC, see I4323). Much of the space was regenerable build output in finished worktrees: earlier that day the session measured about 12 GB of node_modules under oscilla-wt, and at the time of writing 23 node_modules directories totalling 2.3 GiB remain. Majordomus offered none of it. OSCILLA squash-merges, and on master 81ef931a3e1 cleanup eligibility needs merged_into_trunk == Some(true) (worktree/service.rs:835-840), which comes from `git branch --merged` (worktree/state.rs:514-536). A squash-merged branch is never in that list. For example, fix/release-scripts-refuse-unknown-flags, merged as #199 on 2026-10-18, is not among the 84 branches `git branch --merged origin/main` lists. A worktree kept for any other reason keeps all its build output. The only build-output reclaim is this repository's scripts/reap-orphans, whose build-output half removes apps/majordomus-cli/target alone (reap-orphans:37-45, :130). I3833's planned disk.prune names cargo build directories and the container cache. I3832 hardens the removal of whole merged worktrees. Neither knows node_modules or an adopter's target/, and both decide 'merged' by ancestry."
+current_state: "On master 81ef931a3e1, a squash-merged worktree is never cleanup-eligible, and no command reclaims the node_modules/ or target/ of a worktree that is kept."
+desired_state: "In a squash-landing repository, finished worktrees are offered for removal as merge-landed ones are. A finished worktree that is kept can give back its ignored node_modules/ and target/ through one named, listed-first command. A directory that is tracked, unignored, in use or recently written is never removed."
+scope:
+  - "apps/majordomus-cli/src/worktree"
+  - "apps/majordomus-cli/src/commands/worktree.rs"
+  - "docs/WORKTREES.md"
+  - "test/cases"
+non_scope:
+  - "The landed predicate: I4333"
+  - "The container runtime's cache and cargo's private build directories (I3833)"
+  - "Removing whole worktrees beyond today's guards (I3832)"
+  - "Other build output (dist/, .next/, caches): a later list, once an adopter asks for it"
+  - "Doctor's report of a full disk: I4323"
+depends_on:
+  - "I4333"
+acceptance_criteria:
+  - "In a fixture with `landing: squash`, a clean worktree whose branch was squash-merged is listed by `worktree cleanup` as eligible"
+  - "A kept finished worktree with an ignored node_modules/ and target/ is listed by `cleanup --build-output` with each size, and `--remove` deletes both and leaves every tracked file and the branch"
+  - "A node_modules/ that is not ignored, or holds a tracked file, is listed as kept with the reason and is never removed"
+  - "A directory that is a process's cwd, or was written within the idle window, is kept"
+  - "Before the change the case fails on the squash-merged worktree missing from the eligible list"
+validation:
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib worktree::"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "finished_worktree_build_output_case"
+serves: []
+created_at: 2026-10-28
+updated_at: 2026-10-28

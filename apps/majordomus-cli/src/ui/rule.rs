@@ -221,7 +221,7 @@ mod tests {
             source: Source::of("rules.show"),
             route: Some("GET /api/v1/rules/rule".into()),
             exposure: Exposure::default(),
-            value,
+            value: value.map(Into::into),
             took: Duration::from_millis(1),
             standing: crate::ui::source::Standing::NOW,
         }

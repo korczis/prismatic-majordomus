@@ -1,0 +1,31 @@
+id: I2717
+milestone: M004
+title: "A release record pull request gets a verdict that can pass"
+slug: a-record-pr-gets-a-passing-verdict
+priority: p0
+profile: implementation
+parallel_safe: true
+depends_on: []
+objective: "Give the record pull request the release workflow opens a ci verdict it can earn, so that it lands on that verdict and not on a lander's local judgement."
+why: "2026-10-14: the record PR of v0.26.0 (#1147, opened by github-actions at 19:07Z) had no checks in its rollup: its pull_request validate 38620991504 ended action_required (a PR authored with GITHUB_TOKEN does not start workflows without approval), and the dispatched validate 38620987044 failed only in the `evidence` job, step gather, exit 12, \"evidence-collect: no report to record: the suite and the crate both left none\", because the record's light plan runs no suite or crate lane. v0.25.0's record runs 38576703346 and 38576698375 failed the same way; both records were landed on the lander's local judgement with --admin. A release path that cannot pass its own gate keeps the landing HOLD up for an hour and trains landers to override."
+current_state: "The record PR's verdict comes from a dispatched validate; its light plan selects no evidence-producing lane while the evidence job still demands a report; the pull_request run waits for a human approval."
+desired_state: "On a plan that selects no suite or crate lane the evidence job records an explicit planned-empty report (naming the plan) instead of refusing, and the record PR receives a check that GitHub counts for the branch (the dispatched run reports its verdict onto the PR head, or the PR is opened with a token that triggers workflows); the record lands on that green verdict."
+scope:
+  - .github/workflows/validate.yml
+  - scripts/ci/evidence-collect
+  - scripts/ci/verdict
+  - docs/RELEASE.md
+  - docs/CI.md
+  - test/cases
+non_scope:
+  - "release.yml's build and publish jobs (another worker owns them)"
+acceptance_criteria:
+  - "A record PR's validate concludes success when every gate its plan selects passes"
+  - "The evidence job on a plan without suite and crate lanes records a planned-empty report and passes"
+  - "The record PR shows that verdict as a check on its head without a person approving a run"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "record_pr_verdict_can_pass_case"
+created_at: 2026-10-14
+updated_at: 2026-10-14

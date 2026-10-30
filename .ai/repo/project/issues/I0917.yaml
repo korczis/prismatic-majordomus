@@ -29,4 +29,6 @@ evidence_required:
   - rollback_path
 risk: "An automatic rollback that has never run is a second failure mode during the first real incident. Either it is tested or it is a documented manual command."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-10-14
+cancelled: true
+completion: "Cancelled 2026-10-14 on master e28daccd9b: it rolls back the image reference deployed to a provider; the GHCR image is an immutable per-commit tag and nothing is deployed to roll back. The owner disconnected Fly.io on 2026-10-12; this repository deploys release binaries, the GHCR image and GitHub Pages (commit 9af3fa65a4 removed fly.toml)."

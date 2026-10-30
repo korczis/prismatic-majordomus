@@ -1,0 +1,49 @@
+id: I2783
+milestone: idd-workspace
+title: "The intent workspace reads itself again when a move ends on its server"
+slug: the-workspace-follows-the-plan-live
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Have /ui/idd hold one channel to /events through the Cockpit's socket.js, named by the page with the channel's path, and read the screen again when an execution ends there, at most once per burst; the line beside the read time says whether that channel is live, reconnecting or offline, from the socket's own state."
+why: "The workspace reads its sources once a minute, so a move made from another tab, the Cockpit or an agent through this server is invisible on it for up to a minute; the server already reports every execution on one channel with one client to read it."
+serves:
+  - the-owner-directs-work-from-the-ui#the-workspace-follows-moves
+current_state: "/ui screens read again every minute; only the Cockpit follows /events."
+desired_state: "/ui/idd reads again within seconds of an execution ending on its server, says what its channel is doing, and still refreshes by the minute for what the channel does not carry."
+scope:
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/tests/ui_idd_live.rs"
+  - "share/ui/ui.js"
+  - "docs"
+  - "site"
+  - ".ai/repo/project"
+depends_on:
+  - "I2781"
+acceptance_criteria:
+  - "The workspace page names /events and the socket module, and the module is served"
+  - "A move started through executions.start ends on /events and the screen read again reads its new status"
+  - "No other screen declares that it follows executions"
+  - "A snapshot opens no channel"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --test ui_idd_live"
+  - "cargo test --lib ui::"
+evidence_required:
+  - "ui_idd_live_tests"
+created_at: 2026-10-17
+updated_at: 2026-10-19T09:58:46Z
+started_at: 2026-10-19T09:58:17Z
+started_event: sha256:41b70fa72322d05df63b25208f22b5be37d259b6d3f8ca400cad768247cda29e
+verified_at: 2026-10-19T09:58:35Z
+verified_event: sha256:7bd55aeb177e3e70414cabbec14f80f923ababf21ec53e86bc1ba000a90ba5fd
+completed_at: 2026-10-19T09:58:46Z
+completed_event: sha256:22ff4b49a6abf738e7b32b3c0a7408a0d9c2ef0692d69b87df09c43dc5d8a26f
+evidence:
+  - covers: ui_idd_live_tests
+    type: ci
+    command: "gh run view --job 117706042653 --log"
+    result: "tests/ui_idd_live.rs: 2 passed, 0 failed, in rust (3) of validate run 39137437606 on 2dfff96988a, the v0.30.0 top carrying I2783's merge afaecfe341d"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39137437606"
+    commit: dd4c0a87cba408222033c89f002ab2d63f48574c
+    recorded_at: 2026-10-19T09:58:28Z

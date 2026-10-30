@@ -255,6 +255,7 @@ fn every_declared_timing_is_the_one_a_contest_is_judged_by() {
         join_timeout_seconds: Some(5),
         busy_grace_seconds: Some(6),
         read_deadline_seconds: Some(7),
+        idle_seconds: Some(8),
     };
     assert_eq!(
         Timings::from_policy(&declared),
@@ -264,6 +265,7 @@ fn every_declared_timing_is_the_one_a_contest_is_judged_by() {
             join_timeout: Duration::from_secs(5),
             busy_grace: Duration::from_secs(6),
             read_deadline: Duration::from_secs(7),
+            idle: Duration::from_secs(8),
         }
     );
 }

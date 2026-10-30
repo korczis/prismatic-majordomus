@@ -31,4 +31,25 @@ evidence_required:
   - "newer_client_replaces_older_server_test"
   - "older_client_told_test"
 created_at: 2026-10-09
-updated_at: 2026-10-09
+updated_at: 2026-10-14T22:15:01Z
+started_at: 2026-10-14T22:14:26Z
+started_event: sha256:8303f42aa02bcb737ee972ac7ed00bbb36808a25b15ad88fef8f4f2703328620
+verified_at: 2026-10-14T22:14:44Z
+verified_event: sha256:d3b69c3b2984807ed8c423cbc64517f787eb9a6569145cbf5fa6c6001d2d18d7
+completed_at: 2026-10-14T22:15:01Z
+completed_event: sha256:c9efeaaccd43fb37945cebd8bccd22b7a1c6d8f340e1dc5d381ab23fe8e327fd
+evidence:
+  - covers: newer_client_replaces_older_server_test
+    type: ci
+    command: "gh run view 38626102499 --log --job 116065669794 (validate on master e8505a431d, rust (3): cargo test --test serve_lifecycle)"
+    result: "tests/serve_lifecycle.rs newer_client_replaces_older_server_test ... ok and an_older_client_leaves_a_newer_server_alone_and_says_so ... ok in validate run 38626102499 (success) at e8505a431d; delivered by 383309ae06c"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38626102499/job/116065669794"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T22:14:07Z
+  - covers: older_client_told_test
+    type: ci
+    command: "gh run view 38626102499 --log --job 116065669775 (validate on master e8505a431d, rust (2): cargo test --lib)"
+    result: "commands::mcp::tests::older_client_told_test ... ok in validate run 38626102499 (success) at e8505a431d; delivered by 383309ae06c"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38626102499/job/116065669775"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T22:14:17Z

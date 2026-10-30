@@ -1,7 +1,7 @@
 +++
 title = "The derive offload"
 description = "the derive offload: a branch's derive run on a declared cluster machine in its turn — the commands and exit codes, the `derive-offload` declaration, host choice by free space and queue length, the FIFO queue with dead-waiter removal, the bundle round trip with its refusals and a build directory of each derive's own, and the board and mesh etiquette"
-weight = 60
+weight = 61
 [extra]
 source = "docs/OFFLOAD.md"
 +++
@@ -190,12 +190,15 @@ these behaviours:
 - a dead waiter's ticket does not block the queue;
 - a host that is down or short of space is skipped;
 - the uncommitted change travels, and the result comes back staged and uncommitted, with
-  nothing left on the host;
+  nothing left on the host, not even in the shared build directory the checkout declares:
+  the derive's build directory is pinned to its run directory as well as its target;
 - a merge in progress keeps both parents;
 - untracked files, an unresolved merge, a deleting derive and a failed derive are each
   refused;
 - a concurrent build into the shared directory does not replace the derive's executable.
 
 Each of these mutations fails a test: a lock taken regardless of position, dead tickets kept,
-and `CARGO_TARGET_DIR` pointed at the shared directory.
+`CARGO_TARGET_DIR` pointed at the shared directory, and `CARGO_BUILD_BUILD_DIR` left to the
+checkout's declaration (on 2026-10-18 that left 87 GB in lundra's `build-shared/majordomus`,
+outside what the run's traps remove, and the volume at 0 bytes; I2882).
 {% endraw %}

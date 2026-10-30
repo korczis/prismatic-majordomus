@@ -1,0 +1,43 @@
+id: I3829
+milestone: a-provider-carries-the-contract-natively
+title: "A provider declares whether its client drives a browser beside the server, and preflight says when this machine's bridge is missing"
+slug: the-browser-bridge-is-declared
+priority: p2
+profile: implementation
+objective: "Give the provider declaration a third capability axis, `browser` (`bridge` when the provider's client drives a browser through a vendor extension whose tools arrive in the same session as this repository's MCP server, `none` otherwise), with the cited evidence every axis carries; project it through every surface that reports provider capability; and let preflight report, for a provider that declares a bridge and whose client configuration is present, whether this machine has the bridge's native messaging host, with the person-level remedy when it does not."
+why: "docs/MCP.md#claude-in-the-browser describes the one path that drives a page and the live mesh in one session (Claude Code with the Claude in Chrome bridge), but nothing declares it and nothing notices when it is missing: on 2026-10-21 a session found the bridge unconnected only by calling a browser tool, after the owner asked for the Claude, extension and browser integration to work by itself, be described and be enforced. A project cannot turn the bridge on (Claude Code ignores CLAUDE_CODE_ENABLE_CFC in a project's settings, code.claude.com/docs/en/chrome), so the repository's part is to declare the capability with its citation and to say, at the session's start, what the person has to do once. Id from id-block-0c, handed over by 0c on the board. A consequence found by a3 composing train 2 (2026-10-21): share/providers.yaml is read with unknown keys refused (ProviderOffersEntry, deny_unknown_fields), so an executable built before this issue refuses a tree that declares `browser` with \"unknown field `browser`\"; every seat whose cached MAJORDOMUS_BIN predates it must refresh it once this lands. That refusal is the vocabulary rule working, not a fault to relax."
+current_state: "share/providers.yaml declares episode and prompts per provider; nothing says which client drives a browser, and no check looks for the Claude in Chrome native host."
+desired_state: "Every provider carries browser + browser_evidence; providers.md, product providers, the MCP tool and the site's provider cards show it; preflight reports a missing bridge host as a finding with the /chrome remedy, never as a failure, and says nothing for a provider that declares none."
+scope:
+  - "share/providers.yaml"
+  - "apps/majordomus-cli/src/share.rs"
+  - "apps/majordomus-cli/src/product.rs"
+  - "apps/majordomus-cli/src/environment/preflight.rs"
+  - "apps/majordomus-cli/tests/provider_browser.rs"
+  - ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v3.md"
+  - "scripts/provider-evidence-check"
+  - "test/cases/3829_a_provider_declares_its_browser_bridge.sh"
+  - "docs/MCP.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "docs/generated"
+  - "site"
+non_scope:
+  - "Turning the bridge on for a person (a user setting; a project cannot)"
+  - "Pre-approving any browser tool in .claude/settings.json"
+  - "A remote connector for the Claude in Chrome side panel (I3285, and 0c's hosted hub)"
+depends_on: []
+serves:
+  - "a-provider-carries-the-contract-natively#the-browser-bridge-is-declared"
+acceptance_criteria:
+  - "A provider entry without browser_evidence, or with a browser word outside the vocabulary, fails the read of share/providers.yaml with the path named"
+  - "claude-code declares browser: bridge with a citation; every other provider declares its value with one"
+  - "Preflight in a checkout whose .mcp.json is present reports the missing Claude Code native messaging host as a finding naming /chrome, and reports nothing when the host is present"
+  - "docs/generated/providers.md and majordomus product providers show the browser column from the one declaration"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test provider_browser"
+  - "bash test/cases/3829_a_provider_declares_its_browser_bridge.sh"
+evidence_required:
+  - "case_a_provider_declares_its_browser_bridge"
+created_at: 2026-10-21
+updated_at: 2026-10-21

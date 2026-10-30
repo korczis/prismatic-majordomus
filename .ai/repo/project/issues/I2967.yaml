@@ -1,0 +1,36 @@
+id: I2967
+milestone: "development-runtime"
+title: "The site's own pages name the layout in force"
+slug: a-page-names-the-layout-in-force
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Correct the site pages that name the retired `.majordomus/` layout as current, and hold every top-level page, the site's hand-written data and its templates to the `.ai/` layout with a case, leaving the retired path to the migration and plan pages where it is history."
+why: "Truth sweep 2026-10-18 (f6, S10, verified): the published https://majordomus.dev/policy/ (site/content/policy.md:6, hand-written) said '`.majordomus/policy.yaml` is the source of truth for how AI workers operate in a repository'. The policy is .ai/repo/policy.yaml (README.md:68) and every command refuses the .majordomus/ layout (README.md:131). site/content/roadmap.md:6 declared `source = \".majordomus/project/milestones/\"` (not rendered)."
+current_state: "Corrected in this change: site/content/policy.md and site/content/roadmap.md name .ai/repo/."
+desired_state: "No top-level site page, site data file or template names .majordomus/; case 3364 refuses one that does and holds the policy page to .ai/repo/policy.yaml."
+scope:
+  - "site/content/policy.md"
+  - "site/content/roadmap.md"
+  - "test/cases/3364_a_page_names_the_layout_in_force.sh"
+depends_on: []
+acceptance_criteria:
+  - "The policy page names .ai/repo/policy.yaml as the source of truth"
+  - "No top-level site page, site data file or template names .majordomus/, and case 3364 refuses one that does"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_a_page_names_the_layout_in_force"
+created_at: 2026-10-18
+updated_at: 2026-10-19T14:00:10Z
+started_at: 2026-10-19T13:59:49Z
+started_event: sha256:0ba9613adae86b6853f8d883b2bb167dd12a68eb4162da2b45b5d2cce8e32f6b
+completed_at: 2026-10-19T14:00:10Z
+completed_event: sha256:c3fea039443081c047d7fe19666d61cd716adca52b0e8c3aed41d569271ad881
+evidence:
+  - covers: case_a_page_names_the_layout_in_force
+    type: test
+    command: "bash test/run.sh 3364_a_page_names_the_layout_in_force"
+    result: "14 passed, 0 failed, 0 skipped on master dd4c0a87cba"
+    commit: dd4c0a87cba408222033c89f002ab2d63f48574c
+    recorded_at: 2026-10-19T14:00:01Z

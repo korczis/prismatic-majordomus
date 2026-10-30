@@ -1,0 +1,57 @@
+id: "truthful-plan-surfaces"
+title: "The plan's surfaces are inferred from delivery, and nothing they show is typed beside the repository"
+slug: truthful-plan-surfaces
+order: 146
+priority: "p0"
+problem: "Measured 2026-10-16 at master d1162668036 (v0.27.0): /roadmap/ lists 8 of 38 milestones, the ones with a hand-typed version 0.1-1.0; issue status is derived from stamps only and nothing compares it with merged work (I2653 merged by #1097 still READY); /ui/roadmap said latest release 0.26.0 under a 0.27.0 header; the landing page states the present in hand-written toml prose; box art survives outside the diagram rule's scope; code is highlighted by three engines, one fetched from a CDN. ADR 0166."
+outcome: "Every plan surface draws every milestone in the graph's order, each issue with its declared status beside the delivery stage inferred from branches, pull requests, merges, tags and the published site; a merged but unrecorded issue turns the trunk red past a window; no milestone carries a typed version; every relationship is a drawn, clickable diagram; every code block is highlighted by one engine with one token-derived palette."
+current_state: "Status from stamps; roadmap filtered by a hand field; landing prose hand-written; three highlighters; diagram rule covers docs, site sources and templates only."
+desired_state: "plan.delivery and plan.drift capabilities; version inferred from tags; /roadmap/, /plan/, landing page, /ui/roadmap and PLAN_STATUS.md read one derivation; homepage-check refuses present-state prose; diagram rule v2 over ADRs, rules, handbook and UI markdown; syntect everywhere."
+scope:
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/src/web"
+  - "lib/project.awk"
+  - "lib/project.sh"
+  - "lib/plan.sh"
+  - "scripts/generate-site-data"
+  - "scripts/ci"
+  - "site/templates"
+  - "site/content-src"
+  - "site/data"
+  - "share/ui"
+  - "share/design"
+  - "share/schemas"
+  - "handbook"
+  - ".ai/repo/project/milestones"
+  - ".ai/repo/rules/project"
+  - ".ai/repo/adrs"
+  - "docs/PLANNING.md"
+  - "docs/DIAGRAMS.md"
+  - "test/cases"
+non_scope:
+  - "Writing lifecycle stamps from inference; a merge is not acceptance and evidence still decides DONE (ADR 0166, alternatives)."
+  - "Rewriting the awk status engine; delivery is Rust only."
+acceptance_criteria:
+  - "plan.delivery answers a stage with its proving object for every issue, and an unread forge is reported as unread"
+  - "The trunk's ci refuses an issue merged and unrecorded past the declared window, naming the command that settles it"
+  - "No milestone record carries version, and the schema refuses one"
+  - "/roadmap/ and /ui/roadmap list every milestone of the plan in the graph's order, with the inferred stage of each issue linked to its proof"
+  - "homepage-check refuses a present-state sentence in site/data"
+  - "The diagram gate covers ADRs, rules, the handbook and UI markdown, and finds no box art"
+  - "One highlighter: no highlight.js and no CDN highlighter on any surface, and a gate refuses one"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 3100_an_issue_delivery_is_inferred 3101_merged_work_unrecorded_is_drift 3102_a_milestone_version_is_inferred 3103_the_roadmap_draws_every_milestone 3104_the_ui_roadmap_reads_delivery 3105_the_homepage_states_no_present_it_does_not_read 3106_every_published_tree_draws_its_diagrams 3107_one_highlighter"
+evidence_required:
+  - "delivery_inferred"
+  - "drift_gated"
+  - "surfaces_read_one_derivation"
+  - "diagrams_and_code_unified"
+depends_on: []
+risks:
+  - "The drift gate turns the trunk red on landing for every issue already merged and unrecorded; I2748 records them before the gate is made blocking."
+  - "syntect adds to the executable's build time and size; measured in I2747 before it lands."
+created_at: 2026-10-16
+updated_at: 2026-10-16

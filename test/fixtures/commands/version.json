@@ -10,7 +10,7 @@
       "given": { "unknown option given": false },
       "setup": "bare",
       "run": ["version"],
-      "expect": { "exit": 0, "stdout_contains": ["^majordomus [0-9]+\\.[0-9]+\\.[0-9]+$"] },
+      "expect": { "exit": 0, "stdout_contains": ["^majordomus [0-9]+\\.[0-9]+\\.[0-9]+(-(alpha|beta|rc)\\.[0-9]+)?$"] },
       "explain": "The one string every other surface derives its version from — this site, the ledger's `by` field, and the generated provider instructions."
     },
     {

@@ -8,7 +8,7 @@ The order is authority order, and it is deliberate. Git first, because it is the
 
 ## How it works
 
-`mj_context_sections` in `lib/context.sh` writes each section to a numbered file, then `mj_ctx_render` concatenates them in that order with a header and a trailer. Which sections exist is decided by the active profile's `context` block: `context.decisions`, `context.relevant_files`, `context.recent_history_depth`, `context.architecture_notes`, `context.current_state`, `context.task`. A `routine` task gets the task and the state; `deep-work` gets the repository's decisions rather than only its own.
+`mj_context_sections` in `lib/context.sh` writes each section to a numbered file, then `mj_ctx_render` concatenates them in that order with a header and a trailer. Which sections exist is decided by the active profile's `context` block: `context.decisions`, `context.relevant_files`, `context.recent_history_depth`, `context.architecture_notes`, `context.current_state`, `context.task`, `context.knowledge` with `context.knowledge_max_items` (the knowledge pointers: what the task's issue references, never the whole graph; `test/cases/3073_context_knowledge_slice.sh`). A `routine` task gets the task and the state; `deep-work` gets the repository's decisions rather than only its own.
 
 This is the only code that reads those fields. Before it existed they were written by `init` and read by nothing, which made them documentation wearing the costume of configuration.
 

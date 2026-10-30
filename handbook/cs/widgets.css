@@ -328,7 +328,7 @@ svg .mark.picked path { fill: var(--s2); }
 .arch-b:hover, .arch-b:focus-visible { border-color: var(--link); outline: none; }
 .arch-b[aria-selected="true"] { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
 .arch-detail { min-width: 0; border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; background: var(--bg); }
-.arch-detail h4 { margin: 0 0 6px; font: 600 20px/1.25 var(--display); }
+.arch-detail h4, .arch-detail .h4 { margin: 0 0 6px; font: 600 20px/1.25 var(--display); }
 .arch-detail > p { margin: 0 0 8px; font-size: 14.5px; }
 .arch-imp { color: var(--muted); }
 .arch-imp .k { font: 600 10.5px/1 var(--display); letter-spacing: .1em; text-transform: uppercase; padding: 3px 5px; border-radius: 3px; color: var(--accent); border: 1px solid var(--accent); }
@@ -496,6 +496,7 @@ a.md-frag { text-decoration: none; border-bottom: 1px dotted var(--muted); color
 .md h1:hover .md-ha, .md h2:hover .md-ha, .md h3:hover .md-ha, .md h4:hover .md-ha, .md .md-ha:focus { opacity: 1; }
 .md-mermaid { margin: 14px 0; padding: 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); overflow-x: auto; }
 .md-mermaid svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+pre.mermaid-src { margin: 12px 0; padding: 12px 14px; background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px; overflow-x: auto; font: 13px/1.55 var(--mono); }
 .md-src { margin-top: 6px; font-size: 13px; color: var(--muted); }
 .md-src summary { cursor: pointer; }
 .hljs-comment, .hljs-quote { color: var(--muted); font-style: italic; }
@@ -586,3 +587,56 @@ ol.gc-chain { list-style: none; margin: 0; padding: 0; max-width: none; display:
 /* Inline code is prose: a long identifier breaks rather than pushing the page sideways at
    phone widths. Code blocks keep their lines and scroll inside their own box. */
 main p code, main li code, main td code, main dd code, .lab code { overflow-wrap: anywhere; }
+
+/* The outlook chapters (sections-outlook.html, extras15.js). Each kind of statement wears a tag,
+   and every colour below is a role the design declares. */
+.pill.repo { color: var(--link); border: 1px solid var(--link); }
+.pill.model { color: var(--accent); border: 1px solid var(--accent); }
+.pill.ext { color: var(--muted); border: 1px solid var(--line); }
+.pill.ok { color: var(--good); border: 1px solid var(--good); }
+.pill.warn { color: var(--fg); border: 1px solid var(--warn); }
+.pill.bad { color: var(--bad); border: 1px solid var(--bad); }
+h3 .pill { vertical-align: 3px; margin-left: 6px; }
+.small-note { font-size: 13.5px; color: var(--muted); }
+.card .small-note { margin: 8px 0 0; }
+.vs-h.pes { color: var(--bad); }
+.vs-h.real { color: var(--accent); }
+.vs-h.opt { color: var(--good); }
+.sw.pes { background: var(--bad); }
+.sw.real { background: var(--accent); }
+.sw.opt { background: var(--good); }
+.vs-b { display: inline-flex; align-items: center; gap: 6px; }
+.seg-b[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.seg-b.vs-b[aria-pressed="false"] .sw { opacity: .3; }
+svg .vs-line { fill: none; stroke-width: 2.5; stroke-linejoin: round; }
+svg .vs-line.pes { stroke: var(--bad); }
+svg .vs-line.real { stroke: var(--accent); }
+svg .vs-line.opt { stroke: var(--good); }
+svg .vs-dot.pes { fill: var(--bad); }
+svg .vs-dot.real { fill: var(--accent); }
+svg .vs-dot.opt { fill: var(--good); }
+svg .ref.dash { stroke-dasharray: 3 4; }
+svg .ok { fill: var(--good); }
+svg .bad { fill: var(--bad); }
+svg .mut { fill: var(--muted); }
+.score-v { font: 600 15px/1 var(--display); }
+.eq { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 14px 0 18px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); font: 500 15px/1.4 var(--mono); }
+.eq-f { display: inline-grid; text-align: center; }
+.eq-f span:first-child { border-bottom: 1.5px solid var(--fg); padding-bottom: 4px; }
+.eq-f span:last-child { padding-top: 4px; }
+td.mx { text-align: center; font-weight: 600; }
+td.mx.y { color: var(--good); }
+td.mx.p { color: var(--accent); }
+td.mx.q { color: var(--muted); }
+.gauge-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px 20px; align-items: center; }
+@media (min-width: 640px) { .gauge-row { grid-template-columns: 160px minmax(0, 1fr); } }
+.gauge-wrap svg { min-width: 0; max-width: 160px; }
+svg .gauge-track { fill: none; stroke: var(--s1-wash); stroke-width: 14; }
+svg .gauge-arc { fill: none; stroke: var(--s1); stroke-width: 14; stroke-linecap: round; }
+svg .gauge-v { fill: var(--fg); font: 700 20px/1 var(--display); }
+.v-statement { margin: 0 0 8px; padding: 2px 0 2px 14px; border-left: 3px solid var(--bad); font-size: 15px; }
+.v-unmet { margin: 0; font: 13.5px/1.5 var(--mono); }
+#v-scores .meter-row { grid-template-columns: 64px auto; }
+#v-scores .meter i { width: 18px; }
+#v-scores .m-l { grid-column: 1 / -1; }
+@media (min-width: 640px) { #v-scores .meter-row { grid-template-columns: 64px auto minmax(0, 1fr); } #v-scores .m-l { grid-column: auto; } }

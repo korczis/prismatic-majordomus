@@ -39,7 +39,7 @@ before. What it does that the hand-made arrangement below did not:
 |---|---|
 | `init` writes two lines to `.gitignore`, restored with `git checkout .gitignore` | `.gitignore` is not written |
 | the exclude lines are typed, and nothing checks them | one marked block, verified by `init`, by the installer and by every `doctor` |
-| the policy is narrowed so that `update` writes one private file | `update` covers each target before writing it; a target the project tracks is refused whole, with the advice to point that projection at `CLAUDE.local.md` |
+| the policy is narrowed so that `update` writes one private file | `init --personal` fits the seeded projections to the repository: a target the project already tracks moves to the file its provider reads for one person (`personal_target` in [`share/providers.yaml`](../share/providers.yaml), `CLAUDE.local.md` for Claude Code), and a provider with no such file is left out. `update` covers each target before writing it, and still refuses, whole, a policy that names a tracked target |
 | `capture install` was not run, because it writes under `.claude/` | it covers what it writes the same way |
 | the session record's commit and push are turned off in the policy | under a personal layer neither happens, whatever the policy says |
 | the server needs `--discovery filesystem`, started before the client | discovery walks the work tree by itself when the layer is tracked nowhere |
@@ -47,7 +47,12 @@ before. What it does that the hand-made arrangement below did not:
 | converting means deleting the exclude lines and `init --extend` | `majordomus init --extend --shared` |
 
 The hook is still yours to add, and what the organisation's policy says about tools is
-still the organisation's to say.
+still the organisation's to say. Where to add it is git's answer, and `init` prints it:
+under `.git/hooks/` the two lines go straight in. Where `core.hooksPath` points at a
+directory the project tracks, the hook git calls is the project's; a dispatcher that runs
+`<hook>.d/` leaves room for a file of your own, `<hook>.d/majordomus-personal`, which
+`init --personal` covers before it exists, and a tracked hook with no such directory has
+no place of your own, which `init` says instead of advising an edit to a shared file.
 
 ## What it is for
 
@@ -265,7 +270,7 @@ the one edited source file as inside the scope, `finish --check` in the hook pas
 | instruction files are projections of the policy, and a projection's target is one line | [`lib/update.sh`](../lib/update.sh), [`claims/projection-generation.md`](claims/projection-generation.md), [`claims/region-projection.md`](claims/region-projection.md) |
 | a touched file outside the scope is a failure, and `finish` evaluates its contract line by line | [`claims/scope-enforcement.md`](claims/scope-enforcement.md), [`claims/finish-contract.md`](claims/finish-contract.md) |
 | a verification command that does nothing is refused | [`verification-integrity`](../.ai/repo/rules/vendor/majordomus/rules/verification-integrity.v1.md) |
-| nothing performs a network call | [`claims/no-network.md`](claims/no-network.md), [`no-network-no-eval`](../.ai/repo/rules/project/no-network-no-eval.v1.md) |
+| the shell tool performs no network call | [`claims/no-network.md`](claims/no-network.md), [`no-network-no-eval`](../.ai/repo/rules/project/no-network-no-eval.v1.md) |
 | a personal layer changes nothing shared, and the command that says so checks it | [`lib/common.sh`](../lib/common.sh), [`test/cases/2979_a_personal_layer_changes_nothing_shared.sh`](../test/cases/2979_a_personal_layer_changes_nothing_shared.sh), [`claims/personal-layer-changes-nothing-shared.md`](claims/personal-layer-changes-nothing-shared.md) |
 | discovery can walk the work tree instead of asking the index | [`apps/majordomus-cli/src/cli.rs`](../apps/majordomus-cli/src/cli.rs), [`MCP.md`](MCP.md), [`the-server-sees-the-current-tree`](../.ai/repo/rules/project/the-server-sees-the-current-tree.v1.md) |
 | what a worker never reads is declared once | [`claims/scope-declared.md`](claims/scope-declared.md), [`SCOPE.md`](SCOPE.md) |
@@ -333,7 +338,7 @@ decided somewhere that can be read.
 |---|---|---|
 | a colleague | my tasks, their scope and my handovers are in a local directory git ignores; nothing of it is in the repository | `git status --short --ignored` in my clone |
 | a team lead | the repository, its review and its CI are exactly what they were; if it proves useful I will propose it as a pull request | [From personal to shared](#from-personal-to-shared) |
-| security | the tool performs no network call and calls no model; the AI client I use is the one the organisation already allows, under the same data policy | [`claims/no-network.md`](claims/no-network.md), [`no-network-no-eval`](../.ai/repo/rules/project/no-network-no-eval.v1.md) |
+| security | the tool calls no model and sends no telemetry, and its network use is the server, mesh and forge reads you start; the AI client I use is the one the organisation already allows, under the same data policy | [`claims/no-network.md`](claims/no-network.md), [`no-network-no-eval`](../.ai/repo/rules/project/no-network-no-eval.v1.md) |
 | an architect | the same lifecycle the committed adoption runs, with a private policy; no rule of the team's is restated or overridden | [`ADOPTION.md`](ADOPTION.md) |
 | whoever owns tooling policy | it is a local tool in the category of an editor configuration, and it stays subject to the policy on which tools may read this code | the organisation's policy, which this does not change |
 

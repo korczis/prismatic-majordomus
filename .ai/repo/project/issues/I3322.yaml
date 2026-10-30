@@ -1,0 +1,38 @@
+id: I3322
+milestone: a-provider-carries-the-contract-natively
+title: "capture install wires the edit guard into Claude Code's PreToolUse, first in an advisory mode, and doctor reports it unwired"
+slug: the-edit-guard-is-wired
+priority: p2
+profile: implementation
+objective: "Have capture install write the Edit|Write|MultiEdit|NotebookEdit PreToolUse entry for .claude/hooks/majordomus-edit-guard into .claude/settings.json, extend the lifecycle wiring check to it, declare an advisory mode in policy that reports an unclaimed edit without refusing it, and correct docs/MESH.md."
+why: "Critique 2026-10-18: no PreToolUse entry is wired anywhere (.claude/settings.json wires only UserPromptSubmit, SessionStart, SessionEnd and PreCompact, verified on master 707a04c), so Claude Code never calls the guard case 3069 exercises, although .ai/repo/policy.yaml sets edits_require_claim: true and docs/MESH.md says the hook is wired. Wiring it with refusal on would refuse every live peer editing without a claim, so it lands advisory first. Split from I3300 by the 2026-10-18 verification (one worker, one issue, one pull request). Governed by ADR 0214. Sources: chatgpt-majordomus:c174#18, chatgpt-majordomus:c193#1."
+current_state: ".claude/hooks/majordomus-edit-guard exists and case 3069 pipes payloads into it directly; capture install writes no PreToolUse entry and mj_lifecycle_state does not cover the guard."
+desired_state: "Claude Code calls the guard on every Edit, Write, MultiEdit and NotebookEdit; in advisory mode an unclaimed edit is reported and let through; doctor reports an unwired or hand-edited guard; a claim-coverage report lists live peers editing without a claim."
+scope:
+  - "lib/capture.sh"
+  - "lib/doctor.sh"
+  - ".claude/hooks"
+  - ".claude/settings.json"
+  - ".ai/repo/policy.yaml"
+  - "docs/MESH.md"
+non_scope:
+  - "Judging Bash-tool writes at edit time; they are caught by the task scope at check, finish and the pre-push hook"
+  - "Turning refusal on (I3323)"
+  - "Packaging the guard in the plugin (I3300)"
+serves:
+  - "a-provider-carries-the-contract-natively#the-guard-is-wired"
+acceptance_criteria:
+  - "capture install writes the Edit|Write|MultiEdit|NotebookEdit PreToolUse entry for .claude/hooks/majordomus-edit-guard into .claude/settings.json, and a case reads the generated configuration and finds it"
+  - "The lifecycle wiring check (mj_lifecycle_state) covers the edit guard, and doctor reports an unwired or hand-edited guard"
+  - "docs/MESH.md describes the guard wiring as capture install actually writes it, in the same change"
+  - "The guard ships in an advisory mode declared in .ai/repo/policy.yaml that reports an unclaimed edit and does not refuse it, and the change is announced on the board and the mesh before it lands"
+  - "A claim-coverage report lists the live peers editing without a claim"
+  - "Proof is a CI-runnable structural case on the generated configuration and an opt-in end-to-end case gated like case 2980, with case numbers taken from scripts/case-numbers and announced on the board"
+validation:
+  - "bash test/run.sh 3069_an_edit_no_claim_covers_is_refused"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test guard_hook"
+  - "bin/majordomus doctor"
+evidence_required:
+  - "case_the_edit_guard_is_wired_in_the_generated_settings"
+created_at: 2026-10-18
+updated_at: 2026-10-18

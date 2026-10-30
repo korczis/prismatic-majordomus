@@ -1,0 +1,135 @@
+---
+schema: adr/v1
+id: adr-0152
+kind: adr
+title: A diagram and a chart on the site are one viewer each, over what the build derived: interactive, linkable, and linked by inference
+status: proposed
+date: 2026-10-13
+tags:
+  - site
+  - diagrams
+  - charts
+  - derivation
+related:
+  - rule:project.a-diagram-is-drawn-not-typed
+  - rule:project.derived-once
+  - rule:project.interfaces-are-projections
+  - rule:project.homepage-tells-a-declared-story
+  - rule:project.every-link-and-control-is-tested
+  - file:.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md
+  - file:scripts/lib/diagrams.mjs
+  - file:site/diagrams.js
+  - file:site/charts.js
+  - file:share/design/figure.css
+  - file:scripts/ci/link-check
+  - file:docs/DIAGRAMS.md
+  - file:test/cases/3006_diagrams_are_interactive_and_linkable.sh
+provenance:
+  origin: authored
+---
+
+# 152. A diagram and a chart on the site are one viewer each, over what the build derived: interactive, linkable, and linked by inference
+
+## Context
+
+Rule `project.a-diagram-is-drawn-not-typed` moved every architectural relationship this
+repository publishes out of box art and into Mermaid, and gave the reason: a parseable
+diagram can be rendered, themed, linked and checked, and a picture cannot. The ratchet
+reached zero. The site then used one of those four properties. `site/diagrams.js`
+initialised Mermaid with the page's colours and stopped: a dependency graph of every issue
+was drawn at its natural width inside a scrolling box, no diagram had an address, and a node
+that was an issue, a decision or a command was text beside a site that has a page for each.
+The Mermaid build, the heaviest file on the site, was fetched by a blocking script tag.
+
+The site also drew no chart. It renders derived numbers as tables (issues by milestone and
+state, benchmark percentiles, the recorded history of a measured ratio), and ADR 0135
+already names Apache ECharts as the library for measured series, "once vendored".
+
+A downstream project of the same owner had built an interactive Mermaid viewer first. It
+proved the interaction design, and it typed its node links into each diagram with Mermaid's
+`click` directive, held by a build check that every such link names a served page. That is
+the part this repository cannot take: a link written into a diagram is a fact written
+twice, once in the registry that owns the object and once in the picture.
+
+## Decision
+
+**One viewer for every diagram, one component for every chart, and no per-page script.**
+
+1. **The build prepares a diagram; the browser only draws it.** After Zola,
+   `scripts/site-build` runs `scripts/lib/diagrams.mjs` over the built pages. Each
+   `<pre class="mermaid">` gets an id, `diagram-<name>`, where the name is the one its
+   template declared (`data-diagram`, itself an identity from the data: a key of
+   `diagrams.json`, a milestone id) or else the id of the heading it sits under; the list of
+   the nodes its source declares; the viewer's toolbar, hidden; and a list of links.
+
+2. **A node's link is inferred, never written.** A node is linked when its id, its label or
+   one line of its label is the identity of an object the generated data gives a page to:
+   an issue, a milestone, a decision, a rule, a doctrine, a command, a capability, a
+   document. A label that names two objects, or one this site has no page for, is linked to
+   neither. Mermaid's `click` directive is not used. The inferred links are ordinary markup
+   beside the diagram, so `scripts/ci/link-check` decides every one of them with the rest of
+   the site's, and a reader without JavaScript has them.
+
+3. **A diagram and a node have an address.** `#diagram-<name>` is the diagram and
+   `#diagram-<name>:<node>` one node of it, the same scheme the downstream viewer uses, so
+   a link written for one works in the other. `link-check` resolves the second form against
+   the nodes the build listed: a link to a node that no longer exists fails the build.
+
+4. **The viewer is `site/diagrams.js`**, loaded deferred by pages that carry a diagram; it
+   fetches the vendored Mermaid build itself. The frame is the diagram's own `<pre>`, which
+   keeps its id and its place in the tab order. Zoom, pan, fit, full screen, SVG download,
+   tracing of a node's edges, selection, and copying the current address are the same on
+   every page, from the pointer and from the keyboard. Its controls are markup the build
+   wrote, so `scripts/ci/interaction-check` holds them to the `diagram` behaviour spec and
+   `scripts/interaction-probe` exercises them.
+
+5. **A chart is a table, declared.** `<figure data-chart>` around a table the page already
+   renders is drawn by `site/charts.js` with Apache ECharts: the first column is the
+   category, each header marked `data-series` a series, and the numbers are read from the
+   cells. The table stays. ECharts is a pinned npm dependency copied into the build, as
+   Mermaid and Cytoscape are, and is fetched when a chart nears the viewport. A series is
+   drawn in the colour its header's status badge has, so a state's colour stays the design
+   declaration's.
+
+6. **The styling is one hand-written sheet over the tokens**, `share/design/figure.css`,
+   imported by the site only.
+
+## Alternatives rejected
+
+- **Mermaid's `click` directive with a build check on each target.** It works, and it is a
+  second source: the author of a diagram would type a route the generator already knows.
+- **Resolving links in the browser from a published index.** One fewer build step, but the
+  links would not exist without JavaScript and `link-check` could not see them; a link the
+  gates cannot decide is the kind this repository does not publish.
+- **Rendering diagrams to SVG at build time.** Still needs a headless browser in the build,
+  which `docs/GITHUB_PAGES_ARCHITECTURE.md` already rejected, and a static SVG cannot be
+  redrawn in the other theme.
+- **A chart described by a JSON option block per page.** That is a per-page script by
+  another name and a second copy of the numbers. A table is already on the page, already
+  derived, and already accessible.
+- **Adding the styles to `share/design/primitives.css`.** That sheet is compiled into the
+  Cockpit's and the UI's committed stylesheets, which would change for a component neither
+  surface loads.
+- **A diagram on the homepage.** The homepage's sections and its byte budget are declared
+  and it carries no diagram by decision; changing that is its own reviewed change (I2655).
+
+## Consequences
+
+- Every diagram already on the site became interactive and addressable with no edit to any
+  document, and every later one does on arrival. A document that wants a stable address for
+  a diagram gives it its own heading.
+- A diagram's address follows its heading. Renaming a heading changes the address, and
+  `link-check` fails any link on the site that still uses the old one. Links from outside
+  the site are not protected.
+- The node parser reads flowcharts and state diagrams. Other kinds are drawn, zoomed and
+  addressed as a whole and have no node links. A Mermaid syntax the parser misreads costs a
+  missing link or a missing node address, never a broken page.
+- The site build has one more Node pass, and it needs no `node_modules`, so it also runs
+  under `--no-css`.
+- `echarts` is a new pinned build dependency; the `common` build it vendors is about 0.7 MB
+  and is requested only by pages that carry a chart, on demand.
+- `share/design/figure.css` is not yet read by the contrast derivation
+  (`design.contrast`); it uses only pairs `primitives.css` already puts together. Making the
+  derivation read it, sharing the viewer with the Cockpit and the UI, and linking a node
+  that is a repository file to its source are I2656. A gate that holds a chart to its table
+  is I2654.

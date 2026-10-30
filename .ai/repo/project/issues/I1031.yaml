@@ -11,6 +11,9 @@ current_state: "Half of this landed on 2026-09-10 outside the plan. ADR 0035 add
 desired_state: "Every served surface carries the repository root and identity it is answering for, close enough to the content that a reader sees it without asking for it."
 scope:
   - apps/majordomus-cli/src/http/router.rs
+  - apps/majordomus-cli/src/http/swagger.rs
+  - apps/majordomus-cli/src/web/home.rs
+  - test/cases/3110_a_served_surface_names_its_checkout.sh
 non_scope:
   - Publishing an absolute developer path to anything but a loopback surface
   - A second identity beside the one the repository model already holds
@@ -30,4 +33,35 @@ evidence_required:
   - published_carries_no_path
 risk: "The obvious fix — printing the root — is the one to refuse: it would leak the host's directory layout to whoever can reach the socket, and the incident is solved by saying which checkout answered, not where it lives."
 created_at: 2026-09-06
-updated_at: 2026-09-10
+updated_at: 2026-10-17T21:35:04Z
+started_at: 2026-10-16T11:59:02Z
+started_event: sha256:b481964783b38998b04ba4805d010bde2f50aa134a27b91000a53a42ecc4e9c9
+verified_at: 2026-10-16T13:51:16Z
+verified_event: sha256:967b4aa5b0abe20d7da48d0066ed2bf41fbea25f3e2fa7cbca09ad042b983d11
+completed_at: 2026-10-17T21:35:04Z
+completed_event: sha256:a8415b07f65eca49c4f62a9053f83501964849cd02bd7d0a2045ac3fa0edb74c
+evidence:
+  - covers: identity_on_surfaces
+    type: test
+    command: "bash test/run.sh 3110_a_served_surface_names_its_checkout"
+    result: "ok 3110: two roots (primary + linked worktree) served at once; / JSON, / HTML and /swagger each name their own repository_id, the shared git_repository_id, branch and head, never the other's; FAIL on master binary d116266"
+    commit: d1162668036170d42b6c9038d82dfa67064ba561
+    recorded_at: 2026-10-16T13:51:02Z
+  - covers: published_carries_no_path
+    type: test
+    command: "bash test/run.sh 3110_a_served_surface_names_its_checkout"
+    result: "ok 3110 section 3: /, /swagger, /openapi.json, /api/v1/ of both roots carry no fixture root, $ROOT, $HOME or leak-patterns.tsv machine path; scripts/ci/no-machine-paths $ROOT exits 0"
+    commit: d1162668036170d42b6c9038d82dfa67064ba561
+    recorded_at: 2026-10-16T13:51:07Z
+  - covers: identity_on_surfaces
+    type: test
+    command: "bash test/run.sh 3110_a_served_surface_names_its_checkout"
+    result: "ok, 1 passed on master 707a04c7ce8 (2026-10-17); full suite: ci check-run success on 4a4573690f8, run 39049547899 job 117473773693; master 707a04c7ce8 adds only the v0.29.0 release record"
+    commit: 707a04c7ce83ff9f2effd80e0c6dfc1829e49322
+    recorded_at: 2026-10-17T21:34:10Z
+  - covers: published_carries_no_path
+    type: test
+    command: "bash test/run.sh 3110_a_served_surface_names_its_checkout"
+    result: "ok, 1 passed on master 707a04c7ce8 (2026-10-17)"
+    commit: 707a04c7ce83ff9f2effd80e0c6dfc1829e49322
+    recorded_at: 2026-10-17T21:34:14Z

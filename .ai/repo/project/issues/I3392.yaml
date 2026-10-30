@@ -1,0 +1,37 @@
+id: I3392
+milestone: recovery-from-injected-faults-is-proven
+title: "The mesh lab injects the three faults into work in progress, and its evidence holds the conservation reading of each scenario"
+slug: the-mesh-lab-injects-work-faults
+priority: p1
+profile: implementation
+objective: "Add three scenarios to test/mesh-lab/run after the existing nine: a node holding an exclusive claim and an open task is killed, its claim expires, another node resumes from its published handover and finishes; the connection is cut while a claim and a handover are in flight and healed; two nodes take the same issue. Each scripted worker uses start, check, handover and finish through the CLI; each scenario ends with the conservation reading on every node and passes only with zero lost commits and zero duplicate completions. Add the scenarios to scripts/ci/mesh-lab-evidence's required set, to case 414 and to the note of mesh-network-acceptance in docs/CLAIMS.yaml."
+why: "T5 of the owner's report of 2026-10-19. The lab already breaks the network on purpose and is judged by a reader other than itself (case 414), so work-level faults belong there rather than in a second harness."
+current_state: "test/mesh-lab/run:187-245 runs claim_conflict, cross_node_handover, network_partition and process_crash_recovery among nine scenarios; scripts/ci/mesh-lab-evidence refuses an incomplete record; case 414 holds the required set equal to the scenarios the lab reaches."
+desired_state: "target/mesh-lab/evidence.json carries the three scenarios with their conservation readings; case 414 requires them."
+scope:
+  - "test/mesh-lab/run"
+  - "test/mesh-lab/node-entrypoint"
+  - "scripts/ci/mesh-lab-evidence"
+  - "test/cases/414_mesh_lab_evidence.sh"
+  - "docs/CLAIMS.yaml"
+non_scope:
+  - "Agent sessions in the lab (I3393 runs those)"
+  - "A routed or WAN topology"
+depends_on:
+  - "I3390"
+  - "I3391"
+serves:
+  - "the-product-proves-it-pays#recovery-is-proven-for-each-injected-fault"
+acceptance_criteria:
+  - "Each scenario records its fault, timings and conservation reading"
+  - "A scenario with a duplicate completion or a lost commit fails"
+  - "Case 414 refuses a record missing any of the three scenarios"
+  - "The existing nine scenarios still pass"
+validation:
+  - "test/mesh-lab/run"
+  - "bash test/run.sh 414_mesh_lab_evidence"
+  - "majordomus shell check"
+evidence_required:
+  - "mesh_lab_work_faults"
+created_at: 2026-10-19
+updated_at: 2026-10-19

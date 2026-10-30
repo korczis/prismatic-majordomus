@@ -1,7 +1,7 @@
 +++
 title = "Entering the repository"
 description = "entering the repository: what converges on its own and what is asked for, the three commands of the shared server, what each standing means, what is deliberately not automatic and why, and what to run when it does not come up"
-weight = 35
+weight = 36
 [extra]
 source = "docs/ENTRY.md"
 +++
@@ -37,7 +37,9 @@ an agent starts          the provider's start event opens the episode, makes sur
                          next action, and one line naming where the server stands.
 
 an MCP client attaches   the client configuration at the root starts the launcher, which
-                         builds the executable when it must and elects: the first process
+                         never builds (ADR 0224): it runs the tree's executable, or the
+                         installed release of its generation, or exits 12 naming `just
+                         build`; the executable elects: the first process
                          serves, every later one bridges to it. This has always converged.
 
 the worker announces     `majordomus_announce` puts one line of intent and the paths it

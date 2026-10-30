@@ -29,4 +29,21 @@ evidence_required:
   - duplicate_identity_is_gated
 risk: "Low. The failure mode to avoid is a closer that refuses a legitimate re-close after a crash and leaves a session open forever; the refusal must be specific to an identity that already has a complete record."
 created_at: 2026-09-11
-updated_at: 2026-09-11
+updated_at: 2026-10-14T07:58:34Z
+started_at: 2026-10-14T07:58:26Z
+started_event: sha256:47e88a83ad66b898057aad7bf4dc0902f4ed5d6ff1398263421f678a541b661d
+completed_at: 2026-10-14T07:58:34Z
+completed_event: sha256:5adf39a5d8a0a2085eac62d080a0f995d53c45b436d97205f17e9374b456523e
+evidence:
+  - covers: second_close_is_refused
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 220_exactly_once_close"
+    result: "tests: 1 passed, 0 failed, 0 skipped (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T07:58:30Z
+  - covers: duplicate_identity_is_gated
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 72_rust_mcp 63_session_records && cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test cli an_inspection_names_each_diagnostic_and_ends_10_on_an_error"
+    result: "cases: 2 passed, 0 failed; test result: ok. 1 passed; 0 failed (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T07:58:32Z

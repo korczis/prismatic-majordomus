@@ -1,0 +1,41 @@
+id: I4245
+milestone: development-runtime
+title: "The served-executable tests run the copy they just wrote once it is let go, not while a forked child holds it"
+slug: a-served-copy-is-run-when-it-is-let-go
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "run_child in served_executable's tests starts the binary it has just copied through process::retrying_busy, so a child another test thread forked while the copy was open no longer fails the test with ETXTBSY."
+why: "Coverage on #2600 (run 40509763585, 2026-10-27) failed one test of 4189: served_executable::tests::a_copy_that_cannot_be_run_is_said_on_stderr_and_the_server_serves_in_place, panicked at served_executable.rs:588 on Os { code: 26, kind: ExecutableFileBusy, \"Text file busy\" }. The run's own validate self-cancelled every other job on it. run_child copies the test binary and runs it at once. On Linux a child forked by another test thread while the copy was open for writing holds it busy until that child execs. process.rs already names that race (CI run 39049547899), and retrying_busy waits it out for every other just-written program here. run_child was the one that did not use it. #2600 does not touch served_executable.rs. Found by 39 on 641b."
+current_state: "Measured at origin/master 7ddc32da8d4 on 2026-10-27: run_child calls Command::output() on the fresh copy once and unwraps it."
+desired_state: "run_child calls Command::output() through crate::process::retrying_busy, which asks again for up to five seconds while the file is busy and answers any other failure at once."
+scope:
+  - "apps/majordomus-cli/src/served_executable.rs"
+  - ".ai/repo/project/issues/I4245.yaml"
+non_scope:
+  - "The production exec of the copy, which already falls back to serving in place"
+depends_on: []
+acceptance_criteria:
+  - "The served_executable tests pass, each child started through retrying_busy"
+  - "A busy copy is waited for; any other failure to start is not"
+validation:
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib served_executable:: process::"
+evidence_required:
+  - rust
+serves: []
+created_at: 2026-10-27
+started_at: 2026-10-27T14:54:40Z
+started_event: sha256:c31e913fd58660828577883f139627604febbfe246454ecaf8d4c911ec4dbc66
+updated_at: 2026-10-27T14:55:58Z
+verified_at: 2026-10-27T14:55:29Z
+verified_event: sha256:e071290183e741f4265703f19beb6c2a18ca8e5239433262c2dc7b778d387b5a
+completed_at: 2026-10-27T14:55:58Z
+completed_event: sha256:9525ade492b2b8523e7a560e4c1312dccc80efd7b68d3842cfe682bf3f66b264
+evidence:
+  - covers: rust
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib -- served_executable:: process::"
+    result: "21 passed on macOS. The race is Linux's (ETXTBSY): coverage run 40509763585 failed a_copy_that_cannot_be_run_is_said_on_stderr_and_the_server_serves_in_place at served_executable.rs:588 with Os code 26. run_child now starts the copy through process::retrying_busy, whose tests prove a busy start is retried and any other failure answered at once (a_program_that_cannot_start_is_not_asked_again)"
+    artifact: "apps/majordomus-cli/src/served_executable.rs"
+    commit: 7ddc32da8d45dc54e0260d8841c70544615863f5
+    recorded_at: 2026-10-27T14:55:50Z

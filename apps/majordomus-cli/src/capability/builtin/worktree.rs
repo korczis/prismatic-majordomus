@@ -1,6 +1,6 @@
 //! The `worktree` module: the branch-to-worktree topology of this repository, projected.
 //!
-//! Four questions, all read-only, all answered by [`crate::worktree::WorktreeService`] —
+//! Six questions, all read-only, all answered by [`crate::worktree::WorktreeService`] —
 //! the same service the command line renders and the git hooks ask. Declaring them here is
 //! what puts them on MCP (as tools and as a resource), on HTTP, in the OpenAPI document, in
 //! the Swagger UI, in the Cockpit and in the generated reference, without any of those
@@ -24,8 +24,8 @@ use crate::capability::model::{
 };
 use crate::capability::module::ModuleDescriptor;
 use crate::worktree::{
-    migrate, Detail, InspectReport, MigrationPlan, RepositoryTopology, StatusReport, WorktreeError,
-    WorktreeService,
+    migrate, Detail, InspectReport, MigrationPlan, RepositoryTopology, StatusReport, Threshold,
+    TrunkDistance, UncommittedReport, WorktreeError, WorktreeService,
 };
 use crate::{capability, module};
 
@@ -79,6 +79,31 @@ impl BenchmarkCases for InspectInput {
                 branch: "feature/example".into(),
             },
         )]
+    }
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// What to judge uncommitted work against.
+pub struct UncommittedInput {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The age past which work nothing holds is abandoned, as a person writes it (`90s`,
+    /// `30m`, `12h`, `1d`). Default: the policy's `session.stranded_after`, which is also
+    /// how long an open episode may be silent and still hold the work.
+    pub older_than: Option<String>,
+}
+
+impl BenchmarkCases for UncommittedInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![
+            NamedCase::new("policy-threshold", UncommittedInput { older_than: None }),
+            NamedCase::new(
+                "one-hour",
+                UncommittedInput {
+                    older_than: Some("1h".into()),
+                },
+            ),
+        ]
     }
 }
 
@@ -148,6 +173,22 @@ fn worktree_inspect(ctx: &Context, input: InspectInput) -> Result<InspectReport,
 
 fn worktree_migration_plan(ctx: &Context, _: Empty) -> Result<MigrationPlan, CapabilityError> {
     migrate::plan(&service_of(ctx)?).map_err(refused)
+}
+
+fn worktree_trunk(ctx: &Context, input: StatusInput) -> Result<TrunkDistance, CapabilityError> {
+    Ok(service_at(ctx, input.path.as_deref())?.trunk_distance())
+}
+
+fn worktree_uncommitted(
+    ctx: &Context,
+    input: UncommittedInput,
+) -> Result<UncommittedReport, CapabilityError> {
+    let threshold = Threshold::declared_at(
+        Path::new(&ctx.index.repository.root),
+        input.older_than.as_deref(),
+    )
+    .map_err(CapabilityError::InvalidInput)?;
+    service_of(ctx)?.uncommitted(&threshold).map_err(refused)
 }
 
 // ---------------------------------------------------------------- the module
@@ -227,6 +268,38 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Disabled,
                 handler: worktree_migration_plan,
             },
+            capability! {
+                id: "worktree.uncommitted",
+                title: "Uncommitted work in the linked worktrees, and what holds it",
+                description: "Every linked worktree whose index or working tree holds changes no commit carries: how many paths (staged, unstaged, untracked, conflicted), when the oldest change was made (the earliest modification time among the changed paths, the index file's standing in for a deleted one), and what holds the work — an active task record, an open episode that is not stranded, or a process whose working directory is inside. Work nothing holds and older than the threshold is `abandoned`, with the command that would put it on a remote `rescue/` ref; it is suggested, never run. The threshold is the policy's `session.stranded_after` unless `older_than` names another. Reads every worktree and writes none: every status runs without optional locks, so no index is refreshed.",
+                input: UncommittedInput,
+                output: UncommittedReport,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_worktree_uncommitted"),
+                    http: get("/api/v1/worktrees/uncommitted"),
+                    cli: Some(CliExposure { path: vec!["worktree".into(), "uncommitted".into()] }),
+                },
+                tags: ["worktree", "git", "continuity", "introspection"],
+                cache: CachePolicy::Disabled,
+                handler: worktree_uncommitted,
+            },
+            capability! {
+                id: "worktree.trunk",
+                title: "How far a checkout is from the remote trunk",
+                description: "The checkout's `HEAD` and the local trunk branch, each counted against the remote-tracking trunk — commits behind and ahead, a merge in progress counting what it brings in — as of the last fetch, whose time is part of the answer; judged against the policy's `checkout.trunk_distance` as `current`, `lagging`, `stale`, `unjudged` (no threshold declared) or `unmeasured` (no remote trunk), with the commands that bring it current. What doctor renders and what `server.status` and the MCP instructions say about the tree a server serves (`project.a-checkout-serves-the-current-trunk`). Fetches nothing and writes nothing.",
+                input: StatusInput,
+                output: TrunkDistance,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_worktree_trunk"),
+                    http: get("/api/v1/worktrees/trunk"),
+                    cli: Some(CliExposure { path: vec!["worktree".into(), "trunk".into()] }),
+                },
+                tags: ["worktree", "git", "freshness", "introspection"],
+                cache: CachePolicy::Disabled,
+                handler: worktree_trunk,
+            },
         ],
     }
 }
@@ -262,6 +335,16 @@ mod tests {
                 "majordomus_worktree_migration_plan",
                 "/api/v1/worktrees/migration",
             ),
+            (
+                "worktree.uncommitted",
+                "majordomus_worktree_uncommitted",
+                "/api/v1/worktrees/uncommitted",
+            ),
+            (
+                "worktree.trunk",
+                "majordomus_worktree_trunk",
+                "/api/v1/worktrees/trunk",
+            ),
         ];
         let ids: Vec<&str> = m
             .capabilities
@@ -294,6 +377,31 @@ mod tests {
             .as_ref()
             .and_then(|m| m.resource.as_ref());
         assert_eq!(resource.map(|r| r.uri.as_str()), Some(WORKTREES_URI));
+    }
+
+    /// An `older_than` that is not a duration is the caller's error, refused as invalid
+    /// input before any work tree is read.
+    #[test]
+    fn an_uncommitted_reading_against_no_duration_is_invalid_input() {
+        let fixture = crate::synthetic::SyntheticRepository::small().unwrap();
+        let app = crate::app::App::load(&crate::cli::RepoArgs {
+            repo: Some(fixture.root().to_path_buf()),
+            discovery: crate::cli::DiscoveryMode::Filesystem,
+            share: Some(Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share")),
+            ..Default::default()
+        })
+        .unwrap();
+        let refused = app
+            .context
+            .execute(
+                "worktree.uncommitted",
+                serde_json::json!({ "older_than": "soon" }),
+            )
+            .unwrap_err();
+        assert!(
+            matches!(&refused, CapabilityError::InvalidInput(m) if m.contains("older_than")),
+            "{refused:?}"
+        );
     }
 
     /// Every capability of the module is read-only: the registry's contract, and the

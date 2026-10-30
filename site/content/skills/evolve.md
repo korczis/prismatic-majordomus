@@ -49,6 +49,15 @@ majordomus knowledge derive --dry-run
 `derive` writes this episode's candidates; the dry run shows them first. Refused here: an
 observation without a subject, and a note kept in a file of your own instead of the ledger.
 
+Three things the command refuses, each met by the first worker who followed this step:
+- An observation belongs to an episode. In a worktree where none is open, open one first
+  with `majordomus session start`.
+- `--kind` is one of `friction`, `workaround`, `defect`, `drift`, `repetition`. A lesson is
+  what a candidate becomes when it is promoted, not a kind of observation.
+- `--subject` is a repository-relative path, or `capability:`, `rule:`, `command:` or
+  `gate:` followed by an identifier. A test is named by its path; `test:` is a prefix of
+  `--evidence` and not of a subject.
+
 ### 2. Decide each candidate
 
 A candidate is a claim somebody has to stand behind. Read its record and what it names,

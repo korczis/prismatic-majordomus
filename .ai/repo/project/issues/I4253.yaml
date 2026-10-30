@@ -1,0 +1,26 @@
+id: I4253
+milestone: a-second-adopter-is-served
+title: "The remedy doctor names for an orphan skill is a command the shell runs"
+slug: skills-explain-reaches-the-executable
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "majordomus skills explain <id> hands the call to the executable, as `evidence` hands its subcommands, and every `reproduce:` doctor prints for skills is a command the shell accepts."
+why: "An adopter's field report (a private Python client repository adopted from the v1.0.0-alpha.8 release on 2026-10-27, with the plan model, project rules, knowledge, skills, Claude Code capture and a GitHub projection all in use) found: doctor's skill findings say 'reproduce: majordomus skills explain <id>', and the shell answers 'unknown subcommand explain (list|show|check)': the subcommand exists only in the Rust executable."
+current_state: "lib/skills.sh dispatches list, show and check; explain is the executable's."
+desired_state: "majordomus skills explain <id> hands the call to the executable, as `evidence` hands its subcommands, and every `reproduce:` doctor prints for skills is a command the shell accepts."
+scope:
+  - ".ai/repo/project/issues/I4253.yaml"
+  - "lib/skills.sh"
+  - "bin/majordomus"
+  - "test/cases/4253_every_skill_remedy_runs.sh"
+depends_on: []
+acceptance_criteria:
+  - "majordomus skills explain <id> answers the executable's report"
+  - "No doctor remedy for skills names a subcommand the shell refuses"
+validation:
+  - "bash test/run.sh 4253_every_skill_remedy_runs"
+evidence_required:
+  - "case_skills_explain_reaches_the_executable"
+created_at: 2026-10-27
+updated_at: 2026-10-27

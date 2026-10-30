@@ -1,0 +1,34 @@
+id: I3361
+milestone: a-foreign-repository-is-adopted-and-measured
+title: "install-check's first-run stage runs against a clone of an existing repository named on the command line and writes a T1 trial record"
+slug: install-check-adopts-a-named-repository
+priority: p1
+profile: implementation
+objective: "Give scripts/ci/install-check a --repository <path> input and the verify command that repository already runs. It clones into its throwaway tree, never writes to the source, runs I3127's refuse-then-accept stage there instead of on the fixture, and writes the result as a T1 trial record that I3353's loader admits, so anyone can re-measure an adoption from the published installer. Read the board at start for claims on install-check and case 1024."
+why: "T1 of the owner's report of 2026-10-19 and its rule that claims be evidence-backed need an adoption a reader can reproduce. I3127 is the sole owner of the refuse-then-accept stage, so this issue adds only the input and the record writer."
+current_state: "scripts/ci/install-check:17-27 lists seven stages ending when the installed launcher serves a fresh repository. test/cases/1024_an_installed_release_serves_a_foreign_repository.sh:10 states that its fixture release and origin are local. I3127 is BLOCKED by its milestone."
+desired_state: "install-check --repository <clone> --verify-command <cmd> writes a T1 record; case 1024 covers that path on a small repository of another language that it creates locally."
+scope:
+  - "scripts/ci/install-check"
+  - "test/cases/1024_an_installed_release_serves_a_foreign_repository.sh"
+non_scope:
+  - "A second refuse-then-accept scenario"
+  - "Network access in case 1024"
+depends_on:
+  - "I3127"
+  - "I3360"
+serves:
+  - "the-product-proves-it-pays#a-foreign-repository-reaches-an-accepted-finish"
+acceptance_criteria:
+  - "The source repository's status, refs and HEAD are identical before and after a run, and case 1024 asserts it"
+  - "finish refuses while the repository's verify command fails and accepts after the failing edit is reverted, both named in the record"
+  - "The record carries per-step seconds with their source, the undocumented-command count and the platform, and passes the loader"
+  - "Without --repository, install-check behaves as I3127 left it"
+validation:
+  - "bash test/run.sh 1024_an_installed_release_serves_a_foreign_repository"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "majordomus plan validate"
+evidence_required:
+  - "case_install_check_adopts_a_named_repository"
+created_at: 2026-10-19
+updated_at: 2026-10-19

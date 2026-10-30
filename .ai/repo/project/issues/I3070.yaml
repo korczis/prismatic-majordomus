@@ -1,0 +1,51 @@
+id: I3070
+milestone: a-version-follows-the-work
+title: "release.currency measures the landed work past the last release, and the brief and doctor say when it waits"
+slug: the-release-is-current
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - a-version-follows-every-session#measured
+objective: "Declare release.currency with capability! in the release module. It answers the last release (the release record the layer holds, or the newest v* tag the trunk contains when that tag is newer), the landed commits on the trunk past it (release commits and merges left out), when the oldest of them landed, and the version the public contract requires for them (release::version::select), decided only from a recorded release in a checkout at the trunk. The stance is current when nothing has landed past the release, owed when work has, and overdue once the oldest of it has waited longer than six hours, the threshold stated beside its declaration. The brief shows a release line and section, doctor warns on owed and on overdue, and project.land-and-publish names case 3470 as its proof. It is a runtime read only and never enters committed site data."
+why: "The owner wants a new measured version after every session and milestone, enforced. The cooperation model's rule that the release seat releases whenever master holds landed work past the last tag is measured nowhere. Master held landed work past v0.30.0 for hours while every surface stayed green."
+current_state: "release.version reports the last release and the commits since it as evidence, and says nothing about how long they have waited. Nothing in the brief, doctor or finish asks."
+desired_state: "A session's brief and doctor say how much landed work waits for a release, since when and at which version. The release seat can see the debt without reading git."
+scope:
+  - "apps/majordomus-cli/src/release/currency.rs"
+  - "apps/majordomus-cli/src/release/compat.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "docs/BRIEF.md"
+  - ".ai/repo/project/intents/a-version-follows-every-session.yaml"
+  - "apps/majordomus-cli/src/release/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/release.rs"
+  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
+  - "lib/doctor.sh"
+  - ".ai/repo/rules/project/land-and-publish.v1.md"
+  - "docs/RELEASE.md"
+  - "test/cases/3470_the_release_follows_the_work.sh"
+depends_on: []
+acceptance_criteria:
+  - "In a repository with a release record and commits landed after it, release.currency names the release, the landed commits past it without the bump and record commits, the oldest one's landing time and the required version; with nothing landed past it, it says current"
+  - "The brief has a release line saying owed or overdue with the count and the age, and doctor warns accordingly"
+  - "A pushed v* tag newer than the last record counts as the last release"
+  - "The oldest landing is dated by when this clone's remote-tracking trunk first held it, from that ref's reflog, so a top composed hours before it landed waits from its landing; where the reflog does not show it arrive, its commit time bounds the wait from above, the answer says so, and that bound alone never makes the stance overdue (the plan critique of 2026-10-19)"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 3470_the_release_follows_the_work"
+evidence_required:
+  - "case_release_follows_the_work"
+created_at: 2026-10-19
+updated_at: 2026-10-26T01:19:50Z
+started_at: 2026-10-26T01:19:09Z
+started_event: sha256:49825d2ea1b6048c561a5e3dafb60279de92d6aa4adff9ee11e84aded32bd112
+completed_at: 2026-10-26T01:19:50Z
+completed_event: sha256:fd571926292ac149f76cabed90bcdf5b60801948b7769db38e6c78f8c60f4f0a
+evidence:
+  - covers: case_release_follows_the_work
+    type: test
+    command: "bash test/run.sh 3470_the_release_follows_the_work"
+    result: "case 3470 passed 2026-10-26 on master 2efeacea031"
+    artifact: "2efeacea03158615db2b497117a8da35b264909b"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-26T01:19:38Z

@@ -37,4 +37,21 @@ evidence_required:
   - producer_trees_measured
 risk: "Stacked on PR #577, which conflicts with master and so gets no pull-request run of its own: this slice's acceptance is its own pull-request run. A run of #577 after it merges master is a gate of #577's landing, not of this slice."
 created_at: 2026-09-26
-updated_at: 2026-10-08
+updated_at: 2026-10-14T07:59:56Z
+started_at: 2026-10-14T07:59:48Z
+started_event: sha256:8e0259e71e40b293a8d809f09626ec8dc1b6b2aec23d373e60433e9fe4c14837
+completed_at: 2026-10-14T07:59:56Z
+completed_event: sha256:958fe9c2be35cdc05ec72e7f7f29a4498918f4dc2466eacfeebdd517d7ee9b76
+evidence:
+  - covers: report_derived_before_recording
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 357_ci_records_evidence"
+    result: "tests: 1 passed, 0 failed, 0 skipped (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T07:59:52Z
+  - covers: producer_trees_measured
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 357_ci_records_evidence"
+    result: "tests: 1 passed, 0 failed, 0 skipped (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T07:59:54Z

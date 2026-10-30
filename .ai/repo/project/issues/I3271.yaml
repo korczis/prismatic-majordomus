@@ -1,0 +1,25 @@
+id: I3271
+milestone: truthful-plan-surfaces
+title: "plan.drift reports a source it could not observe as unknown, never as a drift finding"
+slug: unobserved-is-not-drift
+priority: p2
+profile: implementation
+objective: "Each drift finding names whether its evidence was observed (merged PR read, branch read) and a finding whose source was not read is classed unknown, counted separately."
+why: "2026-10-16: adding observations cut merged_not_recorded from 23 to 8 in PR #1305, so most of the earlier findings were unobserved, not false. Sources: chatgpt-majordomus:c272#7."
+current_state: "plan.drift and merged_not_recorded live on I2741's branch, not master."
+desired_state: "Drift findings carry observed: true|false; the trunk gate (I2748) counts only observed findings red."
+scope:
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/delivery"
+  - "apps/majordomus-cli/tests/plan_drift.rs"
+depends_on:
+  - "I2741"
+acceptance_criteria:
+  - "A fixture with an unread PR yields unknown, not drift"
+validation:
+  - "majordomus plan validate"
+  - "majordomus intent validate"
+evidence_required:
+  - "test_unobserved_is_not_drift"
+created_at: 2026-10-18
+updated_at: 2026-10-18

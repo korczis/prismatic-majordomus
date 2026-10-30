@@ -1,0 +1,32 @@
+id: I3861
+milestone: a-claim-stands-only-on-its-evidence
+title: "The economics methodology names an interval the calculator does not compute, and ADR 0082 reads a finding it has no run for"
+slug: the-economics-records-say-what-is-computed
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Bring two statements into agreement with what is computed and recorded. (1) .ai/repo/benchmarks/economics/methodology.yaml states the interval as a bootstrap percentile interval of the median resampling pairs; docs/ECONOMICS.md says the interval resamples whole tasks rather than single pairs, because the repetitions of one task are not independent, and the calculator's method is a cluster bootstrap over tasks (apps/majordomus-cli/src/economics/stats.rs). The methodology is a freshness input of the context suite (suites/context.yaml), so the change that corrects it re-records the context evidence with majordomus economics measure in the same commit, or the published context figure reads stale. (2) ADR 0082's consequences say the repository can now say what it measured, including that Majordomus costs more on some tasks; no live run is recorded, so the sentence reads as a finding nothing measured, where it means a result the rule requires to be shown once one is."
+why: "On 2026-10-21 a fact-check of the article on how a saving is measured (I3860) against its sources found these two places. A reader who follows the article to the methodology meets an interval the calculator does not compute, and one who reads ADR 0082 meets a cost the repository has not measured."
+current_state: "Both statements are in the tree at master 97391192dbb, as the objective quotes."
+desired_state: "The methodology names the interval the calculator computes, with the context evidence recorded again against it, and ADR 0082 states a cost on some tasks as what the rule requires to be shown, not as a finding."
+scope:
+  - ".ai/repo/project/issues/I3861.yaml"
+  - ".ai/repo/benchmarks/economics/methodology.yaml"
+  - ".ai/repo/benchmarks/economics/runs"
+  - ".ai/repo/adrs/0082-token-economics-are-measured-from-matched-runs-and-published-only-past-a-declared-rule.md"
+non_scope:
+  - "Running the live suite or publishing any figure"
+depends_on: []
+acceptance_criteria:
+  - "The methodology's interval is the one the calculator computes, and majordomus economics summary reports the context evidence as current after the change"
+  - "ADR 0082 states no cost or saving that no recorded run measured"
+validation:
+  - "majordomus plan validate"
+  - "majordomus economics check"
+  - "majordomus economics summary"
+  - "majordomus adr check"
+evidence_required: []
+serves:
+  - "a-claim-stands-only-on-its-evidence#public-text-true"
+created_at: 2026-10-21
+updated_at: 2026-10-21

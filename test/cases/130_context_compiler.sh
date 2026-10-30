@@ -290,13 +290,16 @@ CLI="$S/surface-cli.json"; HTTP="$S/surface-http.json"; MCP="$S/surface-mcp.json
 # The fingerprint and the head are compared too — three surfaces reading two different trees
 # would agree about nothing worth agreeing about.
 norm() { jq -S '{fingerprint, git, seeds, selected, excluded, deduplicated, conflicts, budget}' "$1"; }
+# The budget is generous on purpose: this section compares surfaces, and the budget is tested
+# above. At 4000 the governance tier alone (the policy and the scope `init` seeds) used 3888,
+# and #1143 grew the seeded scope by 235 bytes: the compile went over and exited 10 on master.
 
-"$RB" devcontext compile --repo "$PWD" --issue I0001 --budget-tokens 4000 --format json > "$S/cli.raw"
+"$RB" devcontext compile --repo "$PWD" --issue I0001 --budget-tokens 16000 --format json > "$S/cli.raw"
 norm "$S/cli.raw" > "$CLI"
 
 # --- over HTTP
 serve_up "$S/serve.out" "$S/serve.err" || exit 1
-curl -s -m 30 "$U/api/v1/devcontext?issue=I0001&budget_tokens=4000" > "$S/http.raw" \
+curl -s -m 30 "$U/api/v1/devcontext?issue=I0001&budget_tokens=16000" > "$S/http.raw" \
   || { echo "    the HTTP route did not answer"; exit 1; }
 jq -e '.selected' "$S/http.raw" >/dev/null 2>&1 \
   || { echo "    the HTTP route answered something that is not a compiled context:"; head -c 400 "$S/http.raw"; exit 1; }
@@ -307,7 +310,7 @@ serve_down
 req() { printf '{"jsonrpc":"2.0","id":%s,"method":"%s"%s}\n' "$1" "$2" "${3:+,\"params\":$3}"; }
 {
   req 1 initialize '{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case130","version":"0"}}'
-  req 2 tools/call '{"name":"majordomus_devcontext","arguments":{"issue":"I0001","budget_tokens":4000}}'
+  req 2 tools/call '{"name":"majordomus_devcontext","arguments":{"issue":"I0001","budget_tokens":16000}}'
 } > "$S/mcp.in"
 rc=0; "$RB" mcp --standalone --repo "$PWD" < "$S/mcp.in" > "$S/mcp.out" 2>/dev/null || rc=$?
 [ "$rc" = 0 ] || { echo "    mcp exited $rc"; exit 1; }
@@ -322,11 +325,11 @@ cmp -s "$CLI" "$MCP" || { echo "    the command line and the MCP tool compiled d
 # --- resolving a path answers the same on every surface too, which is the question a
 # session actually asks: "what applies to the file I am about to edit"
 CLI2="$S/path-cli.json"; MCP2="$S/path-mcp.json"
-"$RB" devcontext compile --repo "$PWD" --path lib --budget-tokens 4000 --format json > "$S/path.raw"
+"$RB" devcontext compile --repo "$PWD" --path lib --budget-tokens 16000 --format json > "$S/path.raw"
 norm "$S/path.raw" > "$CLI2"
 {
   req 1 initialize '{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case130","version":"0"}}'
-  req 2 tools/call '{"name":"majordomus_devcontext","arguments":{"paths":["lib"],"budget_tokens":4000}}'
+  req 2 tools/call '{"name":"majordomus_devcontext","arguments":{"paths":["lib"],"budget_tokens":16000}}'
 } > "$S/mcp2.in"
 rc=0; "$RB" mcp --standalone --repo "$PWD" < "$S/mcp2.in" > "$S/mcp2.out" 2>/dev/null || rc=$?
 [ "$rc" = 0 ] || { echo "    mcp exited $rc for the path request"; exit 1; }

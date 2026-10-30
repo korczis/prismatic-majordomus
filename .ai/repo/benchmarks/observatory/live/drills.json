@@ -1,0 +1,110 @@
+{
+  "schema": "observatory-evidence/v1",
+  "origin": "http://127.0.0.1:8747",
+  "measured_at": "2026-10-14T10:42:24Z",
+  "environment": {
+    "machine": "Apple M5 Pro x18, 64 GiB",
+    "os": "Darwin 25.5.0 arm64",
+    "browser": "chromium 141.0.7390.37",
+    "headless": true,
+    "precise_memory": true
+  },
+  "revision": "981ad2c3ac0f",
+  "status_word": "LIVE · read 2026-10-14 10:42:27Z",
+  "checks": {
+    "screenshot-1080p": {
+      "verdict": "PASS",
+      "file": "target/web/observatory-evidence/live-drills2/kiosk-1080p.png",
+      "viewport": "1920x1080",
+      "status": "LIVE · read 2026-10-14 10:42:24Z",
+      "scene": "01 / 08  MESH COSMOS",
+      "fact": "5 machine(s) · 8 of 19 runtime(s) live · 0 refused link(s)",
+      "script_errors": []
+    },
+    "screenshot-4k": {
+      "verdict": "PASS",
+      "file": "target/web/observatory-evidence/live-drills2/kiosk-4k.png",
+      "viewport": "3840x2160",
+      "status": "LIVE · read 2026-10-14 10:42:27Z",
+      "scene": "01 / 08  MESH COSMOS",
+      "fact": "5 machine(s) · 8 of 19 runtime(s) live · 0 refused link(s)",
+      "script_errors": []
+    },
+    "accessibility-screen": {
+      "verdict": "PASS",
+      "route": "/ui/observatory/",
+      "rules": "wcag2a wcag2aa wcag21a wcag21aa wcag22aa",
+      "violations": []
+    },
+    "accessibility-kiosk": {
+      "verdict": "PASS",
+      "route": "/ui/kiosk/",
+      "rules": "wcag2a wcag2aa wcag21a wcag21aa wcag22aa",
+      "violations": []
+    },
+    "frames-1080p": {
+      "verdict": "PASS",
+      "frames_per_second": 60,
+      "window_seconds": 10,
+      "note": "headless chromium paints without a display; this is the display loop's rate on the machine named, not a panel's"
+    },
+    "reduced-motion": {
+      "verdict": "PASS",
+      "reduced_frame_unchanged_over_400ms": true,
+      "default_frame_changed_over_400ms": true
+    },
+    "event-reaches-the-display": {
+      "verdict": "PASS",
+      "newest_in_journal": {
+        "kind": "session_opened",
+        "lamport": 115359,
+        "at": 1791966533
+      },
+      "newest_in_display": {
+        "kind": "session_opened",
+        "lamport": 115359,
+        "at": 1791966533
+      },
+      "same_identity": true,
+      "events_held": 200
+    },
+    "drill-scene-failure": {
+      "verdict": "PASS",
+      "id": "mesh",
+      "quarantined": {
+        "mesh": "machines.forEach is not a function"
+      },
+      "now": "activity"
+    },
+    "drill-lost-server": {
+      "verdict": "PASS",
+      "while_lost": "STALE · read 2026-10-14 10:42:58Z · 96 s ago, the server is not answering",
+      "after": "LIVE · read 2026-10-14 10:45:58Z"
+    },
+    "drill-expired-cursor": {
+      "verdict": "PASS",
+      "status": "RESYNCED · read 2026-10-14 10:46:12Z"
+    },
+    "drill-interrupt": {
+      "verdict": "PASS",
+      "policy": {
+        "min_dwell_seconds": 12,
+        "interrupt_cooldown_seconds": 120,
+        "manual_hold_seconds": 300
+      },
+      "before": "mesh",
+      "after": "activity",
+      "last_reason": "interrupt: 3 new event(s)"
+    },
+    "drill-interrupt-cooldown": {
+      "verdict": "PASS",
+      "left_for": "intents",
+      "after_new_events_within_cooldown": "intents",
+      "interrupts": 1
+    },
+    "soak": {
+      "verdict": "NOT RUN",
+      "reason": "no --soak-minutes was given"
+    }
+  }
+}

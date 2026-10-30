@@ -215,9 +215,23 @@ case_bound_seconds: 5300
 # not growth. About a tenth above the worst uncensored cost, 4161 x 1.1 = 4577, so 4580,
 # below case_bound_seconds (5300) as case 417 requires. The total stands: 54737 is under
 # 56000, though only by a fortieth.
+#
+# Re-measured on 2026-10-20, when the v1.0.0-alpha.1 release head 88ce9857eee went over both
+# budgets with all four shards green and every case passing:
+#
+#   run 39401797347   56085 s over 567 cases   slowest 4662 s (486_rustdoc_composition)  88ce9857eee
+#   run 39379416881   41734 s over 567 cases   slowest 2797 s (77_rust_evidence)         82ac259d0ae
+#   run 39357242274   49338 s over 567 cases   slowest 2924 s (486_rustdoc_composition)  35f5241add1
+#
+# The same 567 cases cost 41734 s on one head and 56085 s two heads later, 1.34 times as much,
+# and 486_rustdoc_composition 2924 s then 4662 s, 1.59 times, on heads whose differences
+# (a milestone title, two workflow bounds) touch no case: runner load on a shared pool, with
+# shard 3 alone taking 112 min against 70 the run before. Not growth. About a tenth above the
+# worst, 56085 x 1.1 = 61694, so 61700; 4662 x 1.1 = 5128, so 5130, still under the 5300 case
+# bound as case 417 requires.
 budget:
-  # every case, summed; run 37760481991 (51011 s) and the ones above
-  cases_seconds: 56000
+  # every case, summed; run 39401797347 (56085 s) and the ones above
+  cases_seconds: 61700
   # the single slowest case; one case that runs away is invisible in the total until it is
   # most of it, and it is also what decides whether the parallel phase can still be packed.
   # Re-derived from the uncensored 3168 s of run 37207794591: see above. Re-derived on
@@ -232,5 +246,13 @@ budget:
   # 4161 s in run 38093056059, every case passing each time; each cost the verdict and a rerun.
   # Runner load again, not growth: the case is unchanged since the 3530 above. About a tenth
   # above the worst, 4161 x 1.1 = 4577, so 4580, still under the 5300 case bound as case 417
-  # requires.
-  slowest_case_seconds: 4580
+  # requires. Re-derived on 2026-10-20 from run 39401797347, 486_rustdoc_composition at
+  # 4662 s: 4662 x 1.1 = 5128, so 5130, under the 5300 case bound (see above).
+  slowest_case_seconds: 5130
+  # The margin inside which scripts/ci/suite-budget names a case as NEAR its budget (I2068):
+  # a case costing at least slowest_case_seconds less this share of it, in this run or as
+  # recorded in suite-durations.tsv, and the suite at least cases_seconds less this share. On
+  # 2026-10-08 95_executable_reference cost 3465 s against a 3450 s budget and failed a suite
+  # whose every case passed, after days within a few percent of it with nothing saying so.
+  # A NEAR line is a warning and never the exit status; it raises no budget and no bound.
+  near_percent: 5

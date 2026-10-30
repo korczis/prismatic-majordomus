@@ -1,0 +1,33 @@
+id: I3444
+milestone: mesh-journal-converges
+title: "A claim released on a runtime that is not replicating reaches every linked runtime, or the release is refused"
+slug: a-release-reaches-every-linked-runtime
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make a claim release either reach every linked runtime or be refused: (a) mesh.release (MCP majordomus_mesh_release, POST /api/v1/mesh/claims/release) refuses with not_active, naming the reason, when the runtime that holds the claim's stream is not replicating, instead of answering with a written event that no linked runtime will ever see; and (b) a journal written while the runtime was not replicating is caught up by every linked runtime once replication resumes, so a release already written is folded everywhere."
+why: "Found on 2026-10-19 while the owner's /ui/roadmap fixes were being claimed. The session that holds the release seat (9c) released claims c-4976f99ae66b, c-5dd3dfe0fda9, c-effc074ec6f2 and c-76d4d93c073e through its server on 127.0.0.1:8741, and the releases were written there (events 551 and 552 on stream 8241af227eccef89). That server answers GET /api/v1/mesh/state with active: null. The live primary server on 127.0.0.1:51311 (mesh active) still folds the claims as exclusive and held, and does not list stream 8241af227eccef89 among its streams, so an exclusive claim on the same paths stays refused with claim_conflict. The acquisitions had replicated while that mesh was active; the releases never did. The milestone promises that a stale claim never wins, and today it wins indefinitely. 9c and 2b confirmed the defect on the mesh."
+current_state: "apps/majordomus-cli/src/capability/builtin/mesh.rs:998-1000 mesh_release calls cooperation(ctx)?.release(...); cooperation() at :246-256 refuses only when no Cooperation is running in the process. apps/majordomus-cli/src/mesh/cooperation.rs:3596-3612 release checks ownership and existence, then writes ClaimReleased to this runtime's journal. Nothing in either path asks whether the journal is being replicated to linked runtimes, and nothing replays to a linked runtime the events written while replication was off: a release written then stays local to the holder's journal."
+desired_state: "A release on a runtime that is not replicating is refused as not_active with its reason, or is accepted and provably delivered: when replication resumes, each linked runtime folds every event the holder wrote in between, in order, and a claim released on the holder reads released on every linked runtime. mesh doctor names a runtime that holds live claims while not replicating."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/mesh/link.rs"
+  - "apps/majordomus-cli/src/mesh/doctor.rs"
+  - "docs/MESH.md"
+non_scope:
+  - "Releasing another runtime's claim, which stays refused as not_own"
+  - "Stopping or restarting a server that holds a seat's claims"
+acceptance_criteria:
+  - "Two linked fixture runtimes: a release written while the holder is replicating reads released on both"
+  - "The holder's replication is stopped and a release is attempted: it is refused as not_active naming the reason, or it is written and, after replication resumes, the other runtime folds it as released, with no event lost or reordered"
+  - "Negative: a release on a non-replicating holder never leaves the other runtime answering the claim as held after replication has resumed"
+  - "mesh doctor names a runtime that holds live claims while not replicating"
+  - "docs/MESH.md states which of the two behaviours holds and why"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::"
+  - "bash test/run.sh 130_mesh"
+  - "majordomus plan validate"
+evidence_required:
+  - "test_a_release_reaches_every_linked_runtime"
+depends_on: []

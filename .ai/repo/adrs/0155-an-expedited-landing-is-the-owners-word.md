@@ -17,6 +17,8 @@ related:
   - file:.ai/repo/rules/project/land-and-publish.v1.md
   - test:test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh
   - test:test/cases/362_a_release_follows_the_ci_verdict.sh
+  - test:test/cases/3019_a_failed_branch_run_cancels_itself.sh
+  - test:test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh
   - file:docs/INTEGRATION.md
   - file:scripts/ci/release-verdict
 provenance:
@@ -79,6 +81,15 @@ runs the whole structure job, the library tests, the rustdoc build when the crat
 and the cases the change touches. It names the commit each ran on and names what did not
 run. The merge is pinned: `gh pr merge --admin --merge --match-head-commit <head>`.
 
+**What the lander reads follows what the change touches** (amended 2026-10-14, I2664). A
+record a crate test reads — a skill, a rule, a claim, the quality baseline, a plan record —
+is a crate change for the tests that open the repository itself (`tests/skills.rs`,
+`tests/quality.rs` and their siblings) and for the `intent-check` gate, although no Rust
+moved, and those run only in the rust lanes. On 2026-10-13 an active skill named by neither
+`tests/skills.rs` nor case 391 was landed with the structure job green and turned the
+trunk's rust lane red an hour later; the structure job now refuses that omission itself (gate
+`skill-naming`), and the rule's clause 4 lists what each kind of change owes.
+
 **Every landing is a deployment and is verified as one**, as `project.land-and-publish`
 already requires of any merge.
 
@@ -86,6 +97,9 @@ already requires of any merge.
 the head is no longer the branch's head, or another run of the same workflow judges the same
 commit. The trunk's only run of a commit, a deployment in flight, a release run and another
 session's run on a current head are not stale and are not cancelled.
+A branch's run that has failed a job cannot be green, and the validation workflow cancels it
+from the failed job's last step; the trunk's run, the schedule's and a dispatch's are left to
+finish (I2664, case 3019).
 
 **A red on the trunk has one carrier**, named by the integrator.
 

@@ -1,7 +1,7 @@
 +++
 title = "A build never waits in silence behind another build's lock"
 description = "A build never waits in silence behind another build's lock"
-weight = 61
+weight = 63
 [extra]
 kind = "rule"
 slug = "project-a-build-never-waits-in-silence-on-anothers-lock-1"

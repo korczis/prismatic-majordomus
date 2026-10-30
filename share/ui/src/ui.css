@@ -14,7 +14,14 @@
    Every colour is a role, a status or a tone of share/design/tokens.yaml: no literal colour
    and no bracketed size, because the design gate refuses both. The markup names what a
    thing is and never a utility class, because this file compiles only what is written in
-   it (source(none)). */
+   it (source(none)) — with one exception, which is not the UI's markup at all.
+
+   The bar above every screen is majordomus.dev's (project.the-ui-wears-the-sites-navbar): the
+   site's partial, rendered by the site's build and compiled into the executable
+   (apps/majordomus-cli/src/ui/navbar.rs). It is written in the site's utilities, so this file
+   compiles exactly the utilities that file names, from the same Tailwind, the same Flowbite
+   theme and the same generated tokens the site's app.css compiles them from; scripts/ui navbar
+   holds the result to the site's, style by style. */
 
 @import "tailwindcss" source(none);
 @import "flowbite/src/themes/default";
@@ -25,6 +32,7 @@
 @import "../../design/primitives.css";
 @import "../../design/kit.css";
 @plugin "flowbite/plugin";
+@source "../../../apps/majordomus-cli/src/ui/navbar.html";
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
@@ -64,6 +72,9 @@
   }
   .mj-ui-mono {
     @apply font-mono;
+    /* a path, a rule id or a command is one word to the browser: at phone width it breaks
+       rather than widening the page (two rule pages measured 356 and 400 px at 320) */
+    overflow-wrap: anywhere;
   }
   .mj-ui-dim {
     color: var(--mj-muted);
@@ -81,11 +92,18 @@
   .mj-ui-frame {
     @apply flex min-h-screen w-full min-w-0;
   }
+  /* On a wide screen the sidebar stays in view beneath the site's bar, which stays at the top:
+     ui.js writes the bar's height into --ui-bar as it changes (a measurement of this page, not
+     a token), and without the script the sidebar sticks to the top of the window as before. */
   .mj-ui-sidebar {
     @apply fixed inset-y-0 left-0 z-40 hidden w-64 flex-col gap-6 overflow-y-auto px-4 py-5;
-    @apply lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-60 lg:shrink-0;
+    @apply lg:sticky lg:z-10 lg:flex lg:w-60 lg:shrink-0;
     background: var(--mj-raised);
     border-right: 1px solid var(--mj-line);
+    @variant lg {
+      top: var(--ui-bar, 0rem);
+      height: calc(100vh - var(--ui-bar, 0rem));
+    }
   }
   /* a narrow screen opens the sidebar from the menu button, with no script */
   .mj-ui-menu-toggle:checked ~ .mj-ui-frame .mj-ui-sidebar {
@@ -94,29 +112,6 @@
   .mj-ui-menu-toggle:focus-visible ~ .mj-ui-frame .mj-ui-menu-button {
     outline: 2px solid var(--mj-accent);
     outline-offset: 2px;
-  }
-  .mj-ui-brand {
-    @apply flex items-center gap-3 px-1 no-underline;
-    color: var(--mj-fg);
-  }
-  .mj-ui-mark {
-    @apply inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl p-1.5;
-    color: var(--mj-accent);
-    background: var(--mj-accent-soft);
-    border: 1px solid var(--mj-accent-line);
-  }
-  .mj-ui-mark > svg {
-    @apply h-full w-full;
-  }
-  .mj-ui-brand-text {
-    @apply flex min-w-0 flex-col leading-tight;
-  }
-  .mj-ui-brand-name {
-    @apply text-lg font-semibold tracking-tight;
-  }
-  .mj-ui-brand-sub {
-    @apply font-mono text-xs;
-    color: var(--mj-muted);
   }
   .mj-ui-nav-list {
     @apply m-0 grid list-none gap-1 p-0;
@@ -154,9 +149,10 @@
   .mj-ui-body {
     @apply flex min-w-0 flex-1 flex-col;
   }
-  /* below sm the search takes a row of its own, so it stays a target a thumb can hit */
+  /* below sm the search takes a row of its own, so it stays a target a thumb can hit; the bar
+     that stays at the top is the site's, above this one */
   .mj-ui-topbar {
-    @apply sticky top-0 z-30 flex flex-wrap items-center gap-3 px-4 py-3 sm:flex-nowrap lg:px-6;
+    @apply flex flex-wrap items-center gap-3 px-4 py-3 sm:flex-nowrap lg:px-6;
     background: var(--mj-bg);
     border-bottom: 1px solid var(--mj-line);
   }
@@ -249,6 +245,14 @@
   }
   .mj-ui-title {
     @apply text-3xl font-bold tracking-tight sm:text-4xl;
+  }
+  /* the screen's name above the title of the one record a screen shows */
+  .mj-ui-hero-titles {
+    @apply flex min-w-0 flex-col gap-0.5;
+  }
+  .mj-ui-eyebrow {
+    @apply text-xs font-semibold uppercase tracking-wide;
+    color: var(--mj-muted);
   }
   .mj-ui-tagline {
     @apply text-lg font-medium;
@@ -395,6 +399,10 @@
   .mj-ui-empty {
     @apply text-sm;
     color: var(--mj-muted);
+    /* an empty or unobserved panel says why in the source's words, which can hold a key or a
+       path with no place to break: a runner's "this machine's key <64 hex digits> is not in
+       trust.allow" made /ui 578 px wide at 320 (run 39115660488) */
+    overflow-wrap: anywhere;
   }
 
   /* Prose a record carries (ui/prose.rs): a milestone's problem and outcome, a list of
@@ -410,6 +418,18 @@
     @apply mb-3 max-w-prose list-disc space-y-1 pl-5 text-sm leading-relaxed;
     color: var(--mj-body);
     overflow-wrap: anywhere;
+  }
+  /* a command to reproduce: the code whole, wrapped rather than scrolled, its copy button beside it (I3002) */
+  .mj-ui-command {
+    @apply flex min-w-0 items-start gap-2;
+  }
+  .mj-ui-command-text {
+    @apply m-0 min-w-0 flex-1 rounded-lg px-3 py-2 font-mono text-xs;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    color: var(--mj-fg);
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
   }
   .mj-ui-code {
     @apply rounded px-1 py-0.5 font-mono text-small;
@@ -442,6 +462,12 @@
   }
   .mj-ui-badges {
     @apply flex flex-wrap gap-1;
+  }
+  /* a badge holding a long unbroken value (an intent id in a chip) shrinks with its row and
+     truncates inside, rather than widening the page: a flex item keeps its content's width
+     unless it is allowed to shrink (alpha.1 top, /ui/idd and /ui/roadmap at 320 px) */
+  .mj-ui-badges > * {
+    @apply min-w-0 max-w-full;
   }
 
   /* a meter: the bar is a picture of the two numbers written beside it */
@@ -644,5 +670,98 @@
     @apply m-0 font-mono text-lg font-semibold;
     color: var(--mj-fg);
     overflow-wrap: anywhere;
+  }
+
+  /* the Observatory (/ui/observatory, /ui/kiosk): a stage the script draws on, sized for a wall display.
+     Every word on it is set by the script from the projection the page carries. */
+  .mj-obs {
+    @apply relative w-full overflow-hidden rounded-xl;
+    aspect-ratio: 16 / 9;
+    background: var(--mj-bg);
+    border: 1px solid var(--mj-line);
+    color: var(--mj-fg);
+  }
+  .mj-obs:fullscreen {
+    @apply rounded-none;
+    aspect-ratio: auto;
+    border: 0;
+  }
+  .mj-obs--kiosk {
+    @apply fixed inset-0 z-50 rounded-none;
+    aspect-ratio: auto;
+    border: 0;
+  }
+  .mj-obs-canvas {
+    @apply absolute inset-0 block h-full w-full;
+  }
+  .mj-obs-noscript {
+    @apply m-0 p-6 text-sm;
+  }
+  .mj-obs-head,
+  .mj-obs-foot {
+    @apply pointer-events-none absolute inset-x-0 flex items-baseline gap-4 px-[3%] font-mono uppercase;
+    font-size: clamp(0.6rem, 1.15vw, 1.6rem);
+    letter-spacing: 0.14em;
+  }
+  .mj-obs-head {
+    @apply top-[4%];
+  }
+  .mj-obs-foot {
+    @apply bottom-[4%];
+  }
+  .mj-obs-brand,
+  .mj-obs-fact {
+    color: var(--mj-muted);
+  }
+  .mj-obs-title {
+    @apply mx-auto font-semibold;
+    letter-spacing: 0.32em;
+  }
+  .mj-obs-status {
+    @apply ml-auto;
+  }
+  .mj-obs-status[data-state='live'] {
+    color: var(--mj-tone-cyan-fill);
+  }
+  .mj-obs-status[data-state='stale'] {
+    color: var(--mj-tone-orange-fill);
+  }
+  .mj-obs-status[data-state='resynced'] {
+    color: var(--mj-tone-blue-fill);
+  }
+  .mj-obs-status[data-state='replay'] {
+    color: var(--mj-tone-orange-fill);
+  }
+  .mj-obs-status[data-state='snapshot'] {
+    color: var(--mj-tone-violet-fill);
+  }
+  .mj-obs-scene {
+    @apply font-semibold;
+  }
+  .mj-obs-fact {
+    @apply ml-auto normal-case;
+    letter-spacing: 0.02em;
+  }
+  .mj-obs-legend {
+    @apply absolute inset-x-[3%] bottom-[12%] m-0 rounded-lg p-3 text-sm;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+    color: var(--mj-fg);
+  }
+  .mj-obs-controls {
+    @apply absolute right-[3%] top-[11%] flex gap-1 opacity-0 transition-opacity;
+  }
+  .mj-obs:hover .mj-obs-controls,
+  .mj-obs:focus-within .mj-obs-controls {
+    @apply opacity-100;
+  }
+  .mj-obs-button {
+    @apply cursor-pointer rounded-md px-2 py-1 font-mono text-xs;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+    color: var(--mj-fg);
+  }
+  .mj-obs-button[aria-pressed='false'] {
+    color: var(--mj-muted);
   }
 }

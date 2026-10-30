@@ -1,0 +1,64 @@
+id: I3401
+milestone: a-paste-is-decomposed-by-a-skill
+title: "intents.propose writes no record for a multi-paragraph, Markdown or over-length statement and answers invalid_input, naming the canonical digest and the skill that decomposes it"
+slug: a-paste-is-refused-as-a-statement
+priority: p1
+profile: implementation
+objective: "Add a pure function in apps/majordomus-cli/src/intent.rs that says whether a trimmed statement is a brief: it holds a blank line between two non-blank lines, a line that opens a Markdown block (heading, list item, table row, code fence, block quote), or its canonical text exceeds a named constant bound. The canonical text is the statement with leading and trailing whitespace removed followed by exactly one line feed. The bound is the smallest power of two above the longest statement of a tracked intent on the issue's base (the longest statement line on 9904000d2df measures 846 bytes, so 1024 unless the base measures otherwise), stated in ADR 0144 with the command that measured it. propose() returns ProposeError::Invalid before any file is touched, with a message naming majordomus://skill/decompose-a-brief, the canonical text's byte length and sha256:<hex> of its UTF-8 bytes. Extend the Invalid variant's doc to cover a brief. Update the capability description, the intents README and the cli.rs example text, amend ADR 0144, and regenerate the projections."
+why: "The owner ordered on 2026-10-19 that a pasted text never be kept verbatim as an intent statement. The owner's report of 2026-10-19 lists false completion reports and silent failures as the problem class (T3 counts the interventions they cost), and a 50814-byte record with no criterion is such a silent failure: the propose call reports success while no work can serve it. The guard needs no model call; the judgement belongs to the worker who follows the skill (ADR 0098). The capability refuses rather than storing the campaign itself because ADR 0144 allows one new intent record and nothing else, the writers pin would change, and project.never-store-transcripts requires someone to decide whether the paste is a brief, a conversation or carries personal data. Reusing Invalid (whose doc reads 'the input cannot make a record') keeps the public, exhaustive ProposeError enum and the release contract unchanged. Depends on I3400 so the refusal never names a skill that is not on master."
+current_state: "apps/majordomus-cli/src/intent.rs:2327 trims the statement, 2333-2341 take its first line as the title and 2366 writes the whole statement. ProposeError at intent.rs:2251-2259 has Invalid, Exists and Write and is not non_exhaustive. apps/majordomus-cli/src/capability/builtin/intents.rs:460-462 maps Invalid to CapabilityError::InvalidInput (code invalid_input), 422 documents the statement as 'kept verbatim', 596 declares POST /api/v1/intents/propose, and 604-608 declare .skill(\"intent\", \"statement\"). ADR 0144's Decision (line 39) says the statement is written verbatim, and its Alternatives rejected (line 67) turn down plan records shaped by the model's guess. The description text appears in 15 tracked files (git grep -l 'no work can serve it until it is planned'), including .ai/repo/project/intents/README.md:30-32 and cli.rs. Only 5 intents are tracked on master, the longest statement line measuring 846 bytes."
+desired_state: "The command line, MCP and HTTP refuse a brief the same way and write nothing. A one-paragraph statement within the bound is written exactly as before, and the refusal carries what a worker needs to continue: the skill, and a digest and byte length the stored campaign file must reproduce."
+scope:
+  - "apps/majordomus-cli/src/intent.rs"
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/tests/intent.rs"
+  - "test/cases/2978_an_intent_is_proposed_by_a_capability.sh"
+  - ".ai/repo/adrs/0144-an-intent-is-proposed-by-a-capability-and-its-stage-stays-derived.md"
+  - ".ai/repo/project/intents/README.md"
+  - "site/content/adrs/adr-0144.md"
+  - "site/content/registry/capabilities/intents-propose.md"
+  - "site/data/generated/cli.json"
+  - "site/data/generated/openapi.json"
+  - "site/data/registry/registry.json"
+  - "docs/generated/capabilities.md"
+  - "docs/generated/modules/intents.md"
+  - "docs/generated/cli.json"
+  - "docs/generated/cli.md"
+  - "docs/generated/cli.yaml"
+  - "docs/generated/registry.json"
+  - "docs/generated/registry.yaml"
+  - "docs/generated/openapi.json"
+  - "docs/generated/openapi.yaml"
+non_scope:
+  - "Writing a campaign, or any file but the one intent record, from intents.propose"
+  - "A new input field that overrides the guard"
+  - "A new ProposeError or CapabilityError variant, or a change to the output type Proposed"
+  - "Transliteration of non-ASCII letters in proposed ids"
+  - "The /intent alias text (I3402), the domain skills (I3405) and the UI rendering (I3403)"
+depends_on:
+  - "I3400"
+serves:
+  - "a-brief-is-reconciled-into-the-plan#a-paste-is-decomposed-not-stored-verbatim"
+acceptance_criteria:
+  - "Precondition: majordomus intent preflight for this issue passes from a branch of master that holds I3400"
+  - "Over the command line, over MCP and over HTTP POST /api/v1/intents/propose (the Served helper in tests/common), a two-paragraph statement, a statement opening with '# ', one holding a '- ' list item, a table row, a fence or a block quote, and a one-paragraph statement over the bound are each answered with error code invalid_input. The listing of .ai/repo/project/intents is byte-identical before and after each call"
+  - "The message contains majordomus://skill/decompose-a-brief, the canonical text's byte length and sha256: followed by the digest of the trimmed statement plus one line feed; the test computes that digest independently and compares it, including for a statement given with leading and trailing whitespace"
+  - "A one-paragraph statement with several sentences and non-ASCII letters within the bound is written as before, and every existing assertion of case 2978 still passes"
+  - "The brief test is a pure function with a doctest for each block form, for a long single line within the bound (not a brief), for one over the bound, and for an indented continuation line inside one paragraph"
+  - "A test reads every tracked intent under .ai/repo/project/intents and asserts its statement is within the bound, so the constant stays pinned by what it measures"
+  - "The test the_capabilities_that_write_the_repository_are_these in apps/majordomus-cli/src/capability/builtin/mod.rs is unchanged and passes"
+  - "ADR 0144's Decision states the refusal and the bound with the command that measured it, its Alternatives say why a decomposition the worker drafts under a critique and plan validate differs from the rejected model-guessed plan, and majordomus adr check passes"
+  - "majordomus generate --check is clean"
+validation:
+  - "cargo test -p majordomus-cli --test intent"
+  - "cargo test -p majordomus-cli --lib intent::"
+  - "cargo test -p majordomus-cli --doc intent"
+  - "cargo test -p majordomus-cli --lib capability::builtin::"
+  - "bash test/run.sh 2978_an_intent_is_proposed_by_a_capability"
+  - "majordomus adr check"
+  - "majordomus generate --check"
+evidence_required:
+  - "test_a_pasted_brief_is_refused_naming_the_skill"
+created_at: 2026-10-19
+updated_at: 2026-10-19

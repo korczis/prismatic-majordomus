@@ -33,4 +33,21 @@ evidence_required:
   - "record_reopened_once_under_the_lease_case"
   - "reopen_trail_first_unit_tests"
 created_at: 2026-10-10
-updated_at: 2026-10-10
+updated_at: 2026-10-14T08:00:09Z
+started_at: 2026-10-14T08:00:01Z
+started_event: sha256:564762183049b21d3e969748b5334ed91cf0c80aadfd7cf67261a4ac5136548c
+completed_at: 2026-10-14T08:00:09Z
+completed_event: sha256:795a69efbe4ccba1fc4222dd491777f363f203071f77cef682957a034c8809c5
+evidence:
+  - covers: record_reopened_once_under_the_lease_case
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 1036_the_executor_reopens_a_record_pull_request"
+    result: "tests: 1 passed, 0 failed, 0 skipped (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T08:00:05Z
+  - covers: reopen_trail_first_unit_tests
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test integration_record_reopen"
+    result: "test result: ok. 3 passed; 0 failed (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T08:00:07Z

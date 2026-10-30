@@ -77,7 +77,10 @@ fixture() {
 
 # What the site serves: the identity document the model names, and a page whose footer names a
 # commit the way every rendered page does. The two are produced by different steps of one
-# deploy, which is why the gate reads both.
+# deploy, which is why the gate reads both. The body links a commit of its own before the
+# footer, as the homepage's delivery counts link the commit delivery.json observed: the gate
+# reads the footer's commit, never the first one on the page (the 0.30.1 top's pages job read
+# 32924dc there while the footer named 2dfff96).
 #
 # And the release it offers, on the three surfaces the site owns: the homepage's trust strip,
 # build.json's `release`, and releases/latest.json. The fourth argument is what the homepage
@@ -87,7 +90,7 @@ serve() {
   rm -rf "$dir"; mkdir -p "$dir/releases"
   jq -n --arg c "$identity_commit" --arg v "$offer" \
     '{schema: 1, commit: $c, dirty: false, release: {version: $v}}' > "$dir/build.json"
-  printf '<html><body><dl data-trust><div data-trust-key="release" data-release="%s"><dd>%s</dd></div></dl>\n<a href="https://example.invalid/commit/%s">%s</a></body></html>\n' \
+  printf '<html><body><dl data-trust><div data-trust-key="release" data-release="%s"><dd>%s</dd></div></dl>\n<p>delivery inferred at <a href="https://example.invalid/commit/0123456789abcdef0123456789abcdef01234567">0123456789a</a></p>\n<footer><a href="https://example.invalid/commit/%s">%s</a></footer></body></html>\n' \
     "$offer" "$offer" "$footer_commit" "$footer_commit" > "$dir/index.html"
   jq -n '{schema: "release/v1", version: "0.21.0", tag: "v0.21.0"}' > "$dir/releases/latest.json"
   # and what the model says a publication holds beside its pages (the UI's snapshot), read at

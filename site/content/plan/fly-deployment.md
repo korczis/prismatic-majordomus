@@ -1,6 +1,6 @@
 +++
-title = "fly-deployment — A deployment is a projection of the repository model, and a reachable URL is its evidence"
-description = "One canonical deployment object under .ai/repo/deployments/ describes the deployment; a typed Rust model parses and validates it; the container image, the Fly configuration, the smoke suite, the doctor checks, the documentation, the cockpit view and the CI jobs are all projections of that object and of the capability registry, and every one of them is checked for drift. The service runs on Fly.io on a single shared-CPU Machine that stops when idle, its health and readiness are verified from outside, the smoke suite is derived from the route registry rather than written twice, and the deployed URL answers."
+title = "fly-deployment — The container image is a projection of the repository model, and its smoke is its evidence"
+description = "One canonical deployment object under .ai/repo/deployments/ describes the image; a typed Rust model parses and validates it; the Dockerfile, its ignore file, the GHCR image that docker-image.yml and release.yml build, its smoke derived from the route registry, the doctor checks, the documentation and the cockpit view are projections of that object and of the capability registry, each checked for drift. The published image runs as a non-root user, carries no secret and no developer path, answers live and ready in its smoke, and has measured size, cold-start and memory baselines. Re-scoped 2026-10-14 from a Fly.io deployment, which the owner disconnected on 2026-10-12."
 weight = 13
 template = "milestone.html"
 [extra]

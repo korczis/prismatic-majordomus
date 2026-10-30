@@ -26,6 +26,7 @@ use serde_json::{json, Value};
 
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
+use crate::order::{canonical, OrderKey, Ordered};
 
 /// Console width a caller that names none gets.
 pub(crate) const DEFAULT_WIDTH: u16 = 78;
@@ -114,6 +115,15 @@ pub struct ClusterMilestone {
     pub blocked: u32,
     /// Issues being worked.
     pub active: u32,
+}
+
+/// The milestones being worked first, then the furthest along, then by id: the one order
+/// the page, the panel and the JSON answer share.
+impl Ordered for ClusterMilestone {
+    fn order_key(&self) -> OrderKey<'_> {
+        let group = if self.active > 0 { "being worked" } else { "waiting" };
+        OrderKey::grouped(group, &self.id, &self.id).descending(u64::from(self.percent))
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -375,13 +385,8 @@ fn milestones_of(plan: &Value) -> (Vec<ClusterMilestone>, u32, u32, u32) {
     }
     let total = all.len() as u32;
     let left_out = open.len().saturating_sub(MILESTONES_SHOWN) as u32;
-    // the milestones being worked first, then the ones with the most left to do
-    open.sort_by(|a, b| {
-        (b.active > 0)
-            .cmp(&(a.active > 0))
-            .then(b.percent.cmp(&a.percent))
-            .then(a.id.cmp(&b.id))
-    });
+    // the milestones being worked first, then the furthest along (`Ordered` above)
+    canonical(&mut open);
     open.truncate(MILESTONES_SHOWN);
     (open, done, total, left_out)
 }

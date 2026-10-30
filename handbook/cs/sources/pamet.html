@@ -306,7 +306,10 @@ x-majordomus:                     <span class="c"># vazba na nástroj, jen u vyn
 ---</code></pre></div>
       <p>Pravidlo se v <code>rules list</code> ukáže jedním ze tří způsobů vynucení: <code>enforced by &lt;příkazy&gt;</code> (pouští ho dispatcher), <code>proven by &lt;cesty&gt;</code> (drží ho gate nebo test) nebo <code>review-enforced: &lt;důvod&gt;</code> (žádný program ho neumí vyjádřit, například clean-room). Pravidlo bez bloku <code>x-majordomus</code> se vypíše jako <code>no validator; see the rule</code>, nic se neschovává.</p>
       <h3>Pravidlo platí, až když projde celým řetězem</h3>
-      <div class="code"><pre><code>principle → doctrine → validator → enforcement point → propagation (exit code) → test → CI → claim</code></pre></div>
+      <pre class="mermaid-src" data-lang="mermaid">flowchart LR
+  principle["principle"] --&gt; doctrine["doctrine"] --&gt; validator["validator"]
+  validator --&gt; point["enforcement point"] --&gt; propagation["propagation<br/>(exit code)"] --&gt; test["test"]
+  test --&gt; ci["CI"] --&gt; claim["claim"]</pre>
       <p><code>majordomus doctor</code> tento řetěz projde pro každou doktrínu a nahlásí první přerušený článek. Čte přitom zdrojový kód, ne popis registru o sobě samém. Motivace pochází z praxe: 17 nezávislých případů kontroly, která byla zdokumentovaná jako blokující, ležela na disku, byla spustitelná, a nic ji nevolalo. <code>scripts/ci/rule-proof-check</code> navíc vyžaduje, aby každé blokující pravidlo jmenovalo validátor, test nebo zdůvodnění, proč ho vynucuje člověk. Pravidla bez důkazu jsou v ratchetu, který se může jen zmenšovat. Řeší se zapojením vynucení, nikdy změnou třídy.</p>
       <ul>
         <li><strong>Rozlišení selže uzavřeně.</strong> Chybějící závislost, cyklus, jedno <code>id@version</code> ve dvou souborech nebo neznámý klíč zastaví <code>list</code>, <code>show</code> i každý příkaz, který sadu čte. Nic se neaplikuje napůl.</li>

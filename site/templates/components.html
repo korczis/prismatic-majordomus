@@ -128,13 +128,15 @@
 </div>
 {% endcomponent landing_head %}
 
-{#- A data-derived Mermaid diagram from diagrams.json, with provenance. Source visible without JS. -#}
+{#- A data-derived Mermaid diagram from diagrams.json, with provenance. Source visible without JS.
+    The diagram is named by its key in that file, which is what its address is derived from
+    (`#diagram-<key>`, scripts/lib/diagrams.mjs); the viewer is site/diagrams.js (ADR 0152). -#}
 {% component diagram(key) %}
 {%- set d = load_data(path="data/generated/diagrams.json") -%}
 {%- set g = d.diagrams[key] -%}
 <figure class="not-format my-6 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
   <figcaption class="flex flex-wrap items-baseline justify-between gap-2 border-b border-default px-4 py-2"><span class="text-sm font-medium text-heading">{{ g.title }}</span><span class="font-mono text-xs text-body-subtle">from {{ g.source }}</span></figcaption>
-  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 min-w-[20rem] bg-transparent font-mono text-xs text-heading [&_svg]:mx-auto [&_svg]:block">{{ g.mermaid }}</pre></div>
+  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 min-w-[20rem] bg-transparent font-mono text-xs text-heading [&_svg]:mx-auto [&_svg]:block" data-diagram="{{ key }}">{{ g.mermaid }}</pre></div>
 </figure>
 {% endcomponent diagram %}
 
@@ -195,10 +197,12 @@
 {% endcomponent plan_list %}
 
 {#- The dependency graph, drawn from the canonical edges. Scrolls inside its own container so
-    a wide graph never makes the page scroll sideways on a phone. -#}
-{% component plan_graph(mermaid, caption) %}
+    a wide graph never makes the page scroll sideways on a phone. `name` is the identity of what
+    the graph is of (the plan, a milestone's id) and becomes its address, `#diagram-<name>`; every
+    node is an issue id, which is what the build links to that issue's page. -#}
+{% component plan_graph(mermaid, caption, name) %}
 <figure class="not-format my-6 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
   <figcaption class="flex flex-wrap items-baseline justify-between gap-2 border-b border-default px-4 py-2"><span class="text-sm font-medium text-heading">{{ caption }}</span><span class="font-mono text-xs text-body-subtle">from .ai/repo/project</span></figcaption>
-  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading">{{ mermaid }}</pre></div>
+  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" data-diagram="{{ name }}">{{ mermaid }}</pre></div>
 </figure>
 {% endcomponent plan_graph %}

@@ -1,0 +1,26 @@
+id: I2714
+milestone: development-runtime
+title: "One build directory never serves two worktrees' jobs at once"
+slug: a-build-dir-serves-one-worktree
+priority: p1
+profile: implementation
+parallel_safe: true
+depends_on: []
+objective: "Prevent a build directory set through CARGO_BUILD_BUILD_DIR from being used by jobs of two different worktrees at the same time, so that one job's build cannot replace the artifacts another job is testing."
+why: "2026-10-14 ~17:30Z: the rust job judging I1501 ran in the private build directory b6-zeta while a landing chain of another worktree and an agent built there too; about 600 doctests failed with \"no such file ... libmajordomus_cli-8669a524ae357c6a.rlib\" and projection-closure \"could not answer\". None of it was the head's defect; the 40-minute job had to be rerun. ADR 0139 keys the default build directory per worktree, but an exported CARGO_BUILD_BUILD_DIR overrides it for every worktree that inherits it."
+current_state: "mj_cargo_bounded waits on cargo's lock and falls back to a private directory only when the shared one is busy beyond a minute; an explicitly exported directory used by two worktrees is accepted silently."
+desired_state: "A build records which worktree holds its build directory while it runs; a build from a different worktree that finds the directory held refuses, or moves to a directory of its own, and says so, before it compiles anything."
+scope:
+  - lib/rust_bin.sh
+  - docs/DEVELOPMENT_RUNTIME.md
+  - .ai/repo/adrs/0139-*.md
+  - test/cases
+acceptance_criteria:
+  - "Two worktrees building with the same CARGO_BUILD_BUILD_DIR at once: the second refuses or relocates with a line naming the holder"
+  - "One worktree's repeated builds in its own directory are unaffected"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "build_dir_has_one_holder_case"
+created_at: 2026-10-14
+updated_at: 2026-10-14

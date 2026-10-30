@@ -1,0 +1,42 @@
+id: recovery-from-injected-faults-is-proven
+title: "A killed worker, a cut connection and a conflict are injected on purpose, and recovery is proven without lost work or duplicate completion"
+slug: recovery-from-injected-faults-is-proven
+order: 208
+priority: p1
+problem: "T5 of the owner's report of 2026-10-19 asks to kill a worker, cut a connection and cause a conflict, then prove recovery without loss or duplicate completion of work. The mesh lab proves the mesh layer recovers (test/mesh-lab/run scenarios claim_conflict, network_partition, process_crash_recovery), but no scenario holds a task, and nothing counts completions per issue or checks that a task's commits survived. Recovery of the record stores is covered by case 135, but not as a work-level trial."
+outcome: "A conservation reading counts completions per issue, unreachable commits, stranded claims and multiply-consumed handovers; the T5 protocol registers three fault kinds; mesh lab scenarios and live single-host trials inject them; the T5 row publishes every trial."
+current_state: "test/mesh-lab/run:187-245 runs scenarios on claims, handovers, partition and crash, each judged by scripts/ci/mesh-lab-evidence and case 414. apps/majordomus-cli/src/mesh/state.rs:274 and :313 say consumed_by keeps two workers from both resuming a handover; mesh/handover.rs:15 says materializing the same handover twice writes one file. share/events.yaml:152-158 declares session.recovered. I3198 (lease-based assignment that returns when its lease is lost) is BLOCKED at p3 and is not on master."
+desired_state: "economics tasks carries a conservation section; T5 trials are committed for each fault kind; the mesh lab's evidence includes the work-level scenarios."
+scope:
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/src/economics/mod.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "test/mesh-lab/run"
+  - "test/mesh-lab/node-entrypoint"
+  - "scripts/ci/mesh-lab-evidence"
+  - "test/cases/414_mesh_lab_evidence.sh"
+  - "docs/CLAIMS.yaml"
+  - "docs/MESH.md"
+  - ".ai/repo/benchmarks"
+  - "docs/generated/economics.json"
+  - "docs/generated/economics.md"
+  - "docs/generated/economics.yaml"
+  - "site/data/generated/economics.json"
+non_scope:
+  - "Lease-based assignment and its return (I3198, I3199)"
+  - "Supervision repairs (I3183)"
+  - "Running faults in this repository's own checkouts; trials run in throwaway clones"
+  - "Killing any process the trial did not start"
+acceptance_criteria:
+  - "The conservation reading names every violation with its records, and a clean run reads zero violations"
+  - "Each registered fault kind has its registered number of trials committed, each with its conservation reading"
+  - "The mesh lab's required scenario set includes the work-level scenarios, and case 414 holds it"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+risks:
+  - "The mesh lab needs docker; it runs in its CI job, and a local run is optional"
+  - "A killed session's uncommitted edits are lost by construction; the trial counts committed work, and the protocol says so"
+  - "Faults are injected by exact pid, never by name (rule project.reclaim-only-what-you-own)"
+created_at: 2026-10-19
+updated_at: 2026-10-19

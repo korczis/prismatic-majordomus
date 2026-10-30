@@ -1,0 +1,45 @@
+id: I2528
+milestone: a-derive-does-only-the-work-its-inputs-changed
+title: "The UI shows the derivation graph and its last plan, and one documentation page explains the model"
+slug: the-derivation-graph-is-shown-and-documented
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Show the derivation graph, the state of each node and the reason for it on one screen of majordomus ui, reading the capabilities of I2522 and I2524 and nothing else, and complete the documentation of the model in docs/DERIVE.md so that the published site carries it."
+why: "campaigns/majordomus-incremental-derive-prompt-pack/11_11_UI_DOCS_PAGES.md asks for the graph, node states, affected outputs, the last run and the invalidation explanations in the existing interface without a second scheduler in the front end, and for documentation generated from the same registry with no manual node inventory. The brief names the Cockpit; ADR 0135 has since made majordomus ui the primary surface, and ADR 0142 requires that a screen reads and never executes."
+current_state: "No screen under apps/majordomus-cli/src/ui shows derivation. docs/GITHUB_PAGES_ARCHITECTURE.md draws the stages A to C by hand in a diagram. The session brief reports the derive queue and nothing reports a node."
+desired_state: "A screen at /ui/derive lists the nodes in graph order with state, reason, outputs and the time of the last run, links each node to its outputs, and says unknown where no run is recorded. It issues no command. docs/DERIVE.md describes the graph model, the key, the plan states, the full mode and how to add a node, and takes its list of nodes from the generated reference rather than repeating it; the hand-drawn stage diagram points at the generated graph."
+scope:
+  - "apps/majordomus-cli/src/ui/derive.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/src/ui/shell.rs"
+  - "apps/majordomus-cli/tests/ui_surface.rs"
+  - "apps/majordomus-cli/tests/ui_links.rs"
+  - "docs/DERIVE.md"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
+  - "docs/MAJORDOMUS_UI.md"
+  - "README.md"
+  - ".ai/repo/project/issues/I2528.yaml"
+non_scope:
+  - "A control that starts a derive from the browser"
+  - "A page in the superseded Cockpit"
+  - "A list of nodes written by hand in any document"
+  - "Publishing to GitHub Pages by any route other than the existing workflow"
+depends_on:
+  - "I2524"
+acceptance_criteria:
+  - "The screen renders every node the derive.graph capability answers, and a node added to the graph appears with no edit to the screen"
+  - "A node with no recorded run is shown as unknown, never as current"
+  - "The screen answers while a derive holds the machine lock, within the bound the other screens are held to"
+  - "Every node and output the screen names is a link that resolves"
+  - "docs/DERIVE.md contains no enumerated list of nodes, and the documentation gates pass"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_surface --test ui_links"
+  - "majordomus generate --check"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 547_the_ui_says_only_what_is_derived"
+evidence_required:
+  - "ui_derive_screen"
+  - "unknown_is_not_current"
+created_at: 2026-10-13
+updated_at: 2026-10-13

@@ -1,0 +1,43 @@
+id: I2678
+milestone: development-runtime
+title: "The public Observatory replays events that were recorded, and says it is a replay"
+slug: the-public-observatory-replays-what-was-recorded
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Let the three scenes of the mesh move on the public site without inventing a single event: from a capture of real events, redacted, with its manifest, labelled as a recorded replay with its original times."
+why: "ADR 0158 refuses a scene drawn from anything that was not read, and the process that takes the public snapshot runs no mesh, so on majordomus.dev the scenes mesh, activity and coop are unavailable. The owner's specification of 2026-10-14 allows exactly one way to show them there: a replay of genuinely recorded events, never labelled live."
+current_state: "The snapshot of /ui/observatory names mesh, activity and coop as unavailable with the reason mesh.peers gives in a process without a mesh. No capture of mesh events is tracked, and no capability answers one."
+desired_state: "A capture is a tracked, redacted record of real mesh events with a manifest: the window, the source capabilities, the original identities, what was removed and why. A capability answers it, the Observatory draws it under the words RECORDED REPLAY with the events' own times, and without a capture the scenes stay unavailable."
+scope:
+  - "apps/majordomus-cli/src/ui/observatory.rs"
+  - "share/ui/observatory.js"
+  - "docs/MAJORDOMUS_UI.md"
+  - ".ai/repo/project/issues/I2678.yaml"
+non_scope:
+  - "Synthetic events of any kind outside a test harness"
+  - "Publishing intents, paths or message bodies of the mesh: an event stays its identity, kind, node and times"
+depends_on: []
+acceptance_criteria:
+  - "The public snapshot draws the mesh scenes only from a capture whose manifest it names, under a label that says replay, with the original times"
+  - "A capture with an event whose source record is absent is refused, and the refusal names the event"
+  - "Without a capture the three scenes are unavailable, as case 3011 holds today"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 3011_the_observatory_draws_nothing_it_did_not_read"
+evidence_required:
+  - "recorded_replay_case"
+created_at: 2026-10-14
+updated_at: 2026-10-14T12:31:34Z
+started_at: 2026-10-14T12:31:15Z
+started_event: sha256:6377b126998db5e7451ec2deb1f8763ebd04e2decdd20b9d179309767d2236b4
+completed_at: 2026-10-14T12:31:34Z
+completed_event: sha256:bf10bb1215e4d78abe345664e6397452df79f92a5a8b7ed9a7b595117554a7f1
+evidence:
+  - covers: recorded_replay_case
+    type: test
+    command: "bash test/run.sh 3011_the_observatory_draws_nothing_it_did_not_read"
+    result: "ok (run 2026-10-14 on 753449f908, part of #1129's 7 cases): a mesh scene replays the recording labelled with when it was recorded and its manifest's sources; scenes the recording does not carry stay unavailable; a broken recording is a failed source"
+    artifact: "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh"
+    commit: 2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d
+    recorded_at: 2026-10-14T12:31:28Z

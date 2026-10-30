@@ -1,0 +1,44 @@
+id: a-change-is-judged-in-minutes
+title: "A change is derived in under a second and judged in minutes, and nothing that could have changed is skipped"
+statement: "The owner should never wait on the toolchain for a change that touched little. An ordinary derive finishes in under a second. A pull request's required verdict arrives within five minutes. Both are measured and enforced, and the speed comes from not repeating work whose inputs did not move, never from weakening a gate."
+invariants:
+  - "The full derive (scripts/derive --full, introduced by I2525) and scripts/derive-check stay the oracle; an incremental result is byte-identical to a full one"
+  - "A reused result is reported as inputs_unchanged, never as proven (ADR 0041)"
+  - "Unknown impact selects everything; a cache miss or corruption costs time, never correctness (rule project.cache-is-invisible)"
+  - "The executable's generation identity is checked on every reuse (rule project.a-tool-that-cannot-match-the-tree-refuses)"
+  - "Invalidation follows git index semantics; mtime is a hint only (rule project.a-derive-sees-what-the-commit-will)"
+non_goals:
+  - "A cold full rebuild under one second"
+  - "A second derivation engine, scheduler or cache registry beside generate.rs and scripts/ci-plan (rules project.no-new-nouns, project.derived-once)"
+  - "Moving a required check to nightly or making it advisory to reach a number"
+  - "Mandatory mesh discovery on the derive critical path"
+milestones:
+  - "a-derive-answers-within-a-second"
+  - "a-change-is-judged-in-minutes"
+satisfaction:
+  - id: unchanged-tree-derive-is-sub-second
+    criterion: "A warm derive of an unchanged tree finishes under 1 s p95 on the declared reference machine and runs no generator (planned proof: the derive bench --check case of I3236 (no-op scenario) and case warm_no_op_runs_no_generator of I2525)"
+    evidence: command
+    ref: "majordomus intent explain a-change-is-judged-in-minutes"
+  - id: one-input-derive-is-sub-second
+    criterion: "A derive after one changed canonical input finishes under 1 s p95, excluding a cold executable build (planned proof: the derive bench --check case of I3236 (one-input scenario))"
+    evidence: command
+    ref: "majordomus intent explain a-change-is-judged-in-minutes"
+  - id: incremental-equals-full
+    criterion: "For every fixture, an incremental derive under any node order and worker count leaves the same bytes as a full derive, deletions included (planned proof: case incremental_equals_full_case of I2527 plus randomized_order_equals_full_case of I3236)"
+    evidence: command
+    ref: "majordomus intent explain a-change-is-judged-in-minutes"
+  - id: pr-verdict-within-five-minutes
+    criterion: "Required pull-request validation reaches a binding verdict within 300 s p95 from validation start, with queue wait reported separately (planned proof: the integration.timings window case of I3242 (p95 over a declared window of runs, queue wait apart))"
+    evidence: command
+    ref: "majordomus intent explain a-change-is-judged-in-minutes"
+  - id: no-required-check-is-dropped
+    criterion: "Every gate the plan does not run carries the proof that nothing it reads changed, and an omitted dependency turns a gate red (planned proof: case impact_selection_never_skips_an_affected_case of I3238, with I2348's gate_result_reuse_case and I2527's omitted_edge_turns_the_gate_red)"
+    evidence: command
+    ref: "majordomus intent explain a-change-is-judged-in-minutes"
+  - id: a-regression-fails-its-budget
+    criterion: "A derive or CI path that regresses past its noise-aware budget fails a gate and names the stage that caused it (planned proof: the derive bench --check case of I3236 (extends test/cases/82_bench_check.sh) and the per-job budget gate case of I3242)"
+    evidence: command
+    ref: "majordomus intent explain a-change-is-judged-in-minutes"
+created_at: 2026-10-18
+updated_at: 2026-10-18

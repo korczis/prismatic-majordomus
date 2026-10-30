@@ -23,13 +23,17 @@ use super::ServiceAvailability;
 /// caller's clock runs: polling `try_wait` from here instead would deadlock the moment a
 /// child wrote more than a pipe buffer. On expiry the child is killed and `None` comes
 /// back; a caller that cannot say what it wanted must say that, not guess.
+///
+/// A program written a moment ago can still be open for writing in a child another thread
+/// forked meanwhile, and exec then fails with ETXTBSY; it is started through
+/// `crate::process::retrying_busy`, as every other freshly written program is, rather than
+/// reported as absent (#2501's coverage run: a stand-in sccache "does not answer --version").
 pub fn bounded_output(command: &mut Command, budget: Duration) -> Option<Output> {
-    let child = command
+    command
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .ok()?;
+        .stderr(Stdio::piped());
+    let child = crate::process::retrying_busy(|| command.spawn()).ok()?;
     // The child's id, kept here so it can still be signalled after the waiting thread
     // has taken ownership of the `Child` itself.
     #[cfg(unix)]
@@ -102,6 +106,28 @@ pub fn authority(url: &str) -> Option<(String, u16)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A program still open for writing when it is asked to run is waited for, not read as
+    /// absent: the writer here lets go after a moment, as a forked child does at its exec.
+    #[cfg(unix)]
+    #[test]
+    fn a_program_still_being_written_is_run_once_it_is_let_go() {
+        use std::io::Write;
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().unwrap();
+        let program = dir.path().join("probe-me");
+        let mut held = std::fs::File::create(&program).unwrap();
+        held.write_all(b"#!/bin/sh\necho answered\n").unwrap();
+        std::fs::set_permissions(&program, std::fs::Permissions::from_mode(0o755)).unwrap();
+        let writer = std::thread::spawn(move || {
+            std::thread::sleep(Duration::from_millis(300));
+            drop(held);
+        });
+        let out = bounded_output(&mut Command::new(&program), Duration::from_secs(10))
+            .expect("the program runs once nothing holds it open for writing");
+        writer.join().unwrap();
+        assert_eq!(String::from_utf8_lossy(&out.stdout), "answered\n");
+    }
 
     #[test]
     fn a_command_that_finishes_gives_its_output() {

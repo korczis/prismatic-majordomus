@@ -228,7 +228,7 @@ const RECORDS: &str = ".ai/repo/releases/";
 /// tag it records. What makes it the record is the file it adds, not the paths around it;
 /// a change that edits a record already written is no record pull request, and owes the
 /// floor like any other.
-fn records_release_of(trunk: Version, added: &[String]) -> Option<String> {
+fn records_release_of(trunk: &Version, added: &[String]) -> Option<String> {
     let path = format!("{RECORDS}v{trunk}.yaml");
     added.contains(&path).then_some(path)
 }
@@ -264,7 +264,8 @@ fn floor_in(mode: Mode, floor: Impact) -> Impact {
 /// };
 /// let trunk = Version::parse("0.20.0").unwrap();
 /// // a plan record alone is exempt from the floor, and so allocates nothing
-/// let d = decide(trunk, Impact::None, &policy, &[".ai/repo/project/issues/I9.yaml".into()]);
+/// let plan = [".ai/repo/project/issues/I9.yaml".to_string()];
+/// let d = decide(trunk.clone(), Impact::None, &policy, &plan);
 /// assert_eq!(d.next_version, "0.20.0");
 /// assert_eq!(d.exemption.unwrap().id, "plan-records");
 /// // a breaking change below 1.0.0 costs a minor, which the floor already asks
@@ -300,7 +301,7 @@ pub fn decide(
 ///     "docs/INSTALL.md".to_string(),
 /// ];
 /// // the record pull request adds the record, and lands at the release's number
-/// let d = decide_adding(trunk, Impact::None, &policy, &changed, &changed[..1]);
+/// let d = decide_adding(trunk.clone(), Impact::None, &policy, &changed, &changed[..1]);
 /// assert_eq!(d.next_version, "0.20.0");
 /// // a change that edits the record already written owes the floor
 /// let d = decide_adding(trunk, Impact::None, &policy, &changed, &[]);
@@ -313,10 +314,10 @@ pub fn decide_adding(
     changed: &[String],
     added: &[String],
 ) -> LandingDecision {
-    let compat = CompatPolicy::for_version(trunk);
+    let compat = CompatPolicy::for_version(trunk.clone());
     let required = compat.required_of(observed);
     let exemption = exemption_for(policy, changed);
-    let record = records_release_of(trunk, added);
+    let record = records_release_of(&trunk, added);
     // a floor speaks the version's mode as compatibility does: below 1.0.0 nothing costs a
     // major, so a `major` floor asks a minor there; a change of nothing is no landing; and
     // the record of the release the trunk already declares lands at that release's number,
@@ -327,7 +328,7 @@ pub fn decide_adding(
         floor_in(compat.mode, policy.floor)
     };
     let selected = required.max(floor);
-    let next = trunk.raised_to(selected);
+    let next = trunk.clone().raised_to(selected);
 
     let mut explanation = vec![
         format!("the trunk declares {trunk}"),

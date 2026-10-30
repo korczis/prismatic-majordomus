@@ -1,0 +1,54 @@
+id: I2850
+milestone: truthful-plan-surfaces
+title: "the published PR Drain carries its pull requests, and counts pull requests rather than plan issues"
+slug: the-published-pr-drain-carries-its-pull-requests
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "A UI page the snapshot writes carries every slow panel the screen defers to its script, already read, in the place the script would have put it: the published /ui/prs shows the drain, the Dashboard its pull requests and Deployments its delivery. The PR Drain's counts are the integration queue's own, one card per lane the queue counted, each a link to that lane."
+why: "Found by the landing seat on 2026-10-18 at master 707a04c7ce8 (v0.29.0), from a screenshot of the published https://majordomus.dev/ui/prs/ at 1440 px. The screen showed no pull request at all, only the placeholder line 'Open the drain on its own page', because the snapshot's script fetches no panel. Its hero counted plan issues from plan.status (ready 86, blocked 159), not pull requests. The drain's own cards were three lanes typed in the screen ('repair', 'waiting', 'held'), so a lane the queue adds was never counted."
+current_state: "The snapshot writes each screen as its first paint: a slow panel is a placeholder with a link. The PR Drain's hero reads plan.status; its tally strip names three lanes literally."
+desired_state: "The snapshot asks every page with the X-Majordomus-Snapshot header. The UI then replaces each data-panel-src placeholder with the panel's own view, through one dispatcher the server also routes by. The live UI still paints first and defers. The PR Drain's hero reads no plan source, and its strip has an Open card, one card per lane in /queue/tallies/by_lane linked to ?lane=<word>, and the merge throughput."
+scope:
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/src/ui/prs.rs"
+  - "apps/majordomus-cli/src/web/report/snapshot.rs"
+  - "apps/majordomus-cli/src/cockpit/html.rs"
+  - "docs/MAJORDOMUS_UI.md"
+  - "test/cases/3240_the_published_screens_carry_their_slow_panels.sh"
+non_scope:
+  - "The rest of the /ui/prs plan the landing seat relayed: the reading order (what can land, what blocks, issue, milestone, intent), every id a link both ways, ui::prose, one primary action per PR and moves disabled as live only. These are separate issues of this block, after the alpha where they are features."
+  - "The gate that every mj-ui-* class a screen emits is defined (taken over from I2905; claim.rs and intent.rs still emit the undefined mj-ui-list, idd.rs mj-ui-subhead): its own issue after the alpha. Here the PR Drain's two lists move to the kit's mj-ui-prose-list, as /ui/idd's did."
+depends_on: []
+acceptance_criteria:
+  - "Every screen that defers a panel answers a snapshot request with no data-panel-src placeholder and one heading"
+  - "The snapshot's PR Drain carries the drain's own answer"
+  - "The PR Drain's cards are the lanes the queue counted, each a link to its lane; its hero counts no plan issue"
+  - "The PR Drain emits no class the UI's stylesheet does not define"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib -- ui:: cockpit::html web::report::snapshot"
+evidence_required:
+  - "snapshot_reads_every_slow_panel_test"
+  - "counts_are_the_queues_lanes_test"
+created_at: 2026-10-18
+updated_at: 2026-10-20T16:29:16Z
+started_at: 2026-10-20T16:15:52Z
+started_event: sha256:c3c0b9f70fde4dd7eee99582ab1ddfe2fbf851cc18893a39dec8db5dcbffa4c1
+completed_at: 2026-10-20T16:29:16Z
+completed_event: sha256:1978bd653b0223db9451756e5f6be4701c1dfb8d73691c31b098bd48895e57d6
+evidence:
+  - covers: snapshot_reads_every_slow_panel_test
+    type: ci
+    command: "validate run 39438896504 at master 9a5a9b77520: rust (1-3) jobs 118683336143 118683336062 118683336401 run cargo test, incl. ui::a_snapshot_reads_every_slow_panel_into_its_screen (82ace9a104d)"
+    result: "success (the run's only red job is pages, which runs no test)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39438896504"
+    commit: a81b1e3537d333f6b7cfac24dd8aa8bce8a1a7ca
+    recorded_at: 2026-10-20T16:22:27Z
+  - covers: counts_are_the_queues_lanes_test
+    type: ci
+    command: "validate run 39438896504 at master 9a5a9b77520: rust (1-3) jobs 118683336143 118683336062 118683336401 run cargo test, incl. ui::prs::the_counts_are_the_queues_own_lanes_and_never_the_plans_issues (38f2e9b7f21)"
+    result: "success (the run's only red job is pages, which runs no test)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39438896504"
+    commit: a81b1e3537d333f6b7cfac24dd8aa8bce8a1a7ca
+    recorded_at: 2026-10-20T16:22:34Z

@@ -62,6 +62,20 @@ LC_ALL=C sort "$union" | cmp -s - "$all" || { echo "    with half the durations 
 for i in 1 2 3 4; do deal "$i" /nonexistent >> "$union"; done
 LC_ALL=C sort "$union" | cmp -s - "$all" || { echo "    with no durations file, the shards are not the suite"; exit 1; }
 
+# ---------------------------------------------------------------- 3b. an unknown case weighs the median
+# It weighed a guessed 300 s against a recorded median of 9, so 192 unrecorded cases put 87
+# minutes on one shard beside 43 on another (run 39762797718). Every case recorded at 7 s but
+# the last parallel one by name: dealt at the median it ties the others and lists last in its
+# shard, which deals longest first; dealt at any larger guess it would list first.
+last="$(while IFS= read -r n; do grep -q '^# majordomus-exclusive:' "$ROOT/test/cases/$n.sh" || echo "$n"; done < "$all" | tail -1)"
+grep -vx "$last" "$all" | awk -v OFS='\t' '{ print $1, 7 }' > "$T/median.tsv"
+for i in 1 2 3 4; do
+  deal "$i" "$T/median.tsv" > "$T/m$i.txt"
+  grep -qx "$last" "$T/m$i.txt" || continue
+  [ "$(head -1 "$T/m$i.txt")" != "$last" ] \
+    || { echo "    the unrecorded case $last opened shard $i: it was dealt above the recorded median"; exit 1; }
+done
+
 # ---------------------------------------------------------------- 4. the report is verified
 awk -v OFS='\t' '{print $1, "ok", 1, "parallel"}' "$all" > "$T/full.tsv"
 expect_exit 0 bash "$ROOT/test/run.sh" --verify-report "$T/full.tsv"

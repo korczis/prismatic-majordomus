@@ -1,0 +1,27 @@
+id: I4296
+milestone: ci-critical-path
+title: "A full-history checkout of validate fits its bound: structure fetches no blobs, and every one has twenty minutes"
+slug: a-full-history-checkout-fits-its-bound
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Every actions/checkout of .github/workflows/validate.yml that fetches the whole history (fetch-depth: 0) completes inside its own step bound on the hosted runners: the structure job fetches commits and trees only (filter: blob:none), because its gates read history as object ids, merge bases and paths and fetch the one past file they read on demand, and each full-history checkout is bounded at 20 minutes, still under its job's timeout."
+why: "On 2026-10-28 the full fetch of 533 heads and 190 tags took 216 to 488 s on the hosted runners and hit the 10-minute checkout bound in 6 of 11 validate runs in structure and 4 in suite-shard (2). Train 10a's run 40733537887 failed in actions/checkout itself (##[error]The action 'Run actions/checkout@v4' has timed out after 10 minutes), so no train could go green whatever its tree held, and master stood still for a day."
+current_state: "Seven full-history checkouts in validate.yml (structure, suite-shard, rust, evidence, site, macos, pages), each bounded at 10 minutes and none filtered; pages.yml already checks out with filter: blob:none for its link check."
+desired_state: "structure checks out with filter: blob:none, all seven are bounded at 20 minutes, scripts/ci/step-bound-check still holds every bound under its job's, and a train's validate fails only on what its tree holds."
+scope:
+  - ".github/workflows/validate.yml"
+  - ".ai/repo/project/issues/I4296.yaml"
+acceptance_criteria:
+  - "The structure job's checkout carries filter: blob:none and fetch-depth: 0"
+  - "Every fetch-depth: 0 checkout of validate.yml is bounded at 20 minutes and scripts/ci/step-bound-check passes"
+  - "A validate run of a train head that carries this change completes its checkouts inside their bounds (ci evidence from the train's run)"
+validation:
+  - "actionlint .github/workflows/validate.yml"
+  - "scripts/ci/step-bound-check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - ci
+risk: "A blobless clone fetches a blob lazily the first time a gate reads file contents from history; a gate that walks many past files would turn one slow fetch into many. Today's structure gates read one past file (the release registry), so the cost is one round trip."
+created_at: 2026-10-28
+updated_at: 2026-10-28

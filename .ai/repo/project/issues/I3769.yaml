@@ -1,0 +1,42 @@
+# Draft for the 2026-10-20 records sweep. The id, the case number (placeholder I3769 in case names) and the dates are
+# allocated from the granted id block when the coordinator records it; current_state was read
+# on origin/master 91c0b5d5658.
+# rehomed from a-visitor-understands-and-checks-majordomus: the landing items were offered under it and it derives PLANNED, and the campaign covers ACTIVE milestones only (O1); truthful-plan-surfaces is the ACTIVE milestone that owns plan.delivery and its projection onto the published site
+id: "I3769"
+milestone: "truthful-plan-surfaces"
+title: "A published page reads delivery at the commit it was built from, and names one commit"
+slug: "a-published-page-reads-delivery-at-its-build-commit"
+priority: "p2"
+profile: "implementation"
+parallel_safe: false
+objective: "Have scripts/site-build ask plan delivery at the build commit and carry the answer in the build's own uncommitted provenance (site/data/build.json), have the homepage hero card and /roadmap/ read that observation when the build carries one and the committed site/data/generated/delivery.json only otherwise, and have homepage-check refuse a built homepage whose delivery commit differs from its build commit on a clean build."
+why: "The hero card names two commits, delivery inferred at one and the snapshot read at another, because the committed delivery file can only observe the commit before the one it lands in, and a visitor cannot tell which reading is current. The build already knows its own commit and writes a provenance file that is never committed, so the observation can be taken there without breaking the rule that a derived file cannot name the commit it lands in. Found by the landing audit of 2026-10-20 (L-P2-1; campaign defect D24)."
+current_state: "scripts/generate-site-data:1904-1909 explains that a derived file cannot name the commit it lands in (case 51), so a generation observes HEAD, the commit before; :1918 sets DELIVERY_AT to HEAD and :1919 asks plan delivery --at it into the committed site/data/generated/delivery.json. On origin/master that file's observed.commit is 9a5a9b77520 while the branch head is 91c0b5d5658. scripts/site-build:208 reads the build commit and :252 writes site/data/build.json, which is ignored and never committed. site/templates/index.html:134 links delivery.observed.commit as 'Delivery the history proves, inferred at' and :157 links build.commit as the snapshot's commit; site/templates/roadmap.html:33 names build.commit as 'Observed at' and :40 names delivery.observed.commit for the delivery row. The audit saw 35f5241 and 82ac259 side by side on the live page."
+desired_state: "site-build, after generate-site-data and before zola, runs plan delivery --at the build commit through the same tool reader and writes its answer under build.delivery in site/data/build.json; on a dirty build it records the observation with dirty true, as build.json already does. index.html and roadmap.html set delivery from build.delivery when present and fall back to the committed file, so a plain zola serve still renders. The committed delivery.json and its --check behaviour are unchanged, so case 51 stays green. homepage-check refuses, on a clean build, a hero card whose delivery commit is not the build commit, and the deploy probe's footer comparison (scripts/ci/pages-check:344-358, which reads the commit from the footer because the body links delivery commits of its own) keeps working unchanged."
+scope:
+  - "scripts/site-build"
+  - "site/templates/index.html"
+  - "site/templates/roadmap.html"
+  - "scripts/ci/homepage-check"
+  - "test/cases/3742_a_published_page_reads_delivery_at_its_build_commit.sh"
+  - ".ai/repo/project/issues/I3769.yaml"
+non_scope:
+  - "The committed delivery.json and the generator's --check reproduction (scripts/generate-site-data)"
+  - "Bringing the live stages branch, pr_open and deployed to the published site (I2743, I2744)"
+  - "The hero card's status labels and links (I3764)"
+  - "The Pages workflow and its evidence freshness (I2660, I3761)"
+  - "The rest of /roadmap/ and of scripts/site-build, which I3755, I3773 and I3768 also change; this issue touches one delivery read in each and lands in whichever order the landing seat picks"
+acceptance_criteria:
+  - "A clean site-build at a commit writes site/data/build.json whose delivery.observed.commit is that commit"
+  - "The built homepage and /roadmap/ name the build commit for delivery, and the hero card names one commit"
+  - "Negative: a render without site/data/build.json still shows delivery from the committed file"
+  - "homepage-check fails on a clean build whose hero delivery commit is not the build commit, naming both commits (negative case, planted by editing the fixture's build.json)"
+  - "test/cases/51_derived_artifacts_committed.sh and generate-site-data --check pass unchanged"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3742_a_published_page_reads_delivery_at_its_build_commit"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 51_derived_artifacts_committed 333_homepage_narrative"
+  - "scripts/generate-site-data --check && scripts/site-build && scripts/ci/homepage-check"
+evidence_required:
+  - "a_built_page_reads_delivery_at_its_build_commit"
+  - "a_render_without_a_build_record_falls_back_to_committed_delivery"
+depends_on: []

@@ -1,0 +1,61 @@
+id: I2740
+milestone: truthful-plan-surfaces
+title: "An issue's delivery is inferred from branches, pull requests, merges, tags and the published site"
+slug: an-issue-delivery-is-inferred
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Add the capability plan.delivery (CLI majordomus plan delivery [--json] [<id>], HTTP and MCP from the one capability declaration) that answers, for every issue, the furthest stage of none, branch, pr_open, merged, released, deployed, each with the object that proved it and when it was observed, and expose it in the site data the plan pages read."
+why: "ADR 0166. Status is derived from stamps only (lib/project.awk:156-170, plan.rs derive); trace.issue, delivery.report and github-sync each read a part of the truth and nothing joins them. I2653 was merged whole by #1097 and still reads READY."
+current_state: "trace.issue (capability/builtin/trace.rs, worktree/trace.rs) gives an issue's branches and merged commits; the served forge cache holds pull requests and releases; nothing answers a stage per issue."
+desired_state: "plan.delivery reuses trace.issue for branches and merges, the issue edge of I1405 for pull requests named by title, branch or trailer, the served forge cache for open pull requests (unread forge reported as unread, never as none), git tag --contains for the first v* tag, and the published latest.json for deployed; scripts/generate-site-data writes site/data/generated/delivery.json from it."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "apps/majordomus-cli/src/plan"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/tests/plan_delivery.rs"
+  - "scripts/generate-site-data"
+  - "site/data/generated/delivery.json"
+  - "docs/PLANNING.md"
+  - "docs/generated"
+  - "test/cases/3100_an_issue_delivery_is_inferred.sh"
+depends_on: []
+acceptance_criteria:
+  - "An issue named by a merged pull request in a fixture repository reads merged with the merge commit, and released once a v* tag contains it"
+  - "An issue with only an open pull request reads pr_open with its number; with an unread forge the answer says unread"
+  - "The capability is declared once and reaches CLI, HTTP and MCP through majordomus generate"
+  - "site/data/generated/delivery.json is produced by the executable and checked by generate-site-data --check"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery"
+  - "bash test/run.sh 3100_an_issue_delivery_is_inferred"
+evidence_required:
+  - "delivery_stage_case"
+  - "mutations_fail_the_case"
+created_at: 2026-10-16
+updated_at: 2026-10-20T22:11:19Z
+started_at: 2026-10-16T09:56:45Z
+started_event: sha256:ccff17b4f443c1326ed94192c2b84e32c3bf57cfb052b2b1650d417b1731a5c2
+verified_at: 2026-10-16T13:32:49Z
+verified_event: sha256:38d3cda74594483b46d7cfc344f41bce5935a6c47ac60f45983027b7ec5e3be4
+completed_at: 2026-10-20T22:11:19Z
+completed_event: sha256:a4b1df341cd839605bbe44114f297ae5415b9f0f8ccbd28e6a56558a2807749e
+evidence:
+  - covers: delivery_stage_case
+    type: test
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery"
+    result: "3 passed, 0 failed (merged with merge commit and PR #5, released by the first release record v0.1.0, pr_open #9 from the forge observation, unread forge reported unread and unsettled, deployed from the observed Pages deployment's latest.json; --at reads history only and is byte-stable across a later tag; CLI = HTTP = MCP)"
+    commit: b80c183508fdd3a4b6e3455ee22620394deaee38
+    recorded_at: 2026-10-16T13:32:37Z
+  - covers: mutations_fail_the_case
+    type: test
+    command: "bash test/run.sh 3100_an_issue_delivery_is_inferred"
+    result: "1 passed; 4 code mutations of src/plan/delivery.rs applied one at a time each failed it where named (slug half of branch_names, merge title dropped, unread forge not named, open pulls empty)"
+    commit: b80c183508fdd3a4b6e3455ee22620394deaee38
+    recorded_at: 2026-10-16T13:32:41Z
+  - covers: delivery_stage_case
+    type: ci
+    command: "validate run 39438896504 at master 9a5a9b77520: suite-shard (2) job 118683338077 runs 3100_an_issue_delivery_is_inferred; rust (1) job 118683336143 runs cargo test incl. tests/plan_delivery.rs"
+    result: "success (the run's only red job is pages, which runs no test)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39438896504"
+    commit: 573df967bb5bc30cf23e542b8d0dff03d3bf5ee0
+    recorded_at: 2026-10-20T22:10:50Z

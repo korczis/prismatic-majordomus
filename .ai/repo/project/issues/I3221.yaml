@@ -1,0 +1,32 @@
+id: I3221
+milestone: every-surface-follows-what-changed
+title: "Every live surface says in ADR 0158's words whether it is live, reconnecting, stale, polling, a snapshot or a replay"
+slug: one-word-for-liveness
+priority: p2
+profile: implementation
+objective: "Give every live surface one browser-side mapping from its transport state to ADR 0158's words, shared by the scripts of /ui screens, /ui/peers, /cockpit/monitor and the Observatory: LIVE, RECONNECTING, STALE and POLLING on a server, SNAPSHOT and REPLAY on the published site; view::liveness and the Cockpit kit render only the first-paint word."
+why: "A 2026-10-14 review found a hidden-then-shown Observatory claiming an unavailable server; each surface words its state differently today. Proposed in ADR 0216 (Every live surface follows one channel with named follow streams, and nothing polls where a stream exists) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c262#10."
+current_state: "Verified on master 707a04c7ce8: share/ui/observatory.js words REPLAY, SNAPSHOT, RESYNCED, LIVE and STALE; share/ui/ui.js refreshes every 60 s and says it refreshes; ADR 0158 point 11 decides LIVE, RECONNECTING and STALE on a server. In flight, not on master: I2983's share/ui/live.js and PR #1178's observatory-stream.js."
+desired_state: "One mapping and one vocabulary, documented once in docs/MAJORDOMUS_UI.md and in ADR 0158."
+scope:
+  - "apps/majordomus-cli/src/ui/view.rs"
+  - "share/ui/ui.js"
+  - "share/ui/observatory.js"
+  - "share/cockpit/monitor.js"
+  - "docs/MAJORDOMUS_UI.md"
+non_scope:
+  - "New transport behaviour"
+depends_on:
+  - "I3219"
+serves:
+  - "every-surface-follows-what-changed#one-live-word"
+acceptance_criteria:
+  - "A browser test with a controlled clock and a closed socket shows the same word on every listed surface"
+  - "No surface prints LIVE while its socket is closed"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::view"
+  - "scripts/ui audit"
+evidence_required:
+  - "case_one_word_for_liveness"
+created_at: 2026-10-18
+updated_at: 2026-10-18

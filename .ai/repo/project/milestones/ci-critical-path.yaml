@@ -1,0 +1,33 @@
+id: ci-critical-path
+title: The critical path from a change to its verdict, and from a merge to its verified deploy, runs under a minute warm
+slug: ci-critical-path
+order: 125
+priority: p1
+problem: "A pull request's required verdict takes hours, not seconds: the behavioural suite runs on four shards of 51-86 minutes each, every documentation or layer change runs all four, and one case alone has cost up to 3468 s on a loaded runner. The suite budget has been raised three times in a week to follow runner load, and on 2026-10-09 the slowest case went 18 s over its 3450 s budget and failed the verdict of a pull request it does not touch (#831, run 37926379104). The owner's mission of 2026-10-08 asks for the change-to-verdict and merge-to-verified-deploy paths under 60 s warm, measured on GitHub, with no enforcement weakened."
+outcome: "The change-to-verdict path runs p50 under 40 s and p95 under 60 s warm, and merge-to-verified-deploy p50 under 45 s and p95 under 60 s, measured on GitHub with warm, partial and cold reported apart, every skip of a gate explained by the repository's own impact model, and no required test removed, skipped or made advisory to reach the number."
+current_state: "Baseline of change-to-verdict measured on GitHub on 2026-10-22, attempt-1 runs, all jobs on GitHub-hosted ubuntu-latest: a full plan is 31 jobs and 740-860 runner-minutes; green runs took 81 min wall alone on the pool (39634495999), 108 min (39762797718) and 122 min (39712017896); master 2034d4a3f0b took 153 min with 774 summed job-minutes of queueing behind overlapping runs (39784979979). The critical path of 39762797718 was plan 0.4 min, suite-shard (1) 98 min (87 of them cases), suite 0.3, evidence 9. Its four shards ran 87, 52, 82 and 43 min because the deal read a record of 410 of 602 cases (2026-10-10) and weighed every unrecorded case 300 s against a median of 9 (I3930). Beside it: ui 94 min, serial (I3931, I3940); rust lane 3 60-84 min, of which plan-record-cases 1602 s and release-record-cases 425 s re-run cases the suite runs (I3937); the executable built about 4.5 min in eight jobs (I3939); case 486_rustdoc_composition 4017 s, the floor of every shard (I3938). Of the last 120 validate runs 23 passed, 43 failed and 49 were cancelled, most by the branch self-cancel on a first red; the pages job failed on 8 master runs from 2026-10-17 to 10-22 because its 1200 s wait expired while pages.yml queued behind validate (I3936). Merge-to-verified-deploy is not yet measured. .ai/repo/ci/suite.yaml budgets the suite at 61700 case-seconds and the slowest case at 5130 s."
+desired_state: "A measured baseline of both paths is committed before any redesign; each change that shortens them names the measurement it moves; and the budget of a case is never raised to follow runner load again."
+scope:
+  - .ai/repo/project
+  - .ai/repo/ci
+  - .github/workflows
+  - scripts/ci
+  - scripts/ci-plan
+  - test/run.sh
+  - test/cases
+non_scope:
+  - Removing, skipping or making advisory any required test to reach the number
+  - Redesigning anything before the baseline of both paths is measured on GitHub and committed
+  - Local timings as the measure; the number is GitHub's
+acceptance_criteria:
+  - "The baseline of change-to-verdict and merge-to-verified-deploy, warm, partial and cold, is committed with the runs it was measured from"
+  - "Both paths meet the outcome's percentiles over the runs named, and every gate a change skips names the impact rule that skipped it"
+  - "No required test was removed, skipped or made advisory, shown by the gate model's required set before and after"
+validation:
+  - bin/majordomus plan validate
+  - scripts/ci-plan --check
+evidence_required:
+  - baseline_measured_on_github
+  - critical_path_under_a_minute
+created_at: 2026-10-09
+updated_at: 2026-10-22

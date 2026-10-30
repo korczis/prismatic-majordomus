@@ -1,0 +1,162 @@
+{
+  "schema": "observatory-gates/v1",
+  "spec": "tmp/owner-packs/observatory-20261014/ultimate/verification/03-RELEASE-MANIFEST-AND-GATES.md (owner pack, 2026-10-14)",
+  "revision": {
+    "production": "2ca25bb9cf91",
+    "live": "bb844110bdd6",
+    "note": "production is the published site at the revision it served; live is a server of the evidence branch (bb844110bd, the head #1123 landed, with this branch's script changes in its working tree)"
+  },
+  "routes": [
+    "/ui/observatory",
+    "/ui/kiosk",
+    "/ui/screensaver -> /ui/kiosk",
+    "/ui/obsrvatory -> /ui/observatory"
+  ],
+  "capabilities": [
+    "observatory.capture",
+    "observatory.replay",
+    "observatory.events"
+  ],
+  "deployed_url": "https://majordomus.dev/ui/observatory/",
+  "measured_at": {
+    "production": "2026-10-14T12:57:39Z",
+    "live": "2026-10-14T10:42:24Z"
+  },
+  "environment": {
+    "live": {
+      "machine": "Apple M5 Pro x18, 64 GiB",
+      "os": "Darwin 25.5.0 arm64",
+      "browser": "chromium 141.0.7390.37",
+      "headless": true
+    },
+    "production": {
+      "machine": "Apple M5 Pro x18, 64 GiB",
+      "os": "Darwin 25.5.0 arm64",
+      "browser": "chromium 141.0.7390.37",
+      "headless": true,
+      "precise_memory": true
+    }
+  },
+  "gates": {
+    "G0": {
+      "verdict": "PASS",
+      "name": "repository audit",
+      "command": "majordomus capabilities; scripts/ui pages; git rev-parse HEAD",
+      "result": "routes, capabilities and revisions above; the source/capability map is ADR 0158 and docs/MAJORDOMUS_UI.md#the-observatory",
+      "evidence": [
+        ".ai/repo/adrs/0158-the-observatory-draws-only-what-was-observed.md",
+        "docs/MAJORDOMUS_UI.md"
+      ],
+      "unknowns": "no physical wall display was available; every browser figure is headless Chromium"
+    },
+    "G1": {
+      "verdict": "PASS",
+      "name": "data proof",
+      "command": "cargo test --test mesh_cooperation -- three_runtimes",
+      "result": "a claim appended to a real runtime's journal arrives above the cursor of observatory.events with one identity however often it is read; an expired cursor is reported",
+      "evidence": [
+        "apps/majordomus-cli/tests/mesh_cooperation.rs",
+        "apps/majordomus-cli/tests/observatory.rs"
+      ]
+    },
+    "G2": {
+      "verdict": "PASS",
+      "name": "pixels proof",
+      "command": "node scripts/lib/ui-observatory.mjs --origin http://127.0.0.1:<port> --out <dir>",
+      "result": "the newest event of the live journal is the newest event of the display's own model, by identity (PASS)",
+      "evidence": [
+        ".ai/repo/benchmarks/observatory/live/drills.json#checks.event-reaches-the-display"
+      ],
+      "caveat": "the binding from the model to a painted stroke is the renderer's code; no check reads pixels per event"
+    },
+    "G3": {
+      "verdict": "PASS",
+      "name": "continuity proof",
+      "command": "node scripts/lib/ui-observatory.mjs --origin http://127.0.0.1:<port> --out <dir>",
+      "result": "scenes rotate fairly in declared order with each scene's dwell and skip unavailable and quarantined scenes; new journal events interrupt for the river after the minimum dwell (PASS, reason 'interrupt: 3 new event(s)'), not again within the cooldown (PASS), and a reader's choice holds 300 s and is never interrupted",
+      "policy": {
+        "min_dwell_seconds": 12,
+        "interrupt_cooldown_seconds": 120,
+        "manual_hold_seconds": 300
+      },
+      "evidence": [
+        ".ai/repo/benchmarks/observatory/live/drills.json#checks.drill-interrupt",
+        ".ai/repo/benchmarks/observatory/live/drills.json#checks.drill-interrupt-cooldown"
+      ]
+    },
+    "G4": {
+      "verdict": "PASS",
+      "name": "recovery proof",
+      "command": "node scripts/lib/ui-observatory.mjs --origin http://127.0.0.1:<port> --out <dir>",
+      "result": "drills in the browser: a throwing renderer is quarantined and the rotation goes on (PASS); a lost server reads STALE and LIVE again (PASS); an expired cursor reads RESYNCED (PASS); the river holds at most 200 events and remembers at most 4000 identities",
+      "evidence": [
+        ".ai/repo/benchmarks/observatory/live/drills.json"
+      ],
+      "caveat": "the display paints a 2D canvas, so there is no GPU context to lose",
+      "production": "on the published site the scene-failure drill passes as well (quarantined, the rotation goes on); the server drills need a server"
+    },
+    "G5": {
+      "verdict": "PASS",
+      "name": "privacy proof",
+      "command": "cargo test --lib -- capability::builtin::observatory; case 3011; grep -E '[0-9a-f]{16,}' over the recording and this evidence",
+      "result": "the recording names machines, runtimes, sessions and events by ordinal and keeps no body; the projection carries no event body and no link into another surface; the published replay is labelled REPLAY with its time; the evidence here records events by kind and clock only",
+      "evidence": [
+        ".ai/repo/observatory/recording.json",
+        "apps/majordomus-cli/src/capability/builtin/observatory.rs"
+      ]
+    },
+    "G6": {
+      "verdict": "PASS",
+      "name": "UX and performance proof",
+      "command": "node scripts/lib/ui-observatory.mjs --origin https://majordomus.dev --out .ai/repo/benchmarks/observatory/production",
+      "result": {
+        "screenshots": [
+          ".ai/repo/benchmarks/observatory/production/kiosk-1080p.png",
+          ".ai/repo/benchmarks/observatory/production/kiosk-4k.png"
+        ],
+        "frames_per_second_1080p": {
+          "production": 60,
+          "live": 60
+        },
+        "reduced_motion": "PASS",
+        "accessibility": {
+          "screen": "PASS",
+          "kiosk": "PASS",
+          "rules": "axe wcag2a wcag2aa wcag21a wcag21aa wcag22aa"
+        },
+        "soak": {
+          "minutes": 60,
+          "dom_nodes": [
+            426,
+            426
+          ],
+          "heap_note": "Chromium rounds performance.memory without --enable-precise-memory-info: the hour's heap readings are buckets",
+          "precise_20_minutes": {
+            "heap_bytes": [
+              2436652,
+              2867076
+            ],
+            "growth_ratio": 1.18
+          }
+        }
+      },
+      "evidence": [
+        ".ai/repo/benchmarks/observatory/production/evidence.json",
+        ".ai/repo/benchmarks/observatory/live/soak-60-minutes.json",
+        ".ai/repo/benchmarks/observatory/live/soak-20-minutes-precise.json"
+      ],
+      "caveat": "frame rates are headless Chromium's display loop on the machine named, not a panel's; no physical 4K display was measured"
+    },
+    "G7": {
+      "verdict": "PASS",
+      "name": "deployment proof",
+      "command": "gh pr view 1110 1117 1119 1123; curl https://majordomus.dev/build.json",
+      "result": "#1110, #1117, #1119 and #1123 merged pinned --admin after local gates; production serves 2ca25bb9cf91 (version 0.25.0); /ui/observatory/, /ui/kiosk/, /ui/screensaver/ and /features/observatory/ answer 200",
+      "evidence": [
+        "https://majordomus.dev/build.json",
+        "https://majordomus.dev/ui/observatory/"
+      ],
+      "caveat": "the release tag v0.25.0 is cut by the release seat when a master commit's ci is green"
+    }
+  }
+}

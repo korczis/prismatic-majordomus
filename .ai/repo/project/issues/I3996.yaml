@@ -1,0 +1,31 @@
+id: I3996
+milestone: builds-reuse-the-mesh-cache
+title: "A node's provisioning secret is read on mc's standard input, never from a command line"
+slug: a-provisioning-secret-is-read-on-standard-input
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "mesh build-cache provision creates a node's MinIO identity with `mc admin user add <alias> <access key>` and passes the secret on the command's standard input. That is mc's own documented form (minio/mc cmd/admin-user-add.go, fetchUserKeys), so the secret is in no process's argv."
+why: "Found in review of I2674 (#2402) on 2026-10-23, and on master since train 6 (b62848cb6f5): apps/majordomus-cli/src/mesh/cache_provision.rs appended each node's generated secret to the argv of `mc admin user add`. Every user of the provider host can read an argv in ps and /proc/<pid>/cmdline for as long as the call runs. The intent this milestone serves says no credential appears in a process's environment, a log or an answer, and an argument is all three at once. Only `mesh build-cache provision --apply` on a provider host runs the call, and none has been run (lundra, the intended host, has not been provisioned), so no secret has been exposed and none needs rotating."
+current_state: "Measured at master b62848cb6f5 on 2026-10-25: run_steps builds `mc --quiet admin user add <alias> mesh-cache-<node>`, pushes the secret onto that argv (cache_provision.rs:908-909), and the runner gives the child no standard input."
+desired_state: "The identity step's argv ends at the access key. The runner writes the secret, followed by a newline, to the child's standard input and closes it. Every other command gets a null standard input. The step's printed line names where the secret goes, never the secret itself."
+scope:
+  - "apps/majordomus-cli/src/mesh/cache_provision.rs"
+  - ".ai/repo/project/issues/I3996.yaml"
+non_scope:
+  - "A gate and rule that refuse a secret on any command line the repository runs (I4224, train 8)"
+  - "Rotating identities: none was ever created through the argv form"
+depends_on:
+  - I2674
+acceptance_criteria:
+  - "With a recording runner, no argv of any command the apply runs contains any node's secret, and each node's secret, followed by a newline, is the standard input of exactly its own admin user add"
+  - "The real runner gives a stand-in mc the input on its standard input and nothing on its command line; a command given no input reads an empty, closed standard input"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::cache_provision"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - suite
+serves:
+  - "a-build-reuses-what-the-mesh-already-built#nothing-secret-nothing-unbounded"
+created_at: 2026-10-23
+updated_at: 2026-10-25

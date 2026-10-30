@@ -12,7 +12,8 @@ use super::dashboard::ROWS;
 use super::shell::View;
 use super::source::{ask_all, ask_input, Answer, Source};
 use super::view::{
-    code_link, hero, kpi, list, more, none, panel, state, table, text, unanswered, value, wide,
+    code_link, hero, items, kpi, list, more, none, panel, state, table, text, unanswered, value,
+    wide,
 };
 
 /// The route of the screen.
@@ -99,7 +100,7 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
     let commands = ask_input(ctx, "commands.list", input);
     let answers = ask_all(ctx, &[EXECUTIONS, CAPABILITIES]);
     let executions = &answers[&EXECUTIONS];
-    let registry = list(&answers[&CAPABILITIES], "/capabilities");
+    let registry = items(&answers[&CAPABILITIES], "/capabilities");
 
     let top = hero(
         "terminal",
@@ -133,7 +134,7 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
                 .text(*label)
         }));
 
-    let catalogue = catalogue(&commands, &registry);
+    let catalogue = catalogue(&commands, registry);
     let running = running(executions);
 
     let grid = el("div")
@@ -163,7 +164,7 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
 fn catalogue(commands: &Answer, registry: &[serde_json::Value]) -> El {
     unanswered(commands).unwrap_or_else(|| {
         let lines = by_command_line(registry);
-        let rows = list(commands, "/commands")
+        let rows = items(commands, "/commands")
             .iter()
             .map(|c| {
                 let invocation = text(c, "invocation");
@@ -347,7 +348,7 @@ mod tests {
             source,
             route: None,
             exposure: Default::default(),
-            value,
+            value: value.map(Into::into),
             took: std::time::Duration::ZERO,
             standing: crate::ui::source::Standing::NOW,
         };

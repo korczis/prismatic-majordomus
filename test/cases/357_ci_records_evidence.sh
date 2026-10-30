@@ -28,7 +28,8 @@
 #         derived again: a second gather under the same run counts what it recorded, not every
 #         row the ledger holds under that run
 #      e  the report is the tracked ledger's: derived before the run's rows are recorded, on a
-#         checkout measured first, so a claim only the run proved still reads `not_run` in it
+#         checkout measured first, so a claim only the run proved still reads `not_run` in it;
+#         the verdict over the run's own rows is kept apart, as run-report.json (I3916)
 #   4  nothing to gather is refused, not written as an empty success
 #   5  scripts/pages evidence publishes `current` only when the run is of the published commit,
 #      measured clean trees, derived its report on a clean checkout and carries it, and nothing
@@ -181,6 +182,10 @@ run_quiet "$W/after.err" "$MJB" evidence --repo "$T" show --format json > "$W/af
 after="$(state_of "$W/after.json")"
 [ -n "$after" ] && [ "$after" != not_run ] \
   || { echo "    the run's rows did not reach the working ledger, so the report proves nothing about the order: '$after'"; exit 1; }
+# and the verdict over the run's own rows is kept beside the report, apart from it: the count
+# the site publishes (I3916) is this run's, and the report stays the tracked ledger's
+[ "$(state_of "$W/ev/run-report.json")" = "$after" ] \
+  || { echo "    the gathered run verdict is not the verdict over the run's rows: '$(state_of "$W/ev/run-report.json")', not '$after'"; exit 1; }
 jq -e '.report_tree == "clean"' "$M" >/dev/null \
   || { echo "    the report was not derived on a checkout measured clean"; jq -c '{report_tree}' "$M"; exit 1; }
 

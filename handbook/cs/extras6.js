@@ -61,7 +61,7 @@
       c1.addEventListener('click', function () { ii = -1; render(); });
       if (item) { crumb.appendChild(document.createTextNode(' › ')); el('span', { 'class': 'arch-c cur' }, crumb, item.n); }
       if (!item) {
-        el('h4', null, det, layer.n);
+        el('h3', { 'class': 'h4' }, det, layer.n);
         el('p', null, det, layer.d);
         var open = el('button', { type: 'button', 'class': 'btn small' }, det, 'Otevřít kapitolu „' + chapterTitle(layer.ch) + '“ →');
         open.addEventListener('click', function () { jump(layer.ch); });
@@ -77,7 +77,7 @@
         return;
       }
       var tl = chapterTldr(item.ch), r = related(item);
-      el('h4', null, det, item.n);
+      el('h3', { 'class': 'h4' }, det, item.n);
       if (tl[0]) el('p', null, det, tl[0]);
       if (tl[1]) { var im = el('p', { 'class': 'arch-imp' }, det); el('span', { 'class': 'k i' }, im, 'Dopad'); im.appendChild(document.createTextNode(' ' + tl[1])); }
       var open2 = el('button', { type: 'button', 'class': 'btn primary small' }, det, 'Otevřít kapitolu „' + chapterTitle(item.ch) + '“ →');

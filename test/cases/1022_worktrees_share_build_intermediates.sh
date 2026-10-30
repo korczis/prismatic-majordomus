@@ -111,10 +111,15 @@ expect_no_grep 'Compiling p '
 # ---------------------------------------------------------------- the bound
 # The reaper measures the shared directory, bounds it and reduces it — and acts on it only
 # where the checkout declares one, so a fixture with no declaration has nothing to lose.
+# Which directory that is, cargo says for the checkout's crate (case 3125), so the fixture
+# carries one, with the repository's toolchain pin beside it.
 REAPER="$ROOT/scripts/reap-orphans"
 expect_file "$REAPER"
 FIX="$T/fix"; SHARED="$T/shared-build"
-mkdir -p "$FIX/.cargo" "$SHARED/debug"
+mkdir -p "$FIX/.cargo" "$FIX/apps/majordomus-cli/src" "$SHARED/debug"
+cp "$ROOT/rust-toolchain.toml" "$FIX/rust-toolchain.toml"
+printf '[package]\nname = "fixture"\nversion = "0.1.0"\nedition = "2021"\n' > "$FIX/apps/majordomus-cli/Cargo.toml"
+printf 'pub fn n() -> u32 { 7 }\n' > "$FIX/apps/majordomus-cli/src/lib.rs"
 (
   cd "$FIX"
   git init -q . && git config user.email t@example.com && git config user.name Test

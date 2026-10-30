@@ -1,7 +1,7 @@
 +++
 title = "A derive offloaded to another machine goes through the declared hosts and waits its turn in their queue"
 description = "A derive offloaded to another machine goes through the declared hosts and waits its turn in their queue"
-weight = 63
+weight = 66
 [extra]
 kind = "rule"
 slug = "project-a-derive-offload-waits-its-turn-1"

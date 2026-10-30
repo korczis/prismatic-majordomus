@@ -1,0 +1,30 @@
+id: I4221
+milestone: ci-critical-path
+title: CI's Rust cache carries the shared build directory, where cargo actually compiles
+slug: ci-caches-the-shared-build-dir
+priority: p1
+profile: implementation
+parallel_safe: true
+serves: []
+objective: "The setup-rust action's cache (Swatinem/rust-cache) also saves and restores ~/.cargo/build-shared, the build-dir .cargo/config.toml names, so a job whose cache key matches does not recompile its dependencies."
+why: "Train 6's coverage job (run 40070749630) logged 'Restored from cache key v0-rust-coverage-Linux-x64-ade52a28-aaa1f5f1 full match: true', 'Cache Size: ~50 MB', 179 Compiling/Checking lines, and then 'Finished test profile in 10m 23s'. Its Cache Paths were ~/.cargo/{bin,registry,git,.crates*} and apps/majordomus-cli/target, while every unit ran from the runner's ~/.cargo/build-shared/majordomus/llvm-cov-target. ADR 0139 moved cargo's intermediates to {cargo-cache-home}/build-shared and left only finished artifacts in target/, but the CI cache still saved target/ alone. So 'rust cache hit=true' in every job summary meant nothing compiled was reused. The owner's audit 2 (10-24) raised it as cache-hit=true with a ~38 min coverage job."
+current_state: "Swatinem/rust-cache caches the registry, git checkouts and apps/majordomus-cli/target (about 50 MB). build-shared, where every dependency is compiled, is rebuilt from nothing in each job."
+desired_state: "The cache also carries ~/.cargo/build-shared. On an exact key match, the job compiles only the crate's own units. Finished artifacts stay per tree; .cargo/config.toml and the worktree isolation it protects are unchanged."
+scope:
+  - .github/actions/setup-rust/action.yml
+  - .ai/repo/project/issues/I4221.yaml
+non_scope:
+  - "Sharing CARGO_TARGET_DIR between trees, which .cargo/config.toml forbids for a recorded reason"
+  - "Changing build-dir locally or the cache keys"
+depends_on: []
+acceptance_criteria:
+  - "A job's Cache Paths list includes the runner's ~/.cargo/build-shared"
+  - "A second run of a job at the same cache key compiles markedly fewer units than the first, measured by the count of Compiling lines in two runs' logs, quoted in this record"
+  - "Every job that reported a cache hit still passes"
+validation:
+  - "Read the coverage job log of two consecutive runs at one key: Cache Paths, Cache Size and the Compiling count"
+evidence_required:
+  - ci
+risk: "The cache grows from ~50 MB to the size of a job's build intermediates (several GB) per key, against GitHub's per-repository cache budget. If eviction then outruns reuse, narrow cache-directories to the jobs that gain, rather than revert."
+created_at: 2026-10-24
+updated_at: 2026-10-24

@@ -24,7 +24,7 @@ S="$PWD/target/web/ui-snapshot"
 # every link of every page, as "file<TAB>link": the attributes a reader or the script follows
 links() {
   find "$1" -name '*.html' | LC_ALL=C sort | while IFS= read -r f; do
-    grep -oE '(href|src|action|data-graph-lib|data-panel-src)="[^"]*"' "$f" \
+    grep -oE '(href|src|action|data-graph-lib|data-observatory-lib|data-panel-src)="[^"]*"' "$f" \
       | sed -e 's/^[a-z-]*="//' -e 's/"$//' -e 's/&amp;/\&/g' \
       | while IFS= read -r l; do printf '%s\t%s\n' "$f" "$l"; done
   done

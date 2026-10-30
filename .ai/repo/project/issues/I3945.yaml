@@ -1,0 +1,28 @@
+id: I3945
+milestone: ci-critical-path
+title: The site generator's input list reaches jq through a file, not as one command-line argument
+slug: the-inputs-list-reaches-jq-through-a-file
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "scripts/generate-site-data writes source.json's input list to a stage file and hands it to jq with --rawfile, so the list can grow with the repository without approaching Linux's 131072-byte cap on one argument."
+why: "Case 10's measurement of every jq argument (I3942) named it NEAR on train 4: `--arg inputs \"$INPUTS\"` carried 101495 bytes, 77% of the cap, and grows with every input the generator reads. It is a plain variable, a spelling scripts/ci/argv-limit-check cannot see; the plan graph crossed the same cap the same way on train 4 (run 39860903679)."
+current_state: "Line 2006 of scripts/generate-site-data passes the whole newline-separated input list as one --arg."
+desired_state: "The list is written once to the stage directory and read with --rawfile; source.json is byte-identical to what --arg produced."
+scope:
+  - scripts/generate-site-data
+  - .ai/repo/project/issues/I3945.yaml
+non_scope:
+  - The plan graph argument, which p1's repair (r-c873f68b9658) moves
+  - scripts/ci/argv-limit-check, whose blind spot for a plain variable case 10's measurement covers
+depends_on: []
+acceptance_criteria:
+  - "Case 10 with the argument measurement names no input-list argument as NEAR"
+  - "generate-site-data --check passes on the unchanged tree: source.json is byte-identical"
+validation:
+  - bash test/run.sh 10_site_data 51_derived_artifacts_committed
+evidence_required:
+  - suite
+risk: "None beyond the stage file: --rawfile reads exactly the bytes --arg passed, shown on a list with newlines, an empty line, spaces and non-ASCII text."
+created_at: 2026-10-23
+updated_at: 2026-10-23

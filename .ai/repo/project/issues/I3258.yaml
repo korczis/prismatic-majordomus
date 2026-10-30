@@ -1,0 +1,26 @@
+id: I3258
+milestone: intent-lifecycle
+title: "Evidence for and against one criterion is kept and named, and the criterion reads unknown until it is settled"
+slug: conflicting-evidence-is-kept
+priority: p2
+profile: implementation
+objective: "When two current pieces of evidence for one criterion disagree (a passing test and a failing claim, two observations), the criterion keeps both with their sources and reads unknown with reason `conflicting`; nothing averages or drops one."
+why: "2026-10-08 and 2026-10-11: contradicting evidence must be preserved; the vocabulary constraint (do not extend public states unless needed) is kept by the proposed ADR on conflicting evidence. It builds on I2822 (satisfaction is explained), a local revival in flight and not on master or origin; record it as depends_on once I2822's record lands. Proposed in ADR 0193 (Conflicting evidence keeps the verdict vocabulary: the criterion reads unknown and cites both sides) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c221#2."
+current_state: "IntentVerdictState is satisfied, unsatisfied, unknown; a criterion carries one evidence ref; the gap schema already has `conflicting` for a worker's observation."
+desired_state: "Conflict is a reason on unknown, served on CLI, HTTP, MCP and /ui identically."
+scope:
+  - "apps/majordomus-cli/src/intent.rs"
+  - "apps/majordomus-cli/tests/intent.rs"
+  - "docs/CONCEPTS.md"
+serves:
+  - "intent-lifecycle#stage-is-derived"
+acceptance_criteria:
+  - "A criterion with one passing and one failing current source reads unknown naming both"
+  - "The public verdict vocabulary is unchanged (schema test)"
+validation:
+  - "majordomus plan validate"
+  - "majordomus intent validate"
+evidence_required:
+  - "test_conflicting_evidence_is_kept"
+created_at: 2026-10-18
+updated_at: 2026-10-18

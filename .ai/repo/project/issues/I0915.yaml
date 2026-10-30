@@ -31,4 +31,6 @@ evidence_required:
   - read_only
 risk: "Checks that need the provider's network will make the local doctor slow and flaky. Local checks and remote checks have to be separable so that the fast ones stay usable in a hook."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-10-14
+cancelled: true
+completion: "Cancelled 2026-10-14 on master e28daccd9b: what it would add is credential validity and application resolution against Fly; the local checks are deploy.check. The owner disconnected Fly.io on 2026-10-12; this repository deploys release binaries, the GHCR image and GitHub Pages (commit 9af3fa65a4 removed fly.toml)."

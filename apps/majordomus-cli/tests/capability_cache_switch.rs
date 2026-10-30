@@ -53,6 +53,15 @@ fn the_switch_runs_every_handler_and_keeps_nothing_and_the_answers_do_not_change
         );
         assert_eq!(one, two);
     }
+    // a reading, with the switch set, is the handler's answer taken just now by the caller
+    let before = ctx.executor.handler_invocations();
+    let reading = ctx.read("plan.status", json!({}));
+    assert_eq!(ctx.executor.handler_invocations() - before, 1);
+    assert_eq!(
+        reading.freshness,
+        majordomus_cli::capability::readings::Freshness::Current
+    );
+    assert_eq!(reading.value.ok(), Some(kept[1].clone()));
     assert_eq!(ctx.executor.cached_entries(), 0, "nothing was kept");
 
     // any other value is not the switch

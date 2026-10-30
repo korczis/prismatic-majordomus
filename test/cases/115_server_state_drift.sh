@@ -83,10 +83,15 @@ curl -fsS -m 3 "$url/" >/dev/null || { echo "    the primary's stop ended the wo
 agree "with a foreign lease planted in the primary"
 
 # ---------------------------------------------------------------- 3. a server of another version
-# the address still answers; the lease now claims a version this executable is not, which is
-# exactly what an executable rebuilt under a running server leaves behind
+# the address still answers; the lease now claims a version this executable is not. It is a
+# NEWER release, derived from this executable's own: a server of a later build that answers is
+# somebody's, and `ensure` reports it rather than ending it. An older one it may replace (the
+# election orders releases by semantic-version precedence, I2163), so a planted version below
+# this executable's, as 0.0.0-planted became once pre-releases were ordered, tests nothing here.
 cp "$la" "$T/lease.real"
-jq '.version = "0.0.0-planted"' "$T/lease.real" > "$la"
+own="$("$RB" --version | awk '{print $2}')"
+planted="$(( ${own%%.*} + 1 )).0.0-planted"
+jq --arg v "$planted" '.version = $v' "$T/lease.real" > "$la"
 # `outdated` is read only from a server that answers, and the probe waits two seconds
 # (lease::PROBE_TIMEOUT). On a loaded runner one probe did not get its answer and the same
 # server read `stale` (PR #825, job 113788989371; green on the rerun). The question is asked
@@ -98,7 +103,7 @@ for _ in 1 2 3 4 5; do
 done
 expect_exit 0 mj "$A" serve status
 expect_grep '^standing   outdated'
-expect_grep '0\.0\.0-planted'
+expect_grep "$(printf '%s' "$planted" | sed 's/\./\\./g')"
 # `ensure` reports it with the remedy and starts nothing: a server that answers is somebody's
 pid_before="$(jq -r '.pid' "$la")"
 expect_exit 10 mj "$A" serve ensure --port 0 --wait 2 --format json

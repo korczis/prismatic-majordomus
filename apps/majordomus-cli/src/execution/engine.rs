@@ -479,7 +479,7 @@ fn failure(id: &ExecutionId, error: &CapabilityError) -> ExecutionError {
 
 /// Which repository this process runs executions against. Never the request's idea of it:
 /// a process serves the one repository it read at start-up.
-fn repository_of(ctx: &Context) -> RepositoryRef {
+pub(crate) fn repository_of(ctx: &Context) -> RepositoryRef {
     let root = std::path::Path::new(&ctx.index.repository.root);
     RepositoryRef {
         name: root

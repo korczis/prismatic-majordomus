@@ -74,8 +74,11 @@ pub struct ForgeObservation {
     #[serde(default)]
     pub up_to_date_required: Option<bool>,
     /// The merge methods the repository allows, in the forge's words (`merge`, `squash`,
-    /// `rebase`).
-    pub merge_methods: Vec<String>,
+    /// `rebase`); `None` when the forge's answer carried none of the three settings — a token
+    /// that may not read them gets the repository without them, and an unread setting is
+    /// unknown, never "allows nothing" (I2966). An observation recorded before this read an
+    /// array, which is `Some`.
+    pub merge_methods: Option<Vec<String>>,
     /// Every open pull request.
     pub pull_requests: Vec<PullRequestObservation>,
     /// Pull requests that are no longer open and that a supersession names, by number: a
@@ -405,6 +408,29 @@ fn gh_retrying(root: &Path, args: &[&str]) -> Result<(bool, String, String), For
         }
     })
     .map_err(ForgeError)
+}
+
+/// The merge methods a repository's settings allow, from `GET repos/{repository}`, in the
+/// forge's words; `None` when the answer carries none of `allow_merge_commit`,
+/// `allow_squash_merge` and `allow_rebase_merge`. The forge leaves them out for a token that
+/// may not read them (the Pages workflow's), and the snapshot it published read that as
+/// "allows no merge commit (it allows: nothing)" while all three were allowed (I2966).
+fn merge_methods_of(settings: &Value) -> Option<Vec<String>> {
+    let mut read = false;
+    let mut methods = Vec::new();
+    for (key, word) in [
+        ("allow_merge_commit", "merge"),
+        ("allow_squash_merge", "squash"),
+        ("allow_rebase_merge", "rebase"),
+    ] {
+        if let Some(allowed) = settings.get(key).and_then(Value::as_bool) {
+            read = true;
+            if allowed {
+                methods.push(word.to_string());
+            }
+        }
+    }
+    read.then_some(methods)
 }
 
 fn gh_json(root: &Path, args: &[&str]) -> Result<Value, ForgeError> {
@@ -1468,16 +1494,7 @@ impl Forge for GhForge<'_> {
         let delete_branch_on_merge = settings
             .get("delete_branch_on_merge")
             .and_then(Value::as_bool);
-        let mut merge_methods = Vec::new();
-        for (key, word) in [
-            ("allow_merge_commit", "merge"),
-            ("allow_squash_merge", "squash"),
-            ("allow_rebase_merge", "rebase"),
-        ] {
-            if settings.get(key).and_then(Value::as_bool).unwrap_or(false) {
-                merge_methods.push(word.to_string());
-            }
-        }
+        let merge_methods = merge_methods_of(&settings);
         let base_sha = gh_json(
             root,
             &[
@@ -2781,7 +2798,7 @@ mod tests {
             required_checks: None,
             review_policy: None,
             up_to_date_required: None,
-            merge_methods: vec!["merge".into()],
+            merge_methods: Some(vec!["merge".into()]),
             pull_requests: vec![pr(1, &one), pr(2, &two)],
             resolved: BTreeMap::new(),
             delete_branch_on_merge: None,
@@ -2895,7 +2912,7 @@ mod tests {
             required_checks: None,
             review_policy: None,
             up_to_date_required: None,
-            merge_methods: vec!["merge".into()],
+            merge_methods: Some(vec!["merge".into()]),
             pull_requests: vec![pr(1), pr(2)],
             resolved: BTreeMap::new(),
             delete_branch_on_merge: None,
@@ -3489,6 +3506,38 @@ mod tests {
         );
         assert_eq!(REFERENCE_PAGES, 50);
         assert_eq!(OBSERVATION_SCHEMA, 4);
+    }
+
+    #[test]
+    fn merge_settings_absent_from_the_answer_are_unread_and_present_ones_are_read() {
+        use serde_json::json;
+        // a token that may not read them: the repository without its merge settings
+        assert_eq!(
+            merge_methods_of(&json!({"name": "r", "default_branch": "master"})),
+            None
+        );
+        // read, and none allowed, is "allows nothing" — and only that is
+        assert_eq!(
+            merge_methods_of(
+                &json!({"allow_merge_commit": false, "allow_squash_merge": false, "allow_rebase_merge": false})
+            ),
+            Some(Vec::new())
+        );
+        assert_eq!(
+            merge_methods_of(
+                &json!({"allow_merge_commit": true, "allow_squash_merge": true, "allow_rebase_merge": true})
+            ),
+            Some(vec![
+                "merge".to_string(),
+                "squash".to_string(),
+                "rebase".to_string()
+            ])
+        );
+        // one setting read is enough to know the others are not granted
+        assert_eq!(
+            merge_methods_of(&json!({"allow_squash_merge": true})),
+            Some(vec!["squash".to_string()])
+        );
     }
 
     #[test]

@@ -45,7 +45,7 @@ mj_binding_ask() {
   bin="$(mj_rust_bin "$MJ_HOME")"
   if [ ! -x "$bin" ]; then
     MJ_BIND_WHY="the intent engine is not built at $bin, so the binding cannot be asked here"
-    MJ_BIND_FIX="bin/majordomus-cli --help"
+    MJ_BIND_FIX="just build"
     return 1
   fi
   input="$(jq -cn --arg issue "$issue" --arg intent "$intent" --arg paths "$paths" \

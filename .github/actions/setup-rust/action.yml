@@ -32,6 +32,13 @@ runs:
       uses: Swatinem/rust-cache@v2
       with:
         workspaces: apps/majordomus-cli
+        # Where cargo compiles (I4221). .cargo/config.toml puts the intermediates — the
+        # dependencies, fingerprints and incremental state — in build-dir,
+        # {cargo-cache-home}/build-shared, and leaves only finished artifacts in the
+        # workspace's target/. Caching target/ alone restored the executables and none of the
+        # compilation, so a job reported `cache hit=true` and still compiled every dependency.
+        # The finished artifacts stay per tree; only the intermediates are carried here.
+        cache-directories: ~/.cargo/build-shared
         # a red job leaves no cache behind: a half-built target directory would be restored
         # by the next run of the same key
         cache-on-failure: false

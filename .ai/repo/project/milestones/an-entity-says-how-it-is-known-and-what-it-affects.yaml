@@ -1,0 +1,44 @@
+id: an-entity-says-how-it-is-known-and-what-it-affects
+title: "One entity read names how its record says it is known and when it was observed, identically on every surface, and what a change affects is derived from the same index"
+slug: an-entity-says-how-it-is-known-and-what-it-affects
+order: 212
+priority: p1
+problem: "EntityView (apps/majordomus-cli/src/capability/builtin/entity.rs:395-435) carries no epistemic class, no observation time and no blob. Separate vocabularies each answer part of how a record is known: entity.rs:140-151, intent_realization.rs:77-101, devtask/mod.rs:93-125, knowledge epistemics in docs/KNOWLEDGE.md:30, and ProofState in evidence/mod.rs. No test compares entity.show across the command line, REST, MCP and the Cockpit. No capability composes path, issue scope, served intent and the records that name the path: graph.rs RELATIONS has no scope or serves relation, and trace.commit attributes by branch only (capability/builtin/trace.rs:269-271)."
+outcome: "entity.show answers, on every surface from one declaration, a class read from the record and the observation envelope repository.info already uses. Proof stays a pointer (entity.rs:181-185). A test fails on any divergence between surfaces. entity.affected answers what a path set or a revision range touches, with reasons, from the loaded index."
+current_state: "Projections are registry-derived and drift-checked (apps/majordomus-cli/tests/projections.rs). tests/cockpit.rs:187-245 compares the Cockpit entity page with GET /api/v1/entity only. I3314 plans the last-changing commit on the entity read."
+desired_state: "I3427, I3428, I3429, I3407 and I3412 have landed. docs/SURFACES.md states the class vocabulary once, with the mapping from each older vocabulary, as the proposed ADR decides."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/entity.rs"
+  - "apps/majordomus-cli/src/entity.rs"
+  - "apps/majordomus-cli/src/intent_binding.rs"
+  - "apps/majordomus-cli/src/live.rs"
+  - "apps/majordomus-cli/tests/objects.rs"
+  - "apps/majordomus-cli/tests/cockpit.rs"
+  - "docs/SURFACES.md"
+  - "docs/generated/registry.json"
+  - "docs/generated/registry.yaml"
+  - "docs/generated/openapi.json"
+  - "docs/generated/openapi.yaml"
+  - "docs/generated/modules/entity.md"
+  - "site/data/generated/openapi.json"
+  - "site/data/registry/registry.json"
+non_scope:
+  - "Renaming or removing IntentLinkProvenance, FieldProvenance, knowledge epistemics, EvidenceState or ProofState"
+  - "Running a proof inside entity.show"
+  - "A confidence score (no deterministic producer exists)"
+  - "An accountable-owner field (no canonical owner record exists)"
+  - "Adding relations to graph::RELATIONS"
+  - "CI case selection (I3238) and derive input selection (milestone a-derive-does-only-the-work-its-inputs-changed)"
+acceptance_criteria:
+  - "The criteria an-entity-says-how-it-is-known, every-surface-reads-one-entity and what-a-change-affects-is-derived are rewritten to evidence: test"
+  - "bin/majordomus-cli generate --check passes with every new field projected and no projection edited by hand"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+depends_on:
+  - "capability-graph"
+risks:
+  - "entity.rs is edited by I3427, I3428, I3407, I3412 and I3314; I3407 and I3412 chain on I3427, I3428 waits on I3314, and each must merge master before it lands"
+  - "An object whose record carries no basis reads observed; screens that showed resolved evidence keep showing it beside the class, and they must not read as a regression"
+created_at: 2026-10-19
+updated_at: 2026-10-19

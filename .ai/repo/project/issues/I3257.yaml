@@ -1,0 +1,26 @@
+id: I3257
+milestone: command-and-deployment-criteria-are-judged
+title: "intent explain follows each served issue past its merge to the release and the observed deployment that carry it"
+slug: explain-follows-work-to-its-deployment
+priority: p2
+profile: implementation
+objective: "Revive I2507 from origin/chore/seven-owner-packs-are-tracked-and-planned (689021d6ce2, 2026-10-15, never landed): intent explain and the realization join continue from each served issue's merge to the release record and the deployment observation that carry it, with a gap named where one is missing."
+why: "2026-10-02 and 2026-10-16: the chain from intent to runtime observation and from a commit to its criterion should be one query. Sources: chatgpt-majordomus:c176#2, chatgpt-majordomus:c270#4."
+current_state: "intent_realization.rs joins episodes, providers and handovers; delivery inference (I2740) is on its own branch."
+desired_state: "One explain answer carries intent -> criterion -> issue -> merge -> release -> deployment."
+scope:
+  - "apps/majordomus-cli/src/intent_realization.rs"
+  - "apps/majordomus-cli/src/intent.rs"
+  - "apps/majordomus-cli/tests/intent_realization.rs"
+depends_on:
+  - "I3256"
+  - "I2740"
+acceptance_criteria:
+  - "A served issue merged and released shows both; one merged and not released names the missing release"
+validation:
+  - "majordomus plan validate"
+  - "majordomus intent validate"
+evidence_required:
+  - "test_explain_follows_work_to_its_deployment"
+created_at: 2026-10-18
+updated_at: 2026-10-18

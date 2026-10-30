@@ -1,7 +1,7 @@
 +++
 title = "Session records are shared objects with a closed field set"
 description = "Session records are shared objects with a closed field set"
-weight = 52
+weight = 53
 [extra]
 kind = "rule"
 slug = "majordomus-session-records-1"

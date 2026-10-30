@@ -1,0 +1,48 @@
+id: I2701
+milestone: runtime-lifecycle
+title: "The idle timeout is declared beside the other server timings, and serve --idle overrides the declaration"
+slug: the-idle-timeout-is-declared
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Declare the server's idle timeout under policy.yaml server: beside the lease timings, validate it by the policy schema, and make every server that starts stop after the declared time unless serve --idle says otherwise."
+why: "Split from I2129 on 2026-10-14. I2129 made the declared lease timings the ones mcp and serve elect by, and its desired_state said 'Not done here' of the idle timeout as a declared server key, while its acceptance criteria still required it, so it could never close. The idle timeout is the one server timing a repository cannot declare: a compiled constant, absent from policy.yaml server:. Baseline audit of 2026-10-09 at master 1fb8d6be44, lifecycle drift 1."
+current_state: "DEFAULT_IDLE_SECONDS (900, apps/majordomus-cli/src/cli.rs) is the clap default of serve --idle and serve ensure --idle, and env enter passes it to the server it starts (apps/majordomus-cli/src/commands/env.rs). .ai/repo/policy.yaml server: declares probe_timeout_seconds, bind_grace_seconds, join_timeout_seconds, busy_grace_seconds and read_deadline_seconds (lease::Timings, apps/majordomus-cli/src/lease.rs); the policy schema (share/schemas/majordomus/policy/policy.v1.schema.json) knows no idle key."
+desired_state: "policy.yaml server: may declare the idle timeout (server.idle_seconds) and the policy schema validates it; a server started by serve, serve ensure or env enter without --idle stops after the declared time, an absent key keeps 900 s, and --idle given on the command line overrides the declaration. docs/MCP.md lists the key with the other server timings."
+scope:
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/commands/serve.rs"
+  - "apps/majordomus-cli/src/commands/env.rs"
+  - "apps/majordomus-cli/src/policy.rs"
+  - ".ai/repo/policy.yaml"
+  - "share/schemas/majordomus/policy"
+  - "apps/majordomus-cli/tests/serve_lifecycle.rs"
+  - "test/cases"
+  - "docs/MCP.md"
+non_scope:
+  - "The lease timings the elections read, which I2129 delivered"
+depends_on:
+  - I2129
+acceptance_criteria:
+  - "The idle timeout is a declared policy key validated by the policy schema, and serve --idle overrides it"
+  - "A server started without --idle under a declared idle timeout of a few seconds stops after the declared time, not after 900 s"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test serve_lifecycle"
+evidence_required:
+  - "idle_timeout_declared_test"
+created_at: 2026-10-14
+updated_at: 2026-10-17T12:02:08Z
+started_at: 2026-10-17T12:01:46Z
+started_event: sha256:2ce4c7bb890bb552227ee14273a65917883ca71f887994b181871b1cd1557346
+verified_at: 2026-10-17T12:01:59Z
+verified_event: sha256:2b2991e5d69b8709f668fdc997552eee0aefdb6af35628c25828427137544949
+completed_at: 2026-10-17T12:02:08Z
+completed_event: sha256:083c2f8771f7e7f1fa85013b6c38c4bc1efdb101e6147f430b705250d169c1f2
+evidence:
+  - covers: idle_timeout_declared_test
+    type: test
+    command: "cargo test --test serve_lifecycle"
+    result: "17 passed, 0 failed, incl. idle_timeout_declared_test (code on master since 7111f846b83; re-run at master 01227a0)"
+    commit: 01227a0f74ab9de734edd3672dcc9d8d3a2d666c
+    recorded_at: 2026-10-17T12:01:55Z

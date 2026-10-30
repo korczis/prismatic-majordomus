@@ -22,6 +22,12 @@ Exit `0` when nothing stands outside the baseline, `10` otherwise — the code e
 contract in this executable uses. The JSON and the terminal rendering are two readings of
 one execution, so they cannot disagree about the outcome.
 
+The structure job's `rust-quality` gate runs the first line, and so does
+`scripts/rust-check`: first in its default mode, before format, lints and tests, and alone
+with `scripts/rust-check --quality`. A change that adds or widens an exported item runs the
+latter before it is pushed, and meets the finding the structure job would print there, on
+its own machine, rather than at the end of a CI run.
+
 The same measurement answers at `GET /api/v1/quality`, as the MCP tool `majordomus_quality`
 and the resource `majordomus://quality`, and on the Cockpit's **Quality** page. It is a
 capability like any other; nothing on that list is a second implementation.

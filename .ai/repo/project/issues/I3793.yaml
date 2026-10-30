@@ -1,0 +1,33 @@
+id: I3793
+milestone: one-kit-on-every-surface
+title: "One copy control and one tab control ship to every surface"
+slug: one-copy-and-one-tab-control
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make kit.js's dependency-free copy and tab controls the only ones: replace the Alpine copy button and Alpine tabs on the site with them, and ship them to /ui and the Cockpit as byte copies held by scripts/cockpit-assets --check, the way nav.js and theme.js already travel, so a code block, a command or a set of tabs behaves the same on every surface."
+why: "On 2026-10-20 the site had two copy implementations (Alpine in components.html and terminal-run.html, data-copy in kit.js) and two tab implementations (Alpine and kit.js), each with its own interaction spec, and /ui and the Cockpit had no copy control at all; the owner asked for one kit everywhere."
+current_state: "copy-button.mjs and kit-copy.mjs specs; tabs.mjs and kit-tabs.mjs specs; no copy or tabs on /ui and the Cockpit."
+desired_state: "One copy and one tab implementation, one spec each, present on the site, /ui and the Cockpit; a second implementation planted fails the design check that names it."
+scope:
+  - "site/kit.js"
+  - "site/templates/components.html"
+  - "site/templates/partials/terminal-run.html"
+  - "share/ui"
+  - "share/cockpit"
+  - "scripts/cockpit-assets"
+  - "scripts/lib/interaction-specs"
+  - "scripts/ci/design-check"
+depends_on: []
+acceptance_criteria:
+  - "The site, /ui and the Cockpit load the same copy and tab code, byte-identical, checked by cockpit-assets --check"
+  - "No Alpine copy or tab component remains on the site, and one interaction spec covers each control"
+  - "A second copy or tab implementation planted on any surface fails a gate that names it"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/cockpit-assets --check"
+  - "scripts/interaction-probe"
+evidence_required:
+  - "one_copy_and_tab_control_case"
+created_at: 2026-10-20
+updated_at: 2026-10-20

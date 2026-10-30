@@ -189,3 +189,75 @@ expect_exit 0 cov7 "$BASE7"
 printf 'pub fn demo() {}\n\nmod tests;\n' > "$W7/apps/majordomus-cli/src/demo/mod.rs"
 expect_exit 10 cov7 "$BASE7"
 expect_grep "$REL7:6"
+
+# ------------------------------- 9. a raw string across lines does not close a test module early
+#
+# `test_lines` finds the end of an inline `#[cfg(test)] mod tests { ... }` by matching braces.
+# A multi-line raw string such as r#"{"graph": {"nodes": [ ... ]}}"#, whose braces are data,
+# closed the module 63 lines early on 2026-10-22 (I3919): the panic branches after it were
+# judged product code and failed the gate. The fixture's uncovered changed line (8) sits after
+# such a string inside the test module and owes nothing; the same file without the attribute
+# is an ordinary module and its line 8 is owed.
+W9="$T/repo9"; REL9="apps/majordomus-cli/src/rawstr.rs"
+mkdir -p "$W9/$(dirname "$REL9")" "$W9/scripts/ci"
+git -C "$W9" init -q; git -C "$W9" config user.email t@example.com; git -C "$W9" config user.name t
+cp "$ROOT/scripts/rust-coverage" "$W9/scripts/rust-coverage"; chmod +x "$W9/scripts/rust-coverage"
+cp "$ROOT/scripts/ci/coverage-differential" "$W9/scripts/ci/coverage-differential"; chmod +x "$W9/scripts/ci/coverage-differential"
+write_rawstr() {
+  { [ "$1" = test ] && echo '#[cfg(test)]' || echo '// plain module'
+    cat <<'RS'
+mod tests {
+    fn fixture() -> &'static str {
+        r##"{"graph": {"nodes": [
+            {"id": "x"}
+        ], "edges": []}}"##
+    }
+    fn after() { panic!("test branch"); }
+}
+RS
+  } > "$W9/$REL9"
+}
+write_rawstr test
+git -C "$W9" add -A >/dev/null; git -C "$W9" commit -qm base
+BASE9="$(git -C "$W9" rev-parse HEAD)"
+# the export names the file; line 8 (the panic after the raw string) is uncovered
+FX9="$T/export9.json"
+W="$W9" REL="$REL9" python3 - "$FX9" <<'PY'
+import json, os, sys
+target = os.path.join(os.environ["W"], os.environ["REL"])
+seg = lambda l, c, n, s: [l, c, n, s, s, False]
+data = {"version": "2.0.1", "type": "llvm.coverage.json.export", "data": [{
+    "files": [{"filename": target, "segments": [seg(8, 5, 0, True), seg(8, 40, 0, False)], "summary": {}}],
+    "functions": [{"name": "after", "count": 0, "filenames": [target],
+                   "regions": [[8, 5, 8, 40, 0, 0]]}]}]}
+json.dump(data, open(sys.argv[1], "w"))
+PY
+cov9() { ( cd "$W9" && MJ_ROOT="$W9" MJ_COVERAGE_EXPORT="$FX9" scripts/ci/coverage-differential "$1" ); }
+touch9() { python3 - "$W9/$REL9" <<'PY'
+import sys
+path = sys.argv[1]
+lines = open(path).read().splitlines(keepends=True)
+lines[7] = lines[7].rstrip("\n") + "  // touched by 132\n"
+open(path, "w").writelines(lines)
+PY
+}
+touch9
+expect_exit 0 cov9 "$BASE9"
+# the direct check: every line of the module, from its attribute to its closing brace, is test code
+TL="$T/test-lines.out"
+python3 - "$ROOT/scripts/rust-coverage" "$W9/$REL9" > "$TL" <<'PY'
+import re, sys
+src = open(sys.argv[1]).read()
+code = src[src.index("RAW_OPEN = "):src.index("def declared_test_module")]
+def read(path):
+    return open(path).read().splitlines()
+ns = {"re": re, "read": read}
+exec(code, ns)
+print(sorted(ns["test_lines"](sys.argv[2])))
+PY
+grep -q '^\[1, 2, 3, 4, 5, 6, 7, 8, 9\]$' "$TL" \
+  || { cat "$TL"; echo "    test_lines closed the module early at a raw string"; exit 1; }
+# the same file, no longer a test module: its uncovered changed line is owed
+write_rawstr plain; touch9
+expect_exit 10 cov9 "$BASE9"
+expect_grep "$REL9:8"

@@ -1,0 +1,35 @@
+id: I4341
+milestone: development-runtime
+title: "release-check excuses a tag without a record until its grace ends, whatever the job fetched and whenever the release run concluded"
+slug: a-tag-is-excused-until-its-grace-ends
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Make the excuse scripts/ci/release-check gives a published tag without a record monotonic over its grace: when proposed_record() finds no local release/record-<tag> ref it asks `git ls-remote --heads origin release/record-<tag>` and fetches that one ref, and release_in_flight() reads a GitHub release of the tag younger than RECORD_GRACE_HOURS as pending whatever its release run concluded."
+why: "Incident 7 of 2026-10-28: master validate run 40676150754 went red on case 103 after v1.0.0-alpha.9 was tagged before its record landed. release-check has two excuses and they do not cover the same time: 'in flight' (I2712) ends when the release run concludes, and 'proposed record' (I2054) reads only the refs fetched at checkout. A job that fetched after the tag and before the record branch was pushed, and judged after the run ended, matched neither; the structure job has the same gap. The record pull request #2626 is open and blocked (action_required), so unless it lands every job turns red about 2026-10-29 12:47Z, when the 24-hour grace from the record branch ends; the next release meets the same gap."
+current_state: "Measured at 81ef931a3e1: proposed_record() (scripts/ci/release-check line 281) reads local refs only; release_in_flight() (line 254) reads a tag as pending only while its release run is listed in flight or while GitHub holds no release of it; RECORD_GRACE_HOURS (line 223) defaults to 24."
+desired_state: "Within the grace, a tag without a record reads pending in every ordering of the checkout's fetch, the record branch's push and the release run's conclusion; past the grace it is a finding as today; with origin unreachable the finding stands and its note names the remote it could not ask. Enforced by cases 3029 and 3021 in the suite gate."
+scope:
+  - ".ai/repo/project/issues/I4341.yaml"
+  - "scripts/ci/release-check"
+  - "test/cases/3029_a_tag_in_flight_is_pending.sh"
+  - "test/cases/3021_a_tag_does_not_freeze_the_queue.sh"
+  - "docs/RELEASE.md"
+non_scope:
+  - "Landing #2626, the owner's act due before 2026-10-29 12:47Z"
+  - "Case 103 reading the checkout's own tags instead of its fixture (the review's N24, not filed in this block)"
+  - "The age bound on an unlanded record (I4342)"
+acceptance_criteria:
+  - "Case 3029 drives every ordering of {fetch before, fetch after the record branch's push} x {release run in_progress, success, cancelled} within the grace and reads pending with exit 0 in each"
+  - "Case 3029: the same tag past the grace without a record is a finding with a non-zero exit"
+  - "Case 3029: with origin unreachable the finding stands and its note names the remote"
+  - "Case 3021 passes unchanged"
+validation:
+  - "bash test/run.sh 3029_a_tag_in_flight_is_pending 3021_a_tag_does_not_freeze_the_queue"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+depends_on: []
+serves: []
+created_at: 2026-10-29
+updated_at: 2026-10-29

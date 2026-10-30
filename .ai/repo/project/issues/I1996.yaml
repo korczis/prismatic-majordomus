@@ -12,6 +12,7 @@ desired_state: "In a repository that is not this one, the reasoning check holds 
 scope:
   - "lib/doctor.sh"
   - "apps/majordomus-cli/src/reasoning"
+  - "apps/majordomus-cli/src/capability/builtin/reasoning.rs"
   - "docs/REASONING.md"
   - "test/cases"
 acceptance_criteria:
@@ -25,4 +26,21 @@ evidence_required:
   - "adopter_reasoning_check_case"
   - "reproduce_hint_is_runnable_case"
 created_at: 2026-10-08
-updated_at: 2026-10-08
+updated_at: 2026-10-14T13:31:45Z
+started_at: 2026-10-14T13:31:26Z
+started_event: sha256:57dd8212d98b735a4cd881685e0be60d60f072c41154234118121e8c4fc746b8
+completed_at: 2026-10-14T13:31:45Z
+completed_event: sha256:407b898a71abae4bae4aab9e5070f025343e2df197ddd1e9459745280ea25592
+evidence:
+  - covers: adopter_reasoning_check_case
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 3017_doctor_holds_an_adopter_to_what_it_adopted"
+    result: "tests: 1 passed, 0 failed (run 2026-10-14 13:30Z on master 4ec504616c plus this change)"
+    commit: 4ec504616c6dea8c64f75221c7eb97ed835819b8
+    recorded_at: 2026-10-14T13:31:33Z
+  - covers: reproduce_hint_is_runnable_case
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 3017_doctor_holds_an_adopter_to_what_it_adopted"
+    result: "tests: 1 passed, 0 failed: the hint names majordomus reasoning check and runs (run 2026-10-14 13:30Z on master 4ec504616c plus this change)"
+    commit: 4ec504616c6dea8c64f75221c7eb97ed835819b8
+    recorded_at: 2026-10-14T13:31:35Z

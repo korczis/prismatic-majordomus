@@ -541,7 +541,13 @@ fn a_lost_write_that_nothing_can_serve_afterwards_is_still_reported_unknown() {
         }
     }));
     break_the_election(&f);
+    // the session reloads the repository it already found rather than discovering it again
+    // (I3015), so a broken manifest alone no longer stops it: its source classes go too
     f.write(".ai/manifest.yaml", "schema: [this is not a manifest\n");
+    f.write(
+        ".ai/repo/knowledge/sources.yaml",
+        "version: [these are not sources\n",
+    );
     let answer = bridge.call(7, WRITER, json!({ "id": "I0001", "status": "done" }));
     assert_outcome_unknown(&answer, 7);
     assert_eq!(server.received("tools/call", WRITER), 1, "sent once");

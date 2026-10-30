@@ -37,6 +37,12 @@
 //! graph, where every reference the layer declares is already resolved — and the objects
 //! from the index. There is no second relation table, no glob and no walk of the tree.
 //!
+//! One request reads source, and only when it says so: with `source_ranges`, the Rust files
+//! git tracks under the work's paths are parsed into one range per definition
+//! ([`source`]), bounded in files, bytes and ranges and guarded by the repository scope.
+//! Those ranges are candidates like any other, so the same budget spends them in the same
+//! order, and the answer says what reading the files whole would have cost instead.
+//!
 //! # The performance contract
 //!
 //! Nothing here is built when a [`crate::capability::Context`] is composed. The compiler
@@ -107,11 +113,13 @@ use crate::capability::handler::{CapabilityError, Context};
 pub mod budget;
 pub mod model;
 pub mod select;
+pub mod source;
 
 pub use model::{
     tokens_for, Budget, CommitReference, CompiledContext, Conflict, ContextEntry, Deduplicated,
-    Discovery, EntryProvenance, Excluded, ExclusionReason, GitContext, Seed, Selector, Tier,
-    TierSpend, BYTES_PER_TOKEN, DEFAULT_BUDGET_TOKENS, DEFAULT_MAX_DEPTH,
+    Discovery, EntryProvenance, Excluded, ExclusionReason, GitContext, Seed, Selector,
+    SourceCoverage, SourceFile, Tier, TierSpend, UnreadSource, BYTES_PER_TOKEN,
+    DEFAULT_BUDGET_TOKENS, DEFAULT_MAX_DEPTH,
 };
 pub use select::{edge_policy, intent_terms, tier_for_kind, EdgePolicy};
 
@@ -194,6 +202,14 @@ pub struct CompileInput {
     /// may not drop.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub all_blocking_rules: Option<bool>,
+    /// Outline the Rust source under the work's paths into ranges, one candidate per
+    /// definition, spent by the same budget beside the layer's objects ([`source`]).
+    ///
+    /// Off unless asked for: it reads files the index does not hold, and an answer every
+    /// existing caller already depends on — `economics measure` counts the files a context
+    /// names — does not change under it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_ranges: Option<bool>,
 }
 
 impl BenchmarkCases for CompileInput {
@@ -232,6 +248,20 @@ impl BenchmarkCases for CompileInput {
             "intent",
             CompileInput {
                 intent: Some("the context a session is given and the budget it costs".into()),
+                ..Default::default()
+            },
+        ));
+        // the one case that reads source: a path the work names, outlined into ranges and
+        // ordered by an intent, so the cost of parsing is measured rather than assumed
+        cases.push(NamedCase::new(
+            "source-ranges",
+            CompileInput {
+                paths: vec!["apps/majordomus-cli/src/devcontext".into()],
+                intent: Some("the budget spend".into()),
+                budget_tokens: Some(DEFAULT_BUDGET_TOKENS),
+                max_depth: Some(DEFAULT_MAX_DEPTH),
+                floor: Some(DEFAULT_FLOOR),
+                source_ranges: Some(true),
                 ..Default::default()
             },
         ));
@@ -847,7 +877,16 @@ pub fn compile(ctx: &Context, input: CompileInput) -> Result<CompiledContext, Ca
             _ => None,
         },
     };
-    let selection = select::select(ctx, &graph, &request);
+    let mut selection = select::select(ctx, &graph, &request);
+
+    // the Rust source under the effective paths, one candidate per definition, spent by the
+    // same budget in the same order as everything else (`source` is the one reader of files)
+    let paths = std::mem::take(&mut selection.paths);
+    let outlined = if input.source_ranges.unwrap_or(false) {
+        source::offer(ctx, &mut selection, &paths, &request.terms)
+    } else {
+        source::Outlined::default()
+    };
 
     // what stands in for what, from the graph's own edges rather than from a second read
     let mut supersedes: BTreeMap<String, Vec<String>> = BTreeMap::new();
@@ -861,6 +900,7 @@ pub fn compile(ctx: &Context, input: CompileInput) -> Result<CompiledContext, Ca
     }
 
     let (spend, diagnostics) = budget::spend(index, selection, &object_seeds, limit, &supersedes);
+    let sources = source_coverage(outlined, &spend.selected);
 
     // the commits the layer itself names, gathered from what was selected
     let mut commits = Vec::new();
@@ -921,7 +961,42 @@ pub fn compile(ctx: &Context, input: CompileInput) -> Result<CompiledContext, Ca
         conflicts: spend.conflicts,
         budget: spend.budget,
         diagnostics,
+        sources,
     })
+}
+
+/// What the budget made of the ranges [`source::offer`] put in: per file, how many were
+/// selected, what they cost, and what that saved against reading the file whole.
+fn source_coverage(outlined: source::Outlined, selected: &[ContextEntry]) -> SourceCoverage {
+    let mut spent: BTreeMap<&str, (usize, u64)> = BTreeMap::new();
+    for e in selected.iter().filter(|e| e.kind == source::KIND) {
+        let slot = spent.entry(e.provenance.path.as_str()).or_default();
+        slot.0 += 1;
+        slot.1 += e.cost_tokens;
+    }
+    let mut files = outlined.files;
+    for f in &mut files {
+        let (n, tokens) = spent.get(f.path.as_str()).copied().unwrap_or_default();
+        f.selected = n;
+        f.selected_tokens = tokens;
+        f.saved_tokens = if n == 0 {
+            0
+        } else {
+            f.whole_tokens.saturating_sub(tokens)
+        };
+    }
+    let read_any = !files.is_empty() || !outlined.unread.is_empty();
+    SourceCoverage {
+        parser: if read_any {
+            source::PARSER.into()
+        } else {
+            String::new()
+        },
+        files,
+        unread: outlined.unread,
+        unparsed: outlined.unparsed,
+        truncated: outlined.truncated,
+    }
 }
 
 /// Why one identifier is or is not in the context a request compiles to.
@@ -1038,6 +1113,8 @@ pub fn explain(ctx: &Context, input: ExplainInput) -> Result<Explanation, Capabi
         },
         detail: if known {
             format!("the index holds `{uri}` and no selector of this request reached it: no seed names it, no followed edge leads to it, no declared path contains it, and it is not governance")
+        } else if uri.starts_with(source::SCHEME) {
+            format!("`{uri}` is a source range, which the index does not hold: a range is offered only when the request sets `source_ranges` and the span is a definition in the file as it is now, so either the request did not ask for ranges or the file has moved under it")
         } else {
             format!("the index holds nothing under `{uri}`")
         },
@@ -1309,7 +1386,7 @@ mod fixture {
             Ok(me)
         }
 
-        fn write(&self, rel: &str, content: &str) -> std::io::Result<()> {
+        pub fn write(&self, rel: &str, content: &str) -> std::io::Result<()> {
             let p = self.root.join(rel);
             if let Some(dir) = p.parent() {
                 std::fs::create_dir_all(dir)?;
@@ -2191,5 +2268,339 @@ mod tests {
                         .iter()
                         .all(|d| d.selector == Selector::Governance)
             ));
+    }
+
+    /// A checkout whose `src/` holds Rust: one large file with a function worth finding
+    /// among many that are not, homonyms in two owners, a file that is not valid syntax,
+    /// a link out of the repository carrying a canary, a file the scope refuses and a
+    /// document no parser here reads. Tracked by a real `git`, because the compiler asks git
+    /// which files exist rather than walking the tree.
+    fn with_source() -> (Planned, std::sync::Arc<Context>, std::path::PathBuf) {
+        let repo = Planned::build().expect("a repository");
+        repo.write(
+            ".ai/repo/scope.yaml",
+            "version: 1\nin:\n  - .ai/manifest.yaml\n  - .ai/README.md\n  - .ai/repo/**\n  - lib/**\n  - test/**\n  - src/**\nout:\n  paths: [src/secret.rs]\n  binary: true\n  max_bytes: 1048576\n",
+        )
+        .unwrap();
+        let mut big = String::from("//! A large file.\n\nuse std::fmt;\n\n");
+        for i in 0..60 {
+            big.push_str(&format!(
+                "/// Filler {i}.\npub fn filler_{i}(x: u64) -> u64 {{\n{}    x\n}}\n\n",
+                "    let _ = 1;\n".repeat(12)
+            ));
+        }
+        big.push_str("/// The one this request is about.\npub fn budget_spend(limit: u64) -> u64 {\n    limit\n}\n\n");
+        big.push_str("pub struct Budget;\n\nimpl Budget {\n    pub fn alpha() {}\n}\n\npub fn alpha() {}\n\nmod other {\n    pub fn alpha() {}\n}\n\nimpl fmt::Display for Budget {\n    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {\n        write!(f, \"budget\")\n    }\n}\n");
+        repo.write("src/big.rs", &big).unwrap();
+        repo.write("src/broken.rs", "pub fn (\n").unwrap();
+        repo.write("src/secret.rs", "pub fn hidden_by_scope() {}\n")
+            .unwrap();
+        repo.write("src/notes.md", "# notes\n").unwrap();
+        // the canary lives outside the repository; a link to it is tracked inside
+        let outside = repo.root().with_extension("outside.rs");
+        std::fs::write(&outside, "pub fn canary_i3171_leaked() {}\n").unwrap();
+        #[cfg(unix)]
+        std::os::unix::fs::symlink(&outside, repo.root().join("src/link.rs")).unwrap();
+        for args in [&["init", "-q"][..], &["add", "-A"][..]] {
+            let ok = std::process::Command::new("git")
+                .arg("-C")
+                .arg(repo.root())
+                .args(args)
+                .env_remove("GIT_DIR")
+                .env_remove("GIT_WORK_TREE")
+                .env_remove("GIT_INDEX_FILE")
+                .status()
+                .expect("git runs");
+            assert!(ok.success(), "git {args:?}");
+        }
+        let ctx = repo.context().expect("a context");
+        (repo, ctx, outside)
+    }
+
+    fn ranges(c: &CompiledContext) -> Vec<&ContextEntry> {
+        c.selected
+            .iter()
+            .filter(|e| e.kind == source::KIND)
+            .collect()
+    }
+
+    #[test]
+    fn test_context_source_ranges() {
+        let (r, ctx, outside) = with_source();
+        let request = CompileInput {
+            paths: vec!["src".into()],
+            intent: Some("the budget spend".into()),
+            budget_tokens: Some(1_000_000),
+            source_ranges: Some(true),
+            ..Default::default()
+        };
+        let c = compile(&ctx, request.clone()).expect("an answer");
+
+        // every definition of the large file is a range of it, with its provenance
+        let got = ranges(&c);
+        let spend = got
+            .iter()
+            .find(|e| e.facts.get("symbol").map(String::as_str) == Some("budget_spend"))
+            .expect("the function the request is about is a range");
+        assert!(
+            spend.uri.starts_with("source:src/big.rs#L"),
+            "{}",
+            spend.uri
+        );
+        assert_eq!(spend.tier, Tier::Source);
+        assert_eq!(spend.provenance.path, "src/big.rs");
+        assert_eq!(spend.provenance.source_class, "source-syntax");
+        assert_eq!(spend.facts.get("item").map(String::as_str), Some("fn"));
+        // the span is observed (declared path, confidence 1); the name match is inferred
+        let by = |s: Selector| spend.discovered_by.iter().find(|d| d.selector == s);
+        assert_eq!(
+            by(Selector::ScopePath)
+                .expect("a declared way in")
+                .confidence,
+            1.0
+        );
+        let guessed = by(Selector::IntentMatch).expect("and the intent's words");
+        // the share of the intent's terms the name holds: both words here, so 1.0, and
+        // still marked as the one selector that guesses, ranked below anything named
+        assert!(!guessed.selector.declared(), "a name match is an inference");
+        assert!(guessed.confidence > 0.0 && guessed.confidence <= 1.0);
+        assert!(
+            spend.relevance < 0.8,
+            "a range, even one the intent names, ranks below a whole object (0.8): {}",
+            spend.relevance
+        );
+
+        // homonyms stay apart, each under its own owner
+        let symbols: BTreeSet<&str> = got
+            .iter()
+            .filter_map(|e| e.facts.get("symbol").map(String::as_str))
+            .collect();
+        for s in [
+            "alpha",
+            "Budget::alpha",
+            "other::alpha",
+            "<Budget as Display>::fmt",
+        ] {
+            assert!(symbols.contains(s), "{s} missing from {symbols:?}");
+        }
+
+        // what was not outlined says why, and the canary behind the link was never read
+        let unread: BTreeMap<&str, &str> = c
+            .sources
+            .unread
+            .iter()
+            .map(|u| (u.path.as_str(), u.reason.as_str()))
+            .collect();
+        assert!(
+            unread["src/broken.rs"].starts_with("syn cannot parse it"),
+            "{unread:?}"
+        );
+        assert!(
+            unread["src/link.rs"].contains("symbolic link"),
+            "{unread:?}"
+        );
+        assert!(
+            unread["src/secret.rs"].contains("out of the repository scope"),
+            "{unread:?}"
+        );
+        assert_eq!(c.sources.unparsed.get(".md"), Some(&1));
+        let json = serde_json::to_string(&c).unwrap();
+        assert!(!json.contains("canary_i3171"), "the link's target was read");
+        assert!(
+            !json.contains("hidden_by_scope"),
+            "a file out of scope was read"
+        );
+        let _ = std::fs::remove_file(outside);
+
+        // the file is identified by the bytes parsed, not by a commit
+        let big = std::fs::read(r.root().join("src/big.rs")).unwrap();
+        let file = &c.sources.files[0];
+        assert_eq!(file.path, "src/big.rs");
+        assert_eq!(file.digest, crate::evidence::digest_of(&big));
+        assert_eq!(file.whole_tokens, tokens_for(big.len() as u64));
+        assert_eq!(file.selected, got.len());
+
+        // the same request over the same bytes is the same answer, byte for byte
+        let again = compile(&ctx, request).unwrap();
+        assert_eq!(serde_json::to_string(&again).unwrap(), json);
+    }
+
+    #[test]
+    fn a_large_file_is_answered_by_ranges_that_cost_less_than_reading_it() {
+        let (_r, ctx, outside) = with_source();
+        let _ = std::fs::remove_file(outside);
+        let ask = |budget: u64| {
+            compile(
+                &ctx,
+                CompileInput {
+                    paths: vec!["src/big.rs".into()],
+                    intent: Some("budget spend".into()),
+                    budget_tokens: Some(budget),
+                    source_ranges: Some(true),
+                    ..Default::default()
+                },
+            )
+            .expect("an answer")
+        };
+        let generous = ask(1_000_000);
+        let spend = ranges(&generous)
+            .into_iter()
+            .find(|e| e.facts.get("symbol").map(String::as_str) == Some("budget_spend"))
+            .expect("the range")
+            .cost_tokens;
+        // room for everything spent before the source tier, the range asked about, and a
+        // little more: the budget spends in tier order, so that is what the range competes
+        // with
+        let before_source: u64 = generous
+            .selected
+            .iter()
+            .filter(|e| e.tier < Tier::Source)
+            .map(|e| e.cost_tokens)
+            .sum();
+        let tight = ask(before_source + spend + 40);
+        let file = &tight.sources.files[0];
+        assert!(
+            ranges(&tight)
+                .iter()
+                .any(|e| e.facts.get("symbol").map(String::as_str) == Some("budget_spend")),
+            "the intent's range is spent before its siblings"
+        );
+        assert!(file.selected_tokens < file.whole_tokens, "{file:?}");
+        assert_eq!(file.saved_tokens, file.whole_tokens - file.selected_tokens);
+        assert!(tight.sources.saved_tokens() > 0);
+        // and what did not fit is still named, by range, with its cost
+        let left = tight
+            .excluded
+            .iter()
+            .filter(|x| x.uri.starts_with("source:src/big.rs#L"))
+            .count();
+        assert!(
+            left > 0 && left + file.selected == file.ranges,
+            "{left} + {file:?}"
+        );
+    }
+
+    #[test]
+    fn an_edited_definition_moves_its_range_and_the_digest_says_so() {
+        let (r, ctx, outside) = with_source();
+        let _ = std::fs::remove_file(outside);
+        let ask = |ctx: &Context| {
+            compile(
+                ctx,
+                CompileInput {
+                    paths: vec!["src/big.rs".into()],
+                    budget_tokens: Some(1_000_000),
+                    source_ranges: Some(true),
+                    ..Default::default()
+                },
+            )
+            .unwrap()
+        };
+        let before = ask(&ctx);
+        let text = std::fs::read_to_string(r.root().join("src/big.rs")).unwrap();
+        r.write(
+            "src/big.rs",
+            &text.replace("budget_spend", "budget_spent_renamed"),
+        )
+        .unwrap();
+        let after = ask(&ctx);
+        let symbols = |c: &CompiledContext| -> BTreeSet<String> {
+            ranges(c)
+                .iter()
+                .filter_map(|e| e.facts.get("symbol").cloned())
+                .collect()
+        };
+        assert!(symbols(&before).contains("budget_spend"));
+        assert!(
+            !symbols(&after).contains("budget_spend"),
+            "the old name survived"
+        );
+        assert!(symbols(&after).contains("budget_spent_renamed"));
+        assert_ne!(
+            before.sources.files[0].digest,
+            after.sources.files[0].digest
+        );
+    }
+
+    #[test]
+    fn a_path_is_a_literal_and_never_pathspec_magic() {
+        let (_r, ctx, outside) = with_source();
+        let _ = std::fs::remove_file(outside);
+        for path in ["src/*.rs", ":(glob)src/**"] {
+            let c = compile(
+                &ctx,
+                CompileInput {
+                    paths: vec![path.into()],
+                    budget_tokens: Some(1_000_000),
+                    source_ranges: Some(true),
+                    ..Default::default()
+                },
+            );
+            // refused as a path, or read as the literal name nothing has
+            if let Ok(c) = c {
+                assert!(ranges(&c).is_empty(), "{path} was read as a pattern");
+                assert!(c.sources.files.is_empty(), "{path}: {:?}", c.sources);
+            }
+        }
+    }
+
+    #[test]
+    fn a_file_nothing_was_selected_from_saved_nothing() {
+        let (_r, ctx, outside) = with_source();
+        let _ = std::fs::remove_file(outside);
+        // a budget that what may not be dropped already fills: no range fits
+        let c = compile(
+            &ctx,
+            CompileInput {
+                paths: vec!["src/big.rs".into()],
+                budget_tokens: Some(1),
+                source_ranges: Some(true),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        let file = &c.sources.files[0];
+        assert_eq!(file.selected, 0, "{file:?}");
+        assert_eq!(
+            file.saved_tokens, 0,
+            "a file not read is not a saving: {file:?}"
+        );
+        assert_eq!(c.sources.saved_tokens(), 0);
+        // and explain says what a source range is rather than calling it unknown
+        let uri = c
+            .excluded
+            .iter()
+            .find(|x| x.uri.starts_with(source::SCHEME))
+            .expect("an excluded range")
+            .uri
+            .clone();
+        let why = explain(
+            &ctx,
+            ExplainInput {
+                uri: format!("{uri}0"),
+                request: CompileInput::default(),
+            },
+        )
+        .unwrap();
+        assert!(why.detail.contains("source range"), "{}", why.detail);
+    }
+
+    #[test]
+    fn source_is_read_only_when_it_is_asked_for() {
+        let (_r, ctx, outside) = with_source();
+        let _ = std::fs::remove_file(outside);
+        let c = compile(
+            &ctx,
+            CompileInput {
+                paths: vec!["src".into()],
+                budget_tokens: Some(1_000_000),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        assert!(ranges(&c).is_empty());
+        assert!(c.sources.is_empty());
+        // and the answer every existing caller reads has no new key in it
+        assert!(serde_json::to_value(&c).unwrap().get("sources").is_none());
     }
 }

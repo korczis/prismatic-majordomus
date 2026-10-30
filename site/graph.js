@@ -118,6 +118,9 @@
     var base = (el.getAttribute('data-graph-base') || '').replace(/\/$/, '');
     var canvas = el.querySelector('[data-graph-canvas]');
     var detail = el.querySelector('[data-graph-detail]');
+    // the empty description is what the page was built with, in the page's own language: a
+    // copy's translation pass rewrites the text a reader sees, not an attribute beside it
+    var empty = detail ? detail.innerHTML : '';
     if (!canvas) { return; }
 
     var byId = {};
@@ -185,7 +188,7 @@
 
     function clearFocus() {
       cy.elements().removeData('dimmed').removeData('focus');
-      if (detail) { detail.innerHTML = detail.getAttribute('data-empty') || ''; }
+      if (detail) { detail.innerHTML = empty; }
     }
 
     function focus(node) {

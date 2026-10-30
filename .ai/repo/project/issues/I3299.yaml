@@ -1,0 +1,33 @@
+id: I3299
+milestone: every-sessions-usage-is-observed
+title: "Majordomus's own overhead in an adopting repository is measured per operation against declared budgets"
+slug: adoption-overhead-is-measured
+priority: p3
+profile: implementation
+objective: "Declare budgets for CLI start, warm discovery, idle server CPU and resident memory, incremental derive, and the bootstrap tokens a session pays, measure them in an adopting fixture repository with the existing bench, and fail when one is exceeded."
+why: "The owner asked for an honest answer on whether overhead stays acceptable; the proposed numbers (2026-10-16) are targets, not measurements, and nothing measures them in a foreign repository today. It serves the intent's own-overhead-is-measured, the proof of the statement's 'costs'; it is the adopting-repository delta beside I2485, ADR 0169 and project.performance-evidence, which measure this repository only, and it stays bound to this intent because milestone development-runtime belongs to no intent. It extends milestone development-runtime. Sources: chatgpt-majordomus:c278#2, chatgpt-majordomus:c278#3."
+current_state: "rule project.performance-evidence and bench --check hold UI latency budgets (I2489 done) for this repository only."
+desired_state: "An adoption overhead suite in benchmark policy with recorded measurements."
+scope:
+  - ".ai/repo/benchmarks/rust/policy.yaml"
+  - ".ai/repo/benchmarks/rust/README.md"
+  - ".ai/repo/benchmarks/README.md"
+  - "apps/majordomus-cli/src/bench/system.rs"
+  - "apps/majordomus-cli/src/bench/runner.rs"
+  - "apps/majordomus-cli/src/bench/mod.rs"
+  - "apps/majordomus-cli/src/capability/benchmark.rs"
+  - "apps/majordomus-cli/src/commands/bench.rs"
+  - "apps/majordomus-cli/tests/bench.rs"
+  - "docs/generated/benchmarks.json"
+serves:
+  - "every-sessions-usage-is-observed#own-overhead-is-measured"
+acceptance_criteria:
+  - "Each budget has a benchmark that fails when exceeded"
+  - "Idle CPU is measured on an inactive fixture"
+validation:
+  - "majordomus bench --check"
+  - "majordomus plan validate"
+evidence_required:
+  - "bench_adoption_overhead"
+created_at: 2026-10-18
+updated_at: 2026-10-18

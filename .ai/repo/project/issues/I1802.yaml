@@ -1,0 +1,39 @@
+id: I1802
+milestone: automation
+title: Nothing runs Perl
+slug: nothing-runs-perl
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Remove every invocation of Perl from tracked files, including indirect ones such as shasum on macOS, and hold the absence with a gate."
+why: "The repository owner ruled Perl out on 2026-09-15. shasum is a Perl script on macOS, so a digest taken with it runs Perl without the word appearing anywhere. Worked on branch fix/nothing-runs-perl."
+current_state: "shasum is called from shell under scripts and lib."
+desired_state: "No tracked file invokes perl or shasum; a gate refuses a new one."
+scope:
+  - scripts
+  - lib
+  - bin
+  - test
+non_scope:
+  - Replacing shell as a whole; that is the rest of the milestone
+depends_on: []
+acceptance_criteria:
+  - no tracked file invokes perl or shasum
+  - a gate refuses a new invocation
+validation:
+  - bash test/run.sh
+evidence_required:
+  - no_perl
+created_at: 2026-09-15
+updated_at: 2026-10-14T21:35:47Z
+started_at: 2026-10-14T21:35:18Z
+started_event: sha256:e1010724aa2bea80113a987af0ea98e5387cb6f3a4bd5fb088c447e66390681c
+completed_at: 2026-10-14T21:35:47Z
+completed_event: sha256:a18220b3fe25e752edd8e1585c9abdb5837ffa023ba9b736d68a6bee73e99536
+evidence:
+  - covers: no_perl
+    type: test
+    command: "bash test/run.sh 575_nothing_runs_perl"
+    result: "delivered on master by e483e16e48 (2026-09-30): case 575 refuses Perl anywhere the repository runs; this record arrived on master only on 2026-10-14 with ADR 0069"
+    commit: e483e16e481e41259039f12ca61deccee6fc56d4
+    recorded_at: 2026-10-14T20:45:00Z

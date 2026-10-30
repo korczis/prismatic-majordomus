@@ -1,7 +1,7 @@
 +++
 title = "Whether a task added debt, left a branch or a worktree behind, or grew the backlog is answered by the done invariant from git, the debt baselines and the recorded forge observation, measured from where the task started; a reading that was not taken is unknown, never a pass"
 description = "When a person asks at the end of a session whether everything is done, whether any debt was"
-weight = 259
+weight = 263
 [extra]
 claim_id = "the-closing-question-is-measured"
 status = "guaranteed"

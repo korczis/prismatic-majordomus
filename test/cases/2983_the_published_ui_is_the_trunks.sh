@@ -97,6 +97,17 @@ expect_exit 10 probe --commit "$B"
 expect_grep "surface\.json .*built_from=${A:0:10}, want $B\" fail\$"
 echo "    a stale built_from: refused by name, with the command that shows it"
 
+# (a2) the first screen leads with a figure nothing decided
+site "$A" "$A"
+printf '<span class="mj-ui-kpi"><span class="mj-ui-kpi-label">Repository health</span><span class="mj-ui-kpi-value"><span class="mj-badge mj-badge--unknown">unknown</span></span></span>\n' >> "$W$mount/index.html"
+expect_exit 10 probe --commit "$A"
+expect_grep "FAIL the first screen of $HTTP_BASE$mount/ leads with figure\(s\) nothing decided \(Repository health\)"
+expect_grep "first-screen figure\(s\) undecided: Repository health\" fail\$"
+site "$A" "$A"
+expect_exit 0 probe --commit "$A"
+expect_grep 'first-screen figures decided" ok$'
+echo "    an undecided figure on the first screen: refused by name"
+
 # (b) the deploy that lost the mount: the site answers and holds no declaration there
 site "$A" "$A"; rm "$W$mount/surface.json"
 expect_exit 10 probe --commit "$A"
@@ -190,7 +201,7 @@ chmod +x "$S/bin/gh"
 live() {   # <commit the snapshot was read at | none>: the published site, whole but for the UI
   rm -rf "$W"; mkdir -p "$W/releases"
   jq -n --arg c "$PUB" '{schema: 1, commit: $c, dirty: false, release: {version: "0.21.0"}}' > "$W/build.json"
-  printf '<html><body><dl data-trust><div data-trust-key="release" data-release="0.21.0"><dd>0.21.0</dd></div></dl>\n<a href="https://example.invalid/commit/%s">%s</a></body></html>\n' "$PUB" "$PUB" > "$W/index.html"
+  printf '<html><body><dl data-trust><div data-trust-key="release" data-release="0.21.0"><dd>0.21.0</dd></div></dl>\n<footer><a href="https://example.invalid/commit/%s">%s</a></footer></body></html>\n' "$PUB" "$PUB" > "$W/index.html"
   jq -n '{schema: "release/v1", version: "0.21.0", tag: "v0.21.0"}' > "$W/releases/latest.json"
   [ "$1" = none ] || publication_snapshots "$ROOT" "$W" "$1" || { echo "    the stand-in snapshot could not be placed"; exit 1; }
 }

@@ -32,4 +32,27 @@ evidence_required:
   - local_default_unchanged
 risk: "Weakening the loopback default for everyone would expose local repositories on shared networks. The hosted path must be an explicit mode, not a lowered default."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-10-14T09:04:57Z
+started_at: 2026-10-14T09:04:46Z
+started_event: sha256:0878a8a4527f95e12ee3eac2ecb2c4683739ac12b262a60c0c9c945e5f1d319f
+completed_at: 2026-10-14T09:04:57Z
+completed_event: sha256:b7dbad778a985085855e4261ab97b34780d98e4597ade68a2a80318b363651a2
+evidence:
+  - covers: single_port_source
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 85_deployment_bind"
+    result: "tests: 1 passed, 0 failed, 0 skipped (run 2026-10-14 between 08:59Z and 09:04Z on master e28daccd9b)"
+    commit: e28daccd9b29247efec9fe352e8b8c630f6f9919
+    recorded_at: 2026-10-14T09:04:51Z
+  - covers: hosted_bind
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 85_deployment_bind"
+    result: "tests: 1 passed, 0 failed, 0 skipped (run 2026-10-14 between 08:59Z and 09:04Z on master e28daccd9b)"
+    commit: e28daccd9b29247efec9fe352e8b8c630f6f9919
+    recorded_at: 2026-10-14T09:04:53Z
+  - covers: local_default_unchanged
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 85_deployment_bind"
+    result: "tests: 1 passed, 0 failed, 0 skipped (run 2026-10-14 between 08:59Z and 09:04Z on master e28daccd9b)"
+    commit: e28daccd9b29247efec9fe352e8b8c630f6f9919
+    recorded_at: 2026-10-14T09:04:55Z

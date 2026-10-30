@@ -75,6 +75,12 @@ pub struct Provenance {
     /// against. Empty when the host could not be identified (older baselines).
     #[serde(default)]
     pub host: String,
+    /// The host's 1-minute load average when the run finished, two decimals (`3.41`): what
+    /// the samples were measured under. A timing verdict is a statement about a machine as
+    /// much as about a change, so every finding of a check names it. Empty when the host
+    /// does not report one (and in documents recorded before it was kept).
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub load: String,
 }
 
 impl Provenance {
@@ -96,6 +102,9 @@ impl Provenance {
             os: std::env::consts::OS.into(),
             arch: std::env::consts::ARCH.into(),
             host: host_fingerprint(),
+            load: load_average()
+                .map(|l| format!("{l:.2}"))
+                .unwrap_or_default(),
             version: crate::VERSION.into(),
             registry_fingerprint: registry_fingerprint.into(),
         }
@@ -126,6 +135,30 @@ pub fn host_fingerprint() -> String {
         brand
     } else {
         format!("{brand}/{cores}")
+    }
+}
+
+/// The host's 1-minute load average, from `getloadavg(3)`; `None` where the platform has
+/// none or the call fails.
+///
+/// ```
+/// use majordomus_cli::bench::results::load_average;
+/// if let Some(load) = load_average() {
+///     assert!(load >= 0.0 && load.is_finite());
+/// }
+/// ```
+pub fn load_average() -> Option<f64> {
+    #[cfg(unix)]
+    {
+        let mut loads = [0f64; 1];
+        // SAFETY: getloadavg writes at most `nelem` doubles into the buffer it is given,
+        // and the buffer holds exactly that many.
+        let n = unsafe { libc::getloadavg(loads.as_mut_ptr(), 1) };
+        (n == 1 && loads[0].is_finite() && loads[0] >= 0.0).then_some(loads[0])
+    }
+    #[cfg(not(unix))]
+    {
+        None
     }
 }
 

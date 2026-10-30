@@ -105,6 +105,15 @@ pub struct ContractView {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     /// Subtrees below this one that owe nothing: carried, not authored here.
     pub children_exempt: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The lifecycle of what lives here, when the contract declares its layout (I2870).
+    pub layout_lifecycle: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    /// The kinds the directory holds, when the contract says.
+    pub layout_holds: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    /// Lifecycles or kinds that must never appear here, when the contract says.
+    pub layout_excludes: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -287,6 +296,19 @@ fn contract_of(o: &Object) -> ContractView {
                     .map(str::to_string)
                     .collect()
             })
+            .unwrap_or_default(),
+        layout_lifecycle: m
+            .get("layout")
+            .and_then(|l| l.get("lifecycle"))
+            .and_then(Value::as_str)
+            .map(str::to_string),
+        layout_holds: m
+            .get("layout")
+            .map(|l| list(l, "holds"))
+            .unwrap_or_default(),
+        layout_excludes: m
+            .get("layout")
+            .map(|l| list(l, "excludes"))
             .unwrap_or_default(),
     }
 }

@@ -1330,7 +1330,7 @@ mod tests {
                 required_checks: Some(vec!["ci".into()]),
                 review_policy: Some(Default::default()),
                 up_to_date_required: Some(true),
-                merge_methods: vec!["merge".into()],
+                merge_methods: Some(vec!["merge".into()]),
                 pull_requests: vec![
                     pr(1, &heads[0], CheckRunState::Passed),
                     pr(2, &heads[1], CheckRunState::Failed),

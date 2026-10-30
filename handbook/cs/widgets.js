@@ -233,6 +233,11 @@
     tableToggle(el, opts.headers, opts.rows);
   }
 
+  /* The chart machinery, for the chapters a later script draws (extras15.js): one way to draw
+     a bar, a tooltip and a table toggle in the whole edition. */
+  window.mjCharts = { hBars: hBars, frame: chartFrame, tableToggle: tableToggle, bindTip: bindTip,
+    showTip: showTip, hideTip: hideTip, niceMax: niceMax, roundedBarV: roundedBarV, fmt: fmt, svg: svg };
+
   /* ---------- data charts ---------- */
   var repo = readJSON('data-repo');
   var DAY = 86400000;

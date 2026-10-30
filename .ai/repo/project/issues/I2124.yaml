@@ -23,4 +23,18 @@ validation:
 evidence_required:
   - "mesh_trust_reload_red_then_green"
 created_at: 2026-10-09
-updated_at: 2026-10-09
+updated_at: 2026-10-15T07:44:18Z
+started_at: 2026-10-15T07:44:00Z
+started_event: sha256:e4f85246f5e39dfbeb45184b46f14428020cb34209271f4d5cf280f1cbbfb4d4
+verified_at: 2026-10-15T07:44:07Z
+verified_event: sha256:6bd73a8605c21307035215ee153246c46a9d194ef2cb4633325f5a6b70b07ac0
+completed_at: 2026-10-15T07:44:18Z
+completed_event: sha256:d87f88098f55873b93243c033314f81d5068fcc23c44b39d101ad68ec9e6fe09
+evidence:
+  - covers: mesh_trust_reload_red_then_green
+    type: ci
+    command: "gh run view 38635619021 --log --job 116098148455 (validate on master c0e3585dc8, rust (3): cargo test --test mesh_trust_reload --test mesh_cooperation --test mesh_compaction)"
+    result: "red then green: 477f417d916 (PR #865) states both tests in tests/mesh_trust_reload.rs red on master before it and green with it; on master c0e3585dc8 validate run 38635619021 (success) rust (3) reports a_key_withdrawn_from_the_allowlist_is_not_believed_from_the_journal_file ... ok and a_lamport_stamp_far_ahead_of_the_receiver_is_refused ... ok (2 passed), mesh_cooperation 7 passed, mesh_compaction 3 passed"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38635619021/job/116098148455"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-15T07:44:14Z

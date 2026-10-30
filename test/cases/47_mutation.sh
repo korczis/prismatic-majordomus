@@ -128,13 +128,12 @@ rm -f .ai/repo/project/issues/I0002.yaml   # undo mutation 5; the model is legal
 pj_issue I0002 M000
 expect_exit 0 "$MJ" plan validate
 
-rm_milestone() { # ID VERSION ORDER [DEP ...]
-  local id="$1" ver="$2" ord="$3"; shift 3
+rm_milestone() { # ID ORDER [DEP ...]
+  local id="$1" ord="$2"; shift 2
   { cat <<Y
 id: $id
 title: Milestone $id
 slug: $id
-version: "$ver"
 order: $ord
 priority: p1
 problem: "A problem worth solving."
@@ -154,7 +153,7 @@ mstat()  { "$MJ" plan roadmap | awk -v i="$1" '$3==i{print $2}'; }
 
 # a second milestone with no dependency: reachable, and the roadmap shows it
 before_rm="$(rmsnap)"
-rm_milestone LATER 0.2 20
+rm_milestone LATER 20
 expect_exit 0 "$MJ" plan validate
 moved "adding a milestone" "$before_rm" "$(rmsnap)"
 [ "$(mstat LATER)" = PLANNED ] || { echo "    a milestone with no dependency is $(mstat LATER), expected PLANNED"; exit 1; }

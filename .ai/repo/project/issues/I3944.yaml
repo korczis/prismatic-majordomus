@@ -1,0 +1,35 @@
+id: I3944
+milestone: ci-critical-path
+title: "The two readers of the CI model give every gate, and the plan, the same reason in the same words"
+slug: the-two-gate-readers-give-one-reason
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the executable's reader of .ai/repo/ci/gates.yaml (apps/majordomus-cli/src/gates/model.rs) give each gate and the plan scripts/ci-plan's reason word for word, and extend test/cases/131_completion_gates.sh so it compares, for every gate of every change set it already plans, the reason both readers give, plus the plan's mode and top-level reason, not only the selected set. Slice S3 of I2350: a failing gate's output names why it was selected, and that reason must not depend on which reader printed it."
+why: "Case 131 compared only the selected sets, so the per-gate reasons had drifted apart unseen. On origin/master 355a0cee79a the escalation reason named the escalating class ids in model.rs:371 where ci-plan:211 names the first three paths (case 94 asserts the path), and model.rs:379 named every unclassified path where ci-plan:213 names three; a class reason read 'the class X covers a changed path' (model.rs:358) against 'class X' (ci-plan:324), and only the first class rather than every class; a required gate read 'P cannot run without it' (model.rs:442) against 'required by P' (ci-plan:333); a full plan carried no '(without the on-demand gates: ...)' note (ci-plan:220); each gate of a full plan repeated the plan's reason (model.rs:408) where ci-plan says 'full' (ci-plan:318); and the on-demand and left-out reasons differed (model.rs:401 and 416 against ci-plan:315 and 346). ci-plan's words are the reference because case 94 and the CI logs read them, and gates done and finish print the executable's."
+current_state: "model.rs and scripts/ci-plan select the same gates for the change sets of case 131 and describe them in different words; case 131 cannot tell, because it compares the sets alone. ci-plan's escalation reason also ends in a space whenever no on-demand note follows (a plan asked with --on-demand)."
+desired_state: "Every reason model.rs gives, the plan's and each gate's, selected or left out, is ci-plan's byte for byte: the escalation names at most three paths in the order the change gave them, a class reason names every class that selected the gate in byte order, an implied or required gate names its parent as ci-plan's closure walks the plan, and a full plan that leaves the on-demand gates out says which. ci-plan strips the escalation's trailing space with or without the note. Case 131 compares mode, reason and every gate's reason over its six change sets and, on a mismatch, names the gate and prints both texts; a plan ci-plan narrowed by a shape is set aside, and a shape note on the plan's reason is taken off, because the executable applies no shape by design."
+scope:
+  - "apps/majordomus-cli/src/gates/model.rs"
+  - "scripts/ci-plan"
+  - "test/cases/131_completion_gates.sh"
+  - ".ai/repo/project/issues/I3944.yaml"
+non_scope:
+  - "Applying the shapes in the executable: the model's header says it plans the union, which can only be wider, and that stays"
+  - "Changing any reason text of scripts/ci-plan beyond the trailing space, since case 94 and the CI logs read them"
+  - "The selection rules themselves: no gate enters or leaves a plan of this repository's model because of this issue"
+acceptance_criteria:
+  - "For each change set of case 131, the executable and scripts/ci-plan give the same mode, the same plan reason and the same reason for every gate, planned or left out"
+  - "Reverting one of the executable's reason texts makes case 131 fail with the gate's id and both texts"
+  - "A unit test in model.rs pins each corrected reason: the escalation's three paths and on-demand note, the class list, implied by and required by, full, and the two left-out reasons"
+  - "A plan narrowed by a shape is not compared, and a shape note on a reason is the only text normalised away"
+validation:
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib gates"
+  - "env -u MAJORDOMUS_SHARE bash test/run.sh 131_completion_gates 94_ci_plan 26_ci_wiring"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "the_two_gate_readers_give_one_reason_test"
+depends_on:
+  - I3937
+created_at: 2026-10-23
+updated_at: 2026-10-23

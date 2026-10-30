@@ -74,9 +74,9 @@ compare_repository() { # <repository> <label>
 
   # --- the roadmap: rank, order and the whole derived sequence
   ( cd "$repo" && "$MJ" plan roadmap --json ) | jq -S -c '.milestones[]
-      | {id, version, title, status, rank, order, issues, depends_on, blocked_by, dependents, claims}' > "$S/sh.roadmap"
+      | {id, released_in, title, status, rank, order, issues, depends_on, blocked_by, dependents, claims}' > "$S/sh.roadmap"
   plan_tool "$repo" majordomus_plan_roadmap '{}' | jq -S -c '.milestones[]
-      | {id, version, title, status, rank, order, issues: .counts, depends_on, blocked_by, dependents, claims}' > "$S/rs.roadmap" || return 1
+      | {id, released_in, title, status, rank, order, issues: .counts, depends_on, blocked_by, dependents, claims}' > "$S/rs.roadmap" || return 1
   same "$label: the roadmap" "$S/sh.roadmap" "$S/rs.roadmap" || return 1
 
   # --- the one issue a worker should take now

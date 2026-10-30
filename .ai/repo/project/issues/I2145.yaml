@@ -29,4 +29,21 @@ evidence_required:
   - "timed_out_mutation_runs_once_test"
   - "rejected_request_is_not_reelected_test"
 created_at: 2026-10-09
-updated_at: 2026-10-09
+updated_at: 2026-10-14T08:01:55Z
+started_at: 2026-10-14T08:01:47Z
+started_event: sha256:6cac21c51be0f955956202eb39683c45b464d1dd74abe3de5e8a3c50e368f752
+completed_at: 2026-10-14T08:01:55Z
+completed_event: sha256:3be6f9e228aad9ef35dbf4c8ba2db7434745547fcb62760825ddf762a4780d73
+evidence:
+  - covers: timed_out_mutation_runs_once_test
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test mcp_bridge_resend"
+    result: "test result: ok. 5 passed; 0 failed (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T08:01:51Z
+  - covers: rejected_request_is_not_reelected_test
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test mcp_bridge_resend"
+    result: "test result: ok. 5 passed; 0 failed (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T08:01:53Z
