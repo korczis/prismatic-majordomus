@@ -1,0 +1,46 @@
+# Which profile axis may become which runtime limit (I0201). Shipped with the tool, beside
+# share/obligations.yaml; the profiles themselves stay under .ai/repo/profiles/, where any
+# file is read as a profile, so the mapping cannot live in that directory.
+#
+# A profile declares axes — capability, effort, verbosity, context depth, a checkpoint
+# interval — and until a limit is derived from one of them, the axis is prose. This file is
+# the only place that says which axis may become a limit, how the limit's value is derived
+# from the axis's value, and which function applies it. Nothing here applies a limit; it
+# declares what may be applied, and `doctor` reconciles the declaration in both directions:
+#
+#   - every declared axis is set on every profile, and a profile that lacks one is named;
+#   - every declared adapter is a function under lib/ that carries the line
+#     `# majordomus-limit: <limit>` in the comment above it, and a function that carries
+#     that line for a limit this file does not declare is refused.
+#
+# Only an axis whose limit this repository already applies is declared. An axis nobody can
+# observe being enforced — capability, effort, verbosity — is absent on purpose: declaring
+# it would be the theatre the rolled-back attempt became, a limit that is a constant and
+# not a derivation.
+#
+# fields:
+#   id       the limit's name, as `doctor` prints it and an adapter's marker names it
+#   axis     the dotted profile key the limit is derived from
+#   derive   how the value is computed from the axis: `count` (a whole number, as written)
+#            or `duration_seconds` (a duration such as 15m, in seconds)
+#   unit     what the derived number counts
+#   adapter  the lib function that applies the limit
+
+version: 1
+
+limits:
+  - id: checkpoint_max_age_seconds
+    axis: checkpoint_interval
+    derive: duration_seconds
+    unit: seconds
+    adapter: mj_validate_checkpoint
+  - id: history_events
+    axis: context.recent_history_depth
+    derive: count
+    unit: ledger events
+    adapter: mj_ctx_history
+  - id: knowledge_pointers
+    axis: context.knowledge_max_items
+    derive: count
+    unit: knowledge records
+    adapter: mj_context_pointers
