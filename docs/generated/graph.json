@@ -74436,7 +74436,16 @@
             ".ai/repo/ci/gates.yaml",
             "test/cases/4512_no_derived_page_outgrows_the_index.sh",
             "docs/PLAN_STATUS.md",
-            "docs/plan-status"
+            "docs/plan-status",
+            "scripts/ci/derived-size-check",
+            "scripts/gitattributes",
+            ".gitattributes",
+            ".ai/repo/scope.yaml",
+            ".ai/repo/policy.yaml",
+            ".ai/repo/automation/inventory.jsonl",
+            "test/cases/51_derived_artifacts_committed.sh",
+            "test/cases/400_derivation_is_one_graph.sh",
+            "test/cases/3246_every_file_the_site_generator_reads_is_an_input.sh"
           ],
           "slug": "no-derived-page-outgrows-the-index",
           "updated_at": "2026-10-30",
@@ -98217,6 +98226,13 @@
         "label": "test/cases/44_model_doctrine.sh",
         "route": "/cockpit/objects/test/test-cases-44-model-doctrine-sh",
         "source": "test/cases/44_model_doctrine.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4512_no_derived_page_outgrows_the_index.sh",
+        "kind": "test",
+        "label": "test/cases/4512_no_derived_page_outgrows_the_index.sh",
+        "route": "/cockpit/objects/test/test-cases-4512-no-derived-page-outgrows-the-index-sh",
+        "source": "test/cases/4512_no_derived_page_outgrows_the_index.sh"
       },
       {
         "id": "majordomus://test/test/cases/45_github_projection.sh",
@@ -144494,6 +144510,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4512_no_derived_page_outgrows_the_index.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/45_github_projection.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -149565,8 +149586,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4098,
-      "edges": 9461,
+      "nodes": 4099,
+      "edges": 9462,
       "acyclic": false,
       "truncated": false
     }

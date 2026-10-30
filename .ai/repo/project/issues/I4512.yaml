@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: true
 objective: "Keep every derived page under the index's per-file limit by construction, so that one run of scripts/derive leaves a tree the next run does not change."
 why: "On 2026-10-30, PR #2753 (the owner packs mapped onto master) added 32 issues and 2 milestones, and docs/PLAN_STATUS.md grew from 982,448 bytes on master 51b38035a71 to 1,068,157 bytes, past .ai/repo/scope.yaml's out.max_bytes of 1,048,576. A text file over that limit is out of scope, so the page left the index. The derive's stage C (majordomus generate) reads the index, so the registry projection it wrote no longer matched the site data stage B had fingerprinted. The commit hook refused the tree as stale, and only a second derive converged. A derive that needs two passes is not idempotent, and the transition happens on whichever branch first pushes the plan past the limit, not on the branch whose change is large. Raising the limit only moves the edge as the plan grows."
-current_state: "Measured 2026-10-30 on master 51b38035a71: docs/PLAN_STATUS.md is 982,448 bytes, 93.7% of max_bytes 1048576 (.ai/repo/scope.yaml). scripts/generate-site-data writes it in stage B as one page for every milestone and issue. On chore/the-owner-packs-are-mapped-onto-master (83bfba2bd47) it is 1,068,157 bytes, and that branch's derive converged only on its second run. Nothing checks a derived page's size against the scope limit, so the first sign is a stale-tree refusal that names the registry rather than the page."
+current_state: "Measured 2026-10-30 on fix/no-derived-page-outgrows-the-index after the split, at the same plan as master 51b38035a71 (113 milestones, 1103 issues, 6296 findings). Before, docs/PLAN_STATUS.md was one page of 982,448 bytes on master, 93.7% of out.max_bytes 1048576, and 1,068,157 bytes on chore/the-owner-packs-are-mapped-onto-master, whose derive converged only on its second run. After, scripts/generate-site-data writes docs/PLAN_STATUS.md as an index of 119,568 bytes (11.4% of max_bytes: the milestones with a link to each page, the waves, what is ready, findings counted per milestone) and one page per milestone under docs/plan-status/ (113 pages); the largest, docs/plan-status/idd-reads-at-a-glance.md, is 252,917 bytes (24.1%). scripts/ci/derived-size-check (gate derived-size, structure job, feedback lane, always; also run by scripts/derive-check) refuses a derived file whose place in the index its size decides above 75% of max_bytes, naming the file, its size and the limit. site/data/registry/ is declared generated in .ai/repo/scope.yaml: registry.json (8,326,223 bytes) was out only as over_limit and evidence-subjects.json (854,795 bytes, 81.5%) was in the index, both written by stage C. Case 4512 derives a clone whose limit the plan status crosses as one page twice and finds the second derive changes nothing."
 desired_state: "A derived page that would approach the limit is written as several pages (for the plan status, one per milestone with an index page), so no derived file can leave the index as the plan grows. A gate refuses a derived file over a stated fraction of max_bytes before the index loses it, and names the file and the limit."
 scope:
   - .ai/repo/project/issues/I4512.yaml
@@ -18,6 +18,15 @@ scope:
   - test/cases/4512_no_derived_page_outgrows_the_index.sh
   - docs/PLAN_STATUS.md
   - docs/plan-status
+  - scripts/ci/derived-size-check
+  - scripts/gitattributes
+  - .gitattributes
+  - .ai/repo/scope.yaml
+  - .ai/repo/policy.yaml
+  - .ai/repo/automation/inventory.jsonl
+  - test/cases/51_derived_artifacts_committed.sh
+  - test/cases/400_derivation_is_one_graph.sh
+  - test/cases/3246_every_file_the_site_generator_reads_is_an_input.sh
 non_scope:
   - "Raising out.max_bytes. That moves the edge as the plan grows rather than removing it."
   - "Excluding docs/PLAN_STATUS.md from the index. A derived page the index cannot read is a page the briefing, search and context compiler cannot read either."
