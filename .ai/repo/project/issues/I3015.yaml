@@ -1,0 +1,44 @@
+id: I3015
+milestone: two-folder-integration
+title: "serve and mcp discover the repository once, through the shared model"
+slug: serve-and-mcp-discover-once
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "majordomus serve and majordomus mcp take the repository App::load discovered instead of discovering it again (commands/serve.rs and commands/mcp.rs today discover beside App::load), and env, web and guard read the same cell, so every entry point of the executable pays one discovery."
+why: "The second slice of I1105. The 2026-10-20 survey counted two discoveries at the startup of serve, serve status and mcp, and only App::load's discovery is timed, so the others are never measured."
+current_state: "serve.rs and mcp.rs call Repository::discover and then App::load, which discovers again."
+desired_state: "One discovery at each entry point, measured where it happens."
+scope:
+  - apps/majordomus-cli/src/commands/serve.rs
+  - apps/majordomus-cli/src/commands/mcp.rs
+  - apps/majordomus-cli/src/commands/env.rs
+  - apps/majordomus-cli/src/commands/web.rs
+  - apps/majordomus-cli/src/commands/guard.rs
+  - apps/majordomus-cli/src/app.rs
+  - apps/majordomus-cli/tests/hot_path.rs
+non_scope:
+  - "The capabilities' Repository::open calls (I3016)"
+depends_on:
+  - I3014
+acceptance_criteria:
+  - "After serve's startup and after an MCP initialize, repository_discoveries is 1, asserted in tests/hot_path.rs"
+  - "The discovery phase is timed at every entry point that discovers"
+validation:
+  - "cargo test --workspace --all-features"
+evidence_required:
+  - one_discovery_at_every_entry
+created_at: 2026-10-21
+updated_at: 2026-10-26T03:50:41Z
+started_at: 2026-10-26T03:50:13Z
+started_event: sha256:3c97e86720048ef010525911680eb03be3d38c8de112134352f78b4198eccf4e
+completed_at: 2026-10-26T03:50:41Z
+completed_event: sha256:ea67911dd5f1782e01b77140d9982ec1c2256bef660b285a6207288406795095
+evidence:
+  - covers: one_discovery_at_every_entry
+    type: ci
+    command: "cargo test --workspace --all-features (CI rust jobs)"
+    result: "master validate run 40196303175 at 2efeacea031 concluded success; tests/hot_path.rs asserts repository_discoveries 1 after an MCP initialize and after serve's startup; Repository::discover times itself as Phase::RepositoryDiscovery (repository.rs:197), so every entry that discovers is timed"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-26T03:50:32Z

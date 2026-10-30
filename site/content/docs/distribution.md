@@ -1,7 +1,7 @@
 +++
 title = "Distribution"
 description = "how the tool is packaged, published and installed: the one canonical model, what derives from it, the trust path, adding a platform, releasing, and recovering from a bad release"
-weight = 27
+weight = 28
 [extra]
 source = "docs/DISTRIBUTION.md"
 +++
@@ -202,6 +202,14 @@ scripts/release-version --check --tag v0.3.0
 # 3. the commit to be tagged passed ci — the same question the pipeline asks first
 scripts/ci/release-verdict --commit HEAD
 ```
+
+The verdict is the newest `ci` check-run GitHub attaches to that commit, whichever event
+started it, and `release.yml` asks the same question again with `--wait 300`. A commit that
+reached master unchanged from a pull request's head carries that pull request's run too, so a
+red or unfinished run there is the verdict until master's own push run on the commit concludes
+and is the newer one. Tag only after that push run is green: a tag pushed earlier is refused
+by the release workflow, at once on a red run and after five minutes on one still running,
+and is released by dispatching `release.yml` with the tag once the verdict is green.
 
 ```bash
 # 4. tag the merge on the default branch, and push the tag
@@ -604,7 +612,7 @@ not affected, and nothing fetches anything on entering a repository.
 
 **What a node trusts.** Only `releases/latest.json` and `releases/<tag>.json` on the site, and
 only an archive whose digest and size match them. A mesh announcement of a release means
-"check now" and nothing more. A node with no route to the site (jetson) may take the archive
+"check now" and nothing more. A node with no route to the site may take the archive
 from a peer, and verifies it against metadata it can check before unpacking (I2724).
 
 **Forward only, stable only.** No downgrade, no pre-release, no version the metadata does not

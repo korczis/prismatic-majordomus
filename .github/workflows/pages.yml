@@ -82,6 +82,7 @@ on:
       - scripts/lib/project-links.awk
       - scripts/lib/ui-*.mjs
       - scripts/lib/ui-routes.mjs
+      - scripts/lib/site-i18n*.mjs
       - scripts/pages
       - scripts/rules-package
       - scripts/rust-check
@@ -91,6 +92,7 @@ on:
       - scripts/site-deploy
       - scripts/site-probe
       - scripts/site-serve
+      - scripts/site-translate
       - scripts/ui
       - share/**
       - share/allow/**
@@ -182,8 +184,11 @@ jobs:
       remedy: ${{ steps.remedy.outputs.remedy }}
     steps:
       # pages-check asks whether the published commit is on master and how far behind it is,
-      # so it needs the history and the gh-pages branch, and no file of the past
+      # so it needs the history and the gh-pages branch, and no file of the past. Bounded on
+      # its own, as every full-history checkout is (scripts/ci/step-bound-check): a fetch that
+      # stalls fails here by name instead of waiting out the job.
       - uses: actions/checkout@v4
+        timeout-minutes: 5
         with:
           fetch-depth: 0
           filter: blob:none
@@ -214,21 +219,36 @@ jobs:
         # deploy repairs — a push deploy that failed before publishing over a build that had
         # errored too — and asking to rebuild it would republish the stale site and skip the
         # deploy, every thirty minutes. test/cases/625 runs this step against both trees.
+        #
+        # A build of the right tree that is still `building` or `queued` is handed to the
+        # rebuild too (I3902): `scripts/pages rebuild` replaces it once it is older than
+        # deploy.build_hung_after and otherwise waits on it (exit 13). Before this, a hung
+        # build of the right tree chose `deploy`: forty minutes of rustdoc, UI and Cockpit
+        # snapshots to push an identical tree, every thirty minutes.
         run: |
           state="$(scripts/pages built --porcelain 2>/dev/null | cut -f1)"
           published="$(git show origin/gh-pages:build.json 2>/dev/null | sed -n 's/^  "commit": *"\([0-9a-f]*\)".*/\1/p')"
           head="$(git rev-parse HEAD)"
-          if [ "$state" = errored ] && [ "$published" = "$head" ]; then remedy=rebuild; else remedy=deploy; fi
+          case "$state" in errored|building|queued) right_tree_build=1 ;; *) right_tree_build=0 ;; esac
+          if [ "$right_tree_build" = 1 ] && [ "$published" = "$head" ]; then remedy=rebuild; else remedy=deploy; fi
           echo "remedy=$remedy" >> "$GITHUB_OUTPUT"
           echo "the publication is owed; gh-pages carries ${published:-no readable commit} for $head and GitHub's build of it is ${state:-unreadable}, so the remedy is $remedy"
           printf '\ngh-pages carries %s for %s; GitHub'"'"'s build of it is %s, so the remedy is **%s**.\n' "${published:-no readable commit}" "$head" "${state:-unreadable}" "$remedy" >> "$GITHUB_STEP_SUMMARY"
 
-      # the remedy for a build that errored on a tree that is already right
+      # the remedy for a build that errored or hung on a tree that is already right; a build
+      # that is in flight and not hung yet (13) is waited on, and the next schedule asks again
       - id: ask-rebuild
         if: steps.remedy.outputs.remedy == 'rebuild'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: scripts/pages rebuild
+        run: |
+          rc=0
+          scripts/pages rebuild || rc=$?
+          case "$rc" in
+            0)  ;;
+            13) echo "::notice title=Pages build in flight::GitHub's build of the right tree is still in flight and not hung yet; the next schedule asks again" ;;
+            *)  exit "$rc" ;;
+          esac
 
   # The crate's Rust API reference, as the published surface `rustdoc` (ADR 0086). A job of its
   # own so that the deploy job keeps no Rust toolchain; its build cache is setup-rust's, which
@@ -269,9 +289,8 @@ jobs:
   # job and never after it, so that the deploy job keeps no Rust toolchain and waits for the
   # slower of the two rather than for their sum. It is the second Rust command on this path and
   # is here for the reason the first is (ADR 0086): what it writes is published bytes. Its
-  # build cache is setup-rust's, keyed by this job's id. The job carries the one bound and no
-  # step does: test/cases/26_ci_wiring.sh sums every step bound of this file against the
-  # deploy job's, and these steps are not that job's.
+  # build cache is setup-rust's, keyed by this job's id. Its steps' bounds are its own:
+  # test/cases/26_ci_wiring.sh sums only the deploy job's steps against the deploy job's bound.
   ui-snapshot:
     needs: owed
     if: ${{ !cancelled() && (github.event_name != 'schedule' || needs.owed.outputs.remedy == 'deploy') }}
@@ -291,6 +310,7 @@ jobs:
     steps:
       # the UI reads the history too (what changed since, what was released), as the deploy does
       - uses: actions/checkout@v4
+        timeout-minutes: 10
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-rust
@@ -321,6 +341,25 @@ jobs:
           # and released
           apps/majordomus-cli/target/debug/majordomus prs refresh
           apps/majordomus-cli/target/debug/majordomus served forge
+      # The deployed stage, read from what was just observed (I4315, ADR 0227). Every Pages
+      # deployment is a gh-pages commit carrying the built site; the reader, from its first
+      # day (2026-10-16), looked for the pointer at its source path, and plan delivery read
+      # deployed for none of 1036 issues while the site served the trunk. This job published
+      # that answer every time, green. Once the forge has been observed, a publication the reader cannot
+      # read is a defect of this commit: only "no successful deployment" is an answer.
+      - name: the deployed stage reads what Pages published
+        timeout-minutes: 3
+        run: |
+          d="$RUNNER_TEMP/delivery.json"
+          apps/majordomus-cli/target/debug/majordomus plan delivery --format json > "$d"
+          state="$(jq -r '.sources[] | select(.name == "publication") | .state' "$d")"
+          detail="$(jq -r '.sources[] | select(.name == "publication") | .detail' "$d")"
+          echo "publication: ${state:-absent} — $detail"
+          case "$state:$detail" in
+            read:*|*"holds no successful"*) ;;
+            *) echo "::error title=The deployed stage is unread::${detail:-plan delivery names no publication source}"; exit 1 ;;
+          esac
+          jq -c '.tallies' "$d"
       # Every page the screens link to, not the first few: the default budget is sized for a
       # person waiting at a terminal and left most inspectors out of the published snapshot.
       # What was still left out is in snapshot.json, and `scripts/pages verify-ui` reports it.
@@ -385,20 +424,22 @@ jobs:
   # job at 13:56:12 — mid-wait, with the publication already done — so a deployment that had
   # succeeded was reported as `cancelled`.
   #
-  # The three controlled steps below bound 9 minutes between them, against the 96 seconds
-  # .ai/repo/ci/pages.yaml budgets them warm and the 225 it allows the whole controlled half
-  # cold; the probe bounds 11, against a wait this repository does not control and that same
-  # file says never to budget. The job's 41 covers the sum of every step's bound — the evidence
-  # read before the build, and after the probe the reads of GitHub's build, of the documentation,
-  # of the crate's public reference, of the UI's snapshot and of the release the site offers — plus the unbounded
-  # checkout, setup, download and report steps on a cold runner, and leaves the job's bound
-  # where it belongs: as the last resort behind every step's own. No sum is written here, because a step's bound changes without this
-  # comment: test/cases/26_ci_wiring.sh computes it and holds the job strictly above it.
+  # The steps that run a budgeted row (build, check, publish) are bounded from the row: at
+  # least budget.bound.percent of its warm budget in .ai/repo/ci/pages.yaml, which
+  # scripts/ci/step-bound-check holds, so a row that grows inside its budget's margin is never
+  # killed for it. The probe bounds 11, against a wait this repository does not control and
+  # that same file says never to budget. The job's bound covers the sum of every step's bound
+  # — the checkout, the evidence read before the build, and after the probe the reads of
+  # GitHub's build, of the documentation, of the crate's public reference, of the UI's snapshot
+  # and of the release the site offers — plus the unbounded setup, download and report steps on
+  # a cold runner, and leaves the job's bound where it belongs: as the last resort behind every
+  # step's own. No sum is written here, because a step's bound changes without this comment:
+  # test/cases/26_ci_wiring.sh computes it and holds the job strictly above it.
   deploy:
     needs: [owed, rustdoc, ui-snapshot]
     if: ${{ !cancelled() && needs.rustdoc.result == 'success' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 80
     steps:
       # when the push was accepted, so that queue and runner allocation are measured as what
       # they are — GitHub's latency, reported beside this repository's and never mixed into it
@@ -416,8 +457,10 @@ jobs:
       # tags cannot decide any of them — 2302 commit links undecided and six existing tags
       # reported as non-existent, on every run since, with `publish` skipped behind the refusal.
       # fetch-depth: 0 is what the checker asks for by name. scripts/site-deploy still fetches
-      # the one branch it pushes for itself.
+      # the one branch it pushes for itself. Measured at 13-15 s; the step's own bound turns a
+      # stalled fetch into a failure that names it (scripts/ci/step-bound-check).
       - uses: actions/checkout@v4
+        timeout-minutes: 5
         with:
           fetch-depth: 0
           # blob:none keeps the cost to history metadata: every commit and tag is present so the
@@ -513,17 +556,37 @@ jobs:
             echo "::notice::what moved since the last deploy could not be composed; the changelog will say it is unknown"
           fi
 
+      # Coverage and CI cost over master's recent validate runs, as site/data/trends.json, which
+      # /trends/ draws (I3933): read from the forge's record of the runs and each run's own
+      # coverage-summary artifact, every time, so nothing accumulates between publications. A
+      # deployment input like evidence.json and never committed: it reads the forge, not the
+      # tree, so no branch could derive it. Never a gate, and not a step that fails softly
+      # either (the publication measurement is the one of those): a forge that cannot be read
+      # is exit 12 with no file left, said here as a warning, and the page then says no series
+      # reached the build. The bound: one listing, then two API reads and at most one small
+      # download per run.
+      - name: trends
+        timeout-minutes: 4
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/pages trends || echo "::warning title=No trends::scripts/pages trends could not read the forge (exit $?); /trends/ is published without a series"
+
       # the committed derived data proved current by hash, then rendered; no generation. What moved
-      # since the last deploy is the record the step above composed, adopted when it names this commit
+      # since the last deploy is the record the step above composed, adopted when it names this commit.
+      # The bound follows the `build` row of .ai/repo/ci/pages.yaml (budget.bound.percent of it):
+      # 15 s on 39228746039 over the English site, 200-314 s with the Czech copy (ADR 0218).
       - name: build
-        timeout-minutes: 3
+        timeout-minutes: 11
         env:
           MJ_SITE_SINCE_DEPLOY_RECORD: ${{ steps.since.outputs.record }}
         run: scripts/pages build
 
-      # every static check over the output; the browser probe stays in validate.yml
+      # every static check over the output; the browser probe stays in validate.yml. The bound
+      # follows the `check` row: 169 s on 39228746039 over the English site alone; with the
+      # Czech copy the pages it reads doubled, 39392245576 was killed at the old bound of 3
+      # minutes, and the runs after it took 296-517 s against the 10 that replaced it.
       - name: check
-        timeout-minutes: 3
+        timeout-minutes: 18
         run: scripts/pages check
 
       # The UI's snapshot of this commit (ADR 0141), from the ui-snapshot job of this run, placed
@@ -620,7 +683,7 @@ jobs:
       # latency, and this one runs only once the site is known to serve this commit, so what
       # it can find is a broken publication — a reference that is missing, stale or half
       # there — and a broken public reference fails the deployment.
-      - name: rustdoc
+      - name: the crate's reference it publishes
         id: rustdoc
         if: steps.public.outcome == 'success'
         timeout-minutes: 6

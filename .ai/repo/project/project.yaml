@@ -8,7 +8,7 @@
 # Downstream is not the same as current. GitHub receives the projection when a change to
 # these files lands: every push to the default branch starts .github/workflows/github.yml,
 # which runs `scripts/github-sync --apply` and proves the result
-# (project.the-projection-is-applied-at-landing@1). Editing a file here changes nothing on
+# (project.the-projection-is-applied-at-landing@2). Editing a file here changes nothing on
 # GitHub until then. What holds the two together is `scripts/ci/github-check`, the gate that
 # reads the remote and fails when it has stopped agreeing (project.github-projection-gated@1).
 #

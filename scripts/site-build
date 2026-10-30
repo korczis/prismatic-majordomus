@@ -79,6 +79,7 @@ while [ $# -gt 0 ]; do case "$1" in
     DELTA_REPO="$2"; DELTA_OUT="$3"; shift 3 ;;
   --release) RELEASE_ONLY=1; shift ;;
   --release-record) REL_RECORD="${2:?--release-record needs a file}"; shift 2 ;;
+  --release-records) REL_RECORDS="${2:?--release-records needs a directory}"; shift 2 ;;
   --release-published) REL_PUBLISHED="${2:?--release-published needs a file}"; shift 2 ;;
   --release-ref) REL_REF="${2:?--release-ref needs a ref}"; shift 2 ;;
   *) echo "site-build: unknown option $1" >&2; exit 2 ;;
@@ -90,6 +91,7 @@ esac; done
 # releases/latest.json that is not a release document, or a tag file that differs from it;
 # 12 when the record's projection cannot be read.
 REL_RECORD="${REL_RECORD:-$SITE/data/registry/distribution.json}"
+REL_RECORDS="${REL_RECORDS:-$ROOT/.ai/repo/releases}"
 REL_PUBLISHED="${REL_PUBLISHED:-}"
 REL_REF="${REL_REF:-${MJ_SITE_RELEASE_REF:-origin/gh-pages}}"
 release_offered() {
@@ -135,6 +137,42 @@ release_offered() {
     cp "$dir/published.json" "$dir/latest.json"
   fi
   rm -f "$dir/published.json"
+  release_prerelease "$dir"
+}
+# The newest pre-release beside the stable release (I3449, the release seat's ruling of
+# 2026-10-21): the pages a person reads name both channels, each with its own notes and its own
+# install line, while /releases/latest.json and the installer's default stay the stable one
+# (I2829; cases 3222, 3179, 3225). Read from the release records themselves, never from a ref: the
+# highest record of channel prerelease that is not yanked, and only when it is ahead of the
+# stable release (an alpha of a version already released stable is behind it). Versions order
+# by their numeric fields, then a pre-release's own dot-separated identifiers, numbers as numbers.
+release_prerelease() { # dir (holds release.json; rewritten with .prerelease)
+  local dir="$1" rows f
+  rows="$dir/records.jsonl"
+  : > "$rows"
+  if [ -d "$REL_RECORDS" ]; then
+    for f in "$REL_RECORDS"/v*.yaml; do
+      [ -f "$f" ] || continue
+      awk '/^(version|tag|channel|published_at|notes_url|yanked):/ {
+             k = $1; sub(/:$/, "", k); v = $0; sub(/^[a-z_]+:[ ]*/, "", v); gsub(/^"|"$/, "", v)
+             out = out (out == "" ? "" : ",") "\"" k "\":\"" v "\"" }
+           END { print "{" out "}" }' "$f" >> "$rows"
+    done
+  fi
+  jq -s --slurpfile r "$dir/release.json" --arg install "$(jq -r '.install_command // empty' "$REL_RECORD")" '
+    def base: split("-")[0] | split("+")[0] | split(".") | map(tonumber? // 0);
+    def pre: (split("+")[0] | split("-")[1:] | join("-") | split("."))
+             | map(if test("^[0-9]+$") then [0, tonumber] else [1, .] end);
+    ($r[0]) as $s
+    | [.[] | select(.channel == "prerelease" and (.yanked // "false") != "true" and (.version // "") != "")]
+    | (if $s == null then . else map(select((.version | base) > ($s.version | base))) end)
+    | sort_by([(.version | base), (.version | pre)]) | last
+    | (if . == null then null
+       else {version, tag, published_at, notes_url,
+             install_command: (if $install == "" then null else $install + " -s -- --version " + .tag end)} end) as $p
+    | if $s == null then null else $s + {prerelease: $p} end' "$rows" > "$dir/release.next.json" \
+    || { echo "site-build: the pre-release beside the offered release could not be derived" >&2; exit 13; }
+  mv "$dir/release.next.json" "$dir/release.json"; rm -f "$rows"
 }
 if [ "${RELEASE_ONLY:-0}" = 1 ]; then
   command -v jq >/dev/null || { echo "site-build: jq is required" >&2; exit 12; }
@@ -580,6 +618,18 @@ if [ -d "$PUBLIC" ]; then
   DIAGRAM_BASE="$BASE"
   [ -n "$DIAGRAM_BASE" ] || DIAGRAM_BASE="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml")"
   node "$ROOT/scripts/lib/diagrams.mjs" "$PUBLIC" "$SITE/data/generated" "$DIAGRAM_BASE"
+fi
+# Every language the site declares, derived from the English pages just written (ADR 0218):
+# site/i18n/languages.json names them, site/i18n/<lang>/memory holds what is translated, and
+# each page is copied under /<lang>/ with every segment the memory knows replaced and its links
+# pointed at that language. Before the composition below, which adds pages that are not the
+# site's to translate. What the memory does not know is listed for scripts/site-translate.
+if [ -d "$PUBLIC" ] && [ -f "$SITE/i18n/languages.json" ]; then
+  echo "== languages"
+  I18N_BASE="$BASE"
+  [ -n "$I18N_BASE" ] || I18N_BASE="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml")"
+  node "$ROOT/scripts/lib/site-i18n.mjs" build "$PUBLIC" "$SITE/i18n" "$I18N_BASE" \
+    "$ROOT/target/site-i18n/missing.json" || exit 10
 fi
 # the site's own routes, counted before another surface's pages join them
 routes="$(find "$PUBLIC" -name 'index.html' | wc -l | tr -d ' ')"

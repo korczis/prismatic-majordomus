@@ -22,8 +22,10 @@ scope:
   - "share/skeleton/policy.yaml"
   - "test/cases/3069_an_edit_no_claim_covers_is_refused.sh"
   - "docs/MESH.md"
-depends_on:
-  - "I2289"
+# I2289 (a task built off the mesh is refused) was dropped on 2026-10-20 at the landing seat's
+# ruling: the guard of this issue does not use it, and case 3069 with the guard.rs unit tests
+# proved this issue on its own, green in master validate 39438896504. I2289 stays open as its own work.
+depends_on: []
 acceptance_criteria:
   - "An unclaimed edit is refused with exit 2, naming the path and the remedy"
   - "The writing session's live claim, or the active task's scope, lets the edit through; another session's claim does not"
@@ -38,4 +40,25 @@ evidence_required:
   - "case_3069"
   - "guard_unit_tests"
 created_at: 2026-10-15
-updated_at: 2026-10-15
+updated_at: 2026-10-20T21:25:27Z
+started_at: 2026-10-20T21:23:48Z
+started_event: sha256:8c0ef574a2826022c2d532414737243f97a57e58148d63d2627ee6d48c32358b
+verified_at: 2026-10-20T21:24:14Z
+verified_event: sha256:44897f3126d11390d43c231cf177457e60d29d0b2fa8d2f7465ca19f336ce0d7
+completed_at: 2026-10-20T21:25:27Z
+completed_event: sha256:67ffebf5d1d3a27e4b92dd47a284e05f4a366101e52d9099315f45299b43d13e
+evidence:
+  - covers: case_3069
+    type: ci
+    command: "bash test/run.sh 3069_an_edit_no_claim_covers_is_refused"
+    result: "passed in master validate 39438896504 (9a5a9b77520), suite job"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39438896504"
+    commit: 91c0b5d5658c0bcddcd724582068bfa1f51074d1
+    recorded_at: 2026-10-20T21:24:37Z
+  - covers: guard_unit_tests
+    type: ci
+    command: "cargo test --lib guard"
+    result: "passed in master validate 39438896504 (9a5a9b77520), rust jobs"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39438896504"
+    commit: 91c0b5d5658c0bcddcd724582068bfa1f51074d1
+    recorded_at: 2026-10-20T21:24:57Z

@@ -230,3 +230,16 @@ figure[data-chart].is-addressed .mj-chart {
   line-height: var(--text-small--line-height);
   color: var(--mj-muted);
 }
+/* The table a chart is drawn from, on a narrow screen: it scrolls sideways inside its region, and
+   the first column (what a row is: a milestone, a run) stays in place while the numbers move, so a
+   reader never loses which row a number belongs to. Below the `sm` width only; a wide screen shows
+   the whole table and needs no anchor. */
+@media (max-width: 639.98px) {
+  figure[data-chart] table :is(th, td):first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--mj-bg);
+    box-shadow: inset -1px 0 0 var(--mj-line);
+  }
+}

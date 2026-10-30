@@ -35,6 +35,13 @@
   </dd>
   <dt class="text-body">Milestones</dt>
   <dd class="text-heading">{{ roadmap.milestones | length }}, every one the plan holds, in the order the graph derives</dd>
+  {#- the plan's issues counted by the status their records declare, in the plan's order: the
+      counts the homepage hero carried until the owner took them off it on 2026-10-22 (I3917,
+      rule project.homepage-tells-a-declared-story v2), read here where a reader comes for them -#}
+  <dt class="text-body">Issues</dt>
+  <dd class="min-w-0 break-words text-heading" data-roadmap-issues>
+    {%- for st in plan.statuses.issue %}{% set n = [i for i in plan.issues if i.status == st] | length %}{% if n > 0 %}<span class="me-3 inline-block whitespace-nowrap"><span class="font-mono" data-roadmap-issue-status="{{ st }}">{{ n }}</span> {{ st | lower }}</span>{% endif %}{% endfor -%}
+  </dd>
   <dt id="delivery" class="scroll-mt-24 text-body">Delivery</dt>
   <dd class="min-w-0 break-words text-heading">
     {%- if delivery %}inferred from the history at <a href="{{ repo }}/commit/{{ delivery.observed.commit }}" class="font-mono underline hover:text-fg-brand">{{ delivery.observed.commit | truncate(length=11, end="") }}</a>: merged and released, each linked to the commit or release that proves it and naming its pull request
@@ -55,6 +62,19 @@
       <span class="ms-auto">{{ <plan_status status={m.status} /> }}</span>
     </div>
 
+    {#- when: the release that carried it and that release's date, or, before any release, the
+        date of its last delivered issue as the history records it (I3751: dates and bars on
+        every surface). Read from the release records and delivery.json, never a clock at render
+        time. -#}
+    {%- set relrec = false %}{% if m.released_in != "unreleased" %}{% set relrec = load_data(path="static/releases/" ~ m.released_in ~ ".json", required=false) %}{% endif %}
+    {%- set merged_at = [] %}{% if delivery %}{% set merged_at = [d.merged.merged_at for d in delivery.issues if d.milestone == m.id and d.merged and d.merged.merged_at] %}{% endif %}
+    <p class="mt-2 font-mono text-xs text-body" data-milestone-when>
+      {%- if relrec and relrec.published_at %}released <time translate="no" datetime="{{ relrec.published_at }}">{{ relrec.published_at | truncate(length=10, end="") }}</time>
+      {%- elif merged_at | length > 0 %}{% set last = merged_at | sort | last %}last delivery <time translate="no" datetime="{{ last }}">{{ last | truncate(length=10, end="") }}</time>
+      {%- elif m.issues.total > 0 and m.issues.by_status.DONE > 0 %}no delivery date: its done issues left no merge the history can name
+      {%- else %}nothing delivered yet{% endif -%}
+    </p>
+
     {%- if m.blocked_by | length > 0 %}
     <p class="mt-3 text-sm text-body">Blocked by
       {%- for b in m.blocked_by %} <a href="#milestone-{{ b }}" class="font-mono text-heading underline">{{ b }}</a>{% if not loop.last %},{% endif %}{% endfor %}.
@@ -66,6 +86,11 @@
     {%- if m.issues.total > 0 %}
     {#- text-body, not text-body-subtle: an active milestone's card is bg-brand-softer, where the
         subtle token falls under the contrast threshold the UI audit holds every page to -#}
+    {#- the bar is the same count as "done N of M": accepted issues against the ones it requires,
+        cancelled ones left out; a full bar on a blocked milestone still waits for the graph -#}
+    {%- if m.issues.required > 0 %}
+    <progress class="mt-3 block h-2 w-full overflow-hidden rounded-full accent-brand" value="{{ m.issues.by_status.DONE }}" max="{{ m.issues.required }}" aria-label="Required issues done" data-milestone-bar="{{ m.issues.by_status.DONE }}/{{ m.issues.required }}"></progress>
+    {%- endif %}
     <dl class="mt-3 flex flex-wrap gap-x-5 gap-y-1 font-mono text-xs text-body">
       <div class="flex gap-1"><dt>done</dt><dd class="text-heading">{{ m.issues.by_status.DONE }} of {{ m.issues.required }}</dd></div>
       {%- for k, v in m.issues.by_status %}{% if v > 0 and k != "DONE" %}<div class="flex gap-1"><dt>{{ k | lower }}</dt><dd class="text-heading">{{ v }}</dd></div>{% endif %}{% endfor %}
@@ -86,7 +111,7 @@
             <a href="{{ get_url(path="/plan/" ~ (i.id | lower) ~ "/", trailing_slash=true) }}" class="shrink-0 font-mono text-xs text-heading underline">{{ i.id }}</a>
             <span class="min-w-0 flex-1 basis-48 break-words text-body">{{ i.title }}</span>
             {%- if dl | length > 0 %}{% set d = dl[0] %}
-            <span class="flex shrink-0 flex-wrap items-baseline gap-x-2 font-mono text-xs text-heading" data-delivery="{{ d.stage }}">
+            <span class="flex min-w-0 max-w-full flex-wrap items-baseline gap-x-2 font-mono text-xs text-heading" data-delivery="{{ d.stage }}">
               <span class="rounded border border-default px-1.5 py-0.5">{{ d.stage | replace(from="_", to=" ") }}</span>
               {%- if d.released %}<a href="{{ repo }}/releases/tag/{{ d.released.tag }}" class="underline">{{ d.released.tag }}</a>{% endif %}
               {%- if d.merged %}{% if d.merged.pull_request %}<span title="the pull request that merged it">#{{ d.merged.pull_request }}</span>{% endif %}<a href="{{ repo }}/commit/{{ d.merged.commit }}" class="underline">{{ d.merged.commit | truncate(length=7, end="") }}</a>{% endif %}
@@ -99,6 +124,9 @@
       {%- endif %}
       {%- endfor %}
     </div>
+    {%- elif m.status == "DONE" %}
+    {#- accepted with no issue records: delivered, not unwritten (I3751) -#}
+    <p class="mt-3 font-mono text-xs text-body" data-milestone-issueless>delivered — accepted before its work was written as issues, so no issue records it</p>
     {%- else %}
     <p class="mt-3 font-mono text-xs text-body">no issues written yet — the outcome is specified, the work is not</p>
     {%- endif %}
@@ -119,7 +147,9 @@
 </ol>
 
 <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">The order, and why it is not a preference</h2>
-<p class="mt-2 max-w-3xl text-body">Each milestone depends on the ones before it, and the dependency is enforced rather than intended: a milestone whose dependencies are not accepted is <span class="font-mono">BLOCKED</span> whatever its own issues say. That is why there is no percentage anywhere on this page — a bar at 100% inside a blocked milestone would be a lie the graph can already tell you is one.</p>
+{#- counted from the graph, never stated: how many milestones depend on another (I3751) -#}
+{%- set dependent = [x for x in roadmap.milestones if x.depends_on | length > 0] -%}
+<p class="mt-2 max-w-3xl text-body" data-roadmap-dependents="{{ dependent | length }}"><span translate="no">{{ dependent | length }}</span> of <span translate="no">{{ roadmap.milestones | length }}</span> milestones depend on another, and the dependency is enforced rather than intended: a milestone whose dependencies are not accepted is <span class="font-mono">BLOCKED</span> whatever its own issues say. Its bar can be full and it still waits: the bar counts its own issues, the graph says whether it may begin.</p>
 {% include "partials/graph.html" %}
 
 <p class="mt-8 text-sm text-body">

@@ -73,7 +73,7 @@
       "exit": 10,
       "label": "context",
       "lines": 2,
-      "output": "FAIL context     .ai/repo/zones/deep — missing-contract: carries no context document; a directory inside the tree says what it is for, or its governing contract exempts it (children.require_contract: false)  [reproduce: printf '%s\\n' '---' 'schema: context/v1' > .ai/repo/zones/deep/README.md]\ncontext validate: 1 problem(s) in 20 document(s)",
+      "output": "FAIL context     .ai/repo/zones/deep — missing-contract: carries no context document; a directory inside the tree says what it is for, or its governing contract exempts it (children.require_contract: false)  [reproduce: printf '%s\\n' '---' 'schema: context/v1' > .ai/repo/zones/deep/README.md]\ncontext validate: 1 problem(s) in 21 document(s)",
       "route": "/use-cases/document-every-directory-of-the-layer/",
       "use_case": "document-every-directory-of-the-layer",
       "use_case_title": "Refuse a directory of the layer that documents nothing",
@@ -438,6 +438,64 @@
       "use_case": "say-what-reached-the-remote-and-what-did-not",
       "use_case_title": "Say what reached the remote and what did not",
       "what": "FAIL note        t-<id> — no --note file and no handover for this task"
+    }
+  ],
+  "scenarios": [
+    {
+      "command": "majordomus context resolve .ai/repo/zones",
+      "route": "/use-cases/document-every-directory-of-the-layer/",
+      "title": "Refuse a directory of the layer that documents nothing",
+      "use_case": "document-every-directory-of-the-layer",
+      "verdict": "FAIL context     .ai/repo/zones/deep — missing-contract: carries no context document; a directory inside the tree says what it is for, or its governing contract exempts it (children.require_contract: false)"
+    },
+    {
+      "command": "majordomus context --budget-lines 30",
+      "route": "/use-cases/read-only-the-context-that-fits/",
+      "title": "Read only the context that fits the budget, and know what was dropped",
+      "use_case": "read-only-the-context-that-fits",
+      "verdict": "majordomus: context: 45 lines over the budget of 30 with nothing left to drop"
+    },
+    {
+      "command": "majordomus check",
+      "route": "/use-cases/carry-a-blocker-across-a-handover/",
+      "title": "Hand work over with a question still open, and keep it blocking",
+      "use_case": "carry-a-blocker-across-a-handover",
+      "verdict": "FAIL blockers    t-<id> — 1 unresolved question(s) on this branch; first: t-<id> — does the parser need to accept tabs?"
+    },
+    {
+      "command": "majordomus check",
+      "route": "/use-cases/catch-an-agent-that-says-it-is-done/",
+      "title": "Catch an agent that says it is done when it is not",
+      "use_case": "catch-an-agent-that-says-it-is-done",
+      "verdict": "FAIL scope       docs/d — outside claimed scope (lib)"
+    },
+    {
+      "command": "majordomus check",
+      "route": "/use-cases/resume-in-the-right-worktree/",
+      "title": "Resume in the right worktree, never against somebody else’s task",
+      "use_case": "resume-in-the-right-worktree",
+      "verdict": "majordomus: no active task (.ai/local/state/current.yaml); run: majordomus start"
+    },
+    {
+      "command": "majordomus finish --outcome completed --verify-command 'test -d .ai'",
+      "route": "/use-cases/accept-or-refuse-finished-work/",
+      "title": "Decide whether finished work is actually finished",
+      "use_case": "accept-or-refuse-finished-work",
+      "verdict": "FAIL blockers    t-<id> — 1 unresolved question(s) on this branch; first: t-<id> — should tabs be an error or a warning?"
+    },
+    {
+      "command": "majordomus finish --outcome completed --note done",
+      "route": "/use-cases/prove-what-a-task-owed-before-calling-it-done/",
+      "title": "Prove what a task owed before calling it done",
+      "use_case": "prove-what-a-task-owed-before-calling-it-done",
+      "verdict": "FAIL note        t-<id> — no --note file and no handover for this task"
+    },
+    {
+      "command": "majordomus finish --outcome completed --note done",
+      "route": "/use-cases/say-what-reached-the-remote-and-what-did-not/",
+      "title": "Say what reached the remote and what did not",
+      "use_case": "say-what-reached-the-remote-and-what-did-not",
+      "verdict": "FAIL note        t-<id> — no --note file and no handover for this task"
     }
   ],
   "schema": 1,

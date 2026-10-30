@@ -4,7 +4,7 @@
 
 # Prismatic Majordomus
 
-**A lightweight supervisory control layer for AI-assisted work.**
+**Your AI agents say the work is done. Majordomus makes them prove it.**
 
 [Website](https://majordomus.dev) ·
 **[The challenge: watch it refuse an agent](https://majordomus.dev/challenge/)** ·
@@ -126,7 +126,11 @@ majordomus check
 majordomus finish --outcome completed --verify-command "make test"
 ```
 
-Requirements: bash 3.2 or newer, git, and `sha256sum` or `openssl`. Nothing else.
+The shell tool, `bin/majordomus`, is small and portable: bash 3.2 or newer, git, and
+`sha256sum` or `openssl` run it on a stock macOS or Linux. It answers `init`, `start`,
+`check`, `finish` and the other commands of the task cycle itself. Every command it does not
+know it hands to the Rust executable it ships prebuilt as `libexec/majordomus-cli`, so
+`mcp`, `serve`, `generate` and `worktree` exist only there.
 Nothing is installed into your project except `.ai/` and the files the policy names. A
 repository set up before the `.ai/` layer, with its data under `.majordomus/`, is moved
 by `majordomus migrate` (preview with `--dry-run`); every other command refuses that
@@ -609,7 +613,8 @@ value came from: [`docs/WEB.md`](docs/WEB.md),
 **Clients start it themselves.** [`.mcp.json`](.mcp.json) (Claude Code),
 [`.gemini/settings.json`](.gemini/settings.json) (Gemini CLI) and
 [`.codex/config.toml`](.codex/config.toml) (Codex) name [`bin/majordomus-mcp`](bin/majordomus-mcp),
-which builds the executable when it must and runs `majordomus mcp`. Open the repository in
+which runs `majordomus mcp` from the tree's executable and never builds it (`just build` does;
+a release of the tree's generation stands in, ADR 0224). Open the repository in
 any of them and the server is there; open it in two and they share one. Which tools the
 distribution has an adapter for, what each reads and where each keeps its scratch
 checkouts is one generated table, [`docs/generated/providers.md`](docs/generated/providers.md),

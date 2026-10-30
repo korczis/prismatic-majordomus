@@ -1,0 +1,52 @@
+id: I4199
+milestone: ci-critical-path
+title: "A case that compiles the crate runs alone or caps cargo, so the cases beside it are never starved past their bounds"
+slug: a-case-that-compiles-never-starves-its-neighbours
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Run 77_rust_evidence alone (its doc-example and benchmark builds take every core), cap cargo at two jobs and two test threads in the two light compiling cases (76_capabilities_projections, 493_mesh_compaction_keeps_what_is_live), and hold the rule with case 4199: a case whose script runs cargo test, bench or build on a manifest declares '# majordomus-exclusive:' or carries CARGO_BUILD_JOBS on that line."
+why: "Train 5 (#2403, d078fb2309e) was red twice on case 431_economics_claims_gated, killed at its 600 s bound (609 s, 608 s). Alone the case takes 51-69 s, its economics code did not change between trains 4 and 5, and the fixture it reads grew 2%. On CI it spent its whole window beside 77_rust_evidence (3434-3905 s of cargo test --doc and cargo bench --no-run) in a shard that runs four cases at a time on a four-core runner. Its time tracked its neighbour, not its own work; raising the bound would hide the starvation."
+current_state: "Measured on d078fb2309e: test/run.sh runs '# majordomus-exclusive:' cases alone after the parallel phase and nothing else; 77_rust_evidence, 76_capabilities_projections and 493_mesh_compaction_keeps_what_is_live compile with cargo in the parallel phase, uncapped; no rule ties compiling to either remedy. CI durations: 77 3434-3905 s, 76 171-241 s, 493 6-142 s; 431 on train 5's shard 2 overlapped 77 for its entire 609 s."
+desired_state: "No case compiles the crate in the parallel phase with every core: 77 runs alone and 76 and 493 cap cargo at two jobs, case 4199 refuses any new case that compiles uncapped, and case 431 runs beside light neighbours within its bound."
+scope:
+  - ".ai/repo/project/issues/I4199.yaml"
+  - "test/cases/77_rust_evidence.sh"
+  - "test/cases/76_capabilities_projections.sh"
+  - "test/cases/493_mesh_compaction_keeps_what_is_live.sh"
+  - "test/cases/4199_a_case_that_compiles_never_starves_its_neighbours.sh"
+non_scope:
+  - "Raising any case's declared bound"
+  - "The gate model's lanes and tiers"
+acceptance_criteria:
+  - "77_rust_evidence declares '# majordomus-exclusive:' with its reason"
+  - "76 and 493 run their cargo test with CARGO_BUILD_JOBS=2 and RUST_TEST_THREADS=2"
+  - "Case 4199 passes on the tree and, on a fixture, flags exactly an uncapped compile while a capped one, an exclusive one and cargo written only as text pass"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4199_a_case_that_compiles_never_starves_its_neighbours 431_economics_claims_gated"
+  - "majordomus plan validate"
+evidence_required:
+  - "compiling_cases_run_alone_or_capped"
+  - "case_431_within_its_bound"
+depends_on: []
+serves: []
+created_at: 2026-10-24
+updated_at: 2026-10-25T18:47:57Z
+started_at: 2026-10-25T18:47:20Z
+started_event: sha256:dd8db5979724b7a2f7ca98f6f6ae0f93bdeb6415306b8182dbf4203e32b828ad
+completed_at: 2026-10-25T18:47:57Z
+completed_event: sha256:80bab1d2e8a3a5ba6518a59efefc60be45fed8ed21a0df1281372637c53e9c1c
+evidence:
+  - covers: compiling_cases_run_alone_or_capped
+    type: test
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4199_a_case_that_compiles_never_starves_its_neighbours"
+    result: "ok locally at 2efeacea031 (1 passed); ok on master's validate https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175/job/121182964674"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-25T18:46:55Z
+  - covers: case_431_within_its_bound
+    type: ci
+    command: "bash test/run.sh 431_economics_claims_gated"
+    result: "ok in 233 s against its 600 s bound on master 2efeacea031, run alone as # majordomus-exclusive"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175/job/121182964713"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-25T18:47:07Z

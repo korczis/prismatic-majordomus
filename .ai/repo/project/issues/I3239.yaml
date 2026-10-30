@@ -1,0 +1,42 @@
+id: I3239
+milestone: a-change-is-judged-in-minutes
+title: "One job builds a run's executable and every other job of that run uses it"
+slug: one-build-per-run
+priority: p1
+profile: implementation
+objective: "Build the debug executable once per validate run, upload it, and have suite-shard, evidence, ui, mesh-lab and the site jobs download it as MAJORDOMUS_BIN instead of running cargo build each. macOS keeps its own build."
+why: "c228#3 and c195#2: build once and let consumers download products; every job otherwise pays restore, compile and link. It extends milestone ci-critical-path. Sources: chatgpt-majordomus:c195#2, chatgpt-majordomus:c228#3, chatgpt-majordomus:c019#0, chatgpt-majordomus:c019#4."
+current_state: "Measured on master 707a04c, 2026-10-18: validate.yml has five `cargo build --quiet --locked` steps, in the suite-shard, evidence, ui, mesh-lab and macos jobs (grep -c), and 18 suite cases call cargo build, run or test directly (grep -l over test/cases/*.sh). Only the plan artifact is shared."
+desired_state: "One Linux build per run; the artifact carries its generation, and a consumer refuses a mismatched one."
+scope:
+  - ".github/workflows/validate.yml"
+  - "test/lib.sh"
+  - "test/cases/3019_a_failed_branch_run_cancels_itself.sh"
+  - "lib/rust_bin.sh"
+  - "scripts/ci-plan"
+  - ".ai/repo/ci/plan.yaml"
+  - "scripts/ci/run-plan"
+  - "scripts/ci/evidence-collect"
+  - "scripts/ci/mesh-lab-evidence"
+non_scope:
+  - "Uploading the whole target directory"
+  - "Release builds (I2353, rescue)"
+depends_on:
+  - "I3242"
+serves:
+  - "a-change-is-judged-in-minutes#pr-verdict-within-five-minutes"
+acceptance_criteria:
+  - "Exactly one Linux cargo build step per validate run (a case reads the workflow)"
+  - "Each consumer's job time falls by its former build time, measured on GitHub"
+  - "A consumer given an executable of another generation fails"
+  - "Validation runs bash test/run.sh 3019_a_failed_branch_run_cancels_itself (the case on disk) and the one-build case this issue adds"
+  - "test/lib.sh and the 18 suite cases that call cargo build/run/test directly use the downloaded MAJORDOMUS_BIN, or are listed as exempt with their measured compile cost"
+  - "Per-job time is compared with I3242's committed GitHub baseline, suite shards included"
+validation:
+  - "scripts/ci-plan --check"
+  - "bash test/run.sh 3019_a_failed_branch_run_cancels_itself"
+evidence_required:
+  - "one_build_per_run_case"
+  - "per_job_time_before_after"
+created_at: 2026-10-18
+updated_at: 2026-10-18

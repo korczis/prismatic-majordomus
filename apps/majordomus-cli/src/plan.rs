@@ -147,6 +147,11 @@ fn clean(s: &str) -> String {
 /// without one was written by something else. `SEALED_FROM` in `lib/project.awk`.
 pub const SEALED_FROM: &str = "2026-10-01T00:00:00Z";
 
+/// The longest milestone title GitHub accepts, in characters; a longer one is refused with
+/// HTTP 422. A milestone is projected as `"<id> — <title>"` (scripts/github-sync `title_of`),
+/// so that whole string is what must fit (I2844). `MTITLE_MAX` in `lib/project.awk`.
+pub const MILESTONE_TITLE_MAX: usize = 255;
+
 /// The seal of one transition: the proof, tracked in the record beside the stamp, that the
 /// stamp was written by the transition that appends its event.
 ///
@@ -643,7 +648,9 @@ fn raws(index: &Index) -> (PlanProject, Vec<PlanMilestoneRaw>, Vec<PlanIssueRaw>
     (header, milestones, issues)
 }
 
-fn priority_rank(p: &str) -> u8 {
+/// A priority's rank, lowest first: the order [`Plan::next_ready`] takes issues in, and the
+/// one every reader that ranks issues the way the plan does uses (I2917).
+pub(crate) fn priority_rank(p: &str) -> u8 {
     match p {
         "p0" => 0,
         "p1" => 1,
@@ -686,12 +693,24 @@ impl PlanFindings {
 /// assert!(!overlap("lib", "libexec"));
 /// ```
 pub fn overlap(a: &str, b: &str) -> bool {
-    let norm = |s: &str| {
-        let s = s.strip_prefix("./").unwrap_or(s);
-        s.trim_end_matches('/').to_string()
+    overlap_normal(normal(a), normal(b))
+}
+
+/// A scope entry as [`overlap`] compares it: no leading `./`, no trailing `/`.
+fn normal(s: &str) -> &str {
+    s.strip_prefix("./").unwrap_or(s).trim_end_matches('/')
+}
+
+/// [`overlap`] over entries already [`normal`], allocating nothing: the scope conflict below
+/// asks it of every pair of entries of every pair of runnable issues of a wave, and building
+/// four strings per question made it most of `plan::derive` (I4223).
+fn overlap_normal(a: &str, b: &str) -> bool {
+    let within = |inner: &str, outer: &str| {
+        inner.len() > outer.len()
+            && inner.starts_with(outer)
+            && inner.as_bytes()[outer.len()] == b'/'
     };
-    let (a, b) = (norm(a), norm(b));
-    a == b || b.starts_with(&format!("{a}/")) || a.starts_with(&format!("{b}/"))
+    a == b || within(b, a) || within(a, b)
 }
 
 #[allow(clippy::too_many_lines)] // one derivation, in the order lib/project.awk derives it
@@ -1141,20 +1160,23 @@ fn derive(mut header: PlanProject, mraw: Vec<PlanMilestoneRaw>, iraw: Vec<PlanIs
 
     // --- scope conflict: two issues that could run together but touch the same paths.
     //     Reported conservatively — an uncertain overlap serialises rather than races.
-    for a in 0..iraw.len() {
-        for b in (a + 1)..iraw.len() {
-            if !matches!(status[a].as_str(), "READY" | "ACTIVE") {
-                continue;
-            }
-            if !matches!(status[b].as_str(), "READY" | "ACTIVE") {
-                continue;
-            }
+    //     The runnable issues are chosen once and every scope entry normalised once, so the
+    //     pairs cost a comparison each rather than a scan of the whole plan and four strings.
+    let runnable: Vec<usize> = (0..iraw.len())
+        .filter(|&n| matches!(status[n].as_str(), "READY" | "ACTIVE"))
+        .collect();
+    let normals: Vec<Vec<&str>> = iraw
+        .iter()
+        .map(|r| r.scope.iter().map(|s| normal(s)).collect())
+        .collect();
+    for (i, &a) in runnable.iter().enumerate() {
+        for &b in &runnable[i + 1..] {
             if wave[a] != wave[b] {
                 continue;
             }
-            'pair: for x in &iraw[a].scope {
-                for y in &iraw[b].scope {
-                    if overlap(x, y) {
+            'pair: for (x, nx) in iraw[a].scope.iter().zip(&normals[a]) {
+                for ny in &normals[b] {
+                    if overlap_normal(nx, ny) {
                         v.warn(
                             "scope_conflict",
                             &iraw[a].id,
@@ -1217,6 +1239,21 @@ fn derive(mut header: PlanProject, mraw: Vec<PlanMilestoneRaw>, iraw: Vec<PlanIs
                 format!(
                     "is {}, which the milestone status vocabulary does not declare",
                     mstatus[n]
+                ),
+            );
+        }
+    }
+    // A milestone GitHub would refuse to hold: its projected title is over the limit.
+    for m in &mraw {
+        let projected = m.id.chars().count() + 3 + m.title.chars().count();
+        if projected > MILESTONE_TITLE_MAX {
+            v.fail(
+                "milestone_title_too_long",
+                &m.id,
+                format!(
+                    "projects to GitHub as a {projected}-character title (\"{} — <title>\"); \
+                     GitHub's limit is {MILESTONE_TITLE_MAX}",
+                    m.id
                 ),
             );
         }
@@ -1656,6 +1693,68 @@ mod tests {
 
     /// Two issues of one wave that touch the same paths are serialised, and said so.
     #[test]
+    fn overlap_is_asked_of_normal_entries_with_the_same_answers() {
+        // every answer of the allocating definition this replaced, on the entries that
+        // normalisation exists for: `./`, trailing slashes, a prefix that is not a parent
+        let was = |a: &str, b: &str| {
+            let norm = |s: &str| {
+                let s = s.strip_prefix("./").unwrap_or(s);
+                s.trim_end_matches('/').to_string()
+            };
+            let (a, b) = (norm(a), norm(b));
+            a == b || b.starts_with(&format!("{a}/")) || a.starts_with(&format!("{b}/"))
+        };
+        let entries = [
+            "",
+            "/",
+            "./",
+            "lib",
+            "lib/",
+            "./lib",
+            "./lib/",
+            "libexec",
+            "lib/x",
+            "lib/x/",
+            "apps/cli",
+            "apps/cli/src/main.rs",
+            "apps/clix",
+            "/abs",
+            "/abs/b",
+            "a//b",
+            "a/",
+        ];
+        for a in entries {
+            for b in entries {
+                assert_eq!(overlap(a, b), was(a, b), "overlap({a:?}, {b:?})");
+            }
+        }
+    }
+
+    #[test]
+    fn a_conflict_is_reported_once_per_pair_and_only_between_runnable_issues() {
+        let mut a = issue("I0001", "M000", &[]);
+        let mut b = issue("I0002", "M000", &[]);
+        let mut c = issue("I0003", "M000", &[]);
+        a.scope = vec!["docs".into(), "lib/".into()];
+        b.scope = vec!["./lib/x".into(), "docs/a.md".into()];
+        c.scope = vec!["lib".into()];
+        c.cancelled = true;
+        let p = derive(header(), vec![milestone("M000", &[])], vec![a, b, c]);
+        let found: Vec<_> = p
+            .findings
+            .iter()
+            .filter(|f| f.code == "scope_conflict")
+            .collect();
+        assert_eq!(found.len(), 1, "{found:?}");
+        assert_eq!(found[0].subject, "I0001");
+        assert!(
+            found[0].message.starts_with("shares docs with I0002"),
+            "{}",
+            found[0].message
+        );
+    }
+
+    #[test]
     fn overlapping_scope_in_one_wave_is_a_warning() {
         let mut a = issue("I0001", "M000", &[]);
         let mut b = issue("I0002", "M000", &[]);
@@ -1670,6 +1769,30 @@ mod tests {
         assert_eq!(f.level, "WARN");
         assert_eq!(f.subject, "I0001");
         assert!(f.message.contains("I0002"));
+    }
+
+    /// A milestone whose projected GitHub title ("<id> — <title>") is over the limit is
+    /// refused, counted in characters, not bytes; one exactly at the limit is not (I2844).
+    #[test]
+    fn a_milestone_title_github_would_refuse_is_refused() {
+        let mut long = milestone("M001", &[]);
+        // 252 characters, one of them multi-byte: "M001 — " (7) + 252 = 259 > 255
+        long.title = format!("é{}", "x".repeat(251));
+        let mut fits = milestone("M002", &[]);
+        // exactly at the limit: 7 + 248 = 255
+        fits.title = format!("é{}", "x".repeat(247));
+        let p = derive(header(), vec![long, fits], vec![]);
+        let f: Vec<_> = p
+            .findings
+            .iter()
+            .filter(|f| f.code == "milestone_title_too_long")
+            .collect();
+        assert_eq!(f.len(), 1, "{:?}", p.findings);
+        assert_eq!(f[0].level, "FAIL");
+        assert_eq!(f[0].subject, "M001");
+        assert!(f[0]
+            .message
+            .starts_with("projects to GitHub as a 259-character title"));
     }
 
     /// A record naming a dependency that does not exist is refused by name, and the

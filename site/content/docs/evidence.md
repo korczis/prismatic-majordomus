@@ -1,7 +1,7 @@
 +++
 title = "Evidence"
 description = "a claim's proof as a recorded execution rather than a test path that resolves: the test identity derived from the matrix, the seven proof states and how each is derived, why `proven` and `inputs unchanged` are never one state, the ledger's shape and its retention decision, recording a run, the four capabilities with their projections, both directions of the join, the gate and its ratchet, and the limits"
-weight = 74
+weight = 76
 [extra]
 source = "docs/EVIDENCE.md"
 +++
@@ -14,7 +14,7 @@ carrying the provenance the run itself did not have; a ledger of the latest exec
 test; and one derivation that joins the two and says, per claim, exactly what can honestly
 be said about it. Behaviour as implemented; where this document and the executable
 disagree, the document is wrong and changes in the same commit. The decision is
-ADR 40;
+[ADR 41](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0041-proof-is-a-recorded-execution-and-inputs-unchanged-is-not-proven.md);
 the rules it serves are `project.no-claim-without-test` and
 `project.never-reported-is-not-green` under
 [`.ai/repo/rules/project/`](https://github.com/korczis/prismatic-majordomus/tree/@source-ref@/.ai/repo/rules/project).

@@ -195,8 +195,16 @@ fn now_is_where_the_work_is_and_the_release_is_the_releases() {
     let started = &flight["milestones"][1];
     assert_eq!(started["issues"][0]["status"], "ACTIVE");
     assert_eq!(started["issues"][0]["in_flight"], json!(["active"]));
-    assert_eq!(flight["release"]["latest"], VERSION, "{flight}");
-    assert_eq!(flight["release"]["source"], "tags");
+    // The latest release is never a pre-release (#1313): an executable whose version carries a
+    // pre-release part leaves the latest at the highest stable release, the fixture's recorded
+    // 0.1.0, while its own tag still counts as tagged.
+    let (latest, latest_source) = if VERSION.contains('-') {
+        ("0.1.0", "records")
+    } else {
+        (VERSION, "tags")
+    };
+    assert_eq!(flight["release"]["latest"], latest, "{flight}");
+    assert_eq!(flight["release"]["source"], latest_source, "{flight}");
     assert_eq!(flight["release"]["executable"], VERSION);
     assert_eq!(flight["release"]["executable_tagged"], true);
     let records = flight["release"]["readings"]
@@ -225,12 +233,12 @@ fn now_is_where_the_work_is_and_the_release_is_the_releases() {
     );
     // the release, from the releases, never older than this executable
     assert!(
-        html.contains(&format!("Latest release {VERSION} (from tags)")),
+        html.contains(&format!("Latest release {latest} (from {latest_source})")),
         "{html}"
     );
     assert!(
         html.contains(&format!(
-            "href=\"https://github.com/example/fixture/releases/tag/v{VERSION}\""
+            "href=\"https://github.com/example/fixture/releases/tag/v{latest}\""
         )),
         "{html}"
     );
@@ -326,7 +334,7 @@ fn a_live_claim_puts_its_issue_in_flight_and_every_proof_is_shown() {
         ".ai/repo/mesh/majordomus.yaml",
         &format!(
             "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n\
-             multicast:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow:\n    - {key}\n\
+             multicast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow:\n    - {key}\n\
              cooperation:\n  heartbeat_seconds: 1\n  expiry_seconds: 30\n  repository: fixture\n"
         ),
     );

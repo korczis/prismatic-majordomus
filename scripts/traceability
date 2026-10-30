@@ -78,7 +78,7 @@ if [ -z "$RB" ]; then
   RB="$ROOT/apps/majordomus-cli/target/debug/majordomus"
   [ -x "$RB" ] || RB="$ROOT/libexec/majordomus-cli"
 fi
-[ -x "$RB" ] || { echo "traceability: no Rust executable; build it with bin/majordomus-cli --help, or set MAJORDOMUS_BIN" >&2; exit 12; }
+[ -x "$RB" ] || { echo "traceability: no Rust executable; build it with just build, or set MAJORDOMUS_BIN" >&2; exit 12; }
 [ -n "${MAJORDOMUS_SHARE:-}" ] || { MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE; }
 
 mcp_call() { # tool arguments-json -> the capability's typed answer on stdout

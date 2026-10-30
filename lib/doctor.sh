@@ -56,7 +56,8 @@ mj_cmd_doctor() {
   local a
   for a in "$@"; do case "$a" in
     --help|-h) echo "usage: majordomus doctor [--json]   (read-only; exit 0 healthy, 10 failures, 12 missing)"
-               echo "  MAJORDOMUS_DOCTOR_CONTEXT=commit   the pre-commit hook's run: leaves out the per-worktree uncommitted-work reading and says so"
+               echo "  MAJORDOMUS_DOCTOR_CONTEXT=commit   the pre-commit hook's run: leaves out the per-worktree uncommitted-work reading, and the"
+               echo "                                     context builder when nothing staged can change it, and says so"
                return 0 ;;
     *) mj_die "$MJ_EX_USAGE" "doctor: unknown option $a" ;;
   esac; done
@@ -80,6 +81,7 @@ mj_cmd_doctor() {
   mj_doctrine_dispatch doctor
   mj_report_environment
   mj_report_reasoning
+  mj_report_layout
   mj_report_budget doctor "$t_start"
   mj_finish_doctor
 }
@@ -348,8 +350,18 @@ mj_validate_projection() {
 # names .ai/README.md, and no generated target carries what the layer is for. A rule that
 # exists in one provider's file and nowhere else is the two-rulebooks failure this tool was
 # distilled from, so a generated target that holds a rule corpus fails here.
+#
+# Both questions are asked of the generated content only: the whole file in file mode, the
+# region in region mode. The host document around a region is the repository's own, written
+# by people before or beside the layer; it may carry rule bullets and a rules section, and no
+# edit of the policy could remove them, so a finding there could never be fixed by what
+# doctor tells the reader to run. The pointer is read from the same span for the same reason
+# turned round: the region is what a worker is promised, and a host that happens to name
+# .ai/README.md does not stand in for a region that lost it. Absent or malformed markers are
+# the projection doctrine's finding and nothing is judged here.
 mj_validate_bootstrap() {
-  local j=0 tgt mode bad=0
+  local j=0 tgt mode bad=0 owned region
+  region="$(mktemp "${TMPDIR:-/tmp}/mj.bs.XXXXXX")"
   if mj_personal_active; then
     # The chain starts at the project's README, and a personal layer changes nothing the
     # project shares: the README is the repository's, the layer is one person's. The agent
@@ -363,13 +375,19 @@ mj_validate_bootstrap() {
     tgt="$(mj_pol "projections.$j.target")"; mode="$(mj_projection_mode "$j")"; j=$((j+1))
     [ -f "$MJ_ROOT/$tgt" ] || continue   # projection_integrity reports absence
     mj_personal_is_the_projects "$tgt" && continue   # the project's file, like its README
-    if ! grep -q '\.ai/README\.md' "$MJ_ROOT/$tgt"; then
+    owned="$MJ_ROOT/$tgt"
+    if [ "$mode" = region ]; then
+      mj_region_extract "$MJ_ROOT/$tgt" > "$region" 2>/dev/null || continue   # projection_integrity reports the markers
+      owned="$region"
+    fi
+    if ! grep -q '\.ai/README\.md' "$owned"; then
       mj_doctrine_fail bootstrap "$tgt" "does not point at .ai/README.md; a worker reading it never reaches the layer" "grep -n '.ai/README.md' $tgt"; bad=1
-    elif grep -qE '^\| *`?(profile|routine|implementation)`? *\||^- \*\*[A-Za-z].*\*\*|^### (Rules|Ten rules|Lifecycle|Finish contract)' "$MJ_ROOT/$tgt"; then
+    elif grep -qE '^\| *`?(profile|routine|implementation)`? *\||^- \*\*[A-Za-z].*\*\*|^### (Rules|Ten rules|Lifecycle|Finish contract)' "$owned"; then
       mj_doctrine_fail bootstrap "$tgt" "carries a rule corpus of its own (a profile table, rule bullets or a rules section); rules live under .ai/repo/rules/" "grep -nE '^- \*\*|^### ' $tgt"; bad=1
     fi
     mj_bootstrap_rule_refs "$tgt" "$mode" "$(mj_pol "projections.$((j-1)).provider")" || bad=1
   done
+  rm -f "$region"
   [ "$bad" = 0 ] && [ "$j" -gt 0 ] && mj_doctrine_ok bootstrap "$j projection(s)" "each points at .ai/README.md, carries no rule of its own and names only rules in force"
   return 0
 }
@@ -477,6 +495,15 @@ mj_validate_budget() {
     "grep -n 'always_loaded' $(mj_rel "$MJ_POLICY_FILE")"; fi
   rm -f "$owned"
 
+  # In the commit hook the builder is proved only when the commit can change what it reads
+  # (I4265): it composes the whole context, about a quarter of an adopter's doctor run, and a
+  # commit that stages nothing under .ai/ or in a provider file cannot break it. Said by name,
+  # with the command that runs it, because an absent check must not read as a passing one.
+  if [ "${MAJORDOMUS_DOCTOR_CONTEXT:-}" = commit ] \
+     && ! mj_git diff --cached --name-only 2>/dev/null | grep -qE '^(\.ai/|AGENTS\.md$|CLAUDE\.md$|GEMINI\.md$)'; then
+    mj_info context "builder" "not read in the commit hook (MAJORDOMUS_DOCTOR_CONTEXT=commit): nothing staged under .ai/ or in a provider file can change it; run doctor on its own" "majordomus doctor"
+    return 0
+  fi
   # 8. the continuity subsystem: reachable through the CLI, not merely present on disk.
   #    A directory full of records that no command reads is the failure mode this whole
   #    tool exists to catch, so doctor proves each store is readable by the command that
@@ -555,6 +582,35 @@ mj_report_reasoning() {
   return 0
 }
 
+# The boundary between the layer's halves, judged by the executable against the layouts their
+# contracts declare (I2871): a tracked file the ignore rules match under a contract that
+# excludes runtime state, or a copy of authored knowledge in the local half. Exit 10 is the
+# check's verdict on a finding, not a failure to run; an empty answer is.
+mj_report_layout() {
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  local bin share report
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  if [ ! -x "$bin" ]; then
+    mj_info layout "-" "the executable is not built, so the layout boundary is not judged here (majordomus layout check)"
+    return 0
+  fi
+  share="$(mj_rust_share "$MJ_ROOT")"
+  report="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+               "$bin" layout check --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || true
+  if [ -z "$report" ] || [ "$(printf '%s' "$report" | jq -r '.measured')" != true ]; then
+    mj_info layout "-" "the layout boundary could not be judged (majordomus layout check)"
+  elif [ "$(printf '%s' "$report" | jq -r '.passes')" = true ]; then
+    mj_ok layout "-" "$(printf '%s' "$report" | jq -r '"layout check: \(.checked) path(s) judged against their declared layouts; no finding"')"
+  else
+    printf '%s' "$report" | jq -r '.findings[] | [.path, .contract, .excludes, .reason] | @tsv' | \
+      while IFS="$(printf '\t')" read -r path contract excludes reason; do
+        mj_fail layout "$path" "violates $contract: excludes $excludes; $reason" "majordomus layout check"
+      done
+  fi
+  return 0
+}
+
 mj_report_environment() {
   local env="bash ${BASH_VERSION%%(*}"; env="$env, git $(git --version | awk '{print $3}')"
   mj_has jq && env="$env, jq $(jq --version 2>/dev/null | sed 's/jq-//')" || env="$env, jq absent"
@@ -623,6 +679,42 @@ mj_report_clone() {
   fi
   mj_report_uncommitted
   mj_report_trunk_distance
+  mj_report_release_currency
+}
+
+# Whether the trunk's landed work is released (release.currency, I3070; the owner's order of
+# 2026-10-19: a measured version after every session and milestone). The measurement is the
+# executable's, read here and judged nowhere else. Current is OK. Owed work, landed and
+# waiting for the release seat, is a WARN, and overdue, past the six hours it may wait, is a
+# WARN saying so. Unknown (no trunk, no release this clone can read) is INFO. A clone with no
+# remote-tracking branch says so the same way whether or not the executable is at hand,
+# because the use-case catalogue records this line, as it does trunk's.
+mj_report_release_currency() {
+  if [ -z "$(git -C "$MJ_ROOT" for-each-ref --count=1 --format='%(refname)' refs/remotes 2>/dev/null)" ]; then
+    mj_info clone "release" "no remote-tracking branch, so whether the trunk's landed work is released cannot be measured"
+    return 0
+  fi
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  local bin share out stance summary
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  if [ ! -x "$bin" ] || ! mj_has jq; then
+    mj_info clone "release" "the executable or jq is absent, so whether the trunk is released is not measured here (majordomus run release.currency)"
+    return 0
+  fi
+  share="$(mj_rust_share "$MJ_ROOT")"
+  out="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+            "$bin" run release.currency --input '{"next":false}' --quiet --format json --repo "$MJ_ROOT" ) 2>/dev/null | jq -c '.output // empty' 2>/dev/null )" || true
+  stance="$(printf '%s' "$out" | jq -r '.stance // empty' 2>/dev/null)"
+  summary="$(printf '%s' "$out" | jq -r '.summary // empty' 2>/dev/null)"
+  case "$stance" in
+    current) mj_ok clone "release" "$summary" ;;
+    owed) mj_warn clone "release" "$summary" "the release seat releases it: majordomus run release.currency" ;;
+    overdue) mj_warn clone "release" "OVERDUE: $summary" "the release seat releases it now: majordomus run release.currency" ;;
+    unknown) mj_info clone "release" "$summary" "majordomus run release.currency" ;;
+    *) mj_info clone "release" "whether the trunk is released could not be read (majordomus run release.currency)" ;;
+  esac
+  return 0
 }
 
 # How far this checkout is from the remote trunk (project.a-checkout-serves-the-current-trunk).

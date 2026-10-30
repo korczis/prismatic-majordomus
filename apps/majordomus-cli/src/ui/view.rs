@@ -38,6 +38,43 @@ pub const TONES: &[&str] = &["blue", "violet", "green", "cyan", "orange", "rose"
 /// The hero band every screen opens with: the screen's glyph, its title, one line saying
 /// what it is for, one sentence of lead, and the group of KPI tiles beside them.
 pub fn hero(glyph: &str, tone: &str, title: &str, tagline: &str, lead: &str, kpis: Vec<El>) -> El {
+    hero_of(None, glyph, tone, title, tagline, lead, kpis)
+}
+
+/// The hero of a screen that shows one record: the record's title is the heading, and the
+/// screen's own name stands above it as the eyebrow, so the page says first what it is about.
+pub fn hero_under(
+    eyebrow: &str,
+    glyph: &str,
+    tone: &str,
+    title: &str,
+    tagline: &str,
+    lead: &str,
+    kpis: Vec<El>,
+) -> El {
+    hero_of(Some(eyebrow), glyph, tone, title, tagline, lead, kpis)
+}
+
+fn hero_of(
+    eyebrow: Option<&str>,
+    glyph: &str,
+    tone: &str,
+    title: &str,
+    tagline: &str,
+    lead: &str,
+    kpis: Vec<El>,
+) -> El {
+    let heading = el("h1")
+        .attr("id", "mj-ui-title")
+        .class("mj-ui-title")
+        .text(title);
+    let heading = match eyebrow {
+        Some(eyebrow) => el("div")
+            .class("mj-ui-hero-titles")
+            .child(el("p").class("mj-ui-eyebrow").text(eyebrow))
+            .child(heading),
+        None => heading,
+    };
     el("section")
         .class("mj-ui-hero")
         .attr("aria-labelledby", "mj-ui-title")
@@ -52,12 +89,7 @@ pub fn hero(glyph: &str, tone: &str, title: &str, tagline: &str, lead: &str, kpi
                                 .class(format!("mj-ui-hero-glyph mj-tone--{tone}"))
                                 .child(icon(glyph)),
                         )
-                        .child(
-                            el("h1")
-                                .attr("id", "mj-ui-title")
-                                .class("mj-ui-title")
-                                .text(title),
-                        ),
+                        .child(heading),
                 )
                 .child(el("p").class("mj-ui-tagline").text(tagline))
                 .child(el("p").class("mj-ui-lead").text(lead)),
@@ -418,6 +450,30 @@ pub fn unanswered(a: &Answer) -> Option<El> {
     })
 }
 
+/// A command a reader runs again, as a code block with a copy control (I3002). The code is the
+/// whole command, wrapped rather than cut, selectable as text; the button copies exactly that
+/// text. It is on the page hidden, and `ui.js` shows it only where a clipboard can be written,
+/// so a reader without the script, or without a clipboard, is never offered a button that does
+/// nothing. What the copy did is said on the button and announced by the status beside it.
+pub fn command(text: &str) -> El {
+    el("div")
+        .class("mj-ui-command")
+        .child(
+            el("pre")
+                .class("mj-ui-command-text")
+                .child(el("code").text(text)),
+        )
+        .child(
+            el("button")
+                .attr("type", "button")
+                .class("mj-btn mj-btn--sm")
+                .attr("data-mj-copy", "")
+                .flag("hidden")
+                .text("Copy"),
+        )
+        .child(el("span").class("mj-sr-only").attr("role", "status"))
+}
+
 /// An empty list, said in words.
 pub fn nothing(what: &str) -> El {
     el("p").class("mj-ui-empty").text(what)
@@ -716,6 +772,25 @@ mod tests {
     use super::*;
     use crate::ui::source::{Exposure, Source};
     use std::time::Duration;
+
+    /// A command is a code block holding exactly its text, escaped, with a copy button the page
+    /// carries hidden for the script to offer, and a status beside it for what the copy did
+    /// (I3002).
+    #[test]
+    fn a_command_is_a_code_block_with_a_copy_button_held_back() {
+        let html = command("test -n 'a <b> & c' && echo \"held\"").render();
+        assert!(
+            html.contains(
+                "<pre class=\"mj-ui-command-text\"><code>test -n &#39;a &lt;b&gt; &amp; c&#39; &amp;&amp; echo &quot;held&quot;</code></pre>"
+            ),
+            "{html}"
+        );
+        assert!(
+            html.contains("<button type=\"button\" class=\"mj-btn mj-btn--sm\" data-mj-copy hidden>Copy</button>"),
+            "{html}"
+        );
+        assert!(html.contains("role=\"status\""), "{html}");
+    }
 
     /// A source line whose reading is not of the repository as it is now says so and is
     /// marked for the page's script; a current reading's line carries neither.

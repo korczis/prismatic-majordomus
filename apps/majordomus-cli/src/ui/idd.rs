@@ -27,8 +27,8 @@ use super::dashboard::milestone_row;
 use super::shell::View;
 use super::source::{ask_all, Answer, Source};
 use super::view::{
-    graph, hero, kpi, kpi_count, list, nothing, panel, panel_to, state, status_tone, table, text,
-    unanswered, wide, GraphNode, Layout,
+    command, graph, hero, hero_under, items, kpi, kpi_count, list, nothing, panel, panel_to, state,
+    status_tone, table, text, unanswered, wide, GraphNode, Layout,
 };
 
 /// The route of the screen.
@@ -49,10 +49,20 @@ const MOVES: Source = Source::with("executions.list", r#"{"capability":"plan.tra
 /// it (I2789).
 pub const STANDING_PANEL: &str = "/ui/panels/standing";
 
+/// The route that lists every scope conflict among an intent's issues, which the workspace
+/// folds to its first few.
+pub const SHARED_SCOPE_PANEL: &str = "/ui/panels/shared-scope";
+
+/// How many scope conflicts the workspace draws in its fold; the rest are one link away.
+pub const SHARED_SCOPE_SHOWN: usize = 25;
+
 /// The stages, in the order the screen prefers them when the link names no intent: the
 /// first intent `intents.list` reports at the earliest of these is opened. A presentation
 /// rule, printed on the screen, never a status.
 pub const PREFERRED_STAGES: &[&str] = &["executing", "verifying", "planned", "declared"];
+
+/// The question the standing panel answers, its heading and its accessible name.
+pub const STANDING_TITLE: &str = "Why does it stand where it stands?";
 
 /// Where the workspace of intent `id` is.
 pub fn href(id: &str) -> String {
@@ -143,7 +153,7 @@ fn chip(href: String, label: String) -> El {
 pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
     let answers = ask_all(ctx, &[INTENTS, ROADMAP, ISSUES, WAVES, NEXT, MOVES]);
     // the chosen intent in full, asked by its id, so the headline numbers are its own (I2907)
-    let record = chosen(query, &list(&answers[&INTENTS], "/intents"))
+    let record = chosen(query, items(&answers[&INTENTS], "/intents"))
         .map(|id| super::source::ask_input(ctx, RECORD, serde_json::json!({ "id": id })));
     render(
         ctx,
@@ -165,10 +175,10 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
 fn headline(record: Option<&Answer>, intents: &Answer, next: &Answer) -> Vec<El> {
     let next_tile = match next.read("/issue/id").text().filter(|n| !n.is_empty()) {
         Some(n) => super::view::kpi_to(
-            kpi("Plan's next issue", &next.read("/issue/id")),
+            kpi("Next issue to start", &next.read("/issue/id")),
             &issue_href(&n),
         ),
-        None => kpi("Plan's next issue", &next.read("/issue/id")),
+        None => kpi("Next issue to start", &next.read("/issue/id")),
     };
     match record {
         Some(r) => vec![
@@ -196,20 +206,28 @@ fn render(
     moves: &Answer,
     query: &[(String, String)],
 ) -> View {
-    let all = list(intents, "/intents");
-    let id = chosen(query, &all);
+    let all = items(intents, "/intents");
+    let id = chosen(query, all);
     let intent = id
         .as_deref()
         .and_then(|id| all.iter().find(|i| text(i, "id") == id));
 
-    let top = hero(
-        "target",
-        "violet",
-        "Intent workspace",
-        "From what the work is for to the move that starts it.",
-        "One intent and everything that serves it: its milestones, their issues and what blocks them, the waves the dependencies allow and the graph of what waits for what.",
-        headline(record, intents, next),
-    );
+    let tagline = "From what the work is for to the move that starts it.";
+    let lead = "One intent and everything that serves it: its milestones, their issues and what blocks them, the waves the dependencies allow and the graph of what waits for what.";
+    let kpis = headline(record, intents, next);
+    // the chosen intent's title is the page's heading, the screen's name its eyebrow (I3001)
+    let top = match intent.map(|i| text(i, "title")).filter(|t| !t.is_empty()) {
+        Some(title) => hero_under(
+            "Intent workspace",
+            "target",
+            "violet",
+            &title,
+            tagline,
+            lead,
+            kpis,
+        ),
+        None => hero("target", "violet", "Intent workspace", tagline, lead, kpis),
+    };
 
     let mut grid = el("div")
         .class("mj-ui-grid")
@@ -219,7 +237,7 @@ fn render(
         (Some(id), None) => {
             if unanswered(intents).is_none() {
                 grid = grid.child(wide(panel(
-                    "Intent",
+                    "Which intent?",
                     "The intent the link names.",
                     nothing(&format!(
                         "{id} is not an intent of this repository: pick one above."
@@ -230,23 +248,28 @@ fn render(
         }
         (Some(id), Some(intent)) => {
             let mine = if unanswered(issues).is_none() {
-                serving(intent, &list(issues, "/issues"))
+                serving(intent, super::view::items(issues, "/issues"))
             } else {
                 Vec::new()
             };
-            grid = grid.child(wide(super::intent::inspector_closing_to(
-                intents, issues, id, ROUTE,
-            )));
+            // the order a person asks in (I2916): what the intent is, the one move it asks
+            // for now (I2917), what it still misses, the move picked, the work that serves
+            // it, and last what was done here
+            grid = grid
+                .child(wide(super::intent::inspector_closing_to(
+                    intents, issues, id, ROUTE,
+                )))
+                .child(wide(primary_action(issues, next, &mine, id)))
+                .child(wide(standing_placeholder(id)));
             if let Some(issue) = picked_issue(query) {
                 grid = grid.child(wide(move_panel(ctx, issues, &mine, &issue)));
             }
             grid = grid
-                .child(wide(standing_placeholder(id)))
                 .child(wide(milestones(roadmap, intent)))
                 .child(wide(issue_table(issues, waves, next, &mine, id)))
-                .child(wide(moves_panel(moves, &mine)))
-                .child(wide(wave_panel(waves, &mine)))
-                .child(wide(dependency_graph(issues, &mine)));
+                .child(wide(wave_panel(waves, &mine, &known(issues, roadmap), id)))
+                .child(wide(dependency_graph(issues, &mine)))
+                .child(wide(moves_panel(moves, &mine)));
         }
     }
 
@@ -267,7 +290,7 @@ fn render(
 /// it when the link named none.
 fn choice(intents: &Answer, open: Option<&str>) -> El {
     let body = unanswered(intents).unwrap_or_else(|| {
-        let rows = list(intents, "/intents")
+        let rows = items(intents, "/intents")
             .iter()
             .map(|i| {
                 let id = text(i, "id");
@@ -296,12 +319,12 @@ fn choice(intents: &Answer, open: Option<&str>) -> El {
             .class("mj-ui-stack")
             .child(table(&["Intent", "Stage", "Verdict"], rows, ""))
             .child(el("p").class("mj-ui-dim").text(format!(
-                "A link that names no intent opens the first one intents.list reports {}, in that order.",
+                "A link that names no intent opens the first intent whose stage is {}, in that order.",
                 PREFERRED_STAGES.join(", then ")
             )))
     });
     panel(
-        "Intents",
+        "Which intent?",
         "What the work is for: pick one to see what serves it.",
         body,
         &[intents],
@@ -317,7 +340,7 @@ fn milestones(roadmap: &Answer, intent: &Value) -> El {
         .map(|ms| ms.iter().map(|m| text(m, "id")).collect())
         .unwrap_or_default();
     let body = unanswered(roadmap).unwrap_or_else(|| {
-        let plan = list(roadmap, "/milestones");
+        let plan = super::view::items(roadmap, "/milestones");
         let mut rows: Vec<El> = plan
             .iter()
             .filter(|m| named.contains(&text(m, "id")))
@@ -350,7 +373,7 @@ fn milestones(roadmap: &Answer, intent: &Value) -> El {
         )
     });
     panel_to(
-        "Milestones",
+        "Which milestones carry it?",
         "The milestones this intent names, in the roadmap's order; issues done is a count, not the milestone's acceptance.",
         Some(super::roadmap::ROUTE),
         body,
@@ -402,12 +425,7 @@ fn issue_table(issues: &Answer, waves: &Answer, next: &Answer, mine: &[Value], i
                 if next_id.as_deref() == Some(id.as_str()) {
                     title = title.child(el("span").class("mj-ui-dim").text(" — the plan's next"));
                 }
-                let mv = match status.as_str() {
-                    "READY" => Some("start"),
-                    "ACTIVE" => Some("verify"),
-                    "VERIFY" => Some("done"),
-                    _ => None,
-                };
+                let mv = move_of(&status);
                 el("tr")
                     .attr("id", format!("issue-{id}"))
                     .child(el("td").child(title))
@@ -459,12 +477,99 @@ fn issue_table(issues: &Answer, waves: &Answer, next: &Answer, mine: &[Value], i
         )
     });
     panel_to(
-        "Issues",
-        "Every issue of its milestones or naming it, by wave; a move opens its panel on this screen, where plan.transition makes it and refuses one the plan does not allow.",
+        "What work serves it?",
+        "Every issue of its milestones or naming it, by wave; a move opens its panel on this screen, where the plan makes it, or refuses it and says why.",
         Some(super::issues::ROUTE),
         body,
         &[issues, waves, next],
     )
+}
+
+/// The move a status admits, in `plan.transition`'s words: a READY issue is started, an
+/// ACTIVE one verified, one awaiting its verification done; any other status admits none.
+fn move_of(status: &str) -> Option<&'static str> {
+    match status.to_ascii_uppercase().as_str() {
+        "READY" => Some("start"),
+        "ACTIVE" => Some("verify"),
+        "VERIFY" => Some("done"),
+        _ => None,
+    }
+}
+
+/// The one move the intent asks for now (I2917): `plan.next` restricted to the intent's
+/// issues. The plan's own next issue when it serves the intent; otherwise the plan's ranking
+/// (lowest wave, then priority, then id) over the intent's READY issues, and when none is
+/// ready, the same ranking over the issues already under way. With nothing to move, none.
+pub fn primary_move<'a>(next: &Answer, mine: &'a [Value]) -> Option<(&'static str, &'a Value)> {
+    let movable = || {
+        mine.iter()
+            .filter_map(|x| move_of(&text(x, "status")).map(|m| (m, x)))
+    };
+    let rank = |(_, x): &(&'static str, &Value)| {
+        (
+            x.get("wave").and_then(Value::as_u64).unwrap_or(u64::MAX),
+            crate::plan::priority_rank(&text(x, "priority")),
+            text(x, "id"),
+        )
+    };
+    let named = next
+        .ok()
+        .and_then(|v| v.pointer("/issue/id"))
+        .and_then(Value::as_str);
+    movable()
+        .find(|(_, x)| Some(text(x, "id").as_str()) == named)
+        .or_else(|| movable().filter(|(m, _)| *m == "start").min_by_key(rank))
+        .or_else(|| movable().min_by_key(rank))
+}
+
+/// The words of the primary action: the move and the issue it is made on.
+fn action_label(word: &str, id: &str) -> String {
+    match word {
+        "start" => format!("Start {id}"),
+        "verify" => format!("Verify {id}"),
+        _ => format!("Mark {id} done"),
+    }
+}
+
+/// The intent's one primary action (I2917): the move [`primary_move`] picks, drawn as the
+/// page's one primary button, which opens that issue's move panel on this screen. Every move
+/// in the table of its work stays secondary. An intent with nothing to move says so.
+fn primary_action(issues: &Answer, next: &Answer, mine: &[Value], intent: &str) -> El {
+    let body = unanswered(issues).unwrap_or_else(|| match primary_move(next, mine) {
+        None => nothing(
+            "No issue of this intent is ready, under way or awaiting its verification: there is nothing to move.",
+        ),
+        Some((word, x)) => {
+            let id = text(x, "id");
+            el("div")
+                .class("mj-ui-stack")
+                .child(
+                    el("p")
+                        .class("mj-ui-badges")
+                        .child(
+                            el("a")
+                                .class("mj-btn mj-btn--primary")
+                                .attr("href", move_href(intent, &id))
+                                .attr(
+                                    "title",
+                                    format!("the move plan.transition makes: {word} {id}"),
+                                )
+                                .text(action_label(word, &id)),
+                        )
+                        .child(state(x, "status"))
+                        .child(el("span").class("mj-ui-cell-title").text(text(x, "title"))),
+                )
+                .child(el("p").class("mj-ui-dim").text(
+                    "Picked the way the plan picks its next issue: its own next issue when it serves this intent, else the lowest wave, then priority, then id, with ready work before work under way.",
+                ))
+        }
+    });
+    el("div").attr("id", "next-move").child(panel(
+        "What should happen next?",
+        "The one move this intent asks for now; every other move is in the table of its work.",
+        body,
+        &[issues, next],
+    ))
 }
 
 /// The move panel of the picked issue: the form the Cockpit's issue page renders, offering
@@ -494,8 +599,8 @@ fn move_panel(ctx: &Context, issues: &Answer, mine: &[Value], issue: &str) -> El
                 )),
         });
     el("div").attr("id", "move").child(panel(
-        "Move",
-        "The issue's next move, made by plan.transition as an execution on this server; a move the plan does not allow is refused with the reason.",
+        "What does this move do?",
+        "The issue's next move, made as an execution on this server; a move the plan does not allow is refused with the reason.",
         body,
         &[issues],
     ))
@@ -503,21 +608,23 @@ fn move_panel(ctx: &Context, issues: &Answer, mine: &[Value], issue: &str) -> El
 
 /// The waves the intent's issues occupy, as `plan.waves` layers the whole plan, and the
 /// scope conflicts among them that serialise issues of one wave.
-fn wave_panel(waves: &Answer, mine: &[Value]) -> El {
+fn wave_panel(waves: &Answer, mine: &[Value], known: &super::prose::Known, intent: &str) -> El {
     let ids: BTreeSet<String> = mine.iter().map(|x| text(x, "id")).collect();
     let body = unanswered(waves).unwrap_or_else(|| {
-        let rows = list(waves, "/waves")
+        // borrowed, never copied: the waves and the scope pairs cover the whole plan, and this
+        // panel keeps only the few that hold an issue of this intent (I4200)
+        let mine_id = |x: &Value| {
+            x.get("id")
+                .and_then(Value::as_str)
+                .is_some_and(|i| ids.contains(i))
+        };
+        let rows = items(waves, "/waves")
             .iter()
             .filter_map(|w| {
-                let members: Vec<Value> = w
+                let members: Vec<&Value> = w
                     .get("issues")
                     .and_then(Value::as_array)
-                    .map(|a| {
-                        a.iter()
-                            .filter(|x| ids.contains(&text(x, "id")))
-                            .cloned()
-                            .collect()
-                    })
+                    .map(|a| a.iter().filter(|x| mine_id(x)).collect())
                     .unwrap_or_default();
                 if members.is_empty() {
                     return None;
@@ -539,17 +646,7 @@ fn wave_panel(waves: &Answer, mine: &[Value]) -> El {
                 )
             })
             .collect::<Vec<_>>();
-        let conflicts: Vec<El> = list(waves, "/serialised_by_scope")
-            .iter()
-            .filter(|f| ids.contains(&text(f, "subject")))
-            .map(|f| {
-                let subject = text(f, "subject");
-                el("li")
-                    .child(chip(issue_href(&subject), subject))
-                    .child(el("span").text(" "))
-                    .children(linked_issues(&text(f, "message")))
-            })
-            .collect();
+        let conflicts = shared_scope(waves, &ids);
         let mut body = el("div").class("mj-ui-stack").child(table(
             &["Wave", "Issues of this intent in it"],
             rows,
@@ -557,62 +654,130 @@ fn wave_panel(waves: &Answer, mine: &[Value]) -> El {
         ));
         if !conflicts.is_empty() {
             // one line says how many pairs share a scope; the pairs are one click away, so they
-            // never outweigh the waves they qualify (I2900)
+            // never outweigh the waves they qualify (I2900). An intent of many issues has
+            // pairs by the thousand, so the fold holds the first of them and the rest are
+            // their own panel: drawn inline they were most of the screen (I3840)
             let pairs = conflicts.len();
-            body = body.child(
-                el("details")
-                    .child(el("summary").text(format!(
-                        "Shared scope: {pairs} pair(s) of these issues may not run at the same time"
-                    )))
-                    .child(el("ul").class("mj-ui-prose-list").children(conflicts)),
-            );
+            let mut fold = el("details")
+                .child(el("summary").text(format!(
+                    "Shared scope: {pairs} pair(s) of these issues may not run at the same time"
+                )))
+                .child(shared_scope_list(
+                    &conflicts[..pairs.min(SHARED_SCOPE_SHOWN)],
+                    known,
+                ));
+            if pairs > SHARED_SCOPE_SHOWN {
+                fold = fold.child(
+                    el("p").child(
+                        el("a")
+                            .class("mj-ui-link")
+                            .attr("href", shared_scope_href(intent))
+                            .text(format!("Open all {pairs} pairs")),
+                    ),
+                );
+            }
+            body = body.child(fold);
         }
         body
     });
     panel(
-        "Waves",
+        "What can run together?",
         "An issue enters a wave once every dependency has left it; sharing a wave is necessary to run together, not sufficient.",
         body,
         &[waves],
     )
 }
 
-/// A sentence of the plan's own words with every issue id in it a link to that issue, the
-/// brackets and punctuation around an id kept as they were (I2900). A path segment
-/// (`src/I0001`) is a path, never an issue.
-fn linked_issues(message: &str) -> Vec<El> {
-    // the words between two ids stay one run of text, so a sentence without an id reads
-    // exactly as it was written
-    let mut out = Vec::new();
-    let mut run = String::new();
-    for (n, word) in message.split(' ').enumerate() {
-        if n > 0 {
-            run.push(' ');
+/// The scope conflicts `plan.waves` reports whose subject is one of `ids`, in its order.
+fn shared_scope<'a>(waves: &'a Answer, ids: &BTreeSet<String>) -> Vec<&'a Value> {
+    super::view::items(waves, "/serialised_by_scope")
+        .iter()
+        .filter(|f| {
+            f.get("subject")
+                .and_then(Value::as_str)
+                .is_some_and(|s| ids.contains(s))
+        })
+        .collect()
+}
+
+/// Each conflict a line: its subject a link, its message as prose.
+fn shared_scope_list(conflicts: &[&Value], known: &super::prose::Known) -> El {
+    el("ul")
+        .class("mj-ui-prose-list")
+        .children(conflicts.iter().map(|f| {
+            let subject = text(f, "subject");
+            el("li")
+                .child(chip(issue_href(&subject), subject))
+                .child(el("span").text(" "))
+                .nodes(super::prose::inline(&text(f, "message"), known))
+        }))
+}
+
+/// Where every scope conflict among the issues of intent `id` is listed.
+pub fn shared_scope_href(id: &str) -> String {
+    format!("{SHARED_SCOPE_PANEL}?intent={id}")
+}
+
+/// Every scope conflict among the issues serving the intent the query names: what the
+/// workspace's fold holds only the first [`SHARED_SCOPE_SHOWN`] of.
+pub fn shared_scope_panel(ctx: &Context, query: &[(String, String)]) -> View {
+    const TITLE: &str = "Which of its issues share a scope?";
+    let answers = ask_all(ctx, &[INTENTS, ISSUES, ROADMAP, WAVES]);
+    let intent = named_intent(query).and_then(|id| {
+        list(&answers[&INTENTS], "/intents")
+            .into_iter()
+            .find(|i| text(i, "id") == id)
+    });
+    let Some(intent) = intent else {
+        return View::new(
+            TITLE,
+            panel(
+                TITLE,
+                "The pairs of one intent's issues that may not run at the same time.",
+                nothing("Name an intent: open it from the intent workspace."),
+                &[&answers[&INTENTS]],
+            ),
+        );
+    };
+    let id = text(&intent, "id");
+    let waves = &answers[&WAVES];
+    let body = unanswered(waves).unwrap_or_else(|| {
+        let ids: BTreeSet<String> =
+            serving(&intent, super::view::items(&answers[&ISSUES], "/issues"))
+                .iter()
+                .map(|x| text(x, "id"))
+                .collect();
+        let conflicts = shared_scope(waves, &ids);
+        if conflicts.is_empty() {
+            nothing("No two issues of this intent share a scope.")
+        } else {
+            shared_scope_list(&conflicts, &known(&answers[&ISSUES], &answers[&ROADMAP]))
         }
-        let core = word
-            .trim_start_matches(['(', '['])
-            .trim_end_matches([')', ']', ',', ';', '.', ':']);
-        let is_issue = core.len() > 1
-            && core.starts_with('I')
-            && core[1..].bytes().all(|b| b.is_ascii_digit());
-        if !is_issue {
-            run.push_str(word);
-            continue;
-        }
-        // where the id starts: `core` is `word` with its opening brackets trimmed off the front,
-        // so the offset is the length of what was trimmed, and there is nothing to default
-        let at = word.len() - word.trim_start_matches(['(', '[']).len();
-        run.push_str(&word[..at]);
-        if !run.is_empty() {
-            out.push(el("span").text(std::mem::take(&mut run)));
-        }
-        out.push(chip(issue_href(core), core.to_string()));
-        run.push_str(&word[at + core.len()..]);
+    });
+    View::new(
+        TITLE,
+        panel(
+            TITLE,
+            &format!("{id}: the pairs of its issues that may not run at the same time."),
+            body,
+            &[waves],
+        ),
+    )
+}
+
+/// The records the workspace's prose may name: every issue and every milestone the plan holds, so
+/// an id in a sentence is a link exactly when there is a record behind it (I3000).
+fn known(issues: &Answer, roadmap: &Answer) -> super::prose::Known {
+    super::prose::Known {
+        issues: super::view::items(issues, "/issues")
+            .iter()
+            .map(|x| text(x, "id"))
+            .collect(),
+        milestones: super::view::items(roadmap, "/milestones")
+            .iter()
+            .map(|m| text(m, "id"))
+            .collect(),
     }
-    if !run.is_empty() {
-        out.push(el("span").text(run));
-    }
-    out
 }
 
 /// The dependency graph of the intent's issues: each a node in the tone of its status, each
@@ -675,8 +840,8 @@ fn dependency_graph(issues: &Answer, mine: &[Value]) -> El {
         )
     });
     panel(
-        "Dependencies",
-        "What waits for what, as the plan records it; a dependency outside this intent is drawn small.",
+        "What waits for what?",
+        "As the plan records it; a dependency outside this intent is drawn small.",
         body,
         &[issues],
     )
@@ -692,16 +857,16 @@ pub fn standing_href(id: &str) -> String {
 fn standing_placeholder(id: &str) -> El {
     el("section")
         .class("mj-ui-panel")
-        .attr("aria-label", "Why it stands where it stands")
+        .attr("aria-label", STANDING_TITLE)
         .attr("data-panel-src", standing_href(id))
         .attr("aria-busy", "false")
         .child(
             el("header").class("mj-ui-panel-head").child(
                 el("div")
                     .class("mj-ui-panel-heading")
-                    .child(el("h2").class("mj-ui-panel-title").text("Why it stands where it stands"))
+                    .child(el("h2").class("mj-ui-panel-title").text(STANDING_TITLE))
                     .child(el("p").class("mj-ui-panel-sub").text(
-                        "Asked on its own: intent_realization.explain joins the ledger, the session records and the peer board, which would hold this screen back.",
+                        "Asked on its own: the answer joins the ledger, the session records and the peer board, which would hold this screen back.",
                     )),
             ),
         )
@@ -737,10 +902,10 @@ fn named_intent(query: &[(String, String)]) -> Option<String> {
 pub fn standing_panel(ctx: &Context, query: &[(String, String)]) -> View {
     let Some(id) = named_intent(query) else {
         return View::new(
-            "Why it stands where it stands",
+            STANDING_TITLE,
             panel(
-                "Why it stands where it stands",
-                "One intent's standing, from intent_realization.explain.",
+                STANDING_TITLE,
+                "One intent's stage, its verdict and what it still misses.",
                 nothing("Name an intent: open it from the intent workspace."),
                 &[],
             ),
@@ -751,12 +916,14 @@ pub fn standing_panel(ctx: &Context, query: &[(String, String)]) -> View {
         "intent_realization.explain",
         serde_json::json!({ "id": id }),
     );
-    let body = standing_body(&id, &explain);
+    // the records its sentences may name, read from the plan's own answers (I3000)
+    let plan = ask_all(ctx, &[ISSUES, ROADMAP]);
+    let body = standing_body(&id, &explain, &known(&plan[&ISSUES], &plan[&ROADMAP]));
     View::new(
-        "Why it stands where it stands",
+        STANDING_TITLE,
         panel(
-            "Why it stands where it stands",
-            &format!("{id}: its stage, its verdict, what is not yet met and who is on it, as intent_realization.explain derives them."),
+            STANDING_TITLE,
+            &format!("{id}: its stage, its verdict, what is still missing and who is on it."),
             body,
             &[&explain],
         ),
@@ -765,7 +932,7 @@ pub fn standing_panel(ctx: &Context, query: &[(String, String)]) -> View {
 
 /// The standing of intent `id` as `intent_realization.explain` answered it: the sentences, the
 /// unmet criteria, the work realising it and its drift; or why there is no answer.
-fn standing_body(id: &str, explain: &Answer) -> El {
+fn standing_body(id: &str, explain: &Answer, known: &super::prose::Known) -> El {
     unanswered(explain).unwrap_or_else(|| {
         let because = list(explain, "/because");
         let unmet = list(explain, "/realization/unmet");
@@ -775,7 +942,7 @@ fn standing_body(id: &str, explain: &Answer) -> El {
             because
                 .iter()
                 .filter_map(Value::as_str)
-                .map(|line| el("li").children(linked_issues(line))),
+                .map(|line| el("li").nodes(super::prose::inline(line, known))),
         );
         let criteria = table(
             &["Criterion", "Evidence", "State", "Reproduce", "Served by"],
@@ -786,10 +953,7 @@ fn standing_body(id: &str, explain: &Answer) -> El {
                         .child(el("td").child(el("code").text(text(c, "id"))))
                         .child(el("td").text(text(c, "evidence")))
                         .child(el("td").child(state(c, "state")))
-                        .child(
-                            el("td")
-                                .child(el("code").class("mj-ui-mono").text(text(c, "reproduce"))),
-                        )
+                        .child(el("td").child(command(&text(c, "reproduce"))))
                         .child(
                             el("td").child(
                                 el("p").class("mj-ui-badges").children(
@@ -842,28 +1006,28 @@ fn standing_body(id: &str, explain: &Answer) -> El {
                 .class("mj-ui-prose-list")
                 .children(findings.iter().map(
                     |f| match f.get("message").and_then(Value::as_str) {
-                        Some(m) => el("li").children(linked_issues(m)),
+                        Some(m) => el("li").nodes(super::prose::inline(m, known)),
                         None => el("li").text(f.to_string()),
                     },
                 ));
         let mut stack = el("div")
             .class("mj-ui-stack")
             .child(sentences)
-            .child(
-                el("h3")
-                    .class("mj-ui-panel-title")
-                    .text("What is not yet met"),
-            )
+            .child(el("h3").class("mj-ui-panel-title").text("What is missing?"))
             .child(criteria)
             .child(
                 el("h3")
                     .class("mj-ui-panel-title")
-                    .text("The work realising it"),
+                    .text("What work realises it?"),
             )
             .child(realising);
         if !findings.is_empty() {
             stack = stack
-                .child(el("h3").class("mj-ui-panel-title").text("Drift"))
+                .child(
+                    el("h3")
+                        .class("mj-ui-panel-title")
+                        .text("Where has the record drifted?"),
+                )
                 .child(drift);
         }
         stack
@@ -915,8 +1079,8 @@ fn moves_panel(moves: &Answer, mine: &[Value]) -> El {
         )
     });
     panel(
-        "Moves made here",
-        "Every plan.transition this server ran on the intent's issues, newest first.",
+        "What was done here?",
+        "Every move this server made on the intent's issues, newest first.",
         body,
         &[moves],
     )
@@ -1050,6 +1214,184 @@ mod tests {
         assert!(html.contains("Issues of this intent in it"), "{html}");
         assert!(!html.contains("No issue serves this intent yet."), "{html}");
         assert!(!html.contains("NaN") && !html.contains("undefined"));
+    }
+
+    /// The text of every element of `class` in `html`, in order.
+    fn texts_of(html: &str, class: &str) -> Vec<String> {
+        let open = format!("class=\"{class}\"");
+        html.match_indices(&open)
+            .filter_map(|(at, _)| {
+                let rest = &html[at..];
+                let start = rest.find('>')? + 1;
+                let end = rest[start..].find('<')? + start;
+                Some(rest[start..end].to_string())
+            })
+            .collect()
+    }
+
+    /// The chosen intent's title is the page's heading with the screen's name above it, and
+    /// every panel is titled as a question a person asks, in plain words: no heading names a
+    /// capability, which only the panel's source line does (I3001, I2915).
+    #[test]
+    fn the_intent_is_the_heading_and_every_panel_asks_a_plain_question() {
+        let repo = planned_with_an_intent();
+        let ctx = repo.context().expect("a context");
+        let html = screen(&ctx, &[]).main.render();
+        assert_eq!(
+            texts_of(&html, "mj-ui-title"),
+            ["The first intent"],
+            "{html}"
+        );
+        assert_eq!(
+            texts_of(&html, "mj-ui-eyebrow"),
+            ["Intent workspace"],
+            "{html}"
+        );
+        let titles = texts_of(&html, "mj-ui-panel-title");
+        assert!(titles.len() >= 5, "the panels are titled: {titles:?}");
+        for title in &titles {
+            assert!(title.ends_with('?'), "{title} is a question");
+            assert!(
+                !title.split_whitespace().any(|w| {
+                    let w = w.trim_end_matches('?');
+                    w.contains('.') || w.contains('_')
+                }),
+                "{title} names no capability"
+            );
+        }
+        // with no intent recorded there is no record to title the page: the screen's name is
+        let empty = SyntheticRepository::planned();
+        let html = screen(&empty.context().expect("a context"), &[])
+            .main
+            .render();
+        assert_eq!(
+            texts_of(&html, "mj-ui-title"),
+            ["Intent workspace"],
+            "{html}"
+        );
+        assert!(texts_of(&html, "mj-ui-eyebrow").is_empty(), "{html}");
+    }
+
+    /// The panels stand in the order a person asks: what the intent is, what it still
+    /// misses, what to do next, the work that serves it, and last what was done (I2916).
+    #[test]
+    fn the_panels_stand_in_the_order_a_person_asks() {
+        let repo = planned_with_an_intent();
+        let ctx = repo.context().expect("a context");
+        let html = screen(&ctx, &q("issue", "I0001")).main.render();
+        let titles = texts_of(&html, "mj-ui-panel-title");
+        let at = |title: &str| {
+            titles
+                .iter()
+                .position(|t| t == title)
+                .unwrap_or_else(|| panic!("{title} is a panel: {titles:?}"))
+        };
+        let order = [
+            "What is this intent for?",
+            "What should happen next?",
+            STANDING_TITLE,
+            "What does this move do?",
+            "Which milestones carry it?",
+            "What work serves it?",
+            "What can run together?",
+            "What waits for what?",
+            "What was done here?",
+        ];
+        for pair in order.windows(2) {
+            assert!(
+                at(pair[0]) < at(pair[1]),
+                "{} stands before {}: {titles:?}",
+                pair[0],
+                pair[1]
+            );
+        }
+    }
+
+    /// The primary move is `plan.next` restricted to the intent's issues: the plan's own next
+    /// issue when it serves the intent, else the lowest wave, then priority, then id among the
+    /// ready ones, then among those under way; an intent with nothing to move has none (I2917).
+    #[test]
+    fn the_primary_move_is_the_plans_next_restricted_to_the_intent() {
+        let issue = |id: &str, status: &str, wave: u64, priority: &str| serde_json::json!({ "id": id, "status": status, "wave": wave, "priority": priority });
+        let next = |id: &str| answer(NEXT, Ok(serde_json::json!({ "issue": { "id": id } })));
+        let picked = |next: &Answer, mine: &[Value]| {
+            primary_move(next, mine).map(|(m, x)| (m, text(x, "id")))
+        };
+        let mine = vec![
+            issue("I5", "active", 1, "p0"),
+            issue("I4", "ready", 3, "p1"),
+            issue("I3", "ready", 2, "p2"),
+            issue("I2", "ready", 2, "p1"),
+            issue("I1", "done", 1, "p0"),
+        ];
+        assert_eq!(
+            picked(&next("I4"), &mine),
+            Some(("start", "I4".into())),
+            "the plan's own next issue, when it serves the intent"
+        );
+        assert_eq!(
+            picked(&next("I9999"), &mine),
+            Some(("start", "I2".into())),
+            "else the lowest wave, then priority, among the ready ones"
+        );
+        let under_way = vec![
+            issue("I7", "verify", 2, "p1"),
+            issue("I6", "active", 2, "p1"),
+            issue("I1", "done", 1, "p0"),
+        ];
+        assert_eq!(
+            picked(&next("I9999"), &under_way),
+            Some(("verify", "I6".into())),
+            "with nothing ready, the work under way, ranked the same way"
+        );
+        assert_eq!(
+            picked(&next("I1"), &[issue("I1", "done", 1, "p0")]),
+            None,
+            "an issue whose status admits no move is never the primary one"
+        );
+        assert_eq!(action_label("done", "I7"), "Mark I7 done");
+    }
+
+    /// The workspace offers exactly one primary action, the picked move as a button that opens
+    /// its issue's move panel here; every move in the table stays secondary (I2917).
+    #[test]
+    fn the_intent_offers_one_primary_action() {
+        let repo = planned_with_an_intent();
+        let ctx = repo.context().expect("a context");
+        let html = screen(&ctx, &q("intent", "i-first")).main.render();
+        assert_eq!(
+            html.matches("mj-btn--primary").count(),
+            1,
+            "one primary action: {html}"
+        );
+        let issues = crate::ui::source::ask(&ctx, ISSUES);
+        let intents = list(&crate::ui::source::ask(&ctx, INTENTS), "/intents");
+        let mine = serving(&intents[0], &list(&issues, "/issues"));
+        let (word, x) = primary_move(&crate::ui::source::ask(&ctx, NEXT), &mine)
+            .expect("the first milestone has work to move");
+        let id = text(x, "id");
+        assert!(
+            html.contains(&format!(
+                "class=\"mj-btn mj-btn--primary\" href=\"{}\"",
+                move_href("i-first", &id).replace('&', "&amp;")
+            )),
+            "the button opens the move's panel here: {html}"
+        );
+        assert!(
+            html.contains(&format!(">{}</a>", action_label(word, &id))),
+            "the button names the move: {html}"
+        );
+    }
+
+    /// An intent with nothing ready, under way or awaiting verification says so, and offers no
+    /// primary button (I2917).
+    #[test]
+    fn an_intent_with_nothing_to_move_says_so() {
+        let issues = answer(ISSUES, Ok(serde_json::json!({ "issues": [] })));
+        let next = answer(NEXT, Ok(serde_json::json!({})));
+        let html = primary_action(&issues, &next, &[], "i").render();
+        assert!(html.contains("there is nothing to move"), "{html}");
+        assert!(!html.contains("mj-btn--primary"), "{html}");
     }
 
     /// An issue added to the plan's record appears in the workspace with no other edit.
@@ -1204,14 +1546,18 @@ mod tests {
                 "realization": {
                     "unmet": [],
                     "findings": [
-                        { "message": "the scope drifted past src/a.rs (I7)" },
+                        { "message": "the scope drifted past `src/a.rs` (I7), not I99" },
                         { "kind": "orphan", "subject": "t-3" },
                     ],
                 },
             })),
         );
-        let html = standing_body("i", &explain).render();
-        assert!(html.contains("The work realising it"), "{html}");
+        let known = super::super::prose::Known {
+            issues: ["I7".to_string()].into(),
+            milestones: Default::default(),
+        };
+        let html = standing_body("i", &explain, &known).render();
+        assert!(html.contains("What work realises it?"), "{html}");
         assert!(
             html.contains(">task t-1</span>"),
             "the unit is named: {html}"
@@ -1231,10 +1577,13 @@ mod tests {
             html.contains("<td></td><td></td>"),
             "a unit not linked to i has no issue: {html}"
         );
-        assert!(html.contains(">Drift</h3>"), "{html}");
         assert!(
-            html.contains("<li><span>the scope drifted past src/a.rs (</span><a class=\"mj-ui-chip mj-ui-chip--link\" href=\"/ui/prs?issue=I7#issue\">"),
-            "a drift message reads whole, its issue id a link (I2900): {html}"
+            html.contains(">Where has the record drifted?</h3>"),
+            "{html}"
+        );
+        assert!(
+            html.contains("<li>the scope drifted past <code class=\"mj-ui-code\">src/a.rs</code> (<a class=\"mj-ui-link mj-ui-mono\" href=\"/ui/prs?issue=I7#issue\">I7</a>), not I99</li>"),
+            "a drift message is prose: its path is code, the issue the plan holds a link, one it does not hold text (I3000): {html}"
         );
         assert!(
             html.contains("&quot;kind&quot;:&quot;orphan&quot;"),
@@ -1247,7 +1596,7 @@ mod tests {
                 serde_json::json!({ "because": [], "work": [], "realization": { "unmet": [], "findings": [] } }),
             ),
         );
-        let html = standing_body("i", &calm).render();
+        let html = standing_body("i", &calm, &known).render();
         assert!(
             !html.contains(">Drift</h3>"),
             "no drift, no heading: {html}"
@@ -1257,60 +1606,6 @@ mod tests {
             "{html}"
         );
         assert!(html.contains("Every criterion is met."), "{html}");
-    }
-
-    /// A sentence keeps every word between two ids as one run of text, and each id becomes a
-    /// link with the brackets and punctuation around it kept as written; a word that only
-    /// looks like an id (one letter, or letters after the I) stays text (I2900).
-    #[test]
-    fn a_sentence_links_its_ids_and_keeps_its_words() {
-        let html = |m: &str| -> String { linked_issues(m).iter().map(El::render).collect() };
-
-        let plain = html("no issue is named here");
-        assert_eq!(
-            plain, "<span>no issue is named here</span>",
-            "one run: {plain}"
-        );
-
-        let first = html("I7 is ready");
-        assert!(
-            first.starts_with("<a "),
-            "an id first opens with its link: {first}"
-        );
-        assert!(
-            first.contains(&issue_href("I7")) && first.ends_with("<span> is ready</span>"),
-            "{first}"
-        );
-
-        let wrapped = html("waits for (I7), then [I8].");
-        assert!(
-            wrapped.contains("<span>waits for (</span>"),
-            "the text and the bracket before: {wrapped}"
-        );
-        assert!(
-            wrapped.contains("<span>), then [</span>"),
-            "between two ids, one run: {wrapped}"
-        );
-        assert!(
-            wrapped.ends_with("<span>].</span>"),
-            "the punctuation after the last id: {wrapped}"
-        );
-        assert!(
-            wrapped.contains(&issue_href("I7")) && wrapped.contains(&issue_href("I8")),
-            "{wrapped}"
-        );
-
-        let alone = html("I8");
-        assert!(
-            alone.contains(&issue_href("I8")) && !alone.contains("<span>"),
-            "{alone}"
-        );
-
-        let lookalike = html("I and Ix and I7x are words");
-        assert!(
-            !lookalike.contains("<a "),
-            "no lookalike is a link: {lookalike}"
-        );
     }
 
     /// The headline numbers are the chosen intent's own, each read from its record and citing
@@ -1499,11 +1794,51 @@ mod tests {
             })),
         );
         let mine = vec![serde_json::json!({ "id": "I1" })];
-        let html = wave_panel(&waves, &mine).render();
+        let html = wave_panel(&waves, &mine, &Default::default(), "it").render();
         assert!(html.contains(">8</td>"), "{html}");
         assert!(!html.contains(">7</td>"), "{html}");
         assert!(!html.contains("OTHER"), "{html}");
         assert!(html.contains("shares lib/a.rs"), "{html}");
+        assert!(
+            !html.contains(SHARED_SCOPE_PANEL),
+            "one pair needs no link to the rest: {html}"
+        );
+    }
+
+    /// The fold draws the first of an intent's scope conflicts and links to the panel that
+    /// lists them all, so a plan with thousands of pairs does not make the screen its size.
+    #[test]
+    fn the_shared_scope_fold_draws_the_first_pairs_and_links_to_the_rest() {
+        let pairs: Vec<Value> = (0..SHARED_SCOPE_SHOWN + 7)
+            .map(
+                |n| serde_json::json!({ "subject": "I1", "message": format!("shares lib/{n}.rs") }),
+            )
+            .collect();
+        let waves = answer(
+            WAVES,
+            Ok(serde_json::json!({
+                "waves": [{ "wave": 0, "issues": [{ "id": "I1", "status": "READY" }] }],
+                "serialised_by_scope": pairs,
+            })),
+        );
+        let mine = vec![serde_json::json!({ "id": "I1" })];
+        let html = wave_panel(&waves, &mine, &Default::default(), "it").render();
+        let total = SHARED_SCOPE_SHOWN + 7;
+        assert!(
+            html.contains(&format!("Shared scope: {total} pair(s)")),
+            "{html}"
+        );
+        assert_eq!(html.matches("<li>").count(), SHARED_SCOPE_SHOWN, "{html}");
+        assert!(
+            html.contains(&format!("shares lib/{}.rs", SHARED_SCOPE_SHOWN - 1)),
+            "{html}"
+        );
+        assert!(
+            !html.contains(&format!("shares lib/{SHARED_SCOPE_SHOWN}.rs")),
+            "{html}"
+        );
+        assert!(html.contains(&shared_scope_href("it")), "{html}");
+        assert!(html.contains(&format!("Open all {total} pairs")), "{html}");
     }
 
     /// A dependency outside the intent is drawn small, and one the plan does not hold reads

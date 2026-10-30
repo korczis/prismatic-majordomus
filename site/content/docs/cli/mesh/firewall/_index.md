@@ -4,7 +4,7 @@ description = "What the host firewall must admit for the declared mesh and wheth
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 143
+weight = 145
 [extra]
 route = "/docs/cli/mesh/firewall/"
 command = "majordomus mesh firewall"

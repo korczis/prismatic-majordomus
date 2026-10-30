@@ -123,10 +123,21 @@ fn the_screen_names_the_standing_route_and_the_route_answers_what_the_capability
     let read = visible(&panel);
     for line in explain["because"].as_array().expect("the sentences") {
         let line = line.as_str().expect("a sentence");
+        // the sentence is drawn as prose (I3000): a code span keeps its words and loses its
+        // backticks, so the sentence reads whole with its markup set aside, and every span is code
+        let plain = line.replace("**", "").replace('`', "");
         assert!(
-            read.contains(&escaped(line)),
+            read.contains(&escaped(&plain)),
             "the panel leaves out: {line}"
         );
+        for (n, span) in line.split('`').enumerate() {
+            if n % 2 == 1 && !span.is_empty() {
+                assert!(
+                    panel.contains(&format!(">{}</code>", escaped(span))),
+                    "`{span}` in the sentence is not drawn as code: {line}"
+                );
+            }
+        }
         for id in line
             .split(|c: char| !c.is_ascii_alphanumeric())
             .filter(|w| {

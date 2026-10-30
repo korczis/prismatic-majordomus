@@ -412,8 +412,17 @@ fn inspector(name: &str, machines: &[Value], peers: &Answer, events: &Answer) ->
             } else {
                 said.clone()
             };
+            // how long since the worker last showed progress, and what it said it was doing,
+            // beside its name: its exclusive claims exclude by the first (I3990)
+            let mut session = info("session");
+            if let Some(ms) = s.get("progress_ms").and_then(Value::as_u64) {
+                session.push_str(&format!(" · progress {} s ago", ms / 1000));
+            }
+            if let Some(phase) = s.get("phase").and_then(Value::as_str) {
+                session.push_str(&format!(" · {phase}"));
+            }
             el("tr")
-                .child(el("td").class("mj-ui-mono").text(info("session")))
+                .child(el("td").class("mj-ui-mono").text(session))
                 .child(
                     el("td").text(
                         format!("{} {}", info("worker"), info("client"))
@@ -919,7 +928,7 @@ mod tests {
     #[test]
     fn every_seat_is_named_by_the_rule() {
         let rule = include_str!(
-            "../../../../.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md"
+            "../../../../.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
         );
         for seat in SEATS {
             let row = format!("| {} | `{}` |", seat.name.to_lowercase(), seat.scope);
@@ -1003,6 +1012,53 @@ mod tests {
         assert!(
             !inspector.contains("r9"),
             "another machine's event is not this machine's: {inspector}"
+        );
+    }
+
+    /// A session that beat says beside its name how long ago its worker last made progress
+    /// and what it said it was doing; one that never beat says neither (I3990).
+    #[test]
+    fn a_session_shows_its_progress_and_phase_beside_its_name() {
+        let all = answer(
+            PEERS,
+            Ok(serde_json::json!({
+                "active": true,
+                "machines": [{
+                    "node": "641bdb94aa",
+                    "name": "studio",
+                    "local": true,
+                    "runtimes": [{
+                        "runtime": "641bdb94aa-r1",
+                        "liveness": "own",
+                        "sessions": [
+                            {
+                                "key": "641bdb94aa-r1/board-p4",
+                                "info": { "session": "board-p4", "client": "claude-code" },
+                                "state": "active",
+                                "claims": [],
+                                "progress_ms": 12_400,
+                                "phase": "waiting on CI run 42"
+                            },
+                            {
+                                "key": "641bdb94aa-r1/lander",
+                                "info": { "session": "lander", "client": "cli" },
+                                "state": "active",
+                                "claims": []
+                            }
+                        ]
+                    }]
+                }]
+            })),
+        );
+        let machines = list(&all, "/machines");
+        let html = inspector("studio", &machines, &all, &events()).render();
+        assert!(
+            html.contains("board-p4 · progress 12 s ago · waiting on CI run 42"),
+            "{html}"
+        );
+        assert!(
+            html.contains(">lander<"),
+            "a silent name stands alone: {html}"
         );
     }
 

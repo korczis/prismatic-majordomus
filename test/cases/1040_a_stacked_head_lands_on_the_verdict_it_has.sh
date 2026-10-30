@@ -3,18 +3,20 @@
 # 0129, issue I2298). Through the command line, against the scripted forge and the local bare
 # origin case 850 built. Three pull requests:
 #
-#   #1  contains master, its checks passed                  -> ready, merged first
+#   #1  contains master, its checks passed                  -> ready, lands first
 #   #2  built on #1's head, says "Stacked on #1"            -> waits for #1; then it carries
 #                                                              master and merges as it stands
 #   #3  built on #1's head too, says "Stacked on #1"        -> carries master while master is
 #                                                              #1's merge; behind once #2 landed
 #
-# The forge lands a pull request as a merge commit, so after #1 lands neither #2 nor #3
-# contains master. What decides them is what merging them would write.
+# #1 lands as a merge commit, made by the forge's own merge as every landing was before the
+# executor fast-forwarded (I3910), so after #1 lands neither #2 nor #3 contains master. What
+# decides them is what merging them would write, and a head that carries master without
+# containing it is the one the executor still lands by a merge commit.
 #
 # Asserted, in order:
 #   1. the first observation: #1 is ready and says contains_master; #2 and #3 wait for #1
-#   2. drain --max 1 merges #1 alone. Observed again, #2 does not contain master, its relation
+#   2. #1 lands by the forge's merge commit. Observed again, #2 does not contain master, its relation
 #      is carries_master, every gate passes, and it is ready for the reasons carries_master
 #      and required_checks_passed; the executor would merge it next, and repair has nothing to
 #      repair on it
@@ -134,8 +136,10 @@ expect_of 3 .disposition '"waiting_for_dependency"' "first observation"
 [ "$(printf '%s' "$q" | jq -r .next_merge)" = 1 ] || { echo "    the first merge is not #1"; exit 1; }
 
 # ---------------------------------------------------------------- 2. #1 lands; #2 carries master
-out="$(prs drain --max 1)" || { echo "    the first drain failed: $out"; tail -8 "$STATE/log"; exit 1; }
-[ "$(merged)" = "1 " ] || { echo "    the first drain merged [$(merged)], not #1 alone: $out"; exit 1; }
+# a drain would fast-forward master to #1's head (case 720); the forge's merge commit is the
+# landing that leaves a stacked head carrying master without containing it
+gh pr merge 1 --merge --match-head-commit "$H1" || { echo "    the forge did not merge #1"; tail -8 "$STATE/log"; exit 1; }
+[ "$(merged)" = "1 " ] || { echo "    the forge merged [$(merged)], not #1 alone"; exit 1; }
 M1="$(master)"
 git -C "$ORIGIN" merge-base --is-ancestor "$M1" "$H2" \
   && { echo "    the fixture is wrong: #2's head contains the master #1's merge made"; exit 1; }

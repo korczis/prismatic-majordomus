@@ -1,0 +1,43 @@
+id: I3418
+milestone: an-inference-names-its-source-and-budget
+title: "Every advisor consultation records the model that answered, the source it came through and the session that asked"
+slug: a-consultation-names-its-model-and-source
+priority: p1
+profile: implementation
+objective: "Add to the consultation record the model the transport actually used, or its absence with a reason, and the adapter and vendor or peer runtime it came through. Add to the reasoning record envelope the session id of the writer. Every inference a decision rests on is then attributable."
+why: "The owner's 2026-10-19 Cognitive Fabric pack asks for model and source diversity to be tracked (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/04_REASONING_MESH.md), and contracts/ECONOMICS.md asks for attribution per inference."
+current_state: "ConsultationInput (apps/majordomus-cli/src/reasoning/record.rs:414-460) has advisor, status, duration_ms and usage, and no model. The envelope (record.rs:912-930) has task, recorded_at and head, and no session. scripts/advisor-consult:119-125 copies a fixed field list with no model. ollama-chat.mjs:11-15 and lmstudio-chat.mjs:10-11 choose the first served model and do not return it."
+desired_state: "Each adapter returns the model it used, and advisor-consult records model, adapter and vendor or peer runtime on the consultation. The writer stamps the active session id, or records its absence with the reason. reasoning status and explain print them, and records stored earlier read as absent."
+scope:
+  - "apps/majordomus-cli/src/reasoning/record.rs"
+  - "apps/majordomus-cli/src/reasoning/store.rs"
+  - "scripts/advisor-consult"
+  - "scripts/lib/advisors/contract.mjs"
+  - "scripts/lib/advisors/ollama-chat.mjs"
+  - "scripts/lib/advisors/lmstudio-chat.mjs"
+  - "scripts/lib/advisors/openai-chat.mjs"
+  - "scripts/lib/advisors/contract.test.mjs"
+  - "docs/REASONING.md"
+non_scope:
+  - "Recording prompt or answer text"
+  - "Pricing or cost fields (I3422, I3292)"
+  - "Observing local runtimes"
+depends_on:
+  - "I3426"
+serves:
+  - "a-change-reconciles-what-it-affects#an-inference-names-its-source"
+acceptance_criteria:
+  - "A completed consultation through each api and local_runtime adapter carries the model the fake transport reported"
+  - "A transport that reports no model yields model absent with a reason, never a guessed name"
+  - "Every reasoning record written inside a session carries that session id, and one written outside a session says so"
+  - "reasoning check still finds no advisor or model literal in the provider-independent files"
+validation:
+  - "node --test scripts/lib/advisors/contract.test.mjs"
+  - "bash test/run.sh 731_advisor_transport_contract 733_advisor_failure_and_recovery"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib reasoning"
+  - "majordomus reasoning check"
+evidence_required:
+  - "contract test naming the served model per adapter"
+  - "unit test of the envelope session stamp"
+created_at: 2026-10-19
+updated_at: 2026-10-19

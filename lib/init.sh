@@ -139,6 +139,10 @@ H
   mkdir -p "$deployments_dir"
   mj_init_file "$MJ_SKELETON_DIR/ai/repo/deployments/README.md" "$deployments_dir/README.md"
   mj_init_file "$skel/ai/repo/project/README.md" "$MJ_PROJECT_DIR/README.md"
+  # The mesh: a declaration that is enabled and closed until a machine is enrolled. A
+  # machine whose key is not in trust.allow opens no socket (`mesh::manager::closed_to`), so
+  # shipping it enabled sends nothing anywhere; `majordomus mesh enrol` is the one step left.
+  mj_init_tree "$skel/ai/repo/mesh" "$MJ_AI_REPO_DIR/mesh" '*'
   # the checkout-local half: the state directories the durable commands write into, and
   # the two hand-editable stores, seeded from the tool's templates. Never tracked.
   mkdir -p "$MJ_STATE_DIR/handovers" "$MJ_STATE_DIR/checkpoints" "$MJ_AI_LOCAL_DIR/prompts" \
@@ -206,14 +210,14 @@ mj_init_hook_advice() {
   if [ "$tracked" = 0 ]; then
     cat <<OUT
 hooks are not installed by init; add these two lines yourself, doctor verifies them:
-  pre-commit: $rel doctor || exit \$?
+  pre-commit: MAJORDOMUS_DOCTOR_CONTEXT=commit $rel doctor || exit \$?
   pre-push:   $rel finish --check || exit \$?
 OUT
     return 0
   fi
   printf "hooks are not installed by init, and this repository's hooks are the project's (%s/ is tracked):\n" "$hookrel"
   for h in pre-commit pre-push; do
-    case "$h" in pre-commit) line="$rel doctor || exit \$?" ;; *) line="$rel finish --check || exit \$?" ;; esac
+    case "$h" in pre-commit) line="MAJORDOMUS_DOCTOR_CONTEXT=commit $rel doctor || exit \$?" ;; *) line="$rel finish --check || exit \$?" ;; esac
     if [ -d "$MJ_ROOT/$hookrel/$h.d" ]; then
       dropin="$hookrel/$h.d/majordomus-personal"
       mj_personal_cover "$dropin" || mj_die "$MJ_EX_INTERNAL" "cannot write $(mj_personal_exclude_file)"

@@ -1,0 +1,41 @@
+id: I4244
+milestone: development-runtime
+title: "Case 3383 holds the peers screen to its contract: the change, or the reading before it marked as catching up"
+slug: the-peers-screen-may-say-it-is-catching-up
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "The peers screen read right after an announce is accepted when it shows the change, or when it shows the earlier reading marked data-catching-up and a following read shows the change; an old reading served as current still fails the case."
+why: "Master validate 40486931595 at 7ddc32da8d4 was red on suite-shard (4), case 3383_the_peers_screen_follows_the_blackboard, on its run and on its retry: the screen read after a change does not show it. 5c24edb4c3b was green, and the only code between them is lib/rust_bin.sh. Reproduced locally 6 of 6 under load 30-40: /ui/peers?fragment served 'the first reading of 3383' with data-catching-up on blackboard.snapshot. A page waits 50 ms for a reading the change moved (Patience::PAGE, capability/readings.rs) and says it is catching up when the reading takes longer; the case demanded the change at once, which only a fast machine gives. Found by 39 on 641b."
+current_state: "Measured at origin/master 7ddc32da8d4 on 2026-10-27: section 3 of the case greps the fragment once for the second reading and fails otherwise."
+desired_state: "Section 3 accepts the second reading at once, or the first reading marked data-catching-up followed by the second within 10 s of re-reads; an unmarked old reading fails as 'shows the old reading as current', and a screen that never catches up fails."
+scope:
+  - "test/cases/3383_the_peers_screen_follows_the_blackboard.sh"
+  - ".ai/repo/project/issues/I4244.yaml"
+non_scope:
+  - "The page patience itself (Patience::PAGE) and how long blackboard.snapshot takes"
+depends_on: []
+acceptance_criteria:
+  - "Case 3383 passes under load where it failed every time"
+  - "An old reading without the catching-up mark still fails the case"
+validation:
+  - "bash test/run.sh 3383_the_peers_screen_follows_the_blackboard"
+evidence_required:
+  - test
+serves: []
+created_at: 2026-10-27
+started_at: 2026-10-27T13:03:00Z
+started_event: sha256:a1970f46d3e9ed2e275c4868257482fa3c479b8df82011d361eb4f65fa916b75
+updated_at: 2026-10-27T13:04:08Z
+verified_at: 2026-10-27T13:03:36Z
+verified_event: sha256:cb9d04365a589f11615e85557b228a37f5eb07f7058372c50086fc6165242779
+completed_at: 2026-10-27T13:04:08Z
+completed_event: sha256:425624a0f785c8f2c091577d386c0cf123d1a85059ac85541dd98c5d2a954de2
+evidence:
+  - covers: test
+    type: test
+    command: "bash test/run.sh 3383_the_peers_screen_follows_the_blackboard"
+    result: "5 of 5 passed under load 30-40 where master's case failed 6 of 6 (the fragment served the first reading marked data-catching-up); master validate 40486931595 failed it on run and retry"
+    artifact: "test/cases/3383_the_peers_screen_follows_the_blackboard.sh"
+    commit: 7ddc32da8d45dc54e0260d8841c70544615863f5
+    recorded_at: 2026-10-27T13:03:56Z

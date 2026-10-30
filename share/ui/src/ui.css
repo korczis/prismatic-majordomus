@@ -246,6 +246,14 @@
   .mj-ui-title {
     @apply text-3xl font-bold tracking-tight sm:text-4xl;
   }
+  /* the screen's name above the title of the one record a screen shows */
+  .mj-ui-hero-titles {
+    @apply flex min-w-0 flex-col gap-0.5;
+  }
+  .mj-ui-eyebrow {
+    @apply text-xs font-semibold uppercase tracking-wide;
+    color: var(--mj-muted);
+  }
   .mj-ui-tagline {
     @apply text-lg font-medium;
     color: var(--mj-fg);
@@ -411,6 +419,18 @@
     color: var(--mj-body);
     overflow-wrap: anywhere;
   }
+  /* a command to reproduce: the code whole, wrapped rather than scrolled, its copy button beside it (I3002) */
+  .mj-ui-command {
+    @apply flex min-w-0 items-start gap-2;
+  }
+  .mj-ui-command-text {
+    @apply m-0 min-w-0 flex-1 rounded-lg px-3 py-2 font-mono text-xs;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    color: var(--mj-fg);
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+  }
   .mj-ui-code {
     @apply rounded px-1 py-0.5 font-mono text-small;
     background: var(--mj-sunken);
@@ -442,6 +462,12 @@
   }
   .mj-ui-badges {
     @apply flex flex-wrap gap-1;
+  }
+  /* a badge holding a long unbroken value (an intent id in a chip) shrinks with its row and
+     truncates inside, rather than widening the page: a flex item keeps its content's width
+     unless it is allowed to shrink (alpha.1 top, /ui/idd and /ui/roadmap at 320 px) */
+  .mj-ui-badges > * {
+    @apply min-w-0 max-w-full;
   }
 
   /* a meter: the bar is a picture of the two numbers written beside it */
