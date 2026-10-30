@@ -120,13 +120,17 @@ mj_gate_record() {
   esac
   mj_load_current || mj_die "$MJ_EX_MISSING" \
     "no active task ($(mj_rel "$MJ_STATE_DIR")/current.yaml); run: majordomus start"
-  local task ih extra
+  local task ih extra again="evidence --gate $gate --exit $exit_code"
+  # A gate verdict is filed under the caller's task and never under the one another open
+  # episode opened (ADR 0164); the check and its refusal are evidence's, which sourced this.
+  [ -n "$command" ] && again="$again --command \"$command\""
+  mj_task_attribution_or_refuse "$again"
   task="$(mj_cur id)"
   ih="$(mj_gate_inputs_hash "$gate")"
   extra="\"task\":\"$task\",\"gate\":\"$gate\",\"exit\":$exit_code,\"inputs_hash\":\"$ih\""
   [ -n "$command" ] && extra="$extra,\"command\":\"$(mj_json_esc "$command")\""
   [ -n "$result" ] && extra="$extra,\"result\":\"$(mj_json_esc "$result")\""
-  mj_ledger_append task.gate "$extra"
+  mj_ledger_append task.gate "$extra" "$MJ_RECORD_SESSION"
   if [ "$json" = 1 ]; then
     printf '{"task":"%s","gate":"%s","exit":%s,"inputs_hash":"%s"}\n' "$task" "$gate" "$exit_code" "$ih"
   else

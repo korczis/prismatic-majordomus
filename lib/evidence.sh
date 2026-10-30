@@ -92,6 +92,65 @@ mj_task_requires() {
   sed -n 's/^requires\.[0-9]*=//p' "$MJ_CUR_FLAT"
 }
 
+# ---------------------------------------------------------------- whose task this is
+# Evidence, a gate run and a finish decide whether work counts as done, so the task they
+# name is resolved the way every durable record resolves it (mj_record_attribution, ADR
+# 0164): the active task is the caller's unless another episode that is still open in this
+# checkout opened it. ADR 0164 lets every other writer drop the task and still write; these
+# three have no record that means anything without one, and filing it under the other
+# episode's task is the misattribution M002 exists to end, so they refuse, by name and with
+# the command that resolves it in the same breath (M002's second risk).
+#
+# $1 is the command a remedy repeats ("finish --outcome completed"). Returns 0 when the
+# active task is the caller's to carry, or when there is none for the caller to judge; the
+# caller's episode is then MJ_RECORD_SESSION, which its ledger line is stamped with.
+MJ_ATTRIBUTION_RULE=adr-0164
+mj_task_attribution_or_refuse() {
+  local cmd="$1" id opened key me
+  mj_record_attribution
+  [ -n "$MJ_RECORD_TASK" ] && return 0
+  mj_load_current || return 0
+  id="$(mj_cur id)"; [ -n "$id" ] || return 0
+  opened="$(mj_task_opening_session "$id")"
+  { [ -n "$opened" ] && [ "$opened" != "$MJ_RECORD_SESSION" ] \
+      && mj_session_is_open "$opened"; } || return 0
+  key="$(mj_episode_key_of "$opened")"
+  me="${MJ_RECORD_SESSION:+episode $MJ_RECORD_SESSION}"
+  [ -n "$me" ] || me="no episode it can name ($(mj_episode_open_count) are open here)"
+  mj_die "$MJ_EX_REFUSED" \
+    "${cmd%% *}: refused by $MJ_ATTRIBUTION_RULE (a record names the session that wrote it):" \
+    "task $id was opened by episode $opened, which is still open in this checkout, and this" \
+    "caller is $me, so the record would be filed under another live episode's task." \
+    "If you are that episode, name it: MJ_SESSION_KEY=$key majordomus $cmd;" \
+    "if you are not, the task is that worker's, and once it has stopped:" \
+    "majordomus session close --provider-session $key"
+}
+
+# The key (the file name under sessions-open/) of the episode open here as session $1.
+mj_episode_key_of() {
+  local f w
+  for f in "$(mj_session_open_dir)"/*.yaml; do
+    [ -f "$f" ] || continue
+    w="$(sed -n 's/^worktree: //p' "$f" | head -n 1)"
+    [ -n "$w" ] && [ "$w" != "$MJ_ROOT" ] && continue
+    [ "$(sed -n 's/^session_id: //p' "$f" | head -n 1)" = "$1" ] \
+      && { basename "$f" .yaml; return 0; }
+  done
+  printf '%s' "$1"
+}
+
+# How many episodes are open in this checkout.
+mj_episode_open_count() {
+  local f w n=0
+  for f in "$(mj_session_open_dir)"/*.yaml; do
+    [ -f "$f" ] || continue
+    w="$(sed -n 's/^worktree: //p' "$f" | head -n 1)"
+    [ -n "$w" ] && [ "$w" != "$MJ_ROOT" ] && continue
+    n=$((n + 1))
+  done
+  printf '%s' "$n"
+}
+
 # The most recent evidence line for a token of the active task, as
 # "<head>\t<inputs_hash>\t<ts>". Nothing older is consulted: evidence is superseded by
 # evidence, and the ledger keeps the history for a reader who wants it.
@@ -167,6 +226,10 @@ mj_evidence() {
     "no obligation '$covers'; share/obligations.yaml declares: $(mj_obligation_ids | tr '\n' ' ')"
   [ -n "$ecmd" ] || [ -n "$eart" ] || mj_die "$MJ_EX_USAGE" "evidence needs --command or --artifact; narrative is not evidence"
   mj_load_current || mj_die "$MJ_EX_MISSING" "no active task ($(mj_rel "$MJ_STATE_DIR")/current.yaml); run: majordomus start"
+  local again="evidence --covers $covers"
+  [ -n "$ecmd" ] && again="$again --command \"$ecmd\""
+  [ -n "$eart" ] && again="$again --artifact \"$eart\""
+  mj_task_attribution_or_refuse "$again"
   task="$(mj_cur id)"
   # The task must have declared the obligation. Recording evidence for something nobody
   # promised is how a checklist grows entries nobody asked for.
@@ -177,7 +240,7 @@ mj_evidence() {
   [ -n "$ecmd" ] && extra="$extra,\"command\":\"$(mj_json_esc "$ecmd")\""
   [ -n "$eart" ] && extra="$extra,\"artifact\":\"$(mj_json_esc "$eart")\""
   [ -n "$eres" ] && extra="$extra,\"result\":\"$(mj_json_esc "$eres")\""
-  mj_ledger_append task.evidence "$extra"
+  mj_ledger_append task.evidence "$extra" "$MJ_RECORD_SESSION"
   if [ "$json" = 1 ]; then
     printf '{"task":"%s","covers":"%s","kind":"%s","inputs_hash":"%s"}\n' "$task" "$covers" "$etype" "$ih"
   else
