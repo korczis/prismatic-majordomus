@@ -88,10 +88,9 @@ esac
     );
 }
 
-/// The open list a scripted forge answers with something that is not JSON is a refused
-/// refresh naming `gh pr list`, never an observation of no pull requests.
-#[test]
-fn an_open_list_that_is_not_json_refuses_the_refresh() {
+/// `prs refresh` against a scripted forge whose every read is answered except `gh pr list`,
+/// which runs `list` (a shell command): whether it succeeded, and what it printed on stderr.
+fn refresh_answering_list(list: &str) -> (bool, String) {
     let f = common::Fixture::new();
     let root = f.root();
     let outside = f.container();
@@ -115,7 +114,7 @@ case "$1 $2" in
   "api repos/o/r/commits/master") printf '{{"sha":"%s"}}\n' "$(git -C "{origin}" rev-parse master)" ;;
   "api repos/o/r/branches/master/protection") echo '{{"required_status_checks":{{"contexts":["ci"]}}}}' ;;
   "api repos/o/r/rules/branches/master") echo '[]' ;;
-  "pr list") echo 'this is not json' ;;
+  "pr list") {list} ;;
   *) exit 1 ;;
 esac
 "#,
@@ -145,10 +144,27 @@ esac
         .env_remove("GIT_WORK_TREE")
         .output()
         .expect("majordomus runs");
-    let err = String::from_utf8_lossy(&out.stderr);
-    assert!(
-        !out.status.success(),
-        "a list that is not JSON is no observation: {err}"
-    );
+    (
+        out.status.success(),
+        String::from_utf8_lossy(&out.stderr).into_owned(),
+    )
+}
+
+/// The open list a scripted forge answers with something that is not JSON is a refused
+/// refresh naming `gh pr list`, never an observation of no pull requests.
+#[test]
+fn an_open_list_that_is_not_json_refuses_the_refresh() {
+    let (ok, err) = refresh_answering_list("echo 'this is not json'");
+    assert!(!ok, "a list that is not JSON is no observation: {err}");
+    assert!(err.contains("pr list"), "the refusal names the read: {err}");
+}
+
+/// The open list the forge never answers — an outage on every attempt, asked again until the
+/// attempts are spent — is a refused refresh naming `gh pr list`, never an observation of no
+/// pull requests.
+#[test]
+fn an_open_list_the_forge_never_answers_refuses_the_refresh() {
+    let (ok, err) = refresh_answering_list("echo 'HTTP 502: Bad Gateway' >&2; exit 1");
+    assert!(!ok, "an unanswered list is no observation: {err}");
     assert!(err.contains("pr list"), "the refusal names the read: {err}");
 }
