@@ -30,4 +30,18 @@ validation:
 evidence_required:
   - "case_3068"
 created_at: 2026-10-10
-updated_at: 2026-10-15
+updated_at: 2026-10-26T03:33:35Z
+started_at: 2026-10-26T03:32:28Z
+started_event: sha256:14581cc28efdb7c86c7405d3dc1231bc8283e389ff6204a9f70ac338d0812c4a
+verified_at: 2026-10-26T03:32:50Z
+verified_event: sha256:6ed9767a0489e87109865c95e8a4b586859ecaba178232b3d0fb8b436e3a1878
+completed_at: 2026-10-26T03:33:35Z
+completed_event: sha256:436f16600bd78c9a40b40401764e98435920bd7db46380b6077d7e0489628191
+evidence:
+  - covers: case_3068
+    type: test
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT MJ_TEST_JOBS=4 bash test/run.sh 3068_a_task_off_the_mesh_is_refused 3067_a_task_is_claimed_on_the_mesh 18_doctrine_wiring 3022_the_rule_package_is_stamped_and_adopter_neutral"
+    result: "ok   18_doctrine_wiring; ok   3022_the_rule_package_is_stamped_and_adopter_neutral; ok   3067_a_task_is_claimed_on_the_mesh; ok   3068_a_task_off_the_mesh_is_refused; tests: 4 passed, 0 failed, 0 skipped at master 6259dac47af (merged into this branch; run with the alpha.8 executable built from 2efeacea031, whose crate is master's): on an enabled mesh finish refuses a completed task whose scope was never claimed and records task.refused naming majordomus.task-on-the-mesh, a disabled mesh refuses nothing, partial is not refused, and finish claims the scope once a server answers. Landed through #1236 (db4ab5fb343)"
+    artifact: "test/cases/3068_a_task_off_the_mesh_is_refused.sh"
+    commit: 9b14a029ae0329569d782ff5bd74064d9d8c6c82
+    recorded_at: 2026-10-26T03:33:18Z

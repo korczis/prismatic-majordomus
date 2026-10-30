@@ -65,11 +65,13 @@ accepted finish without saying whose repository it was.
 ## 4. The steps and where their time is observed
 
 The steps are those [`docs/ADOPTION.md`](../../../docs/ADOPTION.md) gives a new adopter,
-in that order, with nothing added. Each step's start and end are recorded with their
-source. The source is either the ledger event the step writes, or the run clock where the
-step writes none.
+in that order, with nothing added. Every step starts at the run clock read before its
+command, because no step writes a line when it begins. It ends at the ledger line its
+command writes, or at the run clock read after the command where the step writes none.
+The table names that end source for each step, and the record keeps it as the step's
+`source`.
 
-| step | command | time source |
+| step | command | end time source |
 |---|---|---|
 | install | `curl -fsSL https://majordomus.dev/install.sh \| sh` | run clock |
 | initialise | `majordomus init` | run clock |
@@ -77,12 +79,17 @@ step writes none.
 | first diagnosis | `majordomus doctor` | run clock |
 | add the hook lines `init` printed, diagnose again | edit, then `majordomus doctor` | run clock |
 | first task | `majordomus start "<task>" --scope <paths>` | ledger: `task.started` |
-| progress | `majordomus check` | run clock (a refused check writes no ledger line by design, `share/events.yaml`) |
+| progress | `majordomus check` | run clock (`check` writes no ledger line, passing or refused; only `check --checkpoint` writes one, `task.checkpoint`) |
 | finish | `majordomus finish --outcome completed --verify-command "<the repository's own test command>"` | ledger: `task.finished`, or `task.refused` when it refuses |
 
 The run clock is UTC, read immediately before and after the command with
-`date -u +%Y-%m-%dT%H:%M:%SZ`. A ledger time is the event's own `at`. Both are UTC, so one
-adoption's steps can be laid end to end.
+`date -u +%Y-%m-%dT%H:%M:%SZ`. A ledger time is the line's own `ts`, the envelope field
+every ledger line carries (`share/events.yaml`), stamped in that same spelling to the
+second; a ledger line has no `at`. A ledger step's end is, by definition, the moment its
+effect was recorded, not the moment its process exited: `start` still reports overlap,
+claims its scope on the mesh and names a prior handover after its line, and `finish`
+releases its mesh claim after `task.finished`. Both clocks are UTC, so one adoption's steps
+can be laid end to end.
 
 An accepted finish is a `task.finished` event with outcome `completed`. A refusal is a
 result, not a failure of the protocol: the record keeps it with its reason, and the
@@ -100,9 +107,9 @@ One record per adoption, with these fields:
 - `publication_basis`: `licence` (with its SPDX id), `consent` (with its date and opaque reference), or `none`
 - `tool_version`: what `majordomus version` printed
 - `platform`: what `uname -sm` printed
-- `steps`: for each step of section 4, its name, `started_at`, `ended_at` and `source` (`ledger:<event>` or `run-clock`)
+- `steps`: for each step of section 4, its name, `started_at` (always the run clock), `ended_at` and `source`, where `ended_at` was observed (`ledger:<event>` or `run-clock`)
 - `reached_accepted_finish`: true or false
-- `seconds_to_accepted_finish`: from the install step's start to the accepted `task.finished`; absent when no finish was accepted
+- `seconds_to_accepted_finish`: from the install step's start to the `ts` of the accepted `task.finished`; absent when no finish was accepted
 - `refusals`: each refused `finish` with its reason, in order
 - `findings`: each friction the adoption met, with an id and one sentence, naming a path only under the licence basis
 
