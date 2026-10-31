@@ -12,7 +12,6 @@
 
 import { readFileSync } from 'node:fs';
 import { availableParallelism } from 'node:os';
-import { chromium } from 'playwright';
 
 const AXE = new URL('../../node_modules/axe-core/axe.min.js', import.meta.url);
 
@@ -90,7 +89,10 @@ export async function auditPage(page, origin, route, width) {
       response = await page.goto(`${origin}${route}`, { waitUntil: 'load', timeout: 20000 });
       break;
     } catch (error) {
-      if (attempt < 2 && !String(error?.message ?? error).includes('ERR_CONNECTION_REFUSED')) continue;
+      // A refused connection is not this page's and is not loaded again: it goes to the run,
+      // which stops on it (`audit`) rather than recording every later page as unreachable.
+      if (String(error?.message ?? error).includes('ERR_CONNECTION_REFUSED')) throw error;
+      if (attempt < 2) continue;
       findings.push({
         rule: 'page.unreachable',
         detail: `the page did not load in ${attempt} attempt(s): ${String(error?.message ?? error).split('\n')[0]}`,
@@ -302,16 +304,29 @@ export function jobs() {
 }
 
 /**
+ * The browser the repository already drives for the cockpit probe: the system Chrome, so a CI
+ * runner and a laptop use one browser and neither downloads another. Playwright is loaded
+ * here rather than with the module, so the module's tests run where it is not installed and
+ * hand `audit` a browser of their own.
+ */
+async function launchChrome() {
+  const { chromium } = await import('playwright');
+  return chromium.launch({ channel: 'chrome' });
+}
+
+/**
  * Audit every page of a plan against a running origin.
  *
  * The visits are spread over a pool of tabs, and the results are put back in plan order
  * whatever order they finished in: a results document that changed with the scheduler would
  * make every diff of a run unreadable.
  */
-export async function audit(origin, pages, { onVisit, concurrency = jobs() } = {}) {
-  // the browser the repository already drives for the cockpit probe: the system Chrome,
-  // so a CI runner and a laptop use one browser and neither downloads another
-  const browser = await chromium.launch({ channel: 'chrome' });
+export async function audit(
+  origin,
+  pages,
+  { onVisit, concurrency = jobs(), launch = launchChrome } = {},
+) {
+  const browser = await launch();
   const context = await browser.newContext();
 
   // the whole target set, flattened, so the workers share one queue rather than a page each:

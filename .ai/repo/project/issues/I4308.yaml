@@ -1,0 +1,41 @@
+id: I4308
+milestone: a-finding-is-tracked-to-its-issue
+title: "One capability proposes a canonical issue from a finding and writes it only through the plan's one checked write"
+slug: a-finding-proposes-its-issue
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Declare one capability, on the command line and MCP, that takes a finding (a quality finding by the stable id I4299 publishes, its baseline key; a critique finding by intent and id) and builds a draft issue whose why cites the finding's id and verification state, whose validation is the finding's reproduce command and whose scope is the finding's path, then hands the draft to intents.draft_write (I3252), so the record is written only through the one checked write and its validators, never by a writer of its own; it refuses an issue id that is already a record and one that carries no id:issue claim on the board as I3974's survey reads it."
+why: "dev-68 asked that every finding reach a plan issue, and the conclusion adopted a stable id, a verification state and a plan issue for every finding. Issue records are written by hand today: plan.record only reads (apps/majordomus-cli/src/capability/builtin/plan.rs:493). ADR 0191 (proposed) says that only a checked draft is written, as one repository_mutation capability, and open I3252 plans that capability as intents.draft_write; a second writer here would give one record kind two write paths and two validation paths, so this capability is a caller of I3252's write. The structured board claim for issue ids (id:issue, which the allocation survey reads) is open I3974's; this capability reads it rather than inventing an allocation check. A quality finding's stable key is CODE, path and symbol without the line (.ai/repo/rust-quality-baseline.txt:3-5), and a critique finding carries severity and verification once I4309 lands."
+current_state: "On 81ef931a3e1 no capability writes an issue record, intents.draft_write is planned by open I3252 and has not landed, and the board carries no structured issue-id claim until I3974 lands."
+desired_state: "The capability is declared once with capability! and projected by majordomus generate; it writes nothing itself and calls intents.draft_write; a draft it builds passes plan validate; it refuses a taken or unclaimed id before calling the write; the GitHub issue appears only through scripts/github-sync at landing."
+scope:
+  - ".ai/repo/project/issues/I4308.yaml"
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+non_scope:
+  - "A gh call or any GitHub write (I3975)"
+  - "A writer of issue records of its own, or a validation path beside intents.draft_write (ADR 0191, I3252)"
+  - "Allocating ids, or the board's id:issue claim (I3974): the capability reads the claim and checks it"
+  - "The finding shape and the rule that refuses an untracked serious finding (I4309)"
+depends_on:
+  - "I4299"
+  - "I4309"
+  - "I3252"
+  - "I3974"
+serves:
+  - "a-review-is-seen-at-its-commit#a-finding-becomes-a-tracked-issue"
+acceptance_criteria:
+  - "Proposing an issue from a fixture quality finding writes, through intents.draft_write, an issue record that plan validate accepts, whose why cites the finding's stable id and verification state"
+  - "No code path of the capability writes a record except the call to intents.draft_write"
+  - "An id that is already a record is refused, naming the record"
+  - "An id with no id:issue claim on the board is refused, naming how to claim one"
+  - "The capability is declared once and appears on every transport from majordomus generate alone"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::plan"
+  - "bin/majordomus generate --check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "finding_proposes_its_issue"
+risk: "Medium. It waits on I3252, which waits on I3251 and I3247, and on I3974; if either is re-planned, this issue records a majordomus decision on why it cannot call the checked write rather than adding a writer. Checking a claim needs a reachable board; when none answers, the capability refuses rather than writing an unchecked id."
+created_at: 2026-10-28
+updated_at: 2026-10-28

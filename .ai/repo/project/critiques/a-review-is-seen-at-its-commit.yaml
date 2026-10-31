@@ -1,0 +1,245 @@
+intent: a-review-is-seen-at-its-commit
+reviewed_at: 81ef931a3e1
+reviewed_by: "The review-mission plan (synthesized from area maps over origin/master 81ef931a3e1) was attacked by codex in consultation consultation-20261028T185933069Z-d37ae1 and, independently, by three mesh peers: f3, dev-68 (the JOBL session, which ran the same mission on two adopter repositories and pointed to its reference implementation jobl-mirror/tools/atlas and rule project.review-findings-are-tracked) and dev-53. The conclusion conclusion-20261028T191256050Z-5f3c38 of task t-20261023195110-d51b adopted the plan amended by their objections and is binding on these records. A claude-code subagent dispatched by the coordinating session wrote the records and resolved each objection below, re-reading every cited path and line on the worktree at 81ef931a3e1; the licence fact was verified by the conclusion against crates.io. A second round of reviewers then checked every record against 81ef931a3e1 and confirmed defects in scope, dependency order, duplicated work and command names; the records were revised and the four structural ones are recorded below as findings. Disposition: revised: every blocking finding is planned into an issue that serves this intent, two requests are rejected with their reason, and none is left open."
+findings:
+  - id: conformance-reads-as-assurance
+    class: unproven_assumption
+    subject: "a-review-is-seen-at-its-commit#findings-are-published-at-their-commit"
+    finding: "codex (consultation d37ae1): A2 as first drafted publishes quality.report as 'the quality report' at /quality/. That report is a ratcheted check of the crate's public API documentation, examples and operation parity (the fifteen codes at apps/majordomus-cli/src/quality/model.rs:81-114), and the 1850 entries of .ai/repo/rust-quality-baseline.txt are hidden from it by default (include_baselined, apps/majordomus-cli/src/capability/builtin/quality.rs:83). A due-diligence reader who sees a short list of findings under that title reads it as broad assurance about the code, which the check does not give."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4299
+      because: "I4299 labels the page and its JSON 'public API conformance', publishes the baselined findings marked as baselined, and states beside them the commit, the analyser and its version, the baseline file's identity at that commit, what is excluded and the denominators (items, modules, operations measured). Its acceptance fails a page that omits the label or the baselined findings."
+  - id: findings-carry-no-provenance
+    class: missed_requirement
+    subject: "I4297"
+    finding: "codex (consultation d37ae1): a finding is only checkable if the reader can tell what was measured, when and by what. QualityReport (apps/majordomus-cli/src/quality/model.rs:484-498) records the crate directory and nothing about the commit, the tree or whether the checkout was dirty, so a published finding cannot be linked to its line or reproduced at the commit it came from."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4297
+      because: "I4297 adds the commit, the tree digest and the dirty state to QualityReport, read once at measurement, and refuses to publish a report measured on a dirty tree; I4299 carries that provenance to the page and the JSON download."
+  - id: publish-before-the-report-knows-its-commit
+    class: regression_risk
+    subject: "I4299"
+    finding: "f3: the plan's order put A1 and A2 (publish /quality/) before A3 (the report records its commit). A page published first would have to link its findings to the build commit while the report was measured at whatever tree generate-site-data ran in; any difference between the two produces line links that point at the wrong line, which is worse than no link."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4297
+      because: "The order is A3, then A1, then a scoped A2: I4299 depends on I4297 and I4298, and its acceptance refuses a report whose recorded commit differs from the build commit."
+  - id: no-dependency-security-or-licence-evidence
+    class: missed_requirement
+    subject: "a-review-is-seen-at-its-commit#dependencies-are-judged"
+    finding: "codex (consultation d37ae1) and f3: a due-diligence reader asks first whether the dependencies carry known advisories, acceptable licences and trusted sources. The repository has no cargo-deny or cargo-audit configuration and no gate that runs either, and f3 asked that this evidence join the first slice rather than wait behind the visualisation work."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4300
+      because: "I4300 is in the first milestone: a cargo-deny configuration judging advisories, licences, bans and sources, a gate in .ai/repo/ci/gates.yaml, and the gate's last verdict published beside the conformance report. Its acceptance plants a disallowed licence and requires the gate to fail."
+  - id: giallo-is-eupl-licensed
+    class: regression_risk
+    subject: "I4307"
+    finding: "The plan proposed giallo as the one highlighter for the site, /ui and the Cockpit, following the owner's decision recorded in .ai/repo/project/milestones/one-kit-on-every-surface.yaml:8. giallo 0.5.2 and every earlier version declare EUPL-1.2 on crates.io and upstream (verified by the conclusion against https://crates.io/api/v1/crates/giallo). EUPL-1.2 is copyleft; linking it into the MIT executable changes the licence obligations of every binary Majordomus ships. f3 asked for syntect (MIT) in the crate, as ADR 0166 decision 7 already says (.ai/repo/adrs/0166-the-plan-surfaces-are-inferred-from-delivery.md:130), with giallo kept to Zola's build, where it is a build tool and not shipped code."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4307
+      because: "I4307 proposes ADR 0228 (accepting it is the owner's act): syntect in the crate, giallo only at build time inside Zola, the class vocabulary and palette shared between them, and ADR 0166 decision 7 superseded only as far as naming the site's engine. It then extends I2747 rather than duplicating it, and I4300's licence ban refuses an EUPL crate in the executable's tree."
+  - id: plan-truthfulness-is-unreviewed
+    class: missed_requirement
+    subject: "I4305"
+    finding: "f3: a due-diligence reader needs to know whether the plan describes the repository truthfully (stale stamps, issues whose current_state no longer holds, claims without evidence), and the plan reviewed only the code. The plan itself already shows one instance: I2747's current_state blames share/ui/ui.js for the CDN highlighter, which the handbook loads (handbook/cs/extras10.js)."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4305
+      because: "The first review has a plan-truthfulness section built from plan drift and plan delivery and from the surface disagreements dev-53 asked for, and I4307 corrects I2747's current_state."
+  - id: ci-and-operational-risk-is-unreviewed
+    class: missed_requirement
+    subject: "I4305"
+    finding: "f3: the review covers code and not how the code is delivered: the CI pool runs one validate at a time on self-hosted runners, the landing and release seats are single points, and the deployment observation is checkout-local. A reader judging the repository needs these risks on the scorecard."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4305
+      because: "The scorecard has a delivery and operations row read from existing records (gate timings, deployment observations, release currency), each with its source and the commit it was read at, and not observed where a source is absent."
+  - id: vendored-js-supply-chain
+    class: missed_requirement
+    subject: "I4300"
+    finding: "f3: the vendored JavaScript is a supply chain no gate judges. package.json:18 pins cytoscape with a caret while every other library is exact, and nothing refuses that; p5 is copied three times (scripts/cockpit-assets:121 and :128, .github/workflows/pages.yml:326); and the handbook still loads highlight.js 11.9.0 and ECharts 5.5.0 from cdnjs (handbook/cs/extras10.js:4-13), which scripts/site-check's no-CDN rule (scripts/site-check:1020) does not reach."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4300
+      because: "I4300's gate also refuses a non-exact npm devDependency version and fixes cytoscape's pin. Of the handbook's five CDN loads (handbook/cs/extras10.js:6-13), only the highlighter has an owner: I2747 removes highlight.js and any CDN highlighter. The markdown-it, dompurify, mermaid and ECharts 5.5.0 loads, and the triple p5 copy, are recorded by the first review (I4305) as findings, each with its resolution issue or the reason it is rejected."
+  - id: secrets-in-history
+    class: missed_requirement
+    subject: "I4305"
+    finding: "f3: apps/majordomus-cli/src/quality/leaks.rs and scripts/ci/no-machine-paths apply the leak patterns to the tracked tree only. A credential committed and later removed stays in the history every clone receives, and no check reads the history."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4305
+      because: "The first review runs the one leak-pattern definition (apps/majordomus-cli/src/quality/leak-patterns.tsv) over the reachable history once and records the result; any match is a security finding that I4314 redacts to title, severity and status on every shared surface, and that I4309 requires an issue for. A recurring history scan is left to the issue a finding would open."
+  - id: coverage-and-flaky-tests
+    class: missed_requirement
+    subject: "I4305"
+    finding: "f3: a reader asks how much of the code the tests reach and how often they fail without a change. Coverage is measured (scripts/rust-coverage, scripts/ci/coverage-differential) but is not on any review surface, and no instrument records flaky tests."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4305
+      because: "The scorecard shows the coverage the existing coverage job measured, with its commit and denominator, and shows test stability as not observed, because no flaky-test instrument exists; building one is a non-goal of this intent."
+  - id: links-are-not-pinned-to-a-commit
+    class: missed_requirement
+    subject: "a-review-is-seen-at-its-commit#every-forge-link-is-pinned-and-proven"
+    finding: "dev-68: every link from a review must be pinned to the commit it cites, never to a branch. On the site the merging pull request is a span (site/templates/roadmap.html:117), the evidence commit is text (site/templates/issue.html:73), an episode's commits are text (site/templates/session.html:23), a release's commit is text (site/templates/changelog.html:84), and entity references to files and tests are text (site/templates/entity.html:40-41); source_blob falls back to master when the build is dirty (site/templates/source-links.html:27)."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4298
+      because: "I4298 adds source_commit, source_pull and source_line to the one forge-link component, applies them at each of those sites, and refuses a branch-pinned link instead of falling back to master."
+  - id: cited-lines-are-not-blamed
+    class: missed_requirement
+    subject: "a-review-is-seen-at-its-commit#each-cited-line-is-blamed-to-its-commit"
+    finding: "dev-68: a finding that cites a line must also say which commit introduced that line, so a reader reaches the change and its pull request from the finding. The JOBL atlas blames every cited line; nothing here does."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4301
+      because: "I4301 blames each finding's cited line to its introducing commit at the measured commit, offline with git blame, and links it through I4298's component; it depends on I4298 and measures its build-time cost."
+  - id: findings-carry-no-verification-state
+    class: missed_requirement
+    subject: "I4309"
+    finding: "dev-68: a finding is either confirmed by evidence or plausible, and a plausible one must carry the refuter's note, or the reader cannot tell a measured fault from a suspicion. The critique finding shape (share/schemas/majordomus/critique/critique.v1.schema.json) has no such field and no stable id outside one record."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4309
+      because: "I4309 adds severity, verification (confirmed or plausible, with the refuter's note) and the measured commit to the critique finding shape and keeps the finding id stable; I4299 gives each published quality finding its stable id (the baseline key) and the verification state confirmed, since a code is measured; I4308 proposes an issue from either kind of finding."
+  - id: an-untracked-serious-finding-is-allowed
+    class: missed_requirement
+    subject: "a-review-is-seen-at-its-commit#an-untracked-serious-finding-is-refused"
+    finding: "dev-68: nothing refuses a critical or high finding that no plan issue owns; it can be written down and forgotten. The JOBL rule project.review-findings-are-tracked refuses it at the session's end."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4309
+      because: "I4309 adds a rule of the same id and a gate in intent validate that fails, naming the finding, when a critical or high finding has no resolution issue."
+  - id: no-scorecard-or-remediation-roadmap
+    class: missed_requirement
+    subject: "I4305"
+    finding: "dev-68: a due-diligence report is read top-down, so a list of findings is not enough: it needs a scorecard by dimension and a remediation roadmap ordered by severity and dependency."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4305
+      because: "I4305's record and page open with a scorecard (each dimension with its source, verdict and commit) and close with a roadmap drawn from the resolution issues' derived waves."
+  - id: shared-surfaces-leak-security-detail
+    class: regression_risk
+    subject: "a-review-is-seen-at-its-commit#security-findings-are-redacted"
+    finding: "dev-68: a security finding published in full on the site tells an attacker where to look before the fix lands. The JOBL atlas shows title, severity and status only."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4314
+      because: "I4314 adds the security class and one redaction function in the crate, reduces every finding of that class to title, severity and status on the site and in every published data file, and keeps the detail in the checkout-local report. No /ui or Cockpit screen renders a critique finding today; the one that first does calls the same function. I4314 lands in the first milestone and the first review (I4305) depends on it."
+  - id: unresolved-links-are-emitted
+    class: delivery_verification
+    subject: "I4298"
+    finding: "dev-68: only links that resolve may be emitted; the rest must be reported. scripts/ci/link-check decides commit links through mj_commit_in_history (lib/common.sh:761) but has no pull request form, so a /pull/<n> link would be emitted unchecked."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4298
+      because: "I4298 teaches link-check the pull request and line forms, and the component renders a reference it cannot prove as text and lists it in the build report."
+  - id: surfaces-disagree-about-one-fact
+    class: missed_requirement
+    subject: "a-review-is-seen-at-its-commit#a-review-is-a-record-with-a-scorecard"
+    finding: "dev-53: a due-diligence page must show where two surfaces of the repository disagree about one fact. On 2026-10-28 plan delivery proved deployment for 0 of 1036 issues while the delivery report said 29 of 29 features were deployed. The cause dev-53 gives is that published_live (apps/majordomus-cli/src/plan/delivery.rs:761) reads site/static/releases/latest.json at the deployed commit while the gh-pages branch carries releases/latest.json. Verification: plausible; the refuter's note is that if the observed github-pages deployment names a master commit the path resolves, and the subagent writing this could not read the checkout-local deployment observation to confirm which commit it names; a peer's proposed ADR 0227 (the deployed stage reads the pointer where Pages published it) supports dev-53's cause."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4305
+      because: "The first review has a section of surface disagreements, each with both readings, their sources and the commit each was read at; the delivery disagreement is its first entry. The pointer read itself is not re-planned here: a peer's unpushed branch fix/the-deployed-stage-reads-what-pages-published carries the correction as I4315 with a proposed ADR 0227, and the review records whether it landed."
+  - id: release-pointer-cited-as-latest
+    class: regression_risk
+    subject: "I4298"
+    finding: "dev-53: a page that cites 'latest' cites a moving target; a review read tomorrow says something different about the same commit. Every page must pin the release pointer it cites, and the pointer must be read where the deployment published it."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4298
+      because: "I4298 makes every page that cites a release pointer name the commit and path it read it at. Reading the pointer where the deployment published it is I4315's, on the peer branch fix/the-deployed-stage-reads-what-pages-published, and is not duplicated."
+  - id: the-review-record-has-no-home
+    class: unproven_assumption
+    subject: "I4305"
+    finding: "The plan (A7) says the first review is a critique record rendered at /critiques/. A critique is one record per intent, named by it (.ai/repo/project/critiques/README.md), and the site renders no critique: no template under site/templates and no step of scripts/generate-site-data reads one. Writing the review as a critique of an unrelated intent would make preflight read it as that intent's plan review."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4305
+      because: "I4305 decides the record's home with majordomus decision before writing it, within project.optional-complexity: the finding fields are the critique shape extended by I4309, and the review is either the critique of an intent proposed for the review or a section of the quality data; the site page that renders it is owned by I4305."
+  - id: treemap-needs-a-custom-build
+    class: insufficient_work
+    subject: "I4304"
+    finding: "The hotspot view needs a treemap, but scripts/site-build:231 vendors the ECharts common build, which holds bar and line only, and site/charts.js draws only those two. share/design/tokens.yaml has categorical series tokens and no sequential or diverging ramp, so a treemap coloured by measure would invent colours."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4304
+      because: "I4304 adds a sequential and a diverging ramp to the tokens, switches to a custom ECharts build with treemap within the homepage budget, and amends ADR 0152's chart forms."
+  - id: the-first-slice-waited-on-the-second
+    class: regression_risk
+    subject: "a-review-is-seen-at-its-commit"
+    finding: "Second-round review: as first written, issues of the first milestone (order 521) depended on issues of the second (order 522): I4305 on the finding shape and I4306 on ADR 0228, and the deployed /quality/ page waited on I4297's Cockpit half, which edits apps/majordomus-cli/src/cockpit/pages.rs under the exclusive claim #2520 holds. The milestone order claimed a sequence the dependency graph contradicted."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4309
+      because: "The finding shape and its rule (I4309) and the redaction (I4314) moved into the first milestone, the finding-to-issue capability (I4308) stayed in the second, I4306 no longer depends on I4307 because the design book's highlighter text belongs to I3790, and the Cockpit half of I4297 moved to I4311. Every dependency of an order-521 issue now lies in order 521 or in an earlier milestone."
+  - id: security-detail-before-redaction
+    class: regression_risk
+    subject: "I4305"
+    finding: "Second-round review: I4305 publishes the first review, including the result of a one-off scan of the history for secrets, while the redaction that keeps a security finding to its title, severity and status (I4314) sat in the later milestone and was not among I4305's dependencies."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4314
+      because: "I4314 is in the first milestone and I4305 depends on it; I4305's acceptance requires every security-class finding to reach the built site with only its title, severity and status."
+  - id: a-second-writer-of-issue-records
+    class: unnecessary_work
+    subject: "I4308"
+    finding: "Second-round review: I4308 as first written declared its own repository_mutation capability writing issue records, beside open I3252, which plans intents.draft_write as the one checked write of plan records (ADR 0191, proposed), and its allocation check read a board claim for issue ids that only open I3974 introduces. One record kind would have had two write paths and two validation paths."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4308
+      because: "I4308 now builds a draft and writes it only by calling intents.draft_write, reads I3974's id:issue claims for the allocation check, and depends on I3252 and I3974; if either is re-planned it records a decision rather than adding a writer."
+  - id: two-gates-for-function-length
+    class: unnecessary_work
+    subject: "a-review-is-seen-at-its-commit#a-planted-smell-fails-a-named-gate"
+    finding: "Second-round review: I4302 (clippy too_many_lines) and I4303 (a quality.report code from syn spans) each judged an over-long function with its own limit and its own baseline, so one function could pass one gate and fail the other."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4302
+      because: "Function length is judged by clippy's too_many_lines alone (I4302, baseline .ai/repo/clippy-baseline.txt); I4303 keeps module length, the module-wide dead_code allowance and TODO comments, and the criterion names the split."
+  - id: chart-js-requested
+    class: unnecessary_work
+    subject: "a-review-is-seen-at-its-commit"
+    finding: "The owner's request names Chart.js among the libraries to use. ADR 0135 (.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md:69-71) gives measured series to ECharts, I2654's non_scope refuses a second charting library, and ECharts covers every form the plan needs (bar, line, treemap, heatmap, calendar, sankey)."
+    blocking: false
+    resolution:
+      state: rejected
+      because: "A second chart library would give two mechanisms, two palettes and two accessibility paths for one job against an accepted ADR. The conclusion rejects it; the intent lists it as a non-goal, and every chart this intent adds is ECharts over a table."
+  - id: p5-requested
+    class: unnecessary_work
+    subject: "a-review-is-seen-at-its-commit"
+    finding: "The owner's request names p5.js. ADR 0135 allows p5 only for a justified scene and never as status evidence, and every view this intent adds shows findings, which are evidence."
+    blocking: false
+    resolution:
+      state: rejected
+      because: "No view of this intent is a scene; p5 stays where it is (the Cockpit and kiosk). The existing tension between ADR 0160's scenes and the activity time series is recorded as a finding of the first review (I4305) rather than resolved here."
