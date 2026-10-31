@@ -3631,11 +3631,12 @@ pub enum ContinuityCommand {
 /// `majordomus fleet`. The output shape is global, so it reads where a person writes it.
 ///
 /// ```
-/// use majordomus_cli::cli::{Cli, Command, FleetCommand};
+/// use majordomus_cli::cli::{Cli, Command, FleetArgs, FleetCommand, OutputFormat};
 /// use clap::Parser;
-/// let cli = Cli::try_parse_from(["majordomus", "fleet", "rollout", "--machine", "lundra"]).unwrap();
-/// let Command::Fleet(args) = cli.command else { panic!("not the fleet command") };
-/// assert!(matches!(args.command, FleetCommand::Rollout { machine, .. } if machine == vec!["lundra".to_string()]));
+/// let cli = Cli::try_parse_from(["majordomus", "fleet", "status", "--format", "json"]).unwrap();
+/// let Command::Fleet(FleetArgs { command, format, .. }) = cli.command else { panic!("not the fleet command") };
+/// assert!(matches!(command, FleetCommand::Status));
+/// assert!(matches!(format, OutputFormat::Json), "the shape is read after the subcommand");
 /// assert!(Cli::try_parse_from(["majordomus", "fleet"]).is_err(), "a subcommand is required");
 /// ```
 pub struct FleetArgs {
@@ -3655,6 +3656,27 @@ pub struct FleetArgs {
 #[derive(Debug, Subcommand)]
 /// The subcommands of `majordomus fleet`: the command line of `fleet.plan`, `fleet.status`
 /// and `fleet.rollout`.
+///
+/// A machine is named by repeating `--machine`; none names every machine. A rollout installs
+/// a named `--version` even over a newer one, and restarts older servers unless told to keep
+/// them.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, FleetCommand};
+/// use clap::Parser;
+/// let parse = |words: &[&str]| -> FleetCommand {
+///     let cli = Cli::try_parse_from(words).unwrap();
+///     let Command::Fleet(args) = cli.command else { panic!("not the fleet command") };
+///     args.command
+/// };
+/// let rollout = parse(&["majordomus", "fleet", "rollout", "--machine", "lundra", "--machine", "imac"]);
+/// assert!(matches!(rollout, FleetCommand::Rollout { ref machine, version: None, keep_servers: false }
+///     if machine == &["lundra".to_string(), "imac".to_string()]));
+/// let pinned = parse(&["majordomus", "fleet", "rollout", "--version", "1.2.3", "--keep-servers"]);
+/// assert!(matches!(pinned, FleetCommand::Rollout { ref machine, version: Some(ref v), keep_servers: true }
+///     if machine.is_empty() && v == "1.2.3"));
+/// assert!(matches!(parse(&["majordomus", "fleet", "plan"]), FleetCommand::Plan { ref machine, version: None } if machine.is_empty()));
+/// ```
 pub enum FleetCommand {
     /// What a rollout would do on every machine, reaching nothing
     Plan {

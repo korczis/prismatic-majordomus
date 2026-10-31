@@ -122,6 +122,9 @@ impl Declaration {
         if self.kind != KIND {
             return Err(format!("kind {} is not {KIND}", self.kind));
         }
+        if self.id.trim().is_empty() {
+            return Err("a fleet names its id".into());
+        }
         if self.machines.is_empty() {
             return Err("a fleet names at least one machine".into());
         }
