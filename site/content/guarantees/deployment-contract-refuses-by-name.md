@@ -1,7 +1,7 @@
 +++
 title = "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a provider the contract does not know or a provider address that is not https, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named"
 description = "A deployment of the executable is one YAML object under the layer's deployments section,"
-weight = 202
+weight = 203
 [extra]
 claim_id = "deployment-contract-refuses-by-name"
 status = "guaranteed"

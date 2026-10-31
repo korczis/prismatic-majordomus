@@ -1,7 +1,7 @@
 +++
 title = "A layer installed with --personal is one person's own in a shared repository: it changes no tracked file, no .gitignore line and nothing git status shows, and the command that makes the claim verifies it"
 description = "majordomus init --personal, and the installer's --personal, create the same layer a"
-weight = 79
+weight = 80
 [extra]
 claim_id = "personal-layer-changes-nothing-shared"
 status = "guaranteed"

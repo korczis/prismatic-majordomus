@@ -168,6 +168,15 @@
       "note": "The reader skips a bad line rather than crashing, and check, doctor and watch all report it. The ledger is the one durable record nothing else can reconstruct."
     },
     {
+      "id": "claim:record-attribution",
+      "kind": "claim",
+      "label": "A durable record names the session that wrote it, and is filed under the active task only when no other open episode opened that task",
+      "status": "guaranteed",
+      "route": "/guarantees/record-attribution/",
+      "external": false,
+      "note": "ADR 0164. The session is the identity the caller supplies (the provider session a hook names, MAJORDOMUS_PROVIDER_SESSION, or the provider's declared session variable), so it is supplied, never verified. A record proves which session Majordomus was told wrote it, not who the worker was; a process that sets another session's variable is attributed to that session. With several episodes open and no supplied identity, the record names no session rather than a guess. With no episode open at all, workers cannot be told apart and the active task is the caller's."
+    },
+    {
       "id": "claim:decision-attribution",
       "kind": "claim",
       "label": "A decision record without a task, a head and a reason is reported, and does not block",
@@ -3973,6 +3982,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh"
     },
     {
+      "id": "test:test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
+      "kind": "test",
+      "label": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh"
+    },
+    {
       "id": "test:test/cases/30_command_registry.sh",
       "kind": "test",
       "label": "test/cases/30_command_registry.sh",
@@ -4701,6 +4717,11 @@
     {
       "source": "claim:ledger-integrity",
       "target": "source:docs/DOCTRINE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:record-attribution",
+      "target": "source:docs/CLI.md",
       "kind": "specified_by"
     },
     {
@@ -5954,6 +5975,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:record-attribution",
+      "target": "impl:lib/common.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:decision-attribution",
       "target": "impl:lib/check.sh",
       "kind": "implemented_by"
@@ -7141,6 +7167,11 @@
     {
       "source": "claim:ledger-integrity",
       "target": "test:test/cases/22_history.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:record-attribution",
+      "target": "test:test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
       "kind": "proved_by"
     },
     {
