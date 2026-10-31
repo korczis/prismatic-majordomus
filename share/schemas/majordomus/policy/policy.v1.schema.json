@@ -66,6 +66,10 @@
           "items": {
             "type": "string"
           }
+        },
+        "completed_means_complete": {
+          "type": "boolean",
+          "description": "When true, and the completion-gates doctrine runs at finish (gates_passed in finish_requires), the outcome completed is refused unless the completion report (gates.completion, share/completion.yaml) says complete: every question of the policy passes or is exempt. The refusal names each question still owed with the command that settles it. A weaker outcome is never refused, and every finish records the stage the report derived. When false or absent, the same questions are reported and the outcome is not refused over them."
         }
       }
     },
@@ -554,6 +558,35 @@
               "type": "integer",
               "minimum": 1,
               "description": "At or past this many commits behind, the checkout is stale: doctor fails, and with it the commit hook that runs doctor."
+            }
+          }
+        }
+      }
+    },
+    "machine": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "What one machine admits at once (rule project.the-cooperation-model-is-the-owners-word clause 7). Read by machine.slot on every acquisition; absent declares no limit, and an acquisition then says so.",
+      "properties": {
+        "heavy_work": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "The counting slot for heavy work — a build, a test run — kept beside the derive lock where every checkout of the machine agrees on it.",
+          "properties": {
+            "slots": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "How many holders the machine admits at once; the next waits in turn."
+            },
+            "min_free_gib": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "GiB that must be free on the volume the work writes to; below it an acquisition is refused at once, naming the measurement and the holders."
+            },
+            "wait_seconds": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "How long an acquisition that names no bound waits for a slot before it is refused, naming every holder."
             }
           }
         }

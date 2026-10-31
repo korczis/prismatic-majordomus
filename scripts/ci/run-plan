@@ -30,11 +30,11 @@
 # structure job is too long for a hook (about 20 min, and it reaches the network), so a push
 # runs a budget of it, chosen from what CI recorded and never from a list typed by hand:
 #
-#   - the structure gates of this tree's plan that make no network call (`network: true` in
-#     .ai/repo/ci/gates.yaml) and whose recorded seconds (.ai/repo/ci/structure-durations.tsv,
-#     written by `scripts/ci-baseline --structure-durations`) are at most MJ_PUSH_GATE_SECONDS
-#     (default 15), cheapest first, while their sum stays within MJ_PUSH_GATE_BUDGET (default
-#     120);
+#   - the structure gates of this tree's plan (the jobs structure and structure-b, I4381) that
+#     make no network call (`network: true` in .ai/repo/ci/gates.yaml) and whose recorded
+#     seconds (.ai/repo/ci/structure-durations.tsv, written by `scripts/ci-baseline
+#     --structure-durations`) are at most MJ_PUSH_GATE_SECONDS (default 15), cheapest first,
+#     while their sum stays within MJ_PUSH_GATE_BUDGET (default 120);
 #   - the cases .ai/repo/ci/suite-durations.tsv records at most MJ_PUSH_CASE_SECONDS (default
 #     5), four at a time.
 #
@@ -49,6 +49,10 @@
 #   MJ_CI_RECEIPTS=FILE  append "<gate id><TAB><success or failure><TAB><job>/run-plan" per
 #                        gate: the receipt scripts/ci/verdict asks every selected gate for.
 #                        A gate skipped here writes none; the step that runs it writes its own.
+#   MJ_GATE_RECORD=BIN   record each gate's exit as evidence of the active task through
+#                        `BIN evidence --gate <id> --exit <status>` (what `majordomus
+#                        evidence --run-gates` sets), so a run here and a run in CI are
+#                        the same command reaching the same ledger line
 set -u
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT" || exit 2
@@ -173,7 +177,7 @@ if [ "$before_push" = 1 ]; then
     elif [ -z "$secs" ]; then printf '  left out %s: no recorded duration in %s; CI runs it\n' "$id" "$durations"
     elif [ "$secs" -gt "$per_gate" ]; then printf '  left out %s: CI recorded %ss, over the %ss a push spends on one gate\n' "$id" "$secs" "$per_gate"
     else printf '%s %s\n' "$secs" "$id" >> "$plan.cand"; fi
-  done < <(jq -r '.gates[] | select(.job == "structure" and .selected) | "\(.id) \(.network // false)"' "$plan")
+  done < <(jq -r '.gates[] | select((.job == "structure" or .job == "structure-b") and .selected) | "\(.id) \(.network // false)"' "$plan")
   if [ -f "$plan.cand" ]; then
     while read -r secs id; do
       if [ $(( spent + secs )) -gt "$budget" ]; then
@@ -184,7 +188,7 @@ if [ "$before_push" = 1 ]; then
   fi
   gate_executable
   # the chosen gates, in the plan's order, with stdin closed: a hook's stdin is the ref list
-  for g in $(jq -r '.gates[] | select(.job == "structure" and .selected) | .id' "$plan"); do
+  for g in $(jq -r '.gates[] | select((.job == "structure" or .job == "structure-b") and .selected) | .id' "$plan"); do
     case " $chosen " in *" $g "*) ;; *) continue ;; esac
     cmd="$(jq -r --arg g "$g" '.gates[] | select(.id == $g) | .runs' "$plan")"
     t0="$(date +%s)"
@@ -253,8 +257,12 @@ for g in $gates; do
   fi
   printf '\n==> %s: %s\n' "$g" "$cmd"
   t0="$(date +%s)"
-  if bash -c "$cmd" < /dev/null; then printf '==> %s: ok (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"; outcome=success
-  else printf '==> %s: FAILED (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"; failed="$failed $g"; outcome=failure; fi
+  if bash -c "$cmd" < /dev/null; then rc=0; printf '==> %s: ok (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"; outcome=success
+  else rc=$?; printf '==> %s: FAILED (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"; failed="$failed $g"; outcome=failure; fi
+  if [ -n "${MJ_GATE_RECORD:-}" ]; then
+    "$MJ_GATE_RECORD" evidence --gate "$g" --exit "$rc" --command "$cmd" >/dev/null \
+      || printf '==> %s: the run could not be recorded (%s evidence --gate %s --exit %s)\n' "$g" "$MJ_GATE_RECORD" "$g" "$rc"
+  fi
   [ -z "${MJ_CI_RECEIPTS:-}" ] || printf '%s\t%s\t%s/run-plan\n' "$g" "$outcome" "${job:-plan}" >> "$MJ_CI_RECEIPTS"
   [ -n "${MJ_CI_TIMINGS:-}" ] && printf '%s\t%s\t%s\n' "${job:-plan}" "$g" "$(( $(date +%s) - t0 ))" >> "$MJ_CI_TIMINGS"
   ran=$((ran+1))

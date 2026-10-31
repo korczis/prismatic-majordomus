@@ -315,8 +315,8 @@ $ echo $?
 Begin a scoped task.
 
 **Arguments:** `<task>` one line. `--scope <path>[,<path>...]` required. `--profile
-<name>` default from `policy.profiles.default`. `--owner <string>` free-form, default
-`$USER`. `--issue <id>`, `--intent <id>`, or `--exempt <class> --because "<reason>"` name
+<name>` default from `policy.profiles.default`. `--owner <string>` free-form on one line,
+default `$USER`. `--issue <id>`, `--intent <id>`, or `--exempt <class> --because "<reason>"` name
 what the task serves.
 
 **Reads:** policy, profile, git state, and `intents.binding` through the built executable
@@ -327,6 +327,11 @@ when the binding is asked.
 - Refuses (`15`) if `state/current.yaml` exists and its outcome is not terminal. One
   active task per checkout: hand the existing task over (`handover --close`) or finish
   it first. No flag discards an active task.
+- Refuses (`2`) a task, `--owner` or `--because` that holds a line break, a tab or any
+  other control character, before a finished record is archived or anything is written:
+  the record keeps each of them as one scalar on one line, which is all the layer's YAML
+  readers accept. Every other character is kept: the three are written single-quoted, so
+  a quote, a backslash and a non-ASCII letter come back from `check` exactly as given.
 - Normalises each scope path: strips trailing `/`, canonicalises, refuses paths outside
   the repository. Records the normalised form.
 - Reads every other worktree from `git worktree list` and, where one has an active
@@ -696,6 +701,25 @@ episode's envelope claimed the other's tasks, checkpoints and handovers. A line 
 session belongs to no episode — sessions are optional, and work done outside one is
 attributed to nobody rather than to whoever had a session open nearby.
 
+**What attribution guarantees, and what it does not (ADR 0164).** Every durable record
+(a decision, a question opened or resolved, a checkpoint, `check --checkpoint`, a handover,
+`knowledge observe`) carries the session that ran the command. That session is the
+caller's own episode, found by the identity the caller supplies: the provider session a
+hook names, `MAJORDOMUS_PROVIDER_SESSION`, or the session variable the provider's
+lifecycle adapter declares (`CLAUDE_CODE_SESSION_ID` for Claude Code). When the caller supplies no identity, the one open episode of the checkout is used.
+When several are open, the record names none rather than the last one opened. An identity
+that names no open episode also names none. A record relates the active task unless a
+different episode that is still open opened that task; then it is still written, with no
+task. `lib/common.sh` (`mj_record_attribution`) prepares this once per record, and
+`test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh` proves it.
+
+The identity is **supplied, never verified**. Majordomus records the session it was told
+about; it does not authenticate the worker behind it, and nothing here proves who a worker
+was. A process that sets another session's variable is attributed to that session. With no
+episode open at all, two workers cannot be told apart, and the active task is treated as
+the caller's. Read a record's `session` as "the session the tool was told wrote this", not
+as proof of authorship.
+
 `--outcome` takes `closed` or `interrupted`. Both are self-reported and neither is
 verified; `interrupted` exists because "this episode was cut short and its records may be
 incomplete" is the one thing about an ended session that changes what somebody does next.
@@ -738,10 +762,16 @@ produced one record between them. So an open episode is a file of its own,
 it. `--if-open keep` keeps *your* episode — which is why it exists: the start event fires
 again on a resume and on a compaction — and gives a different provider session an episode
 of its own. `close --provider-session <id>` closes that episode and no other, which is what
-a provider's end event passes. An episode nobody named is keyed `hand`, and there is at
-most one of those: a provider that sends no session identity is indistinguishable from a
-person at a terminal, and inventing a distinction there would multiply episodes nobody can
-close. A hand-opened episode needs no provider anywhere and behaves exactly as before.
+a provider's end event passes. A `session start` that names no provider session is keyed
+by the one this process runs inside, where one is observable: `MAJORDOMUS_PROVIDER_SESSION`,
+then each provider's own variable (`CLAUDE_CODE_SESSION_ID`). That is the key every shell
+writer resolves the same process to, so the observations and decisions it records next land
+in the episode it opened; the record carries `provider_session` and `provider`, and its
+working context still says `opened_by: hand`. Only where no provider session is observable
+is the episode keyed `hand`, and there is at most one of those: a provider that sends no
+session identity is indistinguishable from a person at a terminal, and inventing a
+distinction there would multiply episodes nobody can close. A hand-opened episode needs no
+provider anywhere.
 
 `state/session-current.yaml` is a relative symlink into that store: the pointer to the
 episode of this checkout, aimed at the one opened here last and re-aimed by a close at the
@@ -797,10 +827,11 @@ validation gate of the CI model that has reported.
 ```
 majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]
 majordomus evidence --gate <id> --exit <status> [--command <cmd>] [--result <r>] [--json]
+majordomus evidence --run-gates
 majordomus evidence <show|claim|proves|record|stamp> [options]
 ```
 
-The third form is the other program's. Every argument this command takes is an option, so a
+The last form is the other program's. Every argument this command takes is an option, so a
 word in the first position is never its own: `show`, `claim`, `proves`, `record` and `stamp`
 are subcommands of the Rust executable, which holds the ledger of what ran
 ([`EVIDENCE.md`](@/docs/evidence.md#the-capabilities)), and the launcher hands them to it with
@@ -809,7 +840,7 @@ codes are the executable's, and they need no active task. Which words those are 
 from the executable's own declaration (`docs/generated/cli.yaml` in a checkout, the shipped
 executable's `help evidence <word>` in an installed tree), so `majordomus evidence --help`
 lists exactly the subcommands this installation reaches. A word neither program has is
-refused here, exit `2`. The rest of this section is about the first two forms.
+refused here, exit `2`. The rest of this section is about the first three forms.
 
 The two forms record different kinds of fact and are never one invocation. An obligation is
 a promise the task made; a gate is what the validation pipeline said about the tree. A line
@@ -835,7 +866,10 @@ a deployment is a fact about a machine this repository never contacts.
 `--command` or `--artifact` is required: narrative is not evidence. A token the vocabulary
 does not declare exits `2`; a token the active task never promised exits `15`, because
 recording evidence for something nobody asked for is how a checklist grows entries nobody
-wanted.
+wanted — unless the change set implies it (the completion report's `obligations`, derived
+from the token's own inputs). A task cannot be restarted to declare what its change turned
+out to need, so such a token is added to the task's `requires` by recording it, and the
+closure judges it from then on exactly as one declared at `start`.
 
 **Writes:** a `task.evidence` line in the ledger, carrying the obligation, how it was taken,
 the command or artifact, and the hash of the tracked files the obligation names. Nothing
@@ -864,6 +898,12 @@ an `--exit` that is not a number.
 ```
 majordomus evidence --gate rust-check --exit 0 --command 'scripts/rust-check --ci'
 ```
+
+`--run-gates` runs every gate the task's change selects, here, with the commands the CI
+model names, through the dispatcher CI runs (`scripts/ci/run-plan`, told to record through
+this verb with `MJ_GATE_RECORD`), and records each one's exit as it finishes, passing or
+failing. A gate recorded this way and a gate CI ran are the same command reaching the same
+ledger line. It exits with the dispatcher's status: `1` when a gate failed.
 
 **Writes:** a `task.gate` line in the ledger, carrying the gate, its exit status and the hash
 of the files that select it. Those files are derived from the model rather than declared:
@@ -923,6 +963,24 @@ every reading and written down by nobody. `complete` is true only when a task is
 and every question passes or is exempt; `finishable` and `complete` are two different
 words. A distribution whose policy cannot be read is asked one question, `policy`, answered
 `unknown`, and nothing is complete.
+
+`check` prints where the task stands as one line, `stage`, with what that stage still owes,
+and `finish` records the stage and `complete` on its `task.finished` line, so a task closed
+`partial` says where it stopped and not only the word. Where the policy sets
+`verification.completed_means_complete: true` and the completion-gates doctrine runs at
+finish (`gates_passed` in `verification.finish_requires`), `completed` is earned rather than
+claimed: it is refused unless `complete` is true, and the refusal names each question still
+owed with the command that settles it. A weaker outcome is never refused. The skeleton ships
+the key off, because a repository with no CI model and no recorded evidence would be refused
+every completion; a question the report answers only `elsewhere` stays `unknown`, so a
+policy that keeps such questions keeps `complete` out of reach until something answers them.
+
+The obligation closure the report reads settles the facts git holds — `commit`, `push`,
+`target` — live at HEAD (`live`, on by default, an input of both `gates.completion` and
+`obligations.closure`), and the published site only for a task that declared `pages`. A
+handover derived at an episode's end asks with `live: false`, reads the ledger alone and says
+a live token is owed rather than proven; its `Completion` section is that report's stage and
+the questions still owed.
 
 ### The closing questions
 

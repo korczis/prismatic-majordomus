@@ -1,7 +1,7 @@
 +++
 title = "A bare claude in a supervised repository starts with the repository's session-start prompt as its first message, and a run with an argument, outside such a repository, with the opt-out, or with a prompt that cannot be rendered is left exactly as it was"
 description = "A hook can only add context to a session; nothing but a first message starts a turn. So claude opened in this repository used to receive the whole briefing and then wait for a person to type. With the wrapper sourced, a bare claude here starts with the repository's own prompt as its first message: say how you are attached, read the board, find the work that is owed, check for collisions, announce, then work inside the task's scope and keep everything local."
-weight = 137
+weight = 138
 [extra]
 claim_id = "session-start-prompt"
 status = "guaranteed"

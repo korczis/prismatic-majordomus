@@ -50,6 +50,35 @@ pub const STATUS_ARGS: &[&str] = &[
     ".",
 ];
 
+/// The commit the build was handed: `MAJORDOMUS_BUILD_COMMIT` when it names one (neither
+/// empty nor `unknown`), else a hosting provider's `SOURCE_VERSION` when that is a full 40-hex
+/// commit (the Heroku-compatible variable Gigalixir sets to the pushed commit, ADR 0219),
+/// else whatever `MAJORDOMUS_BUILD_COMMIT` held, which [`identify`] then judges exactly as
+/// before. A `SOURCE_VERSION` that is not a commit (a branch name, a short sha) is ignored
+/// rather than compiled in as one (I3820).
+///
+/// ```
+/// use majordomus_cli::build_identity::declared_commit;
+///
+/// let sha = "0123456789abcdef0123456789abcdef01234567";
+/// // a provider build hands only SOURCE_VERSION: it is the commit
+/// assert_eq!(declared_commit(None, Some(sha)), Some(sha.to_string()));
+/// // a branch name is not a commit and is never compiled in as one
+/// assert_eq!(declared_commit(None, Some("master")), None);
+/// ```
+pub fn declared_commit(majordomus: Option<&str>, source_version: Option<&str>) -> Option<String> {
+    let names_one = |v: &str| !v.trim().is_empty() && v.trim() != "unknown";
+    if let Some(v) = majordomus.filter(|v| names_one(v)) {
+        return Some(v.to_string());
+    }
+    let is_commit = |v: &str| v.len() == 40 && v.bytes().all(|b| b.is_ascii_hexdigit());
+    source_version
+        .map(str::trim)
+        .filter(|v| is_commit(v))
+        .map(str::to_string)
+        .or_else(|| majordomus.map(str::to_string))
+}
+
 /// Decide the commit and the dirty flag from what the build was handed and what git says.
 ///
 /// `declared_commit` is `MAJORDOMUS_BUILD_COMMIT` and `declared_dirty` is
@@ -202,6 +231,50 @@ mod tests {
             identify(Some(&padded), Some("0"), no_git),
             (OTHER.into(), "false")
         );
+    }
+
+    #[test]
+    fn a_provider_source_version_is_the_commit_when_nothing_else_names_one() {
+        assert_eq!(declared_commit(None, Some(SHA)), Some(SHA.into()));
+        let padded = format!(" {SHA}\n");
+        assert_eq!(declared_commit(None, Some(&padded)), Some(SHA.into()));
+        // what the build then compiles in: that commit, with its dirtiness unknown
+        let declared = declared_commit(None, Some(SHA));
+        assert_eq!(
+            identify(declared.as_deref(), None, no_git),
+            (SHA.into(), "unknown")
+        );
+    }
+
+    #[test]
+    fn a_named_majordomus_commit_wins_over_the_provider_source_version() {
+        assert_eq!(declared_commit(Some(OTHER), Some(SHA)), Some(OTHER.into()));
+        // `unknown` and empty name nothing, so the provider's commit is taken
+        assert_eq!(
+            declared_commit(Some("unknown"), Some(SHA)),
+            Some(SHA.into())
+        );
+        assert_eq!(declared_commit(Some(" "), Some(SHA)), Some(SHA.into()));
+    }
+
+    #[test]
+    fn a_source_version_that_is_not_a_full_commit_is_ignored() {
+        let not_commits = [
+            "master".to_string(),
+            "0123456".to_string(),
+            SHA[..39].to_string(),
+            format!("{SHA}0"),
+            "z".repeat(40),
+        ];
+        for v in &not_commits {
+            assert_eq!(declared_commit(None, Some(v)), None, "{v:?}");
+            // what MAJORDOMUS_BUILD_COMMIT held is handed on for identify to judge as before
+            assert_eq!(
+                declared_commit(Some("unknown"), Some(v)),
+                Some("unknown".into())
+            );
+        }
+        assert_eq!(declared_commit(None, None), None);
     }
 
     #[test]

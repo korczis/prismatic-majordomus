@@ -251,6 +251,13 @@ pub struct CompletionInput {
     /// A model that declares no tiers, or a tier it does not declare, is refused as invalid
     /// input, in the words `scripts/ci-plan --tier` refuses it with.
     pub tier: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Settle the obligations something can establish — a commit, a push, the trunk, the
+    /// published site the task declared — live, at HEAD, before the ledger is read
+    /// (`obligations.closure`'s `live`). On by default; a report that passes `false`, such
+    /// as a handover written at an episode's end, reads the ledger alone and says a live
+    /// token is owed, never proven.
+    pub live: Option<bool>,
 }
 
 impl BenchmarkCases for CompletionInput {
@@ -553,7 +560,10 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
     // re-judged here; the state word comes back and is translated once.
     let mut standing: BTreeMap<String, gates::ObligationStanding> = BTreeMap::new();
     let mut closure_reachable = false;
-    match ctx.execute("obligations.closure", serde_json::json!({})) {
+    match ctx.execute(
+        "obligations.closure",
+        serde_json::json!({ "live": input.live.unwrap_or(true) }),
+    ) {
         Ok(value) => match serde_json::from_value::<super::obligations::Closure>(value) {
             Ok(closure) => {
                 closure_reachable = true;

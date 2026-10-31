@@ -22,6 +22,14 @@ verification:
     - state_updated
     - no_open_blockers
     - note_present
+  # `completed` is earned, not claimed. With this on (and gates_passed above), the outcome
+  # completed is refused unless the completion report (`majordomus check`) says every
+  # question of share/completion.yaml passes or is exempt; a task that is not there says so
+  # with another outcome — partial, blocked — and records the stage it stopped at. Off in a
+  # fresh repository, because one with no CI model and no recorded evidence yet would be
+  # refused every completion; turn it on once `majordomus check` answers the questions you
+  # mean to hold work to. Until then the same questions are reported and never refused.
+  completed_means_complete: false
 
 checkpoint:
   max_body_lines: 40                     # a checkpoint is a progress note, not a report

@@ -36,6 +36,8 @@ usage: majordomus start "<task>" --scope <path>[,<path>...] [--requires <token>[
                        [--issue <id> | --intent <id> | --exempt <class> --because "<reason>"]
   one active task per checkout; refuses (15) while a task is active — handover or finish it first
   scope paths are normalised (no trailing /, no escapes); overlap with other worktrees is reported
+  the task, --owner and --because are one line each: a line break, tab or other control
+  character is refused (2) and nothing is written
   --requires  what this task owes before it may be called completed: tokens of
               share/obligations.yaml, listed by \`majordomus evidence\` with no arguments.
               A scope says where a worker may write; requires says what the worker owes.
@@ -54,6 +56,12 @@ H
     *) [ -z "$task" ] || mj_die "$MJ_EX_USAGE" "start: task must be one argument (quote it)"; task="$1"; shift ;;
   esac; done
   [ -n "$task" ]  || mj_die "$MJ_EX_USAGE" "start: a task description is required"
+  # The task, the owner and the reason are each written into the record as one scalar on one
+  # line. Text the record cannot hold is refused here, before a finished record is archived
+  # or anything is written, rather than left for the next check to fail on (I3310).
+  mj_start_holdable "the task" "$task"
+  mj_start_holdable "--owner" "$owner"
+  mj_start_holdable "--because" "$because"
   scope="${scope#,}"; requires="${requires#,}"
   [ -n "$(printf '%s' "$scope" | tr -d ', ')" ] || mj_die "$MJ_EX_USAGE" "start: --scope is required (comma-separated repository paths)"
   mj_require_installed
@@ -141,13 +149,13 @@ H
   local now; now="$(mj_now)"
   mkdir -p "$MJ_STATE_DIR"
   {
-    printf 'id: %s\ntask: "%s"\nprofile: %s\nowner: "%s"\nscope:\n' "$id" "$(printf '%s' "$task" | sed 's/"/\\"/g')" "$profile" "$owner"
+    printf 'id: %s\ntask: %s\nprofile: %s\nowner: %s\nscope:\n' "$id" "$(mj_yaml_squote "$task")" "$profile" "$(mj_yaml_squote "$owner")"
     for p in $norm; do printf '  - %s\n' "$p"; done
     if [ -n "$req_norm" ]; then printf 'requires:\n'; for tok in $req_norm; do printf '  - %s\n' "$tok"; done; fi
     # what the worker named, and two pins; never the intent's stage, verdict or criteria
     [ -z "$issue" ]  || printf 'issue: %s\n' "$issue"
     [ -z "$intent" ] || printf 'intent: %s\n' "$intent"
-    if [ -n "$exempt" ]; then printf 'exemption: %s\nexemption_because: "%s"\n' "$exempt" "$(printf '%s' "$because" | sed 's/"/\\"/g')"; fi
+    if [ -n "$exempt" ]; then printf 'exemption: %s\nexemption_because: %s\n' "$exempt" "$(mj_yaml_squote "$because")"; fi
     [ -z "$bind_standing" ] || printf 'binding: %s\n' "$bind_standing"
     [ -z "$plan_rev" ]      || printf 'plan_revision: %s\n' "$plan_rev"
     [ -z "$ev_standing" ]   || printf 'evidence_standing: %s\n' "$ev_standing"
@@ -176,6 +184,12 @@ H
       "majordomus handover --resolve"
   fi
   printf 'next: majordomus context; checkpoint every %s; majordomus check before claiming anything\n' "$(mj_pro checkpoint_interval)"
+}
+
+# mj_start_holdable <what> <value>: refuse (usage) a value the task record cannot hold
+mj_start_holdable() {
+  mj_scalar_holdable "$2" && return 0
+  mj_die "$MJ_EX_USAGE" "start: $1 holds a line break, a tab or another control character; the task record keeps each value on one line, so give it as one line of text"
 }
 
 # report claims in other worktrees that contain or are contained by our scope

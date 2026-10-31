@@ -203,6 +203,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 5
+  - id: machine
+    title: Machine
+    description: "What one machine admits at once: a counting slot for heavy work (a build, a test run), kept beside the derive lock where every checkout of the machine agrees on it, and held to rule project.the-cooperation-model-is-the-owners-word clause 7 — at most the declared number of holders, and none admitted below the declared free disk — with the numbers read from the policy's machine.heavy_work."
+    stability: experimental
+    source: builtin
+    capabilities: 3
   - id: mcp
     title: MCP projection
     description: "The MCP projection of this registry, described as one typed value: who answers `initialize` and with which protocol versions, the transports and how many sessions each holds, what of the protocol is served and what is not, every tool with the effect and the hints its annotations are derived from, the tools that write the repository, the resources, and where each declared client's configuration stands in this repository. Nothing in it is a list of its own: the tools are the registry's, the effect is the capability's classification, the clients are the distribution's providers."
@@ -23760,6 +23766,11 @@ capabilities:
               - string
               - "null"
             description: "Plan at this tier of the model's `tiers` (ADR 0186): a gate whose lane the tier does\nnot run is left out, and nothing implies or requires it back. Absent plans every lane.\nA model that declares no tiers, or a tier it does not declare, is refused as invalid\ninput, in the words `scripts/ci-plan --tier` refuses it with."
+          live:
+            type:
+              - boolean
+              - "null"
+            description: "Settle the obligations something can establish — a commit, a push, the trunk, the\npublished site the task declared — live, at HEAD, before the ledger is read\n(`obligations.closure`'s `live`). On by default; a report that passes `false`, such\nas a handover written at an episode's end, reads the ledger alone and says a live\ntoken is owed, never proven."
         description: "```\nuse majordomus_cli::capability::builtin::gates::CompletionInput;\n\n// the default asks about the active task's own change set\nlet mine = CompletionInput::default();\nassert!(mine.changed.is_none() && mine.base.is_none());\n\n// and a caller may name the change instead, which is how a test drives it\nlet named = CompletionInput {\n    changed: Some(vec![\"docs/CLI.md\".into()]),\n    ..Default::default()\n};\nassert_eq!(named.changed.unwrap(), [\"docs/CLI.md\"]);\n```\nWhich change to judge completion over."
         title: CompletionInput
     output:
@@ -33995,6 +34006,612 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/lifecycle.rs
+  - id: machine.slot.acquire
+    module: machine
+    kind: command
+    title: Take a machine slot for heavy work
+    description: "Take one of the machine's slots for a running process, named by its pid, with a purpose a person reads. Holders whose process is proven gone — the pid no longer runs, or runs with another start time — are reclaimed first and named. Below the declared free disk it refuses at once; with every slot held it waits in arrival order, listed as a waiter, up to the bound (the input's, else the policy's), and then refuses. A refusal is an answer, not an error: it names the limit, the measured value, every holder with its pid, purpose and age, and what to do instead. A process that already holds a slot is told so and holds one, not two."
+    input:
+      name: SlotAcquireInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          pid:
+            type: integer
+            format: uint32
+            minimum: 0
+            description: "The process that will hold the slot: the build's own shell, not the caller of this\ncapability. It must be running; the slot is reclaimed when it stops."
+          purpose:
+            type: string
+            description: "What the holder is about to do, in a person's words: it is what every waiter and\nevery refusal names."
+          wait_seconds:
+            type:
+              - integer
+              - "null"
+            format: uint64
+            minimum: 0
+            description: "How long to wait for a slot, in seconds; the policy's `machine.heavy_work.wait_seconds`\nwhen absent, and no wait when that is absent too."
+          volume:
+            type:
+              - string
+              - "null"
+            description: "A path the work writes to, whose volume the disk floor is judged on; the slot\ndirectory's own volume when absent."
+        required:
+          - pid
+          - purpose
+        description: "What to ask of `machine.slot.acquire`."
+        title: SlotAcquireInput
+    output:
+      name: SlotAnswer
+      schema:
+        type: object
+        properties:
+          verdict:
+            "$ref": "#/$defs/SlotVerdict"
+            description: "Admitted, already held, or refused."
+          refusal:
+            anyOf:
+              - "$ref": "#/$defs/SlotRefusal"
+              - type: "null"
+            description: Present when refused.
+          waited_seconds:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: Seconds the caller waited in the queue.
+          reclaimed:
+            type: array
+            items:
+              "$ref": "#/$defs/SlotHolder"
+            description: "Holders reclaimed on the way, because their process was proven gone."
+          status:
+            "$ref": "#/$defs/SlotStatus"
+            description: The slot directory as it stood when the answer was given.
+        required:
+          - verdict
+          - waited_seconds
+          - reclaimed
+          - status
+        description: The answer to an acquisition.
+        title: SlotAnswer
+        "$defs":
+          SlotVerdict:
+            oneOf:
+              - type: string
+                const: admitted
+                description: "A slot was taken for the caller's process."
+              - type: string
+                const: already_held
+                description: "The caller's process already held one; nothing was taken."
+              - type: string
+                const: refused
+                description: Refused; the refusal says why and who holds the slots.
+            description: What an acquisition came to.
+          SlotRefusal:
+            type: object
+            properties:
+              reason:
+                "$ref": "#/$defs/SlotRefusalReason"
+                description: Which limit refused.
+              detail:
+                type: string
+                description: "The measured values and every holder, in a sentence."
+              remedy:
+                type: string
+                description: What the caller can do instead.
+            required:
+              - reason
+              - detail
+              - remedy
+            description: "A refusal, with what it measured and what to do."
+          SlotRefusalReason:
+            oneOf:
+              - type: string
+                const: slots_full
+                description: Every slot stayed held for the whole wait.
+              - type: string
+                const: disk_floor
+                description: Less than the floor is free on the volume the work writes to.
+            description: Why an acquisition was refused.
+          SlotHolder:
+            type: object
+            properties:
+              pid:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: The process that holds the slot.
+              purpose:
+                type: string
+                description: What it said it is doing.
+              since:
+                type: string
+                description: "When it was admitted (RFC 3339, UTC)."
+              age_seconds:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Seconds since then.
+              liveness:
+                "$ref": "#/$defs/SlotLiveness"
+                description: Whether that process still runs.
+            required:
+              - pid
+              - purpose
+              - since
+              - age_seconds
+              - liveness
+            description: "One holder of a slot, as a reader sees it."
+          SlotLiveness:
+            oneOf:
+              - type: string
+                const: alive
+                description: "The pid runs, with the start time the record names."
+              - type: string
+                const: unverified
+                description: "The pid runs, and its start time could not be read: kept, never reclaimed."
+              - type: string
+                const: dead
+                description: "The pid no longer runs, or runs with another start time: the slot is reclaimable."
+            description: "Whether a holder's process is still the one that took the slot."
+          SlotStatus:
+            type: object
+            properties:
+              directory:
+                type: string
+                description: The directory the slots are kept in.
+              limits:
+                "$ref": "#/$defs/SlotLimits"
+                description: "The limits, and where they were read."
+              free_mib:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: MiB free on the volume measured; absent when it could not be measured.
+              volume:
+                type: string
+                description: "The volume measured: the work's own path, or the slot directory."
+              held:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many holders whose process is not proven gone.
+              holders:
+                type: array
+                items:
+                  "$ref": "#/$defs/SlotHolder"
+                description: "Every holder, oldest first."
+              waiters:
+                type: array
+                items:
+                  "$ref": "#/$defs/SlotWaiter"
+                description: "Every waiter, in the order they will be admitted."
+              summary:
+                type: string
+                description: "One line: held of slots, free against the floor, the waiters."
+            required:
+              - directory
+              - limits
+              - volume
+              - held
+              - holders
+              - waiters
+              - summary
+            description: The slot directory as it stands.
+          SlotLimits:
+            type: object
+            properties:
+              slots:
+                type:
+                  - integer
+                  - "null"
+                format: uint32
+                minimum: 0
+                description: How many holders the machine admits at once; absent admits every caller.
+              min_free_gib:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: GiB that must be free; absent refuses nobody for disk.
+              wait_seconds:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "How long a caller that names no bound waits, in seconds; absent waits not at all."
+              rule:
+                type: string
+                description: The rule whose numbers these are.
+              declared_in:
+                type: string
+                description: "Where they are declared: the policy file and the key."
+            required:
+              - rule
+              - declared_in
+            description: "The limits an admission is judged by, and where they were read."
+          SlotWaiter:
+            type: object
+            properties:
+              pid:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: The process that waits.
+              purpose:
+                type: string
+                description: What it will do once admitted.
+              since:
+                type: string
+                description: "When it started waiting (RFC 3339, UTC)."
+              waiting_seconds:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Seconds it has waited.
+              waiting_on:
+                type: string
+                description: "What it waits on, in the words a progress report carries: `machine.slot: 5 of 5 held`."
+            required:
+              - pid
+              - purpose
+              - since
+              - waiting_seconds
+              - waiting_on
+            description: "One waiter for a slot, as a reader sees it: the progress a waiting session reports."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::machine_slot
+    exposure:
+      mcp:
+        tool: majordomus_machine_slot_acquire
+      http:
+        method: POST
+        path: /api/v1/machine/slot/acquire
+      cli:
+        path:
+          - machine
+          - slot
+          - acquire
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - machine
+      - build
+      - coordination
+    benchmark:
+      policy: waived
+      reason: destructive
+    cache:
+      policy: disabled
+    execution:
+      effect: process_state
+      cancellable: false
+      concurrency: serial
+    source_path: apps/majordomus-cli/src/capability/builtin/machine_slot.rs
+  - id: machine.slot.release
+    module: machine
+    kind: command
+    title: Give a machine slot back
+    description: "Give back the slot a process holds, and withdraw it from the queue if it waits; the next waiter is admitted on its next look. Releasing a slot nobody holds answers `released: false` and changes nothing."
+    input:
+      name: SlotReleaseInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          pid:
+            type: integer
+            format: uint32
+            minimum: 0
+            description: The process whose slot is given back.
+        required:
+          - pid
+        description: "What to ask of `machine.slot.release`."
+        title: SlotReleaseInput
+    output:
+      name: SlotRelease
+      schema:
+        type: object
+        properties:
+          released:
+            type: boolean
+            description: Whether the process held a slot that is now free.
+          holder:
+            anyOf:
+              - "$ref": "#/$defs/SlotHolder"
+              - type: "null"
+            description: The record that was removed.
+          withdrew_waiter:
+            type: boolean
+            description: Whether a waiter record of the process was withdrawn as well.
+        required:
+          - released
+          - withdrew_waiter
+        description: The answer to a release.
+        title: SlotRelease
+        "$defs":
+          SlotHolder:
+            type: object
+            properties:
+              pid:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: The process that holds the slot.
+              purpose:
+                type: string
+                description: What it said it is doing.
+              since:
+                type: string
+                description: "When it was admitted (RFC 3339, UTC)."
+              age_seconds:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Seconds since then.
+              liveness:
+                "$ref": "#/$defs/SlotLiveness"
+                description: Whether that process still runs.
+            required:
+              - pid
+              - purpose
+              - since
+              - age_seconds
+              - liveness
+            description: "One holder of a slot, as a reader sees it."
+          SlotLiveness:
+            oneOf:
+              - type: string
+                const: alive
+                description: "The pid runs, with the start time the record names."
+              - type: string
+                const: unverified
+                description: "The pid runs, and its start time could not be read: kept, never reclaimed."
+              - type: string
+                const: dead
+                description: "The pid no longer runs, or runs with another start time: the slot is reclaimable."
+            description: "Whether a holder's process is still the one that took the slot."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::machine_slot
+    exposure:
+      mcp:
+        tool: majordomus_machine_slot_release
+      http:
+        method: POST
+        path: /api/v1/machine/slot/release
+      cli:
+        path:
+          - machine
+          - slot
+          - release
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - machine
+      - build
+      - coordination
+    benchmark:
+      policy: waived
+      reason: destructive
+    cache:
+      policy: disabled
+    execution:
+      effect: process_state
+      cancellable: false
+      concurrency: serial
+    source_path: apps/majordomus-cli/src/capability/builtin/machine_slot.rs
+  - id: machine.slot.status
+    module: machine
+    kind: query
+    title: "Who holds the machine's slots, and who waits"
+    description: "The slot directory as it stands: the limits and where they are declared, the free space on the volume measured, every holder with its pid, purpose, age and whether its process still runs (a pid that runs with another start time is a reused pid, and dead), and every waiter with how long it has waited and what it waits on (`machine.slot: 5 of 5 held`) — the progress a waiting session reports. Reads only: a dead holder is reported here and reclaimed by the next acquisition."
+    input:
+      name: SlotStatusInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          volume:
+            type:
+              - string
+              - "null"
+            description: "A path the work writes to, whose volume's free space is measured; the slot\ndirectory's own volume when absent."
+        description: "What to ask of `machine.slot.status`."
+        title: SlotStatusInput
+    output:
+      name: SlotStatus
+      schema:
+        type: object
+        properties:
+          directory:
+            type: string
+            description: The directory the slots are kept in.
+          limits:
+            "$ref": "#/$defs/SlotLimits"
+            description: "The limits, and where they were read."
+          free_mib:
+            type:
+              - integer
+              - "null"
+            format: uint64
+            minimum: 0
+            description: MiB free on the volume measured; absent when it could not be measured.
+          volume:
+            type: string
+            description: "The volume measured: the work's own path, or the slot directory."
+          held:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many holders whose process is not proven gone.
+          holders:
+            type: array
+            items:
+              "$ref": "#/$defs/SlotHolder"
+            description: "Every holder, oldest first."
+          waiters:
+            type: array
+            items:
+              "$ref": "#/$defs/SlotWaiter"
+            description: "Every waiter, in the order they will be admitted."
+          summary:
+            type: string
+            description: "One line: held of slots, free against the floor, the waiters."
+        required:
+          - directory
+          - limits
+          - volume
+          - held
+          - holders
+          - waiters
+          - summary
+        description: The slot directory as it stands.
+        title: SlotStatus
+        "$defs":
+          SlotLimits:
+            type: object
+            properties:
+              slots:
+                type:
+                  - integer
+                  - "null"
+                format: uint32
+                minimum: 0
+                description: How many holders the machine admits at once; absent admits every caller.
+              min_free_gib:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: GiB that must be free; absent refuses nobody for disk.
+              wait_seconds:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "How long a caller that names no bound waits, in seconds; absent waits not at all."
+              rule:
+                type: string
+                description: The rule whose numbers these are.
+              declared_in:
+                type: string
+                description: "Where they are declared: the policy file and the key."
+            required:
+              - rule
+              - declared_in
+            description: "The limits an admission is judged by, and where they were read."
+          SlotHolder:
+            type: object
+            properties:
+              pid:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: The process that holds the slot.
+              purpose:
+                type: string
+                description: What it said it is doing.
+              since:
+                type: string
+                description: "When it was admitted (RFC 3339, UTC)."
+              age_seconds:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Seconds since then.
+              liveness:
+                "$ref": "#/$defs/SlotLiveness"
+                description: Whether that process still runs.
+            required:
+              - pid
+              - purpose
+              - since
+              - age_seconds
+              - liveness
+            description: "One holder of a slot, as a reader sees it."
+          SlotLiveness:
+            oneOf:
+              - type: string
+                const: alive
+                description: "The pid runs, with the start time the record names."
+              - type: string
+                const: unverified
+                description: "The pid runs, and its start time could not be read: kept, never reclaimed."
+              - type: string
+                const: dead
+                description: "The pid no longer runs, or runs with another start time: the slot is reclaimable."
+            description: "Whether a holder's process is still the one that took the slot."
+          SlotWaiter:
+            type: object
+            properties:
+              pid:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: The process that waits.
+              purpose:
+                type: string
+                description: What it will do once admitted.
+              since:
+                type: string
+                description: "When it started waiting (RFC 3339, UTC)."
+              waiting_seconds:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Seconds it has waited.
+              waiting_on:
+                type: string
+                description: "What it waits on, in the words a progress report carries: `machine.slot: 5 of 5 held`."
+            required:
+              - pid
+              - purpose
+              - since
+              - waiting_seconds
+              - waiting_on
+            description: "One waiter for a slot, as a reader sees it: the progress a waiting session reports."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::machine_slot
+    exposure:
+      mcp:
+        tool: majordomus_machine_slot_status
+      http:
+        method: GET
+        path: /api/v1/machine/slot/status
+      cli:
+        path:
+          - machine
+          - slot
+          - status
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - machine
+      - build
+      - coordination
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+      local_only: true
+    source_path: apps/majordomus-cli/src/capability/builtin/machine_slot.rs
   - id: mcp.projection
     module: mcp
     kind: query
@@ -35082,6 +35699,16 @@ capabilities:
                 items:
                   type: string
                 description: The services that restart always and are the last the OOM killer takes.
+              runner_homes:
+                type: array
+                items:
+                  type: string
+                description: "The homes of the CI runners' users: the disk guard reclaims the cargo build output\nanywhere under them, with the same safety as under `home`."
+              runner_units:
+                type: array
+                items:
+                  type: string
+                description: "The CI runner services, as unit name patterns (`*` matches any run of characters):\nevery observed unit that matches one restarts always, without a start limit."
             required:
               - user
               - home
@@ -35098,6 +35725,8 @@ capabilities:
               - local_node
               - nodes
               - critical_services
+              - runner_homes
+              - runner_units
             description: "What the provisioning declares: who runs the builds, which store, how bounded, which\nnodes receive an identity."
           Plan:
             type: object
@@ -35117,6 +35746,11 @@ capabilities:
                 items:
                   "$ref": "#/$defs/Step"
                 description: "The commands, in the order they run."
+              runners:
+                type: array
+                items:
+                  type: string
+                description: "The CI runner units observed on the host, each owed its drop-in and started."
               changes:
                 type: integer
                 format: uint
@@ -35131,6 +35765,7 @@ capabilities:
               - files
               - edits
               - steps
+              - runners
               - changes
               - unobservable
             description: "The plan: every file, edit and command the host still owes."
@@ -42885,12 +43520,18 @@ capabilities:
     title: What this task still owes
     description: "Every obligation the active task declared, joined with what the vocabulary says about it and with the evidence that does or does not discharge it: what is owed, what is discharged, and what has gone stale — with the recorded input hash and the tree's current one, or the recorded commit and its label, so a reader can see against what. The judgement is the one `finish` applies, reproduced rather than re-decided, and the staleness words are the repository's only four. A checkout with no task reports that, rather than reporting nothing owed."
     input:
-      name: Empty
+      name: ClosureInput
       schema:
         type: object
         additionalProperties: false
-        description: No input.
-        title: Empty
+        properties:
+          live:
+            type:
+              - boolean
+              - "null"
+            description: "Settle every token whose fact something can establish — a commit, a push, the\ntrunk, the published site, the deployed surfaces — live, at HEAD, before reading\nthe ledger. On by default: a page rendered from a cache may pass `false` to read\nthe ledger alone, and such a report says a live token is owed rather than proven."
+        description: "```\nuse majordomus_cli::capability::builtin::obligations::ClosureInput;\n// the default settles every establishable token live, at HEAD\nassert!(ClosureInput::default().live.is_none());\n```\nHow the closure is judged. The one choice a caller makes is whether the tokens\nsomething can establish are settled live before the ledger is read; the judgement of\neach token is the same whichever a caller chooses, and a report that skipped the live\npass says a live token is owed rather than proven."
+        title: ClosureInput
     output:
       name: Closure
       schema:
@@ -43009,6 +43650,10 @@ capabilities:
               id:
                 type: string
                 description: "The token, as the task's `requires` names it."
+              declared:
+                type: boolean
+                description: "True when the task's `requires` names it. An establishable token the task did not\ndeclare is judged here too, live, so that the completion report can answer for it\nwhen the change implies it; it never counts toward `closed`."
+                default: true
               title:
                 type: string
                 description: From the vocabulary; the token itself when it declares none.
@@ -43231,6 +43876,9 @@ capabilities:
               note:
                 type: string
                 description: What the vocabulary says about the token beyond its summary.
+              established_by:
+                type: string
+                description: "What settles the fact without asking a worker: `git` for a fact git already holds,\na command for one a command already answers, `none` (or absent) for one nothing\ncan settle. A token that names something is decided live, at HEAD, and its recorded\nevidence is consulted only where the live answer is undecidable."
             required:
               - id
               - title

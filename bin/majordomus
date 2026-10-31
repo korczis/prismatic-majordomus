@@ -3,6 +3,14 @@
 # Single entry point. Subcommands live in ../lib/<name>.sh and are sourced.
 set -eu
 
+# The caller's own MJ_* environment, read before this program sets a variable of its own. A
+# command majordomus runs on its caller's behalf (finish's --verify-command) runs in it, and
+# not with the forty-odd MJ_* variables exported below and in lib/common.sh (I4520). Here,
+# every MJ_* variable came from the environment, so their names say which were inherited.
+mj_caller_env=()
+for mj_name in "${!MJ_@}"; do mj_caller_env+=("$mj_name=${!mj_name}"); done
+unset mj_name
+
 MJ_BIN_DIR="$(cd "$(dirname "$0")" && pwd)"
 MJ_LIB_DIR="$MJ_BIN_DIR/../lib"
 # The version is authored once, in apps/majordomus-cli/Cargo.toml. share/version.txt is its
@@ -281,8 +289,12 @@ case "$cmd" in
     fi
     mj_parse_global_opts "$@"
     # after the dispatch and not before it: a command handed to the other program is an
-    # exec, and an exec runs no exit trap to remove the root
-    mj_tmp_root_init
+    # exec, and an exec runs no exit trap to remove the root. A root that cannot be made
+    # leaves `mktemp` as it was, as the library does for a script that sources it: on a full
+    # or unwritable TMPDIR the entry point died here with mktemp's own message and exit 1,
+    # before doctor could say what was wrong (I4323)
+    mj_tmp_root_init 2>/dev/null || true
+    [ -d "${MJ_TMP_ROOT:-}" ] || MJ_TMP_ROOT=""
     # shellcheck disable=SC1090
     . "$MJ_LIB_DIR/$cmd.sh"
     "mj_cmd_$cmd" "${MJ_ARGS[@]+"${MJ_ARGS[@]}"}"

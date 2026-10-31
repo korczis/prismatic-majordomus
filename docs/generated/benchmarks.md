@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 220 | 181 | 0 | 39 |
-| http | 212 | 181 | 0 | 31 |
-| mcp | 206 | 176 | 0 | 30 |
+| direct | 223 | 182 | 0 | 41 |
+| http | 215 | 182 | 0 | 33 |
+| mcp | 209 | 177 | 0 | 32 |
 | system | 14 | 14 | 0 | 0 |
-| total | 652 | 552 | 0 | 100 |
+| total | 661 | 555 | 0 | 106 |
 
 ## Capabilities
 
@@ -127,6 +127,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `lifecycle.providers` | lifecycle | query | process, 2 entries | covered | covered | covered | `default` |
 | `lifecycle.recovery` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `lifecycle.runtime` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `machine.slot.acquire` | machine | command | — | waived | waived | waived | — |
+| `machine.slot.release` | machine | command | — | waived | waived | waived | — |
+| `machine.slot.status` | machine | query | — | covered | covered | covered | `the-machine`, `a-build-directory` |
 | `mcp.projection` | mcp | query | — | covered | covered | covered | `every-tool`, `writers` |
 | `mesh.beat` | mesh | command | — | waived | waived | waived | — |
 | `mesh.build_cache.ensure` | mesh | command | — | waived | — | — | — |
@@ -165,7 +168,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `objects.list` | objects | query | — | covered | covered | covered | `all`, `first-kind` |
 | `objects.search` | objects | query | process, 64 entries | covered | covered | covered | `common-word`, `no-hit` |
 | `objects.verify` | objects | query | — | covered | covered | covered | `bounded` |
-| `obligations.closure` | obligations | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `obligations.closure` | obligations | query | process, 2 entries, 2s | covered | covered | covered | `live`, `recorded-only` |
 | `obligations.vocabulary` | obligations | query | process, 2 entries | covered | covered | covered | `default` |
 | `observatory.capture` | observatory | query | — | covered | covered | covered | `default` |
 | `observatory.events` | observatory | query | — | covered | covered | covered | `newest`, `after a cursor` |
@@ -275,6 +278,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.ui.capabilities` | `/ui/capabilities` | pinned | — |
 | `system.http.ui.skills` | `/ui/skills` | pinned | — |
 | `system.http.ui.mesh` | `/ui/mesh` | pinned | — |
+| `system.http.ui.board` | `/ui/board` | pinned | — |
 | `system.http.ui.peers` | `/ui/peers` | pinned | — |
 | `system.http.ui.delivery` | `/ui/delivery` | pinned | — |
 | `system.http.ui.deployments` | `/ui/deployments` | pinned | — |
@@ -294,6 +298,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.live.ui.capabilities` | `/ui/capabilities` | live | — |
 | `system.http.live.ui.skills` | `/ui/skills` | live | — |
 | `system.http.live.ui.mesh` | `/ui/mesh` | live | — |
+| `system.http.live.ui.board` | `/ui/board` | live | — |
 | `system.http.live.ui.peers` | `/ui/peers` | live | — |
 | `system.http.live.ui.delivery` | `/ui/delivery` | live | — |
 | `system.http.live.ui.deployments` | `/ui/deployments` | live | — |
@@ -306,6 +311,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.ui.panels.pull_requests` | `/ui/panels/pull-requests` | pinned | yes |
 | `system.http.ui.panels.delivery` | `/ui/panels/delivery` | pinned | yes |
 | `system.http.ui.panels.drain` | `/ui/panels/drain` | pinned | yes |
+| `system.http.ui.panels.board` | `/ui/panels/board` | pinned | yes |
 | `system.http.ui.panels.standing` | `/ui/panels/standing` | pinned | yes |
 | `system.http.ui.panels.shared_scope` | `/ui/panels/shared-scope` | pinned | yes |
 

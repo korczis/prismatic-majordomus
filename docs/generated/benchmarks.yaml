@@ -6,22 +6,22 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 1.0.0-alpha.9
 coverage:
   - scope: direct
-    required: 220
-    covered: 181
+    required: 223
+    covered: 182
     missing: 0
-    waived: 39
+    waived: 41
     inapplicable: 0
   - scope: http
-    required: 212
-    covered: 181
+    required: 215
+    covered: 182
     missing: 0
-    waived: 31
+    waived: 33
     inapplicable: 0
   - scope: mcp
-    required: 206
-    covered: 176
+    required: 209
+    covered: 177
     missing: 0
-    waived: 30
+    waived: 32
     inapplicable: 0
   - scope: system
     required: 14
@@ -30,10 +30,10 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 652
-    covered: 552
+    required: 661
+    covered: 555
     missing: 0
-    waived: 100
+    waived: 106
     inapplicable: 0
 capabilities:
   - id: artifacts.list
@@ -1030,6 +1030,32 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: machine.slot.acquire
+    module: machine
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
+  - id: machine.slot.release
+    module: machine
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
+  - id: machine.slot.status
+    module: machine
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - the-machine
+      - a-build-directory
   - id: mcp.projection
     module: mcp
     kind: query
@@ -1370,7 +1396,8 @@ capabilities:
     mcp: covered
     http: covered
     cases:
-      - default
+      - live
+      - recorded-only
   - id: obligations.vocabulary
     module: obligations
     kind: query
@@ -2139,6 +2166,10 @@ pages:
     route: /ui/mesh
     view: pinned
     deferred: false
+  - key: system.http.ui.board
+    route: /ui/board
+    view: pinned
+    deferred: false
   - key: system.http.ui.peers
     route: /ui/peers
     view: pinned
@@ -2215,6 +2246,10 @@ pages:
     route: /ui/mesh
     view: live
     deferred: false
+  - key: system.http.live.ui.board
+    route: /ui/board
+    view: live
+    deferred: false
   - key: system.http.live.ui.peers
     route: /ui/peers
     view: live
@@ -2261,6 +2296,10 @@ pages:
     deferred: true
   - key: system.http.ui.panels.drain
     route: /ui/panels/drain
+    view: pinned
+    deferred: true
+  - key: system.http.ui.panels.board
+    route: /ui/panels/board
     view: pinned
     deferred: true
   - key: system.http.ui.panels.standing

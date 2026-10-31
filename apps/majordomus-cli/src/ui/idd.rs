@@ -282,6 +282,18 @@ fn render(
             .class("mj-ui-stack")
             .attr("data-follows-executions", "")
             .child(top)
+            // the same work as a board of its stages, with who carries each piece (I4236)
+            .child(
+                el("p")
+                    .class("mj-ui-dim")
+                    .text("Every issue at its delivery stage, and who carries it now: ")
+                    .child(
+                        el("a")
+                            .class("mj-ui-link")
+                            .attr("href", super::board::ROUTE)
+                            .text("the Blackboard"),
+                    ),
+            )
             .child(grid),
     )
 }

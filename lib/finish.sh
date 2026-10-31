@@ -12,6 +12,7 @@
 . "$MJ_LIB_DIR/handover.sh"
 
 MJ_FINISH_OUTCOME=""; MJ_FINISH_VERIFY=""; MJ_FINISH_NOTE=""
+MJ_COMPLETION_STAGE=""; MJ_COMPLETION_COMPLETE=""
 MJ_FINISH_VEXIT=""; MJ_FINISH_VSECS=""; MJ_FINISH_VTREE=""
 export MJ_FINISH_OUTCOME
 
@@ -128,7 +129,11 @@ H
   sed -e "s/^outcome: .*/outcome: $outcome/" -e "s/^checkpoint_at: .*/checkpoint_at: $now/" "$MJ_CUR" > "$MJ_CUR.mj-tmp" && mv "$MJ_CUR.mj-tmp" "$MJ_CUR"
   local vj=null; [ -n "$MJ_FINISH_VEXIT" ] && vj="{\"command\":\"$(mj_json_esc "$verify")\",\"exit\":$MJ_FINISH_VEXIT,\"seconds\":$MJ_FINISH_VSECS${MJ_FINISH_VTREE:+,\"tree\":\"$MJ_FINISH_VTREE\"}}"
   local cps=0; cps="$(find "$MJ_STATE_DIR/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
-  mj_ledger_append task.finished "\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"contract\":$contract,\"verify\":$vj,\"checkpoints\":$cps"
+  # the stage the completion report derived, when the gate doctrine ran: a record that says
+  # `partial` and nothing else sends the next worker back to rediscover what was left
+  local stagej=""
+  [ -z "${MJ_COMPLETION_STAGE:-}" ] || stagej=",\"stage\":\"$MJ_COMPLETION_STAGE\",\"complete\":${MJ_COMPLETION_COMPLETE:-false}"
+  mj_ledger_append task.finished "\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"contract\":$contract,\"verify\":$vj,\"checkpoints\":$cps$stagej"
   mj_mesh_task_release "$id"
   [ "$MJ_JSON" = 1 ] || printf 'finish: %s %s\n' "$id" "$outcome"
 }
@@ -173,6 +178,28 @@ mj_verify_is_vacuous() {
   }
 }
 
+# Make this (sub)shell's environment the one majordomus was called in, for a verify command.
+# The launcher exports variables of its own (MJ_ROOT, MJ_STATE_DIR, MJ_AI_DIR, MJ_LIB_DIR,
+# MJ_SELF and the other paths and exit codes), and the installed launcher MAJORDOMUS_LAUNCHER.
+# Scripts that take MJ_ROOT=<dir> as an override (scripts/ci/release-check, case-numbers) then
+# read the finishing checkout instead of their fixture, and a checkout's bin/majordomus started
+# under them named the installed launcher as itself: `finish --verify-command "scripts/ci/run-plan
+# --before-push"` failed cases 3021, 3029, 276, 850, 911 and 925-939 that pass standalone and in
+# the pre-push hook (seen on 2026-10-30, I4520). So every MJ_* variable and MAJORDOMUS_LAUNCHER
+# is removed and the caller's MJ_* variables, recorded by bin/majordomus before it set any, are
+# exported again with the caller's values. The outcome this finish claims stays unexported even
+# so: a `check` the command runs that saw it would judge obligations and gates as a completed
+# finish and refuse. Run it only in the subshell that runs the command.
+mj_verify_env_is_the_callers() {
+  local mj_v
+  for mj_v in "${!MJ_@}"; do unset "$mj_v"; done
+  unset MAJORDOMUS_LAUNCHER
+  # mj_caller_env is set by bin/majordomus; each entry is NAME=value, exported as written
+  # shellcheck disable=SC2154,SC2163
+  for mj_v in ${mj_caller_env[@]+"${mj_caller_env[@]}"}; do export "$mj_v"; done
+  unset MJ_FINISH_OUTCOME
+}
+
 mj_validate_verification() {
   local id; id="$(mj_cur id)"
   mj_finish_selected || { mj_doctrine_skip verification "$id" "not in verification.finish_requires"; MJ_DOCTRINE_SKIPPED=1; return 0; }
@@ -193,10 +220,10 @@ mj_validate_verification() {
   # about the tree it started on and nothing about the tree it left, so it is not a pass,
   # and the tree that a run did prove is recorded with it.
   local t0 t1 vexit before after; before="$(mj_worktree_tree_id)"; t0="$(date +%s)"
-  # The verify command is the project's own verification, run as a worker would run it. The
-  # outcome this finish claims is its own state: a `check` the command runs that saw it would
-  # judge obligations and gates as a completed finish and refuse, so it is not exported there.
-  if ( cd "$MJ_ROOT" && unset MJ_FINISH_OUTCOME && sh -c "$MJ_FINISH_VERIFY" ) > /dev/null 2>&1; then vexit=0; else vexit=$?; fi
+  # The verify command is the project's own verification, run as a worker would run it, so it
+  # runs in the caller's environment (mj_verify_env_is_the_callers).
+  local vcmd="$MJ_FINISH_VERIFY"
+  if ( cd "$MJ_ROOT" && mj_verify_env_is_the_callers && sh -c "$vcmd" ) > /dev/null 2>&1; then vexit=0; else vexit=$?; fi
   t1="$(date +%s)"; after="$(mj_worktree_tree_id)"
   MJ_FINISH_VEXIT="$vexit"; MJ_FINISH_VSECS=$((t1-t0)); MJ_FINISH_VTREE="$after"
   if [ "$vexit" != 0 ]; then

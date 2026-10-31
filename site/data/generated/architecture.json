@@ -1572,6 +1572,11 @@
       "kind": "sources"
     },
     {
+      "source": "lib/evidence.sh",
+      "target": "lib/rust_bin.sh",
+      "kind": "sources"
+    },
+    {
       "source": "lib/finish.sh",
       "target": "lib/check.sh",
       "kind": "sources"
@@ -1664,6 +1669,11 @@
     {
       "source": "lib/recover.sh",
       "target": "lib/session.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/session.sh",
+      "target": "lib/capture.sh",
       "kind": "sources"
     },
     {
@@ -2289,6 +2299,11 @@
     {
       "source": "lib/common.sh",
       "target": ".ai/local/state/mcp/ensure.log",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/evidence.sh",
+      "target": ".ai/local/state/current.yaml",
       "kind": "writes"
     },
     {

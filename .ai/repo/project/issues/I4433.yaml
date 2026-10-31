@@ -1,0 +1,47 @@
+id: I4433
+milestone: a-finish-reads-the-criteria-its-work-serves
+title: "Where the policy says completed means complete, finish refuses completed until the completion report is complete, and every finish records the stage it stopped at"
+slug: completed-is-earned
+priority: p1
+profile: implementation
+objective: "Port the second slice of pull request 821 fresh onto master: verification.completed_means_complete (schema, allow-list, skeleton off with the reason); lib/gates.sh prints the derived stage on check and, with the key on, refuses finish completed naming each question still owed; lib/finish.sh records stage and complete on task.finished; evidence --run-gates runs the selected gates through scripts/ci/run-plan, which records each exit (MJ_GATE_RECORD); an obligation the change implies is declared by discharging it; obligations.closure and gates.completion settle commit, push and target live at HEAD (live, on by default) and the published site only when declared; the handover's derived Completion section, masked in recorded evidence."
+why: "The completion policy of slice 1 (share/completion.yaml, gates.completion's complete bit) is reported by check and read by nothing at finish: a task can be called completed while the report says it is not. This milestone's desired state names the missing piece: a policy key says whether an owed answer refuses."
+current_state: "On master 51b38035a71 complete is derived and served (gates.completion, gates.policy) but finish never reads it; task.finished carries no stage; the closure reads git's facts only through the shell's establishment; share/obligations.yaml's implementation input `*` stays in one path segment in the Rust glob."
+desired_state: "One bit decides whether an owed question refuses completed; the refusal and the record are the executable's report, read once; the gates are run and recorded by the dispatcher CI runs."
+scope:
+  - "lib/gates.sh"
+  - "lib/finish.sh"
+  - "lib/evidence.sh"
+  - "lib/derive.sh"
+  - "lib/usecase.sh"
+  - "scripts/ci/run-plan"
+  - "apps/majordomus-cli/src/capability/builtin/obligations.rs"
+  - "apps/majordomus-cli/src/capability/builtin/gates.rs"
+  - "apps/majordomus-cli/src/gates/done.rs"
+  - "share/completion.yaml"
+  - "share/obligations.yaml"
+  - "share/skeleton/policy.yaml"
+  - "share/schemas/majordomus/policy/policy.v1.schema.json"
+  - "share/allow/policy.txt"
+  - "share/commands.yaml"
+  - "docs/CLI.md"
+  - "test/cases/880_completion_is_proved.sh"
+non_scope:
+  - "Turning the key on in this repository: the shipped policy still answers generated, handover and issue only elsewhere (unknown), so complete is out of reach here until those questions have sources"
+  - "The deployment plan (deploy/targets.rs) and the release, issue and handover sources of the #292 core"
+  - "Live verification of a deployed surface (deploy.verify)"
+acceptance_criteria:
+  - "With completed_means_complete on, finish completed is refused naming every question that is neither pass nor exempt, with its remediation; partial is accepted"
+  - "Completed is accepted exactly when gates.completion says complete"
+  - "task.finished carries stage and complete whenever the completion-gates doctrine ran"
+  - "evidence --run-gates records one task.gate line per gate it ran, passing or failing"
+  - "Without the key, finish behaves as before"
+validation:
+  - "bash test/run.sh 880_completion_is_proved"
+  - "bash test/run.sh 131_completion_gates"
+  - "majordomus plan validate"
+  - "majordomus intent validate"
+evidence_required:
+  - "case_completion_is_proved"
+created_at: 2026-10-30
+updated_at: 2026-10-30
