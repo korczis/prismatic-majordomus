@@ -1411,7 +1411,8 @@ for dirpath, _, files in site_walk():
     pages += 1
     parts = path.split("/")
     by_policy = len(parts) >= 4 and parts[1] in unlisted
-    has_noindex = bool(noindex_re.search(text[:6000]))
+    # the whole head, not a prefix of it: a long description must not hide the robots meta
+    has_noindex = bool(noindex_re.search(text.split("</head>", 1)[0]))
     in_sitemap = path in locs
     if by_policy and not has_noindex:
         problems.append(f"{path} is below an unlisted section and carries no noindex")

@@ -1,0 +1,36 @@
+id: I4365
+milestone: knowledge-is-reconciled-before-it-is-reviewed
+title: "A promoted record cites no local episode or task: knowledge promote rewrites its provenance to what resolves in a clean clone, or refuses"
+slug: a-promoted-record-cites-no-local-episode
+priority: p1
+profile: implementation
+objective: "When knowledge promote moves a candidate into the tracked curated store, replace every provenance.derived_from reference that names only this machine's local state (session:<episode>, task:<task>) with references that resolve in any clone: the observation's subject and evidence (file:, test:, commit:, issue:, claim:). Refuse the promotion, writing nothing, when nothing resolvable is left. A case runs doctor and knowledge check on a promoted record with .ai/local moved aside."
+why: "On 2026-10-28/29, three sessions independently shipped curated records that failed in every clean clone. #2646 had 3 records (doctor failed 6 references, and the landing seat dropped it from train 11), #2650 had more, and #2656 had all 14 of its records citing session:s-20261028215857-d010 and task:t-20261028215915-277b. Each was fixed by hand. The evolve skill now tells a reviewer to do that by hand (I4337, step 2) until promote does it itself."
+current_state: "mj_knowledge_compose writes `derived_from: [session:<sid>, task:<task>]` into every candidate (lib/knowledge.sh:1222). The deriver reads the session: entry back to group a candidate with its episode (lib/knowledge.sh:1455), so the reference is load-bearing while the record is a candidate. mj_knowledge_promote_cmd (lib/knowledge.sh:1570) keeps it unchanged in the tracked record. The episode and the task live only in the promoting machine's .ai/local. So knowledge check passes in the author's checkout and fails in every other clone, and so does doctor's reference resolution."
+desired_state: "A record under .ai/repo/knowledge/curated/ resolves in a clean clone the moment it is promoted, without anyone editing its provenance by hand; a candidate keeps its session: reference for grouping."
+scope:
+  - "lib/knowledge.sh"
+  - "test/cases/709_knowledge_promotion_is_an_act.sh"
+  - "docs/KNOWLEDGE.md"
+  - "site/content/docs/knowledge.md"
+non_scope:
+  - "Changing how a candidate is grouped with its episode while it is a candidate"
+  - "Rewriting curated records that were already promoted before this lands (they were fixed by hand on #2646, #2650 and #2656)"
+  - "Automatic promotion; promotion stays a person's act (ADR 0091)"
+depends_on:
+  - "I3415"
+serves:
+  - "a-change-reconciles-what-it-affects#promotion-cites-resolvable-evidence"
+acceptance_criteria:
+  - "knowledge promote writes a curated record whose provenance.derived_from names no session: or task: reference, and names the observation's subject and evidence references instead"
+  - "knowledge promote exits 10 and writes nothing when, after the local references are removed, derived_from would name nothing that resolves"
+  - "With .ai/local moved aside, knowledge check and doctor pass on a record promoted in the case (the clean-clone condition the landing seat found on train 11)"
+  - "A candidate still carries its session: reference, and the deriver still groups it with its episode"
+validation:
+  - "bash test/run.sh 709_knowledge_promotion_is_an_act 980_a_session_records_what_it_observed 981_an_observation_becomes_a_grouped_candidate"
+  - "majordomus plan validate"
+  - "majordomus knowledge check"
+evidence_required:
+  - "case_a_promoted_record_cites_no_local_episode"
+created_at: 2026-10-29
+updated_at: 2026-10-29
