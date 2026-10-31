@@ -16,17 +16,30 @@ use common::{Fixture, Served};
 /// link per row of an unbounded list is seen rather than read forever.
 const PAGES: usize = 400;
 
-/// Every `href="…"` of a page, with the entities the renderer escapes undone.
+/// Every `href="…"` of a page, with the entities the renderer escapes undone, but one whose
+/// element says `rel="nofollow"`: a narrowed view of a list the crawl reads unnarrowed (the
+/// capability browser's facets), where every combination of picks is an address of its own.
 fn hrefs(page: &str) -> Vec<String> {
-    page.split("href=\"")
-        .skip(1)
-        .filter_map(|rest| rest.split('"').next())
-        .map(|h| {
-            h.replace("&amp;", "&")
-                .replace("&quot;", "\"")
-                .replace("&#39;", "'")
-        })
-        .collect()
+    let mut found = Vec::new();
+    let mut rest = page;
+    while let Some(at) = rest.find("href=\"") {
+        let start = rest[..at].rfind('<').unwrap_or(0);
+        let after = &rest[at + "href=\"".len()..];
+        let Some(close) = after.find('"') else {
+            break;
+        };
+        let end = after.find('>').unwrap_or(after.len());
+        if !rest[start..at + "href=\"".len() + end].contains("rel=\"nofollow\"") {
+            found.push(
+                after[..close]
+                    .replace("&amp;", "&")
+                    .replace("&quot;", "\"")
+                    .replace("&#39;", "'"),
+            );
+        }
+        rest = &after[close + 1..];
+    }
+    found
 }
 
 /// Whether a link stays inside the server and is one this test follows: a UI route or the
@@ -114,8 +127,10 @@ fn every_link_the_ui_draws_inside_the_server_answers() {
 fn the_crawl_reads_hrefs_and_follows_only_the_servers_own_pages() {
     let page = r#"<a href="/ui/roadmap?milestone=M1&amp;x=1#milestone">m</a>
         <a href="https://example.test/">e</a><a href="/ui/assets/ui.css">a</a>
-        <a href="/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Fa">o</a><a href="/cockpit">c</a>"#;
+        <a href="/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Fa">o</a><a href="/cockpit">c</a>
+        <a class="mj-ui-tab" href="/ui/capabilities?kind=query" rel="nofollow">q</a>"#;
     let all = hrefs(page);
+    assert_eq!(all.len(), 5, "a nofollow link is not read: {all:?}");
     assert_eq!(all[0], "/ui/roadmap?milestone=M1&x=1#milestone");
     let kept: Vec<&String> = all.iter().filter(|h| followed(h)).collect();
     assert_eq!(
