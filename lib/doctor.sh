@@ -56,7 +56,8 @@ mj_cmd_doctor() {
   local a
   for a in "$@"; do case "$a" in
     --help|-h) echo "usage: majordomus doctor [--json]   (read-only; exit 0 healthy, 10 failures, 12 missing)"
-               echo "  MAJORDOMUS_DOCTOR_CONTEXT=commit   the pre-commit hook's run: leaves out the per-worktree uncommitted-work reading and says so"
+               echo "  MAJORDOMUS_DOCTOR_CONTEXT=commit   the pre-commit hook's run: leaves out the per-worktree uncommitted-work reading, and the"
+               echo "                                     context builder when nothing staged can change it, and says so"
                return 0 ;;
     *) mj_die "$MJ_EX_USAGE" "doctor: unknown option $a" ;;
   esac; done
@@ -494,6 +495,15 @@ mj_validate_budget() {
     "grep -n 'always_loaded' $(mj_rel "$MJ_POLICY_FILE")"; fi
   rm -f "$owned"
 
+  # In the commit hook the builder is proved only when the commit can change what it reads
+  # (I4265): it composes the whole context, about a quarter of an adopter's doctor run, and a
+  # commit that stages nothing under .ai/ or in a provider file cannot break it. Said by name,
+  # with the command that runs it, because an absent check must not read as a passing one.
+  if [ "${MAJORDOMUS_DOCTOR_CONTEXT:-}" = commit ] \
+     && ! mj_git diff --cached --name-only 2>/dev/null | grep -qE '^(\.ai/|AGENTS\.md$|CLAUDE\.md$|GEMINI\.md$)'; then
+    mj_info context "builder" "not read in the commit hook (MAJORDOMUS_DOCTOR_CONTEXT=commit): nothing staged under .ai/ or in a provider file can change it; run doctor on its own" "majordomus doctor"
+    return 0
+  fi
   # 8. the continuity subsystem: reachable through the CLI, not merely present on disk.
   #    A directory full of records that no command reads is the failure mode this whole
   #    tool exists to catch, so doctor proves each store is readable by the command that

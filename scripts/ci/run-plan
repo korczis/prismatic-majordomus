@@ -30,11 +30,11 @@
 # structure job is too long for a hook (about 20 min, and it reaches the network), so a push
 # runs a budget of it, chosen from what CI recorded and never from a list typed by hand:
 #
-#   - the structure gates of this tree's plan that make no network call (`network: true` in
-#     .ai/repo/ci/gates.yaml) and whose recorded seconds (.ai/repo/ci/structure-durations.tsv,
-#     written by `scripts/ci-baseline --structure-durations`) are at most MJ_PUSH_GATE_SECONDS
-#     (default 15), cheapest first, while their sum stays within MJ_PUSH_GATE_BUDGET (default
-#     120);
+#   - the structure gates of this tree's plan (the jobs structure and structure-b, I4381) that
+#     make no network call (`network: true` in .ai/repo/ci/gates.yaml) and whose recorded
+#     seconds (.ai/repo/ci/structure-durations.tsv, written by `scripts/ci-baseline
+#     --structure-durations`) are at most MJ_PUSH_GATE_SECONDS (default 15), cheapest first,
+#     while their sum stays within MJ_PUSH_GATE_BUDGET (default 120);
 #   - the cases .ai/repo/ci/suite-durations.tsv records at most MJ_PUSH_CASE_SECONDS (default
 #     5), four at a time.
 #
@@ -173,7 +173,7 @@ if [ "$before_push" = 1 ]; then
     elif [ -z "$secs" ]; then printf '  left out %s: no recorded duration in %s; CI runs it\n' "$id" "$durations"
     elif [ "$secs" -gt "$per_gate" ]; then printf '  left out %s: CI recorded %ss, over the %ss a push spends on one gate\n' "$id" "$secs" "$per_gate"
     else printf '%s %s\n' "$secs" "$id" >> "$plan.cand"; fi
-  done < <(jq -r '.gates[] | select(.job == "structure" and .selected) | "\(.id) \(.network // false)"' "$plan")
+  done < <(jq -r '.gates[] | select((.job == "structure" or .job == "structure-b") and .selected) | "\(.id) \(.network // false)"' "$plan")
   if [ -f "$plan.cand" ]; then
     while read -r secs id; do
       if [ $(( spent + secs )) -gt "$budget" ]; then
@@ -184,7 +184,7 @@ if [ "$before_push" = 1 ]; then
   fi
   gate_executable
   # the chosen gates, in the plan's order, with stdin closed: a hook's stdin is the ref list
-  for g in $(jq -r '.gates[] | select(.job == "structure" and .selected) | .id' "$plan"); do
+  for g in $(jq -r '.gates[] | select((.job == "structure" or .job == "structure-b") and .selected) | .id' "$plan"); do
     case " $chosen " in *" $g "*) ;; *) continue ;; esac
     cmd="$(jq -r --arg g "$g" '.gates[] | select(.id == $g) | .runs' "$plan")"
     t0="$(date +%s)"

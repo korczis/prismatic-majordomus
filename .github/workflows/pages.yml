@@ -329,18 +329,83 @@ jobs:
       # The forge, observed with its own tool before the UI is read: the pull requests the PR
       # Drain draws and the deployments and releases the Deployments screen draws are read
       # from this record and from nothing else. A runner has no observation of its own, so
-      # without this step both screens are published empty — which is what they were. It is
-      # blocking: a snapshot that says "not observed" about a forge that could have been asked
-      # is the stale page nobody sees.
-      - name: the forge, observed
-        timeout-minutes: 5
+      # without these steps both screens are published empty — which is what they were. Every
+      # read is asked again on an outage (four attempts), and a list the forge times out (a
+      # gateway 504, or GraphQL's own "may be the result of a timeout") is read again in
+      # smaller pages (I4380). A forge that still cannot be asked degrades the two screens and
+      # not the site: each screen then says the forge was not observed, the warning names
+      # which, and the publication goes on. Until I4380 this was one blocking step, and on
+      # 2026-10-29 one 504 from the forge (exit 12, run 40823254353) failed this job and with
+      # it the deploy of every page — a whole site held back for two screens that know how to
+      # say "not observed".
+      #
+      # Two questions, two steps, each bounded inside its own minutes, so that a hang is the
+      # warning and never the step's kill, which `||` cannot catch (scripts/ci/step-bound-check
+      # holds that). The bounds are measured, not guessed. `prs refresh` observes and then
+      # fetches every pull request's head in one `git fetch`: 128 s with 77 open (run
+      # 40573560897: observed 22 s, fetched 106 s), 174 s with 84 (40652175281: 85 s, 89 s),
+      # 163 s with 87 (40696771044: 59 s, 104 s), so about 1.2 s a head plus up to 85 s of
+      # reads; 124 open is about 235 s, and a paged list adds a page per 25. 420 s holds a
+      # healthy forge to about 250 open pull requests; a hung one is the warning after 7 min.
+      # `served forge` took 11-12 s on each of those runs.
+      - name: the pull requests, observed
+        timeout-minutes: 8
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # two questions, each its own command: the pull requests, then what was deployed
-          # and released
-          apps/majordomus-cli/target/debug/majordomus prs refresh
-          apps/majordomus-cli/target/debug/majordomus served forge
+          timeout --kill-after=10 420 apps/majordomus-cli/target/debug/majordomus prs refresh \
+            || echo "::warning title=Forge not observed::majordomus prs refresh could not read the pull requests in time (exit $?); the PR Drain is published saying the forge was not observed"
+      # `observed` tells the next step whether the deployments were read at all: the deployed
+      # stage can only be judged against a forge that answered (I4315 with I4380).
+      - name: the deployments and releases, observed
+        id: forge
+        timeout-minutes: 3
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if timeout --kill-after=10 135 apps/majordomus-cli/target/debug/majordomus served forge; then
+            echo "observed=true" >> "$GITHUB_OUTPUT"
+          else
+            rc=$?
+            echo "observed=false" >> "$GITHUB_OUTPUT"
+            echo "reason=served forge exit $rc" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Forge not observed::majordomus served forge could not read the deployments and releases in time (exit $rc); the Deployments screen is published without them"
+          fi
+      # The deployed stage, read from what was just observed (I4315, ADR 0227). Every Pages
+      # deployment is a gh-pages commit carrying the built site; the reader, from its first
+      # day (2026-10-16), looked for the pointer at its source path, and plan delivery read
+      # deployed for none of 1036 issues while the site served the trunk. This job published
+      # that answer every time, green. Once the forge has been observed, a publication the
+      # reader cannot read is a defect of this commit: only "no successful deployment" is an
+      # answer. When the forge was not observed, the stage is unknown, not wrong: the step
+      # says so and the publication goes on, because a forge outage must not hold the site
+      # back (I4380); the red is for a forge that answered.
+      - name: the deployed stage reads what Pages published
+        timeout-minutes: 3
+        env:
+          FORGE_OBSERVED: ${{ steps.forge.outputs.observed }}
+          FORGE_REASON: ${{ steps.forge.outputs.reason }}
+        run: |
+          d="$RUNNER_TEMP/delivery.json"
+          if [ "$FORGE_OBSERVED" != true ]; then
+            # Unknown, not wrong: `deployed` is not reported, what was counted still is.
+            line="::warning title=The deployed stage is unknown::forge not observed (${FORGE_REASON:-served forge wrote no answer})"
+            echo "$line"
+            [ -z "${GITHUB_STEP_SUMMARY:-}" ] || echo "$line" >> "$GITHUB_STEP_SUMMARY"
+            if apps/majordomus-cli/target/debug/majordomus plan delivery --format json > "$d" 2>/dev/null; then
+              jq -c '.tallies' "$d" || true
+            fi
+            exit 0
+          fi
+          apps/majordomus-cli/target/debug/majordomus plan delivery --format json > "$d"
+          state="$(jq -r '.sources[] | select(.name == "publication") | .state' "$d")"
+          detail="$(jq -r '.sources[] | select(.name == "publication") | .detail' "$d")"
+          echo "publication: ${state:-absent} — $detail"
+          case "$state:$detail" in
+            read:*|*"holds no successful"*) ;;
+            *) echo "::error title=The deployed stage is unread::${detail:-plan delivery names no publication source}"; exit 1 ;;
+          esac
+          jq -c '.tallies' "$d"
       # Every page the screens link to, not the first few: the default budget is sized for a
       # person waiting at a terminal and left most inspectors out of the published snapshot.
       # What was still left out is in snapshot.json, and `scripts/pages verify-ui` reports it.
@@ -501,13 +566,19 @@ jobs:
       # tree, so no branch could derive it. Never a gate, and not a step that fails softly
       # either (the publication measurement is the one of those): a forge that cannot be read
       # is exit 12 with no file left, said here as a warning, and the page then says no series
-      # reached the build. The bound: one listing, then two API reads and at most one small
-      # download per run.
+      # reached the build. The cost: one listing, then two API reads and at most one small
+      # download per run, read eight runs at a time with each call bounded (I4380).
+      # The command is bounded inside the step (200 + 10 s < 4 m), because a step killed by its
+      # own timeout-minutes is a failed step that `||` never sees: on 2026-10-29 the sixty runs
+      # read one call at a time took over four minutes, the step was killed ("The action
+      # 'trends' has timed out after 4 minutes"), publish was skipped and the site stayed old,
+      # on runs 40796031540, 40803295553 and 40823254353. A reading that runs out of time is now
+      # the same warning as a forge that cannot be read (timeout's exit 124).
       - name: trends
         timeout-minutes: 4
         env:
           GH_TOKEN: ${{ github.token }}
-        run: scripts/pages trends || echo "::warning title=No trends::scripts/pages trends could not read the forge (exit $?); /trends/ is published without a series"
+        run: timeout --kill-after=10 200 scripts/pages trends || echo "::warning title=No trends::scripts/pages trends could not read the forge in time (exit $?); /trends/ is published without a series"
 
       # the committed derived data proved current by hash, then rendered; no generation. The
       # bound follows the `build` row of .ai/repo/ci/pages.yaml (budget.bound.percent of it):

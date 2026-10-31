@@ -1,0 +1,42 @@
+id: I4352
+milestone: development-runtime
+title: "The build host provisions its CI runners, and its disk guard covers the runners' homes"
+slug: the-build-host-provisions-its-ci-runners
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "The build host provisions its CI runners (restart always, start limit off) and its disk guard covers the runner homes; a host that owes provisioning is reported. The declared policy names the runner homes and the runner unit patterns; `mesh build-cache provision` renders the disk guard's homes from it, installs a drop-in for every observed runner unit and starts the runners, and `mesh doctor` on the build host warns with the number of owed changes and the command to run. A runner home is written by CI jobs, so under it the root guard renames and deletes only as the home's owner and never takes a home, a directory directly in one, a directory reached through a symlink, or one holding a runner installation or a source tree; an aside that came into use after the idle check is given back, never deleted."
+why: "The owner, 2026-10-28: lundra must be rock solid and serve CI 24/7, and none of the day's failures may repeat. Around 14:10Z lundra's GitHub runners (actions.runner.korczis-prismatic-majordomus.lundra-{1,2,3}.service, User=ghrunner) went offline because / reached 100% under the runners' cargo build directories, /home/ghrunner/home-2 and home-3/.cargo/build-shared (74.6 and 39.9 GiB). The cure existed as I2674's build host layer, but it had never been applied on lundra (its plan owed 23 changes, among them `systemctl enable --now disk-guard.timer`), and even applied, disk-guard searched HOMES=(/home/korczis) only. The runner units (Restart=no) stayed active throughout: inside each one runsvc.sh kept relaunching a crashing listener, so systemd had nothing to restart. The restart drop-in this issue installs covers only runsvc.sh itself exiting; recovering a listener that crash-loops inside an active unit is I4345, and bounding a build directory during a job is I4344."
+current_state: "Measured on master 81ef931a3e1 on 2026-10-28: apps/majordomus-cli/assets/mesh-cache-provider/disk-guard hard-codes HOMES=(/home/korczis); the policy declares no runner home and no runner unit; the critical drop-in is installed for minio, gitlab-runner and tailscaled only; nothing on any surface says that a host owes its provisioning."
+desired_state: "policy.json declares runner_homes (/home/ghrunner, /home/gitlab-runner) and runner_units (actions.runner.*.service, gitlab-runner.service); the plan, still a pure function of the policy and the observation, owes /etc/majordomus/disk-guard.homes and /etc/systemd/system/<unit>.d/majordomus-runner.conf (Restart=always, RestartSec=10, StartLimitIntervalSec=0, no OOMScoreAdjust) for every observed, unmasked runner unit, and a runners-start step after the reload; disk-guard reads its homes from that file and reclaims cargo output under the runner homes with the same safety (cargo's CACHEDIR.TAG only, idle windows, an open file skips, never a source, .git, registry or toolchain), and a runner build directory over RUNNER_CARGO_CAP_GIB once it is idle; a second apply changes nothing; `mesh doctor` on the policy's local node reports `build_host` as WARN while the plan owes a change."
+scope:
+  - ".ai/repo/project/issues/I4352.yaml"
+  - "apps/majordomus-cli/assets/mesh-cache-provider/"
+  - "apps/majordomus-cli/src/mesh/cache_provision.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/src/commands/mesh.rs"
+  - "docs/BUILD_CACHE.md"
+  - "docs/generated/"
+  - "site/data/registry/"
+non_scope:
+  - "Applying the provisioning on lundra: the owner runs the apply as root"
+  - "A new surface or script: the change extends the declared policy, the existing capability and the existing doctor"
+  - "Bounding the runners' cargo registries and toolchains, which the guard never touches"
+depends_on: []
+acceptance_criteria:
+  - "The plan names /etc/systemd/system/<unit>.d/majordomus-runner.conf, never the critical 50-build-host.conf, for an observed actions.runner.*.service unit, with Restart=always and StartLimitIntervalSec=0 and no OOMScoreAdjust, and a runners-start step after the daemon reload"
+  - "The plan owes /etc/majordomus/disk-guard.homes, whose HOMES and RUNNER_HOMES come from the policy and include /home/ghrunner and /home/gitlab-runner, and disk-guard reads that file"
+  - "Over a staging root holding a runner unit, a second apply writes nothing and the plan after it owes nothing"
+  - "A cargo tag planted at a runner home, directly in one, beside a runner's .runner or .credentials, beside a Cargo.toml, or behind a symlinked parent takes nothing, while idle cargo output deeper in the home is removed; under a runner home the guard renames and deletes as the home's owner, never as root"
+  - "A build directory that comes into use between the idle check and its removal is given back at its path and nothing in it is deleted"
+  - "On the policy's local node `mesh doctor` shows `build_host` as WARN naming the owed changes and the apply command, and on any other machine no such check"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::cache_provision"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib commands::mesh::tests::a_check_that_holds_with_a_remedy_is_a_warning"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - suite
+  - "runner_host_apply_is_idempotent"
+serves: []
+created_at: 2026-10-28
+updated_at: 2026-10-29

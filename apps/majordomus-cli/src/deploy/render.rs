@@ -705,32 +705,13 @@ mod tests {
             .any(|l| *l == format!("ARG {COMMIT_ARG}=unknown")));
     }
 
-    /// Every file the crate embeds is one the image's compiling stages copy: `deps` and
-    /// `build` are given the package and its path crates, nothing else of the repository. A
-    /// test module may read the repository, since the image compiles no test. Train 6
-    /// embedded `share/mesh-cache-provider/` and master's image stopped compiling (run
-    /// 40189935629); a pull request builds the image only when the image's own definition
-    /// changes, so it is caught here (I4229, from #2523).
-    #[test]
-    fn the_build_stage_carries_every_file_the_package_embeds() {
-        let package = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .canonicalize()
-            .expect("the package directory resolves");
-        let root = package
-            .join("../..")
-            .canonicalize()
-            .expect("the repository resolves");
-        let file = dockerfile(&deployment(), "x.yaml", "1.98.1");
-        let copied: Vec<std::path::PathBuf> = ["deps", "build"]
-            .iter()
-            .flat_map(|name| stage(&file, name))
-            .filter_map(|l| l.strip_prefix("COPY "))
-            .filter(|l| !l.starts_with("--"))
-            .filter_map(|l| l.split(' ').next())
-            .map(|from| root.join(from))
-            .collect();
+    /// Every literal `include_str!` or `include_bytes!` of the non-test code under `src` whose
+    /// file does not resolve under one of `copied`, as `<source>: <embedded path>`. A path is
+    /// resolved against the file that names it, as the compiler resolves it, and from a
+    /// file's first test module on nothing is read, since the image compiles no test.
+    fn embedded_outside(src: &std::path::Path, copied: &[std::path::PathBuf]) -> Vec<String> {
         let mut missing = Vec::new();
-        let mut dirs = vec![package.join("src")];
+        let mut dirs = vec![src.to_path_buf()];
         while let Some(dir) = dirs.pop() {
             for entry in std::fs::read_dir(&dir).expect("the source tree reads") {
                 let path = entry.expect("a source entry reads").path();
@@ -759,10 +740,73 @@ mod tests {
                 }
             }
         }
+        missing
+    }
+
+    /// Every file the crate embeds is one the image's compiling stages copy: `deps` and
+    /// `build` are given the package and its path crates, nothing else of the repository. A
+    /// test module may read the repository, since the image compiles no test. Train 6
+    /// embedded `share/mesh-cache-provider/` and master's image stopped compiling (run
+    /// 40189935629); a pull request builds the image only when the image's own definition
+    /// changes, so it is caught here (I4229, from #2523).
+    #[test]
+    fn the_build_stage_carries_every_file_the_package_embeds() {
+        let package = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .canonicalize()
+            .expect("the package directory resolves");
+        let root = package
+            .join("../..")
+            .canonicalize()
+            .expect("the repository resolves");
+        let file = dockerfile(&deployment(), "x.yaml", "1.98.1");
+        let copied: Vec<std::path::PathBuf> = ["deps", "build"]
+            .iter()
+            .flat_map(|name| stage(&file, name))
+            .filter_map(|l| l.strip_prefix("COPY "))
+            .filter(|l| !l.starts_with("--"))
+            .filter_map(|l| l.split(' ').next())
+            .map(|from| root.join(from))
+            .collect();
+        let missing = embedded_outside(&package.join("src"), &copied);
         assert!(
             missing.is_empty(),
             "embedded, not copied by the build stage: {missing:?}"
         );
+    }
+
+    /// The guard above fails on the defect it exists for: a source that embeds a file of the
+    /// repository's `share/`, which the build stage does not copy, is named with that path,
+    /// while an embed inside the package and one in a test module are not (I4229).
+    #[test]
+    fn an_embed_the_build_stage_does_not_copy_is_named_with_its_source_and_path() {
+        let dir = tempfile::tempdir().expect("a temporary directory");
+        let root = dir.path().canonicalize().expect("the directory resolves");
+        let package = root.join("apps/majordomus-cli");
+        std::fs::create_dir_all(package.join("src")).expect("the source tree is written");
+        std::fs::create_dir_all(root.join("share")).expect("share is written");
+        std::fs::write(root.join("share/advisors.yaml"), "advisors: []\n").expect("written");
+        std::fs::write(package.join("src/schema.json"), "{}\n").expect("written");
+        let source = package.join("src/advisors.rs");
+        std::fs::write(
+            &source,
+            concat!(
+                "const ADVISORS: &str = include_str!(\"../../../share/advisors.yaml\");\n",
+                "const SCHEMA: &[u8] = include_bytes!(\"schema.json\");\n",
+                "#[cfg(test)]\n",
+                "const FIXTURE: &str = include_str!(\"../../../share/advisors.yaml\");\n",
+            ),
+        )
+        .expect("written");
+        let missing = embedded_outside(&package.join("src"), std::slice::from_ref(&package));
+        assert_eq!(
+            missing,
+            [format!(
+                "{}: ../../../share/advisors.yaml",
+                source.display()
+            )]
+        );
+        // The repository's share is carried once a compiling stage copies it.
+        assert!(embedded_outside(&package.join("src"), &[package, root.join("share")]).is_empty());
     }
 
     #[test]
