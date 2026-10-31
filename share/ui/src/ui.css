@@ -764,4 +764,113 @@
   .mj-obs-button[aria-pressed='false'] {
     color: var(--mj-muted);
   }
+
+  /* the Blackboard (I4236): the work as columns of its delivery stages */
+  .mj-ui-board {
+    @apply grid gap-3 overflow-x-auto pb-1;
+    grid-template-columns: repeat(4, minmax(15rem, 1fr));
+  }
+  .mj-ui-board-lane {
+    @apply flex min-w-0 flex-col gap-2 rounded-xl p-3;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+    border-top: 3px solid var(--mj-tone-fill, var(--mj-accent-fill));
+  }
+  .mj-ui-board-lane-head {
+    @apply flex items-center gap-2;
+  }
+  .mj-ui-board-lane-dot {
+    @apply h-2 w-2 rounded-full;
+    background: var(--mj-tone-fill, var(--mj-accent-fill));
+    box-shadow: 0 0 0.5rem var(--mj-tone-fill, var(--mj-accent-fill));
+  }
+  .mj-ui-board-lane-title {
+    @apply m-0 text-sm font-semibold;
+    color: var(--mj-fg);
+  }
+  .mj-ui-board-lane-count {
+    @apply ml-auto font-mono text-xs;
+    color: var(--mj-muted);
+  }
+  .mj-ui-board-lane-says,
+  .mj-ui-board-more {
+    @apply m-0 text-xs;
+    color: var(--mj-muted);
+  }
+  .mj-ui-board-card {
+    @apply flex min-w-0 flex-col gap-1.5 rounded-lg p-3 transition-colors;
+    background: var(--mj-raised);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-ui-board-card:hover,
+  .mj-ui-board-card:focus-within {
+    border-color: var(--mj-tone-line, var(--mj-accent-line));
+  }
+  .mj-ui-board-card-head {
+    @apply flex flex-wrap items-center gap-1.5;
+  }
+  .mj-ui-board-id {
+    @apply text-xs no-underline;
+    color: var(--mj-muted);
+  }
+  .mj-ui-board-prio,
+  .mj-ui-board-status {
+    @apply rounded px-1.5 text-xs;
+    background: var(--mj-accent-soft);
+    color: var(--mj-body);
+  }
+  .mj-ui-board-prio--p0 {
+    background: var(--mj-tone-rose-bg, var(--mj-accent-soft));
+    color: var(--mj-tone-rose-fill, var(--mj-fg));
+  }
+  .mj-ui-board-prio--p1 {
+    background: var(--mj-tone-orange-bg, var(--mj-accent-soft));
+    color: var(--mj-tone-orange-fill, var(--mj-fg));
+  }
+  .mj-ui-board-card-title {
+    @apply text-sm font-semibold leading-snug no-underline;
+    color: var(--mj-fg);
+  }
+  .mj-ui-board-card-title:hover {
+    color: var(--mj-accent);
+  }
+  .mj-ui-board-card-meta {
+    @apply text-xs;
+    color: var(--mj-muted);
+  }
+  .mj-ui-board-card-foot {
+    @apply flex flex-wrap items-center justify-between gap-2;
+  }
+  .mj-ui-board-chips {
+    @apply flex flex-wrap gap-1;
+  }
+  .mj-ui-board-chip {
+    @apply rounded-md px-1.5 py-0.5 font-mono text-xs no-underline;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+    color: var(--mj-body);
+  }
+  .mj-ui-board-chip--pr {
+    color: var(--mj-tone-orange-fill, var(--mj-accent));
+    border-color: var(--mj-tone-orange-line, var(--mj-line));
+  }
+  .mj-ui-board-chip--merged {
+    color: var(--mj-tone-green-fill, var(--mj-accent));
+    border-color: var(--mj-tone-green-line, var(--mj-line));
+  }
+  .mj-ui-board-avatars {
+    @apply flex -space-x-1.5;
+  }
+  .mj-ui-board-avatar {
+    @apply inline-flex h-7 w-7 items-center justify-center rounded-full font-mono text-[0.65rem] font-semibold no-underline;
+    background: var(--mj-accent-soft);
+    color: var(--mj-fg);
+    border: 2px solid var(--mj-raised);
+  }
+  .mj-ui-board-avatar--here {
+    box-shadow: 0 0 0 2px var(--mj-tone-green-fill, var(--mj-accent-fill));
+  }
+  .mj-ui-board-avatar--away {
+    @apply opacity-60;
+  }
 }

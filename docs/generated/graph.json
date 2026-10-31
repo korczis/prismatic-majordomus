@@ -71321,6 +71321,61 @@
         }
       },
       {
+        "id": "majordomus://issue/I4236",
+        "kind": "issue",
+        "label": "I4236",
+        "summary": "The Blackboard is the board of the work: every issue at its delivery stage, with who carries it, live",
+        "route": "/cockpit/objects/issue/i4236",
+        "source": ".ai/repo/project/issues/I4236.yaml",
+        "facts": {
+          "created_at": "2026-10-26",
+          "depends_on": [],
+          "evidence_required": [
+            "case_board_is_derived",
+            "case_board_is_live"
+          ],
+          "milestone": "peer-blackboard",
+          "non_scope": [
+            "A second derivation of stage, presence or claims: the screen draws what the capabilities answered and computes no stage, rank or join of its own",
+            "Moving, assigning or closing work from the board; it reads",
+            "A new third-party library in the UI bundle"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/board.rs",
+            "apps/majordomus-cli/src/ui/mod.rs",
+            "apps/majordomus-cli/src/ui/shell.rs",
+            "apps/majordomus-cli/src/ui/view.rs",
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "share/ui/src/ui.css",
+            "share/ui/ui.css",
+            "share/ui/ui.js",
+            "docs/UI.md",
+            "docs/BLACKBOARD.md",
+            "scripts/lib/ui-routes.mjs",
+            "scripts/lib/interaction-specs",
+            "test/cases/4236_the_blackboard_is_live_in_a_browser.sh"
+          ],
+          "serves": [
+            "the-peer-blackboard-is-one-reality#published-safely",
+            "the-peer-blackboard-is-one-reality#every-surface-reads-it"
+          ],
+          "slug": "the-blackboard-is-the-board-of-the-work",
+          "started_at": "2026-10-26T11:48:42Z",
+          "started_event": "sha256:07583a65132f266feee4093c82ed8738cb3e1324c66b828a3d82cec3f3ed2f50",
+          "updated_at": "2026-10-26T11:56:40Z",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::board",
+            "scripts/ui check"
+          ],
+          "verified_at": "2026-10-26T11:56:40Z",
+          "verified_event": "sha256:5307b14768116d9cf23b4f853094eeae70a4c4479461890a0b1b1fa5f02213e3"
+        }
+      },
+      {
         "id": "majordomus://issue/I4241",
         "kind": "issue",
         "label": "I4241",
@@ -99735,6 +99790,13 @@
         "label": "test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
         "route": "/cockpit/objects/test/test-cases-4232-a-core-build-keeps-its-own-rlib-sh",
         "source": "test/cases/4232_a_core_build_keeps_its_own_rlib.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4236_the_blackboard_is_live_in_a_browser.sh",
+        "kind": "test",
+        "label": "test/cases/4236_the_blackboard_is_live_in_a_browser.sh",
+        "route": "/cockpit/objects/test/test-cases-4236-the-blackboard-is-live-in-a-browser-sh",
+        "source": "test/cases/4236_the_blackboard_is_live_in_a_browser.sh"
       },
       {
         "id": "majordomus://test/test/cases/4251_a_mod_links_nothing_outside_the_repository.sh",
@@ -138578,6 +138640,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4236",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4236",
+        "target": "majordomus://milestone/peer-blackboard",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4241",
         "target": "kind:issue",
         "kind": "is_a"
@@ -146503,6 +146575,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4236_the_blackboard_is_live_in_a_browser.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/4251_a_mod_links_nothing_outside_the_repository.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -151639,8 +151716,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4150,
-      "edges": 9554,
+      "nodes": 4152,
+      "edges": 9557,
       "acyclic": false,
       "truncated": false
     }

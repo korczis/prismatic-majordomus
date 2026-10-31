@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "0d0a12a10de105478e4a6bbb568960b5f8307c7d5f0aef127ede340a83ac0faf",
+    "fingerprint": "b8fe89686dcdaa3701331e31455543e1b6752b1a84a6c86a14f59d786fcf5089",
     "summary": {
-      "total": 3686,
+      "total": 3688,
       "builtin": 220,
-      "declarative": 3466,
+      "declarative": 3468,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3466
+        "resource": 3468
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3476
+        "implemented": 3478
       },
       "mcp_tools": 206,
-      "mcp_resources": 3523,
+      "mcp_resources": 3525,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91407,7 +91407,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1124,
+        "capabilities": 1125,
         "capability_ids": []
       },
       {
@@ -92005,7 +92005,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 663,
+        "capabilities": 664,
         "capability_ids": []
       },
       {
@@ -92097,7 +92097,7 @@
     ]
   },
   "index": {
-    "fingerprint": "91b0178db4961906fb7de708e8b7dbacf8341a031c2dbfe68a321e3156af4f82",
+    "fingerprint": "6230da3ba11405b7cf1e32fda8ea7109006d3fd2323f56aef374e1cc9d9ff58f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92137,7 +92137,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 44,
-      "issue": 1124,
+      "issue": 1125,
       "knowledge": 86,
       "mesh-declaration": 1,
       "milestone": 113,
@@ -92151,7 +92151,7 @@
       "session": 93,
       "skill": 8,
       "taxonomy": 10,
-      "test": 663,
+      "test": 664,
       "use-case": 49,
       "workspace": 1
     },
@@ -99519,7 +99519,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 44548
+        "bytes": 45430
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -99609,7 +99609,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 1023460
+        "bytes": 1023657
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -114956,6 +114956,17 @@
         "bytes": 2806
       },
       {
+        "uri": "majordomus://issue/I4236",
+        "kind": "issue",
+        "identity": "I4236",
+        "title": "The Blackboard is the board of the work: every issue at its delivery stage, with who carries it, live",
+        "description": "Add /ui/board, the Blackboard: one screen that draws the work as a board of its delivery stages (ready, in flight, in review, in a train, landed) from plan.delivery and plan.issues, puts on each card the workers and claims blackboard.snapshot names for it, the pull request and train that carry it from the integration queue, and links every card, avatar, chip and count to the object it was read from; beside it the mesh as a topology of machines, workers and what they hold, and the monitor's stream. It follows the live channel, says how old each reading is, and is published in the majordomus.dev UI snapshot.",
+        "path": ".ai/repo/project/issues/I4236.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5498
+      },
+      {
         "uri": "majordomus://issue/I4241",
         "kind": "issue",
         "identity": "I4241",
@@ -127341,6 +127352,14 @@
         "bytes": 5122
       },
       {
+        "uri": "majordomus://test/test/cases/4236_the_blackboard_is_live_in_a_browser.sh",
+        "kind": "test",
+        "identity": "test/cases/4236_the_blackboard_is_live_in_a_browser.sh",
+        "path": "test/cases/4236_the_blackboard_is_live_in_a_browser.sh",
+        "source_class": "case",
+        "bytes": 6225
+      },
+      {
         "uri": "majordomus://test/test/cases/4251_a_mod_links_nothing_outside_the_repository.sh",
         "kind": "test",
         "identity": "test/cases/4251_a_mod_links_nothing_outside_the_repository.sh",
@@ -129967,7 +129986,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1124
+      "objects": 1125
     },
     {
       "name": "knowledge",
@@ -130129,7 +130148,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 663
+      "objects": 664
     },
     {
       "name": "use-case",
@@ -177475,6 +177494,14 @@
         "route": "GET /ui/mesh"
       },
       {
+        "key": "system.http.ui.board",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/board"
+      },
+      {
         "key": "system.http.ui.peers",
         "kind": "page",
         "transport": "http",
@@ -177627,6 +177654,14 @@
         "route": "GET /ui/mesh"
       },
       {
+        "key": "system.http.live.ui.board",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/board"
+      },
+      {
         "key": "system.http.live.ui.peers",
         "kind": "page",
         "transport": "http",
@@ -177721,6 +177756,14 @@
         "module": "system",
         "cached": true,
         "route": "GET /ui/panels/drain"
+      },
+      {
+        "key": "system.http.ui.panels.board",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/panels/board"
       },
       {
         "key": "system.http.ui.panels.standing",
