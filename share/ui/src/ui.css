@@ -356,6 +356,9 @@
   .mj-ui-panel-sub {
     @apply text-sm;
     color: var(--mj-muted);
+    /* a subtitle names the record it is about, and an intent's id is one long slug: at
+       320px it breaks inside the subtitle rather than widening the page */
+    overflow-wrap: anywhere;
   }
   .mj-ui-panel-body {
     @apply min-w-0 flex-1;
@@ -640,6 +643,12 @@
     @apply flex min-w-0 flex-col gap-3 rounded-xl p-4;
     background: var(--mj-sunken);
     border: 1px solid var(--mj-accent-line);
+    /* everything an entity's detail draws (its id, its title, its statement, however that
+       is rendered) breaks inside the detail. The UI audit measured the roadmap and workspace
+       screens of the intent mission-global-skill-availability-and-autonomous-lifecycle 344px
+       wide at 320 and named no element wider than the window: the statement drawn as
+       Markdown put a heading's text past its block, and text is not an element */
+    overflow-wrap: anywhere;
   }
   .mj-ui-detail-head {
     @apply flex flex-col gap-1;
