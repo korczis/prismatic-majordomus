@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 166,
+      "count": 167,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -24,7 +24,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 191,
+      "count": 192,
       "dir": "rules",
       "statuses": [
         "active"
@@ -38,7 +38,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 166
+      "count": 167
     },
     {
       "kind": "application",
@@ -94,7 +94,7 @@
       "route": null,
       "title": null,
       "reason": "A critique is the adversarial pass over one intent's plan, written by a worker, and work started under the intent without it or with a blocking finding open fails intent validation (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
-      "count": 37
+      "count": 38
     },
     {
       "kind": "deployment",
@@ -166,7 +166,7 @@
       "route": null,
       "title": null,
       "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` and the Cockpit's /cockpit/intents answer for the intent itself.",
-      "count": 43
+      "count": 44
     },
     {
       "kind": "issue",
@@ -174,7 +174,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 1037
+      "count": 1125
     },
     {
       "kind": "knowledge",
@@ -182,7 +182,7 @@
       "route": null,
       "title": null,
       "reason": "Curated knowledge is written for the worker reading the layer, not for a visitor: it is the orientation a session starts from, and it changes with the work rather than with the product.",
-      "count": 58
+      "count": 86
     },
     {
       "kind": "mesh-declaration",
@@ -198,7 +198,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 111
+      "count": 113
     },
     {
       "kind": "moment",
@@ -238,7 +238,7 @@
       "route": "/changelog/",
       "title": null,
       "reason": null,
-      "count": 37
+      "count": 38
     },
     {
       "kind": "rule",
@@ -246,7 +246,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 191
+      "count": 192
     },
     {
       "kind": "scope",
@@ -262,7 +262,7 @@
       "route": "/sessions/",
       "title": null,
       "reason": null,
-      "count": 91
+      "count": 93
     },
     {
       "kind": "skill",
@@ -286,7 +286,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 654
+      "count": 663
     },
     {
       "kind": "use-case",
@@ -14710,6 +14710,23 @@
       "referenced_by": []
     },
     {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0227",
+      "identity": "adr-0227",
+      "slug": "adr-0227",
+      "cockpit": "/cockpit/objects/adr/adr-0227",
+      "title": "The deployed stage reads the pointer where Pages published it",
+      "status": "proposed",
+      "tags": [
+        "delivery",
+        "pages",
+        "plan"
+      ],
+      "source": ".ai/repo/adrs/0227-the-deployed-stage-reads-the-pointer-where-pages-published-i.md",
+      "references": [],
+      "referenced_by": []
+    },
+    {
       "kind": "rule",
       "id": "majordomus://rule/majordomus.adr-integrity@1",
       "identity": "majordomus.adr-integrity@1",
@@ -24176,6 +24193,24 @@
           "external": false
         }
       ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.ui-uses-flowbite-pro@1",
+      "identity": "project.ui-uses-flowbite-pro@1",
+      "slug": "project-ui-uses-flowbite-pro-1",
+      "cockpit": "/cockpit/objects/rule/project-ui-uses-flowbite-pro-1",
+      "title": "Every user interface here is built on Flowbite Pro, through the mj tokens",
+      "status": "active",
+      "tags": [
+        "ui",
+        "flowbite",
+        "design-system",
+        "licence"
+      ],
+      "source": ".ai/repo/rules/project/ui-uses-flowbite-pro.v1.md",
+      "references": [],
+      "referenced_by": []
     },
     {
       "kind": "rule",

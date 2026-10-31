@@ -210,14 +210,14 @@ mj_init_hook_advice() {
   if [ "$tracked" = 0 ]; then
     cat <<OUT
 hooks are not installed by init; add these two lines yourself, doctor verifies them:
-  pre-commit: $rel doctor || exit \$?
+  pre-commit: MAJORDOMUS_DOCTOR_CONTEXT=commit $rel doctor || exit \$?
   pre-push:   $rel finish --check || exit \$?
 OUT
     return 0
   fi
   printf "hooks are not installed by init, and this repository's hooks are the project's (%s/ is tracked):\n" "$hookrel"
   for h in pre-commit pre-push; do
-    case "$h" in pre-commit) line="$rel doctor || exit \$?" ;; *) line="$rel finish --check || exit \$?" ;; esac
+    case "$h" in pre-commit) line="MAJORDOMUS_DOCTOR_CONTEXT=commit $rel doctor || exit \$?" ;; *) line="$rel finish --check || exit \$?" ;; esac
     if [ -d "$MJ_ROOT/$hookrel/$h.d" ]; then
       dropin="$hookrel/$h.d/majordomus-personal"
       mj_personal_cover "$dropin" || mj_die "$MJ_EX_INTERNAL" "cannot write $(mj_personal_exclude_file)"

@@ -380,6 +380,21 @@ mj_capture_event_kind() {
 # inside; `mj_provider_session_env` reads them to answer "which open episode is mine".
 mj_lifecycle_session_vars() { printf '%s\n' "$MJ_CAPTURE_LIFECYCLE" | awk '$13 != "" && $13 != "-" { print $13 }'; }
 
+# The provider whose own variable names the session this process runs inside, in the order
+# `mj_provider_session_env` reads them; nothing when MAJORDOMUS_PROVIDER_SESSION named it,
+# because that variable says whose session it is and not which provider's.
+mj_provider_of_session_env() {
+  [ -n "${MAJORDOMUS_PROVIDER_SESSION:-}" ] && return 0
+  local p n
+  while read -r p n; do
+    # The name comes from the adapter table, never from a payload: indirect expansion, not eval.
+    if [ -n "${!n:-}" ]; then printf '%s' "$p"; return 0; fi
+  done <<EOF_VARS
+$(printf '%s\n' "$MJ_CAPTURE_LIFECYCLE" | awk '$13 != "" && $13 != "-" { print $1, $13 }')
+EOF_VARS
+  return 0
+}
+
 # ------------------------------------------------- the declared capability of a provider
 # What the vendor offers, read from share/providers.yaml, where every cell carries the
 # citation it was verified from (ADR 0103).
