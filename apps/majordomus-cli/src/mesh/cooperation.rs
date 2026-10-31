@@ -6976,5 +6976,16 @@ mod tests {
             Some("its own probe says unhealthy"),
             "and remembers why, so an uncertain reason can be refined"
         );
+        let other = a.write_build_cache_record(
+            &mut publisher,
+            EventBody::SessionClosed {
+                session: "s".into(),
+            },
+        );
+        assert!(other.is_some());
+        assert!(
+            publisher.published.is_none() && publisher.withdrawn.is_none(),
+            "a record that is neither an offer nor a withdrawal leaves nothing to refine"
+        );
     }
 }
