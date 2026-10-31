@@ -65,7 +65,9 @@ attribute, which `scripts/gitattributes` writes from the generators — is admit
 being in the scope when the task also changed a file of the layer or a file inside its
 scope that is not derived: a scope names what a worker changes, not where a generator puts
 its projections. Projections committed with no such change beside them are refused as
-before. `finish --outcome completed` evaluates every line of the finish
+before. When the work needs a path the scope did not foresee, `majordomus scope widen
+<paths> --because "<reason>"` adds it while the task runs: the task keeps its id, the record
+says who widened it, when and why, and the ledger keeps every widening. `finish --outcome completed` evaluates every line of the finish
 contract the policy selects and writes nothing when any line fails; the other outcomes are
 honest statements that the work did not complete, and each needs a note saying what comes
 next (`# Next Action`) or why (`# Reason`). `no_match` means the thing sought does not

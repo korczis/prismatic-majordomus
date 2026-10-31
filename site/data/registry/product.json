@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.9"
   },
-  "fingerprint": "3f04ab98b97029e2e9a0d341bb92bbc0cff3182ba82df0fbb700e0d186a4384b",
+  "fingerprint": "c89cd18c1fb20a696ff59544ac964494feba1d033cecdd761caf1d9ca4bda07c",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -15,8 +15,8 @@
     "providers": 6,
     "modules": 60,
     "modules_covered": 58,
-    "commands": 30,
-    "commands_covered": 30,
+    "commands": 31,
+    "commands_covered": 31,
     "kinds": 31,
     "kinds_covered": 31
   },
@@ -2206,7 +2206,7 @@
           },
           "claims": 9,
           "tested": 9,
-          "use_cases": 7
+          "use_cases": 8
         },
         {
           "id": "ci",
@@ -2560,13 +2560,18 @@
           "id": "say-what-reached-the-remote-and-what-did-not",
           "title": "Say what reached the remote and what did not",
           "category": "completion"
+        },
+        {
+          "id": "widen-a-scope-the-work-outgrew",
+          "title": "Widen a scope the work outgrew, and say why",
+          "category": "completion"
         }
       ],
       "counts": {
         "features": 3,
         "claims": 16,
         "tested": 16,
-        "use_cases": 8,
+        "use_cases": 9,
         "rules": 12,
         "enforced_rules": 10,
         "capabilities": 6,
@@ -3505,7 +3510,7 @@
         },
         {
           "name": "command",
-          "objects": 31
+          "objects": 32
         },
         {
           "name": "claim",
@@ -3782,11 +3787,11 @@
       "counts": {
         "capabilities": 12,
         "mcp_tools": 12,
-        "mcp_resources": 323,
+        "mcp_resources": 324,
         "http_routes": 12,
         "cli_paths": 11,
         "commands": 2,
-        "objects": 316,
+        "objects": 317,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -8619,6 +8624,7 @@
       ],
       "commands": [
         "start",
+        "scope",
         "check",
         "finish",
         "question"
@@ -8656,7 +8662,8 @@
         "catch-an-agent-that-says-it-is-done",
         "know-whether-this-work-is-finished",
         "prove-what-a-task-owed-before-calling-it-done",
-        "say-what-reached-the-remote-and-what-did-not"
+        "say-what-reached-the-remote-and-what-did-not",
+        "widen-a-scope-the-work-outgrew"
       ],
       "cockpit": [],
       "web": [],
@@ -8756,6 +8763,12 @@
           "id": "start",
           "summary": "Begin one scoped task under a profile, and refuse while another is active.",
           "stage": "begin",
+          "read_only": false
+        },
+        {
+          "id": "scope",
+          "summary": "Add paths to the active task's scope, keeping its id, and say who widened it and why.",
+          "stage": "work",
           "read_only": false
         },
         {
@@ -8938,6 +8951,11 @@
           "id": "say-what-reached-the-remote-and-what-did-not",
           "title": "Say what reached the remote and what did not",
           "category": "completion"
+        },
+        {
+          "id": "widen-a-scope-the-work-outgrew",
+          "title": "Widen a scope the work outgrew, and say why",
+          "category": "completion"
         }
       ],
       "cockpit_refs": [],
@@ -9074,14 +9092,14 @@
         "mcp_resources": 6,
         "http_routes": 6,
         "cli_paths": 0,
-        "commands": 4,
+        "commands": 5,
         "objects": 0,
         "rules": 7,
         "enforced_rules": 5,
         "docs": 2,
         "adrs": 0,
         "claims": 9,
-        "use_cases": 7,
+        "use_cases": 8,
         "moments": 20
       },
       "evidence": {
@@ -14332,7 +14350,7 @@
       "kind_refs": [
         {
           "name": "use-case",
-          "objects": 49
+          "objects": 50
         },
         {
           "name": "application",
@@ -14448,11 +14466,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 64,
+        "mcp_resources": 65,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 1,
-        "objects": 64,
+        "objects": 65,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -17463,6 +17481,13 @@
         ]
       },
       {
+        "id": "scope",
+        "title": "scope widen",
+        "features": [
+          "finish-contract"
+        ]
+      },
+      {
         "id": "search",
         "title": "search",
         "features": [
@@ -17562,7 +17587,7 @@
       },
       {
         "id": "command",
-        "title": "command (31)",
+        "title": "command (32)",
         "features": [
           "declare-once"
         ]
@@ -17731,7 +17756,7 @@
       },
       {
         "id": "use-case",
-        "title": "use-case (49)",
+        "title": "use-case (50)",
         "features": [
           "use-cases"
         ]
@@ -18692,24 +18717,24 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3686,
+    "capabilities": 3690,
     "builtin": 220,
-    "declarative": 3466,
+    "declarative": 3470,
     "modules": 60,
     "mcp_tools": 206,
-    "mcp_resources": 3523,
+    "mcp_resources": 3527,
     "http_routes": 212,
     "cli_commands": 220,
-    "shell_commands": 30,
+    "shell_commands": 31,
     "kinds": 34,
-    "objects": 3466,
+    "objects": 3470,
     "by_kind": {
       "adr": 167,
       "application": 5,
       "area": 9,
       "audience": 8,
       "claim": 250,
-      "command": 31,
+      "command": 32,
       "context": 39,
       "critique": 38,
       "deployment": 1,
@@ -18719,7 +18744,7 @@
       "domain": 6,
       "feature": 29,
       "gap": 5,
-      "implementation": 52,
+      "implementation": 53,
       "intent": 44,
       "issue": 1124,
       "knowledge": 86,
@@ -18735,8 +18760,8 @@
       "session": 93,
       "skill": 8,
       "taxonomy": 10,
-      "test": 663,
-      "use-case": 49,
+      "test": 664,
+      "use-case": 50,
       "workspace": 1
     },
     "providers": 6,

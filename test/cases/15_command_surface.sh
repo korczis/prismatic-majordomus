@@ -98,6 +98,12 @@ fi
 for c in $COMMANDS; do
   case "$c" in init|start|search) continue ;; esac   # these take positional arguments
   expect_exit 2 "$MJ" "$c" --no-such-option
+  # `scope` is the executable's but for `widen` and `--help`, so its options are refused by
+  # the executable's parser, in its words (I2114)
+  if [ "$c" = scope ]; then
+    expect_grep "unexpected argument '--no-such-option'" || { echo "    scope accepted --no-such-option"; exit 1; }
+    continue
+  fi
   expect_grep 'unknown (option|subcommand)' || { echo "    $c accepted --no-such-option"; exit 1; }
 done
 

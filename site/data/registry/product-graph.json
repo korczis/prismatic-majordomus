@@ -215,6 +215,15 @@
       "status": "inspect"
     },
     {
+      "id": "command:scope",
+      "kind": "command",
+      "label": "majordomus scope",
+      "summary": "Add paths to the active task's scope, keeping its id, and say who widened it and why.",
+      "route": "/commands/scope/",
+      "source": "share/commands.yaml",
+      "status": "work"
+    },
+    {
       "id": "command:search",
       "kind": "command",
       "label": "majordomus search",
@@ -577,7 +586,7 @@
       "id": "kind:command",
       "kind": "kind",
       "label": "command",
-      "summary": "31 object(s) of the layer",
+      "summary": "32 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -752,7 +761,7 @@
       "id": "kind:use-case",
       "kind": "kind",
       "label": "use-case",
-      "summary": "49 object(s) of the layer",
+      "summary": "50 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -1427,6 +1436,11 @@
       "kind": "exposed_through"
     },
     {
+      "source": "command:scope",
+      "target": "surface:cli",
+      "kind": "exposed_through"
+    },
+    {
       "source": "command:search",
       "target": "surface:cli",
       "kind": "exposed_through"
@@ -1994,6 +2008,11 @@
     {
       "source": "feature:finish-contract",
       "target": "command:question",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:finish-contract",
+      "target": "command:scope",
       "kind": "made_of"
     },
     {
@@ -4068,8 +4087,8 @@
     }
   ],
   "metadata": {
-    "nodes": 153,
-    "edges": 550,
+    "nodes": 154,
+    "edges": 552,
     "acyclic": false,
     "truncated": false
   },

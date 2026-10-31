@@ -4024,6 +4024,11 @@
     },
     {
       "kind": "use_case",
+      "subject": "use_case:widen-a-scope-the-work-outgrew",
+      "path": "/evidence/use-cases/widen-a-scope-the-work-outgrew/"
+    },
+    {
+      "kind": "use_case",
       "subject": "use_case:work-on-a-branch-in-its-canonical-worktree",
       "path": "/evidence/use-cases/work-on-a-branch-in-its-canonical-worktree/"
     }
@@ -12918,6 +12923,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:2114_a_task_scope_is_widened_in_place",
+          "path": "test/cases/2114_a_task_scope_is_widened_in_place.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:25_continuity_lifecycle",
           "path": "test/cases/25_continuity_lifecycle.sh",
           "category": "e2e"
@@ -15109,6 +15120,12 @@
           "via": "behaviour",
           "test": "suite:19_end_to_end",
           "path": "test/cases/19_end_to_end.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:2114_a_task_scope_is_widened_in_place",
+          "path": "test/cases/2114_a_task_scope_is_widened_in_place.sh",
           "category": "e2e"
         },
         {
@@ -17896,10 +17913,23 @@
       "id": "scope",
       "page": "/evidence/commands/scope/",
       "programs": [
-        "native"
+        "native",
+        "shell"
       ],
       "members": [],
       "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:2114_a_task_scope_is_widened_in_place",
+          "path": "test/cases/2114_a_task_scope_is_widened_in_place.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:2114_a_task_scope_is_widened_in_place",
+          "path": "test/cases/2114_a_task_scope_is_widened_in_place.sh",
+          "category": "e2e"
+        },
         {
           "via": "example",
           "test": "crate:cli_examples",
@@ -17908,7 +17938,14 @@
         }
       ],
       "mechanisms": [],
-      "findings": []
+      "findings": [
+        {
+          "code": "command_in_two_programs",
+          "severity": "warning",
+          "subject": "command:scope",
+          "message": "the word `scope` is a public command of the shell tool and a command path of the executable: its behaviour and negative routes come from the shell tool's case headers, its example route from the executable's documented examples, and one page shows both"
+        }
+      ]
     },
     "command:search": {
       "kind": "command",
@@ -19907,6 +19944,7 @@
         "command:check",
         "command:finish",
         "command:question",
+        "command:scope",
         "command:start",
         "rule:majordomus.blocker-resolution",
         "rule:majordomus.define-done-first",
@@ -19921,7 +19959,8 @@
         "use_case:catch-an-agent-that-says-it-is-done",
         "use_case:know-whether-this-work-is-finished",
         "use_case:prove-what-a-task-owed-before-calling-it-done",
-        "use_case:say-what-reached-the-remote-and-what-did-not"
+        "use_case:say-what-reached-the-remote-and-what-did-not",
+        "use_case:widen-a-scope-the-work-outgrew"
       ],
       "routes": [],
       "mechanisms": [],
@@ -29400,6 +29439,30 @@
         {
           "via": "scenario",
           "path": ".ai/repo/use-cases/use-the-tool-as-your-own-in-a-shared-repository.md",
+          "category": "scenario"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "use_case:widen-a-scope-the-work-outgrew": {
+      "kind": "use_case",
+      "id": "widen-a-scope-the-work-outgrew",
+      "status": "active",
+      "page": "/evidence/use-cases/widen-a-scope-the-work-outgrew/",
+      "programs": [],
+      "members": [
+        "claim:scope-enforcement",
+        "claim:scoped-task",
+        "command:check",
+        "command:scope",
+        "rule:majordomus.scope-integrity",
+        "rule:majordomus.state-consistency"
+      ],
+      "routes": [
+        {
+          "via": "scenario",
+          "path": ".ai/repo/use-cases/widen-a-scope-the-work-outgrew.md",
           "category": "scenario"
         }
       ],

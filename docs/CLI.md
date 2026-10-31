@@ -332,6 +332,37 @@ INFO overlap  ../wt-alice-oauth-refresh claims lib/auth/oauth — contained by y
 next: worker reads AGENTS.md; checkpoint every 15m; majordomus check
 ```
 
+## `majordomus scope widen <paths>`
+
+Add paths to the active task's scope. The task keeps its id (I2114).
+
+**Arguments:** one or more paths, comma- or space-separated. `--because "<reason>"`
+required. `--by <string>` free-form, default `$USER`.
+
+**Reads:** `state/current.yaml`, policy, git state.
+**Writes:** `state/current.yaml` and one `task.scope_widened` line to `state/ledger.jsonl`.
+
+**Behaviour:**
+- Refuses (`12`) when this checkout has no task of its own, or its task is not active.
+- Refuses (`2`) without `--because`, without a path, or with a path `start --scope` would
+  refuse: the same normalisation and the same context judgement admit both.
+- Leaves out a path the scope already contains, saying so. A call that adds nothing writes
+  nothing and exits `0`.
+- Appends the new paths under `scope:` and records `scope_widened_at`, `scope_widened_by`
+  and `scope_widened_because`, replacing those of an earlier widening; the ledger keeps
+  every widening. Nothing is ever removed from a scope.
+- Reports overlap of the added paths with other worktrees' active tasks, as `start` does.
+- On a running mesh, releases the task's claim and claims its whole scope again, so no
+  linked runtime keeps reading the narrower claim. Silent when no server answers; `check`
+  claims the scope once one does.
+- Every other word under `majordomus scope` is the executable's (the repository scope,
+  read only); the launcher hands `widen` alone to the shell tool.
+
+```
+$ majordomus scope widen README.md --because "the roadmap gate wants a line"
+widened t-20261027091637-9b83  added=README.md  scope=lib,docs,README.md
+```
+
 ## `majordomus check`
 
 Is the current task consistent with policy, scope, and state? Read-only.

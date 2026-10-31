@@ -918,6 +918,126 @@
       "doc_md": "\nWrite an append-only continuation record.\n\n**Record resolution** — choosing which prior record is about the work happening here — is the same rule for handovers, checkpoints and `context`: same worktree and branch, else same branch, else nothing.\n\n\n**Input:** the authored body on stdin. Required sections are the policy's\n`handover.required_sections` as level-one headings, each with non-empty content;\ntemplate placeholders in angle brackets count as empty. Optional: `# Completed`,\n`# Decisions`, `# Verification`, `# Risks`, `# Open Work`.\n\n`--derive` composes the body instead of reading stdin, from the task record, the ledger,\ngit, the open questions and the newest checkpoint — each already written, already validated\nand already identity-checked. It calls no model and makes no network request, which is what\nmakes it safe for a provider hook to run: a derived body can be wrong only if a record it\nreads is wrong, and every one of those has its own gate. The policy's required sections are\nemitted in the policy's order; a required section this generator cannot fill is refused by\nname rather than written empty, because an empty section passes the section gate and tells\nthe next worker nothing. An authored body still says more than a derived one, and `--derive`\nexists so that the absence of somebody willing to type is no longer the same thing as the\nabsence of a record.\n\n**Writes:** one new file `state/handovers/<utc-ts>--<branch-key>--<short-head>--<rand>.md`,\nmode `0600`, created atomically (temp file, then hard link; retry with a new random\nsuffix on collision). Front matter is computed from git and from `current.yaml`; a body\nthat tries to set identity fields is rejected.\n\n**Never** stages, commits, or modifies any other file except the task record's\n`checkpoint_at`. Appends `task.handed_over` to the ledger. Prints the path.\n\n`--close` additionally sets the task's outcome to `handed_over`, so that a new task may\n`start` in this checkout; the old record is archived by that `start`. Without\n`--close` the task stays active for the next session to continue.\n\nThe provider's `SessionEnd` event runs `--derive --close`, or `--derive --no-task` when no\ntask record exists, so that an episode that ends leaves a continuation record and not only\nthe envelope of what it produced. The two answer different questions: the session record\nindexes the episode, and a handover is what the next worker resumes from. It does not ask\nwhether the task is active — until ADR 0052 it did, and a repository whose last task had\nbeen handed over stopped writing the one record a future worker resumes from, for six days,\nwhile every health check passed.\n\n**Refuses** (`10`) if a required section is missing or empty, or if the body contains\nan identity field. Refuses (`12`) with no active task unless `--no-task`.\n\n**Resolve:** `majordomus handover --resolve` finds the most relevant prior handover for\nthe current worktree and branch: same worktree and branch first, then same branch, never\na repository-wide fallback. Prints its git-state label and its body. No candidate is a\nnormal outcome and exits `0` with `No relevant handover.` `--path` prints the path\nalone, for scripting; `--no-task` resolves without an active task."
     },
     {
+      "name": "scope",
+      "summary": "Add paths to the active task's scope, keeping its id, and say who widened it and why.",
+      "category": "task",
+      "stage": "work",
+      "class": "state-mutating",
+      "read_only": false,
+      "requires_task": "required",
+      "requires_repository": true,
+      "requires_installed": true,
+      "json_output": false,
+      "syntax": "majordomus scope widen <path>[,<path>...] --because \"<reason>\" [--by <who>]",
+      "demo": "scope-widen",
+      "note": "I2114. The paths are admitted by the rule start uses; a path the scope already contains is left out and a call that adds nothing writes nothing. The record keeps who widened the scope, when and why; the ledger keeps every widening as task.scope_widened. Nothing is ever narrowed. On a running mesh the task's claim is renewed over the whole scope. Every other word under `majordomus scope` is the executable's repository scope, read only; the launcher hands `widen` alone to this tool.",
+      "reads": [
+        ".ai/repo/policy.yaml",
+        ".ai/local/state/current.yaml",
+        "git worktree list"
+      ],
+      "writes": [
+        ".ai/local/state/current.yaml",
+        ".ai/local/state/ledger.jsonl"
+      ],
+      "exit_codes": [
+        0,
+        2,
+        10,
+        12
+      ],
+      "tests": {
+        "behaviour": [
+          "2114_a_task_scope_is_widened_in_place"
+        ],
+        "negative": [
+          "2114_a_task_scope_is_widened_in_place"
+        ]
+      },
+      "demo_data": {
+        "schema": 1,
+        "command": "scope",
+        "title": "A scope that grows says why",
+        "intro": "scope widen adds paths to the task you are working on when the work needs one the scope did not foresee. The task keeps its id; the record says who widened it, when and why.",
+        "scenarios": [
+          {
+            "id": "widens",
+            "title": "Widening the scope of the active task",
+            "given": {
+              "task already active": true,
+              "change outside the scope": true
+            },
+            "setup": "check-scope-violation",
+            "run": [
+              "scope",
+              "widen",
+              "docs",
+              "--because",
+              "the change needs its page"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^widened t-",
+                "added=docs",
+                "scope=lib,docs"
+              ]
+            },
+            "explain": "The change under docs was outside the scope, so check refused it. Widening the scope names the path and the reason; the task keeps its id and check now accepts the change.",
+            "setup_sh": "# An active task scoped to lib, with a change under docs that the task never claimed.\n. \"$FIXTURE_SETUP/active-task.sh\"\necho stray >> docs/d",
+            "stdin_body": null
+          },
+          {
+            "id": "refuses-unexplained",
+            "title": "Widening without a reason",
+            "given": {
+              "task already active": true
+            },
+            "setup": "active-task",
+            "run": [
+              "scope",
+              "widen",
+              "docs"
+            ],
+            "expect": {
+              "exit": 2,
+              "stdout_contains": [
+                "--because is required"
+              ]
+            },
+            "explain": "A scope that grows without a reason is the scope creep the scope exists to show, so a widening has to say why.",
+            "setup_sh": "# ... and an active task scoped to lib, with work done inside that scope.\n. \"$FIXTURE_SETUP/installed.sh\"\n\"$MJ\" start \"narrow the parser\" --scope lib >/dev/null\necho work >> lib/a",
+            "stdin_body": null
+          },
+          {
+            "id": "refuses-no-task",
+            "title": "Widening when no task is active",
+            "given": {
+              "task already active": false
+            },
+            "setup": "installed",
+            "run": [
+              "scope",
+              "widen",
+              "docs",
+              "--because",
+              "the change needs its page"
+            ],
+            "expect": {
+              "exit": 12,
+              "stdout_contains": [
+                "no task here to widen"
+              ]
+            },
+            "explain": "Only an active task has a scope to widen. Start one with the paths you mean to change.",
+            "setup_sh": "# A repository with Majordomus installed and projections generated, and one commit of work.\n\"$MJ\" init >/dev/null\n\"$MJ\" update >/dev/null\nmkdir -p lib docs\necho a > lib/a\necho d > docs/d\ngit add . && git commit -qm base",
+            "stdin_body": null
+          }
+        ]
+      },
+      "doc_md": "\nAdd paths to the active task's scope. The task keeps its id (I2114).\n\n**Arguments:** one or more paths, comma- or space-separated. `--because \"<reason>\"`\nrequired. `--by <string>` free-form, default `$USER`.\n\n**Reads:** `state/current.yaml`, policy, git state.\n**Writes:** `state/current.yaml` and one `task.scope_widened` line to `state/ledger.jsonl`.\n\n**Behaviour:**\n- Refuses (`12`) when this checkout has no task of its own, or its task is not active.\n- Refuses (`2`) without `--because`, without a path, or with a path `start --scope` would\n  refuse: the same normalisation and the same context judgement admit both.\n- Leaves out a path the scope already contains, saying so. A call that adds nothing writes\n  nothing and exits `0`.\n- Appends the new paths under `scope:` and records `scope_widened_at`, `scope_widened_by`\n  and `scope_widened_because`, replacing those of an earlier widening; the ledger keeps\n  every widening. Nothing is ever removed from a scope.\n- Reports overlap of the added paths with other worktrees' active tasks, as `start` does.\n- On a running mesh, releases the task's claim and claims its whole scope again, so no\n  linked runtime keeps reading the narrower claim. Silent when no server answers; `check`\n  claims the scope once one does.\n- Every other word under `majordomus scope` is the executable's (the repository scope,\n  read only); the launcher hands `widen` alone to the shell tool.\n\n```\n$ majordomus scope widen README.md --because \"the roadmap gate wants a line\"\nwidened t-20261027091637-9b83  added=README.md  scope=lib,docs,README.md\n```"
+    },
+    {
       "name": "check",
       "summary": "Is the current task still consistent with its policy, its scope and this checkout?",
       "category": "task",
@@ -958,6 +1078,7 @@
           "15_command_surface",
           "17_doctrine_enforcement",
           "19_end_to_end",
+          "2114_a_task_scope_is_widened_in_place",
           "25_continuity_lifecycle",
           "2988_a_scope_admits_what_its_derive_wrote",
           "3023_a_knowledge_record_outlives_the_file_it_cites",
@@ -1081,6 +1202,7 @@
           "16_profiles",
           "17_doctrine_enforcement",
           "19_end_to_end",
+          "2114_a_task_scope_is_widened_in_place",
           "25_continuity_lifecycle",
           "275_publication_is_current",
           "2988_a_scope_admits_what_its_derive_wrote",

@@ -30,6 +30,16 @@
       "external": false
     },
     {
+      "id": "lib/scope.sh",
+      "kind": "module",
+      "label": "scope",
+      "command": "scope",
+      "summary": "widen <paths>  add paths to the active task's scope, keeping its id (--because)",
+      "read_only": null,
+      "route": "/commands/scope/",
+      "external": false
+    },
+    {
       "id": "lib/adr.sh",
       "kind": "module",
       "label": "adr",
@@ -1253,6 +1263,11 @@
     },
     {
       "source": "bin/majordomus",
+      "target": "lib/scope.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
       "target": "lib/search.sh",
       "kind": "sources"
     },
@@ -1664,6 +1679,11 @@
     {
       "source": "lib/recover.sh",
       "target": "lib/session.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/scope.sh",
+      "target": "lib/start.sh",
       "kind": "sources"
     },
     {
@@ -2339,6 +2359,11 @@
     {
       "source": "lib/project.sh",
       "target": ".ai/repo/project/milestones",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/scope.sh",
+      "target": ".ai/local/state/current.yaml",
       "kind": "writes"
     },
     {

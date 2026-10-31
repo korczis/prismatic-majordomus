@@ -1,0 +1,75 @@
+{
+  "schema": 1,
+  "command": "scope",
+  "title": "A scope that grows says why",
+  "intro": "scope widen adds paths to the task you are working on when the work needs one the scope did not foresee. The task keeps its id; the record says who widened it, when and why.",
+  "scenarios": [
+    {
+      "id": "widens",
+      "title": "Widening the scope of the active task",
+      "given": {
+        "task already active": true,
+        "change outside the scope": true
+      },
+      "setup": "check-scope-violation",
+      "run": [
+        "scope",
+        "widen",
+        "docs",
+        "--because",
+        "the change needs its page"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "^widened t-",
+          "added=docs",
+          "scope=lib,docs"
+        ]
+      },
+      "explain": "The change under docs was outside the scope, so check refused it. Widening the scope names the path and the reason; the task keeps its id and check now accepts the change."
+    },
+    {
+      "id": "refuses-unexplained",
+      "title": "Widening without a reason",
+      "given": {
+        "task already active": true
+      },
+      "setup": "active-task",
+      "run": [
+        "scope",
+        "widen",
+        "docs"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout_contains": [
+          "--because is required"
+        ]
+      },
+      "explain": "A scope that grows without a reason is the scope creep the scope exists to show, so a widening has to say why."
+    },
+    {
+      "id": "refuses-no-task",
+      "title": "Widening when no task is active",
+      "given": {
+        "task already active": false
+      },
+      "setup": "installed",
+      "run": [
+        "scope",
+        "widen",
+        "docs",
+        "--because",
+        "the change needs its page"
+      ],
+      "expect": {
+        "exit": 12,
+        "stdout_contains": [
+          "no task here to widen"
+        ]
+      },
+      "explain": "Only an active task has a scope to widen. Start one with the paths you mean to change."
+    }
+  ]
+}
