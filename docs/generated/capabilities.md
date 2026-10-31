@@ -228,7 +228,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `pack.plan` | `pack` | query | behaviorally_verified | `majordomus_pack_plan` | — | `GET /api/v1/pack/plan` | `majordomus pack plan` | — | required |
 | `pack.verify` | `pack` | query | behaviorally_verified | `majordomus_pack_verify` | — | `GET /api/v1/pack/verify` | `majordomus pack verify` | — | required |
 | `peers.announce` | `peers` | command | behaviorally_verified | `majordomus_announce` | — | `POST /api/v1/peers/announce` | — | — | required |
-| `peers.list` | `peers` | query | behaviorally_verified | `majordomus_peers` | — | `GET /api/v1/peers` | — | — | required |
+| `peers.list` | `peers` | query | behaviorally_verified | `majordomus_peers` | — | `GET /api/v1/peers` | `majordomus peers` | — | required |
 | `perf.counters` | `perf` | query | behaviorally_verified | `majordomus_perf` | — | `GET /api/v1/perf` | — | — | required |
 | `plan.delivery` | `plan` | query | experimental | `majordomus_plan_delivery` | — | `GET /api/v1/plan/delivery` | `majordomus plan delivery` | — | required |
 | `plan.drift` | `plan` | query | experimental | `majordomus_plan_drift` | — | `GET /api/v1/plan/drift` | `majordomus plan drift` | — | required |

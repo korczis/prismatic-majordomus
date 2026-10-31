@@ -3129,6 +3129,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:peers",
+      "path": "/evidence/commands/peers/"
+    },
+    {
+      "kind": "command",
       "subject": "command:plan delivery",
       "path": "/evidence/commands/plan-delivery/"
     },
@@ -5876,7 +5881,9 @@
       "id": "peers.list",
       "page": "/evidence/capabilities/peers-list/",
       "programs": [],
-      "members": [],
+      "members": [
+        "command:peers"
+      ],
       "routes": [
         {
           "via": "behaviour",
@@ -16734,6 +16741,25 @@
       "kind": "command",
       "id": "pack verify",
       "page": "/evidence/commands/pack-verify/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:peers": {
+      "kind": "command",
+      "id": "peers",
+      "page": "/evidence/commands/peers/",
       "programs": [
         "native"
       ],
@@ -29592,6 +29618,7 @@
     "suite:2978_an_intent_is_proposed_by_a_capability",
     "suite:2981_the_cockpit_snapshot_holds_its_routes",
     "suite:2982_two_snapshots_link_what_the_other_holds",
+    "suite:2993_the_peer_board_is_read_from_the_command_line",
     "suite:2998_evidence_reaches_the_subcommands_the_executable_owns",
     "suite:3003_the_knowledge_screen_answers",
     "suite:300_a_pipeline_cannot_hide_a_failure",

@@ -42,7 +42,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{CapabilityKind, Exposure, Stability};
+use crate::capability::model::{CapabilityKind, CliExposure, Exposure, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::lease;
 use crate::peers::{overlaps_among, Announced, Overlap, Peer, PeerCheckout, PeerId};
@@ -449,7 +449,7 @@ pub fn module() -> ModuleDescriptor {
                 input: PeerListInput,
                 output: PeerList,
                 stability: Stability::BehaviorallyVerified,
-                exposure: Exposure { mcp: mcp("majordomus_peers"), http: get("/api/v1/peers"), cli: None },
+                exposure: Exposure { mcp: mcp("majordomus_peers"), http: get("/api/v1/peers"), cli: Some(CliExposure { path: vec!["peers".into()] }) },
                 tags: ["peers", "coordination"],
                 handler: peers_list,
             }

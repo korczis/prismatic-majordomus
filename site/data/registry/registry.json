@@ -6,25 +6,25 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "0d0a12a10de105478e4a6bbb568960b5f8307c7d5f0aef127ede340a83ac0faf",
+    "fingerprint": "f110473556e7bb9578019dfaea380b83e1f0b88e7f7a63843dfaed8ea02a59ec",
     "summary": {
-      "total": 3686,
+      "total": 3687,
       "builtin": 220,
-      "declarative": 3466,
+      "declarative": 3467,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3466
+        "resource": 3467
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3476
+        "implemented": 3477
       },
       "mcp_tools": 206,
-      "mcp_resources": 3523,
+      "mcp_resources": 3524,
       "http_routes": 212,
-      "cli_commands": 120,
+      "cli_commands": 121,
       "modules": 94,
       "benchmark_required": 181,
       "benchmark_waived": 39,
@@ -62605,6 +62605,11 @@
           "http": {
             "method": "GET",
             "path": "/api/v1/peers"
+          },
+          "cli": {
+            "path": [
+              "peers"
+            ]
           }
         },
         "availability": "runtime",
@@ -92005,7 +92010,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 663,
+        "capabilities": 664,
         "capability_ids": []
       },
       {
@@ -92097,7 +92102,7 @@
     ]
   },
   "index": {
-    "fingerprint": "91b0178db4961906fb7de708e8b7dbacf8341a031c2dbfe68a321e3156af4f82",
+    "fingerprint": "ca47e83626c4520c65393b5088da6f688b2bdfe8850278b5dba83a4222e615b5",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92151,7 +92156,7 @@
       "session": 93,
       "skill": 8,
       "taxonomy": 10,
-      "test": 663,
+      "test": 664,
       "use-case": 49,
       "workspace": 1
     },
@@ -99528,7 +99533,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 81438
+        "bytes": 82477
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -99609,7 +99614,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 1023460
+        "bytes": 1010992
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -106472,7 +106477,7 @@
         "path": ".ai/repo/project/issues/I1997.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2517
+        "bytes": 4135
       },
       {
         "uri": "majordomus://issue/I1998",
@@ -125349,6 +125354,14 @@
         "bytes": 3270
       },
       {
+        "uri": "majordomus://test/test/cases/2993_the_peer_board_is_read_from_the_command_line.sh",
+        "kind": "test",
+        "identity": "test/cases/2993_the_peer_board_is_read_from_the_command_line.sh",
+        "path": "test/cases/2993_the_peer_board_is_read_from_the_command_line.sh",
+        "source_class": "case",
+        "bytes": 8113
+      },
+      {
         "uri": "majordomus://test/test/cases/2998_evidence_reaches_the_subcommands_the_executable_owns.sh",
         "kind": "test",
         "identity": "test/cases/2998_evidence_reaches_the_subcommands_the_executable_owns.sh",
@@ -130129,7 +130142,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 663
+      "objects": 664
     },
     {
       "name": "use-case",
@@ -164589,6 +164602,139 @@
             "subcommands": []
           }
         ]
+      },
+      {
+        "path": [
+          "majordomus",
+          "peers"
+        ],
+        "route": "/docs/cli/peers/",
+        "executable": true,
+        "usage": "majordomus peers [OPTIONS]",
+        "about": "Who else is working in this repository: every peer of every checkout's board, the worktree it is attached to and the paths it claimed; exits 12 when no board could be asked",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "checkouts",
+            "long": "checkouts",
+            "positional": false,
+            "help": "Which checkouts to answer for: every checkout of the repository, or this one alone — which reads no other checkout's lease and asks no other server",
+            "value_name": "CHECKOUTS",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [
+              {
+                "name": "repository",
+                "help": "Every checkout git registers for the repository, the primary first — a lease read and a probe each. The default, because it is the answer this capability gave before there was anything to ask"
+              },
+              {
+                "name": "this",
+                "help": "This checkout alone. No other checkout is enumerated, no other lease is read and no other server is probed; `servers` holds the one entry, and it is this one"
+              }
+            ],
+            "defaults": [
+              "repository"
+            ]
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [
+          {
+            "id": "peers-no-board",
+            "title": "Who else is working here, and what it says when nobody can be asked",
+            "description": "The board of every checkout of the repository: each peer, the worktree it is attached to, whether it is still attached and the paths it claimed, from the same capability the MCP tool majordomus_peers projects. A board is a server's memory, so in a repository where no server answers for any checkout there is none to read: the command prints the checkouts it covered, says on stderr that no board could be asked, and exits 12 rather than reporting an empty board as if it had read one.",
+            "argv": [
+              "peers"
+            ],
+            "command": "majordomus peers",
+            "setup": [],
+            "expectation": "exits 12"
+          }
+        ],
+        "subcommands": []
       }
     ]
   },
