@@ -1,0 +1,37 @@
+id: I2480
+milestone: development-runtime
+title: "The home page is the UI's front door: every screen and every surface one click away, in the UI's design"
+slug: the-home-page-is-the-front-door
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Let a person who opens a Majordomus process at / land on a screen of majordomus ui, in its frame and design: the version of this executable, the last release, the revision and the capability count, a card for every screen of the UI with the question it answers, and a card for every surface the process serves, leading to it when it answers and naming what builds it when it does not."
+why: "The owner reported on 2026-10-11 that / was inconsistent with majordomus ui, missing links and ugly (and showed 0.19.1, which was a stale server shadowing the current one on 127.0.0.1:8741). / was a plain table of surfaces with no way to the UI's screens, and the UI's top bar led to /docs, which answers 404 until the documentation is built."
+current_state: "/ answers a plain page of surfaces in tables, outside the UI's frame and design, with no link to any screen of the UI; the UI's top bar links /docs whether or not it is built."
+desired_state: "A process that serves the UI answers / with the UI's front door, in the UI's frame: a hero with this executable's version, the last release (distribution.releases), the capability count (repository.info), the revision and the number of surfaces; 'Start here', a card per screen of the UI (SCREENS) with the question it answers; 'Everything this process serves', a card per public surface of the web topology by category, a link when it answers and the producer's command when it is not built, never a link to the page itself. Nothing is written into the page: the same web::home::entries feed the plain page, which a process without the UI still answers. The top bar's Docs leads to the UI's Documentation screen."
+scope:
+  - "apps/majordomus-cli/src/ui/front.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/src/ui/shell.rs"
+  - "apps/majordomus-cli/src/web/home.rs"
+  - "apps/majordomus-cli/src/http/router.rs"
+  - "share/ui/src/ui.css"
+  - "share/ui/ui.css"
+  - ".ai/repo/project/issues/I2480.yaml"
+  - "docs/MAJORDOMUS_UI.md"
+  - "test/cases/89_web_surface.sh"
+  - "test/cases/488_rustdoc_discoverable.sh"
+  - "test/cases/1085_the_home_page_is_the_front_door.sh"
+depends_on: ["I2462"]
+acceptance_criteria:
+  - "/ answers the UI's front door in the UI's frame, linking every screen of the UI and every public surface that answers"
+  - "a surface that is not built is named with what builds it and not linked; the page does not link itself"
+  - "every value on it is read from the process, a capability or the web topology; nothing is written into the page"
+validation:
+  - "cargo test --lib ui::front"
+  - "test/run.sh 1085_the_home_page_is_the_front_door 89_web_surface 488_rustdoc_discoverable"
+evidence_required:
+  - "ui_front_unit_tests"
+  - "ui_front_case_1085"
+created_at: 2026-10-11
+updated_at: 2026-10-11

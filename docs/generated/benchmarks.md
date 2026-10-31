@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.9 -->
+     Generator: majordomus-cli 1.0.0-alpha.10 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 220 | 181 | 0 | 39 |
-| http | 212 | 181 | 0 | 31 |
-| mcp | 206 | 176 | 0 | 30 |
+| direct | 225 | 184 | 0 | 41 |
+| http | 214 | 182 | 0 | 32 |
+| mcp | 210 | 179 | 0 | 31 |
 | system | 14 | 14 | 0 | 0 |
-| total | 652 | 552 | 0 | 100 |
+| total | 663 | 559 | 0 | 104 |
 
 ## Capabilities
 
@@ -21,6 +21,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 |---|---|---|---|---|---|---|---|
 | `artifacts.list` | artifacts | query | process, 8 entries, 5s | covered | covered | covered | `all`, `one-encoding` |
 | `blackboard.snapshot` | blackboard | query | — | covered | covered | covered | `this-checkout`, `addressed` |
+| `board.snapshot` | board | query | — | waived | waived | waived | — |
 | `brief.session` | brief | query | — | covered | covered | covered | `default` |
 | `capabilities.describe` | capabilities | query | process, 512 entries | covered | covered | covered | `repository-info` |
 | `capabilities.list` | capabilities | query | process, 16 entries | covered | covered | covered | `all`, `queries` |
@@ -52,6 +53,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `deploy.slug` | deploy | command | — | waived | — | — | — |
 | `design.contrast` | design | query | — | covered | covered | covered | `default` |
 | `design.explain` | design | query | — | covered | covered | covered | `role`, `state` |
+| `design.kit` | design | query | — | covered | covered | — | `policy`, `evidence` |
+| `design.kit.adopt` | design | command | — | waived | — | — | — |
+| `design.licence` | design | query | — | covered | covered | — | `policy` |
 | `design.system` | design | query | — | covered | covered | covered | `default` |
 | `design.tokens` | design | query | — | covered | covered | covered | `all`, `roles` |
 | `devcontext.compile` | devcontext | query | process, 16 entries | covered | covered | covered | `no-seed`, `issue`, `milestone`, `intent`, `source-ranges` |
@@ -235,6 +239,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `why.validate` | why | query | process, 2 entries | covered | covered | covered | `default` |
 | `worktree.inspect` | worktree | query | — | covered | covered | covered | `feature-branch` |
 | `worktree.migration_plan` | worktree | query | — | covered | covered | covered | `default` |
+| `worktree.reconciliation` | worktree | query | — | covered | covered | covered | `default` |
 | `worktree.status` | worktree | query | — | covered | covered | covered | `default`, `primary-checkout` |
 | `worktree.topology` | worktree | query | — | covered | covered | covered | `default` |
 | `worktree.trunk` | worktree | query | — | covered | covered | covered | `default`, `primary-checkout` |

@@ -1,6 +1,6 @@
 //! The `worktree` module: the branch-to-worktree topology of this repository, projected.
 //!
-//! Six questions, all read-only, all answered by [`crate::worktree::WorktreeService`] —
+//! Seven questions, all read-only, all answered by [`crate::worktree::WorktreeService`] —
 //! the same service the command line renders and the git hooks ask. Declaring them here is
 //! what puts them on MCP (as tools and as a resource), on HTTP, in the OpenAPI document, in
 //! the Swagger UI, in the Cockpit and in the generated reference, without any of those
@@ -24,8 +24,8 @@ use crate::capability::model::{
 };
 use crate::capability::module::ModuleDescriptor;
 use crate::worktree::{
-    migrate, Detail, InspectReport, MigrationPlan, RepositoryTopology, StatusReport, Threshold,
-    TrunkDistance, UncommittedReport, WorktreeError, WorktreeService,
+    migrate, Detail, InspectReport, MigrationPlan, Reconciliation, RepositoryTopology,
+    StatusReport, Threshold, TrunkDistance, UncommittedReport, WorktreeError, WorktreeService,
 };
 use crate::{capability, module};
 
@@ -179,6 +179,10 @@ fn worktree_trunk(ctx: &Context, input: StatusInput) -> Result<TrunkDistance, Ca
     Ok(service_at(ctx, input.path.as_deref())?.trunk_distance())
 }
 
+fn worktree_reconciliation(ctx: &Context, _: Empty) -> Result<Reconciliation, CapabilityError> {
+    service_of(ctx)?.reconciliation().map_err(refused)
+}
+
 fn worktree_uncommitted(
     ctx: &Context,
     input: UncommittedInput,
@@ -300,6 +304,22 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Disabled,
                 handler: worktree_trunk,
             },
+            capability! {
+                id: "worktree.reconciliation",
+                title: "What becomes of every branch and every worktree",
+                description: "Every non-trunk branch and every detached worktree with the one state git and the kernel support for it — active (a process works inside), dirty (files no commit carries), unreadable (a reading failed, so nothing is decided), unpublished (a commit no remote holds), orphaned (a detached worktree is its commit's only name), unstarted, merged (the trunk reaches it), equivalent (merging it changes nothing), conflicted, stale, ready — the readings that decided it, the one step it permits, the command a person runs to take that step, and whether it is removable on proof alone. Decided against the remote-tracking branch the trunk follows, never from an age or a name. A read: it removes nothing, and a removal it names is git's own guarded form (`git worktree remove` without `--force`, `git update-ref -d` on the judged commit). Taking the proven steps is the command line's `majordomus worktree reconcile --apply`, which measures each subject again first.",
+                input: Empty,
+                output: Reconciliation,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_worktree_reconciliation"),
+                    http: get("/api/v1/worktrees/reconciliation"),
+                    cli: Some(CliExposure { path: vec!["worktree".into(), "reconcile".into()] }),
+                },
+                tags: ["worktree", "git", "topology", "reconciliation"],
+                cache: CachePolicy::Disabled,
+                handler: worktree_reconciliation,
+            },
         ],
     }
 }
@@ -344,6 +364,11 @@ mod tests {
                 "worktree.trunk",
                 "majordomus_worktree_trunk",
                 "/api/v1/worktrees/trunk",
+            ),
+            (
+                "worktree.reconciliation",
+                "majordomus_worktree_reconciliation",
+                "/api/v1/worktrees/reconciliation",
             ),
         ];
         let ids: Vec<&str> = m

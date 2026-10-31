@@ -523,6 +523,8 @@ acceptance_criteria: [...]            # what would make the outcome true
 validation: [...]                     # commands that demonstrate it
 evidence_required: [...]              # tokens gating milestone acceptance
 risks: [...]
+due_on: 2026-11-11                    # optional: the day it is expected; projected to the
+                                      # forge's due date, never read to derive a status
 cancelled: false                      # optional
 evidence:                             # appended; each entry covers one required token
   - covers: suite
@@ -561,6 +563,8 @@ desired_state: "…"
 scope: [...]                          # the paths this issue may touch
 non_scope: [...]
 depends_on: [I0005]                   # issue ids; the edges of the DAG
+traces: [PROJ-12, A7]                 # optional: what it answers to outside the layer (tracker
+                                      # keys, requirement ids, URLs), rendered as written
 acceptance_criteria: [...]            # required; an issue without one is a placeholder
 validation: [...]                     # required; the commands that demonstrate it
 evidence_required: [...]              # tokens that gate completion

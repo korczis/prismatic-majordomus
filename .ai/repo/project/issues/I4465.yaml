@@ -1,0 +1,66 @@
+id: I4465
+milestone: a-bounded-task-is-carried-to-accepted-work
+title: "Every enforced rule names the principle it rests on, doctrine show prints it, doctrine status counts the rules that name none, and a rule's class is called its binding level"
+slug: doctrine-show-names-the-principle
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Four changes. First, the loader of lib/doctrine.sh derives each enforced rule's principle instead of reading a field no rule has: the principles are the rules of the effective set tagged `principle` (ten, under share/standard/majordomus/rules/principle-*.v1.md), and a rule's principle is every principle reached through its depends_on, transitively, with the version suffix dropped, comma-joined in the order reached. The awk pass that builds doctrines.N (lib/doctrine.sh:40-61), whose key list at :42 has no principle, records it as doctrines.N.principle, so the existing `principle` line of `doctrine show` (lib/doctrine.sh:301) prints it. A rule that reaches none prints `principle   none — no principle in its depends_on`. Second, `doctrine status` adds one count, `enforced rules naming no principle: <n>`, of the enforced rules whose own depends_on names no principle, and `doctrine status --json` the ids; it is reported, never a refusal. Third, the 13 dispatched rules of the shipped package that name no principle in their depends_on each name, as an exact id@version, the principle they rest on, so README.md:195 and :205-206 ('every enforced rule names the principle it rests on', at :206 'in `depends_on`') become true; the package manifest is rewritten by scripts/rules-package write and the vendored copy by `majordomus rules vendor update`, never by hand. Fourth, a rule's `class` is its binding level (what a violation means: blocking or advisory), and it stops being called an enforcement class: docs/DOCTRINE.md says so where it defines the field and in its section on the two classes, and apps/majordomus-cli/src/graph.rs:734 no longer says 'enforcement class'; how a rule is enforced (its validator, its mode, its proof) stays derived apart, and no schema changes."
+why: "Found by the P00 audit on master 51b38035a71 (H4, H5, matrix row Rule -> principle) and in the backward walk from mj_validate_knowledge_integrity: the `principle` line of `doctrine show` is blank for every rule, because the loader never parses a principle, and 13 of 50 dispatched rules name no principle in depends_on, although README.md:195 and :205 say every enforced rule names the principle it rests on. A reader asking why a refusal exists, which mission section 9 requires to be traceable from requirement to check, gets an empty line where the authority should be; and the README makes a claim no reader checks. The owner decided two of the audit's questions on 2026-10-30: Q-principle, fix the 13 rules and keep the README claim true by a check, rather than narrow the README; and Q-H5, keep `class` as the rule's binding level and stop calling it an enforcement class, with no binding field and no schema change. Both touch the doctrine surface this issue already changes."
+current_state: "At master 51b38035a71: lib/doctrine.sh:42 splits `id title class validator category policy_key exit_code file provenance` as the scalar keys of a doctrine and lists depends_on among the list fields (:58); mj_doctrine_show prints `principle   $(mj_doc \"$i\" principle)` (lib/doctrine.sh:301), always empty. Principle rules carry `tags: [principle]` (for example share/standard/majordomus/rules/principle-10-handovers-carry-state.v1.md, id majordomus.handovers-carry-state). majordomus.scope-integrity depends on majordomus.one-worker-one-scope, a principle. Of the 50 rules of share/standard/majordomus/rules with an x-majordomus validator, 13 name no principle in depends_on: majordomus.candidates-reviewed, majordomus.completion-gates, majordomus.deployment-contract, majordomus.knowledge-graph, majordomus.knowledge-integrity, majordomus.knowledge-observed, majordomus.lifecycle-observed, majordomus.obligation-closure, majordomus.prompt-continuity, majordomus.publication-currency, majordomus.record-changed-files, majordomus.task-on-the-mesh and majordomus.use-case-coverage. Nine of them reach a principle through another rule; four reach none at all: candidates-reviewed (depends only on knowledge-integrity), knowledge-graph, knowledge-integrity and task-on-the-mesh (`depends_on: []`). The vendored rules under .ai/repo/rules/vendor/majordomus/rules are identical to the shipped ones. docs/DOCTRINE.md:45 defines `class` as `blocking` or `advisory` and :187-196 (Two classes, and no third) say what each routes without naming it a binding level; apps/majordomus-cli/src/graph.rs:734 describes the rule graph 'with the enforcement class each carries', the only use of that phrase in tracked code and documentation. Case 18 (test/cases/18_doctrine_wiring.sh:74-75) asserts `wired       yes` for doctrine show and nothing about the principle."
+desired_state: "Every enforced rule names the principle it rests on in depends_on, as the README says, doctrine show prints it, and a rule that stops naming one is counted and fails a case, so the README claim cannot silently become false again. A rule's class reads everywhere as its binding level, never as how it is enforced. Enforced by case 4465 and case 18 unchanged."
+scope:
+  - ".ai/repo/project/issues/I4465.yaml"
+  - "lib/doctrine.sh"
+  - "docs/CLI.md"
+  - "docs/DOCTRINE.md"
+  - "apps/majordomus-cli/src/graph.rs"
+  - "share/standard/majordomus/rules/candidates-reviewed.v1.md"
+  - "share/standard/majordomus/rules/completion-gates.v1.md"
+  - "share/standard/majordomus/rules/deployment-contract.v2.md"
+  - "share/standard/majordomus/rules/knowledge-graph.v1.md"
+  - "share/standard/majordomus/rules/knowledge-integrity.v1.md"
+  - "share/standard/majordomus/rules/knowledge-observed.v1.md"
+  - "share/standard/majordomus/rules/lifecycle-observed.v1.md"
+  - "share/standard/majordomus/rules/obligation-closure.v1.md"
+  - "share/standard/majordomus/rules/prompt-continuity.v1.md"
+  - "share/standard/majordomus/rules/publication-currency.v1.md"
+  - "share/standard/majordomus/rules/record-changed-files.v1.md"
+  - "share/standard/majordomus/rules/task-on-the-mesh.v1.md"
+  - "share/standard/majordomus/rules/use-case-coverage.v1.md"
+  - "share/standard/majordomus/manifest.yaml"
+  - ".ai/repo/rules/vendor/majordomus"
+  - "test/cases/18_doctrine_wiring.sh"
+  - "test/cases/4465_doctrine_show_names_the_principle.sh"
+non_scope:
+  - "Narrowing the README claim instead of fixing the rules: decided against by the owner on 2026-10-30 (P00 question Q-principle)"
+  - "A binding field on rules, renaming class, or any change to the class of rule.v1 (share/schemas/majordomus/rule, share/allow/rule.txt): decided against by the owner on 2026-10-30 (P00 question Q-H5)"
+  - "A new version of any of the 13 rules: naming the principle a rule already rests on changes neither its statement nor what its validator decides"
+  - "Making `doctrine status` refuse: the count is reported; the claim is held by case 4465"
+  - "Rule-to-validator and rule-to-test edges in the composed graph, and one traversal of the whole chain: I1003 and the P00 slices R2 and R3"
+  - "The Rust `rules show` projection"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Case 4465: `majordomus doctrine show majordomus.scope-integrity` prints a principle line naming majordomus.one-worker-one-scope"
+  - "Case 4465: in a fixture rule set where rule X depends on rule Y and Y depends on a principle P, `doctrine show X` names P"
+  - "Case 4465: in a fixture rule set with an enforced rule Z whose depends_on reaches no principle, `doctrine show Z` prints `principle   none — no principle in its depends_on`, and no doctrine show prints an empty principle line"
+  - "Case 4465: in that fixture `majordomus doctrine status` prints `enforced rules naming no principle:` with a number, and `doctrine status --json` lists Z among the ids; the exit code is the one it had before the change"
+  - "Each of the 13 rules names in depends_on, as an exact id@version, the principle it rests on: completion-gates, obligation-closure and publication-currency majordomus.verify-outcomes@1; deployment-contract and prompt-continuity majordomus.sessions-are-workers@1; knowledge-observed and lifecycle-observed majordomus.handovers-carry-state@1; record-changed-files majordomus.handovers-carry-state@1; use-case-coverage majordomus.minimum-sufficient-context@1, each the principle it already reaches; and candidates-reviewed, knowledge-graph, knowledge-integrity and task-on-the-mesh, which reach none, the principle chosen in this issue and stated in the rule's rationale"
+  - "Case 4465 holds README.md:195 and :205 true: every rule of share/standard/majordomus/rules with an x-majordomus validator names a rule tagged `principle` in its own depends_on, and `majordomus doctrine status --json` in this repository counts 0 enforced rules naming no principle; removing the principle from any one of the 13 turns the case red"
+  - "share/standard/majordomus/manifest.yaml is rewritten by scripts/rules-package write and `scripts/rules-package check` passes; the vendored copy under .ai/repo/rules/vendor/majordomus is updated by `majordomus rules vendor update` and `majordomus rules vendor status` reports it current"
+  - "docs/DOCTRINE.md defines `class` as the rule's binding level, blocking or advisory, in its field table (:45) and in its section Two classes, and no third, and says the enforcement (validator, mode, proof) is derived apart; apps/majordomus-cli/src/graph.rs:734 says binding level, not enforcement class"
+  - "Case 4465: `git grep -i 'enforcement class'` over README.md, docs, lib, share and apps/majordomus-cli/src finds nothing; this issue changes neither share/schemas/majordomus/rule nor share/allow/rule.txt, and neither gains a binding field"
+  - "Case 18 passes unchanged"
+  - "Before the change, case 4465 fails at its first assertion"
+validation:
+  - "MJ_TEST_JOBS=4 bash test/run.sh 4465_doctrine_show_names_the_principle 18_doctrine_wiring 36_command_doctrines 44_model_doctrine"
+  - "scripts/rules-package check"
+  - "bin/majordomus rules vendor status"
+  - "bin/majordomus shell check"
+  - "bin/majordomus doctor"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "principle_shown_case"
+created_at: 2026-10-30
+updated_at: 2026-10-30

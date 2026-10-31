@@ -45,6 +45,50 @@ mj_session_open_list() {
   return 0
 }
 
+# A close that names no episode of its own — no --provider-session, no MJ_SESSION_KEY, no
+# provider session in the environment that is open here — resolves through the pointer. With
+# one episode open that is the episode; with more, the pointer names the one opened last,
+# and closing it is the guess ADR 0164 forbids (decision 2): another worker's episode ended
+# and published under a hand-run command. It is refused, naming every key it could mean.
+mj_session_close_unambiguous() {
+  local outcome="$1" line f w sid n=0 keys="" key=""
+  [ -z "${MJ_SESSION_KEY:-}" ] || return 0
+  [ "$(mj_session_file)" = "$(mj_session_pointer)" ] || return 0
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    f="${line#*|}"
+    w="$(sed -n 's/^worktree: //p' "$f" | head -n 1)"
+    [ -n "$w" ] && [ "$w" != "$MJ_ROOT" ] && continue
+    sid="$(sed -n 's/^session_id: //p' "$f" | head -n 1)"
+    n=$((n + 1)); key="${line%%|*}"
+    keys="$keys${keys:+, }$sid ($key)"
+  done <<EOF
+$(mj_session_open_list)
+EOF
+  [ "$n" -gt 1 ] || return 0
+  local again="session close"
+  [ "$outcome" = closed ] || again="$again --outcome $outcome"
+  mj_die "$MJ_EX_REFUSED" \
+    "session close: refused by adr-0164 (a record names the session that wrote it):" \
+    "$n episodes are open in this checkout — $keys — and this caller names none of them," \
+    "so the one the pointer names would be a guess. Name yours:" \
+    "majordomus $again --provider-session <key>, or MJ_SESSION_KEY=<key> majordomus $again" \
+    "(e.g. --provider-session $key)"
+}
+
+# The key of the episode this close resolved, read off the pointer's link when it came
+# through the pointer; nothing when the pointer is a copy, which names no key.
+mj_session_close_key() {
+  local f
+  if [ -n "${MJ_SESSION_KEY:-}" ]; then printf '%s' "$MJ_SESSION_KEY"; return 0; fi
+  f="$(mj_session_file)"
+  if [ "$f" = "$(mj_session_pointer)" ]; then
+    [ -L "$f" ] || return 0
+    f="$(readlink "$f")"
+  fi
+  basename "$f" .yaml
+}
+
 # The episodes open here that are not the one being reported. Two windows on one checkout
 # is now a supported state rather than a collision, so it is a state the tool says out loud:
 # a worker that cannot see the other episode cannot know that the pointer it resolved
@@ -553,6 +597,11 @@ mj_session_close() {
     *) mj_die "$MJ_EX_USAGE" "session close: --outcome must be closed or interrupted" ;;
   esac
 
+  # A close that names no episode reaches one through the pointer, and with several open here
+  # the pointer names whichever was opened last: closing it would end, and publish, another
+  # worker's episode. That is the guess ADR 0164 forbids, so it is refused, with the keys.
+  mj_session_close_unambiguous "$outcome"
+
   local rc=0; mj_load_session || rc=$?
   case "$rc" in
     1) [ "$if_none" = ignore ] && return 0
@@ -565,8 +614,11 @@ mj_session_close() {
   local sid started closed_at task profile owner
   sid="$(mj_ses session_id)"; started="$(mj_ses started_at)"; closed_at="$(mj_now)"
   owner="$(mj_ses owner)"
-  task=none; profile=none
-  if mj_load_current; then task="$(mj_cur id)"; profile="$(mj_cur profile)"; fi
+  # The record relates the active task only when it is this episode's to carry (ADR 0164),
+  # resolved through mj_record_attribution as this episode: by its own key, which a close
+  # that came through the pointer reads off the link it followed.
+  MJ_SESSION_KEY="$(mj_session_close_key)" mj_record_attribution
+  task="${MJ_RECORD_TASK:-none}"; profile="${MJ_RECORD_PROFILE:-none}"
 
   # The optional authored summary. Identity fields are refused in it for the same reason
   # they are refused in a checkpoint: a body that forges a commit hash looks checkable.
@@ -698,7 +750,8 @@ mj_session_close() {
   # Appended before the open record is removed, so the closing event carries this
   # session's stamp like every other event of the episode.
   mj_ledger_append session.closed \
-    "\"outcome\":\"$outcome\",\"session_path\":\"$(mj_json_esc "${final#"$MJ_ROOT/"}")\""
+    "\"outcome\":\"$outcome\",\"session_path\":\"$(mj_json_esc "${final#"$MJ_ROOT/"}")\"" \
+    "$sid"
 
   # This episode's own file goes, and the pointer goes with it only when it named this
   # episode: closing one window must leave the other window's episode exactly where it was.

@@ -1,7 +1,7 @@
 +++
 title = "A published UI shows the evidence CI recorded, never \"not run\" for what CI ran"
 description = "A published UI shows the evidence CI recorded, never \"not run\" for what CI ran"
-weight = 150
+weight = 152
 [extra]
 kind = "rule"
 slug = "project-published-evidence-is-what-ci-recorded-1"

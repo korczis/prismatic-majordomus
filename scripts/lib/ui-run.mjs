@@ -37,6 +37,10 @@ export async function run(origin, surfaces, cssPath, { select, limit, shard, onV
   if (limit) pages = pages.slice(0, limit);
   const narrowed = pages.length !== target.pages.length;
   const planned = visitsOf(pages).length;
+  // The reduced-motion visit is each page's narrowest width in the plan, fixed before the plan
+  // is cut: a shard holds only some of a page's widths, and the narrowest of those is not the
+  // page's, so N shards would otherwise make up to N such visits of one page.
+  pages = pages.map((page) => ({ ...page, narrowest: Math.min(...page.widths) }));
   if (shard) pages = shardPages(pages, shard);
 
   const started = Date.now();
@@ -66,6 +70,12 @@ export async function run(origin, surfaces, cssPath, { select, limit, shard, onV
     }
   }
 
+  // The reduced-motion pass, counted from the visits that made it rather than from the plan:
+  // a page that never loaded was not measured with the preference, and a run with no such
+  // visit says `measured: 0`, never that nothing moved.
+  const reducedMotion = visits.filter((visit) => visit.reduced_motion === true);
+  const motionFindings = findings.filter((f) => f.rule === 'motion.reduced-motion-ignored').length;
+
   return {
     schema: RESULTS_SCHEMA,
     origin,
@@ -93,6 +103,11 @@ export async function run(origin, surfaces, cssPath, { select, limit, shard, onV
     // `localeCompare` would order this report by whoever's machine rendered it.
     rules: Object.fromEntries(Object.entries(rules).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))),
     foreign,
+    reduced_motion: {
+      measured: reducedMotion.length,
+      at: "each page's narrowest width, with prefers-reduced-motion: reduce emulated",
+      findings: motionFindings,
+    },
     findings,
   };
 }

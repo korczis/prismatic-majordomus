@@ -36,6 +36,7 @@ being maintained separately from the repository that backs it.
 | derived routes and links for the executable | one route per module and per capability, the executable's pages, the API anchor, the source on GitHub, the claims attached to each surface | `site/data/generated/executable.json` | never |
 | the native command line, as the site renders it | the command tree flattened, each command with its route, usage, arguments, children and executed examples | `site/data/generated/cli.json` (from `docs/generated/cli.json`, via `scripts/lib/cli-site.jq`) | never |
 | build provenance | the commit, its time and its cleanliness, the site's input hash, the registry and index fingerprints, and each composed surface with the commit its producer declared | `site/data/build.json`, served as `/build.json` | never — `scripts/site-build`, not committed |
+| what moved since the last deploy | the capability, claim and documentation movements from the commit the replaced deployment was built from to the built one, each with the release that carries it or none | `site/data/since-deploy.json`, rendered at `/changelog/#since-deploy` | never — `scripts/site-build`, not committed |
 | the crate's reference | the rustdoc pages of `apps/majordomus-cli`, composed at `/rustdoc` ([`RUSTDOC.md`](RUSTDOC.md)) | `target/web/rustdoc/`, with the `surface.json` that declares what it was built from | never — `scripts/rust-check --doc`, not committed |
 | presentation | Zola templates and Tera 2 components | `site/templates/**` | yes |
 | styling entry | Tailwind v4 + Flowbite v4 directives | `site/tailwind.css` | yes |
@@ -139,7 +140,7 @@ flowchart TB
         GA[docs/generated: openapi, registry, capabilities, cli, modules/*.md — json+yaml+md as each document is committed · share/allow/*.txt · AGENTS.md, CLAUDE.md]
     end
     subgraph stageB[stage B · scripts/generate-site-data]
-        GB[site/data/generated/*.json · site/content/** · docs/SITE_CLAIMS.md, PLAN_STATUS.md]
+        GB[site/data/generated/*.json · site/content/** · docs/SITE_CLAIMS.md, PLAN_STATUS.md, plan-status/*.md]
     end
     subgraph stageC[stage C · majordomus generate, over the index]
         GC[site/data/registry/registry.json · docs/generated/benchmarks.* · docs/generated/artifacts.*]
@@ -163,7 +164,7 @@ flowchart TB
 | stage | generator | reads | writes | checked by |
 |---|---|---|---|---|
 | A | `majordomus generate` | the Rust declarations, `share/`, the policy and the provider templates | `docs/generated/{openapi,registry,cli}.{json,yaml}`, `docs/generated/{capabilities,cli}.md`, `docs/generated/modules/*.md`, `share/allow/*.txt`, the provider bootstraps | `majordomus generate --check` |
-| B | `scripts/generate-site-data` | every canonical file (`--inputs` lists them) and stage A's `registry.json` and `openapi.json` | `site/data/generated/*.json`, `site/content/**`, `docs/SITE_CLAIMS.md`, `docs/PLAN_STATUS.md` | `scripts/generate-site-data --check` (by input hash) |
+| B | `scripts/generate-site-data` | every canonical file (`--inputs` lists them) and stage A's `registry.json` and `openapi.json` | `site/data/generated/*.json`, `site/content/**`, `docs/SITE_CLAIMS.md`, `docs/PLAN_STATUS.md` and its milestone pages `docs/plan-status/*.md` | `scripts/generate-site-data --check` (by input hash) |
 | C | `majordomus generate` | the Rust declarations and the index of the layer, which now holds the documents stage B wrote | `site/data/registry/registry.json`, `docs/generated/benchmarks.{md,json,yaml}`, `docs/generated/artifacts.{json,yaml,md}` | `majordomus generate --check` |
 | build | `scripts/site-build` | stages B and C, the templates, the assets, and the artifact of every published static surface `docs/generated/web.json` names | `site/public/**` (with each such surface composed at its mount), `site/data/build.json`, `site/static/build.json` | `scripts/site-check`, `scripts/site-probe` |
 
@@ -213,7 +214,7 @@ projection.
 | class | what | examples | rule |
 |---|---|---|---|
 | canonical | authored, the only place a fact lives | the Rust declarations, `share/*.yaml`, `docs/*.md`, `docs/CLAIMS.yaml`, `.ai/repo/**`, templates, `nav.toml`, `marketing.toml` | edited by hand |
-| derived, committed | a projection reviewers see on GitHub and CI compares with its sources | `docs/generated/**`, `share/allow/**`, `AGENTS.md`, `CLAUDE.md`, `site/data/generated/**`, `site/data/registry/**`, `docs/SITE_CLAIMS.md`, `docs/PLAN_STATUS.md` | regenerated with `scripts/derive`, committed with the change that moved it; `scripts/derive-check` refuses drift |
+| derived, committed | a projection reviewers see on GitHub and CI compares with its sources | `docs/generated/**`, `share/allow/**`, `AGENTS.md`, `CLAUDE.md`, `site/data/generated/**`, `site/data/registry/**`, `docs/SITE_CLAIMS.md`, `docs/PLAN_STATUS.md`, `docs/plan-status/**` | regenerated with `scripts/derive`, committed with the change that moved it; `scripts/derive-check` refuses drift |
 | derived, build only | rebuilt on every build, never committed | `site/content/{docs,registry,commands,...}/`, `site/static/{app.css,js/,openapi.json,build.json}`, `site/data/build.json`, `site/public/**`, `target/web/rustdoc/` | gitignored; `scripts/site-check` proves the build's own guards (`13e`, `13a`) and that every composed surface is this build's (`13m`) |
 | local, ephemeral | this checkout's state | `.ai/local/**`, `apps/majordomus-cli/target/` | never a source of anything the site shows |
 
@@ -261,7 +262,7 @@ lives in the executable, so it holds for every caller rather than for one script
 | a use case or an application | `.ai/repo/use-cases/`, `.ai/repo/applications/` | `catalogue.json`, its route |
 | a claim | `docs/CLAIMS.yaml` and `docs/claims/<id>.md` | `capabilities.json`, `docs/SITE_CLAIMS.md`, `/guarantees/` |
 | a doctrine | the rule file under `.ai/repo/rules/` or the vendored package | `doctrines.json`, `/doctrines/` |
-| a milestone or an issue | `.ai/repo/project/**` | `plan.json`, `docs/PLAN_STATUS.md`, `/plan/` |
+| a milestone or an issue | `.ai/repo/project/**` | `plan.json`, `docs/PLAN_STATUS.md` and the milestone's page under `docs/plan-status/`, `/plan/` |
 | a profile, the policy's schema | `share/skeleton/**` | `profiles.json`, `policy.json` |
 | a kind or a schema | `share/kinds.yaml`, `share/schemas/`, or `.ai/repo/knowledge/` for this repository | `share/allow/*.txt`, the kinds table |
 | the provider bootstraps | `.ai/repo/policy.yaml`, the provider templates | `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` |
@@ -758,7 +759,8 @@ and names every stale artifact before it exits:
   policy and the index again and compares byte for byte: `docs/generated/**`,
   `share/allow/**`, the provider bootstraps, `site/data/registry/registry.json`.
 - `scripts/generate-site-data --check` regenerates into a temporary directory and diffs every
-  generated file, `docs/SITE_CLAIMS.md` and `docs/PLAN_STATUS.md` against the committed ones;
+  generated file, `docs/SITE_CLAIMS.md`, `docs/PLAN_STATUS.md` and every milestone page under
+  `docs/plan-status/` against the committed ones (a page no milestone produces is an orphan);
   `source.json` is compared by its input hash, which covers every canonical file the
   generator reads, `docs/generated/registry.json` and `docs/generated/openapi.json` among
   them, so a change to the executable's code moves the site's hash.
@@ -790,6 +792,22 @@ composed surface with the commit its producer declared; `scripts/site-check` pro
 file names HEAD and the data the site was built from, and that every composed surface was built
 from that same commit, so a deployment can be verified from outside against the commit that was
 meant to deploy.
+
+What changed since the deployment a visitor last saw is the same kind of fact. `scripts/site-build
+--previous-commit SHA` (or `--previous-deploy REF`, which reads the newest `source:` line of the
+deploy branch that is not the commit being built; `scripts/site-deploy` passes its own gh-pages)
+writes `site/data/since-deploy.json`, ignored like `build.json`, and `/changelog/` renders it under
+"Since the last deploy": the capability movements `majordomus release analyze --since` measures, the
+documentation changes of the changelog composition in that range, and the claims whose entry in
+the committed claims projection moved, a planned claim excepted. Each is labelled with the first
+release record whose tree carries it, or as not yet released. A previous commit that is absent, not
+an ancestor of the built one, or an executable that does not describe the built commit makes the
+section say the delta is unknown and list nothing. The Pages workflow composes the record in a step
+before the build, with the `majordomus-cli-<triple>` artifact validate.yml kept for this commit or
+its nearest ancestor, and the build adopts it only when it names the built commit
+(`MJ_SITE_SINCE_DEPLOY_RECORD`). Nothing of it is committed, so no commit makes it stale;
+`scripts/site-check` refuses it tracked or unignored (check 23), and
+`test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh` holds the whole of it.
 
 ## Local development
 
@@ -828,7 +846,7 @@ If it needs a class Tailwind cannot see in the templates, it does not belong her
 
 `docs/generated/**`, `share/allow/**`, `site/data/registry/**`, `site/data/generated/**`,
 `site/content/{docs,profiles,guarantees,supervises,commands,doctrines,use-cases,applications,plan,why,registry}/**`,
-`site/content/render-test.md`, `docs/SITE_CLAIMS.md`, `docs/PLAN_STATUS.md`,
+`site/content/render-test.md`, `docs/SITE_CLAIMS.md`, `docs/PLAN_STATUS.md`, `docs/plan-status/**`,
 `site/static/app.css`, `site/static/js/**`, `site/static/images/**`, `site/static/openapi.json`,
 `site/static/build.json`, `site/data/build.json`, `site/public/**`, `CLAUDE.md`, `AGENTS.md`.
 Change the canonical file; `just derive`; rebuild.
