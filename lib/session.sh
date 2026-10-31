@@ -311,8 +311,10 @@ usage: majordomus session <subcommand> [options]
 
   One open session per provider session, not one per worktree: a second window of the same
   provider gets an episode of its own, and start refuses (15) only while YOUR episode is
-  open. --provider-session names it; without one you are the hand-opened episode, of which
-  there is at most one. state/session-current.yaml points at the episode of this checkout.
+  open. --provider-session names it; without one, it is the provider session this process
+  runs inside (MAJORDOMUS_PROVIDER_SESSION, then each provider's own variable), and only
+  where none is observable the hand-opened episode, of which there is at most one.
+  state/session-current.yaml points at the episode of this checkout.
   A session is not a task: it claims no paths, gates no acceptance, and is optional.
 
   close derives what the episode produced from the ledger. Nothing writes into an open
@@ -377,6 +379,26 @@ mj_session_start() {
   # provider session names, or the hand-opened one. Everything below — the already-open
   # test, the file written, the ledger stamp — resolves through it.
   [ -n "$psession" ] && MJ_SESSION_KEY="$psession"
+  # Who opened it, kept apart from whose it is: only a provider's hook names --provider, and
+  # an episode a person opens from inside a provider's process is still opened by hand.
+  local opened_by=hand; [ -n "$provider" ] && opened_by=hook
+  # Opened by hand from inside a provider's process, the episode is that provider session's,
+  # resolved as the shell writers that later stamp a record resolve it (mj_open_session_id).
+  # Keyed as `hand` instead, it was an episode no later `knowledge observe` or decision of the
+  # same process could find, which refused them all. The record then carries the session it
+  # is keyed by, and the provider whose variable named it, because every reader that asks
+  # whose an episode is joins on those two fields (lifecycle.episodes, brief, ADR 0075).
+  if [ -z "${MJ_SESSION_KEY:-}" ]; then
+    MJ_SESSION_KEY="$(mj_provider_session_env)"
+    if [ -n "$MJ_SESSION_KEY" ]; then
+      psession="$MJ_SESSION_KEY"
+      # mj_provider_session_env sources the adapter table inside the command substitution
+      # above, so this shell has not got it yet.
+      # shellcheck source=capture.sh
+      [ -n "${MJ_LIB_capture:-}" ] || . "$MJ_LIB_DIR/capture.sh"
+      [ -n "$provider" ] || provider="$(mj_provider_of_session_env)"
+    fi
+  fi
 
   local rc=0; mj_load_session || rc=$?
   case "$rc" in
@@ -428,7 +450,7 @@ mj_session_start() {
   # The working context is written after the episode exists, and its failure never costs
   # one: a session whose context could not be frozen is still a session, and the store
   # says so in its own log rather than through this command's exit code.
-  local ctx; ctx="$(mj_session_context_open "$id" "$([ -n "$provider" ] && printf hook || printf hand)" "$provider" "$psession" "$worker")"
+  local ctx; ctx="$(mj_session_context_open "$id" "$opened_by" "$provider" "$psession" "$worker")"
 
   printf 'session %s opened at %s (head %s)\n' "$id" "$now" "$(mj_git_head | cut -c1-7)"
   [ -n "$ctx" ] && printf 'working context: %s\n' "$ctx"

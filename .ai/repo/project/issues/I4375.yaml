@@ -1,0 +1,28 @@
+id: I4375
+milestone: development-runtime
+title: "An offload's fetch into the host's checkout waits its turn instead of failing the derive"
+slug: an-offload-fetch-waits-its-turn
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "The host's prepare step of `majordomus offload derive` (apps/majordomus-cli/src/offload/run.rs PREPARE) asks a refused fetch again, bounded by MJ_OFFLOAD_FETCH_TRIES (default 5) with MJ_OFFLOAD_FETCH_BACKOFF seconds times the attempt between tries (default 3), so two offloads that reach one host together both prepare their worktrees, and one that never wins still fails with git's refusal in its reason."
+why: "On 2026-10-29 at about 04:40Z an offload derive of chore/evolve-20261029 exited 12 with 'cannot lock ref refs/remotes/origin/...: is at 86368b37 but expected ff7694f8' and 'Another git process seems to be running in this repository'. PREPARE runs `git fetch -q origin` in the host's single checkout under set -e before the derive queue's lock is taken, so every offload that arrives while another is fetching races on git's ref locks and the loser fails the whole derive, which the session then has to queue again. On a day when several sessions offload to lundra at once, that is a failure no one caused and nothing retried."
+current_state: "On master 5370ee63d19 PREPARE fetches origin, and the uploaded bundle, once each under set -e; a refused fetch fails the prepare and the offload with exit 12."
+desired_state: "PREPARE's fetches go through one bounded retry; a fetch refused fewer times than its tries prepares the worktree, one refused every time fails with git's last refusal on stderr, which the caller's refusal already carries ('the host could not prepare the worktree: ...'); a unit test drives the real PREPARE against a git that refuses fetch the way a held ref lock does."
+scope:
+  - ".ai/repo/project/issues/I4375.yaml"
+  - "apps/majordomus-cli/src/offload/run.rs"
+non_scope:
+  - "Taking the queue's lock before the fetch: the lock serialises derives, which take minutes, and the fetch must not wait behind them"
+  - "The exit code of an unprepared host, which stays 12 (EXIT_UNAVAILABLE)"
+depends_on: []
+acceptance_criteria:
+  - "PREPARE run against a git whose fetch is refused twice prepares the worktree and fetches exactly three times"
+  - "PREPARE run against a git whose fetch is always refused fails after exactly MJ_OFFLOAD_FETCH_TRIES fetches, with git's refusal on stderr"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib offload::run"
+evidence_required:
+  - ci
+risk: "A host whose fetch fails for another reason (network, credentials) now fails after the tries and their backoff, about 30 s at the defaults, instead of at once."
+created_at: 2026-10-29
+updated_at: 2026-10-29

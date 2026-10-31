@@ -42846,6 +42846,8 @@
             "After a rotation, peers that trusted the old key link to the new one, and the old key's next hello is refused",
             "A key withdrawn from trust.allow on a running runtime has its events dropped from the running journal at the reload that withdrew it, with no restart"
           ],
+          "completed_at": "2026-10-29T00:48:34Z",
+          "completed_event": "sha256:c9a4c2b52f70bc33a771bce26ef1f142850f0f9f3514859674075ab9e2267a92",
           "created_at": "2026-10-14",
           "depends_on": [
             "I2134"
@@ -42872,12 +42874,16 @@
             "docs/MESH.md"
           ],
           "slug": "a-node-key-can-be-rotated",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-29T00:46:17Z",
+          "started_event": "sha256:077aa384c9417be9c4253c64afd4e8cc8544b909f9db1a6f472080d45ea049b7",
+          "updated_at": "2026-10-29T00:48:34Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test mesh_cooperation",
             "cargo test --lib mesh::identity"
-          ]
+          ],
+          "verified_at": "2026-10-29T00:46:35Z",
+          "verified_event": "sha256:068b2255ec32b971373bf6dad5ae06c6999c7fc045f59c3698c4bf028d020fc6"
         }
       },
       {
@@ -46347,20 +46353,23 @@
         "id": "majordomus://issue/I2901",
         "kind": "issue",
         "label": "I2901",
-        "summary": "One grammar names an issue id, and every surface reads it",
+        "summary": "One grammar names a record id, and every surface reads it: a capital letter and three or more digits that name a record file of the tree read",
         "route": "/cockpit/objects/issue/i2901",
         "source": ".ai/repo/project/issues/I2901.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "The issue schema refuses an id that is not I and four digits",
-            "ui/prs.rs and ui/idd.rs call one plan::is_issue_id"
-          ],
           "created_at": "2026-10-18",
-          "current_state": "issue.v1.schema.json types id as a bare string; four surfaces carry their own predicate.",
           "depends_on": [],
-          "desired_state": "The schema states the pattern; one predicate exists and every surface calls it; a test fails if a second one appears.",
-          "evidence_required": [],
+          "evidence_required": [
+            "test",
+            "rust"
+          ],
           "milestone": "idd-reads-at-a-glance",
+          "non_scope": [
+            "Changing this repository's own I and four digits ids or any existing record id",
+            "Changing which text a surface scans (title, subject, branch, or a commit body for the changelog)",
+            "Case-insensitive branch components in worktree/state.rs issue_of and merge subjects written by the forge's PR_TITLE setting (I4366, the merge-subject draft)",
+            "The reference gate of I3973 and the commit rule of I3976, which call the predicate once it exists"
+          ],
           "parallel_safe": false,
           "priority": "p2",
           "profile": "implementation",
@@ -46368,8 +46377,18 @@
             "share/schemas/majordomus/issue/issue.v1.schema.json",
             "apps/majordomus-cli/src/plan.rs",
             "apps/majordomus-cli/src/ui/prs.rs",
-            "apps/majordomus-cli/src/ui/idd.rs",
+            "apps/majordomus-cli/src/plan/delivery.rs",
+            "apps/majordomus-cli/src/release/commits.rs",
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "apps/majordomus-cli/src/commands/plan.rs",
+            "lib/plan.sh",
+            "lib/project.awk",
+            "scripts/github-sync",
+            "scripts/ci/audit-plan-check",
             "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
+            "test/cases/3970_a_pull_request_carries_its_metadata.sh",
+            "test/cases/2901_one_grammar_names_a_record_id.sh",
             ".ai/repo/project",
             "docs",
             "site"
@@ -46378,11 +46397,13 @@
             "the-owner-directs-work-from-the-ui#workspace-is-derived"
           ],
           "slug": "one-grammar-names-an-issue-id",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-10-29",
           "validation": [
-            "majordomus plan validate",
-            "majordomus plan validate",
-            "cargo test --lib plan::"
+            "bin/majordomus plan validate",
+            "bin/majordomus generate --check",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- plan:: ui::prs worktree::state release::commits",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --doc release::commits",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 2901_one_grammar_names_a_record_id 3970_a_pull_request_carries_its_metadata 3220_the_idd_loop_is_walked_in_a_browser"
           ]
         }
       },
@@ -66740,6 +66761,7 @@
             "share/providers.yaml",
             "apps/majordomus-cli/src/share.rs",
             "apps/majordomus-cli/src/product.rs",
+            "apps/majordomus-cli/src/commands/product.rs",
             "apps/majordomus-cli/src/environment/preflight.rs",
             "apps/majordomus-cli/tests/provider_browser.rs",
             ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v3.md",
@@ -66755,7 +66777,7 @@
             "a-provider-carries-the-contract-natively#the-browser-bridge-is-declared"
           ],
           "slug": "the-browser-bridge-is-declared",
-          "updated_at": "2026-10-21",
+          "updated_at": "2026-10-29",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test provider_browser",
             "bash test/cases/3829_a_provider_declares_its_browser_bridge.sh"
@@ -67129,6 +67151,8 @@
             "A case fails when /plan/ in the built site passes its declared element ceiling, and passes at the tree it lands with",
             "scripts/ui audit visits /plan/ at every declared width within VISIT_DEADLINE_MS on a loaded machine"
           ],
+          "completed_at": "2026-10-29T00:48:53Z",
+          "completed_event": "sha256:07910411cbb8a3ac7d3ebe25251cd158e3cbb1c1170da24c442a1841bfd251be",
           "created_at": "2026-10-21",
           "depends_on": [],
           "evidence_required": [
@@ -67155,11 +67179,15 @@
             "a-change-is-judged-in-minutes#pr-verdict-within-five-minutes"
           ],
           "slug": "the-plan-page-fits-the-audit-budget",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-29T00:46:53Z",
+          "started_event": "sha256:72093d2b8e4a9556f8a18cc63562b822d2b4727a192b7bf77f3dc4241afbf253",
+          "updated_at": "2026-10-29T00:48:53Z",
           "validation": [
             "bash test/run.sh 3848_the_plan_page_fits_the_audit_budget",
             "scripts/ui audit --report"
-          ]
+          ],
+          "verified_at": "2026-10-29T00:47:13Z",
+          "verified_event": "sha256:ebc02a4c88209e5240d9563caa283d2308ad767c71f4759d0985f49bab576d0a"
         }
       },
       {
@@ -69440,6 +69468,8 @@
         "route": "/cockpit/objects/issue/i3962",
         "source": ".ai/repo/project/issues/I3962.yaml",
         "facts": {
+          "completed_at": "2026-10-29T00:49:46Z",
+          "completed_event": "sha256:38d0ef8b85cfbbd7b683c2619e0f60d6ef5be7af4ff65cf2de5b7a959627d3c9",
           "created_at": "2026-10-22",
           "current_state": "scripts/lib/advisors/codex-exec.mjs runs codex exec without --output-schema and falls back to run.stdout when the -o file is absent.",
           "depends_on": [],
@@ -69461,12 +69491,16 @@
             "scripts/lib/advisors/contract.test.mjs"
           ],
           "slug": "the-codex-advisor-answers-to-a-schema",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-10-29T00:47:32Z",
+          "started_event": "sha256:5168ccddad7e4e93975f79b7a7636ca4f11bfe00d1c2ec271fc160d7635a9cf7",
+          "updated_at": "2026-10-29T00:49:46Z",
           "validation": [
             "node --test scripts/lib/advisors/contract.test.mjs",
             "bash test/run.sh 731_advisor_transport_contract",
             "bin/majordomus plan validate"
-          ]
+          ],
+          "verified_at": "2026-10-29T00:47:50Z",
+          "verified_event": "sha256:141217a6352a004b42b689104397141089f6a33760b11d55a9f4b6a6fffdb669"
         }
       },
       {
@@ -69738,7 +69772,7 @@
             "merging-and-referencing-are-enforced#one-allocator"
           ],
           "slug": "one-allocator-for-every-number",
-          "updated_at": "2026-10-22",
+          "updated_at": "2026-10-29",
           "validation": [
             "bin/majordomus plan validate",
             "env -u MAJORDOMUS_SHARE bash test/run.sh 99_adr",
@@ -73585,6 +73619,59 @@
         }
       },
       {
+        "id": "majordomus://issue/I4337",
+        "kind": "issue",
+        "label": "I4337",
+        "summary": "The evolve skill harvests what sessions only remembered, links what is in flight, and takes a number on the board first",
+        "route": "/cockpit/objects/issue/i4337",
+        "source": ".ai/repo/project/issues/I4337.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "majordomus knowledge candidates lists no candidate of episode s-20261028215857-d010 and not s-20261019205653-344d-8a56a0a79628",
+            "majordomus knowledge check and majordomus skills check pass",
+            "Case 3004 refuses an evolve skill that drops the memory harvest, the in-flight check, the board-first number or the self-evolving step, each pinned inside its own step",
+            "Case 4337 refuses a changed SKILL.md body whose version did not rise against the merge-base",
+            "Case 391 refuses a skill body that names a provider, and an implement skill whose phase 1 drops one of its four refusals"
+          ],
+          "created_at": "2026-10-28",
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "knowledge-acts-on-what-it-learns",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/skills/evolve",
+            ".ai/repo/skills/implement",
+            ".ai/repo/knowledge",
+            "test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh",
+            "docs/HANDBOOK.md",
+            ".ai/repo/project/issues/I4337.yaml",
+            ".ai/repo/project/issues/I4360.yaml",
+            ".ai/repo/project/issues/I4362.yaml",
+            ".ai/repo/project/issues/I4363.yaml",
+            ".ai/repo/project/issues/I3974.yaml",
+            "test/cases/391_skills_are_proven_capabilities.sh",
+            "test/cases/4337_a_changed_skill_raises_its_version.sh",
+            "docs/KNOWLEDGE.md"
+          ],
+          "serves": [
+            "the-layer-evolves-when-it-is-due#evolution-does-not-feed-itself"
+          ],
+          "slug": "the-evolve-skill-harvests-what-sessions-only-remembered",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE majordomus knowledge check",
+            "env -u MAJORDOMUS_SHARE majordomus skills check",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 3004_evolve_is_a_procedure_of_existing_commands",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 391_skills_are_proven_capabilities",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 4337_a_changed_skill_raises_its_version",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4338",
         "kind": "issue",
         "label": "I4338",
@@ -73622,6 +73709,79 @@
             "actionlint .github/workflows/validate.yml",
             "scripts/ci/step-bound-check",
             "bash test/run.sh 26_ci_wiring"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4339",
+        "kind": "issue",
+        "label": "I4339",
+        "summary": "Renumbered to I4360: monitor reports a GitHub run queued past its bound",
+        "route": "/cockpit/objects/issue/i4339",
+        "source": ".ai/repo/project/issues/I4339.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "majordomus commit history judges ab447585c29 without commit.unresolved_reference for I4339"
+          ],
+          "cancelled": true,
+          "created_at": "2026-10-28",
+          "current_state": "No record holds I4339; I4360 on docs/the-evolve-skill-harvests-what-sessions-only-remembered carries the objective, the criteria and the no-runner-online cause.",
+          "depends_on": [],
+          "desired_state": "I4339 resolves to this cancelled record, which names I4360 as the issue that carries the work; nothing is planned under I4339.",
+          "evidence_required": [
+            "ci"
+          ],
+          "milestone": "the-runtime-supervises-itself",
+          "non_scope": [
+            "Any of I4360's work: apps/majordomus-cli/src/monitor/github.rs and docs/MONITOR.md are I4360's scope"
+          ],
+          "objective": "Hold the identity I4339 that commit ab447585c29 named for the queued-run monitor issue, so that the commit's reference resolves; the work itself is planned and tracked as I4360.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4339.yaml"
+          ],
+          "slug": "monitor-reports-a-queued-run-renumbered",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "majordomus plan validate",
+            "scripts/ci/commit-policy"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4340",
+        "kind": "issue",
+        "label": "I4340",
+        "summary": "The reaper bounds the shared build directory although cargo writes no CACHEDIR.TAG into a build-dir",
+        "route": "/cockpit/objects/issue/i4340",
+        "source": ".ai/repo/project/issues/I4340.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "ci"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Running the reaper on a schedule on a development machine; the build path's own pass (mj_cargo_bounded) and the build host's disk guard (I4352) are the scheduled bounds",
+            "The bound's size, idle age or eviction order (I3959)"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4340.yaml",
+            "scripts/reap-orphans",
+            "test/cases/3125_the_reaper_asks_cargo_for_the_build_dir.sh",
+            "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh"
+          ],
+          "slug": "the-reaper-bounds-an-untagged-build-dir",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "bash test/run.sh 3959_the_shared_build_dir_stays_under_its_bound 3125_the_reaper_asks_cargo_for_the_build_dir",
+            "shellcheck -x scripts/reap-orphans"
           ]
         }
       },
@@ -74058,6 +74218,45 @@
         }
       },
       {
+        "id": "majordomus://issue/I4350",
+        "kind": "issue",
+        "label": "I4350",
+        "summary": "plan validate refuses a scope that names a directory holding a file another issue plans, so its warnings never publish a path nobody has written",
+        "route": "/cockpit/objects/issue/i4350",
+        "source": ".ai/repo/project/issues/I4350.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A plan where one issue scopes test/cases and another plans test/cases/<new>.sh in the same wave fails plan validate, naming both issues and the directory",
+            "Two issues sharing an existing file still produce only the scope_conflict warning",
+            "Every issue on master passes plan validate after the change, or the change narrows the scopes that fail"
+          ],
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "merging-and-referencing-are-enforced",
+          "non_scope": [
+            "scripts/ci/reference-check and case 59, which stay as strict as they are",
+            "The overlap rule itself (overlap and overlap_normal)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan.rs",
+            ".ai/repo/project/issues/I4350.yaml"
+          ],
+          "serves": [
+            "merging-and-referencing-are-enforced#references-resolve-on-master"
+          ],
+          "slug": "a-directory-scope-over-a-planned-file-is-refused",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4351",
         "kind": "issue",
         "label": "I4351",
@@ -74119,6 +74318,49 @@
           "validation": [
             "bash test/run.sh 4351_a_large_derived_file_is_declared",
             "scripts/derive-check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4352",
+        "kind": "issue",
+        "label": "I4352",
+        "summary": "The build host provisions its CI runners, and its disk guard covers the runners' homes",
+        "route": "/cockpit/objects/issue/i4352",
+        "source": ".ai/repo/project/issues/I4352.yaml",
+        "facts": {
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "suite",
+            "runner_host_apply_is_idempotent"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Applying the provisioning on lundra: the owner runs the apply as root",
+            "A new surface or script: the change extends the declared policy, the existing capability and the existing doctor",
+            "Bounding the runners' cargo registries and toolchains, which the guard never touches"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4352.yaml",
+            "apps/majordomus-cli/assets/mesh-cache-provider/",
+            "apps/majordomus-cli/src/mesh/cache_provision.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "docs/BUILD_CACHE.md",
+            "docs/generated/",
+            "site/data/registry/"
+          ],
+          "serves": [],
+          "slug": "the-build-host-provisions-its-ci-runners",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::cache_provision",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib commands::mesh::tests::a_check_that_holds_with_a_remedy_is_a_warning",
             "bin/majordomus plan validate"
           ]
         }
@@ -74484,6 +74726,804 @@
             "bash test/run.sh 4359_no_ci_routes_to_an_undeclared_runner_host",
             "bin/majordomus mesh runner-routing",
             "bin/majordomus shell check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4360",
+        "kind": "issue",
+        "label": "I4360",
+        "summary": "monitor reports a GitHub run queued past its bound, not only the runs that completed",
+        "route": "/cockpit/objects/issue/i4360",
+        "source": ".ai/repo/project/issues/I4360.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fixture run queued longer than its bound yields exactly one warning moment; one under its bound yields none; a completed run yields what it yields today",
+            "A fixture run queued past its bound for a self-hosted label, with a runner list in which every runner is offline, yields a moment whose cause is no runner online"
+          ],
+          "created_at": "2026-10-28",
+          "current_state": "Verified at 81ef931: apps/majordomus-cli/src/monitor/github.rs:307-309 returns None for any run whose status is not completed.",
+          "depends_on": [
+            "I3903"
+          ],
+          "desired_state": "A run queued past its bound is a monitor moment, with a unit test over a fixture run list holding a queued, an in-progress and a completed run.",
+          "evidence_required": [
+            "rust"
+          ],
+          "milestone": "the-runtime-supervises-itself",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/monitor/github.rs",
+            "docs/MONITOR.md",
+            ".ai/repo/project/issues/I4360.yaml"
+          ],
+          "serves": [
+            "nothing-in-the-mesh-waits-on-something-dead#states-are-classified"
+          ],
+          "slug": "monitor-reports-a-run-queued-past-its-bound",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --lib monitor::github",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4362",
+        "kind": "issue",
+        "label": "I4362",
+        "summary": "adr next and case-numbers next answer within a declared bound in a linked worktree",
+        "route": "/cockpit/objects/issue/i4362",
+        "source": ".ai/repo/project/issues/I4362.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "In a linked worktree of a fixture repository with 300 refs and 20 worktrees, `adr next` and `case-numbers next` each answer within their declared bound (a case times them)",
+            "A survey stopped at its bound exits non-zero and names each source it did not finish",
+            "The measured cause of the 2026-10-28 waits is recorded in this issue"
+          ],
+          "created_at": "2026-10-29",
+          "current_state": "Verified at ab447585c29 by reading lib/adr.sh and scripts/case-numbers: each surveys this tree, every sibling worktree, every ref and the peer board, with no time bound and no partial answer.",
+          "depends_on": [],
+          "desired_state": "Both allocators answer within their declared bound in a linked worktree, and a case measures it over a fixture with many refs and worktrees.",
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "merging-and-referencing-are-enforced",
+          "non_scope": [
+            "The single survey of every number kind and the typed board claim, owned by I3974"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/adr.sh",
+            "scripts/case-numbers",
+            "test/cases/271_adr_allocation.sh",
+            ".ai/repo/project/issues/I4362.yaml"
+          ],
+          "serves": [
+            "merging-and-referencing-are-enforced#one-allocator"
+          ],
+          "slug": "the-number-allocators-answer-within-a-bound",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 271_adr_allocation",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4363",
+        "kind": "issue",
+        "label": "I4363",
+        "summary": "A parked monitor --follow waits on its source instead of spinning: under 1 s of CPU in 10 s",
+        "route": "/cockpit/objects/issue/i4363",
+        "source": ".ai/repo/project/issues/I4363.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A follower parked for 10 s with nothing to print uses less than 1 s of CPU, measured by a test that reads the process's CPU time twice, 10 s apart",
+            "A follower still prints a new moment within its declared interval"
+          ],
+          "created_at": "2026-10-29",
+          "current_state": "Verified at ab447585c29 by the measurement above (ps -o time, 10 s apart); no record owned the defect, and the stream's waiters were replaced by gh polling loops in sessions' private notes.",
+          "depends_on": [],
+          "desired_state": "A parked follower is idle, and a case or test measures its CPU time over an interval.",
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "the-runtime-supervises-itself",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/commands/monitor.rs",
+            "apps/majordomus-cli/src/monitor",
+            "docs/MONITOR.md",
+            "test/cases/1051_a_followed_stream_can_be_waited_on.sh",
+            ".ai/repo/project/issues/I4363.yaml"
+          ],
+          "serves": [
+            "nothing-in-the-mesh-waits-on-something-dead#states-are-classified"
+          ],
+          "slug": "a-parked-monitor-follow-does-not-spin",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 1051_a_followed_stream_can_be_waited_on",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4364",
+        "kind": "issue",
+        "label": "I4364",
+        "summary": "Duplicate of I4365: a promoted knowledge note cites only references a clean clone resolves",
+        "route": "/cockpit/objects/issue/i4364",
+        "source": ".ai/repo/project/issues/I4364.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "majordomus commit history judges 5a4942c3a57 without commit.unresolved_reference for I4364"
+          ],
+          "cancelled": true,
+          "created_at": "2026-10-29",
+          "current_state": "No record holds I4364; I4365 on pull request 2677 (chore/a-promoted-record-cites-no-local-episode-is-planned) carries the objective and the criteria.",
+          "depends_on": [],
+          "desired_state": "I4364 resolves to this cancelled record, which names I4365 as the issue that carries the work; nothing is planned under I4364.",
+          "evidence_required": [
+            "ci"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Any of I4365's work: knowledge promote's provenance rewrite and its case are I4365's scope"
+          ],
+          "objective": "Hold the identity I4364 that commit 5a4942c3a57 named for the promoted-note defect, so that the commit's reference resolves; the work itself is planned and tracked as I4365.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4364.yaml"
+          ],
+          "slug": "a-promoted-note-cites-what-a-clone-resolves",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "majordomus plan validate",
+            "scripts/ci/commit-policy"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4365",
+        "kind": "issue",
+        "label": "I4365",
+        "summary": "A promoted record cites no local episode or task: knowledge promote rewrites its provenance to what resolves in a clean clone, or refuses",
+        "route": "/cockpit/objects/issue/i4365",
+        "source": ".ai/repo/project/issues/I4365.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "knowledge promote writes a curated record whose provenance.derived_from names no session: or task: reference, and names the observation's subject and evidence references instead",
+            "knowledge promote exits 10 and writes nothing when, after the local references are removed, derived_from would name nothing that resolves",
+            "With .ai/local moved aside, knowledge check and doctor pass on a record promoted in the case (the clean-clone condition the landing seat found on train 11)",
+            "A candidate still carries its session: reference, and the deriver still groups it with its episode"
+          ],
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I3415"
+          ],
+          "desired_state": "A record under .ai/repo/knowledge/curated/ resolves in a clean clone the moment it is promoted, without anyone editing its provenance by hand; a candidate keeps its session: reference for grouping.",
+          "evidence_required": [
+            "case_a_promoted_record_cites_no_local_episode"
+          ],
+          "milestone": "knowledge-is-reconciled-before-it-is-reviewed",
+          "non_scope": [
+            "Changing how a candidate is grouped with its episode while it is a candidate",
+            "Rewriting curated records that were already promoted before this lands (they were fixed by hand on #2646, #2650 and #2656)",
+            "Automatic promotion; promotion stays a person's act (ADR 0091)"
+          ],
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/knowledge.sh",
+            "test/cases/709_knowledge_promotion_is_an_act.sh",
+            "docs/KNOWLEDGE.md",
+            "site/content/docs/knowledge.md"
+          ],
+          "serves": [
+            "a-change-reconciles-what-it-affects#promotion-cites-resolvable-evidence"
+          ],
+          "slug": "a-promoted-record-cites-no-local-episode",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "bash test/run.sh 709_knowledge_promotion_is_an_act 980_a_session_records_what_it_observed 981_an_observation_becomes_a_grouped_candidate",
+            "majordomus plan validate",
+            "majordomus knowledge check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4366",
+        "kind": "issue",
+        "label": "I4366",
+        "summary": "A merge whose subject is its pull request's title is read as that pull request, and an adopter's lower-case branch names its upper-case record",
+        "route": "/cockpit/objects/issue/i4366",
+        "source": ".ai/repo/project/issues/I4366.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I2901"
+          ],
+          "evidence_required": [
+            "test",
+            "rust",
+            "an_adopter_merge_is_attributed_to_its_record"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "The id grammar and its predicate (I2901)",
+            "Reading an id from a pull request body or a commit body: title, subject and branch only, as delivery reads today",
+            "Changing issues_named's rule that an id may sit anywhere in the branch",
+            "Delivery reading the projected Refs region (the observed-metadata draft, I4367)",
+            "Changing any caller of issue_of other than through issue_of itself"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4366.yaml",
+            "apps/majordomus-cli/src/plan/delivery.rs",
+            "apps/majordomus-cli/src/worktree/state.rs",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "test/cases/4366_a_merge_titled_by_its_pull_request_is_attributed.sh",
+            "docs",
+            "site/data"
+          ],
+          "serves": [],
+          "slug": "a-merge-titled-by-its-pull-request-is-attributed",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- plan::delivery worktree::state",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --doc worktree::state",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4366_a_merge_titled_by_its_pull_request_is_attributed",
+            "bin/majordomus generate --check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4367",
+        "kind": "issue",
+        "label": "I4367",
+        "summary": "The merged pull requests' observation records the machine-written Refs region, and the live delivery answer reads the region and never the prose around it",
+        "route": "/cockpit/objects/issue/i4367",
+        "source": ".ai/repo/project/issues/I4367.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I3970",
+            "I2901",
+            "I4366"
+          ],
+          "evidence_required": [
+            "test",
+            "rust"
+          ],
+          "milestone": "work-graph-github",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4367.yaml",
+            "apps/majordomus-cli/src/deploy/observed.rs",
+            "apps/majordomus-cli/src/plan/delivery.rs",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "test/fixtures/pr-meta",
+            "test/cases/4367_delivery_reads_the_projected_refs_region.sh",
+            "docs/PLANNING.md",
+            "docs/generated"
+          ],
+          "serves": [],
+          "slug": "delivery-reads-the-projected-refs-region",
+          "updated_at": "2026-10-29"
+        }
+      },
+      {
+        "id": "majordomus://issue/I4368",
+        "kind": "issue",
+        "label": "I4368",
+        "summary": "An adopter's changelog links into its own repository and trunk, and a repository that declares first-parent history is listed by its pull requests",
+        "route": "/cockpit/objects/issue/i4368",
+        "source": ".ai/repo/project/issues/I4368.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I4366"
+          ],
+          "evidence_required": [
+            "test",
+            "rust"
+          ],
+          "milestone": "adopter-upgrades",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4368.yaml",
+            "apps/majordomus-cli/src/release/changelog.rs",
+            "apps/majordomus-cli/src/release/commits.rs",
+            "apps/majordomus-cli/src/release/model.rs",
+            "apps/majordomus-cli/src/release/mod.rs",
+            "share/schemas/majordomus/project",
+            "share/allow/project.txt",
+            "share/schemas/generated/changelog.schema.json",
+            "test/cases/4368_an_adopters_changelog_links_into_its_own_repository.sh",
+            "site/data/generated",
+            "docs"
+          ],
+          "serves": [],
+          "slug": "an-adopters-changelog-links-into-its-own-repository",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- release::",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4368_an_adopters_changelog_links_into_its_own_repository 103_release_projection",
+            "bin/majordomus generate changelog --check",
+            "bin/majordomus generate --check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4369",
+        "kind": "issue",
+        "label": "I4369",
+        "summary": "A record renamed with `replaces:` keeps its GitHub issue or milestone, and an issue whose record was renamed without one stays unmanaged, names the commit that removed its record, and is never closed or reused",
+        "route": "/cockpit/objects/issue/i4369",
+        "source": ".ai/repo/project/issues/I4369.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I1401",
+            "I3920",
+            "I4357"
+          ],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "work-graph-github",
+          "non_scope": [
+            "Renaming any record of this repository",
+            "Closing an issue for any reason other than a declared replacement",
+            "A new drift state: an issue whose record is gone without `replaces:` stays `unmanaged`",
+            "Re-attributing commits and pull requests that name a former id (delivery, trace, the PR projection)",
+            "The forge command's packaging (I4370)"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4369.yaml",
+            "scripts/github-sync",
+            "share/libexec/github-sync",
+            "lib/forge.sh",
+            "scripts/ci/collision-gate",
+            "share/schemas/majordomus/issue/issue.v1.schema.json",
+            "share/schemas/majordomus/milestone/milestone.v1.schema.json",
+            "share/allow/issue.txt",
+            "share/allow/milestone.txt",
+            "lib/project.awk",
+            "apps/majordomus-cli/src/plan.rs",
+            "test/cases/45_github_projection.sh",
+            "test/cases/99_plan_capabilities.sh",
+            "test/cases/894_github_sync_applies_only_the_trunk.sh",
+            "test/cases/4369_a_renamed_record_keeps_its_github_issue.sh",
+            "docs/PLANNING.md"
+          ],
+          "serves": [],
+          "slug": "a-renamed-record-keeps-its-github-issue",
+          "updated_at": "2026-10-29"
+        }
+      },
+      {
+        "id": "majordomus://issue/I4370",
+        "kind": "issue",
+        "label": "I4370",
+        "summary": "The pull-request and plan projection ships in the release as `majordomus forge`, reads an adopter's own models and facts, and writes only what they declare",
+        "route": "/cockpit/objects/issue/i4370",
+        "source": ".ai/repo/project/issues/I4370.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I3970",
+            "I3979",
+            "I3920",
+            "I2901",
+            "I4366"
+          ],
+          "evidence_required": [
+            "test",
+            "rust",
+            "an_installed_release_projects_an_adopter"
+          ],
+          "milestone": "merging-and-referencing-are-enforced",
+          "non_scope": [
+            "Merging, arming auto-merge or landing anything: the intent's non-goal 'Auto-merge on GitHub' stands",
+            "Moving the plan to GitHub issues or Projects, or reading anything back from GitHub into a record",
+            "A network call in the Rust executable beyond ADR 0101's exception: the adapter stays shell over gh, as github-sync is; the one issue-events read for release-freeze is part of prs refresh's observation",
+            "The adopter's workflow files (I4371), renamed records (I4369) and the repository-settings comparison behind `forge check --repo` (I4372)"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4370.yaml",
+            "bin/majordomus",
+            "lib/forge.sh",
+            "lib/common.sh",
+            "scripts/github-sync",
+            "scripts/release-package",
+            "share/libexec/github-sync",
+            "share/schemas/majordomus/pr-facts",
+            "share/schemas/majordomus/forge-plan",
+            "share/commands.yaml",
+            ".ai/repo/automation/inventory.jsonl",
+            ".ai/repo/ci/pr-meta.yaml",
+            ".ai/repo/ci/github.yaml",
+            "apps/majordomus-cli/src/integration/classify.rs",
+            "apps/majordomus-cli/src/integration/forge.rs",
+            "apps/majordomus-cli/src/capability/builtin",
+            ".ai/repo/adrs",
+            "SECURITY.md",
+            ".ai/repo/project/issues/I3979.yaml",
+            ".ai/repo/project/milestones/work-graph-github.yaml",
+            "test/cases/08_no_forbidden_constructs.sh",
+            "test/cases/30_command_registry.sh",
+            "test/cases/31_command_coverage.sh",
+            "test/cases/3970_a_pull_request_carries_its_metadata.sh",
+            "test/cases/894_github_sync_applies_only_the_trunk.sh",
+            "test/cases/45_github_projection.sh",
+            "test/cases/4370_the_projection_ships_as_majordomus_forge.sh",
+            "docs"
+          ],
+          "serves": [
+            "merging-and-referencing-are-enforced#pr-metadata-projected"
+          ],
+          "slug": "the-projection-ships-as-majordomus-forge",
+          "updated_at": "2026-10-29"
+        }
+      },
+      {
+        "id": "majordomus://issue/I4371",
+        "kind": "issue",
+        "label": "I4371",
+        "summary": "An adopter's pull-request and trunk projection workflows are rendered from the tool by `majordomus update`, pinned to a release digest written into the workflow, with a read-only derive job apart from the writing one",
+        "route": "/cockpit/objects/issue/i4371",
+        "source": ".ai/repo/project/issues/I4371.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I3970",
+            "I4370"
+          ],
+          "evidence_required": [
+            "test",
+            "rendered_workflows_pass_the_adopters_rules"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "The forge command itself (I4370)",
+            "An adopter's other workflows, or merging any rendered workflow into an adopter (the adopter commits it)",
+            "Provider bootstraps, whose mechanism stays as it is",
+            "Fetching a digest from the network during `majordomus update`"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4371.yaml",
+            "lib/update.sh",
+            "lib/common.sh",
+            "lib/doctor.sh",
+            "share/ci/github",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/schemas/majordomus",
+            "share/allow/policy.txt",
+            ".ai/repo/policy.yaml",
+            ".ai/repo/ci/pr-meta.yaml",
+            ".ai/repo/ci/github.yaml",
+            ".github/workflows/pr-meta.yml",
+            ".github/workflows/github.yml",
+            "test/fixtures/oscilla-ci-workflow-rules",
+            "test/cases/1097_the_projection_is_applied_at_landing.sh",
+            "test/cases/3970_a_pull_request_carries_its_metadata.sh",
+            "test/cases/4371_an_adopters_projection_workflows_are_generated.sh",
+            "docs/ADOPTION.md",
+            "docs/CI.md"
+          ],
+          "serves": [],
+          "slug": "an-adopters-projection-workflows-are-generated",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4371_an_adopters_projection_workflows_are_generated",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 1097_the_projection_is_applied_at_landing",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3970_a_pull_request_carries_its_metadata",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 08_no_forbidden_constructs",
+            "bin/majordomus generate --check",
+            "bin/majordomus doctor",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4372",
+        "kind": "issue",
+        "label": "I4372",
+        "summary": "A repository's merge methods, merge-commit message settings and required checks are compared with a declared block, and a drift is a report that names the command that repairs it",
+        "route": "/cockpit/objects/issue/i4372",
+        "source": ".ai/repo/project/issues/I4372.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [
+            "I3113",
+            "I3200",
+            "I4370"
+          ],
+          "evidence_required": [
+            "test",
+            "rust",
+            "case_merge_settings_drift_reported"
+          ],
+          "milestone": "a-claim-stands-only-on-its-evidence",
+          "non_scope": [
+            "Changing any repository setting or protection from the tool",
+            "Requiring the comparison as a check: it is a report and a scheduled drift finding",
+            "The protection readings themselves and scripts/ci/github-check (I3113), and the verdict-check declaration (I3200)",
+            "The allowed-methods reading and the drain's landing method (I2966), which this reuses unchanged",
+            "Reading the forge from doctor: doctor reads the recorded observation, as I3200 declares"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4372.yaml",
+            ".ai/repo/ci/github.yaml",
+            "apps/majordomus-cli/src/integration/forge.rs",
+            "apps/majordomus-cli/src/integration/classify.rs",
+            "apps/majordomus-cli/src/capability/builtin/integration.rs",
+            "lib/forge.sh",
+            "share/libexec/github-sync",
+            "share/commands.yaml",
+            "bin/majordomus",
+            "lib/doctor.sh",
+            "test/cases/4372_repository_merge_settings_are_compared_with_a_declaration.sh",
+            "test/cases/30_command_registry.sh",
+            "test/cases/31_command_coverage.sh",
+            "docs/INTEGRATION.md"
+          ],
+          "serves": [
+            "a-claim-stands-only-on-its-evidence#bypass-observed"
+          ],
+          "slug": "repository-merge-settings-are-compared-with-a-declaration",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::forge",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4372_repository_merge_settings_are_compared_with_a_declaration 30_command_registry 31_command_coverage",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3970_a_pull_request_carries_its_metadata 894_github_sync_applies_only_the_trunk 45_github_projection",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4373",
+        "kind": "issue",
+        "label": "I4373",
+        "summary": "The economics runner starts a freshly written harness once it is free, and a harness that cannot start has no version",
+        "route": "/cockpit/objects/issue/i4373",
+        "source": ".ai/repo/project/issues/I4373.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "economics::runner::tests::every_start_waits_for_a_program_still_open_for_writing: spawn_group, harness_version and run_quiet each start a harness held open for writing for 300 ms",
+            "economics::runner::tests::a_run_whose_harness_was_just_written_is_recorded: a run whose harness is held for 500 ms is recorded with version 1.2.3",
+            "economics::runner::tests::a_harness_that_cannot_start_has_no_version: a missing harness is an error naming it",
+            "The first section of a_session_that_failed_or_timed_out_is_not_a_completed_run asserts run()'s failed list is empty before reading the record"
+          ],
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "test",
+            "rust"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "The session timeout: a timed-out session is already recorded, ended `timeout`",
+            "Other modules' starters, already on retrying_busy (I2827)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4373.yaml",
+            "apps/majordomus-cli/src/economics/runner.rs"
+          ],
+          "serves": [],
+          "slug": "a-freshly-written-harness-is-started-once-it-is-free",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib economics",
+            "cargo clippy --manifest-path apps/majordomus-cli/Cargo.toml --all-targets -- -D warnings",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4374",
+        "kind": "issue",
+        "label": "I4374",
+        "summary": "A commit that changes the plan's records reports intent validate before it leaves the machine",
+        "route": "/cockpit/objects/issue/i4374",
+        "source": ".ai/repo/project/issues/I4374.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fixture commit that adds an issue with serves: [] under a milestone an intent realises prints issue_without_purpose from the hook",
+            "A commit that touches no file under .ai/repo/project/ does not run intent validate"
+          ],
+          "created_at": "2026-10-29",
+          "current_state": "On master 5370ee63d19 .githooks/pre-commit reports doctor and checks derived data; intent validate runs only as CI's intent-check gate in the rust job.",
+          "depends_on": [],
+          "evidence_required": [
+            "ci"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Refusing the commit: CI holds the verdict (I3830); the hook reports",
+            "Who may merge a pull request before its validate has run"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "Eight seconds more on a records commit; none on any other.",
+          "scope": [
+            ".ai/repo/project/issues/I4374.yaml",
+            ".githooks/pre-commit",
+            "test/cases/4374_a_records_commit_reports_intent_validate.sh"
+          ],
+          "slug": "a-records-commit-reports-intent-validate",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "bash test/run.sh 4374_a_records_commit_reports_intent_validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4375",
+        "kind": "issue",
+        "label": "I4375",
+        "summary": "An offload's fetch into the host's checkout waits its turn instead of failing the derive",
+        "route": "/cockpit/objects/issue/i4375",
+        "source": ".ai/repo/project/issues/I4375.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "PREPARE run against a git whose fetch is refused twice prepares the worktree and fetches exactly three times",
+            "PREPARE run against a git whose fetch is always refused fails after exactly MJ_OFFLOAD_FETCH_TRIES fetches, with git's refusal on stderr"
+          ],
+          "created_at": "2026-10-29",
+          "current_state": "On master 5370ee63d19 PREPARE fetches origin, and the uploaded bundle, once each under set -e; a refused fetch fails the prepare and the offload with exit 12.",
+          "depends_on": [],
+          "evidence_required": [
+            "ci"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Taking the queue's lock before the fetch: the lock serialises derives, which take minutes, and the fetch must not wait behind them",
+            "The exit code of an unprepared host, which stays 12 (EXIT_UNAVAILABLE)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "A host whose fetch fails for another reason (network, credentials) now fails after the tries and their backoff, about 30 s at the defaults, instead of at once.",
+          "scope": [
+            ".ai/repo/project/issues/I4375.yaml",
+            "apps/majordomus-cli/src/offload/run.rs"
+          ],
+          "slug": "an-offload-fetch-waits-its-turn",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib offload::run"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4380",
+        "kind": "issue",
+        "label": "I4380",
+        "summary": "An optional step of the Pages publication never stops the deploy",
+        "route": "/cockpit/objects/issue/i4380",
+        "source": ".ai/repo/project/issues/I4380.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4380.yaml",
+            ".github/workflows/pages.yml",
+            "scripts/pages",
+            "scripts/ci/step-bound-check",
+            "apps/majordomus-cli/src/integration/forge.rs",
+            "test/cases/742_only_an_outage_is_asked_again.sh",
+            "test/cases/3933_the_trends_are_read_from_the_runs_themselves.sh",
+            "test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
+            "site/content/plan/I4380.md"
+          ],
+          "serves": [],
+          "slug": "a-pages-deploy-is-not-stopped-by-an-optional-step",
+          "updated_at": "2026-10-29"
+        }
+      },
+      {
+        "id": "majordomus://issue/I4381",
+        "kind": "issue",
+        "label": "I4381",
+        "summary": "The structure job fits in half its bound: shellcheck stops re-reading lib/rust_bin.sh for every case, and the network gates run in a second job",
+        "route": "/cockpit/objects/issue/i4381",
+        "source": ".ai/repo/project/issues/I4381.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "test",
+            "rust",
+            "ci"
+          ],
+          "milestone": "a-change-is-judged-in-minutes",
+          "non_scope": [
+            "Dropping, sampling or weakening any gate, or lowering shellcheck's severity (`-S warning` stays)",
+            "Linting only changed files: master and the trains run the full plan, so it saves nothing where the time is spent, and it misses a case whose behaviour changes with test/lib.sh or lib/rust_bin.sh",
+            "More shellcheck parallelism: the step already uses `xargs -P $(nproc)` and saturates the 4 vCPUs of ubuntu-latest",
+            "Sharding shell-lint into a matrix: it needs more runners from a loaded pool, and the directive removes the repeated work instead",
+            "The per-job budget of the pull-request critical path (I3242) and the checkout budget (I4349): this issue budgets the structure job's wall time against its own bound",
+            "Raising `timeout-minutes` of structure to follow runner load"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4381.yaml",
+            "test/lib.sh",
+            "test/lib/rust_bin.functions.sh",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/ci/structure-durations.tsv",
+            ".github/workflows/validate.yml",
+            "scripts/ci-baseline",
+            "scripts/ci/step-bound-check",
+            "scripts/ci/shell-lint",
+            "scripts/ci/run-plan",
+            "apps/majordomus-cli/src/gates/model.rs",
+            "apps/majordomus-cli/src/integration/job_budget.rs",
+            "apps/majordomus-cli/src/integration/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/integration.rs",
+            "test/cases/94_ci_plan.sh",
+            "test/cases/4381_the_structure_job_fits_in_half_its_bound.sh",
+            "docs/CI.md",
+            ".just/ci.just",
+            ".ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md"
+          ],
+          "serves": [
+            "a-change-is-judged-in-minutes#a-regression-fails-its-budget"
+          ],
+          "slug": "the-structure-lane-is-planned-to-fit-its-bound",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "bash test/run.sh 94_ci_plan 4381_the_structure_job_fits_in_half_its_bound 3943_a_second_gate_list_is_found 2999_delivery_is_expedited_only_where_the_rule_says",
+            "scripts/ci/shell-lint",
+            "scripts/ci/step-bound-check",
+            "actionlint .github/workflows/validate.yml",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib gates::model",
             "bin/majordomus plan validate"
           ]
         }
@@ -75318,7 +76358,7 @@
         "summary": "a translated copy doubled the pages a browser sweep drives (2545 to 5090), and interaction-probe hit its 3300 s bound at page 2250 on run 39285861377; a copy shares its English page's template and controls, so it is driven only when its set of (spec, control signature) differs from every copy of its language driven before it (57 of 2136 copies)",
         "route": "/cockpit/objects/knowledge/s-20261019205653-344d-8a56a0a79628",
         "source": ".ai/repo/knowledge/candidates/s-20261019205653-344d-8a56a0a79628.md",
-        "status": "candidate",
+        "status": "superseded",
         "facts": {
           "about": "gate:interaction-probe",
           "class": "lesson",
@@ -75423,6 +76463,526 @@
           "about": "apps/majordomus-cli/src/lease.rs",
           "class": "lesson",
           "date": "2026-10-20",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215542-dcf9-0aec4acf4c97",
+        "kind": "knowledge",
+        "label": "s-20261028215542-dcf9-0aec4acf4c97",
+        "summary": "an issue scope that names a directory (test/cases, docs, .ai/repo/rules) makes plan validate's scope_conflict warnings name files other issues plan and nobody wrote; docs/PLAN_STATUS.md publishes them and reference-check fails case 59; met three times on 2026-10-28 (I0703/I4291/I4292, I4306, I4290), each fixed by narrowing the scope to file paths",
+        "route": "/cockpit/objects/knowledge/s-20261028215542-dcf9-0aec4acf4c97",
+        "source": ".ai/repo/knowledge/curated/s-20261028215542-dcf9-0aec4acf4c97.md",
+        "status": "verified",
+        "facts": {
+          "about": ".ai/repo/project/issues/README.md",
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215542-dcf9-30333fac611c",
+        "kind": "knowledge",
+        "label": "s-20261028215542-dcf9-30333fac611c",
+        "summary": "On 2026-10-28 ~22:30Z the shared Mac reached load 92 and the shared MCP server stopped answering (brief: Resource temporarily unavailable, os error 35) because one session's workflow agents asked whether any branch carried a path or an id with unbounded history scans: git grep -l over refs/remotes/origin/* (~1200 branches, 276% CPU, 5 min), git log --all -SI4338 (7.5 min) and git log --all -S<text>; stopping the three pids took load to 68 and the server answered in 2.4 s. scripts/collision-check answers the path question from branch tips in one cat-file pass, and a tip check plus a date-bounded --grep answers the id question in about 3 s.",
+        "route": "/cockpit/objects/knowledge/s-20261028215542-dcf9-30333fac611c",
+        "source": ".ai/repo/knowledge/curated/s-20261028215542-dcf9-30333fac611c.md",
+        "status": "verified",
+        "facts": {
+          "about": "rule:project.work-is-claimed-before-it-is-built",
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "route": "enforcement",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215542-dcf9-50e730b63c1e",
+        "kind": "knowledge",
+        "label": "s-20261028215542-dcf9-50e730b63c1e",
+        "summary": "two issue ids were taken twice within two days despite the rule: I4251 by a capture-mod fix at 13:03 and a brief status-line fix at 14:57 on 10-27, and I4296 on 10-28 by #2633's commit at 18:37Z while another session had held an exclusive mesh claim on I4296.yaml since 18:16Z; ids are allocated from the refs alone, and the allocator and gate that would decide it are owed by I3974",
+        "route": "/cockpit/objects/knowledge/s-20261028215542-dcf9-50e730b63c1e",
+        "source": ".ai/repo/knowledge/curated/s-20261028215542-dcf9-50e730b63c1e.md",
+        "status": "verified",
+        "facts": {
+          "about": "rule:project.work-is-claimed-before-it-is-built",
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "route": "enforcement",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215542-dcf9-6180b2b50b3f",
+        "kind": "knowledge",
+        "label": "s-20261028215542-dcf9-6180b2b50b3f",
+        "summary": "a majordomus task started in a train worktree (integration/train-10b-20261028) only to hold a reasoning record bound every push of that checkout to the pre-push finish --check for two hours, until it was closed as no_match; the session reported the check refusing the train's push on scope and mesh",
+        "route": "/cockpit/objects/knowledge/s-20261028215542-dcf9-6180b2b50b3f",
+        "source": ".ai/repo/knowledge/curated/s-20261028215542-dcf9-6180b2b50b3f.md",
+        "status": "verified",
+        "facts": {
+          "about": ".ai/repo/workflows/task-lifecycle.md",
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215542-dcf9-f7cf4b4595b9",
+        "kind": "knowledge",
+        "label": "s-20261028215542-dcf9-f7cf4b4595b9",
+        "summary": "an HTTP 429 whose body says the account's quota or credit is exhausted (insufficient_quota, credit_balance_exhausted) is typed rate_limited, which recovers after its retry-after, and a CLI client that exits with IneligibleTierError is typed error, so the plan keeps selecting advisors that cannot answer (gemini selected three runs in a row on assessment-20261028T185442897Z-849b27)",
+        "route": "/cockpit/objects/knowledge/s-20261028215542-dcf9-f7cf4b4595b9",
+        "source": ".ai/repo/knowledge/curated/s-20261028215542-dcf9-f7cf4b4595b9.md",
+        "status": "verified",
+        "facts": {
+          "about": "scripts/lib/advisors/contract.mjs",
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215857-d010-054934dd2bd1",
+        "kind": "knowledge",
+        "label": "s-20261028215857-d010-054934dd2bd1",
+        "summary": "a parked monitor --follow spins instead of waiting: 1.25 s of CPU between its 3rd and 13th second with nothing to print (debug executable, 2026-10-29), 3.7 s per 10 s on 2026-10-24 when four or five of them held a machine's load near 64; sessions stopped using the stream docs/MONITOR.md tells them to follow and polled gh instead; owned by I4363",
+        "route": "/cockpit/objects/knowledge/s-20261028215857-d010-054934dd2bd1",
+        "source": ".ai/repo/knowledge/curated/s-20261028215857-d010-054934dd2bd1.md",
+        "status": "verified",
+        "facts": {
+          "about": "apps/majordomus-cli/src/commands/monitor.rs",
+          "class": "lesson",
+          "date": "2026-10-29",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215857-d010-09ef2b8d8227",
+        "kind": "knowledge",
+        "label": "s-20261028215857-d010-09ef2b8d8227",
+        "summary": "an announce under a claim name replaces that claim's whole scope: every path left out is released and listed under released, so a heartbeat that resends part of a scope silently gives up the rest (five held branch claims on 2026-10-25); resend the claim's full scope and read released in the answer",
+        "route": "/cockpit/objects/knowledge/s-20261028215857-d010-09ef2b8d8227",
+        "source": ".ai/repo/knowledge/curated/s-20261028215857-d010-09ef2b8d8227.md",
+        "status": "verified",
+        "facts": {
+          "about": "apps/majordomus-cli/src/capability/builtin/peers.rs",
+          "class": "lesson",
+          "date": "2026-10-29",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215857-d010-1050b82e9b61",
+        "kind": "knowledge",
+        "label": "s-20261028215857-d010-1050b82e9b61",
+        "summary": "a full-history checkout fetched 533 heads and 190 tags in 216-488 s and hit its 10-minute bound in 6 of 11 structure runs on 2026-10-28; in flight as I4296, pull request 2633",
+        "route": "/cockpit/objects/knowledge/s-20261028215857-d010-1050b82e9b61",
+        "source": ".ai/repo/knowledge/curated/s-20261028215857-d010-1050b82e9b61.md",
+        "status": "verified",
+        "facts": {
+          "about": ".github/workflows/validate.yml",
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215857-d010-3206646bca1a",
+        "kind": "knowledge",
+        "label": "s-20261028215857-d010-3206646bca1a",
+        "summary": "numbers collided on 2026-10-28: I4251 on pull requests 2601 and 2605, I4296 with dev-53, I4334 with oscilla-b0, and ADR 0228, which adr next handed out although the board had claimed it, because the allocators read refs and a free-text intent rather than a typed claim or the mesh; adr next also ran over 5 minutes in a worktree; owed by I3974",
+        "route": "/cockpit/objects/knowledge/s-20261028215857-d010-3206646bca1a",
+        "source": ".ai/repo/knowledge/curated/s-20261028215857-d010-3206646bca1a.md",
+        "status": "verified",
+        "facts": {
+          "about": "command:adr",
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "route": "platform",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215857-d010-363bd98ba774",
+        "kind": "knowledge",
+        "label": "s-20261028215857-d010-363bd98ba774",
+        "summary": "majordomus.dev stated one fact two ways on 2026-10-28: the homepage's 232 supported against 0 on /guarantees/, and 68 rules against 50 declared; in flight as I4317 and I4318",
+        "route": "/cockpit/objects/knowledge/s-20261028215857-d010-363bd98ba774",
+        "source": ".ai/repo/knowledge/curated/s-20261028215857-d010-363bd98ba774.md",
+        "status": "verified",
+        "facts": {
+          "about": "site/templates/index.html",
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215857-d010-4db0cc6c1d08",
+        "kind": "knowledge",
+        "label": "s-20261028215857-d010-4db0cc6c1d08",
+        "summary": "validate's concurrency group is one per pull request with cancel-in-progress false, so a superseded head's run held trains 10a and 10b pending for hours (runs 40708407548, 40713047404, 40713048283); in flight as I3903 on fix/a-stuck-run-is-stopped-by-its-bound (prs supervise)",
+        "route": "/cockpit/objects/knowledge/s-20261028215857-d010-4db0cc6c1d08",
+        "source": ".ai/repo/knowledge/curated/s-20261028215857-d010-4db0cc6c1d08.md",
+        "status": "verified",
+        "facts": {
+          "about": ".github/workflows/validate.yml",
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215857-d010-50190e0ffc82",
+        "kind": "knowledge",
+        "label": "s-20261028215857-d010-50190e0ffc82",
+        "summary": "641b's free disk fell to 0.4-3 GiB twice on 2026-10-28 while several sessions built into the shared build dir: the sweep is skipped while a build holds cargo's lock and lib/rust_bin.sh refuses only below 5 GiB, so clause 7's 35 GiB floor is not held at build start; owed by I3825 and I3959",
+        "route": "/cockpit/objects/knowledge/s-20261028215857-d010-50190e0ffc82",
+        "source": ".ai/repo/knowledge/curated/s-20261028215857-d010-50190e0ffc82.md",
+        "status": "verified",
+        "facts": {
+          "about": "rule:project.the-cooperation-model-is-the-owners-word",
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "route": "enforcement",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215857-d010-5f1cf25a1ccf",
+        "kind": "knowledge",
+        "label": "s-20261028215857-d010-5f1cf25a1ccf",
+        "summary": "claude -p has no ArtifactData tool (measured 2026-10-28: ToolSearch finds none in print mode), so no unattended process such as a launchd service can write a published artifact's database; only an interactive session or the page itself can",
+        "route": "/cockpit/objects/knowledge/s-20261028215857-d010-5f1cf25a1ccf",
+        "source": ".ai/repo/knowledge/curated/s-20261028215857-d010-5f1cf25a1ccf.md",
+        "status": "verified",
+        "facts": {
+          "about": "docs/HANDBOOK.md",
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "route": "documentation",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215857-d010-7b1673ebf094",
+        "kind": "knowledge",
+        "label": "s-20261028215857-d010-7b1673ebf094",
+        "summary": "lessons written only to an agent's private memory (about 560 files in the provider's memory directory for this repository) never reach the ledger, candidates or rules unless a session copies them, and most of 2026-10-28's lessons were written there first; the evolve skill's step 1 gathers only candidates and what the current session remembers",
+        "route": "/cockpit/objects/knowledge/s-20261028215857-d010-7b1673ebf094",
+        "source": ".ai/repo/knowledge/curated/s-20261028215857-d010-7b1673ebf094.md",
+        "status": "verified",
+        "facts": {
+          "about": ".ai/repo/skills/evolve/SKILL.md",
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215857-d010-842498c07c03",
+        "kind": "knowledge",
+        "label": "s-20261028215857-d010-842498c07c03",
+        "summary": "a background task reported failed with exit 144 while its script, reparented to pid 1, kept a cargo build running for 25 minutes and was reported to a peer as stopped; a wrapper's exit is not its script's, so a task is not called dead until its script's pid is gone, and the script is stopped before its child so it cannot go on to commit",
+        "route": "/cockpit/objects/knowledge/s-20261028215857-d010-842498c07c03",
+        "source": ".ai/repo/knowledge/curated/s-20261028215857-d010-842498c07c03.md",
+        "status": "verified",
+        "facts": {
+          "about": "docs/BACKLOG.md",
+          "class": "lesson",
+          "date": "2026-10-29",
+          "epistemics": "observed",
+          "route": "documentation",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215857-d010-937198359654",
+        "kind": "knowledge",
+        "label": "s-20261028215857-d010-937198359654",
+        "summary": "an artifact published under one claude.ai account answers 404 to every session after the session switches account, and a publish to it is refused; only the owner sharing it, or a new address under the current account, restores it",
+        "route": "/cockpit/objects/knowledge/s-20261028215857-d010-937198359654",
+        "source": ".ai/repo/knowledge/curated/s-20261028215857-d010-937198359654.md",
+        "status": "verified",
+        "facts": {
+          "about": "docs/HANDBOOK.md",
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "route": "documentation",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215857-d010-a1658685aedc",
+        "kind": "knowledge",
+        "label": "s-20261028215857-d010-a1658685aedc",
+        "summary": "following step 1 in a Claude Code session, knowledge observe refused all ten observations with no episode open although session start had just opened one: the episode was keyed hand while observe looked up the provider session id, and only MJ_SESSION_KEY=hand let them through",
+        "route": "/cockpit/objects/knowledge/s-20261028215857-d010-a1658685aedc",
+        "source": ".ai/repo/knowledge/curated/s-20261028215857-d010-a1658685aedc.md",
+        "status": "verified",
+        "facts": {
+          "about": ".ai/repo/skills/evolve/SKILL.md",
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215857-d010-bb378d3e4f15",
+        "kind": "knowledge",
+        "label": "s-20261028215857-d010-bb378d3e4f15",
+        "summary": "a run stays queued while any job waits even with others in progress, so gh run list --status in_progress = 0 does not mean nothing runs, and monitor's workflow_run drops every run whose status is not completed, so a queue stuck for hours raised no signal; I3903 cancels a run queued past its bound, nothing reports one",
+        "route": "/cockpit/objects/knowledge/s-20261028215857-d010-bb378d3e4f15",
+        "source": ".ai/repo/knowledge/curated/s-20261028215857-d010-bb378d3e4f15.md",
+        "status": "verified",
+        "facts": {
+          "about": "apps/majordomus-cli/src/monitor/github.rs",
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215857-d010-fefd412fb59b",
+        "kind": "knowledge",
+        "label": "s-20261028215857-d010-fefd412fb59b",
+        "summary": "one session met four refusals more than once on 2026-10-28: a task scope without apps/majordomus-cli/src/cli.rs (twice), a commit subject over 100 characters, a new CLI command without an EXAMPLES entry (refused by the derive), and MAJORDOMUS_SHARE naming the primary checkout's share in a worktree (commit hook: stale artifacts); the implement skill names none of them",
+        "route": "/cockpit/objects/knowledge/s-20261028215857-d010-fefd412fb59b",
+        "source": ".ai/repo/knowledge/curated/s-20261028215857-d010-fefd412fb59b.md",
+        "status": "verified",
+        "facts": {
+          "about": ".ai/repo/skills/implement/SKILL.md",
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028220703-a55b-172d1046d887",
+        "kind": "knowledge",
+        "label": "s-20261028220703-a55b-172d1046d887",
+        "summary": "mj_provider_session_env sources lib/capture.sh lazily, and it is called inside a command substitution, so a function capture.sh defines is still undefined in the caller afterwards; a caller that then calls one dies with command not found under set -e and no message, as mj_session_start did with mj_provider_of_session_env until it sourced capture.sh itself",
+        "route": "/cockpit/objects/knowledge/s-20261028220703-a55b-172d1046d887",
+        "source": ".ai/repo/knowledge/curated/s-20261028220703-a55b-172d1046d887.md",
+        "status": "verified",
+        "facts": {
+          "about": "lib/common.sh",
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028220703-a55b-88cb8a942917",
+        "kind": "knowledge",
+        "label": "s-20261028220703-a55b-88cb8a942917",
+        "summary": "a commit message that names an issue id carried only by an open pull request is refused as commit.unresolved_reference until that pull request lands; the message names the pull request instead, and the id once it is on master",
+        "route": "/cockpit/objects/knowledge/s-20261028220703-a55b-88cb8a942917",
+        "source": ".ai/repo/knowledge/curated/s-20261028220703-a55b-88cb8a942917.md",
+        "status": "verified",
+        "facts": {
+          "about": "apps/majordomus-cli/src/commit/verdict.rs",
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028220703-a55b-90f229e08ef6",
+        "kind": "knowledge",
+        "label": "s-20261028220703-a55b-90f229e08ef6",
+        "summary": "session start by hand inside a provider's process keyed the episode hand while every writer resolved the same process to its provider session, so the knowledge observe the evolve skill asks for next was refused with no episode is open in this checkout for this caller",
+        "route": "/cockpit/objects/knowledge/s-20261028220703-a55b-90f229e08ef6",
+        "source": ".ai/repo/knowledge/curated/s-20261028220703-a55b-90f229e08ef6.md",
+        "status": "verified",
+        "facts": {
+          "about": "lib/session.sh",
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261029014908-3ca1-303247a52e23",
+        "kind": "knowledge",
+        "label": "s-20261029014908-3ca1-303247a52e23",
+        "summary": "an active task's scope cannot be widened: start refuses while a task is active, so a scope that missed one case the change pins (case 3959 on I4340) cost a finish --outcome partial with a note and a second start; every test case the change edits is named in --scope before the first edit",
+        "route": "/cockpit/objects/knowledge/s-20261029014908-3ca1-303247a52e23",
+        "source": ".ai/repo/knowledge/curated/s-20261029014908-3ca1-303247a52e23.md",
+        "status": "verified",
+        "facts": {
+          "about": "command:start",
+          "class": "lesson",
+          "date": "2026-10-29",
+          "epistemics": "observed",
+          "route": "platform",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261029014908-3ca1-38815adc8960",
+        "kind": "knowledge",
+        "label": "s-20261029014908-3ca1-38815adc8960",
+        "summary": "a hand session start inside Claude Code opens hand.yaml while knowledge observe looks for the provider session's file (CLAUDE_CODE_SESSION_ID), so evolve's step 1 is refused with no episode open for this caller; met again on 2026-10-29 after 10-27, fixed by #2646 (train 11); until it lands, start with --provider-session \\\"$CLAUDE_CODE_SESSION_ID\\\"",
+        "route": "/cockpit/objects/knowledge/s-20261029014908-3ca1-38815adc8960",
+        "source": ".ai/repo/knowledge/curated/s-20261029014908-3ca1-38815adc8960.md",
+        "status": "verified",
+        "facts": {
+          "about": "command:knowledge",
+          "class": "lesson",
+          "date": "2026-10-29",
+          "epistemics": "observed",
+          "route": "platform",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261029014908-3ca1-58aff37c4433",
+        "kind": "knowledge",
+        "label": "s-20261029014908-3ca1-58aff37c4433",
+        "summary": "mj_cargo_build_dir answers nothing for a relative crate directory, because mj_cargo_metadata_dir cds into it and then passes the same relative --manifest-path; every caller passes an absolute path, and a hand run of mj_rust_bound_build_dir must too",
+        "route": "/cockpit/objects/knowledge/s-20261029014908-3ca1-58aff37c4433",
+        "source": ".ai/repo/knowledge/curated/s-20261029014908-3ca1-58aff37c4433.md",
+        "status": "verified",
+        "facts": {
+          "about": "lib/rust_bin.sh",
+          "class": "lesson",
+          "date": "2026-10-29",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261029014908-3ca1-cd2e93f4f1ef",
+        "kind": "knowledge",
+        "label": "s-20261029014908-3ca1-cd2e93f4f1ef",
+        "summary": "cargo writes CACHEDIR.TAG into a target-dir and never into a build-dir apart from it, so the reaper skipped the shared build dir before asking its size; on 2026-10-29 it held 43.4GB against its 6144MB bound with 40GB idle 100-212 min and the volume fell to 21GiB; a fail-closed check written for removing a whole directory also blocked the per-unit eviction (I4340, #2674)",
+        "route": "/cockpit/objects/knowledge/s-20261029014908-3ca1-cd2e93f4f1ef",
+        "source": ".ai/repo/knowledge/curated/s-20261029014908-3ca1-cd2e93f4f1ef.md",
+        "status": "verified",
+        "facts": {
+          "about": "scripts/reap-orphans",
+          "class": "lesson",
+          "date": "2026-10-29",
           "epistemics": "observed",
           "route": "project",
           "tags": [
@@ -94864,6 +96424,79 @@
         }
       },
       {
+        "id": "majordomus://session/s-20261028215445-b7a3",
+        "kind": "session",
+        "label": "s-20261028215445-b7a3",
+        "summary": "Session s-20261028215445-b7a3 on chore/the-sessions-lessons-of-2026-10-28-are-reviewed",
+        "route": "/cockpit/objects/session/s-20261028215445-b7a3",
+        "source": ".ai/repo/sessions/20261028T220702Z--s-20261028215445-b7a3--chore-the-sessions-lessons-of-2026-10-28-are-reviewed--81ef931--a22beb8e4db8dc53.md",
+        "facts": {
+          "branch": "chore/the-sessions-lessons-of-2026-10-28-are-reviewed",
+          "changed_files": [
+            "lib/session.sh",
+            "test/cases/111_session_per_provider.sh"
+          ],
+          "checkpoints": [],
+          "closed_at": "2026-10-28T22:06:59Z",
+          "commits": [],
+          "created_at": "2026-10-28T22:06:59Z",
+          "decisions": [],
+          "evidence": [],
+          "handovers": [],
+          "head": "81ef931a3e156907f1784c64c509884f565c17f0",
+          "issues": [],
+          "milestones": [],
+          "outcome": "closed",
+          "profile": "implementation",
+          "questions": [],
+          "repository_id": "git@github.com:korczis/prismatic-majordomus.git",
+          "session_id": "s-20261028215445-b7a3",
+          "start_head": "81ef931a3e156907f1784c64c509884f565c17f0",
+          "start_working_tree": "clean",
+          "started_at": "2026-10-28T21:54:45Z",
+          "task_id": "t-20261028215508-b6d7",
+          "tasks": [],
+          "working_tree": "dirty",
+          "worktree_id": "e34570fc9c686628"
+        }
+      },
+      {
+        "id": "majordomus://session/s-20261029014409-5302",
+        "kind": "session",
+        "label": "s-20261029014409-5302",
+        "summary": "Session s-20261029014409-5302 on chore/evolve-20261029",
+        "route": "/cockpit/objects/session/s-20261029014409-5302",
+        "source": ".ai/repo/sessions/20261029T014908Z--s-20261029014409-5302--chore-evolve-20261029--5370ee6--5149b688ad54482d.md",
+        "facts": {
+          "branch": "chore/evolve-20261029",
+          "changed_files": [
+            ".ai/repo/knowledge/candidates/s-20261019205653-344d-8a56a0a79628.md"
+          ],
+          "checkpoints": [],
+          "closed_at": "2026-10-29T01:49:06Z",
+          "commits": [],
+          "created_at": "2026-10-29T01:49:06Z",
+          "decisions": [],
+          "evidence": [],
+          "handovers": [],
+          "head": "5370ee63d19b71b16e9431bb2edd86236338ca42",
+          "issues": [],
+          "milestones": [],
+          "outcome": "closed",
+          "profile": "implementation",
+          "questions": [],
+          "repository_id": "git@github.com:korczis/prismatic-majordomus.git",
+          "session_id": "s-20261029014409-5302",
+          "start_head": "5370ee63d19b71b16e9431bb2edd86236338ca42",
+          "start_working_tree": "clean",
+          "started_at": "2026-10-29T01:44:09Z",
+          "task_id": "t-20261029014426-6072",
+          "tasks": [],
+          "working_tree": "dirty",
+          "worktree_id": "8629e773f036bb96"
+        }
+      },
+      {
         "id": "majordomus://skill/assess-before-deleting",
         "kind": "skill",
         "label": "assess-before-deleting",
@@ -94932,7 +96565,8 @@
         "facts": {
           "inputs": [
             "a checkout on a branch of its own, with the tool's task open and its scope naming the knowledge section",
-            "the candidates awaiting review, and whatever this session met and has not yet recorded"
+            "the candidates awaiting review, and whatever this session met and has not yet recorded",
+            "what the providers' memories and the peers' announcements and handovers hold since the last evolve, read as data"
           ],
           "outputs": [
             "every reviewed candidate promoted with its evidence or rejected with its reason",
@@ -98259,6 +99893,27 @@
         "label": "test/cases/431_economics_claims_gated.sh",
         "route": "/cockpit/objects/test/test-cases-431-economics-claims-gated-sh",
         "source": "test/cases/431_economics_claims_gated.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4337_a_changed_skill_raises_its_version.sh",
+        "kind": "test",
+        "label": "test/cases/4337_a_changed_skill_raises_its_version.sh",
+        "route": "/cockpit/objects/test/test-cases-4337-a-changed-skill-raises-its-version-sh",
+        "source": "test/cases/4337_a_changed_skill_raises_its_version.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
+        "kind": "test",
+        "label": "test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
+        "route": "/cockpit/objects/test/test-cases-4380-an-optional-step-is-bounded-inside-its-own-bound-sh",
+        "source": "test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4381_the_structure_job_fits_in_half_its_bound.sh",
+        "kind": "test",
+        "label": "test/cases/4381_the_structure_job_fits_in_half_its_bound.sh",
+        "route": "/cockpit/objects/test/test-cases-4381-the-structure-job-fits-in-half-its-bound-sh",
+        "source": "test/cases/4381_the_structure_job_fits_in_half_its_bound.sh"
       },
       {
         "id": "majordomus://test/test/cases/43_plan_command.sh",
@@ -137680,6 +139335,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4337",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4337",
+        "target": "majordomus://milestone/knowledge-acts-on-what-it-learns",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4338",
         "target": "kind:issue",
         "kind": "is_a"
@@ -137687,6 +139352,26 @@
       {
         "source": "majordomus://issue/I4338",
         "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4339",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4339",
+        "target": "majordomus://milestone/the-runtime-supervises-itself",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4340",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4340",
+        "target": "majordomus://milestone/development-runtime",
         "kind": "belongs_to"
       },
       {
@@ -137810,6 +139495,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4350",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4350",
+        "target": "majordomus://milestone/merging-and-referencing-are-enforced",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4351",
         "target": "kind:issue",
         "kind": "is_a"
@@ -137822,6 +139517,16 @@
       {
         "source": "majordomus://issue/I4351",
         "target": "majordomus://milestone/a-change-is-judged-in-minutes",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4352",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4352",
+        "target": "majordomus://milestone/development-runtime",
         "kind": "belongs_to"
       },
       {
@@ -137951,6 +139656,276 @@
       },
       {
         "source": "majordomus://issue/I4359",
+        "target": "majordomus://milestone/a-change-is-judged-in-minutes",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4360",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4360",
+        "target": "majordomus://issue/I3903",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4360",
+        "target": "majordomus://milestone/the-runtime-supervises-itself",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4362",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4362",
+        "target": "majordomus://milestone/merging-and-referencing-are-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4363",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4363",
+        "target": "majordomus://milestone/the-runtime-supervises-itself",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4364",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4364",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4365",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4365",
+        "target": "majordomus://issue/I3415",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4365",
+        "target": "majordomus://milestone/knowledge-is-reconciled-before-it-is-reviewed",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4366",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4366",
+        "target": "majordomus://issue/I2901",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4366",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4367",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4367",
+        "target": "majordomus://issue/I2901",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4367",
+        "target": "majordomus://issue/I3970",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4367",
+        "target": "majordomus://issue/I4366",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4367",
+        "target": "majordomus://milestone/work-graph-github",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4368",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4368",
+        "target": "majordomus://issue/I4366",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4368",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4369",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4369",
+        "target": "majordomus://issue/I1401",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4369",
+        "target": "majordomus://issue/I3920",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4369",
+        "target": "majordomus://issue/I4357",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4369",
+        "target": "majordomus://milestone/work-graph-github",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4370",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4370",
+        "target": "majordomus://issue/I2901",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4370",
+        "target": "majordomus://issue/I3920",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4370",
+        "target": "majordomus://issue/I3970",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4370",
+        "target": "majordomus://issue/I3979",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4370",
+        "target": "majordomus://issue/I4366",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4370",
+        "target": "majordomus://milestone/merging-and-referencing-are-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4371",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4371",
+        "target": "majordomus://issue/I3970",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4371",
+        "target": "majordomus://issue/I4370",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4371",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4372",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4372",
+        "target": "majordomus://issue/I3113",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4372",
+        "target": "majordomus://issue/I3200",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4372",
+        "target": "majordomus://issue/I4370",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4372",
+        "target": "majordomus://milestone/a-claim-stands-only-on-its-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4373",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4373",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4374",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4374",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4375",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4375",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4380",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4380",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4381",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4381",
         "target": "majordomus://milestone/a-change-is-judged-in-minutes",
         "kind": "belongs_to"
       },
@@ -138206,6 +140181,136 @@
       },
       {
         "source": "majordomus://knowledge/s-20261020233257-5779-e6add8c93c8a",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215542-dcf9-0aec4acf4c97",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215542-dcf9-30333fac611c",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215542-dcf9-50e730b63c1e",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215542-dcf9-6180b2b50b3f",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215542-dcf9-f7cf4b4595b9",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215857-d010-054934dd2bd1",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215857-d010-09ef2b8d8227",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215857-d010-1050b82e9b61",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215857-d010-3206646bca1a",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215857-d010-363bd98ba774",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215857-d010-4db0cc6c1d08",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215857-d010-50190e0ffc82",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215857-d010-5f1cf25a1ccf",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215857-d010-7b1673ebf094",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215857-d010-842498c07c03",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215857-d010-937198359654",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215857-d010-a1658685aedc",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215857-d010-bb378d3e4f15",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215857-d010-fefd412fb59b",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028220703-a55b-172d1046d887",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028220703-a55b-88cb8a942917",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028220703-a55b-90f229e08ef6",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261029014908-3ca1-303247a52e23",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261029014908-3ca1-38815adc8960",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261029014908-3ca1-58aff37c4433",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261029014908-3ca1-cd2e93f4f1ef",
         "target": "kind:knowledge",
         "kind": "is_a"
       },
@@ -142235,6 +144340,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://session/s-20261028215445-b7a3",
+        "target": "kind:session",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://session/s-20261029014409-5302",
+        "target": "kind:session",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://skill/assess-before-deleting",
         "target": "kind:skill",
         "kind": "is_a"
@@ -144566,6 +146681,21 @@
       },
       {
         "source": "majordomus://test/test/cases/431_economics_claims_gated.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4337_a_changed_skill_raises_its_version.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4381_the_structure_job_fits_in_half_its_bound.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -149651,8 +151781,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4101,
-      "edges": 9467,
+      "nodes": 4154,
+      "edges": 9562,
       "acyclic": false,
       "truncated": false
     }
