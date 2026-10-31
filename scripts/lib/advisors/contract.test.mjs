@@ -120,6 +120,14 @@ test('HTTP failures are classified, and authentication is not retried as transie
   assert.equal(limited.retryAfterSeconds, 17);
   assert.equal(httpFailure(503).status, 'unavailable');
   assert.equal(httpFailure(418).status, 'error');
+  // a 429 whose body says the quota or credit is spent does not pass with its retry-after
+  const spent = httpFailure(429, { get: () => '17' }, { error: { type: 'insufficient_quota' } });
+  assert.equal(spent.status, 'auth_failed');
+  assert.equal(spent.retryAfterSeconds, undefined);
+  assert.equal(httpFailure(429, undefined, { error: { code: 'credit_balance_exhausted' } }).status, 'auth_failed');
+  assert.equal(httpFailure(429, undefined, { error: { type: 'requests', code: 'rate_limit_exceeded' } }).status,
+    'rate_limited');
+  assert.equal(httpFailure(429, undefined, 'not an object').status, 'rate_limited');
   assert.throws(() => new AdvisorFailure('completed', 'x'));
   assert.ok(STATUSES.includes('cancelled'));
 });
@@ -212,6 +220,12 @@ test('api adapter: absent credential, 401, 429 and an unreachable host are typed
     [{}, fakeFetch([]), 'unavailable'],
     [{ TEST_KEY: 'k' }, fakeFetch([['/chat', () => response(401, {})]]), 'auth_failed'],
     [{ TEST_KEY: 'k' }, fakeFetch([['/chat', () => response(429, {}, { 'retry-after': '30' })]]), 'rate_limited'],
+    // a spent quota answers 429 too, and is not retried as a rate limit
+    [{ TEST_KEY: 'k' }, fakeFetch([['/chat', () => response(429, {
+      error: { message: 'You exceeded your current quota', type: 'insufficient_quota', code: 'insufficient_quota' },
+    })]]), 'auth_failed'],
+    // an error body that is not JSON keeps its status
+    [{ TEST_KEY: 'k' }, fakeFetch([['/chat', () => response(429, 'not json')]]), 'rate_limited'],
     [{ TEST_KEY: 'k' }, fakeFetch([]), 'unavailable'],
     [{ TEST_KEY: 'k' }, fakeFetch([['/chat', () => response(200, { choices: [] })]]), 'malformed'],
     [{ TEST_KEY: 'k' }, fakeFetch([['/chat', () => response(200, { choices: [{ message: { content: '' } }] })]]), 'empty'],
@@ -254,6 +268,15 @@ test('anthropic api adapter: absent credential, refusal, 401, 429 and an empty a
     [{ TEST_KEY: 'k' }, fakeFetch([['/v1/messages', () => response(200, { stop_reason: 'refusal', stop_details: { category: 'cyber' }, content: [] })]]), 'error'],
     [{ TEST_KEY: 'k' }, fakeFetch([['/v1/messages', () => response(401, {})]]), 'auth_failed'],
     [{ TEST_KEY: 'k' }, fakeFetch([['/v1/messages', () => response(429, {}, { 'retry-after': '12' })]]), 'rate_limited'],
+    // a spent credit balance is a 400 that says so only in its message
+    [{ TEST_KEY: 'k' }, fakeFetch([['/v1/messages', () => response(400, {
+      type: 'error',
+      error: { type: 'invalid_request_error', message: 'Your credit balance is too low to access the Anthropic API.' },
+    })]]), 'auth_failed'],
+    // any other 400 stays a plain error
+    [{ TEST_KEY: 'k' }, fakeFetch([['/v1/messages', () => response(400, {
+      type: 'error', error: { type: 'invalid_request_error', message: 'max_tokens: field required' },
+    })]]), 'error'],
     [{ TEST_KEY: 'k' }, fakeFetch([['/v1/messages', () => response(200, { stop_reason: 'end_turn' })]]), 'malformed'],
     [{ TEST_KEY: 'k' }, fakeFetch([['/v1/messages', () => response(200, { stop_reason: 'end_turn', content: [{ type: 'thinking', thinking: '' }] })]]), 'empty'],
     [{ TEST_KEY: 'k' }, fakeFetch([]), 'unavailable'],
@@ -295,6 +318,14 @@ test('cli adapters: output, absent executable, authentication and rate limits', 
   assert.equal((await consultOne(gemini, cli, 'q', { spawn: fakeSpawn({ code: 1, stderr: 'Error: 401 Unauthorized' }) })).status, 'auth_failed');
   assert.equal((await consultOne(codex, cli, 'q', { spawn: fakeSpawn({ code: 1, stderr: 'rate limit exceeded' }) })).status, 'rate_limited');
   assert.equal((await consultOne(codex, cli, 'q', { spawn: fakeSpawn({ code: 2, stderr: 'boom' }) })).status, 'error');
+  // what no retry fixes is not transient: a tier that no longer admits the client, and a spent
+  // quota, even when the client also prints the 429 it was answered with
+  const ineligible = await consultOne(gemini, cli, 'q', { spawn: fakeSpawn({ code: 1,
+    stderr: 'IneligibleTierError: This client is no longer supported for Gemini Code Assist for individuals' }) });
+  assert.equal(ineligible.status, 'auth_failed', JSON.stringify(ineligible));
+  const spent = await consultOne(codex, cli, 'q', { spawn: fakeSpawn({ code: 1,
+    stderr: 'error: 429 Too Many Requests: {"error":{"type":"insufficient_quota"}}' }) });
+  assert.equal(spent.status, 'auth_failed', JSON.stringify(spent));
   assert.equal((await consultOne(gemini, cli, 'q', { timeoutMs: 20, spawn: fakeSpawn({ stdout: ANSWER, delayMs: 500 }) })).status, 'timeout');
   // codex runs read-only
   let seen;

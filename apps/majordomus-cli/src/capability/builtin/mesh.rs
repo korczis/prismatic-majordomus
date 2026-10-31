@@ -251,6 +251,10 @@ fn mesh_doctor(ctx: &Context, _: Empty) -> Result<MeshDoctorReport, CapabilityEr
             &cooperation.session_beat_tally(),
         ));
     }
+    // on the build host alone: what its provisioning still owes, a warning with the command
+    report
+        .checks
+        .extend(crate::mesh::cache_provision::this_host_check());
     // one conjunction over every check, so neither added check's failure can be lost
     report.ok = report.checks.iter().all(|c| c.ok);
     Ok(report)

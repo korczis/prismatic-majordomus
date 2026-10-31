@@ -20,6 +20,16 @@
 #   4  a forge that cannot be read is exit 12 and leaves no file behind
 #   5  the workflow hands rust-coverage its summary file through the variable rust-coverage
 #      itself reads, so the artifact this reads is the measurement's own output
+#   6  the runs are read several at a time (I4380), and one at a time gives the same bytes
+#   7  a call that does not return is stopped at its own bound and is a forge that could not
+#      be read (exit 12, no file), not a reading that waits out the step
+#   8  a forge that never answers anything, through the trends step's own line of pages.yml
+#      run as GitHub runs it (bash -e): the listing is stopped at its bound, the reading is
+#      exit 12 with no file, the step says the ::warning and ends 0, so the deploy goes on;
+#      and a reading that outlives the line's own `timeout` is exit 124, the same warning,
+#      and the same 0 (I4380)
+#   9  a call the forge answers with a 5xx or a rate limit is asked once more inside its own
+#      bound, and the reading is the same bytes; a refusal is the answer, asked once (I4380)
 . "$ROOT/test/lib.sh"
 
 command -v python3 >/dev/null 2>&1 || skip "no python3 to write the fixture artifact"
@@ -89,6 +99,12 @@ while [ \$# -gt 0 ]; do case "\$1" in
   *) url="\$1"; shift ;;
 esac; done
 [ -f "$F/down" ] && exit 1
+[ -f "$F/denied" ] && { echo "HTTP 401: Bad credentials (https://api.github.com/x)" >&2; exit 1; }
+if [ -f "$F/flaky" ]; then
+  rm -f "$F/flaky"; echo "HTTP \$(cat "$F/flaky-answer" 2>/dev/null || echo 502): the forge is busy" >&2; exit 1
+fi
+[ -f "$F/never" ] && exec sleep 60
+case "\$url" in *"/jobs?"*) [ -f "$F/hang" ] && exec sleep 60 ;; esac
 case "\$url" in
   *"/actions/workflows/validate.yml/runs?branch=master&status=completed&per_page="*) f=runs.json ;;
   *"/actions/runs/101/jobs?"*) f=jobs-101.json ;;
@@ -171,5 +187,80 @@ grep -q 'SUMMARY_JSON: \${{ github.workspace }}/coverage-summary.json' "$T/cover
   || { echo "    the coverage job does not keep rust-coverage's summary as the coverage-summary artifact"; exit 1; }
 grep -q 'scripts/pages trends' "$ROOT/.github/workflows/pages.yml" \
   || { echo "    the pages publication does not read the series"; exit 1; }
+
+# ---------------------------------------------------------------- 6. read in parallel, same bytes
+PATH="$T/bin:$PATH" GITHUB_REPOSITORY=example/repo MJ_TRENDS_PARALLEL=1 expect_exit 0 \
+  "$ROOT/scripts/pages" trends --out "$T/serial.json" --runs 2
+cmp -s "$T/one.json" "$T/serial.json" || { echo "    one run at a time reads other bytes than several"; diff "$T/one.json" "$T/serial.json" | head -20; exit 1; }
+MJ_TRENDS_PARALLEL=0 expect_exit 2 "$ROOT/scripts/pages" trends --runs 2
+
+# ---------------------------------------------------------------- 7. a call that hangs is bounded
+if command -v timeout >/dev/null 2>&1; then
+  : > "$F/hang"; t0="$(date +%s)"
+  PATH="$T/bin:$PATH" GITHUB_REPOSITORY=example/repo MJ_TRENDS_CALL_SECONDS=2 expect_exit 12 \
+    "$ROOT/scripts/pages" trends --out "$T/hung.json" --runs 2
+  took=$(( $(date +%s) - t0 ))
+  expect_grep 'the jobs of run 10[12] could not be read'
+  [ ! -e "$T/hung.json" ] || { echo "    a reading stopped at its bound left a file behind"; exit 1; }
+  [ "$took" -lt 30 ] || { echo "    a hanging call was not stopped at its 2 s bound: the reading took $took s"; exit 1; }
+  rm -f "$F/hang"
+else
+  echo "    (no timeout(1) here: the per-call bound is not exercised)"
+fi
+
+# ---------------------------------------------------------------- 8. a forge that never answers
+if command -v timeout >/dev/null 2>&1; then
+  step="$(awk '/- name: trends$/ { f = 1 } f && /^        run: / { sub(/^        run: /, ""); print; exit }' "$ROOT/.github/workflows/pages.yml")"
+  case "$step" in
+    'timeout --kill-after=10 200 scripts/pages trends || echo "::warning title=No trends::'*) ;;
+    *) echo "    the trends step of pages.yml is not the bounded, degrading line this runs: $step"; exit 1 ;;
+  esac
+  # the step's own line, with the series written to the scratch dir instead of the tree
+  line="${step/scripts\/pages trends/scripts/pages trends --out $T/never.json}"
+  run_step() {
+    (cd "$ROOT" && PATH="$T/bin:$PATH" GITHUB_REPOSITORY=example/repo bash -e -c "$1") > "$T/step.out" 2>&1
+  }
+  : > "$F/never"; : > "$F/calls.log"
+  t0="$(date +%s)"
+  MJ_TRENDS_CALL_SECONDS=2 run_step "$line" \
+    || { echo "    the trends step did not end 0 when the forge never answered: the deploy would stop"; cat "$T/step.out"; exit 1; }
+  took=$(( $(date +%s) - t0 ))
+  expect_grep 'pages trends: the validate runs of example/repo could not be listed' "$T/step.out"
+  expect_grep '^::warning title=No trends::.*\(exit 12\)' "$T/step.out"
+  [ ! -e "$T/never.json" ] || { echo "    a forge that never answered left a trends.json"; exit 1; }
+  [ "$took" -lt 30 ] || { echo "    the listing was not stopped at its 2 s bound: the step took $took s"; exit 1; }
+  [ "$(grep -c . "$F/calls.log")" = 1 ] || { echo "    more was asked of a forge whose listing never answered"; cat "$F/calls.log"; exit 1; }
+  # the line's own bound, 3 s here for the 200 of pages.yml, outlived by calls bounded at 8:
+  # a call's own timeout(1) is a process group of its own, which the line's bound does not
+  # reach, so the stand-in's sleep is left to that 8 s and not to the stand-in's 60
+  short="${line/timeout --kill-after=10 200 /timeout --kill-after=2 3 }"
+  [ "$short" != "$line" ] || { echo "    the step's own bound could not be shortened for the test"; exit 1; }
+  t0="$(date +%s)"
+  MJ_TRENDS_CALL_SECONDS=8 run_step "$short" \
+    || { echo "    the trends step did not end 0 when its own bound stopped the reading"; cat "$T/step.out"; exit 1; }
+  took=$(( $(date +%s) - t0 ))
+  expect_grep '^::warning title=No trends::.*\(exit 124\)' "$T/step.out"
+  [ ! -e "$T/never.json" ] || { echo "    a reading stopped at the step's bound left a trends.json"; exit 1; }
+  [ "$took" -lt 30 ] || { echo "    the step's own 3 s bound did not stop the reading: it took $took s"; exit 1; }
+  rm -f "$F/never"
+else
+  echo "    (no timeout(1) here: the trends step's bounds are not exercised)"
+fi
+
+# ---------------------------------------------------------------- 9. an outage is asked again once
+for answer in 502 "403: API rate limit exceeded for installation"; do
+  printf '%s\n' "$answer" > "$F/flaky-answer"; : > "$F/flaky"; : > "$F/calls.log"
+  PATH="$T/bin:$PATH" GITHUB_REPOSITORY=example/repo MJ_TRENDS_PARALLEL=1 expect_exit 0 \
+    "$ROOT/scripts/pages" trends --out "$T/retried.json" --runs 2
+  [ "$(grep -c 'actions/workflows/validate.yml/runs' "$F/calls.log")" = 2 ] \
+    || { echo "    the listing answered HTTP $answer was not asked again exactly once"; cat "$F/calls.log"; exit 1; }
+  cmp -s "$T/one.json" "$T/retried.json" || { echo "    a retried listing ($answer) reads other bytes"; exit 1; }
+done
+rm -f "$F/flaky" "$F/flaky-answer"
+: > "$F/denied"; : > "$F/calls.log"
+PATH="$T/bin:$PATH" GITHUB_REPOSITORY=example/repo expect_exit 12 \
+  "$ROOT/scripts/pages" trends --out "$T/denied.json" --runs 2
+[ "$(grep -c . "$F/calls.log")" = 1 ] || { echo "    a refusal was asked again"; cat "$F/calls.log"; exit 1; }
+rm -f "$F/denied"
 
 echo "    the series is master's runs oldest first, each with its own jobs' cost and its own measurement's totals, null where the forge no longer keeps one"
