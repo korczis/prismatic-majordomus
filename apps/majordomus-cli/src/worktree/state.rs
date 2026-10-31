@@ -490,14 +490,15 @@ pub fn parse_branches(text: &str) -> Vec<BranchRef> {
 /// assert!(commits_no_remote_reaches(dir.path()).unwrap().contains(&head));
 /// ```
 pub fn commits_no_remote_reaches(primary: &Path) -> Result<BTreeSet<String>> {
-    let out = git::run(primary, &["rev-list", "--branches", "--not", "--remotes"])?;
-    Ok(out
-        .text()?
-        .lines()
-        .map(str::trim)
-        .filter(|l| !l.is_empty())
-        .map(str::to_string)
-        .collect())
+    git::run(primary, &["rev-list", "--branches", "--not", "--remotes"])
+        .and_then(|out| out.text())
+        .map(|text| {
+            text.lines()
+                .map(str::trim)
+                .filter(|l| !l.is_empty())
+                .map(str::to_string)
+                .collect()
+        })
 }
 
 /// Every local branch reachable from `trunk` or from the remote-tracking branch `trunk`

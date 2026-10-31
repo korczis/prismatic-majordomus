@@ -945,8 +945,15 @@ impl WorktreeService {
     /// assert!(plan.settled);
     /// ```
     pub fn reconciliation(&self) -> Result<Reconciliation> {
-        let topology = self.refreshed()?.topology(Detail::Fast)?;
-        let shared = self.shared()?;
+        self.refreshed()?.listing()
+    }
+
+    /// The reading [`Self::reconciliation`] answers with, over the registrations this service
+    /// already holds: the act lists with the same service it then acts through.
+    fn listing(&self) -> Result<Reconciliation> {
+        let (topology, shared) = self
+            .topology(Detail::Fast)
+            .and_then(|topology| self.shared().map(|shared| (topology, shared)))?;
 
         let mut subjects: Vec<Subject> = Vec::new();
         let by_path: BTreeMap<&str, &super::model::WorktreeState> = topology
@@ -969,24 +976,23 @@ impl WorktreeService {
                 current: holder.is_some_and(|h| h.current),
             });
         }
-        for w in topology
-            .worktrees
-            .iter()
-            .filter(|w| w.detached && w.exists && w.standing != Standing::Primary)
-        {
-            // a detached worktree git reports no commit for has nothing to judge
-            let Some(head) = w.head.clone() else {
-                continue;
-            };
-            subjects.push(Subject {
-                branch: None,
-                worktree: Some(PathBuf::from(&w.path)),
-                head,
-                own_upstream: false,
-                scratch: true,
-                current: w.current,
-            });
-        }
+        subjects.extend(
+            topology
+                .worktrees
+                .iter()
+                .filter(|w| w.detached && w.exists && w.standing != Standing::Primary)
+                // a detached worktree git reports no commit for has nothing to judge
+                .filter_map(|w| {
+                    w.head.clone().map(|head| Subject {
+                        branch: None,
+                        worktree: Some(PathBuf::from(&w.path)),
+                        head,
+                        own_upstream: false,
+                        scratch: true,
+                        current: w.current,
+                    })
+                }),
+        );
 
         // one kernel reading answers for every worktree: which has a process inside it now
         let dirs: Vec<&Path> = subjects
@@ -1051,13 +1057,20 @@ impl WorktreeService {
     /// ```
     pub fn reconcile(&self, options: &ReconcileOptions) -> Result<ReconcileOutcome> {
         let now = self.refreshed()?;
-        let plan = now.reconciliation()?;
-        let primary = now.identity().primary_worktree().path.clone();
+        let plan = now.listing()?;
+        Ok(now.act(&plan, options))
+    }
+
+    /// Take the steps `plan` lists that `options` reach, each subject read again first: what
+    /// moved, went or can no longer be read since the listing is refused, and so is what git
+    /// itself refuses to remove. Every subject ends in exactly one of the outcome's lists.
+    fn act(&self, plan: &Reconciliation, options: &ReconcileOptions) -> ReconcileOutcome {
+        let primary = self.identity().primary_worktree().path.clone();
         let mut outcome = ReconcileOutcome::default();
 
         for listed in plan.entries.iter().filter(|e| takes(e, options)) {
             let subject = listed.subject().to_string();
-            let measured = match now.remeasure(listed) {
+            let measured = match self.remeasure(listed) {
                 Ok(Some(measured)) => measured,
                 Ok(None) => {
                     outcome.refused.push(ReconcileRefusal {
@@ -1085,24 +1098,21 @@ impl WorktreeService {
                 });
                 continue;
             }
-            if listed.step.removes_worktree() {
-                if let Some(path) = listed.worktree.as_deref() {
-                    match now.remove(path, false) {
-                        Ok(report) => outcome.removed.push(report.path),
-                        Err(e) => {
-                            outcome.refused.push(ReconcileRefusal {
-                                subject,
-                                reason: e.to_string(),
-                            });
-                            continue;
-                        }
+            if let (true, Some(path)) = (listed.step.removes_worktree(), listed.worktree.as_deref())
+            {
+                match self.remove(path, false) {
+                    Ok(report) => outcome.removed.push(report.path),
+                    Err(e) => {
+                        // a branch whose worktree stayed is left with it
+                        outcome.refused.push(ReconcileRefusal {
+                            subject,
+                            reason: e.to_string(),
+                        });
+                        continue;
                     }
                 }
             }
-            if listed.step.deletes_branch() {
-                let Some(branch) = listed.branch.as_deref() else {
-                    continue;
-                };
+            if let (true, Some(branch)) = (listed.step.deletes_branch(), listed.branch.as_deref()) {
                 // Compare-and-delete: the ref goes only while it still names the commit
                 // that was judged.
                 let name = format!("refs/heads/{branch}");
@@ -1121,48 +1131,50 @@ impl WorktreeService {
                 }
             }
         }
-        Ok(outcome)
+        outcome
     }
 
-    /// One listed subject, read again now by the same [`decide`]. `None` when it is gone.
+    /// One listed subject, read again now by the same [`decide`]. `None` when it is gone: a
+    /// branch no longer there, a detached worktree whose directory or commit went away.
     fn remeasure(&self, listed: &ReconcileEntry) -> Result<Option<ReconcileEntry>> {
-        let shared = self.shared()?;
-        let subject = match listed.branch.as_deref() {
-            Some(name) => {
-                let Some(now) = state::branch(&shared.primary, name)? else {
-                    return Ok(None);
-                };
-                Subject {
-                    own_upstream: own_upstream(
-                        name,
-                        now.upstream.as_ref().map(|u| u.name.as_str()),
-                    ),
-                    branch: Some(now.name),
-                    worktree: now.worktree.filter(|p| p.is_dir()),
-                    head: now.head,
-                    scratch: listed.scratch,
-                    current: listed.here,
-                }
-            }
-            None => {
-                let Some(path) = listed.worktree.as_deref().map(PathBuf::from) else {
-                    return Ok(None);
-                };
-                if !path.is_dir() {
-                    return Ok(None);
-                }
-                let Some(head) = git::head_of(&path)? else {
-                    return Ok(None);
-                };
-                Subject {
-                    branch: None,
-                    worktree: Some(path),
-                    head,
-                    own_upstream: false,
-                    scratch: true,
-                    current: listed.here,
-                }
-            }
+        let (shared, subject) = self.shared().and_then(|shared| {
+            let subject = match listed.branch.as_deref() {
+                Some(name) => state::branch(&shared.primary, name).map(|now| {
+                    now.map(|now| Subject {
+                        own_upstream: own_upstream(
+                            name,
+                            now.upstream.as_ref().map(|u| u.name.as_str()),
+                        ),
+                        branch: Some(now.name),
+                        worktree: now.worktree.filter(|p| p.is_dir()),
+                        head: now.head,
+                        scratch: listed.scratch,
+                        current: listed.here,
+                    })
+                }),
+                None => match listed
+                    .worktree
+                    .as_deref()
+                    .map(PathBuf::from)
+                    .filter(|p| p.is_dir())
+                {
+                    Some(path) => git::head_of(&path).map(|head| {
+                        head.map(|head| Subject {
+                            branch: None,
+                            worktree: Some(path),
+                            head,
+                            own_upstream: false,
+                            scratch: true,
+                            current: listed.here,
+                        })
+                    }),
+                    None => Ok(None),
+                },
+            };
+            subject.map(|subject| (shared, subject))
+        })?;
+        let Some(subject) = subject else {
+            return Ok(None);
         };
         let occupied: Option<BTreeMap<PathBuf, bool>> = match subject.worktree.as_deref() {
             Some(dir) => state::processes_inside(&[dir])
@@ -1184,13 +1196,19 @@ impl WorktreeService {
     /// The readings every subject of one reconciliation is judged against.
     fn shared(&self) -> Result<Shared> {
         let primary = self.identity().primary_worktree().path.clone();
-        let base = match self.identity().trunk().branch.as_deref() {
-            Some(trunk) => base_of(&primary, trunk)?,
-            None => None,
-        };
+        let base = self
+            .identity()
+            .trunk()
+            .branch
+            .as_deref()
+            .and_then(|trunk| base_of(&primary, trunk));
+        let (unpublished, remote_names) =
+            state::commits_no_remote_reaches(&primary).and_then(|unpublished| {
+                remote_branch_names(&primary).map(|names| (unpublished, names))
+            })?;
         Ok(Shared {
-            unpublished: state::commits_no_remote_reaches(&primary)?,
-            remote_names: remote_branch_names(&primary)?,
+            unpublished,
+            remote_names,
             base,
             primary,
         })
@@ -1327,11 +1345,21 @@ fn command_for(
     }
 }
 
+/// What git printed, when it ran and exited 0; `None` for every other answer, so a reading
+/// git could not take is never mistaken for an empty one.
+fn answer(primary: &Path, args: &[&str]) -> Option<String> {
+    git::try_run(primary, args)
+        .ok()
+        .filter(|out| out.status == Some(0))
+        .and_then(|out| out.text().ok())
+}
+
 /// The ref the trunk's relations are decided against, with its tree: the remote-tracking
-/// branch the trunk follows when it has one, the trunk itself otherwise.
-fn base_of(primary: &Path, trunk: &str) -> Result<Option<(String, String)>> {
+/// branch the trunk follows when it has one, the trunk itself otherwise. `None` when git
+/// names no such commit, which leaves every relation unknown rather than guessed.
+fn base_of(primary: &Path, trunk: &str) -> Option<(String, String)> {
     let upstream = format!("{trunk}@{{upstream}}");
-    let followed = git::try_run(
+    let name = answer(
         primary,
         &[
             "rev-parse",
@@ -1339,24 +1367,16 @@ fn base_of(primary: &Path, trunk: &str) -> Result<Option<(String, String)>> {
             "--symbolic-full-name",
             upstream.as_str(),
         ],
-    )?;
-    let name = match (followed.status, followed.text()) {
-        (Some(0), Ok(name)) if !name.is_empty() => name,
-        _ => trunk.to_string(),
-    };
-    let tree = git::try_run(
+    )
+    .filter(|name| !name.is_empty())
+    .unwrap_or_else(|| trunk.to_string());
+    let tree = format!("{name}^{{tree}}");
+    answer(
         primary,
-        &[
-            "rev-parse",
-            "--verify",
-            "--quiet",
-            &format!("{name}^{{tree}}"),
-        ],
-    )?;
-    Ok(match (tree.status, tree.text()) {
-        (Some(0), Ok(tree)) if !tree.is_empty() => Some((name, tree)),
-        _ => None,
-    })
+        &["rev-parse", "--verify", "--quiet", tree.as_str()],
+    )
+    .filter(|tree| !tree.is_empty())
+    .map(|tree| (name, tree))
 }
 
 /// How `head` stands against `base`, or `None` when git could not say.
@@ -1364,10 +1384,13 @@ fn base_of(primary: &Path, trunk: &str) -> Result<Option<(String, String)>> {
 /// Reachability first, in one cheap call. Otherwise `git merge-tree --write-tree` performs
 /// the merge in memory — no index, no working tree, the repository's own merge drivers —
 /// and answers with the tree it would produce: the base's own tree means every change
-/// arrived another way, exit 1 means a conflict.
+/// arrived another way, exit 1 means a conflict, and a history the trunk shares nothing
+/// with is refused by git and therefore unknown.
 fn relation_of(primary: &Path, base: &str, base_tree: &str, head: &str) -> Option<TrunkRelation> {
-    let reached = git::try_run(primary, &["merge-base", "--is-ancestor", head, base]).ok()?;
-    match reached.status {
+    let reached = git::try_run(primary, &["merge-base", "--is-ancestor", head, base])
+        .ok()
+        .and_then(|out| out.status);
+    match reached {
         Some(0) => return Some(TrunkRelation::Landed),
         Some(1) => {}
         _ => return None,
@@ -1376,16 +1399,15 @@ fn relation_of(primary: &Path, base: &str, base_tree: &str, head: &str) -> Optio
         primary,
         &["merge-tree", "--write-tree", "--no-messages", base, head],
     )
-    .ok()?;
-    match merged.status {
-        Some(0) => {
-            let tree = merged.text().ok()?;
-            Some(if tree.lines().next() == Some(base_tree) {
+    .ok();
+    match merged.as_ref().and_then(|out| out.status) {
+        Some(0) => merged.and_then(|out| out.text().ok()).map(|tree| {
+            if tree.lines().next() == Some(base_tree) {
                 TrunkRelation::Equivalent
             } else {
                 TrunkRelation::Mergeable
-            })
-        }
+            }
+        }),
         Some(1) => Some(TrunkRelation::Conflicting),
         _ => None,
     }
@@ -1393,30 +1415,25 @@ fn relation_of(primary: &Path, base: &str, base_tree: &str, head: &str) -> Optio
 
 /// `git rev-list --count <range>`, or `None` when git could not count it.
 fn count(primary: &Path, range: &str) -> Option<u64> {
-    let out = git::try_run(primary, &["rev-list", "--count", range]).ok()?;
-    if out.status != Some(0) {
-        return None;
-    }
-    out.text().ok()?.trim().parse().ok()
+    answer(primary, &["rev-list", "--count", range])?
+        .trim()
+        .parse()
+        .ok()
 }
 
 /// Is `commit` on no remote-tracking ref? For a detached worktree, whose commit
 /// `rev-list --branches` does not walk.
 fn on_no_remote(primary: &Path, commit: &str) -> Option<bool> {
-    let out = git::try_run(
+    answer(
         primary,
         &["rev-list", "--max-count=1", commit, "--not", "--remotes"],
     )
-    .ok()?;
-    if out.status != Some(0) {
-        return None;
-    }
-    Some(!out.text().ok()?.trim().is_empty())
+    .map(|text| !text.trim().is_empty())
 }
 
 /// Does any branch, remote-tracking ref or tag hold `commit`?
 fn held_by_a_ref(primary: &Path, commit: &str) -> bool {
-    git::try_run(
+    answer(
         primary,
         &[
             "for-each-ref",
@@ -1429,29 +1446,27 @@ fn held_by_a_ref(primary: &Path, commit: &str) -> bool {
             "refs/tags",
         ],
     )
-    .ok()
-    .filter(|o| o.status == Some(0))
-    .and_then(|o| o.text().ok())
-    .is_some_and(|t| !t.trim().is_empty())
+    .is_some_and(|text| !text.trim().is_empty())
 }
 
 /// The branch names remote-tracking refs carry, with the remote's own name removed.
 fn remote_branch_names(primary: &Path) -> Result<BTreeSet<String>> {
-    let out = git::run(
+    git::run(
         primary,
         &[
             "for-each-ref",
             "--format=%(refname:lstrip=3)",
             "refs/remotes",
         ],
-    )?;
-    Ok(out
-        .text()?
-        .lines()
-        .map(str::trim)
-        .filter(|l| !l.is_empty())
-        .map(str::to_string)
-        .collect())
+    )
+    .and_then(|out| out.text())
+    .map(|text| {
+        text.lines()
+            .map(str::trim)
+            .filter(|l| !l.is_empty())
+            .map(str::to_string)
+            .collect()
+    })
 }
 
 /// Apply `f` to every item on the machine's parallelism, answers in input order. Each call
@@ -1478,9 +1493,9 @@ fn in_parallel<T: Sync, R: Send>(items: &[T], f: impl Fn(&T) -> R + Sync) -> Vec
                 let Some(item) = items.get(i) else {
                     return;
                 };
-                if tx.send((i, f(item))).is_err() {
-                    return;
-                }
+                // the receiver below outlives every sender in this scope, so a send
+                // cannot fail
+                let _ = tx.send((i, f(item)));
             });
         }
         // The receiver below ends when the last sender is gone, so this one must go first.
@@ -1606,6 +1621,25 @@ mod tests {
         assert_eq!(ReconcileStep::Resolve.as_str(), "resolve");
         assert_eq!(TrunkRelation::Mergeable.as_str(), "mergeable");
         assert_eq!(TrunkRelation::Conflicting.as_str(), "conflicting");
+        assert_eq!(TrunkRelation::Landed.as_str(), "landed");
+        assert_eq!(TrunkRelation::Equivalent.as_str(), "equivalent");
+        assert_eq!(WorkState::Unreadable.as_str(), "unreadable");
+        assert_eq!(ReconcileStep::Refresh.as_str(), "refresh");
+        // and each word is the one serde writes, so a document and a line agree
+        for relation in [TrunkRelation::Landed, TrunkRelation::Equivalent] {
+            assert_eq!(
+                serde_json::to_value(relation).unwrap(),
+                serde_json::Value::from(relation.as_str())
+            );
+        }
+        assert_eq!(
+            serde_json::to_value(WorkState::Unreadable).unwrap(),
+            serde_json::Value::from("unreadable")
+        );
+        assert_eq!(
+            serde_json::to_value(ReconcileStep::Refresh).unwrap(),
+            serde_json::Value::from("refresh")
+        );
     }
 
     /// Every branch of the decision, from readings alone: what is asked first wins, and a
@@ -2193,7 +2227,7 @@ mod tests {
         let listed = plan(&repo);
         assert_eq!(listed.base.as_deref(), Some("master"));
         assert_eq!(entry(&listed, "feature/cut").state, WorkState::Unstarted);
-        assert!(base_of(&repo, "no-such-branch").unwrap().is_none());
+        assert!(base_of(&repo, "no-such-branch").is_none());
     }
 
     /// The small readings answer `None` when git cannot, and never the harmless value.
@@ -2214,6 +2248,154 @@ mod tests {
         assert_eq!(on_no_remote(&repo, &head), Some(false));
         assert!(held_by_a_ref(&repo, &head));
         assert!(remote_branch_names(&repo).unwrap().contains("master"));
+
+        // a history the trunk shares nothing with is one git refuses to merge: the relation
+        // is unknown, never "mergeable"
+        git(&repo, &["checkout", "-q", "--orphan", "alone"]);
+        git(&repo, &["commit", "-q", "--allow-empty", "-m", "alone"]);
+        let alone = git(&repo, &["rev-parse", "HEAD"]);
+        git(&repo, &["checkout", "-q", "-f", "master"]);
+        assert_eq!(relation_of(&repo, "master", &tree, &alone), None);
+    }
+
+    /// A refusal names the subject it left, with the reason.
+    fn refusal_of<'a>(outcome: &'a ReconcileOutcome, subject: &str) -> &'a str {
+        outcome
+            .refused
+            .iter()
+            .find(|r| r.subject == subject)
+            .map(|r| r.reason.as_str())
+            .unwrap_or_else(|| panic!("{subject} was not refused: {outcome:#?}"))
+    }
+
+    /// A remote-tracking ref naming no object: git still lists the worktrees, and can no
+    /// longer say which commits a remote holds.
+    fn break_the_remote_refs(repo: &Path) {
+        write(
+            &repo.join(".git/refs/remotes/origin/broken"),
+            "1111111111111111111111111111111111111111\n",
+        );
+    }
+
+    /// The listing and the act are two moments. A commit made, a branch deleted or a reading
+    /// git can no longer take between them is a refusal that says so, and nothing is removed.
+    #[test]
+    fn the_act_refuses_what_moved_went_or_cannot_be_read_since_the_listing() {
+        let (_dir, repo) = repository();
+        let moved = published_branch(&repo, "feature/moved", "moved.txt", "x\n");
+        land(&repo, "feature/moved");
+        let gone = published_branch(&repo, "feature/gone", "gone.txt", "x\n");
+        land(&repo, "feature/gone");
+        let svc = WorktreeService::open(&repo).unwrap();
+        let listed = svc.reconciliation().unwrap();
+        assert_eq!(listed.automatic, 2, "{:#?}", listed.entries);
+
+        // after the listing: a commit in one, and the other removed by hand
+        write(&moved.join("late.txt"), "late\n");
+        git(&moved, &["add", "late.txt"]);
+        git(&moved, &["commit", "-q", "-m", "after the listing"]);
+        git(&repo, &["worktree", "remove", gone.to_str().unwrap()]);
+        git(&repo, &["branch", "-D", "feature/gone"]);
+
+        let outcome = svc.act(&listed, &ReconcileOptions::default());
+        assert!(
+            outcome.removed.is_empty() && outcome.deleted.is_empty(),
+            "{outcome:#?}"
+        );
+        assert_eq!(refusal_of(&outcome, "feature/gone"), "it no longer exists");
+        let why = refusal_of(&outcome, "feature/moved");
+        assert!(
+            why.starts_with("changed since it was listed: now unpublished ("),
+            "{why}"
+        );
+        assert!(moved.exists());
+        let left = git(&repo, &["branch", "--format=%(refname:short)"]);
+        assert!(left.contains("feature/moved"));
+
+        // a third, landed and listed; then git can no longer say what a remote holds
+        let third = published_branch(&repo, "feature/third", "third.txt", "x\n");
+        land(&repo, "feature/third");
+        let listed = svc.reconciliation().unwrap();
+        assert!(entry(&listed, "feature/third").automatic);
+        break_the_remote_refs(&repo);
+        let outcome = svc.act(&listed, &ReconcileOptions::default());
+        let why = refusal_of(&outcome, "feature/third");
+        assert!(why.starts_with("could not be read again: "), "{why}");
+        assert!(outcome.removed.is_empty() && third.exists());
+        // and a reading or an act begun now is an error, never an empty, settled plan
+        assert!(svc.reconciliation().is_err());
+        assert!(svc.reconcile(&ReconcileOptions::default()).is_err());
+    }
+
+    /// What git itself refuses to remove is refused with git's reason: a locked worktree
+    /// stays, and its branch with it; a branch whose ref another process holds stays until
+    /// it is let go, and then goes.
+    #[test]
+    fn what_git_refuses_to_remove_is_refused_with_its_reason() {
+        let (_dir, repo) = repository();
+        let locked = published_branch(&repo, "feature/locked", "locked.txt", "x\n");
+        land(&repo, "feature/locked");
+        let held = published_branch(&repo, "feature/held", "held.txt", "x\n");
+        land(&repo, "feature/held");
+        git(&repo, &["worktree", "remove", held.to_str().unwrap()]);
+        git(
+            &repo,
+            &[
+                "worktree",
+                "lock",
+                "--reason",
+                "in use elsewhere",
+                locked.to_str().unwrap(),
+            ],
+        );
+        let ref_lock = repo.join(".git/refs/heads/feature/held.lock");
+        write(&ref_lock, "");
+
+        let listed = plan(&repo);
+        assert_eq!(
+            entry(&listed, "feature/held").step,
+            ReconcileStep::DeleteBranch
+        );
+        assert_eq!(
+            entry(&listed, "feature/locked").step,
+            ReconcileStep::RemoveWorktreeAndDeleteBranch
+        );
+        assert_eq!(listed.automatic, 2);
+
+        let outcome = apply(&repo, false);
+        assert!(
+            outcome.removed.is_empty() && outcome.deleted.is_empty(),
+            "{outcome:#?}"
+        );
+        assert!(
+            refusal_of(&outcome, "feature/locked").contains("lock"),
+            "{outcome:#?}"
+        );
+        assert!(
+            refusal_of(&outcome, "feature/held").contains("lock"),
+            "{outcome:#?}"
+        );
+        assert!(locked.exists());
+        let left = git(&repo, &["branch", "--format=%(refname:short)"]);
+        assert!(left.contains("feature/locked") && left.contains("feature/held"));
+
+        // the ref let go, the branch goes; the locked worktree is still refused
+        std::fs::remove_file(&ref_lock).unwrap();
+        let outcome = apply(&repo, false);
+        let deleted: Vec<&str> = outcome.deleted.iter().map(|d| d.branch.as_str()).collect();
+        assert_eq!(deleted, vec!["feature/held"]);
+        assert_eq!(outcome.refused.len(), 1, "{outcome:#?}");
+        assert!(locked.exists());
+    }
+
+    /// A repository git can no longer find is an error from the reading and from the act.
+    #[test]
+    fn a_repository_git_cannot_find_is_an_error_not_a_settled_plan() {
+        let (_dir, repo) = repository();
+        let svc = WorktreeService::open(&repo).unwrap();
+        std::fs::rename(repo.join(".git"), repo.parent().unwrap().join("away.git")).unwrap();
+        assert!(svc.reconciliation().is_err());
+        assert!(svc.reconcile(&ReconcileOptions::default()).is_err());
     }
 
     /// An upstream counts as the branch's own only when it carries the branch's name.

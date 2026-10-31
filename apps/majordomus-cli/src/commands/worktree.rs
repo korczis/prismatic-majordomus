@@ -1899,4 +1899,121 @@ mod tests {
         assert!(text.contains("behind    2 trunk commit(s)"));
         assert!(!text.contains("command") && !text.contains("worktree  "));
     }
+
+    /// Every line of the reading, of one subject and of the act is a write a reader that
+    /// went away refuses, and each refusal is a transport error; let finish, each rendering
+    /// says everything it holds.
+    #[test]
+    fn every_reconcile_rendering_survives_a_reader_that_goes_away() {
+        let (_tmp, svc, b) = nominated();
+        let plan = svc.reconciliation().expect("the reading");
+        let text = at_every_line(|mut out| {
+            render_reconciliation(&plan, OutputFormat::Text, &mut out).map(|()| 0)
+        });
+        assert!(text.starts_with("PROVEN merged"), "{text}");
+        assert!(text.contains("    1  merged\n"), "{text}");
+        assert!(text.trim_end().ends_with(&plan.summary()), "{text}");
+        // a subject that is not proven carries no marker
+        let mut unproven = plan.clone();
+        for e in unproven.entries.iter_mut() {
+            e.automatic = false;
+        }
+        let text = at_every_line(|mut out| {
+            render_reconciliation(&unproven, OutputFormat::Text, &mut out).map(|()| 0)
+        });
+        assert!(text.starts_with("       merged"), "{text}");
+
+        // one subject with every optional line: its worktree, how far behind, why, and how
+        let mut entry = plan.entries[0].clone();
+        entry.behind = Some(3);
+        let text =
+            at_every_line(|mut out| render_entry(&entry, OutputFormat::Text, &mut out).map(|()| 0));
+        let path = b.worktree.clone().expect("spare is checked out");
+        for wanted in [
+            "subject   spare\n".to_string(),
+            format!("worktree  {path}\n"),
+            format!("head      {}\n", b.head),
+            "state     merged\n".to_string(),
+            "step      remove_worktree_and_delete_branch   (removable on proof)\n".to_string(),
+            "behind    3 trunk commit(s)\n".to_string(),
+            "because   ".to_string(),
+            "command   git worktree remove ".to_string(),
+        ] {
+            assert!(text.contains(&wanted), "no '{wanted}' in:\n{text}");
+        }
+
+        // the act: what went, how to bring a branch back, and what was left with why
+        let outcome = ReconcileOutcome {
+            removed: vec!["/r-wt/feature/x".into()],
+            deleted: vec![crate::worktree::DeletedBranch {
+                branch: "feature/x".into(),
+                head: "0123abc".into(),
+            }],
+            refused: vec![crate::worktree::ReconcileRefusal {
+                subject: "feature/y".into(),
+                reason: "changed since it was listed".into(),
+            }],
+        };
+        let text = at_every_line(|mut out| {
+            render_outcome(&outcome, OutputFormat::Text, &mut out).map(|()| 0)
+        });
+        assert!(text.starts_with("removed   /r-wt/feature/x\n"), "{text}");
+        assert!(
+            text.contains("deleted   feature/x")
+                && text.contains("restore: git branch feature/x 0123abc"),
+            "{text}"
+        );
+        assert!(
+            text.contains("refused   feature/y") && text.contains("changed since it was listed"),
+            "{text}"
+        );
+        assert!(
+            text.trim_end()
+                .ends_with("1 worktree(s) removed, 1 branch(es) deleted, 1 refused"),
+            "{text}"
+        );
+    }
+
+    /// A repository git can no longer read is refused by the reading and by the act with
+    /// the service's words and nothing printed; a directory no repository holds is refused
+    /// before anything is read; and the command line reaches one subject of a repository.
+    #[test]
+    fn worktree_reconcile_refuses_what_git_cannot_read() {
+        let (tmp, svc, _b) = nominated();
+        let repo = tmp
+            .path()
+            .canonicalize()
+            .expect("canonical tempdir")
+            .join("repo");
+        let args = |at: &Path, selector: Option<&str>| WorktreeArgs {
+            repo: repo_args(at),
+            command: Some(WorktreeCommand::Reconcile {
+                selector: selector.map(str::to_string),
+                apply: false,
+                include_scratch: false,
+            }),
+            format: OutputFormat::Json,
+        };
+        assert_eq!(run(args(&repo, Some("spare"))).expect("one subject"), 0);
+        let plain = tempfile::tempdir().expect("tempdir");
+        assert!(matches!(
+            run(args(plain.path(), None)),
+            Err(Error::Refused { .. })
+        ));
+
+        // a remote-tracking ref naming no object: no reading of what is published is possible
+        std::fs::write(
+            repo.join(".git/refs/remotes/origin/broken"),
+            "1111111111111111111111111111111111111111\n",
+        )
+        .expect("write");
+        for apply in [None, Some(ReconcileOptions::default())] {
+            let mut out: Vec<u8> = Vec::new();
+            match reconcile(&svc, None, apply, OutputFormat::Text, &mut out) {
+                Err(Error::Refused { reason, .. }) => assert!(!reason.is_empty()),
+                other => panic!("an unreadable repository was answered: {other:?}"),
+            }
+            assert!(out.is_empty(), "nothing is printed for a refused reading");
+        }
+    }
 }
