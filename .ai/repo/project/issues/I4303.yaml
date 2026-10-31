@@ -1,0 +1,39 @@
+id: I4303
+milestone: a-review-is-published-at-its-commit
+title: "quality.report reports long modules, module-wide dead-code allowances and TODO comments in product code"
+slug: quality-report-reports-code-smells
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Add violation codes to quality.report for a module longer than a declared limit (measured from syn spans), a module-wide #![allow(dead_code)], and a TODO, FIXME or HACK comment in non-test product code; give each a why and a remediation like the existing codes, and accept today's findings in .ai/repo/rust-quality-baseline.txt so the gate refuses only new ones."
+why: "quality.report has fifteen codes, all about the exported surface and operation parity (apps/majordomus-cli/src/quality/model.rs:81-114); none detects the smells a reviewer looks for first. apps/majordomus-cli/src/cockpit/pages.rs is one 8822-line module and nothing reports it. Extending the existing report keeps one analyser and one baseline rather than adding a capability (plan section 4, A5)."
+current_state: "On 81ef931a3e1 ViolationCode ends at OperationProjectionOrphan; the report parses with syn already; the baseline key is CODE, path and symbol, without the line (.ai/repo/rust-quality-baseline.txt:3-5)."
+desired_state: "Three new codes, the module length with a declared limit, each with why and remediation; the baseline accepts today's findings; an 8000-line module, a module-wide dead-code allowance and a TODO comment in product code each raise their code and fail the rust-quality gate when not baselined."
+scope:
+  - ".ai/repo/project/issues/I4303.yaml"
+  - "apps/majordomus-cli/src/quality/model.rs"
+  - "apps/majordomus-cli/src/quality/report.rs"
+  - "apps/majordomus-cli/src/quality/source.rs"
+  - ".ai/repo/rust-quality-baseline.txt"
+non_scope:
+  - "Splitting apps/majordomus-cli/src/cockpit/pages.rs or fixing any other finding"
+  - "Complexity or duplication measures beyond length"
+  - "Function length, which clippy's too_many_lines judges alone (I4302), and every other clippy lint"
+depends_on:
+  - "I4297"
+serves:
+  - "a-review-is-seen-at-its-commit#a-planted-smell-fails-a-named-gate"
+acceptance_criteria:
+  - "Each new code is raised by a fixture crate that carries exactly that smell and by nothing else in the fixture"
+  - "bin/majordomus-cli quality report passes on master with the baseline written by --write-baseline"
+  - "A TODO inside a test module or a doc example raises nothing"
+  - "Each code has a why and a remediation that the report prints"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib quality::"
+  - "bin/majordomus-cli quality report"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "quality_report_reports_smells"
+risk: "Low. The baseline grows by every existing smell at once; the pull request states how many entries each code adds."
+created_at: 2026-10-28
+updated_at: 2026-10-28
