@@ -50462,6 +50462,20 @@
                     "type": "string"
                   },
                   "description": "The services that restart always and are the last the OOM killer takes."
+                },
+                "runner_homes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The homes of the CI runners' users: the disk guard reclaims the cargo build output\nanywhere under them, with the same safety as under `home`."
+                },
+                "runner_units": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The CI runner services, as unit name patterns (`*` matches any run of characters):\nevery observed unit that matches one restarts always, without a start limit."
                 }
               },
               "required": [
@@ -50479,7 +50493,9 @@
                 "policy_name",
                 "local_node",
                 "nodes",
-                "critical_services"
+                "critical_services",
+                "runner_homes",
+                "runner_units"
               ],
               "description": "What the provisioning declares: who runs the builds, which store, how bounded, which\nnodes receive an identity."
             },
@@ -50507,6 +50523,13 @@
                   },
                   "description": "The commands, in the order they run."
                 },
+                "runners": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The CI runner units observed on the host, each owed its drop-in and started."
+                },
                 "changes": {
                   "type": "integer",
                   "format": "uint",
@@ -50524,6 +50547,7 @@
                 "files",
                 "edits",
                 "steps",
+                "runners",
                 "changes",
                 "unobservable"
               ],
