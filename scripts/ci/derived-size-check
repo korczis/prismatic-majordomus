@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# derived-size-check — no derived file whose place in the index its size decides comes near
+# the size limit (I4512).
+#
+# .ai/repo/scope.yaml's out.max_bytes takes a text file over it out of the index, whatever it
+# is. For a derived file that is a convergence defect, not a question of size: stage B of
+# scripts/derive wrote docs/PLAN_STATUS.md as one page, the branch whose records grew the plan
+# took it past the limit, stage C read an index that had lost the page and wrote a registry
+# projection that no longer matched what stage B had fingerprinted, and the derive converged
+# only on a second run. The first sign was a stale-tree refusal naming the registry, not the
+# page. The page is now one per milestone; this gate is what keeps every derived file clear
+# of the edge before the index loses one.
+#
+# It judges each derived file above three quarters of the limit whose membership in the index
+# its size decides: one the scope admits (verdict `in`) and one it keeps out only for its size
+# (reason `over_limit`). Both are refused, named with the size, the fraction and the limit. A
+# derived file the scope keeps out for what it is (`generated`, an image, binary content) is
+# out at every size and is not judged.
+#
+# Derived means what scripts/gitattributes declares: a tracked or new file git marks
+# merge=derived. The limit and every verdict are the executable's (`majordomus scope`), never
+# a second reading of the YAML.
+#
+#   scripts/ci/derived-size-check                judge this checkout
+#   MJ_ROOT=<dir> scripts/ci/derived-size-check  judge another tree with this tool
+#
+# Exit: 0 no judged derived file is above the fraction · 10 one or more is, each named ·
+# 12 the gate cannot judge (no executable, no limit it can read) · 2 usage.
+set -eu
+set -o pipefail
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_PREFIX
+SELF="$(cd "$(dirname "$0")" && pwd)"
+ROOT="${MJ_ROOT:-$(cd "$SELF/../.." && pwd)}"
+CLI="$SELF/../../bin/majordomus-cli"
+# The fraction of out.max_bytes a derived file may reach. Stated once, here; the gate's
+# summary in .ai/repo/ci/gates.yaml and case 4512 read it from this line.
+PERCENT=75
+[ $# -eq 0 ] || { echo "derived-size-check: takes no arguments (MJ_ROOT names the tree)" >&2; exit 2; }
+cd "$ROOT"
+command -v jq >/dev/null || { echo "derived-size-check: jq is required" >&2; exit 12; }
+# MAJORDOMUS_SHARE inherited from another checkout would read that tree's kinds and schemas.
+scope() { env -u MAJORDOMUS_SHARE "$CLI" scope --repo "$ROOT" --format json "$@" 2>/dev/null; }
+
+max="$(scope | jq -r '.declaration.out.max_bytes // empty')" \
+  || { echo "derived-size-check: the executable could not read the scope of $ROOT" >&2; exit 12; }
+case "$max" in
+  ''|*[!0-9]*) echo "derived-size-check: the scope declares no out.max_bytes; nothing decides a derived file's place by size" ; exit 0 ;;
+esac
+limit=$(( max * PERCENT / 100 ))
+
+# Every derived file present: tracked, or new and not ignored (a derive not yet staged).
+LIST="$(mktemp "${TMPDIR:-/tmp}/mj.dsize.XXXXXX")"
+trap 'rm -f "$LIST" "$LIST".big "$LIST".json' EXIT
+{ git ls-files; git ls-files --others --exclude-standard; } \
+  | git check-attr --stdin merge | awk -F': merge: ' '$2 == "derived" { print $1 }' \
+  | while IFS= read -r p; do [ -f "$p" ] && printf '%s\n' "$p"; done > "$LIST" || true
+n="$(grep -c . "$LIST" || true)"
+[ "$n" -gt 0 ] || { echo "derived-size-check: no file here is marked merge=derived; nothing to judge"; exit 0; }
+
+# The candidates: the derived files above the fraction. Only these are asked of the scope.
+tr '\n' '\0' < "$LIST" | xargs -0 wc -c \
+  | awk -v lim="$limit" '{ b = $1; sub(/^ *[0-9]+ /, ""); if ($0 != "total" && b + 0 > lim) print }' \
+  | LC_ALL=C sort > "$LIST.big"
+
+fails=0; outside=0
+if [ -s "$LIST.big" ]; then
+  # shellcheck disable=SC2046  # one argument per candidate path, a handful at most
+  scope $(cat "$LIST.big") > "$LIST.json" \
+    || { echo "derived-size-check: the executable could not judge the candidates against the scope" >&2; exit 12; }
+  while IFS=$'\t' read -r path verdict reason bytes; do
+    if [ "$verdict" = in ] || [ "$reason" = over_limit ]; then
+      printf 'FAIL derived-size  %s is %s bytes, %s%% of out.max_bytes %s (.ai/repo/scope.yaml); a derived file the index judges by size is refused above %s%% (%s bytes): write it as several pages, as I4512 split docs/PLAN_STATUS.md\n' \
+        "$path" "$bytes" "$(awk -v b="$bytes" -v m="$max" 'BEGIN { printf "%.1f", 100 * b / m }')" "$max" "$PERCENT" "$limit"
+      fails=$((fails + 1))
+    else
+      outside=$((outside + 1))
+    fi
+  done < <(jq -r '.[] | [.path, .verdict, (.reason // "-"), (.bytes // 0 | tostring)] | @tsv' "$LIST.json")
+fi
+[ "$fails" = 0 ] || exit 10
+printf 'OK   derived-size  no derived file the index judges by size is above %s%% of out.max_bytes %s (%s bytes); %s derived file(s) examined, %s above it out of the index for what they are, at any size\n' \
+  "$PERCENT" "$max" "$limit" "$n" "$outside"

@@ -90,7 +90,7 @@ arbitrary. Most of them were paid for.
    `docs/CLAIMS.yaml`, `share/skeleton/**`, `share/*.yaml`, `bin/majordomus`, `lib/**`,
    or anything in the Rust crate — run `just derive` and commit the regenerated
    `site/data/generated/`, `site/data/registry/`, `docs/generated/`, `docs/SITE_CLAIMS.md`
-   and `docs/PLAN_STATUS.md` with it; `just derive-check` (`scripts/derive-check`) says
+   and `docs/PLAN_STATUS.md` with its milestone pages under `docs/plan-status/`; `just derive-check` (`scripts/derive-check`) says
    what is stale, and CI and the Pages workflow run the same script and refuse to deploy
    stale derived files. Never hand-edit a generated file;
    [`docs/GITHUB_PAGES_ARCHITECTURE.md`](docs/GITHUB_PAGES_ARCHITECTURE.md) lists which

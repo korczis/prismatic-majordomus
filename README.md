@@ -466,7 +466,7 @@ majordomus plan rgraph         # the same graph, as a diagram
 ```
 
 Rendered at [the roadmap](https://majordomus.dev/roadmap/), with the
-current state as a document in [`docs/PLAN_STATUS.md`](docs/PLAN_STATUS.md).
+current state as a document in [`docs/PLAN_STATUS.md`](docs/PLAN_STATUS.md), one page per milestone.
 
 Each step is gated by the previous one being real, and that is an invariant rather than a
 promise: a milestone whose dependencies are not accepted is blocked, and finishing every

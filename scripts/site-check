@@ -25,6 +25,8 @@
 #                                   line (a case-insensitive disk cannot hold the clash a case
 #                                   needs): no two paths differ only in case (I3447). Exit 0, 10
 #                                   findings, 12 missing.
+#   scripts/site-check --since-deploy REPO   only check 23's half that needs no build: that REPO
+#                                   does not track the build-time since-deploy record (for the cases)
 #   scripts/site-check --prose-figures <dir>
 #                                   check 19 alone, over every *.md and *.toml under <dir>, with
 #                                   no built site: the scan a case runs on a fixture. Exit 0 when
@@ -40,6 +42,11 @@
 set -eu
 SYNC=1
 if [ "${1:-}" = --no-sync ]; then SYNC=0; shift; fi
+SINCE_REPO=""
+if [ "${1:-}" = --since-deploy ]; then
+  [ $# -ge 2 ] || { echo "site-check: --since-deploy REPO" >&2; exit 2; }
+  SINCE_REPO="$2"; shift 2
+fi
 # The scan of check 19, "prose states no count by hand": every line of the given files on which
 # a number of two or more digits stands within three words before a counted noun. A count
 # typed into prose is the author's on the day it was typed, and the site goes on printing it
@@ -494,6 +501,34 @@ LOCAL="$(mj_rel "$MJ_AI_LOCAL_DIR")"
 SRC_REF="$(jq -r 'if (.commit // "unknown") != "unknown" and (.dirty | not) then .commit else "master" end' \
   "$SITE/data/build.json" 2>/dev/null || echo master)"
 fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12s %s\n' "$1" "$2"; fails=$((fails+1)); }
+# 23. since-deploy (the function; it runs last below). What moved since the previous deployment is a
+# fact of one build — scripts/site-build composes it from the commit that deployment was built from
+# to the one being built — so it lives in an ignored file beside build.json. Tracked, it would be
+# stale at the next commit by construction and every commit would change its bytes; so a tracked
+# or unignored copy is refused, and the built changelog page must say the state the file records
+# (or `absent` without one), with the homepage's trust strip linking it.
+since_deploy_check() {   # <repository> [<built public dir>]
+  local repo="$1" pub="${2:-}" rel=site/data/since-deploy.json sdbad=0 state
+  if git -C "$repo" ls-files --error-unmatch "$rel" >/dev/null 2>&1; then
+    bad since-deploy "$rel is tracked; it is a fact of one build and must never be committed (git rm --cached $rel)"; sdbad=1
+  elif ! git -C "$repo" check-ignore -q "$rel"; then
+    bad since-deploy "$rel is not ignored, so a build would leave it for a commit to pick up"; sdbad=1
+  fi
+  if [ -n "$pub" ]; then
+    state=absent
+    [ -f "$repo/$rel" ] && state="$(jq -r '.state // "unreadable"' "$repo/$rel" 2>/dev/null || echo unreadable)"
+    grep -qF "data-since-deploy=\"$state\"" "$pub/changelog/index.html" 2>/dev/null \
+      || { bad since-deploy "/changelog/ does not show the since-deploy state the build recorded ($state)"; sdbad=1; }
+    grep -qF 'data-since-deploy-link' "$pub/index.html" 2>/dev/null \
+      || { bad since-deploy "the homepage's trust strip does not link what changed since the last deploy"; sdbad=1; }
+  fi
+  [ "$sdbad" = 0 ] && ok since-deploy "$rel is ignored and untracked${pub:+, and /changelog/ shows the state it records ($state)}"
+  return 0
+}
+if [ -n "$SINCE_REPO" ]; then
+  since_deploy_check "$SINCE_REPO"
+  [ "$fails" = 0 ] && exit 0 || exit 10
+fi
 [ -d "$PUB" ] || { echo "site-check: site/public/ missing; run scripts/site-build" >&2; exit 12; }
 PREFIX="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed -E 's#^[a-z]+://[^/]+##; s#/$##')"
 # The pages this check judges are the site's own. scripts/site-build composes the other
@@ -1986,5 +2021,8 @@ article_counterparts "$SITE/content-src" "$SITE/data/nav.toml" "$SITE/config.tom
 # keyed before a rule changed the key is unreachable, and the sentence it holds reads in English.
 # The rule is memory_keyed, above; `--memory <i18n-dir>` runs it alone.
 memory_keyed "$SITE/i18n"
+
+# 23. since-deploy: the record is never committed, and the pages show what it states (above)
+since_deploy_check "$ROOT" "$PUB"
 
 printf 'site-check: %s failure(s)\n' "$fails"; [ "$fails" = 0 ] && exit 0 || exit 10

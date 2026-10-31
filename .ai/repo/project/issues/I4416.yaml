@@ -1,0 +1,54 @@
+id: I4416
+milestone: a-second-adopter-is-served
+title: "The session briefing says how old the task is and never calls a finished one active, an abandoned task is closed as interrupted only by `recover tasks`, and doctor's stranded-episode FAIL names `recover episodes --check`"
+slug: a-stale-task-reads-as-stale-and-is-recovered-on-purpose
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Three changes, none of which closes anything a person did not ask to close. First, the task line of the session briefing (mj_derive_briefing_body, lib/derive.sh:548-552) states the record as it is. A task whose outcome is active reads `Active task <id> (active, profile <p>, started <age> ago, checkpoint <age> ago): <task>`. A task whose outcome is anything else (completed, partial, blocked, no_match, failed, handed_over, interrupted) reads `Last task <id> (<outcome>, closed <age> ago, profile <p>): <task>`, and the word Active is never printed for it. An active task whose checkpoint_at is older than the policy's session.stranded_after gains `stale: no checkpoint for <age>, over the <threshold> session.stranded_after; review it: majordomus recover tasks --check`. Ages come from mj_age_minutes and mj_age_human, as `majordomus context` already renders them (lib/context.sh:190-200), and the threshold is read with mj_pol_req as lib/recover.sh:94 reads it, with no default invented. Second, a new subject `majordomus recover tasks [--check] [--older-than <duration>]` in lib/recover.sh, beside episodes, records and orphans, and included in `recover status` and `recover all`. It reads only this checkout's current.yaml and refuses a foreign one (mj_task_is_foreign) with the worktree it belongs to. An active task whose checkpoint_at is older than the threshold is a candidate; --check prints the task id, its started and checkpoint ages, the threshold and `close with outcome interrupted`, and writes nothing. Without --check, the candidate's current.yaml gets outcome: interrupted and a task.interrupted ledger line carrying task_id, checkpoint_at, age, threshold and source recover; nothing else is rewritten. A task inside the threshold, or one already closed, is named with why it is not a candidate and left byte-for-byte unchanged. The outcome interrupted is admitted by the current.v1 schema and its generated allow-list, and finish answers it as it answers any closed outcome (`already interrupted; run majordomus start for new work`). Third, the remedy column of doctor's lifecycle rows (mj_validate_lifecycle, lib/doctor.sh:1028): the episodes FAIL (lib/doctor.sh:1106-1109) names `majordomus recover episodes --check` instead of `majordomus session list`, and the checkpoints and handovers FAILs (lib/doctor.sh:1056-1075) name it too when the same run counted stranded episodes, because an episode nobody closed is the one that never wrote its handover; with no stranded episode they keep `majordomus <record> --list`."
+why: "Observed in OSCILLA (korczis/oscilla) on 2026-10-29 by session oscilla-af, filed from oscilla-b0's upstream candidates (item 13 of the 2026-10-29 evening list, narrowed by oscilla-af as L3). OSCILLA's `majordomus doctor` failed with `newest handover 22 d` and `5 open episodes > 2 d`, and named no command that would act on either: `majordomus recover episodes` (lib/recover.sh) already closes stranded episodes as interrupted with --check first, but the episodes row points at `majordomus session list`, which only lists them, and the handovers row at `majordomus handover --list`. At SessionStart the same checkout was briefed `Active task t-20261003114817-83ca (partial)`, 26 days after the task was opened. Its outcome was partial, so it had already been finished, yet the line called it active and gave no age; the next worker could not tell a task in progress from a record left behind. `majordomus context` shows started and checkpoint ages (lib/context.sh:199-200), but the briefing is what every episode reads first, and it is bounded to session.briefing_budget_lines, so the age has to be on its one line. Tasks are not episodes: `recover episodes` never reads current.yaml, so an active task abandoned by a client that went away stays active until somebody runs finish by hand in that checkout, and finish has no outcome that says the work was cut short rather than completed, partial or blocked. The recovery stays supervised: case 130 is the memory of the 2026-09-05 outage, in which a task record that nobody replaced stopped the lifecycle, and a briefing that closed tasks on its own would be the watchdog lib/doctor.sh:1092-1095 refuses."
+current_state: "Measured at origin/master 51b38035a71: mj_derive_briefing_body (lib/derive.sh:548-552) prints `Active task %s (%s, profile %s): %s` for any current.yaml that mj_load_current (lib/common.sh:1417-1424) loads, whatever its outcome, with no started_at or checkpoint_at; finish rewrites outcome in place and leaves the record (lib/finish.sh:128), so every finished task reads as active until the next start. lib/context.sh:190-200 renders both ages in the TASK section. The cockpit card is titled `Active task` for any outcome as well (apps/majordomus-cli/src/cockpit/pages.rs:2580-2582), with an info badge for one that is not active. mj_cmd_recover (lib/recover.sh:63-112) knows the subjects status, all, episodes, records and orphans; none of them reads current.yaml. finish admits completed, partial, blocked, no_match and failed (lib/finish.sh:64-66), and the current.v1 schema's outcome enum (share/schemas/majordomus/current/current.v1.schema.json:84-92) adds only handed_over. share/events.yaml has no task.interrupted. doctor's episodes FAIL names `majordomus session list` (lib/doctor.sh:1106-1109); its checkpoints and handovers FAILs name `majordomus ${d%s} --list` (lib/doctor.sh:1056-1075); `git grep -n 'recover episodes' lib/doctor.sh` finds nothing."
+desired_state: "A worker reading the briefing knows at once whether the task it names is in progress, how old it is, and whether it has outlived the threshold the policy already declares for episodes; a finished task is never called active. Abandoned tasks are closed only by a person who runs `recover tasks`, after `--check` has shown what it would do, and the record says interrupted, which is what happened. Every doctor FAIL about stranded lifecycle state names the command that recovers it. Enforced by case 4416, case 130 and case 60."
+scope:
+  - ".ai/repo/project/issues/I4416.yaml"
+  - "lib/derive.sh"
+  - "lib/recover.sh"
+  - "lib/doctor.sh"
+  - "lib/finish.sh"
+  - "lib/common.sh"
+  - "share/schemas/majordomus/current/current.v1.schema.json"
+  - "share/allow/current.txt"
+  - "share/events.yaml"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "docs/CLI.md"
+  - "test/cases/130_lifecycle_survives_a_stale_task.sh"
+  - "test/cases/4416_a_stale_task_reads_as_stale_and_is_recovered_on_purpose.sh"
+non_scope:
+  - "Closing stranded episodes: `majordomus recover episodes`, unchanged"
+  - "Another worktree's stale task claim in the overlap report of start and check: I4328, whose landed predicate is I4333"
+  - "Closing, finishing or rewriting any task without a person running `recover tasks`: the briefing, doctor and the hooks only report"
+  - "A task held in another checkout: `recover tasks` refuses it and names that checkout; I4328 qualifies it"
+  - "The open episodes of refused tasks and the origin of a failed verification: I4413"
+  - "Changing session.stranded_after or giving it a default"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Case 4416, in a fixture with session.stranded_after 12h and a current.yaml whose outcome is partial, started_at and checkpoint_at 26 days ago: the briefing printed by the episode-start event contains `Last task <id> (partial, closed 26 d` and does not contain `Active task`"
+  - "Case 4416: an active task with checkpoint_at 26 days ago is briefed `Active task <id> (active, ...` with its started and checkpoint ages, and the same line names `stale`, the 12h threshold and `majordomus recover tasks --check`; an active task checkpointed 10 minutes ago gets its ages and no stale mark"
+  - "Case 4416: `majordomus recover tasks --check` on the stale active task exits 0, names the task id, its age, the threshold and `outcome interrupted`, and leaves current.yaml and the ledger byte-for-byte unchanged"
+  - "Case 4416: `majordomus recover tasks` sets outcome: interrupted, changes no other line of current.yaml, appends one task.interrupted ledger line with task_id, checkpoint_at, age, threshold and source recover, and a following `majordomus finish --outcome completed` is refused with `already interrupted`"
+  - "Case 4416: with the task checkpointed inside the threshold, or already partial, `recover tasks` names it as not a candidate with the reason and writes nothing; with current.yaml naming another worktree it refuses and names that worktree; with no session.stranded_after declared it exits non-zero naming the key, and writes nothing"
+  - "Case 4416: `recover status` lists the tasks subject beside episodes, records and orphans"
+  - "Case 4416: a fixture with two open episodes older than the threshold makes doctor's lifecycle episodes FAIL name `majordomus recover episodes --check`, and its handovers FAIL name it too; with no stranded episode the handovers FAIL keeps `majordomus handover --list`"
+  - "doctor admits outcome: interrupted in current.yaml through share/allow/current.txt and the current.v1 schema, regenerated by `majordomus generate`, and share/events.yaml declares task.interrupted"
+  - "Cases 130 and 60 pass"
+  - "Before the change, case 4416 fails at its first assertion on the `Active task <id> (partial)` line"
+validation:
+  - "MJ_TEST_JOBS=4 bash test/run.sh 4416_a_stale_task_reads_as_stale_and_is_recovered_on_purpose 130_lifecycle_survives_a_stale_task 60_session_lifecycle 135_session_store_recovery"
+  - "bin/majordomus shell check"
+  - "bin/majordomus doctor"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "stale_task_briefing_and_recovery_case"
+created_at: 2026-10-29
+updated_at: 2026-10-29
