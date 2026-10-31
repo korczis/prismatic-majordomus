@@ -14,6 +14,7 @@ import { contrast, enforce, measure, raise, MINIMUM } from './ui-contrast.mjs';
 import { sample, siblingFamilies } from './ui-routes.mjs';
 import { compare, cut, fragment, GENERATED, VERSION_SLOT } from './ui-navbar.mjs';
 import { audit, auditPage } from './ui-audit.mjs';
+import { shardPages, unionResults } from './ui-shard.mjs';
 
 const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
@@ -371,9 +372,21 @@ test('every page is visited, and the sweep is spent on one page per section', ()
 });
 
 test('the critical widths always hold the reflow floor and the desktop end', () => {
-  const widths = criticalWidths(viewports([640, 768, 1024]));
+  const widths = criticalWidths(viewports([640, 768, 1024], [320, 1600]));
   assert.equal(widths[0], REFLOW_FLOOR);
-  assert.equal(widths[widths.length - 1], 1440);
+  assert.equal(widths[widths.length - 1], 1600, 'the widest width the design declares');
+  // with no declaration the theme's widest boundary is the end: no width is invented here
+  const bare = criticalWidths(viewports([640, 768, 1024]));
+  assert.equal(bare[bare.length - 1], 1024);
+});
+
+test('the widths the design declares are each audited, and none is added beside them', () => {
+  const declared = [320, 375, 390, 768, 1024, 1280, 1600];
+  const widths = viewports([640, 768, 1024, 1280, 1536], declared);
+  assert.ok(declared.every((w) => widths.includes(w)), 'every declared width is visited');
+  const boundaries = new Set([640, 768, 1024, 1280, 1536].flatMap((b) => [b - 1, b]));
+  const invented = widths.filter((w) => !declared.includes(w) && !boundaries.has(w) && w !== REFLOW_FLOOR);
+  assert.deepEqual(invented, [], 'a width nobody declared and no media query implies');
 });
 
 test('a new section brings its own sweep without a list changing', () => {
@@ -439,11 +452,13 @@ const REFUSED = 'page.goto: net::ERR_CONNECTION_REFUSED at http://audit.test/b/\
 const answered = (status) => ({ status: () => status });
 const visited = (g) => g.url && g.options.timeout === 20000;
 
-function fakePage(answer, log = [], tab = 0) {
+function fakePage(answer, log = [], tab = 0, media = []) {
+  let width;
   return {
     removeAllListeners() {},
     on() {},
-    async setViewportSize() {},
+    async setViewportSize(size) { width = size.width; },
+    async emulateMedia(options) { media.push({ width, ...options }); },
     async goto(url, options) {
       log.push({ tab, url, options });
       const n = log.filter((g) => g.url === url && g.tab === tab).length;
@@ -456,12 +471,13 @@ function fakePage(answer, log = [], tab = 0) {
 
 function fakeBrowser(answer) {
   const log = [];
+  const media = [];
   let tabs = 0;
   const context = {
-    async newPage() { tabs += 1; return fakePage(answer, log, tabs - 1); },
+    async newPage() { tabs += 1; return fakePage(answer, log, tabs - 1, media); },
   };
   const browser = { async newContext() { return context; }, async close() {} };
-  return { log, launch: async () => browser };
+  return { log, media, launch: async () => browser };
 }
 
 test('a goto that times out is loaded once more, and the second load is measured', async () => {
@@ -569,6 +585,33 @@ test('a plan with one surface warms it alone, and one with none the root alone',
   const none = fakeBrowser(() => answered(404));
   await audit(ORIGIN, [{ route: '/', widths: [320] }], { concurrency: 1, launch: none.launch });
   assert.deepEqual(warmed(none.log), [ORIGIN], 'no segment of the plan, no surface of its own');
+});
+
+test('a sharded audit makes each page\'s reduced-motion visit once, at its narrowest width', async () => {
+  // the plan as ui-run.mjs hands it over: every page carries its narrowest width before the cut
+  const plan = ['/a/', '/b/', '/c/'].map((route) => ({
+    route, widths: [320, 768, 1600], tier: 'sweep', narrowest: 320,
+  }));
+  const reduced = [];
+  for (let index = 1; index <= 2; index += 1) {
+    const browser = fakeBrowser(() => answered(404));
+    await audit(ORIGIN, shardPages(plan, { index, of: 2 }), { concurrency: 1, launch: browser.launch });
+    reduced.push(...browser.media.filter((m) => m.reducedMotion === 'reduce').map((m) => m.width));
+  }
+  // the stride splits each page's widths between the two shards; the narrowest of a shard's
+  // share is not the page's, and three pages would otherwise be measured six times
+  assert.deepEqual(reduced, [320, 320, 320], 'one reduced-motion visit per page, at 320');
+});
+
+test('the union of the shards counts the reduced-motion visits each shard made', () => {
+  const doc = (index, driven, measured) => ({
+    shard: { index, of: 2, planned: 4, narrowed: false, driven }, visits: driven.length,
+    seconds: 1, findings: [], foreign: [],
+    reduced_motion: { measured, at: 'each page\'s narrowest width', findings: 0 },
+  });
+  const { results } = unionResults([doc(1, ['/a/@320', '/b/@768'], 1), doc(2, ['/a/@768', '/b/@320'], 1)]);
+  assert.equal(results.reduced_motion.measured, 2, 'the shards\' visits add up');
+  assert.equal(results.reduced_motion.findings, 0);
 });
 
 let failed = 0;

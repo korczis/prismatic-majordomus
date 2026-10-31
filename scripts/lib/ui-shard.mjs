@@ -126,6 +126,14 @@ export function unionResults(docs) {
     concurrency: first.concurrency,
     rules: Object.fromEntries(Object.entries(rules).sort((a, b) => b[1] - a[1] || compare(a[0], b[0]))),
     foreign,
+    // each page's reduced-motion visit falls to exactly one shard (ui-run.mjs fixes it before
+    // the cut), so the shards' counts add up to the single audit's
+    reduced_motion: {
+      measured: docs.reduce((n, doc) => n + (doc.reduced_motion?.measured ?? 0), 0),
+      at: docs.find((doc) => doc.reduced_motion)?.reduced_motion.at
+        ?? "each page's narrowest width, with prefers-reduced-motion: reduce emulated",
+      findings: findings.filter((f) => f.rule === 'motion.reduced-motion-ignored').length,
+    },
     findings,
   };
   return { problems, results };
