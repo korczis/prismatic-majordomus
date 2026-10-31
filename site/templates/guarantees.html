@@ -11,9 +11,18 @@
 <p class="mt-3 max-w-3xl text-body">The same data, drawn as the graph it is: <a href="{{ get_url(path="/evidence/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">every claim wired to the document, the implementation and the test behind it &rarr;</a></p>
 {%- set caps = load_data(path="data/generated/capabilities.json") -%}
 {%- set ev_model = load_data(path="data/registry/product.json") -%}{%- set ev = ev_model.evidence -%}
+{#- Two figures, each saying what it counts (I4317): the guaranteed claims CI's recorded run
+    supports, the one figure the homepage's proof band shows (partials/supported-figure.html,
+    over the data/evidence.json /evidence/ reads), and the guaranteed claims the runs recorded
+    in the committed ledger support, the verdict every row of the tables below shows
+    (product.json `evidence`). They differ whenever the ledger committed here is older than
+    CI's run of it, and each says so; scripts/ci/homepage-check `declared` holds the first to
+    the homepage's. -#}
+{%- set ci = load_data(path="data/evidence.json", required=false) -%}
+{%- set ci_figure %}{% include "partials/run-figure.html" %}{% endset -%}{%- set ci_figure = ci_figure | trim -%}
 <div class="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
   {%- for status in caps.status_order -%}
-  <a href="{{ get_url(path="/guarantees/" ~ status ~ "/", trailing_slash=true) }}" class="block rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><div class="mb-2 flex items-center justify-between">{%- set status_kind = "claim" -%}{% include "partials/status-badge.html" %}<span class="font-mono text-sm text-body-subtle">{{ [c for c in caps.claims if c.status == status] | length }} declared</span></div>{% if status == "guaranteed" %}<p class="mb-2 text-sm text-heading">{% if ev.available %}<span class="font-mono font-bold">{{ ev.supported }}</span> supported by a recorded run{% else %}support by a recorded run: unknown, no evidence is recorded{% endif %}</p>{% endif %}<p class="text-sm text-body">{{ caps.statuses[status] }}</p></a>
+  <a href="{{ get_url(path="/guarantees/" ~ status ~ "/", trailing_slash=true) }}" class="block rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><div class="mb-2 flex items-center justify-between">{%- set status_kind = "claim" -%}{% include "partials/status-badge.html" %}<span class="font-mono text-sm text-body-subtle">{{ [c for c in caps.claims if c.status == status] | length }} declared</span></div>{% if status == "guaranteed" %}{%- set sf_tag = "p" -%}{%- set sf_class = "mb-2 text-sm text-heading" -%}{%- set sf_links = false -%}{% include "partials/supported-figure.html" %}<p class="mb-2 text-xs text-body" data-ledger-supported="{% if ev.available %}{{ ev.supported }}{% else %}unknown{% endif %}">{% if ev.available %}<span class="font-mono font-bold">{{ ev.supported }}</span> supported by the runs the committed ledger records, the verdict each row below shows{% else %}support by the runs the committed ledger records: unknown, no evidence is recorded{% endif %}</p>{% endif %}<p class="text-sm text-body">{{ caps.statuses[status] }}</p></a>
   {%- endfor -%}
 </div>
 {%- for status in caps.status_order -%}

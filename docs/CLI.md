@@ -741,10 +741,16 @@ produced one record between them. So an open episode is a file of its own,
 it. `--if-open keep` keeps *your* episode — which is why it exists: the start event fires
 again on a resume and on a compaction — and gives a different provider session an episode
 of its own. `close --provider-session <id>` closes that episode and no other, which is what
-a provider's end event passes. An episode nobody named is keyed `hand`, and there is at
-most one of those: a provider that sends no session identity is indistinguishable from a
-person at a terminal, and inventing a distinction there would multiply episodes nobody can
-close. A hand-opened episode needs no provider anywhere and behaves exactly as before.
+a provider's end event passes. A `session start` that names no provider session is keyed
+by the one this process runs inside, where one is observable: `MAJORDOMUS_PROVIDER_SESSION`,
+then each provider's own variable (`CLAUDE_CODE_SESSION_ID`). That is the key every shell
+writer resolves the same process to, so the observations and decisions it records next land
+in the episode it opened; the record carries `provider_session` and `provider`, and its
+working context still says `opened_by: hand`. Only where no provider session is observable
+is the episode keyed `hand`, and there is at most one of those: a provider that sends no
+session identity is indistinguishable from a person at a terminal, and inventing a
+distinction there would multiply episodes nobody can close. A hand-opened episode needs no
+provider anywhere.
 
 `state/session-current.yaml` is a relative symlink into that store: the pointer to the
 episode of this checkout, aimed at the one opened here last and re-aimed by a close at the

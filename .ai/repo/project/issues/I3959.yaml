@@ -40,4 +40,18 @@ validation:
 evidence_required:
   - "the_shared_build_dir_stays_under_its_bound_test"
 created_at: 2026-10-23
-updated_at: 2026-10-23
+updated_at: 2026-10-28T12:19:11Z
+started_at: 2026-10-28T12:17:50Z
+started_event: sha256:dbbe5a2770f59c0a910ffb858256534e3a1e7090435e1c31edcfc5f8f53de9df
+verified_at: 2026-10-28T12:18:30Z
+verified_event: sha256:ef3714d5798c82f0f0c61a6b60e8b8b7907e1034224ab898f778201379e90134
+completed_at: 2026-10-28T12:19:11Z
+completed_event: sha256:0658e22aa33067db19306b1cee004261ae6341f383ae78d4b68004598a04c88f
+evidence:
+  - covers: the_shared_build_dir_stays_under_its_bound_test
+    type: ci
+    command: "bash test/run.sh 3959_the_shared_build_dir_stays_under_its_bound"
+    result: "ok in 12 s in master validate https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939 at 6c79dcf68cf, suite-shard (3) job 122655183349; the case covers all seven criteria (oldest-first eviction under a free lock, a held profile lock evicts nothing and says so, held/recent/Cargo.lock-named units kept, unnamed dep generations and idle llvm-cov-target evicted, --dry-run, reap-orphans under the lock, the bounded background wait after a build); validation cases 3196 and 1022 also ok there; landed via b3ace7b4593 (#2419, train 7)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939/job/122655183349"
+    commit: 81ef931a3e156907f1784c64c509884f565c17f0
+    recorded_at: 2026-10-28T12:19:02Z
