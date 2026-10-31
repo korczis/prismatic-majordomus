@@ -524,6 +524,17 @@ pub fn report(opts: &EnvOptions) -> EnvReport {
 /// is no configuration directory, and `health` for the store's readiness answer: the command
 /// waits [`HEALTH_BUDGET`], a test as long as an answer takes on a loaded runner.
 fn report_under(opts: &EnvOptions, config: Option<&Path>, health: Duration) -> EnvReport {
+    report_with_disk(opts, config, health, disk_dir())
+}
+
+/// [`report_under`], with `disk` for the directory of the disk level, or none when this
+/// process has no home to keep it in.
+fn report_with_disk(
+    opts: &EnvOptions,
+    config: Option<&Path>,
+    health: Duration,
+    disk: Option<PathBuf>,
+) -> EnvReport {
     let Some(version) = sccache_version(&opts.sccache) else {
         return local_only(
             format!(
@@ -613,7 +624,7 @@ fn report_under(opts: &EnvOptions, config: Option<&Path>, health: Duration) -> E
         return r;
     }
 
-    let Some(disk) = disk_dir() else {
+    let Some(disk) = disk else {
         let mut r = local_only(
             "this process has no home to keep the disk level in: the build uses its local level alone"
                 .into(),
@@ -1135,6 +1146,35 @@ mod tests {
             "an empty HOME is no home"
         );
         assert_eq!(config_dir_from(None, None), None);
+    }
+
+    #[test]
+    fn without_a_home_for_the_disk_level_a_chosen_store_is_left_out() {
+        let d = tempfile::tempdir().unwrap();
+        let port = store_up();
+        let r = report_with_disk(
+            &opts(
+                capable(d.path()),
+                Some(node_file(d.path(), port)),
+                Some(good_credentials(d.path())),
+            ),
+            None,
+            PATIENT,
+            None,
+        );
+        assert_eq!(r.mode, Mode::LocalOnly);
+        assert!(
+            r.reason.contains("no home to keep the disk level in"),
+            "{}",
+            r.reason
+        );
+        assert_eq!(r.store.as_ref().unwrap().bucket, "the-bucket");
+        assert_eq!(
+            r.sccache.multilevel,
+            Some(true),
+            "the chain was measured before the disk level was asked for"
+        );
+        assert!(r.variables.is_empty() && r.credentials_file.is_none());
     }
 
     #[test]
