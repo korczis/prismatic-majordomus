@@ -7,7 +7,8 @@
 #
 #   always  runner containers stopped for an hour, dangling images, the builder cache over
 #           BUILDER_KEEP, runner volumes over RUNNER_VOLUME_CAP_GIB (unused ones, largest
-#           first), and cargo build output nobody wrote for STALE_MIN minutes;
+#           first), cargo build output nobody wrote for STALE_MIN minutes, and a CI runner's
+#           cargo build output over RUNNER_CARGO_CAP_GIB idle for HARD_IDLE_MIN;
 #   soft    below SOFT_GIB: cargo build output idle for IDLE_MIN, every unused runner volume;
 #   hard    below HARD_GIB: the ballast is released first, then cargo build output idle for
 #           HARD_IDLE_MIN, the shared build directories, every unused image, the journal.
@@ -15,7 +16,23 @@
 # Build output is a directory whose CACHEDIR.TAG says cargo created it, outside cargo's
 # registry and git checkouts. Nothing else under a home is touched: no source, worktree,
 # .git, virtualenv, registry or toolchain. A directory with an open file, or a write inside
-# its idle window, is skipped; a check that cannot tell (lsof timed out) also skips.
+# its idle window, is skipped; a check that cannot tell (lsof timed out) also skips. An idle
+# directory is renamed aside, checked again, and only then deleted; one that came into use
+# meanwhile is given back or left for a later run, never deleted (reap).
+#
+# Two kinds of home are searched. HOMES are people's: only their build roots (dev, .cache,
+# .cargo/build-private, offload), and their shared build directories at the hard floor
+# alone. RUNNER_HOMES belong to CI runners (I4352): up to nine levels deep, because a
+# runner's build directory sits under its own per-runner home (on 2026-10-28 lundra's / was
+# filled by /home/ghrunner/home-2 and home-3/.cargo/build-shared, 74.6 and 39.9 GiB). A
+# runner home is written by the CI jobs it runs, so the guard trusts no path in it: there it
+# renames and deletes only as the home's owner, never as root (as_owner_of), and it never
+# takes a home, a directory directly in one, a directory reached through a symlink, or one
+# that holds a runner's installation or a source tree (runner_candidate). Both
+# lists are rendered from the declared policy into $HOMES_FILE by
+# `majordomus mesh build-cache provision`; the defaults below hold without it. The guard only
+# ever removes idle output, so it bounds a runner between jobs; a runner busy back to back
+# keeps its build directory written, and the bound during a job is I4344.
 #
 # The ballast is a file of BALLAST_GIB kept while space is plentiful and released at the hard
 # floor, so the host always has room for the commands that recover it.
@@ -34,15 +51,13 @@ set -uo pipefail
 : "${BALLAST_GIB:=8}"
 : "${RUNNER_VOLUME_CAP_GIB:=60}"
 : "${BUILDER_KEEP:=20GB}"
+: "${RUNNER_CARGO_CAP_GIB:=40}"
 HOMES=(/home/korczis)
+RUNNER_HOMES=()
 : "${STATE:=/var/lib/majordomus/disk-guard.json}"
 : "${SCAN_STAMP:=/var/lib/majordomus/disk-guard.scan}"
-# shellcheck source=/dev/null
-[ -r /etc/majordomus/disk-guard.conf ] && . /etc/majordomus/disk-guard.conf
-
-exec 9>/run/disk-guard.lock
-flock -n 9 || { echo "another run holds the lock"; exit 0; }
-mkdir -p "$(dirname "$STATE")"
+: "${HOMES_FILE:=/etc/majordomus/disk-guard.homes}"
+: "${LOCK:=/run/disk-guard.lock}"
 
 actions=()
 note() { echo "$1${DRY_RUN:+(dry) }$2"; actions+=("$2"); }
@@ -62,27 +77,152 @@ idle() {
   [ $? -eq 1 ]
 }
 
-# Every cargo build directory under the homes, outermost first.
-cargo_dirs() {
+# The CACHEDIR.TAG files under people's homes, in their build roots only.
+home_tags() {
   local h
-  for h in "${HOMES[@]}"; do
+  for h in "${HOMES[@]+"${HOMES[@]}"}"; do
     find "$h/dev" "$h/.cache" "$h/.cargo/build-private" "$h/offload" -maxdepth 9 \
       \( -name .git -o -name node_modules -o -name .venv -o -path "$h/.cargo/registry" \
          -o -path "$h/.cargo/git" -o -path "$h/.cache/sccache" \) -prune \
       -o -name CACHEDIR.TAG -print 2>/dev/null
-  done | while read -r tag; do
-    grep -q 'created by cargo' "$tag" 2>/dev/null && dirname "$tag"
+  done
+}
+
+# The CACHEDIR.TAG files anywhere under a CI runner's home, never inside a checkout's .git,
+# a package tree, cargo's registry or git checkouts, a toolchain or the compiler cache.
+runner_tags() {
+  local h
+  for h in "${RUNNER_HOMES[@]+"${RUNNER_HOMES[@]}"}"; do
+    [ -d "$h" ] || continue
+    as_owner_of "$h" find "$h" -maxdepth 9 \
+      \( -name .git -o -name node_modules -o -name .venv -o -name .rustup \
+         -o -path '*/.cargo/registry' -o -path '*/.cargo/git' -o -name sccache \) -prune \
+      -o -name CACHEDIR.TAG -print 2>/dev/null
+  done
+}
+
+# The runner home that holds $1 (or is $1), if any.
+runner_home_of() {
+  local h
+  for h in "${RUNNER_HOMES[@]+"${RUNNER_HOMES[@]}"}"; do
+    case $1 in "$h" | "$h"/*) echo "$h"; return 0 ;; esac
+  done
+  return 1
+}
+
+# Run a command with no more authority than the owner of the runner home that holds $1.
+# CI jobs write a runner home as its user, so any component of a path there can be swapped
+# for a symlink between two of the guard's steps (x/lib found idle, x then pointing at /usr).
+# As root the guard therefore renames and deletes there as the home's owner, and the kernel
+# lets it take only what that runner could take itself. A runner home owned by root, or
+# whose owner cannot be read, is refused. Outside the runner homes, and when the guard is
+# not root, the command runs as it is.
+as_owner_of() {
+  local path=$1 h uid gid
+  shift
+  if ! h=$(runner_home_of "$path") || [ "$(id -u)" -ne 0 ]; then
+    "$@"
+    return
+  fi
+  uid=$(stat -c %u -- "$h" 2>/dev/null) || return 1
+  gid=$(stat -c %g -- "$h" 2>/dev/null) || return 1
+  [ -n "$uid" ] && [ "$uid" -ne 0 ] || return 1
+  setpriv --reuid="$uid" --regid="$gid" --clear-groups -- "$@"
+}
+
+# Whether the guard may take $1 as build output. Outside the runner homes the people's rules
+# above apply and this holds. Under a runner home it holds only for a directory at least two
+# levels below the home, reached through no symlink, that holds nothing of a runner's
+# installation or of a source tree: a planted tag at the home, in a per-runner home or in a
+# runner's installation must never make the guard take the runner itself.
+runner_candidate() {
+  local dir=$1 h hp rel m
+  h=$(runner_home_of "$dir") || return 0
+  [ "$dir" != "$h" ] || return 1
+  rel=${dir#"$h"/}
+  case $rel in */*) ;; *) return 1 ;; esac
+  hp=$(cd -P -- "$h" 2>/dev/null && pwd) || return 1
+  [ "$(cd -P -- "$dir" 2>/dev/null && pwd)" = "$hp/$rel" ] || return 1
+  for m in .runner .credentials .credentials_rsaparams config.sh run.sh Cargo.toml .git; do
+    if [ -e "$dir/$m" ] || [ -L "$dir/$m" ]; then return 1; fi
+  done
+  return 0
+}
+
+# The directories of the tags read on stdin that cargo created and the guard may take,
+# outermost first. A tag that is a symlink is not cargo's.
+cargo_of() {
+  local tag dir
+  while read -r tag; do
+    [ -f "$tag" ] && [ ! -L "$tag" ] || continue
+    grep -q 'created by cargo' "$tag" 2>/dev/null || continue
+    dir=$(dirname "$tag")
+    runner_candidate "$dir" && printf '%s\n' "$dir"
   done | sort -u
 }
 
+# Every cargo build directory under the homes and the runner homes.
+cargo_dirs() { { home_tags; runner_tags; } | cargo_of; }
+runner_cargo_dirs() { runner_tags | cargo_of; }
+
+# Remove a directory found idle without racing a build that starts meanwhile. The directory
+# is first renamed aside, which is atomic on its own filesystem: a job that starts after the
+# rename gets a fresh directory at the old path. A job that started between the idle check
+# and the rename keeps writing into the aside, so the aside is checked again (a write within
+# the last minute, an open file) before anything is deleted. One in use is renamed back while
+# its old path is still free, and otherwise left for a later run; a busy aside is never
+# deleted. An aside that an interrupted run left behind (only one run holds the lock) goes
+# with the next reap there once it is idle. A rename that fails removes nothing. Under a
+# runner home every rename and deletion runs as the home's owner (as_owner_of), and the
+# candidate is judged again just before the rename.
+reap() {
+  local dir=$1 aside old
+  runner_candidate "$dir" || return 1
+  for old in "$dir".reaping.*; do
+    [ -d "$old" ] && idle "$old" 1 \
+      && act as_owner_of "$old" rm -rf --one-file-system -- "$old"
+  done
+  aside="$dir.reaping.$$"
+  [ -e "$aside" ] && return 1
+  act as_owner_of "$dir" mv -- "$dir" "$aside" || return 1
+  if [ -z "${DRY_RUN:-}" ] && ! idle "$aside" 1; then
+    if [ ! -e "$dir" ]; then
+      as_owner_of "$dir" mv -- "$aside" "$dir" \
+        && warn "gave back $dir: it came into use while it was being removed"
+    else
+      warn "left $aside: it came into use while it was being removed"
+    fi
+    return 1
+  fi
+  act as_owner_of "$aside" rm -rf --one-file-system -- "$aside"
+}
+
+# The size is measured before the idle check, which then runs right before the removal:
+# measuring in between (du over tens of GiB) would open a window of minutes.
 reclaim_cargo() {
   local minutes=$1 dir size
   while read -r dir; do
     [ -d "$dir" ] || continue
-    idle "$dir" "$minutes" || continue
     size=$(size_gib "$dir")
-    act rm -rf --one-file-system -- "$dir" && info "removed cargo output idle >${minutes}m: $dir (${size}G)"
+    idle "$dir" "$minutes" || continue
+    reap "$dir" && info "removed cargo output idle >${minutes}m: $dir (${size}G)"
   done < <(cargo_dirs)
+}
+
+# A runner compiles into one build directory for ever and cargo never shrinks it: one over
+# the cap is removed once it has been idle for $2 minutes, so the next job starts it again.
+# This bounds a runner between jobs only. A runner that takes jobs back to back never leaves
+# its build directory idle, and the bound during a job is I4344's.
+reclaim_runner_cargo_over() {
+  local cap=$1 minutes=$2 dir size
+  while read -r dir; do
+    [ -d "$dir" ] || continue
+    size=$(size_gib "$dir")
+    [ "${size:-0}" -gt "$cap" ] || continue
+    idle "$dir" "$minutes" || continue
+    reap "$dir" \
+      && info "removed runner cargo output over ${cap}G idle >${minutes}m: $dir (${size}G)"
+  done < <(runner_cargo_dirs)
 }
 
 runner_volumes_unused() {
@@ -114,6 +254,18 @@ reclaim_runner_volumes() {
   done < <(runner_volumes_unused)
 }
 
+# Sourced (the tests do), the guard only defines its functions and changes nothing.
+(return 0 2>/dev/null) && return 0
+
+# shellcheck source=/dev/null
+[ -r "$HOMES_FILE" ] && . "$HOMES_FILE"
+# shellcheck source=/dev/null
+[ -r /etc/majordomus/disk-guard.conf ] && . /etc/majordomus/disk-guard.conf
+
+exec 9>"$LOCK"
+flock -n 9 || { echo "another run holds the lock"; exit 0; }
+mkdir -p "$(dirname "$STATE")"
+
 before=$(free_gib)
 tier=always
 
@@ -129,6 +281,7 @@ fi
 # Always, at most once per SCAN_EVERY_MIN: cargo output abandoned for a day.
 if [ -z "$(find "$SCAN_STAMP" -mmin "-$SCAN_EVERY_MIN" 2>/dev/null)" ]; then
   reclaim_cargo "$STALE_MIN"
+  reclaim_runner_cargo_over "$RUNNER_CARGO_CAP_GIB" "$HARD_IDLE_MIN"
   act touch "$SCAN_STAMP"
 fi
 
@@ -144,9 +297,9 @@ if [ "$(free_gib)" -lt "$HARD_GIB" ]; then
   warn "free $(free_gib)G is below the hard floor ${HARD_GIB}G"
   [ -f "$BALLAST" ] && act rm -f "$BALLAST" && warn "released the ${BALLAST_GIB}G ballast"
   reclaim_cargo "$HARD_IDLE_MIN"
-  for h in "${HOMES[@]}"; do
+  for h in "${HOMES[@]+"${HOMES[@]}"}"; do
     for d in "$h"/.cargo/build-shared/*; do
-      idle "$d" "$HARD_IDLE_MIN" && act rm -rf --one-file-system -- "$d" \
+      idle "$d" "$HARD_IDLE_MIN" && reap "$d" \
         && warn "removed shared build directory $d"
     done
   done

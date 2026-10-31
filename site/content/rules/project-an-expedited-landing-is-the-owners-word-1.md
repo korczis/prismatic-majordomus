@@ -60,9 +60,10 @@ makes it safe and what does not, each measured rather than argued:
    locally, the merge is committed, and only then is the branch derived. The merge is `gh pr
    merge --admin --merge --match-head-commit <head>`, so a head that moved is refused.
 4. **The merged tree is judged before the merge, and the judgement is named.** At least the
-   whole structure job (`scripts/ci/run-plan --job structure`), the library tests, the
-   rustdoc build when the crate changed, and every case the change touches, with skips
-   refused. The lander says which commit each ran on. A gate that did not run is named as
+   whole structure job, which is the two CI jobs `structure` and `structure-b` (`just
+   ci-structure` runs `scripts/ci/run-plan --job structure` and `--job structure-b`), the
+   library tests, the rustdoc build when the crate changed, and every case the change
+   touches, with skips refused. The lander says which commit each ran on. A gate that did not run is named as
    not run. A red is not landed.
    **What a change owes beyond that is read from what it touches**, and `scripts/ci-plan
    --files <list>` names the gates it selects:
