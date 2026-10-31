@@ -456,14 +456,18 @@ runtime stores and relays both kinds without reading them.
 Every server restart is a new stream, so a journal that kept everything would grow without
 bound and a machine would fill its 64-stream quota by running. Compaction drops the streams
 nothing needs any more. Each runtime runs it on its own, every sixty heartbeats (five minutes
-at the defaults), and only when its journal holds more than 20 000 events or 768 streams or
+at the defaults) and at once on the next heartbeat after an event was refused for capacity, and
+only when its journal holds more than 20 000 events or 768 streams or
 when one node holds 48 streams or 15 000 events — then that node's streams alone are due. A
 node's own crowding matters because the journal-wide bound is no larger than one node's quota
 of 20 000 events: a machine alone fills its quota before the journal is over its bound, and past
 the quota every event of that machine is refused, a claim's release among them. A stream can go only
 when it has been silent for longer than the expiry plus 15 minutes, measured on the local
 clock from the last beat heard or, for a stream never heard beating, from when the journal
-learned of it (so the streams a restart reloads are not taken for dead at once). A runtime
+learned of it (so the streams a restart reloads are not taken for dead at once). A stream
+whose runtime has since beaten under a newer instance was replaced by a restart, not lost, and
+goes after the expiry alone — provided that newer instance is itself within its expiry; two
+silent instances of one runtime keep the full 15 minutes. A runtime
 never drops its own stream. Of the streams that could go, one stays while:
 
 - **it published a handover nobody has taken** — for at most a day past those 15 minutes
@@ -904,9 +908,17 @@ answer names the one that did not when it is left out:
 
 The variables are `SCCACHE_MULTILEVEL_CHAIN=disk,s3`, `SCCACHE_MULTILEVEL_WRITE_ERROR_POLICY=l0`,
 `SCCACHE_BUCKET`, `SCCACHE_ENDPOINT`, `SCCACHE_REGION`, `SCCACHE_S3_USE_SSL`,
-`SCCACHE_S3_KEY_PREFIX=rust/<rustc host triple>/`, `AWS_SHARED_CREDENTIALS_FILE=<path>` and
-`AWS_PROFILE=mesh-build-cache`. A key is never exported: the environment of every compiler and
-build script would carry it, so only the credential file's path is named.
+`SCCACHE_S3_KEY_PREFIX=rust/<rustc host triple>/`, `AWS_SHARED_CREDENTIALS_FILE=<path>`,
+`AWS_PROFILE=mesh-build-cache` and `SCCACHE_DIR`. A key is never exported: the environment of
+every compiler and build script would carry it, so only the credential file's path is named.
+
+`SCCACHE_DIR` is the disk level: its value when the environment sets it, else the directory
+sccache takes by itself (`~/Library/Caches/Mozilla.sccache` on macOS,
+`${XDG_CACHE_HOME:-$HOME/.cache}/sccache` elsewhere), so the chain keeps what the local cache
+holds. It is named because sccache 0.17.0 and 0.18.0 refuse to start a chain whose `disk` level
+has none ("Disk cache specified in levels but not configured"). Until 2026-10-25 the variables
+left it out, and on every node without `SCCACHE_DIR` set, `sccache-mesh --start-only` answered
+`local-only: sccache did not start with the store`, so no build went through the store.
 
 `share/libexec/sccache-mesh` is the `RUSTC_WRAPPER` that uses it: when no sccache server listens
 on `SCCACHE_SERVER_PORT` (default 4226) it evaluates the script, and then runs sccache with its

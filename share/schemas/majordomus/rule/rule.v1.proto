@@ -90,6 +90,14 @@ message Enforcement {
   // the debt this field replaces. An executable proof always wins: a rule that acquires a
   // case is proven by the case whether or not this is still here.
   string reviewed_because = 8;
+  // The name of an entry under the policy's `enforcement:` that checks this rule: the
+  // repository's own command, with its arguments and the hook or CI job that runs it.
+  //
+  // A project's rule can name no mj_validate_* function, because those are this tool's
+  // source; it can name the command the project already runs. doctor refuses a name the
+  // policy does not declare and verifies the entry's wiring as it verifies every entry, so
+  // the rule is enforced by something that exists and is invoked, not by its own say-so.
+  string enforcement = 9;
 }
 
 // The body: why the rule exists, what it requires, what happens when it is broken, and

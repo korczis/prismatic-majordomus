@@ -1,0 +1,58 @@
+id: I4417
+milestone: a-second-adopter-is-served
+title: "A knowledge class a repository script generates declares its generator and inputs, is reported stale when its inputs moved, and the issue, intent and rule ids its records carry are edges"
+slug: a-generated-knowledge-class-declares-its-generator
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "A class of .ai/repo/knowledge/sources.yaml may carry an optional `generator:` block: `command` (an argv list run from the repository root, never through a shell), `inputs` (one or more `:(glob)` pathspecs of tracked files) and `stamp` (the top-level field each generated file carries, default `inputs_digest`). Its kind is declared in .ai/repo/knowledge/kinds.yaml with `lifecycle: derived`, and a class with a generator whose kind is not derived is refused. The digest is sha256 over the sorted (path, git blob id) pairs of the tracked files the inputs match, and `majordomus knowledge digest <class>` prints it so that the repository's own script stamps its output. Discovery compares each file's stamp with the current digest and emits a warning diagnostic `derived_source_stale` naming the class, the file, both digests and the declared command as the remedy; Majordomus never runs the generator itself, so doctor and every read stay free of side effects. A kind entry may also declare `references:`, a map from a metadata field to a target kind among issue, milestone, intent, rule and adr; the graph resolves those fields as it resolves its built-in relations, so an object of the repository's kind shows an outgoing edge in `majordomus entity show`, the issue, intent or rule it names shows the backlink, trace.issue (majordomus_trace_issue, GET /api/v1/trace/issue) lists the objects that reference the issue, and a reference that resolves to nothing is the existing dangling-reference finding. docs/KNOWLEDGE.md and docs/ADOPTION.md describe a derived knowledge source end to end."
+why: "Observed in OSCILLA (korczis/oscilla) on 2026-10-29, filed from oscilla-b0's upstream candidates (item 8). OSCILLA is designing a build-time component and parameter registry whose records carry intent, issue and rule ids, produced by a repository script, and wants Majordomus to serve it through `context resolve`, `why` and `traceability`; its proposal is a documented, generic derived knowledge source in which a repository script emits records that knowledge indexes, with a declared generator and a staleness check. Half of this exists and is undocumented for adopters: a repository may add a kind and a class without rebuilding the tool, but nothing says which script writes a generated class or whether its output still matches its inputs, and the ids its records carry link to nothing, so a registry that drifted from its components reads as current and a component naming I12 never appears on I12. No open issue covers it: I1103 types the provenance of the files Majordomus generate writes, not of an adopter's; I3157 makes an adopter's scripted capability reach its surfaces, not its records reach the index; I4258 widens the discovery of docs/ only."
+current_state: "Measured at origin/master 51b38035a71: a repository adds kinds in .ai/repo/knowledge/kinds.yaml and schemas under .ai/repo/knowledge/schemas (apps/majordomus-cli/src/metadata/mod.rs:1-24, docs/CAPABILITIES.md:247-252), and a class in sources.yaml carries only id, kind, discovery, pathspec and required (apps/majordomus-cli/src/discovery/mod.rs:81-91, deny_unknown_fields), so it cannot name a generator or inputs; the only class finding is required_source_empty (discovery/mod.rs:385-390). KindSpec has `lifecycle` (metadata/mod.rs:100; values in apps/majordomus-cli/src/repository.rs:93-105, documented at share/kinds.yaml:46-50), read only by the layout check (apps/majordomus-cli/src/layout.rs:258), so `derived` is accepted and checked by nothing. The graph's relations are a compiled table keyed on built-in kinds (apps/majordomus-cli/src/graph.rs:1239); the one relation that applies to any kind is `tracks` to a path (graph.rs:1293-1299), so an `issues:`, `intents:` or `rules:` field of a repository's kind yields no edge in entity::edges (apps/majordomus-cli/src/entity.rs:417). trace.issue derives an issue's work from the branches that name it (apps/majordomus-cli/src/capability/builtin/trace.rs:249-255) and reads no object that references the issue. `context resolve` resolves the context documents that apply to a path (lib/context.sh:66), and `why` is the catalogue of operational moments (apps/majordomus-cli/src/capability/builtin/why.rs:534); neither is a per-object reading. docs/KNOWLEDGE.md:369 says knowledge does not add a kind or a registry, and docs/ADOPTION.md does not describe a repository-declared kind."
+desired_state: "An adopter declares a generated knowledge class once (its kind, its generator command and its inputs) and the index serves its records like any other object: a record whose inputs moved since it was stamped is a named warning with the command that refreshes it, in the repository diagnostics and in doctor; the ids it carries are edges in both directions, so an issue, intent or rule shows the components that name it and trace.issue lists them beside its branches. Nothing in the tool is rebuilt for a new adopter kind, and Majordomus never executes the adopter's script. Enforced by unit tests of discovery, metadata and graph and by case 4417."
+scope:
+  - ".ai/repo/project/issues/I4417.yaml"
+  - "apps/majordomus-cli/src/discovery/mod.rs"
+  - "apps/majordomus-cli/src/metadata/mod.rs"
+  - "apps/majordomus-cli/src/index.rs"
+  - "apps/majordomus-cli/src/graph.rs"
+  - "apps/majordomus-cli/src/entity.rs"
+  - "apps/majordomus-cli/src/capability/builtin/trace.rs"
+  - "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs"
+  - "lib/knowledge.sh"
+  - "share/kinds.yaml"
+  - "docs/KNOWLEDGE.md"
+  - "docs/CAPABILITIES.md"
+  - "docs/ADOPTION.md"
+  - "test/cases/4417_a_generated_knowledge_class_declares_its_generator.sh"
+non_scope:
+  - "Running the adopter's generator from Majordomus (doctor, derive, a hook or a capability): the repository's script runs it; an adopter capability that does is I3157's"
+  - "Typed provenance of the artifacts majordomus generate writes: I1103"
+  - "Widening `context resolve` beyond the context documents of a path, or adding per-object entries to the `why` catalogue: an object of a repository kind is reached through objects, entity and trace"
+  - "Discovering untracked or draft records (item 3 of the same report)"
+  - "Pull requests in the traceability join (scripts/traceability)"
+  - "OSCILLA's registry itself, its schema and its build step"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Unit test of discovery: a class with a `generator:` block (command, inputs, stamp) parses; one with an unknown generator key, a non-`:(glob)` input pathspec or a kind whose lifecycle is not derived is refused naming the class"
+  - "Unit test: the inputs digest is the same for the same tracked blobs in any order of discovery and changes when one input's blob changes; an untracked file matching an input does not change it"
+  - "Case 4417, in a fixture adopter with a kind `component` (format yaml, members `components`, lifecycle derived, references issues: issue, intents: intent, rules: rule) and a script that writes .ai/repo/components.yaml stamped with `majordomus knowledge digest components`: the index reads each component as majordomus://component/<id> with no diagnostic"
+  - "Case 4417: after an input file is changed and committed, the repository diagnostics and `majordomus doctor` each report derived_source_stale naming the class, the file, both digests and the declared command; after the script reruns and the output is committed, the finding is gone"
+  - "Case 4417: no step of the case executes the generator except the case itself (a generator that writes a marker file leaves none after index, doctor and entity reads)"
+  - "Case 4417: `majordomus entity show` on a component that names I1 shows an outgoing edge to issue I1, `majordomus entity show` on I1 shows the incoming edge from the component, and GET /api/v1/trace/issue?id=I1 on the fixture's server lists the component under the objects that reference it"
+  - "Case 4417: a component naming an issue the plan does not declare is the existing dangling-reference finding, not a silent omission"
+  - "docs/KNOWLEDGE.md and docs/ADOPTION.md describe the generator block, the digest command, the staleness finding and `references:`; docs/KNOWLEDGE.md:369 no longer says that a repository cannot add a kind"
+  - "Before the change, case 4417 fails at its first assertion"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib discovery::"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib metadata::"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib graph::"
+  - "bash test/run.sh 4417_a_generated_knowledge_class_declares_its_generator"
+  - "bin/majordomus shell check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+  - "rust"
+  - "generated_knowledge_class_case"
+created_at: 2026-10-29
+updated_at: 2026-10-29

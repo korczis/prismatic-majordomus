@@ -62,10 +62,20 @@ waits = ["I2984", "I2999"]
 #   Their links were compacted to plain inline anchors first; 44% of the page is utility classes.
 # I3759's shorter capability picker takes bytes back; the budget can come down when a build
 # measures that. The "since the last deploy" link (#925, about 140 bytes) waited for this change.
+#
+# And how it renders: the largest contentful paint, in milliseconds, and the cumulative layout
+# shift the page itself reports, each the median of three cold loads at the narrowest and the
+# widest width the design declares, measured by scripts/site-probe in the browser its sweep
+# already drives. Provisional, set 2026-10-10 from local runs (paint 76-112 ms, shift 0.000 at
+# 320 and 1600 px, three runs of three loads) with the margin a runner nobody had measured
+# needs: about nine times the paint and an absolute 0.05 of shift. The record asks for three
+# runs on the CI runner; when they are in, the paint budget follows them with a stated margin.
 [budget]
 html_bytes = 172000
 assets_bytes = 340000
 inline_json_bytes = 8000
+largest_contentful_paint_ms = 1000
+cumulative_layout_shift = 0.05
 
 # The capability words the hand-written copy (marketing.toml, manifesto.toml) may use only
 # while a claim permits them: word = the docs/CLAIMS.yaml id that permits it, "" when no claim

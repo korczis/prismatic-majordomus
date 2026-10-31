@@ -53,6 +53,7 @@ pub mod proof;
 pub mod relation;
 pub mod repair;
 pub mod retry;
+pub mod service;
 #[cfg(test)]
 mod tests;
 pub mod timings;

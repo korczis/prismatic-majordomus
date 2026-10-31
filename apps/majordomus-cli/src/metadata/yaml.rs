@@ -139,6 +139,9 @@ fn flatten(text: &str) -> Result<Vec<Flat>, String> {
     let mut pend: BTreeMap<usize, String> = BTreeMap::new();
     let mut cnt: BTreeMap<String, usize> = BTreeMap::new();
     let mut seen: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+    // the last key whose value was written on its own line, and that line's indentation: a
+    // deeper line that is no key continues that value, which the subset does not read (I4259)
+    let mut last_value: Option<(usize, String)> = None;
     let mut out = Vec::new();
     ctx.insert(0, String::new());
     for (n, raw) in text.lines().enumerate() {
@@ -156,6 +159,7 @@ fn flatten(text: &str) -> Result<Vec<Flat>, String> {
         }
         let s = t;
         if let Some(item) = s.strip_prefix("- ") {
+            last_value = None;
             let Some(parent) = pend.get(&ind).cloned() else {
                 return Err(format!("list item without a parent key on line {n}"));
             };
@@ -186,6 +190,14 @@ fn flatten(text: &str) -> Result<Vec<Flat>, String> {
             continue;
         }
         let Some((k, v)) = is_key(s) else {
+            if let Some((at, key)) = last_value.as_ref().filter(|(at, _)| ind > *at) {
+                let _ = at;
+                return Err(format!(
+                    "line {n} continues the value of '{key}' from the line above: a value is one \
+                     line in this subset (a folded or wrapped scalar is not read); join it onto \
+                     that line, quoted if it holds ': '"
+                ));
+            }
             return Err(format!("cannot parse line {n}: {s}"));
         };
         let Some(base) = ctx.get(&ind).cloned() else {
@@ -198,6 +210,7 @@ fn flatten(text: &str) -> Result<Vec<Flat>, String> {
             return Err(format!("'{p}' is given twice, on line {n}"));
         }
         if v.is_empty() {
+            last_value = None;
             pend.insert(ind, p.clone());
             pend.insert(ind + 2, p.clone());
             ctx.insert(ind + 2, p);
@@ -205,6 +218,7 @@ fn flatten(text: &str) -> Result<Vec<Flat>, String> {
             if is_unsupported_construct(v) {
                 return Err(format!("unsupported YAML construct on line {n}: {v}"));
             }
+            last_value = Some((ind, p.clone()));
             emit(&mut out, &p, v);
         }
     }

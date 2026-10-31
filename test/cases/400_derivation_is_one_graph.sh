@@ -234,7 +234,7 @@ done
 # repeated here so the claim's one named test asserts the whole claim.
 cur="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || true)"
 if [ -n "$cur" ]; then
-  for f in "$ROOT"/site/data/generated/*.json "$ROOT/docs/SITE_CLAIMS.md" "$ROOT/docs/PLAN_STATUS.md"; do
+  for f in "$ROOT"/site/data/generated/*.json "$ROOT/docs/SITE_CLAIMS.md" "$ROOT/docs/PLAN_STATUS.md" "$ROOT"/docs/plan-status/*.md; do
     [ -f "$f" ] || continue
     if grep -qF -- "${cur:0:7}" "$f"; then
       printf '    %s embeds the current commit; it will be stale the moment it is committed\n' "${f#"$ROOT"/}"

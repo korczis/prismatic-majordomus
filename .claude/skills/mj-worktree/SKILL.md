@@ -1,11 +1,11 @@
 ---
 name: mj-worktree
-description: "Majordomus worktree: One branch: where its worktree belongs and what is there; What it would take to bring every worktree home; Where this is, and whether that is where it belongs; The whole topology; How far a checkout is from the remote trunk; Uncommitted work in the linked worktrees, and what…"
+description: "Majordomus worktree: One branch: where its worktree belongs and what is there; What it would take to bring every worktree home; What becomes of every branch and every worktree; Where this is, and whether that is where it belongs; The whole topology; How far a checkout is from the remote trunk…"
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: module:worktree; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.9 -->
+     Generator: majordomus-cli 1.0.0-alpha.10 -->
 
 # Majordomus `worktree`
 
@@ -17,6 +17,7 @@ $ARGUMENTS
 |---|---|---|---|---|
 | `worktree.inspect` | One branch: where its worktree belongs and what is there | `majordomus_worktree_inspect` | `majordomus worktree inspect` | reads |
 | `worktree.migration_plan` | What it would take to bring every worktree home | `majordomus_worktree_migration_plan` | `majordomus worktree migrate` | reads |
+| `worktree.reconciliation` | What becomes of every branch and every worktree | `majordomus_worktree_reconciliation` | `majordomus worktree reconcile` | reads |
 | `worktree.status` | Where this is, and whether that is where it belongs | `majordomus_worktree_status` | `majordomus worktree status` | reads |
 | `worktree.topology` | The whole topology | `majordomus_worktrees` | `majordomus worktree topology` | reads |
 | `worktree.trunk` | How far a checkout is from the remote trunk | `majordomus_worktree_trunk` | `majordomus worktree trunk` | reads |

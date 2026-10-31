@@ -16,7 +16,7 @@ use std::path::PathBuf;
 
 use serde::Serialize;
 
-use crate::cli::{OutputFormat, PrsArgs, PrsCommand};
+use crate::cli::{OutputFormat, PrsArgs, PrsCommand, PrsServiceCommand};
 use crate::error::{Error, Result};
 use crate::integration::{
     self,
@@ -635,6 +635,7 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             };
             printed.map(|()| repair_exit(&report))
         }
+        PrsCommand::Service { command } => service(&root, command, format, &mut out),
         PrsCommand::ProveDryRun => {
             let proof = integration::proof::prove_dry_run(&root).map_err(unusable)?;
             let written = if format == OutputFormat::Json {
@@ -720,6 +721,188 @@ fn diagnosed(q: &integration::IntegrationQueue, format: OutputFormat) -> Result<
         }
     }
     Ok(if q.diagnostics.is_empty() { 0 } else { FINDING })
+}
+
+/// `prs service`: install, read, remove or run the executor's user unit (I3913).
+fn service(
+    root: &std::path::Path,
+    command: Option<PrsServiceCommand>,
+    format: OutputFormat,
+    out: &mut impl Write,
+) -> Result<u8> {
+    use integration::service::{self as svc, Ended, LastRun, Manager, SystemRunner};
+    let manager = || {
+        Manager::of_this_platform().ok_or_else(|| {
+            unusable("no supported service manager on this platform (launchd, systemd --user)")
+        })
+    };
+    match command.unwrap_or(PrsServiceCommand::Status) {
+        PrsServiceCommand::Install {
+            executable,
+            interval,
+            max,
+            no_refresh,
+        } => {
+            let executable = match executable {
+                Some(e) => e,
+                None => std::env::current_exe()
+                    .map_err(|e| unusable(format!("this executable: {e}")))?,
+            };
+            let executable = executable.canonicalize().unwrap_or(executable);
+            if executable.components().any(|c| c.as_os_str() == "target") {
+                return Err(Error::Refused {
+                    code: FINDING,
+                    reason: format!(
+                        "{} lives under a build directory that a clean or a rebuild removes; \
+                         install a stable copy (the release installer puts one in ~/.local/bin) \
+                         and pass it with --executable",
+                        executable.display()
+                    ),
+                });
+            }
+            let path = std::env::var("PATH").unwrap_or_else(|_| "/usr/bin:/bin".into());
+            let unit = svc::executor_unit(
+                root,
+                &svc::ExecutorOptions {
+                    executable,
+                    interval,
+                    max,
+                    refresh: !no_refresh,
+                },
+                path,
+            );
+            let home = svc::home().map_err(unusable)?;
+            let report =
+                svc::install(&unit, manager()?, &home, &mut SystemRunner).map_err(unusable)?;
+            if format == OutputFormat::Json {
+                json(out, &report)?;
+            } else {
+                let done = if report.changed {
+                    "installed"
+                } else {
+                    "unchanged"
+                };
+                w(out, format!("{done} {} ({})", report.label, report.path))?;
+                for c in &report.ran {
+                    w(out, format!("  ran {c}"))?;
+                }
+            }
+            Ok(0)
+        }
+        PrsServiceCommand::Uninstall => {
+            let home = svc::home().map_err(unusable)?;
+            let label = svc::label_for(root);
+            let removed =
+                svc::uninstall(&label, manager()?, &home, &mut SystemRunner).map_err(unusable)?;
+            if format == OutputFormat::Json {
+                json(
+                    out,
+                    &serde_json::json!({ "label": label, "removed": removed }),
+                )?;
+            } else {
+                w(
+                    out,
+                    match removed {
+                        Some(p) => format!("removed {p}"),
+                        None => format!("{label} was not installed"),
+                    },
+                )?;
+            }
+            Ok(0)
+        }
+        PrsServiceCommand::Status => {
+            let home = svc::home().map_err(unusable)?;
+            let s = svc::status(root, &home, &mut SystemRunner);
+            if format == OutputFormat::Json {
+                json(out, &s)?;
+            } else {
+                let state = match (&s.installed, s.running) {
+                    (None, _) => "not installed",
+                    (Some(_), true) => "running",
+                    (Some(_), false) => "installed, not running",
+                };
+                let pid = s.pid.map(|p| format!(" (pid {p})")).unwrap_or_default();
+                w(out, format!("{}: {state}{pid}", s.label))?;
+                if let Some(m) = &s.manager_says {
+                    w(out, format!("  service manager: {m}"))?;
+                }
+                if let Some(l) = &s.last_run {
+                    w(
+                        out,
+                        format!(
+                            "  last run ended {} ({:?}): {}; {} cycle(s), merged {:?}",
+                            l.at, l.disposition, l.why, l.cycles, l.merged
+                        ),
+                    )?;
+                    if let Some(f) = &l.failure {
+                        w(out, format!("  ! {f}"))?;
+                    }
+                }
+                if let Some(n) = &s.next {
+                    w(out, format!("  next: {n}"))?;
+                }
+            }
+            Ok(if s.installed.is_some() && s.running {
+                0
+            } else {
+                FINDING
+            })
+        }
+        PrsServiceCommand::Run {
+            interval,
+            max,
+            refresh,
+        } => {
+            let now = || crate::peers::rfc3339(std::time::SystemTime::now());
+            // the decision is said before the exit that carries it; a record that cannot be
+            // written changes nothing about what the service manager should do
+            let finish = |ended: Ended<'_>, out: &mut dyn Write| -> u8 {
+                let last = LastRun::of(&ended, now());
+                if let Err(e) = svc::record_last_run(root, &last) {
+                    let _ = writeln!(out, "! the last run could not be recorded: {e}");
+                }
+                let _ = writeln!(
+                    out,
+                    "{} service run ended ({:?}): {}",
+                    last.at, last.disposition, last.why
+                );
+                last.disposition.exit_code()
+            };
+            if let Some(reason) = drain::continuous_refused(&drain::events(root)) {
+                return Ok(finish(Ended::RolloutRefused(&reason), out));
+            }
+            let lease = match executor_base(root).and_then(|base| lease_for(root, &base, false)) {
+                Ok(l) => l,
+                Err(reason) => return Ok(finish(Ended::LeaseUnavailable(&reason), out)),
+            };
+            let stop = drain::stop_on_signals();
+            let mut integrator = ForgeIntegrator {
+                root,
+                lease: Some(&lease),
+            };
+            let report = drain::continuous(
+                root,
+                &mut integrator,
+                drain::ContinuousOptions {
+                    max_per_cycle: max,
+                    allow_refresh: refresh,
+                    interval: std::time::Duration::from_secs(interval),
+                    cycles: None,
+                },
+                stop,
+                &mut std::thread::sleep,
+                &mut |n, r| {
+                    let _ = writeln!(out, "{} cycle {n}:", now());
+                    for line in drain_lines(r) {
+                        let _ = writeln!(out, "  {line}");
+                    }
+                    let _ = out.flush();
+                },
+            );
+            drop(lease);
+            Ok(finish(Ended::Drained(&report), out))
+        }
+    }
 }
 
 /// Who the trail says acknowledged a merge that could not be verified.

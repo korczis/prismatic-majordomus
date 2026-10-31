@@ -186,6 +186,8 @@ majordomus worktree uncommitted                # uncommitted work in linked work
 <!-- majordomus:unrun it removes worktrees, which a documentation check must never do to the checkout it reads; case 611 runs it in a disposable repository and holds every refusal -->
 ```bash
 majordomus worktree cleanup --remove           # removes those worktrees, refusing what it cannot prove
+majordomus worktree reconcile                  # one state and one next step for every branch and worktree
+majordomus worktree reconcile --apply          # takes the proven steps, each measured again first
 ```
 
 <div class="overflow-x-auto" tabindex="0">
@@ -207,6 +209,8 @@ majordomus worktree cleanup --remove           # removes those worktrees, refusi
 | `worktree remove <branch\|path> [--force]` | remove one linked worktree; never the primary, never a branch, never dirty work unforced | refused |
 | `worktree cleanup` | branches merged into the trunk, or into the remote-tracking branch the trunk follows, whose worktree is clean or absent, with the commands that would remove them. A primary checkout nobody has pulled does not hide what has already landed. | |
 | `worktree cleanup --remove` | removes those worktrees, each re-measured first; refuses a branch ahead of its remote, a worktree something is working in, uncommitted work, or a reading it could not take | |
+| `worktree reconcile [<branch\|path>]` | every non-trunk branch and detached worktree with one state, the readings that decided it, the one step it permits and the guarded command that takes it; with a selector, that one subject and why. Removes nothing | |
+| `worktree reconcile --apply [--include-scratch]` | removes the clean worktree of a branch the trunk contains, and deletes a branch whose every commit a remote holds and whose merge changes nothing; each subject measured again first, a worktree removed without `--force`, a branch deleted on the judged commit | |
 | `worktree uncommitted [--older-than D]` | every linked worktree holding uncommitted work: paths, age of the oldest change, what holds it, `abandoned` or not, and the command that would put it on a remote ref; writes nothing | |
 | `worktree trunk` | how far this checkout and the local trunk are from the remote trunk, as of the last fetch, judged against `checkout.trunk_distance`, with the commands that bring it current; fetches nothing | the checkout is stale |
 | `worktree branches [--without-worktree]` | every local branch, one per line | |
@@ -242,7 +246,7 @@ flowchart TD
   worktree["canonical worktree&lt;br&gt;majordomus worktree create &amp;lt;branch&amp;gt;&lt;br&gt;→ &amp;lt;repo&amp;gt;-wt/&amp;lt;branch&amp;gt;"]
   session["session / agent&lt;br&gt;majordomus context, start, checkpoint, handover&lt;br&gt;— in that worktree"]
   commit["commit / PR&lt;br&gt;the pre-commit hook asks the guard;&lt;br&gt;push and open the PR from there"]
-  cleanup["cleanup&lt;br&gt;majordomus worktree cleanup → worktree remove,&lt;br&gt;git branch -d, by a person"]
+  cleanup["cleanup&lt;br&gt;majordomus worktree reconcile → --apply&lt;br&gt;removes what is proven, names the rest"]
   issue --&gt; branch
   branch --&gt; worktree
   worktree --&gt; session
@@ -360,9 +364,10 @@ for the container, so the disk is what says stop — and it says it in whatever 
 the next subsystem to fail happens to use. Three said their content was wrong. See ADR 0021
 for why the mechanism is absent rather than missing.
 
-If you hold a worktree whose branch has landed, `worktree cleanup` tells you; `git worktree
-remove <path>` and `git branch -d <branch>` are the two commands, and the `target/`
-directory inside it is usually most of what it costs.
+If you hold a worktree whose branch has landed, `worktree reconcile` tells you and
+`worktree reconcile --apply` removes it with its branch; the `target/` directory inside it is
+usually most of what it costs. What `reconcile` leaves — a dirty tree, an unpublished commit,
+a conflict — it names, with the step that would move it.
 
 ## Enforcement
 
@@ -481,6 +486,68 @@ topology changes outside the process.
 
 </div>
 
+
+## Reconciling
+
+`worktree cleanup` answers one question — what is merged and clean — and is silent about
+everything else, which on 2026-10-29 was most of 570 worktrees and 722 branches.
+`majordomus worktree reconcile` gives every non-trunk branch and every detached worktree one
+state and one next step, decided from git and from the kernel and never from an age:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| state | what was read | step |
+|---|---|---|
+| `active` | a process has its working directory inside the worktree | keep |
+| `dirty` | the worktree holds files no commit carries | commit |
+| `unreadable` | a reading could not be taken | keep: not knowing is not permission |
+| `unstarted` | the trunk reaches the branch and it was never published | keep: a branch cut a minute ago reads the same as one that landed |
+| `merged` | the trunk reaches it, and it was published | remove the worktree, delete the branch |
+| `equivalent` | merging it produces the trunk's own tree | remove the worktree; delete the branch when a remote holds every commit of it |
+| `unpublished` | it holds a commit no remote-tracking ref reaches | publish |
+| `orphaned` | a detached worktree is at a commit no ref holds | name it |
+| `conflicted` | merging it conflicts with the trunk | resolve, or decide it is superseded |
+| `stale` | it merges cleanly and the trunk has moved | refresh |
+| `ready` | it merges cleanly and the trunk has not moved | integrate |
+
+</div>
+
+
+The questions are asked in that order, so a process inside outranks a dirty tree and a dirty
+tree outranks anything about commits. Occupancy is the one kernel reading the worktree service
+already takes (`lsof -a -d cwd`, once for every worktree). The relation to the trunk is
+decided against the remote-tracking branch the trunk follows: reachability first, then
+`git merge-tree --write-tree`, which performs the merge in memory and leaves no index and no
+working tree behind.
+
+`majordomus worktree reconcile feature/improve-cli` prints one subject with every reading
+that decided it, which is the answer to "why is this still here".
+
+The reading removes nothing. A subject whose step removes something, whose proof is complete,
+and which is neither a scratch checkout nor the worktree the call came from is marked
+`PROVEN` (`automatic` in the document), and each removal is printed as git's own guarded
+command: `git worktree remove <path>` without `--force`, which refuses uncommitted work, and
+`git update-ref -d refs/heads/<branch> <commit>` naming the commit that was judged, which
+refuses a branch that moved.
+
+`majordomus worktree reconcile --apply` takes those steps and no others. Each subject is read
+again by the same decision immediately before it goes, and acted on only when it reaches the
+same step at the same commit; a file written, a commit made, a process started or a branch
+moved since the listing is a refusal, named with the state it reads now. A worktree goes by
+the worktree service's own removal, without `--force`; a branch goes by `git update-ref -d`
+on the judged commit, so a branch that moved in the last instant is refused by git rather
+than lost. The report names the commit every deleted branch pointed at, and `git branch
+<name> <commit>` brings it back while the object exists. A scratch checkout or a detached
+worktree is listed and left unless `--include-scratch` is given, and the worktree the call
+came from is never removed. A second `--apply` does nothing.
+
+It differs from `cleanup` in one refusal. That command refuses a branch whose upstream is
+gone, because it does not read whether a remote holds the commits; a forge that deletes the
+head branch of a merged pull request leaves every landed branch in that state. `reconcile`
+reads the thing itself, whether the remote trunk reaches the head. The decision is ADR 127;
+`test/cases/612_every_worktree_has_a_disposition.sh` plants one branch in each state, proves
+the reading removes nothing, that `--apply` takes exactly the proven steps, and that a second
+`--apply` does nothing.
 
 ## Reclaiming
 

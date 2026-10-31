@@ -459,6 +459,47 @@ pub fn parse_branches(text: &str) -> Vec<BranchRef> {
     out
 }
 
+/// The commits that are on a local branch and on no remote-tracking ref.
+///
+/// One call: `git rev-list --branches --not --remotes`. Asking per branch would be one
+/// subprocess per branch, and a repository worked on by many sessions has hundreds of them.
+/// `--no-walk` is deliberately *not* used — it drops the exclusion, and the probe then
+/// reports that nothing is unpublished no matter what is unpublished. A remote-tracking ref
+/// is what this checkout last fetched, which is the question: whether the work left this
+/// disk, not whether the remote still has it.
+///
+/// ```
+/// use majordomus_cli::worktree::state::commits_no_remote_reaches;
+/// use std::process::Command;
+/// let dir = tempfile::tempdir().unwrap();
+/// let git = |args: &[&str]| {
+///     let out = Command::new("git")
+///         .arg("-C")
+///         .arg(dir.path())
+///         .args(["-c", "user.name=t", "-c", "user.email=t@example.com", "-c", "commit.gpgsign=false"])
+///         .args(args)
+///         .output()
+///         .unwrap();
+///     assert!(out.status.success(), "git {args:?}");
+///     String::from_utf8_lossy(&out.stdout).trim().to_string()
+/// };
+/// git(&["init", "-q", "-b", "main"]);
+/// git(&["commit", "-q", "--allow-empty", "-m", "base"]);
+/// // no remote has seen anything, so the one commit there is is on this disk only
+/// let head = git(&["rev-parse", "HEAD"]);
+/// assert!(commits_no_remote_reaches(dir.path()).unwrap().contains(&head));
+/// ```
+pub fn commits_no_remote_reaches(primary: &Path) -> Result<BTreeSet<String>> {
+    let out = git::run(primary, &["rev-list", "--branches", "--not", "--remotes"])?;
+    Ok(out
+        .text()?
+        .lines()
+        .map(str::trim)
+        .filter(|l| !l.is_empty())
+        .map(str::to_string)
+        .collect())
+}
+
 /// Every local branch reachable from `trunk` or from the remote-tracking branch `trunk`
 /// follows. A local trunk that has fallen behind its remote — a primary checkout nobody has
 /// pulled, because a session holds uncommitted work in it — would otherwise call every branch

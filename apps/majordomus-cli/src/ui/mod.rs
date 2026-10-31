@@ -46,6 +46,7 @@ pub(crate) mod delivery;
 pub(crate) mod deployments;
 pub(crate) mod docs;
 pub(crate) mod evidence;
+pub(crate) mod front;
 pub(crate) mod governance;
 pub(crate) mod icons;
 pub(crate) mod idd;
@@ -71,6 +72,7 @@ pub(crate) mod work;
 
 use std::sync::Arc;
 
+use crate::capability::Context;
 use crate::cockpit::assets::Assets;
 use crate::http::router::{Request, Response};
 use crate::live::{IntoLive, Live};
@@ -424,30 +426,54 @@ impl Ui {
         let body = if fragment {
             screen.main.render()
         } else {
-            shell::page(
-                &ctx,
-                &shell::Frame {
-                    current: path,
-                    stylesheet: self.assets.url(STYLESHEET),
-                    favicon: self.assets.url("favicon.svg"),
-                    script: self.assets.url(SCRIPT),
-                    bar_scripts: BAR_SCRIPTS.iter().map(|s| self.assets.url(s)).collect(),
-                    // named only when the distribution holds it: a checkout that never ran
-                    // scripts/cockpit-assets has none, and asking for it would be a 404 and a
-                    // console error on every screen with a graph; the table stands instead (I2900)
-                    graph_lib: if self.assets.has(GRAPH_LIB) {
-                        self.assets.url(GRAPH_LIB)
-                    } else {
-                        String::new()
-                    },
-                    moves_lib: self.cockpit_assets.url(MOVES_LIB),
-                    socket_lib: self.cockpit_assets.url(SOCKET_LIB),
-                    assets_present: self.assets.present(),
-                    version: self.version,
-                },
-                screen,
-            )
+            self.framed(&ctx, path, screen)
         };
+        Self::respond(status, body)
+    }
+
+    /// The front door, for the router's `/`: the UI's own screen of this process and
+    /// everything it serves, in the UI's frame, from facts the router holds and the surfaces
+    /// the topology offers.
+    pub(crate) fn front_door(
+        &self,
+        process: &front::Process<'_>,
+        sections: &[(crate::web::model::Category, Vec<crate::web::home::Entry>)],
+    ) -> Response {
+        let ctx = self.live.current();
+        let screen = front::screen(&ctx, process, sections);
+        let status = screen.status;
+        Self::respond(status, self.framed(&ctx, front::ROUTE, screen))
+    }
+
+    /// A screen in the frame, with the UI's files.
+    fn framed(&self, ctx: &Context, path: &str, screen: shell::View) -> String {
+        shell::page(
+            ctx,
+            &shell::Frame {
+                current: path,
+                stylesheet: self.assets.url(STYLESHEET),
+                favicon: self.assets.url("favicon.svg"),
+                script: self.assets.url(SCRIPT),
+                bar_scripts: BAR_SCRIPTS.iter().map(|s| self.assets.url(s)).collect(),
+                // named only when the distribution holds it: a checkout that never ran
+                // scripts/cockpit-assets has none, and asking for it would be a 404 and a
+                // console error on every screen with a graph; the table stands instead (I2900)
+                graph_lib: if self.assets.has(GRAPH_LIB) {
+                    self.assets.url(GRAPH_LIB)
+                } else {
+                    String::new()
+                },
+                moves_lib: self.cockpit_assets.url(MOVES_LIB),
+                socket_lib: self.cockpit_assets.url(SOCKET_LIB),
+                assets_present: self.assets.present(),
+                version: self.version,
+            },
+            screen,
+        )
+    }
+
+    /// A page of the UI, with the headers every one carries.
+    fn respond(status: u16, body: String) -> Response {
         let mut response = Response::new(status, "text/html; charset=utf-8", body);
         for (name, value) in [
             ("Cache-Control", "no-cache"),

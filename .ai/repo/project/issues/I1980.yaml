@@ -18,11 +18,13 @@ scope:
   - "lib/init.sh"
   - "docs/INSTALL.md"
   - "share/install"
+  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
   - "test/cases"
 acceptance_criteria:
   - "A fixture layer written for the previous minor version upgraded in place yields doctor output that names version skew and the migrate command, and exits with the skew status the issue defines, not 10 for every finding"
   - "A layer whose manifest names a newer tool is refused by the older tool with one message naming both versions"
   - "init writes the version key and migrate advances it"
+  - "doctor and the brief name an installed launcher older than the latest release as a step for the launcher's holder, with the command that takes it; case 1024 proves it, for the criteria-and-authority row of milestone a-bounded-task-is-carried-to-accepted-work"
 validation:
   - "bin/majordomus plan validate"
   - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -31,4 +33,4 @@ evidence_required:
   - "newer_layer_refused_case"
   - "install_docs_upgrade_step"
 created_at: 2026-10-04
-updated_at: 2026-10-04
+updated_at: 2026-10-30

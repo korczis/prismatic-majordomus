@@ -345,3 +345,82 @@ expect_grep 'swagger' shadow.txt
 expect_grep '1 page' shadow.txt
 # and the executable still serves; a shadowing is reported, never refused
 expect_exit 0 "$BIN" web validate
+
+# ---------------------------------------------------------------- the widths, in a browser
+# Everything above holds without a browser; this holds the two things only one can answer
+# (I2378). The widths are the design dataset's own, read from this checkout, so the fixture
+# measures the set the sweep measures: it carries the reflow floor, the common phone, the
+# tablet in portrait and the desktop end, and the audit visits each of them. A page that
+# overflows at 375 and at 768 alone is reported at exactly those widths — no width nearby
+# stands in for them. And at each page's narrowest visit the reader's reduced-motion
+# preference is emulated: a page that keeps spinning is a finding naming the route, the width
+# and the element, and the same page honouring the preference is none. Without playwright or
+# a browser this half is reported skipped, never passed.
+DESIGN="$ROOT/site/data/registry/design.json"
+[ -f "$DESIGN" ] || { echo "    $DESIGN is missing; run: majordomus generate design"; exit 1; }
+for w in 320 375 768 1600; do
+  jq -e --argjson w "$w" '.viewports | index($w)' "$DESIGN" >/dev/null \
+    || { echo "    the design dataset does not declare the width $w: $(jq -c .viewports "$DESIGN")"; exit 1; }
+done
+# no script holds a width list of its own for the sweep: the widths are the dataset's
+if grep -nE 'SITE_PROBE_WIDTHS:-[0-9]|DESKTOP *= *[0-9]' "$ROOT/scripts/site-probe" "$UI/ui-discover.mjs"; then
+  echo "    a probe holds a width of its own beside share/design/tokens.yaml"; exit 1
+fi
+
+# no browser is a skip, never a run that measured nothing and passed
+cat > nobrowser.mjs <<'MJS'
+import { chromium } from "@ROOT@/node_modules/playwright/index.mjs";
+import { audit } from "@UI@/ui-audit.mjs";
+chromium.launch = async () => { throw new Error("Chromium distribution 'chrome' is not found"); };
+try { await audit("http://127.0.0.1:1", [{ route: "/", widths: [320], tier: "sweep" }]); console.log("measured"); }
+catch (error) { console.log(`refused ${error.code}`); }
+MJS
+[ -d "$ROOT/node_modules/playwright" ] && [ -d "$ROOT/node_modules/axe-core" ] \
+  || skip "playwright and axe-core are not installed (npm ci); the browser half was not measured"
+sed "s|@UI@|$UI|;s|@ROOT@|$ROOT|" nobrowser.mjs > nobrowser.run.mjs
+expect_exit 0 node nobrowser.run.mjs
+expect_grep '^refused NO_BROWSER$' -
+
+mkdir -p motion/site/static motion/site/data/registry motion/public/wide motion/public/moving motion/public/still
+: > motion/site/static/app.css                     # no breakpoint: the widths are the dataset's alone
+cp "$DESIGN" motion/site/data/registry/design.json
+page() { printf '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>%s</title><style>%s</style></head><body><main><h1>%s</h1>%s</main></body></html>\n' "$1" "$2" "$1" "$3"; }
+page wide '.w{height:4px;background:#000}@media (min-width:371px) and (max-width:380px){.w{width:900px}}@media (min-width:761px) and (max-width:775px){.w{width:1900px}}' '<div class="w"></div>' > motion/public/wide/index.html
+SPIN='@keyframes spin{to{transform:rotate(360deg)}}.spinner{animation:spin 2s linear infinite;width:20px;height:20px}'
+page moving "$SPIN" '<div class="spinner"></div>' > motion/public/moving/index.html
+page still "$SPIN@media (prefers-reduced-motion:reduce){.spinner{animation:none}}" '<div class="spinner"></div>' > motion/public/still/index.html
+cat > motion.mjs <<'MJS'
+import { createServer } from "node:http";
+import { readFileSync } from "node:fs";
+import { run } from "@UI@/ui-run.mjs";
+const root = "@T@/motion/public";
+const server = createServer((req, res) => {
+  try { res.end(readFileSync(`${root}${req.url.replace(/\/$/, "/index.html")}`)); }
+  catch { res.statusCode = 404; res.end("no"); }
+}).listen(0, "127.0.0.1");
+await new Promise((r) => server.once("listening", r));
+const origin = `http://127.0.0.1:${server.address().port}`;
+const surfaces = [{ id: "fixture", mount: "/", kind: "static-directory", dir: root }];
+let results;
+try { results = await run(origin, surfaces, "@T@/motion/site/static/app.css"); }
+catch (error) { console.log(`refused ${error.code ?? error.message}`); server.close(); process.exit(0); }
+server.close();
+const at = (route, rule) => results.findings.filter((f) => f.route === route && f.rule === rule);
+console.log(`viewports ${results.viewports.join(",")}`);
+console.log(`overflow ${at("/wide/", "responsive.horizontal-overflow").map((f) => f.width).join(",") || "none"}`);
+for (const f of at("/moving/", "motion.reduced-motion-ignored"))
+  console.log(`moving ${f.width} ${f.elements.map((e) => `${e.selector} (${e.motion})`).join("; ")}`);
+console.log(`moving findings ${at("/moving/", "motion.reduced-motion-ignored").length}`);
+console.log(`still findings ${at("/still/", "motion.reduced-motion-ignored").length}`);
+console.log(`reduced ${results.reduced_motion.measured} ${results.reduced_motion.findings}`);
+MJS
+sed "s|@UI@|$UI|;s|@T@|$T|g" motion.mjs > motion.run.mjs
+expect_exit 0 node motion.run.mjs
+grep -q '^refused NO_BROWSER' <<<"$LAST_OUT" && skip "no browser for playwright's chrome channel; the browser half was not measured"
+expect_grep "^viewports $(jq -r '.viewports | join(",")' "$DESIGN")$" -   # the dataset's, and nothing beside it
+expect_grep '^overflow 375,768$' -                 # at exactly the two widths it overflows at
+expect_grep '^moving 320 div\.spinner \(animation spin' -   # the route, the narrowest width, the element
+expect_grep '^moving findings 1$' -
+expect_grep '^still findings 0$' -                 # the preference honoured is no finding
+expect_grep '^reduced 3 1$' -                      # one reduced-motion visit per page, counted
+echo "    the dataset's widths are visited, 375 and 768 among them, and reduced motion is measured"

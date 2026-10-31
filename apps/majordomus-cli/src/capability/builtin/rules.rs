@@ -683,6 +683,7 @@ mod tests {
                     enforced_by: None,
                     tests: vec!["test/cases/07_scope.sh".into()],
                     reviewed_because: None,
+                    entry: None,
                 },
             },
             validator: None,
