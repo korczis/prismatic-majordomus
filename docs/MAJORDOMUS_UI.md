@@ -173,6 +173,10 @@ A list a screen cuts short says so: "The first 8 of 31; 23 more not shown here",
 to the screen that shows them all when there is one. Case 1091 and
 `apps/majordomus-cli/tests/ui_links.rs` read every screen through a real server and follow
 every link under `/ui` and every technical view it draws; one that does not answer fails them.
+A link to a narrowed view of a list the screen already shows whole, such as a facet of the
+Capabilities browser or a row opened under one, says `rel="nofollow"` and is not followed:
+every combination of picks is an address of its own, and the crawl reads each row once, at the
+unnarrowed address, rather than once per combination.
 
 A pull request's detail is read from the queue's own answer, so it costs no second call: what
 the pull request is, every gate with its verdict, the evidence each verdict was read from, why

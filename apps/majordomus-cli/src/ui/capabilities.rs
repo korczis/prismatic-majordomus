@@ -121,6 +121,22 @@ impl Pick {
         }
     }
 
+    /// `nofollow` for the link [`Pick::href`] draws when the page it leads to is narrowed.
+    /// Such a page is one more view of rows the unnarrowed screen lists, and every
+    /// combination of facets, each with every row it admits, is an address of its own:
+    /// thousands over the executable's registry. A crawler reads each declaration once, at
+    /// its own `?id=`, and no view (`tests/ui_links.rs`, ADR 0135).
+    fn rel(&self, key: &str, value: Option<&str>) -> Option<&'static str> {
+        let narrows = KEYS.iter().filter(|k| **k != "id").any(|k| {
+            if *k == key {
+                value.is_some()
+            } else {
+                self.get(k).is_some()
+            }
+        });
+        narrows.then_some("nofollow")
+    }
+
     /// Is any filter picked (the capability shown in full is no filter)?
     fn narrows(&self) -> bool {
         Pick {
@@ -281,10 +297,11 @@ pub fn browser(commands: &Answer, queries: &Answer, pick: &Pick) -> El {
             let mut all = list(queries, "/capabilities");
             all.extend(list(commands, "/capabilities"));
             let shown: Vec<&Value> = all.iter().filter(|c| pick.admits(c)).collect();
-            let tab = |label: String, href: String, current: bool| {
+            let tab = |label: String, kind: Option<&str>, current: bool| {
                 el("a")
                     .class("mj-ui-tab")
-                    .attr("href", href)
+                    .attr("href", pick.href("kind", kind))
+                    .attr_if("rel", pick.rel("kind", kind))
                     .attr_if("aria-current", current.then_some("page"))
                     .text(label)
             };
@@ -294,12 +311,12 @@ pub fn browser(commands: &Answer, queries: &Answer, pick: &Pick) -> El {
                 .attr("aria-label", "Which capabilities")
                 .child(tab(
                     format!("All {}", kinds.iter().map(|(_, n)| n).sum::<u64>()),
-                    pick.href("kind", None),
+                    None,
                     pick.kind.is_none(),
                 ))
                 .children(kinds.into_iter().map(|(k, n)| {
                     let current = pick.kind.as_deref() == Some(k.as_str());
-                    tab(format!("{k} {n}"), pick.href("kind", Some(&k)), current)
+                    tab(format!("{k} {n}"), Some(&k), current)
                 }));
             let select = |name: &str, label: &str, options: Vec<(String, u64)>| {
                 let picked = pick.get(name);
@@ -375,6 +392,7 @@ pub fn browser(commands: &Answer, queries: &Answer, pick: &Pick) -> El {
                 .iter()
                 .map(|c| {
                     let id = text(c, "id");
+                    let module = text(c, "module");
                     let on = surfaces(c);
                     el("tr")
                         .attr("id", format!("capability-{id}"))
@@ -383,6 +401,7 @@ pub fn browser(commands: &Answer, queries: &Answer, pick: &Pick) -> El {
                                 el("a")
                                     .class("mj-ui-row-link")
                                     .attr("href", format!("{}#detail", pick.href("id", Some(&id))))
+                                    .attr_if("rel", pick.rel("id", Some(&id)))
                                     .child(
                                         el("span").class("mj-ui-mono mj-ui-dim").text(id.clone()),
                                     )
@@ -396,8 +415,9 @@ pub fn browser(commands: &Answer, queries: &Answer, pick: &Pick) -> El {
                             el("td").child(
                                 el("a")
                                     .class("mj-ui-mono")
-                                    .attr("href", pick.href("module", Some(&text(c, "module"))))
-                                    .text(text(c, "module")),
+                                    .attr("href", pick.href("module", Some(&module)))
+                                    .attr_if("rel", pick.rel("module", Some(&module)))
+                                    .text(module.clone()),
                             ),
                         )
                         .child(el("td").child(if on.is_empty() {
@@ -409,6 +429,7 @@ pub fn browser(commands: &Answer, queries: &Answer, pick: &Pick) -> El {
                                         el("a")
                                             .class("mj-ui-chip mj-ui-chip--link")
                                             .attr("href", pick.href("surface", Some(k)))
+                                            .attr_if("rel", pick.rel("surface", Some(k)))
                                             .child(
                                                 el("code").class("mj-ui-chip-value").text(*label),
                                             )
@@ -632,6 +653,119 @@ mod tests {
             "a row keeps the filters: {html}"
         );
         assert!(html.contains("Clear"));
+    }
+
+    /// A link to a narrowed view asks a crawler not to follow it, and a declaration's own
+    /// unnarrowed link does not: the crawl reads each declaration once, not once per view.
+    #[test]
+    fn only_a_link_to_an_unnarrowed_page_is_followed() {
+        let (commands, queries) = registry();
+        let html = browser(&commands, &queries, &Pick::default()).render();
+        assert!(
+            html.contains("href=\"/ui/capabilities?id=plan.issues#detail\">"),
+            "an unnarrowed row is followed: {html}"
+        );
+        assert!(
+            html.contains("href=\"/ui/capabilities?module=plan\" rel=\"nofollow\""),
+            "a module narrows: {html}"
+        );
+        assert!(
+            html.contains("href=\"/ui/capabilities?kind=query\" rel=\"nofollow\""),
+            "a kind tab narrows: {html}"
+        );
+        assert!(html.contains("href=\"/ui/capabilities\" aria-current=\"page\""));
+        let pick = Pick::from_query(&q(&[("module", "plan")]));
+        let html = browser(&commands, &queries, &pick).render();
+        assert!(
+            html.contains(
+                "href=\"/ui/capabilities?module=plan&amp;id=plan.issues#detail\" rel=\"nofollow\""
+            ),
+            "a row of a narrowed view keeps its filters and is not followed: {html}"
+        );
+        assert!(
+            html.contains("href=\"/ui/capabilities\">Clear<"),
+            "Clear leads to the unnarrowed list and is followed: {html}"
+        );
+    }
+
+    /// Every link the screen writes is read back, through the server's own parsing of a
+    /// request, as the pick it names: each key the screen reads survives the round trip, a
+    /// search with characters a query must escape among them, and a key it does not read is
+    /// no pick at all.
+    #[test]
+    fn every_link_reads_back_as_the_pick_it_names() {
+        let values = [
+            ("kind", "query"),
+            ("module", "plan"),
+            ("stability", "behaviorally_verified"),
+            ("surface", "http"),
+            ("q", "state & plan=1"),
+            ("id", "plan.issues"),
+        ];
+        assert_eq!(values.map(|(k, _)| k), KEYS, "every key the screen reads");
+        for (key, value) in values {
+            let href = Pick::default().href(key, Some(value));
+            let request = crate::http::Request::parse_target("GET", &href, Vec::new());
+            assert_eq!(request.path, ROUTE, "{href}");
+            let pick = Pick::from_query(&request.query);
+            assert_eq!(pick.get(key), Some(value), "{href}");
+            assert!(
+                KEYS.iter()
+                    .filter(|k| **k != key)
+                    .all(|k| pick.get(k).is_none()),
+                "only {key} is picked: {href}"
+            );
+            assert_eq!(pick.get("page"), None, "a key the screen does not read");
+        }
+        assert_eq!(
+            Pick::default().href("q", Some("state & plan=1")),
+            "/ui/capabilities?q=state%20%26%20plan%3D1",
+            "a search is one parameter, however it is spelled"
+        );
+    }
+
+    /// A capability projected on no surface says so in its row, rather than drawing an empty
+    /// cell or a chip that would narrow to nothing; a projection declared as null is none.
+    #[test]
+    fn a_capability_on_no_surface_says_none() {
+        let c = |id: &str, exposure: Value| {
+            serde_json::json!({ "id": id, "kind": "query", "module": "plan",
+                "title": format!("{id} title"), "description": "", "stability": "implemented",
+                "exposure": exposure, "tags": [] })
+        };
+        let commands = answer(r#"{"kind":"command"}"#, serde_json::json!([]));
+        let queries = answer(
+            r#"{"kind":"query"}"#,
+            serde_json::json!([
+                c("plan.hidden", serde_json::json!({})),
+                c(
+                    "plan.nulled",
+                    serde_json::json!({ "mcp": null, "http": null })
+                ),
+                c("plan.served", serde_json::json!({ "mcp": { "tool": "t" } })),
+            ]),
+        );
+        let html = browser(&commands, &queries, &Pick::default()).render();
+        let row = |id: &str| {
+            let start = html
+                .find(&format!("<tr id=\"capability-{id}\""))
+                .unwrap_or_else(|| panic!("a row for {id}: {html}"));
+            let end = html[start..].find("</tr>").expect("the row ends") + start;
+            html[start..end].to_string()
+        };
+        for id in ["plan.hidden", "plan.nulled"] {
+            let row = row(id);
+            assert!(
+                row.contains("<span class=\"mj-ui-dim\">none</span>")
+                    && !row.contains("mj-ui-chip"),
+                "{id}: {row}"
+            );
+        }
+        let row = row("plan.served");
+        assert!(
+            row.contains("mj-ui-chip--link") && !row.contains(">none<"),
+            "{row}"
+        );
     }
 
     /// The search reads ids, titles, descriptions, modules and tags; a value a link carries

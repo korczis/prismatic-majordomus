@@ -324,4 +324,39 @@ mod tests {
             "the front door does not lead to itself: {html}"
         );
     }
+
+    /// Each category of surface is drawn with a glyph and a tone of its own, so a protocol
+    /// and a report are told apart from an interface at a glance; one not built has the
+    /// glyph and no tone, since it leads nowhere.
+    #[test]
+    fn every_category_of_surface_has_a_glyph_and_a_tone_of_its_own() {
+        let entry = |state| Entry {
+            id: "s".into(),
+            title: "s title".into(),
+            href: "/s".into(),
+            state,
+            producer: "scripts/build-s".into(),
+        };
+        let mut glyphs = std::collections::BTreeSet::new();
+        let mut tones = std::collections::BTreeSet::new();
+        for category in Category::ALL {
+            let (glyph, tone) = category_glyph(category);
+            let drawn = icon(glyph).render();
+            let ready = surface(category, &entry(Availability::Ready)).render();
+            assert!(
+                ready.contains(&format!("mj-ui-card-glyph mj-tone--{tone}\">{drawn}")),
+                "{category:?}: {ready}"
+            );
+            let unbuilt = surface(category, &entry(Availability::NotBuilt)).render();
+            assert!(
+                unbuilt.contains(&format!("<span class=\"mj-ui-card-glyph\">{drawn}"))
+                    && !unbuilt.contains("mj-tone--"),
+                "{category:?}: {unbuilt}"
+            );
+            glyphs.insert(glyph);
+            tones.insert(tone);
+        }
+        assert_eq!(glyphs.len(), Category::ALL.len(), "{glyphs:?}");
+        assert_eq!(tones.len(), Category::ALL.len(), "{tones:?}");
+    }
 }
