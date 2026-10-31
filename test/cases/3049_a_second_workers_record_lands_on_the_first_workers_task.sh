@@ -79,6 +79,121 @@ BODY
   event_is task.checkpoint "" "$id"; checkpoint_record "$id"
 )
 
+# ---------------------------------------------------------------- the executable's writers (I4291)
+# ADR 0164 was implemented in the shell; the executable's writers — the ledger line of every
+# plan transition (the MCP tool included), continuity publish and reasoning record — read the
+# checkout's pointer, which names whoever opened an episode last. The same two episodes, the
+# same questions: each record names its caller, B's record does not relate the task A
+# opened, an anonymous caller among two episodes is nobody, and an MCP connection that
+# attached an episode names that episode whatever its process environment says.
+if RB="$(rust_bin)"; then
+(
+  fixture "$T/rust-writers"
+  pj_init; pj_milestone M000 0
+  for i in I0001 I0002 I0003 I0004; do pj_issue "$i" M000; done
+  git add -A >/dev/null; git commit -qm plan >/dev/null
+  MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
+  # a device key of the fixture's own, never this machine's; the shell tool on PATH is what
+  # an attach's episode driver runs
+  HOME="$T/rust-home"; XDG_STATE_HOME="$T/rust-state"; export HOME XDG_STATE_HOME
+  mkdir -p "$HOME"; PATH="$ROOT/bin:$PATH"; export PATH
+  anon() { env -u MAJORDOMUS_PROVIDER_SESSION -u CLAUDE_CODE_SESSION_ID -u MJ_SESSION_KEY USER=shared-user "$@"; }
+  expect_exit 0 "$MJ" session start --provider-session worker-a-0701 --worker worker-a
+  sid_a="$(sed -n 's/^session_id: //p' .ai/local/state/sessions-open/worker-a-0701.yaml)"
+  must "A has no actual episode" test -n "$sid_a"
+  expect_exit 0 a "$MJ" start "A task the executable writes beside" --scope lib
+  id="$(task_id)"; must "A has no task id" test -n "$id"
+  event_is task.started "$sid_a" "$id"
+  expect_exit 0 "$MJ" session start --provider-session worker-b-0701 --worker worker-b
+  sid_b="$(sed -n 's/^session_id: //p' .ai/local/state/sessions-open/worker-b-0701.yaml)"
+  must "two episodes were folded together" test "$sid_a" != "$sid_b"
+
+  # One MCP session over the real pipes (case 133's frames); the last result on stdout. The
+  # tool's own verdict is in the result: a refusal is a result carrying isError.
+  frame() { printf '{"jsonrpc":"2.0","id":%s,"method":"tools/call","params":{"name":"%s","arguments":%s}}' "$1" "$2" "$3"; }
+  mcp() { # <wrapper> <frame>... — one frame per argument, one line each
+    local w="$1"; shift
+    { printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case3049","version":"0"}}}\n'
+      printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
+      printf '%s\n' "$@"
+    } | "$w" "$RB" mcp 2>"$T/mcp.err" > "$T/mcp.out" \
+      || { echo "    the executable's MCP server failed under $w:"; sed 's/^/    | /' "$T/mcp.err"; return 1; }
+    must "the transition under $w was refused: $(tail -n 1 "$T/mcp.out" | jq -r '.result.content[0].text // empty')" \
+      test "$(tail -n 1 "$T/mcp.out" | jq -r '.result.isError')" = false
+  }
+  move() { frame 2 majordomus_plan_transition "$(jq -nc --arg i "$1" '{issue:$i,transition:"start"}')"; }
+  # B's transition names B; A's names A; an anonymous caller among two episodes is nobody.
+  mcp b "$(move I0001)"
+  event_is plan_start "$sid_b" ""
+  mcp a "$(move I0002)"
+  event_is plan_start "$sid_a" ""
+  mcp anon "$(move I0003)"
+  event_is plan_start "" ""
+  must "the executable's plan transition read the pointer" \
+    test "$(jq -c 'select(.event == "plan_start" and .session == "'"$sid_b"'")' "$ledger" | wc -l | tr -d ' ')" = 1
+
+  # continuity publish: the record names the publishing caller, not the pointer
+  MAJORDOMUS_NOW=2026-09-01T12:00:20Z; export MAJORDOMUS_NOW
+  printf '# Objective\n\nB publishes.\n\n# Current State\n\nB is beside A.\n\n# Next Action\n\nB continues.\n' \
+    | b "$MJ" handover >/dev/null
+  unset MAJORDOMUS_NOW
+  b "$RB" continuity publish --format json > "$T/pub-b.json" 2>"$T/pub-b.err" \
+    || { echo "    B's publish failed:"; sed 's/^/    | /' "$T/pub-b.err"; exit 1; }
+  must "B's published handover names $(jq -c .record.session "$T/pub-b.json"), not B ($sid_b)" \
+    test "$(jq -r .record.session "$T/pub-b.json")" = "$sid_b"
+  must "B's published handover relates A's task: $(jq -c .record.task "$T/pub-b.json")" \
+    test "$(jq -r '.record.task // empty' "$T/pub-b.json")" = ""
+  MAJORDOMUS_NOW=2026-09-01T12:00:30Z; export MAJORDOMUS_NOW
+  printf '# Objective\n\nA publishes.\n\n# Current State\n\nA owns the task.\n\n# Next Action\n\nA continues.\n' \
+    | a "$MJ" handover >/dev/null
+  unset MAJORDOMUS_NOW
+  a "$RB" continuity publish --format json > "$T/pub-a.json" 2>"$T/pub-a.err" \
+    || { echo "    A's publish failed:"; sed 's/^/    | /' "$T/pub-a.err"; exit 1; }
+  must "A's published handover names $(jq -c .record.session "$T/pub-a.json"), not A ($sid_a)" \
+    test "$(jq -r .record.session "$T/pub-a.json")" = "$sid_a"
+  must "A's published handover lost A's task: $(jq -c .record.task "$T/pub-a.json")" \
+    test "$(jq -r '.record.task // empty' "$T/pub-a.json")" = "A task the executable writes beside"
+
+  # reasoning record: the record names its caller and relates the task only when it is the
+  # caller's; an anonymous caller among two episodes names nobody and no task
+  record_as() { # <wrapper> <subject> -> the record on stdout
+    printf '{"kind":"assessment","subject":"%s"}' "$2" | "$1" "$RB" reasoning record --format json 2>"$T/rz.err" \
+      || { echo "    the reasoning record of $2 was refused:"; sed 's/^/    | /' "$T/rz.err"; return 1; }
+  }
+  record_as b "B wonders beside A" > "$T/rz-b.json" || exit 1
+  must "B's reasoning record names $(jq -c .record.session "$T/rz-b.json"), not B ($sid_b)" \
+    test "$(jq -r .record.session "$T/rz-b.json")" = "$sid_b"
+  must "B's reasoning record was filed under A's task: $(jq -c .record.task "$T/rz-b.json")" \
+    test "$(jq -r .record.task "$T/rz-b.json")" = untasked
+  record_as a "A wonders in its own task" > "$T/rz-a.json" || exit 1
+  must "A's reasoning record names $(jq -c .record.session "$T/rz-a.json"), not A ($sid_a)" \
+    test "$(jq -r .record.session "$T/rz-a.json")" = "$sid_a"
+  must "A's reasoning record lost A's task: $(jq -c .record.task "$T/rz-a.json")" \
+    test "$(jq -r .record.task "$T/rz-a.json")" = "$id"
+  record_as anon "Nobody wonders" > "$T/rz-anon.json" || exit 1
+  must "an anonymous reasoning record names an episode: $(jq -c .record.session "$T/rz-anon.json")" \
+    test "$(jq -r '.record | has("session")' "$T/rz-anon.json")" = false
+  must "an anonymous reasoning record was filed under A's task" \
+    test "$(jq -r .record.task "$T/rz-anon.json")" = untasked
+  # and the stored file says the same as the answer
+  must "the stored record of B is under A's task" test -d .ai/local/state/reasoning/untasked
+  must "the stored record of B names no session" \
+    test "$(jq -r '.session' .ai/local/state/reasoning/untasked/"$(jq -r .record.id "$T/rz-b.json")".json)" = "$sid_b"
+  # A connection that attached A's episode names A, although its process environment is B's:
+  # the record is the connection's, not the serving process's. Last, because the connection
+  # ending closes the episode it attached — A's — through the same lifecycle a provider's
+  # hook runs, and everything above needs A still open.
+  mcp b "$(frame 2 majordomus_session_attach '{"external_id":"worker-a-0701"}')" \
+        "$(frame 3 majordomus_plan_transition '{"issue":"I0004","transition":"start"}')"
+  event_is plan_start "$sid_a" ""
+  echo "    ok: the executable's writers name their caller as the shell's do"
+)
+else
+  rc=$?
+  [ "$rc" = 3 ] || exit 1
+  printf '    skip: no executable of this tree and no cargo to build one, so the executable'"'"'s writers were not measured here\n'
+fi
+
 # ---------------------------------------------------------------- two real episodes, the same OS user
 fixture "$T/two-episodes"
 MAJORDOMUS_NOW=2026-09-01T12:00:00Z; export MAJORDOMUS_NOW

@@ -300,6 +300,21 @@ impl Context {
         }
     }
 
+    /// The provider session key of the episode this call's connection holds, when the call
+    /// came through an MCP session that attached one: the `external_id` the client gave
+    /// `majordomus_session_attach`, which is the provider session its open record under
+    /// `sessions-open/` is named by. `None` for the command line, a plain HTTP request and
+    /// a connection that attached nothing — each of which resolves from its environment.
+    /// It is what a writer of a durable record hands [`crate::ledger::attribution`], so
+    /// that a record written for one connection names that connection's episode and not
+    /// whichever episode the serving process was started in (ADR 0164).
+    pub fn episode_key(&self) -> Option<String> {
+        self.caller
+            .as_ref()
+            .and_then(|peer| self.episodes.of_peer(peer))
+            .map(|episode| episode.external_id)
+    }
+
     /// The same context, seen from one peer: what a session hands its handlers.
     pub fn for_caller(&self, caller: PeerId) -> Self {
         Context {
