@@ -1,0 +1,48 @@
+id: I4466
+milestone: a-bounded-task-is-carried-to-accepted-work
+title: "A mesh review answer names the head and the base it reviewed, and a verdict whose head or base has moved reads stale wherever reviews are shown"
+slug: a-review-verdict-names-its-head-and-base
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "The mesh review events carry the revision they are about, and every reader of a review compares it with the subject now. ReviewRequested (apps/majordomus-cli/src/mesh/journal.rs:638-659) gains optional head and base: when its subject names a branch or a commit the requesting runtime's checkout can resolve, the runtime records the subject's head commit and its merge base with the trunk (the trunk crate::delivery::revision::trunk_ref resolves, apps/majordomus-cli/src/delivery/revision.rs:96), from git, never from the requester's text. ReviewAnswered (journal.rs:661-671) gains the same two optional fields, filled by the answering runtime the same way, and, when it cannot resolve the subject, copied from the request and marked `as_requested`. The mesh.review.answer capability (apps/majordomus-cli/src/capability/builtin/mesh.rs:1579-1606) takes an optional head that the answerer may state and refuses one that differs from what its own git resolves, naming both. A reader (mesh state, the mesh page, the monitor's review lines) gives each answered review one standing: `current` when the subject's head and base are the recorded ones, `stale: head moved <old>..<new>` or `stale: base moved <old>..<new>` when either differs, `unbound` for an answer written before this change, and `unknown: <reason>` when the reading runtime cannot resolve the subject; unbound and unknown never read as current. Both fields are listed in .ai/repo/ci/mesh-event-fields.yaml as clear (commit ids are not secrets), so the mesh check admits them."
+why: "Observed in OSCILLA (korczis/oscilla) by session oscilla-b0, 2026-10-29 18:00 to 2026-10-30 01:30 CET, items 4 and 5 of its adopter dossier. OSCILLA's independent review is a verdict bound to a content digest and required on guarded paths. Reviewers answered over the mesh, but the answer carried no revision, so each verdict was committed on the builder's branch and relayed by the coordinating session by hand: #253, #299, #295, #303, #296 and #287, twice with the verdict commit left only in the shared object store. #253's verdict, given at ef722987, went stale after a merge of main and a comment edit, and the builder learnt it only from CI's review check hours later, CI being starved. Mission section 6 says reviews go through the mesh and section 9 that evidence names the revision it is about and that a change of the relevant inputs invalidates it; a verdict with no revision can be neither relayed nor judged stale."
+current_state: "At master 51b38035a71: ReviewRequested carries review, session, subject (free text: a branch, a commit or a pull request), scope, issue, reviewer and body (apps/majordomus-cli/src/mesh/journal.rs:638-659); ReviewAnswered carries request, session, verdict and note (journal.rs:661-671), no revision. mesh_review_answer (apps/majordomus-cli/src/capability/builtin/mesh.rs:1606) passes request, session, verdict and note to Cooperation::answer_review (apps/majordomus-cli/src/mesh/cooperation.rs:4525); it is exposed over MCP as majordomus_mesh_review_answer and over HTTP as POST /api/v1/mesh/reviews/answer (mesh.rs:2091-2101). Reviews are read by mesh/state.rs, mesh/page.rs, mesh/cooperation.rs and monitor/mesh.rs. Every field the wire carries must be listed in .ai/repo/ci/mesh-event-fields.yaml (case 3051)."
+desired_state: "A review verdict is about a named revision, and anyone reading it is told whether that revision is still the subject's, without waiting for CI. Older answers read unbound, never current. Enforced by case 4466 and case 3051."
+scope:
+  - ".ai/repo/project/issues/I4466.yaml"
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/mesh/state.rs"
+  - "apps/majordomus-cli/src/mesh/page.rs"
+  - "apps/majordomus-cli/src/monitor/mesh.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - ".ai/repo/ci/mesh-event-fields.yaml"
+  - "docs/MESH.md"
+  - "docs/generated"
+  - "test/cases/4466_a_review_verdict_names_its_head_and_base.sh"
+non_scope:
+  - "Landing an adopter's verdict file (OSCILLA's reviews/<pr>.yaml) on the builder's branch: the adopter's artifact, which this issue makes checkable, not writable"
+  - "Reporting a stale verdict from check or finish --check: a follow-up once the answer names its revision"
+  - "Who may answer a review and how old an open request may get: I4327 and I3608"
+  - "Recording a critique answer with its evidence: I3420"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Case 4466, with one mesh runtime over a fixture repository whose branch feature has head H1 over trunk base B1: a review requested with subject feature records head H1 and base B1, and an answer records head H1 and base B1; mesh state shows the review `current`"
+  - "Case 4466: after a commit on feature (head H2), the same review reads `stale: head moved` naming H1 and H2; after the trunk advances and is merged into feature, it reads `stale: base moved`"
+  - "Case 4466: an answer stating a head that differs from what the runtime resolves for the subject is refused, naming both commits, and nothing is written to the journal"
+  - "Case 4466: a ReviewAnswered event without the new fields (written as a runtime of today writes it) reads `unbound`, and one whose subject the runtime cannot resolve reads `unknown` with the reason; neither reads `current`"
+  - "Case 3051 passes with the new fields listed as clear in .ai/repo/ci/mesh-event-fields.yaml"
+  - "Before the change, case 4466 fails at its first assertion"
+validation:
+  - "MJ_TEST_JOBS=4 bash test/run.sh 4466_a_review_verdict_names_its_head_and_base 3051_an_unlisted_event_field_fails_the_mesh_check 130_mesh"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::"
+  - "scripts/derive-check"
+  - "bin/majordomus doctor"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "bound_review_case"
+risk: "The events are signed and replicated to every linked runtime; an older runtime must keep reading a newer answer, so both fields are optional on the wire and a reader treats their absence as unbound, never as current."
+created_at: 2026-10-30
+updated_at: 2026-10-30
