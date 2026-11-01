@@ -46,6 +46,32 @@ in:
   - Cargo.toml
   - Cargo.lock
   # end stack: rust
+  # stack: python (pyproject.toml)
+  - pyproject.toml
+  - uv.lock
+  - poetry.lock
+  - requirements*.txt
+  - setup.cfg
+  - setup.py
+  - tox.ini
+  - noxfile.py
+  - conftest.py
+  # end stack: python
+  # stack: node (package.json)
+  - package.json
+  - tsconfig*.json
+  - '*.config.js'
+  - '*.config.mjs'
+  - '*.config.cjs'
+  - '*.config.ts'
+  # end stack: node
+  # stack: go (go.mod)
+  - go.mod
+  - go.sum
+  - cmd/**
+  - internal/**
+  - pkg/**
+  # end stack: go
 
 out:
   # never read, by path: version control, the local half of the layer, dependencies,
@@ -63,6 +89,19 @@ out:
     - vendor/
     - '**/tmp/'
     - '**/logs/'
+    # stack: python (pyproject.toml)
+    - '**/.venv/'
+    - '**/__pycache__/'
+    - '**/.mypy_cache/'
+    - '**/.pytest_cache/'
+    - '**/.ruff_cache/'
+    - '**/*.egg-info/'
+    # end stack: python
+    # stack: node (package.json)
+    - '**/.next/'
+    - '**/.turbo/'
+    - '**/.parcel-cache/'
+    # end stack: node
 
   # content that is not UTF-8 text, whatever the name says
   binary: true

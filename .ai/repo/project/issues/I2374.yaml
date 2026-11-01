@@ -1,0 +1,47 @@
+id: I2374
+milestone: public-proof
+title: "The site shows what changed since its previously deployed commit, computed at build time and never committed"
+slug: change-since-the-last-deploy
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give scripts/site-build the previously deployed commit as an input (`--previous-commit`, `--previous-deploy REF` or `$MJ_SITE_PREVIOUS_DEPLOY`), have it ask `release analyze --since` that commit and the changelog composition of the same range, compare the claims projection committed at both ends, and write the result to the git-ignored site/data/since-deploy.json beside site/data/build.json; render it on /changelog/ as 'Since the last deploy', grouped into capabilities, documentation and claims, each labelled with the release record that first carries it or not yet released, and link it from the homepage trust strip. scripts/site-deploy and the Pages workflow hand the build the previous deployment; scripts/site-check refuses the record when it is tracked. Case 3045 holds it."
+why: "The published changelog ends at the last release by design (compose_published), and nothing says what changed between the deployment a visitor last saw and this one. Composing that delta into committed data would make every commit stale, the defect compose_published was written to remove, so it is a fact of one build, kept where .gitignore already keeps per-deployment data. The issue was planned on 2026-10-10 as I2374 of the milestone the-site-says-what-ships on chore/the-autopilot-and-convergence-packs-are-planned, a branch that never landed; its plan record is restored here under a milestone master holds, and campaigns/README.md still lists 'the release delta to #925 (I2374)' as open work. Implemented by pull request #925."
+current_state: "Measured on master 51b38035a71: scripts/site-build has no since_deploy, --since-deploy or --previous-deploy; site/templates/partials/since-deploy.html does not exist; .gitignore has no since-deploy entry; /changelog/ ends at the last release."
+desired_state: "A deploy renders the capability, claim and documentation movements from the previously deployed commit to the built one, each marked released (with its tag) or not yet released, while planned claims stay in the homepage's planned block; a build with no previous commit, one that is not an ancestor, or no executable describing the built commit says the delta is unknown and lists nothing; no committed byte changes with the previous deployment."
+scope:
+  - ".ai/repo/project/issues/I2374.yaml"
+  - "scripts/site-build"
+  - "scripts/site-deploy"
+  - "scripts/site-check"
+  - ".github/workflows/pages.yml"
+  - ".ai/repo/ci/gates.yaml"
+  - "site/templates/changelog.html"
+  - "site/templates/index.html"
+  - "site/templates/partials/since-deploy.html"
+  - ".gitignore"
+  - "test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
+  - "docs/generated"
+  - "site/data/generated"
+non_scope:
+  - "Not a second differ: capability movements come from `release analyze` and documentation from the changelog composition; only claims compare two committed snapshots"
+  - "Not changing compose_published or docs/generated/changelog.*: the committed changelog keeps ending at the last release"
+  - "Not a new homepage section: the trust strip gains a link, and site/data/homepage.toml `order` is unchanged"
+  - "No Rust change: the existing `release analyze --since` and `release changelog` surfaces suffice"
+depends_on: []
+acceptance_criteria:
+  - "Case 3045 builds a fixture repository with two deployed commits and a capability, a claim and a document moved between them, and finds each movement on the rendered changelog page with its group"
+  - "A movement inside a release record's range is labelled released with that tag; one after the newest record is labelled not yet released; a planned claim is not listed as a movement"
+  - "With no previous commit, or one that is not an ancestor of the built commit, the page says the delta is unknown and lists no movement"
+  - "No tracked file changes when the site is built twice from the same commit with two different previous commits, and scripts/site-check refuses the build-time file if it is tracked"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 3045_the_site_shows_what_changed_since_it_was_deployed"
+  - "scripts/derive-check"
+evidence_required:
+  - "delta_since_deploy_rendered"
+  - "unknown_baseline_case"
+  - "delta_never_committed"
+created_at: 2026-10-10
+updated_at: 2026-10-30
