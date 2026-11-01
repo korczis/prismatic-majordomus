@@ -3630,14 +3630,15 @@
       "requires_repository": true,
       "requires_installed": true,
       "json_output": true,
-      "syntax": "majordomus bench [<command>...] [--samples <n>] [--warmup <n>] [--cold-samples <n>] [--mode cold|warm|both] [--format text|json] [--no-save] [--list] [--check] [--write-baseline [--force]]",
+      "syntax": "majordomus bench [<command>...] [--samples <n>] [--warmup <n>] [--cold-samples <n>] [--mode cold|warm|both] [--format text|json] [--no-save] [--list] [--check] [--write-baseline [--force]] | majordomus bench compare <run-a> <run-b>",
       "demo": "benchmark-run",
-      "note": "The targets are the registry's public commands; the scenarios are the command fixtures when the suite is present. A run is local evidence; only --write-baseline writes the tracked baseline, and --check refuses a regression over the policy's thresholds when two samples agree; one sample over is a warning to re-measure, and every finding names its sample count, the runner and its load average.",
+      "note": "The targets are the registry's public commands; the scenarios are the command fixtures when the suite is present. A run is local evidence; only --write-baseline writes the tracked baseline, and --check refuses a regression over the policy's thresholds when two samples agree; one sample over is a warning to re-measure, and every finding names its sample count, the runner and its load average. `bench compare` reads two persisted runs (an id, a file, latest or baseline) and ranks the largest p95 regressions and improvements; it writes nothing.",
       "reads": [
         "share/commands.yaml",
         "test/fixtures/commands/",
         ".ai/repo/policy.yaml",
-        ".ai/repo/benchmarks/baseline.json"
+        ".ai/repo/benchmarks/baseline.json",
+        ".ai/local/benchmarks/runs/"
       ],
       "writes": [
         ".ai/local/benchmarks/",
@@ -3653,12 +3654,14 @@
       ],
       "tests": {
         "behaviour": [
+          "3058_bench_compares_two_runs",
           "79_bench_command",
           "80_bench_persistence",
           "81_bench_baseline",
           "82_bench_check"
         ],
         "negative": [
+          "3058_bench_compares_two_runs",
           "79_bench_command",
           "80_bench_persistence",
           "81_bench_baseline",
