@@ -297,3 +297,152 @@ probe_step="$(awk '/^      - id: public$/ {f=1} f && /^        timeout-minutes: 
   || { echo "    the publication probe's wait or its step bound could not be read from pages.yml"; exit 1; }
 [ "$probe_to" -lt "$(( probe_step * 60 ))" ] \
   || { echo "    the publication probe waits ${probe_to}s inside a step bounded at ${probe_step}min; the step kills it before it can say what the site is serving"; exit 1; }
+
+# 12. a label that changes nothing starts no second verdict (I4347). `labeled` starts validate
+#     for every label; on 2026-10-28 six of eight trains (#2631, #2630, #2593, #2592, #2591,
+#     #2501) were opened with `--label train` and ran their head twice. Only ci:full and hold
+#     change what a run does. Any other label on a head that already carries a verdict gives
+#     the runners back in the plan job, and the ci job writes that verdict again — never a
+#     skip, which GitHub counts as passing. scripts/ci/carried-verdict decides from the runs
+#     GitHub lists; this section feeds it those lists through a stub `gh`, offline.
+CV="$ROOT/scripts/ci/carried-verdict"
+[ -x "$CV" ] || { echo "    scripts/ci/carried-verdict is missing or not executable"; exit 1; }
+# the wiring: the plan job asks after its checkout and before the release path, on a pull
+# request alone; the ci job asks first, and every step that reads the gates' artifacts or
+# decides from them waits on its answer
+plan_steps="$(awk '/^  plan:$/ {f=1; next} /^  [a-z-]+:$/ {f=0} f' "$W")"
+yield_at="$(printf '%s\n' "$plan_steps" | grep -n 'scripts/ci/carried-verdict yield' | head -1 | cut -d: -f1)"
+co_at="$(printf '%s\n' "$plan_steps" | grep -n 'uses: actions/checkout@' | head -1 | cut -d: -f1)"
+rp_at="$(printf '%s\n' "$plan_steps" | grep -n 'scripts/ci/release-path yield' | head -1 | cut -d: -f1)"
+[ -n "$yield_at" ] || { echo "    the plan job does not ask scripts/ci/carried-verdict yield"; exit 1; }
+[ -n "$co_at" ] && [ "$co_at" -lt "$yield_at" ] || { echo "    the plan job asks carried-verdict before its checkout"; exit 1; }
+[ -n "$rp_at" ] && [ "$yield_at" -lt "$rp_at" ] || { echo "    the plan job asks the release path before carried-verdict, so a redundant run waits for a release"; exit 1; }
+printf '%s\n' "$plan_steps" | grep -B8 'scripts/ci/carried-verdict yield' | grep -q "if: github.event_name == 'pull_request'" \
+  || { echo "    the plan job's carried-verdict step is not limited to a pull request"; exit 1; }
+for v in 'ACTION: ${{ github.event.action }}' 'LABEL: ${{ github.event.label.name }}' 'HEAD_SHA: ${{ github.event.pull_request.head.sha }}'; do
+  [ "$(grep -cF "$v" "$W")" -ge 2 ] || { echo "    validate.yml does not pass $v to both carried-verdict steps through the environment"; exit 1; }
+done
+grep -E 'carried-verdict (yield|verdict)' "$W" | grep -q '\${{' \
+  && { echo "    a carried-verdict step interpolates an expression into its command; a label name is the pull request author's text"; exit 1; }
+ci_steps="$(awk '/^  ci:$/ {f=1; next} /^  [a-z-]+:$/ {f=0} f' "$W")"
+printf '%s\n' "$ci_steps" | grep -q '^      - id: carried$' || { echo "    the ci job has no step with id carried"; exit 1; }
+printf '%s\n' "$ci_steps" | grep -q 'scripts/ci/carried-verdict verdict' || { echo "    the ci job does not ask scripts/ci/carried-verdict verdict"; exit 1; }
+first_dl="$(printf '%s\n' "$ci_steps" | grep -n 'actions/download-artifact@' | head -1 | cut -d: -f1)"
+cv_at="$(printf '%s\n' "$ci_steps" | grep -n 'scripts/ci/carried-verdict verdict' | head -1 | cut -d: -f1)"
+[ -n "$first_dl" ] && [ "$cv_at" -lt "$first_dl" ] || { echo "    the ci job downloads the plan before it asks whether the verdict is carried"; exit 1; }
+unguarded="$(printf '%s\n' "$ci_steps" | awk '
+  /^      - / { if (step != "" && reads && !guard) print step; step=$0; reads=0; guard=0 }
+  /actions\/download-artifact@|scripts\/ci\/verdict|actions\/upload-artifact@/ { reads=1 }
+  /steps\.carried\.outputs\.carried != .true./ { guard=1 }
+  END { if (step != "" && reads && !guard) print step }')"
+[ -z "$unguarded" ] || { echo "    a ci step that reads or decides from the gates runs on a carried verdict:"; printf '      %s\n' "$unguarded"; exit 1; }
+# the labels the script calls plan-changing are exactly the labels validate.yml reads
+read_labels="$( { grep -oE "contains\(github\.event\.pull_request\.labels\.\*\.name, '[^']+'\)" "$W" | sed -E "s/.*, '([^']+)'\)/\1/"
+                  grep -oE '\*,[a-z:-]+,\*\)' "$W" | sed -E 's/\*,([^,]+),\*\)/\1/'; } | sort -u | tr '\n' ' ')"
+script_labels="$(sed -n 's/^PLAN_LABELS="\(.*\)"$/\1/p' "$CV" | tr ' ' '\n' | sort -u | tr '\n' ' ')"
+[ -n "$read_labels" ] && [ "$read_labels" = "$script_labels" ] \
+  || { echo "    validate.yml reads the labels '$read_labels' and carried-verdict treats '$script_labels' as plan-changing"; exit 1; }
+
+# the behaviour, against a stub forge
+CVX="$T/cv"; CVLOG="$CVX/gh.log"; mkdir -p "$CVX/bin" "$CVX/fx"
+cat > "$CVX/bin/gh" <<'STUB'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >> "$GH_STUB_LOG"
+[ ! -f "$GH_STUB_FX/down" ] || { echo "HTTP 503: the forge is down" >&2; exit 1; }
+[ "$1" = api ] || { echo "stub gh: only api" >&2; exit 1; }
+shift
+case "$*" in
+  "-X POST "*) echo '{}' ;;
+  *"/actions/workflows/validate.yml/runs?"*)
+    sha="${*#*head_sha=}"; sha="${sha%%&*}"
+    if [ -f "$GH_STUB_FX/vruns-$sha.json" ]; then cat "$GH_STUB_FX/vruns-$sha.json"; else echo '{"workflow_runs":[]}'; fi ;;
+  *"/actions/runs/"*"/jobs?"*)
+    id="${*#*/actions/runs/}"; id="${id%%/*}"; cat "$GH_STUB_FX/jobs-$id.json" ;;
+  *) echo "stub gh: no answer for: $*" >&2; exit 1 ;;
+esac
+STUB
+chmod +x "$CVX/bin/gh"
+cv() { # <command> <action> <label> <sha>
+  : > "$CVLOG"; : > "$CVX/out"
+  env -u GITHUB_ACTIONS -u GITHUB_STEP_SUMMARY -u GITHUB_REPOSITORY \
+    PATH="$CVX/bin:$PATH" GH_STUB_LOG="$CVLOG" GH_STUB_FX="$CVX/fx" GITHUB_OUTPUT="$CVX/out" \
+    MJ_CARRIED_VERDICT_CANCEL_WAIT=0 \
+    "$CV" "$1" --action "$2" --label "$3" --sha "$4" --self 900 --repo o/r
+}
+# a completed run of a head, and its jobs' conclusions: <sha> <id> <created> <plan> <ci>
+cv_run() {
+  local f="$CVX/fx/vruns-$1.json"
+  [ -f "$f" ] || echo '{"workflow_runs":[]}' > "$f"
+  jq --argjson id "$2" --arg at "$3" '.workflow_runs += [{id: $id, created_at: $at, status: "completed"}]' "$f" > "$f.n" && mv "$f.n" "$f"
+  printf '{"jobs":[{"name":"plan","conclusion":"%s"},{"name":"build","conclusion":"success"},{"name":"ci","conclusion":"%s"}]}' "$4" "$5" > "$CVX/fx/jobs-$2.json"
+}
+cv_reset() { rm -f "$CVX/fx"/*; }
+cv_says() { [ "$LAST_OUT" = "$1" ] || { echo "    carried-verdict decided '$LAST_OUT', not '$1' ($2)"; exit 1; }; }
+cv_posts() { [ "$(grep -c -- '^api -X POST' "$CVLOG" || true)" = "$1" ] || { echo "    carried-verdict wrote to the forge $1 time(s) expected ($2):"; cat "$CVLOG"; exit 1; }; }
+
+# a. opened, synchronize and reopened plan their change, whatever the head carries, and ask nothing
+cv_reset; cv_run aaa 101 2026-10-28T10:00:00Z success success
+for a in opened synchronize reopened; do
+  expect_exit 0 cv decide "$a" "" aaa || exit 1
+  case "$LAST_OUT" in "run a $a event plans its change") ;; *) echo "    a $a event was not planned: $LAST_OUT"; exit 1 ;; esac
+  [ ! -s "$CVLOG" ] || { echo "    a $a event read the forge"; exit 1; }
+done
+# b. ci:full and hold change what the run does: never carried, even on a green head
+for l in ci:full hold; do
+  expect_exit 0 cv decide labeled "$l" aaa || exit 1
+  cv_says "run the label $l changes what this run does" "labeled $l"
+done
+# c. a train label on a green head: carried; the plan job cancels its own run and nothing else;
+#    the ci job writes the success again, and says so in its output
+expect_exit 0 cv decide labeled train aaa || exit 1
+cv_says "carry 101 success" "labeled train on a green head"
+expect_exit 0 cv yield labeled train aaa || exit 1
+cv_posts 1 "yield on a carried verdict"
+grep -q '^api -X POST repos/o/r/actions/runs/900/cancel$' "$CVLOG" || { echo "    yield did not cancel its own run, or cancelled another:"; cat "$CVLOG"; exit 1; }
+expect_exit 0 cv verdict labeled train aaa || exit 1
+grep -qx 'carried=true' "$CVX/out" || { echo "    a carried success did not write carried=true"; exit 1; }
+cv_posts 0 "verdict never writes to the forge"
+# d. a red head keeps its red: a run that ended at its first red (plan success, ci failure)
+#    is a verdict, and the carried ci fails
+cv_reset; cv_run bbb 201 2026-10-28T10:00:00Z success failure
+expect_exit 0 cv decide labeled priority:p0 bbb || exit 1
+cv_says "carry 201 failure" "labeled on a red head"
+expect_exit 1 cv verdict labeled priority:p0 bbb || { echo "    a carried failure did not fail the ci job"; exit 1; }
+grep -qx 'carried=true' "$CVX/out" || { echo "    a carried failure did not write carried=true"; exit 1; }
+# e. a run that yielded (plan cancelled, ci failure for want of a plan) is no verdict: the
+#    older real run is carried, and a head whose only runs yielded plans
+cv_reset; cv_run ccc 301 2026-10-28T10:00:00Z success success; cv_run ccc 302 2026-10-28T11:00:00Z cancelled failure
+expect_exit 0 cv decide labeled train ccc || exit 1
+cv_says "carry 301 success" "a yielded newer run over an older verdict"
+cv_reset; cv_run ddd 401 2026-10-28T10:00:00Z cancelled failure; cv_run ddd 402 2026-10-28T11:00:00Z success cancelled
+expect_exit 0 cv decide labeled train ddd || exit 1
+cv_says "run head ddd carries no verdict yet" "only yielded or unfinished runs"
+expect_exit 0 cv yield labeled train ddd || exit 1
+cv_posts 0 "yield with no verdict to carry"
+expect_exit 0 cv verdict labeled train ddd || exit 1
+grep -qx 'carried=false' "$CVX/out" || { echo "    a run with nothing to carry did not write carried=false"; exit 1; }
+# f. the newest verdict wins, and the run itself is never its own source
+cv_reset; cv_run eee 501 2026-10-28T10:00:00Z success failure; cv_run eee 502 2026-10-28T12:00:00Z success success
+expect_exit 0 cv decide labeled train eee || exit 1
+cv_says "carry 502 success" "two verdicts of one head"
+cv_reset; cv_run fff 900 2026-10-28T10:00:00Z success success
+expect_exit 0 cv decide labeled train fff || exit 1
+cv_says "run head fff carries no verdict yet" "the run's own earlier attempt"
+# g. a forge that cannot be read decides run, in every command, and nothing is cancelled
+cv_reset; cv_run ggg 701 2026-10-28T10:00:00Z success success; touch "$CVX/fx/down"
+expect_exit 0 cv yield labeled train ggg || exit 1
+cv_posts 0 "yield on a forge that cannot be read"
+expect_exit 0 cv verdict labeled train ggg || exit 1
+grep -qx 'carried=false' "$CVX/out" || { echo "    an unreadable forge carried a verdict"; exit 1; }
+# h. the replay of 2026-10-28: each train opened with --label train is one opened event (it
+#    plans and runs its gates, and writes the head's verdict) and one labeled event (it
+#    carries). One gate-running run per head.
+cv_reset; n=0
+for pr in 2631 2630 2593 2592 2591 2501; do
+  n=$((n + 1)); sha="replay$pr"
+  expect_exit 0 cv decide opened "" "$sha" || exit 1
+  case "$LAST_OUT" in run*) ;; *) echo "    #$pr: the opened event did not plan: $LAST_OUT"; exit 1 ;; esac
+  cv_run "$sha" "$((1000 + n))" 2026-10-28T10:00:00Z success success   # the opened run's verdict
+  expect_exit 0 cv decide labeled train "$sha" || exit 1
+  cv_says "carry $((1000 + n)) success" "#$pr: the labeled event of a train"
+done
