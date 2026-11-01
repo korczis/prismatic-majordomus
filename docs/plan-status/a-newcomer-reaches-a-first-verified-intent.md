@@ -26,7 +26,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | level | code | subject | message |
 |---|---|---|---|
 | WARN | `scope_conflict` | `I3395` | shares docs/generated/openapi.json with I3443; they may not run concurrently |
-| WARN | `scope_conflict` | `I3395` | shares test/cases/367_an_intent_is_satisfied_only_by_evidence.sh with I3448; they may not run concurrently |
 | WARN | `scope_conflict` | `I3395` | shares test/cases/367_an_intent_is_satisfied_only_by_evidence.sh with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I3395` | shares docs/generated/cli.json with I3757; they may not run concurrently |
 | WARN | `scope_conflict` | `I3395` | shares docs/generated/cli.json with I3762; they may not run concurrently |

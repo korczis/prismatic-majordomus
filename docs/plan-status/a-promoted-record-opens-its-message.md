@@ -27,7 +27,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 |---|---|---|---|
 | WARN | `scope_conflict` | `I3280` | shares share/schemas/majordomus/adr/adr.v1.schema.json with I3312; they may not run concurrently |
 | WARN | `scope_conflict` | `I3280` | shares test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh with I3318; they may not run concurrently |
-| WARN | `scope_conflict` | `I3280` | shares test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh with I3448; they may not run concurrently |
 | WARN | `scope_conflict` | `I3280` | shares test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I3280` | shares apps/majordomus-cli/src/plan.rs with I3757; they may not run concurrently |
 | WARN | `scope_conflict` | `I3280` | shares apps/majordomus-cli/src/plan.rs with I3762; they may not run concurrently |

@@ -70,7 +70,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3241` | shares test/cases/3749_a_full_history_checkout_is_bounded.sh with I3318; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares .ai/repo/ci/gates.yaml with I3319; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares .ai/repo/project/issues/I3241.yaml with I3373; they may not run concurrently |
-| WARN | `scope_conflict` | `I3241` | shares test/cases/3749_a_full_history_checkout_is_bounded.sh with I3448; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares test/cases/3749_a_full_history_checkout_is_bounded.sh with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares docs/CI.md with I3799; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares docs/CI.md with I3820; they may not run concurrently |

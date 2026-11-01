@@ -105,7 +105,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I3442; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I3443; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares scripts/site-check with I3447; they may not run concurrently |
-| WARN | `scope_conflict` | `I2374` | shares scripts/site-deploy with I3448; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares scripts/site-build with I3449; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I3752; they may not run concurrently |

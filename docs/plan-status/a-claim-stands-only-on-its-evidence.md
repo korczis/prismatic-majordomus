@@ -96,7 +96,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3110` | shares .ai/repo/project/intents with I3226; they may not run concurrently |
 | WARN | `scope_conflict` | `I3110` | shares apps/majordomus-cli/src/evidence/subject.rs with I3255; they may not run concurrently |
 | WARN | `scope_conflict` | `I3110` | shares test/cases/125_rule_proof.sh with I3318; they may not run concurrently |
-| WARN | `scope_conflict` | `I3110` | shares test/cases/125_rule_proof.sh with I3448; they may not run concurrently |
 | WARN | `scope_conflict` | `I3110` | shares test/cases/125_rule_proof.sh with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I3110` | shares scripts/generate-site-data with I3750; they may not run concurrently |
 | WARN | `scope_conflict` | `I3110` | shares scripts/generate-site-data with I3836; they may not run concurrently |
@@ -148,7 +147,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3116` | shares test/cases/10_site_data.sh with I3318; they may not run concurrently |
 | WARN | `scope_conflict` | `I3116` | shares .ai/repo/ci/gates.yaml with I3319; they may not run concurrently |
 | WARN | `scope_conflict` | `I3116` | shares lib/doctor.sh with I3322; they may not run concurrently |
-| WARN | `scope_conflict` | `I3116` | shares test/cases/10_site_data.sh with I3448; they may not run concurrently |
 | WARN | `scope_conflict` | `I3116` | shares apps/majordomus-cli/src/capability/builtin/quality.rs with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I3116` | shares scripts/generate-site-data with I3750; they may not run concurrently |
 | WARN | `scope_conflict` | `I3116` | shares docs/EVIDENCE.md with I3820; they may not run concurrently |
@@ -217,7 +215,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3123` | shares lib/finish.sh with I3309; they may not run concurrently |
 | WARN | `scope_conflict` | `I3123` | shares test/cases/06_finish.sh with I3318; they may not run concurrently |
 | WARN | `scope_conflict` | `I3123` | shares share/events.yaml with I3320; they may not run concurrently |
-| WARN | `scope_conflict` | `I3123` | shares test/cases/06_finish.sh with I3448; they may not run concurrently |
 | WARN | `scope_conflict` | `I3123` | shares test/cases/06_finish.sh with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I3123` | shares docs/SCHEMAS.md with I3820; they may not run concurrently |
 | WARN | `scope_conflict` | `I3123` | shares docs/SCHEMAS.md with I4261; they may not run concurrently |

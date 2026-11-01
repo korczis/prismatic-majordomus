@@ -27,7 +27,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | level | code | subject | message |
 |---|---|---|---|
 | WARN | `scope_conflict` | `I3400` | shares site/data/registry/registry.json with I3442; they may not run concurrently |
-| WARN | `scope_conflict` | `I3400` | shares test/cases/391_skills_are_proven_capabilities.sh with I3448; they may not run concurrently |
 | WARN | `scope_conflict` | `I3400` | shares test/cases/391_skills_are_proven_capabilities.sh with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I3400` | shares docs/generated/graph.json with I3752; they may not run concurrently |
 | WARN | `scope_conflict` | `I3400` | shares site/data/generated/skills.json with I3757; they may not run concurrently |

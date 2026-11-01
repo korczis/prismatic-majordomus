@@ -27,7 +27,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3167` | shares share/allow with I3280; they may not run concurrently |
 | WARN | `scope_conflict` | `I3167` | shares apps/majordomus-cli/src/metadata/mod.rs with I3312; they may not run concurrently |
 | WARN | `scope_conflict` | `I3167` | shares test/cases/340_a_brief_is_kept_as_received.sh with I3318; they may not run concurrently |
-| WARN | `scope_conflict` | `I3167` | shares test/cases/340_a_brief_is_kept_as_received.sh with I3448; they may not run concurrently |
 | WARN | `scope_conflict` | `I3167` | shares test/cases/340_a_brief_is_kept_as_received.sh with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I3167` | shares share/allow with I3763; they may not run concurrently |
 | WARN | `scope_conflict` | `I3167` | shares share/allow with I3820; they may not run concurrently |

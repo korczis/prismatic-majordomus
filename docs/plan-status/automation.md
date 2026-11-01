@@ -66,7 +66,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3160` | shares .ai/repo/ci/gates.yaml with I3241; they may not run concurrently |
 | WARN | `scope_conflict` | `I3160` | shares test/cases/821_a_session_moves_between_machines.sh with I3318; they may not run concurrently |
 | WARN | `scope_conflict` | `I3160` | shares .ai/repo/ci/gates.yaml with I3319; they may not run concurrently |
-| WARN | `scope_conflict` | `I3160` | shares test/cases/821_a_session_moves_between_machines.sh with I3448; they may not run concurrently |
 | WARN | `scope_conflict` | `I3160` | shares test/cases/821_a_session_moves_between_machines.sh with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I3160` | shares .ai/repo/ci/gates.yaml with I3937; they may not run concurrently |
 | WARN | `scope_conflict` | `I3160` | shares .ai/repo/ci/gates.yaml with I3973; they may not run concurrently |

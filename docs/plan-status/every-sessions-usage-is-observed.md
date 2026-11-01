@@ -66,7 +66,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3299` | shares .ai/repo/benchmarks/rust/policy.yaml with I3307; they may not run concurrently |
 | WARN | `scope_conflict` | `I3299` | shares test/cases/83_doctor_budget.sh with I3318; they may not run concurrently |
 | WARN | `scope_conflict` | `I3299` | shares docs/generated/benchmarks.json with I3442; they may not run concurrently |
-| WARN | `scope_conflict` | `I3299` | shares test/cases/83_doctor_budget.sh with I3448; they may not run concurrently |
 | WARN | `scope_conflict` | `I3299` | shares test/cases/83_doctor_budget.sh with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I3299` | shares docs/generated/benchmarks.json with I3757; they may not run concurrently |
 | WARN | `scope_conflict` | `I3299` | shares docs/generated/benchmarks.json with I3762; they may not run concurrently |
