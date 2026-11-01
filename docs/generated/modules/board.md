@@ -19,7 +19,7 @@ Every document of the delivery board by id: meta (the commit, the lanes, the iss
 | HTTP | `GET /api/v1/board/snapshot` |
 | CLI | `majordomus board snapshot` |
 | cache | — |
-| benchmark | required |
+| benchmark | waived (repository_declaration) |
 | provenance | builtin majordomus_cli::capability::builtin::board |
 | tags | board, plan, delivery |
 

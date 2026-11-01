@@ -15,27 +15,33 @@ use crate::error::{Error, Result};
 /// Run `majordomus board`.
 pub fn run(args: BoardArgs) -> Result<u8> {
     let BoardCommand::Snapshot { by } = args.command;
-    let app = App::load(&args.repo)?;
-    let ctx = &app.context;
-    let id = ctx
-        .registry
-        .by_cli(&["board".to_string(), "snapshot".to_string()])
-        .map(|c| c.id.as_str().to_string())
-        .ok_or_else(|| Error::Protocol {
-            reason: "no capability is exposed as `majordomus board snapshot`".into(),
-        })?;
-    let value = ctx.execute(&id, json!({ "by": by })).map_err(refusal)?;
+    // the repository and the answer fold into one result: a failure leaves by one exit
+    let value = App::load(&args.repo)
+        .and_then(|app| execute(&app.context, &["board", "snapshot"], json!({ "by": by })))?;
     print!(
         "{}",
         match args.format {
-            OutputFormat::Json => format!(
-                "{}\n",
-                serde_json::to_string_pretty(&value).unwrap_or_default()
-            ),
+            OutputFormat::Json => format!("{value:#}\n"),
             OutputFormat::Text => text(&value),
         }
     );
     Ok(0)
+}
+
+/// Run the capability exposed as `majordomus <words>`, its refusal as this command's.
+fn execute(ctx: &crate::capability::Context, words: &[&str], input: Value) -> Result<Value> {
+    let words: Vec<String> = words.iter().map(|w| w.to_string()).collect();
+    let id = ctx
+        .registry
+        .by_cli(&words)
+        .map(|c| c.id.as_str().to_string())
+        .ok_or_else(|| Error::Protocol {
+            reason: format!(
+                "no capability is exposed as `majordomus {}`",
+                words.join(" ")
+            ),
+        })?;
+    ctx.execute(&id, input).map_err(refusal)
 }
 
 /// The exit code of a refused snapshot: an open milestone in no lane is a verdict not
@@ -58,7 +64,11 @@ fn refusal(e: CapabilityError) -> Error {
 /// The snapshot as a person reads it: the digest and commit, then one line per document.
 fn text(v: &Value) -> String {
     let mut out = String::new();
-    let _ = writeln!(out, "digest     {}", v["digest"].as_str().unwrap_or_default());
+    let _ = writeln!(
+        out,
+        "digest     {}",
+        v["digest"].as_str().unwrap_or_default()
+    );
     let _ = writeln!(
         out,
         "master     {} {}",
@@ -101,9 +111,49 @@ mod tests {
             "diagnostics": ["the pull request queue is not observed"],
         });
         let t = text(&v);
-        assert!(t.starts_with("digest     sha256:ab\nmaster     abc 2026-10-28\n"), "{t}");
-        assert!(t.contains("meta                    0 item(s)       10 bytes"), "{t}");
-        assert!(t.contains("prs                     2 item(s)       20 bytes"), "{t}");
-        assert!(t.ends_with("note       the pull request queue is not observed\n"), "{t}");
+        assert!(
+            t.starts_with("digest     sha256:ab\nmaster     abc 2026-10-28\n"),
+            "{t}"
+        );
+        assert!(
+            t.contains("meta                    0 item(s)       10 bytes"),
+            "{t}"
+        );
+        assert!(
+            t.contains("prs                     2 item(s)       20 bytes"),
+            "{t}"
+        );
+        assert!(
+            t.ends_with("note       the pull request queue is not observed\n"),
+            "{t}"
+        );
+    }
+
+    /// The command answers through the capability its words name, and words no capability
+    /// is exposed as, or a directory that holds no repository, are errors before anything runs.
+    #[test]
+    fn the_snapshot_runs_by_its_words_and_what_is_missing_is_an_error() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        let v = execute(&ctx, &["board", "snapshot"], json!({ "by": "t" })).expect("a snapshot");
+        assert_eq!(v["documents"]["meta"]["syncedBy"], "t");
+        let err = execute(&ctx, &["board", "nothing"], json!({})).unwrap_err();
+        assert!(
+            matches!(&err, Error::Protocol { reason }
+                if reason == "no capability is exposed as `majordomus board nothing`"),
+            "{err:?}"
+        );
+        let empty = tempfile::tempdir().expect("a directory");
+        let args = BoardArgs {
+            repo: crate::cli::RepoArgs {
+                repo: Some(empty.path().to_path_buf()),
+                discovery: crate::cli::DiscoveryMode::Filesystem,
+                strict: false,
+                share: Some(crate::synthetic::crate_share()),
+            },
+            command: BoardCommand::Snapshot { by: None },
+            format: OutputFormat::Json,
+        };
+        assert!(run(args).is_err());
     }
 }

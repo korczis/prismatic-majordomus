@@ -83,7 +83,10 @@ impl BoardDeclaration {
         let mut held: BTreeMap<&str, &str> = BTreeMap::new();
         for lane in &declaration.lanes {
             if lane.key.is_empty() || !keys.insert(lane.key.as_str()) {
-                return Err(format!("lane key '{}' is empty or declared twice", lane.key));
+                return Err(format!(
+                    "lane key '{}' is empty or declared twice",
+                    lane.key
+                ));
             }
             for m in &lane.milestones {
                 if let Some(other) = held.insert(m, &lane.key) {
@@ -140,7 +143,12 @@ pub(crate) fn stale(declaration: &BoardDeclaration, plan: &Plan) -> Vec<String> 
         .iter()
         .flat_map(|l| l.milestones.iter().map(move |m| (l, m)))
         .filter(|(_, m)| plan.milestone(m).is_none())
-        .map(|(l, m)| format!("lane {} names milestone {m}, which the plan does not declare", l.key))
+        .map(|(l, m)| {
+            format!(
+                "lane {} names milestone {m}, which the plan does not declare",
+                l.key
+            )
+        })
         .collect()
 }
 
@@ -159,20 +167,23 @@ impl Master {
     /// The first of `origin/master` and `HEAD` that resolves in the checkout at `root`.
     pub(crate) fn read(root: &Path) -> Option<Master> {
         ["refs/remotes/origin/master", "HEAD"].iter().find_map(|r| {
-            let out = crate::git::read_only(root)
+            crate::git::read_only(root)
                 .args(["log", "-1", "--no-color", "--format=%H%x1f%cI", r, "--"])
                 .output()
                 .ok()
-                .filter(|o| o.status.success())?;
-            let text = String::from_utf8_lossy(&out.stdout);
-            let (sha, at) = text.trim().split_once('\u{1f}')?;
-            Some(Master {
-                reference: (*r).to_string(),
-                sha: sha.to_string(),
-                committed_at: at.to_string(),
-            })
+                .filter(|o| o.status.success())
+                .and_then(|out| master_of(r, &String::from_utf8_lossy(&out.stdout)))
         })
     }
+}
+
+/// The master a `--format=%H%x1f%cI` line names, or none when the line is not one.
+fn master_of(reference: &str, line: &str) -> Option<Master> {
+    line.trim().split_once('\u{1f}').map(|(sha, at)| Master {
+        reference: reference.to_string(),
+        sha: sha.to_string(),
+        committed_at: at.to_string(),
+    })
 }
 
 /// One pull request as the board shows it.
@@ -463,7 +474,7 @@ pub(crate) fn digest(documents: &BTreeMap<String, Value>) -> String {
 }
 
 #[cfg(test)]
-pub(crate) mod tests {
+mod tests {
     use super::*;
     use crate::plan::{PlanCounts, PlanIssue};
 
@@ -610,9 +621,13 @@ pub(crate) mod tests {
         assert!(BoardDeclaration::parse(&twice)
             .unwrap_err()
             .contains("lane key 'land'"));
-        let shared = format!("{LANES}  - key: other\n    title: O\n    milestones:\n      - m-ui\n");
+        let shared =
+            format!("{LANES}  - key: other\n    title: O\n    milestones:\n      - m-ui\n");
         let e = BoardDeclaration::parse(&shared).unwrap_err();
-        assert!(e.contains("milestone 'm-ui' is in lane 'ui' and in lane 'other'"), "{e}");
+        assert!(
+            e.contains("milestone 'm-ui' is in lane 'ui' and in lane 'other'"),
+            "{e}"
+        );
         assert!(BoardDeclaration::parse("lanes: 3\n").is_err());
     }
 
@@ -624,7 +639,13 @@ pub(crate) mod tests {
             BoardDeclaration::default()
         );
         std::fs::write(dir.path().join(BOARD_FILE), LANES).expect("written");
-        assert_eq!(BoardDeclaration::load(dir.path()).expect("read").lanes.len(), 2);
+        assert_eq!(
+            BoardDeclaration::load(dir.path())
+                .expect("read")
+                .lanes
+                .len(),
+            2
+        );
         std::fs::write(dir.path().join(BOARD_FILE), "lanes: 3\n").expect("written");
         let e = BoardDeclaration::load(dir.path()).unwrap_err();
         assert!(e.contains(BOARD_FILE), "{e}");
@@ -648,7 +669,10 @@ pub(crate) mod tests {
             ]
         );
         let e = compose(inputs(&declaration, &plan)).unwrap_err();
-        assert!(e.contains("m-new") && e.contains("I5") && e.contains(BOARD_FILE), "{e}");
+        assert!(
+            e.contains("m-new") && e.contains("I5") && e.contains(BOARD_FILE),
+            "{e}"
+        );
     }
 
     #[test]
@@ -672,7 +696,14 @@ pub(crate) mod tests {
         let ids: Vec<&str> = c.documents.keys().map(String::as_str).collect();
         assert_eq!(
             ids,
-            ["intents", "issues-land", "issues-ui", "meta", "milestones", "prs"]
+            [
+                "intents",
+                "issues-land",
+                "issues-ui",
+                "meta",
+                "milestones",
+                "prs"
+            ]
         );
         let land = &c.documents["issues-land"];
         assert_eq!(land["lane"], "land");
@@ -681,10 +712,17 @@ pub(crate) mod tests {
             json!({"id": "I1", "t": "land it", "ms": "m-land", "p": "p1", "s": "READY",
                    "w": 0, "d": [], "l": "land"})
         );
-        assert_eq!(c.documents["issues-ui"]["items"].as_array().map(Vec::len), Some(1));
+        assert_eq!(
+            c.documents["issues-ui"]["items"].as_array().map(Vec::len),
+            Some(1)
+        );
         let ms = &c.documents["milestones"]["items"];
         assert_eq!(ms[0]["l"], "land");
-        assert_eq!(ms[2]["l"], Value::Null, "a DONE milestone may be in no lane");
+        assert_eq!(
+            ms[2]["l"],
+            Value::Null,
+            "a DONE milestone may be in no lane"
+        );
         assert_eq!(ms[0]["ready"], 1);
         let intent = &c.documents["intents"]["items"][0];
         assert_eq!(
@@ -695,7 +733,10 @@ pub(crate) mod tests {
         assert_eq!(c.documents["prs"]["items"][0]["n"], 7);
         assert_eq!(c.documents["prs"]["observedAt"], "2026-10-28T10:00:00Z");
         let meta = &c.documents["meta"];
-        assert_eq!(meta["lanes"], json!([["land", "Landing, CI"], ["ui", "UI"]]));
+        assert_eq!(
+            meta["lanes"],
+            json!([["land", "Landing, CI"], ["ui", "UI"]])
+        );
         assert_eq!(meta["sha"], "abc");
         assert_eq!(meta["counts"]["total"], 4);
         assert_eq!(meta["counts"]["done"], 2);
@@ -728,8 +769,12 @@ pub(crate) mod tests {
     #[test]
     fn the_digest_is_stable_moves_with_the_state_and_ignores_the_sync() {
         let (declaration, plan) = sample();
-        let a = compose(inputs(&declaration, &plan)).expect("composed").documents;
-        let b = compose(inputs(&declaration, &plan)).expect("composed").documents;
+        let a = compose(inputs(&declaration, &plan))
+            .expect("composed")
+            .documents;
+        let b = compose(inputs(&declaration, &plan))
+            .expect("composed")
+            .documents;
         assert_eq!(digest(&a), digest(&b), "the same input, the same digest");
         assert!(digest(&a).starts_with("sha256:") && digest(&a).len() == 7 + 64);
 
@@ -738,11 +783,17 @@ pub(crate) mod tests {
         later.synced_by = "another session".into();
         let later = compose(later).expect("composed").documents;
         assert_ne!(later["meta"]["syncedAt"], a["meta"]["syncedAt"]);
-        assert_eq!(digest(&later), digest(&a), "syncedAt and syncedBy do not count");
+        assert_eq!(
+            digest(&later),
+            digest(&a),
+            "syncedAt and syncedBy do not count"
+        );
 
         let mut moved = plan.clone();
         moved.issues[0].status = "ACTIVE".into();
-        let moved = compose(inputs(&declaration, &moved)).expect("composed").documents;
+        let moved = compose(inputs(&declaration, &moved))
+            .expect("composed")
+            .documents;
         assert_ne!(digest(&moved), digest(&a), "a change is a different digest");
 
         // key order is not state: a value built in another order digests the same
@@ -770,7 +821,12 @@ pub(crate) mod tests {
         }
         assert_eq!(back, items, "nothing lost, nothing reordered");
         assert!(split("land", Vec::new(), 1_000).expect("empty").is_empty());
-        assert_eq!(split("land", items[..1].to_vec(), 1_000).expect("one").len(), 1);
+        assert_eq!(
+            split("land", items[..1].to_vec(), 1_000)
+                .expect("one")
+                .len(),
+            1
+        );
 
         let huge = vec![json!({"t": "x".repeat(2_000)})];
         assert!(split("land", huge, 1_000).unwrap_err().contains("alone"));
@@ -894,5 +950,22 @@ pub(crate) mod tests {
             .map(|(_, d)| d["items"].as_array().map_or(0, Vec::len))
             .sum();
         assert_eq!(filed, open, "every open issue is on the board once");
+    }
+
+    /// A log line without its separator names no master; documents without `meta` still
+    /// have a digest, the same for the same documents.
+    #[test]
+    fn a_line_without_its_separator_is_no_master_and_any_documents_have_a_digest() {
+        assert!(master_of("HEAD", "abc").is_none());
+        let m = master_of("HEAD", "abc\u{1f}2026-11-01T00:00:00Z\n").expect("a master");
+        assert_eq!(
+            (m.sha.as_str(), m.committed_at.as_str()),
+            ("abc", "2026-11-01T00:00:00Z")
+        );
+        let none = BTreeMap::new();
+        assert_eq!(digest(&none), digest(&BTreeMap::new()));
+        let mut one = BTreeMap::new();
+        one.insert("prs".to_string(), json!({ "items": [] }));
+        assert_ne!(digest(&one), digest(&none));
     }
 }

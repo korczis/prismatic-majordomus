@@ -369,7 +369,8 @@ paths:
         source: builtin
         module: majordomus_cli::capability::builtin::board
       x-majordomus-benchmark:
-        policy: required
+        policy: waived
+        reason: repository_declaration
       x-majordomus-cache:
         policy: disabled
       x-majordomus-effect: read
@@ -47165,6 +47166,9 @@ components:
         - type: string
           const: published_history
           description: "The capability answers about what this repository has *published*, so its input is a\nrelease: a version tag, the commit it points at, and the projection committed there.\nA benchmark fixture is a repository that has published nothing, and the honest answer\nin one is a refusal — so the case would time an error path and call it coverage.\nDistinct from `WaiverReason::ExternalDependency`: nothing outside this process is\nconsulted, and distinct from `WaiverReason::TransientState`: the history is durable,\nit simply does not exist yet where the benchmark runs."
+        - type: string
+          const: repository_declaration
+          description: "The capability answers from a declaration this repository keeps about its own records\n(the delivery board's lanes over this repository's milestones, share/board.yaml), and\nrefuses a record the declaration does not place. A benchmark fixture's records are in\nno such declaration, so its honest answer there is a refusal, and timing it would time\nan error path. The answer is proved over this repository by the capability's own tests."
       description: "Why an executable capability is not benchmarked. Typed, so that a waiver is a\nreviewable statement and never a convenience; `not_executable` is the registry's own\nreason for resources and is never written by hand."
     WorkStanding:
       oneOf:

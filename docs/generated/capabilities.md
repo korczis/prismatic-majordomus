@@ -77,7 +77,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 |---|---|---|---|---|---|---|---|---|---|
 | `artifacts.list` | `artifacts` | query | behaviorally_verified | `majordomus_artifacts` | `majordomus://artifacts` | `GET /api/v1/artifacts` | — | process, 8 entries, 5s | required |
 | `blackboard.snapshot` | `blackboard` | query | experimental | `majordomus_blackboard` | — | `GET /api/v1/blackboard` | `majordomus blackboard` | — | required |
-| `board.snapshot` | `board` | query | experimental | `majordomus_board_snapshot` | — | `GET /api/v1/board/snapshot` | `majordomus board snapshot` | — | required |
+| `board.snapshot` | `board` | query | experimental | `majordomus_board_snapshot` | — | `GET /api/v1/board/snapshot` | `majordomus board snapshot` | — | waived (repository_declaration) |
 | `brief.session` | `brief` | query | behaviorally_verified | `majordomus_brief` | — | `GET /api/v1/brief` | `majordomus brief` | — | required |
 | `capabilities.describe` | `capabilities` | query | behaviorally_verified | `majordomus_capability` | — | `GET /api/v1/capability` | `majordomus capabilities describe` | process, 512 entries | required |
 | `capabilities.list` | `capabilities` | query | behaviorally_verified | `majordomus_capabilities` | — | `GET /api/v1/capabilities` | `majordomus capabilities list` | process, 16 entries | required |

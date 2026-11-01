@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "1697159f57b41a8e1cc01289486fc484364d8746536979f1ff64b2f17dab078e",
+    "fingerprint": "5f7361cdc324d2c98b65b387b75135c9304c143d3b1a74c7ec290dfaaff4f7d6",
     "summary": {
       "total": 3635,
       "builtin": 221,
@@ -26,8 +26,8 @@
       "http_routes": 213,
       "cli_commands": 121,
       "modules": 95,
-      "benchmark_required": 182,
-      "benchmark_waived": 39,
+      "benchmark_required": 181,
+      "benchmark_waived": 40,
       "cached": 55
     },
     "builtin": [
@@ -1547,7 +1547,8 @@
           "delivery"
         ],
         "benchmark": {
-          "policy": "required"
+          "policy": "waived",
+          "reason": "repository_declaration"
         },
         "cache": {
           "policy": "disabled"
@@ -2670,6 +2671,11 @@
                     "type": "string",
                     "const": "published_history",
                     "description": "The capability answers about what this repository has *published*, so its input is a\nrelease: a version tag, the commit it points at, and the projection committed there.\nA benchmark fixture is a repository that has published nothing, and the honest answer\nin one is a refusal — so the case would time an error path and call it coverage.\nDistinct from `WaiverReason::ExternalDependency`: nothing outside this process is\nconsulted, and distinct from `WaiverReason::TransientState`: the history is durable,\nit simply does not exist yet where the benchmark runs."
+                  },
+                  {
+                    "type": "string",
+                    "const": "repository_declaration",
+                    "description": "The capability answers from a declaration this repository keeps about its own records\n(the delivery board's lanes over this repository's milestones, share/board.yaml), and\nrefuses a record the declaration does not place. A benchmark fixture's records are in\nno such declaration, so its honest answer there is a refusal, and timing it would time\nan error path. The answer is proved over this repository by the capability's own tests."
                   }
                 ],
                 "description": "Why an executable capability is not benchmarked. Typed, so that a waiver is a\nreviewable statement and never a convenience; `not_executable` is the registry's own\nreason for resources and is never written by hand."
@@ -3469,6 +3475,11 @@
                     "type": "string",
                     "const": "published_history",
                     "description": "The capability answers about what this repository has *published*, so its input is a\nrelease: a version tag, the commit it points at, and the projection committed there.\nA benchmark fixture is a repository that has published nothing, and the honest answer\nin one is a refusal — so the case would time an error path and call it coverage.\nDistinct from `WaiverReason::ExternalDependency`: nothing outside this process is\nconsulted, and distinct from `WaiverReason::TransientState`: the history is durable,\nit simply does not exist yet where the benchmark runs."
+                  },
+                  {
+                    "type": "string",
+                    "const": "repository_declaration",
+                    "description": "The capability answers from a declaration this repository keeps about its own records\n(the delivery board's lanes over this repository's milestones, share/board.yaml), and\nrefuses a record the declaration does not place. A benchmark fixture's records are in\nno such declaration, so its honest answer there is a refusal, and timing it would time\nan error path. The answer is proved over this repository by the capability's own tests."
                   }
                 ],
                 "description": "Why an executable capability is not benchmarked. Typed, so that a waiver is a\nreviewable statement and never a convenience; `not_executable` is the registry's own\nreason for resources and is never written by hand."
@@ -92211,7 +92222,7 @@
     ]
   },
   "index": {
-    "fingerprint": "6daaef122d6fb6bd6c6bdffd5f69befd5e83399c1f6f0641c209c50577917e08",
+    "fingerprint": "c0c710d01932c65ab3408105aa6749a0973fd1b0a56c8bc5edf50b8c9ff3355f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -169647,64 +169658,6 @@
         "route": "GET /api/v1/blackboard"
       },
       {
-        "key": "board.snapshot|direct|default",
-        "kind": "capability",
-        "transport": "direct",
-        "id": "board.snapshot",
-        "module": "board",
-        "case": "default",
-        "cached": false
-      },
-      {
-        "key": "board.snapshot|direct|named",
-        "kind": "capability",
-        "transport": "direct",
-        "id": "board.snapshot",
-        "module": "board",
-        "case": "named",
-        "cached": false
-      },
-      {
-        "key": "board.snapshot|mcp|default",
-        "kind": "capability",
-        "transport": "mcp",
-        "id": "board.snapshot",
-        "module": "board",
-        "case": "default",
-        "cached": false,
-        "tool": "majordomus_board_snapshot"
-      },
-      {
-        "key": "board.snapshot|mcp|named",
-        "kind": "capability",
-        "transport": "mcp",
-        "id": "board.snapshot",
-        "module": "board",
-        "case": "named",
-        "cached": false,
-        "tool": "majordomus_board_snapshot"
-      },
-      {
-        "key": "board.snapshot|http|default",
-        "kind": "capability",
-        "transport": "http",
-        "id": "board.snapshot",
-        "module": "board",
-        "case": "default",
-        "cached": false,
-        "route": "GET /api/v1/board/snapshot"
-      },
-      {
-        "key": "board.snapshot|http|named",
-        "kind": "capability",
-        "transport": "http",
-        "id": "board.snapshot",
-        "module": "board",
-        "case": "named",
-        "cached": false,
-        "route": "GET /api/v1/board/snapshot"
-      },
-      {
         "key": "brief.session|direct|default",
         "kind": "capability",
         "transport": "direct",
@@ -177541,22 +177494,25 @@
           "subject": "board.snapshot",
           "module": "board",
           "transport": "direct",
-          "state": "covered",
-          "cases": 2
+          "state": "waived",
+          "cases": 0,
+          "reason": "repository_declaration"
         },
         {
           "subject": "board.snapshot",
           "module": "board",
           "transport": "mcp",
-          "state": "covered",
-          "cases": 2
+          "state": "waived",
+          "cases": 0,
+          "reason": "repository_declaration"
         },
         {
           "subject": "board.snapshot",
           "module": "board",
           "transport": "http",
-          "state": "covered",
-          "cases": 2
+          "state": "waived",
+          "cases": 0,
+          "reason": "repository_declaration"
         },
         {
           "subject": "brief.session",
@@ -182184,23 +182140,23 @@
       "tallies": {
         "direct": {
           "required": 221,
-          "covered": 182,
+          "covered": 181,
           "missing": 0,
-          "waived": 39,
+          "waived": 40,
           "inapplicable": 0
         },
         "http": {
           "required": 213,
-          "covered": 182,
+          "covered": 181,
           "missing": 0,
-          "waived": 31,
+          "waived": 32,
           "inapplicable": 0
         },
         "mcp": {
           "required": 207,
-          "covered": 177,
+          "covered": 176,
           "missing": 0,
-          "waived": 30,
+          "waived": 31,
           "inapplicable": 0
         },
         "system": {
@@ -182212,9 +182168,9 @@
         },
         "total": {
           "required": 655,
-          "covered": 555,
+          "covered": 552,
           "missing": 0,
-          "waived": 100,
+          "waived": 103,
           "inapplicable": 0
         }
       }

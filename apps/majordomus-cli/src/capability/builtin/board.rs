@@ -16,7 +16,9 @@ use serde_json::Value;
 use crate::board::{self, BoardDeclaration, Inputs, Master, PrItem, Queue};
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{CachePolicy, CliExposure, Exposure, Stability};
+use crate::capability::model::{
+    BenchmarkPolicy, CachePolicy, CliExposure, Exposure, Stability, WaiverReason,
+};
 use crate::capability::module::ModuleDescriptor;
 use crate::plan::{Plan, PlanMilestone};
 use crate::{capability, module};
@@ -181,6 +183,7 @@ pub fn module() -> ModuleDescriptor {
                 },
                 tags: ["board", "plan", "delivery"],
                 cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::RepositoryDeclaration },
                 handler: board_snapshot,
             },
         ],
@@ -266,6 +269,133 @@ mod tests {
         );
         match board_snapshot(&ctx, BoardSnapshotInput::default()) {
             Err(CapabilityError::Refused(m)) => assert!(m.contains("unlaned-outcome"), "{m}"),
+            other => panic!("not refused: {other:?}"),
+        }
+    }
+
+    fn git(root: &Path, args: &[&str]) -> String {
+        let out = std::process::Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(["-c", "user.email=t@example.invalid", "-c", "user.name=t"])
+            .args([
+                "-c",
+                "commit.gpgsign=false",
+                "-c",
+                "core.hooksPath=/dev/null",
+            ])
+            .args(args)
+            .output()
+            .expect("git runs");
+        assert!(
+            out.status.success(),
+            "git {args:?}: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+        String::from_utf8_lossy(&out.stdout).trim().to_string()
+    }
+
+    /// A recorded queue is listed item by item, with its head shortened, and a train's top
+    /// is told apart from a pull request of one change.
+    #[test]
+    fn an_observed_queue_is_listed_item_by_item() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let root = repo.root();
+        git(root, &["init", "-q", "-b", "master"]);
+        git(root, &["add", "-A"]);
+        git(root, &["commit", "-qm", "fixture"]);
+        let master = git(root, &["rev-parse", "HEAD"]);
+        git(root, &["update-ref", "refs/remotes/origin/master", &master]);
+        git(root, &["commit", "-q", "--allow-empty", "-m", "a change"]);
+        let head = git(root, &["rev-parse", "HEAD"]);
+        git(root, &["reset", "-q", "--hard", &master]);
+        let pr = |number: u64, head_ref: &str| -> crate::integration::PullRequestObservation {
+            serde_json::from_value(serde_json::json!({
+                "number": number, "title": format!("pull request {number}"), "author": "a",
+                "head_ref": head_ref, "head_sha": head, "base_ref": "master", "draft": false,
+                "created_at": "t0", "updated_at": "t0",
+            }))
+            .expect("a pull request")
+        };
+        let obs = crate::integration::ForgeObservation {
+            schema: crate::integration::OBSERVATION_SCHEMA,
+            repository: "owner/repo".into(),
+            base: "master".into(),
+            base_sha: master.clone(),
+            observed_at: "t0".into(),
+            required_checks: Some(vec!["ci".into()]),
+            review_policy: Some(Default::default()),
+            up_to_date_required: Some(true),
+            merge_methods: Some(vec!["merge".into()]),
+            pull_requests: vec![pr(7, "fix/one-change"), pr(8, "integration/train-1")],
+            resolved: Default::default(),
+            delete_branch_on_merge: None,
+        };
+        crate::integration::store_observation(root, &obs).expect("the observation is stored");
+        let Queue::Observed { observed_at, items } = queue(root) else {
+            panic!("the recorded queue was not read")
+        };
+        assert_eq!(observed_at, "t0");
+        let item = |n: u64| items.iter().find(|i| i.n == n).expect("the item");
+        assert!(!item(7).train && item(8).train);
+        assert_eq!(item(7).t, "pull request 7");
+        assert_eq!(item(7).b, "fix/one-change");
+        assert_eq!(item(7).head.len(), 11, "{:?}", item(7));
+    }
+
+    /// The context of `repo` with its share replaced by `share`.
+    fn with_share(repo: &crate::synthetic::SyntheticRepository, share: &Path) -> Context {
+        let mut index = repo.index().expect("an index");
+        index.share = Some(share.to_path_buf());
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_modules(crate::capability::builtin::modules())
+            .with_index(&index)
+            .build()
+            .expect("a registry");
+        Context::new(std::sync::Arc::new(index), std::sync::Arc::new(registry))
+    }
+
+    /// What the snapshot cannot read is the executable's own failure, never a board: a lane
+    /// declaration that does not parse and an evidence ledger that cannot be read; an issue
+    /// alone over the document bound is refused, as the board cannot carry it.
+    #[test]
+    fn a_declaration_or_a_ledger_it_cannot_read_fails_and_an_oversized_issue_is_refused() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let share = tempfile::tempdir().expect("a share");
+        std::fs::write(share.path().join(board::BOARD_FILE), "lanes: [unclosed\n").unwrap();
+        let ctx = with_share(&repo, share.path());
+        assert!(matches!(
+            board_snapshot(&ctx, BoardSnapshotInput::default()),
+            Err(CapabilityError::Internal(_))
+        ));
+
+        let ledger = repo.root().join(crate::evidence::LEDGER_PATH);
+        std::fs::create_dir_all(ledger.parent().unwrap()).unwrap();
+        std::fs::write(&ledger, r#"{"version": 99, "executions": []}"#).unwrap();
+        let ctx = repo.context().expect("a context");
+        assert!(matches!(
+            board_snapshot(&ctx, BoardSnapshotInput::default()),
+            Err(CapabilityError::Internal(m)) if m.contains("99")
+        ));
+
+        let planned = crate::synthetic::SyntheticRepository::planned();
+        let issue = planned.root().join(".ai/repo/project/issues/I0001.yaml");
+        let text = std::fs::read_to_string(&issue).unwrap();
+        let long = "x".repeat(board::DOCUMENT_LIMIT + 1);
+        std::fs::write(
+            &issue,
+            text.replace("title: The work of I0001", &format!("title: {long}")),
+        )
+        .unwrap();
+        let lanes = tempfile::tempdir().expect("a share");
+        std::fs::write(
+            lanes.path().join(board::BOARD_FILE),
+            "version: 1\nlanes:\n  - key: all\n    title: All\n    milestones: [m-first, m-second, m-loop]\n",
+        )
+        .unwrap();
+        let ctx = with_share(&planned, lanes.path());
+        match board_snapshot(&ctx, BoardSnapshotInput::default()) {
+            Err(CapabilityError::Refused(m)) => assert!(m.contains("alone is over"), "{m}"),
             other => panic!("not refused: {other:?}"),
         }
     }
