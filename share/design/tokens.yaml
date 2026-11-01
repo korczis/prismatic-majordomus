@@ -242,6 +242,40 @@ roles:
     light: fuchsia-600
     dark: fuchsia-400
 
+  # Code. Every code block on every surface is highlighted by one engine (ADR 0166 §7), which
+  # writes a class per kind of token and never a colour; share/design/code.css, generated from
+  # this list, gives each class the role below. Light is each family's 700 step, because the
+  # 600 steps of orange and emerald read under 4.5:1 on the sunken ground a code block sits
+  # on; dark is the 400 step, the accent's pairing. A comment is muted text, which it is.
+  code-comment:
+    about: a comment in a code block; quiet, like every secondary text
+    light: gray-500
+    dark: gray-400
+  code-keyword:
+    about: a keyword or a storage word in a code block (fn, let, if, return)
+    light: violet-700
+    dark: violet-400
+  code-string:
+    about: a string, a plain YAML value, an inserted diff line in a code block
+    light: emerald-700
+    dark: emerald-400
+  code-constant:
+    about: a number, a boolean, a language constant in a code block
+    light: orange-700
+    dark: orange-400
+  code-function:
+    about: a function, a command, a heading or a link in a code block
+    light: blue-700
+    dark: blue-400
+  code-type:
+    about: a type, a class, a namespace or a section in a code block
+    light: cyan-700
+    dark: cyan-400
+  code-tag:
+    about: a key, a tag, an attribute, a variable, a deleted diff line in a code block
+    light: rose-700
+    dark: rose-400
+
 # Status semantics. Five meanings, each with a text colour, a ground and a border per
 # theme; and the vocabulary — every state word any surface renders — filed under the
 # meaning it carries. A word is coloured by the meaning it is filed under and by nothing

@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [truthful-plan-surfaces](https://majordomus.dev/plan/truthful-plan-surfaces/) | ACTIVE | 20/45 | 20 | 5 | 0 | 0 | 0 | Every plan surface draws every milestone in the graph's order, each issue with its declared status beside the delivery stage inferred from branches, pull requests, merges, tags and the published site; a merged but unrecorded issue turns the trunk red past a window; no milestone carries a typed version; every relationship is a drawn, clickable diagram; every code block is highlighted by one engine with one token-derived palette. |
+| [truthful-plan-surfaces](https://majordomus.dev/plan/truthful-plan-surfaces/) | ACTIVE | 20/45 | 19 | 5 | 0 | 1 | 0 | Every plan surface draws every milestone in the graph's order, each issue with its declared status beside the delivery stage inferred from branches, pull requests, merges, tags and the published site; a merged but unrecorded issue turns the trunk red past a window; no milestone carries a typed version; every relationship is a drawn, clickable diagram; every code block is highlighted by one engine with one token-derived palette. |
 
 ## Issues
 
@@ -22,7 +22,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I2744](https://majordomus.dev/plan/i2744/) | DONE | 1 | I2740 | The UI roadmap reads delivery and the releases themselves, and its now is where work is |
 | [I2745](https://majordomus.dev/plan/i2745/) | DONE | 0 | — | The landing page states no present it does not read |
 | [I2746](https://majordomus.dev/plan/i2746/) | DONE | 0 | — | Every published tree draws its diagrams, and every diagram is the interactive viewer |
-| [I2747](https://majordomus.dev/plan/i2747/) | READY | 0 | — | Every code block on every surface is highlighted by one engine with one palette |
+| [I2747](https://majordomus.dev/plan/i2747/) | VERIFY | 0 | — | Every code block on every surface is highlighted by one engine with one palette |
 | [I2748](https://majordomus.dev/plan/i2748/) | BLOCKED | 3 | I2741, I2749, I2750 | The drift already on the trunk is settled before the gate is made blocking |
 | [I2749](https://majordomus.dev/plan/i2749/) | DONE | 2 | I2741 | A commit that only plans an issue is not its delivery |
 | [I2750](https://majordomus.dev/plan/i2750/) | READY | 2 | I2741 | The trunk's drift gate reads the forge before it judges |
@@ -66,54 +66,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | level | code | subject | message |
 |---|---|---|---|
 | WARN | `no_evidence_required` | `I3079` | requires no evidence; nothing gates its completion |
-| WARN | `scope_conflict` | `I2747` | shares .ai/repo/automation/inventory.jsonl with I2846; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I2901; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I2902; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I2903; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I2904; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I2908; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I2909; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I2910; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I2911; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I2912; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I2913; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares site/config.toml with I2914; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I2918; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I2919; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I3003; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares site/config.toml with I3004; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares share/ui/ui.js with I3005; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I3079; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares .ai/repo/automation/inventory.jsonl with I3154; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I3155; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I3163; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I3166; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I3179; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I3214; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares share/design with I3215; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I3219; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I3226; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I3318; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I3440; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I3441; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I3443; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I3447; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I3449; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I3756; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I3757; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I3767; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares scripts/site-build with I3769; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I3774; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares share/ui/ui.js with I3793; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares site/config.toml with I3820; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares site/config.toml with I3829; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I3941; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/Cargo.toml with I4302; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I4327; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I4330; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares share/design with I4400; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares .ai/repo/automation/inventory.jsonl with I4468; they may not run concurrently |
-| WARN | `scope_conflict` | `I2747` | shares .ai/repo/automation/inventory.jsonl with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3079` | shares share/ui/src/ui.css with I3214; they may not run concurrently |
 | WARN | `scope_conflict` | `I3079` | shares .ai/repo/project/issues/I3079.yaml with I3246; they may not run concurrently |
 | WARN | `scope_conflict` | `I3079` | shares .ai/repo/project/issues/I3079.yaml with I3373; they may not run concurrently |

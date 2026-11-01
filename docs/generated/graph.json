@@ -44259,11 +44259,15 @@
             ".ai/repo/automation/inventory.jsonl"
           ],
           "slug": "one-highlighter",
-          "updated_at": "2026-10-16",
+          "started_at": "2026-10-16T10:21:43Z",
+          "started_event": "sha256:21d84989640d094780d4cc28233da244e1f13e6ab74df0c713f51a7facac1bc3",
+          "updated_at": "2026-10-16T12:57:03Z",
           "validation": [
             "scripts/ci/highlighter-check",
             "bash test/run.sh 3107_one_highlighter"
           ],
+          "verified_at": "2026-10-16T12:57:03Z",
+          "verified_event": "sha256:5b8826eda85f84415eae215cdb03c2d59fe5032c1036d86a26ec587df4829923",
           "why": "ADR 0166 decision 7. Code is highlighted by syntect (site), highlight.js 11.9 fetched from a CDN (share/ui/ui.js) and the handbook's own scripts, with three palettes."
         }
       },
@@ -99997,6 +100001,13 @@
         "source": "test/cases/3106_every_published_tree_draws_its_diagrams.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3107_one_highlighter.sh",
+        "kind": "test",
+        "label": "test/cases/3107_one_highlighter.sh",
+        "route": "/cockpit/objects/test/test-cases-3107-one-highlighter-sh",
+        "source": "test/cases/3107_one_highlighter.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/310_rustdoc_projection.sh",
         "kind": "test",
         "label": "test/cases/310_rustdoc_projection.sh",
@@ -147534,6 +147545,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3107_one_highlighter.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/310_rustdoc_projection.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -153610,8 +153626,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4192,
-      "edges": 9633,
+      "nodes": 4193,
+      "edges": 9634,
       "acyclic": false,
       "truncated": false
     }

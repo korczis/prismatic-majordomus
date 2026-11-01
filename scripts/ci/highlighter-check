@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# highlighter-check — every code block on every surface is highlighted by one engine.
+#
+# ADR 0166 §7: the site's code is highlighted by Zola, whose engine is giallo; the executable
+# embeds the same giallo for the Cockpit, the UI and the reports (apps/majordomus-cli/src/
+# highlight.rs); the handbook's code is highlighted at build time by the same Zola
+# (handbook/code.py); and one stylesheet generated from the design tokens,
+# share/design/code.css, colours all of them. Until 2026-10-16 there were three: syntect-era
+# palettes on the site, highlight.js 11.9 fetched from cdnjs by the handbook's reader with a
+# palette of its own, and plain text in the Cockpit. A second highlighter is a second palette
+# and a second tokeniser, so the same block reads differently on two surfaces.
+#
+# What is refused: anything a surface ships that loads, calls or styles another highlighter —
+# highlight.js (`hljs`, `highlight.min.js`, `@highlightjs`), Prism (`prismjs`, `Prism.highlight`,
+# `prism.min.js`), Shiki (`shiki`, `codeToHtml`), and any CDN path to one of them.
+#
+# Where it looks: the files a surface is built from — the site's templates, scripts, styles and
+# static assets, the shared design and UI assets under share/, the handbook's editions and
+# builders, the executable's sources (which write HTML) and the Node manifest (a dependency
+# is a highlighter on its way in). Prose (`*.md`) is not a surface's code and may name a
+# highlighter to explain why it is gone, and so may the records the site's datasets project
+# (site/data/: the plan's issues, the registry's descriptions) and the translation memory that
+# holds that prose and those records in another language (site/i18n/<lang>/memory/); the
+# cases are not scanned.
+#
+#   scripts/ci/highlighter-check     report and refuse
+#
+# MJ_ROOT points the scan at another tree, which is how the case drives it over a fixture.
+#
+# Exit: 0 one highlighter, 10 a second one found, 12 unusable.
+set -eu
+set -o pipefail
+
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+[ -d "$ROOT" ] || { echo "highlighter-check: $ROOT is not a directory" >&2; exit 12; }
+cd "$ROOT"
+
+PATTERN='hljs|highlight(\.min)?\.js|highlightjs|@highlightjs|prismjs|prism(\.min)?\.(js|css)|Prism\.highlight|(^|[^A-Za-z])shiki([^A-Za-z]|$)|codeToHtml'
+
+# The surfaces, as tracked files when the tree is a git work tree and as a walk otherwise
+# (a fixture copied without its index). The same set either way.
+surfaces() {
+  local roots='site share handbook apps/majordomus-cli/src package.json'
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1 && [ -n "$(git ls-files -- site share handbook 2>/dev/null | head -1)" ]; then
+    # shellcheck disable=SC2086
+    git ls-files -- $roots
+  else
+    # shellcheck disable=SC2086
+    find $roots -type f 2>/dev/null | LC_ALL=C sort
+  fi | grep -vE '\.md$|(^|/)node_modules/|^site/public/|^site/data/|^site/i18n/[^/]+/memory/' || true
+}
+
+files="$(surfaces)"
+scanned="$(printf '%s\n' "$files" | grep -c . || true)"
+# one grep over every file; -H names the file even when the list holds a single one
+hits="$(printf '%s\n' "$files" | grep . | tr '\n' '\0' | xargs -0 grep -nHE "$PATTERN" 2>/dev/null || true)"
+found=0
+while IFS= read -r hit; do
+  [ -n "$hit" ] || continue
+  f="${hit%%:*}"; rest="${hit#*:}"
+  printf '%s:%s\n' "$f" "${rest%%:*}"
+  printf '  found:      %s\n' "$(printf '%s' "${rest#*:}" | sed -E 's/^[[:space:]]+//' | cut -c1-160)"
+  printf '  problem:    a second highlighter on a surface; every code block is highlighted by giallo (ADR 0166 §7)\n'
+  printf '  correction: highlight through the one engine — Zola on the site, crate::highlight in the executable, handbook/code.py in the handbook — and colour with share/design/code.css\n'
+  found=$((found + 1))
+done <<EOF
+$hits
+EOF
+
+[ "$scanned" -gt 0 ] || { echo "highlighter-check: no surface file found under $ROOT; nothing was measured" >&2; exit 12; }
+if [ "$found" -gt 0 ]; then
+  echo "highlighter-check: $found reference(s) to a second highlighter in $scanned surface file(s)"
+  exit 10
+fi
+echo "highlighter-check: one highlighter — $scanned surface file(s), none loads, calls or styles another"
