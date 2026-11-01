@@ -57,6 +57,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3298` | shares docs/generated/economics.json with I3829; they may not run concurrently |
 | WARN | `scope_conflict` | `I3298` | shares docs/generated/economics.json with I3841; they may not run concurrently |
 | WARN | `scope_conflict` | `I3298` | shares .ai/repo/benchmarks/economics/methodology.yaml with I3861; they may not run concurrently |
+| WARN | `scope_conflict` | `I3298` | shares docs/generated/economics.json with I4294; they may not run concurrently |
 | WARN | `scope_conflict` | `I3298` | shares docs/generated/economics.json with I4352; they may not run concurrently |
 | WARN | `scope_conflict` | `I3298` | shares apps/majordomus-cli/src/economics with I4373; they may not run concurrently |
 | WARN | `scope_conflict` | `I3298` | shares docs/generated/economics.json with I4400; they may not run concurrently |
@@ -75,6 +76,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3299` | shares docs/generated/benchmarks.json with I3829; they may not run concurrently |
 | WARN | `scope_conflict` | `I3299` | shares docs/generated/benchmarks.json with I3841; they may not run concurrently |
 | WARN | `scope_conflict` | `I3299` | shares lib/plan.sh with I4261; they may not run concurrently |
+| WARN | `scope_conflict` | `I3299` | shares docs/generated/benchmarks.json with I4294; they may not run concurrently |
 | WARN | `scope_conflict` | `I3299` | shares lib/plan.sh with I4322; they may not run concurrently |
 | WARN | `scope_conflict` | `I3299` | shares lib/plan.sh with I4329; they may not run concurrently |
 | WARN | `scope_conflict` | `I3299` | shares docs/generated/benchmarks.json with I4352; they may not run concurrently |

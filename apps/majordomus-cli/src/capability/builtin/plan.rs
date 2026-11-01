@@ -1224,6 +1224,9 @@ fn plan_transition(
         &at,
         &vocabulary,
         &ctx.index.repository.git,
+        // The episode of the connection that made this call, when it attached one: an MCP
+        // transition names its own episode, not the one the server was started in.
+        ctx.episode_key().as_deref(),
     )
     .map_err(|e| match e {
         TransitionError::NoSuchIssue(_) => CapabilityError::NotFound(e.to_string()),

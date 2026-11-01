@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [fly-deployment](https://majordomus.dev/plan/fly-deployment/) | ACTIVE | 5/29 | 9 | 15 | 0 | 0 | 9 | One canonical deployment object under .ai/repo/deployments/ describes the image; a typed Rust model parses and validates it; the Dockerfile, its ignore file, the GHCR image that docker-image.yml and release.yml build, its smoke derived from the route registry, the doctor checks, the documentation and the cockpit view are projections of that object and of the capability registry, each checked for drift. The published image runs as a non-root user, carries no secret and no developer path, answers live and ready in its smoke, and has measured size, cold-start and memory baselines. Re-scoped 2026-10-14 from a Fly.io deployment, which the owner disconnected on 2026-10-12. |
+| [fly-deployment](https://majordomus.dev/plan/fly-deployment/) | ACTIVE | 6/29 | 8 | 15 | 0 | 0 | 9 | One canonical deployment object under .ai/repo/deployments/ describes the image; a typed Rust model parses and validates it; the Dockerfile, its ignore file, the GHCR image that docker-image.yml and release.yml build, its smoke derived from the route registry, the doctor checks, the documentation and the cockpit view are projections of that object and of the capability registry, each checked for drift. The published image runs as a non-root user, carries no secret and no developer path, answers live and ready in its smoke, and has measured size, cold-start and memory baselines. Re-scoped 2026-10-14 from a Fly.io deployment, which the owner disconnected on 2026-10-12. |
 
 ## Issues
 
@@ -21,7 +21,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I0904](https://majordomus.dev/plan/i0904/) | DONE | 2 | I0902 | The listen address is one fact with two projections |
 | [I0905](https://majordomus.dev/plan/i0905/) | DONE | 2 | I0902 | Liveness and readiness are registered capabilities, not router hacks |
 | [I0906](https://majordomus.dev/plan/i0906/) | READY | 3 | I0904 | Termination is graceful and proved against the real container |
-| [I0907](https://majordomus.dev/plan/i0907/) | READY | 2 | I0902 | The running process says what it is, from an allowlist |
+| [I0907](https://majordomus.dev/plan/i0907/) | DONE | 2 | I0902 | The running process says what it is, from an allowlist |
 | [I0908](https://majordomus.dev/plan/i0908/) | READY | 2 | I0902 | A hosted process has no repository, and says so instead of failing |
 | [I0909](https://majordomus.dev/plan/i0909/) | READY | 3 | I0902, I0904, I0905 | The production image is a generated projection of the build specification |
 | [I0910](https://majordomus.dev/plan/i0910/) | BLOCKED | 4 | I0909 | The release profile is chosen by measurement, not by folklore |
@@ -76,11 +76,13 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3820` | shares docs with I4006; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4007; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4008; they may not run concurrently |
+| WARN | `scope_conflict` | `I3820` | shares docs with I4250; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4261; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4265; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4268; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4290; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4292; they may not run concurrently |
+| WARN | `scope_conflict` | `I3820` | shares docs with I4294; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares site with I4298; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares .ai/repo/adrs/0219-a-deployment-names-its-provider-and-every-provider-file-is-derived.md with I4307; they may not run concurrently |
@@ -95,6 +97,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3820` | shares docs with I4330; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4331; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4333; they may not run concurrently |
+| WARN | `scope_conflict` | `I3820` | shares docs with I4334; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4337; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4341; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4343; they may not run concurrently |

@@ -76,6 +76,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3322` | shares docs/MESH.md with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares lib/doctor.sh with I4323; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares docs/MESH.md with I4327; they may not run concurrently |
+| WARN | `scope_conflict` | `I3322` | shares lib/doctor.sh with I4336; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares docs/MESH.md with I4343; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares .ai/repo/policy.yaml with I4349; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares lib/doctor.sh with I4416; they may not run concurrently |
@@ -84,6 +85,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3322` | shares lib/capture.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares .ai/repo/policy.yaml with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3829` | shares docs/generated with I3841; they may not run concurrently |
+| WARN | `scope_conflict` | `I3829` | shares docs/generated with I4294; they may not run concurrently |
 | WARN | `scope_conflict` | `I3829` | shares site with I4298; they may not run concurrently |
 | WARN | `scope_conflict` | `I3829` | shares docs/MCP.md with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I3829` | shares site with I4317; they may not run concurrently |

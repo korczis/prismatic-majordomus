@@ -31,6 +31,7 @@
 
 pub(crate) mod bench;
 pub(crate) mod blackboard;
+pub(crate) mod board;
 pub(crate) mod brief;
 pub(crate) mod capabilities;
 pub(crate) mod command_graph;
@@ -41,6 +42,8 @@ pub(crate) mod convergence;
 pub(crate) mod dashboard;
 pub(crate) mod delivery;
 pub(crate) mod deploy;
+pub(crate) mod design;
+pub(crate) mod design_licence;
 pub(crate) mod devcontext;
 pub(crate) mod devtask;
 pub(crate) mod distribution;
@@ -124,10 +127,12 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Entity(args) => entity::run(args),
         Command::Shell(args) => shell::run(args),
         Command::Layout(args) => layout::run(args),
+        Command::Design(args) => design::run(args),
         Command::Pack(args) => pack::run(args),
         Command::Dashboard(args) => dashboard::run(args),
         Command::Brief(args) => brief::run(args),
         Command::Blackboard(args) => blackboard::run(args),
+        Command::Board(args) => board::run(args),
         Command::Skills(args) => skills::run(args),
         Command::Knowledge(args) => knowledge::run(args),
         Command::Continuity(args) => continuity::run(args),
@@ -204,6 +209,9 @@ mod tests {
             (&["majordomus", "blackboard", "--this-checkout"], |c| {
                 matches!(c, Command::Blackboard(_))
             }),
+            (&["majordomus", "board", "snapshot"], |c| {
+                matches!(c, Command::Board(_))
+            }),
             (
                 &["majordomus", "devcontext", "compile", "--issue", "I1"],
                 |c| matches!(c, Command::Devcontext(_)),
@@ -217,6 +225,9 @@ mod tests {
             ),
             (&["majordomus", "continuity", "status"], |c| {
                 matches!(c, Command::Continuity(_))
+            }),
+            (&["majordomus", "design", "kit", "--check"], |c| {
+                matches!(c, Command::Design(_))
             }),
             (
                 &["majordomus", "continuity", "resume", "--record", "a1b2"],

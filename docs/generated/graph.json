@@ -88,6 +88,15 @@
         "status": "query"
       },
       {
+        "id": "capability:board.snapshot",
+        "kind": "capability",
+        "label": "board.snapshot",
+        "summary": "The delivery board's documents",
+        "route": "/cockpit/capabilities/board.snapshot",
+        "source": "apps/majordomus-cli/src/capability/builtin/board.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:brief.session",
         "kind": "capability",
         "label": "brief.session",
@@ -363,6 +372,33 @@
         "label": "design.explain",
         "summary": "What a design token means",
         "route": "/cockpit/capabilities/design.explain",
+        "source": "apps/majordomus-cli/src/capability/builtin/design.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:design.kit",
+        "kind": "capability",
+        "label": "design.kit",
+        "summary": "Whether the interface is built on the kit",
+        "route": "/cockpit/capabilities/design.kit",
+        "source": "apps/majordomus-cli/src/capability/builtin/design.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:design.kit.adopt",
+        "kind": "capability",
+        "label": "design.kit.adopt",
+        "summary": "Declare the kit in the repository",
+        "route": "/cockpit/capabilities/design.kit.adopt",
+        "source": "apps/majordomus-cli/src/capability/builtin/design.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:design.licence",
+        "kind": "capability",
+        "label": "design.licence",
+        "summary": "Whether a public tree holds a licensed kit's files",
+        "route": "/cockpit/capabilities/design.licence",
         "source": "apps/majordomus-cli/src/capability/builtin/design.rs",
         "status": "query"
       },
@@ -2860,6 +2896,22 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/design/kit.rs",
+        "kind": "file",
+        "label": "kit.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/design/kit.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/design/licence.rs",
+        "kind": "file",
+        "label": "licence.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/design/licence.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/design/mod.rs",
         "kind": "file",
         "label": "mod.rs",
@@ -4409,6 +4461,22 @@
         "label": "figure.css",
         "summary": "named by the layer; not an object of this index",
         "source": "share/design/figure.css",
+        "external": true
+      },
+      {
+        "id": "file:share/design/kits/flowbite-pro.rule.md",
+        "kind": "file",
+        "label": "flowbite-pro.rule.md",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/design/kits/flowbite-pro.rule.md",
+        "external": true
+      },
+      {
+        "id": "file:share/design/kits/flowbite-pro.yaml",
+        "kind": "file",
+        "label": "flowbite-pro.yaml",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/design/kits/flowbite-pro.yaml",
         "external": true
       },
       {
@@ -7550,7 +7618,11 @@
             "file:share/mods/claude-code/majordomus-brief/hooks/register.ts",
             "file:lib/capture.sh",
             "file:docs/BRIEF.md",
-            "test:test/cases/1065_a_session_briefs_itself.sh"
+            "file:.ai/repo/adrs/0207-a-new-mechanism-is-admitted-only-with-the-measured-problem-it-re.md",
+            "file:.ai/repo/project/issues/I4250.yaml",
+            "file:.ai/repo/project/issues/I4293.yaml",
+            "test:test/cases/1065_a_session_briefs_itself.sh",
+            "test:test/cases/4250_the_brief_reports_only_what_changed.sh"
           ],
           "tags": [
             "session",
@@ -9609,6 +9681,32 @@
             "delivery",
             "pages",
             "plan"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0230",
+        "kind": "adr",
+        "label": "adr-0230",
+        "summary": "Flowbite Pro is adapted onto Tailwind 4 and Flowbite 4, a brand's colour is the primary scale, and one capability judges every repository's interface against it",
+        "route": "/cockpit/objects/adr/adr-0230",
+        "source": ".ai/repo/adrs/0230-flowbite-pro-is-adapted-onto-tailwind-4.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-28",
+          "related": [
+            "file:share/design/kits/flowbite-pro.yaml",
+            "file:share/design/kits/flowbite-pro.rule.md",
+            "file:apps/majordomus-cli/src/design/kit.rs",
+            "file:apps/majordomus-cli/src/design/licence.rs",
+            "file:.ai/repo/project/issues/I4334.yaml",
+            "file:.ai/repo/project/issues/I4336.yaml",
+            "test:test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh"
+          ],
+          "tags": [
+            "design",
+            "ui",
+            "enforcement"
           ]
         }
       },
@@ -21006,7 +21104,8 @@
             "plan",
             "devtask",
             "intents",
-            "intent_realization"
+            "intent_realization",
+            "board"
           ],
           "related": [
             "worktrees",
@@ -21741,6 +21840,13 @@
         "label": "lib/finish.sh",
         "route": "/cockpit/objects/implementation/lib-finish-sh",
         "source": "lib/finish.sh"
+      },
+      {
+        "id": "majordomus://implementation/lib/fleet.sh",
+        "kind": "implementation",
+        "label": "lib/fleet.sh",
+        "route": "/cockpit/objects/implementation/lib-fleet-sh",
+        "source": "lib/fleet.sh"
       },
       {
         "id": "majordomus://implementation/lib/gates.sh",
@@ -27717,8 +27823,9 @@
             "A test proves an environment variable outside the allowlist never appears in the output, including one whose name resembles a secret",
             "The metadata read is a registered capability and appears in OpenAPI and the reference without a second registration"
           ],
+          "completed_at": "2026-10-27T15:52:16Z",
+          "completed_event": "sha256:b465e17da69ebe2bae0553e63250c2e9a8d035d2e020b7274194b28354890efe",
           "created_at": "2026-09-06",
-          "current_state": "about.rs carries the executable's own description. Nothing reports the build revision or any platform fact, because nothing is deployed.",
           "depends_on": [
             "I0902"
           ],
@@ -27743,11 +27850,15 @@
             "apps/majordomus-cli/build.rs"
           ],
           "slug": "build-and-runtime-metadata",
-          "updated_at": "2026-09-06",
+          "started_at": "2026-10-27T15:20:43Z",
+          "started_event": "sha256:675c2f3786e497fe2889fd684730d324850e004fce103776a94cb95e825e9451",
+          "updated_at": "2026-10-27T15:52:16Z",
           "validation": [
             "cargo test --workspace --all-features",
             "majordomus generate --check"
-          ]
+          ],
+          "verified_at": "2026-10-27T15:51:38Z",
+          "verified_event": "sha256:177249a98d148fe651a09f394c31a3cfb9e7575edeea9c88cf801df78ff970c3"
         }
       },
       {
@@ -41713,6 +41824,8 @@
             "No offers selects none and says so",
             "The serialized form cannot carry a credential"
           ],
+          "completed_at": "2026-10-28T18:34:09Z",
+          "completed_event": "sha256:9c3026eeec89c4a43db4c5a3cff66856aff08fd2f4afc684839404c969779d61",
           "created_at": "2026-10-13",
           "evidence_required": [
             "build_cache_model_unit_tests"
@@ -41731,11 +41844,15 @@
             "share/schemas/majordomus/mesh-declaration/"
           ],
           "slug": "a-build-cache-offer-is-a-typed-model-and-selection-is-a-pure-function",
-          "updated_at": "2026-10-13",
+          "started_at": "2026-10-28T18:32:38Z",
+          "started_event": "sha256:32a88170161f983c4bb5fc0c1d17e61100f944b15f7d9f2754607061a626b2b4",
+          "updated_at": "2026-10-28T18:34:09Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::build_cache"
-          ]
+          ],
+          "verified_at": "2026-10-28T18:33:15Z",
+          "verified_event": "sha256:336085913d46a80887e373aec70efc051c7367243d5122d41d28d6ca3ff88553"
         }
       },
       {
@@ -71644,6 +71761,54 @@
         }
       },
       {
+        "id": "majordomus://issue/I4250",
+        "kind": "issue",
+        "label": "I4250",
+        "summary": "A session is briefed only when a fact around it changed, in words its person reads",
+        "route": "/cockpit/objects/issue/i4250",
+        "source": ".ai/repo/project/issues/I4250.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "claude plugin test share/mods/claude-code/majordomus-brief passes",
+            "Replacing the fingerprint comparison with `true` fails four of its tests",
+            "test/cases/1065_a_session_briefs_itself.sh passes, and asserts the installed module and the keep-awake text carry the rule",
+            "test/cases/4250_the_brief_reports_only_what_changed.sh runs the mod's test and two mutations of it where `claude` is installed",
+            "cargo test --lib capability::builtin::brief passes with the new keep-awake assertions"
+          ],
+          "created_at": "2026-10-27",
+          "depends_on": [],
+          "evidence_required": [
+            "the_brief_reports_only_what_changed"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "A policy key forcing a report after a long unchanged stretch: rejected in the amendment of ADR 0136, since the status line already shows the session alive every minute (ADR 0207)",
+            "Claude Code's own framing sentence after a plugin's prompt, which the mod cannot change",
+            "The handover mod (ADR 0123)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4250.yaml",
+            "share/mods/claude-code/majordomus-brief/",
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            ".ai/repo/adrs/0136-every-session-briefs-itself-on-an-interval.md",
+            "docs/BRIEF.md",
+            "test/cases/1065_a_session_briefs_itself.sh",
+            "test/cases/4250_the_brief_reports_only_what_changed.sh"
+          ],
+          "serves": [],
+          "slug": "the-brief-reports-only-what-changed",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE claude plugin test share/mods/claude-code/majordomus-brief",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 1065_a_session_briefs_itself 4250_the_brief_reports_only_what_changed",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::brief"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4251",
         "kind": "issue",
         "label": "I4251",
@@ -72085,13 +72250,18 @@
             ".ai/repo/project/issues/I4291.yaml",
             "apps/majordomus-cli/src/ledger.rs",
             "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/capability/handler.rs",
             "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "apps/majordomus-cli/src/capability/builtin/continuity_transfer.rs",
+            "apps/majordomus-cli/src/capability/builtin/reasoning.rs",
             "apps/majordomus-cli/src/continuity",
             "apps/majordomus-cli/src/reasoning",
             "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh"
           ],
           "slug": "rust-writers-attribute-as-the-shell",
-          "updated_at": "2026-10-28",
+          "started_at": "2026-10-31T22:32:59Z",
+          "started_event": "sha256:cf65525be41e3834d09953ea9fc6b0bd0f9d0c2108c70d69452224bcdf535470",
+          "updated_at": "2026-10-31T22:32:59Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ledger::",
             "bash test/run.sh 3049"
@@ -72148,6 +72318,95 @@
             "bash test/run.sh 3049",
             "bash test/run.sh",
             "bin/majordomus doctor"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4293",
+        "kind": "issue",
+        "label": "I4293",
+        "summary": "The brief tells the truth: no finished task, no stale PR count, no self-overlap, and no client left off the board by a restart",
+        "route": "/cockpit/objects/issue/i4293",
+        "source": ".ai/repo/project/issues/I4293.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each named test passes, and fails when its fix is reverted",
+            "cargo test --lib capability::builtin::brief commands::prs::tests mcp::bridge::tests passes"
+          ],
+          "created_at": "2026-10-27",
+          "depends_on": [
+            "I4250"
+          ],
+          "evidence_required": [
+            "the_brief_tells_the_truth"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Removing any worktree: the adopter's worktree boards are reported, not pruned",
+            "Bridges of the release installed before this change: they re-attach only after their client restarts",
+            "Refreshing the forge observation from the brief: the brief reads no forge (ADR 0136)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4293.yaml",
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "apps/majordomus-cli/src/commands/prs.rs",
+            "apps/majordomus-cli/src/mcp/bridge.rs",
+            "apps/majordomus-cli/src/commands/mcp.rs",
+            ".ai/repo/adrs/0136-every-session-briefs-itself-on-an-interval.md",
+            ".ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md",
+            "docs/BRIEF.md",
+            "docs/MCP.md"
+          ],
+          "serves": [],
+          "slug": "the-brief-tells-the-truth",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- capability::builtin::brief commands::prs::tests mcp::bridge::tests"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4294",
+        "kind": "issue",
+        "label": "I4294",
+        "summary": "The delivery board's documents are derived by one capability, and every open milestone has a lane",
+        "route": "/cockpit/objects/issue/i4294",
+        "source": ".ai/repo/project/issues/I4294.yaml",
+        "facts": {
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "board_snapshot_tests"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "share/board.yaml",
+            "apps/majordomus-cli/src/board.rs",
+            "apps/majordomus-cli/src/lib.rs",
+            "apps/majordomus-cli/src/capability/builtin/board.rs",
+            "apps/majordomus-cli/src/capability/builtin/mod.rs",
+            "apps/majordomus-cli/src/commands/board.rs",
+            "apps/majordomus-cli/src/commands/mod.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/tests/board_snapshot.rs",
+            ".ai/repo/features/planning.md",
+            "docs/generated",
+            "site",
+            ".ai/repo/project/issues/I4294.yaml"
+          ],
+          "slug": "the-board-is-derived-by-one-capability",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- board",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test board_snapshot",
+            "majordomus generate --check"
           ]
         }
       },
@@ -73946,6 +74205,104 @@
             "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::relation::",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>",
             "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4334",
+        "kind": "issue",
+        "label": "I4334",
+        "summary": "The UI kit is checked by one capability: design kit judges a repository's interface against the Flowbite Pro profile, and design kit adopt declares it",
+        "route": "/cockpit/objects/issue/i4334",
+        "source": ".ai/repo/project/issues/I4334.yaml",
+        "facts": {
+          "created_at": "2026-10-28",
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "one-kit-on-every-surface",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/design/kit.rs",
+            "apps/majordomus-cli/src/design/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/design.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/design.rs",
+            "apps/majordomus-cli/src/commands/mod.rs",
+            "share/design/kits",
+            ".ai/repo/adrs/0230-flowbite-pro-is-adapted-onto-tailwind-4.md",
+            ".ai/repo/project/issues/I4334.yaml",
+            "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
+            "docs/DESIGN_SYSTEM.md",
+            ".ai/repo/features/interfaces.md",
+            "apps/majordomus-cli/src/capability/builtin/mod.rs",
+            "apps/majordomus-cli/src/design/licence.rs",
+            "apps/majordomus-cli/src/commands/design_licence.rs",
+            "bin/majordomus"
+          ],
+          "slug": "the-ui-kit-is-checked-by-one-capability",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "cargo test --lib design::kit",
+            "cargo test --test cli_examples --test cli_docs",
+            "test/run 4334",
+            "cargo test --lib design::licence",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4336",
+        "kind": "issue",
+        "label": "I4336",
+        "summary": "Every adopter the owner's fleet pack applies to receives its kit, rules and skills, and no licensed source reaches a public tree",
+        "route": "/cockpit/objects/issue/i4336",
+        "source": ".ai/repo/project/issues/I4336.yaml",
+        "facts": {
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "The judge, the design kit capability, adopt and the kit profile format (I4334, p2)",
+            "Shipping any licensed source: only manifests, rule text, skill/v1 text and hash prefixes travel",
+            "Near-copies and licensed fragments inlined inside a larger bundle: the evidence holds whole-file fingerprints only (stated in the usage text)",
+            "Migrating any adopter's UI onto a kit",
+            "Majordomus's own design surfaces (ADR 0031, ADR 0036)"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/design/licence.rs",
+            "lib/rules.sh",
+            "lib/init.sh",
+            "lib/migrate.sh",
+            "lib/update.sh",
+            "lib/doctor.sh",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy",
+            "share/kinds.yaml",
+            "share/skeleton/ai/repo/rules/README.md",
+            "share/skeleton/ai/repo/skills/README.md",
+            "test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh",
+            "test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
+            "test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh",
+            "test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh",
+            ".ai/repo/project/issues/I4336.yaml"
+          ],
+          "serves": [],
+          "slug": "the-fleet-pack-delivers-the-kit-and-keeps-licensed-sources-private",
+          "validation": [
+            "bash test/run.sh <the new licence, fleet-pack, projection and evidence cases>",
+            "bash test/run.sh 08_no_forbidden_constructs",
+            "bash test/run.sh 28_no_hardcoded_values",
+            "bash test/run.sh 3022_the_rule_package_is_stamped_and_adopter_neutral",
+            "majordomus doctor"
           ]
         }
       },
@@ -101250,6 +101607,34 @@
         "source": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh",
+        "kind": "test",
+        "label": "test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh",
+        "route": "/cockpit/objects/test/test-cases-4224-a-licensed-source-never-reaches-a-public-tree-sh",
+        "source": "test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
+        "kind": "test",
+        "label": "test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
+        "route": "/cockpit/objects/test/test-cases-4225-the-fleet-pack-installs-only-what-it-lists-sh",
+        "source": "test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh",
+        "kind": "test",
+        "label": "test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh",
+        "route": "/cockpit/objects/test/test-cases-4226-ci-judges-from-the-kit-evidence-secret-sh",
+        "source": "test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh",
+        "kind": "test",
+        "label": "test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh",
+        "route": "/cockpit/objects/test/test-cases-4227-a-fleet-skill-is-proved-by-its-pack-sh",
+        "source": "test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
         "kind": "test",
         "label": "test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
@@ -101262,6 +101647,13 @@
         "label": "test/cases/4235_an_evidence_token_is_matched_whole.sh",
         "route": "/cockpit/objects/test/test-cases-4235-an-evidence-token-is-matched-whole-sh",
         "source": "test/cases/4235_an_evidence_token_is_matched_whole.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4250_the_brief_reports_only_what_changed.sh",
+        "kind": "test",
+        "label": "test/cases/4250_the_brief_reports_only_what_changed.sh",
+        "route": "/cockpit/objects/test/test-cases-4250-the-brief-reports-only-what-changed-sh",
+        "source": "test/cases/4250_the_brief_reports_only_what_changed.sh"
       },
       {
         "id": "majordomus://test/test/cases/4251_a_mod_links_nothing_outside_the_repository.sh",
@@ -101346,6 +101738,13 @@
         "label": "test/cases/431_economics_claims_gated.sh",
         "route": "/cockpit/objects/test/test-cases-431-economics-claims-gated-sh",
         "source": "test/cases/431_economics_claims_gated.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
+        "kind": "test",
+        "label": "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
+        "route": "/cockpit/objects/test/test-cases-4334-the-ui-kit-is-checked-by-one-capability-sh",
+        "source": "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh"
       },
       {
         "id": "majordomus://test/test/cases/4337_a_changed_skill_raises_its_version.sh",
@@ -105064,6 +105463,11 @@
         "label": "blackboard"
       },
       {
+        "id": "module:board",
+        "kind": "module",
+        "label": "board"
+      },
+      {
         "id": "module:brief",
         "kind": "module",
         "label": "brief"
@@ -105479,6 +105883,26 @@
         "kind": "projects"
       },
       {
+        "source": "capability:board.snapshot",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:board.snapshot",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:board.snapshot",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:board.snapshot",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:brief.session",
         "target": "projection:cli",
         "kind": "projects"
@@ -106025,6 +106449,46 @@
       },
       {
         "source": "capability:design.explain",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.kit",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.kit",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.kit",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.kit.adopt",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.kit.adopt",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.licence",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.licence",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.licence",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -113025,6 +113489,11 @@
       },
       {
         "source": "majordomus://adr/adr-0136",
+        "target": "majordomus://adr/adr-0207",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0136",
         "target": "majordomus://document/docs/BRIEF.md",
         "kind": "put_in_force"
       },
@@ -113035,7 +113504,22 @@
       },
       {
         "source": "majordomus://adr/adr-0136",
+        "target": "majordomus://issue/I4250",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0136",
+        "target": "majordomus://issue/I4293",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0136",
         "target": "majordomus://test/test/cases/1065_a_session_briefs_itself.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0136",
+        "target": "majordomus://test/test/cases/4250_the_brief_reports_only_what_changed.sh",
         "kind": "put_in_force"
       },
       {
@@ -116882,6 +117366,46 @@
         "source": "majordomus://adr/adr-0227",
         "target": "kind:adr",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0230",
+        "target": "file:apps/majordomus-cli/src/design/kit.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0230",
+        "target": "file:apps/majordomus-cli/src/design/licence.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0230",
+        "target": "file:share/design/kits/flowbite-pro.rule.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0230",
+        "target": "file:share/design/kits/flowbite-pro.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0230",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0230",
+        "target": "majordomus://issue/I4334",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0230",
+        "target": "majordomus://issue/I4336",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0230",
+        "target": "majordomus://test/test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
+        "kind": "put_in_force"
       },
       {
         "source": "majordomus://application/ci-gated-project",
@@ -124860,6 +125384,11 @@
       },
       {
         "source": "majordomus://implementation/lib/finish.sh",
+        "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://implementation/lib/fleet.sh",
         "target": "kind:implementation",
         "kind": "is_a"
       },
@@ -140229,6 +140758,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4250",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4250",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4251",
         "target": "kind:issue",
         "kind": "is_a"
@@ -140356,6 +140895,31 @@
       {
         "source": "majordomus://issue/I4292",
         "target": "majordomus://milestone/M002",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4293",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4293",
+        "target": "majordomus://issue/I4250",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4293",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4294",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4294",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
         "kind": "belongs_to"
       },
       {
@@ -140881,6 +141445,26 @@
       {
         "source": "majordomus://issue/I4333",
         "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4334",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4334",
+        "target": "majordomus://milestone/one-kit-on-every-surface",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4336",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4336",
+        "target": "majordomus://milestone/adopter-upgrades",
         "kind": "belongs_to"
       },
       {
@@ -148429,12 +149013,37 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
       {
         "source": "majordomus://test/test/cases/4235_an_evidence_token_is_matched_whole.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4250_the_brief_reports_only_what_changed.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -148495,6 +149104,11 @@
       },
       {
         "source": "majordomus://test/test/cases/431_economics_claims_gated.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -152519,6 +153133,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:board",
+        "target": "capability:board.snapshot",
+        "kind": "composes"
+      },
+      {
         "source": "module:brief",
         "target": "capability:brief.session",
         "kind": "composes"
@@ -152671,6 +153290,21 @@
       {
         "source": "module:design",
         "target": "capability:design.explain",
+        "kind": "composes"
+      },
+      {
+        "source": "module:design",
+        "target": "capability:design.kit",
+        "kind": "composes"
+      },
+      {
+        "source": "module:design",
+        "target": "capability:design.kit.adopt",
+        "kind": "composes"
+      },
+      {
+        "source": "module:design",
+        "target": "capability:design.licence",
         "kind": "composes"
       },
       {
@@ -153610,8 +154244,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4192,
-      "edges": 9633,
+      "nodes": 4214,
+      "edges": 9679,
       "acyclic": false,
       "truncated": false
     }

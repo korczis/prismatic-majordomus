@@ -35,6 +35,10 @@
       "description": "Who works on what in this repository, as one projection of the records that already know it: every checkout's board, the mesh journal's sessions, claims, reviews and handovers on every linked machine, and the monitor's newest signals, joined once so that no surface joins them again (ADR 0176). A board peer and a mesh session are one worker only when an explicit identifier joins them; a source that could not be read makes the answer incomplete and says why."
     },
     {
+      "name": "board",
+      "description": "The documents the delivery board reads, derived from the plan, the roadmap, the intents, the recorded pull request queue and the release currency, with the lanes share/board.yaml declares once. Every open milestone is in a lane or the snapshot refuses, naming it."
+    },
+    {
       "name": "brief",
       "description": "What surrounds one working session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, each section asked of its owner once and saying whether it could be read. The answer a session reports on itself from without being asked, and the one a provider mod shows as its status line (ADR 0136). Writes nothing."
     },
@@ -236,7 +240,7 @@
     },
     {
       "name": "server",
-      "description": "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, and how many peers each one holds."
+      "description": "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, where each runtime stands and how it got there, and how many peers each one holds."
     },
     {
       "name": "session_domain",
@@ -530,6 +534,103 @@
           "tool": "majordomus_blackboard"
         },
         "x-majordomus-cli": "blackboard"
+      }
+    },
+    "/api/v1/board/snapshot": {
+      "get": {
+        "operationId": "board.snapshot",
+        "summary": "The delivery board's documents",
+        "description": "Every document of the delivery board by id: meta (the commit, the lanes, the issue counts, the release), milestones in roadmap order, intents, the pull request queue from the last recorded observation, and the open issues of each lane as issues-<lane>, split into issues-<lane>-2 and onwards so that no document serializes past 250000 bytes. The digest is a SHA-256 over the canonical JSON of the documents with meta.syncedAt and meta.syncedBy left out, so equal state is an equal digest. A milestone that is not DONE and is in no lane of share/board.yaml is refused by name, never filed under other. An unobserved queue is said in prs.unavailable and the diagnostics, never refused. Mesh seats, live work, CI runners and blockers are the sync step's and are not here. Reads only; nothing is cached.",
+        "tags": [
+          "board"
+        ],
+        "parameters": [
+          {
+            "name": "by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Who takes the snapshot, as `meta.syncedBy` names it; `board.snapshot` when absent.\nLeft out of the digest.",
+            "examples": {
+              "named": {
+                "value": "a mesh session"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The delivery board's documents: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardSnapshot"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "board.snapshot",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "experimental",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::board"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "waived",
+          "reason": "repository_declaration"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_board_snapshot"
+        },
+        "x-majordomus-cli": "board snapshot"
       }
     },
     "/api/v1/brief": {
@@ -4710,7 +4811,7 @@
       "get": {
         "operationId": "distribution.build",
         "summary": "This build",
-        "description": "What this executable is: the version of the crate it was built from, the Rust target triple, the profile, and the commit — all compiled in at build time, so an installed binary answers without a repository, a toolchain or git.",
+        "description": "What this executable is: the version of the crate it was built from, the Rust target triple, the profile, and the commit — all compiled in at build time, so an installed binary answers without a repository, a toolchain or git — and the facts of the platform hosting it (application, region, Machine, image), each read from the environment by name from a fixed allowlist and null when absent. No other environment variable is read, so a token or secret the platform injects cannot reach the answer.",
         "tags": [
           "distribution"
         ],
@@ -19546,7 +19647,7 @@
       "get": {
         "operationId": "server.status",
         "summary": "The shared server, and every server of the repository",
-        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; where its runtime stands (`runtime`: that word refined by the server's readiness report, its mesh verdict and the last recorded transition into building, mesh_attaching, operational, degraded, stopping, stopped or failed, with the time, reason and recorder of that transition, kept under `.ai/local/state/runtime/` and written only when the state changes — this reader records `stopped` or `failed` for a server it finds gone); how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, its runtime, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
         "tags": [
           "server"
         ],
@@ -24310,6 +24411,64 @@
         ],
         "description": "What kind of thing is holding a task back. The five are the five the canonical model can\nactually produce; there is no `other`."
       },
+      "BoardSnapshot": {
+        "type": "object",
+        "properties": {
+          "digest": {
+            "type": "string",
+            "description": "`sha256:<hex>` over the canonical JSON of the documents, `meta.syncedAt` and\n`meta.syncedBy` left out: equal state, equal digest."
+          },
+          "master_sha": {
+            "type": "string",
+            "description": "The commit described, empty when the checkout has none."
+          },
+          "master_committed_at": {
+            "type": "string",
+            "description": "Its committer time, RFC 3339."
+          },
+          "master_ref": {
+            "type": "string",
+            "description": "The ref it was read from: `refs/remotes/origin/master`, else `HEAD`."
+          },
+          "document_limit": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "The bound every document is under, in bytes of compact JSON."
+          },
+          "sizes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "Each document's compact size, in bytes, by id."
+          },
+          "documents": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "The documents, by id: `meta`, `milestones`, `intents`, `prs`, and `issues-<lane>`\n(then `issues-<lane>-2`, ...) for each lane with open work."
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What could not be read, in words: an unobserved pull request queue, a lane naming a\nmilestone the plan lacks. Empty is the ordinary case."
+          }
+        },
+        "required": [
+          "digest",
+          "master_sha",
+          "master_committed_at",
+          "master_ref",
+          "document_limit",
+          "sizes",
+          "documents"
+        ],
+        "description": "The answer of `board.snapshot`: every document of the board by id, and the digest that\nsays whether two snapshots describe the same state."
+      },
       "BoardView": {
         "type": "object",
         "properties": {
@@ -25276,7 +25435,9 @@
           },
           "endpoint": {
             "type": "string",
-            "description": "The non-secret address a client connects to."
+            "description": "The non-secret address a client connects to.",
+            "maxLength": 256,
+            "pattern": "^(https?://)?[A-Za-z0-9.:\\[\\]-]+$"
           },
           "bucket": {
             "type": "string",
@@ -25327,7 +25488,7 @@
           "health",
           "age_seconds"
         ],
-        "description": "One node's offer. Carries no credential and no secret of any kind.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::{Health, Offer, Scope};\nlet offer = Offer {\n    node: \"n1\".into(), protocol: \"s3\".into(), provider: \"minio\".into(),\n    scope: Scope::Lan, endpoint: \"http://192.168.100.30:9000\".into(),\n    bucket: \"majordomus-build-cache\".into(), priority: 0, headroom_gib: Some(200),\n    health: Health::Healthy, age_seconds: 3, rtt_ms: None,\n};\nassert_eq!(offer.node, \"n1\");\nassert!(!serde_json::to_string(&offer).unwrap().contains(\"secret\"));\n```"
+        "description": "One node's offer. Carries no credential and no secret of any kind.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::{Health, Offer, Scope};\nlet offer = Offer {\n    node: \"n1\".into(), protocol: \"s3\".into(), provider: \"minio\".into(),\n    scope: Scope::Lan, endpoint: \"http://192.168.100.30:9000\".into(),\n    bucket: \"majordomus-build-cache\".into(), priority: 0, headroom_gib: Some(200),\n    health: Health::Healthy, age_seconds: 3, rtt_ms: None,\n};\nassert_eq!(offer.node, \"n1\");\nassert!(!serde_json::to_string(&offer).unwrap().contains(\"secret\"));\n// an endpoint with a place for a credential is neither written nor read\nlet keyed = Offer { endpoint: \"http://k:s3cr3t@192.168.100.30:9000\".into(), ..offer };\nassert!(!serde_json::to_string(&keyed).unwrap_err().to_string().contains(\"s3cr3t\"));\n```"
       },
       "BuildCacheOfferReading": {
         "type": "object",
@@ -25508,13 +25669,18 @@
               "null"
             ],
             "description": "The target of the model this build matches, when the model declares one for the triple."
+          },
+          "platform": {
+            "$ref": "#/components/schemas/Platform",
+            "description": "The facts of the platform hosting this process, each read by name from the\nallowlist in `platform.rs` and `null` when it is not set; nothing else in the\nenvironment is read, so no other variable can appear here."
           }
         },
         "required": [
           "version",
           "target",
           "profile",
-          "commit"
+          "commit",
+          "platform"
         ],
         "description": "What this executable is: enough to tell two builds apart without asking a repository."
       },
@@ -46771,6 +46937,34 @@
         ],
         "description": "The provider's health, as every surface reports it."
       },
+      "MeshReadiness": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the repository declares its mesh enabled."
+          },
+          "attaching": {
+            "type": "boolean",
+            "description": "Whether the declaration is enabled and this server has not decided the mesh yet."
+          },
+          "ok": {
+            "type": "boolean",
+            "description": "Whether the mesh stands as declared: off when it is not declared, running when it is."
+          },
+          "detail": {
+            "type": "string",
+            "description": "The verdict's words."
+          }
+        },
+        "required": [
+          "enabled",
+          "attaching",
+          "ok",
+          "detail"
+        ],
+        "description": "The mesh in a readiness report: whether the repository declares it enabled, whether this\nserver has decided it yet, and the verdict `mesh doctor`'s runtime check gives.\n\n```\nuse majordomus_cli::capability::builtin::health::MeshReadiness;\nlet m = MeshReadiness { enabled: true, attaching: true, ok: true, detail: \"deciding\".into() };\nassert_eq!(serde_json::to_value(&m).unwrap()[\"attaching\"], true);\n```"
+      },
       "MeshRepositoryBasis": {
         "oneOf": [
           {
@@ -51939,6 +52133,68 @@
         ],
         "description": "One wave, with the issues in it."
       },
+      "Platform": {
+        "type": "object",
+        "properties": {
+          "fly_app_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`FLY_APP_NAME`: the application the Machine belongs to."
+          },
+          "fly_region": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`FLY_REGION`: the region the Machine runs in."
+          },
+          "primary_region": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`PRIMARY_REGION`: the region the application declares as its primary."
+          },
+          "fly_machine_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`FLY_MACHINE_ID`: the Machine's own id."
+          },
+          "fly_machine_version": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`FLY_MACHINE_VERSION`: the version of the Machine's configuration."
+          },
+          "fly_image_ref": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`FLY_IMAGE_REF`: the image the Machine was started from, which is what says that\nthe deployed image is the one that was built."
+          },
+          "fly_process_group": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`FLY_PROCESS_GROUP`: the process group the Machine runs."
+          },
+          "fly_vm_memory_mb": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`FLY_VM_MEMORY_MB`: the memory the Machine was given, in megabytes."
+          }
+        },
+        "description": "The facts of the hosting platform, each read from the one variable its field\nnames and `null` when that variable is unset or empty. Nothing outside these\nfields is read from the environment."
+      },
       "Pointer": {
         "type": "object",
         "properties": {
@@ -54049,6 +54305,17 @@
               "type": "string"
             },
             "description": "Every reason this answer is not a plain yes, as `code: words`. `lease_lost` and\n`stale` make `ready` false: another process holds this checkout's lease, or this one\nserves code that is gone. `layer_degraded` does not: the layer is served with its\ndiagnostics, and a client decides whether that is enough."
+          },
+          "mesh": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MeshReadiness"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The mesh, as this process decided it: present only in a process that holds a lease,\nbecause only a shared server runs a mesh. It never makes `ready` false — a server\nwhose mesh is not running still answers every request — but it is what\n`server.status` refines `ready` into `mesh_attaching`, `operational` or `degraded`\nwith (I3179)."
           }
         },
         "required": [
@@ -55408,7 +55675,14 @@
           },
           "task": {
             "type": "string",
-            "description": "The task it was recorded under, or `untasked`."
+            "description": "The task it was recorded under, or `untasked`: the active task of the checkout,\nunless another episode that is still open opened it (ADR 0164)."
+          },
+          "session": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The episode that recorded it, when the writer ran inside one open here. Absent, not\nguessed: with no identity among several open episodes the record is nobody's."
           },
           "recorded_at": {
             "type": "string",
@@ -55441,7 +55715,7 @@
           "recorded_at",
           "body"
         ],
-        "description": "A stored record: a body with the envelope only the writer stamps.\n\nThe envelope carries the schema and version, a unique id, the task, the time it was\nrecorded, the commit the checkout was on and the secret shapes redacted from its text.\nOne record is one JSON file in the store; the store reads back only records whose\nschema and version match.\n\n```\nuse majordomus_cli::reasoning::record::*;\n\nlet record = ReasoningRecord {\n    schema: RECORD_SCHEMA.into(),\n    version: RECORD_VERSION,\n    id: \"attempt-20261001T000000Z-abcdef\".into(),\n    task: \"untasked\".into(),\n    recorded_at: \"2026-10-01T00:00:00Z\".into(),\n    head: None,\n    redacted: vec![],\n    body: ReasoningBody::Attempt(AttemptInput {\n        assessment: None,\n        attempt: \"inline the call\".into(),\n        observed_failure: \"the test still fails\".into(),\n        assumption_invalidated: None,\n        evidence: vec![],\n        updated_hypothesis: None,\n    }),\n};\nlet text = serde_json::to_string(&record).unwrap();\nassert!(!text.contains(\"\\\"head\\\"\"), \"an absent head is not written\");\nlet back: ReasoningRecord = serde_json::from_str(&text).unwrap();\nassert_eq!(back.id, record.id);\nassert_eq!(back.body.kind(), \"attempt\");\n```"
+        "description": "A stored record: a body with the envelope only the writer stamps.\n\nThe envelope carries the schema and version, a unique id, the task, the time it was\nrecorded, the commit the checkout was on and the secret shapes redacted from its text.\nOne record is one JSON file in the store; the store reads back only records whose\nschema and version match.\n\n```\nuse majordomus_cli::reasoning::record::*;\n\nlet record = ReasoningRecord {\n    schema: RECORD_SCHEMA.into(),\n    version: RECORD_VERSION,\n    id: \"attempt-20261001T000000Z-abcdef\".into(),\n    task: \"untasked\".into(),\n    session: None,\n    recorded_at: \"2026-10-01T00:00:00Z\".into(),\n    head: None,\n    redacted: vec![],\n    body: ReasoningBody::Attempt(AttemptInput {\n        assessment: None,\n        attempt: \"inline the call\".into(),\n        observed_failure: \"the test still fails\".into(),\n        assumption_invalidated: None,\n        evidence: vec![],\n        updated_hypothesis: None,\n    }),\n};\nlet text = serde_json::to_string(&record).unwrap();\nassert!(!text.contains(\"\\\"head\\\"\"), \"an absent head is not written\");\nlet back: ReasoningRecord = serde_json::from_str(&text).unwrap();\nassert_eq!(back.id, record.id);\nassert_eq!(back.body.kind(), \"attempt\");\n```"
       },
       "ReasoningRecordInput": {
         "type": "object",
@@ -60563,6 +60837,90 @@
         ],
         "description": "One runtime in the peer tree."
       },
+      "RuntimeState": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/ServerStanding",
+            "description": "The state, derived on this reading from the lease, the server's readiness report (its\nmesh verdict included) and the last recorded transition."
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why, when the state is not `operational`."
+          },
+          "transition": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RuntimeTransition"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The last transition recorded under `RUNTIME_PATH`, when one ever was. The derived\nstate may be newer than it: only the writers named on `RuntimeWriter` record."
+          }
+        },
+        "required": [
+          "state"
+        ],
+        "description": "Where a checkout's runtime stands now, and the last transition recorded for it.\n\n```\nuse majordomus_cli::capability::builtin::server::{RuntimeState, ServerStanding};\nlet r = RuntimeState { state: ServerStanding::Operational, reason: None, transition: None };\nassert_eq!(serde_json::to_value(&r).unwrap(), serde_json::json!({ \"state\": \"operational\" }));\n```"
+      },
+      "RuntimeTransition": {
+        "type": "object",
+        "properties": {
+          "schema": {
+            "type": "string",
+            "description": "`RUNTIME_SCHEMA`."
+          },
+          "state": {
+            "$ref": "#/components/schemas/ServerStanding",
+            "description": "What the runtime became."
+          },
+          "from": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ServerStanding"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What it was, by the previous record; absent for the first."
+          },
+          "at": {
+            "type": "string",
+            "description": "When, RFC 3339."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why, in the recorder's words."
+          },
+          "by": {
+            "$ref": "#/components/schemas/RuntimeWriter",
+            "description": "Who recorded it."
+          },
+          "pid": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The server process the transition is about, when there is one."
+          }
+        },
+        "required": [
+          "schema",
+          "state",
+          "at",
+          "reason",
+          "by"
+        ],
+        "description": "The last transition of a checkout's runtime: what it became, from what, when, why, who\nrecorded it and which process it is about. The record under `RUNTIME_PATH`.\n\n```\nuse majordomus_cli::capability::builtin::server::{RuntimeTransition, RuntimeWriter, ServerStanding};\nlet t = RuntimeTransition::new(ServerStanding::Ready, None, \"published\", RuntimeWriter::Server, Some(7));\nlet v = serde_json::to_value(&t).unwrap();\nassert_eq!(v[\"state\"], \"ready\");\nassert_eq!(v[\"by\"], \"server\");\nassert!(v.get(\"from\").is_none(), \"a first record came from nothing it can name\");\n```"
+      },
       "RuntimeView": {
         "type": "object",
         "properties": {
@@ -60621,6 +60979,31 @@
           "note"
         ],
         "description": "The commit this process answers about, against the commit the repository is on.\n\nBoth halves are read here and neither is assumed. `served` is what the index this\nprocess is holding was built from; `repository` is what `git` says now, on this call. A\nserver that follows the repository reports them equal and pays one `git` invocation for\nthe proof; a server that froze its index at start-up reports them different, which is\nthe only way a reader could ever have found that out.\n\n`agree` is the field with the operational meaning, and what it says is *not* \"the\nrepository is fine\" but \"the answers you are reading are about the tree you are looking\nat\". When it is false every other capability this process serves is answering about a\ncommit that is no longer checked out, and nothing else in the API would tell you.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::RuntimeView;\nuse serde_json::json;\n\nlet view = |served: &str, repo: &str, agree: bool| -> RuntimeView {\n    serde_json::from_value(json!({\n        \"root\": \"example/repo\",\n        \"served_head\": served, \"served_branch\": \"master\", \"served_working_tree\": \"clean\",\n        \"repository_head\": repo, \"repository_branch\": \"master\",\n        \"repository_working_tree\": \"clean\",\n        \"agree\": agree, \"objects\": 1319, \"index_state\": \"ok\",\n        \"note\": \"as measured on this call\",\n    })).unwrap()\n};\n\n// a server following the repository: one `git` invocation buys the proof\nlet current = view(\"a1b2c3d\", \"a1b2c3d\", true);\nassert!(current.agree);\nassert_eq!(current.served_head, current.repository_head);\nassert_eq!(current.index_state, \"ok\");\n\n// and one that froze its index at start-up: every answer it serves is about the old commit\nlet frozen = view(\"a1b2c3d\", \"9f8e7d6\", false);\nassert!(!frozen.agree);\nassert_ne!(frozen.served_head, frozen.repository_head);\n```"
+      },
+      "RuntimeWriter": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "server",
+            "description": "The serving process, about itself."
+          },
+          {
+            "type": "string",
+            "const": "serve_ensure",
+            "description": "`serve ensure`, which found the lease stale."
+          },
+          {
+            "type": "string",
+            "const": "reap_orphans",
+            "description": "`scripts/reap-orphans`, through `serve status` after its sweep."
+          },
+          {
+            "type": "string",
+            "const": "server_status",
+            "description": "`server.status`, on any surface."
+          }
+        ],
+        "description": "Who recorded a transition. Each state has its one kind of writer: the serving process\nrecords its own `starting`, `ready` and `stopping`, because only it knows them; a reader\nthat finds the server gone records `stopped` or `failed`, because a dead process records\nnothing.\n\n```\nuse majordomus_cli::capability::builtin::server::RuntimeWriter;\nassert_eq!(serde_json::to_value(RuntimeWriter::ServeEnsure).unwrap(), \"serve_ensure\");\nassert_eq!(RuntimeWriter::reader_named(Some(\"reap_orphans\")), RuntimeWriter::ReapOrphans);\nassert_eq!(RuntimeWriter::reader_named(Some(\"server\")), RuntimeWriter::ServerStatus);\nassert_eq!(RuntimeWriter::reader_named(None), RuntimeWriter::ServerStatus);\n```"
       },
       "RustdocAcceptedLinks": {
         "type": "object",
@@ -61433,9 +61816,44 @@
             "type": "string",
             "const": "stale",
             "description": "The lease names a server that does not answer, or is not a lease at all."
+          },
+          {
+            "type": "string",
+            "const": "building",
+            "description": "No lease yet, and the executable a server would run is being built: recorded by the\nbuilder (I3180), and believed only while the process that recorded it is alive."
+          },
+          {
+            "type": "string",
+            "const": "mesh_attaching",
+            "description": "The server is ready, the repository declares its mesh enabled, and the server has not\nyet decided whether the mesh runs."
+          },
+          {
+            "type": "string",
+            "const": "operational",
+            "description": "The server is ready, says so itself, and its mesh runs or is not declared."
+          },
+          {
+            "type": "string",
+            "const": "degraded",
+            "description": "The server answers, current, but its own readiness report or its mesh says it is not\nwhole: it lost the lease, serves replaced code, read a degraded layer, or its declared\nmesh is not running."
+          },
+          {
+            "type": "string",
+            "const": "stopping",
+            "description": "The process that holds the lease recorded that it is stopping, and it is still alive."
+          },
+          {
+            "type": "string",
+            "const": "stopped",
+            "description": "The server is gone after it recorded that it was stopping."
+          },
+          {
+            "type": "string",
+            "const": "failed",
+            "description": "The server is gone without having recorded that it was stopping: its lease names a\nprocess that no longer exists."
           }
         ],
-        "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
+        "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code —\nand, refined by the readiness report, the mesh runtime and the last recorded transition,\nwhere its runtime stands (I3179).\n\nThe first five words are the lease's standing, decided by `standing_of`, and they are\nwhat `standing` carries on every surface: shells compare them, so they never change. The\nother seven are the runtime's refinements, decided by `runtime_of` and carried by\n`runtime.state` alone; `ServerStanding::refines` names the lease word each refines.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n// the runtime's words, in the same snake case the JSON carries\nassert_eq!(serde_json::to_value(ServerStanding::MeshAttaching).unwrap(), \"mesh_attaching\");\nassert_eq!(ServerStanding::MeshAttaching.as_str(), \"mesh_attaching\");\n```"
       },
       "ServerStatus": {
         "type": "object",
@@ -61502,6 +61920,17 @@
               }
             ],
             "description": "How far the tree this checkout serves is from the remote trunk, judged against the\npolicy's `checkout.trunk_distance`: a server of a checkout 779 commits behind answers\nevery session from a tree that no longer exists, and this is where that is said.\nAbsent only from an answer that predates the field."
+          },
+          "runtime": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RuntimeState"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Where this checkout's runtime stands — the lease's word refined by the server's\nreadiness report and mesh verdict and by the last recorded transition — with that\ntransition: when, why and who recorded it (I3179). `standing` keeps the lease's five\nwords; this is where the other seven appear. Absent only from an answer that predates\nthe field."
           }
         },
         "required": [
@@ -61510,7 +61939,7 @@
           "standing",
           "servers"
         ],
-        "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None, trunk: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```"
+        "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None, trunk: None, runtime: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```"
       },
       "ServerView": {
         "type": "object",
@@ -61568,6 +61997,17 @@
             "format": "uint",
             "minimum": 0,
             "description": "How many peers the server reports attached, when it answers."
+          },
+          "runtime": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RuntimeState"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Where its runtime stands, and the last transition recorded for it (I3179). Absent\nonly from an answer that predates the field."
           }
         },
         "required": [
@@ -61577,7 +62017,7 @@
           "this_checkout",
           "standing"
         ],
-        "description": "One checkout of the repository, and the server its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{ServerStanding, ServerView};\nlet view = ServerView { worktree: \"/r\".into(), branch: Some(\"master\".into()), checkout_id: \"c\".into(),\n    primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"standing\"], \"absent\");\nassert!(v.get(\"lease\").is_none() && v.get(\"peers\").is_none(), \"what there is not is not written\");\n```"
+        "description": "One checkout of the repository, and the server its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{ServerStanding, ServerView};\nlet view = ServerView { worktree: \"/r\".into(), branch: Some(\"master\".into()), checkout_id: \"c\".into(),\n    primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None,\n    runtime: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"standing\"], \"absent\");\nassert!(v.get(\"lease\").is_none() && v.get(\"peers\").is_none(), \"what there is not is not written\");\n```"
       },
       "ServiceAvailability": {
         "oneOf": [
@@ -61694,6 +62134,17 @@
           "derive": {
             "$ref": "#/components/schemas/BriefDeriveSection",
             "description": "The derive queue."
+          },
+          "runtime": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RuntimeState"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Where this checkout's runtime stands, and its last recorded transition, as\n`server.status` derives it (I3179). Absent from the answer of a server older than the\nfield."
           }
         },
         "required": [
@@ -63822,7 +64273,7 @@
           "plan",
           "availability"
         ],
-        "description": "A plan as stored: the decision and the availability it was made against.\n\nThe store builds it when it admits a `PlanInput`; nothing else does. The snapshot of\navailability is what a later consultation is admitted against, so an answer that\narrives after the advisor's circuit opened still belongs to the plan that asked for it.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::PlanOutcome;\nuse majordomus_cli::reasoning::record::*;\nuse majordomus_cli::reasoning::store::{admit, Admission, Loaded};\n\nlet mode = ModeResolution { mode: ReasoningMode::Standard, source: \"default\".into() };\nlet admission = Admission { mode: &mode, availability: &[] };\nlet mut loaded = Loaded::default();\nloaded.records.push(ReasoningRecord {\n    schema: RECORD_SCHEMA.into(),\n    version: RECORD_VERSION,\n    id: \"assessment-1\".into(),\n    task: \"t\".into(),\n    recorded_at: \"2026-10-01T00:00:01Z\".into(),\n    head: None,\n    redacted: vec![],\n    body: ReasoningBody::Assessment(AssessmentInput {\n        subject: \"a name\".into(),\n        ..Default::default()\n    }),\n});\nlet input = ReasoningInput::Plan(PlanInput { assessment: \"assessment-1\".into() });\nlet ReasoningBody::Plan(stored) = admit(input, &loaded, &admission).unwrap() else {\n    panic!(\"a plan input is stored as a plan\");\n};\nlet stored: StoredPlan = stored;\nassert_eq!(stored.assessment, \"assessment-1\");\nassert_eq!(stored.plan.outcome, PlanOutcome::DecideLocally);\nassert!(stored.availability.is_empty());\n```"
+        "description": "A plan as stored: the decision and the availability it was made against.\n\nThe store builds it when it admits a `PlanInput`; nothing else does. The snapshot of\navailability is what a later consultation is admitted against, so an answer that\narrives after the advisor's circuit opened still belongs to the plan that asked for it.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::PlanOutcome;\nuse majordomus_cli::reasoning::record::*;\nuse majordomus_cli::reasoning::store::{admit, Admission, Loaded};\n\nlet mode = ModeResolution { mode: ReasoningMode::Standard, source: \"default\".into() };\nlet admission = Admission { mode: &mode, availability: &[] };\nlet mut loaded = Loaded::default();\nloaded.records.push(ReasoningRecord {\n    schema: RECORD_SCHEMA.into(),\n    version: RECORD_VERSION,\n    id: \"assessment-1\".into(),\n    task: \"t\".into(),\n    session: None,\n    recorded_at: \"2026-10-01T00:00:01Z\".into(),\n    head: None,\n    redacted: vec![],\n    body: ReasoningBody::Assessment(AssessmentInput {\n        subject: \"a name\".into(),\n        ..Default::default()\n    }),\n});\nlet input = ReasoningInput::Plan(PlanInput { assessment: \"assessment-1\".into() });\nlet ReasoningBody::Plan(stored) = admit(input, &loaded, &admission).unwrap() else {\n    panic!(\"a plan input is stored as a plan\");\n};\nlet stored: StoredPlan = stored;\nassert_eq!(stored.assessment, \"assessment-1\");\nassert_eq!(stored.plan.outcome, PlanOutcome::DecideLocally);\nassert!(stored.availability.is_empty());\n```"
       },
       "Stranded": {
         "type": "object",
@@ -67811,6 +68262,11 @@
             "type": "string",
             "const": "published_history",
             "description": "The capability answers about what this repository has *published*, so its input is a\nrelease: a version tag, the commit it points at, and the projection committed there.\nA benchmark fixture is a repository that has published nothing, and the honest answer\nin one is a refusal — so the case would time an error path and call it coverage.\nDistinct from `WaiverReason::ExternalDependency`: nothing outside this process is\nconsulted, and distinct from `WaiverReason::TransientState`: the history is durable,\nit simply does not exist yet where the benchmark runs."
+          },
+          {
+            "type": "string",
+            "const": "repository_declaration",
+            "description": "The capability answers from a declaration this repository keeps about its own records\n(the delivery board's lanes over this repository's milestones, share/board.yaml), and\nrefuses a record the declaration does not place. A benchmark fixture's records are in\nno such declaration, so its honest answer there is a refusal, and timing it would time\nan error path. The answer is proved over this repository by the capability's own tests."
           }
         ],
         "description": "Why an executable capability is not benchmarked. Typed, so that a waiver is a\nreviewable statement and never a convenience; `not_executable` is the registry's own\nreason for resources and is never written by hand."

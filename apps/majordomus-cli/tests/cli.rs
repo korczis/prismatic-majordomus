@@ -686,3 +686,73 @@ fn an_inspection_names_each_diagnostic_and_ends_10_on_an_error() {
     // the rest of the inspection is still there, before the diagnostics
     assert!(out.find("server      ").unwrap() < out.find("FAIL duplicate_identity").unwrap());
 }
+
+/// The running process says where it runs from an allowlist, and from nothing else (I0907).
+/// The executable is started in an environment that carries allowlisted platform facts
+/// beside secret-shaped variables a platform injects too; `distribution build` reports the
+/// facts and no value of any other variable, in either format.
+#[test]
+fn the_build_reports_allowlisted_platform_facts_and_no_other_variable() {
+    use majordomus_cli::platform::ALLOWLIST;
+    let f = Fixture::new();
+    // assembled at run time, so that no committed file carries a credential's shape
+    let secret = |name: &str| format!("leak-{name}-{}", "s".repeat(12));
+    let outside = [
+        "FLY_API_TOKEN",
+        "FLY_PRIVATE_IP",
+        "DATABASE_URL",
+        "SECRET_KEY_BASE",
+        "SESSION_SECRET",
+    ];
+    let run = |format: &str| {
+        let mut command = common::majordomus();
+        command
+            .args(["distribution", "build", "--format", format])
+            .current_dir(f.root())
+            .env("MAJORDOMUS_SHARE", common::dist_share());
+        // the caller's own platform, if any, is not this test's
+        for name in ALLOWLIST {
+            command.env_remove(name);
+        }
+        command
+            .env("FLY_APP_NAME", "majordomus-test")
+            .env("FLY_REGION", "ams")
+            .env("FLY_IMAGE_REF", "registry.example/majordomus:deployment-1");
+        for name in outside {
+            command.env(name, secret(name));
+        }
+        let out = command.output().expect("spawn");
+        let text = String::from_utf8(out.stdout).unwrap();
+        assert_eq!(
+            out.status.code(),
+            Some(0),
+            "{text}{}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+        text
+    };
+
+    let json = run("json");
+    let v: serde_json::Value = serde_json::from_str(&json).unwrap();
+    let platform = &v["platform"];
+    assert_eq!(platform["fly_app_name"], "majordomus-test", "{json}");
+    assert_eq!(platform["fly_region"], "ams", "{json}");
+    assert_eq!(
+        platform["fly_image_ref"],
+        "registry.example/majordomus:deployment-1"
+    );
+    // absence is reported as absence: the field is there, and null
+    assert!(platform["fly_machine_id"].is_null(), "{json}");
+    assert_eq!(
+        platform.as_object().unwrap().len(),
+        ALLOWLIST.len(),
+        "{json}"
+    );
+
+    let text = run("text");
+    assert!(text.contains("platform     FLY_REGION ams"), "{text}");
+    for name in outside {
+        assert!(!json.contains(&secret(name)), "{name} leaked: {json}");
+        assert!(!text.contains(&secret(name)), "{name} leaked: {text}");
+    }
+}

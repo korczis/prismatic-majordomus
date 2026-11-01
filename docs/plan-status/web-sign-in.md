@@ -33,7 +33,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1201` | shares share/skeleton with I1990; they may not run concurrently |
 | WARN | `scope_conflict` | `I1201` | shares share/skeleton with I1999; they may not run concurrently |
 | WARN | `scope_conflict` | `I1201` | shares share/skeleton with I2148; they may not run concurrently |
-| WARN | `scope_conflict` | `I1201` | shares share/schemas with I2670; they may not run concurrently |
 | WARN | `scope_conflict` | `I1201` | shares share/schemas with I2901; they may not run concurrently |
 | WARN | `scope_conflict` | `I1201` | shares share/schemas with I3123; they may not run concurrently |
 | WARN | `scope_conflict` | `I1201` | shares share/schemas with I3162; they may not run concurrently |
@@ -52,6 +51,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1201` | shares share/skeleton with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I1201` | shares share/schemas with I4309; they may not run concurrently |
 | WARN | `scope_conflict` | `I1201` | shares share/schemas with I4333; they may not run concurrently |
+| WARN | `scope_conflict` | `I1201` | shares share/kinds.yaml with I4336; they may not run concurrently |
 | WARN | `scope_conflict` | `I1201` | shares share/schemas with I4413; they may not run concurrently |
 | WARN | `scope_conflict` | `I1201` | shares share/schemas with I4415; they may not run concurrently |
 | WARN | `scope_conflict` | `I1201` | shares share/schemas with I4416; they may not run concurrently |

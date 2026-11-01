@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [one-kit-on-every-surface](https://majordomus.dev/plan/one-kit-on-every-surface/) | PLANNED | 0/8 | 2 | 6 | 0 | 0 | 0 | A reader meets one code block, one chart, one copy control, one tab control and one shell block, whichever surface they are on: the site, /ui, the Cockpit or the docs. Each is declared once in the design book with its tokens, and a gate fails the change that renders one another way, so the kit stays one as the surfaces grow. |
+| [one-kit-on-every-surface](https://majordomus.dev/plan/one-kit-on-every-surface/) | PLANNED | 0/9 | 3 | 6 | 0 | 0 | 0 | A reader meets one code block, one chart, one copy control, one tab control and one shell block, whichever surface they are on: the site, /ui, the Cockpit or the docs. Each is declared once in the design book with its tokens, and a gate fails the change that renders one another way, so the kit stays one as the surfaces grow. |
 
 ## Issues
 
@@ -23,6 +23,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3795](https://majordomus.dev/plan/i3795/) | READY | 0 | — | A surface links to another surface and never embeds it |
 | [I3796](https://majordomus.dev/plan/i3796/) | BLOCKED | 1 | I3793 | Every command and its output is one shell block, on every surface |
 | [I3797](https://majordomus.dev/plan/i3797/) | BLOCKED | 2 | I3796 | A command shown outside the shell block is refused by the audit |
+| [I4334](https://majordomus.dev/plan/i4334/) | READY | 0 | — | The UI kit is checked by one capability: design kit judges a repository's interface against the Flowbite Pro profile, and design kit adopt declares it |
 
 ## Findings
 
@@ -30,9 +31,15 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 |---|---|---|---|
 | WARN | `scope_conflict` | `I3793` | shares site/kit.js with I3820; they may not run concurrently |
 | WARN | `scope_conflict` | `I3793` | shares site/kit.js with I3829; they may not run concurrently |
+| WARN | `scope_conflict` | `I3793` | shares site/kit.js with I4294; they may not run concurrently |
 | WARN | `scope_conflict` | `I3793` | shares scripts/ci/design-check with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I3793` | shares scripts/ci/design-check with I4316; they may not run concurrently |
 | WARN | `scope_conflict` | `I3793` | shares site/kit.js with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I3793` | shares scripts/ci/design-check with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3795` | shares docs/DESIGN_SYSTEM.md with I3820; they may not run concurrently |
+| WARN | `scope_conflict` | `I3795` | shares docs/DESIGN_SYSTEM.md with I4334; they may not run concurrently |
 | WARN | `scope_conflict` | `I3795` | shares docs/DESIGN_SYSTEM.md with I4400; they may not run concurrently |
+| WARN | `scope_conflict` | `I4334` | shares apps/majordomus-cli/src/design/licence.rs with I4336; they may not run concurrently |
+| WARN | `scope_conflict` | `I4334` | shares share/design/kits with I4400; they may not run concurrently |
+| WARN | `scope_conflict` | `I4334` | shares apps/majordomus-cli/src/cli.rs with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I4334` | shares apps/majordomus-cli/src/capability/builtin/design.rs with I4468; they may not run concurrently |

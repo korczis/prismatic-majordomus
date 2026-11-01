@@ -336,11 +336,22 @@ fn reasoning_record(
         crate::git::GitState::Available(g) => g.head.clone(),
         _ => None,
     };
+    // Whose record this is, and whether the active task is theirs to file it under: the
+    // calling connection's episode when it attached one, else the environment's, and the
+    // task only when no other open episode opened it (ADR 0164). The pointer and the bare
+    // current task are not consulted: both name whoever was here last.
+    let who = crate::ledger::attribution(
+        Path::new(&ctx.index.repository.root),
+        ctx.episode_key().as_deref(),
+    );
     let record = ReasoningRecord {
         schema: RECORD_SCHEMA.into(),
         version: RECORD_VERSION,
         id: mint_id(body.kind(), &recorded_at),
-        task: s.store.current_task(),
+        task: who
+            .task
+            .unwrap_or_else(|| crate::reasoning::store::UNTASKED.to_string()),
+        session: who.session,
         recorded_at,
         head,
         redacted,

@@ -331,6 +331,25 @@ fn build(app: &App, format: OutputFormat, out: &mut Out<'_>) -> Result<u8> {
                         .unwrap_or("no target of the model matches this triple")
                 ),
             )?;
+            // only the allowlisted facts the handler read; a null one is absent, not shown
+            let present: Vec<(&String, &str)> = v["platform"]
+                .as_object()
+                .into_iter()
+                .flatten()
+                .filter_map(|(field, value)| value.as_str().map(|value| (field, value)))
+                .collect();
+            if present.is_empty() {
+                w(
+                    out,
+                    "platform     none (no allowlisted platform variable is set)".to_string(),
+                )?;
+            }
+            for (field, value) in present {
+                w(
+                    out,
+                    format!("platform     {} {value}", field.to_uppercase()),
+                )?;
+            }
         }
     }
     Ok(0)

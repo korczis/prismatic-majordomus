@@ -25,7 +25,7 @@ use super::record::{
     CarriedDecision, EpisodeAtPublish, SourceState, TaskRef, WorkingTree, MAX_CHANGED,
     MAX_DECISIONS, MAX_DECISION_BYTES,
 };
-use crate::capability::builtin::continuity::{document, read_task};
+use crate::capability::builtin::continuity::read_task;
 
 /// The local state directory, relative to the checkout.
 pub const STATE_DIR: &str = ".ai/local/state";
@@ -275,22 +275,20 @@ fn changed_paths(status: &[u8]) -> (Vec<String>, Vec<String>) {
     (changed, untracked)
 }
 
-/// The episode open in this checkout, when its record is this checkout's.
-pub fn open_episode(root: &Path) -> Option<String> {
-    let f = document(&root.join(STATE_DIR).join("session-current.yaml"))?;
-    let worktree = f.get("worktree").cloned().unwrap_or_default();
-    if !worktree.is_empty() && Path::new(&worktree) != root {
-        let same = std::fs::canonicalize(&worktree).ok() == std::fs::canonicalize(root).ok();
-        if !same {
-            return None;
-        }
-    }
-    f.get("session_id").cloned().filter(|s| !s.is_empty())
+/// The publishing caller's episode, when it has one open in this checkout: the caller's own
+/// by [`crate::ledger::open_session_id`] — `session_key` when the connection holds an
+/// episode, else the environment, else the one open episode here — and never the
+/// checkout's pointer, which names whoever opened an episode last (ADR 0164).
+pub fn open_episode(root: &Path, session_key: Option<&str>) -> Option<String> {
+    crate::ledger::open_session_id(root, session_key)
 }
 
-/// Whether an episode is open here.
-pub fn episode_at_publish(root: &Path) -> (Option<String>, EpisodeAtPublish) {
-    match open_episode(root) {
+/// Whether the caller's episode is open here.
+pub fn episode_at_publish(
+    root: &Path,
+    session_key: Option<&str>,
+) -> (Option<String>, EpisodeAtPublish) {
+    match open_episode(root, session_key) {
         Some(id) => (Some(id), EpisodeAtPublish::Open),
         None => (None, EpisodeAtPublish::None),
     }
@@ -632,33 +630,61 @@ mod tests {
         assert_eq!((nowhere.branch, nowhere.head), (None, None));
     }
 
+    /// The caller's episode is its own open record, never the checkout's pointer: with two
+    /// episodes open, a publication names the one its key resolves and nobody otherwise.
     #[test]
-    fn an_episode_is_open_here_only_when_its_record_is_this_checkouts() {
+    fn an_episode_is_open_here_only_when_its_record_is_this_checkouts_and_the_callers() {
         let dir = repo();
         let root = dir.path();
         let state = state(&dir);
-        assert_eq!(episode_at_publish(root), (None, EpisodeAtPublish::None));
-        let write = |worktree: &str, id: &str| {
+        let open = state.join("sessions-open");
+        std::fs::create_dir_all(&open).unwrap();
+        assert_eq!(
+            episode_at_publish(root, None),
+            (None, EpisodeAtPublish::None)
+        );
+        let write = |key: &str, worktree: &str, id: &str| {
             std::fs::write(
-                state.join("session-current.yaml"),
+                open.join(format!("{key}.yaml")),
                 format!("session_id: {id}\nworktree: {worktree}\n"),
             )
             .unwrap()
         };
-        write(&root.display().to_string(), "s-1");
+        // The pointer alone is nobody's episode. The caller is named by its key here:
+        // resolution from the environment is the ledger's and is proved there with an
+        // injected environment, because this test process may itself run inside a provider
+        // session that names an episode this fixture does not hold.
+        std::fs::write(
+            state.join("session-current.yaml"),
+            format!("session_id: s-0\nworktree: {}\n", root.display()),
+        )
+        .unwrap();
         assert_eq!(
-            episode_at_publish(root),
+            episode_at_publish(root, Some("a")),
+            (None, EpisodeAtPublish::None)
+        );
+        write("a", &root.display().to_string(), "s-1");
+        assert_eq!(
+            episode_at_publish(root, Some("a")),
             (Some("s-1".into()), EpisodeAtPublish::Open)
         );
         // the same directory under another spelling is still this checkout
-        write(&format!("{}/lib/..", root.display()), "s-2");
+        write("a", &format!("{}/lib/..", root.display()), "s-2");
         std::fs::create_dir_all(root.join("lib")).unwrap();
-        assert_eq!(open_episode(root).as_deref(), Some("s-2"));
+        assert_eq!(open_episode(root, Some("a")).as_deref(), Some("s-2"));
+        // a second open episode: each caller is its own, and an anonymous caller is nobody
+        write("b", &root.display().to_string(), "s-3");
+        assert_eq!(open_episode(root, Some("a")).as_deref(), Some("s-2"));
+        assert_eq!(open_episode(root, Some("b")).as_deref(), Some("s-3"));
+        assert_eq!(
+            episode_at_publish(root, Some("missing")),
+            (None, EpisodeAtPublish::None)
+        );
         // another checkout's episode is not open here, and an empty id is no episode
-        write("/srv/elsewhere", "s-3");
-        assert_eq!(open_episode(root), None);
-        write(&root.display().to_string(), "");
-        assert_eq!(open_episode(root), None);
+        write("b", "/srv/elsewhere", "s-4");
+        assert_eq!(open_episode(root, Some("b")), None);
+        write("b", &root.display().to_string(), "");
+        assert_eq!(open_episode(root, Some("b")), None);
     }
 
     #[test]

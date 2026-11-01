@@ -2123,7 +2123,9 @@ pub fn check(
 /// let at = ledger::now();
 /// // The guard runs first, the record is rewritten, and only then is the event appended:
 /// // a ledger line never describes a change that did not reach the file.
-/// transition(root, record, index, &plan, "I0001", Transition::Start, &at, &vocabulary, git)
+/// // `None`: the caller's episode is read from the environment, as on the command line; a
+/// // capability passes the key of the episode its connection holds (ADR 0164).
+/// transition(root, record, index, &plan, "I0001", Transition::Start, &at, &vocabulary, git, None)
 ///     .expect("a READY issue may start");
 /// # }
 /// ```
@@ -2138,6 +2140,7 @@ pub fn transition(
     now: &str,
     vocabulary: &crate::ledger::Vocabulary,
     git: &crate::git::GitState,
+    session_key: Option<&str>,
 ) -> Result<(), TransitionError> {
     check(index, plan, id, transition, now)?;
     let text = std::fs::read_to_string(path).map_err(|e| TransitionError::Write {
@@ -2156,13 +2159,16 @@ pub fn transition(
         path: path.to_path_buf(),
         reason: e.to_string(),
     })?;
-    crate::ledger::append(
+    // The event names the caller's episode, never the checkout's pointer: a worker moving
+    // an issue in a checkout another worker opened stamps its own session (ADR 0164).
+    crate::ledger::append_as(
         root,
         vocabulary,
         git,
         now,
         transition.event(),
         &[("issue", id.to_string())],
+        session_key,
     )
     .map_err(|e| TransitionError::Write {
         path: root.join(".ai/local/state/ledger.jsonl"),
@@ -2601,6 +2607,7 @@ mod seal_tests {
             AT,
             &vocabulary,
             &ix.repository.git,
+            None,
         )
         .expect("a READY issue starts");
         let written = std::fs::read_to_string(root.join(rel)).unwrap();

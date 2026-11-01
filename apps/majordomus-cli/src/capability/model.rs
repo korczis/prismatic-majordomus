@@ -204,6 +204,12 @@ pub enum WaiverReason {
     /// consulted, and distinct from [`WaiverReason::TransientState`]: the history is durable,
     /// it simply does not exist yet where the benchmark runs.
     PublishedHistory,
+    /// The capability answers from a declaration this repository keeps about its own records
+    /// (the delivery board's lanes over this repository's milestones, share/board.yaml), and
+    /// refuses a record the declaration does not place. A benchmark fixture's records are in
+    /// no such declaration, so its honest answer there is a refusal, and timing it would time
+    /// an error path. The answer is proved over this repository by the capability's own tests.
+    RepositoryDeclaration,
 }
 
 /// What a repository must hold before a conditional benchmark requirement applies to it.
