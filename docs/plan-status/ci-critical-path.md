@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [ci-critical-path](https://majordomus.dev/plan/ci-critical-path/) | ACTIVE | 14/43 | 18 | 11 | 0 | 0 | 0 | The change-to-verdict path runs p50 under 40 s and p95 under 60 s warm, and merge-to-verified-deploy p50 under 45 s and p95 under 60 s, measured on GitHub with warm, partial and cold reported apart, every skip of a gate explained by the repository's own impact model, and no required test removed, skipped or made advisory to reach the number. |
+| [ci-critical-path](https://majordomus.dev/plan/ci-critical-path/) | ACTIVE | 15/43 | 17 | 11 | 0 | 0 | 0 | The change-to-verdict path runs p50 under 40 s and p95 under 60 s warm, and merge-to-verified-deploy p50 under 45 s and p95 under 60 s, measured on GitHub with warm, partial and cold reported apart, every skip of a gate explained by the repository's own impact model, and no required test removed, skipped or made advisory to reach the number. |
 
 ## Issues
 
@@ -47,7 +47,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4155](https://majordomus.dev/plan/i4155/) | BLOCKED | 1 | I4154 | The follower's shared board and page caches are keyed by the repository they read |
 | [I4199](https://majordomus.dev/plan/i4199/) | DONE | 0 | — | A case that compiles the crate runs alone or caps cargo, so the cases beside it are never starved past their bounds |
 | [I4203](https://majordomus.dev/plan/i4203/) | DONE | 0 | — | The ci verdict judges each gate by the receipt of the attempt that ran it, so a rerun that passes is not judged by the attempt that failed |
-| [I4221](https://majordomus.dev/plan/i4221/) | READY | 0 | — | CI's Rust cache carries the shared build directory, where cargo actually compiles |
+| [I4221](https://majordomus.dev/plan/i4221/) | DONE | 0 | — | CI's Rust cache carries the shared build directory, where cargo actually compiles |
 | [I4222](https://majordomus.dev/plan/i4222/) | DONE | 0 | — | A forge reply cut off on its way is asked again |
 | [I4226](https://majordomus.dev/plan/i4226/) | READY | 2 | I2486 | Case 1096 matches a page from a here-string, so a match is never read as a miss |
 | [I4296](https://majordomus.dev/plan/i4296/) | READY | 0 | — | A full-history checkout of validate fits its bound: structure fetches no blobs, and every one has twenty minutes |

@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `f122beeea2a9`.
+Generated from canonical inputs `b3f0a7882bab`.
 
 ## Milestones
 
@@ -56,7 +56,7 @@ Generated from canonical inputs `f122beeea2a9`.
 | [builds-reuse-the-mesh-cache](https://majordomus.dev/plan/builds-reuse-the-mesh-cache/) | BLOCKED | 0/8 | 0 | 8 | 0 | 0 | 0 | Majordomus derives a key for every dependency install and compilation from the repository and the machine, restores it from the local level and then a trusted node's store before the work, saves it after, and is invisible when the store is absent; every local build path of the repository goes through it, and a gate refuses a new bypass. | [`plan-status/builds-reuse-the-mesh-cache.md`](plan-status/builds-reuse-the-mesh-cache.md) |
 | [campaigns-are-read-as-provenance](https://majordomus.dev/plan/campaigns-are-read-as-provenance/) | PLANNED | 0/4 | 1 | 3 | 0 | 0 | 0 | campaign is a kind; records cite campaigns through provenance and campaigns list what cites them; one command adds a pack safely; an execution of a record that cites a campaign pins the revision it ran. | [`plan-status/campaigns-are-read-as-provenance.md`](plan-status/campaigns-are-read-as-provenance.md) |
 | [capability-graph](https://majordomus.dev/plan/capability-graph/) | ACTIVE | 12/34 | 7 | 15 | 0 | 0 | 0 | One typed, deterministic capability graph composes the registries that already own their facts — it does not replace them — and adds typed relations between them that are inferred where a stable convention exists and declared where it does not. Both the running server and the published site render from that one graph: the static projection is the snapshot, the runtime projection is the snapshot plus live state. Navigation, overview, detail, search, the relation view and the coverage matrix are all derived, a dangling relation fails generation rather than rendering as a missing section, and a capability that exists with no documentation, no test or no enforcement is visible as such rather than indistinguishable from one that has them. | [`plan-status/capability-graph.md`](plan-status/capability-graph.md) |
-| [ci-critical-path](https://majordomus.dev/plan/ci-critical-path/) | ACTIVE | 14/43 | 18 | 11 | 0 | 0 | 0 | The change-to-verdict path runs p50 under 40 s and p95 under 60 s warm, and merge-to-verified-deploy p50 under 45 s and p95 under 60 s, measured on GitHub with warm, partial and cold reported apart, every skip of a gate explained by the repository's own impact model, and no required test removed, skipped or made advisory to reach the number. | [`plan-status/ci-critical-path.md`](plan-status/ci-critical-path.md) |
+| [ci-critical-path](https://majordomus.dev/plan/ci-critical-path/) | ACTIVE | 15/43 | 17 | 11 | 0 | 0 | 0 | The change-to-verdict path runs p50 under 40 s and p95 under 60 s warm, and merge-to-verified-deploy p50 under 45 s and p95 under 60 s, measured on GitHub with warm, partial and cold reported apart, every skip of a gate explained by the repository's own impact model, and no required test removed, skipped or made advisory to reach the number. | [`plan-status/ci-critical-path.md`](plan-status/ci-critical-path.md) |
 | [command-and-deployment-criteria-are-judged](https://majordomus.dev/plan/command-and-deployment-criteria-are-judged/) | PLANNED | 0/3 | 1 | 2 | 0 | 0 | 0 | A deployment criterion is met when a recorded observation of that deployment served a build containing the newest commit that changed the criterion's serving scope, and reads stale, failing or not_run otherwise, never met on an unreachable, malformed, dirty or undecided answer. A command criterion is met when a recorded execution of exactly the argument vector the criterion names exited 0 at a revision the evidence module's one freshness function judges current, with the scope it serves as its inputs; a different command exiting 0 meets nothing. Both carry the same evaluation a test criterion carries. The negative cases are executable, the claim is guaranteed with its test, and intent-lifecycle can be satisfied. | [`plan-status/command-and-deployment-criteria-are-judged.md`](plan-status/command-and-deployment-criteria-are-judged.md) |
 | [cost-per-accepted-outcome](https://majordomus.dev/plan/cost-per-accepted-outcome/) | BLOCKED | 0/4 | 0 | 4 | 0 | 0 | 0 | The cost of an accepted outcome is computed from measured telemetry and the finish contract that accepted it, and is reported only where both exist. | [`plan-status/cost-per-accepted-outcome.md`](plan-status/cost-per-accepted-outcome.md) |
 | [delivery-economics-are-measured-over-declared-windows](https://majordomus.dev/plan/delivery-economics-are-measured-over-declared-windows/) | PLANNED | 0/3 | 1 | 2 | 0 | 0 | 0 | Corpus runs answer the economics.tasks shape; a delivery window registered in the proof plan before it opens is measured at its close into a committed T3 record that the scorecard reads. | [`plan-status/delivery-economics-are-measured-over-declared-windows.md`](plan-status/delivery-economics-are-measured-over-declared-windows.md) |
@@ -397,7 +397,6 @@ Generated from canonical inputs `f122beeea2a9`.
 - `I4007` (a-session-proceeds-through-the-mesh, wave 0) — An idle serve exits by itself after a bound
 - `I4008` (a-session-proceeds-through-the-mesh, wave 0) — A push that only deletes refs runs no plan in the pre-push hook
 - `I4154` (ci-critical-path, wave 0) — The follow backlog test waits on the follower's cursor, not on fifty milliseconds
-- `I4221` (ci-critical-path, wave 0) — CI's Rust cache carries the shared build directory, where cargo actually compiles
 - `I4226` (ci-critical-path, wave 2) — Case 1096 matches a page from a here-string, so a match is never read as a miss
 - `I4230` (development-runtime, wave 3) — Below the reclaim mark, the shared build directory's bound evicts what is idle for minutes, not an hour
 - `I4231` (landing-survives-any-session, wave 0) — The containment test's unwalkable mirror names a parent that was never written, so a commit-graph cannot walk it
@@ -478,7 +477,7 @@ Generated from canonical inputs `f122beeea2a9`.
 
 ## Findings
 
-8768 finding(s), each on the page of the milestone its subject is or belongs to:
+8750 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
@@ -494,7 +493,7 @@ Generated from canonical inputs `f122beeea2a9`.
 | [`a-paste-is-decomposed-by-a-skill`](plan-status/a-paste-is-decomposed-by-a-skill.md) | 17 |
 | [`a-promoted-record-opens-its-message`](plan-status/a-promoted-record-opens-its-message.md) | 17 |
 | [`a-provider-carries-the-contract-natively`](plan-status/a-provider-carries-the-contract-natively.md) | 66 |
-| [`a-registered-corpus-judges-majordomus`](plan-status/a-registered-corpus-judges-majordomus.md) | 102 |
+| [`a-registered-corpus-judges-majordomus`](plan-status/a-registered-corpus-judges-majordomus.md) | 101 |
 | [`a-review-is-published-at-its-commit`](plan-status/a-review-is-published-at-its-commit.md) | 28 |
 | [`a-second-adopter-is-served`](plan-status/a-second-adopter-is-served.md) | 133 |
 | [`a-session-proceeds-through-the-mesh`](plan-status/a-session-proceeds-through-the-mesh.md) | 42 |
@@ -503,7 +502,7 @@ Generated from canonical inputs `f122beeea2a9`.
 | [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 542 |
 | [`an-authorised-node-connects-from-anywhere`](plan-status/an-authorised-node-connects-from-anywhere.md) | 3 |
 | [`an-outcome-becomes-a-reviewed-plan`](plan-status/an-outcome-becomes-a-reviewed-plan.md) | 11 |
-| [`an-unmet-criterion-is-drafted-into-work`](plan-status/an-unmet-criterion-is-drafted-into-work.md) | 113 |
+| [`an-unmet-criterion-is-drafted-into-work`](plan-status/an-unmet-criterion-is-drafted-into-work.md) | 112 |
 | [`architecture-is-enforced`](plan-status/architecture-is-enforced.md) | 2 |
 | [`automation`](plan-status/automation.md) | 49 |
 | [`campaigns-are-read-as-provenance`](plan-status/campaigns-are-read-as-provenance.md) | 19 |
@@ -521,7 +520,7 @@ Generated from canonical inputs `f122beeea2a9`.
 | [`external-workspaces`](plan-status/external-workspaces.md) | 28 |
 | [`failure-is-visible`](plan-status/failure-is-visible.md) | 31 |
 | [`fly-deployment`](plan-status/fly-deployment.md) | 67 |
-| [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 2995 |
+| [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 2979 |
 | [`intent-lifecycle`](plan-status/intent-lifecycle.md) | 60 |
 | [`knowledge-acts-on-what-it-learns`](plan-status/knowledge-acts-on-what-it-learns.md) | 77 |
 | [`landing-survives-any-session`](plan-status/landing-survives-any-session.md) | 7 |

@@ -70,7 +70,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3246` | shares .ai/repo/project/issues with I4007; they may not run concurrently |
 | WARN | `scope_conflict` | `I3246` | shares .ai/repo/project/issues with I4008; they may not run concurrently |
 | WARN | `scope_conflict` | `I3246` | shares .ai/repo/project/issues with I4154; they may not run concurrently |
-| WARN | `scope_conflict` | `I3246` | shares .ai/repo/project/issues with I4221; they may not run concurrently |
 | WARN | `scope_conflict` | `I3246` | shares .ai/repo/project/issues with I4231; they may not run concurrently |
 | WARN | `scope_conflict` | `I3246` | shares .ai/repo/project/issues with I4232; they may not run concurrently |
 | WARN | `scope_conflict` | `I3246` | shares .ai/repo/project/issues with I4251; they may not run concurrently |

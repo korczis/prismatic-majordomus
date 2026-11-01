@@ -27,4 +27,18 @@ evidence_required:
   - ci
 risk: "The cache grows from ~50 MB to the size of a job's build intermediates (several GB) per key, against GitHub's per-repository cache budget. If eviction then outruns reuse, narrow cache-directories to the jobs that gain, rather than revert."
 created_at: 2026-10-24
-updated_at: 2026-10-24
+updated_at: 2026-10-31T23:42:00Z
+started_at: 2026-10-31T23:39:37Z
+started_event: sha256:f263086aa831f2d77b9b716aec8324f4cc3549a21b203beb0852f80e6e8f60de
+verified_at: 2026-10-31T23:40:49Z
+verified_event: sha256:b97057aff7030abe7020d5bf8db22d2f4ff9a8c27d87773362ef51500dfe0b0b
+completed_at: 2026-10-31T23:42:00Z
+completed_event: sha256:3737a3d700cc029d17edef16299e5b0ee5e3538a45c5bc2781fcbe26735e4dd9
+evidence:
+  - covers: ci
+    type: ci
+    command: "rust (1) of validate, two runs of one head (3dcfee72983, train 13b) at cache key v0-rust-rust-Linux-x64-ade52a28-544173a0"
+    result: "Criterion 1: every rust (1) job lists ~/.cargo/build-shared under Cache Paths (e9e7ba923c7, .github/actions/setup-rust/action.yml:41); master validate 41107049778 rust (1) job 124495538692 log:1108-1115, Cache Size ~1016 MB against ~50 MB before. Criterion 2, two runs at one key: run 41194104887 job 124519535079 computed key ade52a28-544173a0, restored only ade52a28-d9ee47fe (full match: false), compiled 23 units and saved the key; run 41194106236 job 124564687153 computed the same key, restored it (full match: true, Cache up-to-date) and compiled 3 units, the workspace crates alone: 23 to 3. Criterion 3: both jobs concluded success, as did every job of master validate 41107049778 (rust (1) and rust (3) restored with full match: true). Not measured here: the coverage job, which found no cache in 41107049778 (job 124495559388) and compiled 180 units"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/41194106236/job/124564687153"
+    commit: 6b30ede2d133e702e0a796e3d83b2257c7174c7a
+    recorded_at: 2026-10-31T23:41:43Z
