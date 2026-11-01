@@ -1,7 +1,7 @@
 ---
 schema: skill/v1
 id: evolve
-version: 2
+version: 3
 title: Evolve the repository's know-how
 description: Turn what sessions observed into reviewed knowledge and into the rule, skill, document or test each lesson belongs in, then deliver the change and tell every peer what moved.
 status: active
@@ -89,8 +89,9 @@ Four things the command refuses, each met by a worker who followed this step:
 - An observation belongs to an episode. In a worktree where none is open, open one first
   with `majordomus session start`. When `observe` still says no episode is open although
   `session start` has just opened one, the episode was opened under another key than the
-  one `observe` looks up: run `ls .ai/local/state/sessions-open/` and pass the key it lists
-  as `MJ_SESSION_KEY=<key>` to every `observe` and `derive` of the episode. Pull request
+  one `observe` looks up: run `ls .ai/local/state/sessions-open/` and pass the name it lists
+  without its `.yaml` suffix as `MJ_SESSION_KEY=<key>` to every `observe` and `derive` of the
+  episode; the name with the suffix is refused as a provider session with no episode. Pull request
   2646 (commit af8f52b0273) makes `session start` take the key `observe` reads; this
   remedy goes when it lands.
 - `--kind` is one of `friction`, `workaround`, `defect`, `drift`, `repetition`. A lesson is
