@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-second-adopter-is-served](https://majordomus.dev/plan/a-second-adopter-is-served/) | ACTIVE | 5/26 | 19 | 2 | 0 | 0 | 0 | Each finding is fixed generically, with no test of whether the repository is this one: by a declaration, a derivation or a default that an adopter can state. Each fix carries a case that fails without it, its derived files regenerated and its page of the documentation corrected. |
+| [a-second-adopter-is-served](https://majordomus.dev/plan/a-second-adopter-is-served/) | ACTIVE | 5/27 | 20 | 2 | 0 | 0 | 0 | Each finding is fixed generically, with no test of whether the repository is this one: by a declaration, a derivation or a default that an adopter can state. Each fix carries a case that fails without it, its derived files regenerated and its page of the documentation corrected. |
 
 ## Issues
 
@@ -29,6 +29,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4261](https://majordomus.dev/plan/i4261/) | READY | 0 | — | An issue names the external requirement it serves, and a milestone its due date |
 | [I4264](https://majordomus.dev/plan/i4264/) | READY | 0 | — | adr check names decisions it did not examine, and adr propose records who authored one |
 | [I4265](https://majordomus.dev/plan/i4265/) | READY | 0 | — | The hook line init prints runs doctor in its commit context |
+| [I4266](https://majordomus.dev/plan/i4266/) | READY | 0 | — | plan says why an issue with no dependency is BLOCKED by its milestone |
 | [I4268](https://majordomus.dev/plan/i4268/) | READY | 0 | — | An adopter runs every gate of its CI model and records it with one command |
 | [I4320](https://majordomus.dev/plan/i4320/) | BLOCKED | 1 | I4333 | An evidence commit recorded on a branch is resolved to the commit that landed it, and is re-stamped with it |
 | [I4324](https://majordomus.dev/plan/i4324/) | BLOCKED | 1 | I4333 | A finished worktree's build output is reclaimed, node_modules and target/ included, whether its branch landed by merge or by squash |
@@ -58,6 +59,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4256` | shares lib/skills.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4257` | shares lib/init.sh with I4265; they may not run concurrently |
 | WARN | `scope_conflict` | `I4257` | shares lib/init.sh with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I4261` | shares lib/plan.sh with I4266; they may not run concurrently |
 | WARN | `scope_conflict` | `I4261` | shares scripts/github-sync with I4290; they may not run concurrently |
 | WARN | `scope_conflict` | `I4261` | shares docs/SCHEMAS.md with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I4261` | shares lib/plan.sh with I4322; they may not run concurrently |
@@ -79,6 +81,13 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4265` | shares docs/ADOPTION.md with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I4265` | shares lib/doctor.sh with I4418; they may not run concurrently |
 | WARN | `scope_conflict` | `I4265` | shares lib/init.sh with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I4266` | shares lib/plan.sh with I4322; they may not run concurrently |
+| WARN | `scope_conflict` | `I4266` | shares lib/plan.sh with I4329; they may not run concurrently |
+| WARN | `scope_conflict` | `I4266` | shares lib/plan.sh with I4357; they may not run concurrently |
+| WARN | `scope_conflict` | `I4266` | shares lib/plan.sh with I4410; they may not run concurrently |
+| WARN | `scope_conflict` | `I4266` | shares lib/plan.sh with I4463; they may not run concurrently |
+| WARN | `scope_conflict` | `I4266` | shares lib/plan.sh with I4464; they may not run concurrently |
+| WARN | `scope_conflict` | `I4266` | shares lib/plan.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4268` | shares lib/evidence.sh with I4292; they may not run concurrently |
 | WARN | `scope_conflict` | `I4268` | shares bin/majordomus with I4322; they may not run concurrently |
 | WARN | `scope_conflict` | `I4268` | shares bin/majordomus with I4329; they may not run concurrently |
