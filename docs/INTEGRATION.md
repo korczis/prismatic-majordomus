@@ -799,7 +799,14 @@ json` stays the list of pull requests to close.
   pair of commits, so its next read of the same checkout asks git again only about a head or
   a master that moved. Reads of one checkout take turns, so concurrent readers decide each
   pair once. `MAJORDOMUS_INTEGRATION_MEMO=off` reads without that memory; the answer is the
-  same (`integration::memo`). An observation older
+  same (`integration::memo`). What a read still has to decide, it decides side by side:
+  every `master..head` pair the cache lacks is asked of git before the queue is built, at
+  most `MAJORDOMUS_INTEGRATION_WORKERS` at a time (default half the machine's parallelism,
+  between one and six), and the queue then reads the cache as it would have filled it one
+  pair at a time, because no pair's answer depends on another's. On 2026-11-01, with 85 open
+  pull requests and a master newer than `relations.json`, the one-at-a-time read took
+  15 min 22 s; each relation is a few git processes, `merge-tree --write-tree` among them,
+  of six to ten seconds on a loaded machine. An observation older
   than an hour is said in the queue's diagnostics, and every reading of a queue with a
   diagnostic — `status`, `plan` and `explain` alike — exits 10.
 - The trail is written first. A merge is asked of the forge only after `merge_attempted` is
