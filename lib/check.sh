@@ -50,10 +50,14 @@ H
   mj_mesh_task_repair_claim
   if [ -n "$only" ]; then mj_doctrine_one "$only" check; else mj_run_task_checks; fi
   if [ "$checkpoint" = 1 ]; then
-    local now; now="$(mj_now)"
-    sed "s/^checkpoint_at: .*/checkpoint_at: $now/" "$MJ_CUR" > "$MJ_CUR.mj-tmp" && mv "$MJ_CUR.mj-tmp" "$MJ_CUR"
-    mj_ledger_append task.checkpoint "\"task_id\":\"$id\""
-    mj_info checkpoint "$id" "recorded at $now"
+    local now fields=""; now="$(mj_now)"
+    mj_record_attribution
+    if [ -n "$MJ_RECORD_TASK" ]; then
+      sed "s/^checkpoint_at: .*/checkpoint_at: $now/" "$MJ_CUR" > "$MJ_CUR.mj-tmp" && mv "$MJ_CUR.mj-tmp" "$MJ_CUR"
+      fields="\"task_id\":\"$MJ_RECORD_TASK\""
+    fi
+    mj_ledger_append task.checkpoint "$fields" "$MJ_RECORD_SESSION"
+    mj_info checkpoint "${MJ_RECORD_TASK:-(no task)}" "recorded at $now"
   fi
   [ "$MJ_JSON" = 1 ] || printf 'check: %s finding(s), %s failing\n' "$MJ_FINDINGS" "$MJ_FAILS"
   [ "$MJ_FAILS" = 0 ] && exit "$MJ_EX_OK" || exit "$MJ_EX_CONTRACT"
@@ -252,6 +256,8 @@ mj_scope_derived_paths() {
     | tr '\0' '\n' | awk 'NR % 3 == 1 { p = $0 } NR % 3 == 0 && $0 == "derived" { print p }'
 }
 
+# The newest checkpoint is no older than the profile's checkpoint_interval.
+# majordomus-limit: checkpoint_max_age_seconds
 mj_validate_checkpoint() {
   mj_task_gate checkpoint || return 0
   # Freshness is a statement about work in progress. A finished task has no next checkpoint

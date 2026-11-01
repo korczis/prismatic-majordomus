@@ -47,39 +47,41 @@ SRV=""
 trap 'serve_down' EXIT
 serve_up serve.out serve.err || exit 1
 get() { curl -s --max-time 120 "$U$1"; }
+# a page is matched from a here-string, never a pipe: under pipefail, grep -q exiting on its
+# first match breaks printf's pipe and the pipeline fails, so a match read as a miss (I4226)
 
 # the first reading of every source is waited for: there is nothing else to show
 first="$(get /ui)"
-printf '%s' "$first" | grep -q 'mj-ui-source' || { echo "    the dashboard names no source"; exit 1; }
-if printf '%s' "$first" | grep -q 'data-catching-up'; then
+grep -q 'mj-ui-source' <<<"$first" || { echo "    the dashboard names no source"; exit 1; }
+if grep -q 'data-catching-up' <<<"$first"; then
   echo "    a first reading was not waited for: the first page is already catching up"; exit 1
 fi
 before="$(git rev-parse HEAD | cut -c1-10)"
-printf '%s' "$first" | grep -q "$before" || { echo "    the dashboard does not show the commit it was read at ($before)"; exit 1; }
+grep -q "$before" <<<"$first" || { echo "    the dashboard does not show the commit it was read at ($before)"; exit 1; }
 
 git commit -q --allow-empty -m 'the repository moves'
 after="$(git rev-parse HEAD | cut -c1-10)"
 
 moved="$(get /ui)"
-printf '%s' "$moved" | grep -q 'data-catching-up' \
+grep -q 'data-catching-up' <<<"$moved" \
   || { echo "    after the repository moved, nothing on the dashboard is marked as catching up"; exit 1; }
 # which of the two it says depends on whether the server's reload of the repository has
 # finished: before, the whole screen is of the old generation; after, each reading is
-printf '%s' "$moved" | grep -qE 'before the repository changed|The repository changed' \
+grep -qE 'before the repository changed|The repository changed' <<<"$moved" \
   || { echo "    a screen from before the change does not say so"; exit 1; }
 
 # ---------------------------------------------------------------- and then it is current
 i=0
 while :; do
   page="$(get /ui)"
-  printf '%s' "$page" | grep -q 'data-catching-up' || break
+  grep -q 'data-catching-up' <<<"$page" || break
   i=$((i+1))
   [ "$i" -lt 300 ] || { echo "    the dashboard was still catching up after 60 s"; exit 1; }
   sleep 0.2
 done
-printf '%s' "$page" | grep -q "$after" \
+grep -q "$after" <<<"$page" \
   || { echo "    once caught up, the dashboard does not show the commit the repository moved to ($after)"; exit 1; }
-if printf '%s' "$page" | grep -qE 'before the repository changed|The repository changed'; then
+if grep -qE 'before the repository changed|The repository changed' <<<"$page"; then
   echo "    a current reading still says it predates the change"; exit 1
 fi
 

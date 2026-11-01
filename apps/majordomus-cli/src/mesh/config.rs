@@ -63,6 +63,10 @@ pub struct MeshConfig {
     /// Rendezvous endpoints, for networks multicast cannot cross.
     #[serde(default)]
     pub rendezvous: RendezvousConfig,
+    /// The tailnet: every online Tailscale peer is asked as a rendezvous, so a machine
+    /// joining the tailnet is found with no address written by hand.
+    #[serde(default)]
+    pub tailscale: TailscaleConfig,
     /// Who to trust.
     #[serde(default)]
     pub trust: TrustConfig,
@@ -123,6 +127,16 @@ pub struct CooperationConfig {
     /// what a shallow clone needs, and what separates two repositories sharing a history.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub repository: Option<String>,
+    /// Seconds a session holding an exclusive claim may make no progress — no real work,
+    /// no `mesh beat` — before its exclusive claims are suspended: still held, refusing
+    /// nobody until it beats again; its session is not closed. 0 turns the rule off (I3990).
+    /// A runtime's beat proves the runtime is up and nothing about the worker behind it:
+    /// the 5d executor held the integration lease for hours waiting on nobody while its
+    /// server beat (2026-10-22). At least four heartbeats, so a working session is beaten
+    /// for several times inside one ttl, and at most an hour. Left out of the repository's
+    /// declaration on purpose: an older executable refuses a key it does not know.
+    #[serde(default = "default_session_ttl")]
+    pub session_ttl_seconds: u64,
 }
 
 impl Default for CooperationConfig {
@@ -133,8 +147,19 @@ impl Default for CooperationConfig {
             expiry_seconds: DEFAULT_EXPIRY,
             seeds: Vec::new(),
             repository: None,
+            session_ttl_seconds: DEFAULT_SESSION_TTL,
         }
     }
+}
+
+/// The default seconds a claiming session may make no progress before its exclusive claims
+/// are suspended:
+/// ten minutes — longer than any one tool call a working session waits on, far shorter
+/// than the hours a session stuck on a dialog used to hold a scope (I3990).
+pub const DEFAULT_SESSION_TTL: u64 = 600;
+
+fn default_session_ttl() -> u64 {
+    DEFAULT_SESSION_TTL
 }
 
 /// The default seconds between cooperation heartbeats.
@@ -252,6 +277,57 @@ impl Default for RendezvousConfig {
     }
 }
 
+/// Tailscale discovery: the peers `tailscale status --json` lists online are asked as
+/// rendezvous at `http://<tailnet address>:<port>`. On by default; a machine without the
+/// Tailscale CLI reports the provider failed and the others run on. It proposes addresses
+/// only: what links is still decided by the signed answers and the trust list.
+///
+/// ```
+/// use majordomus_cli::mesh::config::TailscaleConfig;
+///
+/// let default = TailscaleConfig::default();
+/// assert!(default.enabled);
+/// assert_eq!((default.port, default.command.as_str()), (8791, "tailscale"));
+/// let stated: TailscaleConfig =
+///     serde_json::from_value(serde_json::json!({ "enabled": false })).unwrap();
+/// assert!(!stated.enabled && stated.interval_seconds == default.interval_seconds);
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct TailscaleConfig {
+    /// Whether the tailnet is asked at all.
+    #[serde(default = "yes")]
+    pub enabled: bool,
+    /// The port a peer's Majordomus server answers `mesh.register` on.
+    #[serde(default = "tailscale_port")]
+    pub port: u16,
+    /// Seconds between two readings of the tailnet and two registrations per peer.
+    #[serde(default = "rendezvous_interval")]
+    pub interval_seconds: u64,
+    /// The Tailscale CLI to ask; `tailscale` on the PATH unless stated.
+    #[serde(default = "tailscale_command")]
+    pub command: String,
+}
+
+impl Default for TailscaleConfig {
+    fn default() -> Self {
+        TailscaleConfig {
+            enabled: true,
+            port: tailscale_port(),
+            interval_seconds: rendezvous_interval(),
+            command: tailscale_command(),
+        }
+    }
+}
+
+fn tailscale_port() -> u16 {
+    8791
+}
+
+fn tailscale_command() -> String {
+    "tailscale".into()
+}
+
 /// Trust settings: the policy, and the public keys trusted regardless of it.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -296,6 +372,11 @@ impl CooperationConfig {
     /// assert!(CooperationConfig::default().validate().is_ok());
     /// let flapping = CooperationConfig { heartbeat_seconds: 10, expiry_seconds: 15, ..Default::default() };
     /// assert!(flapping.validate().is_err());
+    /// // a progress ttl a working session could lapse inside, and one that never lapses
+    /// let racing = CooperationConfig { session_ttl_seconds: 10, ..Default::default() };
+    /// assert!(racing.validate().is_err());
+    /// let off = CooperationConfig { session_ttl_seconds: 0, ..Default::default() };
+    /// assert!(off.validate().is_ok());
     /// ```
     pub fn validate(&self) -> Result<(), String> {
         if self.heartbeat_seconds == 0 {
@@ -319,6 +400,19 @@ impl CooperationConfig {
             if repository.trim().is_empty() || repository.len() > 128 {
                 return Err("cooperation.repository is empty or over 128 characters".into());
             }
+        }
+        let ttl = self.session_ttl_seconds;
+        if ttl != 0 && ttl < 4 * self.heartbeat_seconds {
+            return Err(format!(
+                "cooperation.session_ttl_seconds {ttl} is under four heartbeats ({}): a working session would lapse between two beats",
+                4 * self.heartbeat_seconds
+            ));
+        }
+        if ttl > u64::from(super::journal::MAX_SESSION_TTL_SECONDS) {
+            return Err(format!(
+                "cooperation.session_ttl_seconds {ttl} is over {} (an hour)",
+                super::journal::MAX_SESSION_TTL_SECONDS
+            ));
         }
         Ok(())
     }
@@ -464,6 +558,32 @@ mod tests {
                 .contains("master:m.yaml: cooperation.expiry_seconds 6 is under three heartbeats"),
             "{cooperation}"
         );
+    }
+
+    /// A progress ttl a working session could lapse inside — under four heartbeats, so one
+    /// lost round between two beats would suspend its claims — and one past the hour a beat
+    /// may carry are each refused, naming the bound; zero turns the rule off (I3990).
+    #[test]
+    fn a_session_ttl_under_four_heartbeats_or_over_an_hour_is_refused() {
+        let with = |session_ttl_seconds: u64| CooperationConfig {
+            heartbeat_seconds: 5,
+            expiry_seconds: 15,
+            session_ttl_seconds,
+            ..CooperationConfig::default()
+        };
+        let racing = with(19).validate().unwrap_err();
+        assert!(
+            racing.contains("session_ttl_seconds 19 is under four heartbeats (20)"),
+            "{racing}"
+        );
+        assert!(with(20).validate().is_ok(), "four heartbeats is enough");
+        let endless = with(3601).validate().unwrap_err();
+        assert!(
+            endless.contains("session_ttl_seconds 3601 is over 3600 (an hour)"),
+            "{endless}"
+        );
+        assert!(with(3600).validate().is_ok(), "an hour is the bound itself");
+        assert!(with(0).validate().is_ok(), "zero turns the rule off");
     }
 
     #[test]

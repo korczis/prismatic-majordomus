@@ -7,7 +7,11 @@
   "x-majordomus-allow": "mesh-declaration",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "kind", "id"],
+  "required": [
+    "schema",
+    "kind",
+    "id"
+  ],
   "properties": {
     "schema": {
       "description": "The format version of this object. A version the tool does not know is refused, never guessed.",
@@ -30,19 +34,28 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "enabled": { "type": "boolean" },
+        "enabled": {
+          "type": "boolean"
+        },
         "group": {
           "description": "The IPv4 multicast group, conventionally in 239.0.0.0/8.",
           "type": "string"
         },
-        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
         "ttl": {
           "description": "The datagram TTL; 1 keeps announcements on the local segment.",
           "type": "integer",
           "minimum": 1,
           "maximum": 255
         },
-        "interval_seconds": { "type": "integer", "minimum": 1 }
+        "interval_seconds": {
+          "type": "integer",
+          "minimum": 1
+        }
       }
     },
     "broadcast": {
@@ -50,14 +63,29 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "mode": { "enum": ["disabled", "auto", "explicit"] },
-        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "mode": {
+          "enum": [
+            "disabled",
+            "auto",
+            "explicit"
+          ]
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
         "networks": {
           "description": "Directed broadcast addresses for explicit mode.",
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
-        "interval_seconds": { "type": "integer", "minimum": 1 }
+        "interval_seconds": {
+          "type": "integer",
+          "minimum": 1
+        }
       }
     },
     "rendezvous": {
@@ -69,7 +97,33 @@
           "type": "array",
           "items": { "type": "string", "minLength": 1, "description": "https://host[:port] or http://host:port; the scheme and the address are judged by the declaration check (mesh/config.rs), which names what it refuses." }
         },
-        "interval_seconds": { "type": "integer", "minimum": 1 }
+        "interval_seconds": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "tailscale": {
+      "description": "Tailscale discovery: every online tailnet peer is asked as a rendezvous at http://<tailnet address>:<port>. On by default; without the Tailscale CLI the provider reports itself failed and the others run on.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "interval_seconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "trust": {
@@ -77,11 +131,20 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "policy": { "enum": ["deny_unknown", "tofu", "allowlist"] },
+        "policy": {
+          "enum": [
+            "deny_unknown",
+            "tofu",
+            "allowlist"
+          ]
+        },
         "allow": {
           "description": "Ed25519 public keys (64 hex characters) trusted regardless of policy.",
           "type": "array",
-          "items": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
         }
       }
     },
@@ -90,7 +153,9 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "enabled": { "type": "boolean" },
+        "enabled": {
+          "type": "boolean"
+        },
         "heartbeat_seconds": {
           "description": "Seconds between heartbeats: one beat and one sync per link.",
           "type": "integer",
@@ -111,6 +176,12 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 128
+        },
+        "session_ttl_seconds": {
+          "description": "Seconds a session holding an exclusive claim may make no progress (an MCP request other than ping, an announcement, a claim or a mesh beat) before its exclusive claims are suspended: still held, refusing nobody until it beats again; the session is not closed (I3990). Default 600; 0 turns the rule off; otherwise at least four heartbeats, at most 3600. An executable older than the key refuses a declaration that names it.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3600
         }
       }
     }

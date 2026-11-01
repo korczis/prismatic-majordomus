@@ -1,0 +1,40 @@
+id: a-finding-is-tracked-to-its-issue
+title: "A finding becomes a tracked plan issue whose GitHub projection links both ways, and every surface draws and highlights with the one library for the job"
+slug: a-finding-is-tracked-to-its-issue
+order: 522
+priority: p2
+problem: "A finding has no path into the plan: issue records are written by hand and plan.record only reads (apps/majordomus-cli/src/capability/builtin/plan.rs:493), and the one checked write of plan records is still planned (I3252, ADR 0191). Plan issues are not linked to GitHub from any site, /ui or Cockpit page, and the GitHub issue body has no clickable link back: lib/plan.sh:395 prints the canonical file as a backticked path and the evidence table at lib/plan.sh:451-463 drops the commit. Forge URLs are built separately in apps/majordomus-cli/src/plan/flight.rs:183 and apps/majordomus-cli/src/release/changelog.rs:37 among others, while /ui and the Cockpit print commits as mono text (apps/majordomus-cli/src/cockpit/pages.rs:7559, apps/majordomus-cli/src/ui/claim.rs:76). trace.* has no surface. The /ui donut colours a slice by its position (apps/majordomus-cli/src/ui/view.rs:685-707), so one status reads in different colours on different screens. ADR 0166 decision 7 names syntect as the one highlighter while the milestone one-kit-on-every-surface names giallo, and giallo is licensed EUPL-1.2, which cannot be linked into the MIT executable without a decision."
+outcome: "A finding with a stable id and a verification state becomes a canonical issue through one capability that writes only through the plan's checked write; the issue's site page and its GitHub projection link to each other; every forge link on /ui and the Cockpit comes from one helper; the trace is drawn as a graph over its table; status colours follow status tokens; and the highlighter boundary is written down in a proposed ADR."
+current_state: "On 81ef931a3e1: critique records carry findings with id, class, subject, finding, blocking and resolution and no severity or verification state; scripts/github-sync finds an issue by its record marker and is applied at landing; mj_plan_body_issue (lib/plan.sh:384) renders the GitHub body; I2747 plans one highlighter and PR #1294 carries an unlanded giallo engine; site/graph.js draws Cytoscape graphs on the site; I3792 plans every chart drawn from a table."
+desired_state: "With the finding shape and the rule that refuses an untracked serious finding delivered by the first milestone (I4309), a capability proposes an issue from a finding and writes it through intents.draft_write; site issue pages and GitHub issue bodies link both ways with no closing keyword; one Rust helper builds forge URLs for /ui and the Cockpit; /trace/ draws the trace with Cytoscape over its table; /ui donuts take their colour from status tokens; and a proposed ADR records syntect in the crate and giallo only inside Zola."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "lib/plan.sh"
+  - "site/templates/issue.html"
+  - "apps/majordomus-cli/src/plan/flight.rs"
+  - "apps/majordomus-cli/src/ui/view.rs"
+  - "site/graph.js"
+  - ".ai/repo/adrs"
+non_scope:
+  - "Storing a GitHub issue number in any record as a field or key, or matching a record to GitHub by number (scripts/github-sync:28-33)"
+  - "A gh issue create from any session; issues appear only through github-sync at landing (I3975)"
+  - "A Markdown renderer for /ui, which the unlanded ADR 0148 and I3004 own (branch feature/markdown-is-rendered-once)"
+  - "Reviving or rewriting PR #1294's engine beyond what ADR 0228 decides"
+acceptance_criteria:
+  - "Criteria a-finding-becomes-a-tracked-issue, code-is-highlighted-inside-its-licence-boundary and relations-and-status-are-drawn-from-tables of intent a-review-is-seen-at-its-commit carry their evidence"
+  - "An issue proposed from a fixture finding is written only through intents.draft_write and passes plan validate"
+  - "No record stores a GitHub issue number as a field or key, no record is matched to GitHub by number, and no closing keyword is written"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus intent validate"
+  - "scripts/ci/github-check"
+evidence_required:
+  - "suite"
+depends_on: []
+claims: []
+risks:
+  - "#2622 edits lib/plan.sh and scripts/github-sync; I4310 rebases after it lands and stays out of the milestone loop"
+  - "PR #1294 already edits share/design, share/ui and several Cockpit modules; I4307 decides what of it survives before I3791 applies a highlighter to /ui"
+  - "The I3004 and I2914 branches and #2583 touch apps/majordomus-cli/src/ui, and open I3792 also edits apps/majordomus-cli/src/ui/view.rs; I4313 must re-read them before it starts"
+created_at: 2026-10-28
+updated_at: 2026-10-28

@@ -380,6 +380,21 @@ mj_capture_event_kind() {
 # inside; `mj_provider_session_env` reads them to answer "which open episode is mine".
 mj_lifecycle_session_vars() { printf '%s\n' "$MJ_CAPTURE_LIFECYCLE" | awk '$13 != "" && $13 != "-" { print $13 }'; }
 
+# The provider whose own variable names the session this process runs inside, in the order
+# `mj_provider_session_env` reads them; nothing when MAJORDOMUS_PROVIDER_SESSION named it,
+# because that variable says whose session it is and not which provider's.
+mj_provider_of_session_env() {
+  [ -n "${MAJORDOMUS_PROVIDER_SESSION:-}" ] && return 0
+  local p n
+  while read -r p n; do
+    # The name comes from the adapter table, never from a payload: indirect expansion, not eval.
+    if [ -n "${!n:-}" ]; then printf '%s' "$p"; return 0; fi
+  done <<EOF_VARS
+$(printf '%s\n' "$MJ_CAPTURE_LIFECYCLE" | awk '$13 != "" && $13 != "-" { print $1, $13 }')
+EOF_VARS
+  return 0
+}
+
 # ------------------------------------------------- the declared capability of a provider
 # What the vendor offers, read from share/providers.yaml, where every cell carries the
 # citation it was verified from (ADR 0103).
@@ -1718,10 +1733,16 @@ mj_capture_mesh_join() {
   share="$(mj_rust_share "$MJ_ROOT")"
   [ -n "$share" ] && export MAJORDOMUS_SHARE="$share"
   id="$(mj_capture_mesh_session "$provider" "$psession")"
+  # --client-pid auto: the client that ran this hook, so that its end closes the session even
+  # when it never fires its end event (I3810)
   set -- mesh session open --repo "$MJ_ROOT" --session "$id" --client "$provider" \
-    --branch "$(mj_git_branch)" --head "$(mj_git_head)" --format json
-  if mj_load_current && [ "$(mj_cur outcome)" = active ]; then
-    set -- "$@" --task "$(mj_cur id)" --intent "$(mj_cur task)"
+    --branch "$(mj_git_branch)" --head "$(mj_git_head)" --client-pid auto --format json
+  # The task is this session's to carry or none (ADR 0164), resolved through
+  # mj_record_attribution as the episode its provider session opened: a second window joins
+  # the mesh without claiming the task the first window's episode opened.
+  MJ_SESSION_KEY="$psession" mj_record_attribution
+  if [ -n "$MJ_RECORD_TASK" ] && [ "$(mj_cur outcome)" = active ]; then
+    set -- "$@" --task "$MJ_RECORD_TASK" --intent "$(mj_cur task)"
   fi
   if "$bin" "$@" >/dev/null 2>&1; then printf '%s\n' "$id"
   else mj_session_context_log "$provider start event: the session did not join the mesh as $id"; fi

@@ -6,14 +6,12 @@
 // — because that document is what the report renders and what CI compares, and a shape
 // invented at each call site is a shape that drifts.
 
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
-
 import { planSurfaces } from './ui-discover.mjs';
 import { audit, jobs } from './ui-audit.mjs';
+import { RESULTS_SCHEMA, write } from './ui-results.mjs';
+import { shardPages, visitId, visitsOf } from './ui-shard.mjs';
 
-/** The contract of the results document, read back by `majordomus web report ui`. */
-export const RESULTS_SCHEMA = 'ui-audit/v1';
+export { RESULTS_SCHEMA, write };
 
 /**
  * Run the plan against a running origin and return the results document.
@@ -26,12 +24,20 @@ export const RESULTS_SCHEMA = 'ui-audit/v1';
  *
  * `select` narrows the pages for local iteration; a narrowed run says so in the document,
  * so a partial run can never be read as a clean full one.
+ *
+ * `shard` is `{ index, of }` (ui-shard.mjs): this run drives shard K of N of the visits that
+ * remain after `select` and `limit`, and the document says which shard it is, how many visits
+ * the plan had and which of them it drove, so that the union of the N documents can prove it
+ * is the whole audit, each visit once.
  */
-export async function run(origin, surfaces, cssPath, { select, limit, onVisit } = {}) {
+export async function run(origin, surfaces, cssPath, { select, limit, shard, onVisit } = {}) {
   const target = planSurfaces(surfaces, cssPath);
   let pages = target.pages;
   if (select) pages = pages.filter((page) => page.route.includes(select));
   if (limit) pages = pages.slice(0, limit);
+  const narrowed = pages.length !== target.pages.length;
+  const planned = visitsOf(pages).length;
+  if (shard) pages = shardPages(pages, shard);
 
   const started = Date.now();
   const concurrency = jobs();
@@ -63,7 +69,9 @@ export async function run(origin, surfaces, cssPath, { select, limit, onVisit } 
   return {
     schema: RESULTS_SCHEMA,
     origin,
-    complete: pages.length === target.pages.length,
+    // a shard is a part of the audit however much of it the plan held; the union says whether
+    // the parts are the whole
+    complete: !narrowed && (!shard || shard.of === 1),
     source: target.source,
     breakpoints: target.breakpoints,
     viewports: target.viewports,
@@ -72,16 +80,19 @@ export async function run(origin, surfaces, cssPath, { select, limit, onVisit } 
     visits: visits.length,
     seconds: Math.round((Date.now() - started) / 1000),
     concurrency,
+    ...(shard ? {
+      shard: {
+        index: shard.index,
+        of: shard.of,
+        planned,
+        narrowed,
+        driven: visits.map((visit) => visitId(visit.route, visit.width)),
+      },
+    } : {}),
     // `<` and `>` compare code units, the way every Rust and shell comparator here does.
     // `localeCompare` would order this report by whoever's machine rendered it.
     rules: Object.fromEntries(Object.entries(rules).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))),
     foreign,
     findings,
   };
-}
-
-/** Write a results document where the report renderer expects to read it. */
-export function write(path, results) {
-  mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, `${JSON.stringify(results, null, 2)}\n`);
 }

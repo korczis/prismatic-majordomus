@@ -69,6 +69,32 @@ trap 'rm -rf "$STAGE" "${RULES_TMP:-}" "${LINK_TRACKED:-}" "${LINK_DOCS:-}"; mj_
 command -v jq >/dev/null || { echo "generate-site-data: jq is required" >&2; exit 12; }
 GEN_VERSION=1
 
+# ---------------------------------------------------------------- the manifest, checked before anything is derived
+# The executable's manifest (docs/generated/registry.json) is refused here, before the first
+# read through the tool, rather than where its routes are projected near the end: a manifest
+# of another schema, one naming a source file the tree does not have, or one whose capability
+# names a module it does not hold is a finding about the repository whatever the rest of the
+# data says, and a generation that will be refused has nothing to gain from deriving the other
+# 30-odd files first. Checked at the projection, each refusal cost 94% of a full generation
+# (243 of 259 s, measured 2026-10-20), and test/cases/95_executable_reference.sh pays three.
+REG="$ROOT/docs/generated/registry.json"
+[ "$(jq -r '.schema' "$REG")" = "majordomus/capability-registry/v1" ] || { echo "generate-site-data: docs/generated/registry.json is not a majordomus/capability-registry/v1 manifest (regenerate: apps/majordomus-cli/target/debug/majordomus generate)" >&2; exit 10; }
+[ "$(jq '.capabilities | length' "$REG")" -gt 0 ] || { echo "generate-site-data: docs/generated/registry.json lists no capability" >&2; exit 10; }
+# every source path the manifest names is a file of this tree; the rule that turns a Rust
+# module path into a file lives in the executable, and this is where it is held to the tree
+jq -r '[.capabilities[].source_path] | unique[]' "$REG" | while read -r sp; do
+  [ -f "$ROOT/$sp" ] || { echo "generate-site-data: docs/generated/registry.json names $sp as a capability's source and no such file exists (Provenance::source_path and the crate's layout disagree)" >&2; exit 10; }
+done
+# the modules are read once and asked about together; the first one, in byte order, that is
+# not a builtin module of the manifest is the one named, as it was when each was asked alone
+jq -r '.capabilities[].module' "$REG" | LC_ALL=C sort -u > "$STAGE/capability-modules.txt"
+REG_MISSING="$(jq -r --rawfile ms "$STAGE/capability-modules.txt" '
+  [.modules[] | select(.source == "builtin") | .id] as $builtin
+  | first($ms | split("\n") | .[:-1][] | sub("^[ \t]+"; "") | sub("[ \t]+$"; "")
+          | select(. as $m | $builtin | index([$m]) | not) | "missing " + .) // empty' "$REG")" \
+  || { echo "generate-site-data: reading the modules of docs/generated/registry.json failed" >&2; exit 13; }
+[ -z "$REG_MISSING" ] || { echo "generate-site-data: docs/generated/registry.json: capability module ${REG_MISSING#missing } is not a builtin module of the manifest" >&2; exit 10; }
+
 # ---------------------------------------------------------------- reading the repository through the tool
 # Every JSON the generator asks the tool for is a part of its subject, and the subject is
 # this whole repository. A read that fails leaves part of that subject unreachable, and a
@@ -768,7 +794,7 @@ done
 # exits the generator instead of a subshell of it
 while IFS= read -r t; do
   [ -n "$t" ] || continue
-  printf '%s\n' "$RESP_KEYS" | grep -qxF "$t" \
+  grep -qxF -e "$t" <<<"$RESP_KEYS" \
     || { echo "generate-site-data: README row '$t' has no entry in docs/RESPONSIBILITIES.yaml" >&2; exit 10; }
 done <<EOF
 $README_TITLES
@@ -1879,8 +1905,11 @@ if mj_project_load; then
   for pair in "milestones:$MS" "issues:$IS" "waves:$WV" "edges:$EG" "findings:$FD"; do
     printf '%s' "${pair#*:}" > "$STAGE/plan-${pair%%:*}.json"
   done
+  # The complete graph grows with the plan too. Preserve command substitution's
+  # trailing-newline handling, but carry its bytes through a file instead of argv.
+  printf '%s' "$(mj_project_mermaid)" > "$STAGE/plan-mermaid.txt"
   jq -n --arg name "$(mj_pj_project_name)" --arg repo "$(mj_pj_repository)" --arg branch "$(mj_pj_default_branch)" \
-    --arg active "$(mj_pj_active)" --arg next "$(mj_pj_next_ready)" --arg mermaid "$(mj_project_mermaid)" \
+    --arg active "$(mj_pj_active)" --arg next "$(mj_pj_next_ready)" --rawfile mermaid "$STAGE/plan-mermaid.txt" \
     --argjson statuses "$ST" --argjson worker_sequence "$WS" \
     --slurpfile milestones "$STAGE/plan-milestones.json" --slurpfile issues "$STAGE/plan-issues.json" \
     --slurpfile waves "$STAGE/plan-waves.json" --slurpfile edges "$STAGE/plan-edges.json" \
@@ -2003,7 +2032,11 @@ HASH="$(mj_site_inputs_hash)"
 # tree. The commit a page was built from is a fact of the build, not of the derivation:
 # scripts/site-build writes it into site/data/build.json (for the templates) and
 # site/static/build.json (served at /build.json), neither of them committed.
-jq -n --arg v "$VERSION" --arg h "$HASH" --argjson g "$GEN_VERSION" --arg inputs "$INPUTS" \
+# The input list travels in a file, not on argv: it grows with every input the generator
+# reads, and at 101495 bytes on train 4 it was within a quarter of Linux's 131072-byte cap on
+# one argument (I3945, found by case 10's measurement). --rawfile reads the bytes --arg passed.
+printf '%s' "$INPUTS" > "$STAGE/source-inputs.txt"
+jq -n --arg v "$VERSION" --arg h "$HASH" --argjson g "$GEN_VERSION" --rawfile inputs "$STAGE/source-inputs.txt" \
   '{schema:1, source_version:$v, source_hash:$h, generator_version:$g, input_files: ($inputs | split("\n"))}' > "$OUT/source.json"
 
 mj_phase_end "gen:source.json" "$GEN_T0"
@@ -2308,23 +2341,6 @@ GEN_T0="$(mj_phase_begin "gen:executable_routes")"
 # the source on GitHub, and the claims that speak about each surface, attached by the path of
 # their implementation (scripts/lib/executable-site.jq). A capability added to the registry gets
 # its page, its index entries and its links from this pass alone; nothing here names one.
-REG="$ROOT/docs/generated/registry.json"
-[ "$(jq -r '.schema' "$REG")" = "majordomus/capability-registry/v1" ] || { echo "generate-site-data: docs/generated/registry.json is not a majordomus/capability-registry/v1 manifest (regenerate: apps/majordomus-cli/target/debug/majordomus generate)" >&2; exit 10; }
-[ "$(jq '.capabilities | length' "$REG")" -gt 0 ] || { echo "generate-site-data: docs/generated/registry.json lists no capability" >&2; exit 10; }
-# every source path the manifest names is a file of this tree; the rule that turns a Rust
-# module path into a file lives in the executable, and this is where it is held to the tree
-jq -r '[.capabilities[].source_path] | unique[]' "$REG" | while read -r sp; do
-  [ -f "$ROOT/$sp" ] || { echo "generate-site-data: docs/generated/registry.json names $sp as a capability's source and no such file exists (Provenance::source_path and the crate's layout disagree)" >&2; exit 10; }
-done
-# the modules are read once and asked about together; the first one, in byte order, that is
-# not a builtin module of the manifest is the one named, as it was when each was asked alone
-jq -r '.capabilities[].module' "$REG" | LC_ALL=C sort -u > "$STAGE/capability-modules.txt"
-REG_MISSING="$(jq -r --rawfile ms "$STAGE/capability-modules.txt" '
-  [.modules[] | select(.source == "builtin") | .id] as $builtin
-  | first($ms | split("\n") | .[:-1][] | sub("^[ \t]+"; "") | sub("[ \t]+$"; "")
-          | select(. as $m | $builtin | index([$m]) | not) | "missing " + .) // empty' "$REG")" \
-  || { echo "generate-site-data: reading the modules of docs/generated/registry.json failed" >&2; exit 13; }
-[ -z "$REG_MISSING" ] || { echo "generate-site-data: docs/generated/registry.json: capability module ${REG_MISSING#missing } is not a builtin module of the manifest" >&2; exit 10; }
 # The claims matrix is slurped from its file, never passed on argv: Linux caps a single
 # argument at MAX_ARG_STRLEN (32 pages, 131072 bytes) whatever ARG_MAX says, and the array
 # crossed it — 129593 bytes on master, 131363 with two claims more. macOS has no such
@@ -2481,32 +2497,98 @@ SC="$STAGE/SITE_CLAIMS.md"
 } > "$SC"
 
 mj_phase_end "gen:docs_SITE_CLAIMS.md_derived" "$GEN_T0"
-# ---------------------------------------------------------------- docs/PLAN_STATUS.md (derived)
+# ---------------------------------------------------------------- docs/PLAN_STATUS.md and docs/plan-status/ (derived)
 GEN_T0="$(mj_phase_begin "gen:docs_PLAN_STATUS.md_derived")"
-# The same current state the website's /plan/ route shows, as a Markdown table for a reader
+# The same current state the website's /plan/ route shows, as Markdown tables for a reader
 # on GitHub. Generated from plan.json, which is generated from .ai/repo/project. This is
 # a second rendering, never a second source: docs/PLANNING.md explains the semantics and
-# contains no figure, this file contains only figures and explains nothing.
+# contains no figure, these files contain only figures and explain nothing.
+#
+# One page per milestone, and docs/PLAN_STATUS.md the index of them (I4512). As one page the
+# plan status grew with every issue and every finding: 982,448 bytes on 2026-10-30, and the
+# branch that took it past .ai/repo/scope.yaml's out.max_bytes (1,048,576) took it out of
+# the index. Stage C of scripts/derive reads the index, so the registry projection it wrote
+# no longer matched what stage B had fingerprinted, and the derive converged only on a
+# second run. Split, adding a milestone adds a page and adding an issue grows only its
+# milestone's page; scripts/ci/derived-size-check refuses any derived file the index judges
+# by size once it passes three quarters of the limit.
+#
+# The milestone pages carry no input hash: each is a function of its milestone's records
+# alone, so an unrelated change rewrites the index and no milestone page. The index carries
+# the hash, and --check compares every page byte for byte.
 PS="$STAGE/PLAN_STATUS.md"
+PSD="$STAGE/plan-status"
+rm -rf "$PSD"; mkdir -p "$PSD"
+# A milestone id becomes a file name, so it is held to the characters a file name can carry
+# on every platform the repository is checked out on; anything else is a finding about the
+# records, not a page written under a mangled name.
+bad_mid="$(jq -r '.milestones[].id | select(test("^[A-Za-z0-9][A-Za-z0-9._-]*$") | not)' "$OUT/plan.json")"
+[ -z "$bad_mid" ] || { printf 'generate-site-data: milestone id(s) that cannot name a page under docs/plan-status/: %s\n' "$bad_mid" >&2; exit 10; }
+# The columns are the status vocabulary the engine declared, not a list typed here: DONE
+# against the denominator the engine derives status from, then one column per remaining
+# status. A status added to the engine adds a column to every table by existing.
+PS_JQ_DEFS='(.statuses.issue - ["DONE"]) as $sv
+  | ([ "milestone", "status", "done of required" ] + ($sv | map(ascii_downcase)) + [ "outcome" ]) as $head
+  | def mrow($m): "| [\($m.id)](\($base)/plan/\($m.id | ascii_downcase)/) | \($m.status) | \($m.counts.by_status.DONE)/\($m.counts.required) | "
+                  + (($sv | map($m.counts.by_status[.] | tostring)) | join(" | ")) + " | \($m.outcome) |";
+    def irow($i): "| [\($i.id)](\($base)/plan/\($i.id | ascii_downcase)/) | \($i.status) | \($i.wave) | \(if ($i.depends_on | length) == 0 then "—" else ($i.depends_on | join(", ")) end) | \($i.title) |";
+    def frow($f): "| \($f.level) | `\($f.code)` | `\($f.subject)` | \($f.message) |";
+    def hrow($h): "| " + ($h | join(" | ")) + " |\n|" + ($h | map("---") | join("|")) + "|";
+    (reduce .milestones[] as $x ({}; .[$x.id] = true)) as $is_m
+  | (reduce .issues[] as $i ({}; .[$i.id] = $i.milestone)) as $owner
+  | (reduce .issues[] as $i ({}; .[$i.milestone] += [$i])) as $by_m
+  # a finding belongs to the page of the milestone its subject is, or is an issue of; one
+  # whose subject is neither stays on the index, in full
+  | (reduce .findings[] as $f ({}; .[$owner[$f.subject] // (if $is_m[$f.subject] then $f.subject else "" end)] += [$f])) as $by_f
+  | '
+# Every milestone page in one jq pass over plan.json, split into files by the marker line
+# each page begins with: one process for a hundred pages rather than four per page.
+jq -r --arg base "$SITE_BASE" "$PS_JQ_DEFS"'
+  .milestones[] | . as $m | ($by_m[$m.id] // []) as $is | ($by_f[$m.id] // []) as $fs
+  | "\u0001\($m.id).md",
+    "# Plan status: \($m.id)",
+    "",
+    "Generated by `scripts/generate-site-data` from `.ai/repo/project/`. Do not edit; edit the",
+    "canonical records and regenerate. One milestone of the plan status: the index of every",
+    "milestone, the execution waves and what is ready now are in [`PLAN_STATUS.md`](../PLAN_STATUS.md),",
+    "and the semantics are in [`PLANNING.md`](../PLANNING.md).",
+    "",
+    "## Milestone",
+    "",
+    hrow($head),
+    mrow($m),
+    "",
+    "## Issues",
+    "",
+    (if ($is | length) == 0 then "No issue belongs to this milestone."
+     else hrow(["issue", "status", "wave", "depends on", "title"]), ($is[] | irow(.)) end),
+    "",
+    "## Findings",
+    "",
+    (if ($fs | length) == 0 then "None about this milestone or its issues."
+     else hrow(["level", "code", "subject", "message"]), ($fs[] | frow(.)) end)' "$OUT/plan.json" \
+  | awk -v dir="$PSD" '/^\001/ { if (out != "") close(out); out = dir "/" substr($0, 2); next } { print > out }'
 {
   printf '# Plan status\n\nGenerated by `scripts/generate-site-data` from `.ai/repo/project/`. Do not edit; edit the\ncanonical records and regenerate. `majordomus plan status` prints the same thing at a terminal,\nand the website renders it at `/plan/`. Semantics are in [`PLANNING.md`](PLANNING.md).\n\n'
+  printf 'This page is the index. Each milestone'\''s issues, and the findings about them, are on a page of\nits own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages\nand no one page grows with it.\n\n'
   # No commit here. This file is compared byte for byte by --check, so a field that records
   # the commit it was generated at is stale the moment committing it moves HEAD — the file
   # would name a commit that does not yet contain it. The input hash is the provenance that
   # matters and the thing --check actually compares; it moves when the canonical data moves
   # and not when anything else does.
   printf 'Generated from canonical inputs `%s`.\n\n' "$(printf '%s' "$HASH" | cut -c1-12)"
-  # The columns are the status vocabulary the engine declared, not a list typed here: DONE
-  # against the denominator the engine derives status from, then one column per remaining
-  # status. A status added to the engine adds a column to this table by existing.
-  jq -r '(.statuses.issue - ["DONE"]) as $sv
-         | ([ "milestone", "status", "done of required" ] + ($sv | map(ascii_downcase)) + [ "outcome" ]) as $head
-         | "## Milestones\n\n| " + ($head | join(" | ")) + " |\n|" + ($head | map("---") | join("|")) + "|"' "$OUT/plan.json"
-  jq -r --arg base "$SITE_BASE" '(.statuses.issue - ["DONE"]) as $sv | .milestones[] | . as $m
-         | "| [\(.id)](\($base)/plan/\(.id | ascii_downcase)/) | \(.status) | \(.counts.by_status.DONE)/\(.counts.required) | "
-           + (($sv | map($m.counts.by_status[.] | tostring)) | join(" | ")) + " | \(.outcome) |"' "$OUT/plan.json"
-  printf '\n## Issues\n\n| issue | milestone | status | wave | depends on | title |\n|---|---|---|---|---|---|\n'
-  jq -r --arg base "$SITE_BASE" '.issues[] | "| [\(.id)](\($base)/plan/\(.id | ascii_downcase)/) | \(.milestone) | \(.status) | \(.wave) | \(if (.depends_on | length) == 0 then "—" else (.depends_on | join(", ")) end) | \(.title) |"' "$OUT/plan.json"
+  jq -r --arg base "$SITE_BASE" "$PS_JQ_DEFS"'
+    "## Milestones", "",
+    hrow($head + ["page"]),
+    (.milestones[] | (mrow(.) + " [`plan-status/\(.id).md`](plan-status/\(.id).md) |")),
+    # an issue whose milestone is no milestone has no page to be on; the model refuses it,
+    # and should one pass, it is listed here rather than lost
+    (([.issues[] | select($is_m[.milestone] | not)]) as $lost
+     | if ($lost | length) == 0 then empty
+       else "", "## Issues without a milestone", "",
+            hrow(["issue", "milestone", "status", "wave", "depends on", "title"]),
+            ($lost[] | "| [\(.id)](\($base)/plan/\(.id | ascii_downcase)/) | \(.milestone) | \(.status) | \(.wave) | \(if (.depends_on | length) == 0 then "—" else (.depends_on | join(", ")) end) | \(.title) |")
+       end)' "$OUT/plan.json"
   printf '\n## Execution waves\n\n'
   jq -r '.waves[] | "- **wave \(.wave)** — \(.issues | join(", "))"' "$OUT/plan.json"
   printf '\n## Ready now\n\n'
@@ -2517,8 +2599,17 @@ PS="$STAGE/PLAN_STATUS.md"
   fi
   printf '\n\n## Findings\n\n'
   if [ "$(jq '.findings | length' "$OUT/plan.json")" = 0 ]; then printf 'None. The model validates with no failure and no warning.\n'
-  else printf '| level | code | subject | message |\n|---|---|---|---|\n'
-       jq -r '.findings[] | "| \(.level) | `\(.code)` | `\(.subject)` | \(.message) |"' "$OUT/plan.json"; fi
+  else
+    jq -r --arg base "$SITE_BASE" "$PS_JQ_DEFS"'
+      "\(.findings | length) finding(s), each on the page of the milestone its subject is or belongs to:",
+      "",
+      hrow(["milestone", "findings"]),
+      (.milestones[] | select(($by_f[.id] // []) | length > 0) | "| [`\(.id)`](plan-status/\(.id).md) | \($by_f[.id] | length) |"),
+      (($by_f[""] // []) as $rest
+       | if ($rest | length) == 0 then empty
+         else "", "Findings whose subject is no milestone and no issue of one:", "",
+              hrow(["level", "code", "subject", "message"]), ($rest[] | frow(.)) end)' "$OUT/plan.json"
+  fi
 } > "$PS"
 
 mj_phase_end "gen:docs_PLAN_STATUS.md_derived" "$GEN_T0"
@@ -2673,6 +2764,18 @@ if [ "$CHECK" = 1 ]; then
   for n in SITE_CLAIMS PLAN_STATUS PAGES_STATUS; do
     diff -q "$STAGE/$n.md" "$ROOT/docs/$n.md" >/dev/null 2>&1 || { stale_diff "$STAGE/$n.md" "$ROOT/docs/$n.md" "docs/$n.md"; rc=10; }
   done
+  # The plan status's milestone pages (I4512): every page staged is compared, and a page under
+  # docs/plan-status/ this run did not stage is an orphan — a milestone that is gone, or renamed.
+  for f in "$PSD"/*.md; do
+    [ -f "$f" ] || continue
+    n="$(basename "$f")"
+    diff -q "$f" "$ROOT/docs/plan-status/$n" >/dev/null 2>&1 || { stale_diff "$f" "$ROOT/docs/plan-status/$n" "docs/plan-status/$n"; rc=10; }
+  done
+  for f in "$ROOT"/docs/plan-status/*; do
+    [ -e "$f" ] || continue
+    n="$(basename "$f")"
+    [ -f "$PSD/$n" ] || { echo "ORPHAN docs/plan-status/$n is no longer generated (run: scripts/generate-site-data)"; rc=10; }
+  done
   # The derived content, held to the same contract as the derived data: it is committed, so the
   # publication path can render it without regenerating it, and this is what refuses a stale
   # page. The set of generated paths is what this run staged — never a list written here, which
@@ -2717,6 +2820,13 @@ if [ "$PUBLISH" = 1 ] || [ "$DEST_DATA" != "$ROOT/site/data/generated" ]; then
   else [ -d "$DEST_DATA.mj-old" ] && mv "$DEST_DATA.mj-old" "$DEST_DATA"; echo "generate-site-data: could not publish site data; previous generation restored" >&2; exit 13; fi
 fi
 
+# publish_dir <staged directory> <destination>: replace the destination with the staged tree,
+# restoring the previous one when the move fails, as the content subtrees below are replaced.
+publish_dir() {
+  rm -rf "$2.mj-old"; [ -d "$2" ] && mv "$2" "$2.mj-old"
+  if mv "$1" "$2"; then rm -rf "$2.mj-old"
+  else [ -d "$2.mj-old" ] && mv "$2.mj-old" "$2"; echo "generate-site-data: could not publish ${2#"$ROOT"/}; previous generation restored" >&2; exit 13; fi
+}
 if [ "$PUBLISH" = 1 ]; then
   mkdir -p "$ROOT/site/content"
   mkdir -p "$ROOT/site/content"
@@ -2735,6 +2845,9 @@ if [ "$PUBLISH" = 1 ]; then
   done
   cp "$STAGE/SITE_CLAIMS.md" "$ROOT/docs/SITE_CLAIMS.md.mj-tmp" && mv "$ROOT/docs/SITE_CLAIMS.md.mj-tmp" "$ROOT/docs/SITE_CLAIMS.md"
   cp "$STAGE/PLAN_STATUS.md" "$ROOT/docs/PLAN_STATUS.md.mj-tmp" && mv "$ROOT/docs/PLAN_STATUS.md.mj-tmp" "$ROOT/docs/PLAN_STATUS.md"
+  # The milestone pages the index links to, replaced as one directory: a milestone that is gone
+  # takes its page with it. scripts/gitattributes reads this line to mark the directory derived.
+  publish_dir "$PSD" "$ROOT/docs/plan-status"
   cp "$STAGE/PAGES_STATUS.md" "$ROOT/docs/PAGES_STATUS.md.mj-tmp" && mv "$ROOT/docs/PAGES_STATUS.md.mj-tmp" "$ROOT/docs/PAGES_STATUS.md"
 fi
 

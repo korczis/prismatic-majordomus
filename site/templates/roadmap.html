@@ -35,6 +35,13 @@
   </dd>
   <dt class="text-body">Milestones</dt>
   <dd class="text-heading">{{ roadmap.milestones | length }}, every one the plan holds, in the order the graph derives</dd>
+  {#- the plan's issues counted by the status their records declare, in the plan's order: the
+      counts the homepage hero carried until the owner took them off it on 2026-10-22 (I3917,
+      rule project.homepage-tells-a-declared-story v2), read here where a reader comes for them -#}
+  <dt class="text-body">Issues</dt>
+  <dd class="min-w-0 break-words text-heading" data-roadmap-issues>
+    {%- for st in plan.statuses.issue %}{% set n = [i for i in plan.issues if i.status == st] | length %}{% if n > 0 %}<span class="me-3 inline-block whitespace-nowrap"><span class="font-mono" data-roadmap-issue-status="{{ st }}">{{ n }}</span> {{ st | lower }}</span>{% endif %}{% endfor -%}
+  </dd>
   <dt id="delivery" class="scroll-mt-24 text-body">Delivery</dt>
   <dd class="min-w-0 break-words text-heading">
     {%- if delivery %}inferred from the history at <a href="{{ repo }}/commit/{{ delivery.observed.commit }}" class="font-mono underline hover:text-fg-brand">{{ delivery.observed.commit | truncate(length=11, end="") }}</a>: merged and released, each linked to the commit or release that proves it and naming its pull request
@@ -104,7 +111,7 @@
             <a href="{{ get_url(path="/plan/" ~ (i.id | lower) ~ "/", trailing_slash=true) }}" class="shrink-0 font-mono text-xs text-heading underline">{{ i.id }}</a>
             <span class="min-w-0 flex-1 basis-48 break-words text-body">{{ i.title }}</span>
             {%- if dl | length > 0 %}{% set d = dl[0] %}
-            <span class="flex shrink-0 flex-wrap items-baseline gap-x-2 font-mono text-xs text-heading" data-delivery="{{ d.stage }}">
+            <span class="flex min-w-0 max-w-full flex-wrap items-baseline gap-x-2 font-mono text-xs text-heading" data-delivery="{{ d.stage }}">
               <span class="rounded border border-default px-1.5 py-0.5">{{ d.stage | replace(from="_", to=" ") }}</span>
               {%- if d.released %}<a href="{{ repo }}/releases/tag/{{ d.released.tag }}" class="underline">{{ d.released.tag }}</a>{% endif %}
               {%- if d.merged %}{% if d.merged.pull_request %}<span title="the pull request that merged it">#{{ d.merged.pull_request }}</span>{% endif %}<a href="{{ repo }}/commit/{{ d.merged.commit }}" class="underline">{{ d.merged.commit | truncate(length=7, end="") }}</a>{% endif %}

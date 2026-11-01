@@ -126,7 +126,11 @@ majordomus check
 majordomus finish --outcome completed --verify-command "make test"
 ```
 
-Requirements: bash 3.2 or newer, git, and `sha256sum` or `openssl`. Nothing else.
+The shell tool, `bin/majordomus`, is small and portable: bash 3.2 or newer, git, and
+`sha256sum` or `openssl` run it on a stock macOS or Linux. It answers `init`, `start`,
+`check`, `finish` and the other commands of the task cycle itself. Every command it does not
+know it hands to the Rust executable it ships prebuilt as `libexec/majordomus-cli`, so
+`mcp`, `serve`, `generate` and `worktree` exist only there.
 Nothing is installed into your project except `.ai/` and the files the policy names. A
 repository set up before the `.ai/` layer, with its data under `.majordomus/`, is moved
 by `majordomus migrate` (preview with `--dry-run`); every other command refuses that
@@ -462,7 +466,7 @@ majordomus plan rgraph         # the same graph, as a diagram
 ```
 
 Rendered at [the roadmap](https://majordomus.dev/roadmap/), with the
-current state as a document in [`docs/PLAN_STATUS.md`](docs/PLAN_STATUS.md).
+current state as a document in [`docs/PLAN_STATUS.md`](docs/PLAN_STATUS.md), one page per milestone.
 
 Each step is gated by the previous one being real, and that is an invariant rather than a
 promise: a milestone whose dependencies are not accepted is blocked, and finishing every
@@ -609,7 +613,8 @@ value came from: [`docs/WEB.md`](docs/WEB.md),
 **Clients start it themselves.** [`.mcp.json`](.mcp.json) (Claude Code),
 [`.gemini/settings.json`](.gemini/settings.json) (Gemini CLI) and
 [`.codex/config.toml`](.codex/config.toml) (Codex) name [`bin/majordomus-mcp`](bin/majordomus-mcp),
-which builds the executable when it must and runs `majordomus mcp`. Open the repository in
+which runs `majordomus mcp` from the tree's executable and never builds it (`just build` does;
+a release of the tree's generation stands in, ADR 0224). Open the repository in
 any of them and the server is there; open it in two and they share one. Which tools the
 distribution has an adapter for, what each reads and where each keeps its scratch
 checkouts is one generated table, [`docs/generated/providers.md`](docs/generated/providers.md),

@@ -1,0 +1,29 @@
+id: I3955
+milestone: builds-reuse-the-mesh-cache
+title: "Whether an archived cargo build directory is reused on a second node is measured before anything restores one"
+slug: a-build-directory-archive-is-measured-before-it-is-built
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Build one commit cold on node A, archive its build directory without incremental state, restore it on node B with the same paths but its own checkout and registry, and record how many units B finds Fresh, the archive size and both build times; decide from that whether the cargo build directory becomes a kind of mesh build-cache ensure."
+why: "The owner, 2026-10-22, after lundra (the build and deploy host) reached zero free bytes: the shared cache must be part of Majordomus — used when MinIO is available, enforced, dynamic, derived — for compiled Rust, the shared cargo build directory, mix deps.get and npm install, keyed by a triplet for the most reuse. Decided the same day after critique: the store is trusted only through a signed offer (I2671), the build directory archive is measured before it is built (I3955), and the dependency cache is generic and wired first into prismatic-platform. See ADR 0157 and intent a-build-reuses-what-the-mesh-already-built."
+current_state: "Not measured. ADR 0139 measured 0 sccache hits between two build directories; the build-script fingerprint carries each tree's absolute root on purpose (.cargo/config.toml, MAJORDOMUS_BUILD_TREE); build directories ran from 3.4 GB median to 25 GB (lib/rust_bin.sh)."
+desired_state: "A recorded claim with the commit, the machines, the counts and the times, and the decision it supports written into ADR 0157. Measured 2026-10-22 on lundra in two containers of rust:1-bookworm with identical paths and separate checkouts and registries (3 cpus each): commit 2034d4a3f0b cold on A in 566 s (142 units compiled), build directory archived without incremental state at 2.9 GB, restored on B: 142 Fresh, 0 compiled. Decision 12 of ADR 0157 records it: the cargo build directory is a kind of I3952."
+scope:
+  - ".ai/repo/adrs/0157-the-mesh-offers-a-shared-build-cache.md"
+  - ".ai/repo/project/intents/a-build-reuses-what-the-mesh-already-built.yaml"
+  - "docs/BUILD_CACHE.md"
+non_scope:
+  - "Building the restore itself"
+depends_on: []
+acceptance_criteria:
+  - "Node B's checkout and registry are its own (new mtimes), and only the build directory travels"
+  - "The result is recorded whichever way it falls; a reuse below the cost of the transfer decides against the kind"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "build_dir_reuse_measured"
+serves:
+  - "a-build-reuses-what-the-mesh-already-built#reuse-is-measured-on-real-nodes"
+created_at: 2026-10-22
+updated_at: 2026-10-22

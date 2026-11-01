@@ -400,6 +400,16 @@
       "external": false
     },
     {
+      "id": ".ai/local/cache/flat",
+      "kind": "artifact",
+      "label": "local/cache/flat",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/local/state/session-current.yaml",
       "kind": "artifact",
       "label": "local/state/session-current.yaml",
@@ -720,6 +730,16 @@
       "external": false
     },
     {
+      "id": ".ai/repo/mesh",
+      "kind": "artifact",
+      "label": "repo/mesh",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/local/prompts",
       "kind": "artifact",
       "label": "local/prompts",
@@ -974,6 +994,11 @@
     {
       "source": "lib/context.sh",
       "target": ".ai/repo/project/issues",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/derive.sh",
+      "target": ".ai/local/state/current.yaml",
       "kind": "reads"
     },
     {
@@ -1648,6 +1673,11 @@
     },
     {
       "source": "lib/session.sh",
+      "target": "lib/capture.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/session.sh",
       "target": "lib/changed.sh",
       "kind": "sources"
     },
@@ -1704,6 +1734,11 @@
     {
       "source": "lib/start.sh",
       "target": "lib/intent_binding.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/usecase.sh",
+      "target": "lib/capture.sh",
       "kind": "sources"
     },
     {
@@ -1867,6 +1902,11 @@
       "kind": "uses"
     },
     {
+      "source": "lib/evidence.sh",
+      "target": ".ai/local/state/sessions-open",
+      "kind": "uses"
+    },
+    {
       "source": "lib/finish.sh",
       "target": ".ai/local/state/decisions.md",
       "kind": "uses"
@@ -1924,6 +1964,11 @@
     {
       "source": "lib/init.sh",
       "target": ".ai/repo/knowledge/curated/README.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".ai/repo/mesh",
       "kind": "uses"
     },
     {
@@ -2198,6 +2243,11 @@
     },
     {
       "source": "lib/update.sh",
+      "target": ".ai/repo/policy.yaml",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/update.sh",
       "target": ".ai/repo/providers",
       "kind": "uses"
     },
@@ -2234,6 +2284,11 @@
     {
       "source": "lib/checkpoint.sh",
       "target": ".ai/local/state/current.yaml",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/common.sh",
+      "target": ".ai/local/cache/flat",
       "kind": "writes"
     },
     {

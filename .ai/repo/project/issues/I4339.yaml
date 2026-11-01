@@ -1,0 +1,27 @@
+id: I4339
+milestone: the-runtime-supervises-itself
+title: "Renumbered to I4360: monitor reports a GitHub run queued past its bound"
+slug: monitor-reports-a-queued-run-renumbered
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Hold the identity I4339 that commit ab447585c29 named for the queued-run monitor issue, so that the commit's reference resolves; the work itself is planned and tracked as I4360."
+why: "Commit ab447585c29 (pull request 2656) recorded this issue as I4339; its follow-up 53d481ec80e renumbered the record to I4360 because another branch held the ids before it, and removed I4339.yaml. The published commit message cannot be rewritten, so without this record the history names an issue no record holds, and train 12c's commit-policy gate counted the commit as new debt (54 to 56, with I4364)."
+current_state: "No record holds I4339; I4360 on docs/the-evolve-skill-harvests-what-sessions-only-remembered carries the objective, the criteria and the no-runner-online cause."
+desired_state: "I4339 resolves to this cancelled record, which names I4360 as the issue that carries the work; nothing is planned under I4339."
+scope:
+  - ".ai/repo/project/issues/I4339.yaml"
+non_scope:
+  - "Any of I4360's work: apps/majordomus-cli/src/monitor/github.rs and docs/MONITOR.md are I4360's scope"
+depends_on: []
+acceptance_criteria:
+  - "majordomus commit history judges ab447585c29 without commit.unresolved_reference for I4339"
+validation:
+  - "majordomus plan validate"
+  - "scripts/ci/commit-policy"
+evidence_required:
+  - ci
+created_at: 2026-10-28
+updated_at: 2026-10-30
+cancelled: true
+completion: "Cancelled 2026-10-30 as renumbered: the issue is I4360 (monitor reports a GitHub run queued past its bound, with the no-runner-online cause), renumbered by commit 53d481ec80e on pull request 2656. This record exists only so that commit ab447585c29, which named I4339 before the renumbering, resolves."

@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you. This project is small on purpose. The best contribution is often a deletion.
+Thank you. The shell tool is small on purpose; the Rust executable beside it, `apps/majordomus-cli`, is where the rest lives. The best contribution is often a deletion.
 
 ## Working from a checkout
 
@@ -33,7 +33,7 @@ arbitrary. Most of them were paid for.
 
 - a failing test that shows a documented behaviour is not real
 - a smaller implementation of an existing command
-- a portability fix for bash 3.2 or BSD userland, with the platform named
+- a portability fix for the shell tool's bash 3.2 or BSD userland, with the platform named
 - a projection adapter for a provider, if it translates and adds no rules
 - a correction to a claim in any document, with the reproduce command
 
@@ -90,7 +90,7 @@ arbitrary. Most of them were paid for.
    `docs/CLAIMS.yaml`, `share/skeleton/**`, `share/*.yaml`, `bin/majordomus`, `lib/**`,
    or anything in the Rust crate — run `just derive` and commit the regenerated
    `site/data/generated/`, `site/data/registry/`, `docs/generated/`, `docs/SITE_CLAIMS.md`
-   and `docs/PLAN_STATUS.md` with it; `just derive-check` (`scripts/derive-check`) says
+   and `docs/PLAN_STATUS.md` with its milestone pages under `docs/plan-status/`; `just derive-check` (`scripts/derive-check`) says
    what is stale, and CI and the Pages workflow run the same script and refuse to deploy
    stale derived files. Never hand-edit a generated file;
    [`docs/GITHUB_PAGES_ARCHITECTURE.md`](docs/GITHUB_PAGES_ARCHITECTURE.md) lists which
@@ -156,7 +156,12 @@ arbitrary. Most of them were paid for.
    `mj_covers_resolve` in [`lib/commands.sh`](lib/commands.sh), called by the doctor check and
    by `test/cases/31_command_coverage.sh` alike.
 8. Commit in conventional format, `type(scope): description`, small commits that each
-   leave the tree consistent.
+   leave the tree consistent. A pull request's title is a conventional commit too, and it
+   names the issue ids it serves, `(I3970)`: its labels, milestone, assignee and the
+   `Refs #<n>` links in its body are projected from those records
+   (`scripts/github-sync --prs`, `docs/PLANNING.md`). Never write a closing keyword
+   (`Closes`, `Fixes` or `Resolves` followed by an issue number) in a title, body or commit
+   message: GitHub would close the issue ahead of its canonical record. Link with `Refs #<n>`.
 8. Before marking the pull request ready, compare every capability sentence you touched
    in `README.md` or `docs/` against the tests. Wording that outruns the tests is
    downgraded or removed in the same pull request. A new capability sentence also needs
