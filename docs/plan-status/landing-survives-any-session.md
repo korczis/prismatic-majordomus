@@ -28,7 +28,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | level | code | subject | message |
 |---|---|---|---|
 | WARN | `scope_conflict` | `I3910` | shares apps/majordomus-cli/tests/integration_executor.rs with I3911; they may not run concurrently |
-| WARN | `scope_conflict` | `I3910` | shares apps/majordomus-cli/src/integration/classify.rs with I3979; they may not run concurrently |
 | WARN | `scope_conflict` | `I3910` | shares .ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md with I4006; they may not run concurrently |
 | WARN | `scope_conflict` | `I3910` | shares .ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md with I4307; they may not run concurrently |
 | WARN | `scope_conflict` | `I3910` | shares apps/majordomus-cli/tests/integration_executor.rs with I4315; they may not run concurrently |
