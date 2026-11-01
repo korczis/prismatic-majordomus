@@ -83,6 +83,13 @@ tiktoken-rs = "=0.12.0"
 # request is the crate's own few lines (src/mcp/bridge.rs) over a rustls stream.
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
 webpki-roots = "1"
+# giallo: every code block on every surface is highlighted by one engine (ADR 0166 §7). The
+# site is built by Zola 0.23, which highlights with giallo 0.5.2, so the executable uses the
+# same crate at the same version: the UI's markup for a block is the site's markup for that
+# block, token for token, because it is the same program. Pinned exactly: a giallo release
+# that tokenised differently from the one Zola embeds would make the two surfaces disagree.
+# `dump` carries the built-in grammars (VS Code's TextMate grammars, ~1.2 MiB compressed).
+giallo = { version = "=0.5.2", features = ["dump"] }
 
 [build-dependencies]
 # sha2: build.rs takes the generation — the digest of the crate sources this build read —

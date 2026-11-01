@@ -66,7 +66,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2374` | shares test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh with I2717; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh with I2720; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh with I2723; they may not run concurrently |
-| WARN | `scope_conflict` | `I2374` | shares scripts/site-build with I2747; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh with I2826; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares .github/workflows/pages.yml with I2842; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares .ai/repo/ci/gates.yaml with I2846; they may not run concurrently |

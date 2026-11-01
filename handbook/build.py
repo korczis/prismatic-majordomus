@@ -7,7 +7,9 @@
 The handbook describes this repository, so it is built from this repository and from nothing
 else: the documents, decisions, rules, claims and use cases git tracks here, the graph the
 executable generates (docs/generated/graph.json), the registry, the CI model and the history.
-Nothing is fetched. An edition is a directory beside this file that carries an edition.toml
+Nothing is fetched. The corpus's code blocks are highlighted by the site's own engine, Zola under
+the site's [markdown.highlighting] (code.py), so zola is required. An edition is a directory
+beside this file that carries an edition.toml
 naming its language; its texts are written by hand, and every figure, list, graph and panel
 in it is derived by the three modules here.
 
@@ -78,6 +80,7 @@ def main():
     py = [sys.executable, "-I", "-B"]
     run("the repository's numbers", py + [os.path.join(HERE, "derive_data.py"), "--out", DERIVED], check)
     run("the document corpus", py + [os.path.join(HERE, "corpus.py")], check)
+    run("the corpus's code, highlighted by the site's engine", py + [os.path.join(HERE, "code.py")], check)
     run("the repository graph", py + [os.path.join(HERE, "graph.py")], check)
     built = editions()
     if not built:

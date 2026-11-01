@@ -939,7 +939,7 @@ fn live_page(subject: &Subject, frame: Option<&str>, origin: &Origin) -> String 
         .child(el("p").text(
             "This link leads to something only a running process answers: a page read again as the repository changes, a query, a form, a page past the snapshot's bound, another surface of the server or its API. Run the server in a checkout and open the same path there:",
         ))
-        .child(crate::cockpit::view::pre(format!(
+        .child(crate::cockpit::view::code("bash", format!(
             "majordomus serve\n# then open http://localhost:<port>{}",
             subject.prefix
         )))
