@@ -1004,4 +1004,30 @@ mod tests {
             "a worker's key leaked into {graph}"
         );
     }
+
+    /// What a card does not know it does not draw: no status, an open pull request the
+    /// delivery gives no number for, and a branch whose pull request is open each leave
+    /// their chip out, and the card is still drawn.
+    #[test]
+    fn a_card_draws_nothing_it_does_not_know() {
+        let c = Card {
+            lane: Lane::InReview,
+            id: "I20".into(),
+            title: "partial".into(),
+            milestone: "m".into(),
+            priority: String::new(),
+            wave: u64::MAX,
+            status: String::new(),
+            delivery: serde_json::json!({
+                "pr_open": { "draft": true },
+                "branch": { "name": "feature/y" }
+            }),
+            carriers: Vec::new(),
+        };
+        let html = card(&c).render();
+        assert!(html.contains("card-I20"), "{html}");
+        assert!(!html.contains("mj-ui-board-status"), "{html}");
+        assert!(!html.contains("mj-ui-board-chip--pr"), "{html}");
+        assert!(!html.contains("feature/y"), "{html}");
+    }
 }
