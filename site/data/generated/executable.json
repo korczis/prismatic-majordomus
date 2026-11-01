@@ -1309,6 +1309,23 @@
       "tool": "majordomus_completion"
     },
     {
+      "api_anchor": "/docs/api/gates/#op-gates-headroom",
+      "claims": [],
+      "cli": "majordomus gates headroom",
+      "id": "gates.headroom",
+      "kind": "query",
+      "module": "gates",
+      "module_route": "/registry/modules/gates/",
+      "resource": "majordomus://gates/headroom",
+      "route": "/registry/capabilities/gates-headroom/",
+      "slug": "gates-headroom",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "tests": [],
+      "title": "Whether each structure job fits in half its bound",
+      "tool": "majordomus_gate_headroom"
+    },
+    {
       "api_anchor": "/docs/api/gates/#op-gates-model",
       "claims": [],
       "cli": null,
@@ -4547,7 +4564,7 @@
     ]
   },
   "counts": {
-    "capabilities": 220,
+    "capabilities": 221,
     "claims": 93,
     "modules": 60
   },
@@ -5185,6 +5202,11 @@
           "id": "gates.completion",
           "route": "/registry/capabilities/gates-completion/",
           "slug": "gates-completion"
+        },
+        {
+          "id": "gates.headroom",
+          "route": "/registry/capabilities/gates-headroom/",
+          "slug": "gates-headroom"
         },
         {
           "id": "gates.model",

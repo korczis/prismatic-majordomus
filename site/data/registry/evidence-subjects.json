@@ -414,6 +414,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:gates.headroom",
+      "path": "/evidence/capabilities/gates-headroom/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:gates.model",
       "path": "/evidence/capabilities/gates-model/"
     },
@@ -2849,6 +2854,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:gates headroom",
+      "path": "/evidence/commands/gates-headroom/"
+    },
+    {
+      "kind": "command",
       "subject": "command:generate",
       "path": "/evidence/commands/generate/"
     },
@@ -4903,6 +4913,18 @@
       "page": "/evidence/capabilities/gates-completion/",
       "programs": [],
       "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:gates.headroom": {
+      "kind": "capability",
+      "id": "gates.headroom",
+      "page": "/evidence/capabilities/gates-headroom/",
+      "programs": [],
+      "members": [
+        "command:gates headroom"
+      ],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -15313,6 +15335,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:gates headroom": {
+      "kind": "command",
+      "id": "gates headroom",
+      "page": "/evidence/commands/gates-headroom/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:generate": {
       "kind": "command",
       "id": "generate",
@@ -21197,6 +21238,18 @@
       "programs": [],
       "members": [
         "capability:product.features"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_gate_headroom": {
+      "kind": "mcp",
+      "id": "majordomus_gate_headroom",
+      "alias_of": "capability:gates.headroom",
+      "programs": [],
+      "members": [
+        "capability:gates.headroom"
       ],
       "routes": [],
       "mechanisms": [],

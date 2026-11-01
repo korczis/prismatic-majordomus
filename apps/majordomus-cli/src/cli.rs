@@ -119,6 +119,8 @@ pub enum Command {
     Shell(ShellArgs),
     /// The boundary between the layer's tracked and local halves, checked against the layouts their contracts declare: every path a contract excludes, named with the contract
     Layout(LayoutArgs),
+    /// Whether each structure job of the CI model fits in half its bound: the p90 of its wall time over the committed window against its timeout-minutes, naming the job and its three most expensive gates when it does not
+    Gates(GatesArgs),
     /// The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output
     Pack(PackArgs),
     /// The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it
@@ -520,6 +522,54 @@ pub struct LayoutArgs {
 pub enum LayoutCommand {
     /// Refuse every path a declared layout excludes, naming the contract; exit 10 on a finding, 12 when the halves cannot be read
     Check,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus gates`. The output shape is global, so it reads the way a person writes it.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, GatesArgs, GatesCommand, OutputFormat};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "gates", "headroom", "--format", "json"]).unwrap();
+/// let Command::Gates(args) = cli.command else { panic!("not the gates command") };
+/// let args: GatesArgs = args;
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// assert!(matches!(args.command, GatesCommand::Headroom));
+/// ```
+pub struct GatesArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `headroom`. Required: the group runs nothing of its own.
+    pub command: GatesCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus gates`: `headroom` judges every structure job of the CI
+/// model against half its bound (I4381). It takes no arguments: the jobs, the bounds and the
+/// window are what the repository commits, never what a caller names.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, GatesCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "gates", "headroom"]).unwrap();
+/// let Command::Gates(args) = cli.command else { panic!("not the gates command") };
+/// assert!(matches!(args.command, GatesCommand::Headroom));
+/// // no job is named on the command line, and the group runs nothing of its own
+/// assert!(Cli::try_parse_from(["majordomus", "gates", "headroom", "structure"]).is_err());
+/// assert!(Cli::try_parse_from(["majordomus", "gates"]).is_err());
+/// ```
+pub enum GatesCommand {
+    /// Refuse a structure job whose p90 wall time over the committed window passes half its bound; exit 10 when one does, 12 when one cannot be measured
+    Headroom,
 }
 
 #[derive(Debug, Args)]
@@ -6016,6 +6066,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["layout", "check", "--format", "json"],
             setup: &[],
             expect: Expect::StdoutContains(&["\"checked\"", "\"findings\"", "\"passes\""]),
+        }],
+    },
+    CommandExamples {
+        command: "gates headroom",
+        examples: &[ExampleDoc {
+            id: "gates-headroom-unmeasured",
+            title: "A repository with no committed window is never a pass",
+            description: "Every structure job of the CI model with its bound, the p90 of its wall time over .ai/repo/ci/structure-job-durations.tsv and the share of the bound it takes. A job past half its bound exits 10 and names its three costliest gates; a repository that has committed no window, as this example's fresh one has not, answers unmeasured and exits 12, which is a refusal and never a pass. `scripts/ci-baseline --structure-durations` writes the window.",
+            argv: &["gates", "headroom"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
         }],
     },
     CommandExamples {

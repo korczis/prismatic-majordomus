@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.10"
   },
-  "fingerprint": "c3ab777db475b0f8ea092a855e6e4ef9fdb8bc8990d16f30904b2988cc061670",
+  "fingerprint": "c8ed6a151460bfe6e7b0004e5b3508e5b818b814dbebc818ce54e5a748ced7dc",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -25,7 +25,7 @@
       "id": "cli",
       "title": "Command line",
       "route": "/docs/cli/",
-      "features": 27
+      "features": 28
     },
     {
       "id": "api",
@@ -2180,7 +2180,7 @@
           "route": "/features/coverage/",
           "featured": false,
           "surfaces": {
-            "cli": false,
+            "cli": true,
             "api": true,
             "mcp": true,
             "cockpit": true,
@@ -2569,7 +2569,7 @@
         "use_cases": 8,
         "rules": 12,
         "enforced_rules": 10,
-        "capabilities": 6,
+        "capabilities": 7,
         "moments": 31
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 149,
+        "capabilities": 150,
         "moments": 38
       },
       "evidence": {
@@ -8484,7 +8484,7 @@
       "route": "/features/coverage/",
       "source": ".ai/repo/features/coverage.md",
       "surfaces": {
-        "cli": false,
+        "cli": true,
         "api": true,
         "mcp": true,
         "cockpit": true,
@@ -8506,6 +8506,16 @@
               "tool": "majordomus_completion",
               "resource": "majordomus://gates/completion",
               "route": "GET /api/v1/gates/completion"
+            },
+            {
+              "id": "gates.headroom",
+              "title": "Whether each structure job fits in half its bound",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_gate_headroom",
+              "resource": "majordomus://gates/headroom",
+              "route": "GET /api/v1/gates/headroom",
+              "cli": "majordomus gates headroom"
             },
             {
               "id": "gates.model",
@@ -8570,11 +8580,11 @@
       "moments": [],
       "backlinks": [],
       "counts": {
-        "capabilities": 4,
-        "mcp_tools": 4,
-        "mcp_resources": 4,
-        "http_routes": 4,
-        "cli_paths": 0,
+        "capabilities": 5,
+        "mcp_tools": 5,
+        "mcp_resources": 5,
+        "http_routes": 5,
+        "cli_paths": 1,
         "commands": 0,
         "objects": 0,
         "rules": 1,
@@ -8693,6 +8703,16 @@
               "tool": "majordomus_completion",
               "resource": "majordomus://gates/completion",
               "route": "GET /api/v1/gates/completion"
+            },
+            {
+              "id": "gates.headroom",
+              "title": "Whether each structure job fits in half its bound",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_gate_headroom",
+              "resource": "majordomus://gates/headroom",
+              "route": "GET /api/v1/gates/headroom",
+              "cli": "majordomus gates headroom"
             },
             {
               "id": "gates.model",
@@ -9069,11 +9089,11 @@
         "planning"
       ],
       "counts": {
-        "capabilities": 6,
-        "mcp_tools": 6,
-        "mcp_resources": 6,
-        "http_routes": 6,
-        "cli_paths": 0,
+        "capabilities": 7,
+        "mcp_tools": 7,
+        "mcp_resources": 7,
+        "http_routes": 7,
+        "cli_paths": 1,
         "commands": 4,
         "objects": 0,
         "rules": 7,
@@ -11326,6 +11346,16 @@
               "route": "GET /api/v1/gates/completion"
             },
             {
+              "id": "gates.headroom",
+              "title": "Whether each structure job fits in half its bound",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_gate_headroom",
+              "resource": "majordomus://gates/headroom",
+              "route": "GET /api/v1/gates/headroom",
+              "cli": "majordomus gates headroom"
+            },
+            {
               "id": "gates.model",
               "title": "The CI model",
               "kind": "query",
@@ -11928,11 +11958,11 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 111,
-        "mcp_tools": 99,
-        "mcp_resources": 18,
-        "http_routes": 105,
-        "cli_paths": 49,
+        "capabilities": 112,
+        "mcp_tools": 100,
+        "mcp_resources": 19,
+        "http_routes": 106,
+        "cli_paths": 50,
         "commands": 0,
         "objects": 0,
         "rules": 3,
@@ -16468,13 +16498,14 @@
         "route": "/features/coverage/",
         "status": "stable",
         "surfaces": {
-          "cli": false,
+          "cli": true,
           "api": true,
           "mcp": true,
           "cockpit": true,
           "docs": true
         },
         "exposed": [
+          "cli",
           "api",
           "mcp",
           "cockpit",
@@ -18692,14 +18723,14 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3728,
-    "builtin": 220,
+    "capabilities": 3729,
+    "builtin": 221,
     "declarative": 3508,
     "modules": 60,
-    "mcp_tools": 206,
-    "mcp_resources": 3565,
-    "http_routes": 212,
-    "cli_commands": 220,
+    "mcp_tools": 207,
+    "mcp_resources": 3566,
+    "http_routes": 213,
+    "cli_commands": 221,
     "shell_commands": 30,
     "kinds": 34,
     "objects": 3508,
