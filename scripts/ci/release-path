@@ -11,11 +11,12 @@
 #       the runs of the release path that are queued or running; exit 0 clear, 10 busy
 #   scripts/ci/release-path yield   --event E --pr N --branch B --self ID
 #       a pull request's validate run asks before it plans: busy, and it labels its pull
-#       request, says which run it yielded to, and cancels itself; clear, and it proceeds
+#       request, says which run it yielded to, and cancels itself, except a train's (labelled
+#       with the model's exempt_label), which proceeds; clear, and it proceeds
 #   scripts/ci/release-path preempt [--self ID]
 #       the tag push's own run: busy, and every pull-request validate already queued or
-#       running is labelled, told, and cancelled, and one still not completed after the wait
-#       is force-cancelled; clear, and nothing is touched
+#       running, except a train's, is labelled, told, and cancelled, and one still not
+#       completed after the wait is force-cancelled; clear, and nothing is touched
 #   scripts/ci/release-path resume  [--self ID]
 #       clear, and the newest validate run of each labelled pull request's head runs again
 #       when it is the cancelled one, and the label goes; busy, and nothing is touched

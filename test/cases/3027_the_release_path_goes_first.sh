@@ -265,6 +265,24 @@ expect_grep 'could not be read.*it is not known to be a train, so this run yield
   || { echo "    unreadable labels were not said"; exit 1; }
 [ "$(wrote '^api -X POST repos/o/r/actions/runs/900/cancel$')" = 1 ] \
   || { echo "    a run whose labels could not be read did not yield:"; cat "$LOG"; exit 1; }
+# an answer that is not a JSON list is not a reading either: the run yields, and says why
+rm -f "$FX/labels-5.down"; printf '{"message":"x"}' > "$FX/labels-5.json"
+expect_exit 0 rp yield --event pull_request --pr 5 --branch integration/train-14-20261101 --self 900 || exit 1
+expect_grep 'were not a JSON list.*it is not known to be a train, so this run yields as before' \
+  || { echo "    labels that were not a JSON list were not said"; exit 1; }
+[ "$(wrote '^api -X POST repos/o/r/actions/runs/900/cancel$')" = 1 ] \
+  || { echo "    a run whose labels were not a JSON list did not yield:"; cat "$LOG"; exit 1; }
+# the label decides, never the branch: labelled on another branch it is a train, and a train
+# branch without the label yields like any member
+printf '[{"name":"train"}]' > "$FX/labels-5.json"
+expect_exit 0 rp yield --event pull_request --pr 5 --branch feature/x --self 900 || exit 1
+expect_grep 'labelled train, a train, and a train never yields; this run proceeds' \
+  || { echo "    the label on another branch did not exempt the run"; exit 1; }
+[ "$(wrote '^api -X')" = 0 ] || { echo "    a labelled run on another branch labelled, told or cancelled:"; cat "$LOG"; exit 1; }
+printf '[{"name":"hold"}]' > "$FX/labels-5.json"
+expect_exit 0 rp yield --event pull_request --pr 5 --branch integration/train-14-20261101 --self 900 || exit 1
+[ "$(wrote '^api -X POST repos/o/r/actions/runs/900/cancel$')" = 1 ] \
+  || { echo "    a train branch without the label did not yield:"; cat "$LOG"; exit 1; }
 # preempt: the train's run is left, the member's is cancelled, and so is an unreadable one
 reset
 runs in_progress "$(run 101 release.yml push v9.9.9 in_progress)" \
