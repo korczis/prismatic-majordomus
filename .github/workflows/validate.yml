@@ -1069,7 +1069,7 @@ jobs:
   # nothing keeps the nearest older evidence there. pages.yml stays triggered by the push alone.
   evidence:
     needs: [plan, suite, rust, coverage, build]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && (needs.plan.outputs.shell_suite == 'true' || needs.plan.outputs.rust_check == 'true') }}
+    if: ${{ !cancelled() && needs.plan.result == 'success' && (needs.plan.outputs.shell_suite == 'true' || needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true') }}
     timeout-minutes: 30
     runs-on: ubuntu-latest
     permissions:
