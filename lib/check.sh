@@ -256,6 +256,8 @@ mj_scope_derived_paths() {
     | tr '\0' '\n' | awk 'NR % 3 == 1 { p = $0 } NR % 3 == 0 && $0 == "derived" { print p }'
 }
 
+# The newest checkpoint is no older than the profile's checkpoint_interval.
+# majordomus-limit: checkpoint_max_age_seconds
 mj_validate_checkpoint() {
   mj_task_gate checkpoint || return 0
   # Freshness is a statement about work in progress. A finished task has no next checkpoint
