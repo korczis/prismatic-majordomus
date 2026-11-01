@@ -50,6 +50,18 @@ with the reason; repair it without finishing: `majordomus serve ensure`, then `m
 check`, which claims the running task's scope. Until then `finish --outcome completed` and the
 pre-push `finish --check` refuse it (rule `majordomus.task-on-the-mesh`, `docs/MESH.md`).
 
+A task binds every push of its checkout: the pre-push hook runs `finish --check` against it,
+scope and mesh included. So start one only in the checkout whose work it is, never in a
+worktree whose pushes are another seat's, such as a train's, to hold a reasoning record or
+any other record; hold it under your own worktree's task. On 2026-10-28 a task started in
+the worktree of `integration/train-10b-20261028` only to hold a reasoning record made the
+train's push refuse on scope and mesh. If one was started there, close it with a
+non-completed outcome and its `# Next Action` before that checkout pushes.
+
+Name in `--scope` every file the change will edit before the first edit, the test cases it
+pins among them: a scope cannot be widened while its task is active, so a missed case costs
+a `finish --outcome partial` with a note and a second `start` (I4340, 2026-10-29).
+
 `start` refuses while a task is active here: hand it over or finish it first. `check` and
 `finish --outcome completed` fail on a touched file outside the claimed scope; the other
 outcomes name the files as warnings and close the record, because `start` will not begin a

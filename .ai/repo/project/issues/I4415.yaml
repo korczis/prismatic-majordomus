@@ -1,0 +1,50 @@
+id: I4415
+milestone: a-second-adopter-is-served
+title: "finish names the load its verification ran under, waits below a declared load bound before it runs, and retries a failure under load only as policy allows, recording every attempt"
+slug: a-verification-under-load-says-so
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Three changes to mj_validate_verification in lib/finish.sh, none of which changes a repository that declares nothing. First, every verification run reads the host's 1-minute load average and core count before and after it, through one helper in lib/common.sh that lib/bench.sh's mj_bench_load then calls, and the result line says so on pass and on fail: `npm test — exit 1, 412s, load 77.3 -> 93.1 on 12 cores`. The same fields (load_start, load_end, cores) go into the verify object of task.finished, and task.refused gains that verify object, which it does not carry today. Second, a policy key verification.load_max_per_core (absent: no gate) with verification.load_wait_seconds (default 600), overridable per invocation by MAJORDOMUS_VERIFY_LOAD_MAX: before the command starts, finish waits while the load is above the bound, saying on stderr what it waits for and how long it has waited, and past the wait it does not run the command; the verification line fails as `not run: load <x> above <bound> for <n>s`, and task.refused records verify.not_run: load, so I3131's aggregate can tell a refusal of the work from a refusal of the machine. Under CI (CI or GITHUB_ACTIONS set) there is no gate, as in OSCILLA's suites and I4006. Third, a policy key verification.verify_retries (integer 0-2, default 0): a failed attempt is retried only when that attempt started or ended above the load bound and the tree id is the one the failed attempt ran over; a failure on a quiet machine, or with no bound declared, is never retried, so a deterministic failure cannot be retried into a pass. Every attempt is recorded (verify.attempts: exit, seconds, load_start, load_end, tree), and a pass after a failed attempt reads `exit 0 on attempt 2 of 3 (attempt 1: exit 1, load 81.0)`, never as a plain pass. The rule majordomus.verification-integrity states the attempt record and the conditions under which a retry is admitted."
+why: "Observed in OSCILLA (korczis/oscilla) on 2026-10-29 by session oscilla-b0, on the shared Mac that also runs Majordomus worktrees and builds: `majordomus finish --outcome completed --verify-command \"npm test\"` was refused twice when npm test failed under a 1-minute load of 77 to 93, and then passed on a plain retry with nothing changed. The refusals said neither that the machine was loaded nor how loaded, so each read as a defect of the work, and each left a task.refused line that an aggregate of caught false dones (I3131, ADR 0208) would count as one. OSCILLA's own suites already hold this line: outside CI each waits for the 1-minute load to fall below OSC_LOAD_MAX (default 2 x cores) for at most OSC_LOAD_WAIT_MS (default 600000), prints the load at start and end, and fails without running past the wait (OSCILLA tests/README.md, scripts/release-prepare.mjs). The command finish runs has no such gate unless the adopter builds one, and finish records nothing that would let a reader tell the cause. Filed from oscilla-b0's upstream candidates (item 6 of the 2026-10-29 evening list)."
+current_state: "Measured at origin/master 51b38035a71: lib/finish.sh:199 runs the verify command once, with stdout and stderr sent to /dev/null; lib/finish.sh:203 fails the line as `<cmd> — exit <n>, <s>s` with no load or host; the verify object (lib/finish.sh:129) carries command, exit, seconds and tree, and only task.finished writes it: task.refused (lib/finish.sh:108, share/events.yaml:56) records the doctrines, not the run. The load average is read only by the benchmark paths (lib/bench.sh:148 mj_bench_load, apps/majordomus-cli/src/bench/results.rs:141). Policy verification admits only required_for_changes and finish_requires (share/allow/policy.txt:13-14, share/schemas/majordomus/policy/policy.v1.schema.json:57). Nothing in finish waits, gates or retries."
+desired_state: "A verification refused on a busy machine says how busy it was, in the line and in the ledger. A repository that declares a load bound has its verification wait for the machine before it runs, and a run the machine never let start is a refusal of the machine, recorded as such. A retry happens only under a declared policy, only for a failure that ran above the bound over an unchanged tree, and every attempt stays in the record, so a flaky suite is visible rather than hidden by its eventual pass. With no key declared, finish behaves as today apart from the load fields. Enforced by case 4415, case 06 and the amended rule."
+scope:
+  - ".ai/repo/project/issues/I4415.yaml"
+  - "lib/finish.sh"
+  - "lib/common.sh"
+  - "lib/bench.sh"
+  - "share/allow/policy.txt"
+  - "share/schemas/majordomus/policy/policy.v1.schema.json"
+  - "share/events.yaml"
+  - "share/standard/majordomus/rules/verification-integrity.v1.md"
+  - ".ai/repo/rules/vendor/majordomus/rules/verification-integrity.v1.md"
+  - "docs/CLI.md"
+  - "docs/SCHEMAS.md"
+  - "test/cases/06_finish.sh"
+  - "test/cases/4415_a_verification_under_load_says_so.sh"
+non_scope:
+  - "Keeping the verify command's output tail and admitting verify commands by policy: I3123"
+  - "Classifying refusals as caught, unanswered or downgraded: I3131, which reads the verify.not_run this issue records"
+  - "A machine-wide slot for heavy work (I4006) or for CI capacity across repositories (OSCILLA candidate 5)"
+  - "Lowering the machine's load: finish measures and waits, and never stops another process"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Case 4415, driving the measured load through the helper's test seam: a verify command that exits 1 is refused with a line naming exit 1, its seconds, the load at start and end and the core count, and the task.refused line carries verify with exit, seconds, load_start, load_end, cores and tree"
+  - "Case 4415: with verification.load_max_per_core declared and the load held above it, finish does not start the command (a marker file it would write is absent), waits no longer than verification.load_wait_seconds, fails the line as `not run: load ...`, and task.refused records verify.not_run: load"
+  - "Case 4415: the same run with CI=true starts the command at once"
+  - "Case 4415: with verification.verify_retries: 1 and a command that fails once then passes, a failed attempt above the bound is retried and accepted, the result line names `attempt 2 of 2`, and task.finished's verify.attempts holds both attempts"
+  - "Case 4415: the same command with no load bound declared, or with its failed attempt below the bound, is refused after one attempt; a tree changed between attempts is refused without a retry"
+  - "Case 06 passes unchanged for a policy that declares none of the new keys"
+  - "doctor admits verification.load_max_per_core, verification.load_wait_seconds and verification.verify_retries through share/allow/policy.txt, and the policy schema refuses verify_retries above 2"
+  - "lib/bench.sh's load reading is the shared helper, and the benchmark cases that read it still pass"
+  - "Before the change case 4415 fails at its first assertion"
+validation:
+  - "MJ_TEST_JOBS=4 bash test/run.sh 4415_a_verification_under_load_says_so 06_finish 572_verification_records_the_tree_it_proved"
+  - "bin/majordomus doctor"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "verification_under_load_case"
+created_at: 2026-10-29
+updated_at: 2026-10-29

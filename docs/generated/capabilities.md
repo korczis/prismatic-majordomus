@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.8 -->
+     Generator: majordomus-cli 1.0.0-alpha.10 -->
 # Capability reference
 
 Every capability this executable ships, as the registry holds it. MCP tools and resources, HTTP routes, the OpenAPI document (`openapi.json` beside this file, and `/openapi.json` when serving), Swagger UI, the command line's `capabilities` commands, the benchmark targets (`benchmarks.md`) and the registry manifest (`registry.json`) are projections of the same entries; nothing below is declared anywhere else.
@@ -32,7 +32,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `episodes` | Episodes | behaviorally_verified | 3 | [`modules/episodes.md`](modules/episodes.md) |
 | `evidence` | Evidence | behaviorally_verified | 5 | [`modules/evidence.md`](modules/evidence.md) |
 | `executions` | Executions | behaviorally_verified | 8 | [`modules/executions.md`](modules/executions.md) |
-| `gates` | Completion gates | behaviorally_verified | 2 | [`modules/gates.md`](modules/gates.md) |
+| `gates` | Completion gates | behaviorally_verified | 4 | [`modules/gates.md`](modules/gates.md) |
 | `graph` | Graphs | behaviorally_verified | 2 | [`modules/graph.md`](modules/graph.md) |
 | `guard` | Edit guard | experimental | 1 | [`modules/guard.md`](modules/guard.md) |
 | `health` | Health | behaviorally_verified | 3 | [`modules/health.md`](modules/health.md) |
@@ -43,7 +43,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `layout` | Layer layout | behaviorally_verified | 1 | [`modules/layout.md`](modules/layout.md) |
 | `lifecycle` | Session lifecycle | behaviorally_verified | 5 | [`modules/lifecycle.md`](modules/lifecycle.md) |
 | `mcp` | MCP projection | experimental | 1 | [`modules/mcp.md`](modules/mcp.md) |
-| `mesh` | Mesh | experimental | 25 | [`modules/mesh.md`](modules/mesh.md) |
+| `mesh` | Mesh | experimental | 30 | [`modules/mesh.md`](modules/mesh.md) |
 | `models` | Models | experimental | 2 | [`modules/models.md`](modules/models.md) |
 | `monitor` | The monitor | experimental | 1 | [`modules/monitor.md`](modules/monitor.md) |
 | `objects` | Objects | behaviorally_verified | 4 | [`modules/objects.md`](modules/objects.md) |
@@ -152,6 +152,8 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `executions.start` | `executions` | command | behaviorally_verified | `majordomus_execution_start` | — | `POST /api/v1/executions/start` | `majordomus run` | — | required |
 | `gates.completion` | `gates` | query | behaviorally_verified | `majordomus_completion` | `majordomus://gates/completion` | `GET /api/v1/gates/completion` | — | — | required |
 | `gates.model` | `gates` | query | behaviorally_verified | `majordomus_gates` | `majordomus://gates` | `GET /api/v1/gates` | — | process, 4 entries, 5s | required |
+| `gates.policy` | `gates` | query | behaviorally_verified | `majordomus_completion_policy` | `majordomus://gates/policy` | `GET /api/v1/gates/policy` | — | process, 4 entries, 5s | required |
+| `gates.state` | `gates` | query | behaviorally_verified | `majordomus_gate_state` | `majordomus://gates/state` | `GET /api/v1/gates/state` | — | — | required |
 | `graph.get` | `graph` | query | behaviorally_verified | `majordomus_graph` | — | `GET /api/v1/graph` | — | process, 16 entries | required |
 | `graph.list` | `graph` | query | behaviorally_verified | `majordomus_graphs` | `majordomus://graphs` | `GET /api/v1/graphs` | — | — | required |
 | `guard.edit` | `guard` | query | experimental | `majordomus_guard_edit` | — | `GET /api/v1/guard/edit` | — | — | required |
@@ -184,6 +186,11 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `lifecycle.recovery` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_recovery` | `majordomus://lifecycle/recovery` | `GET /api/v1/lifecycle/recovery` | — | process, 2 entries, 2s | required |
 | `lifecycle.runtime` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_runtime` | — | `GET /api/v1/lifecycle/runtime` | — | process, 2 entries, 2s | required |
 | `mcp.projection` | `mcp` | query | experimental | `majordomus_mcp` | `majordomus://mcp` | `GET /api/v1/mcp` | — | — | required |
+| `mesh.beat` | `mesh` | command | experimental | `majordomus_mesh_beat` | — | `POST /api/v1/mesh/beats` | — | — | waived (transient_state) |
+| `mesh.build_cache.ensure` | `mesh` | command | experimental | — | — | — | `majordomus mesh build-cache ensure` | — | waived (destructive) |
+| `mesh.build_cache.env` | `mesh` | query | experimental | `majordomus_mesh_build_cache_env` | — | `GET /api/v1/mesh/build-cache/env` | `majordomus mesh build-cache env` | — | waived (external_dependency) |
+| `mesh.build_cache.key` | `mesh` | query | experimental | `majordomus_mesh_build_cache_key` | — | `GET /api/v1/mesh/build-cache/key` | `majordomus mesh build-cache key` | — | waived (external_dependency) |
+| `mesh.build_cache.provision` | `mesh` | command | experimental | — | — | — | `majordomus mesh build-cache provision` | — | waived (destructive) |
 | `mesh.claim` | `mesh` | command | experimental | `majordomus_mesh_claim` | — | `POST /api/v1/mesh/claims` | — | — | waived (transient_state) |
 | `mesh.cooperation` | `mesh` | query | experimental | `majordomus_mesh_cooperation` | — | `GET /api/v1/mesh/cooperation` | — | — | required |
 | `mesh.doctor` | `mesh` | query | experimental | `majordomus_mesh_doctor` | — | `GET /api/v1/mesh/doctor` | `majordomus mesh doctor` | — | required |

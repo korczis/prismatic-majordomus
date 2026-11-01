@@ -1,7 +1,7 @@
 +++
 title = "Reasoning"
 description = "provider-independent reasoning: material uncertainty assessed with evidence, optional advisors discovered by capability and consulted through one transport contract, disagreement settled by experiment rather than count, conclusions and review recorded, and the state carried across sessions, with no advisor required"
-weight = 68
+weight = 69
 [extra]
 source = "docs/REASONING.md"
 +++
@@ -94,7 +94,7 @@ optional.
 | `unavailable` | Its executable is not installed. |
 | `not_configured` | Its credential variable is not set. The value is never read by the crate. |
 | `disabled` | The mode or `MAJORDOMUS_ADVISORS_DISABLE` leaves it out. |
-| `temporarily_failed` | Two consecutive transient failures (timeout, unreachable, error) opened its circuit for 10 minutes; an authentication failure for an hour. |
+| `temporarily_failed` | Two consecutive transient failures (timeout, unreachable, error) opened its circuit for 10 minutes; an authentication failure for an hour, and the adapters type as one an exhausted quota or credit (even when it arrives as HTTP 429) and a client the account's tier no longer admits, since asking again fixes neither. |
 | `rate_limited` | It answered with a rate limit; honoured for its retry-after, else 15 minutes. |
 
 </div>

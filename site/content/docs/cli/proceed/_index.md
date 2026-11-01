@@ -4,7 +4,7 @@ description = "What this session proceeds with, and why: the READY issue nothing
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 230
+weight = 237
 [extra]
 route = "/docs/cli/proceed/"
 command = "majordomus proceed"

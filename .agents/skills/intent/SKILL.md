@@ -4,7 +4,7 @@ description: "Propose an intent: what must become true. Runs the Majordomus capa
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: apps/majordomus-cli/src/capability/builtin/intents.rs; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.8 -->
+     Generator: majordomus-cli 1.0.0-alpha.10 -->
 
 # Propose an intent: what must become true
 

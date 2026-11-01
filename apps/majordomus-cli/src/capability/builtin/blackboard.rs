@@ -1018,6 +1018,7 @@ mod tests {
             transport: Transport::Http,
             connected_at: "2026-10-18T00:00:00Z".into(),
             last_seen_seconds_ago: 1,
+            progress_seconds_ago: None,
             attached: true,
             announcement: claims.last().cloned(),
             claims,
@@ -1027,6 +1028,7 @@ mod tests {
                 branch: Some("master".into()),
                 this_checkout: true,
             }),
+            address: None,
         }
     }
 

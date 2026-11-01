@@ -1,7 +1,7 @@
 +++
 title = "Continuous integration"
 description = "how a change is validated: the validation workflow over repository-owned gates, the planner and its model of what can affect what, the gates and how to run each locally, the caches and artifacts, the executable as a build output, the parallel suite and probe, the platform policy, and where the measurements live"
-weight = 78
+weight = 79
 [extra]
 source = "docs/CI.md"
 +++
@@ -22,6 +22,7 @@ every run writes its own summary.
 <pre class="mermaid">
 flowchart LR
   plan["plan"] --&gt; structure["structure&lt;br&gt;(always)"]
+  plan --&gt; structureb["structure-b&lt;br&gt;github-projection,&lt;br&gt;worktree-topology"]
   plan --&gt; shards["suite-shard ×4&lt;br&gt;the suite, dealt by duration"]
   shards --&gt; suite["suite&lt;br&gt;every case exactly once,&lt;br&gt;budget, one verdict"]
   plan --&gt; rust["rust"]
@@ -34,7 +35,7 @@ flowchart LR
   ishards --&gt; interactions["interactions&lt;br&gt;every page exactly once"]
   plan --&gt; ui["ui"]
   plan --&gt; macos["macos"]
-  structure &amp; suite &amp; rust &amp; coverage &amp; bench &amp; site &amp; probe &amp; interactions &amp; ui &amp; macos --&gt; ci["ci&lt;br&gt;the verdict; the one&lt;br&gt;required status"]
+  structure &amp; structureb &amp; suite &amp; rust &amp; coverage &amp; bench &amp; site &amp; probe &amp; interactions &amp; ui &amp; macos --&gt; ci["ci&lt;br&gt;the verdict; the one&lt;br&gt;required status"]
 </pre>
 
 
@@ -48,8 +49,12 @@ flowchart LR
 
 `plan` reads the model and decides. `structure` runs the cheap, deterministic gates every
 plan has (`scripts/ci/shell-lint`, `scripts/ci/core-check`) and the structural gates the
-change needs. The other jobs run when the plan selected a gate they carry, in parallel, each
-through the script a person runs. `ci` always runs and turns the plan and the jobs' results
+change needs. `structure-b` runs, beside it, the two structure gates that need not share its
+55-minute bound: `github-projection`, which waits on GitHub's API, and `worktree-topology`
+(I4381). With them in one job a full plan summed p50 2720 / p90 3256 s of gates, and run
+40813274272 was killed at the bound with all 59 green, so no receipt reached the verdict. The
+other jobs run when the plan selected a gate they carry, in parallel, each through the script
+a person runs. `ci` always runs and turns the plan and the jobs' results
 into one verdict.
 
 A job does not list its gates. `scripts/ci/run-plan --plan plan.json --job <job>` reads the plan and runs every

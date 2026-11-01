@@ -33,6 +33,10 @@ fields:
   # ------------------------------------------------------------- EventBody variants
   EventBody.SessionOpened.info: clear
   EventBody.SessionClosed.session: clear
+  EventBody.SessionBeat.session: clear
+  EventBody.SessionBeat.ttl_seconds: clear
+  # mesh::cooperation::beat passes the phase through redact_secrets before signing (I3990)
+  EventBody.SessionBeat.phase: redacted
   EventBody.ClaimAcquired.claim: clear
   EventBody.ClaimAcquired.session: clear
   EventBody.ClaimAcquired.scope: clear
@@ -40,6 +44,8 @@ fields:
   EventBody.ClaimAcquired.mode: clear
   EventBody.ClaimAcquired.issue: clear
   EventBody.ClaimReleased.claim: clear
+  # a fixed sentence its own runtime writes when it releases an overtaken suspended claim (I3990)
+  EventBody.ClaimReleased.reason: clear
   EventBody.HandoverPublished.handover: clear
   EventBody.HandoverConsumed.handover: clear
   EventBody.HandoverConsumed.session: clear
@@ -61,6 +67,11 @@ fields:
   EventBody.ReviewWithdrawn.session: clear
   # mesh::cooperation::withdraw_review passes the note through redact_secrets
   EventBody.ReviewWithdrawn.note: redacted
+  # an offer names a store and nothing secret: BuildCacheOffer::validate refuses user
+  # information, a path, a query or a fragment in the endpoint (mesh/journal.rs, I2671)
+  EventBody.BuildCacheOffered.offer: clear
+  # a reason from the fixed vocabulary of mesh::build_cache::offer::current, one line
+  EventBody.BuildCacheWithdrawn.reason: clear
   # ------------------------------------------------------------- SessionInfo (session_opened)
   SessionInfo.session: clear
   SessionInfo.client: clear
@@ -87,3 +98,12 @@ fields:
   HandoverBody.name: clear
   # mesh::handover::to_body passes the body through redaction::redact_secrets before signing
   HandoverBody.body: redacted
+  # ------------------------------------------------------------- BuildCacheOffer (build_cache_offered)
+  BuildCacheOffer.protocol: clear
+  BuildCacheOffer.provider: clear
+  BuildCacheOffer.scope: clear
+  BuildCacheOffer.endpoint: clear
+  BuildCacheOffer.bucket: clear
+  BuildCacheOffer.priority: clear
+  BuildCacheOffer.headroom_gib: clear
+  BuildCacheOffer.lifetime_seconds: clear

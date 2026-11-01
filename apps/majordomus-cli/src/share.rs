@@ -182,7 +182,12 @@ impl Share {
     /// [`ProviderDeclaration`] per id that has either, sorted by id. A distribution without
     /// the file declares nothing and every template is a provider named by its file; a
     /// file that does not parse is an error naming it, because a declaration half-read is
-    /// worse than none.
+    /// worse than none. So is an `offers:` block that leaves out `browser` or gives no
+    /// `browser_evidence` (I3829): the browser answer is read as a word with its citation or
+    /// not at all, never as a silent `none` or an empty citation. An entry with no `offers:`
+    /// block at all declares nothing on any axis, which reads as the undeclared state
+    /// [`ProviderOffers`] describes and the evidence gate (`scripts/provider-evidence-check`)
+    /// names, not as a read failure: a template-only provider has no entry either.
     pub fn providers(&self) -> Result<ProviderDeclarations> {
         let path = self.providers_path();
         let file: ProvidersFile = match std::fs::read_to_string(&path) {
@@ -194,6 +199,28 @@ impl Share {
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => ProvidersFile::default(),
             Err(e) => return Err(Error::io(&path, e)),
         };
+        for (id, entry) in &file.providers {
+            let Some(offers) = &entry.offers else {
+                continue;
+            };
+            let missing = if offers.browser.is_none() {
+                "browser"
+            } else if offers
+                .browser_evidence
+                .as_deref()
+                .is_none_or(|e| e.trim().is_empty())
+            {
+                "browser_evidence"
+            } else {
+                continue;
+            };
+            return Err(Error::KindSchema {
+                reason: format!(
+                    "{}: provider '{id}' declares offers without {missing}",
+                    path.display()
+                ),
+            });
+        }
         let templates = self.provider_templates();
         let mut ids: Vec<String> = templates.clone();
         ids.extend(file.providers.keys().cloned());
@@ -288,6 +315,10 @@ struct ProviderOffersEntry {
     browser_host: Option<String>,
     #[serde(default)]
     browser_setup: Option<String>,
+    #[serde(default)]
+    usage: Option<Vec<UsageSource>>,
+    #[serde(default)]
+    usage_evidence: Option<String>,
 }
 
 fn offers_of(e: &ProviderOffersEntry) -> ProviderOffers {
@@ -300,6 +331,8 @@ fn offers_of(e: &ProviderOffersEntry) -> ProviderOffers {
         browser_evidence: e.browser_evidence.clone().unwrap_or_default(),
         browser_host: e.browser_host.clone(),
         browser_setup: e.browser_setup.clone(),
+        usage: e.usage.clone().unwrap_or_default(),
+        usage_evidence: e.usage_evidence.clone().unwrap_or_default(),
     }
 }
 
@@ -519,6 +552,62 @@ pub struct ProviderOffers {
     /// Declared for a `bridge` only.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub browser_setup: Option<String>,
+    /// The official seams through which the provider reports what a session consumed (I3287,
+    /// ADR 0213), every one it offers: `none` alone when it offers nothing a receiver could
+    /// read. Empty in a value written before the axis existed, which declares nothing.
+    #[serde(default)]
+    pub usage: Vec<UsageSource>,
+    /// Where `usage` was verified, on the same terms as `episode_evidence`.
+    #[serde(default)]
+    pub usage_evidence: String,
+}
+
+/// One official seam through which a provider reports what a session consumed.
+///
+/// Usage is read only where the provider itself reports it (ADR 0213): an official
+/// OpenTelemetry export, a protocol notification of the client's own server, or the usage a
+/// non-interactive run prints in its structured output. Never a transcript, a proxy, or a
+/// patched client. `none` is the declared answer for a provider that offers no such seam,
+/// and it stands alone.
+///
+/// ```
+/// use majordomus_cli::share::UsageSource;
+/// assert_eq!(serde_json::from_str::<UsageSource>("\"otel\"").unwrap(), UsageSource::Otel);
+/// assert_eq!(serde_json::from_str::<UsageSource>("\"app-server\"").unwrap(), UsageSource::AppServer);
+/// assert!(serde_json::from_str::<UsageSource>("\"transcript\"").is_err(), "no transcript seam");
+/// assert_eq!(UsageSource::StreamJson.as_str(), "stream-json");
+/// ```
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize, schemars::JsonSchema,
+)]
+#[serde(rename_all = "kebab-case")]
+pub enum UsageSource {
+    /// The provider's own OpenTelemetry export, which the person enables.
+    Otel,
+    /// A notification of the client's own app server protocol.
+    AppServer,
+    /// The usage a non-interactive run reports in its structured (`stream-json`) output.
+    StreamJson,
+    /// No official seam reports usage.
+    None,
+}
+
+impl UsageSource {
+    /// The word as the declaration writes it, which is also how it serialises.
+    ///
+    /// ```
+    /// use majordomus_cli::share::UsageSource;
+    /// assert_eq!(UsageSource::None.as_str(), "none");
+    /// assert_eq!(serde_json::to_string(&UsageSource::AppServer).unwrap(), "\"app-server\"");
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            UsageSource::Otel => "otel",
+            UsageSource::AppServer => "app-server",
+            UsageSource::StreamJson => "stream-json",
+            UsageSource::None => "none",
+        }
+    }
 }
 
 /// What the distribution declares about its providers, joined with the templates it ships.
@@ -801,6 +890,22 @@ mod tests {
         for (source, word) in [
             (BrowserSource::Bridge, "bridge"),
             (BrowserSource::None, "none"),
+        ] {
+            assert_eq!(source.as_str(), word);
+            assert_eq!(
+                serde_json::to_string(&source).unwrap(),
+                format!("\"{word}\"")
+            );
+        }
+    }
+
+    #[test]
+    fn every_usage_seam_prints_as_the_word_it_is_declared_as() {
+        for (source, word) in [
+            (UsageSource::Otel, "otel"),
+            (UsageSource::AppServer, "app-server"),
+            (UsageSource::StreamJson, "stream-json"),
+            (UsageSource::None, "none"),
         ] {
             assert_eq!(source.as_str(), word);
             assert_eq!(

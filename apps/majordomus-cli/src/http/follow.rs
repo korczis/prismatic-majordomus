@@ -350,9 +350,10 @@ impl Follower {
 
     fn snapshot(&self, generation: u64) -> Result<Arc<Value>, String> {
         // reader-neutral: what is for whom is the client's to mark, so that one read serves
-        // every connection
+        // every connection of this server; another server's board is another read (I4241)
         let checkouts = self.follow.checkouts.as_deref().unwrap_or("repository");
-        shared(&BOARD, checkouts, generation, || {
+        let key = format!("{}|{checkouts}", epoch(&self.ctx));
+        shared(&BOARD, &key, generation, || {
             self.ctx
                 .execute(SNAPSHOT, json!({ "checkouts": checkouts, "signals": 0 }))
                 .map_err(|e| e.to_string())
@@ -369,10 +370,11 @@ impl Follower {
     }
 
     /// What a shared page of signals is keyed by besides its cursor: the same cursor read for
-    /// another reader or from other sources is another page.
+    /// another reader, from other sources or of another server's stream is another page.
     fn page_key(&self, cursor: &str) -> String {
         format!(
-            "{}|{}|{cursor}",
+            "{}|{}|{}|{cursor}",
+            epoch(&self.ctx),
             self.follow.sources.as_deref().unwrap_or(DEFAULT_SOURCES),
             self.follow.reader.as_deref().unwrap_or_default()
         )
@@ -1146,6 +1148,26 @@ mod tests {
         (repo, ctx, c)
     }
 
+    /// Two servers in one process, each read at the same generation, are each read their own
+    /// board: a shared read is never handed to a follower of another context (I4241).
+    #[test]
+    fn a_shared_read_is_never_handed_to_another_server() {
+        let (_first_repo, first, _first_mesh) = meshed();
+        let (_second_repo, second, second_mesh) = meshed();
+        session(&second_mesh, "s1", "3d", "only the second server says this");
+        let follower = |ctx: &Arc<Context>| {
+            let follow = Follow::parse(&q(&[("follow", "blackboard")]))
+                .unwrap()
+                .unwrap();
+            Follower::new(Arc::clone(ctx), follow)
+        };
+        let generation = BLACKBOARD.current();
+        let board = |ctx: &Arc<Context>| follower(ctx).snapshot(generation).unwrap().to_string();
+        assert!(!board(&first).contains("only the second server says this"));
+        assert!(board(&second).contains("only the second server says this"));
+        assert!(!board(&first).contains("only the second server says this"));
+    }
+
     /// A follower is written the ready frame with its epoch, then the snapshot with the
     /// connection's cursor; a change that says something new is a snapshot and signals of
     /// its own; a quiet connection is pinged and told it is alive, and is read again when the
@@ -1255,11 +1277,27 @@ mod tests {
         let (_repo, ctx, c) = meshed();
         for (tag, frames) in [("both", "snapshot,signals"), ("alone", "signals")] {
             let sink = Sink::new();
-            let served = serve(&ctx, &[("frames", frames)], |f| f.pages = (1, 1), &sink);
-            sink.until(|f| !f.is_empty());
-            std::thread::sleep(Duration::from_millis(50));
-            for n in 0..3 {
-                session(&c, &format!("{tag}-{n}"), "3d", "one more");
+            let served = serve(
+                &ctx,
+                &[("frames", frames)],
+                |f| {
+                    f.pages = (1, 1);
+                    f.heartbeat = Duration::from_millis(50);
+                },
+                &sink,
+            );
+            // the connection's cursor is taken after its ready frame, and a heartbeat is only
+            // written by the loop that follows: once one came, the cursor stands before the
+            // backlog, however long the follower took to read where the signals stood
+            sink.until(|f| has(f, "stream.heartbeat", ""));
+            // every append is a change of its own, and every read of the signals waits on the
+            // shared page's lock: a backlog written under it is read whole by one round, never
+            // split one signal per wake-up
+            {
+                let _held = PAGE.lock().unwrap_or_else(PoisonError::into_inner);
+                for n in 0..3 {
+                    session(&c, &format!("{tag}-{n}"), "3d", "one more");
+                }
             }
             BLACKBOARD.advance();
             let after = |f: &[Value]| kinds(f).iter().position(|k| k == "stream.resync");

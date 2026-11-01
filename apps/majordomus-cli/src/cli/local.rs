@@ -157,6 +157,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "starts the HTTP server for this checkout as a process of its own when none answers, and waits until it is ready.",
     },
     LocalCommand {
+        command: "ui",
+        reason: LocalReason::ProcessLifecycle,
+        note: "ensures this checkout's server as `serve ensure` does and opens a browser on the invoking user's desktop, which no capability served by that server could do.",
+    },
+    LocalCommand {
         command: "serve stop",
         reason: LocalReason::ProcessLifecycle,
         note: "ends the server this checkout's lease names by signalling the process, which nothing served by that process could do to itself.",
@@ -399,6 +404,11 @@ pub const LOCAL: &[LocalCommand] = &[
         command: "mesh release",
         reason: LocalReason::RendersCapability("mesh.release"),
         note: "runs mesh.release on this checkout's running server, the only process that holds the claim.",
+    },
+    LocalCommand {
+        command: "mesh beat",
+        reason: LocalReason::RendersCapability("mesh.beat"),
+        note: "runs mesh.beat on this checkout's running server, whose journal carries the session's beat to every linked runtime.",
     },
     LocalCommand {
         command: "mesh session open",

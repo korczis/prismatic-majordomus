@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.8 -->
+     Generator: majordomus-cli 1.0.0-alpha.10 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 219 | 182 | 0 | 37 |
-| http | 212 | 182 | 0 | 30 |
-| mcp | 206 | 177 | 0 | 29 |
+| direct | 226 | 184 | 0 | 42 |
+| http | 217 | 184 | 0 | 33 |
+| mcp | 211 | 179 | 0 | 32 |
 | system | 14 | 14 | 0 | 0 |
-| total | 651 | 555 | 0 | 96 |
+| total | 668 | 561 | 0 | 107 |
 
 ## Capabilities
 
@@ -54,7 +54,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `design.explain` | design | query | — | covered | covered | covered | `role`, `state` |
 | `design.system` | design | query | — | covered | covered | covered | `default` |
 | `design.tokens` | design | query | — | covered | covered | covered | `all`, `roles` |
-| `devcontext.compile` | devcontext | query | process, 16 entries | covered | covered | covered | `no-seed`, `issue`, `milestone`, `intent` |
+| `devcontext.compile` | devcontext | query | process, 16 entries | covered | covered | covered | `no-seed`, `issue`, `milestone`, `intent`, `source-ranges` |
 | `devcontext.explain` | devcontext | query | process, 8 entries | covered | covered | covered | `policy`, `absent` |
 | `devcontext.policy` | devcontext | query | — | covered | covered | covered | `default` |
 | `devtask.implement` | devtask | command | — | waived | waived | waived | — |
@@ -96,6 +96,8 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `executions.start` | executions | command | — | covered | covered | covered | `demonstrate` |
 | `gates.completion` | gates | query | — | covered | covered | covered | `this-task`, `one-source-file`, `a-document`, `everything-on-demand` |
 | `gates.model` | gates | query | process, 4 entries, 5s | covered | covered | covered | `default` |
+| `gates.policy` | gates | query | process, 4 entries, 5s | covered | covered | covered | `default` |
+| `gates.state` | gates | query | — | covered | covered | covered | `default` |
 | `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases`, `why`, `product`, `composed` |
 | `graph.list` | graph | query | — | covered | covered | covered | `default` |
 | `guard.edit` | guard | query | — | covered | covered | covered | `in-repository`, `outside` |
@@ -128,6 +130,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `lifecycle.recovery` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `lifecycle.runtime` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `mcp.projection` | mcp | query | — | covered | covered | covered | `every-tool`, `writers` |
+| `mesh.beat` | mesh | command | — | waived | waived | waived | — |
+| `mesh.build_cache.ensure` | mesh | command | — | waived | — | — | — |
+| `mesh.build_cache.env` | mesh | query | — | waived | waived | waived | — |
+| `mesh.build_cache.key` | mesh | query | — | waived | waived | waived | — |
+| `mesh.build_cache.provision` | mesh | command | — | waived | — | — | — |
 | `mesh.claim` | mesh | command | — | waived | waived | waived | — |
 | `mesh.cooperation` | mesh | query | — | covered | covered | covered | `default` |
 | `mesh.doctor` | mesh | query | — | covered | covered | covered | `default` |
@@ -306,5 +313,6 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.ui.panels.delivery` | `/ui/panels/delivery` | pinned | yes |
 | `system.http.ui.panels.drain` | `/ui/panels/drain` | pinned | yes |
 | `system.http.ui.panels.standing` | `/ui/panels/standing` | pinned | yes |
+| `system.http.ui.panels.shared_scope` | `/ui/panels/shared-scope` | pinned | yes |
 
 Cache modes: a cached capability is measured cold (the cache cleared before every sample) and warm (the same input repeated); the direct transport reports the handler invocations of each. Evidence: `.ai/local/benchmarks/` for local runs, `.ai/repo/benchmarks/rust/` for the accepted baselines and the regression policy.

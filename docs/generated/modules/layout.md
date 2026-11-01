@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `layout` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.8 -->
+     Generator: majordomus-cli 1.0.0-alpha.10 -->
 # Module `layout` — Layer layout
 
 The boundary between the layer's tracked and local halves, checked against the layouts their contracts declare: what lives where, and what must never appear there (I1102).

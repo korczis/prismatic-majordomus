@@ -18,7 +18,13 @@ export async function requestJson(url, { method = 'GET', headers = {}, body, io 
     if (io.signal?.aborted) throw e;
     throw new AdvisorFailure('unavailable', `could not reach ${new URL(url).host}`);
   }
-  if (!res.ok) throw httpFailure(res.status, res.headers);
+  if (!res.ok) {
+    // the error body is read only to tell an exhausted quota from a passing rate limit;
+    // a body that is not JSON is no reason to lose the status
+    let errorBody;
+    try { errorBody = await res.json(); } catch { errorBody = undefined; }
+    throw httpFailure(res.status, res.headers, errorBody);
+  }
   try {
     return await res.json();
   } catch {

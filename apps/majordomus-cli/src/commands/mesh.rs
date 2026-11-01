@@ -24,8 +24,9 @@ use serde_json::{json, Value};
 use crate::app::App;
 use crate::capability::CapabilityError;
 use crate::cli::{
-    MeshArgs, MeshCommand, MeshFirewallCommand, MeshHandoverCommand, MeshQueryArgs,
-    MeshReviewCommand, MeshSessionCommand, OutputFormat,
+    MeshArgs, MeshBuildCacheCommand, MeshBuildCacheEnsureArgs, MeshBuildCacheEnvArgs, MeshCommand,
+    MeshFirewallCommand, MeshHandoverCommand, MeshQueryArgs, MeshReviewCommand, MeshSessionCommand,
+    OutputFormat,
 };
 use crate::error::{Error, Result};
 
@@ -49,6 +50,27 @@ pub fn run(args: MeshArgs) -> Result<u8> {
             in_process(q, &["mesh", "enrol"], json!({}), render_enrolment, never)
         }
         MeshCommand::Doctor(q) => doctor(q),
+        // A key is a fact of this machine's toolchains and this checkout's lockfiles:
+        // answered in this process, like the identity.
+        MeshCommand::BuildCache(a) => match a.command {
+            MeshBuildCacheCommand::Key(k) => in_process(
+                k.query,
+                &["mesh", "build-cache", "key"],
+                json!({ "kind": k.kind }),
+                render_build_cache_key,
+                never,
+            ),
+            // it runs a command and writes outside the repository: this process, never a server
+            MeshBuildCacheCommand::Ensure(e) => build_cache_ensure(e),
+            MeshBuildCacheCommand::Env(e) => build_cache_env(e),
+            MeshBuildCacheCommand::Provision(x) => in_process(
+                x.query,
+                &["mesh", "build-cache", "provision"],
+                json!({ "apply": x.apply, "root": x.root }),
+                render_provision,
+                not_ok,
+            ),
+        },
         // The host firewall is a fact of this machine, like the identity: answered in
         // this process. `apply` runs a privileged host tool and is offered nowhere else.
         MeshCommand::Firewall(a) => match a.command {
@@ -82,23 +104,7 @@ pub fn run(args: MeshArgs) -> Result<u8> {
             ask(&v.query, "GET", &target, None, render_state, never)
         }
         MeshCommand::Events(a) => {
-            let mut target = "/api/v1/mesh/events".to_string();
-            let mut pairs = Vec::new();
-            if let Some(after) = a.after {
-                pairs.push(format!("after={after}"));
-            }
-            if let Some(cursor) = &a.cursor {
-                pairs.push(format!("cursor={}", encode(cursor)));
-            }
-            if let Some(limit) = a.limit {
-                pairs.push(format!("limit={limit}"));
-            }
-            if a.newest {
-                pairs.push("newest=true".to_string());
-            }
-            if !pairs.is_empty() {
-                target = format!("{target}?{}", pairs.join("&"));
-            }
+            let target = events_target(&a);
             ask(&a.query, "GET", &target, None, render_events, never)
         }
         MeshCommand::Verify(q) => ask(
@@ -137,6 +143,14 @@ pub fn run(args: MeshArgs) -> Result<u8> {
             "POST",
             "/api/v1/mesh/claims/release",
             Some(json!({ "claim": a.claim })),
+            render_written,
+            never,
+        ),
+        MeshCommand::Beat(a) => ask(
+            &a.query,
+            "POST",
+            "/api/v1/mesh/beats",
+            Some(json!({ "session": a.session, "phase": a.phase, "pid": a.pid })),
             render_written,
             never,
         ),
@@ -629,6 +643,121 @@ fn render_nodes(v: &Value) -> String {
     out.trim_end().to_string()
 }
 
+/// `mesh build-cache ensure`: the capability answered in this process, whose exit code is the
+/// command's own, so that a caller replacing `npm ci` with it sees the same failure.
+fn build_cache_ensure(e: MeshBuildCacheEnsureArgs) -> Result<u8> {
+    let app = App::load(&e.query.repo)?;
+    let input = json!({ "kind": e.kind, "dir": e.dir, "command": e.command });
+    let value = app
+        .context
+        .execute("mesh.build_cache.ensure", input)
+        .map_err(map)?;
+    emit(&e.query, &value, render_build_cache_ensure);
+    Ok(ensure_exit(&value))
+}
+
+/// The command's exit code, clamped to what a process can return; 0 when nothing ran, 1 when
+/// it could not start or a signal ended it.
+fn ensure_exit(v: &Value) -> u8 {
+    if !v["command"].is_object() {
+        return 0;
+    }
+    match v["command"]["exit"].as_i64() {
+        Some(0) => 0,
+        Some(n) => u8::try_from(n.clamp(1, 255)).unwrap_or(1),
+        None => 1,
+    }
+}
+
+/// `mesh build-cache ensure`: where the content came from, and every note.
+fn render_build_cache_ensure(v: &Value) -> String {
+    let mut out = format!("kind       {} ({})\n", s(v, "kind"), s(v, "dir"));
+    out.push_str(&format!(
+        "key        {}\n",
+        v["key"].as_str().unwrap_or("none")
+    ));
+    out.push_str(&format!("target     {}\n", s(v, "target")));
+    out.push_str(&format!(
+        "source     {}\n",
+        s(v, "source").replace('_', " ")
+    ));
+    if v["command"].is_object() {
+        let argv: Vec<&str> = v["command"]["argv"]
+            .as_array()
+            .map(|a| a.iter().filter_map(Value::as_str).collect())
+            .unwrap_or_default();
+        let exit = v["command"]["exit"]
+            .as_i64()
+            .map(|n| n.to_string())
+            .unwrap_or_else(|| "none".into());
+        out.push_str(&format!("command    {} -> exit {exit}\n", argv.join(" ")));
+    }
+    let saved: Vec<&str> = v["saved"]
+        .as_array()
+        .map(|a| a.iter().filter_map(Value::as_str).collect())
+        .unwrap_or_default();
+    if !saved.is_empty() {
+        out.push_str(&format!("saved      {}\n", saved.join(", ")));
+    }
+    let gib = |n: &Value| n.as_u64().unwrap_or(0) as f64 / (1024.0 * 1024.0 * 1024.0);
+    out.push_str(&format!(
+        "local      {}  {:.2} of {:.0} GiB, {} pruned\n",
+        s(&v["local"], "dir"),
+        gib(&v["local"]["bytes"]),
+        gib(&v["local"]["bound_bytes"]),
+        v["local"]["pruned"].as_u64().unwrap_or(0)
+    ));
+    for note in v["notes"].as_array().into_iter().flatten() {
+        out.push_str(&format!("note       {}\n", note.as_str().unwrap_or("")));
+    }
+    out.trim_end().to_string()
+}
+
+/// `mesh build-cache env`: a fact of this machine (its sccache, its node file, its store), so
+/// it is answered without loading a repository: a compile in any directory asks it.
+fn build_cache_env(args: MeshBuildCacheEnvArgs) -> Result<u8> {
+    use crate::mesh::build_cache::env::{report, script, EnvOptions};
+    let answer = report(&EnvOptions {
+        sccache: args.sccache.unwrap_or_else(|| "sccache".to_string()),
+        node_file: args.node_file,
+        credentials: args.credentials,
+    });
+    match args.format {
+        OutputFormat::Json => println!(
+            "{}",
+            serde_json::to_string_pretty(&answer).unwrap_or_default()
+        ),
+        OutputFormat::Text => print!("{}", script(&answer)),
+    }
+    Ok(0)
+}
+
+/// `mesh build-cache key`: one line per cached thing, its key or why it has none.
+fn render_build_cache_key(v: &Value) -> String {
+    let mut out = format!("platform   {}\n", v["platform"].as_str().unwrap_or(""));
+    let kinds = v["kinds"].as_array().cloned().unwrap_or_default();
+    if kinds.is_empty() {
+        out.push_str("no lockfile is tracked: nothing here is cacheable\n");
+    }
+    for k in kinds {
+        let kind = k["kind"].as_str().unwrap_or("");
+        let dir = k["dir"].as_str().unwrap_or("");
+        match k["key"].as_str() {
+            Some(key) => out.push_str(&format!("{kind:<16} {dir:<12} {key}\n")),
+            None => out.push_str(&format!(
+                "{kind:<16} {dir:<12} no key: {}\n",
+                k["unavailable"].as_str().unwrap_or("unknown")
+            )),
+        }
+        out.push_str(&format!(
+            "{:<29} -> {}\n",
+            "",
+            k["location"].as_str().unwrap_or("")
+        ));
+    }
+    out
+}
+
 fn render_enrolment(v: &Value) -> String {
     format!(
         "{}   {}\nkey        {}\nnext       {}",
@@ -670,10 +799,11 @@ fn render_checks(v: &Value, out: &mut String) {
     for c in v["checks"].as_array().into_iter().flatten() {
         out.push_str(&format!(
             "{}  {:<12} {}\n",
-            if c["ok"] == json!(true) {
-                "ok  "
-            } else {
-                "FAIL"
+            // a check that holds and still names a remedy is a warning
+            match (c["ok"] == json!(true), c["remediation"].is_string()) {
+                (true, false) => "ok  ",
+                (true, true) => "WARN",
+                (false, _) => "FAIL",
             },
             c["check"].as_str().unwrap_or("?"),
             c["detail"].as_str().unwrap_or(""),
@@ -751,6 +881,72 @@ fn render_firewall(v: &Value) -> String {
         }
     }
     out.push_str(&format!("verdict     {}", s(v, "verdict")));
+    out
+}
+
+fn render_provision(v: &Value) -> String {
+    let mut out = format!(
+        "mode        {}\nroot        {}\n",
+        s(v, "mode"),
+        s(v, "root")
+    );
+    for f in v["plan"]["files"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "{:<13} {} {} ({})\n",
+            s(f, "state"),
+            s(f, "mode"),
+            s(f, "path"),
+            s(f, "source")
+        ));
+    }
+    for e in v["plan"]["edits"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "{:<13} {}\n",
+            if e["owed"] == json!(true) {
+                "edit"
+            } else {
+                "current"
+            },
+            s(e, "path")
+        ));
+    }
+    for st in v["plan"]["steps"].as_array().into_iter().flatten() {
+        out.push_str(&format!("step ({})  {}\n", s(st, "when"), s(st, "line")));
+    }
+    out.push_str(&format!(
+        "plan        {} change(s) owed, {} not observable here\n",
+        v["plan"]["changes"], v["plan"]["unobservable"]
+    ));
+    if let Some(a) = v.get("apply").filter(|a| a.is_object()) {
+        if let Some(r) = a["refused"].as_str() {
+            out.push_str(&format!("refused     {r}\n"));
+        }
+        for p in a["written"].as_array().into_iter().flatten() {
+            out.push_str(&format!("written     {}\n", p.as_str().unwrap_or("")));
+        }
+        for r in a["ran"].as_array().into_iter().flatten() {
+            out.push_str(&format!(
+                "{}  {}\n",
+                if r["ok"] == json!(true) {
+                    "ok  "
+                } else {
+                    "FAIL"
+                },
+                s(r, "line")
+            ));
+        }
+        for k in a["skipped"].as_array().into_iter().flatten() {
+            out.push_str(&format!("skipped     {}\n", k.as_str().unwrap_or("")));
+        }
+    }
+    out.push_str(&format!(
+        "verdict     {}",
+        if v["ok"] == json!(true) {
+            "ok"
+        } else {
+            "not provisioned (see above)"
+        }
+    ));
     out
 }
 
@@ -960,6 +1156,33 @@ fn viewed(path: &str, v: &crate::cli::MeshViewArgs) -> String {
         path.to_string()
     } else {
         format!("{path}?{}", pairs.join("&"))
+    }
+}
+
+/// The `mesh.events` route `mesh events` asks: each flag given becomes one query pair, and
+/// no flag is the bare route under the server's own default page.
+fn events_target(a: &crate::cli::MeshEventsArgs) -> String {
+    let mut pairs = Vec::new();
+    if let Some(after) = a.after {
+        pairs.push(format!("after={after}"));
+    }
+    if let Some(cursor) = &a.cursor {
+        pairs.push(format!("cursor={}", encode(cursor)));
+    }
+    if let Some(limit) = a.limit {
+        pairs.push(format!("limit={limit}"));
+    }
+    if a.newest {
+        pairs.push("newest=true".to_string());
+    }
+    if a.beats {
+        pairs.push("beats=true".to_string());
+    }
+    let target = "/api/v1/mesh/events";
+    if pairs.is_empty() {
+        target.to_string()
+    } else {
+        format!("{target}?{}", pairs.join("&"))
     }
 }
 
@@ -1246,6 +1469,41 @@ fn map(e: CapabilityError) -> Error {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// `mesh events` asks for what its flags say and nothing else: no flag is the bare
+    /// route, and `--beats` asks for the session beats the journal hides by default (I3990).
+    #[test]
+    fn the_events_flags_are_the_query_the_server_is_asked() {
+        use clap::Parser;
+        let target = |args: &[&str]| {
+            let cli = crate::cli::Cli::try_parse_from(
+                ["majordomus", "mesh", "events"].iter().chain(args),
+            )
+            .unwrap();
+            let crate::cli::Command::Mesh(mesh) = cli.command else {
+                panic!("expected `mesh`")
+            };
+            let MeshCommand::Events(events) = mesh.command else {
+                panic!("expected `events`")
+            };
+            events_target(&events)
+        };
+        assert_eq!(target(&[]), "/api/v1/mesh/events");
+        assert_eq!(
+            target(&["--beats"]),
+            "/api/v1/mesh/events?beats=true",
+            "beats are asked for by name"
+        );
+        assert_eq!(
+            target(&["--after", "42", "--limit", "10", "--newest", "--beats"]),
+            "/api/v1/mesh/events?after=42&limit=10&newest=true&beats=true"
+        );
+        assert_eq!(
+            target(&["--cursor", "00000000000000aa:7", "--beats"]),
+            "/api/v1/mesh/events?cursor=00000000000000aa%3A7&beats=true",
+            "a cursor resumes the walk, encoded, beside the beats"
+        );
+    }
 
     /// One entry of `server.status`'s `servers`, as `checkouts_of` writes it.
     fn server(worktree: &str, primary: bool, this: bool, standing: &str, port: u16) -> Value {
@@ -2236,6 +2494,27 @@ mod tests {
         );
     }
 
+    /// I4352: a check that holds and still names a remedy (the build host owing provisioning)
+    /// is a warning row with its remedy, and the verdict stays that every check holds.
+    #[test]
+    fn a_check_that_holds_with_a_remedy_is_a_warning() {
+        let warned = render_doctor(&json!({
+            "ok": true,
+            "checks": [{ "check": "build_host", "ok": true,
+                         "detail": "lundra owes 3 provisioning change(s)",
+                         "remediation": "sudo majordomus mesh build-cache provision --apply" }],
+        }));
+        assert!(
+            warned.contains("WARN  build_host   lundra owes 3 provisioning change(s)"),
+            "{warned}"
+        );
+        assert!(
+            warned.contains("      remedy      sudo majordomus mesh build-cache provision --apply"),
+            "{warned}"
+        );
+        assert!(warned.ends_with("verdict    every check holds"), "{warned}");
+    }
+
     #[test]
     fn a_runtime_key_is_shortened_to_the_node_a_person_can_recognize_and_the_whole_runtime() {
         assert_eq!(
@@ -2496,6 +2775,192 @@ mod tests {
         assert!(
             refused.is_err(),
             "a port that is not a number was answered: {refused:?}"
+        );
+    }
+
+    #[test]
+    fn an_ensure_answer_reads_as_its_source_command_levels_and_notes() {
+        let v = json!({
+            "kind": "npm-modules", "dir": "site", "target": "site/node_modules",
+            "key": "v1/npm-modules/p/t/d", "source": "in_place",
+            "command": { "argv": ["npm", "ci"], "exit": 0 },
+            "saved": ["local", "store"],
+            "notes": ["local: no archive under this key"],
+            "local": { "dir": "~/.cache/majordomus/build-cache", "bytes": 1073741824_u64,
+                       "bound_bytes": 21474836480_u64, "pruned": 2 },
+        });
+        let text = render_build_cache_ensure(&v);
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines,
+            [
+                "kind       npm-modules (site)",
+                "key        v1/npm-modules/p/t/d",
+                "target     site/node_modules",
+                "source     in place",
+                "command    npm ci -> exit 0",
+                "saved      local, store",
+                "local      ~/.cache/majordomus/build-cache  1.00 of 20 GiB, 2 pruned",
+                "note       local: no archive under this key",
+            ]
+        );
+        assert_eq!(ensure_exit(&v), 0);
+        let bare = json!({ "kind": "mix-deps", "dir": ".", "source": "uncached",
+                           "saved": [], "notes": [], "local": {} });
+        let text = render_build_cache_ensure(&bare);
+        assert!(text.contains("key        none"), "{text}");
+        assert!(
+            !text.contains("command") && !text.contains("saved"),
+            "{text}"
+        );
+        assert_eq!(ensure_exit(&bare), 0, "nothing ran: nothing failed");
+        assert_eq!(ensure_exit(&json!({ "command": { "exit": 3 } })), 3);
+        assert_eq!(ensure_exit(&json!({ "command": { "exit": 300 } })), 255);
+        assert_eq!(ensure_exit(&json!({ "command": { "argv": ["x"] } })), 1);
+        let signalled = render_build_cache_ensure(&json!({ "command": { "argv": ["x"] } }));
+        assert!(
+            signalled.contains("command    x -> exit none"),
+            "{signalled}"
+        );
+    }
+
+    /// The repository this crate is built in, as the command line would name it.
+    fn this_repository(format: OutputFormat) -> MeshQueryArgs {
+        MeshQueryArgs {
+            repo: crate::cli::RepoArgs {
+                repo: Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")),
+                ..Default::default()
+            },
+            format,
+        }
+    }
+
+    #[test]
+    fn an_ensure_outside_a_repository_or_refused_by_the_capability_is_an_error() {
+        let elsewhere = tempfile::tempdir().unwrap();
+        let outside = build_cache_ensure(MeshBuildCacheEnsureArgs {
+            kind: crate::mesh::build_cache::key::Kind::NpmModules,
+            dir: None,
+            command: vec!["true".into()],
+            query: MeshQueryArgs {
+                repo: crate::cli::RepoArgs {
+                    repo: Some(elsewhere.path().to_path_buf()),
+                    ..Default::default()
+                },
+                format: OutputFormat::Text,
+            },
+        });
+        assert!(
+            outside.is_err(),
+            "no layer to load was answered: {outside:?}"
+        );
+        // npm needs its install command: the capability refuses before anything runs
+        let refused = build_cache_ensure(MeshBuildCacheEnsureArgs {
+            kind: crate::mesh::build_cache::key::Kind::NpmModules,
+            dir: None,
+            command: Vec::new(),
+            query: this_repository(OutputFormat::Text),
+        });
+        let why = refused.expect_err("an npm ensure without a command was answered");
+        assert!(
+            why.to_string()
+                .contains("npm-modules needs the install command after `--`"),
+            "{why}"
+        );
+    }
+
+    #[test]
+    fn the_env_answer_is_printed_as_json_and_asks_sccache_by_name_when_none_is_given() {
+        let d = tempfile::tempdir().unwrap();
+        // the node file is absent, so no store is asked whatever sccache is installed
+        let code = build_cache_env(MeshBuildCacheEnvArgs {
+            sccache: None,
+            node_file: Some(d.path().join("absent.json")),
+            credentials: None,
+            format: OutputFormat::Json,
+        })
+        .unwrap();
+        assert_eq!(code, 0, "the answer is a fact, never a failure");
+    }
+
+    #[test]
+    fn a_key_answer_lists_each_kind_with_its_key_or_why_it_has_none() {
+        let v = json!({
+            "platform": "aarch64-apple-darwin",
+            "kinds": [
+                { "kind": "npm-modules", "dir": "site", "key": "v1/npm/k",
+                  "location": "store/v1/npm/k" },
+                { "kind": "mix-deps", "dir": ".", "unavailable": "elixir is not installed",
+                  "location": "" },
+                { "kind": "cargo-build-dir" },
+            ],
+        });
+        let text = render_build_cache_key(&v);
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines,
+            [
+                "platform   aarch64-apple-darwin",
+                "npm-modules      site         v1/npm/k",
+                "                              -> store/v1/npm/k",
+                "mix-deps         .            no key: elixir is not installed",
+                "                              -> ",
+                "cargo-build-dir               no key: unknown",
+                "                              -> ",
+            ]
+        );
+        let none = render_build_cache_key(&json!({ "platform": "p", "kinds": [] }));
+        assert!(none.contains("nothing here is cacheable"), "{none}");
+    }
+
+    #[test]
+    fn a_provision_answer_reads_its_edits_and_what_the_apply_did() {
+        let v = json!({
+            "mode": "apply", "root": "/srv/node", "ok": false,
+            "plan": {
+                "files": [{ "state": "owed", "mode": "0600", "path": "env", "source": "derived" }],
+                "edits": [{ "owed": true, "path": "a.conf" }, { "owed": false, "path": "b.conf" }],
+                "steps": [{ "when": "after", "line": "systemctl restart x" }],
+                "changes": 2, "unobservable": 1,
+            },
+            "apply": {
+                "refused": "the disk is below its floor",
+                "written": ["env"],
+                "ran": [{ "ok": true, "line": "true" }, { "ok": false, "line": "false" }],
+                "skipped": ["systemctl restart x"],
+            },
+        });
+        let text = render_provision(&v);
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines,
+            [
+                "mode        apply",
+                "root        /srv/node",
+                "owed          0600 env (derived)",
+                "edit          a.conf",
+                "current       b.conf",
+                "step (after)  systemctl restart x",
+                "plan        2 change(s) owed, 1 not observable here",
+                "refused     the disk is below its floor",
+                "written     env",
+                "ok    true",
+                "FAIL  false",
+                "skipped     systemctl restart x",
+                "verdict     not provisioned (see above)",
+            ]
+        );
+        let planned = render_provision(&json!({ "mode": "plan", "root": "/r", "ok": true,
+            "plan": { "changes": 0, "unobservable": 0 }, "apply": null }));
+        assert!(planned.ends_with("verdict     ok"), "{planned}");
+        assert!(!planned.contains("refused"), "{planned}");
+        let applied = render_provision(&json!({ "mode": "apply", "root": "/r", "ok": true,
+            "plan": { "changes": 0, "unobservable": 0 },
+            "apply": { "refused": null, "written": ["env"], "ran": [], "skipped": [] } }));
+        assert!(applied.contains("written     env"), "{applied}");
+        assert!(
+            !applied.contains("refused"),
+            "an apply that was not refused says nothing of a refusal: {applied}"
         );
     }
 }

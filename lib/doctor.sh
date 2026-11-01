@@ -56,7 +56,8 @@ mj_cmd_doctor() {
   local a
   for a in "$@"; do case "$a" in
     --help|-h) echo "usage: majordomus doctor [--json]   (read-only; exit 0 healthy, 10 failures, 12 missing)"
-               echo "  MAJORDOMUS_DOCTOR_CONTEXT=commit   the pre-commit hook's run: leaves out the per-worktree uncommitted-work reading and says so"
+               echo "  MAJORDOMUS_DOCTOR_CONTEXT=commit   the pre-commit hook's run: leaves out the per-worktree uncommitted-work reading, and the"
+               echo "                                     context builder when nothing staged can change it, and says so"
                return 0 ;;
     *) mj_die "$MJ_EX_USAGE" "doctor: unknown option $a" ;;
   esac; done
@@ -120,7 +121,77 @@ mj_validate_policy() {
   else mj_doctrine_fail profiles "default" "profiles.default='$def' has no file $(mj_rel "$MJ_PROFILES_DIR")/$def.yaml" \
     "ls $(mj_rel "$MJ_PROFILES_DIR")"; fi
 
+  mj_profile_limits_reconcile
   return 0
+}
+
+# share/profile-limits.yaml against the profiles and lib/ (I0201): every declared axis is set
+# on every profile, every declared adapter is a function that names its limit in a
+# `# majordomus-limit: <limit>` line above it, and no function names a limit the file does
+# not declare. Each profile's limits are then printed as data, one name=value per limit.
+mj_profile_limits_reconcile() {
+  local reg="$MJ_BIN_DIR/../share/profile-limits.yaml" rel="share/profile-limits.yaml"
+  local flat tagged i id axis derive adapter ids="" pf n v line vals bad
+  flat="$(mktemp "${TMPDIR:-/tmp}/mj.pl.XXXXXX")"
+  if ! mj_yaml_flatten "$reg" > "$flat" 2>/dev/null; then
+    mj_doctrine_fail profile-limits "$rel" "does not parse" "cat $rel"; rm -f "$flat"; return 0
+  fi
+  if [ "$(mj_yget "$flat" version)" != 1 ]; then
+    mj_doctrine_fail profile-limits "$rel" "unsupported version '$(mj_yget "$flat" version)' (want 1)" "grep -n '^version:' $rel"
+    rm -f "$flat"; return 0
+  fi
+  # file, limit, function: each function under lib/ with the marker lines directly above it
+  tagged="$(awk '
+    FNR == 1 { n = 0 }
+    /^# majordomus-limit: / { t[n++] = $3; next }
+    /^#/ { next }
+    /^[a-z_][a-z0-9_]*\(\) *\{/ { f = $0; sub(/\(.*/, "", f); for (k = 0; k < n; k++) print FILENAME, t[k], f; n = 0; next }
+    { n = 0 }' "$MJ_LIB_DIR"/*.sh)"
+  i=0
+  while id="$(mj_yget "$flat" "limits.$i.id")" && [ -n "$id" ]; do
+    axis="$(mj_yget "$flat" "limits.$i.axis")"; derive="$(mj_yget "$flat" "limits.$i.derive")"
+    adapter="$(mj_yget "$flat" "limits.$i.adapter")"; ids="$ids $id"
+    case "$derive" in
+      count|duration_seconds) ;;
+      *) mj_doctrine_fail profile-limits "$id" "derive '$derive' is not count or duration_seconds" "grep -n -A4 'id: $id' $rel" ;;
+    esac
+    printf '%s\n' "$tagged" | awk -v l="$id" -v f="$adapter" '$2 == l && $3 == f { ok = 1 } END { exit ok ? 0 : 1 }' \
+      || mj_doctrine_fail profile-limits "$id" "declares adapter $adapter, and no function $adapter under lib/ carries '# majordomus-limit: $id'" \
+        "grep -rn -A1 'majordomus-limit: $id' lib/"
+    i=$((i+1))
+  done
+  while read -r line; do
+    [ -n "$line" ] || continue
+    set -- $line
+    case " $ids " in *" $2 "*) ;;
+      *) mj_doctrine_fail profile-limits "$2" "$(mj_rel "$1"): $3 applies limit '$2', which $rel does not declare" "grep -n 'majordomus-limit: $2' $(mj_rel "$1")" ;;
+    esac
+  done <<EOF
+$tagged
+EOF
+  for pf in "$MJ_PROFILES_DIR"/*.yaml; do
+    [ -f "$pf" ] || continue; n="$(basename "$pf" .yaml)"
+    mj_load_profile "$n" 2>/dev/null || continue
+    vals=""; bad=0; i=0
+    while id="$(mj_yget "$flat" "limits.$i.id")" && [ -n "$id" ]; do
+      axis="$(mj_yget "$flat" "limits.$i.axis")"; derive="$(mj_yget "$flat" "limits.$i.derive")"
+      v="$(mj_pro "$axis")"
+      if [ -z "$v" ]; then
+        mj_doctrine_fail profile-limits "$n" "does not set $axis, from which $rel derives $id" "cat $(mj_rel "$pf")"; bad=1
+      else
+        case "$derive" in
+          duration_seconds) v="$(mj_duration_secs "$v")" || v="" ;;
+          count) case "$v" in *[!0-9]*) v="" ;; esac ;;
+        esac
+        if [ -z "$v" ]; then
+          mj_doctrine_fail profile-limits "$n" "$axis: '$(mj_pro "$axis")' is not a $derive value" "grep -n '$(printf '%s' "$axis" | sed 's/.*\.//'):' $(mj_rel "$pf")"; bad=1
+        else vals="$vals $id=$v"; fi
+      fi
+      i=$((i+1))
+    done
+    [ "$bad" = 1 ] || mj_doctrine_ok profile-limits "$n" "limits${vals}"
+  done
+  rm -f "$flat"
 }
 
 # A linked worktree runs the hooks of its own tree (I2718). The repository's policy is the
@@ -349,8 +420,18 @@ mj_validate_projection() {
 # names .ai/README.md, and no generated target carries what the layer is for. A rule that
 # exists in one provider's file and nowhere else is the two-rulebooks failure this tool was
 # distilled from, so a generated target that holds a rule corpus fails here.
+#
+# Both questions are asked of the generated content only: the whole file in file mode, the
+# region in region mode. The host document around a region is the repository's own, written
+# by people before or beside the layer; it may carry rule bullets and a rules section, and no
+# edit of the policy could remove them, so a finding there could never be fixed by what
+# doctor tells the reader to run. The pointer is read from the same span for the same reason
+# turned round: the region is what a worker is promised, and a host that happens to name
+# .ai/README.md does not stand in for a region that lost it. Absent or malformed markers are
+# the projection doctrine's finding and nothing is judged here.
 mj_validate_bootstrap() {
-  local j=0 tgt mode bad=0
+  local j=0 tgt mode bad=0 owned region
+  region="$(mktemp "${TMPDIR:-/tmp}/mj.bs.XXXXXX")"
   if mj_personal_active; then
     # The chain starts at the project's README, and a personal layer changes nothing the
     # project shares: the README is the repository's, the layer is one person's. The agent
@@ -364,13 +445,19 @@ mj_validate_bootstrap() {
     tgt="$(mj_pol "projections.$j.target")"; mode="$(mj_projection_mode "$j")"; j=$((j+1))
     [ -f "$MJ_ROOT/$tgt" ] || continue   # projection_integrity reports absence
     mj_personal_is_the_projects "$tgt" && continue   # the project's file, like its README
-    if ! grep -q '\.ai/README\.md' "$MJ_ROOT/$tgt"; then
+    owned="$MJ_ROOT/$tgt"
+    if [ "$mode" = region ]; then
+      mj_region_extract "$MJ_ROOT/$tgt" > "$region" 2>/dev/null || continue   # projection_integrity reports the markers
+      owned="$region"
+    fi
+    if ! grep -q '\.ai/README\.md' "$owned"; then
       mj_doctrine_fail bootstrap "$tgt" "does not point at .ai/README.md; a worker reading it never reaches the layer" "grep -n '.ai/README.md' $tgt"; bad=1
-    elif grep -qE '^\| *`?(profile|routine|implementation)`? *\||^- \*\*[A-Za-z].*\*\*|^### (Rules|Ten rules|Lifecycle|Finish contract)' "$MJ_ROOT/$tgt"; then
+    elif grep -qE '^\| *`?(profile|routine|implementation)`? *\||^- \*\*[A-Za-z].*\*\*|^### (Rules|Ten rules|Lifecycle|Finish contract)' "$owned"; then
       mj_doctrine_fail bootstrap "$tgt" "carries a rule corpus of its own (a profile table, rule bullets or a rules section); rules live under .ai/repo/rules/" "grep -nE '^- \*\*|^### ' $tgt"; bad=1
     fi
     mj_bootstrap_rule_refs "$tgt" "$mode" "$(mj_pol "projections.$((j-1)).provider")" || bad=1
   done
+  rm -f "$region"
   [ "$bad" = 0 ] && [ "$j" -gt 0 ] && mj_doctrine_ok bootstrap "$j projection(s)" "each points at .ai/README.md, carries no rule of its own and names only rules in force"
   return 0
 }
@@ -478,6 +565,15 @@ mj_validate_budget() {
     "grep -n 'always_loaded' $(mj_rel "$MJ_POLICY_FILE")"; fi
   rm -f "$owned"
 
+  # In the commit hook the builder is proved only when the commit can change what it reads
+  # (I4265): it composes the whole context, about a quarter of an adopter's doctor run, and a
+  # commit that stages nothing under .ai/ or in a provider file cannot break it. Said by name,
+  # with the command that runs it, because an absent check must not read as a passing one.
+  if [ "${MAJORDOMUS_DOCTOR_CONTEXT:-}" = commit ] \
+     && ! mj_git diff --cached --name-only 2>/dev/null | grep -qE '^(\.ai/|AGENTS\.md$|CLAUDE\.md$|GEMINI\.md$)'; then
+    mj_info context "builder" "not read in the commit hook (MAJORDOMUS_DOCTOR_CONTEXT=commit): nothing staged under .ai/ or in a provider file can change it; run doctor on its own" "majordomus doctor"
+    return 0
+  fi
   # 8. the continuity subsystem: reachable through the CLI, not merely present on disk.
   #    A directory full of records that no command reads is the failure mode this whole
   #    tool exists to catch, so doctor proves each store is readable by the command that

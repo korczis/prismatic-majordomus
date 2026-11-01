@@ -34,4 +34,16 @@ validation:
 evidence_required:
   - "a_second_gate_list_is_found_test"
 created_at: 2026-10-23
-updated_at: 2026-10-23
+updated_at: 2026-10-28T17:21:26Z
+started_at: 2026-10-28T17:20:42Z
+started_event: sha256:61e5b93e25e1c85979809381489cb46262ade049a6b451f89a7722e360c1c90d
+completed_at: 2026-10-28T17:21:26Z
+completed_event: sha256:fd43b2422cdc3fca6656eed0d88a393f329ad6adbd62b6bd981826299349c08b
+evidence:
+  - covers: a_second_gate_list_is_found_test
+    type: ci
+    command: "env -u MAJORDOMUS_SHARE bash test/run.sh 3943_a_second_gate_list_is_found 94_ci_plan 26_ci_wiring 131_completion_gates (run in CI by the validate workflow's suite shards); scripts/ci-plan --inventory (structure job, gate doc-command-check)"
+    result: "pass: 'ok      3943_a_second_gate_list_is_found  47s' (suite-shard (3)); 'ok      94_ci_plan  561s', 'ok      26_ci_wiring  19s' (suite-shard (2)); 'ok      131_completion_gates  199s' (suite-shard (1)); structure: 'ci-plan: inventory: 9 finding(s), 9 in the baseline, 0 to fix' / '==> doc-command-check: ok (12s)'. Run 40676150754 concluded failure only because of case 103 (missing release record) in suite-shard (2), unrelated; the same cases and inventory line are green in fully green run 40573560939 on 6c79dcf, and the I3943 paths are unchanged between 6c79dcf and 81ef931. (commit 81ef931a3e156907f1784c64c509884f565c17f0) Audited per criterion on 2026-10-28 by 61e1283f; two adversarial verifiers did not refute it."
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40676150754 (jobs suite-shard (3) 122783064697, suite-shard (2) 122783064885, suite-shard (1) 122783064867, structure 122783064769); corroborating green run https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939 on 6c79dcf (jobs 122655183349, 122655183734, 122655214836, 122655238421)"
+    commit: 81ef931a3e156907f1784c64c509884f565c17f0
+    recorded_at: 2026-10-28T17:21:15Z

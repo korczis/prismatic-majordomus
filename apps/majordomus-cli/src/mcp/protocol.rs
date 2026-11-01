@@ -174,6 +174,12 @@ impl Server {
     pub fn handle(&mut self, message: Value) -> Option<Reply> {
         if let Some(peer) = self.surface.peer() {
             self.surface.context().peers.touch(peer);
+            // Only real work keeps the peer's mesh claims alive (I3990): the bridge pings
+            // every 20 s whatever its client is doing, so a session stuck on a permission
+            // dialog would otherwise hold an exclusive claim for as long as its server ran.
+            if is_progress(&message) {
+                self.surface.context().peers.progress(peer);
+            }
             // ... and the same message is the heartbeat of whatever episode this connection
             // holds. A client that is working never has to send anything it would not
             // otherwise send in order to keep its episode alive, which is the difference
@@ -330,8 +336,14 @@ impl Server {
             .unwrap_or(PROTOCOL_VERSIONS[0]);
         let client = ClientInfo::from_initialize(params);
         if let Some(peer) = self.surface.peer() {
-            self.surface.context().peers.identify(peer, client.clone());
+            let board = &self.surface.context().peers;
+            board.identify(peer, client.clone());
             tracing::info!(peer = %peer, client = %client.name, version = %client.version, "peer initialized");
+            // where the worker can be reached (I3956), as its bridge carried it; the client
+            // on the server's own stdio was located when it attached
+            if let Some(address) = crate::peers::PeerAddress::from_initialize(params) {
+                board.locate(peer, address);
+            }
         }
         self.client = Some(client);
         json!({
@@ -507,9 +519,73 @@ fn error(id: Value, code: i64, message: &str) -> Value {
     json!({ "jsonrpc": "2.0", "id": id, "error": { "code": code, "message": message } })
 }
 
+/// Whether a message is real work: a request or notification of any method but `ping` and
+/// the `notifications/*` a client sends on its own (cancellation, progress, initialized),
+/// or a batch holding one (I3990). A response from the client is not work either. This is
+/// the only signal a session's mesh claims live by, so it must stay false for everything a
+/// client sends while nobody is answering it.
+fn is_progress(message: &Value) -> bool {
+    match message {
+        Value::Array(batch) => batch.iter().any(is_progress),
+        Value::Object(msg) => msg
+            .get("method")
+            .and_then(Value::as_str)
+            .is_some_and(|m| m != "ping" && !m.starts_with("notifications/")),
+        _ => false,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A keep-alive is presence and not work: a session that only pings, or only sends the
+    /// notifications a client sends unattended, must lose its mesh claims (I3990).
+    #[test]
+    fn a_ping_is_not_progress() {
+        let ping = json!({ "jsonrpc": "2.0", "id": 1, "method": "ping" });
+        assert!(!is_progress(&ping));
+        let cancelled = json!({ "jsonrpc": "2.0", "method": "notifications/cancelled" });
+        assert!(!is_progress(&cancelled));
+        let answer = json!({ "jsonrpc": "2.0", "id": 7, "result": {} });
+        assert!(!is_progress(&answer), "a client's response is not its work");
+        assert!(!is_progress(&json!([ping.clone(), cancelled])));
+        let call = json!({ "jsonrpc": "2.0", "id": 2, "method": "tools/call",
+            "params": { "name": "majordomus_brief", "arguments": {} } });
+        assert!(is_progress(&call));
+        assert!(is_progress(
+            &json!({ "jsonrpc": "2.0", "id": 3, "method": "resources/read" })
+        ));
+        assert!(
+            is_progress(&json!([ping, call])),
+            "a batch with work in it is work"
+        );
+        assert!(!is_progress(&json!("ping")));
+    }
+
+    /// The address a bridge carried in `initialize` lands on the board row of the peer that
+    /// sent it, and an `initialize` that carried none leaves the row without one (I3956).
+    #[test]
+    fn initialize_locates_the_peer_from_the_address_its_bridge_carried() {
+        use crate::worktree::trunk::fixture;
+        let (repo, _origin) = fixture::layered(0, None);
+        let ctx = repo.context().expect("a context");
+        let surface = crate::mcp::surface::Surface::new(ctx.clone());
+        let carried = ctx.peers.attach(crate::peers::Transport::Http);
+        let silent = ctx.peers.attach(crate::peers::Transport::Http);
+        let a = crate::peers::PeerAddress::from_env(|_| None, Some(24025), "mac").unwrap();
+        let mut init = json!({ "jsonrpc": "2.0", "id": 1, "method": "initialize",
+            "params": { "protocolVersion": PROTOCOL_VERSIONS[0],
+                        "clientInfo": { "name": "claude-code", "version": "2" } } });
+        crate::peers::with_address(&mut init, &a);
+        Server::new(surface.for_peer(carried.clone()), "test").handle(init);
+        let plain = json!({ "jsonrpc": "2.0", "id": 1, "method": "initialize",
+            "params": { "protocolVersion": PROTOCOL_VERSIONS[0],
+                        "clientInfo": { "name": "codex", "version": "1" } } });
+        Server::new(surface.for_peer(silent.clone()), "test").handle(plain);
+        assert_eq!(ctx.peers.get(&carried).unwrap().address, Some(a));
+        assert_eq!(ctx.peers.get(&silent).unwrap().address, None);
+    }
 
     /// A stale or lagging tree is named with its distance, its remote and its remedy; a
     /// current one, and one that could not be measured, cost the client no sentence.

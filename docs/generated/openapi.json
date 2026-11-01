@@ -3,7 +3,7 @@
   "jsonSchemaDialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "info": {
     "title": "Majordomus",
-    "version": "1.0.0-alpha.8",
+    "version": "1.0.0-alpha.10",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "description": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 403 `forbidden` (a caller beyond loopback asking for anything but a read or a signed mesh message), 404 `not_found`, 409 `conflict` and 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
     "license": {
@@ -3744,6 +3744,9 @@
             "examples": {
               "intent": {
                 "value": "the context a session is given and the budget it costs"
+              },
+              "source-ranges": {
+                "value": "the budget spend"
               }
             }
           },
@@ -3757,7 +3760,14 @@
                 "type": "string"
               }
             },
-            "description": "Repository-relative paths the work touches, added to whatever the seeds declare."
+            "description": "Repository-relative paths the work touches, added to whatever the seeds declare.",
+            "examples": {
+              "source-ranges": {
+                "value": [
+                  "apps/majordomus-cli/src/devcontext"
+                ]
+              }
+            }
           },
           {
             "name": "uris",
@@ -3780,7 +3790,12 @@
               "format": "uint64",
               "minimum": 0
             },
-            "description": "The ceiling in estimated tokens; `DEFAULT_BUDGET_TOKENS` when absent."
+            "description": "The ceiling in estimated tokens; `DEFAULT_BUDGET_TOKENS` when absent.",
+            "examples": {
+              "source-ranges": {
+                "value": 24000
+              }
+            }
           },
           {
             "name": "max_depth",
@@ -3791,7 +3806,12 @@
               "format": "uint",
               "minimum": 0
             },
-            "description": "How far from a seed the walk goes; `DEFAULT_MAX_DEPTH` when absent."
+            "description": "How far from a seed the walk goes; `DEFAULT_MAX_DEPTH` when absent.",
+            "examples": {
+              "source-ranges": {
+                "value": 3
+              }
+            }
           },
           {
             "name": "floor",
@@ -3801,7 +3821,12 @@
               "type": "number",
               "format": "double"
             },
-            "description": "Relevance below which an entry is reported rather than given; `DEFAULT_FLOOR`\nwhen absent."
+            "description": "Relevance below which an entry is reported rather than given; `DEFAULT_FLOOR`\nwhen absent.",
+            "examples": {
+              "source-ranges": {
+                "value": 0.25
+              }
+            }
           },
           {
             "name": "all_blocking_rules",
@@ -3811,6 +3836,20 @@
               "type": "boolean"
             },
             "description": "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop."
+          },
+          {
+            "name": "source_ranges",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Outline the Rust source under the work's paths into ranges, one candidate per\ndefinition, spent by the same budget beside the layer's objects (`source`).\n\nOff unless asked for: it reads files the index does not hold, and an answer every\nexisting caller already depends on — `economics measure` counts the files a context\nnames — does not change under it.",
+            "examples": {
+              "source-ranges": {
+                "value": true
+              }
+            }
           }
         ],
         "responses": {
@@ -4003,6 +4042,15 @@
               "type": "boolean"
             },
             "description": "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop."
+          },
+          {
+            "name": "source_ranges",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Outline the Rust source under the work's paths into ranges, one candidate per\ndefinition, spent by the same budget beside the layer's objects (`source`).\n\nOff unless asked for: it reads files the index does not hold, and an answer every\nexisting caller already depends on — `economics measure` counts the files a context\nnames — does not change under it."
           }
         ],
         "responses": {
@@ -7829,7 +7877,7 @@
       "get": {
         "operationId": "gates.completion",
         "summary": "Whether this task may be called finished",
-        "description": "The active task's own change set — from the commit it started at to the working tree, uncommitted files included — put through the CI model: which gates it selects and why, what each one last reported and over which files, which verdicts have gone stale because the tree moved underneath them, which required gates have never reported at all, and which obligations the change implies whether or not the task declared them. `finishable` is false only when a required gate is known to be failing, stale or blocked by one that is; absence of a verdict is reported as unverified rather than silently accepted.",
+        "description": "The active task's own change set — from the commit it started at to the working tree, uncommitted files included — put through the CI model: which gates it selects and why, what each one last reported and over which files, which verdicts have gone stale because the tree moved underneath them, which required gates have never reported at all, and which obligations the change implies whether or not the task declared them. `finishable` is false only when a required gate is known to be failing, stale or blocked by one that is; absence of a verdict is reported as unverified rather than silently accepted. The done invariant is the questions of share/completion.yaml, in its order, each answered from the source it names; `stage` is the stage of the work those answers fold to, and `complete` is true only when every question passes or is exempt — finishable and complete are two different words.",
         "tags": [
           "gates"
         ],
@@ -7885,6 +7933,15 @@
                 "value": true
               }
             }
+          },
+          {
+            "name": "tier",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Plan at this tier of the model's `tiers` (ADR 0186): a gate whose lane the tier does\nnot run is left out, and nothing implies or requires it back. Absent plans every lane.\nA model that declares no tiers, or a tier it does not declare, is refused as invalid\ninput, in the words `scripts/ci-plan --tier` refuses it with."
           }
         ],
         "responses": {
@@ -7958,6 +8015,176 @@
           "resource": {
             "uri": "majordomus://gates/completion",
             "name": "completion"
+          }
+        }
+      }
+    },
+    "/api/v1/gates/policy": {
+      "get": {
+        "operationId": "gates.policy",
+        "summary": "The completion policy",
+        "description": "The one definition of done: the stages of the work in order, every question a task must answer before it may be called finished, the stage each question belongs to and the source its answer is taken from — an obligation of share/obligations.yaml, a gate of the CI model, the change set, the repository's convergence or the closing readings. Read from share/completion.yaml, the file `gates.completion` takes its questions from. A token the policy names and the vocabulary lacks is reported as a problem, and a gate question this repository's CI model never answers is listed by name.",
+        "tags": [
+          "gates"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The completion policy: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompletionPolicyReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "gates.policy",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::gates"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "process",
+          "max_entries": 4,
+          "ttl_seconds": 5
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_completion_policy",
+          "resource": {
+            "uri": "majordomus://gates/policy",
+            "name": "completion-policy"
+          }
+        }
+      }
+    },
+    "/api/v1/gates/state": {
+      "get": {
+        "operationId": "gates.state",
+        "summary": "How each gate last went",
+        "description": "Every gate the CI model declares with the standing of its last recorded run in this checkout, whichever task recorded it: `pass` or `fail` over the files as they stand now, `stale` when those files have changed since the run, `queued` when no run has ever reported — listed again under `never_reported`, because a missing verdict is the case an absent reader renders green — and `unknown` when a run exists and cannot be checked against this tree. Each run carries the commit it was taken at and whether that is the commit checked out now. Read offline from this checkout's own record; what it did not consult, the forge's CI runs, is named under `unreached` rather than left out.",
+        "tags": [
+          "gates"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "How each gate last went: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateStateReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "gates.state",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::gates"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_gate_state",
+          "resource": {
+            "uri": "majordomus://gates/state",
+            "name": "gate-state"
           }
         }
       }
@@ -9786,7 +10013,7 @@
       "get": {
         "operationId": "lifecycle.providers",
         "summary": "What each provider's adapter declares",
-        "description": "Per provider: the lifecycle events its adapter declares in the provider's own vocabulary, whether it can archive prompts, and which of this repository's enforcement entries name its hook. Declared in share/providers.yaml and in the policy; never inferred from whether a shim happens to be on disk.",
+        "description": "Per provider: the lifecycle events its adapter declares in the provider's own vocabulary, whether it can archive prompts, the official seams through which it reports what a session consumed (usage, with the citation), and which of this repository's enforcement entries name its hook. Declared in share/providers.yaml and in the policy; never inferred from whether a shim happens to be on disk.",
         "tags": [
           "lifecycle"
         ],
@@ -10298,11 +10525,349 @@
         }
       }
     },
+    "/api/v1/mesh/beats": {
+      "post": {
+        "operationId": "mesh.beat",
+        "summary": "Say a session is making progress",
+        "description": "Record that a session of this runtime is making progress, with the phase it is in (`waiting on CI run 123`) and optionally the running process it speaks for. A session that has beaten lives by its beats: its exclusive claims are suspended — they refuse nobody — once no beat arrives within `cooperation.session_ttl_seconds`, and hold again at the next. A worker's MCP requests other than `ping` beat for it; this is the way for a long-running process that sends none. A beat within a quarter of the ttl with an unchanged phase writes nothing and answers the last one. Writes this runtime's journal only.",
+        "tags": [
+          "mesh"
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "The input of `mesh.beat`.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BeatInput"
+              },
+              "examples": {
+                "unknown": {
+                  "value": {
+                    "session": "none",
+                    "phase": "waiting on CI"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Say a session is making progress: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Written"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "mesh.beat",
+        "x-majordomus-kind": "command",
+        "x-majordomus-stability": "experimental",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::mesh"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "waived",
+          "reason": "transient_state"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "process_state",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_mesh_beat"
+        }
+      }
+    },
+    "/api/v1/mesh/build-cache/env": {
+      "get": {
+        "operationId": "mesh.build_cache.env",
+        "summary": "The sccache client configuration for the store this node selected",
+        "description": "What the process that starts the sccache server should have in its environment on this machine, derived and never typed: the local disk as the first level and the selected store as the second (SCCACHE_MULTILEVEL_CHAIN=disk,s3, the bucket, the endpoint, the region, whether TLS is used, a key prefix of rustc's host triple, the credential FILE path and its profile) only when sccache has the multi-level chain (measured on a throwaway server, not assumed), a credential file of mode 0600 holding the profile exists, and the store answered its readiness route now; otherwise no variable at all, with the one condition that did not hold. sccache fixes its chain at server start and fails the compile when a level is down then, so a store is added only to a server that is starting. No key is ever in the answer, only the credential file's path (ADR 0157, I2673).",
+        "tags": [
+          "mesh"
+        ],
+        "parameters": [
+          {
+            "name": "sccache",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The sccache executable to ask; `sccache` when absent.",
+            "examples": {
+              "no-sccache": {
+                "value": "no-such-sccache"
+              }
+            }
+          },
+          {
+            "name": "node_file",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The node file naming the store this node offers or knows."
+          },
+          {
+            "name": "credentials",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The AWS-format credential file, mode 0600."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The sccache client configuration for the store this node selected: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildCacheEnvReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "mesh.build_cache.env",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "experimental",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::mesh"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "waived",
+          "reason": "external_dependency"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_mesh_build_cache_env"
+        },
+        "x-majordomus-cli": "mesh build-cache env"
+      }
+    },
+    "/api/v1/mesh/build-cache/key": {
+      "get": {
+        "operationId": "mesh.build_cache.key",
+        "summary": "What every dependency install and build directory is cached under",
+        "description": "Every lockfile the repository tracks — Cargo.lock, mix.lock, package-lock.json — as the thing it makes cacheable (a cargo build directory, mix dependencies, npm node_modules), each with its key: a schema version, the platform (the toolchain's own host triple, or `any` for platform-independent source), the toolchain as its executables state it, and the digest of every input and environment variable that changes what the install leaves. Where the entry is restored to is a separate field, so two checkouts with one lockfile share one entry. A kind whose toolchain is absent says why and has no key (ADR 0157, I3950).",
+        "tags": [
+          "mesh"
+        ],
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Kind"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "Only this kind; every kind the repository has when absent.",
+            "examples": {
+              "cargo": {
+                "value": "cargo-build-dir"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What every dependency install and build directory is cached under: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildCacheKeyReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "mesh.build_cache.key",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "experimental",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::mesh"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "waived",
+          "reason": "external_dependency"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_mesh_build_cache_key"
+        },
+        "x-majordomus-cli": "mesh build-cache key"
+      }
+    },
     "/api/v1/mesh/claims": {
       "post": {
         "operationId": "mesh.claim",
         "summary": "Claim a scope across the mesh",
-        "description": "Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own. Writes this runtime's journal only.",
+        "description": "Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own; and an exclusive claim of a session that beats is suspended — refusing nobody — while its holder makes no progress within its ttl. Writes this runtime's journal only.",
         "tags": [
           "mesh"
         ],
@@ -10868,6 +11433,15 @@
               "type": "boolean"
             },
             "description": "The newest `limit` events above `after` instead of the first ones: what a reader who\nwants the journal as it stands now asks for. Still in Lamport order, and `lamport` is\nthen the newest stamp the journal holds, so resuming after it reads only what comes\nnext. Without it the journal is read forward from `after`, a page at a time."
+          },
+          {
+            "name": "beats",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Include the `session_beat` events, which are left out by default: a working session's\nruntime writes one every few minutes to keep its claims alive (I3990), and a reader\nof the journal wants what sessions did rather than that they are still doing it.\nA walk by `after` cuts its page before the beats leave it, so its `lamport` resumes\nafter them; a walk by `cursor` passes them over without counting them toward `limit`.\nPaging misses nothing either way."
           }
         ],
         "responses": {
@@ -20061,7 +20635,7 @@
       "get": {
         "operationId": "shell.check",
         "summary": "Refuse undeclared shell",
-        "description": "Every shell unit under bin/, lib/, scripts/, share/, .githooks/ and .claude/hooks/ — by interpreter line or by a .sh name, as git would commit it, links not followed — against .ai/repo/automation/inventory.jsonl: an undeclared unit, a record whose unit is gone, an exemption missing its reason or its removal condition, a disposition outside A-F, a duplicate and a record out of canonical order are each a finding that names the file and the remedy. Reads the tree and git's index only; no build and no network.",
+        "description": "Every shell unit under bin/, lib/, scripts/, share/, apps/majordomus-cli/assets/, .githooks/ and .claude/hooks/ — by interpreter line or by a .sh name, as git would commit it, links not followed — against .ai/repo/automation/inventory.jsonl: an undeclared unit, a record whose unit is gone, an exemption missing its reason or its removal condition, a disposition outside A-F, a duplicate and a record out of canonical order are each a finding that names the file and the remedy. Reads the tree and git's index only; no build and no network.",
         "tags": [
           "shell"
         ],
@@ -22709,6 +23283,15 @@
             "minimum": 0,
             "description": "Seconds since its last message."
           },
+          "progress_seconds_ago": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Seconds since it last did real work — a request other than `ping`, or an\nannouncement — or absent when it has done none (I3990). `last_seen_seconds_ago`\ncounts a keep-alive ping as a message, so a session stuck on a permission dialog\nbehind a bridge that pings every 20 s looks seen forever; this is the number its\nmesh claims live by."
+          },
           "attached": {
             "type": "boolean",
             "description": "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does."
@@ -22741,6 +23324,17 @@
               }
             ],
             "description": "Which checkout of the repository this peer is attached to; see `PeerCheckout`.\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout's server it asked."
+          },
+          "address": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PeerAddress"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Where the worker behind this peer can be reached from outside its connection: its\nmachine, its process, its provider session and the socket other sessions message it\non; see `PeerAddress`. Derived when the peer attached, never announced by hand.\nAbsent for a client that exposes none of it."
           },
           "overlaps": {
             "type": "array",
@@ -23711,6 +24305,36 @@
           "note"
         ],
         "description": "What the ledger says about episode lifecycle against what the store holds.\n\nThe invariant ADR 0052 asks for, stated as arithmetic a person can check: every episode\nthat started either closed or is still open. When `started` exceeds `closed + open`, the\ndifference is episodes whose close was never recorded — the shape of the outage that ADR\ndescribes, where events kept arriving and the records they should have produced did not.\n\nThe sign matters and the two directions mean opposite things. Positive `unaccounted` is\nthe outage: episodes that started, are not open, and produced no closed record — work\nthat happened and left nothing behind. Negative is ordinary bookkeeping: the ledger was\nrotated, or a record was committed from a checkout whose ledger lines are not in this\none, so there are more records than started lines to account for them.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::Balance;\nuse serde_json::json;\n\nlet of = |started, closed, open, unaccounted, agrees| -> Balance {\n    serde_json::from_value(json!({\n        \"started\": started, \"closed\": closed, \"open\": open,\n        \"unaccounted\": unaccounted, \"agrees\": agrees, \"note\": \"as measured\",\n    })).unwrap()\n};\n\n// the good case: every episode that started either closed or is still open\nlet sound = of(40, 37, 3, 0, true);\nassert_eq!(sound.started as i64 - sound.closed as i64 - sound.open as i64, sound.unaccounted);\nassert!(sound.agrees);\n\n// the outage ADR 0052 describes: four closes that were never recorded\nlet lost = of(40, 33, 3, 4, false);\nassert!(lost.unaccounted > 0 && !lost.agrees);\n\n// and a rotated ledger, which is not a fault in either half\nlet rotated = of(2, 37, 3, -38, false);\nassert!(rotated.unaccounted < 0, \"more records than lines to account for them\");\n```"
+      },
+      "BeatInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "session": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The session making progress; the calling MCP session's own when omitted. It must be\na session this runtime opened (a claim opens one)."
+          },
+          "phase": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What the session is doing, one line: `waiting on CI run 123`, `holding the build\nlock`. Redacted before it is signed, and shown beside the session everywhere."
+          },
+          "pid": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The process the beat speaks for; refused unless it is running on this machine."
+          }
+        },
+        "description": "The input of `mesh.beat`."
       },
       "BenchmarkPolicy": {
         "oneOf": [
@@ -25436,6 +26060,14 @@
             },
             "description": "The repository-relative paths the build context carries, and the only ones."
           },
+          "crates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The path dependencies the package compiles against (`apps/majordomus-core`): in the\nbuild context and in the builder's dependency stage, never in the runtime image,\nsince the running process reads none of them. Absent means the package has none.",
+            "default": []
+          },
           "site": {
             "type": [
               "string",
@@ -25452,6 +26084,384 @@
           "inputs"
         ],
         "description": "What is shipped and what it is built from."
+      },
+      "BuildCacheEnvReport": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "$ref": "#/components/schemas/Mode",
+            "description": "What the client is configured as."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why, always one sentence; for a local-only answer, the condition that did not hold."
+          },
+          "sccache": {
+            "$ref": "#/components/schemas/BuildCacheSccache",
+            "description": "The installed sccache."
+          },
+          "store": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BuildCacheStore"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The selected store, when one was."
+          },
+          "credentials_file": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The path of the credential file the variables name; never its content."
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BuildCacheEnvVar"
+            },
+            "description": "The variables to set in the environment of the process that starts the sccache\nserver; empty when the client is local-only."
+          },
+          "passed_over": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BuildCachePassedOver"
+            },
+            "description": "The offers selection passed over, with the rule."
+          }
+        },
+        "required": [
+          "mode",
+          "reason",
+          "sccache",
+          "variables"
+        ],
+        "description": "The answer of `report`.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::{EnvReport, Mode, Sccache};\nlet r = EnvReport {\n    mode: Mode::LocalOnly, reason: \"sccache is not installed\".into(),\n    sccache: Sccache { found: false, version: None, multilevel: None, detail: String::new() },\n    store: None, credentials_file: None, variables: vec![], passed_over: vec![],\n};\nassert!(r.variables.is_empty());\n```"
+      },
+      "BuildCacheEnvVar": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The variable."
+          },
+          "value": {
+            "type": "string",
+            "description": "Its value: never a key, at most the path of a credential file."
+          }
+        },
+        "required": [
+          "name",
+          "value"
+        ],
+        "description": "One variable of the client's environment.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::EnvVar;\nlet v = EnvVar { name: \"SCCACHE_REGION\".into(), value: \"us-east-1\".into() };\nassert_eq!(v.name, \"SCCACHE_REGION\");\n```"
+      },
+      "BuildCacheHealth": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "healthy",
+            "description": "Ready and answering."
+          },
+          {
+            "type": "string",
+            "const": "degraded",
+            "description": "Answering, but something the policy cares about is wrong (low headroom, slow)."
+          },
+          {
+            "type": "string",
+            "const": "unhealthy",
+            "description": "Not answering, or refusing."
+          },
+          {
+            "type": "string",
+            "const": "unknown",
+            "description": "The probe could not say: never `Healthy`."
+          }
+        ],
+        "description": "How the offering node's own probe judges the store.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::Health;\n// only a healthy store is used; an unknown one is never promoted\nassert_ne!(Health::Unknown, Health::Healthy);\n```"
+      },
+      "BuildCacheKeyReport": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "type": "string",
+            "description": "This machine's platform triple."
+          },
+          "kinds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BuildCacheKindKey"
+            },
+            "description": "One entry per lockfile the repository tracks, by kind then directory."
+          }
+        },
+        "required": [
+          "platform",
+          "kinds"
+        ],
+        "description": "Every cached thing a repository has, as `cache.key` answers it.\n\n```\nuse majordomus_cli::mesh::build_cache::key::KeyReport;\nlet r = KeyReport { platform: \"x86_64-unknown-linux-gnu\".into(), kinds: vec![] };\nassert!(r.kinds.is_empty());\n```"
+      },
+      "BuildCacheKindKey": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/Kind",
+            "description": "What is cached."
+          },
+          "dir": {
+            "type": "string",
+            "description": "The directory holding the lockfile, relative to the repository root (`.` for the root)."
+          },
+          "location": {
+            "type": "string",
+            "description": "Where the entry is restored to: relative to the repository, or `~/`-relative when it\nlies under the home directory (a shared cargo build directory)."
+          },
+          "platform": {
+            "type": "string",
+            "description": "The platform triple the entry is built for."
+          },
+          "toolchain": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The toolchain as its executables state it; absent when they could not be asked."
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The files hashed into the digest, relative to the repository root."
+          },
+          "digest": {
+            "type": "string",
+            "description": "The first 32 hex digits of the SHA-256 over the inputs and the declared environment."
+          },
+          "key": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`v1/<kind>/<platform>/<toolchain>/<digest>`; absent when the toolchain is."
+          },
+          "unavailable": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why there is no key, when there is none."
+          }
+        },
+        "required": [
+          "kind",
+          "dir",
+          "location",
+          "platform",
+          "inputs",
+          "digest"
+        ],
+        "description": "One cached thing of a repository, with its key or the reason it has none.\n\n```\nuse majordomus_cli::mesh::build_cache::key::{Kind, KindKey};\nlet k = KindKey {\n    kind: Kind::NpmModules,\n    dir: \"site\".into(),\n    location: \"site/node_modules\".into(),\n    platform: \"aarch64-apple-darwin\".into(),\n    toolchain: Some(\"node-24.8.0-npm-11\".into()),\n    inputs: vec![\"site/package-lock.json\".into()],\n    digest: \"0\".repeat(32),\n    key: Some(format!(\"v1/npm-modules/aarch64-apple-darwin/node-24.8.0-npm-11/{}\", \"0\".repeat(32))),\n    unavailable: None,\n};\nassert!(k.key.unwrap().starts_with(\"v1/npm-modules/\"));\n```"
+      },
+      "BuildCacheNodeOffer": {
+        "type": "object",
+        "properties": {
+          "node": {
+            "type": "string",
+            "description": "The offering node's id: the last tie-break, so ordering is total."
+          },
+          "protocol": {
+            "type": "string",
+            "description": "The protocol the store speaks (`s3`)."
+          },
+          "provider": {
+            "type": "string",
+            "description": "What serves it (`minio`, `garage`, ...): data, not a code path."
+          },
+          "scope": {
+            "$ref": "#/components/schemas/BuildCacheScope",
+            "description": "How far the endpoint is meant to be reached."
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "The non-secret address a client connects to."
+          },
+          "bucket": {
+            "type": "string",
+            "description": "The bucket the cache lives in."
+          },
+          "priority": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The offering node's own preference, higher first."
+          },
+          "headroom_gib": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Free space on the data path, in GiB, when the node said."
+          },
+          "health": {
+            "$ref": "#/components/schemas/BuildCacheHealth",
+            "description": "The node's own judgement of the store."
+          },
+          "age_seconds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Seconds since the offer was last refreshed."
+          },
+          "rtt_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0,
+            "description": "A measured round trip from the asking node, in milliseconds, when one was."
+          }
+        },
+        "required": [
+          "node",
+          "protocol",
+          "provider",
+          "scope",
+          "endpoint",
+          "bucket",
+          "priority",
+          "health",
+          "age_seconds"
+        ],
+        "description": "One node's offer. Carries no credential and no secret of any kind.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::{Health, Offer, Scope};\nlet offer = Offer {\n    node: \"n1\".into(), protocol: \"s3\".into(), provider: \"minio\".into(),\n    scope: Scope::Lan, endpoint: \"http://192.168.100.30:9000\".into(),\n    bucket: \"majordomus-build-cache\".into(), priority: 0, headroom_gib: Some(200),\n    health: Health::Healthy, age_seconds: 3, rtt_ms: None,\n};\nassert_eq!(offer.node, \"n1\");\nassert!(!serde_json::to_string(&offer).unwrap().contains(\"secret\"));\n```"
+      },
+      "BuildCacheOfferReading": {
+        "type": "object",
+        "properties": {
+          "offers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BuildCacheNodeOffer"
+            },
+            "description": "The offers of trusted runtimes whose beat rose within the offer's lifetime, one per\nnode, in node order: what `super::select` takes."
+          },
+          "ignored": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BuildCachePassedOver"
+            },
+            "description": "Every build-cache record that is not read as an offer, by node, each with its stream\nand the reason: untrusted, withdrawn, stale, unverified or out of bounds."
+          }
+        },
+        "required": [
+          "offers",
+          "ignored"
+        ],
+        "description": "What the journal offers now: the offers a client may select among, and every record that\nis not one, with why.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::offer::{read, OfferReading};\nuse std::time::Duration;\nlet reading: OfferReading = read(&[], &|_| true, &|_| None, Duration::from_secs(30));\nassert!(reading.offers.is_empty());\n```"
+      },
+      "BuildCachePassedOver": {
+        "type": "object",
+        "properties": {
+          "node": {
+            "type": "string",
+            "description": "The offer's node."
+          },
+          "why": {
+            "type": "string",
+            "description": "The rule, in words."
+          }
+        },
+        "required": [
+          "node",
+          "why"
+        ],
+        "description": "An offer that was not chosen, and the rule that said no.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::{select, PassedOver, Policy};\nlet answer = select(&[], &Policy::default());\nlet passed: Vec<PassedOver> = answer.passed_over;\nassert!(passed.is_empty());\n```"
+      },
+      "BuildCacheSccache": {
+        "type": "object",
+        "properties": {
+          "found": {
+            "type": "boolean",
+            "description": "Whether `--version` was answered."
+          },
+          "version": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The version it stated."
+          },
+          "multilevel": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether it has the multi-level chain: measured, and unknown when the measurement\ncould not be made."
+          },
+          "detail": {
+            "type": "string",
+            "description": "How that was found out, in words."
+          }
+        },
+        "required": [
+          "found",
+          "detail"
+        ],
+        "description": "What the installed sccache is, as measured.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::Sccache;\nlet s = Sccache { found: false, version: None, multilevel: None, detail: \"absent\".into() };\nassert!(!s.found);\n```"
+      },
+      "BuildCacheScope": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "host",
+            "description": "Reachable from the machine that offers it and no other."
+          },
+          {
+            "type": "string",
+            "const": "lan",
+            "description": "Reachable on the offering machine's local network."
+          },
+          {
+            "type": "string",
+            "const": "mesh",
+            "description": "Reachable by every node of the mesh."
+          }
+        ],
+        "description": "How far an offer's endpoint is meant to be reached, nearest first.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::Scope;\n// nearest first: a host-only store is preferred to a LAN one, and a LAN one to the mesh\nassert!(Scope::Host < Scope::Lan && Scope::Lan < Scope::Mesh);\n```"
+      },
+      "BuildCacheStore": {
+        "type": "object",
+        "properties": {
+          "node": {
+            "type": "string",
+            "description": "The offering node."
+          },
+          "provider": {
+            "type": "string",
+            "description": "What serves the store."
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "The non-secret endpoint."
+          },
+          "bucket": {
+            "type": "string",
+            "description": "The bucket."
+          }
+        },
+        "required": [
+          "node",
+          "provider",
+          "endpoint",
+          "bucket"
+        ],
+        "description": "The store the second level is.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::Store;\nlet s = Store { node: \"n1\".into(), provider: \"minio\".into(),\n    endpoint: \"http://192.168.100.30:9000\".into(), bucket: \"b\".into() };\nassert_eq!(s.provider, \"minio\");\n```"
       },
       "BuildIdentity": {
         "type": "object",
@@ -26716,9 +27726,26 @@
               "detail"
             ],
             "description": "Live, exclusive, and beaten to its scope by the claim whose key this names."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "const": "suspended"
+              },
+              "detail": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "state",
+              "detail"
+            ],
+            "description": "Exclusive, unreleased and of an open session on a beating runtime, but its holder\nstopped making progress: no session beat within its ttl (I3990). It refuses nobody\nwhile it reads so, and holds again the moment its session beats. Suspension only\nstops the refusal and says so — nobody takes the scope over and nothing is fenced;\nthat waits for an epoch a resumed holder can be told it lost (I3174)."
           }
         ],
-        "description": "A claim's standing, and — where it ended or lost — what ended it. The two variants that\ncarry a string exist because the bare verdict is not actionable: a worker told its claim\nexpired needs to know whether its session closed or its runtime stopped beating, and one\ntold its claim is conflicted needs the key of the claim that beat it, which is the same\nkey on every runtime.\n\n```\nuse majordomus_cli::mesh::state::ClaimState;\n\nassert!(ClaimState::Held.is_live());\nassert!(ClaimState::Conflicted(\"s/c1\".into()).is_live(), \"still held, and not the winner\");\nassert!(!ClaimState::Released.is_live());\n\n// the detail travels with the verdict, so a reader is never left asking who won\nlet value = serde_json::to_value(ClaimState::Conflicted(\"s/c1\".into())).unwrap();\nassert_eq!(value[\"state\"], \"conflicted\");\nassert_eq!(value[\"detail\"], \"s/c1\");\n```"
+        "description": "A claim's standing, and — where it ended, lost or was suspended — why. The variants that\ncarry a string exist because the bare verdict is not actionable: a worker told its claim\nexpired needs to know whether its session closed or its runtime stopped beating, one told\nits claim is conflicted needs the key of the claim that beat it, which is the same key on\nevery runtime, and one told its claim is suspended needs the ttl its holder missed.\n\n```\nuse majordomus_cli::mesh::state::ClaimState;\n\nassert!(ClaimState::Held.is_live());\nassert!(ClaimState::Conflicted(\"s/c1\".into()).is_live(), \"still held, and not the winner\");\nassert!(!ClaimState::Released.is_live());\n\n// the detail travels with the verdict, so a reader is never left asking who won\nlet value = serde_json::to_value(ClaimState::Conflicted(\"s/c1\".into())).unwrap();\nassert_eq!(value[\"state\"], \"conflicted\");\nassert_eq!(value[\"detail\"], \"s/c1\");\n```"
       },
       "ClaimView": {
         "type": "object",
@@ -28490,6 +29517,10 @@
               "$ref": "#/components/schemas/Diagnostic"
             },
             "description": "What the compiler could not read: a knowledge source the layer names and does not\nhold, a session record that no longer describes this checkout. Never an error: an\nabsent source is an answer."
+          },
+          "sources": {
+            "$ref": "#/components/schemas/SourceCoverage",
+            "description": "The source files the request's paths reach, outlined into ranges: what each whole\nfile would cost, what its selected ranges cost instead, and what was not read and\nwhy. Absent when the request reaches no tracked source, so an answer about the layer\nalone is unchanged."
           }
         },
         "required": [
@@ -28649,7 +29680,22 @@
             "items": {
               "$ref": "#/components/schemas/DoneQuestion"
             },
-            "description": "The done invariant: the questions a task must answer before anybody may call it\nfinished, each with the source that answered it and the evidence it read. Composed\nfrom the obligation closure, the gates, the change set, the repository's convergence\nand the closing readings; a question nothing here reaches is `unknown` and names the\ncommand that would answer it."
+            "description": "The done invariant: the questions a task must answer before anybody may call it\nfinished, each with the source that answered it and the evidence it read. Composed\nfrom the obligation closure, the gates, the change set, the repository's convergence\nand the closing readings; a question nothing here reaches is `unknown` and names the\ncommand that would answer it. Exactly the questions of the completion policy, in its\norder, each with the stage the policy places it in."
+          },
+          "policy": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The completion policy the questions were taken from, as the distribution names it.\nAbsent when no policy could be read; a finding then says why, the one question asked\nis whether it can be, and nothing is complete."
+          },
+          "stage": {
+            "$ref": "#/components/schemas/LifecycleStage",
+            "description": "Where the task stands in the lifecycle, folded from the answers in the policy's\nstage order: the first stage blocked, else the first stage pending, else the last.\nDerived on every reading and never written down by anybody."
+          },
+          "complete": {
+            "type": "boolean",
+            "description": "True only when a task is present and every question of the policy passes or is\nexempt. The one field that may be read as \"done\": it is the stage fold's word, and\nno surface computes it a second time from the parts."
           },
           "findings": {
             "type": "array",
@@ -28667,9 +29713,66 @@
           "tallies",
           "gates",
           "obligations",
-          "questions"
+          "questions",
+          "stage",
+          "complete"
         ],
-        "description": "```\nuse majordomus_cli::gates::Completion;\n\n// the document every surface reads, as `gates.completion` answers with it. The property\n// that matters is the one asserted here: a gate that never reported leaves the task\n// finishable and *unverified*, which is a different thing from a task that passed.\nlet c: Completion = serde_json::from_value(serde_json::json!({\n    \"present\": true,\n    \"model\": \".ai/repo/ci/gates.yaml\",\n    \"plan\": { \"mode\": \"affected\", \"reason\": \"1 path in 1 class\", \"changed\": [\"docs/CLI.md\"],\n              \"classes\": [], \"unclassified\": [], \"selected\": {}, \"excluded\": {} },\n    \"finishable\": true,\n    \"unverified\": [\"reference-check\"],\n    \"tallies\": { \"queued\": 1 },\n    \"gates\": [],\n    \"obligations\": [],\n    \"questions\": []\n}))\n.unwrap();\nassert!(c.finishable, \"absence of a verdict does not refuse\");\nassert_eq!(c.unverified, [\"reference-check\"], \"and it is never silently accepted\");\nassert!(c.blocking.is_empty());\n```\nWhether the active task may be called finished, and everything the answer rests on.\n\n`finishable` is the field a caller acts on and the one thing no surface may recompute:\nthe shell tool's `check` and `finish` read it, the HTTP API serves it, the Cockpit\nrenders it, and all of them are reading this one execution."
+        "description": "```\nuse majordomus_cli::gates::Completion;\n\n// the document every surface reads, as `gates.completion` answers with it. The property\n// that matters is the one asserted here: a gate that never reported leaves the task\n// finishable and *unverified*, which is a different thing from a task that passed.\nlet c: Completion = serde_json::from_value(serde_json::json!({\n    \"present\": true,\n    \"model\": \".ai/repo/ci/gates.yaml\",\n    \"plan\": { \"mode\": \"affected\", \"reason\": \"1 path in 1 class\", \"changed\": [\"docs/CLI.md\"],\n              \"classes\": [], \"unclassified\": [], \"selected\": {}, \"excluded\": {} },\n    \"finishable\": true,\n    \"unverified\": [\"reference-check\"],\n    \"tallies\": { \"queued\": 1 },\n    \"gates\": [],\n    \"obligations\": [],\n    \"questions\": [],\n    \"policy\": \"share/completion.yaml\",\n    \"stage\": { \"id\": \"gates\", \"title\": \"Gates\", \"state\": \"pending\", \"complete\": false,\n               \"owing\": [\"ci\"], \"stages\": [] },\n    \"complete\": false\n}))\n.unwrap();\nassert!(c.finishable, \"absence of a verdict does not refuse\");\nassert_eq!(c.unverified, [\"reference-check\"], \"and it is never silently accepted\");\nassert!(c.blocking.is_empty());\n// finishable is not complete: the stage the answers fold to still owes the ci question\nassert!(!c.complete);\nassert_eq!(c.stage.id, \"gates\");\nassert_eq!(c.stage.owing, [\"ci\"]);\n```\nWhether the active task may be called finished, and everything the answer rests on.\n\n`finishable` is the field a caller acts on and the one thing no surface may recompute:\nthe shell tool's `check` and `finish` read it, the HTTP API serves it, the Cockpit\nrenders it, and all of them are reading this one execution."
+      },
+      "CompletionPolicyReport": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The format version the file states."
+          },
+          "source": {
+            "type": "string",
+            "description": "Where it was read from."
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StageDecl"
+            },
+            "description": "The lifecycle, in order."
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuestionDecl"
+            },
+            "description": "Every question, in declaration order."
+          },
+          "outline": {
+            "type": "string",
+            "description": "The definition of done in a dozen lines: one per stage that asks anything, its\nquestions after a colon."
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What does not resolve against the vocabulary the policy is shipped beside: a token\n`share/obligations.yaml` lacks. Empty in a coherent distribution, and never silently so."
+          },
+          "unanswered_gates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The questions answered by a gate this repository's CI model does not declare, as\n`question:gate`. Not a problem of the policy — the model is the repository's — but a\nquestion this repository never gets a verdict for, listed so that it is seen."
+          }
+        },
+        "required": [
+          "version",
+          "source",
+          "stages",
+          "questions",
+          "outline"
+        ],
+        "description": "The completion policy, as `gates.policy` serves it: the stages, the questions and the\nsource each is answered from, with what the policy resolves to in this repository.\nThe policy is flattened into the report, so a reader sees the keys the file carries\nwith the derived fields beside them.\n\n```\nuse majordomus_cli::capability::builtin::gates::CompletionPolicyReport;\nuse majordomus_cli::gates::CompletionPolicy;\n\nlet policy = CompletionPolicy::parse(\n    \"version: 1\\nstages:\\n  - id: a\\n    title: Alpha\\n    summary: s\\nquestions:\\n  - id: q\\n    stage: a\\n    question: Is it?\\n    source: gate:site-check\\n    remediation: run it\\n\",\n    \"share/completion.yaml\",\n)\n.unwrap();\nlet report = CompletionPolicyReport {\n    outline: policy.outline(),\n    problems: policy.validate(&[]),\n    unanswered_gates: policy.unanswered_gates(&[]),\n    policy,\n};\nassert_eq!(report.outline, \"- Alpha: q\\n\");\nassert_eq!(report.unanswered_gates, [\"q:site-check\"]);\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"stages\"][0][\"id\"], \"a\", \"the policy's own keys, flattened\");\nassert!(json.get(\"problems\").is_none(), \"a coherent distribution writes no problems\");\n```"
       },
       "Component": {
         "oneOf": [
@@ -30672,7 +31775,7 @@
           },
           "latest_json": {
             "type": "string",
-            "description": "Where that `latest.json` was read: `<commit>:site/static/releases/latest.json`, the\ncommit the observed Pages deployment published."
+            "description": "Where that `latest.json` was read: `<commit>:releases/latest.json` when the observed\nPages deployment published a gh-pages commit (the built site),\n`<commit>:site/static/releases/latest.json` when it published a source commit."
           },
           "observed_at": {
             "type": "string",
@@ -33025,6 +34128,10 @@
             "type": "string",
             "description": "The question's identity, stable across reports."
           },
+          "stage": {
+            "type": "string",
+            "description": "The lifecycle stage the policy places it in."
+          },
           "question": {
             "type": "string",
             "description": "The question, as a person would ask it."
@@ -33048,13 +34155,14 @@
         },
         "required": [
           "id",
+          "stage",
           "question",
           "status",
           "evidence",
           "source",
           "remediation"
         ],
-        "description": "```\nuse majordomus_cli::gates::{DoneQuestion, GateStatus};\n\nlet q = DoneQuestion {\n    id: \"pushed\".into(),\n    question: \"Has the commit reached the remote?\".into(),\n    status: GateStatus::Queued,\n    evidence: \"the obligation is owed\".into(),\n    source: \"obligation push (obligations.closure)\".into(),\n    remediation: \"git push\".into(),\n};\n// every question names what answered it and what would settle it: a question with\n// neither is a checklist line, which is the artifact this type exists instead of\nassert!(!q.source.is_empty() && !q.remediation.is_empty());\nassert!(q.status.unverified());\n```\nOne question of the done invariant, and what answered it."
+        "description": "```\nuse majordomus_cli::gates::{DoneQuestion, GateStatus};\n\nlet q = DoneQuestion {\n    id: \"pushed\".into(),\n    stage: \"commit\".into(),\n    question: \"Has the commit reached the remote?\".into(),\n    status: GateStatus::Queued,\n    evidence: \"the obligation is owed\".into(),\n    source: \"obligation push (obligations.closure)\".into(),\n    remediation: \"git push\".into(),\n};\n// every question names what answered it and what would settle it: a question with\n// neither is a checklist line, which is the artifact this type exists instead of\nassert!(!q.source.is_empty() && !q.remediation.is_empty());\nassert!(q.status.unverified());\n```\nOne question of the done invariant, and what answered it."
       },
       "DriftClass": {
         "oneOf": [
@@ -36440,7 +37548,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
-            "description": "The `after` of the next page of a walk by stamp: the stamp of the last event this\npage carries, or the `after` that was asked when it carries none. A page never ends\ninside a run of equal stamps (I2140)."
+            "description": "The `after` of the next page of a walk by stamp: the stamp of the last event this\npage read — carried, or a session beat it left out — or the `after` that was asked\nwhen it read none. A page never ends inside a run of equal stamps (I2140)."
           },
           "cursor": {
             "type": [
@@ -39469,6 +40577,113 @@
         ],
         "description": "How old a record is, judged against `session.freshness` in the policy.\n\nThis is the second of two independent judgements every record carries, and it exists\nbecause the first one cannot answer this question. `Divergence` says where a record's\ncommit sits relative to HEAD; `advanced` means that commit is an ancestor of this one,\nwhich sounds like agreement and is identically true on the day the record is written and\na month later. Between 2026-09-05 and 2026-09-11 this repository served a handover that\nwas `advanced` and six days dead, and every surface that read this model — MCP, the HTTP\nAPI, the Cockpit — presented its `Next Action` as the thing to do (ADR 0052).\n\nThe thresholds are policy and are read, never restated here: a constant in this file\nwould be a second source of truth for a number the policy owns, and a repository whose\npolicy predates the key is reported as `Freshness::Unknown` naming the missing key\nrather than judged against a default nobody declared.\n\nThe five words divide into two groups, and the division is the one a caller acts on:\n`fresh` and `aging` are current and may be presented as the instruction, `stale` and\n`invalid` must be shown as history, and `unknown` is neither — a record nobody can date\nis not thereby an old record, and treating it as one would quietly discard a briefing\nthat is perfectly good. `Freshness::history` is that division, and it is the only\nplace it is decided.\n\n```\nuse majordomus_cli::capability::builtin::continuity::Freshness;\n\n// the two renderings are one value: the serialised word is the word `as_str` gives,\n// so a reader who met `stale` from MCP and from the command line met one fact\nlet stale = serde_json::to_value(Freshness::Stale).unwrap();\nassert_eq!(stale, serde_json::json!(\"stale\"));\nassert_eq!(stale.as_str(), Some(Freshness::Stale.as_str()));\n\n// and the division a caller acts on: absence of a judgement is not a bad judgement\nassert!(Freshness::Stale.history() && Freshness::Invalid.history());\nassert!(!Freshness::Unknown.history(), \"undated is not old\");\nassert!(!Freshness::Fresh.history() && !Freshness::Aging.history());\n```"
       },
+      "FundingEvidence": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The page or record it was read from."
+          },
+          "checked": {
+            "type": "string",
+            "description": "The day it was read, `YYYY-MM-DD`."
+          },
+          "quote": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The vendor's own words, verbatim, when a sentence settles it."
+          }
+        },
+        "required": [
+          "url",
+          "checked"
+        ],
+        "description": "Where a funding declaration was read, and when.\n\n```\nuse majordomus_cli::models::FundingEvidence;\n\nlet e: FundingEvidence = serde_json::from_str(\n    r#\"{\"url\":\"https://acme.example/docs\",\"checked\":\"2026-10-21\",\"quote\":\"Pay as you go.\"}\"#,\n).unwrap();\nassert_eq!(e.checked, \"2026-10-21\");\nassert!(serde_json::from_str::<FundingEvidence>(r#\"{\"url\":\"x\",\"checked\":\"y\",\"note\":1}\"#).is_err(),\n    \"a field the evidence does not declare is refused, so none could carry an amount\");\n```"
+      },
+      "FundingKind": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "local",
+            "description": "Inference on this machine; no money changes hands."
+          },
+          {
+            "type": "string",
+            "const": "credit_grant",
+            "description": "A recurring allowance of API usage that comes with something else the owner\npays for, such as the API credits a subscription plan includes."
+          },
+          {
+            "type": "string",
+            "const": "subscription",
+            "description": "A subscription seat, used through the client signed in with it."
+          },
+          {
+            "type": "string",
+            "const": "metered",
+            "description": "Pay-as-you-go usage, billed by what was used."
+          }
+        ],
+        "description": "The kinds of funding source, in the order a policy most often prefers them.\n\n```\nuse majordomus_cli::models::FundingKind;\n\nlet kind: FundingKind = serde_json::from_str(r#\"\"credit_grant\"\"#).unwrap();\nassert_eq!(kind, FundingKind::CreditGrant);\nassert!(serde_json::from_str::<FundingKind>(r#\"\"voucher\"\"#).is_err(), \"the set is closed\");\n```"
+      },
+      "FundingSource": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The source id, unique within its vendor."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/FundingKind",
+            "description": "What kind of source it is."
+          },
+          "credential_env": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The environment variable whose presence reaches this source. Two sources may\nname the same one: a credit grant and metered billing are both reached through\none API credential, and nothing local tells them apart."
+          },
+          "renews": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Renewal"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The period an allowance renews over, for a source that has one."
+          },
+          "claim_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Where the owner claims or links the source, as the vendor published it. Shown as\nevidence; Majordomus never follows it."
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/FundingEvidence",
+            "description": "What the declaration stands on."
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "One line a person needs when choosing."
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "evidence"
+        ],
+        "description": "One way a vendor lets a call be paid. A kind and a credential, never an amount: a\nprice or a balance this tool cannot verify is a fact it must not state.\n\n```\nuse majordomus_cli::models::{FundingKind, FundingSource, ModelCatalogue};\n\nlet c = ModelCatalogue::parse(concat!(\n    \"version: 1\\nvendors:\\n  - id: acme\\n    title: Acme\\n    funding:\\n\",\n    \"      - id: grant\\n        kind: credit_grant\\n        credential_env: ACME_API_KEY\\n\",\n    \"        renews: monthly\\n        claim_url: https://acme.example/claim\\n\",\n    \"        evidence:\\n          url: https://acme.example/docs\\n          checked: 2026-10-21\\n\",\n)).unwrap();\nlet grant: &FundingSource = &c.vendors[0].funding[0];\nassert_eq!(grant.kind, FundingKind::CreditGrant);\nassert_eq!(grant.credential_env.as_deref(), Some(\"ACME_API_KEY\"));\nassert!(c.diagnostics().is_empty());\n```"
+      },
       "GapCondition": {
         "type": "object",
         "properties": {
@@ -39723,6 +40938,18 @@
             "description": "The one other gate that runs everything this gate runs: a plan that selects that gate\ndoes not select this one beside it, and says so. It is how a gate that exists for the\nplans that do not run the suite (the case gates of the record shapes) stops running\nthe same cases a second time in a plan that does. It is decided last, after `implies`\nand `requires` have closed the selection, so a subsuming gate that was only implied\nstill subsumes; a subsuming gate the plan does not select subsumes nothing.\n\n```\nuse majordomus_cli::gates::GateDecl;\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \"id\": \"plan-record-cases\",\n    \"job\": \"rust\",\n    \"runs\": \"bash test/run.sh 26_ci_wiring\",\n    \"subsumed-by\": \"shell-suite\"\n}))\n.unwrap();\n// the field is spelled with a hyphen in the model, as `on-demand` and `at-finish` are\nassert_eq!(decl.subsumed_by.as_deref(), Some(\"shell-suite\"));\n```",
             "default": null
           },
+          "lane": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Lane"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The lane the gate's verdict belongs to (ADR 0186). Optional in a model that declares\nno `tiers`, which is read exactly as before; required of every gate once it does. A\nplan asked at a tier leaves out every gate whose lane the tier does not run (I3947).\n\n```\nuse majordomus_cli::gates::{GateDecl, Lane};\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \"id\": \"shell-suite\",\n    \"job\": \"suite\",\n    \"runs\": \"bash test/run.sh\",\n    \"lane\": \"proof\"\n}))\n.unwrap();\nassert_eq!(decl.lane, Some(Lane::Proof));\n```",
+            "default": null
+          },
           "inputs": {
             "type": "array",
             "items": {
@@ -39928,6 +41155,145 @@
           "exit"
         ],
         "description": "```\nuse majordomus_cli::gates::GateRun;\n\n// what `majordomus evidence --gate` writes: a run, and the tree it was taken over\nlet run = GateRun {\n    recorded_at: \"2026-01-01T00:00:00Z\".into(),\n    head: \"9b1e2d4\".into(),\n    branch: \"master\".into(),\n    exit: 0,\n    command: \"scripts/rust-check --ci\".into(),\n    inputs_hash: \"3f0a\".into(),\n    session: \"s-1\".into(),\n};\n// the hash is what makes a run go stale rather than merely old: the same run read\n// against a different tree is evidence about a tree that no longer exists\nassert_eq!(run.exit, 0);\nassert_ne!(run.inputs_hash, \"0000\");\n```\nThe `task.gate` ledger line that last reported a gate, as the ledger holds it."
+      },
+      "GateState": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The gate's identity in the model."
+          },
+          "job": {
+            "type": "string",
+            "description": "The CI job that runs it."
+          },
+          "always": {
+            "type": "boolean",
+            "description": "Whether every plan selects it."
+          },
+          "on_demand": {
+            "type": "boolean",
+            "description": "Whether its runner can be had only on demand, so no routine plan runs it."
+          },
+          "status": {
+            "$ref": "#/components/schemas/GateStatus",
+            "description": "What is known about its last run: `pass`, `fail`, `stale`, `queued` (never\nreported) or `unknown` (a run exists and cannot be checked against this tree)."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why it is in that status, in words a person can act on."
+          },
+          "last_run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GateRun"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The run that last reported, whichever task recorded it."
+          },
+          "on_head": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether that run was taken at the commit this checkout is at now. Absent when there\nis no run or when the current commit could not be read."
+          },
+          "inputs_hash": {
+            "type": "string",
+            "description": "The hash of the gate's inputs as they stand now, when it could be taken."
+          }
+        },
+        "required": [
+          "id",
+          "job",
+          "always",
+          "on_demand",
+          "status",
+          "reason"
+        ],
+        "description": "One declared gate and the standing of its last recorded run.\n\n```\nuse majordomus_cli::gates::{GateState, GateStatus};\n\nlet never: GateState = serde_json::from_value(serde_json::json!({\n    \"id\": \"rust-check\",\n    \"job\": \"rust\",\n    \"always\": true,\n    \"on_demand\": false,\n    \"status\": \"queued\",\n    \"reason\": \"no run of this gate has ever been recorded in this checkout\",\n}))\n.unwrap();\n// no run, no head, and a word that is not `pass`\nassert!(never.last_run.is_none() && never.on_head.is_none());\nassert_eq!(never.status, GateStatus::Queued);\n```"
+      },
+      "GateStateReport": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "Where the gate set was read from, repository-relative."
+          },
+          "ledger": {
+            "type": "string",
+            "description": "Where the recorded runs were read from, repository-relative."
+          },
+          "head": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The commit this checkout is at, when git could say."
+          },
+          "count": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many gates the model declares; measured."
+          },
+          "tallies": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "How many gates stand in each status, by the status word."
+          },
+          "never_reported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The gates no run has ever reported, in declaration order."
+          },
+          "gates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GateState"
+            },
+            "description": "Every declared gate, in declaration order."
+          },
+          "unreached": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What this answer did not consult, so its silence about it is not read as a verdict."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What could not be read, and what that means for the answer."
+          },
+          "evaluated_at": {
+            "type": "string",
+            "description": "When this answer was taken, RFC 3339 UTC."
+          }
+        },
+        "required": [
+          "source",
+          "ledger",
+          "count",
+          "tallies",
+          "never_reported",
+          "gates",
+          "unreached",
+          "findings",
+          "evaluated_at"
+        ],
+        "description": "The declared gate set and the standing of each gate's last recorded run.\n\n`count`, `tallies` and `never_reported` are measured from `gates`, never written down,\nand `unreached` always names what was not consulted.\n\n```\nuse majordomus_cli::gates::GateStateReport;\n\nlet r: GateStateReport = serde_json::from_value(serde_json::json!({\n    \"source\": \".ai/repo/ci/gates.yaml\",\n    \"ledger\": \".ai/local/state/ledger.jsonl\",\n    \"count\": 0,\n    \"tallies\": {},\n    \"never_reported\": [],\n    \"gates\": [],\n    \"unreached\": [\"the forge's CI runs were not consulted\"],\n    \"findings\": [],\n    \"evaluated_at\": \"2026-10-15T00:00:00Z\",\n}))\n.unwrap();\nassert_eq!(r.count, r.gates.len());\nassert!(r.head.is_none(), \"a checkout without git still answers, and says so\");\nassert!(!r.unreached.is_empty());\n```"
       },
       "GateStatus": {
         "oneOf": [
@@ -43509,7 +44875,21 @@
             "type": "integer",
             "format": "uint",
             "minimum": 0,
-            "description": "How many units of work realise no intent."
+            "description": "How many units of work serve no intent: the unlinked units of class `orphan` alone."
+          },
+          "empty": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many unlinked units are `empty`: session records that did no work a link could be\nread from.",
+            "default": 0
+          },
+          "before_intents": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many unlinked units are `before_intents`: finished work that started before the\nfirst intent record was written, or while none was declared.",
+            "default": 0
           },
           "findings": {
             "type": "array",
@@ -43525,7 +44905,7 @@
           "orphans",
           "findings"
         ],
-        "description": "Every intent, realised, and every unit of work, joined: what `majordomus intent realization`\nanswers.\n\n```\nuse majordomus_cli::intent_realization::IntentRealization;\nlet r = IntentRealization { intents: vec![], work: vec![], orphans: 0, findings: vec![] };\nassert_eq!(r.orphans, 0);\n```"
+        "description": "Every intent, realised, and every unit of work, joined: what `majordomus intent realization`\nanswers.\n\n```\nuse majordomus_cli::intent_realization::IntentRealization;\nlet r = IntentRealization {\n    intents: vec![], work: vec![], orphans: 0, empty: 0, before_intents: 0, findings: vec![],\n};\nassert_eq!(r.orphans + r.empty + r.before_intents, 0);\n```"
       },
       "IntentRealizationView": {
         "type": "object",
@@ -43616,13 +44996,24 @@
               "null"
             ],
             "description": "When it realises none: the first link that is missing."
+          },
+          "class": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IntentUnlinkedClass"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When it realises none: what it is, by the facts it records. `realize` sets it on every\nunlinked unit; `link` alone, which knows neither liveness nor the first intent, leaves\nit empty."
           }
         },
         "required": [
           "work",
           "links"
         ],
-        "description": "A unit of work with every intent it realises, or the reason it realises none.\n\n```\nuse majordomus_cli::intent_realization::{IntentRealizedWork, IntentWorkKind, IntentWorkUnit};\nlet w = IntentRealizedWork {\n    work: IntentWorkUnit::new(IntentWorkKind::Task, \"t-1\"),\n    links: vec![],\n    unlinked: Some(\"it names no issue\".into()),\n};\nassert!(w.links.is_empty() && w.unlinked.is_some());\n```"
+        "description": "A unit of work with every intent it realises, or the reason it realises none.\n\n```\nuse majordomus_cli::intent_realization::{IntentRealizedWork, IntentWorkKind, IntentWorkUnit};\nlet w = IntentRealizedWork {\n    work: IntentWorkUnit::new(IntentWorkKind::Task, \"t-1\"),\n    links: vec![],\n    unlinked: Some(\"it names no issue\".into()),\n    class: None,\n};\nassert!(w.links.is_empty() && w.unlinked.is_some());\n```"
       },
       "IntentStage": {
         "oneOf": [
@@ -43663,6 +45054,26 @@
           }
         ],
         "description": "Where an intent stands, derived on every read and stored nowhere.\n\n```\nuse majordomus_cli::intent::IntentStage;\n// one word every surface prints, and an order that follows the work\nassert_eq!(IntentStage::Executing.as_str(), \"executing\");\nassert!(IntentStage::Declared < IntentStage::Satisfied);\n```"
+      },
+      "IntentUnlinkedClass": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "empty",
+            "description": "A session record that lists no issue, no commit and no changed path outside the session\nrecords, and whose own words cite no issue: it did no work a link could be read from."
+          },
+          {
+            "type": "string",
+            "const": "before_intents",
+            "description": "Not live, not empty, and its earliest episode started before the first intent record\nwas written — or no intent is declared at all."
+          },
+          {
+            "type": "string",
+            "const": "orphan",
+            "description": "Anything else unlinked: work done, or being done, while an intent existed, with no fact\nlinking it to one."
+          }
+        ],
+        "description": "What a unit of work that realises no intent is, by the facts it records (ADR 0075,\namendment of 2026-10-15). Only `IntentUnlinkedClass::Orphan` is work serving no intent;\nthe other two classes say why a unit is not, and neither is a link.\n\n```\nuse majordomus_cli::intent_realization::IntentUnlinkedClass;\nassert_eq!(\n    serde_json::to_string(&IntentUnlinkedClass::BeforeIntents).unwrap(),\n    \"\\\"before_intents\\\"\"\n);\nassert!(IntentUnlinkedClass::Empty < IntentUnlinkedClass::Orphan);\n```"
       },
       "IntentUnmetCriterion": {
         "type": "object",
@@ -44025,6 +45436,17 @@
               "type": "string"
             },
             "description": "Issue ids a recorded event shows it moving."
+          },
+          "started_at": {
+            "type": "string",
+            "description": "When its earliest episode started, as its record says: a session record's `started_at`,\na task's first `task.started`, a claim's `at`. Empty when no record says."
+          },
+          "commits": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The commits a session record lists."
           }
         },
         "required": [
@@ -44160,6 +45582,17 @@
               }
             ],
             "description": "The newest merge that names it."
+          },
+          "planned": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeliveryMerge"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The newest commit that names it while changing only plan records and their\nprojections: passed over as a merge proof, and said so."
           },
           "released": {
             "anyOf": [
@@ -44563,6 +45996,26 @@
           "reason"
         ],
         "description": "The judgement of one served identity against one expected commit, with its reason. The\nreason travels with the verdict so that every surface can say *why* without re-deriving\nit.\n\n```\nuse majordomus_cli::served::{judge, Fetched, Judgement, ServedVerdict};\nlet j: Judgement = judge(&Err(Fetched::Unreachable(\"timeout\".into())), &\"a\".repeat(40), &fake());\nassert_eq!(j.verdict, ServedVerdict::Unreachable);\nassert!(j.reason.contains(\"timeout\"));\n# use majordomus_cli::served::Ancestry;\n# struct N; impl Ancestry for N {\n#     fn has(&self, _: &str) -> Option<bool> { Some(true) }\n#     fn contains(&self, _: &str, _: &str) -> Option<bool> { Some(true) }\n# }\n# fn fake() -> impl Ancestry { N }\n```"
+      },
+      "Kind": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "cargo-build-dir",
+            "description": "The cargo build directory of a workspace: the dependencies compiled on the way, without\nincremental state. Restored only into a directory that is cold."
+          },
+          {
+            "type": "string",
+            "const": "mix-deps",
+            "description": "The `deps/` directory `mix deps.get` fills."
+          },
+          {
+            "type": "string",
+            "const": "npm-modules",
+            "description": "The `node_modules/` directory `npm ci` fills."
+          }
+        ],
+        "description": "What is cached: the thing a lockfile makes reusable, named by the directory an install or\na build fills. The word is part of every key, so two kinds never share an entry.\n\n```\nuse majordomus_cli::mesh::build_cache::key::Kind;\nassert_eq!(Kind::NpmModules.as_str(), \"npm-modules\");\nassert_eq!(Kind::parse(\"mix-deps\"), Some(Kind::MixDeps));\n```"
       },
       "KindCount": {
         "type": "object",
@@ -45182,6 +46635,26 @@
         ],
         "description": "What a landing allocates, and why, step by step.\n\n```\nuse majordomus_cli::release::compat::Impact;\nuse majordomus_cli::release::landing::{decide, LandingDecision, ReleasePolicy, DECISION_SCHEMA};\nuse majordomus_cli::release::version::Version;\nlet d: LandingDecision = decide(Version::parse(\"1.2.3\").unwrap(), Impact::None, &ReleasePolicy::default(), &[]);\nassert_eq!(d.schema, DECISION_SCHEMA);\nassert_eq!(d.next_version, \"1.2.3\", \"nothing moved and nothing is owed\");\n```"
       },
+      "Lane": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "feedback",
+            "description": "Cheap, fast and decisive: a pull request's required verdict needs it green."
+          },
+          {
+            "type": "string",
+            "const": "proof",
+            "description": "The heavy half, which judges the combined top before it lands."
+          },
+          {
+            "type": "string",
+            "const": "release",
+            "description": "A gate only a release asks."
+          }
+        ],
+        "description": "```\nuse majordomus_cli::gates::Lane;\n\n// the three lanes of ADR 0186, spelled as the model spells them\nlet lane: Lane = serde_json::from_value(serde_json::json!(\"feedback\")).unwrap();\nassert_eq!(lane, Lane::Feedback);\nassert_eq!(Lane::Proof.as_str(), \"proof\");\n// a word that is none of the three is no lane\nassert!(serde_json::from_value::<Lane>(serde_json::json!(\"fast\")).is_err());\n```\nThe time horizon a gate's verdict belongs to (ADR 0186). The model's `tiers` name, for\neach moment a plan is asked at, the lanes it runs."
+      },
       "LayerSummary": {
         "type": "object",
         "properties": {
@@ -45506,6 +46979,49 @@
           }
         ],
         "description": "The C library a Linux artifact is linked against."
+      },
+      "LifecycleStage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The stage the task stands at: the first one blocked, else the first one pending,\nelse the last stage of the policy."
+          },
+          "title": {
+            "type": "string",
+            "description": "That stage as a heading."
+          },
+          "state": {
+            "$ref": "#/components/schemas/StageState",
+            "description": "Where it stands."
+          },
+          "complete": {
+            "type": "boolean",
+            "description": "True only when every stage is complete or empty. The word `completed` is earned\nhere and nowhere else."
+          },
+          "owing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The questions still owed or refusing at the stage the task stands at."
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StageReport"
+            },
+            "description": "Every stage of the policy, in order."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "state",
+          "complete",
+          "stages"
+        ],
+        "description": "Where the task stands: the one stage a reader acts on, and every stage behind and\nahead of it. Produced by `derive_stage` and by nothing else, so the stage a report\nnames is always the fold over the answers and never a word somebody wrote down.\n\n```\nuse majordomus_cli::gates::{DoneQuestion, GateStatus, LifecycleStage, StageDecl, StageState, derive_stage};\n\nlet stages = [StageDecl { id: \"build\".into(), title: \"Build\".into(), summary: \"s\".into() }];\nlet owed = DoneQuestion {\n    id: \"committed\".into(), stage: \"build\".into(), question: \"Is it committed?\".into(),\n    status: GateStatus::Queued, evidence: \"owed\".into(), source: \"s\".into(), remediation: \"git commit\".into(),\n};\nlet stage: LifecycleStage = derive_stage(&stages, &[owed]);\nassert_eq!((stage.id.as_str(), stage.state), (\"build\", StageState::Pending));\nassert_eq!(stage.owing, [\"committed\"]);\nassert!(!stage.complete, \"a question still owed is a task not completed\");\nassert_eq!(stage.stages.len(), 1);\n```"
       },
       "LimitsView": {
         "type": "object",
@@ -46660,7 +48176,7 @@
           "mode",
           "acquired_lamport"
         ],
-        "description": "One live claim, told briefly: whose it is, what it is for and how many paths it holds,\nwith its intent cut to `SUMMARY_TEXT` characters — enough to know whom to ask.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into() }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, ClaimBrief};\n\nlet summary = summarize(&state, &[]);\nlet newest: &ClaimBrief = summary.runtimes[0].newest_claim.as_ref().unwrap();\nassert_eq!((newest.issue.as_deref(), newest.paths), (Some(\"#1\"), 1));\n```"
+        "description": "One live claim, told briefly: whose it is, what it is for and how many paths it holds,\nwith its intent cut to `SUMMARY_TEXT` characters — enough to know whom to ask.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into(), reason: None }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, ClaimBrief};\n\nlet summary = summarize(&state, &[]);\nlet newest: &ClaimBrief = summary.runtimes[0].newest_claim.as_ref().unwrap();\nassert_eq!((newest.issue.as_deref(), newest.paths), (Some(\"#1\"), 1));\n```"
       },
       "MeshClaimCounts": {
         "type": "object",
@@ -46688,6 +48204,13 @@
             "format": "uint",
             "minimum": 0,
             "description": "Ended without a release."
+          },
+          "suspended": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Exclusive, its holder silent past its progress ttl: refusing nobody until it beats.",
+            "default": 0
           }
         },
         "required": [
@@ -46696,7 +48219,7 @@
           "released",
           "expired"
         ],
-        "description": "Claims by standing: held, conflicted, released and expired. Held and conflicted are\nlive; the other two are history, counted rather than listed.\n\n```\nuse majordomus_cli::mesh::page::ClaimCounts;\n\nlet counts = ClaimCounts { held: 2, released: 5, ..ClaimCounts::default() };\nassert_eq!(serde_json::to_value(&counts).unwrap()[\"released\"], 5);\n```"
+        "description": "Claims by standing: held, conflicted, suspended, released and expired. Held and\nconflicted are live; a suspended claim is an exclusive one whose holder stopped making\nprogress (I3990), not ended and refusing nobody; the other two are history, counted\nrather than listed.\n\n```\nuse majordomus_cli::mesh::page::ClaimCounts;\n\nlet counts = ClaimCounts { held: 2, released: 5, ..ClaimCounts::default() };\nassert_eq!(serde_json::to_value(&counts).unwrap()[\"released\"], 5);\n```"
       },
       "MeshClaimFilter": {
         "oneOf": [
@@ -47065,7 +48588,7 @@
           "sessions",
           "claims"
         ],
-        "description": "One runtime, counted: its liveness and beat, its sessions and claims by standing, and its\nnewest live claim. The summary lists these, the living runtimes first.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into() }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, RuntimeSummary};\n\nlet summary = summarize(&state, &[]);\nlet runtime: &RuntimeSummary = &summary.runtimes[0];\nassert_eq!((runtime.sessions.active, runtime.claims.held, runtime.claims.released), (1, 1, 1));\n```"
+        "description": "One runtime, counted: its liveness and beat, its sessions and claims by standing, and its\nnewest live claim. The summary lists these, the living runtimes first.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into(), reason: None }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, RuntimeSummary};\n\nlet summary = summarize(&state, &[]);\nlet runtime: &RuntimeSummary = &summary.runtimes[0];\nassert_eq!((runtime.sessions.active, runtime.claims.held, runtime.claims.released), (1, 1, 1));\n```"
       },
       "MeshSessionCounts": {
         "type": "object",
@@ -47172,6 +48695,17 @@
               "$ref": "#/components/schemas/StreamView"
             },
             "description": "Every stream's liveness."
+          },
+          "build_cache": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BuildCacheOfferReading"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The build-cache offers this runtime reads from the journal, and every record it does\nnot read as one with why (I2671); absent when the journal holds none."
           }
         },
         "required": [
@@ -47324,7 +48858,7 @@
           "untaken_handovers",
           "untaken_handovers_not_listed"
         ],
-        "description": "The mesh in an answer a worker reads whole: counts, each runtime, the open reviews and\nthe untaken handovers, every list bounded by `SUMMARY_LIST` with the rest counted.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into() }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, Summary};\n\nlet summary: Summary = summarize(&state, &[]);\nassert_eq!((summary.claims.held, summary.claims.released), (1, 1));\nassert_eq!(summary.digest, state.digest);\n```"
+        "description": "The mesh in an answer a worker reads whole: counts, each runtime, the open reviews and\nthe untaken handovers, every list bounded by `SUMMARY_LIST` with the rest counted.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into(), reason: None }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, Summary};\n\nlet summary: Summary = summarize(&state, &[]);\nassert_eq!((summary.claims.held, summary.claims.released), (1, 1));\nassert_eq!(summary.digest, state.digest);\n```"
       },
       "MeshVerifyCheck": {
         "type": "object",
@@ -47944,6 +49478,21 @@
           "scope"
         ],
         "description": "One issue of a milestone, as a node of its graph."
+      },
+      "Mode": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "mesh",
+            "description": "Local disk first, the selected store second."
+          },
+          {
+            "type": "string",
+            "const": "local-only",
+            "description": "The local disk alone: the build is what it was."
+          }
+        ],
+        "description": "What the client is configured as.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::Mode;\nassert_ne!(Mode::Mesh, Mode::LocalOnly);\n```"
       },
       "ModeResolution": {
         "type": "object",
@@ -50532,6 +52081,15 @@
             "minimum": 0,
             "description": "Seconds since its last message."
           },
+          "progress_seconds_ago": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Seconds since it last did real work — a request other than `ping`, or an\nannouncement — or absent when it has done none (I3990). `last_seen_seconds_ago`\ncounts a keep-alive ping as a message, so a session stuck on a permission dialog\nbehind a bridge that pings every 20 s looks seen forever; this is the number its\nmesh claims live by."
+          },
           "attached": {
             "type": "boolean",
             "description": "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does."
@@ -50564,6 +52122,17 @@
               }
             ],
             "description": "Which checkout of the repository this peer is attached to; see `PeerCheckout`.\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout's server it asked."
+          },
+          "address": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PeerAddress"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Where the worker behind this peer can be reached from outside its connection: its\nmachine, its process, its provider session and the socket other sessions message it\non; see `PeerAddress`. Derived when the peer attached, never announced by hand.\nAbsent for a client that exposes none of it."
           }
         },
         "required": [
@@ -50575,6 +52144,49 @@
           "attached"
         ],
         "description": "One peer as the board lists it."
+      },
+      "PeerAddress": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The provider whose session this is (`claude-code`), when its environment says so."
+          },
+          "host": {
+            "type": "string",
+            "description": "The machine the worker runs on."
+          },
+          "pid": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The worker's own process: the provider's pid, not the MCP bridge it started."
+          },
+          "session": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The provider's id for the session, the one its lifecycle hooks are given."
+          },
+          "socket": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The socket other sessions on the same machine message this one through."
+          }
+        },
+        "required": [
+          "host"
+        ],
+        "description": "Where the worker behind a peer can be reached from outside its MCP connection.\n\nA board row named a client and a version, and nothing a person or another session could\nact on: on 2026-10-22 the session running a 33-minute remote `cargo test --doc` could be\nfound only by walking an ssh client's parent chain to a provider pid, its messaging\nsocket, and a start time matched by hand. Every one of those facts is in the environment\nthe provider hands the processes it starts — the MCP server among them — so the address\nis read from there when the peer attaches, and never asked of the model.\n\nThe provider's messaging *token* is a credential and is never read: the address is where\nto knock, not the key.\n\n```\nuse majordomus_cli::peers::PeerAddress;\n// a client that exposes nothing still has a machine and a parent process\nlet bare = PeerAddress::from_env(|_| None, Some(4242), \"lundra\").unwrap();\nassert_eq!((bare.host.as_str(), bare.pid), (\"lundra\", Some(4242)));\nassert!(bare.provider.is_none() && bare.mesh_session().is_none());\n```"
       },
       "PeerCheckout": {
         "type": "object",
@@ -52877,7 +54489,9 @@
               "prompts": "none",
               "prompts_evidence": "",
               "browser": "none",
-              "browser_evidence": ""
+              "browser_evidence": "",
+              "usage": [],
+              "usage_evidence": ""
             }
           }
         },
@@ -53446,6 +55060,18 @@
             },
             "description": "The enforcement entries of *this repository's* policy that name this provider's hook\nin `wired_by`. Declared wiring, not a file on disk: whether a shim is installed is a\nquestion for `majordomus capture status`, which is the command that owns it."
           },
+          "usage": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UsageSource"
+            },
+            "description": "The official seams through which the provider reports what a session consumed, as\nshare/providers.yaml declares them (`otel`, `app-server`, `stream-json`, or `none`\nalone; I3287). Empty when the declaration says nothing, which is not the same answer\nas `none`.",
+            "default": []
+          },
+          "usage_evidence": {
+            "type": "string",
+            "description": "Where `usage` was verified."
+          },
           "note": {
             "type": "string",
             "description": "What the two together mean."
@@ -53564,6 +55190,19 @@
               "null"
             ],
             "description": "What a person does, once, to install the bridge on a machine, in the vendor's terms.\nDeclared for a `bridge` only."
+          },
+          "usage": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UsageSource"
+            },
+            "description": "The official seams through which the provider reports what a session consumed (I3287,\nADR 0213), every one it offers: `none` alone when it offers nothing a receiver could\nread. Empty in a value written before the axis existed, which declares nothing.",
+            "default": []
+          },
+          "usage_evidence": {
+            "type": "string",
+            "description": "Where `usage` was verified, on the same terms as `episode_evidence`.",
+            "default": ""
           }
         },
         "required": [
@@ -54251,6 +55890,39 @@
           }
         ],
         "description": "How much a finding matters.\n\nThere are two levels and not five, because the only question a gate can answer is\nwhether the change may land. A warning is a finding the repository has decided not to\nblock on; nothing else is a warning."
+      },
+      "QuestionDecl": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The question's identity, stable across reports."
+          },
+          "stage": {
+            "type": "string",
+            "description": "The stage it belongs to."
+          },
+          "question": {
+            "type": "string",
+            "description": "The question, as a person would ask it."
+          },
+          "source": {
+            "type": "string",
+            "description": "What answers it, as the policy states it."
+          },
+          "remediation": {
+            "type": "string",
+            "description": "What would settle it, as a command."
+          }
+        },
+        "required": [
+          "id",
+          "stage",
+          "question",
+          "source",
+          "remediation"
+        ],
+        "description": "One question of the policy, as declared.\n\n`source` is carried as the text the file states (`obligation:tests`, `gates`,\n`closing:debt`), never as a structure: the policy file, `gates.policy` and the\nquestions of the completion report then state the same bytes for the same question,\nand a reader compares them by eye. `Self::kind`\nparses it; `CompletionPolicy::parse` has already refused a text nothing answers.\n\n```\nuse majordomus_cli::gates::{QuestionDecl, QuestionSource};\n\nlet decl = QuestionDecl {\n    id: \"pushed\".into(),\n    stage: \"commit\".into(),\n    question: \"Has the commit reached the remote?\".into(),\n    source: \"obligation:push\".into(),\n    remediation: \"git push\".into(),\n};\nassert_eq!(decl.kind(), QuestionSource::Obligation(\"push\".into()));\n// the source is carried as text, and serialises as the text the file stated\nassert_eq!(serde_json::to_value(&decl).unwrap()[\"source\"], \"obligation:push\");\n```"
       },
       "QueueTallies": {
         "type": "object",
@@ -58284,6 +59956,16 @@
         ],
         "description": "The releases this repository recorded, and the one an unpinned installation resolves to."
       },
+      "Renewal": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "monthly",
+            "description": "Every calendar month, or every billing month, as the vendor states it."
+          }
+        ],
+        "description": "The period an allowance renews over.\n\n```\nuse majordomus_cli::models::Renewal;\n\nassert_eq!(serde_json::from_str::<Renewal>(r#\"\"monthly\"\"#).unwrap(), Renewal::Monthly);\nassert_eq!(serde_json::to_string(&Renewal::Monthly).unwrap(), r#\"\"monthly\"\"#);\n```"
+      },
       "ReportAnswer": {
         "type": "object",
         "properties": {
@@ -62298,6 +63980,22 @@
               "type": "string"
             },
             "description": "The review requests it opened, by key."
+          },
+          "progress_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Milliseconds since this runtime stored the session's newest session beat, on its own\nclock: how long ago its worker last showed progress (I3990). Absent for a session\nthat never beat — it lives by its runtime's beat alone. Outside the digest, like\nevery age."
+          },
+          "phase": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What its newest session beat said it was doing — `waiting on CI run 123` — when it\nsaid (I3990)."
           }
         },
         "required": [
@@ -63334,6 +65032,119 @@
         ],
         "description": "The source half of a plan."
       },
+      "SourceCoverage": {
+        "type": "object",
+        "properties": {
+          "parser": {
+            "type": "string",
+            "description": "What parsed the files, and what that parser does not see."
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceFile"
+            },
+            "description": "The files outlined, in path order."
+          },
+          "unread": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnreadSource"
+            },
+            "description": "Source the paths reach and the compiler did not outline, with the reason: out of\nthe repository scope, a symbolic link, over the size bound, not valid syntax."
+          },
+          "unparsed": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "Tracked files under the paths that no parser here covers, counted by extension.\nThese have no ranges; an empty outline for them would read as complete."
+          },
+          "truncated": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Source files past the per-request bound, counted and not read."
+          }
+        },
+        "description": "What the compiler read of the source under a request's paths, and what that saved.\n\nThe index `fingerprint` covers the layer's objects, not\nthe source files the ranges come from, so each file carries the digest of the bytes\nthat were parsed: a range is true of those bytes, which may be a dirty work tree's\nrather than any commit's, and two answers agree about a file exactly when its digests\ndo.\n\nEvery number here is an estimate in the same unit as the budget (`BYTES_PER_TOKEN`),\nand the saving is measured against reading each outlined file whole — the reading this\nreplaces — not against an ideal reader.\n\n```\nuse majordomus_cli::devcontext::{SourceCoverage, SourceFile};\n\nlet file = SourceFile {\n    path: \"src/big.rs\".into(),\n    digest: \"sha256:00\".into(),\n    bytes: 40_000,\n    whole_tokens: 10_000,\n    definitions: 120,\n    ranges: 120, truncated: 0,\n    selected: 3,\n    selected_tokens: 900,\n    saved_tokens: 9_100,\n};\nlet c = SourceCoverage { files: vec![file], ..Default::default() };\nassert!(!c.is_empty());\nassert_eq!(c.whole_tokens(), 10_000);\nassert_eq!(c.selected_tokens(), 900);\nassert_eq!(c.saved_tokens(), 9_100);\n\n// an answer that read no source has no coverage section at all\nassert!(SourceCoverage::default().is_empty());\n```"
+      },
+      "SourceFile": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Repository-relative."
+          },
+          "digest": {
+            "type": "string",
+            "description": "`sha256:<hex>` of the bytes parsed."
+          },
+          "bytes": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Its size."
+          },
+          "whole_tokens": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "What reading it whole costs, in estimated tokens."
+          },
+          "definitions": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many definitions the parser found in it."
+          },
+          "ranges": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many ranges they were offered as: definitions written on the same lines share\none. Every range is either selected or excluded, so this is `selected` plus the\nfile's ranges in `excluded`."
+          },
+          "truncated": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Definitions past the per-file bound, not offered."
+          },
+          "selected": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many of its ranges the budget selected."
+          },
+          "selected_tokens": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "What those ranges cost, in estimated tokens."
+          },
+          "saved_tokens": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "`whole_tokens - selected_tokens`: what reading the selected ranges instead of the\nfile saves. Zero when the ranges cost as much as the file, and zero when none of its\nranges was selected: a file the answer gives nothing of was not read more cheaply,\nit was not read at all."
+          }
+        },
+        "required": [
+          "path",
+          "digest",
+          "bytes",
+          "whole_tokens",
+          "definitions",
+          "ranges",
+          "truncated",
+          "selected",
+          "selected_tokens",
+          "saved_tokens"
+        ],
+        "description": "One source file the compiler outlined.\n\n```\nuse majordomus_cli::devcontext::SourceFile;\n\nlet f: SourceFile = serde_json::from_value(serde_json::json!({\n    \"path\": \"src/big.rs\", \"digest\": \"sha256:00\", \"bytes\": 4000, \"whole_tokens\": 1000,\n    \"definitions\": 12, \"ranges\": 11, \"truncated\": 0, \"selected\": 2, \"selected_tokens\": 120,\n    \"saved_tokens\": 880,\n})).unwrap();\nassert_eq!(f.whole_tokens - f.selected_tokens, f.saved_tokens);\n```"
+      },
       "SourceRelation": {
         "oneOf": [
           {
@@ -63423,6 +65234,92 @@
           }
         ],
         "description": "Where a capability stands, in the repository's own vocabulary for claims. A capability\nthat is `Planned` or `Unsupported` may be listed but is never executable through any\nprojection; the registry refuses to build otherwise."
+      },
+      "StageDecl": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The stage's identity, stable across reports."
+          },
+          "title": {
+            "type": "string",
+            "description": "The stage as a heading."
+          },
+          "summary": {
+            "type": "string",
+            "description": "What it means for the stage to be complete."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "summary"
+        ],
+        "description": "One stage of the lifecycle, in the order the policy states them. A stage carries no\nquestion of its own: the questions name it by `id`, and\n`CompletionPolicy::questions_of` gathers them back, so a stage is a heading over\nwhatever the policy hangs under it.\n\n```\nuse majordomus_cli::gates::StageDecl;\n\nlet stage = StageDecl {\n    id: \"commit\".into(),\n    title: \"Commit and push\".into(),\n    summary: \"The work is in the branch's history.\".into(),\n};\n// the same shape the file carries, so a report and the policy agree byte for byte\nlet json = serde_json::to_value(&stage).unwrap();\nassert_eq!(json[\"id\"], \"commit\");\nassert_eq!(serde_json::from_value::<StageDecl>(json).unwrap(), stage);\n```"
+      },
+      "StageReport": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The stage's identity."
+          },
+          "title": {
+            "type": "string",
+            "description": "The stage as a heading."
+          },
+          "state": {
+            "$ref": "#/components/schemas/StageState",
+            "description": "Where it stands."
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The questions of this stage, in policy order."
+          },
+          "owing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The questions still owed or refusing, in policy order."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "state",
+          "questions"
+        ],
+        "description": "One stage of the lifecycle, with what its questions said. Every stage of the policy\ngets one, in the policy's order, so a reader sees the stages behind the task as well\nas the one it stands at; `owing` is written only when something is owed.\n\n```\nuse majordomus_cli::gates::{StageReport, StageState};\n\nlet report = StageReport {\n    id: \"commit\".into(),\n    title: \"Commit and push\".into(),\n    state: StageState::Complete,\n    questions: vec![\"committed\".into(), \"pushed\".into()],\n    owing: Vec::new(),\n};\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"state\"], \"complete\");\nassert!(json.get(\"owing\").is_none(), \"nothing owed is nothing written\");\n```"
+      },
+      "StageState": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "complete",
+            "description": "Every question of the stage passes or is exempt."
+          },
+          {
+            "type": "string",
+            "const": "pending",
+            "description": "A question of the stage has not been answered: queued or unknown."
+          },
+          {
+            "type": "string",
+            "const": "blocked",
+            "description": "A question of the stage refuses: failing, stale, or blocked by one that is."
+          },
+          {
+            "type": "string",
+            "const": "empty",
+            "description": "The stage declares no question that applies here."
+          }
+        ],
+        "description": "Where one stage stands, folded from the answers to its questions and never set by\nanybody. A refusal anywhere in the stage makes it blocked whatever else passed; a\nstage with nothing owed is complete; one with an unanswered question is pending; and\na stage the change asks nothing of is empty, which neither blocks nor completes.\n\n```\nuse majordomus_cli::gates::StageState;\n\nassert_eq!(StageState::Blocked.as_str(), \"blocked\");\n// serialised as the same word the report prints, so no reader meets two spellings\nassert_eq!(serde_json::to_string(&StageState::Pending).unwrap(), \"\\\"pending\\\"\");\nassert_eq!(serde_json::from_str::<StageState>(\"\\\"empty\\\"\").unwrap(), StageState::Empty);\n```"
       },
       "Stance": {
         "oneOf": [
@@ -67564,6 +69461,23 @@
               "detail"
             ],
             "description": "The policy rejected this node; `detail` says why (for instance a TOFU key\nchange). A rejected node stays listed — an operator debugging a mesh needs to\nsee what was refused, not wonder about silence."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "const": "retired"
+              },
+              "detail": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "state",
+              "detail"
+            ],
+            "description": "The key was succeeded by a trusted successor, whose key is the `detail`: its history\nstays legitimate, and it is trusted for nothing new. Retired, not withdrawn."
           }
         ],
         "description": "What the policy decided about one node."
@@ -67780,6 +69694,24 @@
         ],
         "description": "One linked work tree holding uncommitted work: how much, how old, what holds it, the\nverdict, and the command that would preserve it. A listing is in canonical order —\nabandoned first, then recent, then held, the oldest first inside each.\n\n```\nuse majordomus_cli::worktree::{DirtyState, UncommittedWorktree, WorkStanding};\nlet entry = |path: &str, standing: WorkStanding, age: u64| UncommittedWorktree {\n    path: path.into(),\n    branch: None,\n    label: path.into(),\n    work: DirtyState { staged: 1, ..DirtyState::default() },\n    paths: 1,\n    oldest_change: None,\n    age_seconds: Some(age),\n    age: None,\n    task: None,\n    episodes: Vec::new(),\n    process_inside: None,\n    held_by: Vec::new(),\n    standing,\n    remedy: String::new(),\n};\nlet mut listing = vec![\n    entry(\"/wt/held-old\", WorkStanding::Held, 900_000),\n    entry(\"/wt/young\", WorkStanding::Abandoned, 50_000),\n    entry(\"/wt/older\", WorkStanding::Abandoned, 90_000),\n];\nmajordomus_cli::order::canonical(&mut listing);\nlet paths: Vec<&str> = listing.iter().map(|w| w.path.as_str()).collect();\nassert_eq!(paths, [\"/wt/older\", \"/wt/young\", \"/wt/held-old\"]);\n```"
       },
+      "UnreadSource": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Repository-relative."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Which guard refused it, or what the parser said."
+          }
+        },
+        "required": [
+          "path",
+          "reason"
+        ],
+        "description": "A source file reached and not outlined.\n\n```\nuse majordomus_cli::devcontext::UnreadSource;\n\nlet u = UnreadSource { path: \"src/link.rs\".into(), reason: \"a symbolic link; not followed\".into() };\nassert_eq!(serde_json::to_value(&u).unwrap()[\"reason\"], \"a symbolic link; not followed\");\n```"
+      },
       "UpstreamState": {
         "type": "object",
         "properties": {
@@ -67815,6 +69747,31 @@
           "gone"
         ],
         "description": "A branch's upstream and how far the two have moved apart, from `for-each-ref` in one\nsubprocess for every branch, never a fetch."
+      },
+      "UsageSource": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "otel",
+            "description": "The provider's own OpenTelemetry export, which the person enables."
+          },
+          {
+            "type": "string",
+            "const": "app-server",
+            "description": "A notification of the client's own app server protocol."
+          },
+          {
+            "type": "string",
+            "const": "stream-json",
+            "description": "The usage a non-interactive run reports in its structured (`stream-json`) output."
+          },
+          {
+            "type": "string",
+            "const": "none",
+            "description": "No official seam reports usage."
+          }
+        ],
+        "description": "One official seam through which a provider reports what a session consumed.\n\nUsage is read only where the provider itself reports it (ADR 0213): an official\nOpenTelemetry export, a protocol notification of the client's own server, or the usage a\nnon-interactive run prints in its structured output. Never a transcript, a proxy, or a\npatched client. `none` is the declared answer for a provider that offers no such seam,\nand it stands alone.\n\n```\nuse majordomus_cli::share::UsageSource;\nassert_eq!(serde_json::from_str::<UsageSource>(\"\\\"otel\\\"\").unwrap(), UsageSource::Otel);\nassert_eq!(serde_json::from_str::<UsageSource>(\"\\\"app-server\\\"\").unwrap(), UsageSource::AppServer);\nassert!(serde_json::from_str::<UsageSource>(\"\\\"transcript\\\"\").is_err(), \"no transcript seam\");\nassert_eq!(UsageSource::StreamJson.as_str(), \"stream-json\");\n```"
       },
       "UseCaseRef": {
         "type": "object",
@@ -67956,6 +69913,13 @@
               "null"
             ],
             "description": "The environment variable whose *presence* means a credential is configured.\nOnly the name lives here, and only presence is ever reported — no code in this\ncrate reads the value, and the environment cache refuses to hold one."
+          },
+          "funding": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FundingSource"
+            },
+            "description": "How a call to this vendor can be paid: the sources the vendor offers, each with\nthe evidence it was read from. What the vendor *offers* is the distribution's;\nwhich of them the owner *holds*, and any amount, is the owner's and never here."
           },
           "credential_configured": {
             "type": [
@@ -68864,7 +70828,7 @@
     }
   },
   "x-majordomus": {
-    "generator": "majordomus-cli 1.0.0-alpha.8",
+    "generator": "majordomus-cli 1.0.0-alpha.10",
     "infrastructure": [
       {
         "id": "home",
@@ -68945,5 +70909,5 @@
     ]
   },
   "x-majordomus-generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical Majordomus capability registry; regenerate with `majordomus generate`",
-  "x-majordomus-generator": "majordomus-cli 1.0.0-alpha.8"
+  "x-majordomus-generator": "majordomus-cli 1.0.0-alpha.10"
 }

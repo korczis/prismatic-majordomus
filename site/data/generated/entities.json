@@ -9,11 +9,12 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 163,
+      "count": 168,
       "dir": "adrs",
       "statuses": [
         "accepted",
-        "proposed"
+        "proposed",
+        "superseded"
       ]
     },
     {
@@ -23,7 +24,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 189,
+      "count": 192,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +38,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 163
+      "count": 168
     },
     {
       "kind": "application",
@@ -93,7 +94,7 @@
       "route": null,
       "title": null,
       "reason": "A critique is the adversarial pass over one intent's plan, written by a worker, and work started under the intent without it or with a blocking finding open fails intent validation (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
-      "count": 34
+      "count": 39
     },
     {
       "kind": "deployment",
@@ -125,7 +126,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 353
+      "count": 354
     },
     {
       "kind": "domain",
@@ -149,7 +150,7 @@
       "route": null,
       "title": null,
       "reason": "A gap is what one worker observed of the repository against an intent's criteria at one commit (ADR 0073). It is a dated input to planning, superseded by the next observation, and the work it suggested is published on /plan/.",
-      "count": 4
+      "count": 5
     },
     {
       "kind": "implementation",
@@ -165,7 +166,7 @@
       "route": null,
       "title": null,
       "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` and the Cockpit's /cockpit/intents answer for the intent itself.",
-      "count": 40
+      "count": 45
     },
     {
       "kind": "issue",
@@ -173,7 +174,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 996
+      "count": 1165
     },
     {
       "kind": "knowledge",
@@ -181,7 +182,7 @@
       "route": null,
       "title": null,
       "reason": "Curated knowledge is written for the worker reading the layer, not for a visitor: it is the orientation a session starts from, and it changes with the work rather than with the product.",
-      "count": 58
+      "count": 86
     },
     {
       "kind": "mesh-declaration",
@@ -197,7 +198,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 108
+      "count": 115
     },
     {
       "kind": "moment",
@@ -237,7 +238,7 @@
       "route": "/changelog/",
       "title": null,
       "reason": null,
-      "count": 36
+      "count": 38
     },
     {
       "kind": "rule",
@@ -245,7 +246,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 189
+      "count": 192
     },
     {
       "kind": "scope",
@@ -261,7 +262,7 @@
       "route": "/sessions/",
       "title": null,
       "reason": null,
-      "count": 91
+      "count": 93
     },
     {
       "kind": "skill",
@@ -285,7 +286,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 639
+      "count": 683
     },
     {
       "kind": "use-case",
@@ -2104,6 +2105,13 @@
         },
         {
           "edge": "put_in_force",
+          "label": "adr-0170",
+          "kind": "adr",
+          "route": "/adrs/adr-0170/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "adr-0211",
           "kind": "adr",
           "route": "/adrs/adr-0211/",
@@ -3040,6 +3048,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0181/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0226",
+          "kind": "adr",
+          "route": "/adrs/adr-0226/",
+          "external": false
         }
       ]
     },
@@ -3129,6 +3144,13 @@
           "label": "adr-0176",
           "kind": "adr",
           "route": "/adrs/adr-0176/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0226",
+          "kind": "adr",
+          "route": "/adrs/adr-0226/",
           "external": false
         }
       ]
@@ -4472,6 +4494,13 @@
           "label": "adr-0163",
           "kind": "adr",
           "route": "/adrs/adr-0163/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0170",
+          "kind": "adr",
+          "route": "/adrs/adr-0170/",
           "external": false
         },
         {
@@ -6056,7 +6085,7 @@
       "slug": "adr-0091",
       "cockpit": "/cockpit/objects/adr/adr-0091",
       "title": "Knowledge is derived at the episode boundary, from the ledger and git, and a person promotes it",
-      "status": "proposed",
+      "status": "accepted",
       "tags": [
         "knowledge",
         "sessions",
@@ -6778,9 +6807,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.a-provider-capability-cites-its-evidence@2",
+          "label": "project.a-provider-capability-cites-its-evidence@3",
           "kind": "rule",
-          "route": "/rules/project-a-provider-capability-cites-its-evidence-2/",
+          "route": "/rules/project-a-provider-capability-cites-its-evidence-3/",
           "external": false
         },
         {
@@ -7553,6 +7582,13 @@
           "label": "adr-0158",
           "kind": "adr",
           "route": "/adrs/adr-0158/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0170",
+          "kind": "adr",
+          "route": "/adrs/adr-0170/",
           "external": false
         },
         {
@@ -10188,12 +10224,73 @@
     },
     {
       "kind": "adr",
+      "id": "majordomus://adr/adr-0170",
+      "identity": "adr-0170",
+      "slug": "adr-0170",
+      "cockpit": "/cockpit/objects/adr/adr-0170",
+      "title": "A browser computes with the portable core, and the server verifies by recomputing",
+      "status": "proposed",
+      "tags": [
+        "mesh",
+        "security",
+        "wasm",
+        "architecture"
+      ],
+      "source": ".ai/repo/adrs/0170-a-browser-computes-and-the-server-verifies-by-recomputing.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-core/fixtures/canonical-digest.v1.json",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-core/src/lib.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0032",
+          "kind": "adr",
+          "route": "/adrs/adr-0032/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0126",
+          "kind": "adr",
+          "route": "/adrs/adr-0126/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-core/tests/parity.rs",
+          "kind": "test",
+          "route": null,
+          "external": true
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
       "id": "majordomus://adr/adr-0172",
       "identity": "adr-0172",
       "slug": "adr-0172",
       "cockpit": "/cockpit/objects/adr/adr-0172",
       "title": "A client always gets a server, and a session that is opened starts by joining the cluster",
-      "status": "proposed",
+      "status": "superseded",
       "tags": [
         "coordination",
         "mesh",
@@ -10266,7 +10363,22 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0224",
+          "kind": "adr",
+          "route": "/adrs/adr-0224/",
+          "external": false
+        },
+        {
+          "edge": "supersedes",
+          "label": "adr-0224",
+          "kind": "adr",
+          "route": "/adrs/adr-0224/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -11073,9 +11185,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.cache-is-invisible@1",
+          "label": "project.cache-is-invisible@2",
           "kind": "rule",
-          "route": "/rules/project-cache-is-invisible-1/",
+          "route": "/rules/project-cache-is-invisible-2/",
           "external": false
         },
         {
@@ -14370,6 +14482,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0220/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0223",
+          "kind": "adr",
+          "route": "/adrs/adr-0223/",
+          "external": false
         }
       ]
     },
@@ -14540,6 +14659,203 @@
           "external": false
         }
       ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0223",
+      "identity": "adr-0223",
+      "slug": "adr-0223",
+      "cockpit": "/cockpit/objects/adr/adr-0223",
+      "title": "A deployment carries the site built at its own commit, and the hosted server serves it at /docs",
+      "status": "accepted",
+      "tags": [
+        "deployment",
+        "site"
+      ],
+      "source": ".ai/repo/adrs/0223-a-deployment-carries-the-site-built-at-its-own-commit.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/deploy/slug.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/site-build",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0219",
+          "kind": "adr",
+          "route": "/adrs/adr-0219/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "majordomus",
+          "kind": "deployment",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "I0912",
+          "kind": "issue",
+          "route": "/plan/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0224",
+      "identity": "adr-0224",
+      "slug": "adr-0224",
+      "cockpit": "/cockpit/objects/adr/adr-0224",
+      "title": "No ordinary command builds; a missing or stale executable fails fast or answers through a release of the same generation, and only an explicit build builds",
+      "status": "accepted",
+      "tags": [
+        "launcher",
+        "build",
+        "enforcement"
+      ],
+      "source": ".ai/repo/adrs/0224-no-ordinary-command-builds.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/ci/gates.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0172",
+          "kind": "adr",
+          "route": "/adrs/adr-0172/",
+          "external": false
+        },
+        {
+          "edge": "supersedes",
+          "label": "adr-0172",
+          "kind": "adr",
+          "route": "/adrs/adr-0172/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "bin/majordomus-cli",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/rust_bin.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "every-capability-has-one-owner-and-the-cli-never-builds",
+          "kind": "intent",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/3177_a_client_always_gets_a_server.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/3221_a_bare_session_start_joins_the_cluster.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0226",
+      "identity": "adr-0226",
+      "slug": "adr-0226",
+      "cockpit": "/cockpit/objects/adr/adr-0226",
+      "title": "A session joins the cluster before it works — current, announced and useful — and the repository says when it has not",
+      "status": "proposed",
+      "tags": [
+        "coordination",
+        "mesh",
+        "governance",
+        "enforcement"
+      ],
+      "source": ".ai/repo/adrs/0226-a-session-joins-the-cluster-before-it-works.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0043",
+          "kind": "adr",
+          "route": "/adrs/adr-0043/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0044",
+          "kind": "adr",
+          "route": "/adrs/adr-0044/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MESH.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.a-session-joins-the-cluster-before-it-works@1",
+          "kind": "rule",
+          "route": "/rules/project-a-session-joins-the-cluster-before-it-works-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.work-is-claimed-before-it-is-built@1",
+          "kind": "rule",
+          "route": "/rules/project-work-is-claimed-before-it-is-built-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0227",
+      "identity": "adr-0227",
+      "slug": "adr-0227",
+      "cockpit": "/cockpit/objects/adr/adr-0227",
+      "title": "The deployed stage reads the pointer where Pages published it",
+      "status": "proposed",
+      "tags": [
+        "delivery",
+        "pages",
+        "plan"
+      ],
+      "source": ".ai/repo/adrs/0227-the-deployed-stage-reads-the-pointer-where-pages-published-i.md",
+      "references": [],
       "referenced_by": []
     },
     {
@@ -17800,10 +18116,10 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.a-provider-capability-cites-its-evidence@2",
-      "identity": "project.a-provider-capability-cites-its-evidence@2",
-      "slug": "project-a-provider-capability-cites-its-evidence-2",
-      "cockpit": "/cockpit/objects/rule/project-a-provider-capability-cites-its-evidence-2",
+      "id": "majordomus://rule/project.a-provider-capability-cites-its-evidence@3",
+      "identity": "project.a-provider-capability-cites-its-evidence@3",
+      "slug": "project-a-provider-capability-cites-its-evidence-3",
+      "cockpit": "/cockpit/objects/rule/project-a-provider-capability-cites-its-evidence-3",
       "title": "A provider capability is declared once, with the citation it was verified from",
       "status": "active",
       "tags": [
@@ -17812,7 +18128,7 @@
         "capability",
         "evidence"
       ],
-      "source": ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v2.md",
+      "source": ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v3.md",
       "references": [
         {
           "edge": "depends_on",
@@ -17841,19 +18157,52 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@1",
-      "identity": "project.a-push-runs-what-ci-would-find-first@1",
-      "slug": "project-a-push-runs-what-ci-would-find-first-1",
-      "cockpit": "/cockpit/objects/rule/project-a-push-runs-what-ci-would-find-first-1",
-      "title": "A push runs what CI would find first",
+      "id": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@2",
+      "identity": "project.a-push-runs-what-ci-would-find-first@2",
+      "slug": "project-a-push-runs-what-ci-would-find-first-2",
+      "cockpit": "/cockpit/objects/rule/project-a-push-runs-what-ci-would-find-first-2",
+      "title": "A push runs what CI would find first, and CI decides",
       "status": "active",
       "tags": [
         "ci",
         "process"
       ],
-      "source": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v1.md",
-      "references": [],
+      "source": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v2.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.the-cooperation-model-is-the-owners-word@2",
+          "kind": "rule",
+          "route": "/rules/project-the-cooperation-model-is-the-owners-word-2/",
+          "external": false
+        }
+      ],
       "referenced_by": []
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.a-session-joins-the-cluster-before-it-works@1",
+      "identity": "project.a-session-joins-the-cluster-before-it-works@1",
+      "slug": "project-a-session-joins-the-cluster-before-it-works-1",
+      "cockpit": "/cockpit/objects/rule/project-a-session-joins-the-cluster-before-it-works-1",
+      "title": "A session is current, attached, announced and useful before it changes anything",
+      "status": "active",
+      "tags": [
+        "coordination",
+        "mesh",
+        "process"
+      ],
+      "source": ".ai/repo/rules/project/a-session-joins-the-cluster-before-it-works.v1.md",
+      "references": [],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0226",
+          "kind": "adr",
+          "route": "/adrs/adr-0226/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",
@@ -18108,6 +18457,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.cache-is-invisible@2",
+          "kind": "rule",
+          "route": "/rules/project-cache-is-invisible-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.integration-follows-the-current-master@3",
           "kind": "rule",
           "route": "/rules/project-integration-follows-the-current-master-3/",
@@ -18152,6 +18508,40 @@
           "label": "project.review-is-recorded-not-claimed@1",
           "kind": "rule",
           "route": "/rules/project-review-is-recorded-not-claimed-1/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.an-exclusive-claim-lives-by-its-holders-progress@1",
+      "identity": "project.an-exclusive-claim-lives-by-its-holders-progress@1",
+      "slug": "project-an-exclusive-claim-lives-by-its-holders-progress-1",
+      "cockpit": "/cockpit/objects/rule/project-an-exclusive-claim-lives-by-its-holders-progress-1",
+      "title": "An exclusive mesh claim lives by its holder session's progress, not only by its runtime's beat",
+      "status": "active",
+      "tags": [
+        "mesh",
+        "cooperation",
+        "liveness",
+        "doctrine"
+      ],
+      "source": ".ai/repo/rules/project/an-exclusive-claim-lives-by-its-holders-progress.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.mesh-cooperation-is-authenticated@1",
+          "kind": "rule",
+          "route": "/rules/project-mesh-cooperation-is-authenticated-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "depends_on",
+          "label": "project.the-cooperation-model-is-the-owners-word@2",
+          "kind": "rule",
+          "route": "/rules/project-the-cooperation-model-is-the-owners-word-2/",
           "external": false
         }
       ]
@@ -18366,18 +18756,26 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.cache-is-invisible@1",
-      "identity": "project.cache-is-invisible@1",
-      "slug": "project-cache-is-invisible-1",
-      "cockpit": "/cockpit/objects/rule/project-cache-is-invisible-1",
+      "id": "majordomus://rule/project.cache-is-invisible@2",
+      "identity": "project.cache-is-invisible@2",
+      "slug": "project-cache-is-invisible-2",
+      "cockpit": "/cockpit/objects/rule/project-cache-is-invisible-2",
       "title": "A cache never changes what a command observes",
       "status": "active",
       "tags": [
         "performance",
-        "doctrine"
+        "doctrine",
+        "cache"
       ],
-      "source": ".ai/repo/rules/project/cache-is-invisible.v1.md",
+      "source": ".ai/repo/rules/project/cache-is-invisible.v2.md",
       "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.accumulation-is-measured@2",
+          "kind": "rule",
+          "route": "/rules/project-accumulation-is-measured-2/",
+          "external": false
+        },
         {
           "edge": "depends_on",
           "label": "project.derived-once@1",
@@ -18945,9 +19343,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.cache-is-invisible@1",
+          "label": "project.cache-is-invisible@2",
           "kind": "rule",
-          "route": "/rules/project-cache-is-invisible-1/",
+          "route": "/rules/project-cache-is-invisible-2/",
           "external": false
         },
         {
@@ -19402,9 +19800,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.a-provider-capability-cites-its-evidence@2",
+          "label": "project.a-provider-capability-cites-its-evidence@3",
           "kind": "rule",
-          "route": "/rules/project-a-provider-capability-cites-its-evidence-2/",
+          "route": "/rules/project-a-provider-capability-cites-its-evidence-3/",
           "external": false
         },
         {
@@ -20633,9 +21031,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.a-provider-capability-cites-its-evidence@2",
+          "label": "project.a-provider-capability-cites-its-evidence@3",
           "kind": "rule",
-          "route": "/rules/project-a-provider-capability-cites-its-evidence-2/",
+          "route": "/rules/project-a-provider-capability-cites-its-evidence-3/",
           "external": false
         },
         {
@@ -21026,6 +21424,13 @@
           "label": "mesh-repository-isolation",
           "kind": "claim",
           "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.an-exclusive-claim-lives-by-its-holders-progress@1",
+          "kind": "rule",
+          "route": "/rules/project-an-exclusive-claim-lives-by-its-holders-progress-1/",
           "external": false
         },
         {
@@ -21447,9 +21852,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.cache-is-invisible@1",
+          "label": "project.cache-is-invisible@2",
           "kind": "rule",
-          "route": "/rules/project-cache-is-invisible-1/",
+          "route": "/rules/project-cache-is-invisible-2/",
           "external": false
         },
         {
@@ -21939,9 +22344,9 @@
       "references": [
         {
           "edge": "depends_on",
-          "label": "project.cache-is-invisible@1",
+          "label": "project.cache-is-invisible@2",
           "kind": "rule",
-          "route": "/rules/project-cache-is-invisible-1/",
+          "route": "/rules/project-cache-is-invisible-2/",
           "external": false
         },
         {
@@ -23154,6 +23559,13 @@
       "references": [
         {
           "edge": "depends_on",
+          "label": "project.an-exclusive-claim-lives-by-its-holders-progress@1",
+          "kind": "rule",
+          "route": "/rules/project-an-exclusive-claim-lives-by-its-holders-progress-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.an-expedited-landing-is-the-owners-word@1",
           "kind": "rule",
           "route": "/rules/project-an-expedited-landing-is-the-owners-word-1/",
@@ -23187,6 +23599,13 @@
           "label": "adr-0167",
           "kind": "adr",
           "route": "/adrs/adr-0167/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-push-runs-what-ci-would-find-first@2",
+          "kind": "rule",
+          "route": "/rules/project-a-push-runs-what-ci-would-find-first-2/",
           "external": false
         }
       ]
@@ -23909,6 +24328,24 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.ui-uses-flowbite-pro@1",
+      "identity": "project.ui-uses-flowbite-pro@1",
+      "slug": "project-ui-uses-flowbite-pro-1",
+      "cockpit": "/cockpit/objects/rule/project-ui-uses-flowbite-pro-1",
+      "title": "Every user interface here is built on Flowbite Pro, through the mj tokens",
+      "status": "active",
+      "tags": [
+        "ui",
+        "flowbite",
+        "design-system",
+        "licence"
+      ],
+      "source": ".ai/repo/rules/project/ui-uses-flowbite-pro.v1.md",
+      "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.unknown-keys-are-errors@1",
       "identity": "project.unknown-keys-are-errors@1",
       "slug": "project-unknown-keys-are-errors-1",
@@ -24151,6 +24588,13 @@
           "label": "adr-0167",
           "kind": "adr",
           "route": "/adrs/adr-0167/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0226",
+          "kind": "adr",
+          "route": "/adrs/adr-0226/",
           "external": false
         },
         {

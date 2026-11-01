@@ -31,9 +31,11 @@
 #                                         or GitHub has not built it yet)
 #   scripts/pages rebuild [--branch B] [--commit SHA]
 #                                         ask GitHub to build that commit of the branch again,
-#                                         only when its build errored and nothing is building:
-#                                         0 requested or none needed, 12 the state unreadable,
-#                                         a build in flight, or the request refused
+#                                         when its build errored and nothing is building, or
+#                                         when the build in flight is hung (older than
+#                                         deploy.build_hung_after): 0 requested or none needed,
+#                                         13 a build in flight that is not hung yet, 12 the
+#                                         state unreadable or the request refused
 #   scripts/pages evidence [--commit SHA] [--from DIR]... [--out FILE] [--ledger-out FILE]
 #   scripts/pages published-evidence --bin EXE [--baseline FILE]
 #                                         refuse to publish a UI whose evidence report holds more
@@ -151,6 +153,20 @@ IDENTITY="$(m deploy.identity)"
 # MJ_PAGES_TIMINGS names the file; without it the rows go nowhere and nothing is measured.
 row() { [ -n "${MJ_PAGES_TIMINGS:-}" ] && printf 'pages\t%s\t%s\n' "$1" "$2" >> "$MJ_PAGES_TIMINGS"; return 0; }
 now() { date +%s; }
+# an ISO 8601 UTC time (2026-10-22T20:28:52Z) in seconds since the epoch, with GNU or BSD date;
+# empty when it cannot be read
+iso_epoch() {
+  # only an ISO 8601 time is a time: GNU date reads "" as midnight today and much else as some
+  # date, so an absent start time became an age of hours and a build in flight read as hung
+  case "$1" in [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]*) ;; *) return 0 ;; esac
+  date -u -d "$1" +%s 2>/dev/null || date -u -j -f '%Y-%m-%dT%H:%M:%SZ' "$1" +%s 2>/dev/null || true
+}
+# seconds since an ISO 8601 UTC time; empty when the time cannot be read, so that an unread time
+# is never taken for an old one
+build_age() {
+  local t; t="$(iso_epoch "$1")"
+  [ -z "$t" ] || printf '%s' $(( $(now) - t ))
+}
 # milliseconds, from the tool's own clock: a phase that takes under a second is still a phase,
 # and a benchmark that can only see whole seconds cannot tell 40 ms from 900
 now_ms() { MJ_TIMING=1 mj_ms; }
@@ -1534,16 +1550,25 @@ ui_pages() {
 #   one slow build becomes two failed ones. The predicate is therefore "the build of this
 #   commit errored AND nothing is building", never "the build errored".
 #
+#   Except when the build in flight is hung (I3902). On 2026-10-22 GitHub's build of
+#   0ae8870522 was still `building` after 47 minutes while the site served the previous
+#   commit, and this predicate refused every request for as long as it stayed so: a build
+#   that never ends is not "a slow build" that preempting would make worse, it is the reason
+#   nothing is published. A build in flight older than deploy.build_hung_after is replaced,
+#   and the line says so; a younger one is still waited on, with its own exit (13), so a
+#   caller can tell "not yet" from "could not ask".
+#
 #   The state is not stable under one reading: `building` at 01:03 had become `errored` by the
 #   next look, and the repository-level status disagreed with the per-build list at the same
 #   moment. So this reads through `pages built --porcelain` — the one place this repository
 #   reads that state — twice: once about the commit in question, once about the newest build,
 #   which is how "nothing is building" is asked. It does not add a third reader.
 #
-# Exit: 0 a build was requested, or none was needed; 12 the state could not be read, or a build
-# is in flight and asking would preempt it. Never 0 for a request that was not made.
+# Exit: 0 a build was requested, or none was needed; 13 a build is in flight and not hung yet,
+# so asking would preempt a build that may still finish; 12 the state could not be read, or the
+# request was refused. Never 0 for a request that was not made.
 cmd_rebuild() {
-  local branch="gh-pages" commit="" slug row status newest nstatus
+  local branch="gh-pages" commit="" slug row status newest nstatus since hung age reason=""
   while [ $# -gt 0 ]; do case "$1" in
     --branch) branch="$2"; shift 2 ;;
     --commit) commit="$2"; shift 2 ;;
@@ -1556,30 +1581,44 @@ cmd_rebuild() {
     echo "pages rebuild: the build state could not be read; not asking blindly (no gh, no token, or no pages:read)" >&2
     return 12; }
   [ -z "$commit" ] && commit="$(printf '%s' "$row" | cut -f2)"
+  hung="$(m deploy.build_hung_after)"
+  case "$hung" in ''|*[!0-9]*) echo "pages rebuild: no numeric deploy.build_hung_after in ${MODEL#"$ROOT"/}" >&2; return 12 ;; esac
 
   case "$status" in
     built)
       printf 'pages rebuild: the build of %s succeeded; nothing to ask for\n' "${commit:0:12}"
       return 0 ;;
     building|queued)
-      printf 'pages rebuild: a build of %s is %s; a request would preempt it\n' "${commit:0:12}" "$status" >&2
-      return 12 ;;
+      since="$(printf '%s' "$row" | cut -f4)"
+      age="$(build_age "$since")"
+      [ -n "$age" ] && [ "$age" -ge "$hung" ] || {
+        printf 'pages rebuild: a build of %s is %s since %s; a request would preempt it (hung only after %s s)\n' "${commit:0:12}" "$status" "${since:-an unread time}" "$hung" >&2
+        return 13; }
+      reason="the build of ${commit:0:12} has been $status since $since, ${age} s, past deploy.build_hung_after (${hung} s): it is hung" ;;
   esac
 
-  # errored, and nothing of this commit is in flight — but a build of something else may be
+  # errored or hung, and nothing else of this branch is still in flight and young
   newest="$(cmd_built --branch "$branch" --porcelain 2>/dev/null)" || true
   nstatus="$(printf '%s' "$newest" | cut -f1)"
   case "$nstatus" in
     building|queued)
-      printf 'pages rebuild: GitHub is %s another commit; a request would preempt it\n' "$nstatus" >&2
-      return 12 ;;
+      since="$(printf '%s' "$newest" | cut -f4)"
+      age="$(build_age "$since")"
+      [ -n "$age" ] && [ "$age" -ge "$hung" ] || {
+        printf 'pages rebuild: GitHub is %s another commit since %s; a request would preempt it (hung only after %s s)\n' "$nstatus" "${since:-an unread time}" "$hung" >&2
+        return 13; }
+      [ -n "$reason" ] || reason="GitHub has been $nstatus another commit since $since, ${age} s, past deploy.build_hung_after (${hung} s): it is hung" ;;
   esac
 
   slug="${GITHUB_REPOSITORY:-}"
   [ -n "$slug" ] || slug="$(git -C "$ROOT" remote get-url origin 2>/dev/null | sed -n 's|.*[:/]\([^/][^/]*/[^/][^/]*\)$|\1|p' | sed 's|\.git$||')"
   [ -n "$slug" ] || { echo "pages rebuild: no repository slug (no GITHUB_REPOSITORY, no origin)" >&2; return 12; }
 
-  printf 'pages rebuild: the build of %s errored; asking GitHub to build it again\n' "${commit:0:12}"
+  if [ -n "$reason" ]; then
+    printf 'pages rebuild: %s; asking GitHub to build %s again, which replaces it\n' "$reason" "${commit:0:12}"
+  else
+    printf 'pages rebuild: the build of %s errored; asking GitHub to build it again\n' "${commit:0:12}"
+  fi
   gh api -X POST "repos/$slug/pages/builds" >/dev/null 2>&1 || {
     echo "pages rebuild: the request was refused (no token, or no pages:write)" >&2; return 12; }
 
@@ -1851,6 +1890,10 @@ cmd_trends() {
   case "$runs" in ''|*[!0-9]*) echo "pages trends: --runs takes a whole number" >&2; exit 2 ;; esac
   # one page of the forge's listing; a longer series would be paginated for little reader value
   [ "$runs" -ge 1 ] && [ "$runs" -le 100 ] || { echo "pages trends: --runs takes 1 to 100" >&2; exit 2; }
+  # how many runs are read at once, and how long one call to the forge may take (below)
+  local parallel="${MJ_TRENDS_PARALLEL:-8}" call="${MJ_TRENDS_CALL_SECONDS:-30}" d why ids=""
+  case "$parallel" in ''|0|*[!0-9]*) echo "pages trends: MJ_TRENDS_PARALLEL takes a whole number of at least 1" >&2; exit 2 ;; esac
+  case "$call" in ''|0|*[!0-9]*) echo "pages trends: MJ_TRENDS_CALL_SECONDS takes a whole number of at least 1" >&2; exit 2 ;; esac
   rm -f "$out"
   command -v gh >/dev/null 2>&1 || { echo "pages trends: gh is not installed, so the runs were not read" >&2; return 12; }
   command -v unzip >/dev/null 2>&1 || { echo "pages trends: unzip is required to read a run's artifact" >&2; return 12; }
@@ -1859,39 +1902,82 @@ cmd_trends() {
   [ -n "$slug" ] || { echo "pages trends: no repository slug (no GITHUB_REPOSITORY, no origin)" >&2; return 12; }
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj-trends.XXXXXX")"
   trends_fail() { echo "pages trends: $1" >&2; rm -rf "$tmp"; return 12; }
-  gh api "repos/$slug/actions/workflows/validate.yml/runs?branch=master&status=completed&per_page=$runs" \
-    > "$tmp/runs.json" 2>/dev/null || { trends_fail "the validate runs of $slug could not be listed"; return 12; }
+  # Every call to the forge is bounded (MJ_TRENDS_CALL_SECONDS, 30), the listing first: a gh
+  # that never answers is a forge that could not be read (exit 12, no file), within seconds,
+  # and not a reading that waits out pages.yml's own bound on the step (I4380). A call the
+  # forge answers with a 5xx or a rate limit is asked once more, a second later, inside what
+  # is left of that same bound; a refusal, a call stopped at its bound and anything else is
+  # the answer. The answer is held until the call is done, so a retried --paginate is never
+  # read twice.
+  trends_gh_once() {
+    if command -v timeout >/dev/null 2>&1; then timeout --kill-after=5 "$1" gh "${@:2}"; else gh "${@:2}"; fi
+  }
+  trends_gh() {
+    local t0="$SECONDS" o e rc=0 left
+    o="$(mktemp "$tmp/gh.XXXXXX")"; e="$(mktemp "$tmp/gh.XXXXXX")"
+    trends_gh_once "$call" "$@" > "$o" 2> "$e" || rc=$?
+    left=$(( call - (SECONDS - t0) - 1 ))
+    if [ "$rc" != 0 ] && [ "$rc" != 124 ] && [ "$rc" != 137 ] && [ "$left" -ge 1 ] \
+      && grep -Eqi 'HTTP 5[0-9][0-9]|HTTP 429|rate limit' "$e"; then
+      sleep 1; rc=0; trends_gh_once "$left" "$@" > "$o" 2> "$e" || rc=$?
+    fi
+    cat "$o"; cat "$e" >&2; rm -f "$o" "$e"
+    return "$rc"
+  }
+  trends_gh api "repos/$slug/actions/workflows/validate.yml/runs?branch=master&status=completed&per_page=$runs" \
+    < /dev/null > "$tmp/runs.json" 2>/dev/null || { trends_fail "the validate runs of $slug could not be listed"; return 12; }
   # oldest first, the run id breaking a tie, so the order is the forge's facts and not its paging
   jq -ce '.workflow_runs | arrays | sort_by(.run_started_at // .created_at, .id) | .[]' "$tmp/runs.json" > "$tmp/runs.jsonl" \
     || { trends_fail "the forge's answer for the validate runs is not a run listing"; return 12; }
-  : > "$tmp/series.jsonl"
+  # Each run's three reads are independent of every other run's, so they are made eight runs
+  # at a time (MJ_TRENDS_PARALLEL), and each call is bounded (MJ_TRENDS_CALL_SECONDS, 30): one
+  # call at a time over sixty runs took more than the four minutes pages.yml allows the step,
+  # and a call that never returns would have waited out any bound (I4380). The series is then
+  # put together in the listing's order, so how the reads interleaved changes no byte of it.
+  # One run's reads into $tmp/r/<id>/: its jobs, its coverage (null when the forge no longer
+  # keeps the artifact) and `kept` or `gone`, or `failed` with what could not be read.
+  trends_read_run() {
+    local id="$1" d="$tmp/r/$1" aid
+    trends_gh api --paginate "repos/$slug/actions/runs/$id/jobs?per_page=100" --jq '.jobs[]' < /dev/null > "$d/jobs.jsonl" 2>/dev/null \
+      || { echo "the jobs of run $id could not be read" > "$d/failed"; return 0; }
+    aid="$(trends_gh api "repos/$slug/actions/runs/$id/artifacts?name=coverage-summary" \
+      --jq '[.artifacts[] | select(.expired | not)] | first | .id // empty' < /dev/null 2>/dev/null)" \
+      || { echo "the artifacts of run $id could not be listed" > "$d/failed"; return 0; }
+    echo null > "$d/coverage.json"
+    if [ -z "$aid" ]; then : > "$d/gone"; return 0; fi
+    mkdir -p "$d/a"
+    trends_gh api "repos/$slug/actions/artifacts/$aid/zip" < /dev/null > "$d/a.zip" 2>/dev/null \
+      && unzip -qo "$d/a.zip" -d "$d/a" >/dev/null 2>&1 \
+      || { echo "the coverage-summary artifact $aid of run $id is kept but could not be read" > "$d/failed"; return 0; }
+    # only rust-coverage's own summary is a measurement; anything else is not read as one
+    jq -ce 'select(.schema == 1 and .measurement == "scripts/rust-coverage")
+      | .crate | {lines: {covered: .lines.covered, total: .lines.total},
+                  functions: {covered: .functions.covered, total: .functions.total},
+                  regions: {covered: .regions.covered, total: .regions.total}}' \
+      "$d/a/coverage-summary.json" > "$d/coverage.json" 2>/dev/null \
+      || { echo "run $id's coverage-summary artifact holds no summary scripts/rust-coverage wrote" > "$d/failed"; return 0; }
+    : > "$d/kept"
+  }
+  mkdir -p "$tmp/r"
   while IFS= read -r run; do
     [ -n "$run" ] || continue
-    id="$(printf '%s' "$run" | jq -r .id)"; n=$((n + 1))
-    printf '%s\n' "$run" > "$tmp/run.json"
-    gh api --paginate "repos/$slug/actions/runs/$id/jobs?per_page=100" --jq '.jobs[]' < /dev/null > "$tmp/jobs.jsonl" 2>/dev/null \
-      || { trends_fail "the jobs of run $id could not be read"; return 12; }
-    aid="$(gh api "repos/$slug/actions/runs/$id/artifacts?name=coverage-summary" \
-      --jq '[.artifacts[] | select(.expired | not)] | first | .id // empty' < /dev/null 2>/dev/null)" \
-      || { trends_fail "the artifacts of run $id could not be listed"; return 12; }
-    echo null > "$tmp/coverage.json"
-    if [ -n "$aid" ]; then
-      rm -rf "$tmp/a"; mkdir -p "$tmp/a"
-      gh api "repos/$slug/actions/artifacts/$aid/zip" < /dev/null > "$tmp/a.zip" 2>/dev/null \
-        && unzip -qo "$tmp/a.zip" -d "$tmp/a" >/dev/null 2>&1 \
-        || { trends_fail "the coverage-summary artifact $aid of run $id is kept but could not be read"; return 12; }
-      # only rust-coverage's own summary is a measurement; anything else is not read as one
-      jq -ce 'select(.schema == 1 and .measurement == "scripts/rust-coverage")
-        | .crate | {lines: {covered: .lines.covered, total: .lines.total},
-                    functions: {covered: .functions.covered, total: .functions.total},
-                    regions: {covered: .regions.covered, total: .regions.total}}' \
-        "$tmp/a/coverage-summary.json" > "$tmp/coverage.json" 2>/dev/null \
-        || { trends_fail "run $id's coverage-summary artifact holds no summary scripts/rust-coverage wrote"; return 12; }
-      kept=$((kept + 1))
-    else
-      gone=$((gone + 1))
-    fi
-    jq -cn --slurpfile r "$tmp/run.json" --slurpfile jobs "$tmp/jobs.jsonl" --slurpfile cov "$tmp/coverage.json" '
+    id="$(printf '%s' "$run" | jq -r .id)"
+    case "$id" in ''|*[!0-9]*) wait; trends_fail "the forge listed a run with no id"; return 12 ;; esac
+    mkdir -p "$tmp/r/$id"; printf '%s\n' "$run" > "$tmp/r/$id/run.json"
+    ids="$ids $id"; n=$((n + 1))
+    trends_read_run "$id" &
+    # a batch at a time: portable to every bash this runs under, which `wait -n` is not
+    [ $((n % parallel)) != 0 ] || wait
+  done < "$tmp/runs.jsonl"
+  wait
+  : > "$tmp/series.jsonl"
+  for id in $ids; do
+    d="$tmp/r/$id"
+    if [ -f "$d/failed" ]; then why="$(cat "$d/failed")"; trends_fail "$why"; return 12; fi
+    if [ -f "$d/kept" ]; then kept=$((kept + 1))
+    elif [ -f "$d/gone" ]; then gone=$((gone + 1))
+    else trends_fail "run $id was not read"; return 12; fi
+    jq -cn --slurpfile r "$d/run.json" --slurpfile jobs "$d/jobs.jsonl" --slurpfile cov "$d/coverage.json" '
       def t: if type == "string" then sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601 else null end;
       def span(a; b): if (a | t) != null and (b | t) != null then [((b | t) - (a | t)), 0] | max else null end;
       $r[0] as $run
@@ -1906,7 +1992,7 @@ cmd_trends() {
          jobs: $js,
          coverage: $cov[0]}' >> "$tmp/series.jsonl" \
       || { trends_fail "run $id could not be read into the series"; return 12; }
-  done < "$tmp/runs.jsonl"
+  done
   # Each job's median over the runs it ran in (a skipped job did not run), slowest first: the
   # one figure of the series a template cannot compute, since the site's Tera has no way to
   # gather a value across runs. The template formats; it computes nothing.

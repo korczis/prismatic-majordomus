@@ -234,7 +234,7 @@ the network's otherwise — run links on a private network or an overlay (a tail
 
 ## Presence, heartbeats and expiry
 
-Two layers, deliberately separate:
+Three layers, deliberately separate:
 
 - **Links** are this runtime's connections. Every heartbeat (`cooperation.heartbeat_seconds`,
   default 5) the dialer runs one sync round. A link is `connected` with an exchange within
@@ -250,12 +250,56 @@ Two layers, deliberately separate:
   never mint one, and the age it reports is clamped to the expiry. Freshness is computed on each runtime's own monotonic clock — no two
   machines' wall clocks are compared. A reloaded journal restores events but no freshness,
   so a restart resurrects nobody's ownership.
+- **Sessions** make progress while their worker does real work (I3990). A stream that beats
+  proves its runtime is up and nothing about the worker behind one of its sessions: a session
+  stuck on a permission dialog, hung or crashed behind a live server used to keep every
+  exclusive claim it held for as long as that server ran — the 5d executor held the
+  integration lease for hours and never answered (2026-10-22). Real work is an MCP request of
+  any method but `ping` and `notifications/*` (over stdio or plain HTTP alike), a board
+  announcement, a claim, or an explicit `majordomus mesh beat --session <id> --phase <text>
+  [--pid <n>]` (`mesh.beat`) from a long-running process; the stdio bridge pings every 20 s
+  whatever its client is doing, so a ping is never progress, while a phase that names a wait
+  (`waiting on CI run 123`) is — a process waiting on something outside itself is working.
+  While a board session (`board-<peer>`) holds a live claim and works, its runtime writes a
+  `session_beat` event carrying the session's ttl (`cooperation.session_ttl_seconds`, default
+  600, at least four heartbeats, at most 3600, `0` turns the rule off): at once when it
+  claims, then at most once a quarter of the ttl, and only after new work; `mesh beat` writes
+  one with its phase (redacted, one line), and a repeat inside a quarter of the ttl with the
+  same phase writes nothing. Every runtime ages the newest beat from the moment it stored it,
+  on its own clock — the holder against the ttl, every other runtime against the ttl plus the
+  expiry — and a held **exclusive** claim whose session's beat is older than that is
+  **suspended**: `its holder stopped making progress: no beat for over <ttl>s`. A suspended
+  claim refuses nobody and is counted and shown as such (`mesh.state`, `mesh.peers` with the
+  session's `progress_ms` and `phase`, the Cockpit, `/ui/mesh`); nothing is written to make it
+  so, the session stays open, an advisory claim is untouched, and the claim holds again at
+  its session's next beat. Suspension is advisory-first: it stops the refusal and says so, and
+  nothing more — no take-over, no fencing. A holder that resumes after another session was
+  admitted to its scope does not get it back: its next beat releases the suspended claim
+  instead of re-arming it (below); fencing a holder that goes on writing without beating
+  waits for an epoch (I3174). A session that never beat — a `mesh claim --session` from the command line that never runs `mesh beat`,
+  every session of a runtime older than this layer — keeps the stream rule alone, and a beat
+  with ttl `0` asks for exactly that. A runtime writes at most one beat per session a quarter of the ttl however
+  often `mesh beat` is called — a new phase inside the interval is held and shown, and the
+  next beat carries it — and at most `8 × ceil(3600 s / (ttl / 4))` beats an hour, sized for
+  eight exclusive holders at full rate; past that it withholds beats, the claims it cannot
+  beat for suspend, and it says so in its log and in `mesh doctor`'s `session_beats` check —
+  never silently. Only a session holding a live exclusive claim is beaten for: an advisory
+  claim refuses nobody and costs no beat. When a holder resumes after another session was
+  admitted over its suspended claim, its next beat does not re-arm the claim: its runtime
+  writes `claim_released` with the reason `suspended while its holder made no progress, and
+  another session was admitted to its scope`, and the holder claims again through admission
+  — so two sessions never both hold one scope. A restarted reader counts the beats its
+  journal reloads as stored at the restart, exactly as it counts a stream it relearns
+  (`learned_at`): a session silent before the restart reads as progressing for at most its
+  ttl plus the expiry after it. The key is left out of the repository's declaration on
+  purpose: an older executable refuses a key it does not know.
 
 ## Events, ordering and deduplication
 
 Everything cooperative is an event of the journal: `session_opened`, `session_closed`,
 `claim_acquired`, `claim_released`, `handover_published`, `handover_consumed`,
-`review_requested`, `review_answered`, `review_withdrawn`. A person or an agent reads the journal folded, not raw, through `majordomus monitor`
+`review_requested`, `review_answered`, `review_withdrawn`, `session_beat` (a working session's progress and phase, left out of `mesh events` unless `--beats` asks and never a monitor signal), and a node's offer of its build
+cache, `build_cache_offered` and `build_cache_withdrawn` ([Build-cache offers](#build-cache-offers)). A person or an agent reads the journal folded, not raw, through `majordomus monitor`
 (`docs/MONITOR.md`, ADR 0133). It drops a board session's unchanged re-projection on each
 heartbeat, marks what names the reader, and pages with the full causal key rather than the
 Lamport stamp alone. An event carries its stream, a dense sequence, a
@@ -335,9 +379,12 @@ A claim is a scope — repository-relative paths — held by a session, `exclusi
 or `advisory`. Paths meet by `peers::claims_meet`, the peer board's own predicate: `apps`
 meets `apps/majordomus-cli`; `app` does not.
 
-- A claim **holds** while it is unreleased, its session is open, and its stream's beat rose
+- A claim **holds** while it is unreleased, its session is open, its stream's beat rose
   within the expiry. That is the lease: it is renewed by the holder's heartbeat and expires on
-  every runtime on its own when the holder stops beating. There is no separate lease table.
+  every runtime on its own when the holder stops beating. An exclusive claim of a session that
+  ever beat is, in addition, **suspended** — still held, refusing nobody — while that
+  session's newest beat is older than its ttl (the holder) or its ttl and the expiry (everyone
+  else), and holds again at its next beat (I3990). There is no separate lease table.
 - **Admission:** `mesh.claim` refuses an exclusive claim that meets a live exclusive claim of
   another session known to this runtime — `claim_conflict`, naming the claims it meets.
 - **Concurrency:** two exclusive claims made where neither runtime could see the other (a
@@ -371,6 +418,38 @@ path of the publishing machine travels. On another runtime, `mesh handover consu
 into that checkout's handovers directory — once, however often consumed — naming the local
 repository and `mesh:<origin runtime>` as its worktree, so `majordomus handover --resolve` on
 the same branch finds it as another checkout's handover.
+
+## Build-cache offers
+
+A node that serves a shared build cache (ADR 0157) says so through the journal, not through
+a committed endpoint and not through the advertisement datagram, which is size-bound. The
+store is declared in the node's own file, `$XDG_CONFIG_HOME/majordomus/build-cache.json`
+(else `~/.config/majordomus/build-cache.json`), outside every repository: an endpoint is a
+fact about a running machine.
+
+- **Published while the store answers.** On every heartbeat, before it beats, the runtime
+  probes its store's readiness route (`mesh::build_cache::probe_health`, bounded at 500 ms).
+  A healthy store not offered yet, or offered differently, is written as a
+  `build_cache_offered` event: protocol, provider, scope, endpoint, bucket, priority,
+  headroom and a lifetime (the cooperation expiry). A store whose probe stops passing, or
+  that is no longer declared, is withdrawn with `build_cache_withdrawn` and a reason from a
+  fixed vocabulary. Nothing is written while nothing changed; a headroom that moves by less
+  than a tenth is not a change.
+- **Signed, and nothing secret.** The record is an ordinary event, signed by its node's key.
+  It has no field for a credential, and its endpoint is a scheme and an address only: user
+  information, a path, a query or a fragment is refused before signing, everywhere.
+- **Read only from trusted keys.** A reader verifies each record's signature against its
+  stream's key again and reads it only when the trust in force trusts that key; a key
+  withdrawn from the allowlist stops being read at once. Presence on a port is never trust.
+- **Expiring with the beat.** An offer is fresh while its stream's signed beat rose within
+  the offer's lifetime (and within the reader's own expiry) on the reader's monotonic clock.
+  A provider whose runtime stops is stale within its lifetime with nobody withdrawing it.
+  Each stream's newest record speaks for it; two servers of one machine make one offer, the
+  fresher.
+
+`mesh state` answers the reading under `build_cache`: the offers the selection
+(`mesh::build_cache::select`) takes, and every record that is not one, with why. An older
+runtime stores and relays both kinds without reading them.
 
 ## Compaction
 
@@ -551,6 +630,7 @@ referenced artifact a peer materialises.
 
 | event | what each runtime does | what converges |
 |---|---|---|
+| a session's worker waits on a permission dialog, hangs or crashes while its server runs | the server keeps beating, and the bridge keeps pinging; neither is progress, so no `session_beat` is written; once its last beat is older than `session_ttl_seconds` on the holder's runtime (and the ttl and the expiry on every other), its exclusive claims read `suspended` and refuse nobody; its session and its advisory claims are untouched | the scope is admitted to the next claimant everywhere; when the worker works again its next beat makes the claim hold again — or, when another session was admitted over it meanwhile, releases it so the holder claims again through admission; no take-over and no fencing in this slice (I3990; the epoch is I3174) |
 | a peer's process is killed | its links go degraded → unreachable → expired; its stream stops beating; its sessions and claims expire | on restart it is the same runtime, new instance; it re-handshakes into one table row and syncs; its previous run's claims stay expired |
 | the network partitions | each side expires the other's streams and may claim what the other held | on healing, one round each way; concurrent exclusive claims resolve to one named winner; digests agree |
 | a peer restarts while linked | the answerer refuses the old link id as `unknown_link`; the dialer says hello again | the table row is kept, `restarts` counts |
@@ -581,6 +661,7 @@ What the mesh defends against, and how:
 | a relay that alters or invents events | the origin's signature fails at every consumer |
 | a trusted key stamping events at the end of the Lamport range | an event more than 2^32 ahead of the receiver's clock is refused `clock_ahead` (`MAX_LAMPORT_LEAD`), so the clock rises at most that much per stored event. A stamp set low to win a claim conflict is not refused: Lamport stamps are their writer's own assertion |
 | flooding | bounded datagrams and a bounded queue of them to the registry (1024; a flood beyond it is dropped and counted as `overflow` in `mesh.status`), messages (900 KiB), events, streams (1024, at most 64 per node), events per node (20 000), pending events (256 per stream, 4096 in all), peers (256), dial targets (8 per node, the present runtimes before the stopped ones), listed refusals (128), registry (256; only allowlisted records are never evicted) |
+| a peer or a rendezvous that answers too much, or too slowly | the dialer holds a link reply at most at one 900 KiB message in its wrapper (`MAX_LINK_REPLY`) and a register answer at most at 33 envelopes (`MAX_ANSWER_CANDIDATES`) and 81 KiB (`MAX_REGISTER_ANSWER`), counted without the whitespace the server pretty-prints, and refuses what is over before parsing it; a reply not whole within 20 s (link) or 15 s (rendezvous) is a failure however steadily it drips (I2704) |
 | a forged or replayed liveness report | beats are signed by their origin and only a higher signed beat counts; a relayed age is clamped to the expiry; a stream is created from a mark only when the mark verifies, its origin is trusted and its beat is fresh |
 | a branch or an uncommitted edit that adds a key, a hub, a seed or `tofu` | the declaration in force is the working tree's with every widening of the trunk's committed copy removed; `mesh doctor` names each ignored line (`trust-root`), and `mesh-check` refuses a committed `tofu` (I2135) |
 | a hostile handover consumed here | every front-matter field is single-line at ingest; the record's file name keeps only timestamp digits, hex and `[A-Za-z0-9_-]`, and a path outside the handovers directory is refused |
@@ -711,6 +792,37 @@ The launchd agent of the same shape — `~/Library/LaunchAgents/dev.majordomus.h
 `RunAtLoad`, `KeepAlive` and those arguments — is the operator's to install, and an installer
 that writes either unit is still owed as a typed capability (ADR 0059).
 
+**The jetson hub.** jetson (`9d652b2c`: aarch64, Ubuntu 18.04, glibc 2.27) runs its hub as the
+systemd user unit `majordomus-hub.service`: `~/.local/bin/majordomus serve --repo
+~/dev/prismatic-majordomus-hub --host 0.0.0.0 --port 8791 --idle 0`, `Restart=always`. Two
+facts of that machine decide how it is upgraded. Its glibc is older than the
+`aarch64-unknown-linux-gnu` archive needs — the 1.0.0-alpha.5 executable asks for `GLIBC_2.32`
+and stops before it starts — while the installer picks the gnu archive on any glibc machine; so
+jetson runs the `aarch64-unknown-linux-musl` archive, verified against its digest, unpacked
+beside the older trees under `~/.local/share/majordomus/versions/`, with both launchers in
+`~/.local/bin` pointed at it. And an executable refuses a manifest newer than itself
+(1.0.0-alpha.5 against the trunk of 2026-10-25: `unknown key(s): lifecycle`), so a hub's
+checkout is never ahead of the executable that serves it: detached at the release's tag, which
+is the trunk when the release was cut from it. A hub left behind falls a protocol behind and
+links with nobody: on 2026-10-25 jetson served 0.26.0, mesh protocol 1, while every MacBook spoke
+protocol 2, and every other machine on its board read `expired`. That day every node and hub
+moved to 1.0.0-alpha.8, cut from the trunk at `2efeacea031`, and every hub checkout to that
+commit; the site published no `releases/v1.0.0-alpha.8.json` until later, so the archives were
+taken from the GitHub release and verified against its digests. jetson's `mesh doctor` held every
+check, and all four hubs listed all five machines live.
+
+jetson also serves a build-cache store (ADR 0157): MinIO on `100.92.246.32:9000`, the systemd
+unit `majordomus-build-cache.service`, bucket `majordomus-build-cache` with a 200 GiB hard quota,
+one client identity under the policy `mj-build-cache-rw` (object read, write and delete in that
+bucket, listing it), and the port admitted from loopback, the LAN and the tailnet only. Its node
+file declares the store under `provider`, and from 1.0.0-alpha.8 its runtime publishes the signed
+offer (`mesh state` reads it under `build_cache`, healthy, with its headroom); a client that
+also names it under `known` in its own node file, with the node id
+`9d652b2c7d06b12bfc5c3f8325e6618c`, still finds it when no runtime is reachable. Each client
+holds the identity in its credential file. On 2026-10-25 a MacBook so configured selected it,
+wrote a 15 KiB entry under `rust/aarch64-apple-darwin/`, and a second compile with an empty disk
+level hit it in 94 ms and backfilled the disk.
+
 **Hubs follow the release (ADR 0161).** A hub is a node like any other: with `follow: stable`
 it keeps its installed Majordomus at the version `releases/latest.json` names, restarts onto it
 under its service manager when no session is attached or after a bounded grace, checks its
@@ -765,6 +877,57 @@ machines, and names a hub — so adding a machine is a key under `trust.allow` a
 that row, in one commit — and a disposable repository proves every briefing answer and exit 10
 through the start event. The hubs are started by hand; an installer that runs one as a service
 is owed as a typed capability or a Rhai workflow (ADR 0059).
+
+## The sccache client of a node
+
+`majordomus mesh build-cache env` prints the environment of the process that starts this
+machine's sccache server: the local disk as the first level and the store this node selected
+(ADR 0157) as the second. It reads this machine alone, never a repository, so a compile in any
+directory can ask it; `--format json` and the tool `majordomus_mesh_build_cache_env` give the
+whole answer with its reason. Nothing is written: `~/.cargo/config.toml` and the shell profile
+stay the user's.
+
+The second level is a start-up decision, because sccache fixes its chain when its server starts
+and fails the compile when an S3 level does not answer then (a store that stops while the server
+runs is only a miss). The store is added only when all of these hold at that moment, and the
+answer names the one that did not when it is left out:
+
+1. `sccache --version` answers;
+2. the node file `~/.config/majordomus/build-cache.json` (outside the repository) offers or
+   knows a store and selection chooses it, which needs the store to answer its readiness route
+   within 300 ms (an unknown is never healthy);
+3. the credential file `~/.config/mesh-build-cache/credentials` is a regular file of mode 0600
+   holding the profile `mesh-build-cache`;
+4. the installed sccache has the multi-level chain, measured by starting a throwaway server on a
+   private port, in a private home, with a chain level that does not exist: an sccache that knows
+   the chain refuses it by name, one that does not starts and is stopped again.
+
+The variables are `SCCACHE_MULTILEVEL_CHAIN=disk,s3`, `SCCACHE_MULTILEVEL_WRITE_ERROR_POLICY=l0`,
+`SCCACHE_BUCKET`, `SCCACHE_ENDPOINT`, `SCCACHE_REGION`, `SCCACHE_S3_USE_SSL`,
+`SCCACHE_S3_KEY_PREFIX=rust/<rustc host triple>/`, `AWS_SHARED_CREDENTIALS_FILE=<path>`,
+`AWS_PROFILE=mesh-build-cache` and `SCCACHE_DIR`. A key is never exported: the environment of
+every compiler and build script would carry it, so only the credential file's path is named.
+
+`SCCACHE_DIR` is the disk level: its value when the environment sets it, else the directory
+sccache takes by itself (`~/Library/Caches/Mozilla.sccache` on macOS,
+`${XDG_CACHE_HOME:-$HOME/.cache}/sccache` elsewhere), so the chain keeps what the local cache
+holds. It is named because sccache 0.17.0 and 0.18.0 refuse to start a chain whose `disk` level
+has none ("Disk cache specified in levels but not configured"). Until 2026-10-25 the variables
+left it out, and on every node without `SCCACHE_DIR` set, `sccache-mesh --start-only` answered
+`local-only: sccache did not start with the store`, so no build went through the store.
+
+`share/libexec/sccache-mesh` is the `RUSTC_WRAPPER` that uses it: when no sccache server listens
+on `SCCACHE_SERVER_PORT` (default 4226) it evaluates the script, and then runs sccache with its
+arguments unchanged. A running server ignores the environment, so nothing is asked then.
+`SCCACHE_MESH_OFF=1` keeps a build local-only; a missing `majordomus` changes nothing.
+
+What a second node can reuse is bounded by sccache's own key, measured on 2026-10-22 with sccache
+0.17.0: an entry is keyed by the absolute path of the cargo target directory, and a workspace
+crate also by the path of its checkout (`CARGO_MANIFEST_DIR`). Two compiles of one crate in one
+checkout with two different target directories both miss; two checkouts that use the same target
+directory path hit for registry crates and miss for the workspace's own crates. So reuse between
+nodes holds for registry dependencies when their target directory has the same path (not measured here
+for ADR 0139's shared build directory) and for workspace crates only at the same checkout path; `--remap-path-prefix` does not change that.
 
 ## The host firewall
 
@@ -851,11 +1014,12 @@ majordomus mesh peers             # machines → runtimes → active sessions, e
 majordomus mesh peer <runtime>    # one runtime; exits 10 when unknown
 majordomus mesh state             # counts, each runtime's newest claim, open reviews, untaken handovers, digest
 majordomus mesh state --full --live-claims   # every held claim; --after, --session, --runtime narrow
-majordomus mesh events            # the journal from the beginning; --cursor <next> resumes
+majordomus mesh events            # the journal from the beginning; --cursor <next> resumes; --beats includes the session beats
 majordomus mesh verify            # a live round with every dialed peer, convergence; exits 10 on failure
 majordomus mesh session open --session s1 --client codex --issue '#184'
 majordomus mesh claim apps/majordomus-cli --session s1 --issue '#184'   # exits 10 on claim_conflict
 majordomus mesh release <claim-key>
+majordomus mesh beat --session lander --phase waiting-on-ci   # keep lander's exclusive claims excluding while it waits
 majordomus mesh handover publish --issue '#184'
 majordomus mesh handover consume <id> --session s2
 majordomus mesh review request feature/x --session s1 --reviewer <runtime>

@@ -33,7 +33,7 @@ use super::provider::{
     ProviderStatus,
 };
 use super::registry::MeshSource;
-use super::rendezvous::register_once;
+use super::rendezvous::register;
 use super::MeshError;
 
 /// How long `tailscale status --json` may take before the reading counts as failed.
@@ -139,7 +139,7 @@ impl MeshProvider for TailscaleProvider {
                                 }
                                 // a peer with no server on the port is the common case, and
                                 // the next reading asks it again
-                                let Ok(answer) = register_once(&endpoint, &beacon.next_envelope())
+                                let Ok(answer) = register(&endpoint, &beacon.next_envelope())
                                 else {
                                     continue;
                                 };
@@ -190,13 +190,14 @@ impl MeshProvider for TailscaleProvider {
 
 /// Whether `command` names nothing this machine can run: spawning it finds no executable.
 fn cli_missing(command: &str) -> bool {
-    match Command::new(command)
-        .arg("version")
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()
-    {
+    match crate::process::retrying_busy(|| {
+        Command::new(command)
+            .arg("version")
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+    }) {
         Ok(mut child) => {
             let _ = child.kill();
             let _ = child.wait();
@@ -209,13 +210,16 @@ fn cli_missing(command: &str) -> bool {
 /// The output of `<command> status --json`, or why it could not be read. Bounded by
 /// [`STATUS_TIMEOUT`]: a CLI that hangs is killed and the reading counts as failed.
 fn read_status(command: &str) -> Result<String, String> {
-    let mut child = Command::new(command)
-        .args(["status", "--json"])
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| format!("`{command} status --json` could not run: {e}"))?;
+    // a CLI written a moment ago can be busy while a forked child still holds it (ETXTBSY)
+    let mut child = crate::process::retrying_busy(|| {
+        Command::new(command)
+            .args(["status", "--json"])
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+    })
+    .map_err(|e| format!("`{command} status --json` could not run: {e}"))?;
     let started = Instant::now();
     loop {
         match child.try_wait() {

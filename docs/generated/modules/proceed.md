@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `proceed` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.8 -->
+     Generator: majordomus-cli 1.0.0-alpha.10 -->
 # Module `proceed` — What a session proceeds with
 
 The decision a session starts from (ADR 0177): the issue to take, every READY issue it passed over with the constraint that issue failed and the hold that failed it, and the terms of the order, composed from the plan, every checkout's board and every linked machine's live claims. Writes nothing.

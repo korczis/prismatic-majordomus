@@ -1,0 +1,47 @@
+id: I4414
+milestone: the-runtime-supervises-itself
+title: "A repository whose runs wait while another repository of the same account holds the Actions jobs is told so, and the landing seat is advised to hold new train runs while it lasts"
+slug: a-share-starved-repository-is-told-so
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Three steps on top of I4326's per-repository queue reads. (1) A typed capability mesh.ci_load (`majordomus mesh ci-load`, MCP and HTTP from the same capability! declaration) reports, for every repository of the checkouts this host serves plus any the policy lists, its queued runs, its in-progress jobs (jobs, not runs: GitHub's account concurrency limit counts jobs), the age of its oldest queued run, and its share of the account's in-progress jobs, against the account's concurrency limit declared in policy. (2) From the same reads the monitor derives a share_starved signal: one repository has queued runs older than a bound and at most a floor of in-progress jobs while another repository of the account holds at least a declared share of the account's in-progress jobs, for longer than the bound. Bound, floor and share are stated beside the signal in policy. The signal names the starved repository, the holding repository and both counts. It is kept apart from I4326's forge_starved, where no repository starts any job. (3) While share_starved names this repository as the holder, `majordomus mesh ci-load` exits with a declared non-zero code and says `hold new train runs: <repo> starved since <time>`. The brief and the monitor carry the same line. docs/MESH.md states the convention that the landing seat pushes no new combined top while the advice holds and announces the hold on the board with majordomus_announce. The advice cancels nothing."
+why: "Observed by OSCILLA (korczis/oscilla) on 2026-10-29, filed from oscilla-b0's upstream candidates (item 5). GitHub Actions concurrency, about 20 jobs, is shared between korczis/prismatic-majordomus and korczis/oscilla. From 18:41 to 20:00 OSCILLA got 0-1 jobs while Majordomus trains ran. A human-relayed pause fixed it when the landing seat de cancelled 9 runs. No Majordomus surface reported it, so OSCILLA's session found out by hand. I4326 does not cover this case. Its forge_starved signal needs in progress == 0 in every repository, and here Majordomus had many jobs in progress. It counts runs, not the jobs the account limit counts, and it advises nobody to hold anything. scripts/ci/release-path yields and preempts only within one repository (I2710, I4353)."
+current_state: "Measured at origin/master 51b38035a71. The monitor's GitHub source reads one repository, the checkout at `root` (apps/majordomus-cli/src/monitor/github.rs:69, fetch_now at :89-120 runs `gh pr list` and `gh run list` there). It drops every run that is not completed (github.rs:307-310), so it sees neither queued runs nor in-progress jobs. No capability under apps/majordomus-cli/src/capability/builtin reads the account's job load. scripts/ci/release-path has the commands status, yield, preempt and resume (:50), and each acts on this repository's own runs only. No policy key declares the account's concurrency limit, and docs/MESH.md has no convention for holding trains for another repository."
+desired_state: "`majordomus mesh ci-load` shows each repository's queued runs, in-progress jobs and share of the account's limit. While one repository is starved by another's share, the monitor and the brief say `share starved since <time>: <repo> <q> queued, <r> running; <holder> holds <n>/<limit> jobs`. The holder's `mesh ci-load` exits with the declared advice code, so a landing seat's loop can gate a new top's push on it. The signal clears when the starved repository runs more than the floor or its queue empties."
+scope:
+  - ".ai/repo/project/issues/I4414.yaml"
+  - "apps/majordomus-cli/src/monitor"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/src/capability/builtin/monitor.rs"
+  - ".ai/repo/policy.yaml"
+  - "share/schemas"
+  - "docs/MESH.md"
+  - "docs/MONITOR.md"
+  - "test/cases/4414_a_share_starved_repository_is_told_so.sh"
+non_scope:
+  - "Account-wide starvation where no repository starts any job, and the per-repository queue reads themselves (I4326)"
+  - "Cancelling, preempting or re-running any run because of the signal (I3903, I4353, scripts/ci/release-path)"
+  - "Raising the account's Actions concurrency limit or adding self-hosted runners (owner-side)"
+  - "An adopter's own CI configuration or scripts, which may read the capability once it exists"
+depends_on:
+  - "I4326"
+serves:
+  - "nothing-in-the-mesh-waits-on-something-dead#states-are-classified"
+acceptance_criteria:
+  - "Given recorded run and job listings of two repositories, `mesh ci-load` reports each repository's queued runs, in-progress jobs, oldest queued age and share of the declared limit"
+  - "Given recorded listings where repository A has runs queued past the bound with 1 job in progress and repository B holds 18 of 20 jobs, the monitor emits one share_starved signal naming A, B and both counts"
+  - "Queued runs younger than the bound, A running more jobs than the floor, or B below the declared share emits no share_starved, and 0 jobs in progress everywhere is I4326's forge_starved, not share_starved"
+  - "While share_starved names this repository as the holder, `majordomus mesh ci-load` exits with the declared advice code and prints the hold line; otherwise it exits 0"
+  - "The capability is declared once with capability! and its CLI, MCP and HTTP projections come from `majordomus generate`"
+  - "Case 4414 drives the capability with a fake gh over recorded listings and fails before the change"
+validation:
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib monitor::"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::mesh"
+  - "bash test/run.sh 4414_a_share_starved_repository_is_told_so"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+  - "rust"
+created_at: 2026-10-29
+updated_at: 2026-10-29

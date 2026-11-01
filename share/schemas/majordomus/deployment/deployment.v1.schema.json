@@ -124,6 +124,14 @@
             "minLength": 1
           }
         },
+        "crates": {
+          "description": "The path dependencies the package compiles against: carried in the build context and the builder's dependency stage, never in the runtime image. A path that does not resolve is refused. Absent means the package has none.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
         "site": {
           "description": "The directory the canonical site pipeline writes, served by the deployed process. Absent means the image serves no site.",
           "type": "string"

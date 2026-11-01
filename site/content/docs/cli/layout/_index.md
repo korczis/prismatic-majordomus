@@ -4,7 +4,7 @@ description = "The boundary between the layer's tracked and local halves, checke
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 221
+weight = 228
 [extra]
 route = "/docs/cli/layout/"
 command = "majordomus layout"

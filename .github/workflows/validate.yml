@@ -135,7 +135,29 @@ jobs:
       installer_live: ${{ steps.plan.outputs.installer_live }}
       pages_live: ${{ steps.plan.outputs.pages_live }}
       rustdoc: ${{ steps.plan.outputs.rustdoc }}
+      github_projection: ${{ steps.plan.outputs.github_projection }}
+      worktree_topology: ${{ steps.plan.outputs.worktree_topology }}
     steps:
+      # I4338: a pull request labelled hold is a train member. Its train's top runs the validate
+      # that judges it, and it lands only with that top, so its own run decides nothing and only
+      # holds a slot of the one validate the pool runs at a time: on 2026-10-28 twelve member
+      # runs queued ahead of trains 10a and 10b. It gives the slot back before any job asks for a
+      # runner, as the release path does below, and since it never reaches ci it can never read
+      # green and land on its own. A cancel that does not take hold fails the step instead.
+      - name: a held member yields to its train
+        if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'hold')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          {
+            echo "## held"; echo
+            echo "Pull request #$PR_NUMBER carries the hold label: it is a train member, judged by its train's top, and lands with it. This run gives its runners back (I4338)."
+          } >> "$GITHUB_STEP_SUMMARY"
+          gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY"
+          sleep 120
+          echo "::error::the run was not cancelled; a held member's run must not go on"
+          exit 1
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
@@ -212,15 +234,18 @@ jobs:
   # commit's: a producer that failed, or was not planned, slows its consumers and never stops
   # them. The `if:` of each producer is the union of its consumers' (test/cases/3939): a plan
   # that selects a consumer selects its producer, and a plan that selects neither skips both.
-  #   build             -> suite-shard, evidence, ui-shard, ui-checks, ui, mesh-lab
+  # A consumer that runs on every plan makes its producer run on every plan, with no `if:`.
+  #   build             -> structure (every plan), structure-b, site, suite-shard, evidence,
+  #                        ui-shard, ui-checks, ui, mesh-lab
   #   rustdoc-surface   -> suite-shard, ui-shard, ui-checks
-  # The macos job keeps its own build (another target), and the site job its own rustdoc: it
-  # would wait for this one and finish later, not sooner. The artifact is `majordomus-exe`,
-  # not the rust job's `majordomus-cli-<triple>`: upload-artifact@v4 refuses a name twice in
-  # one run. Its provenance carries the fields scripts/rust-check --artifact writes.
+  # No gate builds (ADR 0224), so the structure and site jobs, whose gates and generator run the
+  # executable, take this one rather than building their own. The macos job keeps its own build
+  # (another target), and the site job its own rustdoc: it would wait for this one and finish
+  # later, not sooner. The artifact is `majordomus-exe`, not the rust job's
+  # `majordomus-cli-<triple>`: upload-artifact@v4 refuses a name twice in one run. Its
+  # provenance carries the fields scripts/rust-check --artifact writes.
   build:
     needs: plan
-    if: needs.plan.outputs.shell_suite == 'true' || needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.ui_audit == 'true' || needs.plan.outputs.mesh_lab == 'true'
     timeout-minutes: 45
     runs-on: ubuntu-latest
     steps:
@@ -291,9 +316,12 @@ jobs:
   # core-check 698-714 s and shell-lint about 300 s, so 25 minutes cancelled it at 25:00.
   # On the v0.21.0 top it ran 36:01 (run 38210149288) and was killed at 40:00 the next time
   # (run 38214783248): 55 minutes until the structure gates are made cheaper (#972 takes
-  # about 8 minutes off), which is the fix this bound is waiting for.
+  # about 8 minutes off), which is the fix this bound is waiting for. By 2026-10-29 the full
+  # plan ran p50 2720 / p90 3256 s here, and run 40813274272 was killed at the bound with every
+  # gate green (I4381): shellcheck no longer re-reads lib/rust_bin.sh for every case, and the
+  # network-bound github-projection and worktree-topology run beside it in structure-b.
   structure:
-    needs: plan
+    needs: [plan, build]
     timeout-minutes: 55
     runs-on: ubuntu-latest
     env:
@@ -310,10 +338,17 @@ jobs:
       # job's (scripts/ci/step-bound-check): they take 95 to 212 s (2026-10-20), and the one
       # that did not return that day waited out the coverage job's 55 minutes and read as
       # cancelled, with nothing measured (run 39438896504).
+      # On 2026-10-28 (I4296) the full fetch of 533 heads and 190 tags took 216 to 488 s and
+      # hit the old 10-minute bound in 6 of 11 runs here and 4 in suite-shard (train 10a run
+      # 40733537887), so every full-history checkout of this file is bounded at 20 minutes.
+      # This one also keeps its history to commits and trees (blob:none): its gates read history
+      # as object ids, merge bases and paths, and the one file of the past they read, the
+      # release's registry, is fetched on demand, as pages.yml already does for its link check.
       - uses: actions/checkout@v4
-        timeout-minutes: 10
+        timeout-minutes: 20
         with:
           fetch-depth: 0
+          filter: blob:none
       - run: sudo apt-get install -y shellcheck >/dev/null
       # `generation-converges` runs the generator, and the editor projection is one of its
       # targets: it reads the tracked justfile's recipes through `just --dump` (ADR 0140) and
@@ -330,9 +365,23 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: ci-plan
+      # No gate builds (ADR 0224), so every gate and script that asks bin/majordomus-cli gets
+      # the build job's executable (I3939), with MAJORDOMUS_BIN and the commit it was built
+      # from. Six of this job's gates and the scripts several others call run it; each used to
+      # reach it through `cargo run` or a launcher that built, and waited on the build lock.
+      # The pinned toolchain is set up all the same: core-check's derive-toolchain wiring
+      # refuses a job whose cargo lacks it, since a derive there would fetch it mid-merge.
+      - id: rust
+        uses: ./.github/actions/setup-rust
+      - name: the executable every gate runs
+        uses: ./.github/actions/majordomus-bin
+        with:
+          exe: "true"
+          setup: "false"
       # Every gate the model assigns to this job, in its order, as the plan selected them:
       # shell-lint, ui-check and core-check on every plan, and the structural gates a change
-      # needs — site-basepath, rust-command, worktree-topology, providers-data. Dispatched
+      # needs — site-basepath, rust-command, providers-data (worktree-topology and
+      # github-projection run in structure-b, I4381). Dispatched
       # from the plan rather than listed here, so a gate declared in the model cannot be
       # reported as run and never executed, which is what happened to four of them.
       - name: the structure gates of the plan
@@ -350,7 +399,77 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-structure
+          name: ci-receipts-structure-a${{ github.run_attempt }}
+          path: receipts.tsv
+          if-no-files-found: ignore
+          retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
+
+  # ------------------------------------------------------------------ structure-b
+  # The structure gates that need not share structure's 55 minutes (I4381): github-projection,
+  # network-bound (p50 389 / p90 589 s), and worktree-topology (p50 156 / p90 179 s). With
+  # them in structure, train 10a's run 40813274272 passed all 59 gates in 3263 s and was
+  # killed 8 s later in its post-steps, so no receipt reached the ci verdict. The same setup
+  # as structure, a job of its own, on the plans that select either gate; the ci job needs it.
+  structure-b:
+    needs: [plan, build]
+    if: needs.plan.outputs.github_projection == 'true' || needs.plan.outputs.worktree_topology == 'true'
+    timeout-minutes: 40
+    runs-on: ubuntu-latest
+    env:
+      # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
+      MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
+    steps:
+      # structure's setup, step for step (see there for why each is needed): the full history
+      # with a bound of its own, the linters, just, the plan, the toolchain and the executable
+      # worktree-topology's behavioural case drives.
+      - uses: actions/checkout@v4
+        timeout-minutes: 10
+        with:
+          fetch-depth: 0
+      - run: sudo apt-get install -y shellcheck >/dev/null
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: just
+      - name: pinned actionlint
+        env:
+          ACTIONLINT_VERSION: "1.7.7"
+        run: |
+          curl -sSL --max-time 120 "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" | sudo tar xz -C /usr/local/bin actionlint
+          actionlint -version
+      - uses: actions/download-artifact@v4
+        with:
+          name: ci-plan
+      - id: rust
+        uses: ./.github/actions/setup-rust
+      - name: the executable every gate runs
+        uses: ./.github/actions/majordomus-bin
+        with:
+          exe: "true"
+          setup: "false"
+      # The gates the model assigns to structure-b, dispatched from the plan as structure's are.
+      - name: the structure-b gates of the plan
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: MJ_CI_TIMINGS=timings.tsv scripts/ci/run-plan --plan plan.json --job structure-b
+      - if: always()
+        run: scripts/ci/summary --job structure-b --timings timings.tsv
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-structure-b
+          path: timings.tsv
+          retention-days: 14
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-receipts-structure-b-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
@@ -407,7 +526,7 @@ jobs:
       # the whole history: a case that clones this checkout into a fixture and pushes
       # (96_site_deploy does, to a bare repository of its own) cannot push a shallow clone
       - uses: actions/checkout@v4
-        timeout-minutes: 10
+        timeout-minutes: 20
         with:
           fetch-depth: 0
       - id: site
@@ -449,6 +568,8 @@ jobs:
           MJ_TEST_JOBS: 4
           MJ_TEST_SHARD: ${{ matrix.shard }}/4
           MJ_TEST_REPORT: suite.tsv
+          # outside the checkout, so the tree the suite ran in stays the tree it ran in
+          MJ_TEST_FAILURES: ${{ runner.temp }}/suite-failures.log
         run: bash test/run.sh --no-skips
       # The tree the suite ran in, measured here, right after its run: the evidence job records
       # the suite's report against this measurement, never against its own fresh checkout
@@ -478,6 +599,15 @@ jobs:
           name: suite-shard-${{ matrix.shard }}
           path: suite.tsv
           retention-days: 3
+      # what each failed case said, beside the verdict: the reason a case gave is otherwise
+      # only in this job's log, and a failure counted later is a name without it (I4223)
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: suite-failures-${{ matrix.shard }}
+          path: ${{ runner.temp }}/suite-failures.log
+          if-no-files-found: ignore
+          retention-days: 14
       # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
       # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
       - name: a failed branch run ends here
@@ -577,7 +707,7 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-suite
+          name: ci-receipts-suite-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
@@ -649,7 +779,7 @@ jobs:
       # document it is required to write. The gate then reported the committed artifact stale
       # for a reason no branch had caused. A check reads its inputs; this job now fetches them.
       - uses: actions/checkout@v4
-        timeout-minutes: 10
+        timeout-minutes: 20
         with:
           fetch-depth: 0
       - id: rust
@@ -771,7 +901,7 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-rust-${{ matrix.lane }}
+          name: ci-receipts-rust-${{ matrix.lane }}-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
@@ -883,7 +1013,7 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-coverage
+          name: ci-receipts-coverage-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
@@ -946,7 +1076,7 @@ jobs:
     steps:
       # the whole history: the report compares each execution's commit with the tree
       - uses: actions/checkout@v4
-        timeout-minutes: 10
+        timeout-minutes: 20
         with:
           fetch-depth: 0
       # the build job's executable, downloaded; the toolchain is set up only if it has to be built
@@ -1010,8 +1140,11 @@ jobs:
       - uses: actions/checkout@v4
       - id: rust
         uses: ./.github/actions/setup-rust
+      # the explicit build, then the gate's own line through the launcher (ADR 0224)
+      - name: the executable, built for the benchmark
+        run: RUSTFLAGS='' cargo build --quiet --locked
       - id: bench
-        run: cargo run --quiet -- bench --profile ci --check --no-write
+        run: ../../bin/majordomus-cli bench --profile ci --check --no-write
       - if: always()
         run: ../../scripts/ci/summary --job bench --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}"
       - name: the bench receipt
@@ -1020,7 +1153,7 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-bench
+          name: ci-receipts-bench-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
@@ -1037,7 +1170,7 @@ jobs:
   # output, then every route at every width in a real browser (four at a time). On master
   # the same bytes become the Pages artifact the deploy job publishes; nothing rebuilds them.
   site:
-    needs: plan
+    needs: [plan, build]
     # Every gate this job carries, not only the first: the build is a prerequisite of the
     # probe, so a plan that asks for the probe or the Cockpit stylesheet and not for
     # site-build must still open the job — otherwise the gate is planned and the job that
@@ -1061,11 +1194,17 @@ jobs:
       # commit is in the history being published, and refuses to report clean from a shallow
       # clone that cannot say.
       - uses: actions/checkout@v4
-        timeout-minutes: 10
+        timeout-minutes: 20
         with:
           fetch-depth: 0
       - id: site
         uses: ./.github/actions/setup-site
+      # The generator reads the plan, the registry and the delivery through the executable, and
+      # no ordinary command builds it (ADR 0224): the build job's, downloaded (I3939).
+      - name: the executable the generator runs
+        uses: ./.github/actions/majordomus-bin
+        with:
+          exe: "true"
       # One generation for the whole job. This step is the gate — it stages a fresh generation
       # from the canonical sources and diffs it against what is committed, which is the only
       # thing that proves the two agree — and the build and the check then read the committed
@@ -1169,7 +1308,7 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-site
+          name: ci-receipts-site-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
@@ -1267,7 +1406,7 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-site-probe
+          name: ci-receipts-site-probe-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
@@ -1369,7 +1508,7 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-interactions
+          name: ci-receipts-interactions-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
@@ -1527,7 +1666,7 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-ui-checks
+          name: ci-receipts-ui-checks-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
@@ -1603,7 +1742,7 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-ui
+          name: ci-receipts-ui-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
@@ -1657,7 +1796,7 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-cockpit
+          name: ci-receipts-cockpit-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
@@ -1718,7 +1857,7 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-mesh-lab
+          name: ci-receipts-mesh-lab-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
@@ -1745,7 +1884,7 @@ jobs:
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
       - uses: actions/checkout@v4
-        timeout-minutes: 10
+        timeout-minutes: 20
         with:
           fetch-depth: 0
       - id: site
@@ -1787,7 +1926,7 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-macos
+          name: ci-receipts-macos-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
@@ -1833,7 +1972,7 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-install-${{ matrix.runner }}
+          name: ci-receipts-install-${{ matrix.runner }}-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
@@ -1882,7 +2021,7 @@ jobs:
       actions: write
     steps:
       - uses: actions/checkout@v4
-        timeout-minutes: 10
+        timeout-minutes: 20
         with:
           fetch-depth: 0
       # --for: this job runs beside the deploy of its own commit, and judging the site before
@@ -1902,7 +2041,7 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-receipts-pages
+          name: ci-receipts-pages-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
@@ -1926,7 +2065,7 @@ jobs:
   # setting and is not made here; until it is required, this is a verdict a person can read
   # and not one the merge obeys.
   ci:
-    needs: [plan, build, rustdoc-surface, structure, suite, rust, coverage, bench, site, site-probe, interactions, ui, cockpit, mesh-lab, macos, install, pages]
+    needs: [plan, build, rustdoc-surface, structure, structure-b, suite, rust, coverage, bench, site, site-probe, interactions, ui, cockpit, mesh-lab, macos, install, pages]
     if: always()
     timeout-minutes: 15
     runs-on: ubuntu-latest

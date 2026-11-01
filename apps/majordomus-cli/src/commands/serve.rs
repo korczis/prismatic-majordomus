@@ -7,7 +7,8 @@
 //! file (the parent closed its end) starts the shutdown, which waits for attached peers to
 //! leave. When stdin is anything else (a terminal, `/dev/null` under nohup or a service
 //! manager, a file) nothing is watched and the process runs until it is stopped — or, with
-//! `--idle`, until no peer has been attached for that long. There is no daemon mode either
+//! `--idle`, until nothing has used it for that long (`crate::idle` says what counts as use,
+//! and why another server's traffic does not). There is no daemon mode either
 //! way: whoever started the process owns it.
 //!
 //! Stopped means stopped in order. `SIGTERM` (which `serve stop` sends), `SIGINT` and
@@ -57,13 +58,20 @@ use crate::shared::SharedServer;
 
 use super::executions::{ask_server, cli_capability, map};
 
-/// Run `majordomus serve`.
-pub fn run(args: ServeArgs) -> Result<u8> {
-    let start = match &args.repo.repo {
+/// The repository a command that elects this checkout's server works on: the one named by
+/// `--repo`, else the one around the working directory. Found here, before the layer loads,
+/// for `serve` and for `ui`, which converges on the same server (I3017's owners).
+pub(crate) fn discover(args: &RepoArgs) -> Result<Repository> {
+    let start = match &args.repo {
         Some(p) => p.clone(),
         None => std::env::current_dir().map_err(|e| Error::io(".", e))?,
     };
-    let repo = Repository::discover(&start)?;
+    Repository::discover(&start)
+}
+
+/// Run `majordomus serve`.
+pub fn run(args: ServeArgs) -> Result<u8> {
+    let repo = discover(&args.repo)?;
     let layer = layer_args(&args.repo)?;
     match &args.command {
         None => serve(&args, &repo),
@@ -185,10 +193,11 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
         let idle = Duration::from_secs(args.idle);
         tracing::info!(
             idle_seconds = args.idle,
-            "stdin is not a pipe; the server stops when no peer has been attached for {} second(s)",
+            "stdin is not a pipe; the server stops when nothing has used it for {} second(s): no peer attached, no execution queued or running, no live channel, no client request (mesh links, probes and sibling board reads are not use)",
             args.idle
         );
-        let mut idle_since = Instant::now();
+        // idle is decided from what the server holds, by `crate::idle` (I2131, I4007)
+        let mut timer = crate::idle::IdleTimer::new(idle, Instant::now());
         let mut counted = Instant::now();
         loop {
             std::thread::sleep(STOP_POLL);
@@ -202,16 +211,15 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
             if superseded_and_alone(&shared) {
                 break None;
             }
-            // in use: an MCP session attached, a request answered within the last second, or a
-            // live channel open — the Cockpit and the REST API count as much as a client (I2131)
-            if shared.peers_attached() > 0
-                || crate::http::server::used_within(Duration::from_secs(1))
-            {
-                idle_since = Instant::now();
-            } else if idle_since.elapsed() >= idle {
+            // in use: a peer attached, an execution not finished, a live channel open, or a
+            // client's request answered within the last second — the Cockpit and the REST API
+            // count as much as an MCP client; another server's traffic does not
+            let activity = shared.activity(Duration::from_secs(1));
+            if let Some(why) = timer.observe(&activity, Instant::now()) {
                 tracing::info!(
-                    "no peer for {} second(s); stopping",
-                    idle_since.elapsed().as_secs()
+                    idle_seconds = why.idle_for.as_secs(),
+                    bound_seconds = why.bound.as_secs(),
+                    "{why}; stopping"
                 );
                 break None;
             }
@@ -733,7 +741,14 @@ fn ensure(
     layer: &[OsString],
 ) -> Result<u8> {
     let c = converge_with(repo, port, idle, wait, layer)?;
-    let reason = if c.ready() {
+    let reason = not_ready(&c, wait);
+    report(c.standing, c.document, reason, c.started, &c.log, format)
+}
+
+/// Why a convergence did not reach a ready server, in the words `serve ensure` prints:
+/// `None` when it did. `majordomus ui` says the same, because it is the same convergence.
+pub(crate) fn not_ready(c: &Convergence, wait: Duration) -> Option<String> {
+    if c.ready() {
         None
     } else if c.timed_out {
         Some(format!(
@@ -752,8 +767,7 @@ fn ensure(
         ))
     } else {
         c.reason.clone()
-    };
-    report(c.standing, c.document, reason, c.started, &c.log, format)
+    }
 }
 
 /// Print the report and decide the exit code: 0 for a ready server, 10 for anything else,
@@ -820,7 +834,7 @@ fn report(
 /// started that way served a stale checkout's 0.21.0 share, which has no `ui/`, and every
 /// screen of the UI lost its stylesheet and scripts. A relative share is made absolute
 /// here, because the started server's directory is not promised to be this one's.
-fn layer_args(repo: &RepoArgs) -> Result<Vec<OsString>> {
+pub(crate) fn layer_args(repo: &RepoArgs) -> Result<Vec<OsString>> {
     let mut out = Vec::new();
     if let Some(share) = &repo.share {
         let share = std::path::absolute(share).map_err(|e| Error::io(share, e))?;

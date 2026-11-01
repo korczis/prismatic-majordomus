@@ -81,6 +81,15 @@ pub const MAX_PENDING: usize = 256;
 /// The most paths one claim or review names.
 pub const MAX_SCOPE_PATHS: usize = 64;
 
+/// The longest a session beat may keep its claims alive without another, in seconds: an
+/// hour. A session that waits longer than that on a person has stopped as far as the mesh
+/// is concerned, and a bound is what keeps one beat from holding a scope for a day.
+pub const MAX_SESSION_TTL_SECONDS: u32 = 3600;
+
+/// The longest phase a session beat carries, in bytes: one line naming what a session waits
+/// on, never a log.
+pub const MAX_PHASE_BYTES: usize = 160;
+
 /// The most streams one node may occupy: runtime and instance ids are free to invent, so a
 /// single trusted key must not be able to fill the stream table.
 pub const MAX_STREAMS_PER_NODE: usize = 64;
@@ -530,8 +539,9 @@ impl HandoverBody {
 /// never breaks an older one's replication.
 ///
 /// The vocabulary is small on purpose: everything the mesh coordinates is a session, a
-/// claim, a handover or a review, and an event that would need a ninth kind is a feature
-/// that has not been agreed. The `kind` tag is what goes on the wire, so it is protocol —
+/// claim, a handover or a review, and a node's offer of the build cache it serves (ADR 0157
+/// agreed that one, I2671); an event that would need another kind is a feature that has not
+/// been agreed. The `kind` tag is what goes on the wire, so it is protocol —
 /// two executables of different ages read the same word for the same event.
 ///
 /// ```
@@ -555,6 +565,33 @@ pub enum EventBody {
         /// The session id within the stream.
         session: String,
     },
+    /// A session made progress, and its exclusive claims keep excluding for `ttl_seconds`
+    /// more on the clock of whoever reads this (I3990).
+    ///
+    /// The runtime's own beat proves the runtime is alive, and nothing more: a worker stuck
+    /// on a permission dialog, hung or crashed behind a live server kept every exclusive
+    /// claim it held for as long as that server ran — the 5d executor held the integration
+    /// lease for hours and never answered (2026-10-22). A session beat is the second layer:
+    /// written only while the holder does real work — an MCP request other than `ping`, an
+    /// announcement, a claim, or an explicit `mesh beat` from a long-running process that
+    /// says what it is waiting on — it lets every runtime suspend the exclusive claims of a
+    /// session that stopped. It is aged on the reader's monotonic clock from the moment the
+    /// reader stored it, like a stream's beat, so no two wall clocks are compared.
+    /// `ttl_seconds` 0 says "judge me by the stream alone", which is how a session that
+    /// never beat is judged; this executable never writes it, because a beat that turns the
+    /// rule off in silence is the 5d incident again. A runtime older than the kind stores
+    /// and relays it opaque and keeps judging by the stream.
+    SessionBeat {
+        /// The session id within the stream.
+        session: String,
+        /// Seconds the session's claims live past this beat without another; 0 for none.
+        ttl_seconds: u32,
+        /// What the session is doing, when it said: `waiting on CI run 123`, `holding the
+        /// build lock`. A phase is progress too — a process that waits on something
+        /// outside itself is working — and every surface shows it beside the session.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        phase: Option<String>,
+    },
     /// A session claimed a scope.
     ClaimAcquired {
         /// The claim id within the stream.
@@ -577,6 +614,13 @@ pub enum EventBody {
     ClaimReleased {
         /// The claim id within the stream.
         claim: String,
+        /// Why its runtime released it, when the runtime and not the session decided: a
+        /// suspended exclusive claim whose scope another session was admitted to while it
+        /// was silent is released at its holder's next beat rather than re-armed, so two
+        /// sessions never both hold one scope (I3990). A runtime older than the field reads
+        /// the release without it, which is all it needs.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        reason: Option<String>,
     },
     /// A handover was published for other runtimes to consume.
     HandoverPublished {
@@ -637,17 +681,151 @@ pub enum EventBody {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         note: Option<String>,
     },
+    /// A node offers the build cache it serves, its own probe having found the store healthy
+    /// (ADR 0157 decision 2). Fresh while the writing stream beats within the offer's
+    /// lifetime; read by `mesh::build_cache::offer`, not folded.
+    BuildCacheOffered {
+        /// The offer.
+        offer: BuildCacheOffer,
+    },
+    /// The node's offer ended: its probe stopped passing, or it no longer serves a store.
+    BuildCacheWithdrawn {
+        /// Why, from a fixed vocabulary: one line, never a path or an endpoint.
+        reason: String,
+    },
+}
+
+/// The longest lifetime a build-cache offer may state, in seconds: an hour. An offer lives
+/// past its runtime's last beat for at most its lifetime, and the runtime writes the
+/// cooperation expiry there, so anything longer is a record nobody should keep believing.
+pub const BUILD_CACHE_LIFETIME_MAX: u64 = 3600;
+
+/// A node's offer of the build cache it serves, as the journal carries it (ADR 0157 decision
+/// 2, I2671): what a client needs to reach the store and rank it, and how long past its
+/// runtime's last beat it holds. No field holds a credential, and the endpoint is a scheme
+/// and an address alone, so none can ride in it.
+///
+/// ```
+/// use majordomus_cli::mesh::build_cache::Scope;
+/// use majordomus_cli::mesh::journal::BuildCacheOffer;
+///
+/// let offer = BuildCacheOffer { protocol: "s3".into(), provider: "minio".into(),
+///     scope: Scope::Lan, endpoint: "http://192.0.2.10:9000".into(),
+///     bucket: "majordomus-build-cache".into(), priority: 0, headroom_gib: None,
+///     lifetime_seconds: 30 };
+/// assert!(offer.validate().is_ok());
+/// // user information is where a key would ride: refused before anything is signed
+/// let smuggled = BuildCacheOffer { endpoint: "http://k:s@192.0.2.10:9000".into(), ..offer };
+/// assert!(smuggled.validate().is_err());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct BuildCacheOffer {
+    /// The protocol the store speaks (`s3`).
+    pub protocol: String,
+    /// What serves it (`minio`, `garage`, ...): data, not a code path.
+    pub provider: String,
+    /// How far the endpoint is meant to be reached.
+    pub scope: super::build_cache::Scope,
+    /// `http://` or `https://` and an address: no user information, path, query or fragment.
+    pub endpoint: String,
+    /// The bucket, by S3's naming rules.
+    pub bucket: String,
+    /// The node's preference, higher first.
+    #[serde(default)]
+    pub priority: i32,
+    /// Free space on the store's data path, in GiB, when the node said.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub headroom_gib: Option<u64>,
+    /// How long past its runtime's last beat the offer holds, in seconds: 1 to
+    /// [`BUILD_CACHE_LIFETIME_MAX`].
+    pub lifetime_seconds: u64,
+}
+
+impl BuildCacheOffer {
+    /// Check the offer's bounds. A refusal names the field and the rule, never the value: a
+    /// value refused here may be a credential somebody put in the wrong place.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::build_cache::Scope;
+    /// use majordomus_cli::mesh::journal::BuildCacheOffer;
+    ///
+    /// let offer = BuildCacheOffer { protocol: "s3".into(), provider: "minio".into(),
+    ///     scope: Scope::Mesh, endpoint: "https://[2001:db8::1]:9000".into(),
+    ///     bucket: "build.cache-1".into(), priority: 5, headroom_gib: Some(9),
+    ///     lifetime_seconds: 30 };
+    /// assert!(offer.validate().is_ok());
+    /// let queried = BuildCacheOffer { endpoint: "http://192.0.2.1:9000/?X-Amz-Signature=s".into(),
+    ///     ..offer.clone() };
+    /// assert!(!queried.validate().unwrap_err().contains("Signature"));
+    /// let forever = BuildCacheOffer { lifetime_seconds: 0, ..offer };
+    /// assert!(forever.validate().is_err());
+    /// ```
+    pub fn validate(&self) -> Result<(), String> {
+        let word = |name: &str, value: &str, max: usize| {
+            let ok = !value.is_empty()
+                && value.len() <= max
+                && value
+                    .bytes()
+                    .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-');
+            if ok {
+                Ok(())
+            } else {
+                Err(format!("{name} is not 1-{max} of [a-z0-9-]"))
+            }
+        };
+        word("protocol", &self.protocol, 16)?;
+        word("provider", &self.provider, 32)?;
+        let address = self
+            .endpoint
+            .strip_prefix("http://")
+            .or_else(|| self.endpoint.strip_prefix("https://"));
+        let addressed = self.endpoint.len() <= 256
+            && address.is_some_and(|a| {
+                !a.is_empty()
+                    && a.bytes()
+                        .all(|b| b.is_ascii_alphanumeric() || b".-:[]".contains(&b))
+            });
+        if !addressed {
+            return Err(
+                "the endpoint is not http:// or https:// and an address alone \
+                 (no user information, path, query or fragment)"
+                    .into(),
+            );
+        }
+        let b = self.bucket.as_bytes();
+        let named = (3..=63).contains(&b.len())
+            && b.iter()
+                .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || b".-".contains(c))
+            && b[0].is_ascii_alphanumeric()
+            && b[b.len() - 1].is_ascii_alphanumeric();
+        if !named {
+            return Err(
+                "the bucket is not 3-63 of [a-z0-9.-], beginning and ending with a \
+                 letter or a digit"
+                    .into(),
+            );
+        }
+        if !(1..=BUILD_CACHE_LIFETIME_MAX).contains(&self.lifetime_seconds) {
+            return Err(format!(
+                "a lifetime of {} s is not 1-{BUILD_CACHE_LIFETIME_MAX}",
+                self.lifetime_seconds
+            ));
+        }
+        Ok(())
+    }
 }
 
 /// The most a review request's body, or a requester's result note, carries: room for the
 /// evidence a reviewer needs without a second channel, and far under the link's bound.
 pub const REVIEW_BODY_MAX: usize = 8 * 1024;
 
-/// The event kinds this executable interprets. An event naming another kind is stored and
-/// relayed, never folded.
+/// The event kinds this executable interprets: the cooperation fold reads the first nine,
+/// `mesh::build_cache::offer` the build-cache two. An event naming another kind is stored and
+/// relayed, never interpreted.
 pub const KNOWN_KINDS: &[&str] = &[
     "session_opened",
     "session_closed",
+    "session_beat",
     "claim_acquired",
     "claim_released",
     "handover_published",
@@ -655,6 +833,8 @@ pub const KNOWN_KINDS: &[&str] = &[
     "review_requested",
     "review_answered",
     "review_withdrawn",
+    "build_cache_offered",
+    "build_cache_withdrawn",
 ];
 
 impl EventBody {
@@ -666,7 +846,7 @@ impl EventBody {
     /// ```
     /// use majordomus_cli::mesh::journal::{EventBody, KNOWN_KINDS};
     ///
-    /// let released = EventBody::ClaimReleased { claim: "c1".into() };
+    /// let released = EventBody::ClaimReleased { claim: "c1".into(), reason: None };
     /// assert_eq!(released.kind(), "claim_released");
     /// assert_eq!(serde_json::to_value(&released).unwrap()["kind"], released.kind());
     /// assert!(KNOWN_KINDS.contains(&released.kind()));
@@ -675,6 +855,7 @@ impl EventBody {
         match self {
             EventBody::SessionOpened { .. } => "session_opened",
             EventBody::SessionClosed { .. } => "session_closed",
+            EventBody::SessionBeat { .. } => "session_beat",
             EventBody::ClaimAcquired { .. } => "claim_acquired",
             EventBody::ClaimReleased { .. } => "claim_released",
             EventBody::HandoverPublished { .. } => "handover_published",
@@ -682,6 +863,8 @@ impl EventBody {
             EventBody::ReviewRequested { .. } => "review_requested",
             EventBody::ReviewAnswered { .. } => "review_answered",
             EventBody::ReviewWithdrawn { .. } => "review_withdrawn",
+            EventBody::BuildCacheOffered { .. } => "build_cache_offered",
+            EventBody::BuildCacheWithdrawn { .. } => "build_cache_withdrawn",
         }
     }
 
@@ -735,6 +918,22 @@ impl EventBody {
                 Ok(())
             }
             EventBody::SessionClosed { session } => ident("session", session),
+            EventBody::SessionBeat {
+                session,
+                ttl_seconds,
+                phase,
+            } => {
+                ident("session", session)?;
+                if *ttl_seconds > MAX_SESSION_TTL_SECONDS {
+                    return Err(format!(
+                        "a session beat ttl of {ttl_seconds} s exceeds {MAX_SESSION_TTL_SECONDS}"
+                    ));
+                }
+                if let Some(v) = phase {
+                    line("phase", v, MAX_PHASE_BYTES)?;
+                }
+                Ok(())
+            }
             EventBody::ClaimAcquired {
                 claim,
                 session,
@@ -754,7 +953,13 @@ impl EventBody {
                 }
                 Ok(())
             }
-            EventBody::ClaimReleased { claim } => ident("claim", claim),
+            EventBody::ClaimReleased { claim, reason } => {
+                ident("claim", claim)?;
+                if let Some(v) = reason {
+                    line("reason", v, 256)?;
+                }
+                Ok(())
+            }
             EventBody::HandoverPublished { handover } => {
                 if handover.id != HandoverBody::digest_of(&handover.body) {
                     return Err("the handover id is not the digest of its body".into());
@@ -840,6 +1045,8 @@ impl EventBody {
                 }
                 Ok(())
             }
+            EventBody::BuildCacheOffered { offer } => offer.validate(),
+            EventBody::BuildCacheWithdrawn { reason } => line("reason", reason, 256),
         }
     }
 }
@@ -1084,40 +1291,8 @@ impl std::error::Error for CursorError {}
 /// assert_eq!(canonical_json(&a), br#"{"a":[{"c":3,"d":2}],"b":1}"#.to_vec());
 /// ```
 pub fn canonical_json(value: &Value) -> Vec<u8> {
-    let mut out = Vec::new();
-    write_canonical(value, &mut out);
-    out
-}
-
-fn write_canonical(value: &Value, out: &mut Vec<u8>) {
-    match value {
-        Value::Object(map) => {
-            // A BTreeSet, not a sorted vector: the signing order is the byte order of the
-            // keys, decided by the container rather than by a comparator written here.
-            let keys: std::collections::BTreeSet<&String> = map.keys().collect();
-            out.push(b'{');
-            for (i, key) in keys.iter().enumerate() {
-                if i > 0 {
-                    out.push(b',');
-                }
-                out.extend(serde_json::to_vec(key).unwrap_or_default());
-                out.push(b':');
-                write_canonical(&map[*key], out);
-            }
-            out.push(b'}');
-        }
-        Value::Array(items) => {
-            out.push(b'[');
-            for (i, item) in items.iter().enumerate() {
-                if i > 0 {
-                    out.push(b',');
-                }
-                write_canonical(item, out);
-            }
-            out.push(b']');
-        }
-        other => out.extend(serde_json::to_vec(other).unwrap_or_default()),
-    }
+    // one implementation, the portable core's, which a browser runs as wasm32 (ADR 0170)
+    majordomus_core::canonical_json(value)
 }
 
 impl MeshEvent {
@@ -1416,6 +1591,53 @@ impl StreamLiveness {
     }
 }
 
+/// Whether a session still makes progress, on this runtime's clock: the second layer of
+/// liveness, under [`StreamLiveness`] (I3990). A stream that beats proves its runtime is
+/// up; a session beat proves the worker behind one of its sessions is still sending real
+/// work. `Unreported` is every session that never beat, or whose newest beat carries ttl
+/// 0 — it is judged by its stream alone, as every session was before this layer, which is
+/// what keeps a command-line claim that never beats and an older runtime's claim exactly as
+/// they were.
+///
+/// ```
+/// use std::time::Duration;
+/// use majordomus_cli::mesh::journal::SessionProgress;
+///
+/// assert!(SessionProgress::Unreported.holds() && SessionProgress::Within.holds());
+/// let silent = SessionProgress::Silent { ttl_seconds: 600, age: Duration::from_secs(601) };
+/// assert!(!silent.holds(), "its exclusive claims are suspended though its runtime beats");
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SessionProgress {
+    /// The session never beat, or asked to be judged by its stream (ttl 0).
+    Unreported,
+    /// Its newest beat is within its ttl.
+    Within,
+    /// Its newest beat is older than its ttl (plus the grace a foreign stream is given).
+    Silent {
+        /// The ttl the beat carried.
+        ttl_seconds: u32,
+        /// How long ago this runtime stored the beat.
+        age: Duration,
+    },
+}
+
+impl SessionProgress {
+    /// Whether the session's claims still hold as far as progress goes.
+    ///
+    /// ```
+    /// use std::time::Duration;
+    /// use majordomus_cli::mesh::journal::SessionProgress;
+    ///
+    /// assert!(SessionProgress::Within.holds());
+    /// let silent = SessionProgress::Silent { ttl_seconds: 8, age: Duration::from_secs(9) };
+    /// assert!(!silent.holds());
+    /// ```
+    pub fn holds(self) -> bool {
+        !matches!(self, SessionProgress::Silent { .. })
+    }
+}
+
 /// The journal's counters since start: how much it holds, how much it has written,
 /// received, absorbed, refused, held back and compacted away. They are what makes a
 /// replication problem diagnosable from one machine — a runtime whose `received` never
@@ -1547,6 +1769,11 @@ struct StreamLog {
     /// When this journal first held the stream: a stream whose beat has never been heard
     /// here has been silent since then, not since forever.
     learned_at: Instant,
+    /// Each session's newest [`EventBody::SessionBeat`]: when this journal stored it, on
+    /// its own clock, the ttl it carried and the phase it named. Set where the event is stored — written,
+    /// received or reloaded — exactly as `learned_at` is, so a beat is aged from the moment
+    /// this runtime held it and never from its author's wall clock (I3990).
+    session_beats: BTreeMap<String, (Instant, u32, Option<String>)>,
 }
 
 impl StreamLog {
@@ -1559,6 +1786,23 @@ impl StreamLog {
             beat_sig: None,
             fresh_at: None,
             learned_at: Instant::now(),
+            session_beats: BTreeMap::new(),
+        }
+    }
+
+    /// Remember a session beat the stream carries, if `event` is one, as stored now.
+    fn note_session_beat(&mut self, event: &MeshEvent) {
+        if event.kind() != "session_beat" {
+            return;
+        }
+        if let Some(EventBody::SessionBeat {
+            session,
+            ttl_seconds,
+            phase,
+        }) = event.body()
+        {
+            self.session_beats
+                .insert(session, (Instant::now(), ttl_seconds, phase));
         }
     }
 
@@ -1987,12 +2231,9 @@ impl Journal {
             )));
         }
         inner.lamport = lamport;
-        inner
-            .streams
-            .get_mut(&self.own)
-            .expect("own stream")
-            .events
-            .insert(seq, event.clone());
+        let log = inner.streams.get_mut(&self.own).expect("own stream");
+        log.note_session_beat(&event);
+        log.events.insert(seq, event.clone());
         inner.arrive(&self.own, seq);
         inner.tallies.written += 1;
         let durability = self.persist(std::slice::from_ref(&event));
@@ -2486,10 +2727,12 @@ impl Journal {
             return None;
         }
         let mut applied = vec![event.clone()];
+        log.note_session_beat(&event);
         log.events.insert(event.seq, event);
         let mut next = high + 2;
         while let Some(successor) = log.pending.remove(&next) {
             applied.push(successor.clone());
+            log.note_session_beat(&successor);
             log.events.insert(next, successor);
             next += 1;
         }
@@ -2629,6 +2872,101 @@ impl Journal {
             .collect()
     }
 
+    /// Whether the session `key` (`<stream>/<session>`, as the fold names it) still makes
+    /// progress, on this runtime's clock (I3990). The holder's own runtime judges its own
+    /// sessions by their ttl alone; every other runtime adds `grace` — the stream expiry —
+    /// because the beat reached it later than it was written, by up to a sync round and a
+    /// relay. The holder therefore always reads the claim suspended first.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use std::time::Duration;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal, SessionProgress};
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// let key = format!("{}/s1", j.own_stream());
+    /// assert_eq!(j.session_progress(&key, Duration::ZERO), SessionProgress::Unreported);
+    ///
+    /// j.append_own(EventBody::SessionBeat { session: "s1".into(), ttl_seconds: 600, phase: None }).unwrap();
+    /// assert_eq!(j.session_progress(&key, Duration::ZERO), SessionProgress::Within);
+    ///
+    /// // ttl 0: judge me by my stream, as before
+    /// j.append_own(EventBody::SessionBeat { session: "s1".into(), ttl_seconds: 0, phase: None }).unwrap();
+    /// assert_eq!(j.session_progress(&key, Duration::ZERO), SessionProgress::Unreported);
+    /// ```
+    pub fn session_progress(&self, key: &str, grace: Duration) -> SessionProgress {
+        self.session_progress_at(key, grace, Instant::now())
+    }
+
+    /// How long ago, on this runtime's clock, it stored the newest session beat of `key`
+    /// (`<stream>/<session>`), and the phase it named; `None` when the session never beat.
+    /// What a surface shows as a session's progress (I3990).
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal};
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// let key = format!("{}/s1", j.own_stream());
+    /// assert!(j.session_beat_age(&key).is_none());
+    /// j.append_own(EventBody::SessionBeat { session: "s1".into(), ttl_seconds: 600,
+    ///     phase: Some("waiting on CI".into()) }).unwrap();
+    /// let (_, phase) = j.session_beat_age(&key).unwrap();
+    /// assert_eq!(phase.as_deref(), Some("waiting on CI"));
+    /// ```
+    pub fn session_beat_age(&self, key: &str) -> Option<(Duration, Option<String>)> {
+        let (stream, session) = key.split_once('/')?;
+        let stream = StreamId::parse(stream)?;
+        let inner = self.inner.lock().expect("journal lock");
+        let (stored, _, phase) = inner.streams.get(&stream)?.session_beats.get(session)?;
+        Some((stored.elapsed(), phase.clone()))
+    }
+
+    /// [`Journal::session_progress`] measured at `now`: what the tests use to age a beat
+    /// without sleeping.
+    pub(crate) fn session_progress_at(
+        &self,
+        key: &str,
+        grace: Duration,
+        now: Instant,
+    ) -> SessionProgress {
+        let Some((stream, session)) = key
+            .split_once('/')
+            .and_then(|(s, session)| Some((StreamId::parse(s)?, session)))
+        else {
+            return SessionProgress::Unreported;
+        };
+        let inner = self.inner.lock().expect("journal lock");
+        let Some((stored, ttl)) = inner.streams.get(&stream).and_then(|log| {
+            log.session_beats
+                .get(session)
+                .map(|(at, ttl, _)| (*at, *ttl))
+        }) else {
+            return SessionProgress::Unreported;
+        };
+        if ttl == 0 {
+            return SessionProgress::Unreported;
+        }
+        let grace = if stream == self.own {
+            Duration::ZERO
+        } else {
+            grace
+        };
+        let age = now.saturating_duration_since(stored);
+        if age <= Duration::from_secs(u64::from(ttl)) + grace {
+            SessionProgress::Within
+        } else {
+            SessionProgress::Silent {
+                ttl_seconds: ttl,
+                age,
+            }
+        }
+    }
+
     /// Every held event, in stream-then-sequence order. Events waiting for a gap are not
     /// here: what this returns is what the journal is prepared to stand behind, and the
     /// fold takes it whole, which is why the order it comes out in does not matter to the
@@ -2739,6 +3077,37 @@ impl Journal {
         cursor: Option<&Cursor>,
         limit: usize,
     ) -> Result<(Vec<MeshEvent>, Cursor), CursorError> {
+        self.events_since_shown(cursor, limit, |_| true)
+    }
+
+    /// [`Journal::events_since`] of only the events `shown` keeps: an event it leaves out
+    /// moves the cursor past it without counting toward `limit`, so a page is short only at
+    /// the end of the journal and a walk resumed from each cursor still misses none. This is
+    /// how `mesh.events` leaves the session beats out of a walk by cursor (I3990).
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal, MeshEvent};
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// j.append_own(EventBody::SessionBeat { session: "s1".into(), ttl_seconds: 60,
+    ///     phase: None }).unwrap();
+    /// j.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+    ///
+    /// let no_beats = |e: &MeshEvent| e.kind() != "session_beat";
+    /// let (first, cursor) = j.events_since_shown(None, 1, no_beats).unwrap();
+    /// assert_eq!(first.len(), 1, "the beat is passed over, not counted");
+    /// assert_eq!(first[0].kind(), "session_closed");
+    /// assert!(j.events_since_shown(Some(&cursor), 100, no_beats).unwrap().0.is_empty());
+    /// ```
+    pub fn events_since_shown(
+        &self,
+        cursor: Option<&Cursor>,
+        limit: usize,
+        shown: impl Fn(&MeshEvent) -> bool,
+    ) -> Result<(Vec<MeshEvent>, Cursor), CursorError> {
         let instance = self.own.instance();
         let from = match cursor {
             Some(c) if c.instance != instance => {
@@ -2762,6 +3131,7 @@ impl Journal {
                     .streams
                     .get(stream)
                     .and_then(|l| l.events.get(seq))
+                    .filter(|e| shown(e))
                     .cloned(),
             );
             last = arrival;
@@ -3330,6 +3700,183 @@ mod tests {
 
     fn accept_all(_: &MeshEvent) -> Result<(), Rejection> {
         Ok(())
+    }
+
+    /// A session beat crosses a link as any event does, and each runtime ages it from the
+    /// moment it stored it, on its own clock: the writer judges it by its ttl alone, a
+    /// reader by its ttl and the grace a relayed beat is owed. A beat over the bound is
+    /// refused on both sides, and the phase a beat names travels with it (I3990).
+    #[test]
+    fn a_session_beat_round_trips_and_is_aged_on_the_readers_clock() {
+        let a = journal("0000000000000001");
+        let b = journal("0000000000000002");
+        a.append_own(EventBody::SessionBeat {
+            session: "board-p1".into(),
+            ttl_seconds: 8,
+            phase: Some("waiting on CI run 42".into()),
+        })
+        .unwrap();
+        let report = b.ingest(&a.missing_for(&b.marks(), 1 << 20), &accept_all);
+        assert_eq!(report.accepted, 1, "a known kind, stored and folded");
+        let beat = &b.events()[0];
+        assert_eq!(beat.kind(), "session_beat");
+        assert!(matches!(
+            beat.body(),
+            Some(EventBody::SessionBeat { ttl_seconds: 8, .. })
+        ));
+        let (_, phase) = b
+            .session_beat_age(&format!("{}/board-p1", a.own_stream()))
+            .unwrap();
+        assert_eq!(phase.as_deref(), Some("waiting on CI run 42"));
+
+        let key = format!("{}/board-p1", a.own_stream());
+        let grace = Duration::from_secs(30);
+        let now = Instant::now();
+        assert_eq!(
+            a.session_progress_at(&key, grace, now),
+            SessionProgress::Within
+        );
+        assert_eq!(
+            b.session_progress_at(&key, grace, now),
+            SessionProgress::Within
+        );
+        // nine seconds on: past the ttl for the writer, within ttl and grace for the reader
+        let later = now + Duration::from_secs(9);
+        assert!(matches!(
+            a.session_progress_at(&key, grace, later),
+            SessionProgress::Silent { ttl_seconds: 8, .. }
+        ));
+        assert_eq!(
+            b.session_progress_at(&key, grace, later),
+            SessionProgress::Within
+        );
+        // and past both
+        let gone = now + Duration::from_secs(39);
+        assert!(!b.session_progress_at(&key, grace, gone).holds());
+        // a session that never beat is judged by its stream alone
+        let other = format!("{}/board-p2", a.own_stream());
+        assert_eq!(
+            b.session_progress_at(&other, grace, gone),
+            SessionProgress::Unreported
+        );
+
+        let unbounded = EventBody::SessionBeat {
+            session: "s1".into(),
+            ttl_seconds: MAX_SESSION_TTL_SECONDS + 1,
+            phase: None,
+        };
+        assert!(unbounded.validate().is_err());
+        assert!(a.append_own(unbounded).is_err());
+        let rambling = EventBody::SessionBeat {
+            session: "s1".into(),
+            ttl_seconds: 8,
+            phase: Some("waiting\non two lines".into()),
+        };
+        assert!(rambling.validate().is_err(), "a phase is one line");
+        // the field is optional on the wire: a beat without it reads, and says no phase
+        let bare = serde_json::json!({ "kind": "session_beat", "session": "s1", "ttl_seconds": 8 });
+        assert_eq!(
+            serde_json::from_value::<EventBody>(bare).unwrap(),
+            EventBody::SessionBeat {
+                session: "s1".into(),
+                ttl_seconds: 8,
+                phase: None
+            }
+        );
+    }
+
+    /// A beat names its session by the identifier the session opened under, and a release
+    /// its claim by the claim's: neither is free text. The reason a runtime gives for a
+    /// release it decided is one bounded line (I3990), and the typed body's kind is the
+    /// wire word a peer reads.
+    #[test]
+    fn a_beat_and_a_release_name_identifiers_and_a_release_reason_is_one_line() {
+        let beat = EventBody::SessionBeat {
+            session: "board-p1".into(),
+            ttl_seconds: 8,
+            phase: None,
+        };
+        assert_eq!(beat.kind(), "session_beat");
+        assert!(KNOWN_KINDS.contains(&beat.kind()));
+        assert!(beat.validate().is_ok());
+        let unnamed = EventBody::SessionBeat {
+            session: "two words".into(),
+            ttl_seconds: 8,
+            phase: None,
+        };
+        let refused = unnamed.validate().unwrap_err();
+        assert!(
+            refused.contains("session 'two words' is not an identifier"),
+            "{refused}"
+        );
+
+        let released = |claim: &str, reason: Option<&str>| EventBody::ClaimReleased {
+            claim: claim.into(),
+            reason: reason.map(Into::into),
+        };
+        assert!(released("c-1", Some("overtaken while silent"))
+            .validate()
+            .is_ok());
+        let unclaimed = released("not/a claim", None).validate().unwrap_err();
+        assert!(
+            unclaimed.contains("claim 'not/a claim' is not an identifier"),
+            "{unclaimed}"
+        );
+        let two_lines = released("c-1", Some("overtaken\nwhile silent"))
+            .validate()
+            .unwrap_err();
+        assert!(
+            two_lines.contains("reason is over 256 bytes"),
+            "{two_lines}"
+        );
+        let long = "x".repeat(257);
+        assert!(released("c-1", Some(&long)).validate().is_err());
+    }
+
+    /// Progress is read of a session key `<stream>/<session>` alone: a key without a stream,
+    /// with one that is not a stream id, of a stream this journal never heard or of a session
+    /// that never beat has no beat age and is unreported — judged by its stream, as before
+    /// I3990 — and only a silent session's claims stop holding.
+    #[test]
+    fn a_key_that_names_no_beaten_session_is_unreported_and_has_no_beat_age() {
+        let j = journal("0000000000000001");
+        j.append_own(EventBody::SessionBeat {
+            session: "s1".into(),
+            ttl_seconds: 600,
+            phase: Some("waiting on CI".into()),
+        })
+        .unwrap();
+        let own = format!("{}/s1", j.own_stream());
+        assert_eq!(
+            j.session_progress(&own, Duration::ZERO),
+            SessionProgress::Within
+        );
+        assert!(j.session_beat_age(&own).is_some());
+        let stranger = journal("0000000000000002");
+        let elsewhere = format!("{}/s1", stranger.own_stream());
+        for key in [
+            "s1".to_string(),
+            "not-a-stream/s1".to_string(),
+            elsewhere,
+            format!("{}/s2", j.own_stream()),
+        ] {
+            assert_eq!(
+                j.session_progress(&key, Duration::ZERO),
+                SessionProgress::Unreported,
+                "{key}"
+            );
+            assert!(j.session_beat_age(&key).is_none(), "{key}");
+        }
+        assert!(SessionProgress::Within.holds());
+        assert!(
+            SessionProgress::Unreported.holds(),
+            "the stream rule decides"
+        );
+        let silent = SessionProgress::Silent {
+            ttl_seconds: 8,
+            age: Duration::from_secs(9),
+        };
+        assert!(!silent.holds());
     }
 
     #[test]
@@ -4361,7 +4908,10 @@ mod tests {
             })
             .unwrap();
         sibling
-            .append_own(EventBody::ClaimReleased { claim: "c1".into() })
+            .append_own(EventBody::ClaimReleased {
+                claim: "c1".into(),
+                reason: None,
+            })
             .unwrap();
         let refused = observer.ingest(
             &sibling.missing_for(&observer.marks(), usize::MAX),
@@ -4809,7 +5359,10 @@ mod tests {
         };
         out.push(j.append_own(acquired).unwrap());
         let ended = match ending {
-            1 => Some(EventBody::ClaimReleased { claim: "c1".into() }),
+            1 => Some(EventBody::ClaimReleased {
+                claim: "c1".into(),
+                reason: None,
+            }),
             2 => Some(EventBody::SessionClosed {
                 session: "s1".into(),
             }),
@@ -5028,5 +5581,28 @@ mod tests {
             let r = b.ingest(&[event], &accept_all);
             proptest::prop_assert_eq!(r.accepted, 0);
         }
+    }
+
+    #[test]
+    fn the_build_cache_bodies_name_their_kind_and_the_kind_is_known() {
+        let offered = EventBody::BuildCacheOffered {
+            offer: BuildCacheOffer {
+                protocol: "s3".into(),
+                provider: "minio".into(),
+                scope: super::super::build_cache::Scope::Lan,
+                endpoint: "http://192.0.2.10:9000".into(),
+                bucket: "majordomus-build-cache".into(),
+                priority: 0,
+                headroom_gib: None,
+                lifetime_seconds: 30,
+            },
+        };
+        let withdrawn = EventBody::BuildCacheWithdrawn {
+            reason: "probe failed".into(),
+        };
+        assert_eq!(offered.kind(), "build_cache_offered");
+        assert_eq!(withdrawn.kind(), "build_cache_withdrawn");
+        assert!(KNOWN_KINDS.contains(&offered.kind()));
+        assert!(KNOWN_KINDS.contains(&withdrawn.kind()));
     }
 }

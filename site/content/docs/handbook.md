@@ -1,7 +1,7 @@
 +++
 title = "The handbook"
 description = "the handbook: one interactive page per language, built from this tree; what is written and what is derived, and the gate that refuses a change which removes what a chapter rests on"
-weight = 34
+weight = 35
 [extra]
 source = "docs/HANDBOOK.md"
 +++
@@ -95,6 +95,20 @@ the same change.
 
 The outlook is published the way the handbook is: the page `python3 handbook/build.py` writes
 is published by hand as a Claude Artifact. Its browser test is `handbook/cs/tests/pw-outlook.js`.
+
+### What a published artifact cannot do
+
+Two limits of a Claude Artifact decide how one is kept current, and both were measured:
+
+- It belongs to the claude.ai account that published it. After a session switches account,
+  every session answers 404 for it and a publish to it is refused, until the owner shares it
+  with the new account or the page is published at a new address under that account
+  (2026-10-19, the outlook's first two addresses; 2026-10-28, every artifact of one account).
+- No unattended process can write its database. `claude -p` offers no artifact tools: on
+  2026-10-28 `claude -p ... --allowedTools ArtifactData ToolSearch` answered that ArtifactData
+  is not available. A service or a script therefore derives an artifact's content in the tree,
+  and an interactive session that finds it stale writes it; a design that needs a headless
+  writer is measured again only when a Claude Code release adds artifact tools to print mode.
 
 ## An edition and the language rule
 
