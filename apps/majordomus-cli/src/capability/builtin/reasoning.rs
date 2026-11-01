@@ -772,4 +772,44 @@ mod tests {
             );
         }
     }
+
+    /// The writer names its caller and relates the active task only when it is the
+    /// caller's (ADR 0164). With two episodes open in the checkout and no caller named —
+    /// no attached peer, and no environment that names one of them — the record carries
+    /// no session and is filed untasked rather than under whoever opened the task.
+    #[test]
+    fn an_anonymous_record_among_two_episodes_names_nobody_and_is_untasked() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic repository");
+        let state = repo.root().join(".ai/local/state");
+        std::fs::create_dir_all(state.join("sessions-open")).unwrap();
+        let here = repo.root().display().to_string();
+        for (file, sid) in [("worker-a.yaml", "s-a"), ("worker-b.yaml", "s-b")] {
+            std::fs::write(
+                state.join("sessions-open").join(file),
+                format!("session_id: {sid}\nworktree: {here}\n"),
+            )
+            .unwrap();
+        }
+        std::fs::write(
+            state.join("current.yaml"),
+            format!("id: t-1\nworktree: {here}\n"),
+        )
+        .unwrap();
+        let ctx = repo
+            .context()
+            .expect("a context over the synthetic repository");
+        let out = reasoning_record(
+            &ctx,
+            ReasoningRecordInput {
+                record: ReasoningInput::Assessment(crate::reasoning::record::AssessmentInput {
+                    subject: "which episode this record belongs to".into(),
+                    ..Default::default()
+                }),
+            },
+        )
+        .expect("an assessment is admitted in every mode");
+        assert_eq!(out.record.session, None, "two episodes, nobody named");
+        assert_eq!(out.record.task, crate::reasoning::store::UNTASKED);
+        assert!(repo.root().join(&out.path).is_file(), "{}", out.path);
+    }
 }

@@ -1119,6 +1119,56 @@ mod tests {
         );
     }
 
+    /// The wrappers that read this process's environment answer exactly as their explicit
+    /// forms do: a named caller is resolved from the records alone, and an anonymous one
+    /// from whatever the environment names, or from nobody when two episodes are open.
+    #[test]
+    fn the_environment_reading_wrappers_answer_as_their_explicit_forms() {
+        let held = tempdir();
+        two_episodes(&held);
+        let root = held.path();
+        let named = attribution(root, Some("worker-a"));
+        assert_eq!(named.session.as_deref(), Some("s-a"));
+        assert_eq!(named.task.as_deref(), Some("t-1"));
+        assert_eq!(
+            open_session_id(root, None),
+            open_session_id_with(root, None, env_var)
+        );
+        assert_eq!(
+            attribution(root, None),
+            attribution_with(root, None, env_var)
+        );
+        // two episodes and nobody named: whatever the environment says, nobody is the opener
+        assert_eq!(attribution(root, None).task, None);
+    }
+
+    /// The key mapping is the shell's `mj_session_key`: a run of unsafe characters is one
+    /// dash, the ends are trimmed, and a key with nothing left is the hand's.
+    #[test]
+    fn a_session_key_squeezes_dashes_and_an_empty_one_is_the_hands() {
+        assert_eq!(session_key("a--b//c"), "a-b-c");
+        assert_eq!(session_key("--x--"), "x");
+        assert_eq!(session_key("///"), "hand");
+        assert_eq!(session_key(""), "hand");
+        assert_eq!(session_key(&"y".repeat(70)), "y".repeat(64));
+    }
+
+    /// A current task whose record names no worktree is not this checkout's.
+    #[test]
+    fn a_current_task_without_a_worktree_is_nobodys() {
+        let held = tempdir();
+        let state = held.path().join(STATE_DIR);
+        fs::create_dir_all(&state).unwrap();
+        fs::write(state.join(CURRENT), "id: t-9\n").unwrap();
+        assert_eq!(current_task_here(held.path()), None);
+        fs::write(
+            state.join(CURRENT),
+            format!("id: t-9\nworktree: {}\n", held.path().display()),
+        )
+        .unwrap();
+        assert_eq!(current_task_here(held.path()).as_deref(), Some("t-9"));
+    }
+
     fn tempdir() -> TempDir {
         TempDir::new()
     }
