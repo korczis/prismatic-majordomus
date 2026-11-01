@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-change-is-judged-in-minutes](https://majordomus.dev/plan/a-change-is-judged-in-minutes/) | ACTIVE | 1/15 | 5 | 9 | 0 | 0 | 0 | The owner should never wait on the toolchain for a change that touched little. An ordinary derive finishes in under a second. A pull request's required verdict arrives within five minutes. Both are measured and enforced, and the speed comes from not repeating work whose inputs did not move, never from weakening a gate. |
+| [a-change-is-judged-in-minutes](https://majordomus.dev/plan/a-change-is-judged-in-minutes/) | ACTIVE | 1/16 | 5 | 9 | 1 | 0 | 0 | The owner should never wait on the toolchain for a change that touched little. An ordinary derive finishes in under a second. A pull request's required verdict arrives within five minutes. Both are measured and enforced, and the speed comes from not repeating work whose inputs did not move, never from weakening a gate. |
 
 ## Issues
 
@@ -26,6 +26,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3242](https://majordomus.dev/plan/i3242/) | BLOCKED | 5 | I2472, I2350 | The pull-request critical path has a committed GitHub baseline and a budget per required job, and a run's summary names its critical path and every cache state |
 | [I3838](https://majordomus.dev/plan/i3838/) | DONE | 0 | — | The plan page renders within the audit budget at every width, because a finding is counted rather than printed once per pair |
 | [I3841](https://majordomus.dev/plan/i3841/) | READY | 0 | — | The plan's graph is drawn by milestone, so /plan/dag/ answers the site probe within its budget however large the backlog grows |
+| [I4242](https://majordomus.dev/plan/i4242/) | ACTIVE | 0 | — | Lundra is the first wave: the validate jobs of trusted events run on the repository's own runners |
 | [I4349](https://majordomus.dev/plan/i4349/) | READY | 0 | — | Checkout time and repository size have a budget, and a run past it is red |
 | [I4351](https://majordomus.dev/plan/i4351/) | BLOCKED | 1 | I4349 | A tracked derived file over 1 MB is declared with a delta budget, written to delta well, or built rather than committed |
 | [I4359](https://majordomus.dev/plan/i4359/) | BLOCKED | 2 | I4343, I4344, I4345 | Rule: no CI runs on a host whose runner layer is undeclared or whose guard is not observed live, and the runner layer is documented |
@@ -79,6 +80,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3241` | shares .github/workflows/validate.yml with I3936; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares .ai/repo/ci/gates.yaml with I3937; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares .github/workflows/validate.yml with I3973; they may not run concurrently |
+| WARN | `scope_conflict` | `I3241` | shares .github/workflows/validate.yml with I4242; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares scripts/ci-plan with I4268; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares .github/workflows/validate.yml with I4296; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares .github/workflows/validate.yml with I4338; they may not run concurrently |
@@ -98,6 +100,14 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3841` | shares docs/generated with I4418; they may not run concurrently |
 | WARN | `scope_conflict` | `I3841` | shares docs/generated with I4466; they may not run concurrently |
 | WARN | `scope_conflict` | `I3841` | shares scripts/generate-site-data with I4512; they may not run concurrently |
+| WARN | `scope_conflict` | `I4242` | shares docs/CI.md with I4268; they may not run concurrently |
+| WARN | `scope_conflict` | `I4242` | shares .github/workflows/validate.yml with I4296; they may not run concurrently |
+| WARN | `scope_conflict` | `I4242` | shares .github/workflows/validate.yml with I4338; they may not run concurrently |
+| WARN | `scope_conflict` | `I4242` | shares .github/workflows/validate.yml with I4347; they may not run concurrently |
+| WARN | `scope_conflict` | `I4242` | shares .github/workflows/validate.yml with I4349; they may not run concurrently |
+| WARN | `scope_conflict` | `I4242` | shares .github/workflows/validate.yml with I4357; they may not run concurrently |
+| WARN | `scope_conflict` | `I4242` | shares .github/workflows/validate.yml with I4381; they may not run concurrently |
+| WARN | `scope_conflict` | `I4242` | shares docs/CI.md with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I4349` | shares .ai/repo/ci/gates.yaml with I4357; they may not run concurrently |
 | WARN | `scope_conflict` | `I4349` | shares apps/majordomus-cli/src/integration/mod.rs with I4381; they may not run concurrently |
 | WARN | `scope_conflict` | `I4349` | shares .ai/repo/policy.yaml with I4418; they may not run concurrently |
