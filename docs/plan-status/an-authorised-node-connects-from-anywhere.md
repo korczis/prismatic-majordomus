@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [an-authorised-node-connects-from-anywhere](https://majordomus.dev/plan/an-authorised-node-connects-from-anywhere/) | ACTIVE | 1/5 | 1 | 3 | 0 | 0 | 0 | Two trusted Majordomus nodes cooperate whether they share a LAN, a tailnet or neither, choose a working path by themselves, fall back to a relay when no direct path exists, and every surface shows the path in use and why it was chosen. |
+| [an-authorised-node-connects-from-anywhere](https://majordomus.dev/plan/an-authorised-node-connects-from-anywhere/) | ACTIVE | 1/5 | 2 | 2 | 0 | 0 | 0 | Two trusted Majordomus nodes cooperate whether they share a LAN, a tailnet or neither, choose a working path by themselves, fall back to a relay when no direct path exists, and every surface shows the path in use and why it was chosen. |
 
 ## Issues
 
@@ -17,7 +17,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 |---|---|---|---|---|
 | [I3176](https://majordomus.dev/plan/i3176/) | READY | 1 | I2410 | The committed mesh declaration names its hubs by node, and no private address is tracked or published |
 | [I3823](https://majordomus.dev/plan/i3823/) | DONE | 0 | — | The mesh client reaches an https endpoint over TLS and refuses cleartext to a public address |
-| [I3826](https://majordomus.dev/plan/i3826/) | BLOCKED | 1 | I3820 | A hosted hub keeps one key from a secret, advertises its URL, and shows the mesh only to those it trusts |
+| [I3826](https://majordomus.dev/plan/i3826/) | READY | 1 | I3820 | A hosted hub keeps one key from a secret, advertises its URL, and shows the mesh only to those it trusts |
 | [I3827](https://majordomus.dev/plan/i3827/) | BLOCKED | 3 | I3823, I3826, I3822 | The hosted hub is this repository's default rendezvous, and every node shows it as the path from anywhere |
 | [I3842](https://majordomus.dev/plan/i3842/) | BLOCKED | 2 | I3826 | A caller on another host never sees this process's executions, live or recorded |
 
@@ -27,4 +27,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 |---|---|---|---|
 | WARN | `scope_conflict` | `I3176` | shares apps/majordomus-cli/src/http/router.rs with I3288; they may not run concurrently |
 | WARN | `scope_conflict` | `I3176` | shares test/cases/491_the_mesh_is_on_here.sh with I3825; they may not run concurrently |
+| WARN | `scope_conflict` | `I3176` | shares apps/majordomus-cli/src/mesh/config.rs with I3826; they may not run concurrently |
 | WARN | `scope_conflict` | `I3176` | shares test/cases/491_the_mesh_is_on_here.sh with I3837; they may not run concurrently |
+| WARN | `scope_conflict` | `I3826` | shares test/cases/3826_a_hosted_hub_is_trusted_and_closed_to_strangers.sh with I3837; they may not run concurrently |
