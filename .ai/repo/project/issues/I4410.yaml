@@ -1,0 +1,43 @@
+id: I4410
+milestone: a-second-adopter-is-served
+title: "plan evidence records the trunk commit it is given with --commit, and refuses one the trunk does not reach"
+slug: plan-evidence-records-a-named-trunk-commit
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "`majordomus plan evidence <id> --covers <token> ... --commit <rev>` writes the named commit into the entry's commit: instead of HEAD. The revision is resolved with `git rev-parse --verify <rev>^{commit}` to its full 40-hex name, and is accepted only when the trunk's remote-tracking branch (mj_git_trunk_ref, lib/common.sh:540-549) reaches it, judged by mj_commit_in_history (lib/common.sh:761-769) against that ref. A commit the trunk does not reach is refused with exit 15 and a message naming the commit and the trunk ref. A clone that cannot decide (shallow, or the object is missing: mj_commit_in_history returns 2) and a repository with no known trunk (no refs/remotes/<remote>/HEAD) are refused with a message that says which, never recorded unjudged. The ledger event plan_evidence carries the recorded commit and whether it was named or taken from HEAD. Without --commit nothing changes: the entry records HEAD, as today. So any number of evidence entries for already-landed work can be recorded on one branch, in one pull request, each naming the trunk commit that landed its work."
+why: "Observed in OSCILLA (korczis/oscilla) on 2026-10-29, filed from oscilla-b0's upstream candidates (item 1). OSCILLA's tests/unit/plan-evidence-commits.test.mjs (V272 D4) holds every evidence commit: to a commit of main, and on a pull request its offBase check (:126-145) refuses an entry whose commit origin/main does not reach. Because `plan evidence` can only record HEAD (the test's header says so at :2-4 and :24-27), the only way to stamp a commit of main is to record the evidence in a fresh branch of origin/main before that branch's first commit, so HEAD is still main's tip. Once the first record is committed, HEAD is a branch commit, so a second record needs another fresh branch: R021 and S071 had to go as two separate pull requests (#272 'R021 done at its main commit (landed as #242)' and #271 'S071 done at its main commit (landed as #259)'), and OSCILLA wrote the procedure into its .ai/repo/workflows/plan.md ('Evidence names a commit of main'). I4320 corrects branch-stamped entries after a squash landing, through --restamp and a follow-up commit; it does not let a worker name a trunk commit up front, and it waits for I4333. This issue needs neither: the reachability predicate already exists and is called nowhere."
+current_state: "Measured at origin/master 51b38035a71: mj_plan_evidence (lib/plan.sh:552-582) writes `commit: $(mj_git_head)` unconditionally (lib/plan.sh:575; mj_git_head is lib/common.sh:452). The option parser of mj_cmd_plan (lib/plan.sh:75-112) knows --covers, --type, --command, --result and --artifact and no --commit; the usage (lib/plan.sh:40-51), docs/PLANNING.md:126-137 ('with the commit it was recorded at') and docs/CLI.md:1924 describe only HEAD. mj_commit_in_history (lib/common.sh:761-769) and mj_git_trunk_ref (lib/common.sh:540-549) exist; `git grep mj_commit_in_history` finds only the definition."
+desired_state: "A worker records evidence for work that already landed by naming the trunk commit that landed it, from any branch and any number of times in one commit; a commit the trunk does not reach, or one the clone cannot judge, is refused at the moment of recording instead of being found later by an adopter's own test. An entry recorded without --commit is byte-for-byte what it is today."
+scope:
+  - ".ai/repo/project/issues/I4410.yaml"
+  - "lib/plan.sh"
+  - "lib/common.sh"
+  - "docs/PLANNING.md"
+  - "docs/CLI.md"
+  - "test/cases/4410_plan_evidence_records_a_named_trunk_commit.sh"
+non_scope:
+  - "Resolving or re-stamping a branch commit after a squash landing, and plan validate's judgement of existing entries: I4320"
+  - "The landed predicate and a declared landing mode: I4333"
+  - "Warning or refusing at evidence time when HEAD is a branch commit and --commit is absent"
+  - "The Rust plan.transition capability (apps/majordomus-cli/src/capability/builtin/plan.rs): plan evidence stays a command-line operation there (:27-28)"
+  - "The whole-token match of --covers (I4235, #2582), which edits the same function and is merged around, not absorbed"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Case 4410, in a fixture repository with a bare origin whose refs/remotes/origin/HEAD names main: on a branch two commits ahead of origin/main, `plan evidence <id> --covers <t> --type manual --command x --commit origin/main~1` exits 0 and the entry's commit: is the full 40-hex sha of origin/main~1, not HEAD"
+  - "Case 4410: two such records for two issues on the same branch, committed in one commit, both carry their named trunk commits"
+  - "Case 4410: `--commit HEAD` on that branch (a commit origin/main does not reach) exits 15, names the commit and refs/remotes/origin/main, and leaves the issue file unchanged"
+  - "Case 4410: an unknown revision exits 2 (usage); a shallow clone and a repository without refs/remotes/<remote>/HEAD each exit non-zero with a message naming why the commit cannot be judged, and write nothing"
+  - "Case 4410: without --commit the entry records HEAD exactly as before (the bytes of the record are compared with the current output)"
+  - "Case 4410: the plan_evidence ledger event carries the recorded commit and source named or head"
+  - "`plan --help`, docs/PLANNING.md and docs/CLI.md document --commit and its refusal"
+  - "Before the change, case 4410 fails at its first assertion"
+validation:
+  - "bash test/run.sh 4410_plan_evidence_records_a_named_trunk_commit"
+  - "bin/majordomus shell check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "named_trunk_commit_case"
+created_at: 2026-10-29
+updated_at: 2026-10-29

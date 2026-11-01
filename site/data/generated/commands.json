@@ -68,6 +68,7 @@
           "3113_the_adoption_footprint_is_inventoried",
           "3340_a_fresh_init_leaves_doctor_clean",
           "3405_a_misplaced_artifact_is_refused",
+          "4257_init_keeps_a_hand_written_provider_file",
           "4258_documents_below_docs_are_discovered",
           "4265_the_adopter_hook_runs_doctor_in_commit_context"
         ],
@@ -192,7 +193,8 @@
           "3113_the_adoption_footprint_is_inventoried",
           "3340_a_fresh_init_leaves_doctor_clean",
           "33_event_registry",
-          "3405_a_misplaced_artifact_is_refused"
+          "3405_a_misplaced_artifact_is_refused",
+          "4257_init_keeps_a_hand_written_provider_file"
         ],
         "negative": [
           "03_update",
@@ -808,7 +810,7 @@
           }
         ]
       },
-      "doc_md": "\nRecord compact progress inside an active task. Append-only; the body arrives on stdin.\n\nA checkpoint is not a small handover. A handover is a deliberate continuation package\nwritten when a worker stops; a checkpoint is what was true a moment ago, short enough that\nthe next worker's context can quote it whole. `checkpoint.max_body_lines` in the policy\nenforces that difference — a body over the cap is refused with the suggestion to write a\nhandover instead, rather than truncated.\n\n**Writes:** `state/checkpoints/<ts>--<branch>--<head>--<rand>.md`, mode `0600`, created\natomically with `link`, never staged. Front matter is computed exactly as for a handover; a\nbody containing identity fields is refused. Also updates `checkpoint_at` on the task record\nand appends `task.checkpoint` to the ledger.\n\nAn empty body is allowed and writes no file: it updates `checkpoint_at` only, which is what\n`check --checkpoint` has always done. The two are the same operation; `checkpoint` is the\none that can also say what was true.\n\n- `--derive` composes the body from git and the ledger instead of reading stdin: the commit,\n  the working tree, how many files have changed since the task started, the commits since\n  then, and the count of blockers. It stays inside the same cap, and it is what the\n  provider's compaction event runs — a compaction discards the conversation while the work\n  continues, and the moment it is announced is the only moment anything can be written about\n  a context that is about to stop being reachable.\n- `--show` prints the newest checkpoint for this worktree and branch — for the active task\n  when there is one, and otherwise the newest whatever task it names.\n- `--list` lists this worktree's checkpoints, newest first, with each one's git label.\n\nA checkpoint belongs to the **episode**, not to a task. It is written whether or not a task\nis open and whatever outcome the last one reached. It relates the active task unless a\ndifferent, still-open episode opened that task (ADR 0164); then its Markdown `task_id` is\n`none`, its ledger event omits `task_id`, and it leaves the task's `checkpoint_at` alone.\n`check --checkpoint` uses the same rule. A derived checkpoint uses that same prepared\nrelation for its body; it cannot describe another episode's task as its own.\n\nThis refused with `12` (no active task) and `15` (the task is no longer active) until ADR\n0052. Those two refusals are the 2026-09-05 outage: a task marked `handed_over` and never\nreplaced silenced this repository's progress records for six days, while episodes went on\nopening and closing and every health check passed.\n\nExit `10` when the body carries identity fields or exceeds the cap.\n\n```\n$ majordomus checkpoint <<'EOF'\nOAuth state mismatch reproduced with the fixture in test/fixtures/callback.json.\nCause is in callback normalisation, not in the comparison.\nNext: regression test before touching the implementation.\nEOF\n.ai/local/state/checkpoints/20260903T194500Z--main--3f2a9c1--8c1d0e4a2b6f9317.md\n```"
+      "doc_md": "\nRecord compact progress inside an active task. Append-only; the body arrives on stdin.\n\nA checkpoint is not a small handover. A handover is a deliberate continuation package\nwritten when a worker stops; a checkpoint is what was true a moment ago, short enough that\nthe next worker's context can quote it whole. `checkpoint.max_body_lines` in the policy\nenforces that difference — a body over the cap is refused with the suggestion to write a\nhandover instead, rather than truncated.\n\n**Writes:** `state/checkpoints/<ts>--<branch>--<head>--<rand>.md`, mode `0600`, created\natomically with `link`, never staged. Front matter is computed exactly as for a handover; a\nbody containing identity fields is refused. Also updates `checkpoint_at` on the task record\nand appends `task.checkpoint` to the ledger.\n\nAn empty body is allowed and writes no file: it updates `checkpoint_at` only, which is what\n`check --checkpoint` has always done. The two are the same operation; `checkpoint` is the\none that can also say what was true.\n\n- `--derive` composes the body from git and the ledger instead of reading stdin: the commit,\n  the working tree, how many files have changed since the task started, the commits since\n  then, and the count of blockers. It stays inside the same cap, and it is what the\n  provider's compaction event runs — a compaction discards the conversation while the work\n  continues, and the moment it is announced is the only moment anything can be written about\n  a context that is about to stop being reachable.\n- `--show` prints the newest checkpoint for this worktree and branch — for the active task\n  when there is one, and otherwise the newest whatever task it names.\n- `--list` lists this worktree's checkpoints, newest first, with each one's git label.\n\nA checkpoint belongs to the **episode**, not to a task. It is written whether or not a task\nis open and whatever outcome the last one reached. It relates the active task unless a\ndifferent, still-open episode opened that task (ADR 0164); then its Markdown `task_id` is\n`none`, its ledger event omits `task_id`, and it leaves the task's `checkpoint_at` alone.\n`check --checkpoint` uses the same rule. A derived checkpoint uses that same prepared\nrelation for its body; it cannot describe another episode's task as its own.\n\nThe records that decide whether work is done follow the same rule and refuse instead of\nfiling under another worker's task (I4292): `evidence --covers`, `evidence --gate` and a\nreal `finish` exit `15` with `refused by adr-0164` when a different, still-open episode\nopened the active task, write nothing, and print the command to rerun under the opener's\n`MJ_SESSION_KEY` or the `session close --provider-session` that releases it. A hand-run\n`session close` with more than one episode open and none named exits `15` the same way and\nlists the keys to pass. `finish` counts only the checkpoints whose `task_id` is its task.\n\nThis refused with `12` (no active task) and `15` (the task is no longer active) until ADR\n0052. Those two refusals are the 2026-09-05 outage: a task marked `handed_over` and never\nreplaced silenced this repository's progress records for six days, while episodes went on\nopening and closing and every health check passed.\n\nExit `10` when the body carries identity fields or exceeds the cap.\n\n```\n$ majordomus checkpoint <<'EOF'\nOAuth state mismatch reproduced with the fixture in test/fixtures/callback.json.\nCause is in callback normalisation, not in the comparison.\nNext: regression test before touching the implementation.\nEOF\n.ai/local/state/checkpoints/20260903T194500Z--main--3f2a9c1--8c1d0e4a2b6f9317.md\n```"
     },
     {
       "name": "handover",
@@ -1086,6 +1088,7 @@
           "25_continuity_lifecycle",
           "275_publication_is_current",
           "2988_a_scope_admits_what_its_derive_wrote",
+          "3049_a_second_workers_record_lands_on_the_first_workers_task",
           "3059_gate_state_is_answerable",
           "3067_a_task_is_claimed_on_the_mesh",
           "3068_a_task_off_the_mesh_is_refused",
@@ -1106,6 +1109,7 @@
           "21_decision_question",
           "25_continuity_lifecycle",
           "275_publication_is_current",
+          "3049_a_second_workers_record_lands_on_the_first_workers_task",
           "32_refusal_lifecycle",
           "572_verification_records_the_tree_it_proved",
           "578_an_unknown_gate_refuses_completed"
@@ -1677,7 +1681,7 @@
       "requires_repository": true,
       "requires_installed": true,
       "json_output": true,
-      "syntax": "majordomus evidence (--covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) | --gate <id> --exit <status>) [--result <r>] [--json] | majordomus evidence <show|claim|proves|record|stamp> [options]",
+      "syntax": "majordomus evidence (--covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) | --gate <id> --exit <status>) [--result <r>] [--json] | majordomus evidence <show|claim|proves|record|stamp> [options] | majordomus evidence --run-gates [--all]",
       "demo": "obligation-evidence",
       "note": "Every argument the shell command takes is an option, so a word in the first position is never its own: show, claim, proves, record and stamp are subcommands of the Rust executable, which holds the ledger of what ran (docs/EVIDENCE.md), and the launcher hands them to it with every argument unchanged. Which words those are is read from the executable's declaration, never listed in the launcher. They need no active task, their exit codes are the executable's, and what each reads and writes is on its own page under /docs/cli/evidence/.",
       "reads": [
@@ -1699,11 +1703,14 @@
         "behaviour": [
           "103_obligations",
           "131_completion_gates",
-          "3059_gate_state_is_answerable"
+          "3049_a_second_workers_record_lands_on_the_first_workers_task",
+          "3059_gate_state_is_answerable",
+          "4268_an_adopter_runs_and_records_its_gates"
         ],
         "negative": [
           "103_obligations",
-          "131_completion_gates"
+          "131_completion_gates",
+          "3049_a_second_workers_record_lands_on_the_first_workers_task"
         ]
       },
       "demo_data": {
@@ -1981,6 +1988,7 @@
           "224_continuity_crosses_machines",
           "282_the_ledger_envelope_is_reserved",
           "29_prompt_capture",
+          "3049_a_second_workers_record_lands_on_the_first_workers_task",
           "3113_the_adoption_footprint_is_inventoried",
           "3460_a_session_end_hook_fits_its_budget",
           "408_a_receipt_is_provider_neutral",
@@ -2323,6 +2331,8 @@
           "3244_a_milestone_title_fits_on_github",
           "40_project_model",
           "41_project_status",
+          "4235_an_evidence_token_is_matched_whole",
+          "4261_issues_trace_outward",
           "42_dag_waves",
           "43_plan_command",
           "44_model_doctrine",
@@ -2338,6 +2348,7 @@
           "3244_a_milestone_title_fits_on_github",
           "40_project_model",
           "41_project_status",
+          "4235_an_evidence_token_is_matched_whole",
           "42_dag_waves",
           "43_plan_command",
           "581_no_plan_stamp_without_its_event",
@@ -2616,6 +2627,7 @@
           "223_an_unsupported_schema_is_a_finding",
           "281_published_order_is_tracked",
           "3015_an_unsupervised_repository_exits_12_from_both_tools",
+          "3049_a_second_workers_record_lands_on_the_first_workers_task",
           "3060_trunk_stays_clean",
           "3063_a_branch_episode_drains_the_outbox",
           "54_session_lifecycle_hooks",
@@ -2972,6 +2984,7 @@
       "tests": {
         "behaviour": [
           "271_adr_allocation",
+          "4264_adr_check_names_what_it_skipped",
           "99_adr"
         ],
         "negative": [

@@ -1,0 +1,37 @@
+id: I4462
+milestone: a-bounded-task-is-carried-to-accepted-work
+title: "Use-case coverage of none of its targets never prints OK: doctor reports 0 of N covered as a finding that names the policy that allowed it"
+slug: no-use-case-coverage-never-reads-ok
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "One change to mj_validate_use_case_coverage (lib/usecase.sh:988-1008). When the tally has targets and covers none of them (covered 0, total above 0), the closing line is not mj_doctrine_ok: it is an INFO finding that reads `use-case 0 of <N> target(s) covered — the policy requires none (use_cases.coverage: <class>=<value>, ...)` with the remedy `majordomus usecase scaffold` or `majordomus usecase coverage`, so a reader sees zero coverage as zero and sees which policy entry made it acceptable. With at least one target covered and no required gap, the OK line stays as it is; a required gap still fails as it does now; a manifest with no use-cases section still skips. The JSON form of `usecase coverage` is unchanged."
+why: "Observed in session 98's stranger fixture on 2026-10-30 (installed 1.0.0-alpha.8, first doctor run): `OK use-case 0 of 30 target(s) covered`. The skeleton every adopter receives declares every coverage class advisory (share/skeleton/policy.yaml:186-190), so no gap is ever required there and the line is OK for every new adopter whatever its coverage. Mission section 9 says an empty or skipped verification is not success and that diagnostics as well as exit codes are judged; an OK over nothing teaches the reader that coverage was checked and found good."
+current_state: "At master 51b38035a71: mj_validate_use_case_coverage counts total, covered and required gaps, reports advisory gaps as one INFO line (lib/usecase.sh:1005) and then prints `[ \"$gaps\" = 0 ] && mj_doctrine_ok use-case \"$covered of $total target(s) covered\"` (lib/usecase.sh:1006), so 0 of 30 is OK whenever no class is required. This repository's own policy requires commands (.ai/repo/policy.yaml:280-284); the shipped skeleton requires nothing. Case 94 (test/cases/94_use_cases.sh) exercises use cases and coverage; no case asserts the doctor line for zero coverage."
+desired_state: "Zero use-case coverage is never presented as a pass: doctor names it with the count and the policy entries that permit it, and a repository with real coverage reads exactly as before. Enforced by case 4462 and case 94 unchanged."
+scope:
+  - ".ai/repo/project/issues/I4462.yaml"
+  - "lib/usecase.sh"
+  - "docs/CLI.md"
+  - "test/cases/94_use_cases.sh"
+  - "test/cases/4462_no_use_case_coverage_never_reads_ok.sh"
+non_scope:
+  - "Changing the skeleton's coverage policy from advisory, or what an adopter must cover: the policy stays the adopter's"
+  - "The coverage tally itself (mj_uc_coverage_rows) and the JSON of `usecase coverage`"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Case 4462, in a fixture repository initialised from the skeleton with a use-cases section and no use case: `majordomus doctor` output has no line matching `OK +use-case +0 of`, and has an INFO line naming `0 of` the target count and `use_cases.coverage`"
+  - "Case 4462: after one active use case that runs one listed command is added, doctor prints the OK line with `1 of` as today"
+  - "Case 4462: with use_cases.coverage.commands set to required and no use case, doctor fails the use-case line as today, with the scaffold remedy"
+  - "Case 94 passes unchanged"
+  - "Before the change, case 4462 fails at its first assertion"
+validation:
+  - "MJ_TEST_JOBS=4 bash test/run.sh 4462_no_use_case_coverage_never_reads_ok 94_use_cases"
+  - "bin/majordomus shell check"
+  - "bin/majordomus doctor"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "zero_coverage_case"
+created_at: 2026-10-30
+updated_at: 2026-10-30

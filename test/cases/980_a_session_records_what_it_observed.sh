@@ -35,9 +35,12 @@ rc=0; "$MJ" knowledge observe --kind friction --subject lib "nobody would derive
 line="$(grep '"event":"observation.recorded"' "$LEDGER" | tail -n 1)"
 for want in '"kind":"friction"' '"subject":"scripts/site-build"' \
   '"statement":"a moved head composes a stale rustdoc surface"' \
-  '"evidence":["commit:bf9b27caeb","issue:I2091"]' '"task_id":"none"'; do
+  '"evidence":["commit:bf9b27caeb","issue:I2091"]'; do
   printf '%s' "$line" | grep -qF "$want" || { echo "    the line lacks $want: $line"; exit 1; }
 done
+# ADR 0164 (I4292): a line with no related task carries no task_id, never the literal none.
+printf '%s' "$line" | jq -e 'has("task_id") | not' >/dev/null \
+  || { echo "    an observation outside a task names a task_id: $line"; exit 1; }
 
 # ---------------------------------------------------------------- inside a task, typed subjects
 "$MJ" start "observe under a task" --scope lib >/dev/null
