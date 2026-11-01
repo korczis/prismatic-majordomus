@@ -1,0 +1,569 @@
+//! The mesh claim an execution started for an issue holds while it runs (I4004).
+//!
+//! Two workers that start the same issue at once must not both run it. The mesh already
+//! decides that question for sessions — an exclusive claim that meets a live exclusive claim
+//! of another session is refused, on this runtime and on every runtime it has heard — so an
+//! execution started for an issue asks it the same way a person's session does: through
+//! [`Cooperation::claim`], the function `mesh.claim` calls, as the mesh session
+//! `execution-<id>`, for the issue's declared scope.
+//!
+//! ```text
+//!   queued ──► take ──► held ──────► claimed ──► running ──► final ──► released
+//!                  │                                     └─► unknown_outcome ──► kept
+//!                  ├─► conflict ──► refused  (the holder named; nothing runs)
+//!                  └─► no mesh ───► unclaimed ──► claimed ──► running ...   (said, never a failure)
+//! ```
+//!
+//! The claim is given back when the execution reaches a final state, by the worker that ran
+//! it, and — through `HeldClaim`'s `Drop` — when that worker unwinds instead. An outcome
+//! that is not known keeps the claim: whether the work happened is still to be read, and the
+//! scope is not free until it has been. A kept claim, or one whose process died, ends when
+//! its runtime stops beating, as every mesh claim does. Fencing a holder that comes back
+//! after its claim expired is not done here (I3174).
+//!
+//! ```
+//! use majordomus_cli::execution::claim::{disposition, scope_of, session_of};
+//! use majordomus_cli::execution::{ClaimStanding, ExecutionId, ExecutionState};
+//! let repo = majordomus_cli::synthetic::SyntheticRepository::small().unwrap();
+//! let ctx = repo.context().unwrap();
+//! let id = ExecutionId::fresh();
+//! assert_eq!(session_of(&id), format!("execution-{id}"));
+//! assert_eq!(scope_of(&ctx, "I4004"), ["issue/I4004"]);
+//! assert_eq!(disposition(ExecutionState::Cancelled), ClaimStanding::Released);
+//! ```
+
+use std::sync::Arc;
+
+use crate::capability::Context;
+use crate::mesh::cooperation::{Cooperation, CooperationError};
+use crate::mesh::journal::{ClaimMode, SessionInfo};
+use crate::mesh::state::{admission_conflicts, ClaimView};
+
+use super::model::{ClaimStanding, ExecutionId, ExecutionState, IssueClaim};
+
+/// The client name an execution's mesh session is opened with.
+pub const CLIENT: &str = "majordomus-execution";
+
+/// The mesh session an execution claims as: `execution-<id>`, so that a refusal that names
+/// the session names the execution that holds the scope.
+///
+/// ```
+/// use majordomus_cli::execution::{claim::session_of, ExecutionId};
+/// let id = ExecutionId::parse("x-20261023T010203Z-0a1b2c3d").unwrap();
+/// assert_eq!(session_of(&id), "execution-x-20261023T010203Z-0a1b2c3d");
+/// ```
+pub fn session_of(id: &ExecutionId) -> String {
+    format!("execution-{id}")
+}
+
+/// The scope an issue's claim covers: the paths its record declares under `scope`, or the
+/// issue's pseudo-path `issue/<id>` when the record declares none or is not in this checkout.
+///
+/// ```
+/// use majordomus_cli::execution::claim::scope_of;
+/// use majordomus_cli::synthetic::SyntheticRepository;
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+/// assert_eq!(scope_of(&ctx, "I9999"), ["issue/I9999"], "no such record here");
+/// ```
+pub fn scope_of(ctx: &Context, issue: &str) -> Vec<String> {
+    let declared: Vec<String> = crate::plan::Plan::build(&ctx.index)
+        .issue(issue)
+        .map(|i| i.scope.clone())
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|p| !p.trim().is_empty())
+        .collect();
+    if declared.is_empty() {
+        vec![format!("issue/{issue}")]
+    } else {
+        declared
+    }
+}
+
+/// What the claim does when the execution reaches `state`: kept for an outcome that is not
+/// known, released for anything else — a final state, or a worker that is leaving.
+///
+/// ```
+/// use majordomus_cli::execution::claim::disposition;
+/// use majordomus_cli::execution::{ClaimStanding, ExecutionState};
+/// assert_eq!(disposition(ExecutionState::Succeeded), ClaimStanding::Released);
+/// assert_eq!(disposition(ExecutionState::Refused), ClaimStanding::Released);
+/// assert_eq!(disposition(ExecutionState::UnknownOutcome), ClaimStanding::Kept);
+/// ```
+pub fn disposition(state: ExecutionState) -> ClaimStanding {
+    if state == ExecutionState::UnknownOutcome {
+        ClaimStanding::Kept
+    } else {
+        ClaimStanding::Released
+    }
+}
+
+/// How the attempt to take an issue's claim came out: held, unclaimed because no mesh runs,
+/// or refused because another session holds the scope.
+#[derive(Debug)]
+pub(crate) enum Taken {
+    /// The exclusive claim is held; it goes back when the guard is settled or dropped.
+    Held(HeldClaim),
+    /// No mesh cooperation runs in this process: the execution runs without a claim, and
+    /// the claim says why.
+    Unclaimed(IssueClaim),
+    /// The claim was refused: nothing may run.
+    Refused {
+        /// The claim, standing `refused`, with the holder or the reason in its detail.
+        claim: IssueClaim,
+        /// `true` when another session holds the scope (`claim_conflict`); `false` when the
+        /// mesh refused the claim for another reason.
+        conflict: bool,
+        /// The sentence for the execution's error.
+        message: String,
+    },
+}
+
+/// Take the exclusive mesh claim of `issue` for the execution `id`, before it runs: held,
+/// refused with the holder named, or unclaimed with the reason when no mesh cooperation runs in
+/// this process. The tests below hold each branch; a doc example cannot, because a running
+/// mesh is only ever constructed inside `src/mesh/` (scripts/ci/mesh-check).
+pub(crate) fn take(ctx: &Context, id: &ExecutionId, intent: &str, issue: &str) -> Taken {
+    let scope = scope_of(ctx, issue);
+    let Some(cooperation) = ctx.mesh.cooperation() else {
+        let reason = ctx
+            .mesh
+            .cooperation_status()
+            .reason
+            .unwrap_or_else(|| "mesh cooperation is not running in this process".into());
+        return Taken::Unclaimed(IssueClaim {
+            standing: ClaimStanding::Unclaimed,
+            scope,
+            detail: Some(format!(
+                "ran without a mesh claim: {reason}; nothing on the mesh kept a second start of {issue} out"
+            )),
+            ..IssueClaim::wanted(issue)
+        });
+    };
+    take_with(cooperation, id, intent, issue, scope)
+}
+
+fn take_with(
+    cooperation: Arc<Cooperation>,
+    id: &ExecutionId,
+    intent: &str,
+    issue: &str,
+    scope: Vec<String>,
+) -> Taken {
+    let session = session_of(id);
+    let info = SessionInfo {
+        session: session.clone(),
+        client: CLIENT.into(),
+        issue: Some(issue.to_string()),
+        intent: Some(intent.to_string()),
+        ..SessionInfo::default()
+    };
+    match cooperation.claim(
+        &info,
+        scope.clone(),
+        Some(intent.to_string()),
+        ClaimMode::Exclusive,
+        Some(issue.to_string()),
+    ) {
+        Ok(written) => Taken::Held(HeldClaim {
+            cooperation,
+            claim: IssueClaim {
+                standing: ClaimStanding::Held,
+                scope,
+                key: Some(written.key),
+                session: Some(session),
+                ..IssueClaim::wanted(issue)
+            },
+            armed: true,
+        }),
+        Err(CooperationError::Conflict(holders)) => {
+            let named = name_holders(holders.iter());
+            let message =
+                format!("claim_conflict: {issue} is claimed on the mesh: {named}; nothing ran");
+            Taken::Refused {
+                claim: IssueClaim {
+                    standing: ClaimStanding::Refused,
+                    scope,
+                    detail: Some(named),
+                    ..IssueClaim::wanted(issue)
+                },
+                conflict: true,
+                message,
+            }
+        }
+        Err(other) => {
+            let message =
+                format!("the mesh claim of {issue} could not be taken: {other}; nothing ran");
+            Taken::Refused {
+                claim: IssueClaim {
+                    standing: ClaimStanding::Refused,
+                    scope,
+                    detail: Some(other.to_string()),
+                    ..IssueClaim::wanted(issue)
+                },
+                conflict: false,
+                message,
+            }
+        }
+    }
+}
+
+/// The claims that keep a scope out, one sentence: which session holds which claim on what,
+/// and for which issue. What a refusal names, whether it came from taking the claim or from
+/// asking whether it could be taken.
+fn name_holders<'a>(holders: impl Iterator<Item = &'a ClaimView>) -> String {
+    holders
+        .map(|h| {
+            format!(
+                "session {} holds {} on {}{}",
+                h.session,
+                h.key,
+                h.scope.join(", "),
+                h.issue
+                    .as_deref()
+                    .map(|i| format!(" for {i}"))
+                    .unwrap_or_default()
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("; ")
+}
+
+/// Whether an exclusive claim of an issue would be admitted now, asked without taking it
+/// (I4003).
+///
+/// `devtask.implement` creates a worktree before the execution that holds the claim is
+/// started, and an overlap must refuse it before anything exists. It asks the question the
+/// claim itself will ask — [`admission_conflicts`] over the same state, the same scope and
+/// the exclusive mode — so the two cannot disagree except by a claim taken between them, which
+/// the execution's own claim then refuses, with the holder named, before its handler runs.
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum Admission {
+    /// Nothing live and exclusive meets the scope: the execution may take it.
+    Free {
+        /// The scope the claim would cover.
+        scope: Vec<String>,
+    },
+    /// No mesh cooperation runs in this process: nothing on the mesh can be asked, and the
+    /// execution runs unclaimed, as I4004 says it does.
+    Unmeshed {
+        /// The scope the claim would have covered.
+        scope: Vec<String>,
+        /// Why there is no mesh to ask.
+        reason: String,
+    },
+    /// Another session holds the scope: the refusal, starting `claim_conflict:`.
+    Conflict {
+        /// The sentence for the refusal, naming every holder.
+        message: String,
+    },
+}
+
+/// Ask whether the exclusive claim of `issue` would be admitted now; nothing is written.
+pub(crate) fn admission(ctx: &Context, issue: &str) -> Admission {
+    let scope = scope_of(ctx, issue);
+    match ctx.mesh.cooperation() {
+        Some(cooperation) => admission_with(&cooperation, issue, scope),
+        None => Admission::Unmeshed {
+            scope,
+            reason: ctx
+                .mesh
+                .cooperation_status()
+                .reason
+                .unwrap_or_else(|| "mesh cooperation is not running in this process".into()),
+        },
+    }
+}
+
+fn admission_with(cooperation: &Cooperation, issue: &str, scope: Vec<String>) -> Admission {
+    let state = cooperation.state();
+    // no session of ours holds anything yet, so no claim is passed over as our own
+    let conflicts = admission_conflicts(&state, "", &scope, ClaimMode::Exclusive);
+    if conflicts.is_empty() {
+        Admission::Free { scope }
+    } else {
+        Admission::Conflict {
+            message: format!(
+                "claim_conflict: {issue} is claimed on the mesh: {}; nothing was created",
+                name_holders(conflicts.into_iter())
+            ),
+        }
+    }
+}
+
+/// An exclusive mesh claim an execution holds. Settled when the execution ends; released by
+/// `Drop` when the worker unwinds without settling it, so a panic does not leave the scope
+/// claimed for as long as the runtime beats.
+pub(crate) struct HeldClaim {
+    cooperation: Arc<Cooperation>,
+    claim: IssueClaim,
+    armed: bool,
+}
+
+impl std::fmt::Debug for HeldClaim {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("HeldClaim")
+            .field("claim", &self.claim)
+            .field("armed", &self.armed)
+            .finish()
+    }
+}
+
+impl HeldClaim {
+    /// The claim as held: its key, its session and its scope, which the execution's
+    /// `execution.issue_claim` event and the `claimed` holder are made from.
+    pub(crate) fn claim(&self) -> &IssueClaim {
+        &self.claim
+    }
+
+    /// Settle the claim for an execution that reached `state` (`None`: the record is gone):
+    /// released, with its session closed, or kept for an outcome that is not known. The
+    /// answer is the claim as it now stands, for the execution's event.
+    pub(crate) fn settle(mut self, state: Option<ExecutionState>) -> IssueClaim {
+        match state.map(disposition) {
+            Some(ClaimStanding::Kept) => {
+                self.armed = false;
+                IssueClaim {
+                    standing: ClaimStanding::Kept,
+                    detail: Some(
+                        "the outcome is not known, so the claim is kept until a reconciliation reads what happened; it ends when this runtime stops beating"
+                            .into(),
+                    ),
+                    ..self.claim.clone()
+                }
+            }
+            _ => self.release_now(),
+        }
+    }
+
+    fn release_now(&mut self) -> IssueClaim {
+        self.armed = false;
+        let mut problems = Vec::new();
+        if let Some(key) = &self.claim.key {
+            if let Err(e) = self.cooperation.release(key) {
+                problems.push(format!("the release was refused: {e}"));
+            }
+        }
+        if let Some(session) = &self.claim.session {
+            if let Err(e) = self.cooperation.close_session(session) {
+                problems.push(format!("the session did not close: {e}"));
+            }
+        }
+        if !problems.is_empty() {
+            tracing::warn!(claim = ?self.claim.key, "an execution's issue claim was not given back cleanly: {}", problems.join("; "));
+        }
+        IssueClaim {
+            standing: ClaimStanding::Released,
+            detail: (!problems.is_empty()).then(|| problems.join("; ")),
+            ..self.claim.clone()
+        }
+    }
+}
+
+impl Drop for HeldClaim {
+    fn drop(&mut self) {
+        if self.armed {
+            let _ = self.release_now();
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::mesh::state::ClaimState;
+
+    fn live(c: &Cooperation, key: &str) -> bool {
+        c.state()
+            .claims
+            .iter()
+            .any(|claim| claim.key == key && claim.state == ClaimState::Held)
+    }
+
+    #[test]
+    fn a_claim_is_held_exclusively_and_a_second_start_of_the_issue_is_refused_naming_it() {
+        let c = crate::mesh::testing::cooperation();
+        let first = ExecutionId::fresh();
+        let scope = vec!["issue/I4004".to_string()];
+        let Taken::Held(held) = take_with(Arc::clone(&c), &first, "one", "I4004", scope.clone())
+        else {
+            panic!("the first start is not held");
+        };
+        let key = held.claim().key.clone().unwrap();
+        assert!(live(&c, &key));
+        assert_eq!(held.claim().standing, ClaimStanding::Held);
+        assert_eq!(
+            held.claim().session.as_deref(),
+            Some(session_of(&first).as_str())
+        );
+        let second = ExecutionId::fresh();
+        match take_with(Arc::clone(&c), &second, "two", "I4004", scope.clone()) {
+            Taken::Refused {
+                claim,
+                conflict,
+                message,
+            } => {
+                assert!(conflict);
+                assert_eq!(claim.standing, ClaimStanding::Refused);
+                assert!(message.starts_with("claim_conflict: I4004"), "{message}");
+                assert!(
+                    message.contains(&key),
+                    "the holder's claim is named: {message}"
+                );
+                assert!(
+                    message.contains(&session_of(&first)),
+                    "the holding execution is named: {message}"
+                );
+            }
+            other => panic!("the second start was not refused: {other:?}"),
+        }
+        // the refused start opened no session of its own
+        assert!(!c
+            .state()
+            .sessions
+            .iter()
+            .any(|s| s.info.session == session_of(&second)));
+        drop(held.settle(Some(ExecutionState::Succeeded)));
+        assert!(!live(&c, &key), "released at the final state");
+        assert!(
+            matches!(take_with(c, &second, "two", "I4004", scope), Taken::Held(_)),
+            "free again once released"
+        );
+    }
+
+    #[test]
+    fn every_final_state_releases_the_claim_and_an_unknown_outcome_keeps_it() {
+        for state in ExecutionState::ALL {
+            let c = crate::mesh::testing::cooperation();
+            let id = ExecutionId::fresh();
+            let Taken::Held(held) =
+                take_with(Arc::clone(&c), &id, "x", "I1", vec!["issue/I1".into()])
+            else {
+                panic!("not held");
+            };
+            let key = held.claim().key.clone().unwrap();
+            let settled = held.settle(Some(state));
+            if state == ExecutionState::UnknownOutcome {
+                assert_eq!(settled.standing, ClaimStanding::Kept, "{state:?}");
+                assert!(settled.detail.as_deref().unwrap().contains("not known"));
+                assert!(live(&c, &key), "{state:?}: kept");
+            } else {
+                assert_eq!(settled.standing, ClaimStanding::Released, "{state:?}");
+                assert_eq!(settled.detail, None, "{state:?}: released cleanly");
+                assert!(!live(&c, &key), "{state:?}: released");
+            }
+        }
+    }
+
+    #[test]
+    fn a_claim_dropped_unsettled_is_released_and_a_gone_record_releases_it() {
+        let c = crate::mesh::testing::cooperation();
+        let Taken::Held(held) = take_with(
+            Arc::clone(&c),
+            &ExecutionId::fresh(),
+            "x",
+            "I2",
+            vec!["issue/I2".into()],
+        ) else {
+            panic!("not held");
+        };
+        let key = held.claim().key.clone().unwrap();
+        // a worker that panics unwinds through the guard
+        let unwound = std::panic::catch_unwind(std::panic::AssertUnwindSafe(move || {
+            let _held = held;
+            panic!("the worker broke");
+        }));
+        assert!(unwound.is_err());
+        assert!(!live(&c, &key), "released on the unwind");
+
+        let Taken::Held(held) = take_with(
+            Arc::clone(&c),
+            &ExecutionId::fresh(),
+            "x",
+            "I2",
+            vec!["issue/I2".into()],
+        ) else {
+            panic!("not held");
+        };
+        let key = held.claim().key.clone().unwrap();
+        assert_eq!(held.settle(None).standing, ClaimStanding::Released);
+        assert!(!live(&c, &key));
+    }
+
+    #[test]
+    fn admission_is_asked_without_taking_and_names_the_holder_of_an_overlap() {
+        let c = crate::mesh::testing::cooperation();
+        let scope = vec!["issue/I4003".to_string()];
+        assert_eq!(
+            admission_with(&c, "I4003", scope.clone()),
+            Admission::Free {
+                scope: scope.clone()
+            }
+        );
+        assert!(
+            c.state().claims.is_empty() && c.state().sessions.is_empty(),
+            "asking wrote nothing"
+        );
+        let holder = ExecutionId::fresh();
+        let Taken::Held(held) = take_with(Arc::clone(&c), &holder, "x", "I4003", scope.clone())
+        else {
+            panic!("not held");
+        };
+        let key = held.claim().key.clone().unwrap();
+        match admission_with(&c, "I4003", scope.clone()) {
+            Admission::Conflict { message } => {
+                assert!(message.starts_with("claim_conflict: I4003"), "{message}");
+                assert!(message.contains(&key), "{message}");
+                assert!(message.contains(&session_of(&holder)), "{message}");
+                assert!(message.ends_with("nothing was created"), "{message}");
+            }
+            other => panic!("an overlap was admitted: {other:?}"),
+        }
+        // an advisory claim informs and never excludes
+        drop(held.settle(Some(ExecutionState::Succeeded)));
+        c.claim(
+            &SessionInfo::named("advisor", "cli"),
+            scope.clone(),
+            None,
+            ClaimMode::Advisory,
+            Some("I4003".into()),
+        )
+        .unwrap();
+        assert_eq!(
+            admission_with(&c, "I4003", scope.clone()),
+            Admission::Free { scope }
+        );
+    }
+
+    #[test]
+    fn without_a_mesh_admission_says_so_and_names_the_scope() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        match admission(&ctx, "I4003") {
+            Admission::Unmeshed { scope, reason } => {
+                assert_eq!(scope, ["issue/I4003"]);
+                assert!(!reason.is_empty());
+            }
+            other => panic!("{other:?}"),
+        }
+    }
+
+    #[test]
+    fn without_a_mesh_it_runs_unclaimed_and_the_scope_is_the_issue_pseudo_path() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        match take(&ctx, &ExecutionId::fresh(), "x", "I4004") {
+            Taken::Unclaimed(claim) => {
+                assert_eq!(claim.standing, ClaimStanding::Unclaimed);
+                assert_eq!(claim.scope, ["issue/I4004"]);
+                assert!(claim.key.is_none() && claim.session.is_none());
+                assert!(claim
+                    .detail
+                    .unwrap()
+                    .starts_with("ran without a mesh claim"));
+            }
+            other => panic!("{other:?}"),
+        }
+    }
+}

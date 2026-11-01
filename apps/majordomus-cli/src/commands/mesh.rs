@@ -130,6 +130,14 @@ pub fn run(args: MeshArgs) -> Result<u8> {
             render_written,
             never,
         ),
+        MeshCommand::Allocate(a) => ask(
+            &a.query,
+            "POST",
+            "/api/v1/plan/allocate",
+            Some(json!({ "kind": a.kind, "session": a.session, "at_least": a.at_least })),
+            render_allocation,
+            never,
+        ),
         MeshCommand::Release(a) => ask(
             &a.query,
             "POST",
@@ -1378,6 +1386,40 @@ fn render_verify(v: &Value) -> String {
     out
 }
 
+/// A reservation as a person reads it: the identifier, its key and claim, what each source
+/// held, and what was skipped on the way.
+fn render_allocation(v: &Value) -> String {
+    if let Some(text) = inactive(v) {
+        return text;
+    }
+    let mut out = format!(
+        "reserved   {} {} ({})\nclaim      {}",
+        s(v, "kind"),
+        s(v, "value"),
+        s(v, "reservation"),
+        s(v, "claim")
+    );
+    for src in v["sources"].as_array().into_iter().flatten() {
+        let high = src["highest"]
+            .as_u64()
+            .map_or("none".to_string(), |h| h.to_string());
+        out.push_str(&format!(
+            "\nsource     {} {high}: {}",
+            s(src, "source"),
+            s(src, "detail")
+        ));
+    }
+    for k in v["skipped"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "\nskipped    {} held by {} ({})",
+            k["number"],
+            s(k, "holder"),
+            s(k, "claim")
+        ));
+    }
+    out
+}
+
 fn render_written(v: &Value) -> String {
     if let Some(text) = inactive(v) {
         return text;
@@ -2248,6 +2290,27 @@ mod tests {
         assert!(
             text.contains("FAIL  cooperation  cooperation is disabled"),
             "{text}"
+        );
+    }
+
+    #[test]
+    fn a_reservation_names_its_key_its_sources_and_what_it_skipped() {
+        let text = render_allocation(&json!({
+            "kind": "case", "value": "42", "reservation": "id:case/42", "claim": "s/c9",
+            "sources": [
+                {"source": "tree", "highest": 41, "detail": "1 file(s)"},
+                {"source": "mesh", "highest": null, "detail": "0 reservation(s)"},
+            ],
+            "skipped": [{"number": 41, "holder": "s/b", "claim": "s/c1"}],
+        }));
+        assert_eq!(
+            text,
+            "reserved   case 42 (id:case/42)\nclaim      s/c9\nsource     tree 41: 1 file(s)\n\
+             source     mesh none: 0 reservation(s)\nskipped    41 held by s/b (s/c1)"
+        );
+        assert!(
+            render_allocation(&json!({"active": false, "reason": "no server"}))
+                .starts_with("cooperation inactive")
         );
     }
 

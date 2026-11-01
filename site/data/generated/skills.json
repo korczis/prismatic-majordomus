@@ -413,6 +413,13 @@
       "description": "Propose an intent: what must become true. Runs the Majordomus capability intents.propose with the text you type as its `statement`."
     },
     {
+      "name": "proceed",
+      "path": ".claude/skills/proceed/SKILL.md",
+      "kind": "command",
+      "source": "apps/majordomus-cli/src/capability/builtin/proceed.rs",
+      "description": "Proceed: the next step, as one work order. Runs the Majordomus capability proceed.step with the text you type as its `intent`."
+    },
+    {
       "name": "mj-artifacts",
       "path": ".claude/skills/mj-artifacts/SKILL.md",
       "kind": "domain",
@@ -508,7 +515,7 @@
       "path": ".claude/skills/mj-devtask/SKILL.md",
       "kind": "domain",
       "source": "module:devtask",
-      "description": "Majordomus devtask: One issue as an executable development task; One milestone as an executable dependency graph."
+      "description": "Majordomus devtask: Implement an issue: readiness, preflight, claim, worktree and one run; One issue as an executable development task; One milestone as an executable dependency graph."
     },
     {
       "name": "mj-directories",
@@ -718,7 +725,14 @@
       "path": ".claude/skills/mj-plan/SKILL.md",
       "kind": "domain",
       "source": "module:plan",
-      "description": "Majordomus plan: How far each issue's work has travelled; Where the plan's stamps contradict the delivered work; Where the work is now; The issues, filtered by what the graph derived; The whole derived plan; The one issue to take now; One milestone or issue, with everything derived about it; The…"
+      "description": "Majordomus plan: Reserve the next issue, case or ADR number; How far each issue's work has travelled; Where the plan's stamps contradict the delivered work; Where the work is now; The issues, filtered by what the graph derived; The whole derived plan; The one issue to take now; One milestone or…"
+    },
+    {
+      "name": "mj-proceed",
+      "path": ".claude/skills/mj-proceed/SKILL.md",
+      "kind": "domain",
+      "source": "module:proceed",
+      "description": "Majordomus proceed: What to proceed with, and why; Proceed: the next step, as one work order."
     },
     {
       "name": "mj-product",
@@ -830,7 +844,7 @@
       "path": ".claude/skills/mj-worktree/SKILL.md",
       "kind": "domain",
       "source": "module:worktree",
-      "description": "Majordomus worktree: One branch: where its worktree belongs and what is there; What it would take to bring every worktree home; Where this is, and whether that is where it belongs; The whole topology; How far a checkout is from the remote trunk; Uncommitted work in the linked worktrees, and what…"
+      "description": "Majordomus worktree: The canonical worktree of a branch, made or found; One branch: where its worktree belongs and what is there; What it would take to bring every worktree home; Where this is, and whether that is where it belongs; The whole topology; How far a checkout is from the remote trunk…"
     },
     {
       "name": "assess-before-deleting",
@@ -890,8 +904,8 @@
     }
   ],
   "claude_by_kind": {
-    "command": 1,
-    "domain": 60,
+    "command": 2,
+    "domain": 61,
     "skill": 8
   }
 }

@@ -139,10 +139,17 @@ function installExecutionPage() {
     if (
       frame.type === 'execution.completed' ||
       frame.type === 'execution.failed' ||
-      frame.type === 'execution.cancelled'
+      frame.type === 'execution.cancelled' ||
+      frame.type === 'execution.refused'
     ) {
       final = true;
       channel.close();
+      window.setTimeout(() => window.location.reload(), 250);
+      return;
+    }
+    // not the last word, but the page says something else now: read it again and keep
+    // listening for the reconciliation that follows
+    if (frame.type === 'execution.unknown_outcome') {
       window.setTimeout(() => window.location.reload(), 250);
       return;
     }
@@ -190,7 +197,9 @@ function installExecutionPage() {
 }
 
 function isFinalState(state) {
-  return state === 'succeeded' || state === 'failed' || state === 'cancelled';
+  return (
+    state === 'succeeded' || state === 'failed' || state === 'cancelled' || state === 'refused'
+  );
 }
 
 /** Append one log line, escaped; the server already removed control characters. */

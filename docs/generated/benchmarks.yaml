@@ -6,22 +6,22 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 1.0.0-alpha.10
 coverage:
   - scope: direct
-    required: 220
-    covered: 181
+    required: 226
+    covered: 184
     missing: 0
-    waived: 39
+    waived: 42
     inapplicable: 0
   - scope: http
-    required: 212
-    covered: 181
+    required: 217
+    covered: 184
     missing: 0
-    waived: 31
+    waived: 33
     inapplicable: 0
   - scope: mcp
-    required: 206
-    covered: 176
+    required: 211
+    covered: 179
     missing: 0
-    waived: 30
+    waived: 32
     inapplicable: 0
   - scope: system
     required: 14
@@ -30,10 +30,10 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 652
-    covered: 552
+    required: 668
+    covered: 561
     missing: 0
-    waived: 100
+    waived: 107
     inapplicable: 0
 capabilities:
   - id: artifacts.list
@@ -387,6 +387,14 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: devtask.implement
+    module: devtask
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
   - id: devtask.issue
     module: devtask
     kind: query
@@ -406,6 +414,14 @@ capabilities:
     http: covered
     cases:
       - first-milestone
+  - id: devtask.run
+    module: devtask
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: none
+    http: none
+    cases: []
   - id: directories.list
     module: directories
     kind: query
@@ -1454,6 +1470,14 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: plan.allocate
+    module: plan
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
   - id: plan.delivery
     module: plan
     kind: query
@@ -1571,6 +1595,26 @@ capabilities:
     cases:
       - whole-plan
       - one-milestone
+  - id: proceed.plan
+    module: proceed
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+      - milestone_and_session
+  - id: proceed.step
+    module: proceed
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - whole_plan
+      - one_intent
   - id: product.domains
     module: product
     kind: query
@@ -1998,6 +2042,15 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: worktree.create
+    module: worktree
+    kind: command
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - refused-name
   - id: worktree.inspect
     module: worktree
     kind: query

@@ -1,7 +1,7 @@
 +++
 title = "The build cache, as a person sees it"
 description = "what a person sees of the mesh build cache: how a Rust build starts sccache with the store as its second level, the one line a local-only build leaves, and the gate that refuses a build around the cache"
-weight = 27
+weight = 28
 [extra]
 source = "docs/BUILD_CACHE.md"
 +++

@@ -1,6 +1,6 @@
 ---
 name: mj-plan
-description: "Majordomus plan: How far each issue's work has travelled; Where the plan's stamps contradict the delivered work; Where the work is now; The issues, filtered by what the graph derived; The whole derived plan; The one issue to take now; One milestone or issue, with everything derived about it; The…"
+description: "Majordomus plan: Reserve the next issue, case or ADR number; How far each issue's work has travelled; Where the plan's stamps contradict the delivered work; Where the work is now; The issues, filtered by what the graph derived; The whole derived plan; The one issue to take now; One milestone or…"
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
@@ -15,6 +15,7 @@ $ARGUMENTS
 
 | Capability | What it is | MCP tool | Command line | Effect |
 |---|---|---|---|---|
+| `plan.allocate` | Reserve the next issue, case or ADR number | `majordomus_plan_allocate` | — | changes |
 | `plan.delivery` | How far each issue's work has travelled | `majordomus_plan_delivery` | `majordomus plan delivery` | reads |
 | `plan.drift` | Where the plan's stamps contradict the delivered work | `majordomus_plan_drift` | `majordomus plan drift` | reads |
 | `plan.flight` | Where the work is now | `majordomus_plan_flight` | — | reads |

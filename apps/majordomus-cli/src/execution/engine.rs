@@ -28,10 +28,14 @@ use serde_json::Value;
 
 use crate::capability::{Capability, CapabilityError, CapabilityKind, Concurrency, Context};
 
+use super::claim::{HeldClaim, Taken};
 use super::event::EventPayload;
-use super::model::{Actor, Execution, ExecutionError, ExecutionId, RepositoryRef};
+use super::model::{
+    Actor, Execution, ExecutionError, ExecutionId, ExecutionState, IdempotencyKey, IssueClaim,
+    RepositoryRef,
+};
 use super::redact::redact;
-use super::store::{ExecutionStore, Limits};
+use super::store::{Admission, ExecutionStore, Idempotency, KeyConflict, Limits, Seed};
 
 /// Why an execution was not accepted. Refused before anything is created, so a client that
 /// is told no knows nothing started.
@@ -50,6 +54,10 @@ pub enum SubmitError {
     /// The engine is stopping and accepts nothing further.
     #[error("unavailable: {0}")]
     Unavailable(String),
+    /// The idempotency key already started an execution of this capability with a
+    /// different input (I4000).
+    #[error("conflict: {0}")]
+    Conflict(KeyConflict),
 }
 
 impl SubmitError {
@@ -60,15 +68,68 @@ impl SubmitError {
             SubmitError::NotExecutable(_) => "action_unavailable",
             SubmitError::InvalidInput(_) => "validation_error",
             SubmitError::Unavailable(_) => "unavailable",
+            SubmitError::Conflict(_) => "conflict",
         }
     }
+}
+
+/// What a start was answered with: the execution, and whether it is one an earlier start
+/// with the same idempotency key began rather than one this start did.
+///
+/// ```
+/// use majordomus_cli::execution::{Actor, ActorKind, IdempotencyKey, Submitted};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+/// let start = || ctx.executions.submit_once(
+///     &ctx,
+///     "executions.demonstrate",
+///     serde_json::json!({ "steps": 1, "delay_ms": 0 }),
+///     Actor::of(ActorKind::Internal),
+///     Some(IdempotencyKey::parse("click-1").unwrap()),
+/// );
+/// let first: Submitted = start().unwrap();
+/// let again: Submitted = start().unwrap();
+/// assert!(!first.deduplicated && again.deduplicated);
+/// assert_eq!(first.execution.id, again.execution.id, "one execution");
+/// ```
+#[derive(Debug, Clone)]
+pub struct Submitted {
+    /// The execution, as accepted, or as it stands when the key had already started it.
+    pub execution: Execution,
+    /// `true` when nothing was started: the key had already started this execution with
+    /// the same input, and this is that execution.
+    pub deduplicated: bool,
+}
+
+/// What a start asks beyond the capability and its input.
+///
+/// ```
+/// use majordomus_cli::execution::{IdempotencyKey, StartOptions};
+/// let plain = StartOptions::default();
+/// assert!(plain.idempotency_key.is_none() && plain.issue.is_none());
+/// let for_issue = StartOptions {
+///     idempotency_key: Some(IdempotencyKey::parse("issue:I4004").unwrap()),
+///     issue: Some("I4004".into()),
+/// };
+/// assert_eq!(for_issue.issue.as_deref(), Some("I4004"));
+/// ```
+#[derive(Debug, Clone, Default)]
+pub struct StartOptions {
+    /// The idempotency key (I4000): a repeated start with it is the execution it started.
+    pub idempotency_key: Option<IdempotencyKey>,
+    /// The issue the execution works for (I4004): its exclusive mesh claim is taken before
+    /// the handler is entered and given back at the final state.
+    pub issue: Option<String>,
 }
 
 struct Pending {
     id: ExecutionId,
     capability: String,
+    title: String,
     input: Value,
     ctx: Context,
+    issue: Option<String>,
 }
 
 struct Inner {
@@ -194,6 +255,99 @@ impl ExecutionEngine {
         input: Value,
         actor: Actor,
     ) -> Result<Execution, SubmitError> {
+        self.submit_once(ctx, capability, input, actor, None)
+            .map(|s| s.execution)
+    }
+
+    /// [`Self::submit`], held to an idempotency key when the client sent one (I4000).
+    ///
+    /// The key is scoped to this repository and this capability, and is matched with the
+    /// digest of the input in canonical JSON: the same key with the same input is answered
+    /// the execution it started, `deduplicated`, and nothing is queued; the same key with
+    /// another input is refused with [`SubmitError::Conflict`], naming that execution. The
+    /// lookup and the record are one step of the store, so two starts sent at once with
+    /// one key start one execution. The store holds a key for as long as it holds the
+    /// execution the key started, and is in memory: a key does not outlive the server.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{Actor, ActorKind, IdempotencyKey};
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    /// let start = || ctx.executions.submit_once(
+    ///     &ctx,
+    ///     "executions.demonstrate",
+    ///     serde_json::json!({ "steps": 1, "delay_ms": 0 }),
+    ///     Actor::of(ActorKind::Internal),
+    ///     Some(IdempotencyKey::parse("click-1").unwrap()),
+    /// );
+    /// let first = start().unwrap();
+    /// let again = start().unwrap();
+    /// assert!(!first.deduplicated && again.deduplicated);
+    /// assert_eq!(first.execution.id, again.execution.id, "one execution");
+    /// ```
+    pub fn submit_once(
+        &self,
+        ctx: &Context,
+        capability: &str,
+        input: Value,
+        actor: Actor,
+        idempotency_key: Option<IdempotencyKey>,
+    ) -> Result<Submitted, SubmitError> {
+        self.submit_with(
+            ctx,
+            capability,
+            input,
+            actor,
+            StartOptions {
+                idempotency_key,
+                issue: None,
+            },
+        )
+    }
+
+    /// [`Self::submit_once`], for an issue when the start names one (I4004).
+    ///
+    /// An execution started for an issue holds that issue's exclusive mesh claim while it
+    /// runs ([`super::claim`]): the worker that picks it up takes the claim before entering
+    /// the handler and moves it `queued ──► claimed ──► running`; a claim another session
+    /// holds refuses it, with the holder named, and nothing runs; the claim is given back at
+    /// the final state, and kept for an outcome that is not known. With no mesh cooperation
+    /// in this process it runs unclaimed, and its `execution.issue_claim` event says so.
+    /// The issue is part of what an idempotency key is matched against.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{Actor, ActorKind, ClaimStanding, StartOptions};
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    /// let started = ctx.executions.submit_with(
+    ///     &ctx,
+    ///     "executions.demonstrate",
+    ///     serde_json::json!({ "steps": 1, "delay_ms": 0 }),
+    ///     Actor::of(ActorKind::Internal),
+    ///     StartOptions { issue: Some("I4004".into()), ..StartOptions::default() },
+    /// ).unwrap();
+    /// let claim = started.execution.issue_claim.unwrap();
+    /// assert_eq!((claim.issue.as_str(), claim.standing), ("I4004", ClaimStanding::Wanted));
+    /// ```
+    pub fn submit_with(
+        &self,
+        ctx: &Context,
+        capability: &str,
+        input: Value,
+        actor: Actor,
+        options: StartOptions,
+    ) -> Result<Submitted, SubmitError> {
+        let StartOptions {
+            idempotency_key,
+            issue,
+        } = options;
+        let issue = issue
+            .as_deref()
+            .map(super::model::parse_issue)
+            .transpose()
+            .map_err(SubmitError::InvalidInput)?;
         if self.stopping.load(Ordering::SeqCst) {
             return Err(SubmitError::Unavailable(
                 "this server is shutting down and is accepting no further executions".into(),
@@ -224,20 +378,47 @@ impl ExecutionEngine {
 
         let id = ExecutionId::fresh();
         let stored = redact(&c.input.schema, &input);
-        self.store.create(
-            id.clone(),
-            c.id.as_str(),
-            &c.title,
-            stored,
-            c.execution.cancellable,
+        // the issue is part of the request a key names: one key, one input, two issues is
+        // two requests. Without an issue the digest is the input's alone, as it always was.
+        let digested = match &issue {
+            Some(issue) => serde_json::json!({ "input": &input, "issue": issue }),
+            None => input.clone(),
+        };
+        let idempotency = idempotency_key.map(|key| Idempotency {
+            key,
+            digest: crate::policy::sha256_hex(&crate::capability::executor::canonical_json(
+                &digested,
+            )),
+        });
+        let seed = Seed {
+            capability: c.id.as_str(),
+            title: &c.title,
+            input: stored,
+            cancellable: c.execution.cancellable,
             actor,
-            repository_of(ctx),
-        );
+            repository: repository_of(ctx),
+        };
+        match self.store.create_once(id.clone(), seed, idempotency) {
+            Ok(Admission::Created(_)) => {}
+            Ok(Admission::Existing(execution)) => {
+                return Ok(Submitted {
+                    execution: *execution,
+                    deduplicated: true,
+                })
+            }
+            Err(conflict) => return Err(SubmitError::Conflict(conflict)),
+        }
+        if let Some(issue) = &issue {
+            self.store
+                .publish(&id, EventPayload::IssueClaim(IssueClaim::wanted(issue)));
+        }
         let pending = Pending {
             id: id.clone(),
             capability: c.id.to_string(),
+            title: c.title.to_string(),
             input,
             ctx: ctx.clone(),
+            issue,
         };
         // The queue lock is held across the queued event and the snapshot: a worker
         // finishing another execution calls `dispatch` too, and it needs this lock to take
@@ -253,9 +434,14 @@ impl ExecutionEngine {
             self.store.get(&id)
         };
         self.dispatch();
-        accepted.ok_or_else(|| {
-            SubmitError::Unavailable("the execution was forgotten as it was created".into())
-        })
+        accepted
+            .map(|execution| Submitted {
+                execution,
+                deduplicated: false,
+            })
+            .ok_or_else(|| {
+                SubmitError::Unavailable("the execution was forgotten as it was created".into())
+            })
     }
 
     /// Start whatever may start now: the bound on concurrent handlers, and the serial
@@ -394,16 +580,34 @@ fn run(store: &Arc<ExecutionStore>, pending: Pending) {
     let Pending {
         id,
         capability,
+        title,
         input,
         ctx,
+        issue,
     } = pending;
     let Some(cancel) = store.token(&id) else {
         return;
+    };
+    // an execution for an issue holds the issue's claim before anything runs; `held` lives
+    // to the end of this function, so a worker that unwinds gives the claim back on its way
+    let held = match &issue {
+        Some(issue) => match claim_issue(store, &ctx, &id, &title, issue) {
+            Some(held) => held,
+            None => return,
+        },
+        None => None,
     };
     // it may have been cancelled while it waited, up to this very instant: the start is
     // refused from a final state under the lock a cancel takes, and a refused start runs
     // nothing, where a look at the state first would leave that instant open
     if store.publish(&id, EventPayload::Started).is_none() {
+        // claimed, and asked to stop before the handler was entered: nothing ran
+        let state = store.get(&id).map(|e| e.state);
+        if state == Some(ExecutionState::Cancelling) {
+            finish(store, &id, held, EventPayload::Cancelled);
+        } else if let Some(held) = held {
+            store.publish(&id, EventPayload::IssueClaim(held.settle(state)));
+        }
         return;
     }
     let progress =
@@ -445,7 +649,88 @@ fn run(store: &Arc<ExecutionStore>, pending: Pending) {
             }
         }
     };
-    store.publish(&id, payload);
+    finish(store, &id, held, payload);
+}
+
+/// Take the issue's claim for an execution a worker picked up (I4004). `Some(held)` to go on
+/// — `held` is `None` when it runs unclaimed — and `None` when nothing may run: the claim was
+/// refused, or the execution was stopped while the claim was taken.
+fn claim_issue(
+    store: &Arc<ExecutionStore>,
+    ctx: &Context,
+    id: &ExecutionId,
+    title: &str,
+    issue: &str,
+) -> Option<Option<HeldClaim>> {
+    // stopped while it waited: nothing to claim for
+    if store.get(id).is_none_or(|e| e.state.is_final()) {
+        return None;
+    }
+    match super::claim::take(ctx, id, title, issue) {
+        Taken::Held(held) => {
+            store.publish(id, EventPayload::IssueClaim(held.claim().clone()));
+            let holder = held.claim().session.clone().unwrap_or_default();
+            if store
+                .publish(id, EventPayload::Claimed { holder })
+                .is_none()
+            {
+                // cancelled between the look above and the claim: give it back at once
+                let state = store.get(id).map(|e| e.state);
+                store.publish(id, EventPayload::IssueClaim(held.settle(state)));
+                return None;
+            }
+            Some(Some(held))
+        }
+        Taken::Unclaimed(claim) => {
+            store.publish(id, EventPayload::IssueClaim(claim));
+            let holder = "this process's execution engine, without a mesh claim".to_string();
+            store.publish(id, EventPayload::Claimed { holder })?;
+            Some(None)
+        }
+        Taken::Refused {
+            claim,
+            conflict,
+            message,
+        } => {
+            store.publish(id, EventPayload::IssueClaim(claim));
+            let error = ExecutionError {
+                code: if conflict { "refused" } else { "unavailable" }.into(),
+                message,
+                suggestion: Some(if conflict {
+                    "wait for the holder to finish, or ask it with majordomus_mesh_peers; the claim ends when its execution does".into()
+                } else {
+                    "read majordomus mesh doctor; nothing ran".into()
+                }),
+                correlation_id: id.to_string(),
+            };
+            let payload = if conflict {
+                EventPayload::Refused {
+                    error,
+                    policy: Some("mesh.claim".into()),
+                }
+            } else {
+                EventPayload::Failed { error }
+            };
+            store.publish(id, payload);
+            None
+        }
+    }
+}
+
+/// Publish an execution's last event, settling its issue claim first: released for a final
+/// state, kept for an outcome that is not known, so that the claim's event is said before the
+/// event a subscriber stops reading at.
+fn finish(
+    store: &Arc<ExecutionStore>,
+    id: &ExecutionId,
+    held: Option<HeldClaim>,
+    payload: EventPayload,
+) {
+    if let Some(held) = held {
+        let settled = held.settle(payload.implies_state());
+        store.publish(id, EventPayload::IssueClaim(settled));
+    }
+    store.publish(id, payload);
 }
 
 /// A capability error as an execution reports it.
@@ -458,6 +743,7 @@ fn failure(id: &ExecutionId, error: &CapabilityError) -> ExecutionError {
         CapabilityError::NotFound(_) => ("not_found", None),
         CapabilityError::Refused(_) => ("refused", None),
         CapabilityError::Forbidden(_) => ("forbidden", None),
+        CapabilityError::Conflict(_) => ("conflict", None),
         CapabilityError::Internal(_) => (
             "internal",
             Some(format!("search the server's output for execution_id={id}")),
@@ -470,7 +756,8 @@ fn failure(id: &ExecutionId, error: &CapabilityError) -> ExecutionError {
             | CapabilityError::NotFound(m)
             | CapabilityError::Refused(m)
             | CapabilityError::Internal(m)
-            | CapabilityError::Forbidden(m) => m.clone(),
+            | CapabilityError::Forbidden(m)
+            | CapabilityError::Conflict(m) => m.clone(),
         },
         suggestion,
         correlation_id: id.to_string(),
@@ -520,6 +807,242 @@ pub fn runnable(kind: CapabilityKind, stability: crate::capability::Stability) -
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::execution::{ActorKind, ClaimStanding};
+    use crate::mesh::state::ClaimState;
+
+    /// A context over a synthetic repository, with a mesh runtime attached when `mesh`.
+    fn context(mesh: bool) -> (crate::synthetic::SyntheticRepository, Arc<Context>) {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        if mesh {
+            ctx.mesh
+                .attach_cooperation(crate::mesh::testing::cooperation());
+        }
+        (repo, ctx)
+    }
+
+    fn start(ctx: &Context, issue: &str, input: Value) -> Execution {
+        ctx.executions
+            .submit_with(
+                ctx,
+                "executions.demonstrate",
+                input,
+                Actor::of(ActorKind::Internal),
+                StartOptions {
+                    issue: Some(issue.into()),
+                    ..StartOptions::default()
+                },
+            )
+            .unwrap()
+            .execution
+    }
+
+    /// Wait, bounded, for an execution to reach a state that satisfies `done`.
+    fn until(ctx: &Context, id: &ExecutionId, done: impl Fn(&Execution) -> bool) -> Execution {
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
+        loop {
+            let e = ctx.executions.store().get(id).expect("held");
+            if done(&e) {
+                return e;
+            }
+            assert!(
+                std::time::Instant::now() < deadline,
+                "never reached: {e:#?}"
+            );
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+    }
+
+    fn types(ctx: &Context, id: &ExecutionId) -> Vec<&'static str> {
+        ctx.executions
+            .store()
+            .events(id, 0, 1000)
+            .unwrap()
+            .events
+            .iter()
+            .map(|e| e.type_name())
+            .collect()
+    }
+
+    fn live_claims(ctx: &Context, issue: &str) -> usize {
+        ctx.mesh
+            .cooperation()
+            .unwrap()
+            .state()
+            .claims
+            .iter()
+            .filter(|c| c.issue.as_deref() == Some(issue) && c.state == ClaimState::Held)
+            .count()
+    }
+
+    #[test]
+    fn an_issue_execution_is_claimed_then_runs_and_gives_the_claim_back() {
+        let (_repo, ctx) = context(true);
+        let e = start(
+            &ctx,
+            "I4004",
+            serde_json::json!({ "steps": 1, "delay_ms": 0 }),
+        );
+        let done = until(&ctx, &e.id, |e| e.state.is_final());
+        assert_eq!(done.state, ExecutionState::Succeeded);
+        let claim = done.issue_claim.expect("the claim is on the snapshot");
+        assert_eq!(claim.standing, ClaimStanding::Released);
+        assert_eq!(claim.scope, ["issue/I4004"]);
+        assert_eq!(
+            claim.session.as_deref(),
+            Some(format!("execution-{}", e.id).as_str())
+        );
+        assert!(claim.key.is_some());
+        let order: Vec<_> = types(&ctx, &e.id)
+            .into_iter()
+            .filter(|t| {
+                matches!(
+                    *t,
+                    "execution.issue_claim"
+                        | "execution.queued"
+                        | "execution.claimed"
+                        | "execution.started"
+                        | "execution.completed"
+                )
+            })
+            .collect();
+        assert_eq!(
+            order,
+            [
+                "execution.issue_claim", // wanted
+                "execution.queued",
+                "execution.issue_claim", // held
+                "execution.claimed",
+                "execution.started",
+                "execution.issue_claim", // released
+                "execution.completed",
+            ]
+        );
+        assert_eq!(live_claims(&ctx, "I4004"), 0, "released");
+    }
+
+    #[test]
+    fn a_second_start_of_a_held_issue_is_refused_naming_the_holder_and_nothing_runs() {
+        let (_repo, ctx) = context(true);
+        let first = start(
+            &ctx,
+            "I4004",
+            serde_json::json!({ "steps": 50, "delay_ms": 1000 }),
+        );
+        until(&ctx, &first.id, |e| e.state == ExecutionState::Running);
+        assert_eq!(live_claims(&ctx, "I4004"), 1);
+        let second = start(
+            &ctx,
+            "I4004",
+            serde_json::json!({ "steps": 1, "delay_ms": 0 }),
+        );
+        let refused = until(&ctx, &second.id, |e| e.state.is_final());
+        assert_eq!(refused.state, ExecutionState::Refused);
+        assert_eq!(refused.started_at, None, "nothing ran");
+        let error = refused.error.expect("why");
+        assert_eq!(error.code, "refused");
+        assert!(
+            error.message.starts_with("claim_conflict: I4004"),
+            "{}",
+            error.message
+        );
+        assert!(
+            error.message.contains(&format!("execution-{}", first.id)),
+            "the holder is named: {}",
+            error.message
+        );
+        let claim = refused.issue_claim.unwrap();
+        assert_eq!(claim.standing, ClaimStanding::Refused);
+        assert!(!types(&ctx, &second.id).contains(&"execution.started"));
+        // another issue is not held by it
+        let other = start(
+            &ctx,
+            "I4005",
+            serde_json::json!({ "steps": 1, "delay_ms": 0 }),
+        );
+        assert_eq!(
+            until(&ctx, &other.id, |e| e.state.is_final()).state,
+            ExecutionState::Succeeded
+        );
+        ctx.executions.cancel(&first.id, "test");
+        let stopped = until(&ctx, &first.id, |e| e.state.is_final());
+        assert_eq!(stopped.state, ExecutionState::Cancelled);
+        assert_eq!(
+            stopped.issue_claim.unwrap().standing,
+            ClaimStanding::Released
+        );
+        assert_eq!(live_claims(&ctx, "I4004"), 0, "released when cancelled");
+    }
+
+    #[test]
+    fn a_failed_issue_execution_releases_its_claim_too() {
+        let (_repo, ctx) = context(true);
+        let e = start(
+            &ctx,
+            "I7",
+            serde_json::json!({ "steps": 2, "delay_ms": 0, "fail_at": 1 }),
+        );
+        let done = until(&ctx, &e.id, |e| e.state.is_final());
+        assert_eq!(done.state, ExecutionState::Failed);
+        assert_eq!(done.issue_claim.unwrap().standing, ClaimStanding::Released);
+        assert_eq!(live_claims(&ctx, "I7"), 0);
+    }
+
+    #[test]
+    fn without_a_mesh_an_issue_execution_runs_unclaimed_and_says_so() {
+        let (_repo, ctx) = context(false);
+        let e = start(
+            &ctx,
+            "I4004",
+            serde_json::json!({ "steps": 1, "delay_ms": 0 }),
+        );
+        let done = until(&ctx, &e.id, |e| e.state.is_final());
+        assert_eq!(done.state, ExecutionState::Succeeded, "never a failure");
+        let claim = done.issue_claim.unwrap();
+        assert_eq!(claim.standing, ClaimStanding::Unclaimed);
+        assert!(claim.key.is_none());
+        assert!(claim
+            .detail
+            .unwrap()
+            .starts_with("ran without a mesh claim"));
+        assert!(types(&ctx, &e.id).contains(&"execution.claimed"));
+        // and a start that names no issue is exactly what it was
+        let plain = ctx
+            .executions
+            .submit(
+                &ctx,
+                "executions.demonstrate",
+                serde_json::json!({ "steps": 1, "delay_ms": 0 }),
+                Actor::of(ActorKind::Internal),
+            )
+            .unwrap();
+        assert_eq!(plain.last_sequence, 2, "created, queued");
+        let plain = until(&ctx, &plain.id, |e| e.state.is_final());
+        assert!(plain.issue_claim.is_none());
+        assert!(!types(&ctx, &plain.id).contains(&"execution.claimed"));
+    }
+
+    #[test]
+    fn a_bad_issue_id_is_refused_before_anything_is_created() {
+        let (_repo, ctx) = context(false);
+        for bad in ["", "I1/../x", "two words", &"I".repeat(65)] {
+            let refused = ctx
+                .executions
+                .submit_with(
+                    &ctx,
+                    "executions.demonstrate",
+                    serde_json::json!({}),
+                    Actor::of(ActorKind::Internal),
+                    StartOptions {
+                        issue: Some(bad.to_string()),
+                        ..StartOptions::default()
+                    },
+                )
+                .unwrap_err();
+            assert_eq!(refused.code(), "validation_error", "{bad:?}");
+        }
+        assert!(ctx.executions.store().is_empty());
+    }
 
     #[test]
     fn a_forbidden_capability_fails_its_execution_with_the_refusal_it_gave() {

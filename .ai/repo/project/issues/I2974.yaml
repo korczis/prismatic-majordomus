@@ -1,0 +1,33 @@
+id: I2974
+milestone: "a-session-proceeds"
+title: "Proceeding claims and starts the chosen work once"
+slug: proceeding-claims-and-starts-once
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Add majordomus proceed take: through the existing capabilities only, take proceed.plan's selection with one exclusive mesh claim on the primary checkout's runtime, ensure the issue's canonical worktree, record the take in that worktree and start the task bound to the issue there; a session whose take is recorded gets that work back and nothing is created, a finished one is reported and its claim released."
+why: "ADR 0177 decision 3. Claim, worktree and start are three commands typed by hand, and nothing stops a second proceed in the same session from opening a second claim, worktree and task."
+current_state: "proceed.plan says what to take and prints the three commands; nothing takes it."
+desired_state: "One command takes it; run again, from the primary checkout or the worktree, after a restart of the server or after finish, it creates nothing; case 3443 holds each of these on a fixture repository with a declared mesh."
+serves:
+  - a-session-proceeds#proceeding-twice-creates-nothing
+scope:
+  - "apps/majordomus-cli/src/commands/proceed.rs"
+  - "apps/majordomus-cli/src/capability/builtin/proceed.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/cli/local.rs"
+  - "apps/majordomus-cli/src/commands/worktree.rs"
+  - "test/cases/3443_proceeding_twice_creates_nothing.sh"
+depends_on:
+  - "I2973"
+acceptance_criteria:
+  - "One proceed take claims the selection exclusively on the primary checkout's runtime, ensures its canonical worktree and starts the task bound to it there"
+  - "A second take by the same session, from the primary checkout or the worktree, after a server restart or after finish, creates no claim, worktree or task"
+  - "A take whose start is refused keeps its claim and record, and a rerun continues at the start; a take whose worktree cannot be ensured releases the claim it made"
+validation:
+  - "majordomus plan validate"
+  - "bash test/run.sh 3443_proceeding_twice_creates_nothing"
+evidence_required:
+  - "case_proceeding_twice_creates_nothing"
+created_at: 2026-10-18
+updated_at: 2026-10-18

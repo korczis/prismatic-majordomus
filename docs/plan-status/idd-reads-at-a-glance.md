@@ -74,9 +74,11 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I2914; they may not run concurrently |
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I2918; they may not run concurrently |
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I2919; they may not run concurrently |
+| WARN | `scope_conflict` | `I2901` | shares apps/majordomus-cli/src/plan.rs with I2972; they may not run concurrently |
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I3003; they may not run concurrently |
 | WARN | `scope_conflict` | `I2901` | shares test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh with I3004; they may not run concurrently |
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I3005; they may not run concurrently |
+| WARN | `scope_conflict` | `I2901` | shares apps/majordomus-cli/src/capability/builtin/brief.rs with I3040; they may not run concurrently |
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I3061; they may not run concurrently |
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I3079; they may not run concurrently |
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I3083; they may not run concurrently |
@@ -267,6 +269,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2902` | shares .ai/repo/project with I2914; they may not run concurrently |
 | WARN | `scope_conflict` | `I2902` | shares apps/majordomus-cli/src/ui/idd.rs with I2918; they may not run concurrently |
 | WARN | `scope_conflict` | `I2902` | shares apps/majordomus-cli/src/ui/idd.rs with I2919; they may not run concurrently |
+| WARN | `scope_conflict` | `I2902` | shares apps/majordomus-cli/src/plan.rs with I2972; they may not run concurrently |
 | WARN | `scope_conflict` | `I2902` | shares apps/majordomus-cli/src/ui/idd.rs with I3003; they may not run concurrently |
 | WARN | `scope_conflict` | `I2902` | shares .ai/repo/project with I3004; they may not run concurrently |
 | WARN | `scope_conflict` | `I2902` | shares .ai/repo/project with I3005; they may not run concurrently |

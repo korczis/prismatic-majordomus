@@ -1,0 +1,24 @@
+id: I2978
+milestone: "a-session-proceeds"
+title: "The UI shows what proceeding chose, what it refused and why"
+slug: the-ui-shows-the-proceed-decision
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Render proceed.plan's decision on /ui/proceed and in the Cockpit: the selection, the rejected candidates with their constraints, the ranking terms, what it unblocks, and the history of decisions this repository's sessions took, followed live through the existing event stream."
+why: "ADR 0177: a choice nobody can read is a second opinion nobody can check."
+current_state: "No surface shows why a session took its work."
+desired_state: "/ui/proceed and the Cockpit draw the decision from the same capability, held by a UI test and the ui audit."
+scope:
+  - "apps/majordomus-cli/src/ui"
+depends_on:
+  - "I2972"
+acceptance_criteria:
+  - "/ui/proceed shows the selection, the rejected candidates and the ranking terms from proceed.plan"
+  - "The decision history updates live from the event stream"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "test_the_ui_shows_the_proceed_decision"
+created_at: 2026-10-18
+updated_at: 2026-10-18

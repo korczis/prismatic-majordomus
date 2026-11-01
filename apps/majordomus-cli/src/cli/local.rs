@@ -142,6 +142,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "becomes the stdio MCP server for the client that spawned it; the capabilities it then serves are the projection.",
     },
     LocalCommand {
+        command: "proceed take",
+        reason: LocalReason::WritesRepository,
+        note: "creates the issue's worktree and starts its task in this checkout's repository, composing proceed.plan and mesh.claim on the primary checkout's server with worktree create and start; every projection of the registry is read-only.",
+    },
+    LocalCommand {
         command: "serve",
         reason: LocalReason::ProcessLifecycle,
         note: "becomes the HTTP server that serves every capability over the API this command exists to start.",
@@ -273,11 +278,6 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "creates a branch and a linked worktree on disk at the path the topology derives for it.",
     },
     LocalCommand {
-        command: "worktree ensure",
-        reason: LocalReason::WritesRepository,
-        note: "creates the canonical worktree of a branch when it is absent, which is the same write made idempotent.",
-    },
-    LocalCommand {
         command: "worktree repair",
         reason: LocalReason::WritesRepository,
         note: "rewrites the git administrative files of a worktree whose links no longer resolve.",
@@ -394,6 +394,11 @@ pub const LOCAL: &[LocalCommand] = &[
         command: "mesh claim",
         reason: LocalReason::RendersCapability("mesh.claim"),
         note: "runs mesh.claim on this checkout's running server, whose journal replicates it; exits 10 with the conflicting claims when it is refused.",
+    },
+    LocalCommand {
+        command: "mesh allocate",
+        reason: LocalReason::RendersCapability("plan.allocate"),
+        note: "runs plan.allocate on this checkout's running server, whose mesh admits the reservation under one lock; exits 10 when no server runs the mesh.",
     },
     LocalCommand {
         command: "mesh release",

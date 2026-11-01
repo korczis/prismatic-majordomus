@@ -1,0 +1,24 @@
+id: I2977
+milestone: "a-session-proceeds"
+title: "A session whose work stopped is resumed, never duplicated"
+slug: stopped-work-is-resumed-not-duplicated
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "When proceed finds work whose session is gone — a task with no live episode, a claim whose runtime expired, a handover nobody took — offer it first, resume it through handover --resolve and the existing claim, and never open a second claim, worktree or task for it."
+why: "ADR 0177 acceptance scenario 3. On 2026-10-16 orphaned active tasks were closed by hand (owner: work autonomously); proceed is where that decision belongs."
+current_state: "Orphaned work is found and resumed by a person reading the board and the handovers."
+desired_state: "A case stops a session mid-task and finds the next proceed resuming that task in place."
+scope:
+  - "test/cases/3371_stopped_work_is_resumed_not_duplicated.sh"
+depends_on:
+  - "I2974"
+acceptance_criteria:
+  - "Work whose session is gone is offered before new work and resumed in its own worktree and task"
+  - "No second claim, worktree or task is created for it"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_stopped_work_is_resumed_not_duplicated"
+created_at: 2026-10-18
+updated_at: 2026-10-18

@@ -11,7 +11,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 167,
+      "count": 168,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -40,7 +40,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 167
+      "count": 168
     },
     {
       "kind": "application",
@@ -96,7 +96,7 @@
       "route": null,
       "title": null,
       "reason": "A critique is the adversarial pass over one intent's plan, written by a worker, and work started under the intent without it or with a blocking finding open fails intent validation (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
-      "count": 38
+      "count": 39
     },
     {
       "kind": "deployment",
@@ -128,7 +128,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 353
+      "count": 354
     },
     {
       "kind": "domain",
@@ -168,7 +168,7 @@
       "route": null,
       "title": null,
       "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` and the Cockpit's /cockpit/intents answer for the intent itself.",
-      "count": 44
+      "count": 45
     },
     {
       "kind": "issue",
@@ -176,7 +176,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 1156
+      "count": 1165
     },
     {
       "kind": "knowledge",
@@ -200,7 +200,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 114
+      "count": 115
     },
     {
       "kind": "moment",
@@ -288,7 +288,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 672
+      "count": 683
     },
     {
       "kind": "use-case",
@@ -487,6 +487,13 @@
           "label": "adr-0149",
           "kind": "adr",
           "route": "/adrs/adr-0149/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0177",
+          "kind": "adr",
+          "route": "/adrs/adr-0177/",
           "external": false
         },
         {
@@ -4778,6 +4785,13 @@
         },
         {
           "edge": "put_in_force",
+          "label": "adr-0177",
+          "kind": "adr",
+          "route": "/adrs/adr-0177/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "adr-0191",
           "kind": "adr",
           "route": "/adrs/adr-0191/",
@@ -8598,6 +8612,13 @@
         },
         {
           "edge": "put_in_force",
+          "label": "adr-0177",
+          "kind": "adr",
+          "route": "/adrs/adr-0177/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "adr-0191",
           "kind": "adr",
           "route": "/adrs/adr-0191/",
@@ -10071,6 +10092,13 @@
       "referenced_by": [
         {
           "edge": "put_in_force",
+          "label": "adr-0177",
+          "kind": "adr",
+          "route": "/adrs/adr-0177/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "adr-0186",
           "kind": "adr",
           "route": "/adrs/adr-0186/",
@@ -10484,6 +10512,110 @@
         {
           "edge": "put_in_force",
           "label": "peer-blackboard",
+          "kind": "milestone",
+          "route": "/plan/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0177",
+      "identity": "adr-0177",
+      "slug": "adr-0177",
+      "cockpit": "/cockpit/objects/adr/adr-0177",
+      "title": "A session proceeds through one entrypoint that composes the capabilities the repository already has",
+      "status": "proposed",
+      "tags": [
+        "proceed",
+        "orchestration",
+        "planning",
+        "mesh",
+        "session"
+      ],
+      "source": ".ai/repo/adrs/0177-a-session-proceeds-through-one-entrypoint-that-composes-the-capabilities.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/brief.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mesh/state.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/peers.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/plan.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0004",
+          "kind": "adr",
+          "route": "/adrs/adr-0004/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0070",
+          "kind": "adr",
+          "route": "/adrs/adr-0070/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0144",
+          "kind": "adr",
+          "route": "/adrs/adr-0144/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0167",
+          "kind": "adr",
+          "route": "/adrs/adr-0167/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/workflows/task-lifecycle.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "a-session-proceeds",
+          "kind": "intent",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "a-session-proceeds",
           "kind": "milestone",
           "route": "/plan/",
           "external": false

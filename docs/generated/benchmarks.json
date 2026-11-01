@@ -5,26 +5,26 @@
   "coverage": [
     {
       "scope": "direct",
-      "required": 220,
-      "covered": 181,
+      "required": 226,
+      "covered": 184,
       "missing": 0,
-      "waived": 39,
+      "waived": 42,
       "inapplicable": 0
     },
     {
       "scope": "http",
-      "required": 212,
-      "covered": 181,
+      "required": 217,
+      "covered": 184,
       "missing": 0,
-      "waived": 31,
+      "waived": 33,
       "inapplicable": 0
     },
     {
       "scope": "mcp",
-      "required": 206,
-      "covered": 176,
+      "required": 211,
+      "covered": 179,
       "missing": 0,
-      "waived": 30,
+      "waived": 32,
       "inapplicable": 0
     },
     {
@@ -37,10 +37,10 @@
     },
     {
       "scope": "total",
-      "required": 652,
-      "covered": 552,
+      "required": 668,
+      "covered": 561,
       "missing": 0,
-      "waived": 100,
+      "waived": 107,
       "inapplicable": 0
     }
   ],
@@ -504,6 +504,16 @@
       ]
     },
     {
+      "id": "devtask.implement",
+      "module": "devtask",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
       "id": "devtask.issue",
       "module": "devtask",
       "kind": "query",
@@ -527,6 +537,16 @@
       "cases": [
         "first-milestone"
       ]
+    },
+    {
+      "id": "devtask.run",
+      "module": "devtask",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "none",
+      "http": "none",
+      "cases": []
     },
     {
       "id": "directories.list",
@@ -1899,6 +1919,16 @@
       ]
     },
     {
+      "id": "plan.allocate",
+      "module": "plan",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
       "id": "plan.delivery",
       "module": "plan",
       "kind": "query",
@@ -2049,6 +2079,32 @@
       "cases": [
         "whole-plan",
         "one-milestone"
+      ]
+    },
+    {
+      "id": "proceed.plan",
+      "module": "proceed",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default",
+        "milestone_and_session"
+      ]
+    },
+    {
+      "id": "proceed.step",
+      "module": "proceed",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "whole_plan",
+        "one_intent"
       ]
     },
     {
@@ -2608,6 +2664,18 @@
       "http": "covered",
       "cases": [
         "default"
+      ]
+    },
+    {
+      "id": "worktree.create",
+      "module": "worktree",
+      "kind": "command",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "refused-name"
       ]
     },
     {

@@ -62,11 +62,12 @@ pub fn run(args: RunArgs) -> Result<u8> {
     // subscribe before starting: an execution this fast would otherwise be over before
     // anything was listening
     let (subscriber, rx) = ctx.executions.store().subscribe(Filter::All);
+    let mut start = json!({ "capability": args.capability, "input": input });
+    if let Some(key) = &args.idempotency_key {
+        start["idempotency_key"] = json!(key);
+    }
     let started = ctx
-        .execute(
-            cli_capability(ctx, &["run"])?,
-            json!({ "capability": args.capability, "input": input }),
-        )
+        .execute(cli_capability(ctx, &["run"])?, start)
         .map_err(map)?;
     let id = started["id"].as_str().unwrap_or_default().to_string();
     // the id is the one this process just minted, so it parses whenever a server serves
@@ -416,6 +417,34 @@ fn describe(event: &crate::execution::ExecutionEvent) -> Option<String> {
         Cancelled => "---  cancelled".to_string(),
         Completed { .. } => "---  completed".to_string(),
         Failed { error } => format!("FAIL {}: {}", error.code, error.message),
+        Claimed { holder } => format!("---  held by {holder}"),
+        IssueClaim(claim) => format!(
+            "---  {} mesh claim {}{}{}",
+            claim.issue,
+            claim.standing.as_str(),
+            claim
+                .key
+                .as_ref()
+                .map(|k| format!(" {k}"))
+                .unwrap_or_default(),
+            claim
+                .detail
+                .as_ref()
+                .map(|d| format!(" — {d}"))
+                .unwrap_or_default()
+        ),
+        Verifying => "---  checking what it produced".to_string(),
+        Refused { error, policy } => format!(
+            "REFUSED {}: {}{}",
+            error.code,
+            error.message,
+            policy
+                .as_ref()
+                .map(|p| format!(" ({p})"))
+                .unwrap_or_default()
+        ),
+        UnknownOutcome { error } => format!("UNKNOWN {}: {}", error.code, error.message),
+        Authorizing => "---  waiting for a policy decision".to_string(),
         Queued { .. } => return None,
     })
 }
@@ -762,6 +791,7 @@ mod tests {
                 detail: None,
                 suggestion: None,
             }),
+            EventPayload::IssueClaim(crate::execution::IssueClaim::wanted("I4004")),
             EventPayload::Cancelling {
                 by: "client".into(),
             },
@@ -771,6 +801,28 @@ mod tests {
                 error: ExecutionError {
                     code: "internal".into(),
                     message: "it broke".into(),
+                    suggestion: None,
+                    correlation_id: "x".into(),
+                },
+            },
+            EventPayload::Authorizing,
+            EventPayload::Claimed {
+                holder: "worker-1".into(),
+            },
+            EventPayload::Verifying,
+            EventPayload::Refused {
+                error: ExecutionError {
+                    code: "refused".into(),
+                    message: "not here".into(),
+                    suggestion: None,
+                    correlation_id: "x".into(),
+                },
+                policy: Some("project.example".into()),
+            },
+            EventPayload::UnknownOutcome {
+                error: ExecutionError {
+                    code: "unavailable".into(),
+                    message: "it went silent".into(),
                     suggestion: None,
                     correlation_id: "x".into(),
                 },
@@ -1265,6 +1317,7 @@ mod tests {
             },
             capability: "executions.demonstrate".into(),
             input: Some(r#"{ "steps": 1, "delay_ms": 0 }"#.into()),
+            idempotency_key: None,
             follow: !quiet,
             quiet,
             format,

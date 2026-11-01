@@ -1,0 +1,24 @@
+id: I2976
+milestone: "a-session-proceeds"
+title: "Two sessions proceeding at once never hold the same work"
+slug: concurrent-sessions-never-share-work
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Hold that two sessions running proceed at the same moment, on one machine or two, never both hold the same issue or overlapping scope: on one runtime the exclusive claim admits one, and across runtimes the loser of the fold's winner-naming stops and proceeds with the next eligible issue."
+why: "ADR 0177 acceptance scenario 2. Cross-machine exclusivity is local admission plus deterministic naming of the winner until mesh-journal-converges adds fencing; proceed must act on that verdict, not assume a lock."
+current_state: "Nothing stops two sessions choosing the same issue but the person reading the board."
+desired_state: "A case races two proceeds on one runtime and through two linked runtimes and finds one holder and one loser who moved on."
+scope:
+  - "test/cases/3370_two_sessions_proceeding_never_share_work.sh"
+depends_on:
+  - "I2974"
+acceptance_criteria:
+  - "Two simultaneous proceeds on one runtime hold different work"
+  - "Across two linked runtimes the loser of a conflicting claim stops and takes the next eligible issue"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_two_sessions_proceeding_never_share_work"
+created_at: 2026-10-18
+updated_at: 2026-10-18
