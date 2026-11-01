@@ -2201,6 +2201,15 @@ pub enum ReleaseCommand {
         #[arg(long, value_name = "REF", default_value = "HEAD")]
         head: String,
     },
+    /// Whether a release leaves the site better than the previous one found it: no measure of the site regressed, and at least one change in the window improves it through a source it is generated from
+    Site {
+        /// The previous release: a recorded tag or version, or any commit; the newest recorded stable release that is an ancestor of the head when absent
+        #[arg(long, value_name = "REF")]
+        since: Option<String>,
+        /// The commit being released
+        #[arg(long, value_name = "REF", default_value = "HEAD")]
+        head: String,
+    },
     /// Raise the version in the one place it is authored, to at least what the public contract requires; scripts/derive derives the rest
     Bump {
         /// Raise by this much instead of by the measured minimum; never below it
@@ -5649,6 +5658,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             title: "What a landing would raise the version to",
             description: "The version the integration executor allocates when it lands a head on the trunk (ADR 0134): the trunk's version, the head's movement of the public contract measured against the trunk's committed registry, the policy floor and any exemption, and the larger of the requirement and the floor — read from git at the two refs, never from the branch's own version. This fixture has no trunk to raise from, and says so with exit 12 rather than inventing a number.",
             argv: &["release", "next", "--format", "json"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "release site",
+        examples: &[ExampleDoc {
+            id: "release-site",
+            title: "Whether a release leaves the site better than it found it",
+            description: "The verdict of project.a-release-leaves-the-site-better: every measure of the site the executable computes — the text pairs below WCAG AA and the weakest text contrast in each theme, and the page files written by hand — at the previous release's recorded commit and at the commit being released, each with its delta; then every commit of the window that touched the site or named it, and whether it counts as an improvement. Exit 0 passes, 10 is a regression or a window with no improvement, each finding naming the measure and its delta or the commits and why none counts. The release workflow asks it before it builds anything. This fixture has recorded no release, so there is nothing to compare with, and it says so with exit 12 rather than passing.",
+            argv: &["release", "site", "--format", "json"],
             setup: &[],
             expect: Expect::ExitCode(12),
         }],

@@ -646,6 +646,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "prints the version a landing of HEAD onto the trunk would allocate, and why.",
     },
     LocalCommand {
+        command: "release site",
+        reason: LocalReason::RendersCapability("release.site"),
+        note: "prints whether a release leaves the site better than the previous one: every measure with its delta, and the changes that count; exit 10 when it does not.",
+    },
+    LocalCommand {
         command: "release bump",
         reason: LocalReason::WritesRepository,
         note: "raises the version in the one place it is authored, and the lock's record of it; the one writer, and a deliberate act.",
