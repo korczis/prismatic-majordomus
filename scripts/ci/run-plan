@@ -203,7 +203,7 @@ if [ "$before_push" = 1 ]; then
     if bash -c "$cmd" < /dev/null > "$plan.$g.log" 2>&1; then printf '  ok     %s (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"; printf '%s %s\n' "$(( $(date +%s) - t0 ))" "$g" >> "$plan.times"
     elif g_rc=$?; [ "$g_rc" = 12 ] && [ "$no_exe" = 1 ]; then
       printf '  NOT JUDGED %s (%ss): exit 12, and no executable of this tree'"'"'s generation is here; CI judges it\n' \
-        "$g" "$(( $(date +%s) - t0 ))"
+        "$g" "$(( $(date +%s) - t0 ))"; sed 's/^/         | /' "$plan.$g.log" | tail -n 5
       unjudged="$unjudged $g"
     else printf '  FAILED %s (%ss): %s\n' "$g" "$(( $(date +%s) - t0 ))" "$cmd"; sed 's/^/         | /' "$plan.$g.log" | tail -n 15
       failed="$failed $g"; fi
