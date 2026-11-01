@@ -59137,7 +59137,9 @@
             "a-provider-carries-the-contract-natively#the-guard-is-wired"
           ],
           "slug": "the-edit-guard-is-wired",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-11-01T07:56:02Z",
+          "started_event": "sha256:2eb92c6fa24d972384bad6d64679ac1b929ae2b3d6e5f5743a2562e71efe62f6",
+          "updated_at": "2026-11-01T07:56:02Z",
           "validation": [
             "bash test/run.sh 3069_an_edit_no_claim_covers_is_refused",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test guard_hook",
@@ -101402,6 +101404,20 @@
         "label": "test/cases/4512_no_derived_page_outgrows_the_index.sh",
         "route": "/cockpit/objects/test/test-cases-4512-no-derived-page-outgrows-the-index-sh",
         "source": "test/cases/4512_no_derived_page_outgrows_the_index.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4521_the_edit_guard_is_wired_in_the_generated_settings.sh",
+        "kind": "test",
+        "label": "test/cases/4521_the_edit_guard_is_wired_in_the_generated_settings.sh",
+        "route": "/cockpit/objects/test/test-cases-4521-the-edit-guard-is-wired-in-the-generated-settings-sh",
+        "source": "test/cases/4521_the_edit_guard_is_wired_in_the_generated_settings.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4522_an_unclaimed_edit_is_reported_through_the_generated_settings.sh",
+        "kind": "test",
+        "label": "test/cases/4522_an_unclaimed_edit_is_reported_through_the_generated_settings.sh",
+        "route": "/cockpit/objects/test/test-cases-4522-an-unclaimed-edit-is-reported-through-the-generated-settings-sh",
+        "source": "test/cases/4522_an_unclaimed_edit_is_reported_through_the_generated_settings.sh"
       },
       {
         "id": "majordomus://test/test/cases/45_github_projection.sh",
@@ -148539,6 +148555,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4521_the_edit_guard_is_wired_in_the_generated_settings.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4522_an_unclaimed_edit_is_reported_through_the_generated_settings.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/45_github_projection.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -153610,8 +153636,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4192,
-      "edges": 9633,
+      "nodes": 4194,
+      "edges": 9635,
       "acyclic": false,
       "truncated": false
     }

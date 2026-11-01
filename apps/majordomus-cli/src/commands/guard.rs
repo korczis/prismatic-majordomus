@@ -6,6 +6,13 @@
 //! 2, with the reason and the remedy on stderr, which the provider hands to the model. Every
 //! other outcome is 0, an undecidable one included: a guard that refused because it could
 //! not read its own inputs would stop every edit of a checkout nobody has served.
+//!
+//! Under `session.edit_guard_mode: advisory` (I3322) an edit no claim covers is one of those
+//! other outcomes, and it is not let through in silence: the reason and the remedy are said on
+//! stderr, and one line — when, which session, which path — is appended to
+//! [`UNCLAIMED_LOG`] in the checkout the file belongs to. `majordomus doctor` reads those
+//! lines across the repository's checkouts and names the sessions that edited unclaimed
+//! recently; that list is what says when refusal can be turned on (I3323).
 
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
@@ -16,6 +23,20 @@ use crate::guard::{from_payload, judge, server_claims, ClaimSource, EditVerdict}
 
 /// The code a provider's pre-tool hook reads as "do not run this tool".
 const EXIT_REFUSED: u8 = 2;
+
+/// Where an advisory guard records an unclaimed edit, relative to the checkout's root: one
+/// tab-separated line per edit — the time (UTC, RFC 3339), the writing session
+/// (`<provider>-<session id>`, `-` when the payload named none) and the repository-relative
+/// path. Beside the shim's own `skipped.log`, under the checkout's local state, because it is
+/// a fact about this checkout's sessions and nobody else's to commit.
+const UNCLAIMED_LOG: &str = ".ai/local/state/guard/unclaimed.log";
+
+/// One judged edit: the checkout it belongs to, the session that asked, and the verdict.
+struct Judged {
+    root: PathBuf,
+    session: Option<String>,
+    verdict: EditVerdict,
+}
 
 /// Run `majordomus guard`.
 pub fn run(args: GuardArgs) -> Result<u8> {
@@ -30,8 +51,52 @@ fn hook(args: GuardHookArgs) -> Result<u8> {
     let mut payload = String::new();
     let _ = std::io::stdin().read_to_string(&mut payload);
     let base = args.repo.clone().or_else(|| std::env::current_dir().ok());
-    let verdict = answer(&args.provider, base, &payload, server_claims);
-    Ok(report(verdict.as_ref(), &mut std::io::stderr()))
+    let judged = answer(&args.provider, base, &payload, server_claims);
+    let mut err = std::io::stderr();
+    if let Some(j) = judged.as_ref().filter(|j| advised(&j.verdict)) {
+        record(
+            j,
+            &crate::peers::rfc3339(std::time::SystemTime::now()),
+            &mut err,
+        );
+    }
+    Ok(report(judged.as_ref().map(|j| &j.verdict), &mut err))
+}
+
+/// Whether `verdict` is an unclaimed edit an advisory guard let through.
+fn advised(verdict: &EditVerdict) -> bool {
+    verdict.allowed && verdict.ground == "unclaimed"
+}
+
+/// Append the advisory line for `j` to its checkout's [`UNCLAIMED_LOG`]. A line that cannot
+/// be written is said on `err` and costs the edit nothing: the record is the report's input,
+/// and an edit is never stopped for the sake of a report about it.
+fn record(j: &Judged, at: &str, err: &mut dyn Write) {
+    let log = j.root.join(UNCLAIMED_LOG);
+    // a field is one line and holds no tab, whatever a payload put in it
+    let field = |s: &str| s.replace(['\t', '\n', '\r'], " ");
+    let line = format!(
+        "{at}\t{}\t{}\n",
+        field(j.session.as_deref().unwrap_or("-")),
+        field(&j.verdict.path)
+    );
+    let written = log
+        .parent()
+        .map_or(Ok(()), std::fs::create_dir_all)
+        .and_then(|()| {
+            std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(&log)
+        })
+        .and_then(|mut f| f.write_all(line.as_bytes()));
+    if let Err(e) = written {
+        let _ = writeln!(
+            err,
+            "majordomus guard: the unclaimed edit was not recorded in {}: {e}",
+            log.display()
+        );
+    }
 }
 
 /// The verdict on the edit `payload` names, or `None` when it names no file of a repository.
@@ -45,7 +110,7 @@ fn answer(
     base: Option<PathBuf>,
     payload: &str,
     claims: impl FnOnce(&Path) -> ClaimSource,
-) -> Option<EditVerdict> {
+) -> Option<Judged> {
     let (path, session) = from_payload(payload)?;
     let target = base.unwrap_or_default().join(path);
     let start = target.ancestors().find(|a| a.is_dir())?.to_path_buf();
@@ -57,26 +122,39 @@ fn answer(
     let rest = target.strip_prefix(&start).unwrap_or(target.as_path());
     let path = start.canonicalize().unwrap_or_default().join(rest);
     let session = session.map(|s| format!("{provider}-{s}"));
-    Some(judge(
-        &root,
-        &path.to_string_lossy(),
-        session.as_deref(),
-        || claims(&root),
-    ))
+    let verdict = judge(&root, &path.to_string_lossy(), session.as_deref(), || {
+        claims(&root)
+    });
+    Some(Judged {
+        root,
+        session,
+        verdict,
+    })
 }
 
 /// The exit code for `verdict`, with the reason and the remedy written to `err` for a
-/// refusal: the provider hands that text to the model.
+/// refusal — the provider hands that text to the model — and for an unclaimed edit an
+/// advisory guard let through, which exits 0 and is said all the same.
 fn report(verdict: Option<&EditVerdict>, err: &mut dyn Write) -> u8 {
-    let Some(refused) = verdict.filter(|v| !v.allowed) else {
+    let Some(unclaimed) = verdict.filter(|v| !v.allowed || advised(v)) else {
         return 0;
     };
-    let remedy = refused.remedy.as_deref().unwrap_or_default();
+    let remedy = unclaimed.remedy.as_deref().unwrap_or_default();
+    if unclaimed.allowed {
+        let _ = writeln!(
+            err,
+            "majordomus guard (advisory): {}\n  {remedy}\n  \
+             (recorded in {UNCLAIMED_LOG}; session.edit_guard_mode: refuse in \
+             .ai/repo/policy.yaml would have refused it; I3322)",
+            unclaimed.detail
+        );
+        return 0;
+    }
     let _ = writeln!(
         err,
         "majordomus guard: {}\n  {remedy}\n  \
          (session.edits_require_claim in .ai/repo/policy.yaml turns this guard off; I2735)",
-        refused.detail
+        unclaimed.detail
     );
     EXIT_REFUSED
 }
@@ -85,8 +163,9 @@ fn report(verdict: Option<&EditVerdict>, err: &mut dyn Write) -> u8 {
 mod tests {
     use super::*;
 
-    /// A repository on the mesh whose policy asks every edit for a claim.
-    fn repository() -> tempfile::TempDir {
+    /// A repository on the mesh whose policy asks every edit for a claim, with the guard in
+    /// `mode`.
+    fn repository_in(mode: &str) -> tempfile::TempDir {
         let skeleton = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share/skeleton");
         let dir = tempfile::tempdir().unwrap();
         let ai = dir.path().join(".ai");
@@ -94,7 +173,11 @@ mod tests {
         std::fs::copy(skeleton.join("ai/manifest.yaml"), ai.join("manifest.yaml")).unwrap();
         let policy = std::fs::read_to_string(skeleton.join("policy.yaml"))
             .unwrap()
-            .replace("edits_require_claim: false", "edits_require_claim: true");
+            .replace("edits_require_claim: false", "edits_require_claim: true")
+            .replace(
+                "edit_guard_mode: advisory",
+                &format!("edit_guard_mode: {mode}"),
+            );
         std::fs::write(ai.join("repo/policy.yaml"), policy).unwrap();
         std::fs::write(
             ai.join("repo/mesh/mesh.yaml"),
@@ -102,6 +185,11 @@ mod tests {
         )
         .unwrap();
         dir
+    }
+
+    /// The same, refusing.
+    fn repository() -> tempfile::TempDir {
+        repository_in("refuse")
     }
 
     fn edit(path: &str) -> String {
@@ -112,7 +200,7 @@ mod tests {
     fn an_unclaimed_edit_is_refused_with_the_reason_and_the_remedy() {
         let dir = repository();
         let root = dir.path().canonicalize().unwrap();
-        let verdict = answer(
+        let judged = answer(
             "claude-code",
             Some(dir.path().to_path_buf()),
             &edit("docs/new.md"),
@@ -122,16 +210,76 @@ mod tests {
             },
         )
         .expect("a file of the repository");
+        let verdict = &judged.verdict;
         assert!(!verdict.allowed);
+        assert!(
+            !advised(verdict),
+            "a refusal is not an advisory let-through"
+        );
         assert_eq!(
             verdict.path, "docs/new.md",
             "a file that does not exist yet is placed"
         );
         let mut err = Vec::new();
-        assert_eq!(report(Some(&verdict), &mut err), EXIT_REFUSED);
+        assert_eq!(report(Some(verdict), &mut err), EXIT_REFUSED);
         let text = String::from_utf8(err).unwrap();
         assert!(text.contains("no claim covers docs/new.md"), "{text}");
         assert!(text.contains("--session claude-code-s1"), "{text}");
+    }
+
+    #[test]
+    fn an_advisory_guard_lets_the_unclaimed_edit_through_says_so_and_records_it() {
+        let dir = repository_in("advisory");
+        let judged = answer(
+            "claude-code",
+            Some(dir.path().to_path_buf()),
+            &edit("docs/new.md"),
+            |_| ClaimSource::Claims(vec![]),
+        )
+        .expect("a file of the repository");
+        assert!(advised(&judged.verdict), "{:?}", judged.verdict);
+        assert_eq!(judged.session.as_deref(), Some("claude-code-s1"));
+        let mut err = Vec::new();
+        assert_eq!(report(Some(&judged.verdict), &mut err), 0);
+        let text = String::from_utf8(err).unwrap();
+        assert!(text.contains("majordomus guard (advisory)"), "{text}");
+        assert!(text.contains("no claim covers docs/new.md"), "{text}");
+        assert!(
+            text.contains("majordomus start"),
+            "the remedy is said: {text}"
+        );
+        let mut err = Vec::new();
+        record(&judged, "2026-11-01T10:00:00Z", &mut err);
+        record(&judged, "2026-11-01T10:05:00Z", &mut err);
+        assert!(err.is_empty(), "{}", String::from_utf8_lossy(&err));
+        let log = std::fs::read_to_string(judged.root.join(UNCLAIMED_LOG)).unwrap();
+        assert_eq!(
+            log,
+            "2026-11-01T10:00:00Z\tclaude-code-s1\tdocs/new.md\n\
+             2026-11-01T10:05:00Z\tclaude-code-s1\tdocs/new.md\n",
+            "one line per edit, appended"
+        );
+    }
+
+    #[test]
+    fn a_record_that_cannot_be_written_is_said_and_costs_the_edit_nothing() {
+        let dir = repository_in("advisory");
+        let judged = answer(
+            "claude-code",
+            Some(dir.path().to_path_buf()),
+            &edit("docs/new.md"),
+            |_| ClaimSource::Claims(vec![]),
+        )
+        .expect("a file of the repository");
+        // the directory the log belongs in is a file
+        let state = judged.root.join(".ai/local/state");
+        std::fs::create_dir_all(&state).unwrap();
+        std::fs::write(state.join("guard"), "not a directory").unwrap();
+        let mut err = Vec::new();
+        record(&judged, "2026-11-01T10:00:00Z", &mut err);
+        let text = String::from_utf8(err).unwrap();
+        assert!(text.contains("was not recorded"), "{text}");
+        assert_eq!(report(Some(&judged.verdict), &mut Vec::<u8>::new()), 0);
     }
 
     #[test]
@@ -159,16 +307,17 @@ mod tests {
     fn an_allowed_edit_says_nothing() {
         let dir = repository();
         let claims = |_: &Path| ClaimSource::Unavailable("no server".into());
-        let verdict = answer(
+        let judged = answer(
             "claude-code",
             Some(dir.path().into()),
             &edit("a.md"),
             claims,
         )
         .expect("a file of the repository");
-        assert_eq!(verdict.ground, "undecided");
+        assert_eq!(judged.verdict.ground, "undecided");
+        assert!(!advised(&judged.verdict));
         let mut err = Vec::new();
-        assert_eq!(report(Some(&verdict), &mut err), 0);
+        assert_eq!(report(Some(&judged.verdict), &mut err), 0);
         assert!(err.is_empty());
     }
 }

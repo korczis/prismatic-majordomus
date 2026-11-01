@@ -131,7 +131,15 @@
         },
         "edits_require_claim": {
           "type": "boolean",
-          "description": "Refuse a provider's tool that writes a file of the checkout unless a claim covers it: the active task's scope, or a live mesh claim of the writing session. Judged by `majordomus guard hook`, which the provider's pre-tool hook runs; only on a repository whose mesh is declared enabled, and what cannot be read is let through. Absent means off: it refuses edits, and a repository that never asked for that must not find its workers stopped by an upgrade (I2735)."
+          "description": "Refuse a provider's tool that writes a file of the checkout unless a claim covers it: the active task's scope, or a live mesh claim of the writing session. Judged by `majordomus guard hook`, which the provider's pre-tool hook runs; only on a repository whose mesh is declared enabled, and what cannot be read is let through. Absent means off: it refuses edits, and a repository that never asked for that must not find its workers stopped by an upgrade (I2735). Whether an unclaimed edit is refused or only reported is edit_guard_mode."
+        },
+        "edit_guard_mode": {
+          "type": "string",
+          "enum": [
+            "advisory",
+            "refuse"
+          ],
+          "description": "What the edit guard does with an edit no claim covers once edits_require_claim asks it to judge one. `advisory` says the edit was unclaimed, on the provider's stderr and as a line of .ai/local/state/guard/unclaimed.log in the checkout the file belongs to, and lets it through; `doctor` lists the sessions that edited unclaimed recently. `refuse` stops it: the pre-tool hook exits 2 with the reason and the remedy. Absent means advisory, because `capture install` wires the guard into the provider and a repository whose policy asked for claims before the hook existed must not find its workers stopped by that upgrade (I3322)."
         },
         "brief_interval_minutes": {
           "type": "integer",

@@ -20107,7 +20107,7 @@
           "type": "string"
         },
         {
-          "description": "Why, as one word: `off`, `outside`, `local`, `no_mesh`, `task`, `claim`,\n`undecided` or `unclaimed`. Only `unclaimed` refuses.",
+          "description": "Why, as one word: `off`, `outside`, `local`, `no_mesh`, `task`, `claim`,\n`undecided` or `unclaimed`. Only `unclaimed` refuses, and only under\n`session.edit_guard_mode: refuse`; under `advisory` it is allowed and reported.",
           "name": "ground",
           "refs": [],
           "required": true,
@@ -20121,7 +20121,7 @@
           "type": "string"
         },
         {
-          "description": "What makes the edit allowed, when it is refused.",
+          "description": "What makes the edit claimed, when no claim covers it: refused, or let through only\nbecause the guard is advisory.",
           "name": "remedy",
           "refs": [],
           "required": false,
@@ -68629,7 +68629,7 @@
       "slug": "graph"
     },
     {
-      "description": "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim.",
+      "description": "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim and made to refuse by session.edit_guard_mode.",
       "name": "guard",
       "operations": [
         {
@@ -68641,7 +68641,7 @@
           "cache_detail": "",
           "cli": "",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/guard/edit?path=docs%2FMESH.md&session=claude-code-bench\"",
-          "description": "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; refused as unclaimed otherwise, with the remedy. What cannot be read — the policy, the mesh — is let through and named, never refused.",
+          "description": "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; otherwise the ground is unclaimed, with the remedy: refused under session.edit_guard_mode: refuse, and let through and still named under advisory, the default (I3322). What cannot be read — the policy, the mesh — is let through and named, never refused.",
           "home": "guard",
           "id": "guard.edit",
           "kind": "query",

@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.10"
   },
   "registry": {
-    "fingerprint": "cc9dfc7440e849f7ae318d91aa14dbb563ddb53691110d8224b774189334c1f5",
+    "fingerprint": "901e768d063af6ef253e7f90a371b0eca98e3b30a9cbdba711233fbe9d531041",
     "summary": {
-      "total": 3728,
+      "total": 3730,
       "builtin": 220,
-      "declarative": 3508,
+      "declarative": 3510,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3508
+        "resource": 3510
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3518
+        "implemented": 3520
       },
       "mcp_tools": 206,
-      "mcp_resources": 3565,
+      "mcp_resources": 3567,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -34842,7 +34842,7 @@
         "module": "guard",
         "kind": "query",
         "title": "Judge one edit",
-        "description": "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; refused as unclaimed otherwise, with the remedy. What cannot be read — the policy, the mesh — is let through and named, never refused.",
+        "description": "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; otherwise the ground is unclaimed, with the remedy: refused under session.edit_guard_mode: refuse, and let through and still named under advisory, the default (I3322). What cannot be read — the policy, the mesh — is let through and named, never refused.",
         "input": {
           "name": "GuardEditInput",
           "schema": {
@@ -34883,7 +34883,7 @@
               },
               "ground": {
                 "type": "string",
-                "description": "Why, as one word: `off`, `outside`, `local`, `no_mesh`, `task`, `claim`,\n`undecided` or `unclaimed`. Only `unclaimed` refuses."
+                "description": "Why, as one word: `off`, `outside`, `local`, `no_mesh`, `task`, `claim`,\n`undecided` or `unclaimed`. Only `unclaimed` refuses, and only under\n`session.edit_guard_mode: refuse`; under `advisory` it is allowed and reported."
               },
               "detail": {
                 "type": "string",
@@ -34894,7 +34894,7 @@
                   "string",
                   "null"
                 ],
-                "description": "What makes the edit allowed, when it is refused."
+                "description": "What makes the edit claimed, when no claim covers it: refused, or let through only\nbecause the guard is advisory."
               }
             },
             "required": [
@@ -91299,7 +91299,7 @@
       {
         "id": "guard",
         "title": "Edit guard",
-        "description": "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim.",
+        "description": "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim and made to refuse by session.edit_guard_mode.",
         "stability": "experimental",
         "source": "builtin",
         "capabilities": 1,
@@ -92005,7 +92005,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 672,
+        "capabilities": 674,
         "capability_ids": []
       },
       {
@@ -92097,7 +92097,7 @@
     ]
   },
   "index": {
-    "fingerprint": "3090325deb7958157829ab237390785703428ed455f9d7510c30d9104dfe66b4",
+    "fingerprint": "a7a97cf84c876dad3b4d1a38a88b9b2bb96cef13b832dd86acbbede31b585dc9",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92151,7 +92151,7 @@
       "session": 93,
       "skill": 8,
       "taxonomy": 10,
-      "test": 672,
+      "test": 674,
       "use-case": 49,
       "workspace": 1
     },
@@ -99537,7 +99537,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 90757
+        "bytes": 92416
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -99609,7 +99609,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 126535
+        "bytes": 126344
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -102710,7 +102710,7 @@
         "identity": "lib/capture.sh",
         "path": "lib/capture.sh",
         "source_class": "library",
-        "bytes": 170507
+        "bytes": 177657
       },
       {
         "uri": "majordomus://implementation/lib/changed.sh",
@@ -102798,7 +102798,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 112757
+        "bytes": 116699
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -112082,7 +112082,7 @@
         "path": ".ai/repo/project/issues/I3322.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3365
+        "bytes": 3495
       },
       {
         "uri": "majordomus://issue/I3323",
@@ -119480,7 +119480,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 26319
+        "bytes": 26909
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -126165,7 +126165,7 @@
         "identity": "test/cases/3069_an_edit_no_claim_covers_is_refused.sh",
         "path": "test/cases/3069_an_edit_no_claim_covers_is_refused.sh",
         "source_class": "case",
-        "bytes": 5718
+        "bytes": 6228
       },
       {
         "uri": "majordomus://test/test/cases/3073_context_knowledge_slice.sh",
@@ -127878,6 +127878,22 @@
         "path": "test/cases/4512_no_derived_page_outgrows_the_index.sh",
         "source_class": "case",
         "bytes": 6738
+      },
+      {
+        "uri": "majordomus://test/test/cases/4521_the_edit_guard_is_wired_in_the_generated_settings.sh",
+        "kind": "test",
+        "identity": "test/cases/4521_the_edit_guard_is_wired_in_the_generated_settings.sh",
+        "path": "test/cases/4521_the_edit_guard_is_wired_in_the_generated_settings.sh",
+        "source_class": "case",
+        "bytes": 11228
+      },
+      {
+        "uri": "majordomus://test/test/cases/4522_an_unclaimed_edit_is_reported_through_the_generated_settings.sh",
+        "kind": "test",
+        "identity": "test/cases/4522_an_unclaimed_edit_is_reported_through_the_generated_settings.sh",
+        "path": "test/cases/4522_an_unclaimed_edit_is_reported_through_the_generated_settings.sh",
+        "source_class": "case",
+        "bytes": 8402
       },
       {
         "uri": "majordomus://test/test/cases/45_github_projection.sh",
@@ -130564,7 +130580,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 672
+      "objects": 674
     },
     {
       "name": "use-case",
@@ -150260,7 +150276,7 @@
             "route": "/docs/cli/guard/hook/",
             "executable": true,
             "usage": "majordomus guard hook [OPTIONS]",
-            "about": "Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise",
+            "about": "Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it and session.edit_guard_mode is refuse, 0 otherwise; under advisory, the default, an unclaimed edit is said on stderr and recorded, and exits 0",
             "args": [
               {
                 "name": "provider",
@@ -166297,7 +166313,7 @@
         "name": "majordomus_guard_edit",
         "id": "guard.edit",
         "title": "Judge one edit",
-        "description": "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; refused as unclaimed otherwise, with the remedy. What cannot be read — the policy, the mesh — is let through and named, never refused.",
+        "description": "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; otherwise the ground is unclaimed, with the remedy: refused under session.edit_guard_mode: refuse, and let through and still named under advisory, the default (I3322). What cannot be read — the policy, the mesh — is let through and named, never refused.",
         "kind": "query",
         "read_only": true,
         "effect": "read",
