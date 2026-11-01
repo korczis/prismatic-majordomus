@@ -1,0 +1,31 @@
+id: I4231
+milestone: landing-survives-any-session
+title: The containment test's unwalkable mirror names a parent that was never written, so a commit-graph cannot walk it
+slug: a-mirror-whose-history-is-missing-decides-nothing
+priority: p0
+profile: implementation
+parallel_safe: true
+serves:
+  - "landing-survives-any-session#one-executor"
+objective: "integration::memo::tests::containment_answers_as_containing_and_asks_each_pair_once builds its unwalkable mirror deterministically, so it fails only when CheckoutMemo::containing answers for a mirror git cannot walk, never because git found the history elsewhere."
+why: "The test failed on #2519's coverage job (run 40204784145, job 121204410486, git 2.55.0) at memo.rs:466 with walked = {one: [(1, one), (2, two)], two: [(2, two)]}, and passed on master's run 40196303175. It made the mirror unwalkable by deleting the loose object of its tip's parent. Reproduced on this machine (git 2.55.0): with no commit-graph, git rev-list on the tip exits 128; with a commit-graph written before the deletion, it exits 0, because git reads the parent links from the graph without opening the object. So whether the test passed depended on whether anything had written a commit-graph in the temporary repository."
+current_state: "The test deletes .git/objects/<lost> and asserts that containment then answers nothing for the mirror."
+desired_state: "The mirror's tip is a commit written with git hash-object whose parent id was never written, so no pack, commit-graph or maintenance run can supply it. The test asserts that precondition (git rev-list on the tip fails) before it asserts the behaviour."
+scope:
+  - apps/majordomus-cli/src/integration/memo.rs
+  - .ai/repo/project/issues/I4231.yaml
+non_scope:
+  - "CheckoutMemo::containing and ancestry, which already treat a walk git refuses as undecided"
+  - "Isolating the test's git from the runner's global configuration"
+depends_on: []
+acceptance_criteria:
+  - "The test passes, and its precondition holds: git rev-list on the mirror's tip fails"
+  - "The precondition still holds after git commit-graph write --reachable and git gc in the test repository"
+  - "The rest of the test (pairs decided once, an unnamed head left to the caller, no repository answers nothing) is unchanged"
+validation:
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::memo::"
+evidence_required:
+  - "containment_answers_as_containing_and_asks_each_pair_once_test"
+risk: "Test-only change; the production code paths are untouched."
+created_at: 2026-10-25
+updated_at: 2026-10-25
