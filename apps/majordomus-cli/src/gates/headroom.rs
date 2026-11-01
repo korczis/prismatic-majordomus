@@ -33,6 +33,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::model::{GateModel, MODEL_PATH};
+use crate::order::{canonical, numeric, OrderKey, Ordered};
 
 /// The window of measured job wall times, relative to the repository root.
 pub(crate) const WINDOW_PATH: &str = ".ai/repo/ci/structure-job-durations.tsv";
@@ -81,6 +82,14 @@ pub struct GateCost {
     pub gate: String,
     /// Its longest recorded seconds.
     pub seconds: u64,
+}
+
+/// Gates are read costliest first, then by name: the seconds are the rank, negated so that
+/// the gate that costs most leads.
+impl Ordered for GateCost {
+    fn order_key(&self) -> OrderKey<'_> {
+        OrderKey::plain(&self.gate, &self.gate).descending(self.seconds)
+    }
 }
 
 /// One structure job's headroom: its bound, the share of it the p90 may take, how many measured
@@ -235,8 +244,13 @@ pub(crate) fn judge(inputs: &Inputs<'_>) -> HeadroomReport {
         .map(|job| {
             let bound = inputs.bounds.get(job).copied();
             let limit = bound.map(|b| b * HEADROOM_PERCENT / 100);
-            let mut measured = window.get(job).cloned().unwrap_or_default();
-            measured.sort_unstable();
+            // a sample has one order, `order::numeric`'s; whole seconds are exact in an f64
+            let mut sample: Vec<f64> = window
+                .get(job)
+                .map(|v| v.iter().map(|&t| t as f64).collect())
+                .unwrap_or_default();
+            numeric(&mut sample);
+            let measured: Vec<u64> = sample.into_iter().map(|t| t as u64).collect();
             let p = (!measured.is_empty()).then(|| p90(&measured));
             let mut costliest: Vec<GateCost> = inputs
                 .gate_jobs
@@ -246,7 +260,7 @@ pub(crate) fn judge(inputs: &Inputs<'_>) -> HeadroomReport {
                     costs.get(g).map(|s| GateCost { gate: g.clone(), seconds: *s })
                 })
                 .collect();
-            costliest.sort_by(|a, b| b.seconds.cmp(&a.seconds).then(a.gate.cmp(&b.gate)));
+            canonical(&mut costliest);
             costliest.truncate(COSTLIEST);
             let named = costliest
                 .iter()
@@ -383,12 +397,12 @@ mod tests {
             ("structure-b".to_string(), 2400),
         ]);
         let gate_jobs = BTreeMap::from([
-            ("shell-lint".to_string(), "structure".to_string()),
-            ("shell-suite".to_string(), "structure".to_string()),
-            ("adr-collision".to_string(), "structure".to_string()),
-            ("audit-plan".to_string(), "structure".to_string()),
-            ("github-projection".to_string(), "structure-b".to_string()),
-            ("rust-check".to_string(), "rust".to_string()),
+            ("slow-gate".to_string(), "structure".to_string()),
+            ("mid-gate".to_string(), "structure".to_string()),
+            ("small-gate".to_string(), "structure".to_string()),
+            ("free-gate".to_string(), "structure".to_string()),
+            ("net-gate".to_string(), "structure-b".to_string()),
+            ("rust-gate".to_string(), "rust".to_string()),
         ]);
         let jobs = structure_jobs(&gate_jobs);
         judge(&Inputs {
@@ -396,7 +410,7 @@ mod tests {
             bounds: &bounds,
             gate_jobs: &gate_jobs,
             window,
-            costs: Some("# c\nadr-collision\t10\naudit-plan\t0\nshell-lint\t1388\nshell-suite\t400\ngithub-projection\t589\n"),
+            costs: Some("# c\nsmall-gate\t10\nfree-gate\t0\nslow-gate\t1388\nmid-gate\t400\nnet-gate\t589\n"),
         })
     }
 
@@ -435,9 +449,9 @@ mod tests {
             .iter()
             .map(|c| c.gate.as_str())
             .collect();
-        assert_eq!(names, ["shell-lint", "shell-suite", "adr-collision"]);
+        assert_eq!(names, ["slow-gate", "mid-gate", "small-gate"]);
         assert!(
-            r.jobs[0].reason.contains("shell-lint 1388 s"),
+            r.jobs[0].reason.contains("slow-gate 1388 s"),
             "{}",
             r.jobs[0].reason
         );
