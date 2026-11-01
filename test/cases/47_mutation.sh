@@ -128,6 +128,9 @@ rm -f .ai/repo/project/issues/I0002.yaml   # undo mutation 5; the model is legal
 pj_issue I0002 M000
 expect_exit 0 "$MJ" plan validate
 
+# A record the schema accepts, as pj_milestone writes one: `validation` items are strings, and an
+# unquoted `true` is a boolean the executable's index drops, so `plan done` (plan.transition)
+# would see no milestone where the shell's reading sees one.
 rm_milestone() { # ID ORDER [DEP ...]
   local id="$1" ord="$2"; shift 2
   { cat <<Y
@@ -141,7 +144,7 @@ outcome: "The outcome once it is solved."
 acceptance_criteria:
   - The outcome is reached
 validation:
-  - true
+  - "true"
 evidence_required:
   - proof
 Y

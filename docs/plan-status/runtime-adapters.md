@@ -27,7 +27,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | level | code | subject | message |
 |---|---|---|---|
 | WARN | `scope_conflict` | `I0201` | shares share with I1201; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I1504; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares share with I1900; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares share with I1980; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares share with I1990; they may not run concurrently |

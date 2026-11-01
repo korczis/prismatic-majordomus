@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `cf9dabf45ec5`.
+Generated from canonical inputs `498887cdd763`.
 
 ## Milestones
 
@@ -62,7 +62,7 @@ Generated from canonical inputs `cf9dabf45ec5`.
 | [delivery-economics-are-measured-over-declared-windows](https://majordomus.dev/plan/delivery-economics-are-measured-over-declared-windows/) | PLANNED | 0/3 | 1 | 2 | 0 | 0 | 0 | Corpus runs answer the economics.tasks shape; a delivery window registered in the proof plan before it opens is measured at its close into a committed T3 record that the scorecard reads. | [`plan-status/delivery-economics-are-measured-over-declared-windows.md`](plan-status/delivery-economics-are-measured-over-declared-windows.md) |
 | [delivery-flow-is-measured](https://majordomus.dev/plan/delivery-flow-is-measured/) | BLOCKED | 0/6 | 0 | 6 | 0 | 0 | 0 | Queue time, run time and lead time per phase are derived readings; the backlog bound is policy and the brief says when it is passed; finish names the pull request it hands on; budgets exist per phase without turning runner wall time into a correctness gate. | [`plan-status/delivery-flow-is-measured.md`](plan-status/delivery-flow-is-measured.md) |
 | [derived-data-integrity](https://majordomus.dev/plan/derived-data-integrity/) | ACTIVE | 1/4 | 3 | 0 | 0 | 0 | 1 | A committed derived artifact is a projection of inputs the commit owns. Landing an unrelated change on the trunk does not invalidate it, a fixture whose object database has no history can still evaluate it, and the staleness refusal exists on the path merges actually take - so the first thing that says no is a check rather than the published site. | [`plan-status/derived-data-integrity.md`](plan-status/derived-data-integrity.md) |
-| [development-runtime](https://majordomus.dev/plan/development-runtime/) | ACTIVE | 67/110 | 26 | 17 | 0 | 0 | 1 | A development transition is decided in exactly one place — a `capability!` of kind `command` in the Rust registry — and every surface that offers it is a projection: the CLI, the MCP tool, the HTTP route, the OpenAPI operation and the Cockpit's generated runner form, none of them written by hand. The lifecycle stops being a second program with no surfaces, and the execution history a development surface would show exists somewhere durable. | [`plan-status/development-runtime.md`](plan-status/development-runtime.md) |
+| [development-runtime](https://majordomus.dev/plan/development-runtime/) | ACTIVE | 68/110 | 26 | 16 | 0 | 0 | 1 | A development transition is decided in exactly one place — a `capability!` of kind `command` in the Rust registry — and every surface that offers it is a projection: the CLI, the MCP tool, the HTTP route, the OpenAPI operation and the Cockpit's generated runner form, none of them written by hand. The lifecycle stops being a second program with no surfaces, and the execution history a development surface would show exists somewhere durable. | [`plan-status/development-runtime.md`](plan-status/development-runtime.md) |
 | [entry-proves-what-it-handed](https://majordomus.dev/plan/entry-proves-what-it-handed/) | BLOCKED | 0/7 | 0 | 7 | 0 | 0 | 0 | One governance digest computed by one function, recorded per episode with the briefing digest, compared at the next interaction, carried by handovers, identical across every entry surface; every route around the preflight is a case or a stated limit; task start states how far its base is behind the remote's master. | [`plan-status/entry-proves-what-it-handed.md`](plan-status/entry-proves-what-it-handed.md) |
 | [every-model-call-is-paid-from-a-declared-source](https://majordomus.dev/plan/every-model-call-is-paid-from-a-declared-source/) | ACTIVE | 2/3 | 0 | 1 | 0 | 0 | 5 | Each vendor declares its funding sources with vendor evidence, an Anthropic API advisor lets a held grant pay for review, and each run and consultation carries the funding kind the owner declared for it, in I3292's one vocabulary. | [`plan-status/every-model-call-is-paid-from-a-declared-source.md`](plan-status/every-model-call-is-paid-from-a-declared-source.md) |
 | [every-session-joins-the-mesh](https://majordomus.dev/plan/every-session-joins-the-mesh/) | ACTIVE | 4/5 | 1 | 0 | 0 | 0 | 0 | Any LLM session that starts in a repository with an enabled mesh is on the mesh from its first turn, told who works where on every machine and what waits for it, and a task built outside the mesh is refused by the repository's gates. | [`plan-status/every-session-joins-the-mesh.md`](plan-status/every-session-joins-the-mesh.md) |
@@ -165,7 +165,7 @@ Generated from canonical inputs `cf9dabf45ec5`.
 - `I1017` (capability-graph, wave 4) — Live state is an overlay that degrades to nothing
 - `I1201` (web-sign-in, wave 0) — An identity provider is a declarative object, and Google and Facebook are two of them
 - `I1302` (external-workspaces, wave 1) — Identity, provenance and support level are typed fields, not prose
-- `I1504` (development-runtime, wave 0) — One development transition is a capability, end to end
+- `I1505` (development-runtime, wave 1) — A mutating capability leaves a durable event, and the ledger can be read back
 - `I1801` (automation, wave 1) — A scripted capability is a kind, discovered and registered, runnable and projected like any capability
 - `I1900` (intent-lifecycle, wave 0) — An intent is a typed record whose stage and satisfaction are derived
 - `I1953` (test-evidence, wave 2) — Evidence answers by subject, on every surface
@@ -471,7 +471,7 @@ Generated from canonical inputs `cf9dabf45ec5`.
 
 ## Findings
 
-8481 finding(s), each on the page of the milestone its subject is or belongs to:
+8366 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
@@ -505,7 +505,7 @@ Generated from canonical inputs `cf9dabf45ec5`.
 | [`command-and-deployment-criteria-are-judged`](plan-status/command-and-deployment-criteria-are-judged.md) | 5 |
 | [`delivery-economics-are-measured-over-declared-windows`](plan-status/delivery-economics-are-measured-over-declared-windows.md) | 1 |
 | [`derived-data-integrity`](plan-status/derived-data-integrity.md) | 25 |
-| [`development-runtime`](plan-status/development-runtime.md) | 879 |
+| [`development-runtime`](plan-status/development-runtime.md) | 765 |
 | [`every-session-joins-the-mesh`](plan-status/every-session-joins-the-mesh.md) | 13 |
 | [`every-sessions-usage-is-observed`](plan-status/every-sessions-usage-is-observed.md) | 53 |
 | [`every-surface-follows-what-changed`](plan-status/every-surface-follows-what-changed.md) | 15 |
@@ -527,7 +527,7 @@ Generated from canonical inputs `cf9dabf45ec5`.
 | [`prismatic-lumen`](plan-status/prismatic-lumen.md) | 8 |
 | [`public-proof`](plan-status/public-proof.md) | 134 |
 | [`repository-automation-is-typed`](plan-status/repository-automation-is-typed.md) | 30 |
-| [`runtime-adapters`](plan-status/runtime-adapters.md) | 91 |
+| [`runtime-adapters`](plan-status/runtime-adapters.md) | 90 |
 | [`runtime-lifecycle`](plan-status/runtime-lifecycle.md) | 43 |
 | [`runtime-trust`](plan-status/runtime-trust.md) | 26 |
 | [`safe-self-update`](plan-status/safe-self-update.md) | 431 |
