@@ -154,7 +154,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3810` | shares docs/generated with I3841; they may not run concurrently |
 | WARN | `scope_conflict` | `I3810` | shares apps/majordomus-cli/src/capability/builtin/mesh.rs with I4002; they may not run concurrently |
 | WARN | `scope_conflict` | `I3810` | shares apps/majordomus-cli/src/capability/builtin/mesh.rs with I4006; they may not run concurrently |
-| WARN | `scope_conflict` | `I3810` | shares lib/capture.sh with I4292; they may not run concurrently |
 | WARN | `scope_conflict` | `I3810` | shares docs/MESH.md with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I3810` | shares apps/majordomus-cli/src/mesh/journal.rs with I4327; they may not run concurrently |
 | WARN | `scope_conflict` | `I3810` | shares apps/majordomus-cli/src/mesh/journal.rs with I4343; they may not run concurrently |

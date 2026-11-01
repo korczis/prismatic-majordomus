@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `cf9dabf45ec5`.
+Generated from canonical inputs `17ca844af5b0`.
 
 ## Milestones
 
@@ -16,7 +16,7 @@ Generated from canonical inputs `cf9dabf45ec5`.
 |---|---|---|---|---|---|---|---|---|---|
 | [M000](https://majordomus.dev/plan/m000/) | DONE | 15/15 | 0 | 0 | 0 | 0 | 0 | Every non-trivial change in this repository belongs to a milestone specification and to one dependency-linked issue execution contract, validated as a DAG, with status derived rather than asserted, and projected to GitHub and to the website from that one canonical model. | [`plan-status/M000.md`](plan-status/M000.md) |
 | [M001](https://majordomus.dev/plan/m001/) | DONE | 4/4 | 0 | 0 | 0 | 0 | 0 | An unresolved question keeps refusing a completed finish after the work moves to a new task, or the alternative is chosen deliberately and the reason is recorded where the next worker will read it. | [`plan-status/M001.md`](plan-status/M001.md) |
-| [M002](https://majordomus.dev/plan/m002/) | ACTIVE | 2/6 | 1 | 1 | 2 | 0 | 0 | A durable record either names the worker that produced it or is refused, and a record written from one session can never arrive attributed to another session's task. | [`plan-status/M002.md`](plan-status/M002.md) |
+| [M002](https://majordomus.dev/plan/m002/) | ACTIVE | 3/6 | 1 | 1 | 1 | 0 | 0 | A durable record either names the worker that produced it or is refused, and a record written from one session can never arrive attributed to another session's task. | [`plan-status/M002.md`](plan-status/M002.md) |
 | [M003](https://majordomus.dev/plan/m003/) | ACTIVE | 13/17 | 2 | 2 | 0 | 0 | 1 | A worker with no conversation history can answer what happened, why, what was decided, which evidence supports it, where the canonical source lives, and what to do next — from records and a derived index, with git still the authority over both. | [`plan-status/M003.md`](plan-status/M003.md) |
 | [M004](https://majordomus.dev/plan/m004/) | ACTIVE | 23/45 | 12 | 10 | 0 | 0 | 0 | Every public command can be benchmarked from the command registry with cold and warm distributions, the phases and work counters of any run can be printed, the caches and batch reads that remove repeated work preserve every observable result, an accepted baseline lives in the repository and a check refuses a regression by policy, and the pre-commit hook is fast enough that nobody routes around it. | [`plan-status/M004.md`](plan-status/M004.md) |
 | [a-bounded-task-is-carried-to-accepted-work](https://majordomus.dev/plan/a-bounded-task-is-carried-to-accepted-work/) | PLANNED | 0/11 | 10 | 1 | 0 | 0 | 0 | Every row reads wired with its proof run: each break is closed in the owner it names by the smallest change that unblocks its user step, with a case that fails before the change, and the stranger fixture and the in-repo pass, run again, reach acceptance with no hand-written state and no step outside its budget. | [`plan-status/a-bounded-task-is-carried-to-accepted-work.md`](plan-status/a-bounded-task-is-carried-to-accepted-work.md) |
@@ -56,7 +56,7 @@ Generated from canonical inputs `cf9dabf45ec5`.
 | [builds-reuse-the-mesh-cache](https://majordomus.dev/plan/builds-reuse-the-mesh-cache/) | BLOCKED | 0/8 | 0 | 8 | 0 | 0 | 0 | Majordomus derives a key for every dependency install and compilation from the repository and the machine, restores it from the local level and then a trusted node's store before the work, saves it after, and is invisible when the store is absent; every local build path of the repository goes through it, and a gate refuses a new bypass. | [`plan-status/builds-reuse-the-mesh-cache.md`](plan-status/builds-reuse-the-mesh-cache.md) |
 | [campaigns-are-read-as-provenance](https://majordomus.dev/plan/campaigns-are-read-as-provenance/) | PLANNED | 0/4 | 1 | 3 | 0 | 0 | 0 | campaign is a kind; records cite campaigns through provenance and campaigns list what cites them; one command adds a pack safely; an execution of a record that cites a campaign pins the revision it ran. | [`plan-status/campaigns-are-read-as-provenance.md`](plan-status/campaigns-are-read-as-provenance.md) |
 | [capability-graph](https://majordomus.dev/plan/capability-graph/) | ACTIVE | 12/34 | 7 | 15 | 0 | 0 | 0 | One typed, deterministic capability graph composes the registries that already own their facts — it does not replace them — and adds typed relations between them that are inferred where a stable convention exists and declared where it does not. Both the running server and the published site render from that one graph: the static projection is the snapshot, the runtime projection is the snapshot plus live state. Navigation, overview, detail, search, the relation view and the coverage matrix are all derived, a dangling relation fails generation rather than rendering as a missing section, and a capability that exists with no documentation, no test or no enforcement is visible as such rather than indistinguishable from one that has them. | [`plan-status/capability-graph.md`](plan-status/capability-graph.md) |
-| [ci-critical-path](https://majordomus.dev/plan/ci-critical-path/) | ACTIVE | 14/43 | 18 | 11 | 0 | 0 | 0 | The change-to-verdict path runs p50 under 40 s and p95 under 60 s warm, and merge-to-verified-deploy p50 under 45 s and p95 under 60 s, measured on GitHub with warm, partial and cold reported apart, every skip of a gate explained by the repository's own impact model, and no required test removed, skipped or made advisory to reach the number. | [`plan-status/ci-critical-path.md`](plan-status/ci-critical-path.md) |
+| [ci-critical-path](https://majordomus.dev/plan/ci-critical-path/) | ACTIVE | 15/43 | 17 | 11 | 0 | 0 | 0 | The change-to-verdict path runs p50 under 40 s and p95 under 60 s warm, and merge-to-verified-deploy p50 under 45 s and p95 under 60 s, measured on GitHub with warm, partial and cold reported apart, every skip of a gate explained by the repository's own impact model, and no required test removed, skipped or made advisory to reach the number. | [`plan-status/ci-critical-path.md`](plan-status/ci-critical-path.md) |
 | [command-and-deployment-criteria-are-judged](https://majordomus.dev/plan/command-and-deployment-criteria-are-judged/) | PLANNED | 0/3 | 1 | 2 | 0 | 0 | 0 | A deployment criterion is met when a recorded observation of that deployment served a build containing the newest commit that changed the criterion's serving scope, and reads stale, failing or not_run otherwise, never met on an unreachable, malformed, dirty or undecided answer. A command criterion is met when a recorded execution of exactly the argument vector the criterion names exited 0 at a revision the evidence module's one freshness function judges current, with the scope it serves as its inputs; a different command exiting 0 meets nothing. Both carry the same evaluation a test criterion carries. The negative cases are executable, the claim is guaranteed with its test, and intent-lifecycle can be satisfied. | [`plan-status/command-and-deployment-criteria-are-judged.md`](plan-status/command-and-deployment-criteria-are-judged.md) |
 | [cost-per-accepted-outcome](https://majordomus.dev/plan/cost-per-accepted-outcome/) | BLOCKED | 0/4 | 0 | 4 | 0 | 0 | 0 | The cost of an accepted outcome is computed from measured telemetry and the finish contract that accepted it, and is reported only where both exist. | [`plan-status/cost-per-accepted-outcome.md`](plan-status/cost-per-accepted-outcome.md) |
 | [delivery-economics-are-measured-over-declared-windows](https://majordomus.dev/plan/delivery-economics-are-measured-over-declared-windows/) | PLANNED | 0/3 | 1 | 2 | 0 | 0 | 0 | Corpus runs answer the economics.tasks shape; a delivery window registered in the proof plan before it opens is measured at its close into a committed T3 record that the scorecard reads. | [`plan-status/delivery-economics-are-measured-over-declared-windows.md`](plan-status/delivery-economics-are-measured-over-declared-windows.md) |
@@ -446,7 +446,6 @@ Generated from canonical inputs `cf9dabf45ec5`.
 - `I4373` (ci-critical-path, wave 0) — The economics runner starts a freshly written harness once it is free, and a harness that cannot start has no version
 - `I4374` (development-runtime, wave 0) — A commit that changes the plan's records reports intent validate before it leaves the machine
 - `I4375` (development-runtime, wave 0) — An offload's fetch into the host's checkout waits its turn instead of failing the derive
-- `I4380` (ci-critical-path, wave 0) — An optional step of the Pages publication never stops the deploy
 - `I4381` (a-change-is-judged-in-minutes, wave 0) — The structure job fits in half its bound: shellcheck stops re-reading lib/rust_bin.sh for every case, and the network gates run in a second job
 - `I4400` (surfaces-never-disagree, wave 0) — A chart on the site is read by pointing at it: one crosshair, an exact tooltip, series a reader can hide, a range a reader can zoom, drawn from the design's tokens
 - `I4410` (a-second-adopter-is-served, wave 0) — plan evidence records the trunk commit it is given with --commit, and refuses one the trunk does not reach
@@ -471,77 +470,77 @@ Generated from canonical inputs `cf9dabf45ec5`.
 
 ## Findings
 
-8481 finding(s), each on the page of the milestone its subject is or belongs to:
+8355 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
-| [`M002`](plan-status/M002.md) | 33 |
-| [`M003`](plan-status/M003.md) | 10 |
-| [`M004`](plan-status/M004.md) | 389 |
+| [`M002`](plan-status/M002.md) | 15 |
+| [`M003`](plan-status/M003.md) | 9 |
+| [`M004`](plan-status/M004.md) | 381 |
 | [`a-bounded-task-is-carried-to-accepted-work`](plan-status/a-bounded-task-is-carried-to-accepted-work.md) | 25 |
-| [`a-change-is-judged-in-minutes`](plan-status/a-change-is-judged-in-minutes.md) | 72 |
-| [`a-claim-stands-only-on-its-evidence`](plan-status/a-claim-stands-only-on-its-evidence.md) | 191 |
-| [`a-derive-does-only-the-work-its-inputs-changed`](plan-status/a-derive-does-only-the-work-its-inputs-changed.md) | 63 |
+| [`a-change-is-judged-in-minutes`](plan-status/a-change-is-judged-in-minutes.md) | 70 |
+| [`a-claim-stands-only-on-its-evidence`](plan-status/a-claim-stands-only-on-its-evidence.md) | 187 |
+| [`a-derive-does-only-the-work-its-inputs-changed`](plan-status/a-derive-does-only-the-work-its-inputs-changed.md) | 62 |
 | [`a-finding-is-tracked-to-its-issue`](plan-status/a-finding-is-tracked-to-its-issue.md) | 2 |
 | [`a-newcomer-reaches-a-first-verified-intent`](plan-status/a-newcomer-reaches-a-first-verified-intent.md) | 16 |
 | [`a-paste-is-decomposed-by-a-skill`](plan-status/a-paste-is-decomposed-by-a-skill.md) | 17 |
 | [`a-promoted-record-opens-its-message`](plan-status/a-promoted-record-opens-its-message.md) | 17 |
-| [`a-provider-carries-the-contract-natively`](plan-status/a-provider-carries-the-contract-natively.md) | 65 |
-| [`a-registered-corpus-judges-majordomus`](plan-status/a-registered-corpus-judges-majordomus.md) | 100 |
+| [`a-provider-carries-the-contract-natively`](plan-status/a-provider-carries-the-contract-natively.md) | 62 |
+| [`a-registered-corpus-judges-majordomus`](plan-status/a-registered-corpus-judges-majordomus.md) | 98 |
 | [`a-review-is-published-at-its-commit`](plan-status/a-review-is-published-at-its-commit.md) | 29 |
-| [`a-second-adopter-is-served`](plan-status/a-second-adopter-is-served.md) | 105 |
+| [`a-second-adopter-is-served`](plan-status/a-second-adopter-is-served.md) | 104 |
 | [`a-session-proceeds-through-the-mesh`](plan-status/a-session-proceeds-through-the-mesh.md) | 40 |
-| [`a-test-fails-when-the-code-is-wrong`](plan-status/a-test-fails-when-the-code-is-wrong.md) | 41 |
+| [`a-test-fails-when-the-code-is-wrong`](plan-status/a-test-fails-when-the-code-is-wrong.md) | 39 |
 | [`a-version-follows-the-work`](plan-status/a-version-follows-the-work.md) | 17 |
-| [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 530 |
+| [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 524 |
 | [`an-authorised-node-connects-from-anywhere`](plan-status/an-authorised-node-connects-from-anywhere.md) | 3 |
 | [`an-outcome-becomes-a-reviewed-plan`](plan-status/an-outcome-becomes-a-reviewed-plan.md) | 11 |
-| [`an-unmet-criterion-is-drafted-into-work`](plan-status/an-unmet-criterion-is-drafted-into-work.md) | 111 |
+| [`an-unmet-criterion-is-drafted-into-work`](plan-status/an-unmet-criterion-is-drafted-into-work.md) | 109 |
 | [`architecture-is-enforced`](plan-status/architecture-is-enforced.md) | 2 |
 | [`automation`](plan-status/automation.md) | 48 |
 | [`campaigns-are-read-as-provenance`](plan-status/campaigns-are-read-as-provenance.md) | 17 |
 | [`capability-graph`](plan-status/capability-graph.md) | 11 |
-| [`ci-critical-path`](plan-status/ci-critical-path.md) | 319 |
+| [`ci-critical-path`](plan-status/ci-critical-path.md) | 312 |
 | [`command-and-deployment-criteria-are-judged`](plan-status/command-and-deployment-criteria-are-judged.md) | 5 |
 | [`delivery-economics-are-measured-over-declared-windows`](plan-status/delivery-economics-are-measured-over-declared-windows.md) | 1 |
 | [`derived-data-integrity`](plan-status/derived-data-integrity.md) | 25 |
-| [`development-runtime`](plan-status/development-runtime.md) | 879 |
+| [`development-runtime`](plan-status/development-runtime.md) | 868 |
 | [`every-session-joins-the-mesh`](plan-status/every-session-joins-the-mesh.md) | 13 |
 | [`every-sessions-usage-is-observed`](plan-status/every-sessions-usage-is-observed.md) | 53 |
 | [`every-surface-follows-what-changed`](plan-status/every-surface-follows-what-changed.md) | 15 |
 | [`every-task-states-its-delivery-economics`](plan-status/every-task-states-its-delivery-economics.md) | 7 |
 | [`everything-is-followed-in-one-stream`](plan-status/everything-is-followed-in-one-stream.md) | 6 |
 | [`external-workspaces`](plan-status/external-workspaces.md) | 27 |
-| [`failure-is-visible`](plan-status/failure-is-visible.md) | 30 |
-| [`fly-deployment`](plan-status/fly-deployment.md) | 66 |
-| [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 2963 |
+| [`failure-is-visible`](plan-status/failure-is-visible.md) | 29 |
+| [`fly-deployment`](plan-status/fly-deployment.md) | 64 |
+| [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 2931 |
 | [`intent-lifecycle`](plan-status/intent-lifecycle.md) | 60 |
-| [`knowledge-acts-on-what-it-learns`](plan-status/knowledge-acts-on-what-it-learns.md) | 76 |
+| [`knowledge-acts-on-what-it-learns`](plan-status/knowledge-acts-on-what-it-learns.md) | 73 |
 | [`landing-survives-any-session`](plan-status/landing-survives-any-session.md) | 9 |
-| [`mcp-transports-are-reliable`](plan-status/mcp-transports-are-reliable.md) | 172 |
+| [`mcp-transports-are-reliable`](plan-status/mcp-transports-are-reliable.md) | 170 |
 | [`measurements-are-tracked-over-time`](plan-status/measurements-are-tracked-over-time.md) | 11 |
 | [`merging-and-referencing-are-enforced`](plan-status/merging-and-referencing-are-enforced.md) | 34 |
-| [`mesh-journal-converges`](plan-status/mesh-journal-converges.md) | 129 |
+| [`mesh-journal-converges`](plan-status/mesh-journal-converges.md) | 128 |
 | [`one-kit-on-every-surface`](plan-status/one-kit-on-every-surface.md) | 8 |
 | [`peer-blackboard`](plan-status/peer-blackboard.md) | 6 |
 | [`prismatic-lumen`](plan-status/prismatic-lumen.md) | 8 |
-| [`public-proof`](plan-status/public-proof.md) | 134 |
+| [`public-proof`](plan-status/public-proof.md) | 133 |
 | [`repository-automation-is-typed`](plan-status/repository-automation-is-typed.md) | 30 |
-| [`runtime-adapters`](plan-status/runtime-adapters.md) | 91 |
+| [`runtime-adapters`](plan-status/runtime-adapters.md) | 90 |
 | [`runtime-lifecycle`](plan-status/runtime-lifecycle.md) | 43 |
 | [`runtime-trust`](plan-status/runtime-trust.md) | 26 |
-| [`safe-self-update`](plan-status/safe-self-update.md) | 431 |
-| [`surfaces-never-disagree`](plan-status/surfaces-never-disagree.md) | 285 |
+| [`safe-self-update`](plan-status/safe-self-update.md) | 425 |
+| [`surfaces-never-disagree`](plan-status/surfaces-never-disagree.md) | 280 |
 | [`test-evidence`](plan-status/test-evidence.md) | 15 |
 | [`the-corpus-is-registered-before-it-runs`](plan-status/the-corpus-is-registered-before-it-runs.md) | 4 |
-| [`the-mesh-works-out-of-the-box`](plan-status/the-mesh-works-out-of-the-box.md) | 181 |
+| [`the-mesh-works-out-of-the-box`](plan-status/the-mesh-works-out-of-the-box.md) | 179 |
 | [`the-plan-says-what-a-fix-unblocks`](plan-status/the-plan-says-what-a-fix-unblocks.md) | 23 |
 | [`the-proof-scorecard-is-published`](plan-status/the-proof-scorecard-is-published.md) | 3 |
 | [`the-proof-tests-are-registered-before-they-run`](plan-status/the-proof-tests-are-registered-before-they-run.md) | 11 |
-| [`the-session-domain-is-written-once`](plan-status/the-session-domain-is-written-once.md) | 11 |
+| [`the-session-domain-is-written-once`](plan-status/the-session-domain-is-written-once.md) | 10 |
 | [`the-ui-runs-and-explains`](plan-status/the-ui-runs-and-explains.md) | 9 |
 | [`the-ui-works-on-a-phone`](plan-status/the-ui-works-on-a-phone.md) | 13 |
-| [`truthful-plan-surfaces`](plan-status/truthful-plan-surfaces.md) | 240 |
+| [`truthful-plan-surfaces`](plan-status/truthful-plan-surfaces.md) | 239 |
 | [`two-folder-integration`](plan-status/two-folder-integration.md) | 7 |
 | [`web-sign-in`](plan-status/web-sign-in.md) | 32 |
 | [`work-graph-github`](plan-status/work-graph-github.md) | 5 |

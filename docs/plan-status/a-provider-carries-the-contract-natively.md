@@ -40,7 +40,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3304` | shares lib/capture.sh with I3810; they may not run concurrently |
 | WARN | `scope_conflict` | `I3304` | shares apps/majordomus-cli/src/capability/builtin/lifecycle.rs with I4002; they may not run concurrently |
 | WARN | `scope_conflict` | `I3304` | shares apps/majordomus-cli/src/capability/builtin/lifecycle.rs with I4006; they may not run concurrently |
-| WARN | `scope_conflict` | `I3304` | shares lib/capture.sh with I4292; they may not run concurrently |
 | WARN | `scope_conflict` | `I3304` | shares apps/majordomus-cli/src/capability/builtin/lifecycle.rs with I4327; they may not run concurrently |
 | WARN | `scope_conflict` | `I3304` | shares .ai/repo/policy.yaml with I4349; they may not run concurrently |
 | WARN | `scope_conflict` | `I3304` | shares .ai/repo/policy.yaml with I4418; they may not run concurrently |
@@ -72,7 +71,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3322` | shares docs/MESH.md with I3820; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares docs/MESH.md with I3835; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares lib/doctor.sh with I4265; they may not run concurrently |
-| WARN | `scope_conflict` | `I3322` | shares lib/capture.sh with I4292; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares docs/MESH.md with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares lib/doctor.sh with I4323; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares docs/MESH.md with I4327; they may not run concurrently |
@@ -90,7 +88,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3829` | shares site with I4318; they may not run concurrently |
 | WARN | `scope_conflict` | `I3829` | shares docs/MCP.md with I4323; they may not run concurrently |
 | WARN | `scope_conflict` | `I3829` | shares docs/generated with I4352; they may not run concurrently |
-| WARN | `scope_conflict` | `I3829` | shares site with I4380; they may not run concurrently |
 | WARN | `scope_conflict` | `I3829` | shares docs/CLAIMS.yaml with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I3829` | shares docs/claims with I4411; they may not run concurrently |
 | WARN | `scope_conflict` | `I3829` | shares docs/generated with I4418; they may not run concurrently |
