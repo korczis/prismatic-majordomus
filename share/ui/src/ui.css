@@ -33,6 +33,9 @@
 @import "../../design/kit.css";
 @plugin "flowbite/plugin";
 @source "../../../apps/majordomus-cli/src/ui/navbar.html";
+/* Flowbite's own sources, as its Tailwind 4 setup asks: the classes its components set
+   from script are emitted, and the output stays a function of the pinned version */
+@source "../../../node_modules/flowbite";
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
