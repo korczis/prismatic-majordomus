@@ -337,15 +337,19 @@ browser. Reproduce one CI shard with `MJ_PROBE_SHARD=2/6 MJ_PROBE_JOBS=4 scripts
 
 ## Where the jobs run
 
-The plan job decides, once, the runner of the first wave, and each first-wave job reads it
-as `fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"')` (I4242). The first wave is
-the jobs that run once beside the critical path (plan, build, the suite and ui shards, suite,
-evidence, ci) or are its cheap unions: suite, coverage, evidence, site-probe,
-interactions, ui, cockpit, mesh-lab, pages and ci. Everything else stays on `ubuntu-latest`,
-structure among them (its gates took 3214 s on lundra-3 against 36-48 minutes hosted, past
-the job's 55-minute bound, run 40613243708):
-three runners of one machine serialise a full run's thirty jobs into hours (run
-40407809503), while GitHub-hosted runners take the shards twenty at once. The pool is the
+The plan job decides, once, the runner of every Linux job, and each of them reads it as
+`fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"')` (I4242). Until 2026-11-01 only a
+first wave took it — the jobs that run once beside the critical path (plan, build, the suite
+and ui shards, suite, evidence, ci) or are its cheap unions: suite, coverage, evidence,
+site-probe, interactions, ui, cockpit, mesh-lab, pages and ci — and everything else, structure
+and the shards among them, stayed on `ubuntu-latest`, because three runners of one machine
+serialise a full run's thirty jobs into hours (run 40407809503) while GitHub-hosted runners
+take the shards twenty at once. On 2026-11-01 the account's hosted job cap was spent: 50+
+validate runs waited for hours with nothing in progress while lundra-1..3 stood idle, so a
+run that needs one hosted job never reached a verdict. Every Linux job, the plan included,
+now follows the pool, and a run on the pool is slower rather than never; structure's bound
+is the pool's 75 minutes (its gates took 3214 s on lundra-3 against 36-48 minutes hosted, run
+40613243708). The pool is the
 repository's own machines: the repository variable `MJ_RUNNER` names them, as a
 runner label (`lundra`, meaning `[self-hosted, lundra]`) or a JSON list of labels. They cost
 nothing per minute and do not share the account's hosted concurrency, which sixteen
@@ -358,7 +362,8 @@ validate runs exhausted on 2026-10-26.
 | push, schedule, a pull request from a branch of this repository | `MJ_RUNNER`, else `ubuntu-latest` |
 | a dispatch | its `runner` input, else `MJ_RUNNER`, else `ubuntu-latest` |
 | a pull request from a fork | `ubuntu-latest`, whatever `MJ_RUNNER` says: the repository is public and the pool is machines of the fleet |
-| the plan job itself; macOS and the install matrix | as written: the plan stays hosted so a verdict is planned while the pool is offline |
+| the plan job itself | `MJ_RUNNER` read by its own `runs-on` (a label, or a JSON list of labels), a fork's pull request hosted, else `ubuntu-latest`; a dispatch's `runner` input does not move it |
+| macOS and the install matrix | as written |
 
 </div>
 
@@ -377,7 +382,7 @@ An offline pool queues jobs rather than failing them, so the remedy is
 `gh variable delete MJ_RUNNER`: the next run is hosted, with no other change. A pool is
 proved on a branch first with `gh workflow run validate.yml --ref <branch> -f runner=lundra`.
 `pages.yml` and `release.yml` hold deploy and release credentials and stay hosted. A
-GitHub-hosted image carries Node and the pool need not, so every first-wave job sets Node up
+GitHub-hosted image carries Node and the pool need not, so every job of the pool sets Node up
 on a self-hosted runner: `setup-site`, or `actions/setup-node` guarded by
 `runner.environment == 'self-hosted'` (structure, then of the first wave, failed on lundra
 without it, run 40416931397). Case 4242 holds every job to the planned runner and to that Node, and drives

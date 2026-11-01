@@ -111,7 +111,12 @@ jobs:
   # pull request labelled ci:full, runs the full plan. The plan is the artifact ci-plan.
   plan:
     timeout-minutes: 10
-    runs-on: ubuntu-latest
+    # I4242, 2026-11-01: the plan runs on the pool too. The account's hosted job cap was spent:
+    # 50+ runs waited hours with nothing in progress while lundra-1..3 stood idle, and a hosted
+    # plan held every one of them. It reads vars.MJ_RUNNER itself, since it cannot read its own
+    # output: a fork's pull request stays hosted, a JSON list is the labels, a single value is
+    # one label, unset is hosted. The remedy for an offline pool is still to unset MJ_RUNNER.
+    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || startsWith(vars.MJ_RUNNER, '[') && fromJSON(vars.MJ_RUNNER) || vars.MJ_RUNNER || 'ubuntu-latest' }}
     outputs:
       runner: ${{ steps.runner.outputs.runner }}
       mode: ${{ steps.plan.outputs.mode }}
@@ -224,10 +229,10 @@ jobs:
       # is routed off them, because this repository is public and they are machines of the fleet;
       # an unset or unreadable variable means GitHub-hosted. This is routing, not the control:
       # a fork's run executes the pull request's own workflow file, so what keeps it off the
-      # fleet is the fork approval policy all_external_contributors (docs/CI.md). This job stays hosted so that a
-      # verdict is planned even when the pool is offline; the remedy for an offline pool is to
-      # unset MJ_RUNNER. Every job reads `needs.plan.outputs.runner || "ubuntu-latest"`, so a
-      # plan that failed still lets `ci` report. Case 4242 drives this step.
+      # fleet is the fork approval policy all_external_contributors (docs/CI.md). This job
+      # follows vars.MJ_RUNNER itself (see its runs-on); the remedy for an offline pool is to
+      # unset MJ_RUNNER. Every other Linux job reads `needs.plan.outputs.runner ||
+      # "ubuntu-latest"`, so a plan that failed still lets `ci` report. Case 4242 drives this step.
       - id: runner
         env:
           CHOSEN: ${{ github.event.inputs.runner || vars.MJ_RUNNER }}
@@ -286,8 +291,14 @@ jobs:
   build:
     needs: plan
     timeout-minutes: 45
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     steps:
+      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
+      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
+      - if: runner.environment == 'self-hosted'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - uses: actions/checkout@v4
       - id: rust
         uses: ./.github/actions/setup-rust
@@ -326,8 +337,14 @@ jobs:
     needs: plan
     if: needs.plan.outputs.shell_suite == 'true' || needs.plan.outputs.ui_audit == 'true'
     timeout-minutes: 30
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     steps:
+      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
+      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
+      - if: runner.environment == 'self-hosted'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - uses: actions/checkout@v4
       - name: the crate's Rust API reference
         uses: ./.github/actions/rustdoc
@@ -361,14 +378,22 @@ jobs:
   # network-bound github-projection and worktree-topology run beside it in structure-b.
   structure:
     needs: [plan, build]
-    timeout-minutes: 55
-    # I4242: hosted, not the first wave: its 42 gates took 3214 s on lundra-3 against 36-48
-    # minutes hosted, and the job's bound cancelled them there (run 40613243708)
-    runs-on: ubuntu-latest
+    # I4242: its 42 gates took 3214 s on lundra-3 against 36-48 minutes hosted, and the old
+    # 55-minute bound cancelled them there (run 40613243708). Since 2026-11-01 every Linux job
+    # takes the planned runner (the hosted cap was spent and nothing ran), so the bound is the
+    # pool's: that run plus the setup and headroom, until structure-b's split is measured there.
+    timeout-minutes: 75
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
+      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
+      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
+      - if: runner.environment == 'self-hosted'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       # the whole history and its tags: `version-matches-surface` asks what the public
       # surface has lost since the last release, and it finds that release with
       # `git tag --list 'v[0-9]*'` and reads the registry out of it with `git show`. A
@@ -462,11 +487,17 @@ jobs:
     needs: [plan, build]
     if: needs.plan.outputs.github_projection == 'true' || needs.plan.outputs.worktree_topology == 'true'
     timeout-minutes: 40
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
+      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
+      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
+      - if: runner.environment == 'self-hosted'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       # structure's setup, step for step (see there for why each is needed): the full history
       # with a bound of its own, the linters, just, the plan, the toolchain and the executable
       # worktree-topology's behavioural case drives.
@@ -562,7 +593,7 @@ jobs:
     # suite-budget step below refuses growth while the bound still has room. One declaration,
     # two readers — test/cases/417 refuses the workflow and the model when they disagree.
     timeout-minutes: 225
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     steps:
       # the whole history: a case that clones this checkout into a fixture and pushes
       # (96_site_deploy does, to a bare repository of its own) cannot push a shallow clone
@@ -802,7 +833,7 @@ jobs:
     # at 21:28 after 10 of its minutes. 90 leaves that gate about 25 minutes and a slow runner
     # its margin; lanes 1 and 2 finish far inside it.
     timeout-minutes: 90
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
@@ -817,6 +848,12 @@ jobs:
       matrix:
         lane: [1, 2, 3]
     steps:
+      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
+      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
+      - if: runner.environment == 'self-hosted'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       # the whole history: `generate --check` runs here, and the changelog is composed from
       # the release records, the decisions and `git log <previous>..<this>` — history is one
       # of its canonical sources (project.release-is-a-projection). A default checkout is one
@@ -1244,7 +1281,7 @@ jobs:
     # on the next head (39317142394): its bound is 60 min; the steps before it now take 25 min
     # with the Czech copy built, so the job is 105
     timeout-minutes: 105
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
@@ -1399,7 +1436,7 @@ jobs:
     # a sixth of a sweep that no longer fits 45 minutes (the Czech copies doubled the routes:
     # run 39317142394 stopped the single step at its 2700 s bound), plus the build and setup
     timeout-minutes: 30
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     steps:
       - uses: actions/checkout@v4
       - id: site
@@ -1504,7 +1541,7 @@ jobs:
     # a sixth of a probe that no longer fits 55 minutes, plus the setup; the slowest shard ran
     # 1450-1527 s of its former 1500 s bound on every run of 2026-10-21/22, so the bound is 1800 s
     timeout-minutes: 36
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     steps:
       - uses: actions/checkout@v4
       - id: site
@@ -1627,7 +1664,7 @@ jobs:
     # about 13 minutes of setup and a build of the site that is bounded at 40, then the audit step's
     # 35 minutes: the step is the one that runs out of time, never the job
     timeout-minutes: 70
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     steps:
       - uses: actions/checkout@v4
       - id: site
@@ -1687,7 +1724,7 @@ jobs:
     if: needs.plan.outputs.ui_audit == 'true'
     # the bounded steps add up to 40 + 10 + 10 + 15 minutes, and the setup is about 13
     timeout-minutes: 90
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
