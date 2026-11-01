@@ -365,6 +365,18 @@ sections:
     compare_url: https://github.com/korczis/prismatic-majordomus/compare/v1.0.0-alpha.5...v1.0.0-alpha.8
     tree_url: https://github.com/korczis/prismatic-majordomus/tree/v1.0.0-alpha.8
     decisions:
+      - id: adr-0223
+        title: "A deployment carries the site built at its own commit, and the hosted server serves it at /docs"
+        status: accepted
+        date: "2026-10-23"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0223-a-deployment-carries-the-site-built-at-its-own-commit.md
+        added: 9c9b1157845bc9143246e9a983e4d31dfe5c20d9
+      - id: adr-0224
+        title: "No ordinary command builds; a missing or stale executable fails fast or answers through a release of the same generation, and only an explicit build builds"
+        status: accepted
+        date: "2026-10-22"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0224-no-ordinary-command-builds.md
+        added: 9d38456bbb2ee3f9d6e2670841285cd8ffb88f44
       - id: adr-0220
         title: "A hosted server is a rendezvous only over TLS, with its key held as a secret and the mesh read only by those it trusts"
         status: accepted
@@ -383,6 +395,18 @@ sections:
         date: "2026-10-18"
         url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0176-the-blackboard-is-one-projection-pushed-over-one-socket.md
         added: 35f852d9ed72cc1003050ac7dbdbf07a972f33bd
+      - id: adr-0170
+        title: "A browser computes with the portable core, and the server verifies by recomputing"
+        status: proposed
+        date: "2026-10-16"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0170-a-browser-computes-and-the-server-verifies-by-recomputing.md
+        added: 03318debce66b349758474d9f5f8e562ba2bcab7
+      - id: adr-0226
+        title: "A session joins the cluster before it works — current, announced and useful — and the repository says when it has not"
+        status: proposed
+        date: "2026-10-13"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0226-a-session-joins-the-cluster-before-it-works.md
+        added: d55a5af86f3dc36cd4f0b20d43e9251503dea47a
       - id: adr-0221
         title: "Init declares the mesh, closed until a machine is enrolled"
         status: proposed
