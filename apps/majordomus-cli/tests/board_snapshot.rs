@@ -76,7 +76,11 @@ fn board_snapshot_is_one_answer_on_the_command_line_and_over_mcp() {
     let dir = tempfile::tempdir().expect("a directory");
     let share = share_with_lane(dir.path());
 
-    let (code, out, err) = cli(&f, &share, &["board", "snapshot", "--by", "s1", "--format", "json"]);
+    let (code, out, err) = cli(
+        &f,
+        &share,
+        &["board", "snapshot", "--by", "s1", "--format", "json"],
+    );
     assert_eq!(code, 0, "{err}");
     let answer: Value = serde_json::from_str(&out).expect("one JSON document");
     let docs = &answer["documents"];
@@ -89,7 +93,9 @@ fn board_snapshot_is_one_answer_on_the_command_line_and_over_mcp() {
     assert!(docs["prs"]["unavailable"].is_string(), "{}", docs["prs"]);
     assert_eq!(docs["intents"]["items"][0]["id"], "fixture-intent");
     assert_eq!(docs["milestones"]["items"][0]["l"], "fixture");
-    assert!(answer["digest"].as_str().is_some_and(|d| d.starts_with("sha256:")));
+    assert!(answer["digest"]
+        .as_str()
+        .is_some_and(|d| d.starts_with("sha256:")));
     for (id, n) in answer["sizes"].as_object().expect("sizes") {
         assert!(n.as_u64() < Some(250_000), "{id}");
     }
@@ -102,7 +108,10 @@ fn board_snapshot_is_one_answer_on_the_command_line_and_over_mcp() {
         structured["digest"], answer["digest"],
         "the same state is the same digest on every surface"
     );
-    assert_eq!(structured["documents"]["issues-fixture"], docs["issues-fixture"]);
+    assert_eq!(
+        structured["documents"]["issues-fixture"],
+        docs["issues-fixture"]
+    );
 
     let (code, out, _) = cli(&f, &share, &["board", "snapshot"]);
     assert_eq!(code, 0);
@@ -117,7 +126,10 @@ fn board_snapshot_refuses_an_open_milestone_in_no_lane_on_every_surface() {
     let share = common::dist_share();
     let (code, out, err) = cli(&f, &share, &["board", "snapshot", "--format", "json"]);
     assert_ne!(code, 0, "{out}");
-    assert!(err.contains("fixture-milestone") && err.contains("board.yaml"), "{err}");
+    assert!(
+        err.contains("fixture-milestone") && err.contains("board.yaml"),
+        "{err}"
+    );
 
     let mcp = mcp_board_snapshot(&f, &share, json!({}));
     assert_eq!(mcp["isError"], true, "{mcp}");
