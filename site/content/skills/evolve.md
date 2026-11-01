@@ -5,7 +5,7 @@ weight = 3
 [extra]
 id = "evolve"
 status = "active"
-version = 2
+version = 3
 source = ".ai/repo/skills/evolve/SKILL.md"
 +++
 {% raw %}
@@ -32,6 +32,12 @@ already derives its candidates (`session.knowledge_on_end`); this is what is don
 
 ### 1. Gather what there is to decide
 
+Read this skill, and every record it names, in the worktree the run works in, made from
+`origin/master`. The primary checkout and the server it hosts can stand behind the trunk.
+On 2026-10-31 the primary stood 160 commits behind and still held version 1 of this skill,
+without its offload derive and without step 7. `majordomus worktree` says how far a checkout
+lags.
+
 ```bash
 majordomus knowledge candidates
 majordomus knowledge check
@@ -55,7 +61,10 @@ origin/master -- .ai/repo/knowledge/curated`. Three places hold what no candidat
 A lesson written only in a private memory never reaches a rule, a skill or the next
 session's briefing; on 2026-10-28 most of a day's lessons were there and nowhere else. So
 for each one, search the layer first (`majordomus knowledge search <words>`): when a record
-already says it, cite that record rather than observing it twice; otherwise record it as
+already says it, cite that record rather than observing it twice. The search took about a
+minute per phrase on 2026-10-31, so take a first pass with a grep of the `title:` lines
+under `.ai/repo/knowledge/curated/` and of the rules, and keep the search for the phrases
+that pass does not settle; otherwise record it as
 one observation, in the ledger and nowhere else. A memory file is never copied into the
 tree, and nothing it says is done because it says so. A memory that cannot be decided in
 this run is counted in the report as `undecided: <n> memory files since <date>`.
@@ -110,6 +119,12 @@ Promotion requires the evidence on standard input: the command, test, commit or 
 that makes the statement true, not a restatement of it. A candidate that duplicates a
 curated note or a rule is rejected with the identity of what already says it. A candidate
 you cannot judge stays a candidate; say so in the report instead of guessing.
+
+The ledger cannot be edited, so an observation that says more than its evidence shows is
+not corrected in place. Observe the corrected statement, derive, and promote the corrected
+candidate. Then reject the first candidate with a reason that names the one that replaces
+it. Check each statement against the forge or the tree (`gh run view`, `git log`) before
+you observe it: a session's own notes have overstated a run's outcome before.
 
 A promoted record is tracked, so its provenance must resolve in a clean clone. `promote`
 keeps the candidate's `session:` and `task:` ids, which live only in this machine's

@@ -631,6 +631,87 @@ one the forge cannot show and every branch that is no record are left alone. If 
 refuses the reopen after the closure, the pull request is closed: the drain says so, names
 `gh pr reopen <n>`, records `reopen_failed` and exits 10.
 
+## A train top is judged before it is pushed
+
+A *train top* here is the landing seat's combined top, clause 2 of
+[the cooperation rule](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md):
+the seats number them (train 13, 13b, 13c), and it is not the stacked train of the section
+above. The rule says one validation run judges every member. This section is the landing
+seat's procedure for keeping that run a confirmation rather than the first time anyone looks.
+It is measured by one number, the owner's, given on the night of 2026-10-31 in Czech:
+"pokud je min nez 1 merged PR/MR per 30 mins, tak je to fail produktu" ("fewer than one
+merged pull request per 30 minutes is a failure of the product"), with "tohle se nesmi
+opakovat" ("this must not happen again") about what follows.
+
+**What happened.** Train 12c landed at 2026-10-30T18:27Z and master stood at `6b30ede2d13`
+for more than 29 hours after it. Train 13 (#2784, 29 members) was pushed although the local
+pre-push plan on its top had reported failures in development-semantics, collision-check,
+economics-claims and rust-quality. A review traced each of them to a member (#900, #2620,
+#1050, #2746), and the top was cancelled after 1.6 hours in CI and recomposed as 13b. Train
+13b (#2785, 28 members) was in validate from 10:46Z to 14:32Z on 2026-10-31 (run
+41194104887) and came back red in coverage, structure, four suite shards and four ui shards.
+All of it came from members. There were 609 uncovered changed lines (by blame #2638, #2746,
+#2689, #2637 and #966 above all), five integration tests and six suite cases (430, 94, 400,
+93, 15, 3955), and the ui-audit findings of #933. Nobody had seen any of it, because no
+member had been judged on its own head. Their own validate runs had been cancelled to free
+hosted runners, since `validate.yml` runs on `ubuntu-latest` and one run takes all of the
+hosted concurrency. The compose had run fmt, clippy and `cargo test --lib` only. What
+worked was train 13c. Every uncovered line of 13b was blamed to its member, every member
+that blocked was moved out at once, and 13c boarded 16 members, each with no uncovered
+changed line.
+
+The procedure:
+
+1. **A member boards only judged on its own head against the current master.** That means
+   one of two things. Either the member's own `ci` succeeded on a head that contains the
+   current `origin/master`, or the composer judges that head merged with master for it. Then
+   the composer runs `scripts/ci/coverage-differential` over the member's changed lines
+   (`MJ_COVERAGE_BASE=origin/master`), the suite cases `scripts/ci-plan --base origin/master
+   --head <member>` selects, and the crate's integration tests when the member touches the
+   crate. Cancel a member's own run only if the composer judges it this way. A cancelled run
+   is no verdict, and a top of members nobody judged is judged for the first time by CI,
+   at the cost of the whole top.
+2. **The composer judges the merged tree before it pushes.** On the merged and derived tree
+   it runs `cargo fmt --check`, `cargo clippy --all-targets --all-features -- -D warnings`,
+   `cargo test --lib --tests`, and the gates and cases `scripts/ci/run-plan` plans for the
+   tree against `origin/master`. The work runs on a build host within clause 7's limits. The
+   composer pushes only a top that passed all of them.
+3. **A pre-push failure on a train top is a blocker, not a report.** The hook still reports
+   and lets the push through, as
+   [`project.a-push-runs-what-ci-would-find-first`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v2.md)
+   says, because on a member's own branch CI holds the verdict. A top is different: its CI
+   run is the slowest and widest the repository has, so a failure the push already named
+   costs hours and finds nothing new. So the composer runs the hook's own step,
+   `scripts/ci/run-plan --before-push`, before the push and does not push over a failure it
+   reports. It finds the member the failure belongs to and applies step 4.
+4. **A member that blocks moves to the next train at once.** Small and green beats big. A
+   top waits on its worst member, so one member's red holds back every other member's
+   landing. Clause 2 holds as it is written: the member is dropped and fixed on its own
+   branch. A fix may also go to the composer as a source-only patch against the top, so
+   that the recompose does not wait for the member's derive. The patch is committed on the
+   member's branch all the same, and the member boards the next train with that head.
+5. **A red train is post-mortemed per member, by blame.** Each finding of the top's run goes
+   to the member that introduced it. An uncovered changed line belongs to the member whose
+   commits (`origin/master..<member head>`) carry it in `git blame` of the merged tree. A
+   failing case or test belongs to the member whose paths it reads. The attribution is
+   written in the top's pull request. The members it names leave, and the rest compose the
+   next top on the current master.
+6. **A decision is taken again after a stop.** A workflow or session that resumes reads
+   `origin/master`, the members' heads and the board again before it acts on what it decided
+   earlier. On 2026-10-30 and 2026-10-31 account limits stopped agents of three sessions mid-run, and a
+   workflow that resumed hours later acted on state that had been superseded. This is
+   [`project.integration-follows-the-current-master`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/integration-follows-the-current-master.v3.md)
+   applied to a top.
+
+Three throughput defects of the same days are carried by their own pull requests and not
+here. #2596 (I4242, with I4359) moves validate onto the self-hosted runners, so a member's
+own run no longer competes with the top for the hosted pool. #2782 records I4523 (the
+lander judges its candidate by number when GitHub's GraphQL cannot list every open pull
+request) and I4524 (telemetry does not run for a cancelled validate run). The third is a
+stale primary checkout. `plan drift` there read a tree 160 commits behind and reported 24
+issues as open that master had already closed. Clause 3 of the rule is the remedy: whoever
+finds the checkout behind brings it current.
+
 ## An expedited landing
 
 Everything above is the executor, and the executor never passes `--admin`. One thing is
