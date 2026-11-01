@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `cf9dabf45ec5`.
+Generated from canonical inputs `fc494ee37b92`.
 
 ## Milestones
 
@@ -127,7 +127,7 @@ Generated from canonical inputs `cf9dabf45ec5`.
 | [two-folder-integration](https://majordomus.dev/plan/two-folder-integration/) | ACTIVE | 3/31 | 2 | 26 | 0 | 0 | 0 | Adoption is a reconciliation, not a template copy. One typed repository model is discovered once and every consumer reads it. A desired integration is computed from that model, diffed against what the repository actually holds, and applied as the smallest mutation that closes the gap — with everything Majordomus owns living under `.ai/` and `.majordomus/`, and anything outside those two namespaces reduced to a small managed bridge whose ownership is recorded. Running the reconciliation twice changes nothing the second time, and uninstalling gives back exactly what was taken and nothing a person authored. | [`plan-status/two-folder-integration.md`](plan-status/two-folder-integration.md) |
 | [web-sign-in](https://majordomus.dev/plan/web-sign-in/) | PLANNED | 0/8 | 1 | 7 | 0 | 0 | 0 | One canonical identity-provider kind under .ai/repo/identity/providers/ describes each provider as data: its issuer, its endpoints or its discovery document, the scopes requested, the claim that carries a stable subject and the environment variable names its credentials arrive in. A single OpenID-Connect-shaped flow in the executable serves every provider in that directory; Google and Facebook are two objects, not two code paths. Sessions are cookie-borne, signed, short and revocable; identity is attached to a request once, in the router, and every surface — HTTP, Cockpit, OpenAPI, MCP — reads it from the same place. The capability registry's effect classification, not a per-route list, decides what an anonymous reader may do, and the OpenAPI document and the Cockpit both state that decision because both project it from the registry. Striking a provider is deleting one file and regenerating. | [`plan-status/web-sign-in.md`](plan-status/web-sign-in.md) |
 | [what-a-workspace-decides-reaches-the-repository-with-its-source](https://majordomus.dev/plan/what-a-workspace-decides-reaches-the-repository-with-its-source/) | BLOCKED | 0/2 | 0 | 2 | 0 | 0 | 0 | The owner thinks aloud in the ChatGPT project. What the owner decides there is read into this checkout's own store, promoted by a person into intents, ADRs, milestones, issues and knowledge, and every promoted record names the conversation and message it came from, so that from the UI one click opens that message for the operator who holds the store, while the public repository and site carry only the reference. | [`plan-status/what-a-workspace-decides-reaches-the-repository-with-its-source.md`](plan-status/what-a-workspace-decides-reaches-the-repository-with-its-source.md) |
-| [work-graph-github](https://majordomus.dev/plan/work-graph-github/) | ACTIVE | 12/15 | 1 | 2 | 0 | 0 | 0 | The projection cannot rot silently: a gate runs the drift check on every change that can move the model or the adapter, and drift is a CI failure with the record named. Identity travels with the record rather than being parsed out of its title, so renaming a GitHub title moves nothing and creates no duplicate, and the remote can be a fixture, so which record is which is provable with no network. The reconciliation vocabulary distinguishes the states it currently conflates, so `missing` no longer stands for both a record never created and a record a person deleted, and a remote edit is reported as a remote edit. Above the projection, a pull request names the issue it realises and the edge is derived from git and GitHub rather than remembered, so a merged commit leads back to the acceptance criteria it satisfied and an outcome leads forward to the evidence that it holds. The derivations the shell already computes — ready, blocked, waves, next, status — are readable through the same capability surface as every other thing this repository knows, rather than only from a terminal. | [`plan-status/work-graph-github.md`](plan-status/work-graph-github.md) |
+| [work-graph-github](https://majordomus.dev/plan/work-graph-github/) | ACTIVE | 13/15 | 0 | 2 | 0 | 0 | 0 | The projection cannot rot silently: a gate runs the drift check on every change that can move the model or the adapter, and drift is a CI failure with the record named. Identity travels with the record rather than being parsed out of its title, so renaming a GitHub title moves nothing and creates no duplicate, and the remote can be a fixture, so which record is which is provable with no network. The reconciliation vocabulary distinguishes the states it currently conflates, so `missing` no longer stands for both a record never created and a record a person deleted, and a remote edit is reported as a remote edit. Above the projection, a pull request names the issue it realises and the edge is derived from git and GitHub rather than remembered, so a merged commit leads back to the acceptance criteria it satisfied and an outcome leads forward to the evidence that it holds. The derivations the shell already computes — ready, blocked, waves, next, status — are readable through the same capability surface as every other thing this repository knows, rather than only from a terminal. | [`plan-status/work-graph-github.md`](plan-status/work-graph-github.md) |
 
 ## Execution waves
 
@@ -409,7 +409,6 @@ Generated from canonical inputs `cf9dabf45ec5`.
 - `I4264` (a-second-adopter-is-served, wave 0) — adr check names decisions it did not examine, and adr propose records who authored one
 - `I4265` (a-second-adopter-is-served, wave 0) — The hook line init prints runs doctor in its commit context
 - `I4268` (a-second-adopter-is-served, wave 0) — An adopter runs every gate of its CI model and records it with one command
-- `I4290` (work-graph-github, wave 0) — The reconciliation names a record never created on GitHub apart from one deleted there
 - `I4291` (M002, wave 0) — The executable's record writers attribute a record as the shell's do  **← `majordomus plan next` returns this one**
 - `I4296` (ci-critical-path, wave 0) — A full-history checkout of validate fits its bound: structure fetches no blobs, and every one has twenty minutes
 - `I4297` (a-review-is-published-at-its-commit, wave 0) — The quality report records the commit and the tree it measured
@@ -471,13 +470,13 @@ Generated from canonical inputs `cf9dabf45ec5`.
 
 ## Findings
 
-8481 finding(s), each on the page of the milestone its subject is or belongs to:
+8434 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
 | [`M002`](plan-status/M002.md) | 33 |
 | [`M003`](plan-status/M003.md) | 10 |
-| [`M004`](plan-status/M004.md) | 389 |
+| [`M004`](plan-status/M004.md) | 387 |
 | [`a-bounded-task-is-carried-to-accepted-work`](plan-status/a-bounded-task-is-carried-to-accepted-work.md) | 25 |
 | [`a-change-is-judged-in-minutes`](plan-status/a-change-is-judged-in-minutes.md) | 72 |
 | [`a-claim-stands-only-on-its-evidence`](plan-status/a-claim-stands-only-on-its-evidence.md) | 191 |
@@ -487,25 +486,25 @@ Generated from canonical inputs `cf9dabf45ec5`.
 | [`a-paste-is-decomposed-by-a-skill`](plan-status/a-paste-is-decomposed-by-a-skill.md) | 17 |
 | [`a-promoted-record-opens-its-message`](plan-status/a-promoted-record-opens-its-message.md) | 17 |
 | [`a-provider-carries-the-contract-natively`](plan-status/a-provider-carries-the-contract-natively.md) | 65 |
-| [`a-registered-corpus-judges-majordomus`](plan-status/a-registered-corpus-judges-majordomus.md) | 100 |
+| [`a-registered-corpus-judges-majordomus`](plan-status/a-registered-corpus-judges-majordomus.md) | 99 |
 | [`a-review-is-published-at-its-commit`](plan-status/a-review-is-published-at-its-commit.md) | 29 |
-| [`a-second-adopter-is-served`](plan-status/a-second-adopter-is-served.md) | 105 |
+| [`a-second-adopter-is-served`](plan-status/a-second-adopter-is-served.md) | 104 |
 | [`a-session-proceeds-through-the-mesh`](plan-status/a-session-proceeds-through-the-mesh.md) | 40 |
 | [`a-test-fails-when-the-code-is-wrong`](plan-status/a-test-fails-when-the-code-is-wrong.md) | 41 |
 | [`a-version-follows-the-work`](plan-status/a-version-follows-the-work.md) | 17 |
-| [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 530 |
+| [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 527 |
 | [`an-authorised-node-connects-from-anywhere`](plan-status/an-authorised-node-connects-from-anywhere.md) | 3 |
 | [`an-outcome-becomes-a-reviewed-plan`](plan-status/an-outcome-becomes-a-reviewed-plan.md) | 11 |
-| [`an-unmet-criterion-is-drafted-into-work`](plan-status/an-unmet-criterion-is-drafted-into-work.md) | 111 |
+| [`an-unmet-criterion-is-drafted-into-work`](plan-status/an-unmet-criterion-is-drafted-into-work.md) | 110 |
 | [`architecture-is-enforced`](plan-status/architecture-is-enforced.md) | 2 |
 | [`automation`](plan-status/automation.md) | 48 |
 | [`campaigns-are-read-as-provenance`](plan-status/campaigns-are-read-as-provenance.md) | 17 |
 | [`capability-graph`](plan-status/capability-graph.md) | 11 |
-| [`ci-critical-path`](plan-status/ci-critical-path.md) | 319 |
+| [`ci-critical-path`](plan-status/ci-critical-path.md) | 317 |
 | [`command-and-deployment-criteria-are-judged`](plan-status/command-and-deployment-criteria-are-judged.md) | 5 |
 | [`delivery-economics-are-measured-over-declared-windows`](plan-status/delivery-economics-are-measured-over-declared-windows.md) | 1 |
 | [`derived-data-integrity`](plan-status/derived-data-integrity.md) | 25 |
-| [`development-runtime`](plan-status/development-runtime.md) | 879 |
+| [`development-runtime`](plan-status/development-runtime.md) | 874 |
 | [`every-session-joins-the-mesh`](plan-status/every-session-joins-the-mesh.md) | 13 |
 | [`every-sessions-usage-is-observed`](plan-status/every-sessions-usage-is-observed.md) | 53 |
 | [`every-surface-follows-what-changed`](plan-status/every-surface-follows-what-changed.md) | 15 |
@@ -513,14 +512,14 @@ Generated from canonical inputs `cf9dabf45ec5`.
 | [`everything-is-followed-in-one-stream`](plan-status/everything-is-followed-in-one-stream.md) | 6 |
 | [`external-workspaces`](plan-status/external-workspaces.md) | 27 |
 | [`failure-is-visible`](plan-status/failure-is-visible.md) | 30 |
-| [`fly-deployment`](plan-status/fly-deployment.md) | 66 |
-| [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 2963 |
+| [`fly-deployment`](plan-status/fly-deployment.md) | 65 |
+| [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 2947 |
 | [`intent-lifecycle`](plan-status/intent-lifecycle.md) | 60 |
 | [`knowledge-acts-on-what-it-learns`](plan-status/knowledge-acts-on-what-it-learns.md) | 76 |
 | [`landing-survives-any-session`](plan-status/landing-survives-any-session.md) | 9 |
-| [`mcp-transports-are-reliable`](plan-status/mcp-transports-are-reliable.md) | 172 |
+| [`mcp-transports-are-reliable`](plan-status/mcp-transports-are-reliable.md) | 171 |
 | [`measurements-are-tracked-over-time`](plan-status/measurements-are-tracked-over-time.md) | 11 |
-| [`merging-and-referencing-are-enforced`](plan-status/merging-and-referencing-are-enforced.md) | 34 |
+| [`merging-and-referencing-are-enforced`](plan-status/merging-and-referencing-are-enforced.md) | 33 |
 | [`mesh-journal-converges`](plan-status/mesh-journal-converges.md) | 129 |
 | [`one-kit-on-every-surface`](plan-status/one-kit-on-every-surface.md) | 8 |
 | [`peer-blackboard`](plan-status/peer-blackboard.md) | 6 |
@@ -530,18 +529,17 @@ Generated from canonical inputs `cf9dabf45ec5`.
 | [`runtime-adapters`](plan-status/runtime-adapters.md) | 91 |
 | [`runtime-lifecycle`](plan-status/runtime-lifecycle.md) | 43 |
 | [`runtime-trust`](plan-status/runtime-trust.md) | 26 |
-| [`safe-self-update`](plan-status/safe-self-update.md) | 431 |
-| [`surfaces-never-disagree`](plan-status/surfaces-never-disagree.md) | 285 |
+| [`safe-self-update`](plan-status/safe-self-update.md) | 428 |
+| [`surfaces-never-disagree`](plan-status/surfaces-never-disagree.md) | 283 |
 | [`test-evidence`](plan-status/test-evidence.md) | 15 |
 | [`the-corpus-is-registered-before-it-runs`](plan-status/the-corpus-is-registered-before-it-runs.md) | 4 |
-| [`the-mesh-works-out-of-the-box`](plan-status/the-mesh-works-out-of-the-box.md) | 181 |
+| [`the-mesh-works-out-of-the-box`](plan-status/the-mesh-works-out-of-the-box.md) | 180 |
 | [`the-plan-says-what-a-fix-unblocks`](plan-status/the-plan-says-what-a-fix-unblocks.md) | 23 |
 | [`the-proof-scorecard-is-published`](plan-status/the-proof-scorecard-is-published.md) | 3 |
 | [`the-proof-tests-are-registered-before-they-run`](plan-status/the-proof-tests-are-registered-before-they-run.md) | 11 |
 | [`the-session-domain-is-written-once`](plan-status/the-session-domain-is-written-once.md) | 11 |
 | [`the-ui-runs-and-explains`](plan-status/the-ui-runs-and-explains.md) | 9 |
 | [`the-ui-works-on-a-phone`](plan-status/the-ui-works-on-a-phone.md) | 13 |
-| [`truthful-plan-surfaces`](plan-status/truthful-plan-surfaces.md) | 240 |
+| [`truthful-plan-surfaces`](plan-status/truthful-plan-surfaces.md) | 238 |
 | [`two-folder-integration`](plan-status/two-folder-integration.md) | 7 |
 | [`web-sign-in`](plan-status/web-sign-in.md) | 32 |
-| [`work-graph-github`](plan-status/work-graph-github.md) | 5 |

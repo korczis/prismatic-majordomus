@@ -111,7 +111,7 @@ check_fx() { MJ_GH_FIXTURE_ISSUES="$FX_I" MJ_GH_FIXTURE_MILESTONES="$FX_M" "$SYN
 "$SYNC" --render I0002 | row 7 'Renamed by a person entirely' I0002 > "$FX_I"
 expect_exit 11 check_fx
 expect_grep 'OK +insync +issue I0002 \(#7\)'
-expect_no_grep 'DRIFT +(missing|behind|edited|conflict) +issue I0002'
+expect_no_grep 'DRIFT +(never-created|deleted-remotely|behind|edited|conflict) +issue I0002'
 
 # the same region after the canonical record moves: behind, and safe to rewrite
 "$SYNC" --render I0002 | row 7 'Renamed by a person entirely' I0002 > "$FX_I"
@@ -147,7 +147,7 @@ expect_grep 'DRIFT +adopt +issue I0002 \(#8\)'
 # a title that merely looks canonical never captures a record carrying another identity
 "$SYNC" --render I0100 | row 9 'I0002 — Issue I0002' I0100 > "$FX_I"
 expect_exit 11 check_fx
-expect_grep 'DRIFT +missing +issue I0002 is not on GitHub'
+expect_grep 'DRIFT +never-created +issue I0002 is not on GitHub'
 
 # a remote issue claiming a record this repository does not have is drift, and is counted:
 # it used to be printed from inside a pipeline, where the count could never see it
@@ -176,6 +176,86 @@ expect_grep 'DRIFT +unmanaged +issue #12 claims to be I9999'
 # a fixture is a remote to read, never one to write
 MJ_GH_FIXTURE_ISSUES="$FX_I" expect_exit 15 "$SYNC" --apply
 expect_grep 'refuses a fixture remote'
+
+# --- a record GitHub does not serve is one of two absences, and they never read as one (I4290)
+#     GitHub says when it created each projected record; the newest of those is the last apply
+#     that created anything. A record that reached the trunk before it was created by it and
+#     then deleted on GitHub; one that reached the trunk later was never created. The records
+#     land now, so a projection dated 2999 came after them and one dated 2000 before.
+# MUTATION, RUN: make absence_of print never-created always -> the deleted-remotely lines
+# below are missing; make it print deleted-remotely always -> the never-created ones are.
+git add -A >/dev/null; git commit -qm "the records land on the trunk" >/dev/null
+created() { awk -v c="$1" 'BEGIN { FS = OFS = "\t" } { print $0, c }'; }
+remote_at() {
+  { "$SYNC" --render I0001 | row 21 'I0001 — Issue I0001' I0001
+    "$SYNC" --render I0100 | row 22 'I0100 — Issue I0100' I0100; } | created "$1" > "$FX_I"
+  printf '1\tM000 — Milestone M000\topen\t%s\n2\tM001 — Milestone M001\topen\t%s\n' "$1" "$1" > "$FX_M"
+}
+remote_at 2999-01-01T00:00:00Z
+expect_exit 11 check_fx
+expect_grep 'DRIFT +deleted-remotely +issue I0002 was on GitHub \(on the trunk since [0-9T:-]+Z, before the projection of 2999-01-01T00:00:00Z\)'
+expect_grep 'MJ_GH_RECREATE=I0002'
+expect_no_grep 'never-created +issue I0002'
+remote_at 2000-01-01T00:00:00Z
+expect_exit 11 check_fx
+expect_grep 'DRIFT +never-created +issue I0002 is not on GitHub; --apply creates it'
+expect_no_grep 'deleted-remotely'
+# a projected milestone dates the projection as an issue does
+printf '1\tM000 — Milestone M000\topen\t2999-01-01T00:00:00Z\n' > "$FX_M"; : > "$FX_I"
+expect_exit 11 check_fx
+expect_grep 'DRIFT +deleted-remotely +milestone M001'
+expect_grep 'DRIFT +deleted-remotely +issue I0002'
+# a remote that carries no projected record yet (an adopter's first apply) dates nothing,
+# and neither does a row written before the remote said when it was created
+: > "$FX_M"
+expect_exit 11 check_fx
+expect_grep 'DRIFT +never-created +milestone M001'
+expect_grep 'DRIFT +never-created +issue I0002'
+expect_no_grep 'deleted-remotely'
+printf '1\tM000 — Milestone M000\topen\n2\tM001 — Milestone M001\topen\n' > "$FX_M"
+"$SYNC" --render I0001 | row 21 'I0001 — Issue I0001' I0001 > "$FX_I"
+expect_exit 11 check_fx
+expect_grep 'DRIFT +never-created +issue I0002'
+expect_no_grep 'deleted-remotely'
+
+# --- --apply refuses a deleted-remotely record, names it and writes nothing for it; a
+#     person names it in MJ_GH_RECREATE and the next apply creates it. A fixture is never
+#     applied, so `gh` is a stub on PATH that answers the listings and records every call,
+#     and the trunk is a local bare remote, as in case 602.
+STUB="$T/stub"; mkdir -p "$STUB"; CALLS="$T/gh.calls"
+cat > "$STUB/gh" <<'STUB'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >> "$MJ_STUB_CALLS"
+case "$1 $2" in "auth status"|"label list") exit 0 ;; esac
+case "$*" in
+  *"--paginate repos/"*"/milestones"*) cat "$MJ_STUB_MS"; exit 0 ;;
+  *"issue list"*)                      cat "$MJ_STUB_IS"; exit 0 ;;
+  *"api graphql"*)                     wc -l < "$MJ_STUB_IS" | tr -d ' '; exit 0 ;;
+  *"issue create"*)                    echo "https://github.com/example/fixture/issues/99"; exit 0 ;;
+esac
+exit 0
+STUB
+chmod +x "$STUB/gh"
+printf '/stub/\n/remote.git/\n/gh.calls\n' >> .git/info/exclude
+git init -q --bare "$T/remote.git"
+git -C "$T/remote.git" fetch -q --no-prune "$T" HEAD:refs/heads/trunk
+git -C "$T/remote.git" symbolic-ref HEAD refs/heads/trunk
+git remote add origin "$T/remote.git"; git fetch -q origin; git remote set-head origin trunk >/dev/null
+remote_at 2999-01-01T00:00:00Z
+apply() {
+  : > "$CALLS"
+  PATH="$STUB:$PATH" MJ_GH_PACE=0 MJ_STUB_MS="$FX_M" MJ_STUB_IS="$FX_I" MJ_STUB_CALLS="$CALLS" \
+    "$SYNC" --apply
+}
+expect_exit 15 apply
+expect_grep 'REFUSED +created +issue I0002 — deleted on GitHub; nothing was written'
+expect_grep 'name it in MJ_GH_RECREATE'
+if grep -q 'issue create' "$CALLS"; then
+  echo "    --apply created an issue GitHub had deleted:"; grep 'issue create' "$CALLS"; exit 1
+fi
+MJ_GH_RECREATE=I0002 expect_exit 0 apply
+expect_grep 'OK +created +issue I0002'
+grep -q 'issue create .*I0002 — ' "$CALLS" || { echo "    MJ_GH_RECREATE=I0002 did not create I0002"; cat "$CALLS"; exit 1; }
 rm -f "$FX_I" "$FX_M"
 
 # --- nothing the adapter does writes to the canonical model
