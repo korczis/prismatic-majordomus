@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.10"
   },
   "registry": {
-    "fingerprint": "cc9dfc7440e849f7ae318d91aa14dbb563ddb53691110d8224b774189334c1f5",
+    "fingerprint": "34855c9dbdbe34a8c18dd60351bceb03d15be3d2247bbc545531a598f9a657d5",
     "summary": {
-      "total": 3728,
+      "total": 3732,
       "builtin": 220,
-      "declarative": 3508,
+      "declarative": 3512,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3508
+        "resource": 3512
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3518
+        "implemented": 3522
       },
       "mcp_tools": 206,
-      "mcp_resources": 3565,
+      "mcp_resources": 3569,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91107,7 +91107,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 353,
+        "capabilities": 355,
         "capability_ids": []
       },
       {
@@ -91970,7 +91970,7 @@
         "title": "skill",
         "description": "Declarative objects of kind 'skill' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 8,
+        "capabilities": 10,
         "capability_ids": []
       },
       {
@@ -92097,7 +92097,7 @@
     ]
   },
   "index": {
-    "fingerprint": "3090325deb7958157829ab237390785703428ed455f9d7510c30d9104dfe66b4",
+    "fingerprint": "a2fee6de5d85df54cf0304e223bcedc95aa06788656a0d3b1018264e3c404218",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92131,7 +92131,7 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 353,
+      "document": 355,
       "domain": 6,
       "feature": 29,
       "gap": 5,
@@ -92149,7 +92149,7 @@
       "rule": 192,
       "scope": 1,
       "session": 93,
-      "skill": 8,
+      "skill": 10,
       "taxonomy": 10,
       "test": 672,
       "use-case": 49,
@@ -98915,6 +98915,16 @@
         "bytes": 455
       },
       {
+        "uri": "majordomus://document/.ai/repo/skills/integrator/examples/finished-but-not-on-master.md",
+        "kind": "document",
+        "identity": ".ai/repo/skills/integrator/examples/finished-but-not-on-master.md",
+        "title": "Finished, but not on master",
+        "path": ".ai/repo/skills/integrator/examples/finished-but-not-on-master.md",
+        "section": "skills",
+        "source_class": "skill_example",
+        "bytes": 647
+      },
+      {
         "uri": "majordomus://document/.ai/repo/skills/pack-for-chatgpt/examples/upload-sources-to-a-project.md",
         "kind": "document",
         "identity": ".ai/repo/skills/pack-for-chatgpt/examples/upload-sources-to-a-project.md",
@@ -98933,6 +98943,16 @@
         "section": "skills",
         "source_class": "skill_example",
         "bytes": 408
+      },
+      {
+        "uri": "majordomus://document/.ai/repo/skills/rebaser/examples/a-link-behind-master.md",
+        "kind": "document",
+        "identity": ".ai/repo/skills/rebaser/examples/a-link-behind-master.md",
+        "title": "A link behind master",
+        "path": ".ai/repo/skills/rebaser/examples/a-link-behind-master.md",
+        "section": "skills",
+        "source_class": "skill_example",
+        "bytes": 670
       },
       {
         "uri": "majordomus://document/.ai/repo/skills/repo-review/examples/review-a-subsystem.md",
@@ -99032,7 +99052,7 @@
         "path": ".ai/repo/workflows/task-lifecycle.md",
         "section": "workflows",
         "source_class": "workflow",
-        "bytes": 8623
+        "bytes": 9068
       },
       {
         "uri": "majordomus://document/.ai/repo/workflows/use-cases.md",
@@ -124128,6 +124148,25 @@
         ]
       },
       {
+        "uri": "majordomus://skill/integrator",
+        "kind": "skill",
+        "identity": "integrator",
+        "title": "Take finished work to a verified master",
+        "description": "Carry a finished change from an open pull request to master and beyond through the one integration engine and the one landing seat, answering at each stage why it is not there yet and stopping only at a landing verified on master, a release, or a named blocker with its next act.",
+        "path": ".ai/repo/skills/integrator/SKILL.md",
+        "section": "skills",
+        "source_class": "skill",
+        "bytes": 7021,
+        "tags": [
+          "integration",
+          "landing",
+          "ci",
+          "release",
+          "delivery",
+          "mesh"
+        ]
+      },
+      {
         "uri": "majordomus://skill/pack-for-chatgpt",
         "kind": "skill",
         "identity": "pack-for-chatgpt",
@@ -124158,6 +124197,24 @@
           "review",
           "archive",
           "privacy"
+        ]
+      },
+      {
+        "uri": "majordomus://skill/rebaser",
+        "kind": "skill",
+        "identity": "rebaser",
+        "title": "Bring a branch current by the cheapest safe strategy",
+        "description": "Decide, from the integration engine's own assessment, whether a branch needs nothing, master merged in, a repair by its owner, a fresh branch from master or to wait, and carry out only that, with every rewrite preceded by a rescue ref and every push a fast-forward.",
+        "path": ".ai/repo/skills/rebaser/SKILL.md",
+        "section": "skills",
+        "source_class": "skill",
+        "bytes": 7271,
+        "tags": [
+          "integration",
+          "merge",
+          "repair",
+          "rescue",
+          "worktrees"
         ]
       },
       {
@@ -127381,7 +127438,7 @@
         "identity": "test/cases/391_skills_are_proven_capabilities.sh",
         "path": "test/cases/391_skills_are_proven_capabilities.sh",
         "source_class": "case",
-        "bytes": 11002
+        "bytes": 11021
       },
       {
         "uri": "majordomus://test/test/cases/3932_the_coverage_export_is_its_one_measurement.sh",
@@ -130345,7 +130402,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 353
+      "objects": 355
     },
     {
       "name": "domain",
@@ -130537,7 +130594,7 @@
       "identity": [
         "id"
       ],
-      "objects": 8
+      "objects": 10
     },
     {
       "name": "taxonomy",

@@ -171,6 +171,49 @@
       "route": "/skills/implement/"
     },
     {
+      "id": "integrator",
+      "uri": "majordomus://skill/integrator",
+      "title": "Take finished work to a verified master",
+      "description": "Carry a finished change from an open pull request to master and beyond through the one integration engine and the one landing seat, answering at each stage why it is not there yet and stopping only at a landing verified on master, a release, or a named blocker with its next act.",
+      "status": "active",
+      "version": 1,
+      "tags": [
+        "integration",
+        "landing",
+        "ci",
+        "release",
+        "delivery",
+        "mesh"
+      ],
+      "related": [
+        "rebaser",
+        "implement",
+        "evolve",
+        "report-verification-state"
+      ],
+      "inputs": [
+        "the work to integrate: one pull request, a train, or every open pull request",
+        "the last recorded forge observation and the audit trail of this checkout's executor",
+        "the peer board, with who holds `seat/landing` and `seat/release`"
+      ],
+      "outputs": [
+        "for each pull request, the stage it reached (open, ready, landed, released, deployed) with the evidence of each",
+        "the landing verified on master by commit, or the blocker that stopped it, its owner and the next act",
+        "the measurements of the attempt (wait, check time, retries), read from the engine, never estimated"
+      ],
+      "path": ".ai/repo/skills/integrator/SKILL.md",
+      "sha256": "eae62e95522b9bd0423d1fbe43731b88a88b934d3551775611d08454f4ede368",
+      "examples": [
+        {
+          "path": ".ai/repo/skills/integrator/examples/finished-but-not-on-master.md",
+          "title": "Finished, but not on master",
+          "body": "\nThe implementation was pushed yesterday and its pull request is open with a green check.\nFind out why it is not on master and carry it there: read its disposition and the evidence\nbehind it, see who holds the landing seat, make the head ready (contains master, required\ncheck passed on that head, issue evidence recorded), announce it to the seat with its sha,\nand verify the landing afterwards — the head an ancestor of master, master's own run on that\ncommit green, then whether the release seat has released it. Report each stage reached with\nits run or commit, and the blocker with its owner where it stopped.\n"
+        }
+      ],
+      "valid": true,
+      "route": "/skills/integrator/"
+    },
+    {
       "id": "pack-for-chatgpt",
       "uri": "majordomus://skill/pack-for-chatgpt",
       "title": "Pack the sources for a ChatGPT project",
@@ -243,6 +286,48 @@
       ],
       "valid": true,
       "route": "/skills/pack-for-review/"
+    },
+    {
+      "id": "rebaser",
+      "uri": "majordomus://skill/rebaser",
+      "title": "Bring a branch current by the cheapest safe strategy",
+      "description": "Decide, from the integration engine's own assessment, whether a branch needs nothing, master merged in, a repair by its owner, a fresh branch from master or to wait, and carry out only that, with every rewrite preceded by a rescue ref and every push a fast-forward.",
+      "status": "active",
+      "version": 1,
+      "tags": [
+        "integration",
+        "merge",
+        "repair",
+        "rescue",
+        "worktrees"
+      ],
+      "related": [
+        "integrator",
+        "implement",
+        "assess-before-deleting",
+        "report-verification-state"
+      ],
+      "inputs": [
+        "one branch or pull request, a train, or the whole open queue, named by number or branch",
+        "the last recorded forge observation (`majordomus prs refresh` makes a new one)",
+        "a checkout with git history, the peer board and the derived-merge driver configured"
+      ],
+      "outputs": [
+        "for each candidate, the strategy chosen, the disposition and relation it was chosen from, and the command that carried it out or the reason it was left",
+        "a rescue ref for any head that was rewritten, proven on the remote before the rewrite",
+        "the head pushed, the run of the required check it started, and the queue read again afterwards"
+      ],
+      "path": ".ai/repo/skills/rebaser/SKILL.md",
+      "sha256": "f0aef975a88083e702abab84e51c69a96f262aa48540cd74787196af355b94b9",
+      "examples": [
+        {
+          "path": ".ai/repo/skills/rebaser/examples/a-link-behind-master.md",
+          "title": "A link behind master",
+          "body": "\nTrain 13c landed and every open pull request went `CONFLICTING` on the forge within minutes.\nBring the next train's members current without spending a check run on any head that does\nnot need one: refresh the observation, read each member's disposition and relation, merge\nmaster into the `needs_refresh` ones whose conflicts are only derived files with\n`prs repair <n> --apply`, leave the heads that already contain master alone, hand the one\n`conflicting` member back to its owner naming its authored files, and wait for the stacked\nlink until its base lands. Report each member with the strategy, the head pushed and the\ncheck run it started.\n"
+        }
+      ],
+      "valid": true,
+      "route": "/skills/rebaser/"
     },
     {
       "id": "repo-review",
@@ -336,7 +421,7 @@
       "route": "/skills/report-verification-state/"
     }
   ],
-  "count": 8,
+  "count": 10,
   "by_tag": {
     "cleanup": [
       "assess-before-deleting"
@@ -352,7 +437,8 @@
       "report-verification-state"
     ],
     "worktrees": [
-      "assess-before-deleting"
+      "assess-before-deleting",
+      "rebaser"
     ],
     "site": [
       "deploy-site"
@@ -370,7 +456,8 @@
       "repo-review"
     ],
     "delivery": [
-      "evolve"
+      "evolve",
+      "integrator"
     ],
     "coordination": [
       "evolve"
@@ -386,6 +473,22 @@
       "implement",
       "repo-review"
     ],
+    "integration": [
+      "integrator",
+      "rebaser"
+    ],
+    "landing": [
+      "integrator"
+    ],
+    "ci": [
+      "integrator"
+    ],
+    "release": [
+      "integrator"
+    ],
+    "mesh": [
+      "integrator"
+    ],
     "archive": [
       "pack-for-chatgpt",
       "pack-for-review"
@@ -396,6 +499,15 @@
     ],
     "chatgpt": [
       "pack-for-chatgpt"
+    ],
+    "merge": [
+      "rebaser"
+    ],
+    "repair": [
+      "rebaser"
+    ],
+    "rescue": [
+      "rebaser"
     ],
     "reporting": [
       "report-verification-state"
@@ -861,6 +973,13 @@
       "description": "Carry a requested change through the repository evidence-first, from the invariant it must keep to a verified, reconciled, documented and committed tree, without widening its scope."
     },
     {
+      "name": "integrator",
+      "path": ".claude/skills/integrator/SKILL.md",
+      "kind": "skill",
+      "source": ".ai/repo/skills/integrator/SKILL.md",
+      "description": "Carry a finished change from an open pull request to master and beyond through the one integration engine and the one landing seat, answering at each stage why it is not there yet and stopping only at a landing verified on master, a release, or a named blocker with its next act."
+    },
+    {
       "name": "pack-for-chatgpt",
       "path": ".claude/skills/pack-for-chatgpt/SKILL.md",
       "kind": "skill",
@@ -873,6 +992,13 @@
       "kind": "skill",
       "source": ".ai/repo/skills/pack-for-review/SKILL.md",
       "description": "Prepare a bounded, reproducible snapshot of the tracked tree for a reviewer who cannot read the repository directly, with the local half and anything secret left out and the questions the review must answer written down."
+    },
+    {
+      "name": "rebaser",
+      "path": ".claude/skills/rebaser/SKILL.md",
+      "kind": "skill",
+      "source": ".ai/repo/skills/rebaser/SKILL.md",
+      "description": "Decide, from the integration engine's own assessment, whether a branch needs nothing, master merged in, a repair by its owner, a fresh branch from master or to wait, and carry out only that, with every rewrite preceded by a rescue ref and every push a fast-forward."
     },
     {
       "name": "repo-review",
@@ -892,6 +1018,6 @@
   "claude_by_kind": {
     "command": 1,
     "domain": 60,
-    "skill": 8
+    "skill": 10
   }
 }
