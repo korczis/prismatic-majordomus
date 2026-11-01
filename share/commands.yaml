@@ -322,7 +322,7 @@ commands:
     requires_installed: true
     requires_task: required
     json: true
-    syntax: "majordomus evidence (--covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) | --gate <id> --exit <status>) [--result <r>] [--json] | majordomus evidence <show|claim|proves|record|stamp> [options]"
+    syntax: "majordomus evidence (--covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) | --gate <id> --exit <status>) [--result <r>] [--json] | majordomus evidence <show|claim|proves|record|stamp> [options] | majordomus evidence --run-gates [--all]"
     reads: [share/obligations.yaml, .ai/repo/ci/gates.yaml, .ai/local/state/current.yaml]
     writes: [.ai/local/state/ledger.jsonl]
     exit_codes: [0, 2, 12, 13, 15]

@@ -4,7 +4,7 @@ description: "Prepare a bounded, reproducible snapshot of the tracked tree for a
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: .ai/repo/skills/pack-for-review/SKILL.md; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.9 -->
+     Generator: majordomus-cli 1.0.0-alpha.10 -->
 
 # Pack the repository for an outside reviewer
 
