@@ -792,6 +792,37 @@ The launchd agent of the same shape — `~/Library/LaunchAgents/dev.majordomus.h
 `RunAtLoad`, `KeepAlive` and those arguments — is the operator's to install, and an installer
 that writes either unit is still owed as a typed capability (ADR 0059).
 
+**The jetson hub.** jetson (`9d652b2c`: aarch64, Ubuntu 18.04, glibc 2.27) runs its hub as the
+systemd user unit `majordomus-hub.service`: `~/.local/bin/majordomus serve --repo
+~/dev/prismatic-majordomus-hub --host 0.0.0.0 --port 8791 --idle 0`, `Restart=always`. Two
+facts of that machine decide how it is upgraded. Its glibc is older than the
+`aarch64-unknown-linux-gnu` archive needs — the 1.0.0-alpha.5 executable asks for `GLIBC_2.32`
+and stops before it starts — while the installer picks the gnu archive on any glibc machine; so
+jetson runs the `aarch64-unknown-linux-musl` archive, verified against its digest, unpacked
+beside the older trees under `~/.local/share/majordomus/versions/`, with both launchers in
+`~/.local/bin` pointed at it. And an executable refuses a manifest newer than itself
+(1.0.0-alpha.5 against the trunk of 2026-10-25: `unknown key(s): lifecycle`), so a hub's
+checkout is never ahead of the executable that serves it: detached at the release's tag, which
+is the trunk when the release was cut from it. A hub left behind falls a protocol behind and
+links with nobody: on 2026-10-25 jetson served 0.26.0, mesh protocol 1, while every MacBook spoke
+protocol 2, and every other machine on its board read `expired`. That day every node and hub
+moved to 1.0.0-alpha.8, cut from the trunk at `2efeacea031`, and every hub checkout to that
+commit; the site published no `releases/v1.0.0-alpha.8.json` until later, so the archives were
+taken from the GitHub release and verified against its digests. jetson's `mesh doctor` held every
+check, and all four hubs listed all five machines live.
+
+jetson also serves a build-cache store (ADR 0157): MinIO on `100.92.246.32:9000`, the systemd
+unit `majordomus-build-cache.service`, bucket `majordomus-build-cache` with a 200 GiB hard quota,
+one client identity under the policy `mj-build-cache-rw` (object read, write and delete in that
+bucket, listing it), and the port admitted from loopback, the LAN and the tailnet only. Its node
+file declares the store under `provider`, and from 1.0.0-alpha.8 its runtime publishes the signed
+offer (`mesh state` reads it under `build_cache`, healthy, with its headroom); a client that
+also names it under `known` in its own node file, with the node id
+`9d652b2c7d06b12bfc5c3f8325e6618c`, still finds it when no runtime is reachable. Each client
+holds the identity in its credential file. On 2026-10-25 a MacBook so configured selected it,
+wrote a 15 KiB entry under `rust/aarch64-apple-darwin/`, and a second compile with an empty disk
+level hit it in 94 ms and backfilled the disk.
+
 **Hubs follow the release (ADR 0161).** A hub is a node like any other: with `follow: stable`
 it keeps its installed Majordomus at the version `releases/latest.json` names, restarts onto it
 under its service manager when no session is attached or after a bounded grace, checks its
@@ -873,9 +904,17 @@ answer names the one that did not when it is left out:
 
 The variables are `SCCACHE_MULTILEVEL_CHAIN=disk,s3`, `SCCACHE_MULTILEVEL_WRITE_ERROR_POLICY=l0`,
 `SCCACHE_BUCKET`, `SCCACHE_ENDPOINT`, `SCCACHE_REGION`, `SCCACHE_S3_USE_SSL`,
-`SCCACHE_S3_KEY_PREFIX=rust/<rustc host triple>/`, `AWS_SHARED_CREDENTIALS_FILE=<path>` and
-`AWS_PROFILE=mesh-build-cache`. A key is never exported: the environment of every compiler and
-build script would carry it, so only the credential file's path is named.
+`SCCACHE_S3_KEY_PREFIX=rust/<rustc host triple>/`, `AWS_SHARED_CREDENTIALS_FILE=<path>`,
+`AWS_PROFILE=mesh-build-cache` and `SCCACHE_DIR`. A key is never exported: the environment of
+every compiler and build script would carry it, so only the credential file's path is named.
+
+`SCCACHE_DIR` is the disk level: its value when the environment sets it, else the directory
+sccache takes by itself (`~/Library/Caches/Mozilla.sccache` on macOS,
+`${XDG_CACHE_HOME:-$HOME/.cache}/sccache` elsewhere), so the chain keeps what the local cache
+holds. It is named because sccache 0.17.0 and 0.18.0 refuse to start a chain whose `disk` level
+has none ("Disk cache specified in levels but not configured"). Until 2026-10-25 the variables
+left it out, and on every node without `SCCACHE_DIR` set, `sccache-mesh --start-only` answered
+`local-only: sccache did not start with the store`, so no build went through the store.
 
 `share/libexec/sccache-mesh` is the `RUSTC_WRAPPER` that uses it: when no sccache server listens
 on `SCCACHE_SERVER_PORT` (default 4226) it evaluates the script, and then runs sccache with its

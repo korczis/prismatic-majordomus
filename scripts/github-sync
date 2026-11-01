@@ -969,13 +969,17 @@ fi
 # ---------------------------------------------------------------- milestones
 for id in $(selected_milestones); do
   num="$(remote_milestone_number "$id")"
+  # A declared due day becomes GitHub's due date (midnight UTC, the only form it takes); a
+  # milestone that declares none leaves GitHub's alone, so a date set there by hand survives.
+  due=(); d="$(mj_pj_get "$id" due_on 2>/dev/null || true)"
+  [ -z "$d" ] || due=(-f due_on="${d}T00:00:00Z")
   desc="$(printf '%s — %s. Canonical: .ai/repo/project/milestones/%s.yaml' \
     "$(mj_pj_m_status "$id")" "$(mj_pj_get "$id" outcome)" "$id" | cut -c1-980)"
   if [ -z "$num" ]; then
     note DRIFT missing "milestone $id is not on GitHub"
     if [ "$MODE" = apply ]; then
       applied created "milestone $id" "the canonical record has no counterpart on GitHub" \
-        gh api -X POST "repos/$REPO/milestones" -f title="$(title_of "$id")" -f description="$desc"
+        gh api -X POST "repos/$REPO/milestones" -f title="$(title_of "$id")" -f description="$desc" ${due[@]+"${due[@]}"}
       pace
     fi
   else
@@ -985,12 +989,12 @@ for id in $(selected_milestones); do
       note DRIFT state "milestone $id is $have on GitHub, canonically $want"
       if [ "$MODE" = apply ]; then
         applied updated "milestone $id (#$num)" "state $have -> $want and description, from canonical status $(mj_pj_m_status "$id")" \
-          gh api -X PATCH "repos/$REPO/milestones/$num" -f state="$want" -f description="$desc"
+          gh api -X PATCH "repos/$REPO/milestones/$num" -f state="$want" -f description="$desc" ${due[@]+"${due[@]}"}
       fi
     else
       if [ "$MODE" = apply ]; then
         applied updated "milestone $id (#$num)" "description rewritten from the canonical record, which owns all of it" \
-          gh api -X PATCH "repos/$REPO/milestones/$num" -f description="$desc"
+          gh api -X PATCH "repos/$REPO/milestones/$num" -f description="$desc" ${due[@]+"${due[@]}"}
       fi
       note OK insync "milestone $id (#$num)"
     fi

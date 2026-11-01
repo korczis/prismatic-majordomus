@@ -24,4 +24,16 @@ evidence_required:
 depends_on: []
 serves: []
 created_at: 2026-10-23
-updated_at: 2026-10-23
+updated_at: 2026-10-25T23:42:24Z
+started_at: 2026-10-25T23:42:00Z
+started_event: sha256:e3a5d60c1914722cc7cbfe472d1296e11fb9b9d3950dc607566f540f00a763db
+completed_at: 2026-10-25T23:42:24Z
+completed_event: sha256:420fbaaca5dec81bdd175ca6b2cf2ab034946f9b6d11dbb32fe36cadacc11646
+evidence:
+  - covers: fixture_holds_the_skills
+    type: test
+    command: "MJ_TEST_JOBS=2 env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3999_a_fixture_holds_the_skills_the_generator_reads; cases 10, 11 and 37 on master validate run 40196303175"
+    result: "at master 2efeacea031: case 3999 ok locally and on CI. C1: master validate run 40196303175 at 2efeacea031 ran cases 10_site_data (suite-shard 4, job 121182964713, ok 1662 s), 11_site_derivation (suite-shard 2, job 121182964674, ok 1055 s) and 37_responsibility_surface (suite-shard 3, job 121182964650, ok 664 s) on a checkout that has .claude/skills. C2 by mutation: with 33c1948674c's test/lib.sh hunk reversed, case 3999 fails: the fixture lacks .claude/skills/assess-before-deleting/SKILL.md; restored, test/lib.sh is identical to master. Landed 33c1948674c through train 7 (#2501, merge 2efeacea031); its own PR #2416 was closed, the train carried the commit"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175"
+    commit: cb4741a60d9a1e6e57bb2c60c91ccf7f5806a847
+    recorded_at: 2026-10-25T23:41:00Z

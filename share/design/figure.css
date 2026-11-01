@@ -16,11 +16,8 @@
    one thing on every page without any page being edited.
 
    State is carried by attributes and classes site/diagrams.js and site/charts.js write
-   (`is-tracing`, `is-hot`, `is-selected`, `is-panning`, `is-expanded`, a legend key's
-   `aria-pressed`, a chart's `data-chart-empty`), never by inline colour. The one inline
-   style either script writes is geometry: a transform, a height.
-   site/graph.js keeps the same contract for the relation graph at the end of this file
-   (`is-pointing`, `data-graph-ready`; a transform, a background's position and size). */
+   (`is-tracing`, `is-hot`, `is-selected`, `is-panning`, `is-expanded`), never by inline
+   colour. The one inline style either script writes is geometry: a transform, a height. */
 
 /* ------------------------------------------------------------------ the diagram viewer */
 
@@ -31,7 +28,7 @@
   max-width: 100%;
   margin-block: 1rem;
   border: 1px solid var(--mj-line);
-  border-radius: var(--radius-lg);
+  border-radius: 0.5rem;
   background: var(--mj-raised);
   color: var(--mj-fg);
 }
@@ -77,7 +74,7 @@ pre.mj-diagram-canvas {
   padding: 0;
   overflow: hidden;
   border: 0;
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  border-radius: 0 0 0.5rem 0.5rem;
   background: var(--mj-bg);
   color: var(--mj-fg);
   white-space: normal;
@@ -207,24 +204,261 @@ pre.mj-diagram-canvas.is-addressed {
 
 /* ------------------------------------------------------------------ the chart */
 
-/* A chart is drawn above the table it reads. The table stays: it is the data, and it is
-   what a reader without the script, a screen reader and a printout get. */
+/* A chart is drawn above the table it reads, in a card: the site's card (`--mj-raised`, the
+   frame's line, the large radius), a header row and the plot. The table stays: it is the
+   data, and it is what a reader without the script, a screen reader and a printout get. */
+.mj-chart-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  box-sizing: border-box;
+  min-width: 0;
+  margin: 0 0 0.75rem;
+  padding: 0.75rem 0.75rem 0.375rem;
+  border: 1px solid var(--mj-line);
+  border-radius: var(--radius-lg, 0.5rem);
+  background: var(--mj-raised);
+  color: var(--mj-fg);
+  /* the header is laid out by the card's width, not the viewport's: a chart in a narrow
+     column is as compact as one on a phone */
+  container-type: inline-size;
+}
+.mj-chart-card[hidden] {
+  display: none;
+}
 .mj-chart {
   display: block;
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
   height: 20rem;
-  margin: 0 0 0.75rem;
-  border: 1px solid var(--mj-line);
-  border-radius: var(--radius-lg);
-  background: var(--mj-bg);
+  margin: 0;
+  border-radius: var(--radius-md, 0.375rem);
+  background: transparent;
+  /* how strongly a line's area is filled under it, at the line; the fill fades to nothing at
+     the axis. A share of the series colour, never a colour of its own. Only a lone series,
+     or the one pointed at, is filled. */
+  --chart-area-opacity: 0.16;
+  /* the same under a line focused among others, lighter: its gaps are gaps in a tint the rest
+     of the plot does not carry */
+  --chart-focus-area-opacity: 0.1;
+  /* the dark card swallows a tint, so the dark theme's fills are stronger: a lone line's half
+     as strong again, and a focused one's more, since it lies under the other lines' strokes */
+  --chart-area-opacity-dark: 0.24;
+  --chart-focus-area-opacity-dark: 0.22;
 }
 .mj-chart[hidden] {
   display: none;
 }
-figure[data-chart]:target .mj-chart,
-figure[data-chart].is-addressed .mj-chart {
+/* the plot's text is drawn in SVG and takes the page's figures: every number in a column of
+   ticks is as wide as the next (ECharts writes only the font's size and family inline) */
+.mj-chart svg text {
+  font-variant-numeric: tabular-nums;
+}
+/* the frame takes focus (the arrow keys move along the categories); the ring is the base
+   sheet's, drawn inside so the card's edge does not clip it */
+.mj-chart:focus-visible {
+  outline-offset: -2px;
+}
+/* a zoomable plot is panned by a mouse drag, which must not select the page's text */
+.mj-chart {
+  -webkit-user-select: none;
+  user-select: none;
+}
+/* The header: the legend at the left, the zoomed range and Reset at the right, wrapping onto
+   a second row on a phone with the range kept at the right. */
+.mj-chart-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  min-width: 0;
+}
+.mj-chart-head[hidden] {
+  display: none;
+}
+/* The window a zoomable line chart shows and the button that gives the whole range back.
+   The button is the shared `.mj-button`, shown only while the chart is zoomed: at the whole
+   range there is nothing to reset, and a greyed button would spend room saying so. On a
+   phone the same slot is the tooltip's dock: the category pointed at, said in full. */
+.mj-chart-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin: 0 0 0 auto;
+  font-size: var(--text-small);
+  line-height: var(--text-small--line-height);
+  color: var(--mj-muted);
+}
+.mj-chart-tools[hidden],
+.mj-chart-tools [hidden] {
+  display: none;
+}
+.mj-chart-range {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+/* docked, the range says what a tooltip would: in the ink, not the muted range */
+.mj-chart-range[data-chart-pointing] {
+  color: var(--mj-fg);
+  font-weight: 500;
+}
+/* The legend: one toggle button per series. It wraps onto as many rows as the width needs,
+   so no key is ever paged out of sight, and each button is at least 28px tall (above the
+   24px target size). A hidden series is said three ways: aria-pressed, a struck-through name
+   and a hollow key, so its state is never a colour alone. The key's colour is the series',
+   set by charts.js as `--chart-key`; the text is the page's. Beside the name stands the
+   series' value: the latest, or the one at the category pointed at. */
+.mj-chart-keys {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+  margin: 0 0 0 -0.375rem;
+}
+.mj-chart-keys[hidden] {
+  display: none;
+}
+.mj-chart-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 1.75rem;
+  padding: 0.125rem 0.5rem 0.125rem 0.375rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md, 0.375rem);
+  background: transparent;
+  color: var(--mj-body);
+  font: inherit;
+  font-size: var(--text-small);
+  line-height: var(--text-small--line-height);
+  cursor: pointer;
+}
+button.mj-chart-key:hover {
+  background: var(--mj-sunken);
+  border-color: var(--mj-line);
+}
+/* one series: its key and value stand as a readout, not a control */
+.mj-chart-key--static {
+  cursor: default;
+}
+.mj-chart-key-mark {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 0.625rem;
+  height: 0.625rem;
+  border: 1px solid var(--chart-key, var(--mj-muted));
+  border-radius: 0.1875rem;
+  background: var(--chart-key, var(--mj-muted));
+}
+/* a hatched series (the second state of no coloured meaning) is hatched in its key too */
+.mj-chart-key[data-chart-hatch] .mj-chart-key-mark {
+  background: repeating-linear-gradient(-45deg, var(--chart-key, var(--mj-muted)) 0 2px,
+    transparent 2px 4px);
+}
+/* a line's key is a stroke, as its mark is */
+.mj-chart-keys--line .mj-chart-key-mark {
+  width: 0.875rem;
+  height: 0.1875rem;
+  border-radius: 1px;
+}
+.mj-chart-key-value {
+  color: var(--mj-fg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.mj-chart-key-value:empty {
+  display: none;
+}
+.mj-chart-key[aria-pressed="false"] {
+  color: var(--mj-faint);
+}
+.mj-chart-key[aria-pressed="false"] .mj-chart-key-name {
+  text-decoration: line-through;
+}
+.mj-chart-key[aria-pressed="false"] .mj-chart-key-mark {
+  background: transparent;
+}
+/* On a narrow card the header is compact: keys closer together (each still 24px tall, the
+   target size), the not-recorded key wrapping beside them, and the range and Reset on one
+   line across the card. */
+@container (max-width: 30rem) {
+  .mj-chart-head {
+    gap: 0.25rem 0.5rem;
+  }
+  .mj-chart-keys {
+    gap: 0 0.125rem;
+  }
+  .mj-chart-key,
+  .mj-chart-gap {
+    min-height: 1.5rem;
+    gap: 0.3125rem;
+    padding-inline: 0.3125rem 0.375rem;
+  }
+  .mj-chart-tools {
+    flex: 1 1 100%;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    min-height: 1.75rem;
+    margin: 0;
+  }
+}
+/* What a line's dashed bridge is: it crosses a gap and is not data. */
+.mj-chart-gap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 1.75rem;
+  font-size: var(--text-small);
+  line-height: var(--text-small--line-height);
+  color: var(--mj-faint);
+}
+.mj-chart-gap[hidden] {
+  display: none;
+}
+.mj-chart-gap-mark {
+  flex-shrink: 0;
+  width: 0.875rem;
+  border-top: 2px dashed var(--mj-faint);
+}
+/* The colour a status column is drawn in. A status's ink is a text colour (the 900 step on
+   its tint in light, the 300 on its ground in dark), and a filled mark needs the family's
+   middle: the ink mixed with the status's own border (its 200 step in light, its 900 in
+   dark) lands at a lightness of 0.56-0.59 in light and 0.6-0.7 in dark, so every state stands
+   at least 3:1 on the card in both themes, and its hue, mixed between two steps of one
+   family, is within a few degrees in both themes. The mix halves the chroma of a light ink
+   (the 900 step is a dark, quiet colour), so a state is then given back at least the chroma
+   its dark mix has (0.14, the family's middle steps): the same hue and lightness, as vivid
+   in light as in dark, and never a brown where the dark theme draws an orange. Where relative
+   colour is not understood the mix stands alone. charts.js reads it from the column's badge. */
+figure[data-chart] thead :is(.mj-badge, .mj-status) {
+  --chart-status: color-mix(in oklch, var(--mj-status-fg) 64%, var(--mj-status-line));
+}
+@supports (color: oklch(from red l c h)) {
+  figure[data-chart] thead :is(.mj-badge, .mj-status) {
+    --chart-status: oklch(from color-mix(in oklch, var(--mj-status-fg) 64%,
+      var(--mj-status-line)) l max(c, 0.14) h);
+  }
+}
+/* what the tooltip says, for a reader who hears the page; not drawn */
+.mj-chart-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+figure[data-chart]:target .mj-chart-card,
+figure[data-chart].is-addressed .mj-chart-card {
   box-shadow: inset 0 0 0 2px var(--mj-accent);
 }
 .mj-chart-note {
@@ -233,184 +467,16 @@ figure[data-chart].is-addressed .mj-chart {
   line-height: var(--text-small--line-height);
   color: var(--mj-muted);
 }
-
-/* What follows is scoped to the site's charts: the UI kit has a `.mj-chart` of its own (the
-   sparkline in kit.css), and none of this may reach it. */
-
-/* The frame takes the focus: the accent outline base.css draws, inside the frame's edge. */
-figure[data-chart] .mj-chart {
-  position: relative;
-}
-figure[data-chart] .mj-chart:focus-visible {
-  outline-offset: -2px;
-}
-/* Every series hidden: the frame says so rather than showing empty axes as a finding. */
-figure[data-chart] .mj-chart[data-chart-empty]::after {
-  content: attr(data-chart-empty);
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: var(--text-small);
-  color: var(--mj-muted);
-  pointer-events: none;
-}
-
-/* The legend, which is also the filter: a row of buttons above the frame, each a swatch, a
-   name and a figure. Pressed is shown. A series taken out keeps its button, hollow, struck
-   through and faded, so the state is never carried by colour alone. */
-figure[data-chart] .mj-chart-keys {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0 0 0.5rem;
-}
-figure[data-chart] .mj-chart-keys[hidden] {
-  display: none;
-}
-figure[data-chart] .mj-chart-key {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  min-height: 1.75rem;
-  padding: 0.125rem 0.5rem;
-  border: 1px solid var(--mj-line);
-  border-radius: var(--radius-sm);
-  background: var(--mj-raised);
-  color: var(--mj-body);
-  font-family: var(--font-sans);
-  font-size: var(--text-small);
-  line-height: var(--text-small--line-height);
-  cursor: pointer;
-  transition: border-color var(--mj-motion-fast), opacity var(--mj-motion-fast);
-}
-figure[data-chart] .mj-chart-key:hover {
-  border-color: var(--mj-accent);
-}
-figure[data-chart] .mj-chart-key-count {
-  color: var(--mj-fg);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-}
-figure[data-chart] .mj-chart-key-count:empty {
-  display: none;
-}
-figure[data-chart] .mj-chart-key[aria-pressed="false"] {
-  opacity: 0.5;
-}
-figure[data-chart] .mj-chart-key[aria-pressed="false"] .mj-chart-key-name {
-  text-decoration: line-through;
-}
-figure[data-chart] .mj-chart-key[aria-pressed="false"] .mj-chart-swatch {
-  background: transparent;
-  box-shadow: inset 0 0 0 2px currentColor;
-}
-figure[data-chart] .mj-chart-reset {
-  margin-inline-start: auto;
-}
-figure[data-chart] .mj-chart-reset[hidden] {
-  display: none;
-}
-
-/* A series' swatch, in the legend and the tooltip. Its colour is the stylesheet's: a series
-   slot, or a status drawn as site/charts.js draws it, between the badge's ink and its line
-   (the state's middle step, in either theme). The swatch is painted in `color`, so its
-   hollow form is a ring of the same colour. */
-figure[data-chart] .mj-chart-swatch {
-  display: inline-block;
-  flex: none;
-  width: 0.625rem;
-  height: 0.625rem;
-  border-radius: var(--radius-sm);
-  color: color-mix(in oklch, var(--mj-status-fg, var(--mj-muted)) 60%, var(--mj-status-line, var(--mj-bg)));
-  background: currentColor;
-}
-figure[data-chart] .mj-chart-swatch[data-series-slot="1"] { color: var(--mj-series-1); }
-figure[data-chart] .mj-chart-swatch[data-series-slot="2"] { color: var(--mj-series-2); }
-figure[data-chart] .mj-chart-swatch[data-series-slot="3"] { color: var(--mj-series-3); }
-figure[data-chart] .mj-chart-swatch[data-series-slot="4"] { color: var(--mj-series-4); }
-figure[data-chart] .mj-chart-swatch[data-series-slot="5"] { color: var(--mj-series-5); }
-figure[data-chart] .mj-chart-swatch[data-series-slot="6"] { color: var(--mj-series-6); }
-
-/* The tooltip: one card, a header, a row per series and, for a row that is a link, how to
-   open it. ECharts writes its ground, border, radius and elevation from the tokens; the type
-   is set here. Text wears the ink roles, never a series colour. */
-figure[data-chart] .mj-chart-tip {
-  min-width: 10rem;
-  font-family: var(--font-sans);
-  font-variant-numeric: tabular-nums;
-  line-height: var(--text-small--line-height);
-}
-figure[data-chart] .mj-chart-tip-head {
-  margin-bottom: 0.25rem;
-  color: var(--mj-fg);
-  font-weight: 600;
-}
-figure[data-chart] .mj-chart-tip-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-figure[data-chart] .mj-chart-tip-name {
-  flex: 1 1 auto;
-  color: var(--mj-body);
-}
-figure[data-chart] .mj-chart-tip-value {
-  margin-inline-start: 1rem;
-  color: var(--mj-fg);
-  font-weight: 500;
-  text-align: end;
-}
-figure[data-chart] .mj-chart-tip-total {
-  margin-top: 0.25rem;
-  padding-top: 0.25rem;
-  border-top: 1px solid var(--mj-line);
-}
-figure[data-chart] .mj-chart-tip-foot {
-  margin-top: 0.375rem;
-  padding-top: 0.375rem;
-  border-top: 1px solid var(--mj-line);
-  color: var(--mj-muted);
-  font-size: var(--text-label);
-}
-
-/* The note of the keys, which describes the frame, and the readout of the sentence the
-   keyboard cursor is on: both for a screen reader alone. */
-figure[data-chart] .mj-chart-help,
-figure[data-chart] .mj-chart-readout {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
-}
-
-/* A phone: the legend is one row that scrolls sideways rather than a wall of buttons. */
-@media (max-width: 479.98px) {
-  figure[data-chart] .mj-chart-keys {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: 0.125rem;
-  }
-  figure[data-chart] .mj-chart-key {
-    flex: none;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  figure[data-chart] .mj-chart-key {
-    transition: none;
-  }
-}
 /* The table a chart is drawn from, on a narrow screen: it scrolls sideways inside its region, and
    the first column (what a row is: a milestone, a run) stays in place while the numbers move, so a
-   reader never loses which row a number belongs to. Below the `sm` width only; a wide screen shows
-   the whole table and needs no anchor. */
+   reader never loses which row a number belongs to. A cell keeps to one line, so a date is never
+   broken over three and two headings never run together, and the region's right edge is shaded
+   while more of the table lies past it (the shade is covered once the end is scrolled to). Below
+   the `sm` width only; a wide screen shows the whole table and needs no anchor. */
 @media (max-width: 639.98px) {
+  figure[data-chart] table :is(th, td) {
+    white-space: nowrap;
+  }
   figure[data-chart] table :is(th, td):first-child {
     position: sticky;
     left: 0;
@@ -418,112 +484,11 @@ figure[data-chart] .mj-chart-readout {
     background: var(--mj-bg);
     box-shadow: inset -1px 0 0 var(--mj-line);
   }
-}
-
-/* ------------------------------------------------------------------ the relation graph */
-
-/* site/graph.js draws a generated graph over the list that is the graph (partials/graph.html).
-   The drawing's ground is the page's own, plain, as every relation graph's is (the Cockpit's,
-   the trains', the UI's). It fades in once, the first time it is drawn, at twice the motion
-   token; base.css takes the duration away for a reader who asked for stillness. */
-[data-graph-canvas] {
-  background-color: var(--mj-bg);
-  opacity: 0;
-  transition: opacity calc(var(--mj-motion-fast) * 2) ease-out;
-}
-[data-graph-canvas][data-graph-ready] {
-  opacity: 1;
-}
-/* the global ring (base.css), drawn inside the frame, where the card's overflow cannot clip it */
-[data-graph-canvas]:focus-visible {
-  outline-offset: -2px;
-}
-[data-graph-canvas].is-pointing {
-  cursor: pointer;
-}
-
-/* The card that names what the pointer is on: a Pro tooltip, over the roles. The script
-   places it with a transform and never colours it; it takes no pointer, so it never stands
-   between the reader and the node under it. */
-.mj-graph-tip {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 1;
-  max-width: 18rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--mj-line);
-  border-radius: var(--radius-md);
-  background: var(--mj-raised);
-  color: var(--mj-body);
-  box-shadow: 0 1px 2px color-mix(in oklch, var(--mj-fg) 8%, transparent),
-              0 8px 24px -8px color-mix(in oklch, var(--mj-fg) 22%, transparent);
-  font-family: var(--font-sans);
-  font-size: var(--text-small);
-  line-height: var(--text-small--line-height);
-  pointer-events: none;
-}
-.mj-graph-tip[hidden] {
-  display: none;
-}
-.mj-graph-tip-title {
-  margin: 0;
-  overflow-wrap: anywhere;
-  font-family: var(--font-mono);
-  font-weight: 500;
-  color: var(--mj-fg);
-}
-.mj-graph-tip-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.375rem;
-  margin: 0.25rem 0 0;
-}
-.mj-graph-tip-value {
-  margin-inline-start: auto;
-  padding-inline-start: 0.5rem;
-  color: var(--mj-fg);
-  font-variant-numeric: tabular-nums;
-}
-.mj-graph-tip-foot {
-  margin: 0.375rem 0 0;
-  padding-top: 0.375rem;
-  border-top: 1px solid var(--mj-line);
-  font-size: var(--text-label);
-  color: var(--mj-muted);
-}
-
-/* An edge kind's chip carries a sample of the line that kind is drawn with, in the drawing's
-   own encodings (site/graph.js's stylesheet): the edge's own mix of the muted ink into the line
-   role, a dash for a use or a dependency, a dot for what was satisfied or merged, weight and
-   the warning role for a write. The count beside the name is how many edges of it there are. */
-.mj-graph-edge {
-  display: inline-block;
-  flex: none;
-  width: 1rem;
-  border-top: 2px solid color-mix(in oklch, var(--mj-muted) 40%, var(--mj-line));
-}
-.mj-graph-kind-count {
-  color: var(--mj-muted);
-  font-variant-numeric: tabular-nums;
-}
-.mj-graph-edge[data-edge-kind="uses"],
-.mj-graph-edge[data-edge-kind="depends_on"] {
-  border-top-style: dashed;
-}
-.mj-graph-edge[data-edge-kind="satisfied"],
-.mj-graph-edge[data-edge-kind="merged"] {
-  border-top-style: dotted;
-}
-.mj-graph-edge[data-edge-kind="writes"] {
-  border-top-width: 3px;
-  border-top-color: var(--mj-warn);
-}
-/* off is never colour alone: the box unticked, the name struck through, the chip stepped back */
-.mj-graph-kind:has(input:not(:checked)) {
-  opacity: 0.5;
-}
-.mj-graph-kind:has(input:not(:checked)) .mj-graph-kind-name {
-  text-decoration: line-through;
+  figure[data-chart] > [role="region"] {
+    background:
+      linear-gradient(to left, var(--mj-bg) 40%, color-mix(in oklab, var(--mj-bg) 0%,
+        transparent)) right / 2.5rem 100% no-repeat local,
+      radial-gradient(farthest-side at 100% 50%, color-mix(in oklab, var(--mj-fg) 18%,
+        transparent), transparent) right / 0.875rem 100% no-repeat scroll;
+  }
 }

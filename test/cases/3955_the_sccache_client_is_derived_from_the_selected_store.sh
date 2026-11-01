@@ -7,7 +7,7 @@
 # sccache server of this machine is touched (a throwaway one runs on a private port).
 #
 #   no node file / store down       local-only: no variable, the reason says which condition
-#   the store answers, a 0600 file  the nine variables, the file's PATH and no key anywhere
+#   the store answers, a 0600 file  the ten variables, the file's PATH and no key anywhere
 #   a file open to others           local-only
 #   an sccache without the chain    local-only, and the throwaway server it started is stopped
 #   a store stopped after           local-only again: health is read at every start
@@ -110,9 +110,10 @@ echo "    with no store offered the client is local-only, with the reason, and e
 node_file "$PORT"
 r="$(env_json "$S/sccache-capable")"
 [ "$(mode_of "$r")" = mesh ] || { echo "    a healthy store is not the second level: $r"; cat "$S/err"; exit 1; }
-want='["SCCACHE_MULTILEVEL_CHAIN","SCCACHE_MULTILEVEL_WRITE_ERROR_POLICY","SCCACHE_BUCKET","SCCACHE_ENDPOINT","SCCACHE_REGION","SCCACHE_S3_USE_SSL","SCCACHE_S3_KEY_PREFIX","AWS_SHARED_CREDENTIALS_FILE","AWS_PROFILE"]'
+want='["SCCACHE_MULTILEVEL_CHAIN","SCCACHE_MULTILEVEL_WRITE_ERROR_POLICY","SCCACHE_BUCKET","SCCACHE_ENDPOINT","SCCACHE_REGION","SCCACHE_S3_USE_SSL","SCCACHE_S3_KEY_PREFIX","AWS_SHARED_CREDENTIALS_FILE","AWS_PROFILE",
+  "SCCACHE_DIR"]'
 printf '%s' "$r" | jq -e --argjson want "$want" '[.variables[].name] == $want' >/dev/null \
-  || { echo "    the variables are not the derived nine: $r"; exit 1; }
+  || { echo "    the variables are not the derived ten: $r"; exit 1; }
 val() { printf '%s' "$r" | jq -r --arg n "$1" '.variables[] | select(.name == $n) | .value'; }
 [ "$(val SCCACHE_MULTILEVEL_CHAIN)" = "disk,s3" ] || { echo "    the chain is not disk,s3"; exit 1; }
 [ "$(val SCCACHE_BUCKET)" = the-bucket ] || { echo "    the bucket is not the store's"; exit 1; }
@@ -120,6 +121,8 @@ val() { printf '%s' "$r" | jq -r --arg n "$1" '.variables[] | select(.name == $n
 [ "$(val SCCACHE_S3_USE_SSL)" = false ] || { echo "    an http endpoint is not cleartext"; exit 1; }
 [ "$(val AWS_PROFILE)" = mesh-build-cache ] || { echo "    the profile is not mesh-build-cache"; exit 1; }
 [ "$(val AWS_SHARED_CREDENTIALS_FILE)" = "$CRED" ] || { echo "    the credential is not the file path"; exit 1; }
+# the chain's disk level is named, or sccache refuses the chain (env.rs disk_dir)
+case "$(val SCCACHE_DIR)" in /*) ;; *) echo "    the disk level has no directory: $(val SCCACHE_DIR)"; exit 1 ;; esac
 if command -v rustc >/dev/null 2>&1; then
   [ "$(val SCCACHE_S3_KEY_PREFIX)" = "rust/$(rustc -vV | sed -n 's/^host: //p')/" ] \
     || { echo "    the key prefix is not rustc's host triple: $(val SCCACHE_S3_KEY_PREFIX)"; exit 1; }

@@ -1,0 +1,63 @@
+id: I4418
+milestone: a-second-adopter-is-served
+title: "serve ensure fast-forwards a clean trunk checkout that is strictly behind its remote trunk, or offers to, and majordomus init declares checkout.trunk_distance, so a shared server does not answer from an old tree unjudged"
+slug: a-clean-trunk-checkout-is-fast-forwarded-by-serve-ensure
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Two changes. Neither moves a checkout that holds anything to lose, and neither supplies a threshold that no policy wrote. First, `majordomus serve ensure` (and through it the start event's mj_capture_ensure_server, lib/capture.sh:1679-1699) measures the trunk distance (worktree::trunk::measure) before it converges, and decides whether the checkout can be fast-forwarded. It can only when all of the following hold: HEAD is the trunk branch; the checkout is strictly behind the remote-tracking trunk as last fetched (behind > 0, ahead 0); no tracked file is staged or modified; no merge, rebase, cherry-pick, revert or bisect is in progress; and no index.lock exists. A new policy key checkout.fast_forward (off | offer | apply, absent: offer) decides what happens to an eligible checkout. With offer, the ensure answer (the human line and the JSON EnsureReport, which today carries no trunk field) gains `trunk` with standing, behind, eligible and the command `majordomus serve ensure --fast-forward`; the remedy in the MCP initialize trunk sentence names the same command. With apply, and with `--fast-forward` on any policy but off, ensure runs `git merge --ff-only <remote trunk>` in the checkout before it converges, never fetches, and reports the old and new heads as trunk.fast_forwarded {from, to}. A checkout that is not eligible is never moved. The answer says which condition failed (not the trunk branch, ahead of the remote trunk, uncommitted tracked changes, an operation in progress, or no remote trunk) and keeps today's remedy with its rescue step. A `git merge --ff-only` that refuses, for example over an untracked file it would overwrite, is reported with git's message and the checkout is left unchanged. The server's standing and its exit code are decided exactly as today. Second, share/skeleton/policy.yaml declares a checkout: block, trunk_distance with warn_behind 20 and fail_behind 200, plus fast_forward: offer, each commented, so a repository made by `majordomus init` judges its distance with numbers written in its own policy. Doctor's unjudged INFO (lib/doctor.sh:760) names the block to add, taken from the skeleton, instead of only `majordomus worktree trunk`. The reader still supplies no default threshold: a policy without trunk_distance stays unjudged, as project.a-checkout-serves-the-current-trunk requires."
+why: "Observed in OSCILLA (korczis/oscilla) on 2026-10-29 by session oscilla-af (item L4 of the 2026-10-29 late list). At SessionStart in OSCILLA's primary checkout, on main, the MCP initialize instructions read `This server serves a tree 38 commit(s) behind origin/main (unjudged) ... the policy declares no checkout.trunk_distance`. The remedy was printed, but nothing acted on it or gated on it, so every plan, rule and status answer of that session was 38 commits stale by default. The checkout was clean and strictly behind, which is exactly the case where a fast-forward loses nothing. project.a-checkout-serves-the-current-trunk measures and reports the distance, and names 'a typed majordomus worktree update ... is the next slice; until it lands, the remedy each reading names is the sequence a person runs'. No issue carries that slice. I2690 reads whether a session is current but moves nothing; I3153 reports a task's base distance at start; I2059 and I2718 concern the executable and hooks of a stale primary, not its tree. OSCILLA never got a threshold because majordomus init writes share/skeleton/policy.yaml, and the skeleton has no checkout: block, although majordomus.policy-completeness says every policy value the code reads is declared there. Its validator (mj_validate_policy_defaults, lib/doctor.sh:874-901) scans only mj_pol readers under lib/, and checkout.trunk_distance is read only by the Rust executable, so the gap was never reported. A default threshold in the reader, OSCILLA's first proposal, is excluded by the rule ('no reader supplies a number the policy did not write', trunk.rs:12-16, policy.rs:209). This issue writes the number into the adopter's policy instead. OSCILLA is declaring checkout.trunk_distance in its own policy; that part is OSCILLA's."
+current_state: "Measured at origin/master 51b38035a71. worktree::trunk (apps/majordomus-cli/src/worktree/trunk.rs) judges a distance with no declared threshold as unjudged (:560). remedy_of (:569-601) composes the text `git fetch; commit or rescue uncommitted work, then: git -C <checkout> merge --ff-only <remote trunk>` and runs nothing. mcp::protocol::trunk_sentence (apps/majordomus-cli/src/mcp/protocol.rs:443-462) puts a lagging, stale or unjudged distance with that remedy into the initialize instructions. Doctor's mj_report_trunk_distance (lib/doctor.sh:730-760) FAILs stale, WARNs lagging and only INFOs unjudged. `serve ensure` (apps/majordomus-cli/src/commands/serve.rs:735-746) converges on a ready server (converge_with, :621) and its EnsureReport (:404-424) carries standing, url, pid, version, started, reason and log, with no trunk distance. `git grep -n 'merge --ff-only' apps/majordomus-cli/src/commands/serve.rs` finds nothing. CheckoutPolicy (apps/majordomus-cli/src/policy.rs:215-220) has only trunk_distance, and the schema (share/schemas/majordomus/policy/policy.v1.schema.json:538-556) admits only trunk_distance under checkout. share/skeleton/policy.yaml (216 lines) has no checkout: key, while this repository's .ai/repo/policy.yaml:390-393 declares warn_behind 100 and fail_behind 400."
+desired_state: "A session that starts in a clean trunk checkout which is merely behind is answered from the trunk as last fetched: offered the one command under the default policy, fast-forwarded without asking under checkout.fast_forward: apply, and in either case told the distance in the ensure answer it reads first. A checkout with anything to lose is never moved and says why. A repository made by majordomus init judges its distance from numbers in its own policy, so 'unjudged' is what a repository chose, not what it was never offered. Enforced by case 4418 and case 3176."
+scope:
+  - ".ai/repo/project/issues/I4418.yaml"
+  - "apps/majordomus-cli/src/commands/serve.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/worktree/trunk.rs"
+  - "apps/majordomus-cli/src/mcp/protocol.rs"
+  - "apps/majordomus-cli/src/policy.rs"
+  - "share/skeleton/policy.yaml"
+  - "share/schemas/majordomus/policy/policy.v1.schema.json"
+  - "share/allow/policy.txt"
+  - "lib/doctor.sh"
+  - ".ai/repo/policy.yaml"
+  - ".ai/repo/rules/project/a-checkout-serves-the-current-trunk.v1.md"
+  - "docs/WORKTREES.md"
+  - "docs/generated/cli.md"
+  - "docs/generated/cli.json"
+  - "docs/generated/cli.yaml"
+  - "test/cases/3176_a_checkout_serves_the_current_trunk.sh"
+  - "test/cases/4418_a_clean_trunk_checkout_is_fast_forwarded_by_serve_ensure.sh"
+non_scope:
+  - "Moving a dirty, diverged or non-trunk checkout: rescuing uncommitted work into refs/rescue/, merging the remote trunk into a feature branch, and the general majordomus worktree update that the rule names as its next slice"
+  - "Fetching: ensure fast-forwards to the remote-tracking trunk as last fetched and never contacts the remote, so its wall time stays bounded"
+  - "The shell-prompt path (`env enter`, apps/majordomus-cli/src/commands/env.rs:713) and `majordomus ui`, which converge without the trunk step"
+  - "A default threshold supplied by any reader when the policy declares none: excluded by project.a-checkout-serves-the-current-trunk"
+  - "Extending mj_validate_policy_defaults to keys read only by the Rust executable"
+  - "Reading whether a session is current, attached, announced and useful: I2690"
+  - "A task's base distance at start: I3153"
+  - "OSCILLA's own checkout.trunk_distance declaration"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Case 4418, in a fixture repository with a bare origin moved 3 commits ahead of its clean clone on main, policy without checkout.fast_forward: `serve ensure --format json` exits as today, does not move HEAD, and its answer carries trunk.behind 3, trunk.eligible true and the command `majordomus serve ensure --fast-forward`. The MCP initialize instructions' Remedy names that command"
+  - "Case 4418: `serve ensure --fast-forward` on that clone moves HEAD to origin/main, answers trunk.fast_forwarded with the old and new full shas, and afterwards `worktree trunk` reports behind 0. With checkout.fast_forward: apply, a plain `serve ensure` does the same"
+  - "Case 4418: with checkout.fast_forward: off, `serve ensure` reports the distance without eligible or command, and HEAD is unchanged"
+  - "Case 4418: in five clones (one with a modified tracked file, one with a staged file, one with a commit origin/main lacks, one on a feature branch, one with .git/index.lock present), `serve ensure --fast-forward` leaves HEAD and `git status --porcelain` unchanged. Each answer names its condition, and the remedy still names rescuing uncommitted work"
+  - "Case 4418: an untracked file at a path origin/main adds makes `git merge --ff-only` refuse; ensure reports git's refusal, HEAD and the untracked file are unchanged, and the server standing and exit code are those of a plain ensure"
+  - "Case 4418: no `git fetch` runs during ensure (the fixture origin's refs/heads/main moves after the clone's last fetch, and the fast-forward lands on the remote-tracking ref, not on the moved origin head)"
+  - "Case 4418: `majordomus init` in an empty repository writes a policy whose checkout.trunk_distance is warn_behind 20 and fail_behind 200 and whose checkout.fast_forward is offer. Doctor then judges a clone 25 commits behind as lagging (WARN), not unjudged"
+  - "Case 4418: with checkout: removed from the policy, doctor's clone/trunk line is INFO unjudged and its remedy names the checkout: block of share/skeleton/policy.yaml. No reader judges the distance lagging or stale"
+  - "Case 3176 passes, extended with the ensure answer's trunk field for its stale fixture"
+  - "The policy schema refuses checkout.fast_forward values other than off, offer and apply, and share/allow/policy.txt admits the key after `majordomus generate`"
+  - "Before the change, case 4418 fails at its first assertion"
+validation:
+  - "MJ_TEST_JOBS=4 bash test/run.sh 4418_a_clean_trunk_checkout_is_fast_forwarded_by_serve_ensure 3176_a_checkout_serves_the_current_trunk"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- worktree::trunk commands::serve mcp::protocol policy"
+  - "bin/majordomus shell check"
+  - "bin/majordomus doctor"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "clean_trunk_fast_forward_case"
+created_at: 2026-10-29
+updated_at: 2026-10-29

@@ -1,11 +1,68 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.9 -->
+     Generator: majordomus-cli 1.0.0-alpha.10 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **1.0.0-alpha.9**
+Current version: **1.0.0-alpha.10**
+
+## v1.0.0-alpha.9 — 2026-10-28
+
+### Added
+
+- **ui**: majordomus ui ensures the shared server and opens the dashboard (I2484) (`2273179f5`)
+- **mesh**: a claim lives by its holder session's progress (`62e4e0ea4`)
+
+### Fixed
+
+- **follow**: a follower's shared read is keyed by its own server (I4241) (`e2fb35e04`)
+- **train**: train 8 owes alpha.9, its ui coverage and its roadmap width (`b63ff0c87`)
+- **ui**: ui takes its repository from serve's one discovery (I2484) (`a31215b95`)
+- **launcher**: a MAJORDOMUS_BIN naming a launcher is refused, not looped (I3320) (`fe6bf1153`)
+- **plan**: a commit that only plans an issue is not its delivery (I2749) (`71674847a`)
+- **ci**: a rerun is judged by its own receipts (`36b4a0771`)
+- **ui**: the ui command's summary quotes its route placeholder (I2484) (`81f2c1a70`)
+- **ci**: only a trends/v1 series decides a run link (`59bcaa4f9`)
+- **ui**: the ui case bounds its requests and UiArgs' example names it (I2484) (`656bb6a02`)
+- **peers**: a client that re-attaches keeps one departed row, not one per reconnect (I4227) (`8c480144a`)
+- **mesh**: a node's provisioning secret is read on mc's standard input (I3996) (`7a71401f8`)
+- **ci**: install-check names a launcher that closed its pipe instead of dying on it (`3da5911d2`)
+- **mesh**: the tailscale CLI is started through the busy retry (ETXTBSY) (`8ad00b161`)
+- **ci**: the Rust cache carries the shared build directory (I4221) (`e9e7ba923`)
+- **mesh**: the items with doc examples stay public, each with its own (`a380305aa`)
+- **mesh**: claim liveness is a rule of its own, and every new surface is proven (`c2b1d4a94`)
+
+### Tests
+
+- **ui**: case 3383 lets the peers screen say it is catching up (I4244) (`6c79dcf68`)
+- cases 3075 and 51 are handed this tree's executable (ADR 0224) (`4c7d86e19`)
+- **plan**: a git that cannot answer is an error, not an empty answer (I2749) (`e610dfe28`)
+- **deploy**: the image's build stage carries every file the crate embeds (`8402db60e`)
+- **mesh**: case 3990 turns the tailnet off with multicast (I3990) (`38b6d05ec`)
+- **mesh**: an overtaken release logs its outcome, and mesh.beat's refusals are tested (`2703e7929`)
+- **mesh**: every beat path I3990 added is covered, the unreachable ones removed (`d0f68f0e7`)
+- **mesh**: cover the progress rule's bounds, readers and surfaces (I3990) (`596e3b2ae`)
+
+### Housekeeping
+
+- **derive**: delivery observes the committed I4241 fix (`e2e4d3eac`)
+- **release**: record v1.0.0-alpha.8 and the metadata it publishes (`f219fc9c8`)
+- **derive**: train 8's derived data observes its committed merge (`91a9570d0`)
+- **plan**: I3171 is done; the source-range test passes on master after train 7 (`e75d3c393`)
+- **derive**: delivery observes the committed merge of train 7 (`e43a17ee7`)
+- **derive**: delivery observes the committed fix (`70a15d8cc`)
+- **derive**: delivery observes the committed merge of master (`c3a6920cc`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v1.0.0-alpha.9-aarch64-apple-darwin.tar.gz (`29b669559190`)
+- `macos-x86_64` — majordomus-v1.0.0-alpha.9-x86_64-apple-darwin.tar.gz (`774141b6da42`)
+- `linux-x86_64-gnu` — majordomus-v1.0.0-alpha.9-x86_64-unknown-linux-gnu.tar.gz (`a73710f2e52b`)
+- `linux-x86_64-musl` — majordomus-v1.0.0-alpha.9-x86_64-unknown-linux-musl.tar.gz (`492e842bee68`)
+- `linux-aarch64-gnu` — majordomus-v1.0.0-alpha.9-aarch64-unknown-linux-gnu.tar.gz (`da9918ab3c1d`)
+- `linux-aarch64-musl` — majordomus-v1.0.0-alpha.9-aarch64-unknown-linux-musl.tar.gz (`f78cbb2261e7`)
+
 
 ## v1.0.0-alpha.8 — 2026-10-25
 
@@ -2204,7 +2261,7 @@ Current version: **1.0.0-alpha.9**
 - **ADR-0075** Which work realises an intent is a join over the records the lifecycle already keeps, and closed work does not outrank evidence _(proposed)_
 - **ADR-0073** An issue names the intent criterion it serves, and the coverage of every criterion is derived from the plan _(proposed)_
 - **ADR-0070** An intent is a typed record, and its stage and satisfaction are derived from the plan and the evidence _(proposed)_
-- **ADR-0091** Knowledge is derived at the episode boundary, from the ledger and git, and a person promotes it _(proposed)_
+- **ADR-0091** Knowledge is derived at the episode boundary, from the ledger and git, and a person promotes it _(accepted)_
 - **ADR-0046** A working context is derived and a closed record is composed; neither is a document somebody must remember to write _(proposed)_
 
 ### Added

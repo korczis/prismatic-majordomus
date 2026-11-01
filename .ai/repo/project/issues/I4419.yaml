@@ -1,0 +1,45 @@
+id: I4419
+milestone: a-version-follows-the-work
+title: "A release that waits behind a starved forge says so: release.currency keeps its stance and names the forge as the cause, and doctor's remedy stops telling the seat to release now"
+slug: a-release-held-by-a-starved-forge-names-it
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "release.currency reads the forge_starved signal that I4326 derives (each served repository's queued and in-progress workflow runs, and the time since the account last started a job). It reads the last observation the monitor holds, or makes one bounded read when the shared server holds none. While the signal holds for the measured repository, the answer keeps its stance (owed or overdue: the landed work does wait) and gains a field, held_by, carrying the signal's start and this repository's queued and in-progress counts. The summary appends `; the forge has started no job since <time> (<repo>: <n> queued, 0 in progress), so the release waits with the work it would ship`. lib/doctor.sh prints that summary under its existing WARN, and the remedy names the wait (`the release waits for the forge: majordomus monitor`) instead of `the release seat releases it now: majordomus run release.currency`. The brief's release part reads `release OVERDUE <n> (forge starved)`. With no observation (no token, offline, never observed) or a signal that does not hold, the answer is byte for byte today's, and it says nothing about the forge. Nothing is suppressed: the stance, the count, the wait and the threshold stay what I3070 measures."
+why: "Observed in OSCILLA (korczis/oscilla) on 2026-10-29, filed from oscilla-b0's upstream candidates (item 10 of the 2026-10-29 evening list). OSCILLA's pre-commit doctor warned 'release overdue, 55 commits' on every commit between about 18:41 and 20:00 while GitHub Actions gave OSCILLA 0-1 jobs, because prismatic-majordomus trains held the account's shared concurrency (item 5 of the same list). Nothing could land, the release pull request included, until a human-relayed pause cancelled 9 runs. The warning was true and its remedy could not be taken: the release seat cannot release past a forge that starts no job, and a WARN on every commit that nobody can act on trains readers to skip doctor (the same reasoning as lib/check.sh:261-265 for an overdue checkpoint). OSCILLA proposed suppressing the cadence warning during a CI backlog. This issue keeps the warning, because I3070 says landed work does not wait in silence, and makes it name why it waits and what to do instead. The starvation signal is I4326's; on origin/master 51b38035a71 it does not exist yet, because the monitor drops every run that is not completed (apps/majordomus-cli/src/monitor/github.rs:307-310)."
+current_state: "Measured at origin/master 51b38035a71: release.currency's measure (apps/majordomus-cli/src/release/currency.rs:252-322) reads git and the clock only, and its summary (currency.rs:523-573) says how much landed work waits and for how long, never why. lib/doctor.sh:711-713 prints owed and overdue as WARNs whose remedy is always 'the release seat releases it (now): majordomus run release.currency', and the commit hook runs that doctor on every commit. The brief renders 'release OVERDUE <n>' (apps/majordomus-cli/src/capability/builtin/brief.rs:988-990) with no cause. No surface reads queued workflow runs (monitor/github.rs:307-310), so neither the answer nor doctor can tell a release the seat neglects from one the forge holds."
+desired_state: "While I4326's forge_starved signal holds for the measured repository, release.currency answers its unchanged stance with held_by and the appended clause; doctor's release line keeps its WARN and names the forge as the cause and the monitor as the remedy; the brief appends '(forge starved)'. Once the signal clears, the next answer is today's again. An unobserved forge changes nothing. Enforced by unit tests in release::currency and case 4419."
+scope:
+  - "apps/majordomus-cli/src/release/currency.rs"
+  - "apps/majordomus-cli/src/capability/builtin/release.rs"
+  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
+  - "lib/doctor.sh"
+  - "docs/RELEASE.md"
+  - "test/cases/4419_a_release_held_by_a_starved_forge_names_it.sh"
+non_scope:
+  - "Deriving the forge_starved signal and reading queued runs: I4326"
+  - "Changing the stance, the six-hour threshold, or the release seat's finish refusal (I3072)"
+  - "Suppressing or downgrading the release warning while the forge is starved"
+  - "Fair-share scheduling of CI across repositories, or holding trains for another repository (item 5 of the same OSCILLA list)"
+  - "OSCILLA's own release script and its bounds"
+depends_on:
+  - "I3070"
+  - "I4326"
+serves:
+  - "a-version-follows-every-session#measured"
+acceptance_criteria:
+  - "Unit test: given an overdue measurement and a forge_starved observation for the measured repository, release.currency answers stance overdue with held_by naming the signal's start and the queued and in-progress counts, and the summary ends with the forge clause"
+  - "Unit test: given the same measurement and no observation, or an observation in which a run is in progress, the answer equals today's, held_by absent"
+  - "Case 4419, with gh stubbed on PATH to list queued runs and none in progress past I4326's bound: doctor's release line is a WARN carrying 'the forge has started no job since' and the remedy 'the release waits for the forge', and does not carry 'releases it now'"
+  - "Case 4419: with the stub listing one run in progress, doctor's release line is today's OVERDUE line and its remedy is 'the release seat releases it now'"
+  - "Case 4419: the brief's release part reads 'release OVERDUE <n> (forge starved)' while the signal holds and 'release OVERDUE <n>' once it clears"
+  - "Before the change the first unit test fails, because the answer carries no held_by"
+validation:
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib release::currency::"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 4419_a_release_held_by_a_starved_forge_names_it"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 3470_the_release_follows_the_work"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "a_release_held_by_a_starved_forge_names_it"
+created_at: 2026-10-29
+updated_at: 2026-10-29
