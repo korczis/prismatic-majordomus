@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `8e9bef317c7e`.
+Generated from canonical inputs `5375776b9fd7`.
 
 ## Milestones
 
@@ -477,43 +477,43 @@ Generated from canonical inputs `8e9bef317c7e`.
 
 ## Findings
 
-8750 finding(s), each on the page of the milestone its subject is or belongs to:
+8769 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
 | [`M002`](plan-status/M002.md) | 34 |
 | [`M003`](plan-status/M003.md) | 10 |
-| [`M004`](plan-status/M004.md) | 394 |
+| [`M004`](plan-status/M004.md) | 396 |
 | [`a-bounded-task-is-carried-to-accepted-work`](plan-status/a-bounded-task-is-carried-to-accepted-work.md) | 25 |
-| [`a-change-is-judged-in-minutes`](plan-status/a-change-is-judged-in-minutes.md) | 72 |
-| [`a-claim-stands-only-on-its-evidence`](plan-status/a-claim-stands-only-on-its-evidence.md) | 191 |
+| [`a-change-is-judged-in-minutes`](plan-status/a-change-is-judged-in-minutes.md) | 74 |
+| [`a-claim-stands-only-on-its-evidence`](plan-status/a-claim-stands-only-on-its-evidence.md) | 193 |
 | [`a-derive-does-only-the-work-its-inputs-changed`](plan-status/a-derive-does-only-the-work-its-inputs-changed.md) | 62 |
 | [`a-finding-is-tracked-to-its-issue`](plan-status/a-finding-is-tracked-to-its-issue.md) | 1 |
 | [`a-newcomer-reaches-a-first-verified-intent`](plan-status/a-newcomer-reaches-a-first-verified-intent.md) | 16 |
-| [`a-paste-is-decomposed-by-a-skill`](plan-status/a-paste-is-decomposed-by-a-skill.md) | 17 |
+| [`a-paste-is-decomposed-by-a-skill`](plan-status/a-paste-is-decomposed-by-a-skill.md) | 18 |
 | [`a-promoted-record-opens-its-message`](plan-status/a-promoted-record-opens-its-message.md) | 17 |
 | [`a-provider-carries-the-contract-natively`](plan-status/a-provider-carries-the-contract-natively.md) | 66 |
 | [`a-registered-corpus-judges-majordomus`](plan-status/a-registered-corpus-judges-majordomus.md) | 101 |
 | [`a-review-is-published-at-its-commit`](plan-status/a-review-is-published-at-its-commit.md) | 28 |
-| [`a-second-adopter-is-served`](plan-status/a-second-adopter-is-served.md) | 133 |
+| [`a-second-adopter-is-served`](plan-status/a-second-adopter-is-served.md) | 137 |
 | [`a-session-proceeds-through-the-mesh`](plan-status/a-session-proceeds-through-the-mesh.md) | 42 |
-| [`a-test-fails-when-the-code-is-wrong`](plan-status/a-test-fails-when-the-code-is-wrong.md) | 40 |
+| [`a-test-fails-when-the-code-is-wrong`](plan-status/a-test-fails-when-the-code-is-wrong.md) | 41 |
 | [`a-version-follows-the-work`](plan-status/a-version-follows-the-work.md) | 17 |
 | [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 542 |
 | [`an-authorised-node-connects-from-anywhere`](plan-status/an-authorised-node-connects-from-anywhere.md) | 3 |
 | [`an-outcome-becomes-a-reviewed-plan`](plan-status/an-outcome-becomes-a-reviewed-plan.md) | 11 |
 | [`an-unmet-criterion-is-drafted-into-work`](plan-status/an-unmet-criterion-is-drafted-into-work.md) | 112 |
 | [`architecture-is-enforced`](plan-status/architecture-is-enforced.md) | 2 |
-| [`automation`](plan-status/automation.md) | 49 |
+| [`automation`](plan-status/automation.md) | 50 |
 | [`campaigns-are-read-as-provenance`](plan-status/campaigns-are-read-as-provenance.md) | 19 |
 | [`capability-graph`](plan-status/capability-graph.md) | 11 |
-| [`ci-critical-path`](plan-status/ci-critical-path.md) | 326 |
+| [`ci-critical-path`](plan-status/ci-critical-path.md) | 327 |
 | [`command-and-deployment-criteria-are-judged`](plan-status/command-and-deployment-criteria-are-judged.md) | 5 |
 | [`delivery-economics-are-measured-over-declared-windows`](plan-status/delivery-economics-are-measured-over-declared-windows.md) | 1 |
 | [`derived-data-integrity`](plan-status/derived-data-integrity.md) | 25 |
 | [`development-runtime`](plan-status/development-runtime.md) | 1055 |
 | [`every-session-joins-the-mesh`](plan-status/every-session-joins-the-mesh.md) | 13 |
-| [`every-sessions-usage-is-observed`](plan-status/every-sessions-usage-is-observed.md) | 53 |
+| [`every-sessions-usage-is-observed`](plan-status/every-sessions-usage-is-observed.md) | 54 |
 | [`every-surface-follows-what-changed`](plan-status/every-surface-follows-what-changed.md) | 14 |
 | [`every-task-states-its-delivery-economics`](plan-status/every-task-states-its-delivery-economics.md) | 7 |
 | [`everything-is-followed-in-one-stream`](plan-status/everything-is-followed-in-one-stream.md) | 6 |
@@ -521,17 +521,17 @@ Generated from canonical inputs `8e9bef317c7e`.
 | [`failure-is-visible`](plan-status/failure-is-visible.md) | 31 |
 | [`fly-deployment`](plan-status/fly-deployment.md) | 67 |
 | [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 2979 |
-| [`intent-lifecycle`](plan-status/intent-lifecycle.md) | 60 |
+| [`intent-lifecycle`](plan-status/intent-lifecycle.md) | 61 |
 | [`knowledge-acts-on-what-it-learns`](plan-status/knowledge-acts-on-what-it-learns.md) | 77 |
 | [`landing-survives-any-session`](plan-status/landing-survives-any-session.md) | 7 |
 | [`mcp-transports-are-reliable`](plan-status/mcp-transports-are-reliable.md) | 176 |
 | [`measurements-are-tracked-over-time`](plan-status/measurements-are-tracked-over-time.md) | 11 |
-| [`merging-and-referencing-are-enforced`](plan-status/merging-and-referencing-are-enforced.md) | 36 |
+| [`merging-and-referencing-are-enforced`](plan-status/merging-and-referencing-are-enforced.md) | 37 |
 | [`mesh-journal-converges`](plan-status/mesh-journal-converges.md) | 129 |
 | [`one-kit-on-every-surface`](plan-status/one-kit-on-every-surface.md) | 8 |
 | [`peer-blackboard`](plan-status/peer-blackboard.md) | 6 |
 | [`prismatic-lumen`](plan-status/prismatic-lumen.md) | 7 |
-| [`public-proof`](plan-status/public-proof.md) | 133 |
+| [`public-proof`](plan-status/public-proof.md) | 134 |
 | [`repository-automation-is-typed`](plan-status/repository-automation-is-typed.md) | 30 |
 | [`runtime-adapters`](plan-status/runtime-adapters.md) | 94 |
 | [`runtime-lifecycle`](plan-status/runtime-lifecycle.md) | 43 |
@@ -547,7 +547,7 @@ Generated from canonical inputs `8e9bef317c7e`.
 | [`the-session-domain-is-written-once`](plan-status/the-session-domain-is-written-once.md) | 12 |
 | [`the-ui-runs-and-explains`](plan-status/the-ui-runs-and-explains.md) | 8 |
 | [`the-ui-works-on-a-phone`](plan-status/the-ui-works-on-a-phone.md) | 12 |
-| [`truthful-plan-surfaces`](plan-status/truthful-plan-surfaces.md) | 231 |
+| [`truthful-plan-surfaces`](plan-status/truthful-plan-surfaces.md) | 232 |
 | [`two-folder-integration`](plan-status/two-folder-integration.md) | 7 |
 | [`web-sign-in`](plan-status/web-sign-in.md) | 35 |
 | [`work-graph-github`](plan-status/work-graph-github.md) | 4 |

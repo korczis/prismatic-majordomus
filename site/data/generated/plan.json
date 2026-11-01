@@ -68164,7 +68164,8 @@
         "test/cases/4235_an_evidence_token_is_matched_whole.sh",
         ".ai/repo/project/issues/I4235.yaml",
         ".ai/repo/project/issues/I3663.yaml",
-        ".ai/repo/project/issues/I3995.yaml"
+        ".ai/repo/project/issues/I3995.yaml",
+        ".ai/repo/ci/gates.yaml"
       ],
       "non_scope": [
         "plan.transition in the executable (#2414, I1504, moves the done transition there)",
@@ -68416,7 +68417,8 @@
         ".ai/repo/project/issues/I4252.yaml",
         "share/skeleton/ai/repo/scope.yaml",
         "lib/init.sh",
-        "test/cases/3016_init_seeds_the_scope_of_the_stack_it_finds.sh"
+        "test/cases/3016_init_seeds_the_scope_of_the_stack_it_finds.sh",
+        "test/cases/93_scope_policy.sh"
       ],
       "non_scope": [],
       "objective": "Blocks for pyproject.toml (Python), package.json (Node) and go.mod (Go) are seeded when their marker is at the root, and the message names every marker it looked for.",
@@ -68548,12 +68550,13 @@
         "apps/majordomus-cli/src/skill/mod.rs",
         "lib/skills.sh",
         "share/skeleton/ai/repo/scope.yaml",
-        "test/cases/4256_a_skill_is_proved_where_the_adopter_tests.sh"
+        "test/cases/4256_a_skill_is_proved_where_the_adopter_tests.sh",
+        "apps/majordomus-cli/tests/skills.rs"
       ],
       "non_scope": [],
       "objective": "Test markers are read from the repository's declared test paths (scope or policy, with tests/ and test/ as defaults); the page and gate warnings apply only where the repository declares a site and a CI model; `skills check` reports what doctor will fail on.",
       "why": "An adopter's field report (a private Python client repository adopted from the v1.0.0-alpha.8 release on 2026-10-27, with the plan model, project rules, knowledge, skills, Claude Code capture and a GitHub projection all in use) found: doctor failed every skill as untested although tests/test_skills.py named each one: skill/mod.rs reads markers only from test/cases and apps/majordomus-cli/tests, so the adopter added a test/cases shim. Its warnings also named site/content/skills/<id>.md, scripts/generate-site-data and scripts/ci-plan, which exist only in the tool's source, while `skills check` reported every skill valid.",
-      "current_state": "TEST_DIRS and SKILL_PAGES_DIR are the tool's own layout; skills check and doctor disagree.",
+      "current_state": "Criterion 2 landed in 07490cfd1f9 (#2615, train 13c): no undocumented warning until the repository tracks a skill page under site/content/skills/ (apps/majordomus-cli/tests/skills.rs). Criteria 1 and 3 remain: TEST_DIRS is still the tool's own layout, so a marker in an adopter's tests/ proves nothing, and skills check and doctor still report different orphans.",
       "desired_state": "Test markers are read from the repository's declared test paths (scope or policy, with tests/ and test/ as defaults); the page and gate warnings apply only where the repository declares a site and a CI model; `skills check` reports what doctor will fail on.",
       "acceptance_criteria": [
         "A marker in tests/test_x.py proves a skill in a repository with no test/cases",
@@ -68590,7 +68593,8 @@
         ".ai/repo/project/issues/I4257.yaml",
         "lib/init.sh",
         "share/skeleton/ai/repo/policy.yaml",
-        "test/cases/4257_init_keeps_a_hand_written_provider_file.sh"
+        "test/cases/4257_init_keeps_a_hand_written_provider_file.sh",
+        "apps/majordomus-cli/src/economics/runner.rs"
       ],
       "non_scope": [],
       "objective": "For each projection target that already exists and carries no stamp, init writes mode region and says so.",
@@ -68720,7 +68724,8 @@
         "lib/plan.sh",
         "scripts/github-sync",
         "docs/SCHEMAS.md",
-        "test/cases/4261_issues_trace_outward.sh"
+        "test/cases/4261_issues_trace_outward.sh",
+        ".ai/repo/ci/gates.yaml"
       ],
       "non_scope": [],
       "objective": "Issues accept a `traces` list (tracker keys, requirement ids, URLs) projected into the GitHub body; milestones accept an optional `due_on` projected to GitHub's due date and never used to derive status.",
@@ -68735,7 +68740,7 @@
         "bash test/run.sh 4261_issues_trace_outward"
       ],
       "evidence_required": [
-        "case_issues_trace_outward_and_milestones_carr"
+        "case_issues_trace_outward_and_milestones_carry_dates"
       ],
       "evidence": [],
       "risk": "",
@@ -82992,6 +82997,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1900",
+      "message": "shares .ai/repo/ci/gates.yaml with I4261; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1900",
       "message": "shares apps/majordomus-cli/src/intent.rs with I4322; they may not run concurrently"
     },
     {
@@ -92154,7 +92165,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2350",
-      "message": "shares test/cases with I4261; they may not run concurrently"
+      "message": "shares .ai/repo/ci/gates.yaml with I4261; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -92821,6 +92832,12 @@
       "code": "scope_conflict",
       "subject": "I2374",
       "message": "shares .ai/repo/ci/gates.yaml with I3973; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2374",
+      "message": "shares .ai/repo/ci/gates.yaml with I4261; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -94645,6 +94662,12 @@
       "code": "scope_conflict",
       "subject": "I2662",
       "message": "shares .github/workflows/validate.yml with I3973; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2662",
+      "message": "shares .ai/repo/ci/gates.yaml with I4261; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -100596,6 +100619,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2846",
+      "message": "shares .ai/repo/ci/gates.yaml with I4261; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2846",
       "message": "shares .ai/repo/ci/gates.yaml with I4349; they may not run concurrently"
     },
     {
@@ -100771,6 +100800,12 @@
       "code": "scope_conflict",
       "subject": "I2848",
       "message": "shares .ai/repo/ci/gates.yaml with I3973; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2848",
+      "message": "shares .ai/repo/ci/gates.yaml with I4261; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -120150,6 +120185,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3116",
+      "message": "shares .ai/repo/ci/gates.yaml with I4261; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3116",
       "message": "shares lib/doctor.sh with I4265; they may not run concurrently"
     },
     {
@@ -120510,6 +120551,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3120",
+      "message": "shares .ai/repo/ci/gates.yaml with I4261; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3120",
       "message": "shares .github/workflows with I4296; they may not run concurrently"
     },
     {
@@ -120715,6 +120762,12 @@
       "code": "scope_conflict",
       "subject": "I3126",
       "message": "shares docs/ECONOMICS.md with I3820; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3126",
+      "message": "shares apps/majordomus-cli/src/economics with I4257; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -120991,6 +121044,12 @@
       "code": "scope_conflict",
       "subject": "I3160",
       "message": "shares .ai/repo/ci/gates.yaml with I3973; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3160",
+      "message": "shares .ai/repo/ci/gates.yaml with I4261; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -122226,6 +122285,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3241",
+      "message": "shares .ai/repo/ci/gates.yaml with I4261; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3241",
       "message": "shares scripts/ci-plan with I4268; they may not run concurrently"
     },
     {
@@ -123445,6 +123510,12 @@
       "code": "scope_conflict",
       "subject": "I3298",
       "message": "shares .ai/repo/benchmarks/economics/methodology.yaml with I3861; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3298",
+      "message": "shares apps/majordomus-cli/src/economics with I4257; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -124908,6 +124979,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3319",
+      "message": "shares .ai/repo/ci/gates.yaml with I4261; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3319",
       "message": "shares apps/majordomus-cli/src/quality with I4297; they may not run concurrently"
     },
     {
@@ -126097,6 +126174,12 @@
       "code": "scope_conflict",
       "subject": "I3400",
       "message": "shares site/content/skills with I3841; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3400",
+      "message": "shares apps/majordomus-cli/tests/skills.rs with I4256; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -130296,6 +130379,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3937",
+      "message": "shares .ai/repo/ci/gates.yaml with I4261; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3937",
       "message": "shares scripts/ci-plan with I4268; they may not run concurrently"
     },
     {
@@ -130399,6 +130488,12 @@
       "code": "scope_conflict",
       "subject": "I3961",
       "message": "shares apps/majordomus-cli/src/capability/builtin/peers.rs with I4468; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3973",
+      "message": "shares .ai/repo/ci/gates.yaml with I4261; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -130902,6 +130997,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I4257",
+      "message": "shares apps/majordomus-cli/src/economics/runner.rs with I4373; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I4257",
       "message": "shares lib/init.sh with I4468; they may not run concurrently"
     },
     {
@@ -130998,7 +131099,19 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I4261",
+      "message": "shares .ai/repo/ci/gates.yaml with I4349; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I4261",
       "message": "shares lib/plan.sh with I4357; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I4261",
+      "message": "shares .ai/repo/ci/gates.yaml with I4381; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -131035,6 +131148,12 @@
       "code": "scope_conflict",
       "subject": "I4261",
       "message": "shares share/allow/issue.txt with I4468; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I4261",
+      "message": "shares .ai/repo/ci/gates.yaml with I4512; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -132811,7 +132930,7 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "count": 8712,
+      "count": 8731,
       "examples": [
         {
           "level": "WARN",

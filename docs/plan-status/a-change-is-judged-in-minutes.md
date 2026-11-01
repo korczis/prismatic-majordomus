@@ -60,6 +60,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2848` | shares .ai/repo/project/issues/I2848.yaml with I3373; they may not run concurrently |
 | WARN | `scope_conflict` | `I2848` | shares .ai/repo/ci/gates.yaml with I3937; they may not run concurrently |
 | WARN | `scope_conflict` | `I2848` | shares .ai/repo/ci/gates.yaml with I3973; they may not run concurrently |
+| WARN | `scope_conflict` | `I2848` | shares .ai/repo/ci/gates.yaml with I4261; they may not run concurrently |
 | WARN | `scope_conflict` | `I2848` | shares .ai/repo/ci/gates.yaml with I4349; they may not run concurrently |
 | WARN | `scope_conflict` | `I2848` | shares .ai/repo/ci/gates.yaml with I4357; they may not run concurrently |
 | WARN | `scope_conflict` | `I2848` | shares .ai/repo/ci/gates.yaml with I4381; they may not run concurrently |
@@ -79,6 +80,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3241` | shares .github/workflows/validate.yml with I3936; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares .ai/repo/ci/gates.yaml with I3937; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares .github/workflows/validate.yml with I3973; they may not run concurrently |
+| WARN | `scope_conflict` | `I3241` | shares .ai/repo/ci/gates.yaml with I4261; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares scripts/ci-plan with I4268; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares .github/workflows/validate.yml with I4296; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares .github/workflows/validate.yml with I4338; they may not run concurrently |

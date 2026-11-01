@@ -70,6 +70,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4256` | shares lib/skills.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4257` | shares lib/init.sh with I4262; they may not run concurrently |
 | WARN | `scope_conflict` | `I4257` | shares lib/init.sh with I4265; they may not run concurrently |
+| WARN | `scope_conflict` | `I4257` | shares apps/majordomus-cli/src/economics/runner.rs with I4373; they may not run concurrently |
 | WARN | `scope_conflict` | `I4257` | shares lib/init.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4259` | shares lib/common.sh with I4323; they may not run concurrently |
 | WARN | `scope_conflict` | `I4259` | shares lib/common.sh with I4333; they may not run concurrently |
@@ -86,13 +87,16 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4261` | shares docs/SCHEMAS.md with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I4261` | shares lib/plan.sh with I4322; they may not run concurrently |
 | WARN | `scope_conflict` | `I4261` | shares lib/plan.sh with I4329; they may not run concurrently |
+| WARN | `scope_conflict` | `I4261` | shares .ai/repo/ci/gates.yaml with I4349; they may not run concurrently |
 | WARN | `scope_conflict` | `I4261` | shares lib/plan.sh with I4357; they may not run concurrently |
+| WARN | `scope_conflict` | `I4261` | shares .ai/repo/ci/gates.yaml with I4381; they may not run concurrently |
 | WARN | `scope_conflict` | `I4261` | shares lib/plan.sh with I4410; they may not run concurrently |
 | WARN | `scope_conflict` | `I4261` | shares docs/SCHEMAS.md with I4413; they may not run concurrently |
 | WARN | `scope_conflict` | `I4261` | shares docs/SCHEMAS.md with I4415; they may not run concurrently |
 | WARN | `scope_conflict` | `I4261` | shares share/schemas/majordomus/issue/issue.v1.schema.json with I4463; they may not run concurrently |
 | WARN | `scope_conflict` | `I4261` | shares lib/plan.sh with I4464; they may not run concurrently |
 | WARN | `scope_conflict` | `I4261` | shares share/allow/issue.txt with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I4261` | shares .ai/repo/ci/gates.yaml with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I4262` | shares lib/init.sh with I4265; they may not run concurrently |
 | WARN | `scope_conflict` | `I4262` | shares share/schemas/majordomus/policy/policy.v1.schema.json with I4333; they may not run concurrently |
 | WARN | `scope_conflict` | `I4262` | shares share/schemas/majordomus/policy/policy.v1.schema.json with I4413; they may not run concurrently |

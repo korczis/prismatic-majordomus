@@ -38,6 +38,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3400` | shares .gitattributes with I3820; they may not run concurrently |
 | WARN | `scope_conflict` | `I3400` | shares site/content/skills with I3829; they may not run concurrently |
 | WARN | `scope_conflict` | `I3400` | shares site/content/skills with I3841; they may not run concurrently |
+| WARN | `scope_conflict` | `I3400` | shares apps/majordomus-cli/tests/skills.rs with I4256; they may not run concurrently |
 | WARN | `scope_conflict` | `I3400` | shares .ai/repo/skills with I4337; they may not run concurrently |
 | WARN | `scope_conflict` | `I3400` | shares site/data/registry/registry.json with I4352; they may not run concurrently |
 | WARN | `scope_conflict` | `I3400` | shares site/content/skills with I4400; they may not run concurrently |
