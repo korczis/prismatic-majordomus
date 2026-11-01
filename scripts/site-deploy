@@ -33,7 +33,10 @@
 # metadata here minutes after its archives, and its record reaches master an hour or more later;
 # a deploy of master in between carries the previous release's latest.json. So an ordinary
 # deploy keeps the releases/latest.json gh-pages carries, and the tag file it names, when that
-# names a newer version than the build does.
+# names a newer version than the build does. It also keeps every releases/<tag>.json gh-pages
+# carries and the build does not hold, stable or pre-release, and names each (I3448): a
+# pre-release is never named by latest.json, so only this keeps its metadata until its record
+# lands.
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DRY=0; PROBE=0; SKIP_BUILD=0; ANY_REF=0; ALLOW_DIRTY=0; CONFIGURE=0; RELEASE_TAG=""
@@ -266,6 +269,23 @@ prev_tag="$(printf '%s' "$prev_latest" | jq -r '.tag // empty' 2>/dev/null || tr
 find "$W" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
 cp -R site/public/. "$W"/
 : > "$W/.nojekyll"
+# Every release's tag file gh-pages serves and the build does not hold stays, byte for byte
+# (I3448). A pre-release is published here by its release's job (--release-metadata) and is
+# never named by latest.json (I2829), so the rule for latest.json below never keeps it, and
+# until its record reaches master the build does not carry it: the copy above deleted it, and
+# releases/<tag>.json answered 404 while the GitHub release existed (v1.0.0-alpha.1, 2026-10-20).
+# A tag file the build holds is the build's; latest.json keeps its own rule.
+kept_tags=""
+while IFS= read -r f; do
+  case "$f" in releases/v[0-9]*.json) ;; *) continue ;; esac
+  [ -e "site/public/$f" ] && continue
+  mkdir -p "$W/releases"
+  git -C "$W" cat-file blob "HEAD:$f" > "$W/$f"
+  kept_tags="${kept_tags:+$kept_tags }${f#releases/}"
+  echo "site-deploy: kept $f: gh-pages serves it and the build does not hold it (I3448)"
+done <<EOF
+$(git -C "$W" ls-tree --name-only HEAD -- releases/ 2>/dev/null || true)
+EOF
 build_version="$(jq -r '.version // empty' site/public/releases/latest.json 2>/dev/null || true)"
 if newer "$prev_version" "$build_version" && [ -n "$prev_tag" ] \
    && git -C "$W" cat-file -e "HEAD:releases/$prev_tag.json" 2>/dev/null; then
@@ -280,7 +300,7 @@ if newer "$prev_version" "$build_version" && [ -n "$prev_tag" ] \
   # `scripts/pages release-live` and the pages-live gate refuse it once the window has passed.
   echo "site-deploy: warning: the pages of this build offer ${build_version:-no release}, older than the $prev_version gh-pages serves; the next build offers $prev_version (project.the-site-offers-the-release-it-published)" >&2
 fi
-msg="deploy: site from ${HEAD_SHA:0:7}${fp:+ (registry $fp)}, $routes routes${kept:+, release metadata kept at $kept}"
+msg="deploy: site from ${HEAD_SHA:0:7}${fp:+ (registry $fp)}, $routes routes${kept:+, release metadata kept at $kept}${kept_tags:+, release files kept: $kept_tags}"
 (
   cd "$W"
   git add -A

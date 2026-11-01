@@ -406,6 +406,14 @@ names, when it names a newer version than the build; it says so in its output an
 site never goes back a release. `test/cases/1041_a_release_publishes_its_metadata.sh` holds
 all of it.
 
+A pre-release is never named by `latest.json`, so that rule never kept its tag file: on
+2026-10-20 the deploys of master after v1.0.0-alpha.1's metadata was published deleted
+`releases/v1.0.0-alpha.1.json`, and it answered 404 while the GitHub release existed. An
+ordinary deploy now also keeps every `releases/<tag>.json` that `gh-pages` serves and the
+build does not hold, stable or pre-release, byte for byte, and names each in its output and in
+the `gh-pages` commit; a tag file the build holds is the build's
+(`test/cases/3721_a_deploy_keeps_every_pre_release_it_serves.sh`, I3448).
+
 The pages follow the metadata, not the record. Until 2026-10-12 they did not: `latest.json`
 named v0.21.0 from 10:23Z while the homepage beside the install command offered v0.20.0,
 because every page read the release record and the record was still a pull request. The
