@@ -18,6 +18,7 @@
   // The page is read again every POLL_MS for every scene; the journal's events are followed
   // between those readings from a cursor every STREAM_MS, through observatory.events.
   const POLL_MS = 60000;
+  const PULSE_MS = 4000;
   const STREAM_MS = 3000;
   // The events the river holds at most, newest first: the server's bound on one scene.
   const HELD = 200;
@@ -557,6 +558,42 @@
     }
     if (!snapshot) timer = setTimeout(poll, POLL_MS);
 
+    // Between readings the display asks the server's pulse whether the repository moved past
+    // the generation it was drawn from: it reads itself again at once when it did, and says
+    // BEHIND, with the server's reason, while the server is not reading the repository as it
+    // is. A display that says LIVE of a server that cannot load the repository is the lie.
+    let pulseGeneration = null;
+    let behind = null;
+    async function pulse() {
+      pulseTimer = null;
+      if (document.visibilityState === 'visible' && !controller) {
+        const ask = new AbortController();
+        const give = setTimeout(() => ask.abort(), PULSE_MS);
+        try {
+          const response = await fetch('/ui/pulse', { cache: 'no-store', signal: ask.signal });
+          if (!response.ok) throw new Error(String(response.status));
+          const beat = await response.json();
+          const moved = pulseGeneration !== null && beat.generation !== pulseGeneration;
+          const settled = behind !== null && beat.lag === 'current';
+          pulseGeneration = beat.generation;
+          behind = beat.lag === 'current' ? null
+            : beat.lag === 'failed' ? `the server could not read the repository: ${beat.error} (next attempt in ${beat.retry_in_s} s)`
+              : 'the repository moved, and is being read again';
+          if (moved || settled) {
+            if (timer) clearTimeout(timer);
+            await poll();
+          }
+        } catch (e) {
+          /* the display as it is stays; the next beat asks again */
+        } finally {
+          clearTimeout(give);
+        }
+      }
+      pulseTimer = setTimeout(pulse, PULSE_MS + Math.random() * 500);
+    }
+    let pulseTimer = null;
+    if (!snapshot) pulseTimer = setTimeout(pulse, PULSE_MS);
+
     // ------------------------------------------------------------ following the journal
     // Between readings of the page, the river follows the journal from its cursor: only the
     // events above it come back, each by its identity, so one delivered twice is one mark.
@@ -717,7 +754,7 @@
       const age = Date.now() - readAt;
       // a replayed scene is a replay whatever the page is: it shows when it was recorded
       const resynced = Date.now() - resyncedAt < 10000;
-      const word = scene.replay ? 'REPLAY' : snapshot ? 'SNAPSHOT' : resynced ? 'RESYNCED' : age < LIVE_WITHIN_MS ? 'LIVE' : 'STALE';
+      const word = scene.replay ? 'REPLAY' : snapshot ? 'SNAPSHOT' : behind ? 'BEHIND' : resynced ? 'RESYNCED' : age < LIVE_WITHIN_MS ? 'LIVE' : 'STALE';
       // why a reading is old: only an asking that failed blames the server
       const silence = failures || streamFailures ? 'the server is not answering'
         : pollOwed || streamOwed ? 'not asked while the page was hidden'
@@ -727,7 +764,7 @@
       const text = [
         word,
         scene.replay ? `recorded ${recordedAt}${scene.replay.revision ? ` at ${scene.replay.revision}` : ''} · not live`
-          : snapshot ? `read once at ${data.revision || 'an unknown commit'} · ${when}` : `read ${when}${word === 'STALE' ? ` · ${Math.round(age / 1000)} s ago, ${silence}` : ''}`,
+          : snapshot ? `read once at ${data.revision || 'an unknown commit'} · ${when}` : `read ${when}${word === 'BEHIND' ? ` · ${behind}` : word === 'STALE' ? ` · ${Math.round(age / 1000)} s ago, ${silence}` : ''}`,
         `${String(current + 1).padStart(2, '0')} / ${String(data.scenes.length).padStart(2, '0')}  ${scene.label.toUpperCase()}`,
         line,
         auto && !held ? 'auto' : 'held',
@@ -827,6 +864,7 @@
       policy: { min_dwell_seconds: MIN_DWELL_S, interrupt_cooldown_seconds: INTERRUPT_COOLDOWN_S, manual_hold_seconds: MANUAL_HOLD_S },
       dispose() {
         if (timer) clearTimeout(timer);
+        if (pulseTimer) clearTimeout(pulseTimer);
         if (controller) controller.abort();
         if (streamTimer) clearTimeout(streamTimer);
         if (streamController) streamController.abort();

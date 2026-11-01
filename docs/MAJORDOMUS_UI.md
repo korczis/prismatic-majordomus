@@ -234,6 +234,9 @@ of the request.
 The repository's own reload is not waited for either. When the repository has changed, a
 screen is drawn from the generation the server has, opens with "The repository changed: this
 screen shows it as it was, and is being read again", and the next generation loads behind it.
+When that reload **fails**, the screen says that instead, with the first line of what the load
+said, the generation it shows and the seconds to the next attempt (`data-reload-failed`;
+[ADR 0173](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0173-a-screen-behind-the-repository-says-why.md)).
 An answer over the API, MCP or the command line still waits for the generation its caller
 saw.
 
@@ -268,7 +271,13 @@ queue (`integration.queue`) is `/ui/panels/pull-requests`:
 While a screen is visible, `ui.js` asks the server for it again every minute, puts the new
 rendering in place, and updates the time in the tool bar. That time is when the page was
 rendered; each source line says when its own reading is older. This is a refresh and is said
-as one. A streamed page and one stream of changed readings replace it in I2487.
+as one; nothing claims a live stream. Between those minutes the page asks `GET /ui/pulse`
+every 3 seconds while it is seen (the kiosk every 4): the generation, its head, the version and
+how the server stands (`current`, `reloading` or `failed` with the reason and the seconds to the
+next attempt). When the generation moved, or the server caught up, the page is read again at
+once. The pulse is a few bytes, is not cached, reads no source, and starts the reload a moved
+repository is owed. A snapshot never asks it. A streamed page and one stream of changed
+readings replace the polling in I2487.
 
 The intent workspace also follows the executions its server runs (I2783). Its screen carries
 `data-follows-executions`, and the page names the channel (`data-events`, `/events`) and the
@@ -404,6 +413,10 @@ of health. An event of the mesh is projected as its identity (stream and sequenc
 its node, its logical time and its wall time, and never as its body.
 
 The status word says how the page was read:
+- `BEHIND`: the pulse says the server is not reading the repository as it is, either because a
+  reload is on its way or because the layer would not load; the status names which, with the
+  server's reason and the seconds to its next attempt. It outranks `LIVE`, because a reading
+  that is recent of a server that is behind is not live;
 - `LIVE`: read again within 90 seconds. The script asks for its own page every 60 seconds, and
   between those readings follows the mesh journal from a cursor every 3 seconds through
   `observatory.events`, which answers only the events above the cursor, projected exactly as

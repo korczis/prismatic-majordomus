@@ -3252,6 +3252,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/live.rs",
+        "kind": "file",
+        "label": "live.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/live.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/mcp/bridge.rs",
         "kind": "file",
         "label": "bridge.rs",
@@ -4705,6 +4713,14 @@
         "label": "observatory.js",
         "summary": "named by the layer; not an object of this index",
         "source": "share/ui/observatory.js",
+        "external": true
+      },
+      {
+        "id": "file:share/ui/ui.js",
+        "kind": "file",
+        "label": "ui.js",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/ui/ui.js",
         "external": true
       },
       {
@@ -8241,6 +8257,34 @@
             "mesh",
             "mcp",
             "enforcement"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0173",
+        "kind": "adr",
+        "label": "adr-0173",
+        "summary": "A screen behind the repository says why it is behind, and a page follows the repository by a pulse instead of by the minute",
+        "route": "/cockpit/objects/adr/adr-0173",
+        "source": ".ai/repo/adrs/0173-a-screen-behind-the-repository-says-why.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-17",
+          "related": [
+            "file:.ai/repo/adrs/0142-no-screen-waits-for-a-source.md",
+            "file:.ai/repo/adrs/0158-the-observatory-draws-only-what-was-observed.md",
+            "file:.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
+            "file:.ai/repo/rules/project/ui-derived-state.v1.md",
+            "test:test/cases/3095_a_display_behind_the_repository_says_why.sh",
+            "file:apps/majordomus-cli/src/live.rs",
+            "file:apps/majordomus-cli/src/ui/mod.rs",
+            "file:share/ui/ui.js",
+            "file:share/ui/observatory.js"
+          ],
+          "tags": [
+            "ui",
+            "observatory",
+            "freshness"
           ]
         }
       },
@@ -99941,6 +99985,13 @@
         "source": "test/cases/3090_a_flatten_is_cached_by_its_content.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3095_a_display_behind_the_repository_says_why.sh",
+        "kind": "test",
+        "label": "test/cases/3095_a_display_behind_the_repository_says_why.sh",
+        "route": "/cockpit/objects/test/test-cases-3095-a-display-behind-the-repository-says-why-sh",
+        "source": "test/cases/3095_a_display_behind_the_repository_says_why.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/30_command_registry.sh",
         "kind": "test",
         "label": "test/cases/30_command_registry.sh",
@@ -114191,6 +114242,56 @@
       {
         "source": "majordomus://adr/adr-0172",
         "target": "majordomus://test/test/cases/3221_a_bare_session_start_joins_the_cluster.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0173",
+        "target": "file:apps/majordomus-cli/src/live.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0173",
+        "target": "file:apps/majordomus-cli/src/ui/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0173",
+        "target": "file:share/ui/observatory.js",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0173",
+        "target": "file:share/ui/ui.js",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0173",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0173",
+        "target": "majordomus://adr/adr-0135",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0173",
+        "target": "majordomus://adr/adr-0142",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0173",
+        "target": "majordomus://adr/adr-0158",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0173",
+        "target": "majordomus://rule/project.ui-derived-state@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0173",
+        "target": "majordomus://test/test/cases/3095_a_display_behind_the_repository_says_why.sh",
         "kind": "put_in_force"
       },
       {
@@ -147494,6 +147595,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3095_a_display_behind_the_repository_says_why.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/30_command_registry.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -153610,8 +153716,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4192,
-      "edges": 9633,
+      "nodes": 4196,
+      "edges": 9644,
       "acyclic": false,
       "truncated": false
     }
