@@ -5,7 +5,7 @@ template = "page.html"
 [extra]
 lang = "cs"
 translated_from = "seats-not-names/"
-source_digest = "5b26414f155534e79c5587a3457a7c8faf3d2188b7f4151836050397fc9ad48c"
+source_digest = "ba64b391f7679aa9b77b23e0cb16dff20bfb0c5860c12687d17422c5e6f746d7"
 related = ["vsechno-v-jednom-proudu/", "teze/", "vlozene-zadani-se-stava-planem/", "plan-se-napadne-driv-nez-se-postavi/", "zabrano-driv-nez-se-stavi/", "mnoho-stroju-jeden-denik/"]
 [extra.translations]
 en = "seats-not-names/"
