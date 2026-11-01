@@ -635,11 +635,15 @@ refuses the reopen after the closure, the pull request is closed: the drain says
 
 A *train top* here is the landing seat's combined top, clause 2 of
 [the cooperation rule](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md):
-the seats number them (train 13, 13b, 13c), its branch is named `integration/train-*` (for
-example `integration/train-13c-20261031`) and its pull request is labelled `train`, and it is
-not the stacked train of the section above. Tops under other names (`integration/next-top`,
-`integration/e7-top-*`) are of an earlier procedure; a top is named under `integration/train-*`
-because that is the name the pre-push hook refuses a failed gate on (step 3). The rule says
+the seats number them (train 13, 13b, 13c), and it is not the stacked train of the section
+above. By practice, not by that rule, its branch is named `integration/train-<train>-<date>`
+(for example `integration/train-13c-20261031`), because that is the name the pre-push hook
+refuses a failed gate on (step 3), and its pull request is opened labelled `train`, with
+`gh pr create --label train`, so that the first validate run already reads the label and does
+not yield to the release path (`docs/CI.md`): a label added after the run started, as
+`scripts/github-sync --prs` adds it in `pr-meta`, comes too late for that run, and a label
+added with the workflow's token starts no new one. Tops under other names
+(`integration/next-top`, `integration/e7-top-*`) are of an earlier procedure. The rule says
 one validation run judges every member. This section is the landing seat's procedure for
 keeping that run a confirmation rather than the first time anyone looks.
 It is measured by one number, the owner's, given on the night of 2026-10-31 in Czech:
@@ -714,24 +718,28 @@ The procedure:
    [`project.a-push-runs-what-ci-would-find-first`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v3.md),
    `.githooks/pre-push` refuses a push that carries a ref under `refs/heads/integration/train-*`
    when `scripts/ci/run-plan --before-push` exits 1. On a member's own branch it still
-   reports, because there CI's verdict costs one run. Pushing a top does not need an executable
-   of the tree's generation: when none exists, a gate that exits 12 for want of it is printed
-   `NOT JUDGED`, a fast case that runs the executable is left out by name, neither makes the
-   step exit 1, and CI judges them. Every other failure still refuses the top. A top's run
+   reports, because there CI's verdict costs one run. When no executable of the tree's
+   generation exists, exactly two things are left to CI: a gate whose exit 12 is the
+   launcher's own refusal (`run: just build`), printed `NOT JUDGED`, and a fast case that
+   calls `rust_bin`, left out by name. That is not a promise that such a host can push a top.
+   A gate that exits 12 for a reason of its own (CANNOT MEASURE), and a fast case that reaches
+   the executable without calling `rust_bin`, still fail, and so does every other failure;
+   each refuses the top. A top's run
    is the widest and slowest the
    repository has, and every member waits on it. The composer finds the member the failure
    belongs to and applies step 4.
 4. **A member that blocks moves to the next train at once, unless its fix is small and
    ready.** Small and green beats big. A top waits on its worst member, so one member's red
-   holds back every other member's landing. Clause 2, as the owner amended it on 2026-11-01
-   ("Yes, with attribution", version 3), allows two remedies. Either the member is dropped from
-   the top, its fix is committed on its own branch, and it boards the next train with that
-   head; or the fix travels inside the top as a commit of its own whose message names the
-   member's pull request, the same commit is carried to the member's own branch, and the top's
-   pull request lists it beside the member. A fix that is not ready before the push is the
-   first remedy. 13c's patches inside its top (the eight listed in its compose commit
-   `af91101cfdd`) were made before that decision and are covered by it; they were folded into
-   the compose commit, and the next top gives each its own commit.
+   holds back every other member's landing. Clause 2, as the owner decided on 2026-11-01 at
+   02:45Z (version 3), allows two remedies. Either the member is dropped from the top, its fix
+   is committed on its own branch, and it boards the next train with that head; or the fix
+   travels inside the top as its own commit that names the member, and is carried to the
+   member's branch afterwards. By practice, not by the rule, the commit names the member's pull
+   request in its message and the top's pull request lists each such fix beside its member. A
+   fix that is not ready before the push is the first remedy. 13c's eight patches (listed in
+   its compose commit `af91101cfdd`) were folded into that compose commit before the decision.
+   They are not in the form it allows, and carrying each to its member's branch is still
+   owed.
 5. **A red train is post-mortemed per member, by blame.** Each finding of the top's run goes
    to the member that introduced it. An uncovered changed item belongs to the member whose
    commits (`origin/master..<member head>`) carry it in `git blame` of the merged tree. A
@@ -739,8 +747,9 @@ The procedure:
    in the top (step 4) is that member's, by the name its commit carries. Some lines no member
    owns: merge resolutions and the top's own commits (the version raise, the derive). The
    composer owns those and, before pushing, fixes them in commits of the top's own or drops
-   them; clause 2 never forbade the top its own commits, only a member's fix without its
-   name. The attribution is written in the top's pull request. The
+   them. Clause 2 speaks of a member's fix, not of the top's own commits: version 2 kept every
+   member's fix out of the top ("never inside the top"), and version 3 lets one in only as its
+   own commit that names the member. The attribution is written in the top's pull request. The
    members it names leave, and the rest compose the next top on the current master.
 6. **A decision is taken again after a stop.** A workflow or session that resumes reads
    `origin/master`, the members' heads and the board again before it acts on what it decided

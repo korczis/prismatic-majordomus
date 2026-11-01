@@ -27,11 +27,12 @@ version: 1
 #   4. Nothing of the release path is ever cancelled by this, and neither is master's own
 #      validate: only runs whose event is pull_request, of the verdict workflow, on a branch
 #      that is not a record branch, are candidates — and a run yields only itself.
-#   5. A train never yields (the owner, 2026-11-01 03:40Z: "Exempt train PRs from yield"): a
-#      pull request labelled `exempt_label` is the landing seat's combined top, every member
-#      waits on its one run, and neither `yield` nor `preempt` cancels it. Its members, and
-#      every other pull request, yield as in 1 and 2. The label is read from the forge when
-#      the path is busy; a pull request whose labels cannot be read is not cancelled.
+#   5. A train never yields (the owner's decision of 2026-11-01 03:40Z, which chose to exempt
+#      train pull requests from yielding): a pull request labelled `exempt_label` is the
+#      landing seat's combined top, every member waits on its one run, and neither `yield` nor
+#      `preempt` cancels it. Its members, and every other pull request, yield as in 1 and 2.
+#      The label is read from the forge when the path is busy; a pull request whose labels
+#      cannot be read is not known to be a train and yields as in 1 and 2.
 #
 # The release path is detected from outside the release workflow, by the runs GitHub lists,
 # so nothing here depends on the release workflow saying anything.

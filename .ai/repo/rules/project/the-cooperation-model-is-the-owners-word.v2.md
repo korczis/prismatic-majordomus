@@ -3,7 +3,7 @@ id: project.the-cooperation-model-is-the-owners-word
 version: 3
 kind: rule
 title: Work moves through seats held as mesh claims, a worker lands its own green head, and every checkout is kept current
-description: The owner's operating decision of 2026-10-16, relaxed by the owner on 2026-10-20 and amended by the owner on 2026-11-01 (a member's fix may travel inside a train top with attribution). A seat (landing, release, repair, worker) is an exclusive mesh claim and nothing else; a worker lands its own green pull request through the guarded lander's queue, pinned to the head its ci judged; the landing seat composes combined tops, named integration/train-*, only when heads must ship together, and a member's fix may travel inside a top as its own commit that names the member and is then carried to the member's branch; a stale checkout or branch is preserved in a rescue ref and brought current without asking; the release seat tags on master's own green ci whenever master holds landed work past the last tag. At most five builders run on one machine and none starts below 35 GiB free. Every surface that describes the model reads this record or the live claims, never a copy.
+description: The owner's operating decision of 2026-10-16, relaxed by the owner on 2026-10-20 and amended by the owner on 2026-11-01 (a member's fix may travel inside a train top with attribution). A seat (landing, release, repair, worker) is an exclusive mesh claim and nothing else; a worker lands its own green pull request through the guarded lander's queue, pinned to the head its ci judged; the landing seat composes combined tops only when heads must ship together, and a member's fix may travel inside a top as its own commit that names the member and is then carried to the member's branch; a stale checkout or branch is preserved in a rescue ref and brought current without asking; the release seat tags on master's own green ci whenever master holds landed work past the last tag. At most five builders run on one machine and none starts below 35 GiB free. Every surface that describes the model reads this record or the live claims, never a copy.
 statement: Hold a seat only by holding its exclusive mesh claim; land a pull request or a combined top only pinned to the head whose ci succeeded and which contains the current master, a worker's own green head through the guarded lander's queue; put a member's fix inside a top only as its own commit that names the member, and carry it to the member's branch; preserve a stale checkout's work in a rescue ref, then bring it current without asking, and bring a pushed branch current by merging master into it; release whenever master holds landed work past the last tag; start no build beside five others or below 35 GiB free; and describe the model by pointing at this rule or reading the live claims, never by copying it.
 status: active
 class: blocking
@@ -56,14 +56,18 @@ Train 13c (#2786, compose commit `af91101cfdd`, 2026-10-31T23:24Z) did not keep 
 commit carries eight of f3's review patches for nine members (#925, #2615, #2610, #2582 with
 #2622, #2756, #2603, #2618, #2577), "applied on the top (they travel to their members later)",
 in that commit's own words. On 2026-11-01 at 02:45Z the landing seat asked the owner whether
-clause 2 should allow that, and the owner chose "Yes, with attribution". Version 3 records that
-answer: a member's fix may travel inside a train top as its own commit that names the member,
-and it is then carried to the member's own branch, so the member's history holds what landed in
-its name. 13c's patches were made before the decision and are covered by it. They were folded
-into the compose commit rather than each made a commit of its own, which is not yet the form
-the decision asks for; the next top gives each fix its own commit. Version 3 also says what a top's branch is called,
-`integration/train-*`, because the pre-push hook refuses a failed gate on a top by that name
-(rule `project.a-push-runs-what-ci-would-find-first` v3).
+clause 2 should allow a member's fix inside a top, and the owner chose to allow it on condition
+that the fix is attributed. Version 3 records exactly that decision: a member's fix may travel
+inside a train top as its own commit that names the member, and it is carried to the member's
+own branch afterwards.
+
+13c's patches are not in that form. They were made before the decision and folded into the
+compose commit, not made as commits of their own that each name a member, so the decision does
+not cover them after the fact. Carrying each of them to its member's branch is still owed; no
+record yet shows any of the eight carried.
+
+How a top's branch is named, the label its pull request carries and how its pull request lists
+the fixes are practice, described in `docs/INTEGRATION.md`, not obligations of this rule.
 
 The file keeps its name, `the-cooperation-model-is-the-owners-word.v2.md`. The rule's identity
 is the `id` and `version` above, and the file name is a convenience (`README.md` of this
@@ -91,15 +95,12 @@ and 3824 read this file by that path, and renaming it would change the crate for
    The Mesh screen of the UI (`/ui/mesh`) reads these scopes from the live claims of
    `mesh.state` and draws who holds each seat now; its seat table and this table name the same
    scopes, and case 3150 and the screen's own test hold the two to each other.
-2. **A combined top is the landing seat's unit of work.** Its branch is named
-   `integration/train-<train>-<date>`, under `integration/train-*`, and its pull request is
-   labelled `train`. Its members are pull requests whose
+2. **A combined top is the landing seat's unit of work.** Its members are pull requests whose
    heads conflict with nothing in authored paths, decided by a chain of `git merge-tree` from
    the current master. The derived files are regenerated once, after the merge commit. One
    validation run judges every member. A red member is dropped from the top and fixed on its
-   own branch, or its fix travels inside the top as a commit of its own whose message names the
-   member's pull request; such a fix is then carried to the member's own branch, and the top's
-   pull request lists it beside the member. The top lands by one merge,
+   own branch, or its fix travels inside the top as its own commit that names the member, and
+   is carried to the member's branch afterwards. The top lands by one merge,
    `gh pr merge <n> --admin --merge --match-head-commit <sha>`, and only when that exact head's
    `ci` concluded success and the head contains the current `origin/master`. A release's bump
    may ride inside a top. The pull request of a top names its members and their heads.
@@ -141,10 +142,11 @@ critical path, not by this rule.
 
 # What it amends, and what still holds
 
-Version 3 widens one sentence of clause 2, "never inside the top": a member's fix may ride in
-the top, attributed and carried home, as the owner decided on 2026-11-01. It adds the name and
-the label a top carries. Nothing about what may reach master is looser: the top still lands
-only pinned to a head whose `ci` succeeded and which contains the current master.
+Version 3 widens one sentence of clause 2, "never inside the top": a member's fix may travel
+inside the top as its own commit that names the member, and is carried to the member's branch
+afterwards, as the owner decided on 2026-11-01. It adds nothing else. Nothing about what may
+reach master is looser: the top still lands only pinned to a head whose `ci` succeeded and
+which contains the current master.
 
 Version 2 lifts two words of version 1's worker row, "never merges": a worker's own green head
 is landed through the guarded lander's queue, under exactly the pin the landing seat lands

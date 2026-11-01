@@ -47,12 +47,15 @@
 # skips the step, as there is no --no-verify.
 #
 # NOT JUDGED HERE. When no executable of this tree's generation exists (the line
-# `executable: none` says so), a gate that exits 12 has refused for want of it, not for the
-# change: it is named `NOT JUDGED`, counted apart from the failures, and left to CI, and a fast
-# case that runs the executable (`rust_bin`, test/lib.sh) is left out by name. They do not make
-# the step exit 1: no host may build below the 35 GiB floor, so on a host without an executable
-# a train top would otherwise be unpushable. A gate that exits 12 while an executable exists,
-# and every other failure, is still a failure.
+# `executable: none` says so), a gate whose log carries the launcher's own refusal (the line
+# `run: just build` that lib/rust_bin.sh's mj_rust_resolve prints before it exits 12) has
+# refused for want of the executable, not for the change: it is named `NOT JUDGED`, counted
+# apart from the failures, and left to CI. A fast case that calls `rust_bin` (test/lib.sh) is
+# left out by name. Those two, and nothing else, are what a host without an executable leaves
+# to CI; it is not a promise that such a host can push a top. A gate that exits 12 for a reason
+# of its own (collision-check, nav-check, worktree-check, evidence-check and others say CANNOT
+# MEASURE that way), a gate that exits 12 while an executable exists, a case that reaches the
+# executable without calling `rust_bin`, and every other failure, is still a failure.
 #
 #   MJ_CI_TIMINGS=FILE   append "<job or plan><TAB><gate id><TAB>seconds" per gate
 #   MJ_CI_RECEIPTS=FILE  append "<gate id><TAB><success or failure><TAB><job>/run-plan" per
@@ -201,8 +204,8 @@ if [ "$before_push" = 1 ]; then
     cmd="$(jq -r --arg g "$g" '.gates[] | select(.id == $g) | .runs' "$plan")"
     t0="$(date +%s)"
     if bash -c "$cmd" < /dev/null > "$plan.$g.log" 2>&1; then printf '  ok     %s (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"; printf '%s %s\n' "$(( $(date +%s) - t0 ))" "$g" >> "$plan.times"
-    elif g_rc=$?; [ "$g_rc" = 12 ] && [ "$no_exe" = 1 ]; then
-      printf '  NOT JUDGED %s (%ss): exit 12, and no executable of this tree'"'"'s generation is here; CI judges it\n' \
+    elif g_rc=$?; [ "$g_rc" = 12 ] && [ "$no_exe" = 1 ] && grep -qF 'run: just build   (cargo build --locked' "$plan.$g.log"; then
+      printf '  NOT JUDGED %s (%ss): exit 12, the launcher'"'"'s refusal for want of an executable of this tree'"'"'s generation; CI judges it\n' \
         "$g" "$(( $(date +%s) - t0 ))"; sed 's/^/         | /' "$plan.$g.log" | tail -n 5
       unjudged="$unjudged $g"
     else printf '  FAILED %s (%ss): %s\n' "$g" "$(( $(date +%s) - t0 ))" "$cmd"; sed 's/^/         | /' "$plan.$g.log" | tail -n 15
@@ -250,9 +253,9 @@ if [ "$before_push" = 1 ]; then
   fi
   rm -f "$plan.times"
   # Exit 1 is a failed gate or case: the pre-push hook reports it and CI decides (I3830), or,
-  # on a push that carries a train top, the hook refuses it. A gate not judged for want of an
-  # executable is named and never makes the exit 1.
-  [ -z "$unjudged" ] || printf '; not judged here:%s (exit 12 with no executable of this tree'"'"'s generation; CI judges them)' "$unjudged"
+  # on a push that carries a train top, the hook refuses it. A gate the launcher refused for
+  # want of an executable is named and never makes the exit 1; any other exit 12 is a failure.
+  [ -z "$unjudged" ] || printf '; not judged here:%s (exit 12 from the launcher, which has no executable of this tree'"'"'s generation; CI judges them)' "$unjudged"
   if [ -n "$failed" ]; then printf '; failed:%s. CI would refuse this push for the same reason.\n' "$failed"; exit 1; fi
   if [ -n "$unjudged" ]; then printf '; nothing judged here failed\n'; exit 0; fi
   printf '; nothing CI would find here first\n'

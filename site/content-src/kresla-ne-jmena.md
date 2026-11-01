@@ -27,7 +27,7 @@ Vlastník repozitáře sessions to ráno odpověděl několika řádky v češti
 
 První rozhodnutí se týkalo toho, kdo co dělá. Integrace potřebuje několik rolí, které smí v jednu chvíli držet jen jedna session: někdo přistává, někdo vydává. Nejjednodušší je zapsat to jménem do dokumentu: „vydává session 9c“. Jenže to jméno přestane platit ve chvíli, kdy se session znovu připojí pod jinou identitou, spadne nebo práci předá, a nic si toho nevšimne.
 
-Role je proto **křeslo** (seat) a křeslo se drží tak, že se drží exkluzivní claim na meshi, a nijak jinak. Claim už je podepsaná událost, kterou replikuje každý stroj, která žije jen tak dlouho jako heartbeat její session a kterou jiná session nemůže vzít, dokud ji drží. Pravidlo [project.the-cooperation-model-is-the-owners-word](@/rules/project-the-cooperation-model-is-the-owners-word-2.md) jmenuje čtyři křesla:
+Role je proto **křeslo** (seat) a křeslo se drží tak, že se drží exkluzivní claim na meshi, a nijak jinak. Claim už je podepsaná událost, kterou replikuje každý stroj, která žije jen tak dlouho jako heartbeat její session a kterou jiná session nemůže vzít, dokud ji drží. Pravidlo [project.the-cooperation-model-is-the-owners-word](@/rules/project-the-cooperation-model-is-the-owners-word-3.md) jmenuje čtyři křesla:
 
 | křeslo | claimuje | dělá |
 |---|---|---|

@@ -73,9 +73,10 @@ done
 # plan or its durations cannot be computed), refuses: what cannot be measured is not passed.
 # Exit 1 on a push that carries a train top refuses too (rule version 3): on 2026-10-31 train
 # 13's top was pushed over four structure gates this step had named, and its CI run failed the
-# same four about 30 minutes later; master stood still for more than 29 hours. A gate that
-# exits 12 because no executable of this tree's generation exists is not judged here: run-plan
-# names it NOT JUDGED and does not count it, so it never makes exit 1, and CI judges it.
+# same four about 30 minutes later; master stood still for more than 29 hours. A gate whose
+# exit 12 is the launcher's refusal (`run: just build`) while no executable of this tree's
+# generation exists is not judged here: run-plan names it NOT JUDGED and does not count it, and
+# CI judges it. A gate that exits 12 for a reason of its own is a failure like any other.
 scripts/ci/run-plan --before-push
 mj_rc=$?
 case "$mj_rc" in
