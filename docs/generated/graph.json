@@ -75443,6 +75443,45 @@
         }
       },
       {
+        "id": "majordomus://issue/I4527",
+        "kind": "issue",
+        "label": "I4527",
+        "summary": "The installed launcher is checked on a layer the release wrote, never on the source checkout",
+        "route": "/cockpit/objects/issue/i4527",
+        "source": ".ai/repo/project/issues/I4527.yaml",
+        "facts": {
+          "created_at": "2026-11-01",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Whether a release reads a layer newer than itself: that is version skew, which doctor is to tell from a defect (I1980)",
+            "The order or content of sections 1-4 and 7"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "risk": "The launcher check no longer touches the source checkout at all; a launcher that reads only a newer layer would pass here, which is the skew I1980 owns, not this gate.",
+          "scope": [
+            ".ai/repo/project/issues/I4527.yaml",
+            "scripts/ci/install-check",
+            "test/cases/97_install_gate.sh",
+            "site/content/plan/I4527.md"
+          ],
+          "serves": [],
+          "slug": "the-install-check-runs-the-release-on-a-layer-it-wrote",
+          "started_at": "2026-11-01T02:54:21Z",
+          "started_event": "sha256:cc9eecd15f90e75f239c2d02bd1b647435a2e1381f16427d538b057859cb357e",
+          "updated_at": "2026-11-01T02:54:21Z",
+          "validation": [
+            "bash test/run.sh 97_install_gate 1024_an_installed_release_serves_a_foreign_repository",
+            "shellcheck -S warning scripts/ci/install-check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -139807,6 +139846,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4527",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4527",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -151653,8 +151702,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4151,
-      "edges": 9555,
+      "nodes": 4152,
+      "edges": 9557,
       "acyclic": false,
       "truncated": false
     }
