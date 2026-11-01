@@ -222,7 +222,7 @@ mkdir -p "$HR/.ai/repo/ci" "$HR/.github/workflows"
 printf 'version: 1\ngates:\n  - id: shell-lint\n    job: structure\n    runs: "true"\n    summary: lints\n  - id: audit-plan\n    job: structure\n    runs: "true"\n    summary: audits\nclasses: []\n' > "$HR/.ai/repo/ci/gates.yaml"
 printf 'jobs:\n  structure:\n    timeout-minutes: 55\n' > "$HR/.github/workflows/validate.yml"
 printf 'shell-lint\t1388\naudit-plan\t0\n' > "$HR/.ai/repo/ci/structure-durations.tsv"
-headroom() { MAJORDOMUS_SHARE="$ROOT/share" "$RBIN" gates headroom --repo "$HR"; }
+headroom() { MAJORDOMUS_SHARE="$ROOT/share" "$RBIN" gates headroom --repo "$HR" "$@"; }
 # 1617 s is 49% of 3300 s, 1683 s is 51%; the p90 of ten runs is the ninth, so the outlier
 # a tenth run adds does not decide
 { for i in 1 2 3 4 5 6 7 8 9; do printf '%s\tstructure\t1617\n' "$i"; done; printf '10\tstructure\t3000\n'; } > "$HR/.ai/repo/ci/structure-job-durations.tsv"
@@ -232,6 +232,20 @@ printf '1\tstructure\t1683\n' > "$HR/.ai/repo/ci/structure-job-durations.tsv"
 expect_exit 10 headroom || { echo "    a structure job at 51% of its bound was not refused with exit 10"; exit 1; }
 expect_grep 'EXCEEDS .*job structure.*51%' || { echo "    the refusal does not name the job and its share"; exit 1; }
 expect_grep 'shell-lint 1388 s' || { echo "    the refusal does not name the costliest gate"; exit 1; }
+# the MCP tool is the same capability: one answer on both transports
+headroom --format json > "$T/headroom.json" 2>/dev/null || true
+{
+  printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case4381","version":"0"}}}'
+  printf '%s\n' '{"jsonrpc":"2.0","method":"notifications/initialized"}'
+  printf '%s\n' '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_gate_headroom","arguments":{}}}'
+} > "$T/headroom-mcp.in"
+( cd "$HR" && MAJORDOMUS_SHARE="$ROOT/share" "$RBIN" mcp --standalone < "$T/headroom-mcp.in" > "$T/headroom-mcp.out" 2>/dev/null ) \
+  || { echo "    the MCP server did not answer"; exit 1; }
+jq -c 'select(.id == 2) | .result.structuredContent' "$T/headroom-mcp.out" > "$T/headroom-mcp.json"
+jq -e '.ok == false and .jobs[0].verdict == "exceeds"' "$T/headroom-mcp.json" >/dev/null \
+  || { echo "    majordomus_gate_headroom did not answer exceeds over the 51% window"; cat "$T/headroom-mcp.out"; exit 1; }
+[ "$(jq -S -c . "$T/headroom-mcp.json")" = "$(jq -S -c . "$T/headroom.json")" ] \
+  || { echo "    majordomus_gate_headroom answers differently from gates headroom --format json"; diff <(jq -S . "$T/headroom-mcp.json") <(jq -S . "$T/headroom.json") | head; exit 1; }
 rm "$HR/.ai/repo/ci/structure-job-durations.tsv"
 expect_exit 12 headroom || { echo "    a missing window was not refused with exit 12"; exit 1; }
 expect_grep 'is missing' || { echo "    the missing window is not named"; exit 1; }
