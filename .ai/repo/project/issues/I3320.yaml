@@ -29,4 +29,15 @@ validation:
 evidence_required:
   - "case_a_lifecycle_command_refuses_a_stale_executable"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-11-01T04:49:34Z
+started_at: 2026-11-01T04:48:43Z
+started_event: sha256:1de9340822dd6b9ec9a9eefeae1f6d86cfec53f7277ed75d92f547242b666769
+completed_at: 2026-11-01T04:49:34Z
+completed_event: sha256:2173d335f2a7fbeb32c6e93e872a394117c402f8bfe582dad1863e0627a60d6d
+evidence:
+  - covers: "case_a_lifecycle_command_refuses_a_stale_executable"
+    type: test
+    command: "bash test/run.sh --no-skips 54_session_lifecycle_hooks 220_exactly_once_close && cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test session_domain"
+    result: "delivered by 7ddc32da8d4 on master: cases 54 and 220 ok 2 passed with no skips, session_domain 2 passed (imac), at master aca6f182b41"
+    commit: aca6f182b4175a0da20878211103eff3801132f1
+    recorded_at: 2026-11-01T04:49:17Z
