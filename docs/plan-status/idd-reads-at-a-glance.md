@@ -256,6 +256,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2901` | shares apps/majordomus-cli/src/capability/builtin/brief.rs with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I4528; they may not run concurrently |
 | WARN | `scope_conflict` | `I2902` | shares apps/majordomus-cli/src/ui/idd.rs with I2903; they may not run concurrently |
 | WARN | `scope_conflict` | `I2902` | shares apps/majordomus-cli/src/ui/idd.rs with I2904; they may not run concurrently |
 | WARN | `scope_conflict` | `I2902` | shares apps/majordomus-cli/src/ui/idd.rs with I2908; they may not run concurrently |
@@ -448,6 +449,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2902` | shares .ai/repo/project with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I2902` | shares .ai/repo/project with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I2902` | shares .ai/repo/project with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I2902` | shares .ai/repo/project with I4528; they may not run concurrently |
 | WARN | `scope_conflict` | `I2903` | shares apps/majordomus-cli/src/ui/idd.rs with I2904; they may not run concurrently |
 | WARN | `scope_conflict` | `I2903` | shares apps/majordomus-cli/src/ui/idd.rs with I2908; they may not run concurrently |
 | WARN | `scope_conflict` | `I2903` | shares apps/majordomus-cli/src/ui/idd.rs with I2909; they may not run concurrently |
@@ -637,6 +639,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2903` | shares .ai/repo/project with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I2903` | shares .ai/repo/project with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I2903` | shares .ai/repo/project with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I2903` | shares .ai/repo/project with I4528; they may not run concurrently |
 | WARN | `scope_conflict` | `I2904` | shares apps/majordomus-cli/src/ui/idd.rs with I2908; they may not run concurrently |
 | WARN | `scope_conflict` | `I2904` | shares apps/majordomus-cli/src/ui/idd.rs with I2909; they may not run concurrently |
 | WARN | `scope_conflict` | `I2904` | shares apps/majordomus-cli/src/ui/idd.rs with I2910; they may not run concurrently |
@@ -825,6 +828,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2904` | shares .ai/repo/project with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I2904` | shares .ai/repo/project with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I2904` | shares .ai/repo/project with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I2904` | shares .ai/repo/project with I4528; they may not run concurrently |
 | WARN | `scope_conflict` | `I2908` | shares apps/majordomus-cli/src/ui/idd.rs with I2909; they may not run concurrently |
 | WARN | `scope_conflict` | `I2908` | shares apps/majordomus-cli/src/ui/idd.rs with I2910; they may not run concurrently |
 | WARN | `scope_conflict` | `I2908` | shares apps/majordomus-cli/src/ui/idd.rs with I2911; they may not run concurrently |
@@ -1014,6 +1018,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2908` | shares .ai/repo/project with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I2908` | shares .ai/repo/project with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I2908` | shares .ai/repo/project with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I2908` | shares .ai/repo/project with I4528; they may not run concurrently |
 | WARN | `scope_conflict` | `I2909` | shares apps/majordomus-cli/src/ui/idd.rs with I2910; they may not run concurrently |
 | WARN | `scope_conflict` | `I2909` | shares apps/majordomus-cli/src/ui/idd.rs with I2911; they may not run concurrently |
 | WARN | `scope_conflict` | `I2909` | shares .ai/repo/project with I2912; they may not run concurrently |
@@ -1200,6 +1205,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2909` | shares .ai/repo/project with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I2909` | shares .ai/repo/project with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I2909` | shares .ai/repo/project with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I2909` | shares .ai/repo/project with I4528; they may not run concurrently |
 | WARN | `scope_conflict` | `I2910` | shares apps/majordomus-cli/src/ui/idd.rs with I2911; they may not run concurrently |
 | WARN | `scope_conflict` | `I2910` | shares .ai/repo/project with I2912; they may not run concurrently |
 | WARN | `scope_conflict` | `I2910` | shares apps/majordomus-cli/src/ui/idd.rs with I2913; they may not run concurrently |
@@ -1386,6 +1392,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2910` | shares .ai/repo/project with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I2910` | shares .ai/repo/project with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I2910` | shares .ai/repo/project with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I2910` | shares .ai/repo/project with I4528; they may not run concurrently |
 | WARN | `scope_conflict` | `I2911` | shares .ai/repo/project with I2912; they may not run concurrently |
 | WARN | `scope_conflict` | `I2911` | shares apps/majordomus-cli/src/ui/idd.rs with I2913; they may not run concurrently |
 | WARN | `scope_conflict` | `I2911` | shares .ai/repo/project with I2914; they may not run concurrently |
@@ -1570,6 +1577,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2911` | shares .ai/repo/project with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I2911` | shares .ai/repo/project with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I2911` | shares .ai/repo/project with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I2911` | shares .ai/repo/project with I4528; they may not run concurrently |
 | WARN | `scope_conflict` | `I2912` | shares .ai/repo/project with I2913; they may not run concurrently |
 | WARN | `scope_conflict` | `I2912` | shares .ai/repo/project with I2914; they may not run concurrently |
 | WARN | `scope_conflict` | `I2912` | shares .ai/repo/project with I2918; they may not run concurrently |
@@ -1755,6 +1763,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2912` | shares .ai/repo/project with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I2912` | shares .ai/repo/project with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I2912` | shares .ai/repo/project with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I2912` | shares .ai/repo/project with I4528; they may not run concurrently |
 | WARN | `scope_conflict` | `I2913` | shares .ai/repo/project with I2914; they may not run concurrently |
 | WARN | `scope_conflict` | `I2913` | shares apps/majordomus-cli/src/ui/idd.rs with I2918; they may not run concurrently |
 | WARN | `scope_conflict` | `I2913` | shares apps/majordomus-cli/src/ui/idd.rs with I2919; they may not run concurrently |
@@ -1937,6 +1946,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2913` | shares .ai/repo/project with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I2913` | shares .ai/repo/project with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I2913` | shares .ai/repo/project with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I2913` | shares .ai/repo/project with I4528; they may not run concurrently |
 | WARN | `scope_conflict` | `I2914` | shares .ai/repo/project with I2918; they may not run concurrently |
 | WARN | `scope_conflict` | `I2914` | shares .ai/repo/project with I2919; they may not run concurrently |
 | WARN | `scope_conflict` | `I2914` | shares .ai/repo/project with I3003; they may not run concurrently |
@@ -2118,6 +2128,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2914` | shares .ai/repo/project with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I2914` | shares .ai/repo/project with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I2914` | shares .ai/repo/project with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I2914` | shares .ai/repo/project with I4528; they may not run concurrently |
 | WARN | `scope_conflict` | `I2918` | shares apps/majordomus-cli/src/ui/idd.rs with I2919; they may not run concurrently |
 | WARN | `scope_conflict` | `I2918` | shares apps/majordomus-cli/src/ui/idd.rs with I3003; they may not run concurrently |
 | WARN | `scope_conflict` | `I2918` | shares .ai/repo/project with I3004; they may not run concurrently |
@@ -2298,6 +2309,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2918` | shares .ai/repo/project with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I2918` | shares .ai/repo/project with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I2918` | shares .ai/repo/project with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I2918` | shares .ai/repo/project with I4528; they may not run concurrently |
 | WARN | `scope_conflict` | `I2919` | shares apps/majordomus-cli/src/ui/idd.rs with I3003; they may not run concurrently |
 | WARN | `scope_conflict` | `I2919` | shares .ai/repo/project with I3004; they may not run concurrently |
 | WARN | `scope_conflict` | `I2919` | shares share/ui/ui.js with I3005; they may not run concurrently |
@@ -2477,6 +2489,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2919` | shares .ai/repo/project with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I2919` | shares .ai/repo/project with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I2919` | shares .ai/repo/project with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I2919` | shares .ai/repo/project with I4528; they may not run concurrently |
 | WARN | `scope_conflict` | `I3003` | shares .ai/repo/project with I3004; they may not run concurrently |
 | WARN | `scope_conflict` | `I3003` | shares share/ui/src/ui.css with I3005; they may not run concurrently |
 | WARN | `scope_conflict` | `I3003` | shares .ai/repo/project with I3061; they may not run concurrently |
@@ -2655,6 +2668,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3003` | shares .ai/repo/project with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3003` | shares .ai/repo/project with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3003` | shares .ai/repo/project with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I3003` | shares .ai/repo/project with I4528; they may not run concurrently |
 | WARN | `scope_conflict` | `I3004` | shares .ai/repo/project with I3005; they may not run concurrently |
 | WARN | `scope_conflict` | `I3004` | shares .ai/repo/project with I3061; they may not run concurrently |
 | WARN | `scope_conflict` | `I3004` | shares .ai/repo/project with I3079; they may not run concurrently |
@@ -2832,6 +2846,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3004` | shares .ai/repo/project with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3004` | shares .ai/repo/project with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3004` | shares .ai/repo/project with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I3004` | shares .ai/repo/project with I4528; they may not run concurrently |
 | WARN | `scope_conflict` | `I3005` | shares .ai/repo/project with I3061; they may not run concurrently |
 | WARN | `scope_conflict` | `I3005` | shares share/ui/src/ui.css with I3079; they may not run concurrently |
 | WARN | `scope_conflict` | `I3005` | shares .ai/repo/project with I3083; they may not run concurrently |
@@ -3008,3 +3023,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3005` | shares .ai/repo/project with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3005` | shares .ai/repo/project with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3005` | shares .ai/repo/project with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I3005` | shares .ai/repo/project with I4528; they may not run concurrently |
