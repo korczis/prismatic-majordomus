@@ -458,12 +458,22 @@ fn benchmark_policy(text: &str, region: &[&str]) -> Result<String, String> {
     let mut text = text.to_string();
     for target in region {
         let line = format!("    target: {target}\n");
-        if !text.contains(&line) {
+        let Some(at) = text.find(&line) else {
             return Err(format!(
                 "the policy declares no projection with target {target}"
             ));
+        };
+        // init already declares a mode for a provider file the project wrote (I4257): that
+        // line is set to region, never followed by a second `mode` key
+        let after = at + line.len();
+        if text[after..].starts_with("    mode:") {
+            let end = text[after..]
+                .find('\n')
+                .map_or(text.len(), |n| after + n + 1);
+            text.replace_range(after..end, "    mode: region\n");
+        } else {
+            text.insert_str(after, "    mode: region\n");
         }
-        text = text.replace(&line, &format!("{line}    mode: region\n"));
     }
     let setting = "ensure_server_on_start: false";
     let mut lines: Vec<String> = text.lines().map(str::to_string).collect();
@@ -2428,6 +2438,18 @@ mod tests {
             text.contains("\n    ensure_server_on_start: true\n"),
             "the nested key is left alone"
         );
+
+        // a policy init wrote for a project that has its own CLAUDE.md already declares the
+        // mode (I4257): it is set once, never given twice, whatever it was
+        for mode in ["region", "file"] {
+            let written = format!(
+                "projections:\n  - provider: claude-code\n    target: CLAUDE.md\n    mode: {mode}\n"
+            );
+            let text = benchmark_policy(&written, &["CLAUDE.md"]).unwrap();
+            assert_eq!(text.matches("    mode:").count(), 1, "{text}");
+            let after: Policy = yaml::parse_into(&text).unwrap();
+            assert_eq!(after.projections[0].mode, ProjectionMode::Region, "{text}");
+        }
 
         // a change that cannot be made is refused, never run as a different treatment
         let err = benchmark_policy("version: 1\nprojections: []\n", &["CLAUDE.md"]).unwrap_err();

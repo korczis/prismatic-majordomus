@@ -452,16 +452,41 @@ mod tests {
         assert_eq!(memo.containing(r, &heads, |h| h != absent), answers);
         assert_eq!(memo.decided.containment, asked, "every pair was decided");
         // a mirror whose history git cannot walk decides nothing: the heads not yet asked
-        // against it are left to the caller
-        git(r, &["checkout", "-q", "--orphan", "broken"]);
-        git(r, &["commit", "-q", "--allow-empty", "-m", "lost"]);
-        let lost = git(r, &["rev-parse", "HEAD"]);
-        git(r, &["commit", "-q", "--allow-empty", "-m", "kept"]);
-        let kept = git(r, &["rev-parse", "HEAD"]);
-        git(r, &["checkout", "-q", "master"]);
+        // against it are left to the caller. Its tip names a parent that was never written
+        // (I4231): deleting a loose object proved nothing, because git 2.55 on the runner
+        // still walked it (run 40204784145), and no pack, commit-graph or maintenance run
+        // can hold a commit that never existed
+        let tree = git(r, &["hash-object", "-w", "-t", "tree", "/dev/null"]);
+        let never = "1".repeat(40);
+        let body = format!(
+            "tree {tree}\nparent {never}\nauthor t <t@example.com> 0 +0000\n\
+             committer t <t@example.com> 0 +0000\n\nkept\n"
+        );
+        let mut write = Command::new("git")
+            .env_remove("GIT_DIR")
+            .arg("-C")
+            .arg(r)
+            .args(["hash-object", "-w", "-t", "commit", "--stdin"])
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .spawn()
+            .unwrap();
+        std::io::Write::write_all(&mut write.stdin.take().unwrap(), body.as_bytes()).unwrap();
+        let out = write.wait_with_output().unwrap();
+        assert!(out.status.success(), "{out:?}");
+        let kept = String::from_utf8_lossy(&out.stdout).trim().to_string();
         git(r, &["update-ref", "refs/majordomus/prs/3", &kept]);
-        let objects = r.join(".git/objects").join(&lost[..2]).join(&lost[2..]);
-        std::fs::remove_file(objects).unwrap();
+        let walk = Command::new("git")
+            .env_remove("GIT_DIR")
+            .arg("-C")
+            .arg(r)
+            .args(["rev-list", &kept])
+            .output()
+            .unwrap();
+        assert!(
+            !walk.status.success(),
+            "the precondition: git cannot walk {kept}"
+        );
         let walked = memo.containing(r, &heads[..2], all);
         assert!(walked.is_empty(), "{walked:?}");
         // a head git cannot name, told present, is left to the caller

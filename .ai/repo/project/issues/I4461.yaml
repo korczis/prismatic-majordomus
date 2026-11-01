@@ -1,0 +1,41 @@
+id: I4461
+milestone: a-bounded-task-is-carried-to-accepted-work
+title: "handover --resolve judges the working tree as well as HEAD, and never says exact over changes made since the handover"
+slug: a-handover-resolves-against-the-working-tree
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "A handover records a fingerprint of the working tree it was written over, and resolving it compares that fingerprint as well as the head and branch. The writer adds `tree: <id>` to the record's front matter, computed by mj_worktree_tree_id (lib/common.sh:68), the same tree id finish already records for its verification. mj_handover_resolve (lib/handover.sh:143) keeps its `Git state` line as mj_git_label computes it for the head, and prints a `Working tree` line beside it: `unchanged since the handover` when the current tree id equals the recorded one, `changed since the handover` with the paths whose status differs from the record's changed_files when it does not, and `unknown: the record has no tree` for a record written before this change, never unchanged. The session briefing (lib/derive.sh:577, which resolves the same record) prints the same word. No new label is added to mj_git_label's vocabulary and no other caller of it changes."
+why: "Observed in session 98's stranger fixture on 2026-10-30 (installed 1.0.0-alpha.8, pass 2, scenario S1). After a handover was written and a source file changed, `handover --resolve` under a new session key printed `Git state: exact` over a tree that was not the one the handover described. Mission section 5 says a new session must be shown the mismatch after the branch moves or the checkout changes, and must not be handed an old conclusion as current; a resumed worker that reads exact will trust the handover's Current State and Next Action over edits it has not seen. The record already carries the clean or dirty word and the changed files (lib/common.sh:1759-1768), so the fact needed is one more line at write time and one comparison at resolve time."
+current_state: "At master 51b38035a71: mj_handover_resolve prints `Git state: %s` from mj_git_label \"$MJ_RES_HEAD\" \"$MJ_RES_BRANCH\" (lib/handover.sh:147-149), and mj_git_label (lib/common.sh:458-468) compares only the branch and the head commit. The only working-tree comparison is lib/handover.sh:158, which prints a Divergence line when the recorded word (clean or dirty) differs from mj_git_dirty (lib/common.sh:453); a handover written over a dirty tree and resolved over a differently dirty tree prints nothing. mj_record_front_matter (lib/common.sh:1755-1771) writes head, working_tree and changed_files and no tree id. Case 05 (test/cases/05_handover.sh:34-75) asserts exact, advanced and other-branch resolutions over committed states only."
+desired_state: "A worker resuming from a handover is told whether the working tree is the one the handover describes, and which paths moved if it is not; a record too old to say reads unknown. Enforced by case 4461 and case 05 unchanged."
+scope:
+  - ".ai/repo/project/issues/I4461.yaml"
+  - "lib/handover.sh"
+  - "lib/common.sh"
+  - "lib/derive.sh"
+  - "docs/CLI.md"
+  - "test/cases/05_handover.sh"
+  - "test/cases/4461_a_handover_resolves_against_the_working_tree.sh"
+non_scope:
+  - "Published handovers that cross machines (continuity publish and resume, apps/majordomus-cli/src/continuity), whose dirty-tree handling ADR 0105 and case 822 already cover"
+  - "Restoring or diffing the changed content itself: the resolution names the paths, it carries no source"
+  - "One resolver for continuity in place of the shell's copies: I3145"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Case 4461: a handover written over a dirty tree, then a tracked file edited further with no commit; `majordomus handover --resolve` under a new MJ_SESSION_KEY exits 0, prints `Git state: exact` and a `Working tree: changed since the handover` line naming the edited path"
+  - "Case 4461: with nothing changed after the handover, the same command prints `Working tree: unchanged since the handover`"
+  - "Case 4461: a handover record written without a tree line (the fixture strips it) resolves with `Working tree: unknown` and never `unchanged`"
+  - "Case 4461: the session briefing printed at episode start carries the same Working tree word as --resolve for the same record"
+  - "Case 05 passes unchanged"
+  - "Before the change, case 4461 fails at its first assertion"
+validation:
+  - "MJ_TEST_JOBS=4 bash test/run.sh 4461_a_handover_resolves_against_the_working_tree 05_handover 25_continuity_lifecycle"
+  - "bin/majordomus shell check"
+  - "bin/majordomus doctor"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "handover_tree_case"
+created_at: 2026-10-30
+updated_at: 2026-10-30

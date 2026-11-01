@@ -3,26 +3,26 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "1.0.0-alpha.9"
+    "version": "1.0.0-alpha.10"
   },
   "registry": {
-    "fingerprint": "f95533ff8d53c18491b1175cf44dab39321ffef6c006fb02b7c342b41d9edd5c",
+    "fingerprint": "cc9dfc7440e849f7ae318d91aa14dbb563ddb53691110d8224b774189334c1f5",
     "summary": {
-      "total": 3687,
+      "total": 3728,
       "builtin": 220,
-      "declarative": 3467,
+      "declarative": 3508,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3467
+        "resource": 3508
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3477
+        "implemented": 3518
       },
       "mcp_tools": 206,
-      "mcp_resources": 3524,
+      "mcp_resources": 3565,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91407,7 +91407,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1124,
+        "capabilities": 1156,
         "capability_ids": []
       },
       {
@@ -91546,7 +91546,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 113,
+        "capabilities": 114,
         "capability_ids": []
       },
       {
@@ -92005,7 +92005,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 664,
+        "capabilities": 672,
         "capability_ids": []
       },
       {
@@ -92097,7 +92097,7 @@
     ]
   },
   "index": {
-    "fingerprint": "0cea67a0164dea9ff112f33d60d537660128584aa899884a9c393955340faed4",
+    "fingerprint": "3090325deb7958157829ab237390785703428ed455f9d7510c30d9104dfe66b4",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92137,10 +92137,10 @@
       "gap": 5,
       "implementation": 52,
       "intent": 44,
-      "issue": 1124,
+      "issue": 1156,
       "knowledge": 86,
       "mesh-declaration": 1,
-      "milestone": 113,
+      "milestone": 114,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -92151,7 +92151,7 @@
       "session": 93,
       "skill": 8,
       "taxonomy": 10,
-      "test": 664,
+      "test": 672,
       "use-case": 49,
       "workspace": 1
     },
@@ -93395,7 +93395,7 @@
         "path": ".ai/repo/adrs/0091-knowledge-is-derived-at-the-episode-boundary-and-a-person-promotes-it.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 28001,
+        "bytes": 28262,
         "tags": [
           "knowledge",
           "sessions",
@@ -97682,7 +97682,7 @@
         "description": "The repository's architecture decisions as objects: list, show, ask for the next free identity, propose one with provenance, and validate the whole set against this tree and every other ref.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/archive",
@@ -97692,7 +97692,7 @@
         "description": "Take a snapshot of the tracked tree that can be read, or checked, somewhere else.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/bench",
@@ -97702,7 +97702,7 @@
         "description": "Time every public command of the registry, cold and warm, and compare with the baseline.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/capture",
@@ -97712,7 +97712,7 @@
         "description": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, reconcile and prune the archive, and report what each provider actually does here.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/check",
@@ -97722,7 +97722,7 @@
         "description": "Is the current task still consistent with its policy, its scope and this checkout?",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/checkpoint",
@@ -97732,7 +97732,7 @@
         "description": "Record compact progress inside the active task, so the next worker does not start over.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/context",
@@ -97742,7 +97742,7 @@
         "description": "What the next worker needs to know now, in authority order and within a budget.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/decision",
@@ -97752,7 +97752,7 @@
         "description": "Record a decision that was made between real alternatives, with its reason, and read them back.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/doctor",
@@ -97762,7 +97762,7 @@
         "description": "It checks governance only: is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/doctrine",
@@ -97772,7 +97772,7 @@
         "description": "What rules are enforced, by what, and whether each one is actually wired.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/evidence",
@@ -97782,7 +97782,7 @@
         "description": "Record evidence against the active task: one obligation it declared, discharged, or one validation gate of the CI model that has reported — each as a ledger line carrying the hash of the files it was taken over.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/finish",
@@ -97792,7 +97792,7 @@
         "description": "Evaluate the finish contract and refuse the outcome if any line of it is unmet.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/handover",
@@ -97802,7 +97802,7 @@
         "description": "Write an append-only continuation record, and resolve the most relevant prior one.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/help",
@@ -97812,7 +97812,7 @@
         "description": "Print the usage text, which is the list of every public command.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/history",
@@ -97822,7 +97822,7 @@
         "description": "Read the append-only ledger back, filtered by task, event or time.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/init",
@@ -97832,7 +97832,7 @@
         "description": "Create the .ai/ layer in this repository, and refuse to overwrite an existing one.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/knowledge",
@@ -97842,7 +97842,7 @@
         "description": "The compiled index over what this repository states, and the candidate records it derives from what an episode did.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/migrate",
@@ -97852,7 +97852,7 @@
         "description": "Move pre-.ai project data from .majordomus/ into .ai/, explicitly and backed up.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/plan",
@@ -97862,7 +97862,7 @@
         "description": "The milestone and issue model — validate it, read it, and move one issue through it.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/prompt",
@@ -97872,7 +97872,7 @@
         "description": "List, show and render the repository's own prompt assets, substituting known tokens only.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/question",
@@ -97882,7 +97882,7 @@
         "description": "Open a question that blocks acceptance, resolve it, and list what is still open.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/recover",
@@ -97892,7 +97892,7 @@
         "description": "Close episodes nobody ended, fold duplicate records, classify the stores' stray files.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/rules",
@@ -97902,7 +97902,7 @@
         "description": "The effective rule set, vendored baseline plus project rules.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/search",
@@ -97912,7 +97912,7 @@
         "description": "Find a durable record without reading all of them, in authority order.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/session",
@@ -97922,7 +97922,7 @@
         "description": "Open, inspect and close one execution episode.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/skills",
@@ -97932,7 +97932,7 @@
         "description": "The repository's skills — provider-neutral procedures under the skills section — listed, shown and checked from the one catalogue every surface reads.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/start",
@@ -97942,7 +97942,7 @@
         "description": "Begin one scoped task under a profile, and refuse while another is active.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/update",
@@ -97952,7 +97952,7 @@
         "description": "Regenerate every provider instruction file from the one policy, deterministically.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/usecase",
@@ -97962,7 +97962,7 @@
         "description": "The executable use cases: list, show, validate, run against the real tool, coverage, impact, scaffold.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/version",
@@ -97972,7 +97972,7 @@
         "description": "Print the version, without needing a repository or an installation.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://command/watch",
@@ -97982,7 +97982,7 @@
         "description": "What has drifted since the last update — policy, projections, state, retention.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35551
       },
       {
         "uri": "majordomus://context/ai.layer",
@@ -99069,7 +99069,7 @@
         "title": "Contributing",
         "path": "CONTRIBUTING.md",
         "source_class": "readme",
-        "bytes": 12733
+        "bytes": 12776
       },
       {
         "uri": "majordomus://document/GEMINI.md",
@@ -99087,7 +99087,7 @@
         "title": "Prismatic Majordomus",
         "path": "README.md",
         "source_class": "readme",
-        "bytes": 40709
+        "bytes": 40733
       },
       {
         "uri": "majordomus://document/SECURITY.md",
@@ -99195,7 +99195,7 @@
         "title": "CLI specification — `majordomus`",
         "path": "docs/CLI.md",
         "source_class": "document",
-        "bytes": 144820
+        "bytes": 145444
       },
       {
         "uri": "majordomus://document/docs/COCKPIT.md",
@@ -99294,7 +99294,7 @@
         "title": "The design system — one declaration, every surface",
         "path": "docs/DESIGN_SYSTEM.md",
         "source_class": "document",
-        "bytes": 22626
+        "bytes": 24816
       },
       {
         "uri": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
@@ -99429,7 +99429,7 @@
         "title": "GitHub Pages architecture",
         "path": "docs/GITHUB_PAGES_ARCHITECTURE.md",
         "source_class": "document",
-        "bytes": 63409
+        "bytes": 65413
       },
       {
         "uri": "majordomus://document/docs/GITHUB_PAGES_PERFORMANCE.md",
@@ -99474,7 +99474,7 @@
         "title": "Installing Majordomus",
         "path": "docs/INSTALL.md",
         "source_class": "document",
-        "bytes": 16225
+        "bytes": 16226
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION.md",
@@ -99537,7 +99537,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 90111
+        "bytes": 90757
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -99609,7 +99609,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 1023361
+        "bytes": 126535
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -99645,7 +99645,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 26255
+        "bytes": 26348
       },
       {
         "uri": "majordomus://document/docs/REASONING.md",
@@ -99690,7 +99690,7 @@
         "title": "File schemas — every file Majordomus reads or writes",
         "path": "docs/SCHEMAS.md",
         "source_class": "document",
-        "bytes": 90226
+        "bytes": 90591
       },
       {
         "uri": "majordomus://document/docs/SCOPE.md",
@@ -99735,7 +99735,7 @@
         "title": "How Majordomus derives its surfaces — one typed reality, many projections",
         "path": "docs/SURFACES.md",
         "source_class": "document",
-        "bytes": 82713
+        "bytes": 82736
       },
       {
         "uri": "majordomus://document/docs/TWO_FOLDER_CONSOLIDATION.md",
@@ -100284,7 +100284,7 @@
         "title": "Every committed derived artifact is regenerated by one command in dependency order and checked by one read-only command",
         "path": "docs/claims/derivation-one-graph.md",
         "source_class": "claim_page",
-        "bytes": 4089
+        "bytes": 4547
       },
       {
         "uri": "majordomus://document/docs/claims/derived-data-current.md",
@@ -102686,7 +102686,7 @@
         "identity": "lib/adr.sh",
         "path": "lib/adr.sh",
         "source_class": "library",
-        "bytes": 71764
+        "bytes": 72591
       },
       {
         "uri": "majordomus://implementation/lib/archive.sh",
@@ -102710,7 +102710,7 @@
         "identity": "lib/capture.sh",
         "path": "lib/capture.sh",
         "source_class": "library",
-        "bytes": 170201
+        "bytes": 170507
       },
       {
         "uri": "majordomus://implementation/lib/changed.sh",
@@ -102814,7 +102814,7 @@
         "identity": "lib/evidence.sh",
         "path": "lib/evidence.sh",
         "source_class": "library",
-        "bytes": 29815
+        "bytes": 33836
       },
       {
         "uri": "majordomus://implementation/lib/finish.sh",
@@ -102822,7 +102822,7 @@
         "identity": "lib/finish.sh",
         "path": "lib/finish.sh",
         "source_class": "library",
-        "bytes": 16230
+        "bytes": 17015
       },
       {
         "uri": "majordomus://implementation/lib/gates.sh",
@@ -102830,7 +102830,7 @@
         "identity": "lib/gates.sh",
         "path": "lib/gates.sh",
         "source_class": "library",
-        "bytes": 21440
+        "bytes": 23967
       },
       {
         "uri": "majordomus://implementation/lib/handover.sh",
@@ -102854,7 +102854,7 @@
         "identity": "lib/init.sh",
         "path": "lib/init.sh",
         "source_class": "library",
-        "bytes": 23480
+        "bytes": 25501
       },
       {
         "uri": "majordomus://implementation/lib/intent_binding.sh",
@@ -102894,7 +102894,7 @@
         "identity": "lib/knowledge.sh",
         "path": "lib/knowledge.sh",
         "source_class": "library",
-        "bytes": 120091
+        "bytes": 121649
       },
       {
         "uri": "majordomus://implementation/lib/machine_lock.sh",
@@ -102926,7 +102926,7 @@
         "identity": "lib/plan.sh",
         "path": "lib/plan.sh",
         "source_class": "library",
-        "bytes": 29322
+        "bytes": 30110
       },
       {
         "uri": "majordomus://implementation/lib/plan_json.awk",
@@ -103006,7 +103006,7 @@
         "identity": "lib/session.sh",
         "path": "lib/session.sh",
         "source_class": "library",
-        "bytes": 75520
+        "bytes": 78117
       },
       {
         "uri": "majordomus://implementation/lib/session_context.sh",
@@ -104371,7 +104371,7 @@
         "path": ".ai/repo/project/issues/I0828.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1204
+        "bytes": 1452
       },
       {
         "uri": "majordomus://issue/I0829",
@@ -106307,7 +106307,7 @@
         "path": ".ai/repo/project/issues/I1980.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2545
+        "bytes": 2868
       },
       {
         "uri": "majordomus://issue/I1981",
@@ -106516,7 +106516,7 @@
         "path": ".ai/repo/project/issues/I2001.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3035
+        "bytes": 3350
       },
       {
         "uri": "majordomus://issue/I2002",
@@ -106622,11 +106622,11 @@
         "kind": "issue",
         "identity": "I2114",
         "title": "A task's scope admits what its derive writes",
-        "description": "Stop the pre-push scope check from refusing a branch for the projections its own derive wrote, and give a task one supported command to widen its scope.",
+        "description": "Stop the pre-push scope check from refusing a branch for the projections its own derive wrote. The command that widens a running task's scope is I4260's scope add, not this issue's.",
         "path": ".ai/repo/project/issues/I2114.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2884
+        "bytes": 2716
       },
       {
         "uri": "majordomus://issue/I2115",
@@ -107012,6 +107012,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 4826
+      },
+      {
+        "uri": "majordomus://issue/I2374",
+        "kind": "issue",
+        "identity": "I2374",
+        "title": "The site shows what changed since its previously deployed commit, computed at build time and never committed",
+        "description": "Give scripts/site-build the previously deployed commit as an input (`--previous-commit`, `--previous-deploy REF` or `$MJ_SITE_PREVIOUS_DEPLOY`), have it ask `release analyze --since` that commit and the changelog composition of the same range, compare the claims projection committed at both ends, and write the result to the git-ignored site/data/since-deploy.json beside site/data/build.json; render it on /changelog/ as 'Since the last deploy', grouped into capabilities, documentation and claims, each labelled with the release record that first carries it or not yet released, and link it from the homepage trust strip. scripts/site-deploy and the Pages workflow hand the build the previous deployment; scripts/site-check refuses the record when it is tracked. Case 3045 holds it.",
+        "path": ".ai/repo/project/issues/I2374.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4581
       },
       {
         "uri": "majordomus://issue/I2396",
@@ -108595,7 +108606,7 @@
         "path": ".ai/repo/project/issues/I2826.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2304
+        "bytes": 2260
       },
       {
         "uri": "majordomus://issue/I2827",
@@ -109977,11 +109988,11 @@
         "kind": "issue",
         "identity": "I3117",
         "title": "The README and the launch page say only what master does about model invocation, doctrine dispatch and overrides",
-        "description": "Reconcile the model-invocation clause of README.md:20-21 ('never invokes a model') and docs/LAUNCH.md:44 and :61 with master, where scripts/advisor-consult carries questions to advisor CLIs, and state that an expedited landing is a recorded override. Qualify README.md:207-212 as the doctrine dispatch of lib/doctrine.sh and lib/check.sh, distinct from the CI ratchet baselines. Add each corrected sentence to docs/CLAIMS.yaml so claim-proof-check holds it to a test.",
+        "description": "Reconcile the model-invocation clause of README.md:20-21 ('never invokes a model') and docs/LAUNCH.md:44 and :61 with master, where scripts/advisor-consult carries questions to advisor CLIs, and state that an expedited landing is a recorded override. Add each corrected sentence to docs/CLAIMS.yaml so claim-proof-check holds it to a test.",
         "path": ".ai/repo/project/issues/I3117.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3963
+        "bytes": 3859
       },
       {
         "uri": "majordomus://issue/I3118",
@@ -110102,7 +110113,7 @@
         "path": ".ai/repo/project/issues/I3128.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4177
+        "bytes": 4527
       },
       {
         "uri": "majordomus://issue/I3129",
@@ -110509,7 +110520,7 @@
         "path": ".ai/repo/project/issues/I3166.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3393
+        "bytes": 4046
       },
       {
         "uri": "majordomus://issue/I3167",
@@ -111609,7 +111620,7 @@
         "path": ".ai/repo/project/issues/I3280.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4042
+        "bytes": 4349
       },
       {
         "uri": "majordomus://issue/I3281",
@@ -111818,7 +111829,7 @@
         "path": ".ai/repo/project/issues/I3299.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2156
+        "bytes": 2429
       },
       {
         "uri": "majordomus://issue/I3300",
@@ -112027,7 +112038,7 @@
         "path": ".ai/repo/project/issues/I3318.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3019
+        "bytes": 3863
       },
       {
         "uri": "majordomus://issue/I3319",
@@ -113160,7 +113171,7 @@
         "path": ".ai/repo/project/issues/I3448.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2483
+        "bytes": 3934
       },
       {
         "uri": "majordomus://issue/I3449",
@@ -113270,7 +113281,7 @@
         "path": ".ai/repo/project/issues/I3663.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2489
+        "bytes": 3541
       },
       {
         "uri": "majordomus://issue/I3664",
@@ -114634,7 +114645,7 @@
         "path": ".ai/repo/project/issues/I3995.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3073
+        "bytes": 3651
       },
       {
         "uri": "majordomus://issue/I3996",
@@ -114901,6 +114912,17 @@
         "bytes": 5097
       },
       {
+        "uri": "majordomus://issue/I4225",
+        "kind": "issue",
+        "identity": "I4225",
+        "title": "A withdrawal whose probe could not say is refined to the verdict that follows it",
+        "description": "When a provider's store dies while a probe is in flight, the build-cache withdrawal it writes says the probe could not say. The next heartbeat's probe is refused, and the runtime writes the withdrawal once more with that verdict. The record a peer reads converges on what the probe says instead of keeping the first, uncertain reason.",
+        "path": ".ai/repo/project/issues/I4225.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3221
+      },
+      {
         "uri": "majordomus://issue/I4226",
         "kind": "issue",
         "identity": "I4226",
@@ -114945,6 +114967,17 @@
         "bytes": 2916
       },
       {
+        "uri": "majordomus://issue/I4231",
+        "kind": "issue",
+        "identity": "I4231",
+        "title": "The containment test's unwalkable mirror names a parent that was never written, so a commit-graph cannot walk it",
+        "description": "integration::memo::tests::containment_answers_as_containing_and_asks_each_pair_once builds its unwalkable mirror deterministically, so it fails only when CheckoutMemo::containing answers for a mirror git cannot walk, never because git found the history elsewhere.",
+        "path": ".ai/repo/project/issues/I4231.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2592
+      },
+      {
         "uri": "majordomus://issue/I4232",
         "kind": "issue",
         "identity": "I4232",
@@ -114954,6 +114987,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2806
+      },
+      {
+        "uri": "majordomus://issue/I4235",
+        "kind": "issue",
+        "identity": "I4235",
+        "title": "An evidence token is matched whole, so an issue that requires one with spaces can be done",
+        "description": "`plan done` reads the evidence an issue requires one token per line and matches each whole, and `plan evidence` writes the token it records quoted, as it already writes the command and the result.",
+        "path": ".ai/repo/project/issues/I4235.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3316
       },
       {
         "uri": "majordomus://issue/I4241",
@@ -115000,6 +115044,17 @@
         "bytes": 1819
       },
       {
+        "uri": "majordomus://issue/I4252",
+        "kind": "issue",
+        "identity": "I4252",
+        "title": "init seeds the scope of a Python, Node or Go repository, not only Elixir and Rust",
+        "description": "Blocks for pyproject.toml (Python), package.json (Node) and go.mod (Go) are seeded when their marker is at the root, and the message names every marker it looked for.",
+        "path": ".ai/repo/project/issues/I4252.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1691
+      },
+      {
         "uri": "majordomus://issue/I4253",
         "kind": "issue",
         "identity": "I4253",
@@ -115009,6 +115064,28 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 1645
+      },
+      {
+        "uri": "majordomus://issue/I4256",
+        "kind": "issue",
+        "identity": "I4256",
+        "title": "A skill is proved by the adopter's own tests, and its findings name nothing of the tool's tree",
+        "description": "Test markers are read from the repository's declared test paths (scope or policy, with tests/ and test/ as defaults); the page and gate warnings apply only where the repository declares a site and a CI model; `skills check` reports what doctor will fail on.",
+        "path": ".ai/repo/project/issues/I4256.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2191
+      },
+      {
+        "uri": "majordomus://issue/I4257",
+        "kind": "issue",
+        "identity": "I4257",
+        "title": "init projects into an existing CLAUDE.md or AGENTS.md as a region",
+        "description": "For each projection target that already exists and carries no stamp, init writes mode region and says so.",
+        "path": ".ai/repo/project/issues/I4257.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1529
       },
       {
         "uri": "majordomus://issue/I4258",
@@ -115022,6 +115099,28 @@
         "bytes": 1391
       },
       {
+        "uri": "majordomus://issue/I4261",
+        "kind": "issue",
+        "identity": "I4261",
+        "title": "An issue names the external requirement it serves, and a milestone its due date",
+        "description": "Issues accept a `traces` list (tracker keys, requirement ids, URLs) projected into the GitHub body; milestones accept an optional `due_on` projected to GitHub's due date and never used to derive status.",
+        "path": ".ai/repo/project/issues/I4261.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1925
+      },
+      {
+        "uri": "majordomus://issue/I4264",
+        "kind": "issue",
+        "identity": "I4264",
+        "title": "adr check names decisions it did not examine, and adr propose records who authored one",
+        "description": "adr check names untracked files under the section; adr propose writes `authored` unless --from names a source.",
+        "path": ".ai/repo/project/issues/I4264.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1438
+      },
+      {
         "uri": "majordomus://issue/I4265",
         "kind": "issue",
         "identity": "I4265",
@@ -115030,7 +115129,18 @@
         "path": ".ai/repo/project/issues/I4265.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1406
+        "bytes": 1703
+      },
+      {
+        "uri": "majordomus://issue/I4268",
+        "kind": "issue",
+        "identity": "I4268",
+        "title": "An adopter runs every gate of its CI model and records it with one command",
+        "description": "`majordomus gates run [--tier <t>]` runs each gate the change selects (or all), records `evidence --gate` with its exit, and exits non-zero when one fails; the pre-push line init prints can use it.",
+        "path": ".ai/repo/project/issues/I4268.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1752
       },
       {
         "uri": "majordomus://issue/I4290",
@@ -115063,7 +115173,7 @@
         "path": ".ai/repo/project/issues/I4292.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3162
+        "bytes": 3369
       },
       {
         "uri": "majordomus://issue/I4296",
@@ -115345,11 +115455,11 @@
         "kind": "issue",
         "identity": "I4322",
         "title": "plan validate and intent validate read the project through one discovery rule, and a record left untracked is named",
-        "description": "The shell plan model enumerates .ai/repo/project the way the executable's Index does: through `git ls-files` when the policy declares discovery vcs, and through the work tree otherwise. Today lib/project.sh:50-56 always uses `ls -1` of the work tree. After the change, `majordomus plan validate|status|list` and the plan.validate capability count the same records on every projection (CLI, MCP majordomus_plan_validate, HTTP /api/v1/plan/validate). Under vcs discovery, a file under .ai/repo that matches a class pathspec but is not tracked yields one diagnostic, untracked_record. plan validate, intent validate and doctor print it as `INFO untracked_record <path> — skipped until tracked (git add <path>)`.",
+        "description": "The shell plan model enumerates .ai/repo/project the way the executable's Index does: through `git ls-files` when the policy declares discovery vcs, and through the work tree otherwise. Today lib/project.sh:50-56 always uses `ls -1` of the work tree. After the change, `majordomus plan validate|status|list` and the plan.validate capability count the same records on every projection (CLI, MCP majordomus_plan_validate, HTTP /api/v1/plan/validate). Under vcs discovery, a file under .ai/repo that matches a class pathspec but is not tracked yields one diagnostic, untracked_record. plan validate, intent validate and doctor print it as `INFO untracked_record <path> — skipped until tracked (git add <path>)`. The untracked_record line names both remedies: `git add <path>` to make the record part of the layer, or a rerun with `--discovery filesystem` to validate drafts in place without staging them. Under that option, `intent validate` and the plan.validate capability count and check untracked records exactly as tracked ones. docs/PLANNING.md documents this draft workflow.",
         "path": ".ai/repo/project/issues/I4322.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4653
+        "bytes": 7358
       },
       {
         "uri": "majordomus://issue/I4323",
@@ -115367,11 +115477,11 @@
         "kind": "issue",
         "identity": "I4324",
         "title": "A finished worktree's build output is reclaimed, node_modules and target/ included, whether its branch landed by merge or by squash",
-        "description": "Two changes to `majordomus worktree cleanup`. First, a worktree whose branch has landed by the predicate of I4333 is cleanup-eligible, so a branch squash-merged under `landing: squash` is offered, as one merged by merge commit is today. Second, a finished worktree that cleanup keeps (its branch landed, or it is idle past the sweep window, but its status is not empty) is offered for build-output reclaim: `majordomus worktree cleanup --build-output` lists, and with `--remove` deletes, its node_modules/ and target/ directories (any depth). A directory is reclaimed only when `git check-ignore` reports it ignored and git tracks no file under it. Reclaim runs under the guards I3832 already gives the removal: no process cwd, open file or command line inside, not named by the derive lock or a live mesh claim, idle past MAJORDOMUS_WORKTREE_SWEEP_IDLE_MIN, and under every cargo lock in a target/. The listing gives each directory's size, and the answer gives the total reclaimed. The worktree, its branch and every tracked or unignored file stay.",
+        "description": "Three changes to `majordomus worktree cleanup`, and one reading of doctor. First, a worktree whose branch has landed by the predicate of I4333 is cleanup-eligible, so a branch squash-merged under `landing: squash` is offered, as one merged by merge commit is today. Second, a finished worktree that cleanup keeps (its branch landed, or it is idle past the sweep window, but its status is not empty) is offered for build-output reclaim: `majordomus worktree cleanup --build-output` lists, and with `--remove` deletes, its node_modules/ and target/ directories (any depth). A directory is reclaimed only when `git check-ignore` reports it ignored and git tracks no file under it. Reclaim runs under the guards I3832 already gives the removal: no process cwd, open file or command line inside, not named by the derive lock or a live mesh claim, idle past MAJORDOMUS_WORKTREE_SWEEP_IDLE_MIN, and under every cargo lock in a target/. The listing gives each directory's size, and the answer gives the total reclaimed. The worktree, its branch and every tracked or unignored file stay. Third, the removal refusal of `worktree cleanup --remove` (apps/majordomus-cli/src/commands/worktree.rs:751-780) stops refusing a gone upstream on its own: a clean worktree whose upstream is gone and whose HEAD is an ancestor of the trunk's remote-tracking branch (git merge-base --is-ancestor, read at the moment of removal like every other reading there) is removed, because every commit it holds is on the remote through the trunk. A worktree whose HEAD carries a commit that remote trunk lacks is still refused, naming the count, whether its upstream is gone or it never had one, and so are uncommitted work, a process inside, and an ancestry git cannot decide. Fourth, doctor reads the same listing, read-only: when the build output reclaimable by `worktree cleanup --build-output`, plus the worktrees `worktree cleanup` lists as eligible, exceed a floor stated beside the check (overridable through an environment variable), it prints one `WARN disk — <n> finished worktrees hold <size> of reclaimable build output` whose remedy is `majordomus worktree cleanup --build-output` (then `--remove`). Doctor never deletes. Under the pre-commit context (MAJORDOMUS_DOCTOR_CONTEXT=commit) the reading is left out, as the per-worktree uncommitted-work reading already is, so the hook stays within its latency budget.",
         "path": ".ai/repo/project/issues/I4324.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4620
+        "bytes": 9438
       },
       {
         "uri": "majordomus://issue/I4325",
@@ -115697,11 +115807,11 @@
         "kind": "issue",
         "identity": "I4357",
         "title": "Issue, ADR and case numbers are reserved atomically at origin and checked at landing",
-        "description": "`next --kind issue|adr|case --reserve` reserves a number by creating refs/ids/<kind>/<n> on the forge (`gh api repos/{owner}/{repo}/git/refs -f ref=refs/ids/<kind>/<n> -f sha=<commit>`), which fails atomically with 422 when the ref exists and runs no local hook, and takes the next number on that refusal; .githooks/pre-push skips refs/ids/* as it skips refs/majordomus/*, so a reservation that does reach origin through git does no hook work; a required landing check refuses an id that is already on master or reserved under different content; the identifier gates (collision-check, adr-collision, case-numbers) run in a job that needs only plan, is exempt from the first-red cancel and checks out blobless.",
+        "description": "`next --kind issue|adr|case --reserve` reserves a number by creating refs/ids/<kind>/<n> on the forge (`gh api repos/{owner}/{repo}/git/refs -f ref=refs/ids/<kind>/<n> -f sha=<commit>`), which fails atomically with 422 when the ref exists and runs no local hook, and takes the next number on that refusal; .githooks/pre-push skips refs/ids/* as it skips refs/majordomus/*, so a reservation that does reach origin through git does no hook work; a required landing check refuses an id that is already on master or reserved under different content; the identifier gates (collision-check, adr-collision, case-numbers) run in a job that needs only plan, is exempt from the first-red cancel and checks out blobless. The issue kind is reachable to an adopter as `majordomus plan reserve <prefix> [--count N]` in the shipped tree (lib/ or the plan capability), with the series prefix and the zero-padded width derived from the plan's existing ids, never hard-coded to I.",
         "path": ".ai/repo/project/issues/I4357.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4112
+        "bytes": 6173
       },
       {
         "uri": "majordomus://issue/I4358",
@@ -115911,6 +116021,248 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 10765
+      },
+      {
+        "uri": "majordomus://issue/I4400",
+        "kind": "issue",
+        "identity": "I4400",
+        "title": "A chart on the site is read by pointing at it: one crosshair, an exact tooltip, series a reader can hide, a range a reader can zoom, drawn from the design's tokens",
+        "description": "Make the one chart component (site/charts.js, ADR 0152) a chart a reader works with rather than only looks at. It keeps the same declaration (<figure data-chart> over the table it draws) and adds: a crosshair with one tooltip that lists every series at the pointed category, in its unit; a legend whose entries hide and show their series without repainting the others; a zoomable and pannable range on a line chart that has more categories than fit (slider, wheel, pinch, keyboard), with a reset; an emphasised last value; line charts drawn with a light area fill under each series and bars with rounded data ends; marks that focus the hovered series and fade the rest; and motion that is turned off under prefers-reduced-motion. Every colour is still a token of the page, so light and dark are both designed by the stylesheet.",
+        "path": ".ai/repo/project/issues/I4400.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4040
+      },
+      {
+        "uri": "majordomus://issue/I4410",
+        "kind": "issue",
+        "identity": "I4410",
+        "title": "plan evidence records the trunk commit it is given with --commit, and refuses one the trunk does not reach",
+        "description": "`majordomus plan evidence <id> --covers <token> ... --commit <rev>` writes the named commit into the entry's commit: instead of HEAD. The revision is resolved with `git rev-parse --verify <rev>^{commit}` to its full 40-hex name, and is accepted only when the trunk's remote-tracking branch (mj_git_trunk_ref, lib/common.sh:540-549) reaches it, judged by mj_commit_in_history (lib/common.sh:761-769) against that ref. A commit the trunk does not reach is refused with exit 15 and a message naming the commit and the trunk ref. A clone that cannot decide (shallow, or the object is missing: mj_commit_in_history returns 2) and a repository with no known trunk (no refs/remotes/<remote>/HEAD) are refused with a message that says which, never recorded unjudged. The ledger event plan_evidence carries the recorded commit and whether it was named or taken from HEAD. Without --commit nothing changes: the entry records HEAD, as today. So any number of evidence entries for already-landed work can be recorded on one branch, in one pull request, each naming the trunk commit that landed its work.",
+        "path": ".ai/repo/project/issues/I4410.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5926
+      },
+      {
+        "uri": "majordomus://issue/I4411",
+        "kind": "issue",
+        "identity": "I4411",
+        "title": "check and finish name the head they judged beside the task's start, and the scope line counts the layer's own paths instead of reporting them as none",
+        "description": "Two lines of `majordomus check` and `majordomus finish` say what they measured. The state line names the task's recorded start head and the HEAD it compared against it, with the distance: `advanced from 3e89654 to 4e6f74e (1 commit)`, not `advanced (head 3e89654)`, which prints only the start head. The scope line counts every path mj_git_touched returned. A path under the layer (.ai/) that the task's scope names is counted as within scope. A layer path the scope does not name is counted separately as admitted because it is the layer's: `0 touched file(s) within scope, and 54 of the layer (.ai/) admitted`. When the walk since the start head finds commits but returns no path, because every commit was a merge or a trunk commit not made here, the line says so: `0 touched file(s): 2 commit(s) since 3e89654 are merges or trunk commits this checkout did not make`. The existing prefix `N touched file(s), all within scope` stays for a task with no layer paths, so cases 108, 108b, 1073 and 25 still match.",
+        "path": ".ai/repo/project/issues/I4411.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6192
+      },
+      {
+        "uri": "majordomus://issue/I4413",
+        "kind": "issue",
+        "identity": "I4413",
+        "title": "A failed verification is run again over the trunk commit the work is built on, and its refusal says which failures were already there, so one red test of the trunk does not read as every task's defect",
+        "description": "Two changes to mj_validate_verification in lib/finish.sh, none of which changes a repository that declares nothing. First, a policy key verification.failure_pattern (an extended regular expression with one group, absent: none): when it is declared, the verify command's output is written to a temporary file instead of /dev/null, the group's text on every matching line is a failure id, and the sorted, unique ids (at most 50, with their count) go into the refusal line and into a verify object that task.refused now carries (verify.failures); the output file is removed afterwards. Second, a policy key verification.base_rerun (boolean, absent: false), overridable per invocation by `finish --no-base-rerun`: when the verify command failed, finish exports the base commit with `git archive` into a temporary directory (never a linked worktree, so no worktree is registered and no hook runs), runs verification.base_prepare there when declared (for example `npm ci`), runs the same verify command there with the same environment, and removes the directory on every exit path. The base is the merge base of HEAD and the trunk's remote-tracking branch (mj_git_trunk_ref, lib/common.sh:540-549), and the task's start head (mj_cur head) when no trunk is known; the record says which (base_source: trunk or start). The verification is classified in the vocabulary I3313 defines for session records: introduced when the base run passes, or when a failure id of this run is absent from the base run's ids (only those ids are listed as introduced); pre-existing only when the base run fails, a failure_pattern is declared and every failure id of this run is among the base run's; unknown when the base run fails with no failure_pattern declared, or the base could not be exported, prepared or resolved (a shallow clone, a missing object), with the reason. unknown is never shown as pre-existing. The classification never accepts the task: a red verification stays a refusal whatever its class, as majordomus.verification-integrity requires. A pre-existing refusal reads `npm test — exit 1, 412s; pre-existing at 3e89654 (trunk): 1 of 1 failure fails there too: studio perf budget`, and its remedy names re-running finish once the trunk's failure is fixed and `finish --outcome blocked` with that reason, instead of a re-run of the same command over the same tree. task.refused records verify.origin with base, base_source, base_exit, base_seconds, class, failures, base_failures and, for unknown, reason. The rule majordomus.verification-integrity states that the base run classifies a refusal and never turns it into a pass.",
+        "path": ".ai/repo/project/issues/I4413.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 9887
+      },
+      {
+        "uri": "majordomus://issue/I4414",
+        "kind": "issue",
+        "identity": "I4414",
+        "title": "A repository whose runs wait while another repository of the same account holds the Actions jobs is told so, and the landing seat is advised to hold new train runs while it lasts",
+        "description": "Three steps on top of I4326's per-repository queue reads. (1) A typed capability mesh.ci_load (`majordomus mesh ci-load`, MCP and HTTP from the same capability! declaration) reports, for every repository of the checkouts this host serves plus any the policy lists, its queued runs, its in-progress jobs (jobs, not runs: GitHub's account concurrency limit counts jobs), the age of its oldest queued run, and its share of the account's in-progress jobs, against the account's concurrency limit declared in policy. (2) From the same reads the monitor derives a share_starved signal: one repository has queued runs older than a bound and at most a floor of in-progress jobs while another repository of the account holds at least a declared share of the account's in-progress jobs, for longer than the bound. Bound, floor and share are stated beside the signal in policy. The signal names the starved repository, the holding repository and both counts. It is kept apart from I4326's forge_starved, where no repository starts any job. (3) While share_starved names this repository as the holder, `majordomus mesh ci-load` exits with a declared non-zero code and says `hold new train runs: <repo> starved since <time>`. The brief and the monitor carry the same line. docs/MESH.md states the convention that the landing seat pushes no new combined top while the advice holds and announces the hold on the board with majordomus_announce. The advice cancels nothing.",
+        "path": ".ai/repo/project/issues/I4414.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6142
+      },
+      {
+        "uri": "majordomus://issue/I4415",
+        "kind": "issue",
+        "identity": "I4415",
+        "title": "finish names the load its verification ran under, waits below a declared load bound before it runs, and retries a failure under load only as policy allows, recording every attempt",
+        "description": "Three changes to mj_validate_verification in lib/finish.sh, none of which changes a repository that declares nothing. First, every verification run reads the host's 1-minute load average and core count before and after it, through one helper in lib/common.sh that lib/bench.sh's mj_bench_load then calls, and the result line says so on pass and on fail: `npm test — exit 1, 412s, load 77.3 -> 93.1 on 12 cores`. The same fields (load_start, load_end, cores) go into the verify object of task.finished, and task.refused gains that verify object, which it does not carry today. Second, a policy key verification.load_max_per_core (absent: no gate) with verification.load_wait_seconds (default 600), overridable per invocation by MAJORDOMUS_VERIFY_LOAD_MAX: before the command starts, finish waits while the load is above the bound, saying on stderr what it waits for and how long it has waited, and past the wait it does not run the command; the verification line fails as `not run: load <x> above <bound> for <n>s`, and task.refused records verify.not_run: load, so I3131's aggregate can tell a refusal of the work from a refusal of the machine. Under CI (CI or GITHUB_ACTIONS set) there is no gate, as in OSCILLA's suites and I4006. Third, a policy key verification.verify_retries (integer 0-2, default 0): a failed attempt is retried only when that attempt started or ended above the load bound and the tree id is the one the failed attempt ran over; a failure on a quiet machine, or with no bound declared, is never retried, so a deterministic failure cannot be retried into a pass. Every attempt is recorded (verify.attempts: exit, seconds, load_start, load_end, tree), and a pass after a failed attempt reads `exit 0 on attempt 2 of 3 (attempt 1: exit 1, load 81.0)`, never as a plain pass. The rule majordomus.verification-integrity states the attempt record and the conditions under which a retry is admitted.",
+        "path": ".ai/repo/project/issues/I4415.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 7625
+      },
+      {
+        "uri": "majordomus://issue/I4416",
+        "kind": "issue",
+        "identity": "I4416",
+        "title": "The session briefing says how old the task is and never calls a finished one active, an abandoned task is closed as interrupted only by `recover tasks`, and doctor's stranded-episode FAIL names `recover episodes --check`",
+        "description": "Three changes, none of which closes anything a person did not ask to close. First, the task line of the session briefing (mj_derive_briefing_body, lib/derive.sh:548-552) states the record as it is. A task whose outcome is active reads `Active task <id> (active, profile <p>, started <age> ago, checkpoint <age> ago): <task>`. A task whose outcome is anything else (completed, partial, blocked, no_match, failed, handed_over, interrupted) reads `Last task <id> (<outcome>, closed <age> ago, profile <p>): <task>`, and the word Active is never printed for it. An active task whose checkpoint_at is older than the policy's session.stranded_after gains `stale: no checkpoint for <age>, over the <threshold> session.stranded_after; review it: majordomus recover tasks --check`. Ages come from mj_age_minutes and mj_age_human, as `majordomus context` already renders them (lib/context.sh:190-200), and the threshold is read with mj_pol_req as lib/recover.sh:94 reads it, with no default invented. Second, a new subject `majordomus recover tasks [--check] [--older-than <duration>]` in lib/recover.sh, beside episodes, records and orphans, and included in `recover status` and `recover all`. It reads only this checkout's current.yaml and refuses a foreign one (mj_task_is_foreign) with the worktree it belongs to. An active task whose checkpoint_at is older than the threshold is a candidate; --check prints the task id, its started and checkpoint ages, the threshold and `close with outcome interrupted`, and writes nothing. Without --check, the candidate's current.yaml gets outcome: interrupted and a task.interrupted ledger line carrying task_id, checkpoint_at, age, threshold and source recover; nothing else is rewritten. A task inside the threshold, or one already closed, is named with why it is not a candidate and left byte-for-byte unchanged. The outcome interrupted is admitted by the current.v1 schema and its generated allow-list, and finish answers it as it answers any closed outcome (`already interrupted; run majordomus start for new work`). Third, the remedy column of doctor's lifecycle rows (mj_validate_lifecycle, lib/doctor.sh:1028): the episodes FAIL (lib/doctor.sh:1106-1109) names `majordomus recover episodes --check` instead of `majordomus session list`, and the checkpoints and handovers FAILs (lib/doctor.sh:1056-1075) name it too when the same run counted stranded episodes, because an episode nobody closed is the one that never wrote its handover; with no stranded episode they keep `majordomus <record> --list`.",
+        "path": ".ai/repo/project/issues/I4416.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 10107
+      },
+      {
+        "uri": "majordomus://issue/I4417",
+        "kind": "issue",
+        "identity": "I4417",
+        "title": "A knowledge class a repository script generates declares its generator and inputs, is reported stale when its inputs moved, and the issue, intent and rule ids its records carry are edges",
+        "description": "A class of .ai/repo/knowledge/sources.yaml may carry an optional `generator:` block: `command` (an argv list run from the repository root, never through a shell), `inputs` (one or more `:(glob)` pathspecs of tracked files) and `stamp` (the top-level field each generated file carries, default `inputs_digest`). Its kind is declared in .ai/repo/knowledge/kinds.yaml with `lifecycle: derived`, and a class with a generator whose kind is not derived is refused. The digest is sha256 over the sorted (path, git blob id) pairs of the tracked files the inputs match, and `majordomus knowledge digest <class>` prints it so that the repository's own script stamps its output. Discovery compares each file's stamp with the current digest and emits a warning diagnostic `derived_source_stale` naming the class, the file, both digests and the declared command as the remedy; Majordomus never runs the generator itself, so doctor and every read stay free of side effects. A kind entry may also declare `references:`, a map from a metadata field to a target kind among issue, milestone, intent, rule and adr; the graph resolves those fields as it resolves its built-in relations, so an object of the repository's kind shows an outgoing edge in `majordomus entity show`, the issue, intent or rule it names shows the backlink, trace.issue (majordomus_trace_issue, GET /api/v1/trace/issue) lists the objects that reference the issue, and a reference that resolves to nothing is the existing dangling-reference finding. docs/KNOWLEDGE.md and docs/ADOPTION.md describe a derived knowledge source end to end.",
+        "path": ".ai/repo/project/issues/I4417.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 9212
+      },
+      {
+        "uri": "majordomus://issue/I4418",
+        "kind": "issue",
+        "identity": "I4418",
+        "title": "serve ensure fast-forwards a clean trunk checkout that is strictly behind its remote trunk, or offers to, and majordomus init declares checkout.trunk_distance, so a shared server does not answer from an old tree unjudged",
+        "description": "Two changes. Neither moves a checkout that holds anything to lose, and neither supplies a threshold that no policy wrote. First, `majordomus serve ensure` (and through it the start event's mj_capture_ensure_server, lib/capture.sh:1679-1699) measures the trunk distance (worktree::trunk::measure) before it converges, and decides whether the checkout can be fast-forwarded. It can only when all of the following hold: HEAD is the trunk branch; the checkout is strictly behind the remote-tracking trunk as last fetched (behind > 0, ahead 0); no tracked file is staged or modified; no merge, rebase, cherry-pick, revert or bisect is in progress; and no index.lock exists. A new policy key checkout.fast_forward (off | offer | apply, absent: offer) decides what happens to an eligible checkout. With offer, the ensure answer (the human line and the JSON EnsureReport, which today carries no trunk field) gains `trunk` with standing, behind, eligible and the command `majordomus serve ensure --fast-forward`; the remedy in the MCP initialize trunk sentence names the same command. With apply, and with `--fast-forward` on any policy but off, ensure runs `git merge --ff-only <remote trunk>` in the checkout before it converges, never fetches, and reports the old and new heads as trunk.fast_forwarded {from, to}. A checkout that is not eligible is never moved. The answer says which condition failed (not the trunk branch, ahead of the remote trunk, uncommitted tracked changes, an operation in progress, or no remote trunk) and keeps today's remedy with its rescue step. A `git merge --ff-only` that refuses, for example over an untracked file it would overwrite, is reported with git's message and the checkout is left unchanged. The server's standing and its exit code are decided exactly as today. Second, share/skeleton/policy.yaml declares a checkout: block, trunk_distance with warn_behind 20 and fail_behind 200, plus fast_forward: offer, each commented, so a repository made by `majordomus init` judges its distance with numbers written in its own policy. Doctor's unjudged INFO (lib/doctor.sh:760) names the block to add, taken from the skeleton, instead of only `majordomus worktree trunk`. The reader still supplies no default threshold: a policy without trunk_distance stays unjudged, as project.a-checkout-serves-the-current-trunk requires.",
+        "path": ".ai/repo/project/issues/I4418.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 11070
+      },
+      {
+        "uri": "majordomus://issue/I4419",
+        "kind": "issue",
+        "identity": "I4419",
+        "title": "A release that waits behind a starved forge says so: release.currency keeps its stance and names the forge as the cause, and doctor's remedy stops telling the seat to release now",
+        "description": "release.currency reads the forge_starved signal that I4326 derives (each served repository's queued and in-progress workflow runs, and the time since the account last started a job). It reads the last observation the monitor holds, or makes one bounded read when the shared server holds none. While the signal holds for the measured repository, the answer keeps its stance (owed or overdue: the landed work does wait) and gains a field, held_by, carrying the signal's start and this repository's queued and in-progress counts. The summary appends `; the forge has started no job since <time> (<repo>: <n> queued, 0 in progress), so the release waits with the work it would ship`. lib/doctor.sh prints that summary under its existing WARN, and the remedy names the wait (`the release waits for the forge: majordomus monitor`) instead of `the release seat releases it now: majordomus run release.currency`. The brief's release part reads `release OVERDUE <n> (forge starved)`. With no observation (no token, offline, never observed) or a signal that does not hold, the answer is byte for byte today's, and it says nothing about the forge. Nothing is suppressed: the stance, the count, the wait and the threshold stay what I3070 measures.",
+        "path": ".ai/repo/project/issues/I4419.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6329
+      },
+      {
+        "uri": "majordomus://issue/I4460",
+        "kind": "issue",
+        "identity": "I4460",
+        "title": "A gate run over an input set that selects no file is never a freshness proof: both gate judges read it unknown and a completed finish refuses it",
+        "description": "When a gate's inputs (Model::inputs_of, mj_gate_inputs) are empty or select no tracked file, a run recorded for it can be judged neither fresh nor stale, and the judgement says so instead of comparing an empty hash with an empty hash. Both Rust gate judges, judge_one (apps/majordomus-cli/src/gates/judge.rs:359-385), which gates.completion answers, and standing_of (apps/majordomus-cli/src/gates/state.rs:142-188), which gate state answers, return unknown for that case with the detail `the gate <id> selects no file in this repository (inputs <specs>); its run cannot be judged fresh` and a remedy naming the class paths that would give it inputs; neither returns pass for a recorded \\\"\\\" against a current \\\"\\\". The shell recorder (mj_gate_inputs_hash, lib/gates.sh:97-106) keeps writing the empty hash it writes today, so the ledger is unchanged and the decision is the judges' alone; mj_validate_completion_gates already maps unknown onto a refusal of completed and a named skip otherwise (lib/gates.sh:150-151, mj_gate_unknown). The rule is written once, as one table of cases (inputs that select files, inputs that select none, a gate no class names, an always gate, a recorded empty hash, a recorded non-empty hash) that a parity case drives through the shell recorder and both Rust judges, so the recorded hash and the two readings cannot drift apart.",
+        "path": ".ai/repo/project/issues/I4460.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 7383
+      },
+      {
+        "uri": "majordomus://issue/I4461",
+        "kind": "issue",
+        "identity": "I4461",
+        "title": "handover --resolve judges the working tree as well as HEAD, and never says exact over changes made since the handover",
+        "description": "A handover records a fingerprint of the working tree it was written over, and resolving it compares that fingerprint as well as the head and branch. The writer adds `tree: <id>` to the record's front matter, computed by mj_worktree_tree_id (lib/common.sh:68), the same tree id finish already records for its verification. mj_handover_resolve (lib/handover.sh:143) keeps its `Git state` line as mj_git_label computes it for the head, and prints a `Working tree` line beside it: `unchanged since the handover` when the current tree id equals the recorded one, `changed since the handover` with the paths whose status differs from the record's changed_files when it does not, and `unknown: the record has no tree` for a record written before this change, never unchanged. The session briefing (lib/derive.sh:577, which resolves the same record) prints the same word. No new label is added to mj_git_label's vocabulary and no other caller of it changes.",
+        "path": ".ai/repo/project/issues/I4461.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4764
+      },
+      {
+        "uri": "majordomus://issue/I4462",
+        "kind": "issue",
+        "identity": "I4462",
+        "title": "Use-case coverage of none of its targets never prints OK: doctor reports 0 of N covered as a finding that names the policy that allowed it",
+        "description": "One change to mj_validate_use_case_coverage (lib/usecase.sh:988-1008). When the tally has targets and covers none of them (covered 0, total above 0), the closing line is not mj_doctrine_ok: it is an INFO finding that reads `use-case 0 of <N> target(s) covered — the policy requires none (use_cases.coverage: <class>=<value>, ...)` with the remedy `majordomus usecase scaffold` or `majordomus usecase coverage`, so a reader sees zero coverage as zero and sees which policy entry made it acceptable. With at least one target covered and no required gap, the OK line stays as it is; a required gap still fails as it does now; a manifest with no use-cases section still skips. The JSON form of `usecase coverage` is unchanged.",
+        "path": ".ai/repo/project/issues/I4462.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3821
+      },
+      {
+        "uri": "majordomus://issue/I4463",
+        "kind": "issue",
+        "identity": "I4463",
+        "title": "plan validate flags an open issue named as a blocker in another issue's current_state and absent from its depends_on, and plan next does not propose the issue it blocks",
+        "description": "Both engines of the plan read one more thing from an issue's current_state: an open issue id that the text names as what the issue waits on. The phrases that make a mention a blocker are declared once, as data both engines read (beside the plan schema in share/, not as a constant in either engine): `completes when <ids> ... land`, `blocked by <id>`, `blocked on <id>`, `waits for <id>`, `waits on <id>`, `after <id> lands`, `until <id> lands`. When such an id names an issue that is neither DONE nor CANCELLED and is not in the issue's depends_on, plan validate emits a WARN finding on the issue: `current_state names <id> as a blocker and depends_on does not; add it to depends_on, or reword current_state`. The derived status treats that mention as an open dependency for readiness, so the issue is not READY, and plan next and plan start never propose it while the named blocker is open; plan show names the blocker as the reason. A mention that is not in one of the declared phrases is not read, so citing another issue in prose stays free.",
+        "path": ".ai/repo/project/issues/I4463.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5002
+      },
+      {
+        "uri": "majordomus://issue/I4464",
+        "kind": "issue",
+        "identity": "I4464",
+        "title": "plan next says when the ready issue needs a build the machine cannot start, and proposes a ready issue that needs none first, never hiding either",
+        "description": "The plan derivation stays a walk of the records (apps/majordomus-cli/src/plan.rs says it opens no file and starts no process); the machine's capacity is read where the answer is projected, once per call: by plan next, by the `next ready issue` line of plan start (lib/plan.sh:263, :514) and by the Rust plan.next capability. An issue needs a build when its scope names a path that matches a build input the repository declares: a new optional policy key, build.inputs (a list of globs; absent: no issue is known to need a build, and every answer is as today), admitted through the policy schema and its generated allow-list. The floor is the one the build itself enforces, MAJORDOMUS_MIN_FREE_MB with its default (lib/rust_bin.sh:461-470, :551), so the plan and the build cannot disagree about it. When the free space of the checkout's volume is below that floor, plan next takes the first ready issue in today's ranking that needs no build, and prints, for each better-ranked issue it passed over, `<id> needs a build: <free> free, below the <floor> floor`; when every ready issue needs a build it still names the first, with the same line, and never answers none. plan ready lists every READY issue as today and marks those that need a build. At or above the floor nothing changes.",
+        "path": ".ai/repo/project/issues/I4464.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5375
+      },
+      {
+        "uri": "majordomus://issue/I4465",
+        "kind": "issue",
+        "identity": "I4465",
+        "title": "Every enforced rule names the principle it rests on, doctrine show prints it, doctrine status counts the rules that name none, and a rule's class is called its binding level",
+        "description": "Four changes. First, the loader of lib/doctrine.sh derives each enforced rule's principle instead of reading a field no rule has: the principles are the rules of the effective set tagged `principle` (ten, under share/standard/majordomus/rules/principle-*.v1.md), and a rule's principle is every principle reached through its depends_on, transitively, with the version suffix dropped, comma-joined in the order reached. The awk pass that builds doctrines.N (lib/doctrine.sh:40-61), whose key list at :42 has no principle, records it as doctrines.N.principle, so the existing `principle` line of `doctrine show` (lib/doctrine.sh:301) prints it. A rule that reaches none prints `principle   none — no principle in its depends_on`. Second, `doctrine status` adds one count, `enforced rules naming no principle: <n>`, of the enforced rules whose own depends_on names no principle, and `doctrine status --json` the ids; it is reported, never a refusal. Third, the 13 dispatched rules of the shipped package that name no principle in their depends_on each name, as an exact id@version, the principle they rest on, so README.md:195 and :205-206 ('every enforced rule names the principle it rests on', at :206 'in `depends_on`') become true; the package manifest is rewritten by scripts/rules-package write and the vendored copy by `majordomus rules vendor update`, never by hand. Fourth, a rule's `class` is its binding level (what a violation means: blocking or advisory), and it stops being called an enforcement class: docs/DOCTRINE.md says so where it defines the field and in its section on the two classes, and apps/majordomus-cli/src/graph.rs:734 no longer says 'enforcement class'; how a rule is enforced (its validator, its mode, its proof) stays derived apart, and no schema changes.",
+        "path": ".ai/repo/project/issues/I4465.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 10439
+      },
+      {
+        "uri": "majordomus://issue/I4466",
+        "kind": "issue",
+        "identity": "I4466",
+        "title": "A mesh review answer names the head and the base it reviewed, and a verdict whose head or base has moved reads stale wherever reviews are shown",
+        "description": "The mesh review events carry the revision they are about, and every reader of a review compares it with the subject now. ReviewRequested (apps/majordomus-cli/src/mesh/journal.rs:638-659) gains optional head and base: when its subject names a branch or a commit the requesting runtime's checkout can resolve, the runtime records the subject's head commit and its merge base with the trunk (the trunk crate::delivery::revision::trunk_ref resolves, apps/majordomus-cli/src/delivery/revision.rs:96), from git, never from the requester's text. ReviewAnswered (journal.rs:661-671) gains the same two optional fields, filled by the answering runtime the same way, and, when it cannot resolve the subject, copied from the request and marked `as_requested`. The mesh.review.answer capability (apps/majordomus-cli/src/capability/builtin/mesh.rs:1579-1606) takes an optional head that the answerer may state and refuses one that differs from what its own git resolves, naming both. A reader (mesh state, the mesh page, the monitor's review lines) gives each answered review one standing: `current` when the subject's head and base are the recorded ones, `stale: head moved <old>..<new>` or `stale: base moved <old>..<new>` when either differs, `unbound` for an answer written before this change, and `unknown: <reason>` when the reading runtime cannot resolve the subject; unbound and unknown never read as current. Both fields are listed in .ai/repo/ci/mesh-event-fields.yaml as clear (commit ids are not secrets), so the mesh check admits them.",
+        "path": ".ai/repo/project/issues/I4466.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6502
+      },
+      {
+        "uri": "majordomus://issue/I4467",
+        "kind": "issue",
+        "identity": "I4467",
+        "title": "A handover records the work its writer delegated to subagents and peers, and resolving it says where each piece stands now",
+        "description": "`majordomus handover` takes a repeatable `--delegated <ref>`, and the record keeps what the writer handed to others beside its own task. A ref is one of: a task id (t-...), a branch, a mesh review (<stream>/<review>), or anything else, kept verbatim. The writer names the ref; the tool, never the writer, resolves where it stands from its authority at write time: a task from the task record of whichever worktree of the repository holds it (its outcome and worktree) or from the ledger's task.finished; a branch from git (its head and whether the trunk contains it); a review from the executable's mesh state when the mesh is enabled (open, answered with its verdict, withdrawn). What cannot be resolved is recorded as `unknown: <reason>`, never as done. The front matter (lib/handover.sh:74, mj_record_front_matter) carries a `delegated:` list, one `<kind> <ref> <standing>` per item; `handover --derive` adds a `# Delegated` section listing them. `handover --resolve` and the session briefing print each item with its standing then and its standing now, resolved again the same way, so a resumed coordinator sees which delegated work finished, which is still open and where, and which it can no longer find.",
+        "path": ".ai/repo/project/issues/I4467.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5193
+      },
+      {
+        "uri": "majordomus://issue/I4468",
+        "kind": "issue",
+        "identity": "I4468",
+        "title": "Every exemption is written in one grammar (scope, rule, reason, approver, an expiry or a removal condition, shrink-only) that generate inlines into each existing shape, and the README describes declared exemptions instead of denying them",
+        "description": "Declare the grammar of an exemption once, under share/schemas/majordomus/exemption/, with six fields: scope (the paths, units, ids or lines it covers), rule (the exact rule id@version it exempts from), reason, approver (who accepted it), expires_at or removal (a date, or the condition whose truth removes it; one of the two is required), and shrink_only (whether the covered set may only shrink without a new approval). `majordomus generate` inlines that grammar into each of the eleven existing exemption shapes, in the form each shape already has (a schema's properties, a JSONL object's keys, a baseline file's header, a marker's arguments), and `generate --check` refuses a shape that drifted from it. Each shape's existing reader then refuses an entry that lacks a required field, reports an entry past its expires_at, and refuses growth of a shrink_only set that carries no new approval. No new store: every exemption stays where it is written today. A ratchet baseline file is one exemption, declared in its header; its lines are its scope. The eleven shapes, at master 51b38035a71: (1) intent-binding exemption classes, .ai/repo/policy.yaml:39-53, given as `start --exempt <class> --because` and recorded as bound_exemption (lib/handover.sh:67); (2) release version-floor exemptions by path, .ai/repo/policy.yaml:61-70; (3) a directory contract's `children.exempt` (.ai/repo/rules/README.md:14-17 and :35-38); (4) a reviewed rule's `x-majordomus.reviewed_because` (share/schemas/majordomus/rule/rule.v1.proto:92, share/allow/rule.txt:21); (5) the 157 shell-unit exemptions of .ai/repo/automation/inventory.jsonl, each with a why and a removal; (6) a capability's benchmark WaiverReason (apps/majordomus-cli/src/capability/model.rs:181-207); (7) the ratchet baselines, the 16 .ai/repo/*-baseline.txt files plus .ai/repo/ci/case-numbers-baseline.txt, .ai/repo/ci/gate-list-baseline.txt, .ai/repo/ci/github-drift-baseline.txt and .ai/repo/evidence/published-not-run.txt; (8) english-only's name, fixture and translation declarations, scripts/ci/english-only-allow.txt with its grammar at scripts/ci/english-only-check:30-36; (9) an unrun documented command's `<!-- majordomus:unrun <reason> -->` marker (scripts/ci/doc-command-check:32-35); (10) the version-label history, .ai/repo/version-label-history.txt (apps/majordomus-cli/src/release/version.rs:86); (11) the design check's path exemptions, written as reasons inside scripts/ci/design-check:36-57. Then README.md:211-213 says what master does: a doctrine is blocking or advisory, and what does not yet meet a rule is a declared exemption under that grammar, named, approved, bounded and shrink-only, rather than 'no baseline, and no override'.",
+        "path": ".ai/repo/project/issues/I4468.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 9165
+      },
+      {
+        "uri": "majordomus://issue/I4469",
+        "kind": "issue",
+        "identity": "I4469",
+        "title": "A knowledge record may say where it holds, in an optional typed holds_for (subsystem, version, environment), and a task's context matches it against the task's scope",
+        "description": "Add one optional field to knowledge/v1, `holds_for`, a typed object with three optional members: subsystem (repository paths or path prefixes, the same spelling a task's scope uses), version (a version range of the tool or the repository the lesson was learnt on) and environment (named conditions such as an operating system, a CI host or a provider). A record without holds_for means what it means today. The field is declared in share/schemas/majordomus/knowledge/knowledge.v1.proto, projected into knowledge.v1.schema.json by `majordomus generate`, and admitted by share/allow/knowledge.txt. The readers that compile a task's context (devcontext and the briefing's knowledge pointers) match a note's holds_for.subsystem against the task's scope with the same path matching the task's scope uses, select a matching note before an unmatched one, leave out a note whose holds_for names a version or an environment that the task's state contradicts, and print why a note was selected or left out. knowledge validate refuses a holds_for member of the wrong type or an unknown key.",
+        "path": ".ai/repo/project/issues/I4469.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4742
+      },
+      {
+        "uri": "majordomus://issue/I4512",
+        "kind": "issue",
+        "identity": "I4512",
+        "title": "No derived page grows past the scope's size limit, so one derive is a fixpoint",
+        "description": "Keep every derived page under the index's per-file limit by construction, so that one run of scripts/derive leaves a tree the next run does not change.",
+        "path": ".ai/repo/project/issues/I4512.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4563
+      },
+      {
+        "uri": "majordomus://issue/I4522",
+        "kind": "issue",
+        "identity": "I4522",
+        "title": "A repository's release records are judged against the repository's own distribution model, or on internal consistency alone when it declares none, never against the installed tool's",
+        "description": "Release records under .ai/repo/releases are judged against the distribution model of the repository that carries them: the distribution-model object its own knowledge sources index (Model::from_index, apps/majordomus-cli/src/distribution/mod.rs:370), which in this repository is share/distribution.yaml through the `distribution` class of .ai/repo/knowledge/sources.yaml:246-250. The installed tool's model, Model::load(&app.share) and Model::locate(&share), stays what describes this build, its installer and its archive names, and stops being what a repository's records are measured against. Releases::findings and Release::findings (apps/majordomus-cli/src/distribution/release.rs:348 and :134) take the repository's model as an Option: with a model, every finding they make today is made against it; with none, the model-bound findings (a target the model does not declare or does not publish, a name the naming function does not derive, a URL outside the model's download prefix; release.rs:174-199) are not made, and the record is judged on internal consistency alone: a semantic version, no pre-release on the stable channel, tag equal to `v` and the version (release.rs:106), every required target carried by an artifact, no target twice, no tag twice, a URL ending in its own tag and name, a 64-hex digest and a non-zero size. The judgement is chosen in one function every caller asks (the generator, distribution validate, distribution metadata, the distribution status capability), so the generator and the command line cannot judge one record two ways. A finding names which model it was judged against, or that it was judged on internal consistency because the repository declares none.",
+        "path": ".ai/repo/project/issues/I4522.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 10629
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -117276,6 +117628,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 4617
+      },
+      {
+        "uri": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "milestone",
+        "identity": "a-bounded-task-is-carried-to-accepted-work",
+        "title": "A bounded task is carried to accepted work: one integration map of the cycle, each break owned by an existing issue and closed by a case",
+        "description": "Every row reads wired with its proof run: each break is closed in the owner it names by the smallest change that unblocks its user step, with a case that fails before the change, and the stranger fixture and the in-repo pass, run again, reach acceptance with no hand-written state and no step outside its budget.",
+        "path": ".ai/repo/project/milestones/a-bounded-task-is-carried-to-accepted-work.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 12610
       },
       {
         "uri": "majordomus://milestone/a-change-is-judged-in-minutes",
@@ -119117,7 +119480,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 26296
+        "bytes": 26319
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -122672,7 +123035,7 @@
         "path": ".ai/repo/scope.yaml",
         "section": "scope",
         "source_class": "scope",
-        "bytes": 4552
+        "bytes": 4832
       },
       {
         "uri": "majordomus://session/s-20260906035523-7b6c",
@@ -125442,7 +125805,7 @@
         "identity": "test/cases/3016_init_seeds_the_scope_of_the_stack_it_finds.sh",
         "path": "test/cases/3016_init_seeds_the_scope_of_the_stack_it_finds.sh",
         "source_class": "case",
-        "bytes": 4204
+        "bytes": 5517
       },
       {
         "uri": "majordomus://test/test/cases/3017_doctor_holds_an_adopter_to_what_it_adopted.sh",
@@ -125629,6 +125992,14 @@
         "bytes": 3761
       },
       {
+        "uri": "majordomus://test/test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh",
+        "kind": "test",
+        "identity": "test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh",
+        "path": "test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh",
+        "source_class": "case",
+        "bytes": 15849
+      },
+      {
         "uri": "majordomus://test/test/cases/3047_a_leak_finding_names_where_it_is.sh",
         "kind": "test",
         "identity": "test/cases/3047_a_leak_finding_names_where_it_is.sh",
@@ -125650,7 +126021,7 @@
         "identity": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
         "path": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
         "source_class": "case",
-        "bytes": 9902
+        "bytes": 17631
       },
       {
         "uri": "majordomus://test/test/cases/304_a_provider_is_declared_once.sh",
@@ -126154,7 +126525,7 @@
         "identity": "test/cases/3246_every_file_the_site_generator_reads_is_an_input.sh",
         "path": "test/cases/3246_every_file_the_site_generator_reads_is_an_input.sh",
         "source_class": "case",
-        "bytes": 4274
+        "bytes": 4291
       },
       {
         "uri": "majordomus://test/test/cases/3247_a_derive_records_what_each_stage_cost.sh",
@@ -127010,7 +127381,7 @@
         "identity": "test/cases/391_skills_are_proven_capabilities.sh",
         "path": "test/cases/391_skills_are_proven_capabilities.sh",
         "source_class": "case",
-        "bytes": 10670
+        "bytes": 11002
       },
       {
         "uri": "majordomus://test/test/cases/3932_the_coverage_export_is_its_one_measurement.sh",
@@ -127114,7 +127485,7 @@
         "identity": "test/cases/3955_the_sccache_client_is_derived_from_the_selected_store.sh",
         "path": "test/cases/3955_the_sccache_client_is_derived_from_the_selected_store.sh",
         "source_class": "case",
-        "bytes": 15246
+        "bytes": 15461
       },
       {
         "uri": "majordomus://test/test/cases/3956_a_node_is_provisioned_as_a_cache_provider.sh",
@@ -127210,7 +127581,7 @@
         "identity": "test/cases/400_derivation_is_one_graph.sh",
         "path": "test/cases/400_derivation_is_one_graph.sh",
         "source_class": "case",
-        "bytes": 14333
+        "bytes": 14715
       },
       {
         "uri": "majordomus://test/test/cases/401_the_rust_artifact_carries_its_provenance.sh",
@@ -127341,6 +127712,14 @@
         "bytes": 5122
       },
       {
+        "uri": "majordomus://test/test/cases/4235_an_evidence_token_is_matched_whole.sh",
+        "kind": "test",
+        "identity": "test/cases/4235_an_evidence_token_is_matched_whole.sh",
+        "path": "test/cases/4235_an_evidence_token_is_matched_whole.sh",
+        "source_class": "case",
+        "bytes": 1546
+      },
+      {
         "uri": "majordomus://test/test/cases/4251_a_mod_links_nothing_outside_the_repository.sh",
         "kind": "test",
         "identity": "test/cases/4251_a_mod_links_nothing_outside_the_repository.sh",
@@ -127357,6 +127736,14 @@
         "bytes": 2298
       },
       {
+        "uri": "majordomus://test/test/cases/4257_init_keeps_a_hand_written_provider_file.sh",
+        "kind": "test",
+        "identity": "test/cases/4257_init_keeps_a_hand_written_provider_file.sh",
+        "path": "test/cases/4257_init_keeps_a_hand_written_provider_file.sh",
+        "source_class": "case",
+        "bytes": 2253
+      },
+      {
         "uri": "majordomus://test/test/cases/4258_documents_below_docs_are_discovered.sh",
         "kind": "test",
         "identity": "test/cases/4258_documents_below_docs_are_discovered.sh",
@@ -127365,12 +127752,36 @@
         "bytes": 1507
       },
       {
+        "uri": "majordomus://test/test/cases/4261_issues_trace_outward.sh",
+        "kind": "test",
+        "identity": "test/cases/4261_issues_trace_outward.sh",
+        "path": "test/cases/4261_issues_trace_outward.sh",
+        "source_class": "case",
+        "bytes": 3785
+      },
+      {
+        "uri": "majordomus://test/test/cases/4264_adr_check_names_what_it_skipped.sh",
+        "kind": "test",
+        "identity": "test/cases/4264_adr_check_names_what_it_skipped.sh",
+        "path": "test/cases/4264_adr_check_names_what_it_skipped.sh",
+        "source_class": "case",
+        "bytes": 1185
+      },
+      {
         "uri": "majordomus://test/test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh",
         "kind": "test",
         "identity": "test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh",
         "path": "test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh",
         "source_class": "case",
         "bytes": 2277
+      },
+      {
+        "uri": "majordomus://test/test/cases/4268_an_adopter_runs_and_records_its_gates.sh",
+        "kind": "test",
+        "identity": "test/cases/4268_an_adopter_runs_and_records_its_gates.sh",
+        "path": "test/cases/4268_an_adopter_runs_and_records_its_gates.sh",
+        "source_class": "case",
+        "bytes": 2423
       },
       {
         "uri": "majordomus://test/test/cases/42_dag_waves.sh",
@@ -127445,12 +127856,28 @@
         "bytes": 3441
       },
       {
+        "uri": "majordomus://test/test/cases/4406_a_chart_is_read_by_pointing_at_it.sh",
+        "kind": "test",
+        "identity": "test/cases/4406_a_chart_is_read_by_pointing_at_it.sh",
+        "path": "test/cases/4406_a_chart_is_read_by_pointing_at_it.sh",
+        "source_class": "case",
+        "bytes": 51277
+      },
+      {
         "uri": "majordomus://test/test/cases/44_model_doctrine.sh",
         "kind": "test",
         "identity": "test/cases/44_model_doctrine.sh",
         "path": "test/cases/44_model_doctrine.sh",
         "source_class": "case",
         "bytes": 3076
+      },
+      {
+        "uri": "majordomus://test/test/cases/4512_no_derived_page_outgrows_the_index.sh",
+        "kind": "test",
+        "identity": "test/cases/4512_no_derived_page_outgrows_the_index.sh",
+        "path": "test/cases/4512_no_derived_page_outgrows_the_index.sh",
+        "source_class": "case",
+        "bytes": 6738
       },
       {
         "uri": "majordomus://test/test/cases/45_github_projection.sh",
@@ -127658,7 +128085,7 @@
         "identity": "test/cases/51_derived_artifacts_committed.sh",
         "path": "test/cases/51_derived_artifacts_committed.sh",
         "source_class": "case",
-        "bytes": 4631
+        "bytes": 5378
       },
       {
         "uri": "majordomus://test/test/cases/529_the_preflight_reads_the_one_verdict.sh",
@@ -128954,7 +129381,7 @@
         "identity": "test/cases/93_scope_policy.sh",
         "path": "test/cases/93_scope_policy.sh",
         "source_class": "case",
-        "bytes": 10026
+        "bytes": 10100
       },
       {
         "uri": "majordomus://test/test/cases/93_workspace_kind.sh",
@@ -129122,7 +129549,7 @@
         "identity": "test/cases/980_a_session_records_what_it_observed.sh",
         "path": "test/cases/980_a_session_records_what_it_observed.sh",
         "source_class": "case",
-        "bytes": 4600
+        "bytes": 4819
       },
       {
         "uri": "majordomus://test/test/cases/981_an_observation_becomes_a_grouped_candidate.sh",
@@ -129975,7 +130402,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1124
+      "objects": 1156
     },
     {
       "name": "knowledge",
@@ -130005,7 +130432,7 @@
       "identity": [
         "id"
       ],
-      "objects": 113
+      "objects": 114
     },
     {
       "name": "moment",
@@ -130137,7 +130564,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 664
+      "objects": 672
     },
     {
       "name": "use-case",
