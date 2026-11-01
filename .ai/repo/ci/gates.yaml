@@ -667,6 +667,19 @@ gates:
     runs: scripts/ci/step-bound-check
     summary: every timed step and every full-history checkout of validate.yml and pages.yml declares a bound smaller than its job's, so a step that runs out of time fails with a message instead of being killed by its job and reported as a cancellation; every gate of this model has a step in its job that dispatches it, times it or writes its receipt, so the ci verdict never meets a green job with a silent gate; and a pages.yml step or job named after a row of .ai/repo/ci/pages.yaml is bounded at no less than budget.bound.percent of that row's warm budget
 
+  # I4381, criterion 9: the warning before the kill. On 2026-10-25 run 40813274272 was killed
+  # at the structure job's 55-minute bound with all its gates green; shell-lint had grown to a
+  # p90 of 1388 s in two weeks and nothing said so. A structure job whose p90 wall time over
+  # the committed window passes half its timeout-minutes fails here, naming its three costliest
+  # gates: the remedy is a split or a cheaper gate, never a larger bound. Typed (ADR 0069):
+  # the gates.headroom capability; the window is scripts/ci-baseline --structure-durations.
+  - id: job-headroom
+    job: structure
+    lane: feedback
+    always: true
+    runs: bin/majordomus-cli gates headroom
+    summary: every structure job's p90 wall time over the committed window .ai/repo/ci/structure-job-durations.tsv is at most half its timeout-minutes in validate.yml; a job past it is named with its three most expensive gates, and a missing window, a job with no measured run or no bound fails
+
   # network: true marks a gate that reaches beyond this machine (GitHub's API, the live
   # site, the published installer). It is true or absent. scripts/ci/run-plan --before-push
   # never runs such a gate before a push and says so (project.a-push-runs-what-ci-would-find-first).

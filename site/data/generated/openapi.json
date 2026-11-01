@@ -71,6 +71,7 @@
     "op-executions-report": "docs/api/executions/",
     "op-executions-start": "docs/api/executions/",
     "op-gates-completion": "docs/api/gates/",
+    "op-gates-headroom": "docs/api/gates/",
     "op-gates-model": "docs/api/gates/",
     "op-gates-policy": "docs/api/gates/",
     "op-gates-state": "docs/api/gates/",
@@ -628,6 +629,7 @@
     "schema-GateClass": "docs/api/gates/",
     "schema-GateClassMatch": "docs/api/gates/",
     "schema-GateClassSelects": "docs/api/gates/",
+    "schema-GateCost": "docs/api/gates/",
     "schema-GateModelEntry": "docs/api/gates/",
     "schema-GateModelReport": "docs/api/gates/",
     "schema-GatePlan": "docs/api/gates/",
@@ -651,6 +653,8 @@
     "schema-HandoverPublishInput": "docs/api/mesh/",
     "schema-HandoverView": "docs/api/mesh/",
     "schema-HeadTiming": "docs/api/integration/",
+    "schema-HeadroomReport": "docs/api/gates/",
+    "schema-HeadroomVerdict": "docs/api/gates/",
     "schema-Health": "docs/api/health/",
     "schema-HealthCheck": "docs/api/health/",
     "schema-HealthRoutes": "docs/api/deploy/",
@@ -733,6 +737,7 @@
     "schema-IssueOrigin": "docs/api/intents/",
     "schema-IssuePurpose": "docs/api/intents/",
     "schema-IssueTrace": "docs/api/trace/",
+    "schema-JobHeadroom": "docs/api/gates/",
     "schema-JobMedian": "docs/api/delivery/",
     "schema-JournalTallies": "docs/api/mesh/",
     "schema-JudgedCommit": "docs/api/commit/",
@@ -1357,8 +1362,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 212,
-    "schemas": 1082,
+    "operations": 213,
+    "schemas": 1086,
     "tags": 60
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1521,6 +1526,7 @@
     "executions.report": "executions",
     "executions.start": "executions",
     "gates.completion": "gates",
+    "gates.headroom": "gates",
     "gates.model": "gates",
     "gates.policy": "gates",
     "gates.state": "gates",
@@ -2082,6 +2088,7 @@
     "GateClass": "gates",
     "GateClassMatch": "gates",
     "GateClassSelects": "gates",
+    "GateCost": "gates",
     "GateModelEntry": "gates",
     "GateModelReport": "gates",
     "GatePlan": "gates",
@@ -2105,6 +2112,8 @@
     "HandoverPublishInput": "mesh",
     "HandoverView": "mesh",
     "HeadTiming": "integration",
+    "HeadroomReport": "gates",
+    "HeadroomVerdict": "gates",
     "Health": "health",
     "HealthCheck": "health",
     "HealthRoutes": "deploy",
@@ -2187,6 +2196,7 @@
     "IssueOrigin": "intents",
     "IssuePurpose": "intents",
     "IssueTrace": "trace",
+    "JobHeadroom": "gates",
     "JobMedian": "delivery",
     "JournalTallies": "mesh",
     "JudgedCommit": "commit",
@@ -21827,6 +21837,7 @@
         "executions.start",
         "gates.model",
         "gates.completion",
+        "gates.headroom",
         "gates.policy",
         "gates.state",
         "graph.get",
@@ -26062,6 +26073,35 @@
       "variants": []
     },
     {
+      "description": "One gate and the longest seconds it took in the window its costs were read from: what a\njob past its share names, longest first, so the remedy starts at the gate that costs most.\n\n```\nuse majordomus_cli::gates::GateCost;\nlet c: GateCost = serde_json::from_value(serde_json::json!({\n    \"gate\": \"shell-lint\", \"seconds\": 1388\n})).unwrap();\nassert_eq!((c.gate.as_str(), c.seconds), (\"shell-lint\", 1388));\n```",
+      "home": "gates",
+      "is_enum": false,
+      "name": "GateCost",
+      "properties": [
+        {
+          "description": "The gate's id in the CI model.",
+          "name": "gate",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its longest recorded seconds.",
+          "name": "seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "JobHeadroom"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "```\nuse majordomus_cli::capability::builtin::gates::GateModelEntry;\nuse majordomus_cli::gates::GateDecl;\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \"id\": \"site-check\",\n    \"job\": \"site\",\n    \"runs\": \"scripts/site-check\",\n    \"summary\": \"the site is whole\"\n}))\n.unwrap();\nlet entry = GateModelEntry { declared: decl, inputs: vec![\"site/**\".into()] };\n// the declaration as the file carries it, plus the paths its evidence is taken over —\n// derived from the classes that select it, never written down a second time\nassert_eq!(entry.declared.id, \"site-check\");\nassert_eq!(entry.inputs, [\"site/**\"]);\n```\nOne gate of the model, with what the model implies about it.",
       "home": "gates",
       "is_enum": false,
@@ -27384,6 +27424,85 @@
         "CiTimings"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Every structure job's headroom, and whether all of them fit.\n\n```\nuse majordomus_cli::gates::HeadroomReport;\nlet r: HeadroomReport = serde_json::from_value(serde_json::json!({\n    \"ok\": false, \"percent\": 50, \"window\": \".ai/repo/ci/structure-job-durations.tsv\",\n    \"jobs\": [], \"problems\": [\"the window is missing\"]\n})).unwrap();\n// a report with a problem is never ok\nassert!(!r.ok && !r.problems.is_empty());\n```",
+      "home": "gates",
+      "is_enum": false,
+      "name": "HeadroomReport",
+      "properties": [
+        {
+          "description": "True only when every structure job fits and every input was read.",
+          "name": "ok",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The share of a bound a p90 may take.",
+          "name": "percent",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Where the window was read from.",
+          "name": "window",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One entry per structure job, in name order.",
+          "name": "jobs",
+          "refs": [
+            "JobHeadroom"
+          ],
+          "required": true,
+          "type": "array of JobHeadroom"
+        },
+        {
+          "description": "What could not be read, one line each; any line makes `ok` false.",
+          "name": "problems",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "gates.headroom"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How one structure job stands against its bound.\n\n```\nuse majordomus_cli::gates::HeadroomVerdict;\n// only a job that fits passes; a job nobody measured is not a pass\nassert_eq!(serde_json::to_string(&HeadroomVerdict::Unmeasured).unwrap(), \"\\\"unmeasured\\\"\");\nassert_ne!(HeadroomVerdict::Unmeasured, HeadroomVerdict::Fits);\n```",
+      "home": "gates",
+      "is_enum": true,
+      "name": "HeadroomVerdict",
+      "properties": [],
+      "type": "\"fits\" | \"exceeds\" | \"unmeasured\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "JobHeadroom"
+      ],
+      "values": [
+        {
+          "description": "The p90 is at most `HEADROOM_PERCENT` of the bound.",
+          "value": "fits"
+        },
+        {
+          "description": "The p90 is past it.",
+          "value": "exceeds"
+        },
+        {
+          "description": "No window, no measured run of the job or no bound: not a pass.",
+          "value": "unmeasured"
+        }
+      ],
       "variants": []
     },
     {
@@ -31926,6 +32045,88 @@
       ],
       "used_by_schemas": [
         "TraceReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One structure job's headroom: its bound, the share of it the p90 may take, how many measured\nruns the window holds, the p90 itself and the share it takes, the verdict with its reason in\none sentence, and the gates that cost the job most.\n\n```\nuse majordomus_cli::gates::{HeadroomVerdict, JobHeadroom};\nlet j: JobHeadroom = serde_json::from_value(serde_json::json!({\n    \"job\": \"structure\", \"bound_seconds\": 3300, \"limit_seconds\": 1650, \"runs\": 2,\n    \"p90_seconds\": 1455, \"used_percent\": 44, \"verdict\": \"fits\",\n    \"reason\": \"job structure: p90 1455 s over 2 run(s) is 44% of its 3300 s bound\",\n    \"costliest_gates\": []\n})).unwrap();\n// the p90 is within the limit, so the job fits\nassert!(j.p90_seconds <= j.limit_seconds);\nassert_eq!(j.verdict, HeadroomVerdict::Fits);\n```",
+      "home": "gates",
+      "is_enum": false,
+      "name": "JobHeadroom",
+      "properties": [
+        {
+          "description": "The job, as the CI model and the workflow name it.",
+          "name": "job",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its `timeout-minutes`, in seconds; absent when the workflow states none.",
+          "name": "bound_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "`HEADROOM_PERCENT` of the bound, in seconds: the most the p90 may be.",
+          "name": "limit_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "How many measured runs of the job the window holds.",
+          "name": "runs",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The 90th percentile (nearest rank) of those runs, in seconds.",
+          "name": "p90_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The p90 as a whole percent of the bound, rounded down.",
+          "name": "used_percent",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "How the job stands.",
+          "name": "verdict",
+          "refs": [
+            "HeadroomVerdict"
+          ],
+          "required": true,
+          "type": "HeadroomVerdict"
+        },
+        {
+          "description": "The verdict in one sentence.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The job's most expensive gates, longest first; at most `COSTLIEST`.",
+          "name": "costliest_gates",
+          "refs": [
+            "GateCost"
+          ],
+          "required": true,
+          "type": "array of GateCost"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "HeadroomReport"
       ],
       "values": [],
       "variants": []
@@ -68351,6 +68552,63 @@
           "result_schema": "Completion",
           "stability": "behaviorally_verified",
           "summary": "Whether this task may be called finished"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "gates headroom",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/gates/headroom\"",
+          "description": "Every structure job the CI model assigns gates to (`structure`, `structure-<x>`), with its `timeout-minutes` from .github/workflows/validate.yml, the 90th percentile (nearest rank) of its wall time over the committed window .ai/repo/ci/structure-job-durations.tsv, and that p90 as a share of the bound. A job past half its bound is `exceeds` and names its three most expensive gates from .ai/repo/ci/structure-durations.tsv, so the remedy is a split or a cheaper gate and never a larger bound (I4381). A missing window, a job with no measured run or no bound is `unmeasured`, never a pass; `ok` is true only when every job fits and every input was read.",
+          "home": "gates",
+          "id": "gates.headroom",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "gate-headroom",
+            "uri": "majordomus://gates/headroom"
+          },
+          "mcp_tool": "majordomus_gate_headroom",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/gates/headroom",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::gates",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Whether each structure job fits in half its bound: the result.",
+              "schema": "HeadroomReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "HeadroomReport",
+          "stability": "behaviorally_verified",
+          "summary": "Whether each structure job fits in half its bound"
         },
         {
           "benchmark": "required",

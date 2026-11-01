@@ -736,6 +736,15 @@
         "status": "query"
       },
       {
+        "id": "capability:gates.headroom",
+        "kind": "capability",
+        "label": "gates.headroom",
+        "summary": "Whether each structure job fits in half its bound",
+        "route": "/cockpit/capabilities/gates.headroom",
+        "source": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:gates.model",
         "kind": "capability",
         "label": "gates.model",
@@ -106759,6 +106768,26 @@
         "kind": "projects"
       },
       {
+        "source": "capability:gates.headroom",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.headroom",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.headroom",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.headroom",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:gates.model",
         "target": "projection:cockpit",
         "kind": "projects"
@@ -152880,6 +152909,11 @@
       },
       {
         "source": "module:gates",
+        "target": "capability:gates.headroom",
+        "kind": "composes"
+      },
+      {
+        "source": "module:gates",
         "target": "capability:gates.model",
         "kind": "composes"
       },
@@ -153610,8 +153644,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4192,
-      "edges": 9633,
+      "nodes": 4193,
+      "edges": 9638,
       "acyclic": false,
       "truncated": false
     }

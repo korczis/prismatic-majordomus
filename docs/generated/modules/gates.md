@@ -5,7 +5,7 @@
 
 Completion as a state the repository decides rather than a claim a worker makes: the validation gates this repository declares in its CI model, which of them a task's own change set selects, what each one last reported, whether that verdict still describes the tree it was taken over, and therefore whether the task may be called finished. A gate that has never reported is `queued` and not `pass`, a run whose files have changed since is `stale` and refuses exactly as a failure does, and a gate the change cannot affect is `exempt` rather than unknown.
 
-Stability: behaviorally_verified. Capabilities: 4.
+Stability: behaviorally_verified. Capabilities: 5.
 
 ## `gates.completion` — Whether this task may be called finished
 
@@ -36,6 +36,27 @@ A model that declares no tiers, or a tier it does not declare, is refused as inv
 input, in the words `scripts/ci-plan --tier` refuses it with. |
 
 Output: `Completion`.
+
+## `gates.headroom` — Whether each structure job fits in half its bound
+
+Every structure job the CI model assigns gates to (`structure`, `structure-<x>`), with its `timeout-minutes` from .github/workflows/validate.yml, the 90th percentile (nearest rank) of its wall time over the committed window .ai/repo/ci/structure-job-durations.tsv, and that p90 as a share of the bound. A job past half its bound is `exceeds` and names its three most expensive gates from .ai/repo/ci/structure-durations.tsv, so the remedy is a split or a cheaper gate and never a larger bound (I4381). A missing window, a job with no measured run or no bound is `unmeasured`, never a pass; `ok` is true only when every job fits and every input was read.
+
+| | |
+|---|---|
+| kind | query |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_gate_headroom` |
+| MCP resource | `majordomus://gates/headroom` |
+| HTTP | `GET /api/v1/gates/headroom` |
+| CLI | `majordomus gates headroom` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::gates |
+| tags | gates, ci, performance, gate |
+
+Input: none.
+
+Output: `HeadroomReport`.
 
 ## `gates.model` — The CI model
 

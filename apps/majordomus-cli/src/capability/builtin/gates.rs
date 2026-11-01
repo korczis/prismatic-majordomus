@@ -1,8 +1,10 @@
 //! The `gates` module: completion as a state the repository decides.
 //!
-//! Four capabilities: the model, the policy, and the completion they decide, which split the
-//! way [`super::obligations`] splits, for the same reason; and the state of every declared
-//! gate's last run, which answers the question none of them does.
+//! Five capabilities: the model, the policy, and the completion they decide, which split the
+//! way [`super::obligations`] splits, for the same reason; the state of every declared
+//! gate's last run, which answers the question none of them does; and the headroom of every
+//! structure job against its bound (I4381), the warning that comes before a job is killed
+//! with all its gates green.
 //!
 //! **The model is declared.** `.ai/repo/ci/gates.yaml` is this repository's CI model: every
 //! validation gate, the job that runs it, the command it runs, and the path classes that
@@ -40,14 +42,21 @@
 //! ```
 //! use majordomus_cli::capability::builtin::gates::module;
 //!
-//! // the whole module, as every projection reads it: four capabilities, none with a
-//! // command-line arm of its own (`majordomus run <id>` reaches each, and `check` and
-//! // `finish` are the command line's answer about completion)
+//! // the whole module, as every projection reads it: five capabilities. Only the headroom
+//! // has a command-line arm of its own, because a CI gate runs it and needs its exit code;
+//! // `majordomus run <id>` reaches the others, and `check` and `finish` are the command
+//! // line's answer about completion
 //! let m = module();
 //! let ids: Vec<&str> = m.capabilities.iter().map(|c| c.capability.id.as_str()).collect();
-//! assert_eq!(ids, ["gates.model", "gates.policy", "gates.completion", "gates.state"]);
+//! assert_eq!(
+//!     ids,
+//!     ["gates.model", "gates.policy", "gates.completion", "gates.state", "gates.headroom"]
+//! );
 //! for entry in &m.capabilities {
-//!     assert!(entry.capability.exposure.cli.is_none());
+//!     let cli = entry.capability.exposure.cli.as_ref().map(|c| c.path.clone());
+//!     let expected = (entry.capability.id.as_str() == "gates.headroom")
+//!         .then(|| vec!["gates".to_string(), "headroom".to_string()]);
+//!     assert_eq!(cli, expected);
 //!     assert!(entry.capability.exposure.http.is_some());
 //! }
 //! ```
@@ -60,9 +69,13 @@ use serde::{Deserialize, Serialize};
 
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{CachePolicy, Exposure, McpExposure, McpResource, Stability};
+use crate::capability::model::{
+    CachePolicy, CliExposure, Exposure, McpExposure, McpResource, Stability,
+};
 use crate::capability::module::ModuleDescriptor;
-use crate::gates::{self, judge, model, Completion, CompletionPolicy, GateStateReport};
+use crate::gates::{
+    self, judge, model, Completion, CompletionPolicy, GateStateReport, HeadroomReport,
+};
 use crate::{capability, module};
 
 use super::get;
@@ -125,6 +138,9 @@ pub struct CompletionPolicyReport {
 
 /// The URI under which the state of every declared gate is read as an MCP resource.
 pub const STATE_URI: &str = "majordomus://gates/state";
+
+/// The URI under which the structure jobs' headroom is read as an MCP resource.
+pub const HEADROOM_URI: &str = "majordomus://gates/headroom";
 
 // ---------------------------------------------------------------- output types
 
@@ -409,6 +425,13 @@ fn head_of(root: &Path) -> Result<String, String> {
     Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
 }
 
+/// `gates.headroom`: every structure job's p90 wall time over the committed window against
+/// half its bound, from the files the CI model, the workflow and `scripts/ci-baseline` keep.
+/// Never cached: a gate that answered from memory could pass a window committed a moment ago.
+fn gates_headroom(ctx: &Context, _: Empty) -> Result<HeadroomReport, CapabilityError> {
+    Ok(gates::headroom::read(Path::new(&ctx.index.repository.root)))
+}
+
 fn gates_state(ctx: &Context, _: Empty) -> Result<GateStateReport, CapabilityError> {
     let root = PathBuf::from(&ctx.index.repository.root);
     let mut findings: Vec<String> = Vec::new();
@@ -648,10 +671,11 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
 /// The `gates` module: the CI model every clone shares, and the completion state only this
 /// checkout can answer.
 ///
-/// Neither has a command-line projection of its own, for the reason [`super::obligations`]
-/// states about the local half: `majordomus check` and `majordomus finish` are already the
-/// command line's answer to this question, and they read this module rather than deriving a
-/// second one. What is new is that they now have a gate half to read.
+/// None but the headroom has a command-line projection of its own, for the reason
+/// [`super::obligations`] states about the local half: `majordomus check` and `majordomus
+/// finish` are already the command line's answer to this question, and they read this module
+/// rather than deriving a second one. The headroom is a CI gate, so `majordomus gates
+/// headroom` gives it the exit code a gate is judged by.
 ///
 /// ```
 /// use majordomus_cli::capability::builtin::gates::module;
@@ -663,7 +687,16 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
 ///     .iter()
 ///     .filter_map(|e| e.capability.exposure.http.as_ref().map(|h| h.path.as_str()))
 ///     .collect();
-/// assert_eq!(routes, ["/api/v1/gates", "/api/v1/gates/policy", "/api/v1/gates/completion", "/api/v1/gates/state"]);
+/// assert_eq!(
+///     routes,
+///     [
+///         "/api/v1/gates",
+///         "/api/v1/gates/policy",
+///         "/api/v1/gates/completion",
+///         "/api/v1/gates/state",
+///         "/api/v1/gates/headroom",
+///     ]
+/// );
 /// ```
 pub fn module() -> ModuleDescriptor {
     module! {
@@ -748,6 +781,25 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Disabled,
                 handler: gates_state,
             },
+            capability! {
+                id: "gates.headroom",
+                title: "Whether each structure job fits in half its bound",
+                description: "Every structure job the CI model assigns gates to (`structure`, `structure-<x>`), with its `timeout-minutes` from .github/workflows/validate.yml, the 90th percentile (nearest rank) of its wall time over the committed window .ai/repo/ci/structure-job-durations.tsv, and that p90 as a share of the bound. A job past half its bound is `exceeds` and names its three most expensive gates from .ai/repo/ci/structure-durations.tsv, so the remedy is a split or a cheaper gate and never a larger bound (I4381). A missing window, a job with no measured run or no bound is `unmeasured`, never a pass; `ok` is true only when every job fits and every input was read.",
+                input: Empty,
+                output: HeadroomReport,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: Some(McpExposure {
+                        tool: Some("majordomus_gate_headroom".into()),
+                        resource: Some(McpResource { uri: HEADROOM_URI.into(), name: "gate-headroom".into() }),
+                    }),
+                    http: get("/api/v1/gates/headroom"),
+                    cli: Some(CliExposure { path: vec!["gates".into(), "headroom".into()] }),
+                },
+                tags: ["gates", "ci", "performance", "gate"],
+                cache: CachePolicy::Disabled,
+                handler: gates_headroom,
+            },
         ],
     }
 }
@@ -760,7 +812,7 @@ mod tests {
     fn the_module_declares_what_it_claims() {
         let m = module();
         assert_eq!(m.id.as_str(), "gates");
-        assert_eq!(m.capabilities.len(), 4);
+        assert_eq!(m.capabilities.len(), 5);
         for e in &m.capabilities {
             assert_eq!(e.capability.id.namespace(), "gates");
             assert!(
@@ -769,6 +821,66 @@ mod tests {
                 e.capability.id
             );
         }
+    }
+
+    /// `gates.headroom` through the registry over a synthetic repository: the structure job
+    /// fits at 49% of its bound, exceeds at 51% naming its costliest gate, and a window that
+    /// is taken away is never a pass.
+    #[test]
+    fn the_headroom_answers_from_the_committed_window_and_a_missing_one_fails() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = repo.root().to_path_buf();
+        std::fs::create_dir_all(root.join(".ai/repo/ci")).unwrap();
+        std::fs::create_dir_all(root.join(".github/workflows")).unwrap();
+        std::fs::write(
+            root.join(model::MODEL_PATH),
+            "version: 1\ngates:\n  - id: lint\n    job: structure\n    runs: \"true\"\n    \
+             summary: lints\n  - id: build\n    job: rust\n    runs: \"true\"\n    \
+             summary: builds\nclasses: []\n",
+        )
+        .unwrap();
+        std::fs::write(
+            root.join(".github/workflows/validate.yml"),
+            "jobs:\n  structure:\n    timeout-minutes: 55\n  rust:\n    timeout-minutes: 60\n",
+        )
+        .unwrap();
+        std::fs::write(
+            root.join(".ai/repo/ci/structure-durations.tsv"),
+            "lint\t1388\n",
+        )
+        .unwrap();
+        let window = root.join(".ai/repo/ci/structure-job-durations.tsv");
+        let headroom = || -> HeadroomReport {
+            let index = repo.index().unwrap();
+            let registry = crate::capability::CapabilityRegistry::builder()
+                .with_modules(super::super::modules())
+                .with_index(&index)
+                .build()
+                .expect("the registry builds");
+            let ctx = Context::new(std::sync::Arc::new(index), std::sync::Arc::new(registry));
+            serde_json::from_value(
+                ctx.execute("gates.headroom", serde_json::json!({}))
+                    .expect("the headroom answers"),
+            )
+            .expect("a headroom report")
+        };
+
+        std::fs::write(&window, "# w\n1\tstructure\t1617\n").unwrap();
+        let fits = headroom();
+        assert!(fits.ok, "{fits:?}");
+        assert_eq!(fits.jobs.len(), 1, "only the structure job is judged");
+        assert_eq!(fits.jobs[0].bound_seconds, Some(3300));
+
+        std::fs::write(&window, "1\tstructure\t1683\n").unwrap();
+        let over = headroom();
+        assert!(!over.ok);
+        assert_eq!(over.jobs[0].verdict, gates::HeadroomVerdict::Exceeds);
+        assert_eq!(over.jobs[0].costliest_gates[0].gate, "lint");
+
+        std::fs::remove_file(&window).unwrap();
+        let none = headroom();
+        assert!(!none.ok);
+        assert_eq!(none.jobs[0].verdict, gates::HeadroomVerdict::Unmeasured);
     }
 
     /// `gates.state` over a synthetic repository with no git: one gate reported by a task

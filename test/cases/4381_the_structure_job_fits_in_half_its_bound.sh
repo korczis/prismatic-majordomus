@@ -32,7 +32,11 @@
 #   7. every job of .ai/repo/ci/gates.yaml named structure or structure-<x> is run by `just
 #      ci-structure` and named in clause 4 of project.an-expedited-landing-is-the-owners-word,
 #      which say what judging "the whole structure job" locally is (proved on a copy of the
-#      recipe that runs only structure). It reads the recipe's text; it does not run it.
+#      recipe that runs only structure). It reads the recipe's text; it does not run it;
+#   8. criterion 9: the CI model's gate job-headroom runs `majordomus-cli gates headroom`, and
+#      that command, over a fixture layer whose structure job is bounded at 55 minutes, exits 0
+#      for a window whose p90 is 49% of the bound, 10 for one at 51% (naming the job and its
+#      costliest gate), and 12 when the window is missing: a missing window is never a pass.
 # What it does not check: a function rust_bin.sh defines other than as `name() ` at the start of
 # a line, a global set by export, readonly or declare, or one assigned inside a function (those
 # are left undeclared on purpose, item 6); the arity of a function (a stub takes any arguments,
@@ -203,4 +207,33 @@ grep -q 'for job in structure; do' "$T/ci.only-structure.just" || { echo "    th
 expect_exit 1 recipe_runs_every_job "$T/ci.only-structure.just"
 expect_grep 'does not run structure-b'
 
-echo "    shellcheck reads test/lib.sh's chain through $DECL_REL, not lib/rust_bin.sh (${chained} ms against ${alone} ms alone); its names agree with rust_bin.sh's; SC2033 holds on xargs, sudo and find -exec; a read of a variable only rust_bin.sh assigns ($var) is still reported; and just ci-structure and the rule name every structure job ($(tr '\n' ' ' < "$T/structure.jobs" | sed 's/ $//'))"
+# --- 8. the warning before the kill (criterion 9): the gate, and the command it runs
+G="$ROOT/.ai/repo/ci/gates.yaml"
+awk '/^  - id: job-headroom$/ {f=1; next} f && /^  - id: / {exit} f' "$G" > "$T/headroom.gate"
+for want in '^    job: structure$' '^    always: true$' '^    runs: bin/majordomus-cli gates headroom$'; do
+  grep -q "$want" "$T/headroom.gate" \
+    || { echo "    the CI model's gate job-headroom lacks /$want/: it must be an always-on structure gate running bin/majordomus-cli gates headroom"; exit 1; }
+done
+RBIN="$(rust_bin)" || rust_bin_exit $?
+HR="$T/headroom-layer"; mkdir -p "$HR"
+( cd "$HR" && git init -q && "$MJ" init >/dev/null 2>&1 && git add -A && git commit -qm adopt ) \
+  || { echo "    the fixture layer could not be adopted"; exit 1; }
+mkdir -p "$HR/.ai/repo/ci" "$HR/.github/workflows"
+printf 'version: 1\ngates:\n  - id: shell-lint\n    job: structure\n    runs: "true"\n    summary: lints\n  - id: audit-plan\n    job: structure\n    runs: "true"\n    summary: audits\nclasses: []\n' > "$HR/.ai/repo/ci/gates.yaml"
+printf 'jobs:\n  structure:\n    timeout-minutes: 55\n' > "$HR/.github/workflows/validate.yml"
+printf 'shell-lint\t1388\naudit-plan\t0\n' > "$HR/.ai/repo/ci/structure-durations.tsv"
+headroom() { MAJORDOMUS_SHARE="$ROOT/share" "$RBIN" gates headroom --repo "$HR"; }
+# 1617 s is 49% of 3300 s, 1683 s is 51%; the p90 of ten runs is the ninth, so the outlier
+# a tenth run adds does not decide
+{ for i in 1 2 3 4 5 6 7 8 9; do printf '%s\tstructure\t1617\n' "$i"; done; printf '10\tstructure\t3000\n'; } > "$HR/.ai/repo/ci/structure-job-durations.tsv"
+expect_exit 0 headroom || { echo "    a structure job at 49% of its bound was refused"; exit 1; }
+expect_grep '^fits ' || { echo "    the passing job was not reported as fitting"; exit 1; }
+printf '1\tstructure\t1683\n' > "$HR/.ai/repo/ci/structure-job-durations.tsv"
+expect_exit 10 headroom || { echo "    a structure job at 51% of its bound was not refused with exit 10"; exit 1; }
+expect_grep 'EXCEEDS .*job structure.*51%' || { echo "    the refusal does not name the job and its share"; exit 1; }
+expect_grep 'shell-lint 1388 s' || { echo "    the refusal does not name the costliest gate"; exit 1; }
+rm "$HR/.ai/repo/ci/structure-job-durations.tsv"
+expect_exit 12 headroom || { echo "    a missing window was not refused with exit 12"; exit 1; }
+expect_grep 'is missing' || { echo "    the missing window is not named"; exit 1; }
+
+echo "    shellcheck reads test/lib.sh's chain through $DECL_REL, not lib/rust_bin.sh (${chained} ms against ${alone} ms alone); its names agree with rust_bin.sh's; SC2033 holds on xargs, sudo and find -exec; a read of a variable only rust_bin.sh assigns ($var) is still reported; and just ci-structure and the rule name every structure job ($(tr '\n' ' ' < "$T/structure.jobs" | sed 's/ $//')); gates headroom fits at 49% of the bound, refuses at 51% naming shell-lint, and refuses a missing window"

@@ -5037,6 +5037,62 @@ paths:
         resource:
           uri: majordomus://gates/completion
           name: completion
+  "/api/v1/gates/headroom":
+    get:
+      operationId: gates.headroom
+      summary: Whether each structure job fits in half its bound
+      description: "Every structure job the CI model assigns gates to (`structure`, `structure-<x>`), with its `timeout-minutes` from .github/workflows/validate.yml, the 90th percentile (nearest rank) of its wall time over the committed window .ai/repo/ci/structure-job-durations.tsv, and that p90 as a share of the bound. A job past half its bound is `exceeds` and names its three most expensive gates from .ai/repo/ci/structure-durations.tsv, so the remedy is a split or a cheaper gate and never a larger bound (I4381). A missing window, a job with no measured run or no bound is `unmeasured`, never a pass; `ok` is true only when every job fits and every input was read."
+      tags:
+        - gates
+      parameters: []
+      responses:
+        "200":
+          description: "Whether each structure job fits in half its bound: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/HeadroomReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: gates.headroom
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::gates
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_gate_headroom
+        resource:
+          uri: majordomus://gates/headroom
+          name: gate-headroom
+      x-majordomus-cli: gates headroom
   "/api/v1/gates/policy":
     get:
       operationId: gates.policy
@@ -26800,6 +26856,21 @@ components:
             type: string
           description: "`gates: [a, b]` — exactly these, and `gates: []` — nothing."
       description: "What a class selects: the word `full`, or the gates it names."
+    GateCost:
+      type: object
+      properties:
+        gate:
+          type: string
+          description: "The gate's id in the CI model."
+        seconds:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Its longest recorded seconds.
+      required:
+        - gate
+        - seconds
+      description: "One gate and the longest seconds it took in the window its costs were read from: what a\njob past its share names, longest first, so the remedy starts at the gate that costs most.\n\n```\nuse majordomus_cli::gates::GateCost;\nlet c: GateCost = serde_json::from_value(serde_json::json!({\n    \"gate\": \"shell-lint\", \"seconds\": 1388\n})).unwrap();\nassert_eq!((c.gate.as_str(), c.seconds), (\"shell-lint\", 1388));\n```"
     GateModelEntry:
       type: object
       properties:
@@ -27564,6 +27635,49 @@ components:
         - slowest_seconds
         - failed
       description: "How long CI took on one open pull request's head: from its first check's start to its last\ncheck's completion, and the check that took longest."
+    HeadroomReport:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          description: True only when every structure job fits and every input was read.
+        percent:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: The share of a bound a p90 may take.
+        window:
+          type: string
+          description: Where the window was read from.
+        jobs:
+          type: array
+          items:
+            "$ref": "#/components/schemas/JobHeadroom"
+          description: "One entry per structure job, in name order."
+        problems:
+          type: array
+          items:
+            type: string
+          description: "What could not be read, one line each; any line makes `ok` false."
+      required:
+        - ok
+        - percent
+        - window
+        - jobs
+        - problems
+      description: "Every structure job's headroom, and whether all of them fit.\n\n```\nuse majordomus_cli::gates::HeadroomReport;\nlet r: HeadroomReport = serde_json::from_value(serde_json::json!({\n    \"ok\": false, \"percent\": 50, \"window\": \".ai/repo/ci/structure-job-durations.tsv\",\n    \"jobs\": [], \"problems\": [\"the window is missing\"]\n})).unwrap();\n// a report with a problem is never ok\nassert!(!r.ok && !r.problems.is_empty());\n```"
+    HeadroomVerdict:
+      oneOf:
+        - type: string
+          const: fits
+          description: "The p90 is at most `HEADROOM_PERCENT` of the bound."
+        - type: string
+          const: exceeds
+          description: The p90 is past it.
+        - type: string
+          const: unmeasured
+          description: "No window, no measured run of the job or no bound: not a pass."
+      description: "How one structure job stands against its bound.\n\n```\nuse majordomus_cli::gates::HeadroomVerdict;\n// only a job that fits passes; a job nobody measured is not a pass\nassert_eq!(serde_json::to_string(&HeadroomVerdict::Unmeasured).unwrap(), \"\\\"unmeasured\\\"\");\nassert_ne!(HeadroomVerdict::Unmeasured, HeadroomVerdict::Fits);\n```"
     Health:
       type: object
       properties:
@@ -30073,6 +30187,63 @@ components:
         - commits
         - complete
       description: "Everything git knows about one issue's realisation."
+    JobHeadroom:
+      type: object
+      properties:
+        job:
+          type: string
+          description: "The job, as the CI model and the workflow name it."
+        bound_seconds:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "Its `timeout-minutes`, in seconds; absent when the workflow states none."
+        limit_seconds:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "`HEADROOM_PERCENT` of the bound, in seconds: the most the p90 may be."
+        runs:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: How many measured runs of the job the window holds.
+        p90_seconds:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "The 90th percentile (nearest rank) of those runs, in seconds."
+        used_percent:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "The p90 as a whole percent of the bound, rounded down."
+        verdict:
+          "$ref": "#/components/schemas/HeadroomVerdict"
+          description: How the job stands.
+        reason:
+          type: string
+          description: The verdict in one sentence.
+        costliest_gates:
+          type: array
+          items:
+            "$ref": "#/components/schemas/GateCost"
+          description: "The job's most expensive gates, longest first; at most `COSTLIEST`."
+      required:
+        - job
+        - runs
+        - verdict
+        - reason
+        - costliest_gates
+      description: "One structure job's headroom: its bound, the share of it the p90 may take, how many measured\nruns the window holds, the p90 itself and the share it takes, the verdict with its reason in\none sentence, and the gates that cost the job most.\n\n```\nuse majordomus_cli::gates::{HeadroomVerdict, JobHeadroom};\nlet j: JobHeadroom = serde_json::from_value(serde_json::json!({\n    \"job\": \"structure\", \"bound_seconds\": 3300, \"limit_seconds\": 1650, \"runs\": 2,\n    \"p90_seconds\": 1455, \"used_percent\": 44, \"verdict\": \"fits\",\n    \"reason\": \"job structure: p90 1455 s over 2 run(s) is 44% of its 3300 s bound\",\n    \"costliest_gates\": []\n})).unwrap();\n// the p90 is within the limit, so the job fits\nassert!(j.p90_seconds <= j.limit_seconds);\nassert_eq!(j.verdict, HeadroomVerdict::Fits);\n```"
     JobMedian:
       type: object
       properties:

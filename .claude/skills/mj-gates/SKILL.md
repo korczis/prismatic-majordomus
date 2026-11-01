@@ -1,6 +1,6 @@
 ---
 name: mj-gates
-description: "Majordomus gates: Whether this task may be called finished; The CI model; The completion policy; How each gate last went."
+description: "Majordomus gates: Whether this task may be called finished; Whether each structure job fits in half its bound; The CI model; The completion policy; How each gate last went."
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
@@ -16,6 +16,7 @@ $ARGUMENTS
 | Capability | What it is | MCP tool | Command line | Effect |
 |---|---|---|---|---|
 | `gates.completion` | Whether this task may be called finished | `majordomus_completion` | — | reads |
+| `gates.headroom` | Whether each structure job fits in half its bound | `majordomus_gate_headroom` | `majordomus gates headroom` | reads |
 | `gates.model` | The CI model | `majordomus_gates` | — | reads |
 | `gates.policy` | The completion policy | `majordomus_completion_policy` | — | reads |
 | `gates.state` | How each gate last went | `majordomus_gate_state` | — | reads |

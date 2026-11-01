@@ -49,6 +49,7 @@ pub(crate) mod entity;
 pub(crate) mod env;
 pub(crate) mod evidence;
 pub(crate) mod executions;
+mod gates;
 pub(crate) mod generate;
 pub(crate) mod guard;
 pub(crate) mod intent;
@@ -124,6 +125,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Entity(args) => entity::run(args),
         Command::Shell(args) => shell::run(args),
         Command::Layout(args) => layout::run(args),
+        Command::Gates(args) => gates::run(args),
         Command::Pack(args) => pack::run(args),
         Command::Dashboard(args) => dashboard::run(args),
         Command::Brief(args) => brief::run(args),

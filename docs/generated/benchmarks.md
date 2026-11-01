@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 220 | 181 | 0 | 39 |
-| http | 212 | 181 | 0 | 31 |
-| mcp | 206 | 176 | 0 | 30 |
+| direct | 221 | 182 | 0 | 39 |
+| http | 213 | 182 | 0 | 31 |
+| mcp | 207 | 177 | 0 | 30 |
 | system | 14 | 14 | 0 | 0 |
-| total | 652 | 552 | 0 | 100 |
+| total | 655 | 555 | 0 | 100 |
 
 ## Capabilities
 
@@ -93,6 +93,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `executions.report` | executions | command | — | waived | — | waived | — |
 | `executions.start` | executions | command | — | covered | covered | covered | `demonstrate` |
 | `gates.completion` | gates | query | — | covered | covered | covered | `this-task`, `one-source-file`, `a-document`, `everything-on-demand` |
+| `gates.headroom` | gates | query | — | covered | covered | covered | `default` |
 | `gates.model` | gates | query | process, 4 entries, 5s | covered | covered | covered | `default` |
 | `gates.policy` | gates | query | process, 4 entries, 5s | covered | covered | covered | `default` |
 | `gates.state` | gates | query | — | covered | covered | covered | `default` |
