@@ -13,6 +13,7 @@
     "op-commit-plan": "docs/api/commit/",
     "op-commit-scopes": "docs/api/commit/",
     "op-commit-validate": "docs/api/commit/",
+    "op-compute-verify": "docs/api/compute/",
     "op-continuity-device": "docs/api/continuity/",
     "op-continuity-plan": "docs/api/continuity/",
     "op-continuity-publish": "docs/api/continuity/",
@@ -387,6 +388,10 @@
     "schema-Completion": "docs/api/gates/",
     "schema-CompletionPolicyReport": "docs/api/gates/",
     "schema-Component": "docs/api/continuity/",
+    "schema-ComputeFunction": "docs/api/compute/",
+    "schema-ComputeVerdict": "docs/api/compute/",
+    "schema-ComputeVerification": "docs/api/compute/",
+    "schema-ComputeVerifyInput": "docs/api/compute/",
     "schema-ConclusionView": "docs/api/reasoning/",
     "schema-ConditionState": "docs/api/intents/",
     "schema-Confidence": "docs/api/environment/",
@@ -1300,6 +1305,7 @@
     "tag-capabilities": "docs/api/capabilities/",
     "tag-commands": "docs/api/commands/",
     "tag-commit": "docs/api/commit/",
+    "tag-compute": "docs/api/compute/",
     "tag-continuity": "docs/api/continuity/",
     "tag-convergence": "docs/api/convergence/",
     "tag-dashboard": "docs/api/dashboard/",
@@ -1357,9 +1363,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 212,
-    "schemas": 1082,
-    "tags": 60
+    "operations": 213,
+    "schemas": 1086,
+    "tags": 61
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1463,6 +1469,7 @@
     "commit.plan": "commit",
     "commit.scopes": "commit",
     "commit.validate": "commit",
+    "compute.verify": "compute",
     "continuity.device": "continuity",
     "continuity.plan": "continuity",
     "continuity.publish": "continuity",
@@ -1841,6 +1848,10 @@
     "Completion": "gates",
     "CompletionPolicyReport": "gates",
     "Component": "continuity",
+    "ComputeFunction": "compute",
+    "ComputeVerdict": "compute",
+    "ComputeVerification": "compute",
+    "ComputeVerifyInput": "compute",
     "ConclusionView": "reasoning",
     "ConditionState": "intents",
     "Confidence": "environment",
@@ -12003,6 +12014,152 @@
       "variants": []
     },
     {
+      "description": "A function of the portable core whose result a browser may claim.\n\n```\nuse majordomus_cli::capability::builtin::compute::ComputeFunction;\nlet f: ComputeFunction = serde_json::from_str(r#\"\"canonical_digest\"\"#).unwrap();\nassert_eq!(f, ComputeFunction::CanonicalDigest);\n```",
+      "home": "compute",
+      "is_enum": true,
+      "name": "ComputeFunction",
+      "properties": [],
+      "type": "\"canonical_digest\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ComputeVerification",
+        "ComputeVerifyInput"
+      ],
+      "values": [
+        {
+          "description": "SHA-256, as lowercase hex, of a JSON document's canonical bytes: the digest the mesh\nsigns and the executor keys its cache by.",
+          "value": "canonical_digest"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "What the server's recomputation says of a claim.\n\n```\nuse majordomus_cli::capability::builtin::compute::ComputeVerdict;\nassert_eq!(serde_json::to_string(&ComputeVerdict::Mismatch).unwrap(), r#\"\"mismatch\"\"#);\n```",
+      "home": "compute",
+      "is_enum": true,
+      "name": "ComputeVerdict",
+      "properties": [],
+      "type": "\"match\" | \"mismatch\" | \"invalid\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ComputeVerification"
+      ],
+      "values": [
+        {
+          "description": "The server computed the same result from the same input.",
+          "value": "match"
+        },
+        {
+          "description": "The server computed a different result: the claim is wrong, whoever made it.",
+          "value": "mismatch"
+        },
+        {
+          "description": "The claim could not be judged: its input is not what the function takes, or its\nresult is not the shape the function returns. `reason` says which.",
+          "value": "invalid"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The server's answer to a claim.\n\n```\nuse majordomus_cli::capability::builtin::compute::{\n    verify_claim, ComputeFunction, ComputeVerification,\n};\nlet answer: ComputeVerification = verify_claim(ComputeFunction::CanonicalDigest, \"[1]\", \"00\");\nassert_eq!(answer.reason.as_deref(), Some(\"the claimed result is not 64 lowercase hex characters\"));\nassert_eq!(answer.input_bytes, 3);\nassert!(answer.recomputed.is_some(), \"the input was read, so the server says what it computed\");\n```",
+      "home": "compute",
+      "is_enum": false,
+      "name": "ComputeVerification",
+      "properties": [
+        {
+          "description": "The function the claim named.",
+          "name": "function",
+          "refs": [
+            "ComputeFunction"
+          ],
+          "required": true,
+          "type": "ComputeFunction"
+        },
+        {
+          "description": "Whether the server's recomputation agrees.",
+          "name": "verdict",
+          "refs": [
+            "ComputeVerdict"
+          ],
+          "required": true,
+          "type": "ComputeVerdict"
+        },
+        {
+          "description": "The result the claim carried, as given.",
+          "name": "claimed",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the server computed, when the input could be read.",
+          "name": "recomputed",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Why the claim could not be judged, when the verdict is `invalid`.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How many bytes of input the claim carried.",
+          "name": "input_bytes",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "compute.verify"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A browser's claim: what it computed, on what, and what it got.\n\n```\nuse majordomus_cli::capability::builtin::compute::{ComputeFunction, ComputeVerifyInput};\nlet claim: ComputeVerifyInput =\n    serde_json::from_str(r#\"{\"input\":\"[1]\",\"claimed\":\"00\"}\"#).unwrap();\nassert_eq!(claim.function, ComputeFunction::CanonicalDigest, \"the function defaults\");\n```",
+      "home": "compute",
+      "is_enum": false,
+      "name": "ComputeVerifyInput",
+      "properties": [
+        {
+          "description": "The function the claim was computed with.",
+          "name": "function",
+          "refs": [
+            "ComputeFunction"
+          ],
+          "required": false,
+          "type": "ComputeFunction"
+        },
+        {
+          "description": "The input the browser computed on, as JSON text, at most `MAX_INPUT_BYTES`.",
+          "name": "input",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The result the browser claims: for `canonical_digest`, 64 lowercase hex characters.",
+          "name": "claimed",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "compute.verify"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One conclusion, as the state reports it.\n\nBesides the decision and its computed review, the view counts the validations\nrecorded against the conclusion and names the later conclusion that superseded it,\nif any. A superseded conclusion stays in the list; the report leaves it out.\n\n```\n#### use majordomus_cli::reasoning::record::ReasoningRecord;\n#### use serde_json::json;\n#### fn rec(id: &str, n: u32, body: serde_json::Value) -> ReasoningRecord {\n####     serde_json::from_value(json!({\n####         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": \"t\",\n####         \"recorded_at\": format!(\"2026-10-01T00:00:{n:02}Z\"), \"body\": body,\n####     }))\n####     .unwrap()\n#### }\nuse majordomus_cli::reasoning::state::{derive, ConclusionView};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet conclusion = |decision: &str, supersedes: Option<&str>| {\n    json!({\n        \"kind\": \"conclusion\", \"assessment\": \"assessment-0\", \"decision\": decision,\n        \"rationale\": \"r\", \"supersedes\": supersedes,\n        \"reviewed_by\": [], \"independent_review_count\": 0,\n    })\n};\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\"conclusion-1\", 1, conclusion(\"A\", None)));\nloaded.records.push(rec(\"validation-2\", 2, json!({\n    \"kind\": \"validation\", \"conclusion\": \"conclusion-1\", \"check\": \"x\", \"outcome\": \"fail\",\n})));\nloaded.records.push(rec(\"conclusion-3\", 3, conclusion(\"B\", Some(\"conclusion-1\"))));\n\nlet state = derive(&loaded, None);\nlet first: &ConclusionView = &state.conclusions[0];\nassert_eq!((first.validations_passed, first.validations_failed), (0, 1));\nassert_eq!(first.superseded_by.as_deref(), Some(\"conclusion-3\"));\nassert_eq!(state.conclusions[1].superseded_by, None);\n```",
       "home": "reasoning",
       "is_enum": false,
@@ -21768,6 +21925,7 @@
         "commit.plan",
         "commit.scopes",
         "commit.validate",
+        "compute.verify",
         "continuity.state",
         "continuity.device",
         "continuity.plan",
@@ -64141,6 +64299,76 @@
         }
       ],
       "slug": "commit"
+    },
+    {
+      "description": "The server's half of browser compute (ADR 0170): a browser computes with the portable core, the same code this executable links, and returns a claim; the server recomputes it on the same input and says whether they agree. A verification records nothing, so any caller may ask, and agreement among browsers is never proof.",
+      "name": "compute",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [
+            {
+              "case": "match",
+              "json": "{\"function\":\"canonical_digest\",\"input\":\"{\\\"b\\\":[1,2,{\\\"d\\\":true}],\\\"a\\\":\\\"x\\\"}\",\"claimed\":\"805b269d6f45f7d8c91abe60bae90be5475c952e6fd7fb57843a8c2fedbe5f4f\"}"
+            },
+            {
+              "case": "mismatch",
+              "json": "{\"function\":\"canonical_digest\",\"input\":\"{\\\"b\\\":[1,2,{\\\"d\\\":true}],\\\"a\\\":\\\"x\\\"}\",\"claimed\":\"0000000000000000000000000000000000000000000000000000000000000000\"}"
+            }
+          ],
+          "body_schema": "ComputeVerifyInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/compute/verify\" -H \"content-type: application/json\" -d '{\"function\":\"canonical_digest\",\"input\":\"{\\\"b\\\":[1,2,{\\\"d\\\":true}],\\\"a\\\":\\\"x\\\"}\",\"claimed\":\"805b269d6f45f7d8c91abe60bae90be5475c952e6fd7fb57843a8c2fedbe5f4f\"}'",
+          "description": "Recompute a claimed result of a portable-core function (today `canonical_digest`: SHA-256 of a JSON document's canonical bytes) on the input the claim carries, with the same core the browser ran as wasm32, and answer `match`, `mismatch`, or `invalid` with the reason when the input is not JSON, exceeds 1 MiB or the result is not the function's shape. It records nothing: no execution, ledger entry or journal event, and the claim never enters a record.",
+          "home": "compute",
+          "id": "compute.verify",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_compute_verify",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/compute/verify",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::compute",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Whether a browser's result is what the server computes: the result.",
+              "schema": "ComputeVerification",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ComputeVerification",
+          "stability": "experimental",
+          "summary": "Whether a browser's result is what the server computes"
+        }
+      ],
+      "slug": "compute"
     },
     {
       "description": "What this checkout's lifecycle is holding: the open episode, the record the next worker would resume from with the label that says how far to trust it, the newest progress note, and what is blocking acceptance. Read from the local half of the layer, which this process serves to the worker in front of it and never publishes.",

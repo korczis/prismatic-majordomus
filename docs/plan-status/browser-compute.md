@@ -9,14 +9,42 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [browser-compute](https://majordomus.dev/plan/browser-compute/) | DONE | 1/1 | 0 | 0 | 0 | 0 | 0 | One portable core runs on the host and as wasm32 in a browser, held by one executed fixture; the server verifies a browser's result by recomputing it; recording browser results, enrollment and community compute follow only once the owner decides how a remote browser is authenticated and narrowly granted a task (ADR 0170). |
+| [browser-compute](https://majordomus.dev/plan/browser-compute/) | ACTIVE | 1/3 | 1 | 1 | 0 | 0 | 0 | One portable core runs on the host and as wasm32 in a browser, held by one executed fixture; the server verifies a browser's result by recomputing it; recording browser results, enrollment and community compute follow only once the owner decides how a remote browser is authenticated and narrowly granted a task (ADR 0170). |
 
 ## Issues
 
 | issue | status | wave | depends on | title |
 |---|---|---|---|---|
 | [I2784](https://majordomus.dev/plan/i2784/) | DONE | 0 | — | One portable core runs on the host and as wasm32, and one executed fixture holds both |
+| [I2785](https://majordomus.dev/plan/i2785/) | READY | 1 | I2784 | The server recomputes a browser's claimed result with the portable core |
+| [I2788](https://majordomus.dev/plan/i2788/) | BLOCKED | 2 | I2785 | A page computes the canonical digest in a Worker and shows the server's verdict |
 
 ## Findings
 
-None about this milestone or its issues.
+| level | code | subject | message |
+|---|---|---|---|
+| WARN | `scope_conflict` | `I2785` | shares .ai/repo/project with I2870; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares docs with I2981; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares apps/majordomus-cli/src/capability/builtin/compute.rs with I3016; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares .ai/repo/project with I3071; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares .ai/repo/project with I3072; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares .ai/repo/project with I3076; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares .ai/repo/project with I3117; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares .ai/repo/project with I3119; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares docs with I3122; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares docs with I3124; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares docs with I3176; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares .ai/repo/project with I3229; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares docs with I3292; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares share with I3303; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares docs with I3352; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares docs with I3353; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares docs with I3367; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares docs with I3377; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares docs with I3378; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares docs with I3382; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares docs with I3390; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares .ai/repo/project with I3825; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares .ai/repo/project with I3843; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares .ai/repo/project with I3932; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares docs with I4332; they may not run concurrently |

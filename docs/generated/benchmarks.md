@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 220 | 181 | 0 | 39 |
-| http | 212 | 181 | 0 | 31 |
-| mcp | 206 | 176 | 0 | 30 |
+| direct | 221 | 182 | 0 | 39 |
+| http | 213 | 182 | 0 | 31 |
+| mcp | 207 | 177 | 0 | 30 |
 | system | 14 | 14 | 0 | 0 |
-| total | 652 | 552 | 0 | 100 |
+| total | 655 | 555 | 0 | 100 |
 
 ## Capabilities
 
@@ -32,6 +32,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `commit.plan` | commit | query | — | covered | covered | covered | `default` |
 | `commit.scopes` | commit | query | — | covered | covered | covered | `default` |
 | `commit.validate` | commit | query | — | covered | covered | covered | `conventional`, `not-conventional`, `merge` |
+| `compute.verify` | compute | query | — | covered | covered | covered | `match`, `mismatch` |
 | `continuity.device` | continuity | command | — | waived | waived | waived | — |
 | `continuity.plan` | continuity | query | — | covered | covered | covered | `default`, `by-prefix` |
 | `continuity.publish` | continuity | command | — | waived | waived | waived | — |
@@ -275,6 +276,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.ui.capabilities` | `/ui/capabilities` | pinned | — |
 | `system.http.ui.skills` | `/ui/skills` | pinned | — |
 | `system.http.ui.mesh` | `/ui/mesh` | pinned | — |
+| `system.http.ui.compute` | `/ui/compute` | pinned | — |
 | `system.http.ui.peers` | `/ui/peers` | pinned | — |
 | `system.http.ui.delivery` | `/ui/delivery` | pinned | — |
 | `system.http.ui.deployments` | `/ui/deployments` | pinned | — |
@@ -294,6 +296,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.live.ui.capabilities` | `/ui/capabilities` | live | — |
 | `system.http.live.ui.skills` | `/ui/skills` | live | — |
 | `system.http.live.ui.mesh` | `/ui/mesh` | live | — |
+| `system.http.live.ui.compute` | `/ui/compute` | live | — |
 | `system.http.live.ui.peers` | `/ui/peers` | live | — |
 | `system.http.live.ui.delivery` | `/ui/delivery` | live | — |
 | `system.http.live.ui.deployments` | `/ui/deployments` | live | — |

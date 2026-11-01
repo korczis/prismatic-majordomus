@@ -109,6 +109,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:compute.verify",
+      "path": "/evidence/capabilities/compute-verify/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:continuity.device",
       "path": "/evidence/capabilities/continuity-device/"
     },
@@ -4173,6 +4178,16 @@
       "members": [
         "command:commit validate"
       ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:compute.verify": {
+      "kind": "capability",
+      "id": "compute.verify",
+      "page": "/evidence/capabilities/compute-verify/",
+      "programs": [],
+      "members": [],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -20614,6 +20629,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_compute_verify": {
+      "kind": "mcp",
+      "id": "majordomus_compute_verify",
+      "alias_of": "capability:compute.verify",
+      "programs": [],
+      "members": [
+        "capability:compute.verify"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_continuity": {
       "kind": "mcp",
       "id": "majordomus_continuity",
@@ -29535,6 +29562,7 @@
     "crate:cli_docs",
     "crate:cli_validate_violations",
     "crate:cockpit_plan",
+    "crate:compute_verify",
     "crate:continuity",
     "crate:continuity_transfer",
     "crate:cov_runtime_a_server",
@@ -29613,6 +29641,7 @@
     "crate:shared_units",
     "crate:skeleton_holds_the_declaration",
     "crate:tool_input_schemas",
+    "crate:ui_compute",
     "crate:ui_idd",
     "crate:ui_idd_evidence",
     "crate:ui_idd_live",

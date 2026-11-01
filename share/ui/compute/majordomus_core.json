@@ -1,0 +1,16 @@
+{
+  "module": "majordomus_core.wasm",
+  "module_sha256": "619f4c174394a0cf26c0f8a76d4825fc78867f70ded7140849464611ea5b60a6",
+  "sources_sha256": "c9c17b9d607073a5da0b4ae1425205afa5233e0095fa641e13a78deccc9fd909",
+  "sources": [
+    "apps/majordomus-core/Cargo.lock",
+    "apps/majordomus-core/Cargo.toml",
+    "apps/majordomus-core/src/lib.rs",
+    "apps/majordomus-core/src/wasm.rs",
+    "rust-toolchain.toml"
+  ],
+  "target": "wasm32-unknown-unknown",
+  "toolchain": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "host": "aarch64-apple-darwin",
+  "rebuild": "cargo test --test ui_compute -- --ignored --exact the_core_module_is_rebuilt_from_its_sources"
+}

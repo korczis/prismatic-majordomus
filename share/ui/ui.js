@@ -280,7 +280,9 @@ async function readScreen() {
   if (document.visibilityState !== 'visible') return;
   const main = document.getElementById('main');
   if (!main || main.querySelector('[aria-busy="true"]')) return;
-  if (main.querySelector('[data-observatory]')) return;
+  // a screen that holds what the reader is doing (the Observatory's scene, a computation
+  // asked in the browser) is not read again under them
+  if (main.querySelector('[data-observatory], [data-keeps-its-place]')) return;
   // the screen as it is shown, filters included: the query is the reader's, not this script's
   const query = window.location.search ? `${window.location.search}&` : '?';
   const controller = new AbortController();

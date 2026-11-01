@@ -41,6 +41,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 4
+  - id: compute
+    title: Browser compute
+    description: "The server's half of browser compute (ADR 0170): a browser computes with the portable core, the same code this executable links, and returns a claim; the server recomputes it on the same input and says whether they agree. A verification records nothing, so any caller may ask, and agreement among browsers is never proof."
+    stability: experimental
+    source: builtin
+    capabilities: 1
   - id: continuity
     title: Continuity
     description: "What this checkout's lifecycle is holding: the open episode, the record the next worker would resume from with the label that says how far to trust it, the newest progress note, and what is blocking acceptance. Read from the local half of the layer, which this process serves to the worker in front of it and never publishes."
@@ -5064,6 +5070,118 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/commit.rs
+  - id: compute.verify
+    module: compute
+    kind: query
+    title: "Whether a browser's result is what the server computes"
+    description: "Recompute a claimed result of a portable-core function (today `canonical_digest`: SHA-256 of a JSON document's canonical bytes) on the input the claim carries, with the same core the browser ran as wasm32, and answer `match`, `mismatch`, or `invalid` with the reason when the input is not JSON, exceeds 1 MiB or the result is not the function's shape. It records nothing: no execution, ledger entry or journal event, and the claim never enters a record."
+    input:
+      name: ComputeVerifyInput
+      schema:
+        type: object
+        properties:
+          function:
+            "$ref": "#/$defs/ComputeFunction"
+            description: The function the claim was computed with.
+            default: canonical_digest
+          input:
+            type: string
+            description: "The input the browser computed on, as JSON text, at most `MAX_INPUT_BYTES`."
+          claimed:
+            type: string
+            description: "The result the browser claims: for `canonical_digest`, 64 lowercase hex characters."
+        required:
+          - input
+          - claimed
+        description: "A browser's claim: what it computed, on what, and what it got.\n\n```\nuse majordomus_cli::capability::builtin::compute::{ComputeFunction, ComputeVerifyInput};\nlet claim: ComputeVerifyInput =\n    serde_json::from_str(r#\"{\"input\":\"[1]\",\"claimed\":\"00\"}\"#).unwrap();\nassert_eq!(claim.function, ComputeFunction::CanonicalDigest, \"the function defaults\");\n```"
+        title: ComputeVerifyInput
+        "$defs":
+          ComputeFunction:
+            oneOf:
+              - type: string
+                const: canonical_digest
+                description: "SHA-256, as lowercase hex, of a JSON document's canonical bytes: the digest the mesh\nsigns and the executor keys its cache by."
+            description: "A function of the portable core whose result a browser may claim.\n\n```\nuse majordomus_cli::capability::builtin::compute::ComputeFunction;\nlet f: ComputeFunction = serde_json::from_str(r#\"\"canonical_digest\"\"#).unwrap();\nassert_eq!(f, ComputeFunction::CanonicalDigest);\n```"
+    output:
+      name: ComputeVerification
+      schema:
+        type: object
+        properties:
+          function:
+            "$ref": "#/$defs/ComputeFunction"
+            description: The function the claim named.
+          verdict:
+            "$ref": "#/$defs/ComputeVerdict"
+            description: "Whether the server's recomputation agrees."
+          claimed:
+            type: string
+            description: "The result the claim carried, as given."
+          recomputed:
+            type:
+              - string
+              - "null"
+            description: "What the server computed, when the input could be read."
+          reason:
+            type:
+              - string
+              - "null"
+            description: "Why the claim could not be judged, when the verdict is `invalid`."
+          input_bytes:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many bytes of input the claim carried.
+        required:
+          - function
+          - verdict
+          - claimed
+          - input_bytes
+        description: "The server's answer to a claim.\n\n```\nuse majordomus_cli::capability::builtin::compute::{\n    verify_claim, ComputeFunction, ComputeVerification,\n};\nlet answer: ComputeVerification = verify_claim(ComputeFunction::CanonicalDigest, \"[1]\", \"00\");\nassert_eq!(answer.reason.as_deref(), Some(\"the claimed result is not 64 lowercase hex characters\"));\nassert_eq!(answer.input_bytes, 3);\nassert!(answer.recomputed.is_some(), \"the input was read, so the server says what it computed\");\n```"
+        title: ComputeVerification
+        "$defs":
+          ComputeFunction:
+            oneOf:
+              - type: string
+                const: canonical_digest
+                description: "SHA-256, as lowercase hex, of a JSON document's canonical bytes: the digest the mesh\nsigns and the executor keys its cache by."
+            description: "A function of the portable core whose result a browser may claim.\n\n```\nuse majordomus_cli::capability::builtin::compute::ComputeFunction;\nlet f: ComputeFunction = serde_json::from_str(r#\"\"canonical_digest\"\"#).unwrap();\nassert_eq!(f, ComputeFunction::CanonicalDigest);\n```"
+          ComputeVerdict:
+            oneOf:
+              - type: string
+                const: match
+                description: The server computed the same result from the same input.
+              - type: string
+                const: mismatch
+                description: "The server computed a different result: the claim is wrong, whoever made it."
+              - type: string
+                const: invalid
+                description: "The claim could not be judged: its input is not what the function takes, or its\nresult is not the shape the function returns. `reason` says which."
+            description: "What the server's recomputation says of a claim.\n\n```\nuse majordomus_cli::capability::builtin::compute::ComputeVerdict;\nassert_eq!(serde_json::to_string(&ComputeVerdict::Mismatch).unwrap(), r#\"\"mismatch\"\"#);\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::compute
+    exposure:
+      mcp:
+        tool: majordomus_compute_verify
+      http:
+        method: POST
+        path: /api/v1/compute/verify
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - compute
+      - browser
+      - verification
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/compute.rs
   - id: continuity.device
     module: continuity
     kind: command

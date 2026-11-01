@@ -6,20 +6,20 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 1.0.0-alpha.10
 coverage:
   - scope: direct
-    required: 220
-    covered: 181
+    required: 221
+    covered: 182
     missing: 0
     waived: 39
     inapplicable: 0
   - scope: http
-    required: 212
-    covered: 181
+    required: 213
+    covered: 182
     missing: 0
     waived: 31
     inapplicable: 0
   - scope: mcp
-    required: 206
-    covered: 176
+    required: 207
+    covered: 177
     missing: 0
     waived: 30
     inapplicable: 0
@@ -30,8 +30,8 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 652
-    covered: 552
+    required: 655
+    covered: 555
     missing: 0
     waived: 100
     inapplicable: 0
@@ -161,6 +161,16 @@ capabilities:
       - conventional
       - not-conventional
       - merge
+  - id: compute.verify
+    module: compute
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - match
+      - mismatch
   - id: continuity.device
     module: continuity
     kind: command
@@ -2139,6 +2149,10 @@ pages:
     route: /ui/mesh
     view: pinned
     deferred: false
+  - key: system.http.ui.compute
+    route: /ui/compute
+    view: pinned
+    deferred: false
   - key: system.http.ui.peers
     route: /ui/peers
     view: pinned
@@ -2213,6 +2227,10 @@ pages:
     deferred: false
   - key: system.http.live.ui.mesh
     route: /ui/mesh
+    view: live
+    deferred: false
+  - key: system.http.live.ui.compute
+    route: /ui/compute
     view: live
     deferred: false
   - key: system.http.live.ui.peers
