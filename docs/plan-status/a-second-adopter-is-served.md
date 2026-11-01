@@ -79,7 +79,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4265` | shares docs/ADOPTION.md with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I4265` | shares lib/doctor.sh with I4418; they may not run concurrently |
 | WARN | `scope_conflict` | `I4265` | shares lib/init.sh with I4468; they may not run concurrently |
-| WARN | `scope_conflict` | `I4268` | shares lib/evidence.sh with I4292; they may not run concurrently |
 | WARN | `scope_conflict` | `I4268` | shares bin/majordomus with I4322; they may not run concurrently |
 | WARN | `scope_conflict` | `I4268` | shares bin/majordomus with I4329; they may not run concurrently |
 | WARN | `scope_conflict` | `I4268` | shares scripts/ci-plan with I4347; they may not run concurrently |
