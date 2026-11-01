@@ -9,13 +9,14 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [derived-data-integrity](https://majordomus.dev/plan/derived-data-integrity/) | ACTIVE | 1/4 | 3 | 0 | 0 | 0 | 1 | A committed derived artifact is a projection of inputs the commit owns. Landing an unrelated change on the trunk does not invalidate it, a fixture whose object database has no history can still evaluate it, and the staleness refusal exists on the path merges actually take - so the first thing that says no is a check rather than the published site. |
+| [derived-data-integrity](https://majordomus.dev/plan/derived-data-integrity/) | ACTIVE | 1/5 | 4 | 0 | 0 | 0 | 1 | A committed derived artifact is a projection of inputs the commit owns. Landing an unrelated change on the trunk does not invalidate it, a fixture whose object database has no history can still evaluate it, and the staleness refusal exists on the path merges actually take - so the first thing that says no is a check rather than the published site. |
 
 ## Issues
 
 | issue | status | wave | depends on | title |
 |---|---|---|---|---|
 | [I1409](https://majordomus.dev/plan/i1409/) | DONE | 0 | — | Derived data stops hashing inputs it cannot control |
+| [I2730](https://majordomus.dev/plan/i2730/) | READY | 0 | — | A derive does not depend on how loaded the machine is |
 | [I2863](https://majordomus.dev/plan/i2863/) | READY | 0 | — | A derive does not run while a merge is uncommitted |
 | [I2864](https://majordomus.dev/plan/i2864/) | CANCELLED | 0 | — | The site generator reads no output of a later derive stage |
 | [I3775](https://majordomus.dev/plan/i3775/) | READY | 0 | — | A page written by hand is never resolved as derived: the merge=derived globs name only what a generator writes |
@@ -25,6 +26,20 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | level | code | subject | message |
 |---|---|---|---|
+| WARN | `scope_conflict` | `I2730` | shares .ai/repo/policy.yaml with I3162; they may not run concurrently |
+| WARN | `scope_conflict` | `I2730` | shares .ai/repo/policy.yaml with I3163; they may not run concurrently |
+| WARN | `scope_conflict` | `I2730` | shares apps/majordomus-cli/src/generate.rs with I3280; they may not run concurrently |
+| WARN | `scope_conflict` | `I2730` | shares .ai/repo/policy.yaml with I3304; they may not run concurrently |
+| WARN | `scope_conflict` | `I2730` | shares .ai/repo/policy.yaml with I3322; they may not run concurrently |
+| WARN | `scope_conflict` | `I2730` | shares share/schemas/majordomus/policy with I4333; they may not run concurrently |
+| WARN | `scope_conflict` | `I2730` | shares .ai/repo/policy.yaml with I4349; they may not run concurrently |
+| WARN | `scope_conflict` | `I2730` | shares share/schemas/majordomus/policy with I4413; they may not run concurrently |
+| WARN | `scope_conflict` | `I2730` | shares share/schemas/majordomus/policy with I4415; they may not run concurrently |
+| WARN | `scope_conflict` | `I2730` | shares apps/majordomus-cli/src/policy.rs with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I2730` | shares share/schemas/majordomus/policy with I4464; they may not run concurrently |
+| WARN | `scope_conflict` | `I2730` | shares .ai/repo/policy.yaml with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I2730` | shares .ai/repo/policy.yaml with I4512; they may not run concurrently |
+| WARN | `scope_conflict` | `I2730` | shares apps/majordomus-cli/src/generate.rs with I4522; they may not run concurrently |
 | WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I2901; they may not run concurrently |
 | WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I2902; they may not run concurrently |
 | WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I2903; they may not run concurrently |
