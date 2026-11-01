@@ -36,6 +36,15 @@ commit_file() {   # commit_file <path> <content> <message>
   g add -- "$1"
   g commit -q -m "$3"
 }
+# expect_row_under <listing header> <row>: the row is in the listing that header opens, not
+# merely somewhere in the output: a related row and a collision row print alike, so only the
+# header above a row says which it is
+expect_row_under() {
+  H="$1" R="$2" awk '/^collision-check: / { in_s = ($0 ~ ENVIRON["H"]); next } in_s && $0 ~ ENVIRON["R"] { found = 1 } END { exit !found }' <<< "$LAST_OUT" \
+    || { printf '    expected /%s/ under /%s/ in output:\n%s\n' "$2" "$1" "$LAST_OUT"; return 1; }
+}
+NUMBER_RELATED='not collisions — branches carrying another name for a number'
+DECL_RELATED='not collisions — branches declaring what the head declares'
 
 # ---------------------------------------------------------------- the fixture
 git init -q --bare "$O"
@@ -234,5 +243,363 @@ expect_exit 2 env MJ_ROOT="$W" "$CHECK" --added src/x
 expect_grep '--added reads the paths from the head'
 expect_exit 2 env MJ_ROOT="$W" "$CHECK" --quick src/x
 expect_grep 'unknown option: --quick'
+expect_exit 2 env MJ_ROOT="$W" MJ_COLLISION_RECENT_DAYS=soon "$CHECK" --added
+expect_grep 'MJ_COLLISION_RECENT_DAYS must be a number of days'
+expect_exit 2 env MJ_ROOT="$W" MJ_COLLISION_REWRITE_LINES=many "$CHECK" --added
+expect_grep 'MJ_COLLISION_REWRITE_LINES must be a number of lines'
+
+# ---------------------------------------------------------------- 7. what no added path shows
+# Two branches can take one thing from each other without adding one path: a number under two
+# names (ADR 0168 and I4296 were each taken twice), one flag of one command (PR #2748 and I4268
+# both added `evidence --run-gates`), one capability id, one authored file rewritten twice
+# (#2741 and I4400 both rewrote site/charts.js). The base gets the files those are declared in.
+g checkout -q master
+mkdir -p "$W/share" "$W/apps/majordomus-cli/src/capability/builtin" "$W/site"
+cat > "$W/share/commands.yaml" <<'YAML'
+commands:
+  - id: evidence
+    title: evidence
+    syntax: "majordomus evidence --covers <token> [--json]"
+  - id: plan
+    title: plan
+    syntax: majordomus plan [--json]
+YAML
+cat > "$W/apps/majordomus-cli/src/capability/builtin/evidence.rs" <<'RS'
+pub fn declare() {
+            capability! {
+                id: "evidence.record",
+                title: "Record evidence",
+            }
+}
+RS
+awk 'BEGIN { for (i = 1; i <= 100; i++) print "chart line " i ", version one" }' > "$W/site/charts.js"
+g add -- share apps site
+g commit -q -m 'the commands, a capability and the charts'
+g push -q origin master
+# a branch forked before the base rewrote the charts: older than the base, not a rewrite
+g checkout -q -b feature/stale-charts master
+commit_file docs/unrelated.md 'unrelated' 'docs: something else'
+g push -q origin feature/stale-charts
+g checkout -q master
+awk 'BEGIN { for (i = 1; i <= 100; i++) print "chart line " i ", version two" }' > "$W/site/charts.js"
+g commit -q -am 'the charts, version two'
+g push -q origin master
+
+# one number, two names, on two branches neither of which contains the other
+g checkout -q -b feature/adr-a master
+commit_file .ai/repo/adrs/0300-a.md '# ADR 0300: design a' 'docs(adr): 0300, design a'
+g push -q origin feature/adr-a
+g checkout -q -b feature/adr-b master
+commit_file .ai/repo/adrs/0300-b.md '# ADR 0300: design b' 'docs(adr): 0300, design b'
+g push -q origin feature/adr-b
+# a branch built on adr-a, carrying its number under its name, a second name under the same
+# number (an amendment of it), and the next number
+g checkout -q -b feature/adr-a-follow feature/adr-a
+commit_file .ai/repo/adrs/0300-a-amended.md '# ADR 0300, amended' 'docs(adr): amend 0300'
+commit_file .ai/repo/adrs/0301-follow.md '# ADR 0301: follows 0300' 'docs(adr): 0301'
+g push -q origin feature/adr-a-follow
+g checkout -q -b feature/case-a master
+commit_file test/cases/9990_a.sh 'echo a' 'test: case 9990, a'
+g push -q origin feature/case-a
+g checkout -q -b feature/case-b master
+commit_file test/cases/9990_b.sh 'echo b' 'test: case 9990, b'
+g push -q origin feature/case-b
+
+# one flag of one command, declared on two branches; the same flag on another command
+with_syntax() {   # with_syntax <command> <extra syntax>: the base's commands.yaml, one line longer
+  git -C "$W" show master:share/commands.yaml \
+    | awk -v c="$1" -v x="$2" '/^  - id: / { id = $3 } /^    syntax: / && id == c { sub(/"?$/, ""); sub(/syntax: "?/, "syntax: \""); $0 = $0 " | " x "\"" } { print }' \
+    > "$W/share/commands.yaml"
+}
+g checkout -q -b feature/flag-a master
+with_syntax evidence 'majordomus evidence --run-gates [--all]'
+g commit -q -am 'feat(evidence): --run-gates, a'
+g push -q origin feature/flag-a
+g checkout -q -b feature/flag-b master
+with_syntax evidence 'majordomus evidence --run-gates <gate>'
+g commit -q -am 'feat(evidence): --run-gates, b'
+g push -q origin feature/flag-b
+g checkout -q -b feature/flag-other master
+with_syntax plan 'majordomus plan --run-gates'
+g commit -q -am 'feat(plan): --run-gates'
+g push -q origin feature/flag-other
+# a train top that merged flag-a: it carries the flag through flag-a's commit
+g checkout -q -b integration/train master
+g merge -q --no-ff --no-edit feature/flag-a
+g push -q origin integration/train
+
+# one capability id, declared on two branches in two different files
+g checkout -q -b feature/cap-a master
+printf '%s\n' 'pub fn more() {' '            capability! {' '                id: "evidence.run_gates",' '            }' '}' \
+  >> "$W/apps/majordomus-cli/src/capability/builtin/evidence.rs"
+g commit -q -am 'feat(capability): evidence.run_gates, a'
+g push -q origin feature/cap-a
+g checkout -q -b feature/cap-b master
+commit_file apps/majordomus-cli/src/capability/builtin/gates.rs \
+  "$(printf '%s\n' 'pub fn declare() {' '            capability! {' '                id: "evidence.run_gates",' '            }' '}')" \
+  'feat(capability): evidence.run_gates, b'
+g push -q origin feature/cap-b
+
+# one authored file rewritten on two recent branches; a small edit, and an old rewrite
+rewrite_charts() {   # rewrite_charts <version>
+  awk -v v="$1" 'BEGIN { for (i = 1; i <= 100; i++) print "chart line " i ", version " v }' > "$W/site/charts.js"
+}
+g checkout -q -b feature/rw-a master
+rewrite_charts three-a
+g commit -q -am 'feat(site): the charts, rewritten, a'
+g push -q origin feature/rw-a
+g checkout -q -b feature/rw-b master
+rewrite_charts three-b
+g commit -q -am 'feat(site): the charts, rewritten, b'
+g push -q origin feature/rw-b
+# a follow-up built on rw-a that rewrites the charts again: built on the head, not beside it
+g checkout -q -b feature/rw-a-follow feature/rw-a
+rewrite_charts four-a
+g commit -q -am 'feat(site): the charts, rewritten again on top of a'
+g push -q origin feature/rw-a-follow
+g checkout -q -b feature/rw-small master
+awk 'NR <= 3 { print "chart line " NR ", touched"; next } { print }' "$W/site/charts.js" > "$W/site/charts.js.new"
+mv "$W/site/charts.js.new" "$W/site/charts.js"
+g commit -q -am 'fix(site): three chart lines'
+g push -q origin feature/rw-small
+g checkout -q -b feature/rw-old master
+rewrite_charts old
+GIT_COMMITTER_DATE='2020-01-01T00:00:00Z' GIT_AUTHOR_DATE='2020-01-01T00:00:00Z' \
+  g commit -q -am 'feat(site): the charts, rewritten long ago'
+g push -q origin feature/rw-old
+g checkout -q master
+git -C "$C" fetch -q origin '+refs/heads/*:refs/remotes/origin/*'
+
+# ---------------------------------------------------------------- 7a. one ADR number, two names
+ci_merge feature/adr-a
+expect_exit 11 pr feature/adr-a "$GATE"
+expect_grep 'COLLISION  number 0300 of \.ai/repo/adrs/ is taken twice: the head adds \.ai/repo/adrs/0300-a\.md'
+expect_grep '^  origin/feature/adr-b +\.ai/repo/adrs/0300-b\.md$'
+expect_grep 'REFUSED'
+# the branch built on it carries a second name for 0300 too: listed as related, not refused
+expect_grep 'not collisions — branches carrying another name for a number the head adds'
+expect_row_under "$NUMBER_RELATED" '^  origin/feature/adr-a-follow +\.ai/repo/adrs/0300-a-amended\.md$'
+expect_no_grep 'feature/case-|feature/flag-|feature/cap-'
+
+# ---------------------------------------------------------------- 7b. two_branches_taking_one_number_are_refused
+ci_merge feature/case-a
+expect_exit 11 pr feature/case-a "$GATE"
+expect_grep 'COLLISION  number 9990 of test/cases/ is taken twice: the head adds test/cases/9990_a\.sh'
+expect_grep '^  origin/feature/case-b +test/cases/9990_b\.sh$'
+expect_grep 'REFUSED'
+# and the other way round, naming the other
+ci_merge feature/case-b
+expect_exit 11 pr feature/case-b "$GATE"
+expect_grep '^  origin/feature/case-a +test/cases/9990_a\.sh$'
+expect_grep 'REFUSED'
+
+# ---------------------------------------------------------------- 7c. built on the head, the same number
+# With the independent claimant set aside, nothing refuses: the follow-up takes 0300 under a
+# second name, but it is built on the head (it carries the head's name, and contains it).
+# From the follow-up's side the branch it is built on carries 0300 only under a name the
+# follow-up carries too, so it is no second name at all and the number check names nothing;
+# the branch is listed by the path check, as the same bytes. Where the head contains a branch
+# holding another name for its number, the merge base decides: 7j.
+expect_exit 0 env MJ_ROOT="$C" "$CHECK" --added --head origin/feature/adr-a \
+  --exclude origin/feature/adr-a --exclude origin/feature/adr-b
+expect_no_grep 'COLLISION'
+expect_row_under "$NUMBER_RELATED" '^  origin/feature/adr-a-follow +\.ai/repo/adrs/0300-a-amended\.md$'
+expect_grep 'OK   no other branch takes a number or a declaration `origin/feature/adr-a` adds \(1 numbered name'
+expect_exit 0 env MJ_ROOT="$C" "$CHECK" --added --head origin/feature/adr-a-follow \
+  --exclude origin/feature/adr-a-follow --exclude origin/feature/adr-b
+expect_no_grep 'COLLISION'
+expect_row_under 'not collisions — branches carrying paths the head adds' '^  origin/feature/adr-a +1 path\(s\) with the same bytes, e\.g\. \.ai/repo/adrs/0300-a\.md$'
+expect_no_grep "$NUMBER_RELATED"
+
+# ---------------------------------------------------------------- 7d. one flag of one command, twice
+ci_merge feature/flag-a
+expect_exit 11 pr feature/flag-a "$GATE"
+expect_grep 'COLLISION  the flag --run-gates of the command `evidence` \(share/commands\.yaml\) is declared independently by:'
+expect_grep '^  origin/feature/flag-b +'
+expect_grep 'REFUSED'
+# the same flag on another command is another declaration; --all is flag-a's alone
+expect_no_grep 'feature/flag-other'
+expect_no_grep 'flag --all'
+# the train that merged flag-a carries it through flag-a's own commit
+expect_no_grep '^  origin/integration/train +[0-9]'
+expect_row_under "$DECL_RELATED" '^  origin/integration/train +evidence --run-gates$'
+
+# ---------------------------------------------------------------- 7e. one capability id, twice
+ci_merge feature/cap-a
+expect_exit 11 pr feature/cap-a "$GATE"
+expect_grep 'COLLISION  the capability id evidence\.run_gates \(apps/majordomus-cli/src/capability/builtin\) is declared independently by:'
+expect_grep '^  origin/feature/cap-b +'
+expect_no_grep '^  origin/feature/cap-a +'
+expect_grep 'REFUSED'
+
+# ---------------------------------------------------------------- 7f. a train is not refused against its member
+# Neither the member against the train that merged it, nor the train against its member; the
+# independent flag-b is set aside, because against it both are rightly refused.
+expect_exit 0 env MJ_ROOT="$C" "$CHECK" --added --head origin/feature/flag-a \
+  --exclude origin/feature/flag-a --exclude origin/feature/flag-b
+expect_no_grep 'COLLISION'
+expect_row_under "$DECL_RELATED" '^  origin/integration/train +evidence --run-gates$'
+expect_exit 0 env MJ_ROOT="$C" "$CHECK" --added --head origin/integration/train \
+  --exclude origin/integration/train --exclude origin/feature/flag-b
+expect_no_grep 'COLLISION'
+expect_row_under "$DECL_RELATED" '^  origin/feature/flag-a +evidence --run-gates$'
+
+# ---------------------------------------------------------------- 7g. one file rewritten twice is reported
+# Reported and never refused: the exit stays 0. The small edit, the rewrite older than the
+# window and the branch that is only older than the base are not rewrites of it.
+ci_merge feature/rw-a
+expect_exit 0 pr feature/rw-a "$GATE"
+expect_grep 'OVERLAP  site/charts\.js is also rewritten by:'
+expect_grep '^  origin/feature/rw-b +200 line\(s\) '
+expect_grep 'an overlap is reported, not refused'
+expect_no_grep 'feature/rw-small|feature/rw-old|feature/stale-charts|feature/rw-a-follow|COLLISION'
+# the window is the owner's to set: with a smaller line bound the small edit is a rewrite too
+expect_exit 0 env MJ_ROOT="$C" MJ_COLLISION_REWRITE_LINES=6 "$CHECK" --added --head origin/feature/rw-a \
+  --exclude origin/feature/rw-a
+expect_grep '^  origin/feature/rw-small +6 line\(s\) '
+expect_no_grep 'feature/rw-old|feature/stale-charts'
+
+
+# ---------------------------------------------------------------- 7h. trains that merged master
+# The shape every train has here ("Merge master 54c317f11ad (#2654, I0201) into train 13c"):
+# the train merges its member and then master; master moves on, and the member, re-pushed,
+# merges master too. The two then have two merge bases, the member's own commit and the master
+# commit the train took, and plain `git merge-base` names one of them by commit date. Neither
+# refuses the other, whichever it names, and neither reports the other's copy of the member's
+# rewrite as an overlap: that rewrite is the member's own.
+g checkout -q master
+awk 'BEGIN { for (i = 1; i <= 100; i++) print "board line " i ", version one" }' > "$W/site/board.js"
+g add -- site/board.js
+g commit -q -m 'the board'
+g push -q origin master
+g checkout -q -b feature/watch-m master
+with_syntax plan 'majordomus plan --watch'
+awk 'NR <= 90 { print "board line " NR ", watched"; next } { print }' "$W/site/board.js" > "$W/site/board.js.new"
+mv "$W/site/board.js.new" "$W/site/board.js"
+g commit -q -am 'feat(plan): --watch, and the board rewritten for it'
+g push -q origin feature/watch-m
+g checkout -q -b integration/watch-train master
+g merge -q --no-ff --no-edit feature/watch-m
+g checkout -q master
+commit_file docs/x.md 'x' 'docs: master moves on'
+g push -q origin master
+g checkout -q integration/watch-train
+g merge -q --no-ff --no-edit master
+g push -q origin integration/watch-train
+g checkout -q master
+awk 'NR == 100 { print "board line 100, changed on master"; next } { print }' "$W/site/board.js" > "$W/site/board.js.new"
+mv "$W/site/board.js.new" "$W/site/board.js"
+g commit -q -am 'the board, its last line changed'
+g push -q origin master
+g checkout -q feature/watch-m
+g merge -q --no-ff --no-edit master >/dev/null
+g push -q origin feature/watch-m
+# Two train tops merging the member and an unrelated member in opposite orders: criss-cross
+# merge bases, the two members. Plain `git merge-base` names whichever was committed later, so
+# the unrelated member is built both later and earlier than the one that declares --watch. It
+# edits a file rather than adding one: an added path with the same bytes on the other top would
+# make it a copy of this work, and the merge bases would never be asked; and the first top
+# commits its own derived edit, so the two tops do not hold one identical commands.yaml.
+for order in late early; do
+  case "$order" in late) when='2030-01-01T00:00:00Z' ;; *) when='2020-01-01T00:00:00Z' ;; esac
+  g checkout -q -b "feature/watch-x-$order" master
+  printf '%s\n' "unrelated, $order" >> "$W/README.md"
+  g add -- README.md
+  GIT_COMMITTER_DATE="$when" GIT_AUTHOR_DATE="$when" g commit -q -m "docs: an unrelated member, $order"
+  g push -q origin "feature/watch-x-$order"
+  g checkout -q -b "integration/watch-t1-$order" master
+  g merge -q --no-ff --no-edit "feature/watch-x-$order"
+  g merge -q --no-ff --no-edit feature/watch-m
+  awk '/^    title: plan$/ { print "    title: plan, as the first top derived it"; next } { print }' \
+    "$W/share/commands.yaml" > "$W/share/commands.yaml.new"
+  mv "$W/share/commands.yaml.new" "$W/share/commands.yaml"
+  g commit -q -am "chore(derive): the first top, $order"
+  g push -q origin "integration/watch-t1-$order"
+  g checkout -q -b "integration/watch-t2-$order" master
+  g merge -q --no-ff --no-edit feature/watch-m
+  g merge -q --no-ff --no-edit "feature/watch-x-$order"
+  g push -q origin "integration/watch-t2-$order"
+done
+g checkout -q master
+git -C "$C" fetch -q origin '+refs/heads/*:refs/remotes/origin/*'
+# the shape is the one that refused before: two merge bases, one of them master's
+[ "$(git -C "$C" merge-base --all origin/feature/watch-m origin/integration/watch-train | grep -c .)" = 2 ] \
+  || { echo "    the member and its train were meant to have two merge bases"; exit 1; }
+expect_exit 0 env MJ_ROOT="$C" "$CHECK" --added --head origin/feature/watch-m --exclude origin/feature/watch-m
+expect_no_grep 'COLLISION|OVERLAP'
+expect_row_under "$DECL_RELATED" '^  origin/integration/watch-train +plan --watch$'
+expect_exit 0 env MJ_ROOT="$C" "$CHECK" --added --head origin/integration/watch-train \
+  --exclude origin/integration/watch-train
+expect_no_grep 'COLLISION|OVERLAP'
+expect_row_under "$DECL_RELATED" '^  origin/feature/watch-m +plan --watch$'
+for order in late early; do
+  expect_exit 0 env MJ_ROOT="$C" "$CHECK" --added --head "origin/integration/watch-t2-$order" \
+    --exclude "origin/integration/watch-t2-$order"
+  expect_no_grep 'COLLISION|OVERLAP'
+  expect_row_under "$DECL_RELATED" "^  origin/integration/watch-t1-$order +plan --watch\$"
+done
+
+# ---------------------------------------------------------------- 7i. copies of the head declare what it declares
+# A rescue that copied only the flag (the same file, byte for byte) and a re-cut of the whole
+# of it onto a newer master (the same bytes on the path it adds; its share/commands.yaml differs,
+# master having changed another line of it) are this work, and are listed, never refused. A
+# branch that declares the same flag in its own words is still refused.
+g checkout -q -b feature/since-h master
+with_syntax plan 'majordomus plan --since <rev>'
+g commit -q -am 'feat(plan): --since'
+commit_file src/since.rs 'pub fn since() {}' 'feat(plan): what --since reads'
+g push -q origin feature/since-h
+g checkout -q -b rescue/since-h-flag master
+with_syntax plan 'majordomus plan --since <rev>'
+g commit -q -am 'rescue: --since'
+g push -q origin rescue/since-h-flag
+g checkout -q -b feature/since-other master
+with_syntax plan 'majordomus plan --since <date>'
+g commit -q -am 'feat(plan): --since, another design'
+g push -q origin feature/since-other
+g checkout -q master
+awk '/^    title: evidence$/ { print "    title: the evidence"; next } { print }' "$W/share/commands.yaml" > "$W/share/commands.yaml.new"
+mv "$W/share/commands.yaml.new" "$W/share/commands.yaml"
+g commit -q -am 'the evidence command, retitled'
+g push -q origin master
+g checkout -q -b feature/since-h-recut master
+g cherry-pick feature/since-h~1 feature/since-h >/dev/null
+g push -q origin feature/since-h-recut
+g checkout -q master
+git -C "$C" fetch -q origin '+refs/heads/*:refs/remotes/origin/*'
+expect_exit 0 env MJ_ROOT="$C" "$CHECK" --added --head origin/feature/since-h \
+  --exclude origin/feature/since-h --exclude origin/feature/since-other
+expect_no_grep 'COLLISION'
+expect_row_under "$DECL_RELATED" '^  origin/rescue/since-h-flag +plan --since$'
+expect_row_under "$DECL_RELATED" '^  origin/feature/since-h-recut +plan --since$'
+expect_grep '^  origin/feature/since-h-recut +1 path\(s\) with the same bytes, e\.g\. src/since\.rs$'
+expect_exit 11 env MJ_ROOT="$C" "$CHECK" --added --head origin/feature/since-h --exclude origin/feature/since-h
+expect_grep 'COLLISION  the flag --since of the command `plan` \(share/commands\.yaml\) is declared independently by:'
+expect_grep '^  origin/feature/since-other +'
+# the copies stay listed as this work beside the refusal, never among the refused
+expect_row_under "$DECL_RELATED" '^  origin/rescue/since-h-flag +plan --since$'
+expect_row_under "$DECL_RELATED" '^  origin/feature/since-h-recut +plan --since$'
+
+# ---------------------------------------------------------------- 7j. the merge base decides a number
+# The head renamed a draft it is built on (0310-c.md, on an unmerged branch, became
+# 0310-c-final.md), and a sibling is built on the same draft. Neither carries the head's name,
+# so only the merge base says the other name is shared history, not a second taking of 0310.
+g checkout -q -b feature/adr-c master
+commit_file .ai/repo/adrs/0310-c.md '# ADR 0310: a draft' 'docs(adr): 0310, a draft'
+g push -q origin feature/adr-c
+g checkout -q -b feature/adr-c-final feature/adr-c
+g mv .ai/repo/adrs/0310-c.md .ai/repo/adrs/0310-c-final.md
+g commit -q -m 'docs(adr): 0310, its final name'
+g push -q origin feature/adr-c-final
+g checkout -q -b feature/adr-c-other feature/adr-c
+commit_file .ai/repo/adrs/0311-other.md '# ADR 0311: on the 0310 draft' 'docs(adr): 0311'
+g push -q origin feature/adr-c-other
+g checkout -q master
+git -C "$C" fetch -q origin '+refs/heads/*:refs/remotes/origin/*'
+expect_exit 0 env MJ_ROOT="$C" "$CHECK" --added --head origin/feature/adr-c-final --exclude origin/feature/adr-c-final
+expect_no_grep 'COLLISION'
+expect_row_under "$NUMBER_RELATED" '^  origin/feature/adr-c +\.ai/repo/adrs/0310-c\.md$'
+expect_row_under "$NUMBER_RELATED" '^  origin/feature/adr-c-other +\.ai/repo/adrs/0310-c\.md$'
 
 echo "    a new path added independently elsewhere is refused by name; its own branch, related work and copies pass; blindness is 12"
+echo "    one number under two names and one flag or capability id on two branches are refused; trains and follow-ups pass; a double rewrite is reported"

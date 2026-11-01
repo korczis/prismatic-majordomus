@@ -22,6 +22,15 @@
 #              passes;
 #   diverged   a branch byte-identical on some added paths and different on others: a copy
 #              of this work that moved on (a rescue, a re-cut) — listed, passes, one is stale.
+#   number     a branch neither built on this pull request nor under it adds an ADR or a case
+#              under a number this pull request adds, with another name — exit 11, refused,
+#              naming the number, both names and the branch;
+#   declaration  such a branch declares a (command, --flag) of share/commands.yaml or a
+#              capability id this pull request declares anew — exit 11, refused, naming it;
+#              a train top that merged this pull request, or one it is built on, shares the
+#              declaration through history and passes;
+#   overlap    a recent branch also rewrote heavily an authored file this pull request
+#              rewrites heavily — reported as OVERLAP, passes, never changes the exit.
 # A path the pull request's .gitattributes declares merge=derived is counted, not examined.
 # A person who has read a collision and decided to land anyway (the other branch is
 # abandoned and not theirs to delete, or two designs are meant to be compared) labels the
@@ -92,10 +101,15 @@ if grep -qxF -e "$ACCEPT" <<<"$labels"; then
 fi
 cat >&2 <<WHY
 
-collision-gate: REFUSED  a path this pull request adds is being built, differently, on
-another unmerged branch named above. Read it, then one of:
+collision-gate: REFUSED  something this pull request takes (a path it adds, a number it gives
+an ADR or a case, a flag or capability id it declares) is taken, independently, by another
+unmerged branch named above. Read it, then one of:
   - build on it instead: rebase onto that branch, and the claim becomes related work;
-  - rename your path, if the two are different things that happen to share a name;
+  - a path: rename yours, if the two are different things that happen to share a name;
+  - a number: take the next free one, surveyed rather than guessed: \`majordomus adr next\`
+    for an ADR, \`scripts/case-numbers next\` for a case;
+  - a flag or a capability id: name yours differently if the two mean different things, or
+    agree with the other branch's owner which one declares it and build on that;
   - have its owner land it or delete it, if it is abandoned;
   - label this pull request $ACCEPT, as a person, having read both.
 WHY

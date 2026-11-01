@@ -30,6 +30,8 @@
 #                branch, whose name a detached checkout does not know); repeatable.
 #   --added      check the paths the head adds relative to its merge base with the base,
 #                rather than paths named here; implies --new. What the pull-request gate asks.
+#                It also asks three things no added path shows, because two branches can take
+#                one thing from each other without both adding one path (see below).
 #
 # Which branches can claim: every local and remote branch that is not merged into the base,
 # is not the base, and is not this work — the branch HEAD is on, its origin/ copy, and every
@@ -52,6 +54,34 @@
 # merge regenerates it, so two versions of it are two generations, not two designs.
 # For a path the base already has, every unmerged branch carrying a different version is a
 # collision, as it always was; --new is the question worth refusing on.
+#
+# What --added asks beyond the paths. PR #2748 and I4268 both added `evidence --run-gates`;
+# ADR 0168 and issue I4296 were each taken twice under two names; #2741 and I4400 both rewrote
+# site/charts.js. No two of those branches added one path, so the path question saw nothing.
+# In each, "two heads neither of which contains the other" is what makes a hit: a branch
+# built on the head, or one the head is built on (a train top, a member re-pushed after a
+# master merge), shares the thing through history and is listed, never refused.
+#   number       a numbered name the head adds — an ADR .ai/repo/adrs/NNNN-<slug>.md or a
+#                case test/cases/<n>_<slug>.sh — that a branch adds under another name with
+#                the same number. Related when the other name is at the merge base of that
+#                branch and the head, or the branch also carries the head's name, or contains
+#                the head. Otherwise a collision, exit 11. (An issue id is one exact path,
+#                .ai/repo/project/issues/I<n>.yaml, so the path question already covers it.)
+#   declaration  a (command, --flag) pair a syntax line of share/commands.yaml declares, or
+#                a capability id an `id: "x.y",` line under the builtin capability sources
+#                declares, that the head has and neither the base nor the head's fork point
+#                has, and that a branch declares too. Related when it is at the merge base of
+#                that branch and the head; otherwise a collision, exit 11.
+#   overlap      an authored file the base has, which the head rewrites heavily (at least
+#                MJ_COLLISION_REWRITE_LINES, 80, changed lines since its fork) and which a
+#                recent branch (tip within MJ_COLLISION_RECENT_DAYS, 14 days) also rewrote
+#                heavily relative to its own merge base with the base. Reported, never
+#                refused: both are edits, and whoever lands second merges by hand.
+# Each is asked only when the head has something of its kind, so a head that adds no numbered
+# name, declares nothing new and rewrites nothing pays one diff and one cat-file. When asked,
+# the cost is bounded by distinct objects, not by branches: every branch's directory tree or
+# blob comes from one cat-file, identical ones are read once, what they add over the base is
+# one diff-tree, and a merge base is computed only for a branch that holds a candidate.
 #
 # Exit: 0 nothing collides · 11 something does (drift, the repository's own code for "what
 # you believe and what is true differ") · 12 could not measure — a shallow repository, a
@@ -94,6 +124,10 @@ if [ "$added" = 1 ]; then
 else
   [ "${#paths[@]}" -gt 0 ] || { printf 'collision-check: name at least one path\n' >&2; exit 2; }
 fi
+RECENT_DAYS="${MJ_COLLISION_RECENT_DAYS:-14}"
+REWRITE_LINES="${MJ_COLLISION_REWRITE_LINES:-80}"
+case "$RECENT_DAYS" in ''|*[!0-9]*) printf 'collision-check: MJ_COLLISION_RECENT_DAYS must be a number of days, not %s\n' "$RECENT_DAYS" >&2; exit 2 ;; esac
+case "$REWRITE_LINES" in ''|*[!0-9]*) printf 'collision-check: MJ_COLLISION_REWRITE_LINES must be a number of lines, not %s\n' "$REWRITE_LINES" >&2; exit 2 ;; esac
 
 cannot() { printf 'collision-check: CANNOT MEASURE  %s\n' "$1" >&2; exit 12; }
 
@@ -125,9 +159,9 @@ is_excluded() {   # is_excluded <short ref name>
 }
 
 # the branches, by full name so origin/HEAD (a pointer, not a branch) is never one of them
-branch_names() {   # branch_names [for-each-ref filter...]
+branch_names() {
   local full short
-  git for-each-ref --format='%(refname)' "$@" refs/heads refs/remotes/origin | while IFS= read -r full; do
+  git for-each-ref --format='%(refname)' refs/heads refs/remotes/origin | while IFS= read -r full; do
     case "$full" in
       refs/remotes/origin/HEAD) continue ;;
       refs/heads/*) short="${full#refs/heads/}" ;;
@@ -138,60 +172,602 @@ branch_names() {   # branch_names [for-each-ref filter...]
   done
 }
 
+TAB="$(printf '\t')"
+SOH="$(printf '\001')"   # what a newline inside a NUL-terminated name becomes, so it is seen
+NL='
+'
+
 visible="$(branch_names | LC_ALL=C sort -u)"
 if [ -z "$visible" ]; then
   cannot "no branch but \`$base\` and this work is visible here (a single-branch clone, or nothing fetched), so there is nothing to compare against; git fetch origin '+refs/heads/*:refs/remotes/origin/*'"
 fi
 n_visible="$(printf '%s\n' "$visible" | grep -c . || true)"
-refs="$(branch_names --no-merged "$base" | LC_ALL=C sort -u)"
+# The unmerged branches, each with what a row naming it prints (tip, date, subject), from one
+# for-each-ref: a row printed from these columns costs nothing, where a `git log` per row cost
+# two forks each, and every later question reads the tips from here rather than asking again.
+unmerged="$(git for-each-ref --no-merged "$base" refs/heads refs/remotes/origin \
+  --format='%(refname)%09%(objectname)%09%(committerdate:unix)%09%(committerdate:relative)%09%(contents:subject)')" \
+  || cannot "git for-each-ref could not list the branches not merged into \`$base\`"
+REF_INFO=""   # short name<TAB>tip<TAB>unix date<TAB>relative date<TAB>subject
+while IFS="$TAB" read -r full oid unix rel subj; do
+  case "$full" in
+    refs/remotes/origin/HEAD|"") continue ;;
+    refs/heads/*) short="${full#refs/heads/}" ;;
+    refs/remotes/*) short="${full#refs/remotes/}" ;;
+    *) continue ;;
+  esac
+  is_excluded "$short" || REF_INFO="$REF_INFO$short$TAB$oid$TAB$unix$TAB$rel$TAB$subj$NL"
+done <<< "$unmerged"
+refs="$(awk -F '\t' 'NF { print $1 }' <<< "$REF_INFO" | LC_ALL=C sort -u)"
 n_refs="$(printf '%s' "$refs" | grep -c . || true)"
 
+# unseen <what> <names>: a name holding a newline or a tab cannot travel in this script's
+# line-and-tab records, so it is not examined; said, never skipped in silence.
+unseen() {
+  [ -n "$2" ] || return 0
+  printf 'collision-check: NOT EXAMINED  %s %s(s) whose name holds a newline or a tab:\n' "$(grep -c . <<< "$2")" "$1"
+  awk '{ gsub(/\001/, "\\n"); gsub(/\t/, "\\t"); print "  " $0 }' <<< "$2"
+}
+
+oid_of() {   # the object id cat-file answered, or empty when the path is not there
+  case "$1" in *" missing"|"") OID="" ;; *) OID="${1%% *}" ;; esac
+}
+
+# ---------------------------------------------------------------- what a path does not show
+# The three questions --added asks beyond the paths (see the header). Each is a function over
+# the same unmerged $refs, and each reads objects in batches: one cat-file for every branch's
+# copy of a directory or file, one diff-tree or cat-file over the distinct ones, and a merge
+# base only for a branch that holds a candidate.
+NUMBERED=""   # dir<TAB>number<TAB>name: every numbered name the head adds
+DECLARED=""   # kind<TAB>declaration: every flag and capability id the head declares anew
+REWRITTEN=""  # path<TAB>lines<TAB>head blob<TAB>base blob: every authored file it rewrites
+COMMANDS="share/commands.yaml"
+CAP_DIR="apps/majordomus-cli/src/capability/builtin"
+OBJ_HEADER="collision-check-object"
+BASE_COMMANDS=""
+BASE_CAP=""
+HEAD_COMMANDS=""
+HEAD_CAP=""
+EMPTY_TREE=""
+
+empty_tree() {   # sets EMPTY_TREE, asked once: the tree a directory the base lacks is diffed from
+  [ -n "$EMPTY_TREE" ] || EMPTY_TREE="$(git hash-object -t tree /dev/null)"
+}
+
+# zip_oids <queries>: every line's last tab-separated field is an object name (<rev>:<path>);
+# each line is printed back with the object id cat-file answered appended, empty when there
+# is none. One cat-file for all of them; a short answer is a failure, never "not there".
+zip_oids() {
+  [ -n "$1" ] || return 0
+  awk -F '\t' '
+    FILENAME == ARGV[1] { o[++n] = ($0 ~ /^[0-9a-f]+$/) ? $0 : ""; next }
+    { print $0 "\t" o[FNR] }
+    END { if (n != FNR) exit 3 }' \
+    <(awk -F '\t' '{ print $NF }' <<< "$1" | git cat-file --batch-check='%(objectname)') - <<< "$1"
+}
+
+# uq: the name git printed, unquoted. Even with core.quotePath=false git C-quotes a name holding
+# `"`, a backslash or a control character; compared as printed, such a name matches nothing and
+# its file drops out unseen. Octal escapes are only ever control characters here (bytes above
+# 0x7f are printed raw), so the awk that uses this runs under LC_ALL=C.
+UQ='
+function uq(s,   out, c, e, i) {
+  if (s !~ /^".*"$/) return s
+  s = substr(s, 2, length(s) - 2); out = ""
+  for (i = 1; i <= length(s); i++) {
+    c = substr(s, i, 1)
+    if (c != "\\") { out = out c; continue }
+    e = substr(s, ++i, 1)
+    if (e ~ /[0-7]/) { out = out sprintf("%c", substr(s, i, 1) * 64 + substr(s, i + 1, 1) * 8 + substr(s, i + 2, 1)); i += 2; continue }
+    out = out ((e == "a") ? "\007" : (e == "b") ? "\010" : (e == "t") ? "\011" : (e == "n") ? "\012" : (e == "v") ? "\013" : (e == "f") ? "\014" : (e == "r") ? "\015" : e)
+  }
+  return out
+}'
+
+# The merge bases of a branch and the head: every one of them (`git merge-base --all`), because
+# a train top and its member, or two tops sharing a member, have several after the master merges
+# every train takes, and plain `git merge-base` names one by commit date and drops the rest.
+# A `git merge-base` per branch costs half a second on this history, so mb_prepare walks every
+# commit the branches and the head have and the base lacks, once, and finds each branch's bases
+# there: the newest commits both reach. A base inside the base branch's own history is not one
+# of them: what the base once held and has dropped is not work the two share. A branch that
+# shares nothing with the head beyond the base gets none; one that contains the head gets the
+# head; one the head contains gets itself.
+MB_CACHE="$NL"   # branch<TAB>its merge bases with the head, space-separated
+mb_prepare() {   # mb_prepare <branch>...: fill MB_CACHE for those not in it, one walk for all
+  local want="" r tips walk out
+  for r in "$@"; do
+    case "$MB_CACHE$want$NL" in *"$NL$r$TAB"*|*"$NL$r$NL"*) ;; *) want="$want$NL$r" ;; esac
+  done
+  [ -n "$want" ] || return 0
+  tips="$(awk -F '\t' '$0 == "@@" { p++; next } p == 0 { o[$1] = $2; next } ($0 in o) { print $0 "\t" o[$0] }' \
+    <<< "$REF_INFO@@$want")"
+  [ -n "$tips" ] || return 0
+  walk="$({ printf '%s\n' "$head_commit"; awk -F '\t' '{ print $2 }' <<< "$tips"; } \
+    | git log --boundary --format='%m %H %P' --stdin "^$base")" \
+    || cannot "git log could not walk the branches and the head back to \`$base\`, so what they share is unknown"
+  out="$(awk -v head="$head_commit" '
+    function reach(start, into,   st, sp, c, n, up, i) {
+      sp = 0; st[++sp] = start
+      while (sp > 0) {
+        c = st[sp--]; if ((c in into) || !(c in par)) continue; into[c] = 1
+        n = split(par[c], up, " "); for (i = 1; i <= n; i++) st[++sp] = up[i]
+      }
+    }
+    $0 == "@@" { part++; if (part == 1) reach(head, H); next }
+    part == 0 { if ($1 != "-") { par[$2] = ""; for (i = 3; i <= NF; i++) par[$2] = par[$2] " " $i } next }
+    {
+      split("", R); split("", S); split("", B); reach($2, R)
+      if (head in R) { print $1 "\t" head; next }
+      ns = 0; for (c in R) if (c in H) { S[c] = 1; ns++ }
+      m = ""
+      if (ns > 0) {
+        # every ancestor of a shared commit is shared; the bases are the ones no other is above
+        for (c in S) { n = split(par[c], up, " "); for (i = 1; i <= n; i++) reach(up[i], B) }
+        for (c in S) if (!(c in B)) m = m " " c
+      }
+      print $1 "\t" substr(m, 2)
+    }' <<< "$walk$NL@@$NL$tips")"
+  MB_CACHE="$MB_CACHE$out$NL"
+}
+# mb_rows <rows>: each "<branch><TAB>...<TAB><path>" row once per merge base of the branch,
+# with "<base>:<path>" appended for zip_oids; a branch with none has no row, and one that
+# contains the head is the head's.
+mb_rows() {
+  awk -F '\t' '
+    $0 == "@@" { part++; next }
+    part == 0 { if ($1 != "") mbs[$1] = $2; next }
+    $1 != "" { n = split(mbs[$1], b, " "); for (i = 1; i <= n; i++) print $0 "\t" b[i] ":" $NF }' \
+    <<< "$MB_CACHE@@$NL$1"
+}
+
+# cmd_pairs <blob>...: "<blob><TAB><command> <--flag><TAB><the syntax line>" for every flag a syntax
+# line of share/commands.yaml declares; every blob is read by one cat-file however many there are.
+cmd_pairs() {
+  [ $# -gt 0 ] || return 0
+  printf '%s\n' "$@" | git cat-file --batch="$OBJ_HEADER %(objectname)" | awk -v hdr="$OBJ_HEADER" '
+    $1 == hdr && NF == 2 { o = $2; c = ""; next }
+    /^  - id: / { c = $0; sub(/^  - id:[[:space:]]*/, "", c); gsub(/["\047]/, "", c); sub(/[[:space:]]+$/, "", c); next }
+    /^    syntax: / && c != "" {
+      s = $0
+      while (match(s, /--[A-Za-z0-9][A-Za-z0-9-]*/)) {
+        k = c " " substr(s, RSTART, RLENGTH); s = substr(s, RSTART + RLENGTH)
+        if (!((o, k) in seen)) { seen[o, k] = 1; print o "\t" k "\t" $0 }
+      }
+    }'
+}
+
+# blob_cap_ids <blob>...: "<blob><TAB><id>" for every `id: "x.y",` line, one cat-file.
+blob_cap_ids() {
+  [ $# -gt 0 ] || return 0
+  printf '%s\n' "$@" | git cat-file --batch="$OBJ_HEADER %(objectname)" | awk -v hdr="$OBJ_HEADER" '
+    $1 == hdr && NF == 2 { o = $2; next }
+    /^[[:space:]]*id: "[a-z0-9_]+(\.[a-z0-9_]+)+",/ { i = $0; sub(/^[^"]*"/, "", i); sub(/".*/, "", i); print o "\t" i }'
+}
+
+# tree_cap_ids <tree>...: "<tree><TAB><id>" for every capability id the trees declare, one grep.
+tree_cap_ids() {
+  [ $# -gt 0 ] || return 0
+  local out st=0
+  out="$(git grep -o -E '^[[:space:]]*id: "[a-z0-9_]+(\.[a-z0-9_]+)+",' "$@")" || st=$?
+  [ "$st" -le 1 ] || return "$st"
+  [ -n "$out" ] || return 0
+  awk '{ t = $0; sub(/:.*/, "", t); i = $0; sub(/^[^"]*"/, "", i); sub(/".*/, "", i); print t "\t" i }' <<< "$out"
+}
+
+# numbered_scan: the numbered names among the paths the head adds ($list).
+numbered_scan() {
+  NUMBERED="$(awk '
+    /^\.ai\/repo\/adrs\/[0-9][0-9][0-9][0-9]-[^\/]*\.md$/ { print ".ai/repo/adrs\t" substr($0, 15, 4) "\t" substr($0, 15); next }
+    /^test\/cases\/[0-9]+_[^\/]*\.sh$/ { n = substr($0, 12); sub(/_.*/, "", n); print "test/cases\t" n "\t" substr($0, 12) }' <<< "$list")"
+}
+
+# declared_scan: what the head declares that neither the base nor its fork point declares. A
+# declaration the fork has and the base dropped is not the head's: it is older than the head.
+declared_scan() {
+  local a hc bc fc ht bt ft rows new=""
+  a="$(printf '%s\n' "$head_commit:$COMMANDS" "$base:$COMMANDS" "$fork:$COMMANDS" \
+    "$head_commit:$CAP_DIR" "$base:$CAP_DIR" "$fork:$CAP_DIR" | git cat-file --batch-check='%(objectname)')" \
+    || cannot "git cat-file could not read $COMMANDS and $CAP_DIR at the head and the base"
+  { read -r hc; read -r bc; read -r fc; read -r ht; read -r bt; read -r ft; } <<< "$a"
+  oid_of "$hc"; hc="$OID"; oid_of "$bc"; bc="$OID"; oid_of "$fc"; fc="$OID"
+  oid_of "$ht"; ht="$OID"; oid_of "$bt"; bt="$OID"; oid_of "$ft"; ft="$OID"
+  BASE_COMMANDS="$bc"; BASE_CAP="$bt"; HEAD_COMMANDS="$hc"; HEAD_CAP="$ht"
+  if [ -n "$hc" ] && [ "$hc" != "$bc" ]; then
+    rows="$(cmd_pairs $hc $bc $fc)" || cannot "git cat-file could not read $COMMANDS"
+    new="$new$(awk -F '\t' -v h="$hc" -v b="$bc" -v f="$fc" '
+      { if ($1 == h) n[$2] = 1; if ($1 == b || $1 == f) o[$2] = 1 }
+      END { for (k in n) if (!(k in o)) print "command\t" k }' <<< "$rows")$NL"
+  fi
+  if [ -n "$ht" ] && [ "$ht" != "$bt" ]; then
+    rows="$(tree_cap_ids $ht $bt $ft)" || cannot "git grep could not read $CAP_DIR"
+    new="$new$(awk -F '\t' -v h="$ht" -v b="$bt" -v f="$ft" '
+      { if ($1 == h) n[$2] = 1; if ($1 == b || $1 == f) o[$2] = 1 }
+      END { for (k in n) if (!(k in o)) print "capability\t" k }' <<< "$rows")$NL"
+  fi
+  case "$new" in *[!"$NL"]*) DECLARED="$(awk 'NF' <<< "$new" | LC_ALL=C sort -u)" ;; esac
+}
+
+# rewritten_scan: authored files the base has that the head rewrites heavily since its fork.
+rewritten_scan() {
+  local ns cand kept="" p v q rows
+  # NUL-terminated, so a name arrives as it is rather than quoted; a newline in one becomes SOH
+  ns="$(git diff --numstat -z --no-renames --diff-filter=M "$fork" "$head_commit" | tr '\n\0' '\001\n')" \
+    || cannot "git diff --numstat between the merge base and \`$head\` failed, so what the head rewrites is unknown"
+  cand="$(awk -F '\t' -v min="$REWRITE_LINES" '
+    $1 != "-" && $1 + $2 >= min { p = $0; sub(/^[^\t]*\t[^\t]*\t/, "", p); print ((p ~ /[\t\001]/) ? "!" : "") p "\t" $1 + $2 }' <<< "$ns")"
+  unseen "rewritten file" "$(awk '/^!/ { sub(/\t[0-9]+$/, ""); print substr($0, 2) }' <<< "$cand")"
+  cand="$(awk '!/^!/' <<< "$cand")"
+  [ -n "$cand" ] || return 0
+  while IFS= read -r -d '' p && IFS= read -r -d '' _ && IFS= read -r -d '' v; do
+    [ "$v" = derived ] || kept="$kept$p$NL"
+  done < <(while IFS="$TAB" read -r p _; do printf '%s\0' "$p"; done <<< "$cand" \
+             | git check-attr ${attr_src[@]+"${attr_src[@]}"} -z --stdin merge)
+  [ -n "$kept" ] || return 0
+  q="$(awk -F '\t' -v h="$head_commit" -v b="$base" '
+    $0 == "@@" { part++; next }
+    part == 0 { keep[$0] = 1; next }
+    ($1 in keep) { print $1 "\t" $2 "\th\t" h ":" $1; print $1 "\t" $2 "\tb\t" b ":" $1 }' <<< "$kept@@$NL$cand")"
+  rows="$(zip_oids "$q")" || cannot "git cat-file could not read the files the head rewrites"
+  REWRITTEN="$(awk -F '\t' '
+    $3 == "h" { if (!($1 in hb)) o[++m] = $1; hb[$1] = $5; n[$1] = $2 }
+    $3 == "b" { bb[$1] = $5 }
+    END { for (i = 1; i <= m; i++) if (bb[o[i]] != "") print o[i] "\t" n[o[i]] "\t" hb[o[i]] "\t" bb[o[i]] }' <<< "$rows")"
+}
+
+# mb_split <rows>: each "<branch><TAB>..." row, classified by the branch's merge bases with the
+# head: "head<TAB>row" when the branch contains the head (built on this work), "none<TAB>row"
+# when the two share nothing beyond the base, else "base<TAB>row<TAB><merge base>" once for each.
+mb_split() {
+  awk -F '\t' -v head="$head_commit" '
+    $0 == "@@" { part++; next }
+    part == 0 { if ($1 != "") mbs[$1] = $2; next }
+    $1 == "" { next }
+    mbs[$1] == head { print "head\t" $0; next }
+    { n = split(mbs[$1], b, " "); if (n == 0) print "none\t" $0; for (i = 1; i <= n; i++) print "base\t" $0 "\t" b[i] }' \
+    <<< "$MB_CACHE@@$NL$1"
+}
+
+# number_check: the numbered names the head adds, against every branch's same directory.
+number_check() {
+  [ -n "$NUMBERED" ] || return 0
+  local d q rows first bt pairs diffs cands="" pend="" split related="" coll="" kind ref n other mine
+  for d in $(awk -F '\t' '!s[$1]++ { print $1 }' <<< "$NUMBERED"); do
+    q="$(printf '%s\t%s:%s\n' "$base" "$base" "$d"; for ref in $refs; do printf '%s\t%s:%s\n' "$ref" "$ref" "$d"; done)"
+    rows="$(zip_oids "$q")" || cannot "git cat-file could not read $d on the branches"
+    first="${rows%%"$NL"*}"; bt="${first##*"$TAB"}"
+    [ -n "$bt" ] || { empty_tree; bt="$EMPTY_TREE"; }
+    # what each distinct tree adds over the base's, one diff-tree for all of them
+    pairs="$(awk -F '\t' -v bt="$bt" 'NR > 1 && $NF != "" && $NF != bt && !s[$NF]++ { print bt " " $NF }' <<< "$rows")"
+    [ -n "$pairs" ] || continue
+    diffs="$(git -c core.quotePath=false diff-tree --stdin --no-renames --diff-filter=A --name-only <<< "$pairs")" \
+      || cannot "git diff-tree could not compare $d on the branches with the base"
+    cands="$cands$(LC_ALL=C awk -F '\t' -v d="$d" "$UQ"'
+      function num(x,   n) {
+        if (d == ".ai/repo/adrs") return (x ~ /^[0-9][0-9][0-9][0-9]-.*\.md$/) ? substr(x, 1, 4) : ""
+        if (x ~ /^[0-9]+_.*\.sh$/) { n = x; sub(/_.*/, "", n); return n }
+        return ""
+      }
+      $0 == "@@" { part++; next }
+      part == 0 { if ($1 == d) { want[$2] = 1; mine[$2, $3] = 1; heads[$2] = heads[$2] ((heads[$2] == "") ? "" : ", ") d "/" $3 } next }
+      part == 1 {
+        if ($0 ~ /^[0-9a-f]+ [0-9a-f]+$/) { split($0, p, " "); t = p[2]; next }
+        x = uq($0); if (x ~ /[\t\n]/) next
+        n = num(x); if (n != "" && (n in want)) { k[t]++; nm[t, k[t]] = x }
+        next
+      }
+      ($NF in k) {
+        t = $NF; split("", exact)
+        for (i = 1; i <= k[t]; i++) { n = num(nm[t, i]); if ((n, nm[t, i]) in mine) exact[n] = 1 }
+        for (i = 1; i <= k[t]; i++) {
+          x = nm[t, i]; n = num(x); if ((n, x) in mine) continue
+          print ((n in exact) ? "related" : "cand") "\t" $1 "\t" d "\t" n "\t" x "\t" heads[n]
+        }
+      }' <<< "$NUMBERED$NL@@$NL$diffs$NL@@$NL$rows")$NL"
+  done
+  # A candidate is related when its branch is a copy of this work (the same bytes on a path the
+  # head adds), contains the head, or holds the other name at one of its merge bases with the
+  # head: the two share the commit that added it. Otherwise it was taken independently.
+  while IFS="$TAB" read -r kind ref d n other mine; do
+    [ -n "$kind" ] || continue
+    if [ "$kind" = related ] || is_same_work "$ref"; then related="$related$ref$TAB$d/$other$NL"
+    else pend="$pend$ref$TAB$d$TAB$n$TAB$mine$TAB$d/$other$NL"; fi
+  done <<< "$cands"
+  if [ -n "$pend" ]; then
+    # shellcheck disable=SC2046  # branch names and object ids: no whitespace, no glob, one word each
+    mb_prepare $(awk -F '\t' 'NF && !s[$1]++ { print $1 }' <<< "$pend")
+    split="$(mb_split "$pend")"
+    rows="$(zip_oids "$(awk -F '\t' '$1 == "base" { print $0 "\t" $NF ":" $(NF - 1) }' <<< "$split")")" \
+      || cannot "git cat-file could not read the merge bases of the branches"
+    # columns: how, branch, directory, number, the head's name(s), the other name[, base, query, oid]
+    related="$related$(awk -F '\t' '
+      $0 == "@@" { part++; next }
+      part == 0 { if ($NF != "") at[$2, $6] = 1; next }
+      $1 == "head" || (($2, $6) in at) { print $2 "\t" $6 }' <<< "$rows$NL@@$NL$split")$NL"
+    coll="$(awk -F '\t' '
+      $0 == "@@" { part++; next }
+      part == 0 { if ($NF != "") at[$2, $6] = 1; next }
+      $1 != "head" && !(($2, $6) in at) { print $3 "\t" $4 "\t" $5 "\t" $2 "\t" $6 }' <<< "$rows$NL@@$NL$split")"
+  fi
+  if [ -n "$coll" ]; then
+    collided=1
+    printf '%s\n' "$coll" | LC_ALL=C sort -u | awk -F '\t' '
+      $1 FS $2 != last { printf "collision-check: COLLISION  number %s of %s/ is taken twice: the head adds %s, and another name for it is added by:\n", $2, $1, $3; last = $1 FS $2 }
+      { printf "  %-52s %s\n", $4, $5 }'
+  fi
+  if [ -n "${related//$NL/}" ]; then
+    printf 'collision-check: not collisions — branches carrying another name for a number the head adds, from shared history:\n'
+    printf '%s' "$related" | awk 'NF' | LC_ALL=C sort -u | awk -F '\t' '{ printf "  %-52s %s\n", $1, $2 }'
+  fi
+}
+
+# declaration_check: the flags and capability ids the head declares, against every branch.
+declaration_check() {
+  [ -n "$DECLARED" ] || return 0
+  local q rows objs pairs tb ids hits="" pend="" split related="" coll="" r1 r2 k1 k2 out ref kind key same
+  case "$NL$DECLARED" in *"${NL}command$TAB"*)
+    q="$(for ref in $refs; do printf '%s\t%s:%s\n' "$ref" "$ref" "$COMMANDS"; done)"
+    rows="$(zip_oids "$q")" || cannot "git cat-file could not read $COMMANDS on the branches"
+    objs="$(awk -F '\t' -v b="$BASE_COMMANDS" '$NF != "" && $NF != b && !s[$NF]++ { print $NF }' <<< "$rows")"
+    if [ -n "$objs" ]; then
+      pairs="$(cmd_pairs $objs)" || cannot "git cat-file could not read $COMMANDS on the branches"
+      # "same" when the branch's whole file is the head's: a copy of this work (a re-cut, a
+      # cherry-pick) that adds no path of its own. Not one line: two designs appending the same
+      # flag to the end of one syntax line write the same line, and are still two designs.
+      hits="$hits$(awk -F '\t' -v hb="$HEAD_COMMANDS" '
+        $0 == "@@" { part++; next }
+        part == 0 { if ($1 == "command") want[$2] = 1; next }
+        part == 1 { if ($2 in want) { m[$1]++; k[$1, m[$1]] = $2 } next }
+        { for (i = 1; i <= m[$NF]; i++) print $1 "\tcommand\t" k[$NF, i] "\t" (($NF == hb) ? "same" : "") }' \
+        <<< "$DECLARED$NL@@$NL$pairs$NL@@$NL$rows")$NL"
+    fi ;;
+  esac
+  case "$NL$DECLARED" in *"${NL}capability$TAB"*)
+    q="$(for ref in $refs; do printf '%s\t%s:%s\n' "$ref" "$ref" "$CAP_DIR"; done)"
+    rows="$(zip_oids "$q")" || cannot "git cat-file could not read $CAP_DIR on the branches"
+    empty_tree
+    objs="$(awk -F '\t' -v b="$BASE_CAP" '$NF != "" && $NF != b && !s[$NF]++ { print $NF }' <<< "$rows")"
+    if [ -n "$objs" ]; then
+      # only a file a branch changed can declare what the base does not: the blobs that differ
+      # from the base's, every distinct tree compared in one diff-tree, every blob read once. The
+      # head's tree is read with them: a branch declaring the id in a file byte-identical to the
+      # file the head declares it in carries a copy of this work, not a second design.
+      tb="$( { printf '%s\n' "$objs"; [ "$HEAD_CAP" = "$BASE_CAP" ] || printf '%s\n' "$HEAD_CAP"; } \
+        | awk -v bt="${BASE_CAP:-$EMPTY_TREE}" 'NF && !s[$0]++ { print bt " " $0 }' \
+        | git diff-tree --stdin -r --no-renames --diff-filter=AM --raw --no-abbrev \
+        | awk '/^[0-9a-f]+ [0-9a-f]+$/ { t = $2; next } /^:/ && $2 ~ /^100/ { print t "\t" $4 }')" \
+        || cannot "git diff-tree could not compare $CAP_DIR on the branches with the base"
+      # shellcheck disable=SC2046  # branch names and object ids: no whitespace, no glob, one word each
+      ids="$(blob_cap_ids $(awk -F '\t' '!s[$2]++ { print $2 }' <<< "$tb"))" \
+        || cannot "git cat-file could not read $CAP_DIR on the branches"
+      hits="$hits$(awk -F '\t' -v ht="$HEAD_CAP" '
+        $0 == "@@" { part++; next }
+        part == 0 { if ($1 == "capability") want[$2] = 1; next }
+        part == 1 { if (($2 in want) && !(($1, $2) in seen)) { seen[$1, $2] = 1; m[$1]++; k[$1, m[$1]] = $2 } next }
+        part == 2 {
+          for (i = 1; i <= m[$2]; i++) {
+            id = k[$2, i]; if ($1 == ht) hb[id, $2] = 1
+            if (!(($1, id) in tseen)) { tseen[$1, id] = 1; tm[$1]++; tk[$1, tm[$1]] = id }
+            in_t[$1, id] = in_t[$1, id] " " $2
+          }
+          next
+        }
+        {
+          for (i = 1; i <= tm[$NF]; i++) {
+            id = tk[$NF, i]; same = ""; n = split(in_t[$NF, id], bl, " ")
+            for (j = 1; j <= n; j++) if ((id, bl[j]) in hb) same = "same"
+            print $1 "\tcapability\t" id "\t" same
+          }
+        }' <<< "$DECLARED$NL@@$NL$ids$NL@@$NL$tb$NL@@$NL$rows")$NL"
+    fi ;;
+  esac
+  # Related when the branch is a copy of this work (above, or the same bytes on a path the head
+  # adds), contains the head, or declares it at one of its merge bases with the head: the two
+  # share the commit that declared it. Otherwise it was declared independently.
+  while IFS="$TAB" read -r ref kind key same; do
+    [ -n "$ref" ] || continue
+    if [ "$same" = same ] || is_same_work "$ref"; then related="$related$ref$TAB$key$NL"
+    else pend="$pend$ref$TAB$kind$TAB$key$NL"; fi
+  done <<< "$hits"
+  if [ -n "$pend" ]; then
+    # shellcheck disable=SC2046  # branch names and object ids: no whitespace, no glob, one word each
+    mb_prepare $(awk -F '\t' 'NF && !s[$1]++ { print $1 }' <<< "$pend")
+    split="$(mb_split "$pend")"
+    r1="$(zip_oids "$(awk -F '\t' -v p="$COMMANDS" '$1 == "base" && !s[$5]++ { print $5 "\t" $5 ":" p }' <<< "$split")")" \
+      || cannot "git cat-file could not read $COMMANDS at the merge bases"
+    r2="$(zip_oids "$(awk -F '\t' -v p="$CAP_DIR" '$1 == "base" && !s[$5]++ { print $5 "\t" $5 ":" p }' <<< "$split")")" \
+      || cannot "git cat-file could not read $CAP_DIR at the merge bases"
+    # shellcheck disable=SC2046  # branch names and object ids: no whitespace, no glob, one word each
+    k1="$(cmd_pairs $(awk -F '\t' '$NF != "" && !s[$NF]++ { print $NF }' <<< "$r1"))" \
+      || cannot "git cat-file could not read $COMMANDS at the merge bases"
+    # shellcheck disable=SC2046  # branch names and object ids: no whitespace, no glob, one word each
+    k2="$(tree_cap_ids $(awk -F '\t' '$NF != "" && !s[$NF]++ { print $NF }' <<< "$r2"))" \
+      || cannot "git grep could not read $CAP_DIR at the merge bases"
+    # split columns: how, branch, kind, key[, merge base]; related when any merge base has it
+    out="$(awk -F '\t' '
+      $0 == "@@" { part++; next }
+      part == 0 { has[$1, $2] = 1; next }
+      part == 1 { if ($NF != "") { m[$1]++; o[$1, m[$1]] = $NF } next }
+      $1 == "" { next }
+      {
+        r = $2 FS $3 FS $4; if (!(r in at)) { at[r] = 0; order[++n] = r }
+        if ($1 == "head") at[r] = 1
+        if ($1 == "base") for (i = 1; i <= m[$5]; i++) if ((o[$5, i], $4) in has) at[r] = 1
+      }
+      END { for (i = 1; i <= n; i++) print (at[order[i]] ? "related" : "collision") "\t" order[i] }' \
+      <<< "$k1$NL$k2$NL@@$NL$r1$NL$r2$NL@@$NL$split")"
+    related="$related$(awk -F '\t' '$1 == "related" { print $2 "\t" $4 }' <<< "$out")$NL"
+    coll="$(awk -F '\t' '$1 == "collision" { print $3 "\t" $4 "\t" $2 }' <<< "$out")"
+  fi
+  if [ -n "$coll" ]; then
+    collided=1
+    # each row from the columns the one for-each-ref read, not from a log per row
+    printf '%s\n' "$coll" | LC_ALL=C sort -u | awk -F '\t' -v cmds="$COMMANDS" -v cap="$CAP_DIR" '
+      $0 == "@@" { part++; next }
+      part == 0 { when[$1] = $4; subj[$1] = $5; next }
+      $1 == "" { next }
+      $1 FS $2 != last {
+        if ($1 == "command") {
+          f = $2; sub(/^[^ ]* /, "", f); c = $2; sub(/ .*/, "", c)
+          printf "collision-check: COLLISION  the flag %s of the command `%s` (%s) is declared independently by:\n", f, c, cmds
+        } else printf "collision-check: COLLISION  the capability id %s (%s) is declared independently by:\n", $2, cap
+        last = $1 FS $2
+      }
+      { printf "  %-52s %-14s %s\n", $3, when[$3], substr(subj[$3], 1, 60) }' <(printf '%s@@\n' "$REF_INFO") -
+  fi
+  if [ -n "${related//$NL/}" ]; then
+    printf 'collision-check: not collisions — branches declaring what the head declares, sharing the commit that declared it:\n'
+    printf '%s' "$related" | awk 'NF' | LC_ALL=C sort -u | awk -F '\t' '{ printf "  %-52s %s\n", $1, $2 }'
+  fi
+}
+
+# overlap_report: the files the head rewrites, against every recent branch that rewrote them
+# too. Reported, never refused, and never a change to the exit status. What a row prints comes
+# from the one for-each-ref that lists the branches, never from a log per row.
+OVERLAP_ROWS=10
+overlap_report() {
+  [ -n "$REWRITTEN" ] || return 0
+  local cutoff cand q rows pend tips walk own dfs pairs p ns out ps=()
+  cutoff=$(( $(date +%s) - RECENT_DAYS * 86400 ))
+  cand="$(awk -F '\t' -v cutoff="$cutoff" '
+    $0 == "@@" { part++; next }
+    part == 0 { if ($1 != "" && $3 >= cutoff) c[$1] = $2 "\t" $4 "\t" $5; next }
+    ($0 in c) { print $0 "\t" c[$0] }' <<< "$REF_INFO@@$NL$refs")"
+  [ -n "$cand" ] || return 0
+  q="$(awk -F '\t' '
+    $0 == "@@" { part++; next }
+    part == 0 { p[++n] = $1; next }
+    { for (i = 1; i <= n; i++) print $1 "\t" $2 "\t" p[i] "\t" $1 ":" p[i] }' <<< "$REWRITTEN$NL@@$NL$cand")"
+  rows="$(zip_oids "$q")" || cannot "git cat-file could not read the rewritten files on the branches"
+  while IFS="$TAB" read -r p _; do ps+=("$p"); done <<< "$REWRITTEN"
+  # a branch carrying the head's version or the base's did not rewrite the file
+  pend="$(awk -F '\t' '
+    $0 == "@@" { part++; next }
+    part == 0 { hb[$1] = $3; bb[$1] = $4; next }
+    $NF != "" && $NF != hb[$3] && $NF != bb[$3] { print $1 "\t" $2 "\t" $3 }' <<< "$REWRITTEN$NL@@$NL$rows")"
+  [ -n "$pend" ] || return 0
+  tips="$(awk -F '\t' '!s[$2]++ { print $2 }' <<< "$pend")"
+  # How much each such branch changed since its own merge base with the base, not since the
+  # base: measured against the base, every stale branch would look like a rewrite. A `git
+  # merge-base` per branch costs most of a second on this history (81 of them took 50 s), so
+  # one walk of every commit the tips have and the base lacks finds them all: a tip's merge
+  # base is the newest boundary commit (a commit of the base) it reaches. Then one diff-tree.
+  walk="$(git log --boundary --format='%m %H %ct %P' --stdin "^$base" <<< "$tips")" \
+    || cannot "git log could not walk the branches that rewrote the files back to the base"
+  # And whose rewrite it is. One log of the commits that touched the files, reachable from a
+  # tip and from neither the base nor the head, with the lines each changed: a branch whose own
+  # commits changed fewer lines than the bound only carries a rewrite somebody else made. That
+  # is a branch forked before the base rewrote the file (older, not a competitor), and a train
+  # top that merged the head, or a member re-pushed after a master merge, carrying the head's
+  # own rewrite. A branch that contains the head is built on this work and is not asked at all.
+  own="$(git --literal-pathspecs -c core.quotePath=false log --stdin --no-merges --full-history --no-renames \
+    --format='C %H' --numstat "^$base" "^$head_commit" -- "${ps[@]}" <<< "$tips")" \
+    || cannot "git log could not read which commits of the branches rewrote the files"
+  dfs="$(LC_ALL=C awk -v head="$head_commit" "$UQ"'
+    $0 == "@@" { part++; next }
+    part == 0 { if ($1 == "-") when[$2] = $3; else { par[$2] = ""; for (i = 4; i <= NF; i++) par[$2] = par[$2] " " $i } next }
+    part == 1 {
+      if ($1 == "C" && NF == 2) { c = $2; next }
+      if (split($0, f, "\t") >= 3 && f[1] != "-") { p = $0; sub(/^[^\t]*\t[^\t]*\t/, "", p); ownn[c]++; ownp[c, ownn[c]] = uq(p); ownl[c, ownn[c]] = f[1] + f[2] }
+      next
+    }
+    {
+      split("", seen); split("", tot); best = ""; at = -1; sp = 0; stack[++sp] = $1; mine = 1
+      while (sp > 0) {
+        c = stack[sp--]; if (c in seen) continue; seen[c] = 1
+        if (c == head) { mine = 0; break }
+        if (c in when) { if (when[c] + 0 > at) { at = when[c] + 0; best = c } continue }
+        for (i = 1; i <= ownn[c]; i++) tot[ownp[c, i]] += ownl[c, i]
+        n = split(par[c], up, " "); for (i = 1; i <= n; i++) stack[++sp] = up[i]
+      }
+      if (!mine || best == "") next
+      print "P " $1 " " best
+      for (p in tot) print "O\t" $1 "\t" p "\t" tot[p]
+    }' <<< "$walk$NL@@$NL$own$NL@@$NL$tips")"
+  pairs="$(awk '/^P / { print $2 " " $3 }' <<< "$dfs")"
+  [ -n "$pairs" ] || return 0
+  ns="$(git --literal-pathspecs -c core.quotePath=false diff-tree --stdin --numstat --no-renames -r -- "${ps[@]}" <<< "$pairs")" \
+    || cannot "git diff-tree could not measure what the branches changed"
+  out="$(LC_ALL=C awk -F '\t' -v min="$REWRITE_LINES" "$UQ"'
+    $0 == "@@" { part++; next }
+    part == 0 { order[$1] = NR; next }
+    part == 1 { if ($1 == "O" && $4 >= min) mine[$2, $3] = 1; next }
+    part == 2 { if ($0 ~ /^[0-9a-f]+$/) { c = $0; next } if ($1 != "-" && $1 + $2 >= min) big[c, uq($3)] = $1 + $2; next }
+    (($2, $3) in big) && (($2, $3) in mine) { printf "%08d\t%s\t%s\t%s\t%s\n", order[$3], $3, $1, big[$2, $3], $2 }' \
+    <<< "$REWRITTEN$NL@@$NL$dfs$NL@@$NL$ns$NL@@$NL$pend" | LC_ALL=C sort)"
+  [ -n "$out" ] || return 0
+  # one row per distinct tip (the first name of it), and at most OVERLAP_ROWS rows per file: a
+  # file every train touches would otherwise bury the one overlap a person must read
+  awk -F '\t' -v cap="$OVERLAP_ROWS" '
+    function flush() { if (n > cap) printf "  ... and %d more branch(es)\n", n - cap }
+    $0 == "@@" { part++; next }
+    part == 0 { when[$1] = $3; subj[$1] = $4; next }
+    $2 == "" || (($2, $5) in shown) { next }
+    {
+      shown[$2, $5] = 1
+      if ($2 != last) { flush(); printf "collision-check: OVERLAP  %s is also rewritten by:\n", $2; last = $2; n = 0 }
+      if (++n <= cap) printf "  %-52s %5s line(s) %-14s %s\n", $3, $4, when[$3], substr(subj[$3], 1, 60)
+    }
+    END {
+      flush()
+      print "collision-check: an overlap is reported, not refused: both rewrites are authored, so whoever lands second merges them by hand; read the other first"
+    }' <<< "$cand$NL@@$NL$out"
+}
+
+ok_empty=""   # the verdict for a head whose added paths leave nothing to examine
 if [ "$added" = 1 ]; then
   fork="$(git merge-base "$base" "$head_commit" 2>/dev/null)" \
     || cannot "\`$head\` and \`$base\` share no history, so what the head adds cannot be told apart from what the base has"
-  list="$(git -c core.quotePath=false diff --name-only --no-renames --diff-filter=A "$fork" "$head_commit")" \
+  # NUL-terminated, so a name arrives as it is rather than quoted; a newline in one becomes SOH
+  list="$(git diff --name-only -z --no-renames --diff-filter=A "$fork" "$head_commit" | tr '\n\0' '\001\n')" \
     || cannot "git diff between the merge base and \`$head\` failed, so what the head adds is unknown"
+  odd=""
   while IFS= read -r line; do
-    [ -z "$line" ] || paths+=("$line")
+    case "$line" in
+      "") ;;
+      *"$SOH"*|*"$TAB"*) odd="$odd$line$NL" ;;
+      *) paths+=("$line") ;;
+    esac
   done <<< "$list"
-  if [ "${#paths[@]}" = 0 ]; then
-    printf 'collision-check: OK   `%s` adds no path relative to %s, so nothing is there for another branch to claim (%s unmerged of %s branch(es) visible)\n' \
-      "$head" "$base" "$n_refs" "$n_visible"
-    exit 0
-  fi
+  unseen "added path" "${odd%"$NL"}"
   # A path declared merge=derived is regenerated by the merge, never chosen between. The
   # declarations are read from the head, which is where a pull request adding a derived tree
   # declares it; a git too old for --source reads the checkout's.
   attr_src=(--source "$head_commit")
   git check-attr --source "$head_commit" merge -- .gitattributes >/dev/null 2>&1 || attr_src=()
-  kept=()
-  while IFS= read -r -d '' p && IFS= read -r -d '' _ && IFS= read -r -d '' v; do
-    if [ "$v" = derived ]; then n_derived=$((n_derived + 1)); else kept+=("$p"); fi
-  done < <(printf '%s\0' "${paths[@]}" | git check-attr ${attr_src[@]+"${attr_src[@]}"} -z --stdin merge)
-  if [ $(( ${#kept[@]} + n_derived )) != "${#paths[@]}" ]; then
-    cannot "git check-attr answered for $(( ${#kept[@]} + n_derived )) of ${#paths[@]} added path(s), so which of them are derived is unknown"
+  numbered_scan
+  declared_scan
+  rewritten_scan
+  if [ "${#paths[@]}" = 0 ]; then
+    printf -v ok_empty 'collision-check: OK   `%s` adds no path relative to %s, so nothing is there for another branch to claim (%s unmerged of %s branch(es) visible)' \
+      "$head" "$base" "$n_refs" "$n_visible"
+    if [ -z "$NUMBERED$DECLARED$REWRITTEN" ]; then printf '%s\n' "$ok_empty"; exit 0; fi
+  else
+    kept=()
+    while IFS= read -r -d '' p && IFS= read -r -d '' _ && IFS= read -r -d '' v; do
+      if [ "$v" = derived ]; then n_derived=$((n_derived + 1)); else kept+=("$p"); fi
+    done < <(printf '%s\0' "${paths[@]}" | git check-attr ${attr_src[@]+"${attr_src[@]}"} -z --stdin merge)
+    if [ $(( ${#kept[@]} + n_derived )) != "${#paths[@]}" ]; then
+      cannot "git check-attr answered for $(( ${#kept[@]} + n_derived )) of ${#paths[@]} added path(s), so which of them are derived is unknown"
+    fi
+    if [ "${#kept[@]}" = 0 ]; then
+      printf -v ok_empty 'collision-check: OK   every path `%s` adds (%s) is declared merge=derived, which the merge regenerates; nothing is there for another branch to claim' \
+        "$head" "$n_derived"
+      if [ -z "$NUMBERED$DECLARED$REWRITTEN" ]; then printf '%s\n' "$ok_empty"; exit 0; fi
+      paths=()
+    else
+      paths=("${kept[@]}")
+    fi
   fi
-  if [ "${#kept[@]}" = 0 ]; then
-    printf 'collision-check: OK   every path `%s` adds (%s) is declared merge=derived, which the merge regenerates; nothing is there for another branch to claim\n' \
-      "$head" "$n_derived"
-    exit 0
-  fi
-  paths=("${kept[@]}")
 fi
 
 # Every (ref, path) object id in one process, per path: the base, the head, every branch.
 # Sets OID rather than printing it: a command substitution is a fork, and a pull request
 # adding two hundred paths against two hundred branches would pay forty thousand of them.
-oid_of() {   # the object id cat-file answered, or empty when the path is not there
-  case "$1" in *" missing"|"") OID="" ;; *) OID="${1%% *}" ;; esac
-}
-TAB="$(printf '\t')"
 EMPTY_BLOB="$(git hash-object -t blob /dev/null)"
-NL='
-'
 answers=()
 while IFS= read -r line; do answers+=("$line"); done < <(
-  for path in "${paths[@]}"; do
+  for path in ${paths[@]+"${paths[@]}"}; do
     printf '%s:%s\n' "$base" "$path" "$head_commit" "$path"
     for ref in $refs; do printf '%s:%s\n' "$ref" "$path"; done
   done | git cat-file --batch-check='%(objectname)'
@@ -208,17 +784,16 @@ collided=0
 notes=""   # kind<TAB>branch<TAB>path, for the claims that are not collisions
 coll=""    # path<TAB>branch<TAB>new|base, every candidate collision, printed after the loop
 evidence="" # branches carrying some added path byte for byte: copies of this work
-mb=()      # each branch's merge base with the head, by branch index, asked once
+pend_paths="" # branch<TAB>path, for the claims only a merge base can classify
 i=0
-for path in "${paths[@]}"; do
+for path in ${paths[@]+"${paths[@]}"}; do
   oid_of "${answers[$i]:-}"; base_oid="$OID"; i=$((i + 1))
   oid_of "${answers[$i]:-}"; head_oid="$OID"; i=$((i + 1))
   if [ "$only_new" = 1 ] && [ -n "$base_oid" ]; then
     i=$((i + n_refs)); continue
   fi
-  j=0
   for ref in $refs; do
-    oid_of "${answers[$i]:-}"; ref_oid="$OID"; i=$((i + 1)); j=$((j + 1))
+    oid_of "${answers[$i]:-}"; ref_oid="$OID"; i=$((i + 1))
     [ -n "$ref_oid" ] || continue
     [ "$ref_oid" != "$base_oid" ] || continue
     if [ -n "$base_oid" ]; then
@@ -230,13 +805,33 @@ for path in "${paths[@]}"; do
       [ "$head_oid" = "$EMPTY_BLOB" ] || evidence="${evidence}${ref}${NL}"
       continue
     fi
-    [ -n "${mb[$j]+set}" ] || mb[$j]="$(git merge-base "$ref" "$head_commit" 2>/dev/null || true)"
-    if [ -n "${mb[$j]}" ] && git cat-file -e "${mb[$j]}:$path" 2>/dev/null; then
-      notes="${notes}related${TAB}${ref}${TAB}${path}${NL}"; continue
-    fi
-    coll="${coll}${path}${TAB}${ref}${TAB}new${NL}"
+    pend_paths="${pend_paths}${ref}${TAB}${path}${NL}"
+    coll="${coll}${path}${TAB}${ref}${TAB}?${NL}"
   done
 done
+
+# A pending claim is related when the path is at one of the merge bases of its branch and the
+# head (the two share the commit that added it), or the branch contains the head and the head
+# has it; otherwise it was added independently. Every branch's merge bases come from one walk,
+# every (merge base, path) from one cat-file.
+if [ -n "$pend_paths" ]; then
+  # shellcheck disable=SC2046  # branch names and object ids: no whitespace, no glob, one word each
+  mb_prepare $(awk -F '\t' '!s[$1]++ { print $1 }' <<< "$pend_paths")
+  split="$(mb_split "$pend_paths")"
+  rows="$(zip_oids "$(awk -F '\t' -v h="$head_commit" '
+    $1 == "head" { print $0 "\t" h ":" $3 } $1 == "base" { print $0 "\t" $NF ":" $3 }' <<< "$split")")" \
+    || cannot "git cat-file could not read the added paths at the merge bases of the branches"
+  rel="$(awk -F '\t' '
+    $0 == "@@" { part++; next }
+    part == 0 { if ($NF != "") at[$2, $3] = 1; next }
+    $3 == "?" && (($2, $1) in at) { print "related\t" $2 "\t" $1 }' <<< "$rows$NL@@$NL$coll")"
+  [ -z "$rel" ] || notes="$notes$rel$NL"
+  coll="$(awk -F '\t' '
+    $0 == "@@" { part++; next }
+    part == 0 { if ($NF != "") at[$2, $3] = 1; next }
+    $3 != "?" { print; next }
+    !(($2, $1) in at) { print $1 "\t" $2 "\tnew" }' <<< "$rows$NL@@$NL$coll")"
+fi
 
 # Printed after the loop, because whether a branch is a copy of this work can be learned
 # from any path, including one examined after the path it differs on.
@@ -282,14 +877,28 @@ if [ -n "$notes" ]; then
     }'
 fi
 
+# What no added path shows (see the header); each prints nothing when the head has nothing
+# of its kind, and only the first two can refuse.
+number_check
+declaration_check
+overlap_report
+
 denominator="$n_refs unmerged of $n_visible branch(es) compared against $base"
 [ "$n_derived" = 0 ] || denominator="$denominator; $n_derived derived path(s) not examined, the merge regenerates them"
 if [ "$collided" = 0 ]; then
   if [ "$added" = 1 ]; then
-    printf 'collision-check: OK   no other branch collides on the %s path(s) `%s` adds (%s):\n' \
-      "${#paths[@]}" "$head" "$denominator"
-    printf '  %s\n' "${paths[@]:0:20}"
-    [ "${#paths[@]}" -le 20 ] || printf '  ... and %s more\n' "$(( ${#paths[@]} - 20 ))"
+    if [ "${#paths[@]}" -gt 0 ]; then
+      printf 'collision-check: OK   no other branch collides on the %s path(s) `%s` adds (%s):\n' \
+        "${#paths[@]}" "$head" "$denominator"
+      printf '  %s\n' "${paths[@]:0:20}"
+      [ "${#paths[@]}" -le 20 ] || printf '  ... and %s more\n' "$(( ${#paths[@]} - 20 ))"
+    else
+      printf '%s\n' "$ok_empty"
+    fi
+    if [ -n "$NUMBERED$DECLARED" ]; then
+      printf 'collision-check: OK   no other branch takes a number or a declaration `%s` adds (%s numbered name(s), %s declaration(s))\n' \
+        "$head" "$(grep -c . <<< "$NUMBERED" || true)" "$(grep -c . <<< "$DECLARED" || true)"
+    fi
   else
     printf 'collision-check: OK   no other branch collides on '
     printf '%s ' "${paths[@]}"
