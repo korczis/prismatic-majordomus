@@ -146,7 +146,8 @@ pub fn stamp_line(policy_path: &str, policy_sha: &str, content_sha: &str) -> Str
     )
 }
 
-/// Fill a template: `{{DEFAULT_PROFILE}}`, `{{CHECKPOINT_DEFAULT}}` and `{{POLICY_SHA}}`
+/// Fill a template: `{{DEFAULT_PROFILE}}`, `{{CHECKPOINT_DEFAULT}}`, `{{LIMITS_ENFORCEMENT}}`
+/// (`on` only when `profiles.enforce_limits` is true, `off` otherwise) and `{{POLICY_SHA}}`
 /// come from the policy; any other `{{TOKEN}}` is an error, because a template that asks
 /// for something the policy does not carry cannot be rendered deterministically.
 ///
@@ -155,15 +156,19 @@ pub fn stamp_line(policy_path: &str, policy_sha: &str, content_sha: &str) -> Str
 /// use majordomus_cli::policy::{LoadedPolicy, Policy, ProfilesPolicy};
 /// let policy = LoadedPolicy {
 ///     policy: Policy {
-///         profiles: ProfilesPolicy { default: Some("implementation".into()), checkpoint_interval_default: Some("15m".into()) },
+///         profiles: ProfilesPolicy {
+///             default: Some("implementation".into()),
+///             checkpoint_interval_default: Some("15m".into()),
+///             enforce_limits: None,
+///         },
 ///         ..Policy::default()
 ///     },
 ///     path: ".ai/repo/policy.yaml".into(),
 ///     sha256: "0123456789abcdef0123456789abcdef".into(),
 /// };
 /// assert_eq!(
-///     render("profile {{DEFAULT_PROFILE}}, every {{CHECKPOINT_DEFAULT}}, policy {{POLICY_SHA}}\n", &policy).unwrap(),
-///     "profile implementation, every 15m, policy 0123456789ab\n"
+///     render("profile {{DEFAULT_PROFILE}}, every {{CHECKPOINT_DEFAULT}}, limits {{LIMITS_ENFORCEMENT}}, policy {{POLICY_SHA}}\n", &policy).unwrap(),
+///     "profile implementation, every 15m, limits off, policy 0123456789ab\n"
 /// );
 /// assert!(render("{{PROFILE_TABLE}}\n", &policy).unwrap_err().contains("PROFILE_TABLE"));
 /// ```
@@ -180,10 +185,13 @@ pub fn render(template: &str, policy: &LoadedPolicy) -> std::result::Result<Stri
         let value = match token {
             "DEFAULT_PROFILE" => policy.policy.profiles.default.clone(),
             "CHECKPOINT_DEFAULT" => policy.policy.profiles.checkpoint_interval_default.clone(),
+            "LIMITS_ENFORCEMENT" => Some(
+                if policy.policy.profiles.enforce_limits == Some(true) { "on" } else { "off" }.to_string(),
+            ),
             "POLICY_SHA" => Some(policy.sha256[..12.min(policy.sha256.len())].to_string()),
             _ => {
                 return Err(format!(
-                    "token {{{{{token}}}}} is not one the policy can fill (DEFAULT_PROFILE, CHECKPOINT_DEFAULT, POLICY_SHA)"
+                    "token {{{{{token}}}}} is not one the policy can fill (DEFAULT_PROFILE, CHECKPOINT_DEFAULT, LIMITS_ENFORCEMENT, POLICY_SHA)"
                 ))
             }
         };

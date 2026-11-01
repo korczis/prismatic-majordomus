@@ -62,6 +62,9 @@ pub struct ProfilesPolicy {
     /// The checkpoint interval the default profile sets.
     #[serde(default)]
     pub checkpoint_interval_default: Option<String>,
+    /// Whether the repository opted into runtime limit enforcement (I0203); absent is off.
+    #[serde(default)]
+    pub enforce_limits: Option<bool>,
 }
 
 /// `session.freshness:` of the policy: how old a continuation record may be before it stops

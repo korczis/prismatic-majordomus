@@ -1524,6 +1524,23 @@ mj_limits_resolve() {
 # not yield one, and the caller keeps its own behaviour for that case.
 mj_limit() { mj_limits_resolve | awk -F'\t' -v l="$1" '$1 == l && $8 == "ok" { print $6 }'; }
 
+# Whether the repository chose runtime enforcement (I0203): policy profiles.enforce_limits.
+# Only true is on; absent and false are off, so a repository that never set the key behaves as
+# it did before. A limit the tool applied before the limits were declared — the three in
+# share/profile-limits.yaml today — does not ask; a clamp added after them does, and stays off
+# until the repository opts in. doctor refuses a value that is not a boolean.
+mj_limits_enforced() { [ "$(mj_pol profiles.enforce_limits)" = true ]; }
+# off, on or invalid, with the reason, for doctor and `doctrine limits` to print
+mj_limits_enforcement() {
+  local v; v="$(mj_pol profiles.enforce_limits)"
+  case "$v" in
+    true) printf 'on\tpolicy profiles.enforce_limits: true' ;;
+    false) printf 'off\tpolicy profiles.enforce_limits: false' ;;
+    "") printf 'off\tpolicy profiles.enforce_limits is absent, which is off' ;;
+    *) printf 'invalid\tpolicy profiles.enforce_limits: %s is not true or false' "$v" ;;
+  esac
+}
+
 # ---------------------------------------------------------------- temporary files
 # Every temporary file a command makes lives under one directory of the process's own, and
 # the exit trap removes that directory. Before this, the trap removed the four files it knew

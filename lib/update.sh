@@ -189,7 +189,8 @@ mj_build_fragments() {
 # the policy values a template or body may name inline
 mj_render_tokens() {
   sed -e "s|{{CHECKPOINT_DEFAULT}}|$(mj_pol profiles.checkpoint_interval_default)|g" \
-      -e "s|{{DEFAULT_PROFILE}}|$(mj_pol profiles.default)|g" "$1"
+      -e "s|{{DEFAULT_PROFILE}}|$(mj_pol profiles.default)|g" \
+      -e "s|{{LIMITS_ENFORCEMENT}}|$(mj_limits_enforced && printf on || printf off)|g" "$1"
 }
 # replace lines that are exactly {{TOKEN}} with the file $d/TOKEN; inline {{REQUIRED_SECTIONS}} too
 mj_expand_blocks() {

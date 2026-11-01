@@ -15,6 +15,8 @@ This repository is supervised by Majordomus. Run `majordomus context` before wor
 take the task lifecycle from `.ai/repo/workflows/task-lifecycle.md`, and expect `check`
 and `finish` to refuse work outside the task's scope. The default profile is
 `{{DEFAULT_PROFILE}}`; the checkpoint interval it sets is `{{CHECKPOINT_DEFAULT}}`.
+Runtime limit enforcement is `{{LIMITS_ENFORCEMENT}}` (policy `profiles.enforce_limits`);
+`majordomus doctrine limits` prints the limits.
 
 Before working under a path, run `majordomus context resolve <path>` (or read the
 `README.md` chain from `.ai/` down to that directory): each document adds to its

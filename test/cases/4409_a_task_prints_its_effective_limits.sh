@@ -13,7 +13,7 @@ limit() { "$MJ" doctrine limits --json | jq -r --arg l "$1" '.limits[] | select(
 expect_exit 0 "$MJ" doctrine limits
 expect_grep "^profile implementation, the default: no task is active$"
 expect_grep "^  checkpoint_max_age_seconds +900 seconds +from checkpoint_interval: 15m$"
-text_ids="$(printf '%s\n' "$LAST_OUT" | awk 'NR > 1 { print $1 }' | sort | tr '\n' ' ')"
+text_ids="$(printf '%s\n' "$LAST_OUT" | awk '/^  / { print $1 }' | sort | tr '\n' ' ')"
 expect_exit 0 "$MJ" doctrine limits --json
 printf '%s' "$LAST_OUT" | jq -e '.source == "default" and .task == null and .profile == "implementation" and .complete' >/dev/null
 # the JSON carries the same set of limits the text does, and every declared one

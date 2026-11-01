@@ -16,6 +16,8 @@ This repository is supervised by Majordomus. Run `majordomus context` before wor
 the task lifecycle is `.ai/repo/workflows/task-lifecycle.md`; the default profile is
 `{{DEFAULT_PROFILE}}`. `AGENTS.md` carries the same bootstrap for every
 other worker, and a rule that exists in one of these files and not in `.ai/` is a bug.
+Runtime limit enforcement is `{{LIMITS_ENFORCEMENT}}` (policy `profiles.enforce_limits`);
+`majordomus doctrine limits` prints the limits.
 
 Linked git worktrees of this repository live at `<repository>-wt/<branch>` — the primary
 checkout's sibling named with `-wt`, then the branch name with its hierarchy kept — derived

@@ -51,6 +51,10 @@
         },
         "checkpoint_interval_default": {
           "type": "string"
+        },
+        "enforce_limits": {
+          "type": "boolean",
+          "description": "Apply the runtime limits share/profile-limits.yaml derives from a profile beyond those the tool applied before the limits were declared. Absent or false means off, and a repository that never sets it behaves exactly as it did before; only true turns enforcement on. `doctor` and `majordomus doctrine limits` say which (I0203)."
         }
       }
     },

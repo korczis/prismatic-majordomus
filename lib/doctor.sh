@@ -189,6 +189,12 @@ $(mj_limits_resolve)
 EOT
     [ "$bad" = 1 ] || mj_doctrine_ok profile-limits "$n" "limits${vals}"
   done
+  # whether the repository opted into enforcement (I0203): reported, never switched on here
+  local en; en="$(mj_limits_enforcement)"
+  case "${en%%"$MJ_TAB"*}" in
+    invalid) mj_doctrine_fail profile-limits enforcement "${en#*"$MJ_TAB"}" "grep -n 'enforce_limits:' $(mj_rel "$MJ_POLICY_FILE")" ;;
+    *) mj_doctrine_ok profile-limits enforcement "${en%%"$MJ_TAB"*} — ${en#*"$MJ_TAB"}" ;;
+  esac
 }
 
 # A linked worktree runs the hooks of its own tree (I2718). The repository's policy is the

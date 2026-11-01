@@ -231,11 +231,17 @@ mj_doctrine_limits() {
   mj_limits_load || rc=$?
   [ "$rc" = 0 ] || mj_die "$MJ_EX_CONTRACT" "share/profile-limits.yaml does not load (run: majordomus doctor)"
   rows="$(mj_limits_resolve)"
+  # whether the repository opted into enforcement (I0203); the limits print either way
+  local en; en="$(mj_limits_enforcement)"
   if [ "$MJ_JSON" = 1 ]; then
-    printf '{"profile":"%s","source":"%s","task":%s,"limits":[' "$(mj_json_esc "$profile")" \
-      "$([ -n "$task" ] && printf task || printf default)" "$([ -n "$task" ] && printf '"%s"' "$(mj_json_esc "$task")" || printf null)"
-  elif [ -n "$task" ]; then printf 'profile %s, of task %s\n' "$profile" "$task"
-  else printf 'profile %s, the default: no task is active\n' "$profile"; fi
+    printf '{"profile":"%s","source":"%s","task":%s,"enforcement":"%s","enforcement_reason":"%s","limits":[' "$(mj_json_esc "$profile")" \
+      "$([ -n "$task" ] && printf task || printf default)" "$([ -n "$task" ] && printf '"%s"' "$(mj_json_esc "$task")" || printf null)" \
+      "${en%%"$MJ_TAB"*}" "$(mj_json_esc "${en#*"$MJ_TAB"}")"
+  else
+    if [ -n "$task" ]; then printf 'profile %s, of task %s\n' "$profile" "$task"
+    else printf 'profile %s, the default: no task is active\n' "$profile"; fi
+    printf 'enforcement %s — %s\n' "${en%%"$MJ_TAB"*}" "${en#*"$MJ_TAB"}"
+  fi
   while IFS="$MJ_TAB" read -r id axis derive unit raw v cap st; do
     [ -n "$id" ] || continue
     [ "$st" = ok ] || bad=1
@@ -270,7 +276,8 @@ usage: majordomus doctrine [status|list|show <id>|limits] [--json]
   show     the full record for one doctrine: claims, tests, dependencies, the rule file
   limits   the runtime limits the active task's profile derives (the default profile's
            when no task is active), each with the axis it came from; exit 10 when a
-           declared limit cannot be derived
+           declared limit cannot be derived; says whether policy
+           profiles.enforce_limits turned enforcement on
 H
       return 0 ;;
     status|list) shift || true ;;

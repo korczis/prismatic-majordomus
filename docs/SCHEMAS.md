@@ -285,6 +285,15 @@ with a `status` per limit (`ok`, `unset`, `invalid`) and `complete`, and the com
 when a declared limit cannot be derived. `test/cases/4409_a_task_prints_its_effective_limits.sh`
 compares the command's numbers with what the context section enforcing them does.
 
+Enforcement beyond the three limits above is the repository's choice (I0203): policy
+`profiles.enforce_limits`, `false` in the skeleton. Absent and `false` both mean off and only
+`true` is on; `doctor` prints which (`OK profile-limits enforcement — off — …`) and refuses any
+other value, `majordomus doctrine limits` carries it as `enforcement`, and the provider
+projections say it where a worker reads them. A clamp added after the three applied ones asks
+`mj_limits_enforced` and does nothing until the repository opts in.
+`test/cases/4410_a_repository_that_declines_limits_is_unaffected.sh` runs the lifecycle with the
+key `false` and absent and compares what a worker meets.
+
 ---
 
 ## `.ai/repo/rules/**/*.md` — rule objects
