@@ -138,6 +138,16 @@ for m in contrast.light.failing contrast.light.weakest contrast.dark.failing con
 done
 [ "$(jq -r '.measures[] | select(.id == "site.pages-by-hand") | .current == 1' "$S/json")" = true ] \
   || { echo "    the page written by hand is not counted once"; cat "$S/json"; exit 1; }
+# the same verdict over MCP, as a client asks it: one session against this fixture, alone,
+# binding no port and writing no lease, and the typed answer of the tools/call or nothing
+mcp="$( { printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case3170","version":"0"}}}\n'
+  printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
+  printf '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_release_site","arguments":{"head":"%s"}}}\n' "$C4"
+} | "$RB" mcp --standalone --repo "$PWD" 2>"$S/mcp.err" | sed -n 2p | jq -c '.result.structuredContent // empty')"
+[ -n "$mcp" ] || { echo "    majordomus_release_site gave no typed answer over MCP:"; sed 's/^/      /' "$S/mcp.err" | head -5; exit 1; }
+[ "$(printf '%s' "$mcp" | jq -r '.passes')" = true ] && [ "$(printf '%s' "$mcp" | jq -r '.improvements')" = 1 ] \
+  || { echo "    over MCP the tool does not answer what the command does: $mcp"; exit 1; }
+echo "  asked over MCP, majordomus_release_site gives the command's verdict: it passes, one improvement"
 
 # ---------------------------------------------------------------- a canonical record that names the site
 echo "  a canonical record whose commit names the site counts, outside the site's own paths"
