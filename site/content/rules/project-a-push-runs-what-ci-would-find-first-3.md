@@ -1,20 +1,17 @@
----
-id: project.a-push-runs-what-ci-would-find-first
-version: 2
-kind: rule
-title: A push runs what CI would find first, and CI decides
-description: Before a push, the pre-push hook runs the plan's structure gates that CI recorded as cheap and that reach no network, and the suite's fast cases, within a stated bound, so a failure a local run finds in seconds is seen before a CI round trip; a gate CI runs again reports and lets the push through, and only the integrity checks refuse.
-statement: Push through the pre-push hook, which runs `scripts/ci/run-plan --before-push` after `finish --check` and the case-number check. A failed gate or case is named and reported, and CI holds the verdict on it. An uncomputable plan, a failed `finish --check` and a duplicate case number refuse the push. In the commit hook, `scripts/pages current`, the worktree guard and the SSH permissions check refuse and doctor reports. A gate the step leaves out is named with its reason and left to CI. Nothing skips the step.
-status: active
-class: blocking
-depends_on: [project.the-cooperation-model-is-the-owners-word@2]
-tags: [ci, process]
++++
+title = "A push runs what CI would find first, and CI decides"
+description = "A push runs what CI would find first, and CI decides"
+weight = 75
+[extra]
+kind = "rule"
+slug = "project-a-push-runs-what-ci-would-find-first-3"
+identity = "project.a-push-runs-what-ci-would-find-first@3"
+status = "active"
+source = ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v3.md"
++++
+{% raw %}
 
-x-majordomus:
-  tests: [test/cases/1021_a_push_runs_what_ci_would_find_first.sh, test/cases/4008_a_push_that_only_deletes_plans_nothing.sh, test/cases/3948_a_local_gate_reports_and_ci_decides.sh]
----
-
-# Rationale
+## Rationale
 
 On 2026-10-09 CI refused the 0.19.0 release twice, each time for something a local run finds
 in seconds. The first was a structure gate, `economics-claims`, at 6 s and `always: true`.
@@ -37,7 +34,32 @@ is therefore reported here, not refused (I3830). A check CI cannot reach, or rea
 after a merge or a deploy it would break, still refuses: it takes seconds and nothing else
 would say it.
 
-# Required behaviour
+Version 3 refuses one more thing: a failed gate or case on a push that carries a train top, the
+landing seat's combined top under `refs/heads/integration/train-*`. On 2026-10-31 at 09:12Z train
+13's top (`a428913c05d`, #2784, 29 members) was pushed although this step had named failures
+in four structure gates (development semantics, the collision check, economics claims, rust
+quality), because exit 1 was reported, not refused. CI's run 41187739613 failed the same four
+in its structure job by 09:44Z, with shell lint, five integration tests and coverage beside
+them. The top was recomposed twice, and master, which had stood at `6b30ede2d13` since
+2026-10-30 18:27Z, stayed there for more than 29 hours. A member's own branch is still
+reported: there, CI's verdict comes in time and costs one run. A top's run is the widest and
+slowest the repository has, and every member waits on it, so a failure the push has already
+named is not worth a run. The landing seat's procedure is in `docs/INTEGRATION.md` ("A train
+top is judged before it is pushed"). This rule refuses by the name: a top pushed under a name
+outside `integration/train-*` is only reported. The name is the landing seat's practice, set
+out in that section, not a clause of `project.the-cooperation-model-is-the-owners-word`.
+
+No host may start a build below 35 GiB free (that rule's clause 7), and on 2026-11-01 the push
+that raised this rule ran with no executable of the tree's generation: its gates exited 12 with
+the launcher's refusal and its cases failed for that alone, which said nothing about the change.
+So, when no executable exists, exactly two things are left to CI: a gate whose exit 12 is the
+launcher's own refusal (`run: just build`), named `NOT JUDGED`, and a fast case that calls
+`rust_bin`, left out by name. That is not a promise that a top can be pushed without an
+executable. A gate that exits 12 for a reason of its own (CANNOT MEASURE, as collision-check,
+nav-check, worktree-check and evidence-check say it), and a fast case that reaches the
+executable without calling `rust_bin`, still fail and still refuse a top.
+
+## Required behaviour
 
 - `.githooks/pre-push` calls `scripts/ci/run-plan --before-push` after `finish --check`. The
   policy declares it (`enforcement: structure-gates-on-push`, wired by `git-hook:pre-push`),
@@ -69,10 +91,23 @@ would say it.
 - **Bound.** It reports its measured time against `MJ_PUSH_BOUND` (default 180). An overrun
   names the slowest steps and never refuses the push: a busy machine must not fail it, or
   people route around the step.
+- **Not judged here.** When the step finds no executable of this tree's generation (its line
+  `executable: none`), a gate that exits 12 and whose output carries the launcher's refusal
+  (lib/rust_bin.sh's `run: just build` line) is printed `NOT JUDGED <gate>`, collected in the
+  last line as `not judged here: <gates>`, and does not count as a failure, and a fast case that
+  calls `rust_bin` (test/lib.sh) is left out by name. A gate that exits 12 without that line,
+  and any exit 12 while an executable is present, is a failure like any other. A step whose only
+  findings are not judged exits 0 and ends `nothing judged here failed`.
 - **Verdict.** A failed gate or case exits 1 with the tail of its output and a last line that
-  names it and says CI holds the verdict. The hook prints `reported, not refused: CI holds the
-  verdict` and lets the push through; CI's validate refuses the same head. Any other non-zero
-  exit of the step, 12 above all, refuses the push: what cannot be measured is not passed.
+  names it and says CI would refuse the push for the same reason. The hook prints `reported, not
+  refused: CI holds the verdict` and lets the push through; CI's validate refuses the same head.
+  Any other non-zero exit of the step, 12 above all, refuses the push: what cannot be measured
+  is not passed.
+- **Train tops.** The hook collects the remote refs of the push that receive a commit. When
+  the step exits 1 and one of them is under `refs/heads/integration/train-*`, the hook prints
+  `refused: this push carries the train top <names>, and a train top is judged before it is
+  pushed` and exits 1, whatever else the push carries. A train ref that is only deleted is no
+  top.
 - **Stdin.** Every gate and every case runs with stdin closed. A hook's stdin is the ref
   list. `test/run.sh` gave each case the runner's stdin, because a background job under job
   control keeps it, so a case that read stdin waited for ever on an open pipe: case 54, for
@@ -82,31 +117,39 @@ would say it.
   deletions waited 2400 s on the build lock, 2026-10-22); one ref that carries a commit and the
   whole hook applies.
 
-# What refuses and what reports
+## What refuses and what reports
+
+<div class="overflow-x-auto" tabindex="0">
 
 | Hook | Check | Local verdict | Why |
 |---|---|---|---|
 | pre-push | `bin/majordomus finish --check` | refuses | the task's scope and contract exist only on this machine |
 | pre-push | `scripts/case-numbers check` | refuses | each branch is clean alone; the pair exists only after a merge |
 | pre-push | `scripts/ci/run-plan --before-push`, exit 12 | refuses | a plan that cannot be computed is not a pass |
-| pre-push | `scripts/ci/run-plan --before-push`, exit 1 | reports | CI's structure job and suite run the same gates and cases |
+| pre-push | `scripts/ci/run-plan --before-push`, exit 1, on a push that carries no train top | reports | CI's structure job and suite run the same gates and cases |
+| pre-push | `scripts/ci/run-plan --before-push`, exit 1, on a push that carries a `refs/heads/integration/train-*` ref | refuses | a top's CI run is the widest the repository has and every member waits on it; train 13 was pushed over four failures this step had named (2026-10-31) |
+| pre-push | a gate's exit 12 that is the launcher's refusal (`run: just build`), with no executable of the tree's generation, any push | not judged: named, never exit 1 | it says nothing about the change, and no host may build below the 35 GiB floor |
+| pre-push | a gate's exit 12 for a reason of its own (CANNOT MEASURE), any push | a failure: reported, or refused on a train top | what cannot be measured is not passed |
 | pre-push | `scripts/rust-check --doc` | reports | CI's rustdoc job refuses the same head |
 | pre-commit | `bin/majordomus doctor` | reports | CI's core-check runs doctor and refuses |
 | pre-commit | `bin/majordomus-cli worktree guard` | refuses | CI checks out a fresh clone and never sees which worktree a commit came from (rule `project.worktree-topology`) |
 | pre-commit | `scripts/pages current` | refuses | a stale derive breaks the deploy for whoever lands next |
 | pre-commit | `scripts/ci/providers-check --permissions-only` | refuses | the owner-authorized SSH permissions of every native client |
 
+</div>
+
+
 A reported finding prints one line on stderr, `<hook>: <check> failed (exit <n>); reported,
 not refused: CI holds the verdict`, after the check's own output. The hooks carry the
 `report` function themselves; there is no sourced helper.
 
-# Failure behaviour
+## Failure behaviour
 
 A refusing check exits the hook with its own code, naming what failed. A reporting check
 never changes the hook's exit. There is no flag that skips any step, as there is no
 `--no-verify`.
 
-# Verification
+## Verification
 
 `test/cases/1021_a_push_runs_what_ci_would_find_first.sh` drives the step over a plan and
 durations it writes. It proves:
@@ -127,6 +170,14 @@ durations it writes. It proves:
 whose checks are stubs with chosen exit codes. It proves:
 
 - a push whose step exits 1 exits 0, with the gate's line and the hook's report line;
+- a push whose step exits 1 and that carries a train ref is refused with 1, naming the top,
+  alone and beside a feature ref; a green top goes on; a push that only deletes a train ref
+  beside a feature ref is reported, not refused;
+- with no executable, a train top whose gate exits 12 with the launcher's refusal goes on with
+  that gate `NOT JUDGED` and the case that calls `rust_bin` left out; beside a failed case the
+  same top is refused, naming both; a gate that exits 12 for a reason of its own is a failure
+  and the top is refused; with an executable, the gate's exit 12 is a failure and the top is
+  refused;
 - a push whose step exits 12, whose `finish --check` fails or whose case numbers collide is
   refused with that code;
 - a push that changes the crate and whose rustdoc fails exits 0 with a report line;
@@ -136,3 +187,4 @@ whose checks are stubs with chosen exit codes. It proves:
 
 The first run of the step on its own branch refused that branch for an unpinned `sort`
 (order-check), before any CI saw it.
+{% endraw %}

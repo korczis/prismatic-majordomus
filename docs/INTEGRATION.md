@@ -582,6 +582,142 @@ one the forge cannot show and every branch that is no record are left alone. If 
 refuses the reopen after the closure, the pull request is closed: the drain says so, names
 `gh pr reopen <n>`, records `reopen_failed` and exits 10.
 
+## A train top is judged before it is pushed
+
+A *train top* here is the landing seat's combined top, clause 2 of
+[the cooperation rule](../.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md):
+the seats number them (train 13, 13b, 13c), and it is not the stacked train of the section
+above. By practice, not by that rule, its branch is named `integration/train-<train>-<date>`
+(for example `integration/train-13c-20261031`), because that is the name the pre-push hook
+refuses a failed gate on (step 3), and its pull request is opened labelled `train`, with
+`gh pr create --label train`, so that the first validate run already reads the label and does
+not yield to the release path (`docs/CI.md`): a label added after the run started, as
+`scripts/github-sync --prs` adds it in `pr-meta`, comes too late for that run, and a label
+added with the workflow's token starts no new one. Tops under other names
+(`integration/next-top`, `integration/e7-top-*`) are of an earlier procedure. The rule says
+one validation run judges every member. This section is the landing seat's procedure for
+keeping that run a confirmation rather than the first time anyone looks.
+It is measured by one number, the owner's, given on the night of 2026-10-31 in Czech:
+"pokud je min nez 1 merged PR/MR per 30 mins, tak je to fail produktu" ("fewer than one
+merged pull request per 30 minutes is a failure of the product"), with "tohle se nesmi
+opakovat" ("this must not happen again") about what follows.
+
+**What happened.** Train 12c landed at 2026-10-30T18:27Z and master stood at `6b30ede2d13`
+for more than 29 hours after it, until #2654 was merged outside the train at 2026-10-31T23:50Z.
+Train 13 (#2784, 29 members, top `a428913c05d`) was pushed at 09:12Z on 2026-10-31 although the
+local pre-push plan on its top had reported failures in four structure gates: development
+semantics, the collision check, economics claims and rust quality. Its validate run
+41187739613 failed the same four in its structure job by 09:44Z, together with shell lint,
+which the push leaves out. Job rust (3) failed five integration tests (`discovery_has_its_owners`,
+`http_serve`, `quality`, `skills`, `ui_links`), and coverage, three suite shards and the four ui
+shards failed as well. A review traced the structure failures to members (#900, #2620, #1050,
+#2746). The top's pull request was closed at 10:48Z, 1.6 hours after the push, and the run
+then ended as `cancelled`, although most of its verdict was already red. The compose of 13 had
+run fmt, clippy and `cargo test --lib` only. Train 13b (#2785, 28 members) was in validate
+from 10:46Z to 14:32Z (run 41194104887), and its rust jobs passed. It came back red in
+coverage, in structure (the collision check), in three suite shards with six cases (430, 94,
+400, 93, 15, 3955), in three ui shards and in one site-probe shard. Its coverage gate counted
+609 uncovered changed items: 257 lines, 329 regions and 23 functions (job 124519535121 of that
+run, `rust-coverage --changed: 609 uncovered changed item(s)`). The landing seat's reviewer,
+f3, attributed 586 of them, the line and region items, to members by `git blame` of the merged
+tree, as the compose commit of 13c (`af91101cfdd`) records; #2638, #2746, #2689, #2637 and
+#966 carried most of them. The ui-audit findings were attributed to #933. All of it came from
+members, and nobody had seen any of it before boarding, because no member had been judged on
+its own head against the current master. Their own validate runs had been cancelled to free
+hosted runners, since `validate.yml` runs on `ubuntu-latest` and one run takes all of the
+hosted concurrency. Train 13c (#2786) was composed differently. Every uncovered item of 13b
+was blamed to its member, every member that carried one or a new ui-audit finding was moved to
+the next train at once (#2638, #2746, #2689, #2637, #966, #1050, #933, #900 and four others,
+named in `af91101cfdd`'s message), and 13c boarded 16 members, each with no uncovered changed
+item. The members behind the six suite reds were not moved out: each was fixed by one of f3's
+patches inside the top (step 4). 13c's pull request was opened at 2026-10-31T23:51:38Z and
+merged at 2026-11-01T03:08:34Z as `aca6f182b41`, 3 hours 17 minutes later
+(`gh pr view 2786 --json createdAt,mergedAt`). It landed, but not within the owner's 30
+minutes.
+
+The procedure:
+
+1. **A member boards only judged on its own head merged with the current master.** One of two
+   things is true. Either the member's own `ci` succeeded on a head that contains the current
+   `origin/master`, or the composer merges the member into the current `origin/master` and
+   judges that merge commit, not the member's unmerged head. On that commit the composer runs
+   `scripts/ci/coverage-differential` with `MJ_COVERAGE_BASE=origin/master` (the same verdict
+   as `scripts/rust-coverage --changed origin/master`). When the member touches the crate,
+   the composer also runs `cargo test --tests` in `apps/majordomus-cli`. Last come the suite
+   cases that read the member's paths, named by hand (`bash test/run.sh <case>...`):
+   `scripts/ci/run-plan` selects gates by the path classes a change touches, and its suite gate
+   runs the whole suite, so it is no way to name a member's cases. A cancelled run is no
+   verdict, so a member whose own run was
+   cancelled boards only after this judgement. The landing seat may still cancel queued runs
+   of hold members, as the owner approved. This step does not run the structure gates, ui-audit
+   or site-probe for each member. Their findings, and those that arise only from members
+   together, are found on the top: the structure gates at steps 2 and 3, and ui-audit and
+   site-probe in CI.
+2. **The composer judges the merged tree before it pushes, within half an hour.** On the
+   merged and derived tree it runs `cargo fmt --check`,
+   `cargo clippy --all-targets --all-features -- -D warnings`, `cargo test --lib --tests`, and
+   the gates and cases `scripts/ci/run-plan` plans for the tree against `origin/master`. The
+   target is the owner's: the top is pushed within 30 minutes of being composed, and what does
+   not fit that time is left to CI and named. Two limits bound what a local run can prove. A
+   macOS build host differs from CI's `ubuntu-latest`: bash 3.2, BSD tools and another
+   browser stack. So a platform-dependent case that passes there can fail in CI, and ui-audit
+   and site-probe are judged by CI, not here. Clause 7 starts no build below 35 GiB free, so
+   when no host has that much room, nobody builds the top's executable: CI's coverage and rust
+   jobs are then the judges of coverage and of the crate's tests, and the composer says so in
+   the top's pull request. The composer pushes only a top that passed what it could run.
+3. **A pre-push failure on a train top refuses the push.** Since version 3 of
+   [`project.a-push-runs-what-ci-would-find-first`](../.ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v3.md),
+   `.githooks/pre-push` refuses a push that carries a ref under `refs/heads/integration/train-*`
+   when `scripts/ci/run-plan --before-push` exits 1. On a member's own branch it still
+   reports, because there CI's verdict costs one run. When no executable of the tree's
+   generation exists, exactly two things are left to CI: a gate whose exit 12 is the
+   launcher's own refusal (`run: just build`), printed `NOT JUDGED`, and a fast case that
+   calls `rust_bin`, left out by name. That is not a promise that such a host can push a top.
+   A gate that exits 12 for a reason of its own (CANNOT MEASURE), and a fast case that reaches
+   the executable without calling `rust_bin`, still fail, and so does every other failure;
+   each refuses the top. A top's run
+   is the widest and slowest the
+   repository has, and every member waits on it. The composer finds the member the failure
+   belongs to and applies step 4.
+4. **A member that blocks moves to the next train at once, unless its fix is small and
+   ready.** Small and green beats big. A top waits on its worst member, so one member's red
+   holds back every other member's landing. Clause 2, as the owner decided on 2026-11-01 at
+   02:45Z (version 3), allows two remedies. Either the member is dropped from the top, its fix
+   is committed on its own branch, and it boards the next train with that head; or the fix
+   travels inside the top as its own commit that names the member, and is carried to the
+   member's branch afterwards. By practice, not by the rule, the commit names the member's pull
+   request in its message and the top's pull request lists each such fix beside its member. A
+   fix that is not ready before the push is the first remedy. 13c's eight patches (listed in
+   its compose commit `af91101cfdd`) were folded into that compose commit before the decision.
+   They are not in the form it allows, and carrying each to its member's branch is still
+   owed.
+5. **A red train is post-mortemed per member, by blame.** Each finding of the top's run goes
+   to the member that introduced it. An uncovered changed item belongs to the member whose
+   commits (`origin/master..<member head>`) carry it in `git blame` of the merged tree. A
+   failing case or test belongs to the member whose paths it reads. A member's fix that rides
+   in the top (step 4) is that member's, by the name its commit carries. Some lines no member
+   owns: merge resolutions and the top's own commits (the version raise, the derive). The
+   composer owns those and, before pushing, fixes them in commits of the top's own or drops
+   them. Clause 2 speaks of a member's fix, not of the top's own commits: version 2 kept every
+   member's fix out of the top ("never inside the top"), and version 3 lets one in only as its
+   own commit that names the member. The attribution is written in the top's pull request. The
+   members it names leave, and the rest compose the next top on the current master.
+6. **A decision is taken again after a stop.** A workflow or session that resumes reads
+   `origin/master`, the members' heads and the board again before it acts on what it decided
+   earlier. On 2026-10-30 and 2026-10-31 account limits stopped agents of three sessions
+   mid-run, and a workflow that resumed hours later acted on state that had been superseded.
+   This is
+   [`project.integration-follows-the-current-master`](../.ai/repo/rules/project/integration-follows-the-current-master.v3.md)
+   applied to a top.
+
+Two other throughput defects of the same days are outside this section. #2596 (I4242, with
+I4359) moves validate onto the self-hosted runners, so a member's own run no longer competes
+with the top for the hosted pool. It is open. The other is a stale primary checkout. `plan
+drift` there read a tree 160 commits behind and reported 24 issues as open that master had
+already closed. Clause 3 of the rule is the remedy: whoever finds the checkout behind brings it
+current. Two lander and telemetry findings of 2026-10-30 are only proposed, in the open #2782.
+Nothing here depends on them.
+
 ## An expedited landing
 
 Everything above is the executor, and the executor never passes `--admin`. One thing is
