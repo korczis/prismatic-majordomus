@@ -49,7 +49,7 @@ flowchart TD
     registry["MeshRegistry&lt;br&gt;one record per node × runtime"]
   end
   subgraph cooperationLayer["cooperation (ADR 0067)"]
-    link["link handshake (link.rs)&lt;br&gt;signature · freshness · nonce · protocol ·&lt;br&gt;self · repository · trust"]
+    link["link handshake (cooperation.rs)&lt;br&gt;size · shape · signature · freshness · nonce ·&lt;br&gt;protocol · self · recipient · repository ·&lt;br&gt;trust · link age · nonce cache · capacity"]
     table["peer-link table (cooperation.rs)&lt;br&gt;connecting · connected · degraded ·&lt;br&gt;unreachable · expired"]
     journal["Journal (journal.rs)&lt;br&gt;signed events (stream, seq), Lamport,&lt;br&gt;beats, marks"]
     fold["fold (state.rs)&lt;br&gt;sessions · claims · conflicts ·&lt;br&gt;handovers · reviews · digest"]
@@ -202,25 +202,35 @@ other, or any runtime with a declared seed — posts a signed **hello** to
 `POST /api/v1/mesh/link/hello`: its runtime card (key, runtime, instance, repository, name,
 version, features, endpoints), a 32-hex nonce, a timestamp, its link protocol range and,
 when the dialer knows whom it dials, the runtime key it means to reach (`to`). The answerer
-admits it only if, in the order the code checks:
+admits it only if, in the order the code checks (`Cooperation::accept_hello`; the first check
+that fails decides the refusal, and rule `project.mesh-cooperation-is-authenticated` v2 lists
+the same order):
 
-1. the message is within 900 KiB and has the shape of a hello;
-2. the Ed25519 signature verifies under the hello domain (a signature over another message
-   kind can never be replayed as a hello);
-3. the timestamp is within ±300 s of its clock;
-4. the nonce has 32 hex characters;
-5. the protocol ranges meet (link protocol 1..1 today; the highest common version is chosen);
-6. the peer is not this runtime;
-7. a hello that names its recipient names this runtime — a copy captured on its way to
-   another runtime of the repository is refused `misaddressed`;
-8. the peer's repository identity equals its own;
-9. the peer's key is trusted by its policy;
-10. the hello is no older than the one that made the peer's live link, and its nonce has not
-    been answered before. Both are checked last on purpose: the replay cache holds only nonces
-    of trusted keys of this repository, so a stranger's hellos can neither fill it nor evict a
-    real peer's nonce. The age check is what the cache cannot be after a restart: a hello
-    captured before this runtime restarted, replayed within the skew window once the peer has
-    linked again, is refused `replay` rather than displacing that link.
+1. cooperation is running on it (`not_active`);
+2. the message is within 900 KiB (`oversized`);
+3. it has the shape of a hello and a well-formed card (`malformed`);
+4. the Ed25519 signature verifies under the hello domain — a signature over another message
+   kind can never be replayed as a hello (`signature`);
+5. the timestamp is within ±300 s of its clock (`stale`);
+6. the nonce has 32 hex characters (`malformed`);
+7. the protocol ranges meet — link protocol 1..1 today; the highest common version is
+   chosen (`protocol_unsupported`);
+8. the peer is not this runtime (`self_link`);
+9. a hello that names its recipient names this runtime — a copy captured on its way to
+   another runtime of the repository is refused before its nonce is spent (`misaddressed`);
+10. the peer's repository identity equals its own (`repository_mismatch`);
+11. the peer's key is trusted by its policy (`untrusted`);
+12. the hello is no older than the one that made the peer's live link (`replay`);
+13. its nonce has not been answered before (`replay`);
+14. a peer it does not know yet fits the peer table (`capacity`).
+
+The two replay checks come after trust on purpose: the replay cache holds only nonces of
+trusted keys of this repository, so a stranger's hellos can neither fill it nor evict a real
+peer's nonce. The age check is what the cache cannot be after a restart: a hello captured
+before this runtime restarted, replayed within the skew window once the peer has linked
+again, is refused `replay` rather than displacing that link. The unit test
+`the_hello_checks_run_in_the_order_the_rule_lists` sends hellos that fail each check and
+each adjacent pair, and reads this list and the rule's to hold all three to one order.
 
 A hello without `to` — from a seed, a first contact, or a release before it — is still
 admitted, and is protected from replay to another runtime only by the per-runtime nonce cache
@@ -312,6 +322,24 @@ Three layers, deliberately separate:
   (`learned_at`): a session silent before the restart reads as progressing for at most its
   ttl plus the expiry after it. The key is left out of the repository's declaration on
   purpose: an older executable refuses a key it does not know.
+- **A session waiting on a person says so** (I3992). A beat whose phase opens with `blocked:`
+  — `blocked: permission dialog (Claude needs your permission to use Bash)`, `blocked:
+  awaiting input` — marks the session as waiting on a person, so that peers and the landing
+  seat see it within seconds, and why, instead of reading a ttl's silence. A mark is
+  information and never progress: it moves no session's progress clock on any runtime that
+  knows marks, so a session that worked and then only waits is suspended by its ttl exactly
+  as before, however often it says so, and a session that only ever waited starts no clock
+  and keeps the stream rule; it re-arms and releases nothing. A mark is written at once —
+  inside the interval, and for a session holding no exclusive claim too — and saying the same
+  wait again writes nothing. The first beat after it that is not a wait is the session's next
+  real work: it clears the mark at once, is progress, and progress keeps its interval after
+  it. Marks and their clears are counted in a window of their own, of the same size as the
+  progress beats', so that a session whose turns end often cannot spend the beats that keep
+  other sessions' claims excluding; past it a mark is withheld, logged, and still shown by
+  the runtime that holds it. `mesh.peers` carries the reason as `blocked` beside the
+  `phase`, and `mesh peers`, the Cockpit and `/ui/mesh` show it with the session. A runtime
+  older than marks reads a mark as a phase like any other, so on it a mark keeps the claims
+  of a session that is already waiting for up to one more ttl.
 
 ## Events, ordering and deduplication
 
@@ -646,6 +674,31 @@ reads its hooks when it starts:
 The hook asks `bin/majordomus-cli` and never builds it: where that executable is absent, every
 edit is let through.
 
+A provider session that waits on a person says so on the mesh (I3992). The hook
+`.claude/hooks/majordomus-session-wait` hands each payload to `majordomus mesh beat --hook
+claude-code`, which reads the session (`claude-code-<session id>`, the one the start event
+opened) and the event out of it and beats for it on this checkout's ready server: a permission
+dialog, an MCP server's question or an idle prompt (`Notification`) and the end of a turn
+(`Stop`) mark it `blocked: …` with the reason, and its next prompt (`UserPromptSubmit`) or tool
+call (`PreToolUse`) is real work, which clears the mark. Since a provider session beats on its
+tool calls, an exclusive claim held under its own id lives by its progress like a board
+session's (I3990). The command builds no index — it runs before every tool call, in about
+twenty milliseconds — prints nothing and exits 0 whatever happens: no payload, an event that is
+no beat, no executable, no server, a refusal. Like the edit guard it is not written by
+`capture install` and not wired in this repository's `.claude/settings.json` yet; a person
+wires it by hand, as above, and starts a new session:
+
+```json
+"Notification": [ { "matcher": "", "hooks": [ { "type": "command",
+  "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/majordomus-session-wait", "timeout": 15 } ] } ],
+"Stop": [ { "matcher": "", "hooks": [ { "type": "command",
+  "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/majordomus-session-wait", "timeout": 15 } ] } ],
+"PreToolUse": [ { "matcher": "", "hooks": [ { "type": "command",
+  "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/majordomus-session-wait", "timeout": 15 } ] } ]
+```
+
+and the same handler beside `majordomus-capture` in the existing `UserPromptSubmit` group.
+
 What a session shares is metadata — intent, issue, task, milestone, branch, head, dirtiness,
 a context revision identifier. Context bodies are not replicated; a handover is the
 referenced artifact a peer materialises.
@@ -656,7 +709,7 @@ referenced artifact a peer materialises.
 
 | event | what each runtime does | what converges |
 |---|---|---|
-| a session's worker waits on a permission dialog, hangs or crashes while its server runs | the server keeps beating, and the bridge keeps pinging; neither is progress, so no `session_beat` is written; once its last beat is older than `session_ttl_seconds` on the holder's runtime (and the ttl and the expiry on every other), its exclusive claims read `suspended` and refuse nobody; its session and its advisory claims are untouched | the scope is admitted to the next claimant everywhere; when the worker works again its next beat makes the claim hold again — or, when another session was admitted over it meanwhile, releases it so the holder claims again through admission; no take-over and no fencing in this slice (I3990; the epoch is I3174) |
+| a session's worker waits on a permission dialog, hangs or crashes while its server runs | the server keeps beating, and the bridge keeps pinging; neither is progress, so no progress beat is written — where the provider's wait hook is wired, the dialog writes a `blocked: permission dialog` mark at once, which every peer sees and which is not progress either (I3992); once its last beat is older than `session_ttl_seconds` on the holder's runtime (and the ttl and the expiry on every other), its exclusive claims read `suspended` and refuse nobody; its session and its advisory claims are untouched | the scope is admitted to the next claimant everywhere; when the worker works again its next beat makes the claim hold again — or, when another session was admitted over it meanwhile, releases it so the holder claims again through admission; no take-over and no fencing in this slice (I3990; the epoch is I3174) |
 | a peer's process is killed | its links go degraded → unreachable → expired; its stream stops beating; its sessions and claims expire | on restart it is the same runtime, new instance; it re-handshakes into one table row and syncs; its previous run's claims stay expired |
 | the network partitions | each side expires the other's streams and may claim what the other held | on healing, one round each way; concurrent exclusive claims resolve to one named winner; digests agree |
 | a peer restarts while linked | the answerer refuses the old link id as `unknown_link`; the dialer says hello again | the table row is kept, `restarts` counts |

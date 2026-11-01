@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.10"
   },
-  "fingerprint": "c3ab777db475b0f8ea092a855e6e4ef9fdb8bc8990d16f30904b2988cc061670",
+  "fingerprint": "f7e7052344adca7ffe59a8429372b456014f60356110e3dedfbf393779d19bd8",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 83,
+        "capabilities": 84,
         "moments": 17
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 149,
+        "capabilities": 150,
         "moments": 38
       },
       "evidence": {
@@ -5814,6 +5814,15 @@
               "stability": "experimental",
               "tool": "majordomus_mesh_verify",
               "route": "POST /api/v1/mesh/verify"
+            },
+            {
+              "id": "mesh.who",
+              "title": "Who runs this",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_who",
+              "route": "GET /api/v1/mesh/who",
+              "cli": "majordomus mesh who"
             }
           ]
         }
@@ -5836,11 +5845,11 @@
         },
         {
           "id": "project.mesh-cooperation-is-authenticated",
-          "identity": "project.mesh-cooperation-is-authenticated@1",
+          "identity": "project.mesh-cooperation-is-authenticated@2",
           "title": "Mesh cooperation is admitted per link, replicated through one journal, and projected by every surface alike",
           "class": "blocking",
           "enforced": true,
-          "path": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
+          "path": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md"
         }
       ],
       "doc_refs": [
@@ -5934,11 +5943,11 @@
         "reasoning"
       ],
       "counts": {
-        "capabilities": 30,
-        "mcp_tools": 25,
+        "capabilities": 31,
+        "mcp_tools": 26,
         "mcp_resources": 2,
-        "http_routes": 27,
-        "cli_paths": 9,
+        "http_routes": 28,
+        "cli_paths": 10,
         "commands": 0,
         "objects": 1,
         "rules": 2,
@@ -9895,6 +9904,15 @@
               "stability": "experimental",
               "tool": "majordomus_mesh_verify",
               "route": "POST /api/v1/mesh/verify"
+            },
+            {
+              "id": "mesh.who",
+              "title": "Who runs this",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_who",
+              "route": "GET /api/v1/mesh/who",
+              "cli": "majordomus mesh who"
             }
           ]
         },
@@ -10448,11 +10466,11 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 69,
-        "mcp_tools": 60,
+        "capabilities": 70,
+        "mcp_tools": 61,
         "mcp_resources": 9,
-        "http_routes": 64,
-        "cli_paths": 25,
+        "http_routes": 65,
+        "cli_paths": 26,
         "commands": 0,
         "objects": 1,
         "rules": 2,
@@ -11153,6 +11171,15 @@
               "stability": "experimental",
               "tool": "majordomus_mesh_verify",
               "route": "POST /api/v1/mesh/verify"
+            },
+            {
+              "id": "mesh.who",
+              "title": "Who runs this",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_who",
+              "route": "GET /api/v1/mesh/who",
+              "cli": "majordomus mesh who"
             }
           ]
         },
@@ -11928,11 +11955,11 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 111,
-        "mcp_tools": 99,
+        "capabilities": 112,
+        "mcp_tools": 100,
         "mcp_resources": 18,
-        "http_routes": 105,
-        "cli_paths": 49,
+        "http_routes": 106,
+        "cli_paths": 50,
         "commands": 0,
         "objects": 0,
         "rules": 3,
@@ -13485,7 +13512,7 @@
         },
         {
           "name": "issue",
-          "objects": 1156
+          "objects": 1160
         },
         {
           "name": "intent",
@@ -13695,11 +13722,11 @@
       "counts": {
         "capabilities": 26,
         "mcp_tools": 26,
-        "mcp_resources": 1360,
+        "mcp_resources": 1364,
         "http_routes": 26,
         "cli_paths": 13,
         "commands": 1,
-        "objects": 1357,
+        "objects": 1361,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -17632,7 +17659,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (1156)",
+        "title": "issue (1160)",
         "features": [
           "planning"
         ]
@@ -18341,11 +18368,11 @@
     },
     {
       "id": "project.mesh-cooperation-is-authenticated",
-      "identity": "project.mesh-cooperation-is-authenticated@1",
+      "identity": "project.mesh-cooperation-is-authenticated@2",
       "title": "Mesh cooperation is admitted per link, replicated through one journal, and projected by every surface alike",
       "class": "blocking",
       "enforced": true,
-      "path": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
+      "path": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md"
     },
     {
       "id": "project.mesh-is-observation-not-authority",
@@ -18692,17 +18719,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3728,
-    "builtin": 220,
-    "declarative": 3508,
+    "capabilities": 3735,
+    "builtin": 221,
+    "declarative": 3514,
     "modules": 60,
-    "mcp_tools": 206,
-    "mcp_resources": 3565,
-    "http_routes": 212,
-    "cli_commands": 220,
+    "mcp_tools": 207,
+    "mcp_resources": 3571,
+    "http_routes": 213,
+    "cli_commands": 222,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3508,
+    "objects": 3514,
     "by_kind": {
       "adr": 167,
       "application": 5,
@@ -18721,7 +18748,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 44,
-      "issue": 1156,
+      "issue": 1160,
       "knowledge": 86,
       "mesh-declaration": 1,
       "milestone": 114,
@@ -18735,7 +18762,7 @@
       "session": 93,
       "skill": 8,
       "taxonomy": 10,
-      "test": 672,
+      "test": 674,
       "use-case": 49,
       "workspace": 1
     },
