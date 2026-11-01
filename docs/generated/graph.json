@@ -67573,11 +67573,6 @@
         "route": "/cockpit/objects/issue/i3903",
         "source": ".ai/repo/project/issues/I3903.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "A queued or in-progress run past its declared bound is cancelled once, with its reason recorded",
-            "A pull-request run whose head moved is cancelled; a run of master, a release, a tag or a deploy never is for that reason",
-            "A dry run decides without acting, and the decision is the same"
-          ],
           "created_at": "2026-10-22",
           "current_state": "Stuck and superseded runs hold runners until GitHub's six-hour limit or a person cancels them.",
           "depends_on": [
@@ -67599,15 +67594,21 @@
             ".ai/repo/ci",
             ".github/workflows",
             "scripts/ci/release-path",
-            "docs/CI.md"
+            "docs/CI.md",
+            "docs/INTEGRATION.md",
+            "test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/prs.rs",
+            "SECURITY.md"
           ],
           "serves": [
             "nothing-in-the-mesh-waits-on-something-dead#states-are-classified"
           ],
           "slug": "a-stuck-run-is-stopped-by-its-bound",
-          "updated_at": "2026-10-22",
+          "updated_at": "2026-10-29",
           "validation": [
-            "cargo test --lib integration"
+            "cargo test --lib integration",
+            "bash test/run.sh 3903_the_supervisor_is_wired_to_survive_a_burst 350_the_queue_measures_itself"
           ]
         }
       },
@@ -100954,6 +100955,13 @@
         "label": "test/cases/389_cockpit_projection.sh",
         "route": "/cockpit/objects/test/test-cases-389-cockpit-projection-sh",
         "source": "test/cases/389_cockpit_projection.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh",
+        "kind": "test",
+        "label": "test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh",
+        "route": "/cockpit/objects/test/test-cases-3903-the-supervisor-is-wired-to-survive-a-burst-sh",
+        "source": "test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh"
       },
       {
         "id": "majordomus://test/test/cases/390_unresolved_relation_refuses_generation.sh",
@@ -148219,6 +148227,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/390_unresolved_relation_refuses_generation.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -153610,8 +153623,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4192,
-      "edges": 9633,
+      "nodes": 4193,
+      "edges": 9634,
       "acyclic": false,
       "truncated": false
     }
