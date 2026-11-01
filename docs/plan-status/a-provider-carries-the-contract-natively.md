@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-provider-carries-the-contract-natively](https://majordomus.dev/plan/a-provider-carries-the-contract-natively/) | PLANNED | 0/11 | 6 | 5 | 0 | 0 | 0 | One generated Claude plugin, the edit guard wired and then refusing, a Stop-time owed report, extension provenance in doctor, bounded hooks and MCP listing, Codex hook parity where Codex offers the hook, Zed schema associations. |
+| [a-provider-carries-the-contract-natively](https://majordomus.dev/plan/a-provider-carries-the-contract-natively/) | ACTIVE | 0/11 | 5 | 5 | 1 | 0 | 0 | One generated Claude plugin, the edit guard wired and then refusing, a Stop-time owed report, extension provenance in doctor, bounded hooks and MCP listing, Codex hook parity where Codex offers the hook, Zed schema associations. |
 
 ## Issues
 
@@ -22,7 +22,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3304](https://majordomus.dev/plan/i3304/) | READY | 0 | — | A prompt reaches the model within a declared capture budget, and no captured record is lost |
 | [I3307](https://majordomus.dev/plan/i3307/) | READY | 0 | — | The default MCP tools/list stays within a declared byte budget, and a full schema is fetched per tool |
 | [I3308](https://majordomus.dev/plan/i3308/) | READY | 0 | — | Zed validates and completes .ai files against the repository's own schemas |
-| [I3322](https://majordomus.dev/plan/i3322/) | READY | 0 | — | capture install wires the edit guard into Claude Code's PreToolUse, first in an advisory mode, and doctor reports it unwired |
+| [I3322](https://majordomus.dev/plan/i3322/) | ACTIVE | 0 | — | capture install wires the edit guard into Claude Code's PreToolUse, first in an advisory mode, and doctor reports it unwired |
 | [I3323](https://majordomus.dev/plan/i3323/) | BLOCKED | 1 | I3322 | An unclaimed edit is refused in Claude Code once no live peer edits without a claim |
 | [I3410](https://majordomus.dev/plan/i3410/) | BLOCKED | 2 | I3303, I3406 | A Codex prompt is captured through Codex's own UserPromptSubmit hook, and capture status stops calling Codex prompts unadapted |
 | [I3829](https://majordomus.dev/plan/i3829/) | READY | 0 | — | A provider declares whether its client drives a browser beside the server, and preflight says when this machine's bridge is missing |

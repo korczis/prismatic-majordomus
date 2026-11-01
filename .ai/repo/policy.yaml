@@ -138,8 +138,15 @@ session:
   brief_on_interval: true                # keep the session briefed on what surrounds it, as
                                          # its status line and on an interval (ADR 0136)
   brief_interval_minutes: 20             # how often a session reports on itself unasked
-  edits_require_claim: true              # refuse an edit no claim covers: the active task's
+  edits_require_claim: true              # judge every edit for a claim: the active task's
                                          # scope or a live mesh claim of the session (I2735)
+  # What the guard does with an edit no claim covers. `capture install` wires it into Claude
+  # Code's PreToolUse (I3322), and a dozen sessions edit this repository, most without a live
+  # claim: refusing from the moment the hook lands would stop every one of them. Advisory says
+  # the edit was unclaimed — on stderr, and as a line of .ai/local/state/guard/unclaimed.log in
+  # the checkout the file belongs to — and lets it through; `majordomus doctor` lists the
+  # sessions that did so recently. `refuse` is I3323, written here once that list is empty.
+  edit_guard_mode: advisory
   knowledge_on_end: true                 # the evidence the episode produced is about to stop
                                          # being reachable; derive what it says as the
                                          # episode closes, on every close path

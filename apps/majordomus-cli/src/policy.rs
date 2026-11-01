@@ -370,9 +370,31 @@ pub struct SessionPolicy {
     /// checkout only while a claim covers it: the active task's scope, or a live mesh claim
     /// of the writing session (I2735, [`crate::guard`]). Off unless a repository turns it
     /// on, because it refuses edits, and a repository that never asked for that must not
-    /// find its workers stopped by an upgrade.
+    /// find its workers stopped by an upgrade. Whether an unclaimed edit is refused or only
+    /// reported is `edit_guard_mode`.
     #[serde(default)]
     pub edits_require_claim: bool,
+    /// `session.edit_guard_mode:` — what the edit guard does with an edit no claim covers,
+    /// once `edits_require_claim` asks it to judge one: `advisory` reports it and lets it
+    /// through, `refuse` stops it (I3322). Wiring the guard into a provider and refusing with
+    /// it are two changes, because a repository whose policy already asked for claims has
+    /// workers editing without them the moment the hook is wired; advisory is what the
+    /// report of who those workers are is gathered from, before refusal is turned on (I3323).
+    ///
+    /// ```
+    /// use majordomus_cli::policy::{EditGuardMode, SessionPolicy};
+    /// assert_eq!(SessionPolicy::default().edit_guard_mode, EditGuardMode::Advisory);
+    /// let refusing: SessionPolicy =
+    ///     serde_json::from_str(r#"{"edit_guard_mode": "refuse"}"#).expect("a session block");
+    /// assert_eq!(refusing.edit_guard_mode, EditGuardMode::Refuse);
+    /// // a word the schema does not admit is the schema's finding, and is read as the one
+    /// // mode that stops nobody rather than as a policy that does not load at all
+    /// let unknown: SessionPolicy =
+    ///     serde_json::from_str(r#"{"edit_guard_mode": "enforce"}"#).expect("a session block");
+    /// assert_eq!(unknown.edit_guard_mode, EditGuardMode::Advisory);
+    /// ```
+    #[serde(default, deserialize_with = "edit_guard_mode")]
+    pub edit_guard_mode: EditGuardMode,
     /// `session.stranded_after:` — how long an open episode may be silent before its client
     /// is taken to be gone (`90s`, `30m`, `12h`). `majordomus recover` reads it to judge an
     /// episode stranded, and `worktree.uncommitted` reads the same value twice over: an
@@ -417,9 +439,43 @@ impl Default for SessionPolicy {
             knowledge_on_compact: true,
             brief_interval_minutes: None,
             edits_require_claim: false,
+            edit_guard_mode: EditGuardMode::Advisory,
             stranded_after: None,
         }
     }
+}
+
+/// `session.edit_guard_mode:` — what the edit guard does with an unclaimed edit (I3322).
+///
+/// Absent is `advisory`, for the reason `edits_require_claim` is absent-off: the guard is
+/// wired by `capture install`, and a repository whose policy turned claims on before the hook
+/// existed must not find its workers stopped by the upgrade that wires it. Refusal is a
+/// decision a repository writes down.
+///
+/// ```
+/// use majordomus_cli::policy::EditGuardMode;
+/// assert_eq!(EditGuardMode::default(), EditGuardMode::Advisory);
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum EditGuardMode {
+    /// Say the edit was unclaimed, on stderr and in the checkout's record of unclaimed edits,
+    /// and let it through.
+    #[default]
+    Advisory,
+    /// Refuse it: the provider's pre-tool hook exits 2 with the reason and the remedy.
+    Refuse,
+}
+
+/// `refuse` is the one word that refuses; anything else, a misspelling included, is advisory.
+/// The schema names the two words and `doctor` reports a third; reading it here as a parse
+/// failure would take the whole policy down with one key, and every reader of it.
+fn edit_guard_mode<'de, D: serde::Deserializer<'de>>(
+    d: D,
+) -> std::result::Result<EditGuardMode, D::Error> {
+    Ok(match serde_json::Value::deserialize(d)? {
+        serde_json::Value::String(s) if s == "refuse" => EditGuardMode::Refuse,
+        _ => EditGuardMode::Advisory,
+    })
 }
 
 fn yes() -> bool {

@@ -773,7 +773,7 @@ pub struct GuardArgs {
 /// assert!(Cli::try_parse_from(["majordomus", "guard", "docs/a.md"]).is_err());
 /// ```
 pub enum GuardCommand {
-    /// Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise
+    /// Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it and session.edit_guard_mode is refuse, 0 otherwise; under advisory, the default, an unclaimed edit is said on stderr and recorded, and exits 0
     Hook(GuardHookArgs),
 }
 

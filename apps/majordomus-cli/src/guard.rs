@@ -19,6 +19,12 @@
 //! checkout nobody can serve a checkout nobody can edit, which is worse than the edit it
 //! would have stopped; I2289 still refuses the completion of such work.
 //!
+//! What it does with an edit no claim covers is the policy's second word,
+//! `session.edit_guard_mode` (I3322): `refuse` stops it, `advisory` — the default — lets it
+//! through as allowed on the ground `unclaimed`, with the remedy still said. Wiring the guard
+//! into a provider turns it on for every live session at once, so it is wired advisory first,
+//! and the hook's record of who edited unclaimed is what says when refusal can follow (I3323).
+//!
 //! One edit, from the path a provider names to the verdict it reads:
 //!
 //! ```
@@ -52,6 +58,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::integration::exclusive::Mesh;
 use crate::mesh::state::{ClaimState, ClaimView};
+use crate::policy::{EditGuardMode, SessionPolicy};
 
 /// The answer to one edit: whether it may proceed, the one word it was decided on, the
 /// sentence a person reads and, for a refusal, what would allow it. `guard.edit` returns it
@@ -80,11 +87,13 @@ pub struct EditVerdict {
     /// The path asked about, repository-relative when it is inside the checkout.
     pub path: String,
     /// Why, as one word: `off`, `outside`, `local`, `no_mesh`, `task`, `claim`,
-    /// `undecided` or `unclaimed`. Only `unclaimed` refuses.
+    /// `undecided` or `unclaimed`. Only `unclaimed` refuses, and only under
+    /// `session.edit_guard_mode: refuse`; under `advisory` it is allowed and reported.
     pub ground: String,
     /// The sentence a person reads.
     pub detail: String,
-    /// What makes the edit allowed, when it is refused.
+    /// What makes the edit claimed, when no claim covers it: refused, or let through only
+    /// because the guard is advisory.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub remedy: Option<String>,
 }
@@ -97,6 +106,41 @@ impl EditVerdict {
             ground: ground.to_string(),
             detail: detail.into(),
             remedy: None,
+        }
+    }
+
+    /// The verdict under `mode`: an unclaimed edit refused stays refused under `refuse`, and
+    /// under `advisory` is let through on the same ground, with the same remedy, and with the
+    /// reason it was not refused said in its detail. Every other verdict is already allowed
+    /// and is returned as it is.
+    ///
+    /// ```
+    /// use majordomus_cli::guard::{judge_facts, ClaimSource, EditFacts};
+    /// use majordomus_cli::policy::EditGuardMode;
+    ///
+    /// let facts = || EditFacts {
+    ///     required: Ok(true), mesh_enabled: true, task: None, session: Some("claude-code-s1"),
+    ///     claims: ClaimSource::Claims(vec![]),
+    /// };
+    /// let refused = judge_facts("a.md", Some("a.md"), facts()).under(EditGuardMode::Refuse);
+    /// assert!(!refused.allowed);
+    /// let advised = judge_facts("a.md", Some("a.md"), facts()).under(EditGuardMode::Advisory);
+    /// assert!(advised.allowed);
+    /// assert_eq!(advised.ground, "unclaimed", "the ground is still what was found");
+    /// assert!(advised.remedy.is_some(), "and the remedy is still said");
+    /// assert!(advised.detail.contains("edit_guard_mode is advisory"));
+    /// ```
+    pub fn under(self, mode: EditGuardMode) -> Self {
+        if self.allowed || mode == EditGuardMode::Refuse {
+            return self;
+        }
+        EditVerdict {
+            allowed: true,
+            detail: format!(
+                "{}; let through, because session.edit_guard_mode is advisory",
+                self.detail
+            ),
+            ..self
         }
     }
 }
@@ -394,9 +438,22 @@ fn declares_open_mesh(m: &serde_json::Map<String, serde_json::Value>) -> bool {
 /// assert!(edits_require_claim(dir.path()).is_err(), "no manifest, so no policy");
 /// ```
 pub fn edits_require_claim(root: &Path) -> Result<bool, String> {
+    session_policy(root).map(|s| s.edits_require_claim)
+}
+
+/// The `session:` block of the repository at `root`, or why its policy could not be read.
+/// Read once per edit: the switch and the mode are two keys of one file.
+///
+/// ```
+/// use majordomus_cli::guard::session_policy;
+///
+/// let dir = tempfile::tempdir().unwrap();
+/// assert!(session_policy(dir.path()).is_err(), "no manifest, so no policy");
+/// ```
+pub fn session_policy(root: &Path) -> Result<SessionPolicy, String> {
     let repository = crate::repository::Repository::open(root).map_err(|e| e.to_string())?;
     crate::policy::LoadedPolicy::load(&repository)
-        .map(|p| p.policy.session.edits_require_claim)
+        .map(|p| p.policy.session)
         .map_err(|e| e.to_string())
 }
 
@@ -467,8 +524,10 @@ pub(crate) fn claims_of(mesh: &dyn Mesh) -> ClaimSource {
     }
 }
 
-/// Judge an edit of `path` by `session` in the checkout at `root`, reading every fact.
-/// `claims` is asked only when the cheaper facts have not already decided.
+/// Judge an edit of `path` by `session` in the checkout at `root`, reading every fact, under
+/// the policy's `session.edit_guard_mode` (advisory when the policy cannot be read, which
+/// already enforces nothing). `claims` is asked only when the cheaper facts have not already
+/// decided.
 ///
 /// ```
 /// use majordomus_cli::guard::judge;
@@ -486,7 +545,12 @@ pub fn judge(
     claims: impl FnOnce() -> ClaimSource,
 ) -> EditVerdict {
     let rel = relative_to(root, path);
-    let required = edits_require_claim(root);
+    let policy = session_policy(root);
+    let mode = policy
+        .as_ref()
+        .map(|s| s.edit_guard_mode)
+        .unwrap_or_default();
+    let required = policy.map(|s| s.edits_require_claim);
     let mesh_enabled = mesh_declared_enabled(root);
     let task = active_task(root);
     let needs_claims = rel.is_some()
@@ -514,6 +578,7 @@ pub fn judge(
             claims,
         },
     )
+    .under(mode)
 }
 
 /// The path a provider's pre-tool payload names, and the provider's own session id: the
@@ -692,8 +757,13 @@ mod tests {
     }
 
     /// A repository made of the shipped skeleton's manifest and policy, with the policy
-    /// switch and the mesh declaration as asked.
+    /// switch and the mesh declaration as asked, and the guard refusing.
     fn repository(required: bool, mesh: bool) -> tempfile::TempDir {
+        repository_in("refuse", required, mesh)
+    }
+
+    /// The same, with the guard in the mode asked.
+    fn repository_in(mode: &str, required: bool, mesh: bool) -> tempfile::TempDir {
         let skeleton = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share/skeleton");
         let dir = tempfile::tempdir().unwrap();
         let ai = dir.path().join(".ai");
@@ -702,7 +772,11 @@ mod tests {
         let policy = std::fs::read_to_string(skeleton.join("policy.yaml")).unwrap();
         let line = "edits_require_claim: false";
         assert!(policy.contains(line), "the skeleton declares the switch");
-        let policy = policy.replace(line, &format!("edits_require_claim: {required}"));
+        let advisory = "edit_guard_mode: advisory";
+        assert!(policy.contains(advisory), "the skeleton declares the mode");
+        let policy = policy
+            .replace(line, &format!("edits_require_claim: {required}"))
+            .replace(advisory, &format!("edit_guard_mode: {mode}"));
         std::fs::write(ai.join("repo/policy.yaml"), policy).unwrap();
         // open when it is on: trust on first use, so it runs a mesh on some machine
         std::fs::write(
@@ -766,6 +840,47 @@ mod tests {
         assert!(asked.get(), "only the claims could decide");
         assert!(!v.allowed);
         assert_eq!(v.ground, "unclaimed");
+    }
+
+    #[test]
+    fn an_advisory_guard_lets_the_unclaimed_edit_through_and_says_so() {
+        let dir = repository_in("advisory", true, true);
+        let v = judge(dir.path(), "docs/a.md", Some("claude-code-s1"), || {
+            ClaimSource::Claims(vec![])
+        });
+        assert!(v.allowed, "{v:?}");
+        assert_eq!(v.ground, "unclaimed");
+        assert!(v.remedy.is_some_and(|r| r.contains("majordomus start")));
+        // the mode decides nothing that was already allowed
+        let off = repository_in("advisory", false, true);
+        let v = judge(off.path(), "docs/a.md", None, || unreachable!("off"));
+        assert_eq!(v.ground, "off");
+        assert!(!v.detail.contains("advisory"), "{}", v.detail);
+    }
+
+    #[test]
+    fn the_mode_is_read_from_the_policy_and_absent_is_advisory() {
+        assert_eq!(
+            session_policy(repository(true, true).path()).map(|s| s.edit_guard_mode),
+            Ok(EditGuardMode::Refuse)
+        );
+        assert_eq!(
+            session_policy(repository_in("advisory", true, true).path()).map(|s| s.edit_guard_mode),
+            Ok(EditGuardMode::Advisory)
+        );
+        let silent = repository(true, true);
+        let policy = silent.path().join(".ai/repo/policy.yaml");
+        let text = std::fs::read_to_string(&policy).unwrap();
+        let text: String = text
+            .lines()
+            .filter(|l| !l.trim_start().starts_with("edit_guard_mode:"))
+            .map(|l| format!("{l}\n"))
+            .collect();
+        std::fs::write(&policy, text).unwrap();
+        assert_eq!(
+            session_policy(silent.path()).map(|s| s.edit_guard_mode),
+            Ok(EditGuardMode::Advisory)
+        );
     }
 
     #[test]

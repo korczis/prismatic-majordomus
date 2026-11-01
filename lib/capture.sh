@@ -285,6 +285,30 @@ MJ_CAPTURE_ADAPTERS='claude-code .claude/settings.json UserPromptSubmit prompt_i
 # nothing writes `-`, and its workers resolve through the pointer as everything did before.
 MJ_CAPTURE_LIFECYCLE='claude-code .claude/settings.json SessionStart SessionEnd .claude/hooks/majordomus-session-start .claude/hooks/majordomus-session-end session_id,sessionId source,session_source reason,end_reason clear,logout,prompt_input_exit PreCompact .claude/hooks/majordomus-session-compact CLAUDE_CODE_SESSION_ID'
 
+# The edit guard (I2735, I3322): the provider's pre-tool event, narrowed by its matcher to the
+# tools that write a file, runs the guard's shim, which asks `majordomus guard hook` whether a
+# claim covers the path. One line per provider:
+#   1 provider  2 config file  3 event  4 matcher  5 shim
+#
+# It is not a column of the lifecycle line above, although the lifecycle check reads it,
+# because it is not an episode event: `capture session` must not accept it, share/providers.yaml
+# lists only the episode's events under `lifecycle`, it fires on every edit rather than once
+# an episode, and it is the one hook allowed to answer 2 — the provider's refusal — which every
+# generated shim is contracted never to do. So its shim is not generated either: it is the
+# checkout's own (.claude/hooks/majordomus-edit-guard, which asks the launcher and never
+# builds), and `capture install` wires it where it exists. A checkout without it has no guard
+# to wire, and the generated plugin is what will carry it there (I3300).
+#
+# The matcher is the part a hand edit is most likely to narrow without anyone noticing: drop
+# NotebookEdit from it and every notebook is written unjudged while the hook still reads as
+# wired. The lifecycle check compares it with this line (mj_guard_state).
+MJ_CAPTURE_GUARD='claude-code .claude/settings.json PreToolUse Edit|Write|MultiEdit|NotebookEdit .claude/hooks/majordomus-edit-guard'
+
+mj_guard_adapter()   { printf '%s\n' "$MJ_CAPTURE_GUARD" | awk -v p="$1" '$1 == p { print; f = 1 } END { exit !f }'; }
+mj_guard_field()     { mj_guard_adapter "$1" 2>/dev/null | awk -v n="$2" '{ print $n }'; }
+# Whether this checkout carries the guard for this provider: an adapter line, and its shim.
+mj_guard_installed() { mj_guard_adapter "$1" >/dev/null 2>&1 && [ -e "$MJ_ROOT/$(mj_guard_field "$1" 5)" ]; }
+
 # The mods a provider loads by itself from a folder inside the repository (ADR 0123): one
 # line each, the provider, the mod's name under share/mods/<provider>/, the folder it is
 # installed to, and the policy key that switches it. A shim answers an event the provider
@@ -310,10 +334,16 @@ claude-code majordomus-brief .claude/skills/majordomus-brief session.brief_on_in
 # continuation, so under the default it was cut short before the episode closed. The start and
 # the compaction are bounded as well, so that a stalled one cannot hold a fresh session for
 # ten minutes.
+#
+# The guard runs before every edit and the model waits for it. It never builds, and a cold
+# start of the executable is what it costs; the bound is there so that a guard that stalls
+# delays one edit by half a minute rather than ten, and a guard the provider cancels lets the
+# tool run, which is what the guard does with every outcome it cannot decide.
 MJ_CAPTURE_TIMEOUTS='claude-code prompt 30
 claude-code start 30
 claude-code end 60
-claude-code compact 60'
+claude-code compact 60
+claude-code guard 30'
 
 # ---------------------------------------------------------------- the connection episode
 # A provider whose declared episode source is `connection` has no adapter line above and
@@ -366,10 +396,12 @@ mj_capture_timeout() {
   printf '%s\n' "$MJ_CAPTURE_TIMEOUTS" | awk -v p="$1" -v k="$2" '$1 == p && $2 == k { print $3 }'
 }
 # The kind a provider's own event name stands for: `prompt` for the prompt adapter's event,
-# otherwise the lifecycle kind whose column names it; nothing when neither does.
+# `guard` for the edit guard's, otherwise the lifecycle kind whose column names it; nothing
+# when none does.
 mj_capture_event_kind() {
   local p="$1" event="$2" k
   [ "$event" = "$(mj_capture_field "$p" 3)" ] && { printf 'prompt\n'; return 0; }
+  [ "$event" = "$(mj_guard_field "$p" 3)" ] && { printf 'guard\n'; return 0; }
   mj_lifecycle_adapter "$p" >/dev/null 2>&1 || return 0
   for k in $(mj_lifecycle_kinds); do
     [ "$(mj_lifecycle_event "$p" "$k")" = "$event" ] && { printf '%s\n' "$k"; return 0; }
@@ -2180,9 +2212,56 @@ mj_lifecycle_state() {
     [ -f "$MJ_ROOT/$rel" ] || { printf 'named\t%s names %s, which does not exist\n' "$(mj_lifecycle_field "$p" 2)" "$rel"; return 0; }
     [ -x "$MJ_ROOT/$rel" ] || { printf 'named\t%s is not executable, so the provider cannot run it\n' "$rel"; return 0; }
   done
-  local shims; shims="$(for one in $(mj_lifecycle_kinds); do mj_lifecycle_shim_rel "$p" "$one"; done | paste -sd, - | sed 's/,/, /g')"
+  mj_guard_state "$p" "$cfg" || return 0
+  local shims; shims="$( { for one in $(mj_lifecycle_kinds); do mj_lifecycle_shim_rel "$p" "$one"; done
+    mj_guard_installed "$p" && mj_guard_field "$p" 5; } | paste -sd, - | sed 's/,/, /g')"
   if mj_lifecycle_selftest "$p"; then printf 'verified\t%s are wired, and a synthetic payload through the end shim reached the command\n' "$shims"
   else printf 'wired\t%s are in place but a synthetic payload through the end shim did not reach the command\n' "$shims"; fi
+}
+
+# The edit guard's part of the lifecycle check: silent and 0 when it is wired as `capture
+# install` writes it, or when this checkout carries no guard to wire; otherwise one state line
+# in the lifecycle's words, and 1, so the caller reports that line and nothing after it.
+#
+# Until I3322 this check did not exist, and the guard read as wired in every report while no
+# configuration named it: the shim was in place, case 3069 drove it by hand, the policy asked
+# every edit for a claim, and no edit ever reached it. So each way it can fail to be called is
+# named — no pre-tool hook, a pre-tool hook that runs something else, a shim the provider
+# cannot run — and so is the one way it can be called for less than it should: a matcher
+# narrowed by hand, which leaves the tools it dropped writing unjudged while the entry still
+# reads as present. The guard is not driven here: a synthetic edit would be judged against
+# this checkout's live claims and recorded as somebody's unclaimed edit, which is not a price
+# a diagnostic may charge. The structure is what is checked, and case 3069 drives the judgement.
+mj_guard_state() {
+  local p="$1" cfg="$2" event matcher rel cmd have
+  mj_guard_adapter "$p" >/dev/null 2>&1 || return 0
+  event="$(mj_guard_field "$p" 3)"; matcher="$(mj_guard_field "$p" 4)"; rel="$(mj_guard_field "$p" 5)"
+  cmd="\${CLAUDE_PROJECT_DIR}/$rel"
+  if ! mj_guard_installed "$p"; then
+    grep -qF "$rel" "$cfg" || return 0
+    printf 'named\t%s names %s, which does not exist\n' "$(mj_guard_field "$p" 2)" "$rel"; return 1
+  fi
+  [ -x "$MJ_ROOT/$rel" ] || { printf 'named\t%s is not executable, so the provider cannot run it and no edit is judged\n' "$rel"; return 1; }
+  grep -qF "\"$event\"" "$cfg" || {
+    printf 'unconfigured\t%s declares no %s hook, so no edit reaches %s (run: majordomus capture install)\n' "$(mj_guard_field "$p" 2)" "$event" "$rel"; return 1; }
+  grep -qF "$rel" "$cfg" || {
+    printf 'named\t%s declares %s but does not name %s, so no edit reaches the guard\n' "$(mj_guard_field "$p" 2)" "$event" "$rel"; return 1; }
+  if mj_has jq; then
+    # read as JSON: the handler must be an event's handler, and its group's matcher the one
+    jq -e --arg e "$event" --arg c "$cmd" 'any(.hooks[$e][]?; any(.hooks[]?; .command == $c))' \
+      "$cfg" >/dev/null 2>&1 || {
+      printf 'named\t%s names %s, but no %s handler runs %s\n' "$(mj_guard_field "$p" 2)" "$rel" "$event" "$cmd"; return 1; }
+    have="$(jq -r --arg e "$event" --arg c "$cmd" \
+      '[.hooks[$e][]? | select(any(.hooks[]?; .command == $c)) | .matcher // ""] | first' "$cfg" 2>/dev/null)"
+  else
+    # without a JSON reader, the declared matcher must at least be written somewhere in it
+    have="$(sed -n 's/^ *"matcher": "\(.*\)",\{0,1\}$/\1/p' "$cfg" | grep -xF "$matcher" | head -n 1)"
+    [ -n "$have" ] || have="no matcher naming all four (jq is not installed to read which)"
+  fi
+  [ "$have" = "$matcher" ] || {
+    printf 'named\tthe %s entry running %s matches "%s" rather than "%s", the tools that write a file (hand-edited; restore the matcher capture install writes)\n' \
+      "$event" "$rel" "$have" "$matcher"; return 1; }
+  return 0
 }
 
 # The episode a connection draws, as it stands here (ADR 0103). A different wiring is being
@@ -2288,7 +2367,16 @@ mj_capture_install_one() {
   if [ "$(cat "$cfg")" = "$(mj_capture_config "$p" legacy)" ]; then
     mj_personal_guard "$(mj_capture_field "$p" 2)"
     mj_capture_config "$p" > "$cfg"
-    mj_info capture "$(mj_capture_field "$p" 2)" "rewritten: every hook now carries its timeout"
+    mj_info capture "$(mj_capture_field "$p" 2)" "rewritten: every hook now carries its timeout$(mj_guard_installed "$p" && printf ', and the edit guard is wired')"
+    return 0
+  fi
+  # Exactly the configuration this tool wrote before it wired the edit guard, in a checkout
+  # that carries the guard: the same, for the PreToolUse entry (I3322). Where the guard is not
+  # carried the two shapes are one, and there is nothing to bring up to date.
+  if mj_guard_installed "$p" && [ "$(cat "$cfg")" = "$(mj_capture_config "$p" timed)" ]; then
+    mj_personal_guard "$(mj_capture_field "$p" 2)"
+    mj_capture_config "$p" > "$cfg"
+    mj_info capture "$(mj_capture_field "$p" 2)" "rewritten: the edit guard is wired ($(mj_guard_field "$p" 3) $(mj_guard_field "$p" 4))"
     return 0
   fi
   # A configuration this tool did not write is not this tool's to rewrite, and one it wrote
@@ -2306,21 +2394,34 @@ mj_capture_install_one() {
   mj_err "capture install: $(mj_capture_field "$p" 2) exists and does not name $(printf '%s' "$missing" | wc -w | tr -d ' ') of the hooks; it is not this tool's to rewrite. Add to its \"hooks\" object:"
   for one in $missing; do
     event="${one%%=*}"; rel="${one#*=}"
-    mj_err "  \"$event\": [ { \"matcher\": \"\", \"hooks\": [ { \"type\": \"command\", \"command\": \"\${CLAUDE_PROJECT_DIR}/$rel\" } ] } ]"
+    mj_err "  \"$event\": [ { \"matcher\": \"$(mj_capture_matcher "$p" "$event")\", \"hooks\": [ { \"type\": \"command\", \"command\": \"\${CLAUDE_PROJECT_DIR}/$rel\" } ] } ]"
   done
   return "$MJ_EX_REFUSED"
 }
 
 # Every event this provider has a shim for, as <event>=<shim path>, in the order they are
 # written into a configuration. One list, read by the writer and by the reconciliation, so
-# the two cannot disagree about what "installed" means.
+# the two cannot disagree about what "installed" means. The edit guard comes last, and only
+# where this checkout carries its shim; `noguard` leaves it out, which is the list this tool
+# wrote before it wired the guard (I3322).
 mj_capture_events() {
-  local p="$1" one
+  local p="$1" guard="${2:-}" one
   printf '%s=%s\n' "$(mj_capture_field "$p" 3)" "$(mj_capture_shim_rel "$p")"
-  mj_lifecycle_adapter "$p" >/dev/null 2>&1 || return 0
-  for one in $(mj_lifecycle_kinds); do
-    printf '%s=%s\n' "$(mj_lifecycle_event "$p" "$one")" "$(mj_lifecycle_shim_rel "$p" "$one")"
-  done
+  if mj_lifecycle_adapter "$p" >/dev/null 2>&1; then
+    for one in $(mj_lifecycle_kinds); do
+      printf '%s=%s\n' "$(mj_lifecycle_event "$p" "$one")" "$(mj_lifecycle_shim_rel "$p" "$one")"
+    done
+  fi
+  [ "$guard" = noguard ] && return 0
+  mj_guard_installed "$p" || return 0
+  printf '%s=%s\n' "$(mj_guard_field "$p" 3)" "$(mj_guard_field "$p" 5)"
+}
+
+# The matcher a configuration gives one event's group: the guard's for the guard's event, and
+# empty — every occurrence — for every other.
+mj_capture_matcher() {
+  [ "$2" = "$(mj_guard_field "$1" 3)" ] && { mj_guard_field "$1" 4; return 0; }
+  return 0
 }
 
 # One shim: the provider runs it, it finds the repository from its own location, and it
@@ -2479,22 +2580,25 @@ mj_capture_shim_body() {
 }
 
 # The configuration this tool writes when there is none: every event it has a shim for, in
-# one hooks object. The event takes no matcher and fires every time, but the shape is the
-# one every event uses — a group, then the handlers inside it. Each handler carries the
-# timeout MJ_CAPTURE_TIMEOUTS declares for its event.
+# one hooks object. An episode event takes no matcher and fires every time; the edit guard's
+# matcher names the tools that write a file. The shape is the one every event uses — a group,
+# then the handlers inside it. Each handler carries the timeout MJ_CAPTURE_TIMEOUTS declares
+# for its event.
 #
-# `legacy` is the shape this tool wrote before it declared timeouts. It is kept only to be
-# compared with: a configuration identical to it is this tool's by its content and is brought
-# up to date, and one that differs by a byte is somebody's and is not rewritten (I3060).
+# `legacy` is the shape this tool wrote before it declared timeouts, and `timed` the shape it
+# wrote before it wired the edit guard (I3322). They are kept only to be compared with: a
+# configuration identical to one is this tool's by its content and is brought up to date, and
+# one that differs by a byte is somebody's and is not rewritten (I3060).
 mj_capture_config() {
-  local p="$1" shape="${2:-current}" one event rel secs first=1
+  local p="$1" shape="${2:-current}" one event rel secs guard="" first=1
+  [ "$shape" = current ] || guard=noguard
   printf '{\n  "hooks": {\n'
-  for one in $(mj_capture_events "$p"); do
+  for one in $(mj_capture_events "$p" ${guard:+"$guard"}); do
     event="${one%%=*}"; rel="${one#*=}"
     secs=""
     [ "$shape" = legacy ] || secs="$(mj_capture_timeout "$p" "$(mj_capture_event_kind "$p" "$event")")"
     [ "$first" = 1 ] || printf ',\n'; first=0
-    printf '    "%s": [\n      {\n        "matcher": "",\n        "hooks": [\n' "$event"
+    printf '    "%s": [\n      {\n        "matcher": "%s",\n        "hooks": [\n' "$event" "$(mj_capture_matcher "$p" "$event")"
     if [ -n "$secs" ]; then
       printf '          {\n            "type": "command",\n            "command": "${CLAUDE_PROJECT_DIR}/%s",\n            "timeout": %s\n          }\n' "$rel" "$secs"
     else

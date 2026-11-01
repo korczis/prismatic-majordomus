@@ -80,6 +80,7 @@ mj_cmd_doctor() {
 
   mj_doctrine_dispatch doctor
   mj_report_environment
+  mj_report_edit_claims
   mj_report_reasoning
   mj_report_layout
   mj_report_budget doctor "$t_start"
@@ -687,6 +688,69 @@ mj_report_environment() {
   mj_has shellcheck && env="$env, shellcheck present"
   mj_info env "-" "$env"
   mj_report_clone
+  return 0
+}
+
+# The claim-coverage report (I3322): which sessions edited a file no claim covered, recently.
+#
+# The edit guard is wired into the provider's pre-tool hook, and while the policy's
+# `session.edit_guard_mode` is `advisory` it refuses nothing: it says the edit was unclaimed
+# and appends one line — time, session, path — to .ai/local/state/guard/unclaimed.log in the
+# checkout the file belongs to. Refusal (I3323) is turned on when this report names nobody,
+# because refusing while it names somebody stops that somebody mid-edit. So the report is
+# read the way the guard writes it: every checkout of the repository — a session started in
+# one checkout edits files of the others, and each records its own — and a session counts
+# while its newest unclaimed edit is younger than `session.stranded_after`, the policy's one
+# word for how long a silent session is still taken to be there. Older lines are history and
+# are not read as somebody editing now.
+#
+# Its reach is this machine: the records are each checkout's local state, and a session on
+# another machine of the mesh is reported by that machine's doctor. It is a report and never
+# a failure: an unclaimed edit is what advisory mode exists to let through.
+mj_report_edit_claims() {
+  local window secs now cutoff wt rows=""
+  if [ "$(mj_pol session.edits_require_claim)" != true ]; then
+    mj_info guard "claim coverage" "session.edits_require_claim is off, so the edit guard judges no edit here"
+    return 0
+  fi
+  window="$(mj_pol session.stranded_after)"
+  secs="$(mj_duration_secs "$window" 2>/dev/null)" || secs=""
+  if [ -z "$secs" ]; then
+    mj_info guard "claim coverage" "not read: the policy declares no session.stranded_after, which is what says a session is still there" "majordomus doctor"
+    return 0
+  fi
+  now="$(mj_epoch "$(mj_now)")" || now=""
+  [ -n "$now" ] || { mj_info guard "claim coverage" "not read: the clock could not be read as an epoch"; return 0; }
+  cutoff=$((now - secs))
+  cutoff="$(date -u -r "$cutoff" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d "@$cutoff" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null)"
+  # every checkout of the repository, this one included even where git lists no worktree,
+  # each spelt physically so that one checkout reached by two spellings is read once
+  local here; here="$(cd "$MJ_ROOT" && pwd -P)"
+  while IFS= read -r wt; do
+    [ -f "$wt/.ai/local/state/guard/unclaimed.log" ] || continue
+    # RFC 3339 instants in UTC compare as strings; a line that is not three fields is skipped
+    rows="$rows$(awk -F '\t' -v c="$cutoff" -v w="$wt" 'NF == 3 && $1 >= c { printf "%s\t%s\t%s\t%s\n", $2, $1, $3, w }' \
+      "$wt/.ai/local/state/guard/unclaimed.log" 2>/dev/null)
+"
+  done <<EOF
+$( { printf '%s\n' "$MJ_ROOT"; git -C "$MJ_ROOT" worktree list --porcelain 2>/dev/null | sed -n 's/^worktree //p'; } \
+  | while IFS= read -r wt; do (cd "$wt" 2>/dev/null && pwd -P); done | awk '!seen[$0]++')
+EOF
+  if [ -z "$(printf '%s' "$rows" | tr -d '\n')" ]; then
+    mj_ok guard "claim coverage" "no session edited a file without a claim in the last $window (session.edit_guard_mode: $(mj_pol session.edit_guard_mode | grep . || echo advisory))"
+    return 0
+  fi
+  # one line per session: how many unclaimed edits, the newest, and where
+  local session count newest path checkout
+  while IFS="$(printf '\t')" read -r session count newest path checkout; do
+    [ -n "$session" ] || continue
+    mj_warn guard "$session" \
+      "$count unclaimed edit(s) in the last $window, the newest at $newest: $path in $([ "$checkout" = "$here" ] && printf "this checkout" || printf "%s" "$checkout")" \
+      "majordomus mesh claim $path --session $session --advisory"
+  done <<EOF
+$(printf '%s' "$rows" | awk -F '\t' 'NF == 4 { n[$1]++; if ($2 >= t[$1]) { t[$1] = $2; p[$1] = $3; w[$1] = $4 } }
+  END { for (s in n) printf "%s\t%s\t%s\t%s\t%s\n", s, n[s], t[s], p[s], w[s] }' | LC_ALL=C sort)
+EOF
   return 0
 }
 

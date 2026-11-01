@@ -618,33 +618,66 @@ refused, and a repository with no enabled mesh is not judged.
 
 An edit can be asked for its claim before it happens (I2735). With `session.edits_require_claim:
 true` in the policy, the provider's pre-tool hook (`.claude/hooks/majordomus-edit-guard`, for
-Edit, Write, MultiEdit and NotebookEdit) runs `majordomus guard hook`, which exits 2 — the
-provider's refusal — when neither the active task's scope nor a live mesh claim of the writing
-session (`<provider>-<session id>`, the id the start event opened) covers the path, naming the
-path and the remedy: `majordomus start "<task>" --scope <path>`, or `majordomus mesh claim
-<path> --session <id> --advisory`. The checkout judged is the one the file belongs to, so a
-session started in one checkout editing another's file is judged by the other's task and
-claims. Local state, a path outside the checkout, a repository with no enabled mesh and a
+Edit, Write, MultiEdit and NotebookEdit) runs `majordomus guard hook`, which judges whether the
+active task's scope or a live mesh claim of the writing session (`<provider>-<session id>`, the
+id the start event opened) covers the path. The checkout judged is the one the file belongs
+to, so a session started in one checkout editing another's file is judged by the other's task
+and claims. Local state, a path outside the checkout, a repository with no enabled mesh and a
 server that does not answer are let through. The same judgement is `guard.edit` over MCP and
 HTTP.
 
-The hook is not wired yet, and until it is, the policy's `edits_require_claim` refuses nothing in
-Claude Code (I3010). `majordomus capture install` writes the UserPromptSubmit, SessionStart,
-SessionEnd and PreCompact entries of `.claude/settings.json`, and no PreToolUse entry; the hook
-script and `guard.edit` exist, but no edit reaches them. Wiring it (advisory first), and then
-refusing an unclaimed edit, are the generated-plugin work that follows the alpha. Until then a
-person who wants the guard wires it by hand: add this entry under `"hooks"` in
-`.claude/settings.json` (shared with everyone who works in the checkout) or in
-`.claude/settings.local.json` (this machine only), and start a new Claude Code session, which
-reads its hooks when it starts:
+What the guard does with an edit no claim covers is `session.edit_guard_mode` (I3322):
+
+- `advisory`, the default and this repository's setting, lets the edit through and says so: the
+  reason and the remedy — `majordomus start "<task>" --scope <path>`, or `majordomus mesh claim
+  <path> --session <id> --advisory` — on stderr, and one line (time, session, path) appended to
+  `.ai/local/state/guard/unclaimed.log` in the checkout the file belongs to. `guard.edit`
+  answers `allowed: true` on the ground `unclaimed`, with the remedy.
+- `refuse` exits 2 — the provider's refusal — with the same reason and remedy, which the
+  provider hands to the model.
+
+`majordomus doctor` is the claim-coverage report: it reads `unclaimed.log` in every checkout of
+the repository and names, one WARN per session, each session whose newest unclaimed edit is
+younger than `session.stranded_after`, with how many it made, the newest path and the claim
+that would cover it. Its reach is this machine; a session on another machine is reported by
+that machine's doctor. Refusal is turned on (I3323) once that report names nobody, because
+wiring the guard reaches every live session at once and most of them edit without a claim.
+
+`majordomus capture install` writes the hook into `.claude/settings.json`, after the
+UserPromptSubmit, SessionStart, SessionEnd and PreCompact entries, wherever the checkout carries
+the guard's shim (`.claude/hooks/majordomus-edit-guard`; a checkout without it has no guard to
+wire, and the generated plugin is what will carry it, I3300):
 
 ```json
-"PreToolUse": [ { "matcher": "Edit|Write|MultiEdit|NotebookEdit",
-  "hooks": [ { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/majordomus-edit-guard" } ] } ]
+"PreToolUse": [
+  {
+    "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+    "hooks": [
+      {
+        "type": "command",
+        "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/majordomus-edit-guard",
+        "timeout": 30
+      }
+    ]
+  }
+]
 ```
 
+A configuration `capture install` wrote before it wired the guard is brought up to date by the
+same command; one somebody else wrote is left as it is, and the entry it lacks is named for a
+person to add. Claude Code reads its hooks when a session starts, so a session already running
+is judged from its next start. `majordomus capture status` (and the `session-lifecycle` wiring
+`doctor` checks) reports the guard with the episode hooks: `unconfigured` when no PreToolUse
+entry exists, `named` when the entry runs something else, the shim is not executable, or the
+matcher was narrowed by hand — dropping NotebookEdit leaves every notebook written unjudged
+while the entry still looks present.
+
+Bash-tool writes are not judged at edit time: the hook sees only the four tools that name the
+file they write. They are caught by the task's scope at `check`, at `finish` and in the
+pre-push hook.
+
 The hook asks `bin/majordomus-cli` and never builds it: where that executable is absent, every
-edit is let through.
+edit is let through, and the shim says so on stderr and in `.ai/local/state/guard/skipped.log`.
 
 What a session shares is metadata — intent, issue, task, milestone, branch, head, dirtiness,
 a context revision identifier. Context bodies are not replicated; a handover is the
