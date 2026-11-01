@@ -22,6 +22,7 @@
     "op-continuity-status": "docs/api/continuity/",
     "op-continuity-sync": "docs/api/continuity/",
     "op-convergence-report": "docs/api/convergence/",
+    "op-dashboard-cluster": "docs/api/dashboard/",
     "op-dashboard-overview": "docs/api/dashboard/",
     "op-delivery-feature": "docs/api/delivery/",
     "op-delivery-report": "docs/api/delivery/",
@@ -347,6 +348,8 @@
     "schema-ClosedSessions": "docs/api/lifecycle/",
     "schema-Closure": "docs/api/obligations/",
     "schema-ClosureMatrix": "docs/api/capabilities/",
+    "schema-ClusterMachine": "docs/api/dashboard/",
+    "schema-ClusterMilestone": "docs/api/dashboard/",
     "schema-CockpitAreaRef": "docs/api/product/",
     "schema-ColourPart": "docs/api/design/",
     "schema-CommandArgument": "docs/api/commands/",
@@ -416,6 +419,7 @@
     "schema-CritiqueClass": "docs/api/intents/",
     "schema-CritiqueFinding": "docs/api/intents/",
     "schema-DashboardCard": "docs/api/dashboard/",
+    "schema-DashboardCluster": "docs/api/dashboard/",
     "schema-DashboardMeasure": "docs/api/dashboard/",
     "schema-DashboardOverview": "docs/api/dashboard/",
     "schema-DashboardQuestion": "docs/api/dashboard/",
@@ -1357,8 +1361,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 212,
-    "schemas": 1082,
+    "operations": 213,
+    "schemas": 1085,
     "tags": 60
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1472,6 +1476,7 @@
     "continuity.status": "continuity",
     "continuity.sync": "continuity",
     "convergence.report": "convergence",
+    "dashboard.cluster": "dashboard",
     "dashboard.overview": "dashboard",
     "delivery.feature": "delivery",
     "delivery.report": "delivery",
@@ -1801,6 +1806,8 @@
     "ClosedSessions": "lifecycle",
     "Closure": "obligations",
     "ClosureMatrix": "capabilities",
+    "ClusterMachine": "dashboard",
+    "ClusterMilestone": "dashboard",
     "CockpitAreaRef": "product",
     "ColourPart": "design",
     "CommandArgument": "commands",
@@ -1870,6 +1877,7 @@
     "CritiqueClass": "intents",
     "CritiqueFinding": "intents",
     "DashboardCard": "dashboard",
+    "DashboardCluster": "dashboard",
     "DashboardMeasure": "dashboard",
     "DashboardOverview": "dashboard",
     "DashboardQuestion": "dashboard",
@@ -9791,6 +9799,155 @@
       "variants": []
     },
     {
+      "description": "One machine of the mesh and what runs on it.",
+      "home": "dashboard",
+      "is_enum": false,
+      "name": "ClusterMachine",
+      "properties": [
+        {
+          "description": "The name a person reads: the card's, else the first eight characters of the node id.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether it is the machine that composed the page.",
+          "name": "local",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "`own` (this machine), `live` (a runtime beats) or `expired` (none does).",
+          "name": "liveness",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many of its runtimes beat.",
+          "name": "runtimes_live",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many runtimes it has, expired ones included.",
+          "name": "runtimes",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Active sessions on it.",
+          "name": "sessions",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Claims those sessions hold.",
+          "name": "claims",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "What its sessions say they are doing, at most three, cut.",
+          "name": "activity",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DashboardCluster"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One milestone and how far it is.",
+      "home": "dashboard",
+      "is_enum": false,
+      "name": "ClusterMilestone",
+      "properties": [
+        {
+          "description": "The identity (`M003`, or the slug a milestone is named by).",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line naming the outcome.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The derived status word the plan reports.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Issues done.",
+          "name": "done",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Issues that count (the plan's own denominator: total less cancelled).",
+          "name": "required",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "`done` over `required`, whole percent; `0` where nothing counts.",
+          "name": "percent",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Issues ready to take.",
+          "name": "ready",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Issues waiting on a dependency.",
+          "name": "blocked",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Issues being worked.",
+          "name": "active",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DashboardCluster"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One area of the Cockpit the feature names.",
       "home": "product",
       "is_enum": false,
@@ -13952,6 +14109,116 @@
       "used_by_schemas": [
         "DashboardQuestion"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `dashboard.cluster`.",
+      "home": "dashboard",
+      "is_enum": false,
+      "name": "DashboardCluster",
+      "properties": [
+        {
+          "description": "When it was composed, RFC 3339.",
+          "name": "at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Which process composed it: `leaseholder`, `this_process`, or `forwarded` with the address in `notes`.",
+          "name": "origin",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The brief's one line, as a status line shows it.",
+          "name": "line",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The machines, this one first.",
+          "name": "machines",
+          "refs": [
+            "ClusterMachine"
+          ],
+          "required": true,
+          "type": "array of ClusterMachine"
+        },
+        {
+          "description": "Open milestones, newest id last, at most eight.",
+          "name": "milestones",
+          "refs": [
+            "ClusterMilestone"
+          ],
+          "required": true,
+          "type": "array of ClusterMilestone"
+        },
+        {
+          "description": "Milestones the plan reports done.",
+          "name": "milestones_done",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Every milestone the plan has.",
+          "name": "milestones_total",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "How many open milestones the page left out.",
+          "name": "milestones_left_out",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "The integration queue, as `majordomus prs brief` says it.",
+          "name": "integration",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The derive lock, as the brief says it.",
+          "name": "derive",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The mesh's links and what its journal addresses to this runtime.",
+          "name": "mesh",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What could not be read and why, in words.",
+          "name": "notes",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The page as console text, cut to the width asked.",
+          "name": "lines",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "dashboard.cluster"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -21777,6 +22044,7 @@
         "continuity.status",
         "continuity.sync",
         "convergence.report",
+        "dashboard.cluster",
         "dashboard.overview",
         "delivery.report",
         "delivery.feature",
@@ -64709,6 +64977,85 @@
       "description": "The Dashboard Suite as a projection of the canonical state: every card is one fact read out of an existing capability's answer, carrying the capability it asked, the input, the JSON pointer its value was read from, the Cockpit page that holds the evidence and the command that acts on it. No dashboard stores, counts or judges anything of its own (ADR 0088).",
       "name": "dashboard",
       "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "dashboard cluster",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/dashboard/cluster?local=true&width=78\"",
+          "description": "Who works where and how far each milestone is, as one reading and one rendering: every machine of the mesh with its runtimes, active sessions, claims held and what its sessions say they are doing (`mesh.peers`), the progress of every open milestone (`plan.status`), and the one-line brief with the integration queue, the derive lock and the mesh's links (`brief.session`). It holds no data of its own and names, in `notes`, each source that did not answer. `lines` is the page as console text, cut to the width asked, and is what the command line prints and the /ui panel draws. Composed by the server holding this checkout's lease; the command line asks it. Writes nothing.",
+          "home": "dashboard",
+          "id": "dashboard.cluster",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_dashboard_cluster",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Compose in the process that answers and never ask the checkout's leaseholder: what a forwarded request says, so that it is never forwarded again.",
+              "examples": [
+                {
+                  "case": "default",
+                  "value": "true"
+                }
+              ],
+              "name": "local",
+              "required": false,
+              "type": "boolean"
+            },
+            {
+              "description": "The console width `lines` is cut to, in characters (40 to 200; 78 when absent).",
+              "examples": [
+                {
+                  "case": "default",
+                  "value": "78"
+                }
+              ],
+              "name": "width",
+              "required": false,
+              "type": "integer (uint16)"
+            }
+          ],
+          "path": "/api/v1/dashboard/cluster",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::dashboard",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The cluster: machines, sessions, claims and plan progress: the result.",
+              "schema": "DashboardCluster",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "DashboardCluster",
+          "stability": "behaviorally_verified",
+          "summary": "The cluster: machines, sessions, claims and plan progress"
+        },
         {
           "benchmark": "required",
           "benchmark_reason": "",

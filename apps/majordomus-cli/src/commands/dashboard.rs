@@ -48,6 +48,37 @@ pub fn run(args: DashboardArgs) -> Result<u8> {
             }
             Ok(exit_for(&v))
         }
+        DashboardCommand::Cluster { width } => {
+            let id = ctx
+                .registry
+                .by_cli(&["dashboard".to_string(), "cluster".to_string()])
+                .map(|c| c.id.as_str().to_string())
+                .ok_or_else(|| Error::Protocol {
+                    reason: "no capability is exposed as `majordomus dashboard cluster`".into(),
+                })?;
+            let mut input = json!({});
+            if let Some(w) = width {
+                input["width"] = json!(w);
+            }
+            let v = ctx.execute(&id, input).map_err(|e| Error::Protocol {
+                reason: e.to_string(),
+            })?;
+            match args.format {
+                OutputFormat::Json => writeln!(
+                    out,
+                    "{}",
+                    serde_json::to_string_pretty(&v).unwrap_or_else(|_| v.to_string())
+                )
+                .map_err(Error::Transport)?,
+                OutputFormat::Text => {
+                    for l in v["lines"].as_array().unwrap_or(&Vec::new()) {
+                        writeln!(out, "{}", l.as_str().unwrap_or_default())
+                            .map_err(Error::Transport)?;
+                    }
+                }
+            }
+            Ok(0)
+        }
     }
 }
 

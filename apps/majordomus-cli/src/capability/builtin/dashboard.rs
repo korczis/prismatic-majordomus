@@ -786,6 +786,23 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Disabled,
                 handler: overview,
             },
+            capability! {
+                id: "dashboard.cluster",
+                title: "The cluster: machines, sessions, claims and plan progress",
+                description: "Who works where and how far each milestone is, as one reading and one rendering: every machine of the mesh with its runtimes, active sessions, claims held and what its sessions say they are doing (`mesh.peers`), the progress of every open milestone (`plan.status`), and the one-line brief with the integration queue, the derive lock and the mesh's links (`brief.session`). It holds no data of its own and names, in `notes`, each source that did not answer. `lines` is the page as console text, cut to the width asked, and is what the command line prints and the /ui panel draws. Composed by the server holding this checkout's lease; the command line asks it. Writes nothing.",
+                input: super::dashboard_cluster::ClusterInput,
+                output: super::dashboard_cluster::DashboardCluster,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_dashboard_cluster"),
+                    http: get("/api/v1/dashboard/cluster"),
+                    cli: Some(CliExposure { path: vec!["dashboard".into(), "cluster".into()] }),
+                },
+                tags: ["dashboard", "cluster", "peers", "plan", "introspection"],
+                // the board is live memory and every source carries its own cache policy
+                cache: CachePolicy::Disabled,
+                handler: super::dashboard_cluster::cluster,
+            },
         ],
     }
 }
@@ -871,7 +888,7 @@ mod tests {
             .iter()
             .map(|e| e.capability.id.as_str())
             .collect();
-        assert_eq!(ids, ["dashboard.overview"]);
+        assert_eq!(ids, ["dashboard.overview", "dashboard.cluster"]);
         let exposure = &m.capabilities[0].capability.exposure;
         assert_eq!(
             exposure.http.as_ref().unwrap().path,
@@ -880,6 +897,17 @@ mod tests {
         assert_eq!(
             exposure.cli.as_ref().unwrap().path,
             ["dashboard", "overview"]
+        );
+        // the cluster page is the same module's second page, on the same four surfaces
+        let cluster = &m.capabilities[1].capability.exposure;
+        assert_eq!(
+            cluster.http.as_ref().unwrap().path,
+            "/api/v1/dashboard/cluster"
+        );
+        assert_eq!(cluster.cli.as_ref().unwrap().path, ["dashboard", "cluster"]);
+        assert_eq!(
+            cluster.mcp.as_ref().and_then(|t| t.tool.as_deref()),
+            Some("majordomus_dashboard_cluster")
         );
     }
 

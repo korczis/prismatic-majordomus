@@ -32208,6 +32208,132 @@
               }
             ],
             "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "dashboard",
+              "cluster"
+            ],
+            "route": "/docs/cli/dashboard/cluster/",
+            "executable": true,
+            "usage": "majordomus dashboard cluster [OPTIONS]",
+            "about": "Who works where and how far each milestone is: every machine with its sessions and claims, the progress of every open milestone, and the integration and derive queues, drawn as console text from `dashboard.cluster`",
+            "args": [
+              {
+                "name": "width",
+                "long": "width",
+                "positional": false,
+                "help": "The console width the page is cut to, in characters (40 to 200)",
+                "value_name": "WIDTH",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "dashboard-cluster-json",
+                "title": "The cluster: machines, sessions, claims and plan progress, with the console text",
+                "description": "The same answer `GET /api/v1/dashboard/cluster`, the MCP tool `majordomus_dashboard_cluster` and the /ui cluster panel return: every machine of the mesh with its active sessions and claims, how far each open milestone is, and the integration and derive queues, plus `lines`, the page as console text. A source that did not answer is named in `notes`; the exit code is 0 either way.",
+                "argv": [
+                  "dashboard",
+                  "cluster",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus dashboard cluster --format json",
+                "setup": [],
+                "expectation": "exits 0"
+              }
+            ],
+            "subcommands": []
           }
         ]
       },

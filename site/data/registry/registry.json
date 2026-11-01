@@ -6,27 +6,27 @@
     "version": "1.0.0-alpha.10"
   },
   "registry": {
-    "fingerprint": "cc9dfc7440e849f7ae318d91aa14dbb563ddb53691110d8224b774189334c1f5",
+    "fingerprint": "6529532186f49dfa46d5dfc35e6daccb10dbef301c9b43bbda6645b0c6bc7286",
     "summary": {
-      "total": 3728,
-      "builtin": 220,
-      "declarative": 3508,
+      "total": 3736,
+      "builtin": 221,
+      "declarative": 3515,
       "by_kind": {
         "command": 36,
-        "query": 184,
-        "resource": 3508
+        "query": 185,
+        "resource": 3515
       },
       "by_stability": {
-        "behaviorally_verified": 147,
+        "behaviorally_verified": 148,
         "experimental": 63,
-        "implemented": 3518
+        "implemented": 3525
       },
-      "mcp_tools": 206,
-      "mcp_resources": 3565,
-      "http_routes": 212,
-      "cli_commands": 120,
+      "mcp_tools": 207,
+      "mcp_resources": 3572,
+      "http_routes": 213,
+      "cli_commands": 121,
       "modules": 94,
-      "benchmark_required": 181,
+      "benchmark_required": 182,
       "benchmark_waived": 39,
       "cached": 55
     },
@@ -10689,6 +10689,300 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/convergence.rs"
+      },
+      {
+        "id": "dashboard.cluster",
+        "module": "dashboard",
+        "kind": "query",
+        "title": "The cluster: machines, sessions, claims and plan progress",
+        "description": "Who works where and how far each milestone is, as one reading and one rendering: every machine of the mesh with its runtimes, active sessions, claims held and what its sessions say they are doing (`mesh.peers`), the progress of every open milestone (`plan.status`), and the one-line brief with the integration queue, the derive lock and the mesh's links (`brief.session`). It holds no data of its own and names, in `notes`, each source that did not answer. `lines` is the page as console text, cut to the width asked, and is what the command line prints and the /ui panel draws. Composed by the server holding this checkout's lease; the command line asks it. Writes nothing.",
+        "input": {
+          "name": "ClusterInput",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "local": {
+                "type": "boolean",
+                "description": "Compose in the process that answers and never ask the checkout's leaseholder: what a forwarded request says, so that it is never forwarded again.",
+                "default": false
+              },
+              "width": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint16",
+                "minimum": 0,
+                "maximum": 65535,
+                "description": "The console width `lines` is cut to, in characters (40 to 200; 78 when absent)."
+              }
+            },
+            "description": "What to ask of `dashboard.cluster`.",
+            "title": "ClusterInput"
+          }
+        },
+        "output": {
+          "name": "DashboardCluster",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string",
+                "description": "When it was composed, RFC 3339."
+              },
+              "origin": {
+                "type": "string",
+                "description": "Which process composed it: `leaseholder`, `this_process`, or `forwarded` with the address in `notes`."
+              },
+              "line": {
+                "type": "string",
+                "description": "The brief's one line, as a status line shows it."
+              },
+              "machines": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ClusterMachine"
+                },
+                "description": "The machines, this one first."
+              },
+              "milestones": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ClusterMilestone"
+                },
+                "description": "Open milestones, newest id last, at most eight."
+              },
+              "milestones_done": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0,
+                "description": "Milestones the plan reports done."
+              },
+              "milestones_total": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0,
+                "description": "Every milestone the plan has."
+              },
+              "milestones_left_out": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0,
+                "description": "How many open milestones the page left out."
+              },
+              "integration": {
+                "type": "string",
+                "description": "The integration queue, as `majordomus prs brief` says it."
+              },
+              "derive": {
+                "type": "string",
+                "description": "The derive lock, as the brief says it."
+              },
+              "mesh": {
+                "type": "string",
+                "description": "The mesh's links and what its journal addresses to this runtime."
+              },
+              "notes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What could not be read and why, in words."
+              },
+              "lines": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The page as console text, cut to the width asked."
+              }
+            },
+            "required": [
+              "at",
+              "origin",
+              "line",
+              "machines",
+              "milestones",
+              "milestones_done",
+              "milestones_total",
+              "milestones_left_out",
+              "integration",
+              "derive",
+              "mesh",
+              "notes",
+              "lines"
+            ],
+            "description": "The answer of `dashboard.cluster`.",
+            "title": "DashboardCluster",
+            "$defs": {
+              "ClusterMachine": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The name a person reads: the card's, else the first eight characters of the node id."
+                  },
+                  "local": {
+                    "type": "boolean",
+                    "description": "Whether it is the machine that composed the page."
+                  },
+                  "liveness": {
+                    "type": "string",
+                    "description": "`own` (this machine), `live` (a runtime beats) or `expired` (none does)."
+                  },
+                  "runtimes_live": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many of its runtimes beat."
+                  },
+                  "runtimes": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many runtimes it has, expired ones included."
+                  },
+                  "sessions": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Active sessions on it."
+                  },
+                  "claims": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Claims those sessions hold."
+                  },
+                  "activity": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "What its sessions say they are doing, at most three, cut."
+                  }
+                },
+                "required": [
+                  "name",
+                  "local",
+                  "liveness",
+                  "runtimes_live",
+                  "runtimes",
+                  "sessions",
+                  "claims",
+                  "activity"
+                ],
+                "description": "One machine of the mesh and what runs on it."
+              },
+              "ClusterMilestone": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The identity (`M003`, or the slug a milestone is named by)."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "One line naming the outcome."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "The derived status word the plan reports."
+                  },
+                  "done": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Issues done."
+                  },
+                  "required": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Issues that count (the plan's own denominator: total less cancelled)."
+                  },
+                  "percent": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "`done` over `required`, whole percent; `0` where nothing counts."
+                  },
+                  "ready": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Issues ready to take."
+                  },
+                  "blocked": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Issues waiting on a dependency."
+                  },
+                  "active": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Issues being worked."
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "status",
+                  "done",
+                  "required",
+                  "percent",
+                  "ready",
+                  "blocked",
+                  "active"
+                ],
+                "description": "One milestone and how far it is."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::dashboard"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_dashboard_cluster"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/dashboard/cluster"
+          },
+          "cli": {
+            "path": [
+              "dashboard",
+              "cluster"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "dashboard",
+          "cluster",
+          "peers",
+          "plan",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/dashboard.rs"
       },
       {
         "id": "dashboard.overview",
@@ -90767,7 +91061,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 167,
+        "capabilities": 168,
         "capability_ids": []
       },
       {
@@ -90962,8 +91256,9 @@
         "description": "The Dashboard Suite as a projection of the canonical state: every card is one fact read out of an existing capability's answer, carrying the capability it asked, the input, the JSON pointer its value was read from, the Cockpit page that holds the evidence and the command that acts on it. No dashboard stores, counts or judges anything of its own (ADR 0088).",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 1,
+        "capabilities": 2,
         "capability_ids": [
+          "dashboard.cluster",
           "dashboard.overview"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/dashboard.rs",
@@ -91407,7 +91702,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1156,
+        "capabilities": 1161,
         "capability_ids": []
       },
       {
@@ -92005,7 +92300,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 672,
+        "capabilities": 673,
         "capability_ids": []
       },
       {
@@ -92097,7 +92392,7 @@
     ]
   },
   "index": {
-    "fingerprint": "3090325deb7958157829ab237390785703428ed455f9d7510c30d9104dfe66b4",
+    "fingerprint": "52d53b8e8e136bd6c18e1c8369db9a94da16ad20db15c2f241e7e923459e6c22",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92120,7 +92415,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 167,
+      "adr": 168,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -92137,7 +92432,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 44,
-      "issue": 1156,
+      "issue": 1161,
       "knowledge": 86,
       "mesh-declaration": 1,
       "milestone": 114,
@@ -92151,7 +92446,7 @@
       "session": 93,
       "skill": 8,
       "taxonomy": 10,
-      "test": 672,
+      "test": 673,
       "use-case": 49,
       "workspace": 1
     },
@@ -93960,6 +94255,23 @@
           "ui",
           "observatory",
           "evidence",
+          "mesh"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0159",
+        "kind": "adr",
+        "identity": "adr-0159",
+        "title": "The cluster is drawn once, from the sources that hold its facts, and every session reports it on an interval",
+        "description": "The cluster is drawn once, from the sources that hold its facts, and every session reports it on an interval",
+        "path": ".ai/repo/adrs/0159-the-cluster-is-drawn-once-and-every-session-reports-it.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5931,
+        "tags": [
+          "dashboard",
+          "ui",
+          "session",
           "mesh"
         ]
       },
@@ -99519,7 +99831,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 44548
+        "bytes": 45149
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -99609,7 +99921,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 126535
+        "bytes": 126704
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -107903,6 +108215,61 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2971
+      },
+      {
+        "uri": "majordomus://issue/I2685",
+        "kind": "issue",
+        "identity": "I2685",
+        "title": "The cluster page is one reading with one generated text on the command line and in the UI",
+        "description": "Compose machines, sessions, claims, milestone progress and the queue lines from their owners in one capability and draw it once as console text, so that the terminal and the /ui panel are one text.",
+        "path": ".ai/repo/project/issues/I2685.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2368
+      },
+      {
+        "uri": "majordomus://issue/I2686",
+        "kind": "issue",
+        "identity": "I2686",
+        "title": "The cluster page states estimates, risks and timings only where a source records them",
+        "description": "Add the sections of the owner's report that need measurements \\u2014 estimates, risks and the derive and hook durations \\u2014 read from the ledgers and timings the repository already keeps, and refuse to state what it cannot read.",
+        "path": ".ai/repo/project/issues/I2686.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2060
+      },
+      {
+        "uri": "majordomus://issue/I2687",
+        "kind": "issue",
+        "identity": "I2687",
+        "title": "The /ui cluster panel is updated by the stream, not by polling, when the readings stream exists",
+        "description": "Use the one streaming mechanism of I2487 for the cluster panel so that a session that starts, ends or claims is on the screen within the stream's lifetime.",
+        "path": ".ai/repo/project/issues/I2687.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1573
+      },
+      {
+        "uri": "majordomus://issue/I2688",
+        "kind": "issue",
+        "identity": "I2688",
+        "title": "Every session reports the cluster on the policy's interval, and a session that does not is visible",
+        "description": "Make the periodic report a property of the repository: the provider mod's interval prompt carries the cluster page, the interval is the policy's, and a session with no report inside two intervals is marked on the page and in doctor.",
+        "path": ".ai/repo/project/issues/I2688.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2070
+      },
+      {
+        "uri": "majordomus://issue/I2689",
+        "kind": "issue",
+        "identity": "I2689",
+        "title": "The cluster page is documented once and published on the site and the Pages",
+        "description": "Say what the page is, how to read it and what it does not know, from the capability, on the handbook, docs/BRIEF.md, docs/MAJORDOMUS_UI.md and the site.",
+        "path": ".ai/repo/project/issues/I2689.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1526
       },
       {
         "uri": "majordomus://issue/I2690",
@@ -125784,6 +126151,14 @@
         "bytes": 12519
       },
       {
+        "uri": "majordomus://test/test/cases/3012_the_dashboard_is_one_reading.sh",
+        "kind": "test",
+        "identity": "test/cases/3012_the_dashboard_is_one_reading.sh",
+        "path": "test/cases/3012_the_dashboard_is_one_reading.sh",
+        "source_class": "case",
+        "bytes": 4759
+      },
+      {
         "uri": "majordomus://test/test/cases/3014_the_kiosk_draws_what_the_repository_proves.sh",
         "kind": "test",
         "identity": "test/cases/3014_the_kiosk_draws_what_the_repository_proves.sh",
@@ -130239,7 +130614,7 @@
       "identity": [
         "id"
       ],
-      "objects": 167
+      "objects": 168
     },
     {
       "name": "application",
@@ -130402,7 +130777,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1156
+      "objects": 1161
     },
     {
       "name": "knowledge",
@@ -130564,7 +130939,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 672
+      "objects": 673
     },
     {
       "name": "use-case",
@@ -162816,6 +163191,132 @@
               }
             ],
             "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "dashboard",
+              "cluster"
+            ],
+            "route": "/docs/cli/dashboard/cluster/",
+            "executable": true,
+            "usage": "majordomus dashboard cluster [OPTIONS]",
+            "about": "Who works where and how far each milestone is: every machine with its sessions and claims, the progress of every open milestone, and the integration and derive queues, drawn as console text from `dashboard.cluster`",
+            "args": [
+              {
+                "name": "width",
+                "long": "width",
+                "positional": false,
+                "help": "The console width the page is cut to, in characters (40 to 200)",
+                "value_name": "WIDTH",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "dashboard-cluster-json",
+                "title": "The cluster: machines, sessions, claims and plan progress, with the console text",
+                "description": "The same answer `GET /api/v1/dashboard/cluster`, the MCP tool `majordomus_dashboard_cluster` and the /ui cluster panel return: every machine of the mesh with its active sessions and claims, how far each open milestone is, and the integration and derive queues, plus `lines`, the page as console text. A source that did not answer is named in `notes`; the exit code is 0 either way.",
+                "argv": [
+                  "dashboard",
+                  "cluster",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus dashboard cluster --format json",
+                "setup": [],
+                "expectation": "exits 0"
+              }
+            ],
+            "subcommands": []
           }
         ]
       },
@@ -165408,6 +165909,23 @@
         },
         "input": "Empty",
         "output": "ConvergenceReport"
+      },
+      {
+        "name": "majordomus_dashboard_cluster",
+        "id": "dashboard.cluster",
+        "title": "The cluster: machines, sessions, claims and plan progress",
+        "description": "Who works where and how far each milestone is, as one reading and one rendering: every machine of the mesh with its runtimes, active sessions, claims held and what its sessions say they are doing (`mesh.peers`), the progress of every open milestone (`plan.status`), and the one-line brief with the integration queue, the derive lock and the mesh's links (`brief.session`). It holds no data of its own and names, in `notes`, each source that did not answer. `lines` is the page as console text, cut to the width asked, and is what the command line prints and the /ui panel draws. Composed by the server holding this checkout's lease; the command line asks it. Writes nothing.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "ClusterInput",
+        "output": "DashboardCluster"
       },
       {
         "name": "majordomus_dashboard_overview",
@@ -169077,6 +169595,12 @@
       },
       {
         "method": "GET",
+        "path": "/api/v1/dashboard/cluster",
+        "id": "dashboard.cluster",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
         "path": "/api/v1/dashboard/overview",
         "id": "dashboard.overview",
         "kind": "query"
@@ -171052,6 +171576,35 @@
         "case": "default",
         "cached": false,
         "route": "GET /api/v1/convergence"
+      },
+      {
+        "key": "dashboard.cluster|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "dashboard.cluster",
+        "module": "dashboard",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "dashboard.cluster|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "dashboard.cluster",
+        "module": "dashboard",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_dashboard_cluster"
+      },
+      {
+        "key": "dashboard.cluster|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "dashboard.cluster",
+        "module": "dashboard",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/dashboard/cluster"
       },
       {
         "key": "dashboard.overview|direct|default",
@@ -178134,6 +178687,14 @@
         "route": "GET /ui/observatory"
       },
       {
+        "key": "system.http.ui.panels.cluster",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/panels/cluster"
+      },
+      {
         "key": "system.http.ui.panels.pull_requests",
         "kind": "page",
         "transport": "http",
@@ -178647,6 +179208,27 @@
         {
           "subject": "convergence.report",
           "module": "convergence",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "dashboard.cluster",
+          "module": "dashboard",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "dashboard.cluster",
+          "module": "dashboard",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "dashboard.cluster",
+          "module": "dashboard",
           "transport": "http",
           "state": "covered",
           "cases": 1
@@ -182844,22 +183426,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 220,
-          "covered": 181,
+          "required": 221,
+          "covered": 182,
           "missing": 0,
           "waived": 39,
           "inapplicable": 0
         },
         "http": {
-          "required": 212,
-          "covered": 181,
+          "required": 213,
+          "covered": 182,
           "missing": 0,
           "waived": 31,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 206,
-          "covered": 176,
+          "required": 207,
+          "covered": 177,
           "missing": 0,
           "waived": 30,
           "inapplicable": 0
@@ -182872,8 +183454,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 652,
-          "covered": 552,
+          "required": 655,
+          "covered": 555,
           "missing": 0,
           "waived": 100,
           "inapplicable": 0

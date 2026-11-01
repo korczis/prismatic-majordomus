@@ -1663,6 +1663,81 @@ paths:
           uri: majordomus://convergence
           name: convergence
       x-majordomus-cli: convergence
+  "/api/v1/dashboard/cluster":
+    get:
+      operationId: dashboard.cluster
+      summary: "The cluster: machines, sessions, claims and plan progress"
+      description: "Who works where and how far each milestone is, as one reading and one rendering: every machine of the mesh with its runtimes, active sessions, claims held and what its sessions say they are doing (`mesh.peers`), the progress of every open milestone (`plan.status`), and the one-line brief with the integration queue, the derive lock and the mesh's links (`brief.session`). It holds no data of its own and names, in `notes`, each source that did not answer. `lines` is the page as console text, cut to the width asked, and is what the command line prints and the /ui panel draws. Composed by the server holding this checkout's lease; the command line asks it. Writes nothing."
+      tags:
+        - dashboard
+      parameters:
+        - name: local
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: "Compose in the process that answers and never ask the checkout's leaseholder: what a forwarded request says, so that it is never forwarded again."
+          examples:
+            default:
+              value: true
+        - name: width
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint16
+            minimum: 0
+            maximum: 65535
+          description: "The console width `lines` is cut to, in characters (40 to 200; 78 when absent)."
+          examples:
+            default:
+              value: 78
+      responses:
+        "200":
+          description: "The cluster: machines, sessions, claims and plan progress: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/DashboardCluster"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: dashboard.cluster
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::dashboard
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_dashboard_cluster
+      x-majordomus-cli: dashboard cluster
   "/api/v1/dashboard/overview":
     get:
       operationId: dashboard.overview
@@ -17888,6 +17963,106 @@ components:
         - unbacked
         - unclassified
       description: "The whole matrix, with the findings and the debt beside it: one value that answers\n\"where does each capability appear, and is any claim unmet\"."
+    ClusterMachine:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The name a person reads: the card's, else the first eight characters of the node id."
+        local:
+          type: boolean
+          description: Whether it is the machine that composed the page.
+        liveness:
+          type: string
+          description: "`own` (this machine), `live` (a runtime beats) or `expired` (none does)."
+        runtimes_live:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many of its runtimes beat.
+        runtimes:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many runtimes it has, expired ones included."
+        sessions:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Active sessions on it.
+        claims:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Claims those sessions hold.
+        activity:
+          type: array
+          items:
+            type: string
+          description: "What its sessions say they are doing, at most three, cut."
+      required:
+        - name
+        - local
+        - liveness
+        - runtimes_live
+        - runtimes
+        - sessions
+        - claims
+        - activity
+      description: One machine of the mesh and what runs on it.
+    ClusterMilestone:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The identity (`M003`, or the slug a milestone is named by)."
+        title:
+          type: string
+          description: One line naming the outcome.
+        status:
+          type: string
+          description: The derived status word the plan reports.
+        done:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: Issues done.
+        required:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: "Issues that count (the plan's own denominator: total less cancelled)."
+        percent:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: "`done` over `required`, whole percent; `0` where nothing counts."
+        ready:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: Issues ready to take.
+        blocked:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: Issues waiting on a dependency.
+        active:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: Issues being worked.
+      required:
+        - id
+        - title
+        - status
+        - done
+        - required
+        - percent
+        - ready
+        - blocked
+        - active
+      description: One milestone and how far it is.
     CockpitAreaRef:
       type: object
       properties:
@@ -20250,6 +20425,77 @@ components:
         - source
         - route
       description: "One fact on a dashboard: a value read out of one capability's answer, the verdict the\nsource gives it, where a reader drills in, and what acts on it.\n\n```\nuse majordomus_cli::capability::builtin::dashboard::DashboardCard;\nuse serde_json::json;\n\nlet card: DashboardCard = serde_json::from_value(json!({\n    \"id\": \"health-status\",\n    \"title\": \"Health\",\n    \"value\": \"ok\",\n    \"status\": \"ok\",\n    \"detail\": \"the worst of 8 check(s)\",\n    \"source\": { \"capability\": \"health.report\", \"input\": {}, \"pointer\": \"/status\", \"measure\": \"exact\" },\n    \"route\": \"/cockpit/health\",\n})).unwrap();\n// the value is the source's: reading the pointer out of its answer gives it back\nassert_eq!(card.source.measure.read(&json!({ \"status\": \"ok\" }), &card.source.pointer), card.value);\nassert!(card.action.is_none());\n```"
+    DashboardCluster:
+      type: object
+      properties:
+        at:
+          type: string
+          description: "When it was composed, RFC 3339."
+        origin:
+          type: string
+          description: "Which process composed it: `leaseholder`, `this_process`, or `forwarded` with the address in `notes`."
+        line:
+          type: string
+          description: "The brief's one line, as a status line shows it."
+        machines:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ClusterMachine"
+          description: "The machines, this one first."
+        milestones:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ClusterMilestone"
+          description: "Open milestones, newest id last, at most eight."
+        milestones_done:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: Milestones the plan reports done.
+        milestones_total:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: Every milestone the plan has.
+        milestones_left_out:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: How many open milestones the page left out.
+        integration:
+          type: string
+          description: "The integration queue, as `majordomus prs brief` says it."
+        derive:
+          type: string
+          description: "The derive lock, as the brief says it."
+        mesh:
+          type: string
+          description: "The mesh's links and what its journal addresses to this runtime."
+        notes:
+          type: array
+          items:
+            type: string
+          description: "What could not be read and why, in words."
+        lines:
+          type: array
+          items:
+            type: string
+          description: "The page as console text, cut to the width asked."
+      required:
+        - at
+        - origin
+        - line
+        - machines
+        - milestones
+        - milestones_done
+        - milestones_total
+        - milestones_left_out
+        - integration
+        - derive
+        - mesh
+        - notes
+        - lines
+      description: "The answer of `dashboard.cluster`."
     DashboardMeasure:
       oneOf:
         - type: string

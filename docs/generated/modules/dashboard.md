@@ -5,7 +5,30 @@
 
 The Dashboard Suite as a projection of the canonical state: every card is one fact read out of an existing capability's answer, carrying the capability it asked, the input, the JSON pointer its value was read from, the Cockpit page that holds the evidence and the command that acts on it. No dashboard stores, counts or judges anything of its own (ADR 0088).
 
-Stability: behaviorally_verified. Capabilities: 1.
+Stability: behaviorally_verified. Capabilities: 2.
+
+## `dashboard.cluster` — The cluster: machines, sessions, claims and plan progress
+
+Who works where and how far each milestone is, as one reading and one rendering: every machine of the mesh with its runtimes, active sessions, claims held and what its sessions say they are doing (`mesh.peers`), the progress of every open milestone (`plan.status`), and the one-line brief with the integration queue, the derive lock and the mesh's links (`brief.session`). It holds no data of its own and names, in `notes`, each source that did not answer. `lines` is the page as console text, cut to the width asked, and is what the command line prints and the /ui panel draws. Composed by the server holding this checkout's lease; the command line asks it. Writes nothing.
+
+| | |
+|---|---|
+| kind | query |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_dashboard_cluster` |
+| HTTP | `GET /api/v1/dashboard/cluster` |
+| CLI | `majordomus dashboard cluster` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::dashboard |
+| tags | dashboard, cluster, peers, plan, introspection |
+
+| input | type | required | description |
+|---|---|---|---|
+| `local` | boolean | no | Compose in the process that answers and never ask the checkout's leaseholder: what a forwarded request says, so that it is never forwarded again. |
+| `width` | integer or null | no | The console width `lines` is cut to, in characters (40 to 200; 78 when absent). |
+
+Output: `DashboardCluster`.
 
 ## `dashboard.overview` — The Overview: four questions
 

@@ -30,6 +30,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | level | code | subject | message |
 |---|---|---|---|
+| WARN | `scope_conflict` | `I2411` | shares apps/majordomus-cli/src/cli.rs with I2685; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares apps/majordomus-cli/src/mesh/address.rs with I2690; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares test/cases with I2714; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares test/cases with I2717; they may not run concurrently |

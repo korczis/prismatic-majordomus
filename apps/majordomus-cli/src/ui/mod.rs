@@ -257,6 +257,7 @@ pub(crate) const SCREENS: &[Screen] = &[
 /// The routes that answer one panel of a screen, each also a page of its own for a reader
 /// without JavaScript.
 pub(crate) const PANELS: &[&str] = &[
+    dashboard::CLUSTER_PANEL,
     dashboard::PULL_REQUESTS_PANEL,
     deployments::DELIVERY_PANEL,
     prs::PANEL,
@@ -496,6 +497,7 @@ impl Ui {
                 };
                 observatory::screen(ctx, query, &libs, kiosk)
             }
+            dashboard::CLUSTER_PANEL => dashboard::cluster_panel(ctx),
             dashboard::PULL_REQUESTS_PANEL => dashboard::pull_requests_panel(ctx, query),
             deployments::DELIVERY_PANEL => deployments::delivery_panel(ctx),
             prs::PANEL => prs::panel_view(ctx, query),

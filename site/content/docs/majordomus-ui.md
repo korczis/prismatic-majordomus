@@ -304,6 +304,14 @@ queue (`integration.queue`) is `/ui/panels/pull-requests`:
   screen has painted;
 - without JavaScript the placeholder is a link to the same route.
 
+The cluster (`dashboard.cluster`, ADR 0159) is the second such panel, `/ui/panels/cluster`:
+every machine of the mesh with its active sessions, claims and what its sessions say they
+are doing, how far each open milestone is, and the integration and derive queues. It is a
+panel because it asks the server that holds this checkout's board. The panel draws the
+capability's own `lines` in a `<pre>` as they are, so it is the text
+`majordomus dashboard cluster [--width N]` prints, to the character: the terminal, this
+screen and the report a session gives on its interval (ADR 0136) are one rendering.
+
 While a screen is visible, `ui.js` asks the server for it again every minute, puts the new
 rendering in place, and updates the time in the tool bar. That time is when the page was
 rendered; each source line says when its own reading is older. This is a refresh and is said

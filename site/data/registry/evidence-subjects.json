@@ -154,6 +154,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:dashboard.cluster",
+      "path": "/evidence/capabilities/dashboard-cluster/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:dashboard.overview",
       "path": "/evidence/capabilities/dashboard-overview/"
     },
@@ -2589,6 +2594,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:dashboard cluster",
+      "path": "/evidence/commands/dashboard-cluster/"
+    },
+    {
+      "kind": "command",
       "subject": "command:dashboard overview",
       "path": "/evidence/commands/dashboard-overview/"
     },
@@ -4278,6 +4288,18 @@
       "programs": [],
       "members": [
         "command:convergence"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:dashboard.cluster": {
+      "kind": "capability",
+      "id": "dashboard.cluster",
+      "page": "/evidence/capabilities/dashboard-cluster/",
+      "programs": [],
+      "members": [
+        "command:dashboard cluster"
       ],
       "routes": [],
       "mechanisms": [],
@@ -13665,6 +13687,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:dashboard cluster": {
+      "kind": "command",
+      "id": "dashboard cluster",
+      "page": "/evidence/commands/dashboard-cluster/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:dashboard overview": {
       "kind": "command",
       "id": "dashboard overview",
@@ -20717,6 +20758,18 @@
       "programs": [],
       "members": [
         "capability:convergence.report"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_dashboard_cluster": {
+      "kind": "mcp",
+      "id": "majordomus_dashboard_cluster",
+      "alias_of": "capability:dashboard.cluster",
+      "programs": [],
+      "members": [
+        "capability:dashboard.cluster"
       ],
       "routes": [],
       "mechanisms": [],
@@ -29685,6 +29738,7 @@
     "suite:2998_evidence_reaches_the_subcommands_the_executable_owns",
     "suite:3003_the_knowledge_screen_answers",
     "suite:300_a_pipeline_cannot_hide_a_failure",
+    "suite:3012_the_dashboard_is_one_reading",
     "suite:3014_the_kiosk_draws_what_the_repository_proves",
     "suite:3016_init_seeds_the_scope_of_the_stack_it_finds",
     "suite:3017_doctor_holds_an_adopter_to_what_it_adopted",

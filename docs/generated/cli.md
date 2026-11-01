@@ -248,6 +248,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus pack verify`](#majordomus-pack-verify) | `/docs/cli/pack/verify/` | Verify a written pack against its manifest and the profile it names; exit 10 on a finding, 12 when the manifest cannot be read |
 | [`majordomus dashboard`](#majordomus-dashboard) | `/docs/cli/dashboard/` | The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it |
 | [`majordomus dashboard overview`](#majordomus-dashboard-overview) | `/docs/cli/dashboard/overview/` | Is it healthy, what changed, what is broken, what needs action: every card with its value, the source's verdict, and the capability and pointer it was read from; exit 10 when the overview is fail or unknown |
+| [`majordomus dashboard cluster`](#majordomus-dashboard-cluster) | `/docs/cli/dashboard/cluster/` | Who works where and how far each milestone is: every machine with its sessions and claims, the progress of every open milestone, and the integration and derive queues, drawn as console text from `dashboard.cluster` |
 | [`majordomus brief`](#majordomus-brief) | `/docs/cli/brief/` | What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout's lease |
 | [`majordomus blackboard`](#majordomus-blackboard) | `/docs/cli/blackboard/` | Who works on what in this repository, on every board and every linked machine: each worker with its client, intent, checkout, branch and claims, the claims that meet, the reviews and handovers that wait, typed relations verified only by an explicit identifier, and whether every source could be read — asked of the server holding this checkout's lease |
 | [`majordomus skills`](#majordomus-skills) | `/docs/cli/skills/` | Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans |
@@ -7052,7 +7053,7 @@ Examples:
 
 The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it
 
-Subcommands: [`majordomus dashboard overview`](#majordomus-dashboard-overview).
+Subcommands: [`majordomus dashboard overview`](#majordomus-dashboard-overview), [`majordomus dashboard cluster`](#majordomus-dashboard-cluster).
 
 ```text
 majordomus dashboard [OPTIONS] <COMMAND>
@@ -7092,6 +7093,34 @@ Examples:
   ```
 
   Verified: exits 10.
+
+<a id="majordomus-dashboard-cluster"></a>
+## `majordomus dashboard cluster`
+
+Who works where and how far each milestone is: every machine with its sessions and claims, the progress of every open milestone, and the integration and derive queues, drawn as console text from `dashboard.cluster`
+
+```text
+majordomus dashboard cluster [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--width` | `<WIDTH>` | — | The console width the page is cut to, in characters (40 to 200) |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The cluster: machines, sessions, claims and plan progress, with the console text** — The same answer `GET /api/v1/dashboard/cluster`, the MCP tool `majordomus_dashboard_cluster` and the /ui cluster panel return: every machine of the mesh with its active sessions and claims, how far each open milestone is, and the integration and derive queues, plus `lines`, the page as console text. A source that did not answer is named in `notes`; the exit code is 0 either way.
+
+  ```console
+  $ majordomus dashboard cluster --format json
+  ```
+
+  Verified: exits 0.
 
 <a id="majordomus-brief"></a>
 ## `majordomus brief`
