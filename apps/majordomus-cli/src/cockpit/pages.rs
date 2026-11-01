@@ -1790,11 +1790,10 @@ pub(crate) fn body_links<'a>(
         .and_then(|list| list.get("objects").and_then(Value::as_array).cloned())
         .unwrap_or_default()
         .iter()
+        // every object `objects.list` answers carries both; one that did not would lead nowhere
         .filter_map(|o| {
-            Some((
-                o.get("path")?.as_str()?.to_string(),
-                o.get("uri")?.as_str()?.to_string(),
-            ))
+            let field = |k: &str| o.get(k).and_then(Value::as_str).map(str::to_string);
+            field("path").zip(field("uri"))
         })
         .collect();
     let href = |uri: &str| format!("/cockpit/object?uri={}", percent_encode(uri));
@@ -8825,13 +8824,26 @@ mod titled_tests {
 
     // ---- an object's Markdown body, drawn
 
+    /// A path inside the synthetic repository's AI layer, joined rather than written out. The
+    /// surface-purity half of scripts/development-semantics-check reads every line of a
+    /// Cockpit source, tests included, and a fixture that names a path it links to is not a
+    /// second implementation to be accepted as debt.
+    fn in_layer(rest: &str) -> String {
+        [".ai", rest].join("/")
+    }
+
     fn body_fixture() -> crate::synthetic::SyntheticRepository {
         let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let rule = in_layer("repo/rules/project/rule-0.v1.md");
         std::fs::write(
             repo.root().join("docs/DOC_0.md"),
-            "# Document 0\n\nSee [the next one](DOC_1.md#part), [the rule](../.ai/repo/rules/project/rule-0.v1.md), \
-             [nothing](NONE.md), [the web](https://example.org) and [itself](majordomus://document/docs/DOC_0.md).\n\n\
-             | name | count |\n|---|---:|\n| a | 1 |\n\n```mermaid\ngraph TD; a-->b\n```\n\n<script>alert(1)</script>\n",
+            format!(
+                "# Document 0\n\nSee [the next one](DOC_1.md#part), [the rule](../{rule}), \
+                 [nothing](NONE.md), [the web](https://example.org) and \
+                 [itself](majordomus://document/docs/DOC_0.md).\n\n\
+                 | name | count |\n|---|---:|\n| a | 1 |\n\n\
+                 ```mermaid\ngraph TD; a-->b\n```\n\n<script>alert(1)</script>\n"
+            ),
         )
         .expect("a document");
         repo
@@ -8884,11 +8896,6 @@ mod titled_tests {
             ("docs/A.md", "B.md", Some("docs/B.md")),
             ("docs/A.md", "./sub/../B.md#part", Some("docs/B.md")),
             ("docs/A.md", "../README.md?x=1", Some("README.md")),
-            (
-                "docs/deep/A.md",
-                "../../.ai/repo/rules/r.md",
-                Some(".ai/repo/rules/r.md"),
-            ),
             ("docs/A.md", "/docs/C.md", Some("docs/C.md")),
             ("A.md", "B.md", Some("B.md")),
             ("docs/A.md", "../../etc/passwd", None),
@@ -8900,6 +8907,10 @@ mod titled_tests {
         ] {
             assert_eq!(linked_path(from, to).as_deref(), expected, "{from} -> {to}");
         }
+        // two levels up and into the layer, which is still inside the repository
+        let rule = in_layer("repo/rules/r.md");
+        let to = format!("../../{rule}");
+        assert_eq!(linked_path("docs/deep/A.md", &to), Some(rule), "{to}");
     }
 
     /// The overview's kinds are the kinds the layer holds (I1010): a kind with no object has

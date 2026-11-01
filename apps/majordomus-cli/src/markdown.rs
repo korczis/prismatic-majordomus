@@ -168,8 +168,13 @@ impl<'a> Drawing<'a> {
     }
 
     fn append(&mut self, node: Node) {
+        self.extend(std::iter::once(node));
+    }
+
+    /// Hand nodes to the frame on top; with nothing open, there is nowhere to draw them.
+    fn extend(&mut self, nodes: impl IntoIterator<Item = Node>) {
         if let Some(top) = self.stack.last_mut() {
-            top.nodes.push(node);
+            top.nodes.extend(nodes);
         }
     }
 
@@ -189,9 +194,15 @@ impl<'a> Drawing<'a> {
 
     fn close(&mut self) {
         let drawn = self.pop();
-        if let Some(top) = self.stack.last_mut() {
-            top.nodes.extend(drawn);
+        self.extend(drawn);
+    }
+
+    /// Everything drawn, with whatever the events left open closed, so no element is lost.
+    fn finish(mut self) -> Vec<Node> {
+        while self.stack.len() > 1 {
+            self.close();
         }
+        self.stack.pop().map(|root| root.nodes).unwrap_or_default()
     }
 
     /// Prose, with every word the surface knows as a record drawn as a link to it.
@@ -429,11 +440,12 @@ impl<'a> Drawing<'a> {
             Event::Code(code) => self.append(Node::Element(
                 el("code").class("mj-md-code").text(code.to_string()),
             )),
-            Event::Html(html) => match self.html.as_mut() {
+            // the parser gives a block's HTML inside the block and a sentence's as inline
+            // HTML; whichever it is, a block being read takes it whole and prose shows it
+            Event::Html(html) | Event::InlineHtml(html) => match self.html.as_mut() {
                 Some(block) => block.push_str(&html),
                 None => self.literal(&html),
             },
-            Event::InlineHtml(html) => self.literal(&html),
             Event::SoftBreak => self.append(text(" ")),
             Event::HardBreak => self.append(Node::Element(el("br"))),
             Event::Rule => self.append(Node::Element(el("hr").class("mj-md-rule"))),
@@ -492,15 +504,7 @@ fn draw(source: &str, options: &Options<'_>, inline: bool) -> Vec<Node> {
     for event in Parser::new_ext(source, asked) {
         drawing.event(event);
     }
-    // whatever the parser left open is closed, so no element is lost
-    while drawing.stack.len() > 1 {
-        drawing.close();
-    }
-    drawing
-        .stack
-        .pop()
-        .map(|root| root.nodes)
-        .unwrap_or_default()
+    drawing.finish()
 }
 
 #[cfg(test)]
@@ -810,28 +814,26 @@ mod tests {
         ] {
             drawing.event(event);
         }
-        while drawing.stack.len() > 1 {
-            drawing.close();
-        }
-        let drawn = el("div").nodes(drawing.pop_root()).render();
+        let drawn = el("div").nodes(drawing.finish()).render();
         assert_eq!(
             drawn,
             "<div><sup>up</sup><sub>down</sub><div>xyn&lt;i&gt;</div></div>"
         );
         // closing with nothing open loses nothing
         let mut empty = Drawing {
+            options: &options,
+            inline: false,
             stack: Vec::new(),
-            ..drawing
+            code: None,
+            html: None,
+            quiet: 0,
+            columns: Vec::new(),
+            cell: 0,
+            in_head: false,
         };
         empty.append(text("dropped"));
         assert!(empty.pop().is_empty());
         empty.end(TagEnd::CodeBlock);
         empty.end(TagEnd::HtmlBlock);
-    }
-
-    impl Drawing<'_> {
-        fn pop_root(&mut self) -> Vec<Node> {
-            self.stack.pop().map(|root| root.nodes).unwrap_or_default()
-        }
     }
 }
