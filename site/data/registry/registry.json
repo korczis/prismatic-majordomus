@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "f95533ff8d53c18491b1175cf44dab39321ffef6c006fb02b7c342b41d9edd5c",
+    "fingerprint": "fb03d0edd45572aecde8d9e8ae9f0daebbac32984f95734bf7dc48504b17f1fc",
     "summary": {
-      "total": 3687,
+      "total": 3690,
       "builtin": 220,
-      "declarative": 3467,
+      "declarative": 3470,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3467
+        "resource": 3470
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3477
+        "implemented": 3480
       },
       "mcp_tools": 206,
-      "mcp_resources": 3524,
+      "mcp_resources": 3527,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91407,7 +91407,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1124,
+        "capabilities": 1126,
         "capability_ids": []
       },
       {
@@ -92005,7 +92005,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 664,
+        "capabilities": 665,
         "capability_ids": []
       },
       {
@@ -92097,7 +92097,7 @@
     ]
   },
   "index": {
-    "fingerprint": "0cea67a0164dea9ff112f33d60d537660128584aa899884a9c393955340faed4",
+    "fingerprint": "55c3df4855c3cf07b315c6fe41f9d8ff9bbb6fdadefd051aace759d104c32f76",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92137,7 +92137,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 44,
-      "issue": 1124,
+      "issue": 1126,
       "knowledge": 86,
       "mesh-declaration": 1,
       "milestone": 113,
@@ -92151,7 +92151,7 @@
       "session": 93,
       "skill": 8,
       "taxonomy": 10,
-      "test": 664,
+      "test": 665,
       "use-case": 49,
       "workspace": 1
     },
@@ -99609,7 +99609,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 1023361
+        "bytes": 1032006
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -102654,7 +102654,7 @@
         "identity": "bin/majordomus",
         "path": "bin/majordomus",
         "source_class": "entrypoint",
-        "bytes": 14344
+        "bytes": 14818
       },
       {
         "uri": "majordomus://implementation/bin/majordomus-cli",
@@ -102822,7 +102822,7 @@
         "identity": "lib/finish.sh",
         "path": "lib/finish.sh",
         "source_class": "library",
-        "bytes": 16230
+        "bytes": 17618
       },
       {
         "uri": "majordomus://implementation/lib/gates.sh",
@@ -115913,6 +115913,28 @@
         "bytes": 10765
       },
       {
+        "uri": "majordomus://issue/I4520",
+        "kind": "issue",
+        "identity": "I4520",
+        "title": "finish runs its verify command in the caller's environment, not with the launcher's own MJ_* exported",
+        "description": "`majordomus finish --verify-command <cmd>` runs <cmd> with the MJ_* environment of the process that called majordomus, not the one majordomus built for itself: bin/majordomus records the MJ_* variables it inherited before it exports any, and lib/finish.sh unsets every MJ_* variable and MAJORDOMUS_LAUNCHER inside the verify subshell, then re-exports the inherited ones (MJ_FINISH_OUTCOME stays unset, as before). A verify command then judges the tree as a worker running it by hand, the pre-push hook and CI do.",
+        "path": ".ai/repo/project/issues/I4520.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3596
+      },
+      {
+        "uri": "majordomus://issue/I4521",
+        "kind": "issue",
+        "identity": "I4521",
+        "title": "A use-case scenario is recorded with the fleet pack off, so its evidence is the same on every machine",
+        "description": "lib/usecase.sh mj_uc_run_one pins the fleet pack off for the scenario it records (MAJORDOMUS_FLEET=off, exported beside MAJORDOMUS_REASONING_MODE=ci), and lib/fleet.sh reads it: mj_fleet_present and mj_fleet_install see no pack while it is set, and the doctor still prints the default path it would look under, so a scenario's output does not depend on whether the recording machine keeps a pack. A case records a scenario with a fake pack present under XDG_CONFIG_HOME and MAJORDOMUS_FLEET_PACK and gets byte-identical evidence to the same recording with none.",
+        "path": ".ai/repo/project/issues/I4521.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3081
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -127453,6 +127475,14 @@
         "bytes": 3076
       },
       {
+        "uri": "majordomus://test/test/cases/4520_a_verify_command_runs_in_the_callers_environment.sh",
+        "kind": "test",
+        "identity": "test/cases/4520_a_verify_command_runs_in_the_callers_environment.sh",
+        "path": "test/cases/4520_a_verify_command_runs_in_the_callers_environment.sh",
+        "source_class": "case",
+        "bytes": 3501
+      },
+      {
         "uri": "majordomus://test/test/cases/45_github_projection.sh",
         "kind": "test",
         "identity": "test/cases/45_github_projection.sh",
@@ -129975,7 +130005,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1124
+      "objects": 1126
     },
     {
       "name": "knowledge",
@@ -130137,7 +130167,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 664
+      "objects": 665
     },
     {
       "name": "use-case",

@@ -3,6 +3,14 @@
 # Single entry point. Subcommands live in ../lib/<name>.sh and are sourced.
 set -eu
 
+# The caller's own MJ_* environment, read before this program sets a variable of its own. A
+# command majordomus runs on its caller's behalf (finish's --verify-command) runs in it, and
+# not with the forty-odd MJ_* variables exported below and in lib/common.sh (I4520). Here,
+# every MJ_* variable came from the environment, so their names say which were inherited.
+mj_caller_env=()
+for mj_name in "${!MJ_@}"; do mj_caller_env+=("$mj_name=${!mj_name}"); done
+unset mj_name
+
 MJ_BIN_DIR="$(cd "$(dirname "$0")" && pwd)"
 MJ_LIB_DIR="$MJ_BIN_DIR/../lib"
 # The version is authored once, in apps/majordomus-cli/Cargo.toml. share/version.txt is its
