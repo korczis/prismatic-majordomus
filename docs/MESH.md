@@ -241,8 +241,12 @@ Three layers, deliberately separate:
   two heartbeats plus one second, `degraded` beyond that, `unreachable` beyond half the expiry, and `expired`
   — dropped — beyond `cooperation.expiry_seconds` (default 30, at least three heartbeats).
   A failed round backs off exponentially, capped at the expiry, so a returning peer is dialed
-  again within one expiry; an unknown link id (the peer restarted) re-handshakes at once, into
-  the same table row.
+  again within one expiry and a quarter; an unknown link id (the peer restarted) re-handshakes
+  at once, into the same table row, and a peer that keeps answering it is retried no faster
+  than once per heartbeat. Every retry pause carries a jitter of up to a quarter of its base
+  on top of it (`link::jittered`, never shorter than the base), so runtimes whose links to one
+  peer failed together do not retry it at the same instant; each refusal is counted in
+  `refused_out` by its code, which is how the retry rate is read (I2704).
 - **Streams** are alive while their beat rises. Each runtime raises its own beat every
   heartbeat; sync rounds carry every stream's beat with how long ago the sender saw it rise,
   so a runtime reached only through a relay is alive, and a crashed runtime stops beating for

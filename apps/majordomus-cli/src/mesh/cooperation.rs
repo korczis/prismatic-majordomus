@@ -3302,22 +3302,30 @@ impl Cooperation {
                 if *unknown_in_a_row == 1 {
                     Duration::ZERO
                 } else {
-                    self.heartbeat()
+                    Self::jitter(self.heartbeat())
                 }
             }
             Err(RoundError::Refused(_)) => {
                 *failures = failures.saturating_add(3).min(6);
-                self.backoff(*failures)
+                Self::jitter(self.backoff(*failures))
             }
             Err(_) => {
                 *failures = failures.saturating_add(1).min(6);
-                self.backoff(*failures)
+                Self::jitter(self.backoff(*failures))
             }
         }
     }
 
+    /// A retry's pause: `base` and a fresh jitter of up to a quarter of it on top, never
+    /// less than `base`, so that runtimes whose links to one peer failed together do not
+    /// retry it together (I2704).
+    fn jitter(base: Duration) -> Duration {
+        super::link::jittered(base, super::link::retry_seed())
+    }
+
     /// Heartbeat × 2^failures, never beyond the expiry: an unreachable peer is asked less
-    /// and less, and still within one expiry of coming back.
+    /// and less, and still within one expiry of coming back. The base a retry's jitter is
+    /// drawn over, by [`Self::jitter`].
     fn backoff(&self, failures: u32) -> Duration {
         let factor = 1u32 << failures.min(6);
         (self.heartbeat() * factor).min(self.expiry().max(self.heartbeat()))
@@ -5467,30 +5475,115 @@ mod tests {
         };
         let (mut failures, mut unknown) = (0u32, 0u32);
         let beat = a.heartbeat();
+        let within = |pause: Duration, base: Duration| {
+            pause >= base && pause <= base + base / crate::mesh::link::RETRY_JITTER_DIVISOR
+        };
         let unknown_link = refusal(RefusalCode::UnknownLink);
         assert_eq!(
             a.after_round(&unknown_link, &mut failures, &mut unknown),
             Duration::ZERO,
             "a restarted answerer is greeted again at once"
         );
-        assert_eq!(
-            a.after_round(&unknown_link, &mut failures, &mut unknown),
-            beat,
-            "and no faster than a heartbeat after that"
+        let pause = a.after_round(&unknown_link, &mut failures, &mut unknown);
+        assert!(
+            within(pause, beat),
+            "and no faster than a heartbeat after that, jittered: {pause:?}"
         );
         assert_eq!(unknown, 2);
         let replay = refusal(RefusalCode::Replay);
-        assert_eq!(
-            a.after_round(&replay, &mut failures, &mut unknown),
-            a.backoff(3)
-        );
-        assert_eq!(
-            a.after_round(&Err(RoundError::NoLink), &mut failures, &mut unknown),
-            a.backoff(4)
-        );
+        let pause = a.after_round(&replay, &mut failures, &mut unknown);
+        assert!(within(pause, a.backoff(3)), "{pause:?}");
+        let pause = a.after_round(&Err(RoundError::NoLink), &mut failures, &mut unknown);
+        assert!(within(pause, a.backoff(4)), "{pause:?}");
         assert_eq!(failures, 4);
         assert_eq!(a.after_round(&Ok(()), &mut failures, &mut unknown), beat);
         assert_eq!((failures, unknown), (0, 0));
+    }
+
+    /// The retry rate against a peer that welcomes every hello and refuses every sync as
+    /// `unknown_link`, and against one that refuses every hello, measured: each refusal is
+    /// counted where every surface reads it (`refused_out`), and the pauses the worker takes
+    /// between the rounds are summed into the time the rounds take. No faster than once
+    /// per heartbeat, and two dialers of one peer never in lockstep (I2704).
+    #[test]
+    fn unknown_link_retry_rate_test() {
+        const ROUNDS: u32 = 40;
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let c = runtime(&net, "c:1", "root", TrustPolicy::Tofu);
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        let beat = a.heartbeat();
+        let ceiling = beat + beat / crate::mesh::link::RETRY_JITTER_DIVISOR;
+        let mut sequences = Vec::new();
+        for dialer in [&a, &c] {
+            let (mut failures, mut unknown) = (0u32, 0u32);
+            let mut pauses = Vec::new();
+            for _ in 0..ROUNDS {
+                // what the worker does each round: hello while unlinked, then sync
+                let key = dialer
+                    .dial(&["b:1".into()])
+                    .expect("b welcomes every hello");
+                // b forgets every link it made: the sync names a link it does not know
+                b.table.lock().unwrap().inbound_links.clear();
+                let outcome = dialer.sync_with(&key);
+                assert!(
+                    matches!(&outcome, Err(RoundError::Refused(r)) if r.code == RefusalCode::UnknownLink),
+                    "{outcome:?}"
+                );
+                pauses.push(dialer.after_round(&outcome, &mut failures, &mut unknown));
+            }
+            let refused = dialer.status().counters.refused_out[&RefusalCode::UnknownLink];
+            assert_eq!(refused, u64::from(ROUNDS), "every refusal is counted");
+            assert_eq!(
+                pauses[0],
+                Duration::ZERO,
+                "the first is a restart, greeted at once"
+            );
+            let elapsed: Duration = pauses.iter().sum();
+            assert!(
+                elapsed >= beat * (ROUNDS - 1) && elapsed <= ceiling * (ROUNDS - 1),
+                "{refused} refusals in {elapsed:?}: no faster than one per {beat:?}"
+            );
+            let retries = &pauses[1..];
+            assert!(
+                retries.iter().all(|p| *p >= beat && *p <= ceiling),
+                "{retries:?}"
+            );
+            let distinct: std::collections::BTreeSet<_> = retries.iter().collect();
+            assert!(
+                distinct.len() > retries.len() / 2,
+                "jittered, not fixed: {retries:?}"
+            );
+            sequences.push(pauses);
+        }
+        assert_ne!(
+            sequences[0], sequences[1],
+            "two dialers of one peer drift apart"
+        );
+
+        // a peer that refuses every hello: another repository's runtime
+        let d = runtime(&net, "d:1", "elsewhere", TrustPolicy::Tofu);
+        let (mut failures, mut unknown) = (0u32, 0u32);
+        let mut elapsed = Duration::ZERO;
+        for round in 0..ROUNDS {
+            let outcome = a.dial(&["d:1".into()]).map(|_| ());
+            assert!(
+                matches!(&outcome, Err(RoundError::Refused(_))),
+                "{outcome:?}"
+            );
+            let pause = a.after_round(&outcome, &mut failures, &mut unknown);
+            let base = a.backoff(failures);
+            assert!(
+                pause >= base && pause <= base + base / 4 && pause >= beat,
+                "round {round}: {pause:?} against {base:?}"
+            );
+            elapsed += pause;
+        }
+        assert!(
+            elapsed >= beat * ROUNDS,
+            "{ROUNDS} refused hellos in {elapsed:?}: no faster than one per {beat:?}"
+        );
+        drop(d);
     }
 
     #[test]
