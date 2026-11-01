@@ -6,6 +6,9 @@
 # other checks are stubs with chosen exit codes. It proves, for each branch of the hooks:
 #
 #   pre-push    run-plan exits 1 (a gate failed)    exits 0, names the gate, CI holds the verdict
+#               run-plan exits 1, the push carries  refused with 1, naming the top (rule v3)
+#               a refs/heads/integration/train-*
+#               ref with a commit
 #               run-plan exits 12 (no plan)         refused with 12
 #               finish --check fails                refused with its code
 #               two cases share a number            refused with 1
@@ -41,6 +44,20 @@ unset MAJORDOMUS_BIN
 
 push() { printf 'refs/heads/a %s refs/heads/a %s\n' "$1" "$A" | (cd fx && sh .githooks/pre-push origin url); }
 pushA() { push "$A"; }
+# a push of a train top, alone and beside a feature ref, and a train ref that is only deleted
+T13=integration/train-13-20261031
+pushTop() {
+  printf 'refs/heads/%s %s refs/heads/%s %s\n' "$T13" "$A" "$T13" "$A" | (cd fx && sh .githooks/pre-push origin url)
+}
+pushBoth() {
+  printf 'refs/heads/a %s refs/heads/a %s\nrefs/heads/%s %s refs/heads/%s %s\n' \
+    "$A" "$A" "$T13" "$A" "$T13" "$A" \
+    | (cd fx && sh .githooks/pre-push origin url)
+}
+pushGone() {
+  printf 'refs/heads/a %s refs/heads/a %s\n(delete) %s refs/heads/%s %s\n' "$A" "$A" "${A//1/0}" "$T13" "$A" \
+    | (cd fx && sh .githooks/pre-push origin url)
+}
 commit() { (cd fx && sh .githooks/pre-commit); }
 
 echo "  pre-push: every check green, the push goes on"
@@ -53,6 +70,21 @@ GATE_FAILS=1 expect_exit 0 pushA
 expect_grep 'FAILED economics-claims'
 expect_grep 'failed: economics-claims\. CI would refuse this push for the same reason, and CI holds the verdict'
 expect_grep '^pre-push: run-plan --before-push failed \(exit 1\).*; reported, not refused: CI holds the verdict$'
+
+echo "  pre-push: a failed gate on a train top is refused, naming the top (rule v3)"
+GATE_FAILS=1 expect_exit 1 pushTop
+expect_grep 'FAILED economics-claims'
+expect_grep "^pre-push: run-plan --before-push failed \(exit 1\).*; refused: this push carries the train top $T13, \
+and a train top is judged before it is pushed$"
+expect_no_grep 'reported, not refused'
+GATE_FAILS=1 expect_exit 1 pushBoth
+expect_grep "refused: this push carries the train top $T13,"
+echo "  pre-push: a green train top goes on, and a deleted train ref is no top"
+expect_exit 0 pushTop
+expect_grep 'nothing CI would find here first'
+GATE_FAILS=1 expect_exit 0 pushGone
+expect_grep '; reported, not refused: CI holds the verdict$'
+expect_no_grep 'refused: this push carries'
 
 echo "  pre-push: an uncomputable plan, or no durations, refuses with 12"
 PLAN_FAILS=1 expect_exit 12 pushA

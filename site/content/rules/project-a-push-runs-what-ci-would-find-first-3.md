@@ -4,10 +4,10 @@ description = "A push runs what CI would find first, and CI decides"
 weight = 75
 [extra]
 kind = "rule"
-slug = "project-a-push-runs-what-ci-would-find-first-2"
-identity = "project.a-push-runs-what-ci-would-find-first@2"
+slug = "project-a-push-runs-what-ci-would-find-first-3"
+identity = "project.a-push-runs-what-ci-would-find-first@3"
 status = "active"
-source = ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v2.md"
+source = ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v3.md"
 +++
 {% raw %}
 
@@ -33,6 +33,19 @@ I3824): local gates are informative and CI holds the verdict. A finding CI will 
 is therefore reported here, not refused (I3830). A check CI cannot reach, or reaches only
 after a merge or a deploy it would break, still refuses: it takes seconds and nothing else
 would say it.
+
+Version 3 refuses one more thing: a failed gate or case on a push that carries a train top, the
+landing seat's combined top under `refs/heads/integration/train-*`. On 2026-10-31 at 09:12Z train
+13's top (`a428913c05d`, #2784, 29 members) was pushed although this step had named failures
+in four structure gates (development semantics, the collision check, economics claims, rust
+quality), because exit 1 was reported, not refused. CI's run 41187739613 failed the same four
+in its structure job by 09:44Z, with shell lint, five integration tests and coverage beside
+them. The top was recomposed twice, and master, which had stood at `6b30ede2d13` since
+2026-10-30 18:27Z, stayed there for more than 29 hours. A member's own branch is still
+reported: there, CI's verdict comes in time and costs one run. A top's run is the widest and
+slowest the repository has, and every member waits on it, so a failure the push has already
+named is not worth a run. The landing seat's procedure is in `docs/INTEGRATION.md` ("A train
+top is judged before it is pushed").
 
 ## Required behaviour
 
@@ -70,6 +83,11 @@ would say it.
   names it and says CI holds the verdict. The hook prints `reported, not refused: CI holds the
   verdict` and lets the push through; CI's validate refuses the same head. Any other non-zero
   exit of the step, 12 above all, refuses the push: what cannot be measured is not passed.
+- **Train tops.** The hook collects the remote refs of the push that receive a commit. When
+  the step exits 1 and one of them is under `refs/heads/integration/train-*`, the hook prints
+  `refused: this push carries the train top <names>, and a train top is judged before it is
+  pushed` and exits 1, whatever else the push carries. A train ref that is only deleted is no
+  top.
 - **Stdin.** Every gate and every case runs with stdin closed. A hook's stdin is the ref
   list. `test/run.sh` gave each case the runner's stdin, because a background job under job
   control keeps it, so a case that read stdin waited for ever on an open pipe: case 54, for
@@ -88,7 +106,8 @@ would say it.
 | pre-push | `bin/majordomus finish --check` | refuses | the task's scope and contract exist only on this machine |
 | pre-push | `scripts/case-numbers check` | refuses | each branch is clean alone; the pair exists only after a merge |
 | pre-push | `scripts/ci/run-plan --before-push`, exit 12 | refuses | a plan that cannot be computed is not a pass |
-| pre-push | `scripts/ci/run-plan --before-push`, exit 1 | reports | CI's structure job and suite run the same gates and cases |
+| pre-push | `scripts/ci/run-plan --before-push`, exit 1, on a push that carries no train top | reports | CI's structure job and suite run the same gates and cases |
+| pre-push | `scripts/ci/run-plan --before-push`, exit 1, on a push that carries a `refs/heads/integration/train-*` ref | refuses | a top's CI run is the widest the repository has and every member waits on it; train 13 was pushed over four failures this step had named (2026-10-31) |
 | pre-push | `scripts/rust-check --doc` | reports | CI's rustdoc job refuses the same head |
 | pre-commit | `bin/majordomus doctor` | reports | CI's core-check runs doctor and refuses |
 | pre-commit | `bin/majordomus-cli worktree guard` | refuses | CI checks out a fresh clone and never sees which worktree a commit came from (rule `project.worktree-topology`) |
@@ -129,6 +148,9 @@ durations it writes. It proves:
 whose checks are stubs with chosen exit codes. It proves:
 
 - a push whose step exits 1 exits 0, with the gate's line and the hook's report line;
+- a push whose step exits 1 and that carries a train ref is refused with 1, naming the top,
+  alone and beside a feature ref; a green top goes on; a push that only deletes a train ref
+  beside a feature ref is reported, not refused;
 - a push whose step exits 12, whose `finish --check` fails or whose case numbers collide is
   refused with that code;
 - a push that changes the crate and whose rustdoc fails exits 0 with a report line;

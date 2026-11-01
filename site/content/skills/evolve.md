@@ -124,7 +124,10 @@ The ledger cannot be edited, so an observation that says more than its evidence 
 not corrected in place. Observe the corrected statement, derive, and promote the corrected
 candidate. Then reject the first candidate with a reason that names the one that replaces
 it. Check each statement against the forge or the tree (`gh run view`, `git log`) before
-you observe it: a session's own notes have overstated a run's outcome before.
+you observe it, and a correction too. A run's conclusion is not its jobs' verdicts: on
+2026-10-31 this procedure's own correction read validate run 41187739613 as cancelled, not red.
+Its jobs (`gh run view <id> --json jobs`) had failed coverage, structure and the suite and ui
+shards before the cancel, and the correction was wrong where the first statement had been right.
 
 A promoted record is tracked, so its provenance must resolve in a clean clone. `promote`
 keeps the candidate's `session:` and `task:` ids, which live only in this machine's

@@ -12,11 +12,20 @@
 # `finish --check` is skipped too, as for refs/majordomus/*: the contract asks whether work
 # may be published, and a deletion publishes none. One ref that carries a commit and the
 # whole hook applies to the whole push, as before.
-any=0 carries=0 heads=""
+# A remote ref under refs/heads/integration/train-* that receives a commit is a train top: its
+# names are collected here, for the verdict on run-plan below.
+any=0 carries=0 heads="" tops=""
 while read -r _local_ref local_sha remote_ref _remote_sha; do
   any=1
   case "$remote_ref" in refs/majordomus/*) continue ;; esac
-  case "$local_sha" in *[!0]*) carries=1; heads="$heads $local_sha" ;; esac
+  case "$local_sha" in
+    *[!0]*)
+      carries=1; heads="$heads $local_sha"
+      case "$remote_ref" in
+        refs/heads/integration/train-*) tops="$tops ${remote_ref#refs/heads/}" ;;
+      esac
+      ;;
+  esac
 done
 [ "$any" = 1 ] && [ "$carries" = 0 ] && exit 0
 # A hook never starts a build of the executable (I3831, ADR 0224): when it is missing or stale,
@@ -60,12 +69,22 @@ done
 # What CI would find first, within a bound. Exit 1 is a gate or case that failed, named in
 # run-plan's last line: reported, since CI runs it again. Any other failure, 12 above all (the
 # plan or its durations cannot be computed), refuses: what cannot be measured is not passed.
+# Exit 1 on a push that carries a train top refuses too (rule version 3): on 2026-10-31 train
+# 13's top was pushed over four structure gates this step had named, and its CI run failed the
+# same four about 30 minutes later; master stood still for more than 29 hours.
 scripts/ci/run-plan --before-push
 mj_rc=$?
 case "$mj_rc" in
   0) ;;
-  1) printf 'pre-push: %s; reported, not refused: CI holds the verdict\n' \
-       'run-plan --before-push failed (exit 1) on what its last line names' >&2 ;;
+  1)
+    if [ -n "$tops" ]; then
+      printf 'pre-push: %s; refused: this push carries the train top%s, %s\n' \
+        'run-plan --before-push failed (exit 1) on what its last line names' "$tops" \
+        'and a train top is judged before it is pushed' >&2
+      exit 1
+    fi
+    printf 'pre-push: %s; reported, not refused: CI holds the verdict\n' \
+      'run-plan --before-push failed (exit 1) on what its last line names' >&2 ;;
   *) exit "$mj_rc" ;;
 esac
 exit 0
