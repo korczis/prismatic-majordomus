@@ -586,9 +586,13 @@ refuses the reopen after the closure, the pull request is closed: the drain says
 
 A *train top* here is the landing seat's combined top, clause 2 of
 [the cooperation rule](../.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md):
-the seats number them (train 13, 13b, 13c), and it is not the stacked train of the section
-above. The rule says one validation run judges every member. This section is the landing
-seat's procedure for keeping that run a confirmation rather than the first time anyone looks.
+the seats number them (train 13, 13b, 13c), its branch is named `integration/train-*` (for
+example `integration/train-13c-20261031`) and its pull request is labelled `train`, and it is
+not the stacked train of the section above. Tops under other names (`integration/next-top`,
+`integration/e7-top-*`) are of an earlier procedure; a top is named under `integration/train-*`
+because that is the name the pre-push hook refuses a failed gate on (step 3). The rule says
+one validation run judges every member. This section is the landing seat's procedure for
+keeping that run a confirmation rather than the first time anyone looks.
 It is measured by one number, the owner's, given on the night of 2026-10-31 in Czech:
 "pokud je min nez 1 merged PR/MR per 30 mins, tak je to fail produktu" ("fewer than one
 merged pull request per 30 minutes is a failure of the product"), with "tohle se nesmi
@@ -608,16 +612,24 @@ then ended as `cancelled`, although most of its verdict was already red. The com
 run fmt, clippy and `cargo test --lib` only. Train 13b (#2785, 28 members) was in validate
 from 10:46Z to 14:32Z (run 41194104887), and its rust jobs passed. It came back red in
 coverage, in structure (the collision check), in three suite shards with six cases (430, 94,
-400, 93, 15, 3955), in three ui shards and in one site-probe shard. The coverage job reported
-609 uncovered changed items (lines, regions and functions), blamed to #2638, #2746, #2689,
-#2637 and #966 above all. The ui-audit findings were attributed to #933. All of it came from
+400, 93, 15, 3955), in three ui shards and in one site-probe shard. Its coverage gate counted
+609 uncovered changed items: 257 lines, 329 regions and 23 functions (job 124519535121 of that
+run, `rust-coverage --changed: 609 uncovered changed item(s)`). The landing seat's reviewer,
+f3, attributed 586 of them, the line and region items, to members by `git blame` of the merged
+tree, as the compose commit of 13c (`af91101cfdd`) records; #2638, #2746, #2689, #2637 and
+#966 carried most of them. The ui-audit findings were attributed to #933. All of it came from
 members, and nobody had seen any of it before boarding, because no member had been judged on
 its own head against the current master. Their own validate runs had been cancelled to free
 hosted runners, since `validate.yml` runs on `ubuntu-latest` and one run takes all of the
 hosted concurrency. Train 13c (#2786) was composed differently. Every uncovered item of 13b
-was blamed to its member, every member that blocked was moved out at once, and 13c boarded 16
-members, each with no uncovered changed item. At 2026-11-01T01:54Z it is in CI and not merged,
-so whether it lands within the owner's measure is not yet observed.
+was blamed to its member, every member that carried one or a new ui-audit finding was moved to
+the next train at once (#2638, #2746, #2689, #2637, #966, #1050, #933, #900 and four others,
+named in `af91101cfdd`'s message), and 13c boarded 16 members, each with no uncovered changed
+item. The members behind the six suite reds were not moved out: each was fixed by one of f3's
+patches inside the top (step 4). 13c's pull request was opened at 2026-10-31T23:51:38Z and
+merged at 2026-11-01T03:08:34Z as `aca6f182b41`, 3 hours 17 minutes later
+(`gh pr view 2786 --json createdAt,mergedAt`). It landed, but not within the owner's 30
+minutes.
 
 The procedure:
 
@@ -628,8 +640,10 @@ The procedure:
    `scripts/ci/coverage-differential` with `MJ_COVERAGE_BASE=origin/master` (the same verdict
    as `scripts/rust-coverage --changed origin/master`). When the member touches the crate,
    the composer also runs `cargo test --tests` in `apps/majordomus-cli`. Last come the suite
-   cases that read the member's paths, named by hand (`bash test/run.sh <case>...`) or
-   through `scripts/ci/run-plan`. A cancelled run is no verdict, so a member whose own run was
+   cases that read the member's paths, named by hand (`bash test/run.sh <case>...`):
+   `scripts/ci/run-plan` selects gates by the path classes a change touches, and its suite gate
+   runs the whole suite, so it is no way to name a member's cases. A cancelled run is no
+   verdict, so a member whose own run was
    cancelled boards only after this judgement. The landing seat may still cancel queued runs
    of hold members, as the owner approved. This step does not run the structure gates, ui-audit
    or site-probe for each member. Their findings, and those that arise only from members
@@ -643,33 +657,41 @@ The procedure:
    not fit that time is left to CI and named. Two limits bound what a local run can prove. A
    macOS build host differs from CI's `ubuntu-latest`: bash 3.2, BSD tools and another
    browser stack. So a platform-dependent case that passes there can fail in CI, and ui-audit
-   and site-probe are judged by CI, not here. Clause 7 starts no build below 35 GiB free. On
-   2026-11-01 no cluster host met that floor (macbook-2 19 GiB, lundra 6.5 GiB, the iMac 9.2
-   GiB, the landing seat's Mac about 5 GiB), so whenever no host has room, CI's coverage job
-   is the judge of coverage, and the
-   composer says so in the top's pull request. The composer pushes only a top that passed
-   what it could run.
+   and site-probe are judged by CI, not here. Clause 7 starts no build below 35 GiB free, so
+   when no host has that much room, nobody builds the top's executable: CI's coverage and rust
+   jobs are then the judges of coverage and of the crate's tests, and the composer says so in
+   the top's pull request. The composer pushes only a top that passed what it could run.
 3. **A pre-push failure on a train top refuses the push.** Since version 3 of
    [`project.a-push-runs-what-ci-would-find-first`](../.ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v3.md),
    `.githooks/pre-push` refuses a push that carries a ref under `refs/heads/integration/train-*`
    when `scripts/ci/run-plan --before-push` exits 1. On a member's own branch it still
-   reports, because there CI's verdict costs one run. A top's run is the widest and slowest the
+   reports, because there CI's verdict costs one run. Pushing a top does not need an executable
+   of the tree's generation: when none exists, a gate that exits 12 for want of it is printed
+   `NOT JUDGED`, a fast case that runs the executable is left out by name, neither makes the
+   step exit 1, and CI judges them. Every other failure still refuses the top. A top's run
+   is the widest and slowest the
    repository has, and every member waits on it. The composer finds the member the failure
    belongs to and applies step 4.
-4. **A member that blocks moves to the next train at once.** Small and green beats big. A
-   top waits on its worst member, so one member's red holds back every other member's
-   landing. Clause 2 holds as it is written: the member is dropped from the top and its fix is
-   committed on its own branch, never inside the top, and the member boards the next train
-   with that head. Train 13c carried member fixes inside its top (f3's patches 12 to 17). That
-   was a dated exception, under the owner's explicit order of 2026-11-01 ("mergni 13c hned jak
-   bude pushnuty", "merge 13c as soon as it is pushed", and "absolute clearance"). Whether
-   clause 2 should allow it is the owner's decision.
+4. **A member that blocks moves to the next train at once, unless its fix is small and
+   ready.** Small and green beats big. A top waits on its worst member, so one member's red
+   holds back every other member's landing. Clause 2, as the owner amended it on 2026-11-01
+   ("Yes, with attribution", version 3), allows two remedies. Either the member is dropped from
+   the top, its fix is committed on its own branch, and it boards the next train with that
+   head; or the fix travels inside the top as a commit of its own whose message names the
+   member's pull request, the same commit is carried to the member's own branch, and the top's
+   pull request lists it beside the member. A fix that is not ready before the push is the
+   first remedy. 13c's patches inside its top (the eight listed in its compose commit
+   `af91101cfdd`) were made before that decision and are covered by it; they were folded into
+   the compose commit, and the next top gives each its own commit.
 5. **A red train is post-mortemed per member, by blame.** Each finding of the top's run goes
    to the member that introduced it. An uncovered changed item belongs to the member whose
    commits (`origin/master..<member head>`) carry it in `git blame` of the merged tree. A
-   failing case or test belongs to the member whose paths it reads. Some lines no member owns:
-   merge resolutions, seat fixes and the top's own commits. The composer owns those, and fixes
-   or drops them before pushing. The attribution is written in the top's pull request. The
+   failing case or test belongs to the member whose paths it reads. A member's fix that rides
+   in the top (step 4) is that member's, by the name its commit carries. Some lines no member
+   owns: merge resolutions and the top's own commits (the version raise, the derive). The
+   composer owns those and, before pushing, fixes them in commits of the top's own or drops
+   them; clause 2 never forbade the top its own commits, only a member's fix without its
+   name. The attribution is written in the top's pull request. The
    members it names leave, and the rest compose the next top on the current master.
 6. **A decision is taken again after a stop.** A workflow or session that resumes reads
    `origin/master`, the members' heads and the board again before it acts on what it decided

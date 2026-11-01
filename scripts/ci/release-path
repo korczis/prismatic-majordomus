@@ -27,6 +27,11 @@
 # Never cancelled by this, by construction: anything of the release path, and any run whose
 # event is not pull_request — master's validate, the schedule, a dispatch. `yield` cancels
 # only its own run, and only when --event is pull_request and --branch is no record branch.
+# Nor a train: a pull request labelled with the model's exempt_label (`train`, the landing
+# seat's combined top) never yields and is never preempted (the owner, 2026-11-01). Its labels
+# are read from the forge; a run whose labels cannot be read is not asked to yield, by yield
+# or by preempt, because a reading that cannot be made decides nothing. Members and every
+# other pull request yield as before.
 #
 # Forge access is `gh api` with GH_TOKEN, against --repo or GITHUB_REPOSITORY. A reading that
 # cannot be made is said and decides nothing: `yield` lets the run proceed, `preempt` and
@@ -80,6 +85,7 @@ W_PAGES="$(model pages)"
 PAGES_BY="$(model pages_dispatched_by)"
 TRUNK="$(model trunk)"
 LABEL="$(model label)"
+EXEMPT="$(model exempt_label)"
 CANCEL_WAIT="${MJ_RELEASE_PATH_CANCEL_WAIT:-$(model cancel_wait_seconds)}"
 case "$CANCEL_WAIT" in *[!0-9]*) echo "release-path: cancel_wait_seconds is not a number: $CANCEL_WAIT" >&2; exit 2 ;; esac
 
@@ -154,6 +160,19 @@ holder_phrase() {
   printf '%s, run %s (%s)%s' "$what" "$id" "$st" "${url:+ $url}"
 }
 
+# Whether pull request <pr> carries the exempt label: 0 it does, 1 it does not, 2 its labels
+# could not be read (said in LABELS_ERR).
+LABELS_ERR=""
+is_exempt() { # <pr>
+  local out
+  if ! out="$(api "repos/$SLUG/issues/$1/labels" 2>&1)"; then
+    LABELS_ERR="the labels of pull request #$1 could not be read: $(printf '%s' "$out" | head -n 1)"; return 2
+  fi
+  jq -e --arg l "$EXEMPT" 'type == "array" and any(.[]; .name == $l)' <<<"$out" >/dev/null 2>&1 && return 0
+  jq -e 'type == "array"' <<<"$out" >/dev/null 2>&1 || { LABELS_ERR="the labels of pull request #$1 were not a JSON list"; return 2; }
+  return 1
+}
+
 mark_and_tell() { # <pr> <run id> <holder phrase>
   local out
   out="$(api -X POST "repos/$SLUG/issues/$1/labels" -f "labels[]=$LABEL" 2>&1)" \
@@ -194,6 +213,15 @@ yield)
     exit 0
   fi
   first="$(holder_phrase "$(printf '%s\n' "$held" | head -n 1)")"
+  # A train does not give way: every member waits on its one run (owner, 2026-11-01).
+  ex=0; is_exempt "$PR" || ex=$?
+  if [ "$ex" = 0 ]; then
+    say "release-path: pull request #$PR is labelled $EXEMPT, a train, and a train never yields; this run proceeds beside $first"
+    exit 0
+  elif [ "$ex" = 2 ]; then
+    warn "$LABELS_ERR; this run proceeds without yielding to $first"
+    exit 0
+  fi
   notice "validate run $SELF of pull request #$PR yields to $first; it runs again once the release path is clear"
   summary "## Yielded to the release path"
   summary ""
@@ -226,6 +254,14 @@ preempt)
     [ -n "$id" ] || continue
     if [ -z "$pr" ]; then
       say "left   validate run $id on $branch ($st): GitHub names no pull request for it, so nothing could re-request it"
+      continue
+    fi
+    ex=0; is_exempt "$pr" || ex=$?
+    if [ "$ex" = 0 ]; then
+      say "left   validate run $id of #$pr on $branch ($st): labelled $EXEMPT, a train, which never yields"
+      continue
+    elif [ "$ex" = 2 ]; then
+      warn "validate run $id of #$pr was not asked to yield: $LABELS_ERR"
       continue
     fi
     mark_and_tell "$pr" "$id" "$first"

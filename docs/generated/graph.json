@@ -66789,7 +66789,7 @@
             ".githooks/pre-push",
             "scripts/ci/run-plan",
             ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v1.md",
-            ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v2.md",
+            ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v3.md",
             ".ai/repo/policy.yaml",
             ".ai/repo/automation/inventory.jsonl",
             ".ai/repo/project/issues/I3830.yaml",
@@ -78531,7 +78531,7 @@
         "id": "majordomus://knowledge/s-20261031234907-e660-81faa4c60c71",
         "kind": "knowledge",
         "label": "s-20261031234907-e660-81faa4c60c71",
-        "summary": "train 13c (#2786) was composed from the per-member blame of 13b's red top (f3 attributed 586 uncovered items to members by git blame of the changed lines): every blocking member was dropped to the next train at once and 16 members boarded, each with zero uncovered changed items, where the 29-member top had waited on its worst member; on 2026-11-01T01:54Z 13c is in CI and not merged, so that it lands faster is not yet observed",
+        "summary": "train 13c (#2786) was composed from the per-member blame of 13b's red top: every member that carried an uncovered changed item or a new ui-audit finding moved to the next train, and 16 members boarded with none; the members behind 13b's six suite reds stayed in and were fixed by patches inside the top, covered since by the owner's amendment of clause 2 (2026-11-01); 13c merged at 2026-11-01T03:08:34Z, 3 h 17 min after its pull request opened, so it landed but not within the owner's 30 minutes",
         "route": "/cockpit/objects/knowledge/s-20261031234907-e660-81faa4c60c71",
         "source": ".ai/repo/knowledge/curated/s-20261031234907-e660-81faa4c60c71.md",
         "status": "verified",
@@ -78571,7 +78571,7 @@
         "id": "majordomus://knowledge/s-20261031234907-e660-c67cb106340d",
         "kind": "knowledge",
         "label": "s-20261031234907-e660-c67cb106340d",
-        "summary": "train 13b's top 3dcfee72983 (#2785, 28 members) took validate run 41194104887 from 10:46Z to 14:32Z on 2026-10-31 and came back red on member defects nobody had judged before boarding: 609 uncovered changed items (lines, regions, functions) in coverage (attributed by blame to #2638, #2746, #2689, #2637, #966 ...), the collision check in structure, three suite shards (cases 430 94 400 93 15 3955), three ui shards and one site-probe shard, while its rust jobs passed; train 13 (#2784) had already failed five integration tests, coverage, structure and its suite and ui shards in run 41187739613 before it was cancelled after 1.6 h and recomposed; master stood at 6b30ede2d13 from 2026-10-30 18:27Z for more than 29 h",
+        "summary": "train 13b's top 3dcfee72983 (#2785, 28 members) took validate run 41194104887 from 10:46Z to 14:32Z on 2026-10-31 and came back red on member defects nobody had judged before boarding: 609 uncovered changed items in coverage (257 lines, 329 regions, 23 functions, the gate's own count; f3's blame attributed the 586 line and region items to members, #2638, #2746, #2689, #2637 and #966 above all), the collision check in structure, three suite shards (cases 430 94 400 93 15 3955), three ui shards and one site-probe shard, while its rust jobs passed; train 13 (#2784) had already failed five integration tests, coverage, structure and its suite and ui shards in run 41187739613 before it was cancelled after 1.6 h and recomposed; master stood at 6b30ede2d13 from 2026-10-30 18:27Z for more than 29 h",
         "route": "/cockpit/objects/knowledge/s-20261031234907-e660-c67cb106340d",
         "source": ".ai/repo/knowledge/curated/s-20261031234907-e660-c67cb106340d.md",
         "status": "verified",
@@ -89590,7 +89590,7 @@
         "facts": {
           "class": "blocking",
           "depends_on": [
-            "project.the-cooperation-model-is-the-owners-word@2"
+            "project.the-cooperation-model-is-the-owners-word@3"
           ],
           "tags": [
             "ci",
@@ -91513,11 +91513,11 @@
         }
       },
       {
-        "id": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
+        "id": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@3",
         "kind": "rule",
-        "label": "project.the-cooperation-model-is-the-owners-word@2",
+        "label": "project.the-cooperation-model-is-the-owners-word@3",
         "summary": "Work moves through seats held as mesh claims, a worker lands its own green head, and every checkout is kept current",
-        "route": "/cockpit/objects/rule/project-the-cooperation-model-is-the-owners-word-2",
+        "route": "/cockpit/objects/rule/project-the-cooperation-model-is-the-owners-word-3",
         "source": ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md",
         "status": "active",
         "facts": {
@@ -114328,7 +114328,7 @@
       },
       {
         "source": "majordomus://adr/adr-0167",
-        "target": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
+        "target": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@3",
         "kind": "put_in_force"
       },
       {
@@ -144523,7 +144523,7 @@
       },
       {
         "source": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@3",
-        "target": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
+        "target": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@3",
         "kind": "depends_on"
       },
       {
@@ -145622,32 +145622,32 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@3",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@3",
         "target": "majordomus://rule/project.an-exclusive-claim-lives-by-its-holders-progress@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@3",
         "target": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@3",
         "target": "majordomus://rule/project.integration-follows-the-current-master@3",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@3",
         "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@3",
         "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
         "kind": "depends_on"
       },

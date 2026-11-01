@@ -41,9 +41,18 @@
 # Every gate left out prints one line naming it and why. The step reports its measured time
 # against MJ_PUSH_BOUND (default 180) seconds. A plan that cannot be computed, or a durations
 # file that is missing, refuses the push (exit 12): what cannot be measured is not passed. A
-# gate or case that fails exits 1 with its name, which the hook reports and lets through,
-# because CI runs it again and holds the verdict (I3830). There is no flag that skips the
-# step, as there is no --no-verify.
+# gate or case that fails exits 1 with its name. The hook reports that and lets the push
+# through, because CI runs it again (I3830), except on a push that carries a train top, which
+# it refuses (rule project.a-push-runs-what-ci-would-find-first v3). There is no flag that
+# skips the step, as there is no --no-verify.
+#
+# NOT JUDGED HERE. When no executable of this tree's generation exists (the line
+# `executable: none` says so), a gate that exits 12 has refused for want of it, not for the
+# change: it is named `NOT JUDGED`, counted apart from the failures, and left to CI, and a fast
+# case that runs the executable (`rust_bin`, test/lib.sh) is left out by name. They do not make
+# the step exit 1: no host may build below the 35 GiB floor, so on a host without an executable
+# a train top would otherwise be unpushable. A gate that exits 12 while an executable exists,
+# and every other failure, is still a failure.
 #
 #   MJ_CI_TIMINGS=FILE   append "<job or plan><TAB><gate id><TAB>seconds" per gate
 #   MJ_CI_RECEIPTS=FILE  append "<gate id><TAB><success or failure><TAB><job>/run-plan" per
@@ -132,6 +141,8 @@ fi
 # installed release of this tree's generation, or exit 12 naming `just build` — a refusal, in
 # every gate that needs it, never a build.
 # majordomus-on-stale-executable: fallback, else refuse
+# no_exe is 1 once the line above has said `executable: none`.
+no_exe=0
 gate_executable() {
   # shellcheck source=../../lib/rust_bin.sh
   . "$ROOT/lib/rust_bin.sh"
@@ -151,6 +162,7 @@ gate_executable() {
   else
     cat "$plan.resolve"
     printf '  executable: none; every gate that runs it fails with exit 12 until `just build` has run\n'
+    no_exe=1
   fi
   rm -f "$plan.resolve"
 }
@@ -164,7 +176,7 @@ if [ "$before_push" = 1 ]; then
   done
   per_gate="${MJ_PUSH_GATE_SECONDS:-15}"; budget="${MJ_PUSH_GATE_BUDGET:-120}"
   per_case="${MJ_PUSH_CASE_SECONDS:-5}"; bound="${MJ_PUSH_BOUND:-180}"
-  t_all="$(date +%s)"; failed=""; chosen=""; spent=0
+  t_all="$(date +%s)"; failed=""; unjudged=""; chosen=""; spent=0
   printf 'run-plan --before-push: %s — %s\n' "$(jq -r .mode "$plan")" "$(jq -r .reason "$plan")"
   # candidates, cheapest first: "<seconds> <id>", or a line saying why a gate is left out
   while read -r id network; do
@@ -189,6 +201,10 @@ if [ "$before_push" = 1 ]; then
     cmd="$(jq -r --arg g "$g" '.gates[] | select(.id == $g) | .runs' "$plan")"
     t0="$(date +%s)"
     if bash -c "$cmd" < /dev/null > "$plan.$g.log" 2>&1; then printf '  ok     %s (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"; printf '%s %s\n' "$(( $(date +%s) - t0 ))" "$g" >> "$plan.times"
+    elif g_rc=$?; [ "$g_rc" = 12 ] && [ "$no_exe" = 1 ]; then
+      printf '  NOT JUDGED %s (%ss): exit 12, and no executable of this tree'"'"'s generation is here; CI judges it\n' \
+        "$g" "$(( $(date +%s) - t0 ))"
+      unjudged="$unjudged $g"
     else printf '  FAILED %s (%ss): %s\n' "$g" "$(( $(date +%s) - t0 ))" "$cmd"; sed 's/^/         | /' "$plan.$g.log" | tail -n 15
       failed="$failed $g"; fi
     rm -f "$plan.$g.log"
@@ -204,6 +220,9 @@ if [ "$before_push" = 1 ]; then
       printf '  left out case %s: it declares that it runs alone; CI runs it\n' "$n"; continue; fi
     if grep -qE '\bserve_up\b|\bmcp_shared\b|\bserve (ensure|start)\b|majordomus-mcp|\$MJ"? mcp\b' "test/cases/$n.sh"; then
       printf '  left out case %s: it starts a server; CI runs it\n' "$n"; continue; fi
+    if [ "$no_exe" = 1 ] && grep -qE '\brust_bin\b' "test/cases/$n.sh"; then
+      printf '  left out case %s: it runs the executable, and none of this tree'"'"'s generation is here; CI runs it\n' "$n"
+      continue; fi
     names="$names $n"
   done
   ncases="$(printf '%s' "$names" | wc -w | tr -d ' ')"
@@ -230,8 +249,12 @@ if [ "$before_push" = 1 ]; then
       "$(( took - bound ))" "$( [ -f "$plan.times" ] && LC_ALL=C sort -rn "$plan.times" | head -n 3 | awk '{s=$1; $1=""; sub(/^ /,""); printf "%s%s %ss", (NR>1?", ":""), $0, s}')"
   fi
   rm -f "$plan.times"
-  # Exit 1 is a failed gate or case; the pre-push hook reports it and CI decides (I3830).
-  if [ -n "$failed" ]; then printf '; failed:%s. CI would refuse this push for the same reason, and CI holds the verdict.\n' "$failed"; exit 1; fi
+  # Exit 1 is a failed gate or case: the pre-push hook reports it and CI decides (I3830), or,
+  # on a push that carries a train top, the hook refuses it. A gate not judged for want of an
+  # executable is named and never makes the exit 1.
+  [ -z "$unjudged" ] || printf '; not judged here:%s (exit 12 with no executable of this tree'"'"'s generation; CI judges them)' "$unjudged"
+  if [ -n "$failed" ]; then printf '; failed:%s. CI would refuse this push for the same reason.\n' "$failed"; exit 1; fi
+  if [ -n "$unjudged" ]; then printf '; nothing judged here failed\n'; exit 0; fi
   printf '; nothing CI would find here first\n'
   exit 0
 fi

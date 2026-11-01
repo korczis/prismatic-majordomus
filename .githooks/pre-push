@@ -12,7 +12,8 @@
 # `finish --check` is skipped too, as for refs/majordomus/*: the contract asks whether work
 # may be published, and a deletion publishes none. One ref that carries a commit and the
 # whole hook applies to the whole push, as before.
-# A remote ref under refs/heads/integration/train-* that receives a commit is a train top: its
+# A remote ref under refs/heads/integration/train-* that receives a commit is a train top (a
+# top is named so, clause 2 of rule project.the-cooperation-model-is-the-owners-word v3): its
 # names are collected here, for the verdict on run-plan below.
 any=0 carries=0 heads="" tops=""
 while read -r _local_ref local_sha remote_ref _remote_sha; do
@@ -34,10 +35,11 @@ done
 # majordomus-on-stale-executable: fallback, else refuse
 MAJORDOMUS_HOOK=1; export MAJORDOMUS_HOOK
 # A local gate reports and CI decides (I3830, rule project.a-push-runs-what-ci-would-find-first
-# v2): a check CI runs again prints its finding and lets the push through, because CI holds
+# v3): a check CI runs again prints its finding and lets the push through, because CI holds
 # the verdict and a loaded machine must not refuse a push for the load. On 2026-10-20 a push
 # of a rescue ref spent 3490 s in run-plan at load 70-90. The integrity checks, which take
-# seconds and say what CI cannot or says only after a merge, still refuse with `|| exit $?`.
+# seconds and say what CI cannot or says only after a merge, still refuse with `|| exit $?`,
+# and so does a failed gate or case on a train top (below).
 report() {
   mj_what="$1"; shift
   "$@" && return 0
@@ -71,7 +73,9 @@ done
 # plan or its durations cannot be computed), refuses: what cannot be measured is not passed.
 # Exit 1 on a push that carries a train top refuses too (rule version 3): on 2026-10-31 train
 # 13's top was pushed over four structure gates this step had named, and its CI run failed the
-# same four about 30 minutes later; master stood still for more than 29 hours.
+# same four about 30 minutes later; master stood still for more than 29 hours. A gate that
+# exits 12 because no executable of this tree's generation exists is not judged here: run-plan
+# names it NOT JUDGED and does not count it, so it never makes exit 1, and CI judges it.
 scripts/ci/run-plan --before-push
 mj_rc=$?
 case "$mj_rc" in

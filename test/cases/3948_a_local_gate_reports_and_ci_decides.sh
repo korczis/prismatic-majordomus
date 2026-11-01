@@ -1,5 +1,5 @@
 # claim: derived-data-current
-# A local gate reports and CI decides (I3830, project.a-push-runs-what-ci-would-find-first v2).
+# A local gate reports and CI decides (I3830, project.a-push-runs-what-ci-would-find-first v3).
 # The owner's relaxation of 2026-10-21: a check CI runs again prints its finding and lets the
 # commit or push through; the integrity checks still refuse. This case runs the repository's
 # real pre-commit and pre-push hooks, and the real scripts/ci/run-plan, in a fixture whose
@@ -9,6 +9,10 @@
 #               run-plan exits 1, the push carries  refused with 1, naming the top (rule v3)
 #               a refs/heads/integration/train-*
 #               ref with a commit
+#               a gate exits 12 and no executable   the top goes on: the gate is NOT JUDGED,
+#               of the tree's generation exists     CI judges it, and a fast case that runs
+#                                                   the executable is left out by name
+#               a gate exits 12 beside an executable refused on a top: a failure as any other
 #               run-plan exits 12 (no plan)         refused with 12
 #               finish --check fails                refused with its code
 #               two cases share a number            refused with 1
@@ -34,13 +38,26 @@ stub scripts/case-numbers 'echo "case 7 is claimed twice"; exit "${CASES_RC:-0}"
 stub scripts/rust-check 'echo "rustdoc: warning"; exit "${RUSTDOC_RC:-0}"'
 stub scripts/pages 'exit "${PAGES_RC:-0}"'
 stub scripts/ci/providers-check 'exit "${SSH_RC:-0}"'
-# the plan run-plan computes: one structure gate, which fails when GATE_FAILS is set
+# the plan run-plan computes: one structure gate, which fails when GATE_FAILS is set and exits
+# 12 when GATE_RC12 is set, as a gate does that finds no executable
 stub scripts/ci-plan '[ -n "${PLAN_FAILS:-}" ] && exit 3
 runs=true; [ -n "${GATE_FAILS:-}" ] && runs="echo the reason it failed; false"
+[ -n "${GATE_RC12:-}" ] && runs="echo no executable of this generation; exit 12"
 printf "{\"schema\":1,\"mode\":\"test\",\"reason\":\"a fixture\",\"selected\":[],\"gates\":[{\"id\":\"economics-claims\",\"job\":\"structure\",\"runs\":\"%s\",\"selected\":true,\"network\":false,\"reason\":\"t\"}]}\n" "$runs"'
 printf 'economics-claims\t2\n' > "$T/durations.tsv"; : > "$T/cases.tsv"
 export MJ_PUSH_DURATIONS="$T/durations.tsv" MJ_PUSH_CASES="$T/cases.tsv"
 unset MAJORDOMUS_BIN
+# The executable run-plan finds: the one EXE names, or none when EXE is empty (lib/rust_bin.sh's
+# two answers). The fast cases are run by a runner stub that prints the names it was given.
+mkdir -p fx/lib fx/test/cases
+cat > fx/lib/rust_bin.sh <<'LIB'
+mj_rust_same_generation() { return 1; }
+mj_rust_resolve() { [ -n "${EXE:-}" ] && { printf '%s' "$EXE"; return 0; }; echo "${2}no executable" >&2; return 12; }
+LIB
+stub test/run.sh 'echo "$*" > "$CASES_RAN"; [ -z "${CASES_FAIL:-}" ] || { echo "FAIL $1"; exit 1; }'
+export CASES_RAN="$T/cases.ran"
+printf '. "$ROOT/test/lib.sh"\nRB="$(rust_bin)" || rust_bin_exit $?\n' > fx/test/cases/9001_runs_the_executable.sh
+printf '. "$ROOT/test/lib.sh"\ntrue\n' > fx/test/cases/9002_runs_no_executable.sh
 
 push() { printf 'refs/heads/a %s refs/heads/a %s\n' "$1" "$A" | (cd fx && sh .githooks/pre-push origin url); }
 pushA() { push "$A"; }
@@ -68,7 +85,7 @@ expect_no_grep 'reported, not refused'
 echo "  pre-push: a failed gate is named, reported, and CI holds the verdict"
 GATE_FAILS=1 expect_exit 0 pushA
 expect_grep 'FAILED economics-claims'
-expect_grep 'failed: economics-claims\. CI would refuse this push for the same reason, and CI holds the verdict'
+expect_grep 'failed: economics-claims\. CI would refuse this push for the same reason\.$'
 expect_grep '^pre-push: run-plan --before-push failed \(exit 1\).*; reported, not refused: CI holds the verdict$'
 
 echo "  pre-push: a failed gate on a train top is refused, naming the top (rule v3)"
@@ -85,6 +102,30 @@ expect_grep 'nothing CI would find here first'
 GATE_FAILS=1 expect_exit 0 pushGone
 expect_grep '; reported, not refused: CI holds the verdict$'
 expect_no_grep 'refused: this push carries'
+
+echo "  pre-push: with no executable of the tree's generation, a gate's exit 12 is not judged here"
+printf '9001_runs_the_executable\t1\n9002_runs_no_executable\t1\n' > "$T/cases.tsv"
+GATE_RC12=1 expect_exit 0 pushTop
+expect_grep 'executable: none'
+expect_grep "^  NOT JUDGED economics-claims \([0-9]+s\): exit 12, and no executable of this tree's generation is here; CI judges it$"
+expect_grep "^  left out case 9001_runs_the_executable: it runs the executable, and none of this tree's generation is here; CI runs it$"
+grep -qx '9002_runs_no_executable' "$CASES_RAN" || fail "the cases run were: $(cat "$CASES_RAN")"
+expect_grep "; not judged here: economics-claims \(exit 12 with no executable of this tree's generation; CI judges them\); nothing judged here failed$"
+expect_no_grep 'FAILED|refused'
+echo "  pre-push: beside a judged failure the not-judged gate is still named, and the top is refused"
+GATE_RC12=1 CASES_FAIL=1 expect_exit 1 pushTop
+expect_grep '^  NOT JUDGED economics-claims '
+expect_grep '^  FAILED cases '
+expect_grep "; not judged here: economics-claims \(.*\); failed: cases\. CI would refuse this push for the same reason\.$"
+expect_grep "refused: this push carries the train top $T13,"
+echo "  pre-push: a gate's exit 12 while an executable exists is a failure, refused on a top"
+EXE=/bin/true GATE_RC12=1 expect_exit 1 pushTop
+expect_grep 'executable: the gates run /bin/true'
+expect_grep 'FAILED economics-claims'
+expect_grep "refused: this push carries the train top $T13,"
+expect_no_grep 'NOT JUDGED'
+grep -qx '9001_runs_the_executable 9002_runs_no_executable' "$CASES_RAN" || fail "the cases run were: $(cat "$CASES_RAN")"
+: > "$T/cases.tsv"
 
 echo "  pre-push: an uncomputable plan, or no durations, refuses with 12"
 PLAN_FAILS=1 expect_exit 12 pushA

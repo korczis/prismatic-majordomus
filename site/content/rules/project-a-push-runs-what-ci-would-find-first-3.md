@@ -45,7 +45,15 @@ them. The top was recomposed twice, and master, which had stood at `6b30ede2d13`
 reported: there, CI's verdict comes in time and costs one run. A top's run is the widest and
 slowest the repository has, and every member waits on it, so a failure the push has already
 named is not worth a run. The landing seat's procedure is in `docs/INTEGRATION.md` ("A train
-top is judged before it is pushed").
+top is judged before it is pushed"). A top is named under `integration/train-*`, as clause 2 of
+`project.the-cooperation-model-is-the-owners-word` (version 3) says; a top pushed under another
+name would only be reported, so the name is the rule.
+
+Version 3 does not make an executable a condition of pushing a top. No host may start a build
+below 35 GiB free (that rule's clause 7), and on 2026-11-01 the push that raised this rule ran
+with none of the tree's generation, and its gates (exit 12) and cases failed for that alone,
+which said nothing about the change. Such a gate is named `NOT JUDGED` and left to CI, and a
+fast case that runs the executable is left out by name; neither counts as a failure.
 
 ## Required behaviour
 
@@ -79,10 +87,17 @@ top is judged before it is pushed").
 - **Bound.** It reports its measured time against `MJ_PUSH_BOUND` (default 180). An overrun
   names the slowest steps and never refuses the push: a busy machine must not fail it, or
   people route around the step.
+- **Not judged here.** When the step finds no executable of this tree's generation (its line
+  `executable: none`), a gate that exits 12 is printed `NOT JUDGED <gate>`, collected in the
+  last line as `not judged here: <gates>`, and does not count as a failure, and a fast case that
+  calls `rust_bin` (test/lib.sh) is left out by name. With an executable present, exit 12 is a
+  failure like any other. A step whose only findings are not judged exits 0 and ends `nothing
+  judged here failed`.
 - **Verdict.** A failed gate or case exits 1 with the tail of its output and a last line that
-  names it and says CI holds the verdict. The hook prints `reported, not refused: CI holds the
-  verdict` and lets the push through; CI's validate refuses the same head. Any other non-zero
-  exit of the step, 12 above all, refuses the push: what cannot be measured is not passed.
+  names it and says CI would refuse the push for the same reason. The hook prints `reported, not
+  refused: CI holds the verdict` and lets the push through; CI's validate refuses the same head.
+  Any other non-zero exit of the step, 12 above all, refuses the push: what cannot be measured
+  is not passed.
 - **Train tops.** The hook collects the remote refs of the push that receive a commit. When
   the step exits 1 and one of them is under `refs/heads/integration/train-*`, the hook prints
   `refused: this push carries the train top <names>, and a train top is judged before it is
@@ -108,6 +123,7 @@ top is judged before it is pushed").
 | pre-push | `scripts/ci/run-plan --before-push`, exit 12 | refuses | a plan that cannot be computed is not a pass |
 | pre-push | `scripts/ci/run-plan --before-push`, exit 1, on a push that carries no train top | reports | CI's structure job and suite run the same gates and cases |
 | pre-push | `scripts/ci/run-plan --before-push`, exit 1, on a push that carries a `refs/heads/integration/train-*` ref | refuses | a top's CI run is the widest the repository has and every member waits on it; train 13 was pushed over four failures this step had named (2026-10-31) |
+| pre-push | a gate's exit 12 with no executable of the tree's generation, any push | not judged: named, never exit 1 | it says nothing about the change, and no host may build below the 35 GiB floor |
 | pre-push | `scripts/rust-check --doc` | reports | CI's rustdoc job refuses the same head |
 | pre-commit | `bin/majordomus doctor` | reports | CI's core-check runs doctor and refuses |
 | pre-commit | `bin/majordomus-cli worktree guard` | refuses | CI checks out a fresh clone and never sees which worktree a commit came from (rule `project.worktree-topology`) |
@@ -151,6 +167,9 @@ whose checks are stubs with chosen exit codes. It proves:
 - a push whose step exits 1 and that carries a train ref is refused with 1, naming the top,
   alone and beside a feature ref; a green top goes on; a push that only deletes a train ref
   beside a feature ref is reported, not refused;
+- with no executable, a train top whose gate exits 12 goes on with that gate `NOT JUDGED` and
+  the case that runs the executable left out; beside a failed case the same top is refused,
+  naming both; with an executable, the gate's exit 12 is a failure and the top is refused;
 - a push whose step exits 12, whose `finish --check` fails or whose case numbers collide is
   refused with that code;
 - a push that changes the crate and whose rustdoc fails exits 0 with a report line;

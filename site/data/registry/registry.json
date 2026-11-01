@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.10"
   },
   "registry": {
-    "fingerprint": "9bd86345ce261b5923053cbe87c6374cdfbf110216853bd3590984f5a9874ead",
+    "fingerprint": "5c1bd3a845724a38c371a0098c3ee4bac9249bea165fe6bfa1320174f10e1c3a",
     "summary": {
       "total": 3742,
       "builtin": 220,
@@ -92097,7 +92097,7 @@
     ]
   },
   "index": {
-    "fingerprint": "005a236a4647877637f37acae63c74d7a58cc64436b9d7a14516897e145dd82d",
+    "fingerprint": "883b942ce31d3034dcf766b42b3f7cbb00f732a0b3400c7e6640ab6a5795f539",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99186,7 +99186,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 44980
+        "bytes": 45259
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -99483,7 +99483,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 83473
+        "bytes": 85405
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
@@ -117537,12 +117537,12 @@
         "uri": "majordomus://knowledge/s-20261031234907-e660-81faa4c60c71",
         "kind": "knowledge",
         "identity": "s-20261031234907-e660-81faa4c60c71",
-        "title": "train 13c (#2786) was composed from the per-member blame of 13b's red top (f3 attributed 586 uncovered items to members by git blame of the changed lines): every blocking member was dropped to the next train at once and 16 members boarded, each with zero uncovered changed items, where the 29-member top had waited on its worst member; on 2026-11-01T01:54Z 13c is in CI and not merged, so that it lands faster is not yet observed",
+        "title": "train 13c (#2786) was composed from the per-member blame of 13b's red top: every member that carried an uncovered changed item or a new ui-audit finding moved to the next train, and 16 members boarded with none; the members behind 13b's six suite reds stayed in and were fixed by patches inside the top, covered since by the owner's amendment of clause 2 (2026-11-01); 13c merged at 2026-11-01T03:08:34Z, 3 h 17 min after its pull request opened, so it landed but not within the owner's 30 minutes",
         "description": "Observed as repetition about docs/INTEGRATION.md in episode s-20261031234907-e660.",
         "path": ".ai/repo/knowledge/curated/s-20261031234907-e660-81faa4c60c71.md",
         "section": "knowledge",
         "source_class": "curated",
-        "bytes": 2335,
+        "bytes": 2759,
         "tags": [
           "derived",
           "observation"
@@ -117567,12 +117567,12 @@
         "uri": "majordomus://knowledge/s-20261031234907-e660-c67cb106340d",
         "kind": "knowledge",
         "identity": "s-20261031234907-e660-c67cb106340d",
-        "title": "train 13b's top 3dcfee72983 (#2785, 28 members) took validate run 41194104887 from 10:46Z to 14:32Z on 2026-10-31 and came back red on member defects nobody had judged before boarding: 609 uncovered changed items (lines, regions, functions) in coverage (attributed by blame to #2638, #2746, #2689, #2637, #966 ...), the collision check in structure, three suite shards (cases 430 94 400 93 15 3955), three ui shards and one site-probe shard, while its rust jobs passed; train 13 (#2784) had already failed five integration tests, coverage, structure and its suite and ui shards in run 41187739613 before it was cancelled after 1.6 h and recomposed; master stood at 6b30ede2d13 from 2026-10-30 18:27Z for more than 29 h",
+        "title": "train 13b's top 3dcfee72983 (#2785, 28 members) took validate run 41194104887 from 10:46Z to 14:32Z on 2026-10-31 and came back red on member defects nobody had judged before boarding: 609 uncovered changed items in coverage (257 lines, 329 regions, 23 functions, the gate's own count; f3's blame attributed the 586 line and region items to members, #2638, #2746, #2689, #2637 and #966 above all), the collision check in structure, three suite shards (cases 430 94 400 93 15 3955), three ui shards and one site-probe shard, while its rust jobs passed; train 13 (#2784) had already failed five integration tests, coverage, structure and its suite and ui shards in run 41187739613 before it was cancelled after 1.6 h and recomposed; master stood at 6b30ede2d13 from 2026-10-30 18:27Z for more than 29 h",
         "description": "Observed as defect about gate:coverage-differential in episode s-20261031234907-e660.",
         "path": ".ai/repo/knowledge/curated/s-20261031234907-e660-c67cb106340d.md",
         "section": "knowledge",
         "source_class": "curated",
-        "bytes": 3178,
+        "bytes": 3660,
         "tags": [
           "derived",
           "observation"
@@ -121303,7 +121303,7 @@
         "path": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v3.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 11728,
+        "bytes": 13569,
         "tags": [
           "ci",
           "process"
@@ -122816,15 +122816,15 @@
         ]
       },
       {
-        "uri": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
+        "uri": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@3",
         "kind": "rule",
-        "identity": "project.the-cooperation-model-is-the-owners-word@2",
+        "identity": "project.the-cooperation-model-is-the-owners-word@3",
         "title": "Work moves through seats held as mesh claims, a worker lands its own green head, and every checkout is kept current",
-        "description": "The owner's operating decision of 2026-10-16, relaxed by the owner on 2026-10-20. A seat (landing, release, repair, worker) is an exclusive mesh claim and nothing else; a worker lands its own green pull request through the guarded lander's queue, pinned to the head its ci judged; the landing seat composes combined tops only when heads must ship together; a stale checkout or branch is preserved in a rescue ref and brought current without asking; the release seat tags on master's own green ci whenever master holds landed work past the last tag. At most five builders run on one machine and none starts below 35 GiB free. Every surface that describes the model reads this record or the live claims, never a copy.",
+        "description": "The owner's operating decision of 2026-10-16, relaxed by the owner on 2026-10-20 and amended by the owner on 2026-11-01 (a member's fix may travel inside a train top with attribution). A seat (landing, release, repair, worker) is an exclusive mesh claim and nothing else; a worker lands its own green pull request through the guarded lander's queue, pinned to the head its ci judged; the landing seat composes combined tops, named integration/train-*, only when heads must ship together, and a member's fix may travel inside a top as its own commit that names the member and is then carried to the member's branch; a stale checkout or branch is preserved in a rescue ref and brought current without asking; the release seat tags on master's own green ci whenever master holds landed work past the last tag. At most five builders run on one machine and none starts below 35 GiB free. Every surface that describes the model reads this record or the live claims, never a copy.",
         "path": ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 13664,
+        "bytes": 16362,
         "tags": [
           "process",
           "integration",
@@ -124651,7 +124651,7 @@
         "identity": "test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
         "path": "test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
         "source_class": "case",
-        "bytes": 10180
+        "bytes": 10158
       },
       {
         "uri": "majordomus://test/test/cases/1022_worktrees_share_build_intermediates.sh",
@@ -126099,7 +126099,7 @@
         "identity": "test/cases/3027_the_release_path_goes_first.sh",
         "path": "test/cases/3027_the_release_path_goes_first.sh",
         "source_class": "case",
-        "bytes": 17902
+        "bytes": 21673
       },
       {
         "uri": "majordomus://test/test/cases/3028_the_pages_job_waits_for_its_deployment.sh",
@@ -127427,7 +127427,7 @@
         "identity": "test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh",
         "path": "test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh",
         "source_class": "case",
-        "bytes": 4083
+        "bytes": 4181
       },
       {
         "uri": "majordomus://test/test/cases/3826_a_hosted_hub_is_trusted_and_closed_to_strangers.sh",
@@ -127651,7 +127651,7 @@
         "identity": "test/cases/3948_a_local_gate_reports_and_ci_decides.sh",
         "path": "test/cases/3948_a_local_gate_reports_and_ci_decides.sh",
         "source_class": "case",
-        "bytes": 8124
+        "bytes": 11045
       },
       {
         "uri": "majordomus://test/test/cases/3950_a_cache_key_is_a_derived_triplet.sh",
