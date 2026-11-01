@@ -207,6 +207,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3119` | shares .ai/repo/project/intents with I3229; they may not run concurrently |
 | WARN | `scope_conflict` | `I3122` | shares apps/majordomus-cli/src/evidence/coverage.rs with I3124; they may not run concurrently |
 | WARN | `scope_conflict` | `I3122` | shares scripts/generate-site-data with I3176; they may not run concurrently |
+| WARN | `scope_conflict` | `I3122` | shares site/templates/evidence.html with I3668; they may not run concurrently |
 | WARN | `scope_conflict` | `I3122` | shares test/cases/10_site_data.sh with I3825; they may not run concurrently |
 | WARN | `scope_conflict` | `I3122` | shares scripts/ci/evidence-collect with I3837; they may not run concurrently |
 | WARN | `scope_conflict` | `I3122` | shares scripts/rust-coverage with I3932; they may not run concurrently |

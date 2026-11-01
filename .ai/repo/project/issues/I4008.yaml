@@ -13,14 +13,13 @@ current_state: "Not built: this issue is planned by the milestone a-session-proc
 desired_state: "The acceptance criteria below hold and case 4008 proves them."
 scope:
   - ".githooks/pre-push"
-  - "apps/majordomus-cli/src/hooks"
-  - "docs/HOOKS.md"
+  - "scripts/ci/run-plan"
   - "test/cases/4008_a_push_that_only_deletes_runs_no_plan.sh"
   - ".ai/repo/project/issues/I4008.yaml"
 acceptance_criteria:
   - "A push of only deletions runs no plan and exits 0"
   - "A push of any non-deletion ref runs the plan as before"
-  - "The exemption is declared data beside the refs/majordomus/* one"
+  - "The exemption sits beside the refs/majordomus/* one in the hook, covers a push of deletions plus refs/majordomus/* refs, and exits before finish --check, case-numbers and run-plan"
 validation:
   - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4008_a_push_that_only_deletes_runs_no_plan"
 evidence_required:

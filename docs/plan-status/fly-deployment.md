@@ -75,11 +75,9 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3820` | shares docs with I4002; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4006; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4007; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4008; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4261; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4265; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4268; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4290; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4292; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares site with I4298; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4306; they may not run concurrently |

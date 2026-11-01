@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [work-graph-github](https://majordomus.dev/plan/work-graph-github/) | ACTIVE | 12/15 | 1 | 2 | 0 | 0 | 0 | The projection cannot rot silently: a gate runs the drift check on every change that can move the model or the adapter, and drift is a CI failure with the record named. Identity travels with the record rather than being parsed out of its title, so renaming a GitHub title moves nothing and creates no duplicate, and the remote can be a fixture, so which record is which is provable with no network. The reconciliation vocabulary distinguishes the states it currently conflates, so `missing` no longer stands for both a record never created and a record a person deleted, and a remote edit is reported as a remote edit. Above the projection, a pull request names the issue it realises and the edge is derived from git and GitHub rather than remembered, so a merged commit leads back to the acceptance criteria it satisfied and an outcome leads forward to the evidence that it holds. The derivations the shell already computes — ready, blocked, waves, next, status — are readable through the same capability surface as every other thing this repository knows, rather than only from a terminal. |
+| [work-graph-github](https://majordomus.dev/plan/work-graph-github/) | ACTIVE | 13/15 | 0 | 2 | 0 | 0 | 0 | The projection cannot rot silently: a gate runs the drift check on every change that can move the model or the adapter, and drift is a CI failure with the record named. Identity travels with the record rather than being parsed out of its title, so renaming a GitHub title moves nothing and creates no duplicate, and the remote can be a fixture, so which record is which is provable with no network. The reconciliation vocabulary distinguishes the states it currently conflates, so `missing` no longer stands for both a record never created and a record a person deleted, and a remote edit is reported as a remote edit. Above the projection, a pull request names the issue it realises and the edge is derived from git and GitHub rather than remembered, so a merged commit leads back to the acceptance criteria it satisfied and an outcome leads forward to the evidence that it holds. The derivations the shell already computes — ready, blocked, waves, next, status — are readable through the same capability surface as every other thing this repository knows, rather than only from a terminal. |
 
 ## Issues
 
@@ -27,16 +27,10 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I2300](https://majordomus.dev/plan/i2300/) | DONE | 0 | — | A head is judged against what it changes, not against GitHub's live state |
 | [I2844](https://majordomus.dev/plan/i2844/) | DONE | 0 | — | plan validate refuses a milestone whose GitHub title would be over 255 characters |
 | [I3920](https://majordomus.dev/plan/i3920/) | DONE | 0 | — | The GitHub projection reads every issue, and a listing shorter than the repository refuses rather than reads as missing |
-| [I4290](https://majordomus.dev/plan/i4290/) | READY | 0 | — | The reconciliation names a record never created on GitHub apart from one deleted there |
+| [I4290](https://majordomus.dev/plan/i4290/) | DONE | 0 | — | The reconciliation names a record never created on GitHub apart from one deleted there |
 | [I4367](https://majordomus.dev/plan/i4367/) | BLOCKED | 2 | I3970, I2901, I4366 | The merged pull requests' observation records the machine-written Refs region, and the live delivery answer reads the region and never the prose around it |
 | [I4369](https://majordomus.dev/plan/i4369/) | BLOCKED | 1 | I1401, I3920, I4357 | A record renamed with `replaces:` keeps its GitHub issue or milestone, and an issue whose record was renamed without one stays unmanaged, names the commit that removed its record, and is never closed or reused |
 
 ## Findings
 
-| level | code | subject | message |
-|---|---|---|---|
-| WARN | `scope_conflict` | `I4290` | shares docs/PLANNING.md with I4306; they may not run concurrently |
-| WARN | `scope_conflict` | `I4290` | shares docs/PLANNING.md with I4315; they may not run concurrently |
-| WARN | `scope_conflict` | `I4290` | shares docs/PLANNING.md with I4322; they may not run concurrently |
-| WARN | `scope_conflict` | `I4290` | shares docs/PLANNING.md with I4330; they may not run concurrently |
-| WARN | `scope_conflict` | `I4290` | shares docs/PLANNING.md with I4410; they may not run concurrently |
+None about this milestone or its issues.

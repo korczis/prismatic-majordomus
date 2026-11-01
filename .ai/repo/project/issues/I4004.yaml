@@ -20,7 +20,7 @@ scope:
 depends_on:
   - "I4000"
 acceptance_criteria:
-  - "The claim exists exactly while the run does, and is released on completion, failure, cancellation and an unknown outcome"
+  - "The claim is held while the run is, and is released on completion, failure and cancellation; an unknown outcome keeps it until the outcome is verified or the holder's liveness lapses (I3990), and a crashed holder's claim is released only by that liveness"
   - "A second start for a claimed item is refused naming the holder"
   - "Fencing is not written here: it is I3174's, and this issue records the dependency"
 validation:

@@ -127,7 +127,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4264; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares lib/init.sh with I4265; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4268; they may not run concurrently |
-| WARN | `scope_conflict` | `I2148` | shares test/cases with I4290; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4291; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4292; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares share/skeleton with I4306; they may not run concurrently |
@@ -193,6 +192,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2840` | shares docs/MCP.md with I3820; they may not run concurrently |
 | WARN | `scope_conflict` | `I2840` | shares docs/MCP.md with I3829; they may not run concurrently |
 | WARN | `scope_conflict` | `I2840` | shares apps/majordomus-cli/src/mcp with I3960; they may not run concurrently |
+| WARN | `scope_conflict` | `I2840` | shares apps/majordomus-cli/src/commands/mcp.rs with I4006; they may not run concurrently |
+| WARN | `scope_conflict` | `I2840` | shares docs/MCP.md with I4007; they may not run concurrently |
 | WARN | `scope_conflict` | `I2840` | shares docs/MCP.md with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I2840` | shares docs/MCP.md with I4323; they may not run concurrently |
 | WARN | `scope_conflict` | `I2840` | shares apps/majordomus-cli/src/mcp with I4418; they may not run concurrently |

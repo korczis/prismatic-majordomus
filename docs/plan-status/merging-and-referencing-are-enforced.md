@@ -49,7 +49,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3974` | shares lib/adr.sh with I4362; they may not run concurrently |
 | WARN | `scope_conflict` | `I3974` | shares lib/adr.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3979` | shares scripts/github-sync with I4261; they may not run concurrently |
-| WARN | `scope_conflict` | `I3979` | shares scripts/github-sync with I4290; they may not run concurrently |
 | WARN | `scope_conflict` | `I3979` | shares .ai/repo/ci/github.yaml with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4350` | shares apps/majordomus-cli/src/plan.rs with I4463; they may not run concurrently |
 | WARN | `scope_conflict` | `I4350` | shares apps/majordomus-cli/src/plan.rs with I4464; they may not run concurrently |

@@ -12,14 +12,17 @@ why: "Idle servers accumulate across worktrees and keep their claims live; each 
 current_state: "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists."
 desired_state: "The acceptance criteria below hold and case 4007 proves them."
 scope:
-  - "apps/majordomus-cli/src/serve"
-  - "docs/SERVE.md"
+  - "apps/majordomus-cli/src/commands/serve.rs"
+  - "apps/majordomus-cli/src/shared.rs"
+  - "apps/majordomus-cli/src/lease.rs"
+  - "docs/MCP.md"
   - "test/cases/4007_an_idle_serve_exits_by_itself.sh"
   - ".ai/repo/project/issues/I4007.yaml"
 acceptance_criteria:
   - "A serve with a lease, a peer or a running execution never exits"
   - "An idle one exits after the bound and says why on stderr"
   - "The bound is policy data"
+  - "An attached MCP client, an open event stream or a running execution keeps it alive, while the machine's own probes and mesh link traffic do not; the next client re-ensures it"
 validation:
   - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4007_an_idle_serve_exits_by_itself"
 evidence_required:

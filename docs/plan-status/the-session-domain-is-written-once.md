@@ -29,6 +29,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | level | code | subject | message |
 |---|---|---|---|
+| WARN | `scope_conflict` | `I3320` | shares lib/rust_bin.sh with I4006; they may not run concurrently |
 | WARN | `scope_conflict` | `I3320` | shares share/events.yaml with I4292; they may not run concurrently |
 | WARN | `scope_conflict` | `I3320` | shares lib/common.sh with I4323; they may not run concurrently |
 | WARN | `scope_conflict` | `I3320` | shares lib/common.sh with I4333; they may not run concurrently |
