@@ -3364,6 +3364,18 @@ impl Journal {
     /// How many events a live ingest refused for capacity since this run started: the
     /// signal that a node's quota is full of the dead, which compaction answers at once
     /// instead of waiting for its schedule (I2825).
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal};
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// j.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+    ///
+    /// assert_eq!(j.capacity_refusals(), 0, "an event of our own is never refused for capacity");
+    /// ```
     pub fn capacity_refusals(&self) -> u64 {
         self.inner.lock().expect("journal lock").capacity_refused
     }
