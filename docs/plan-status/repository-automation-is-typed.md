@@ -58,3 +58,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3156` | shares bin/majordomus with I4268; they may not run concurrently |
 | WARN | `scope_conflict` | `I3156` | shares bin/majordomus with I4322; they may not run concurrently |
 | WARN | `scope_conflict` | `I3156` | shares bin/majordomus with I4329; they may not run concurrently |
+| WARN | `scope_conflict` | `I3156` | shares bin/majordomus with I4520; they may not run concurrently |

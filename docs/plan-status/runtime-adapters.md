@@ -68,7 +68,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I0201` | shares lib with I3299; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares lib with I3304; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares lib with I3309; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I3310; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares share with I3312; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares lib with I3318; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares share with I3320; they may not run concurrently |
@@ -82,6 +81,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I0201` | shares share with I3820; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares share with I3829; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares lib with I3974; they may not run concurrently |
+| WARN | `scope_conflict` | `I0201` | shares share with I4250; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares share with I4251; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares share with I4252; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares lib with I4253; they may not run concurrently |
@@ -96,7 +96,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I0201` | shares share with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares share with I4309; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares lib with I4322; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I4323; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares lib with I4329; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares share with I4333; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares lib with I4357; they may not run concurrently |
@@ -117,3 +116,5 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I0201` | shares share with I4465; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares lib with I4467; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares share with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I0201` | shares lib with I4520; they may not run concurrently |
+| WARN | `scope_conflict` | `I0201` | shares lib with I4521; they may not run concurrently |

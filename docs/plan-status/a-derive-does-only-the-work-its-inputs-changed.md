@@ -32,7 +32,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | level | code | subject | message |
 |---|---|---|---|
-| WARN | `scope_conflict` | `I2521` | shares scripts/derive with I2863; they may not run concurrently |
 | WARN | `scope_conflict` | `I2521` | shares docs/PERFORMANCE.md with I2901; they may not run concurrently |
 | WARN | `scope_conflict` | `I2521` | shares docs/PERFORMANCE.md with I2902; they may not run concurrently |
 | WARN | `scope_conflict` | `I2521` | shares docs/PERFORMANCE.md with I2903; they may not run concurrently |
@@ -82,8 +81,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2867` | shares .ai/repo/project/issues/I2867.yaml with I3246; they may not run concurrently |
 | WARN | `scope_conflict` | `I2867` | shares .ai/repo/project/issues/I2867.yaml with I3373; they may not run concurrently |
 | WARN | `scope_conflict` | `I2867` | shares .github/workflows/validate.yml with I3930; they may not run concurrently |
-| WARN | `scope_conflict` | `I2867` | shares .github/workflows/validate.yml with I3931; they may not run concurrently |
-| WARN | `scope_conflict` | `I2867` | shares .github/workflows/validate.yml with I3936; they may not run concurrently |
 | WARN | `scope_conflict` | `I2867` | shares .github/workflows/validate.yml with I3973; they may not run concurrently |
 | WARN | `scope_conflict` | `I2867` | shares .github/workflows/validate.yml with I4296; they may not run concurrently |
 | WARN | `scope_conflict` | `I2867` | shares .github/workflows/pages.yml with I4315; they may not run concurrently |
@@ -95,3 +92,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2867` | shares .github/workflows/validate.yml with I4381; they may not run concurrently |
 | WARN | `scope_conflict` | `I2867` | shares lib/usecase.sh with I4462; they may not run concurrently |
 | WARN | `scope_conflict` | `I2867` | shares lib/usecase.sh with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I2867` | shares lib/usecase.sh with I4521; they may not run concurrently |

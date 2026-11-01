@@ -867,16 +867,20 @@ fn interval_minutes(root: &Path) -> u64 {
         .unwrap_or(DEFAULT_INTERVAL_MINUTES)
 }
 
-/// What a session is told at its start about keeping itself awake.
+/// What a session is told at its start about keeping itself awake: read the brief on the
+/// interval, report only when a fact in it changed (ADR 0136, amended 2026-10-27), and leave
+/// the scheduling to the majordomus-brief mod where it is loaded.
 pub(crate) fn keep_awake(interval: u64) -> String {
     format!(
         "Keep yourself awake and reporting (ADR 0136): every {interval} minutes, without being asked, \
-         give a brief report of two to four lines (this session's task and state, the peers of \
-         every board, the mesh, the integration queue, the derive queue) read from `majordomus \
-         brief`, never from memory. If your client can schedule its own prompts (Claude Code: \
-         `/loop {interval}m majordomus brief`, or a session cron), schedule that now. Where the \
-         majordomus-brief mod is loaded it shows the one-line brief as the status line and puts \
-         the full brief in front of you on the same interval."
+         read `majordomus brief`, never from memory, and only when a fact in it changed since your \
+         last report give a brief report of two to four lines (this session's task and state, the \
+         peers of every board, the mesh, the integration queue, the derive queue); a brief in which \
+         only times and ages moved needs no report. If your client can schedule its own prompts \
+         (Claude Code: `/loop {interval}m majordomus brief`, or a session cron), schedule that now, \
+         unless the majordomus-brief mod is loaded (`.claude/skills/majordomus-brief`): it shows the \
+         one-line brief as the status line and puts the brief in front of you when it changed, at \
+         most once per interval, so a loop of your own would only repeat it."
     )
 }
 
@@ -1293,6 +1297,9 @@ mod tests {
         assert_eq!(percent_encode("a b/c-d_e.f~"), "a%20b%2Fc-d_e.f~");
         assert_eq!(state_word(BriefSectionState::Partial), "partial");
         assert!(keep_awake(7).contains("every 7 minutes"));
+        // a report only on a changed fact, and no loop of its own beside the mod (I4250)
+        assert!(keep_awake(7).contains("only when a fact in it changed since your last report"));
+        assert!(keep_awake(7).contains("unless the majordomus-brief mod is loaded"));
     }
 
     #[test]

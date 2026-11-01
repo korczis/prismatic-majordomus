@@ -2069,6 +2069,11 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:record-attribution",
+      "path": "/evidence/claims/record-attribution/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:record-resolution",
       "path": "/evidence/claims/record-resolution/"
     },
@@ -10867,6 +10872,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "claim:record-attribution": {
+      "kind": "claim",
+      "id": "record-attribution",
+      "status": "guaranteed",
+      "page": "/evidence/claims/record-attribution/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:3049_a_second_workers_record_lands_on_the_first_workers_task",
+          "path": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/CLI.md",
+            "lib/common.sh",
+            "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "claim:record-resolution": {
       "kind": "claim",
       "id": "record-resolution",
@@ -12978,6 +13006,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:4233_start_refuses_unsafe_scalars",
+          "path": "test/cases/4233_start_refuses_unsafe_scalars.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:578_an_unknown_gate_refuses_completed",
           "path": "test/cases/578_an_unknown_gate_refuses_completed.sh",
           "category": "e2e"
@@ -14218,6 +14252,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:4323_a_full_disk_is_one_finding",
+          "path": "test/cases/4323_a_full_disk_is_one_finding.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:4400_a_profile_axis_names_the_limit_it_derives",
           "path": "test/cases/4400_a_profile_axis_names_the_limit_it_derives.sh",
           "category": "e2e"
@@ -15221,6 +15261,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:4520_a_verify_command_runs_in_the_callers_environment",
+          "path": "test/cases/4520_a_verify_command_runs_in_the_callers_environment.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:572_verification_records_the_tree_it_proved",
           "path": "test/cases/572_verification_records_the_tree_it_proved.sh",
           "category": "e2e"
@@ -15295,6 +15341,12 @@
           "via": "negative",
           "test": "suite:32_refusal_lifecycle",
           "path": "test/cases/32_refusal_lifecycle.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:4520_a_verify_command_runs_in_the_callers_environment",
+          "path": "test/cases/4520_a_verify_command_runs_in_the_callers_environment.sh",
           "category": "e2e"
         },
         {
@@ -18607,6 +18659,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:4233_start_refuses_unsafe_scalars",
+          "path": "test/cases/4233_start_refuses_unsafe_scalars.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:821_a_session_moves_between_machines",
           "path": "test/cases/821_a_session_moves_between_machines.sh",
           "category": "e2e"
@@ -18645,6 +18703,12 @@
           "via": "negative",
           "test": "suite:32_refusal_lifecycle",
           "path": "test/cases/32_refusal_lifecycle.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:4233_start_refuses_unsafe_scalars",
+          "path": "test/cases/4233_start_refuses_unsafe_scalars.sh",
           "category": "e2e"
         }
       ],
@@ -29826,6 +29890,8 @@
     "suite:4199_a_case_that_compiles_never_starves_its_neighbours",
     "suite:4223_a_failed_cases_reason_reaches_the_artifact",
     "suite:4232_a_core_build_keeps_its_own_rlib",
+    "suite:4236_the_blackboard_is_live_in_a_browser",
+    "suite:4250_the_brief_reports_only_what_changed",
     "suite:4318_the_homepage_rule_figure_agrees_with_its_link",
     "suite:4380_an_optional_step_is_bounded_inside_its_own_bound",
     "suite:4381_the_structure_job_fits_in_half_its_bound",

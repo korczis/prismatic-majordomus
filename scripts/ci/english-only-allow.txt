@@ -25,6 +25,7 @@ fixture test/cases/3731_a_number_in_a_segment_is_a_placeholder.sh the case seeds
 
 fixture apps/majordomus-cli/src/capability/model.rs a doctest proving a capability identity's local part is opaque bytes and not an ASCII identifier
 fixture apps/majordomus-cli/src/cockpit/html.rs a doctest proving the HTML escaper passes multi-byte text through unchanged
+fixture test/cases/4233_start_refuses_unsafe_scalars.sh the case starts a task whose text carries non-ASCII letters to prove start stores and check reads them back unchanged, which requires writing such letters
 fixture apps/majordomus-cli/src/environment/text.rs a doctest proving the shell sanitiser leaves a multi-byte branch name intact
 fixture apps/majordomus-cli/src/scope.rs a doctest proving the text/binary sniffer reads multi-byte UTF-8 as text
 fixture apps/majordomus-cli/src/worktree/path.rs a doctest proving a branch name may carry multi-byte characters

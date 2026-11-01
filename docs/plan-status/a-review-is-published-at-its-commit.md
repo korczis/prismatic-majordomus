@@ -40,7 +40,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4306` | shares docs/PLANNING.md with I4315; they may not run concurrently |
 | WARN | `scope_conflict` | `I4306` | shares scripts/ci/design-check with I4316; they may not run concurrently |
 | WARN | `scope_conflict` | `I4306` | shares docs/PLANNING.md with I4322; they may not run concurrently |
-| WARN | `scope_conflict` | `I4306` | shares docs/MCP.md with I4323; they may not run concurrently |
 | WARN | `scope_conflict` | `I4306` | shares docs/MESH.md with I4327; they may not run concurrently |
 | WARN | `scope_conflict` | `I4306` | shares docs/CLI.md with I4329; they may not run concurrently |
 | WARN | `scope_conflict` | `I4306` | shares docs/PLANNING.md with I4330; they may not run concurrently |

@@ -288,14 +288,12 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3764` | shares site/templates/index.html with I3820; they may not run concurrently |
 | WARN | `scope_conflict` | `I3764` | shares site/templates/index.html with I3829; they may not run concurrently |
 | WARN | `scope_conflict` | `I3764` | shares site/templates/plan-section.html with I3841; they may not run concurrently |
-| WARN | `scope_conflict` | `I3764` | shares site/templates/index.html with I4317; they may not run concurrently |
 | WARN | `scope_conflict` | `I3764` | shares site/templates/index.html with I4318; they may not run concurrently |
 | WARN | `scope_conflict` | `I3764` | shares site/templates/index.html with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I3764` | shares scripts/ci/homepage-check with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3769` | shares site/templates/index.html with I3820; they may not run concurrently |
 | WARN | `scope_conflict` | `I3769` | shares site/templates/index.html with I3829; they may not run concurrently |
 | WARN | `scope_conflict` | `I3769` | shares site/templates/roadmap.html with I4298; they may not run concurrently |
-| WARN | `scope_conflict` | `I3769` | shares site/templates/index.html with I4317; they may not run concurrently |
 | WARN | `scope_conflict` | `I3769` | shares site/templates/index.html with I4318; they may not run concurrently |
 | WARN | `scope_conflict` | `I3769` | shares site/templates/index.html with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I3769` | shares scripts/ci/homepage-check with I4468; they may not run concurrently |
