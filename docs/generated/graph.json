@@ -16761,6 +16761,14 @@
         "source": ".ai/repo/skills/implement/examples/refactor-without-behaviour-change.md"
       },
       {
+        "id": "majordomus://document/.ai/repo/skills/integrator/examples/finished-but-not-on-master.md",
+        "kind": "document",
+        "label": ".ai/repo/skills/integrator/examples/finished-but-not-on-master.md",
+        "summary": "Finished, but not on master",
+        "route": "/cockpit/objects/document/ai-repo-skills-integrator-examples-finished-but-not-on-master-md",
+        "source": ".ai/repo/skills/integrator/examples/finished-but-not-on-master.md"
+      },
+      {
         "id": "majordomus://document/.ai/repo/skills/pack-for-chatgpt/examples/upload-sources-to-a-project.md",
         "kind": "document",
         "label": ".ai/repo/skills/pack-for-chatgpt/examples/upload-sources-to-a-project.md",
@@ -16775,6 +16783,14 @@
         "summary": "A second opinion from a model without the checkout",
         "route": "/cockpit/objects/document/ai-repo-skills-pack-for-review-examples-second-opinion-from-another-model-md",
         "source": ".ai/repo/skills/pack-for-review/examples/second-opinion-from-another-model.md"
+      },
+      {
+        "id": "majordomus://document/.ai/repo/skills/rebaser/examples/a-link-behind-master.md",
+        "kind": "document",
+        "label": ".ai/repo/skills/rebaser/examples/a-link-behind-master.md",
+        "summary": "A link behind master",
+        "route": "/cockpit/objects/document/ai-repo-skills-rebaser-examples-a-link-behind-master-md",
+        "source": ".ai/repo/skills/rebaser/examples/a-link-behind-master.md"
       },
       {
         "id": "majordomus://document/.ai/repo/skills/repo-review/examples/review-a-subsystem.md",
@@ -74451,13 +74467,6 @@
         "route": "/cockpit/objects/issue/i4347",
         "source": ".ai/repo/project/issues/I4347.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "Case 26: a labeled event with the label train requests no gate job and writes no `ci` conclusion",
-            "Case 26: a labeled event with ci:full reaches the full plan",
-            "Case 26: opened, synchronize and reopened plan exactly as before (case 94 passes unchanged)",
-            "Case 26 replays the events of #2631, #2630, #2593, #2592, #2591 and #2501 and plans one gate-running run per head",
-            "actionlint passes on .github/workflows/validate.yml"
-          ],
           "created_at": "2026-10-29",
           "depends_on": [],
           "evidence_required": [
@@ -74480,7 +74489,7 @@
           ],
           "serves": [],
           "slug": "a-labeled-event-starts-gates-only-for-ci-full",
-          "updated_at": "2026-10-29",
+          "updated_at": "2026-11-01",
           "validation": [
             "bash test/run.sh 26_ci_wiring 94_ci_plan",
             "actionlint .github/workflows/validate.yml",
@@ -98185,6 +98194,41 @@
         }
       },
       {
+        "id": "majordomus://skill/integrator",
+        "kind": "skill",
+        "label": "integrator",
+        "summary": "Take finished work to a verified master",
+        "route": "/cockpit/objects/skill/integrator",
+        "source": ".ai/repo/skills/integrator/SKILL.md",
+        "status": "active",
+        "facts": {
+          "inputs": [
+            "the work to integrate: one pull request, a train, or every open pull request",
+            "the last recorded forge observation and the audit trail of this checkout's executor",
+            "the peer board, with who holds `seat/landing` and `seat/release`"
+          ],
+          "outputs": [
+            "for each pull request, the stage it reached (open, ready, landed, released, deployed) with the evidence of each",
+            "the landing verified on master by commit, or the blocker that stopped it, its owner and the next act",
+            "the measurements of the attempt (wait, check time, retries), read from the engine, never estimated"
+          ],
+          "related": [
+            "rebaser",
+            "implement",
+            "evolve",
+            "report-verification-state"
+          ],
+          "tags": [
+            "integration",
+            "landing",
+            "ci",
+            "release",
+            "delivery",
+            "mesh"
+          ]
+        }
+      },
+      {
         "id": "majordomus://skill/pack-for-chatgpt",
         "kind": "skill",
         "label": "pack-for-chatgpt",
@@ -98239,6 +98283,40 @@
             "review",
             "archive",
             "privacy"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://skill/rebaser",
+        "kind": "skill",
+        "label": "rebaser",
+        "summary": "Bring a branch current by the cheapest safe strategy",
+        "route": "/cockpit/objects/skill/rebaser",
+        "source": ".ai/repo/skills/rebaser/SKILL.md",
+        "status": "active",
+        "facts": {
+          "inputs": [
+            "one branch or pull request, a train, or the whole open queue, named by number or branch",
+            "the last recorded forge observation (`majordomus prs refresh` makes a new one)",
+            "a checkout with git history, the peer board and the derived-merge driver configured"
+          ],
+          "outputs": [
+            "for each candidate, the strategy chosen, the disposition and relation it was chosen from, and the command that carried it out or the reason it was left",
+            "a rescue ref for any head that was rewritten, proven on the remote before the rewrite",
+            "the head pushed, the run of the required check it started, and the queue read again afterwards"
+          ],
+          "related": [
+            "integrator",
+            "implement",
+            "assess-before-deleting",
+            "report-verification-state"
+          ],
+          "tags": [
+            "integration",
+            "merge",
+            "repair",
+            "rescue",
+            "worktrees"
           ]
         }
       },
@@ -122966,12 +123044,22 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/.ai/repo/skills/integrator/examples/finished-but-not-on-master.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/.ai/repo/skills/pack-for-chatgpt/examples/upload-sources-to-a-project.md",
         "target": "kind:document",
         "kind": "is_a"
       },
       {
         "source": "majordomus://document/.ai/repo/skills/pack-for-review/examples/second-opinion-from-another-model.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/.ai/repo/skills/rebaser/examples/a-link-behind-master.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -146361,6 +146449,31 @@
         "kind": "related_to"
       },
       {
+        "source": "majordomus://skill/integrator",
+        "target": "kind:skill",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://skill/integrator",
+        "target": "majordomus://skill/evolve",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/integrator",
+        "target": "majordomus://skill/implement",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/integrator",
+        "target": "majordomus://skill/rebaser",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/integrator",
+        "target": "majordomus://skill/report-verification-state",
+        "kind": "related_to"
+      },
+      {
         "source": "majordomus://skill/pack-for-chatgpt",
         "target": "kind:skill",
         "kind": "is_a"
@@ -146392,6 +146505,31 @@
       },
       {
         "source": "majordomus://skill/pack-for-review",
+        "target": "majordomus://skill/report-verification-state",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/rebaser",
+        "target": "kind:skill",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://skill/rebaser",
+        "target": "majordomus://skill/assess-before-deleting",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/rebaser",
+        "target": "majordomus://skill/implement",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/rebaser",
+        "target": "majordomus://skill/integrator",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/rebaser",
         "target": "majordomus://skill/report-verification-state",
         "kind": "related_to"
       },
@@ -153772,8 +153910,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4196,
-      "edges": 9637,
+      "nodes": 4200,
+      "edges": 9649,
       "acyclic": false,
       "truncated": false
     }

@@ -76,6 +76,12 @@ The work between `start` and `finish` follows the repository's skills, each read
 `majordomus://skill/implement`; removing a file, branch, worktree, record or process that
 this task did not create follows `majordomus://skill/assess-before-deleting`; the final
 report and every handover body follow `majordomus://skill/report-verification-state`.
+A change that is implemented and pushed is not yet delivered: bringing its branch current
+with master follows `majordomus://skill/rebaser`, which picks the cheapest safe strategy from
+the integration engine's own assessment and never rewrites a published branch, and taking
+it from an open pull request to a verified master and release follows
+`majordomus://skill/integrator`, through the one engine (`majordomus prs`) and the one
+landing seat.
 What a task learned does not end as a note: before the episode closes, or whenever the
 briefing names candidates awaiting review, follow `majordomus://skill/evolve` — decide each
 candidate, put each lesson where it changes behaviour, deliver, and tell the peers.
