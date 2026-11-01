@@ -902,7 +902,7 @@ the `initialize` instructions name them, derived from the registry, and so does
 `majordomus mcp --inspect`. Each tool carries the canonical id in `_meta.majordomus.id` and
 its `inputSchema` and `outputSchema` from the canonical schemas. A refused call is a result with
 `isError: true`, the reason as text, and the category as one word in
-`_meta.majordomus.error.code` — `invalid_input`, `not_found`, `refused` or `forbidden`, the same word the
+`_meta.majordomus.error.code` — `invalid_input`, `not_found`, `refused`, `forbidden` or `conflict`, the same word the
 HTTP route answers as `error.code`, because both read it from the error itself. A
 refused result carries no `structuredContent`: the output schema describes a success. An
 unknown tool, method or resource is a protocol error.

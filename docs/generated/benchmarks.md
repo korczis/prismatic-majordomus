@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 220 | 181 | 0 | 39 |
-| http | 212 | 181 | 0 | 31 |
-| mcp | 206 | 176 | 0 | 30 |
+| direct | 223 | 182 | 0 | 41 |
+| http | 214 | 182 | 0 | 32 |
+| mcp | 208 | 177 | 0 | 31 |
 | system | 14 | 14 | 0 | 0 |
-| total | 652 | 552 | 0 | 100 |
+| total | 659 | 555 | 0 | 104 |
 
 ## Capabilities
 
@@ -57,8 +57,10 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `devcontext.compile` | devcontext | query | process, 16 entries | covered | covered | covered | `no-seed`, `issue`, `milestone`, `intent`, `source-ranges` |
 | `devcontext.explain` | devcontext | query | process, 8 entries | covered | covered | covered | `policy`, `absent` |
 | `devcontext.policy` | devcontext | query | — | covered | covered | covered | `default` |
+| `devtask.implement` | devtask | command | — | waived | waived | waived | — |
 | `devtask.issue` | devtask | query | — | covered | covered | covered | `records-only`, `with-git` |
 | `devtask.milestone` | devtask | query | — | covered | covered | covered | `first-milestone` |
+| `devtask.run` | devtask | command | — | waived | — | — | — |
 | `directories.list` | directories | query | process, 8 entries, 5s | covered | covered | covered | `whole-tree`, `one-directory`, `effective-everywhere`, `owed` |
 | `distribution.artifact` | distribution | query | — | covered | covered | covered | `first-published-target` |
 | `distribution.build` | distribution | query | — | covered | covered | covered | `default` |
@@ -233,6 +235,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `why.list` | why | query | process, 32 entries | covered | covered | covered | `all`, `by-audience`, `search` |
 | `why.moment` | why | query | process, 64 entries | covered | covered | covered | `first-moment` |
 | `why.validate` | why | query | process, 2 entries | covered | covered | covered | `default` |
+| `worktree.create` | worktree | command | — | covered | covered | covered | `refused-name` |
 | `worktree.inspect` | worktree | query | — | covered | covered | covered | `feature-branch` |
 | `worktree.migration_plan` | worktree | query | — | covered | covered | covered | `default` |
 | `worktree.status` | worktree | query | — | covered | covered | covered | `default`, `primary-checkout` |

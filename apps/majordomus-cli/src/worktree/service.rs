@@ -213,8 +213,13 @@ pub struct CreateReport {
     pub container: String,
     /// Whether the container was created by this command.
     pub container_created: bool,
-    /// The worktree already existed at its canonical path and nothing was created.
+    /// The worktree already existed at its canonical path and nothing was created: the
+    /// `existing` answer of an idempotent create, where `false` is `created`.
     pub existed: bool,
+    /// The commit the worktree's HEAD names now, read back from it after the create or the
+    /// find, whichever this was; `None` when git cannot say (an unborn branch).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub head: Option<String>,
     /// What became of its `.envrc` under direnv: the primary checkout's approval carried to
     /// this path, or why it was not. A worktree that starts blocked is the recurring
     /// "direnv does not work again"; this says so before the first `cd` does.
@@ -1125,6 +1130,7 @@ impl WorktreeService {
                         container: display(&self.container.path),
                         container_created: false,
                         existed: true,
+                        head: git::head_of(&existing.path).ok().flatten(),
                         envrc,
                         envrc_local,
                         hooks,
@@ -1200,7 +1206,9 @@ impl WorktreeService {
                 args.push(base.clone());
             }
         }
-        git::run(&primary, &args)?;
+        // Bounded: a checkout that hangs (a filter, a filesystem gone away) is refused at
+        // the deadline instead of holding the worktree lock, and every create behind it.
+        git::run_bounded(&primary, &args, git::WORKTREE_ADD_TIMEOUT)?;
 
         // Verify rather than assume: the answer is what the topology says.
         identity.refresh()?;
@@ -1218,11 +1226,9 @@ impl WorktreeService {
         let envrc_local = direnv::link_local(&primary, &registered.path);
         // And the moment it is bound to the hooks of its own tree, before its first commit.
         let hooks = hooks::carry_hooks_path(&primary, &registered.path);
-        let start_commit = match start {
-            // The worktree is made; a commit git cannot read back is not a reason to say not.
-            Some(_) => git::head_of(&registered.path).ok().flatten(),
-            None => None,
-        };
+        // The worktree is made; a commit git cannot read back is not a reason to say not.
+        let head = git::head_of(&registered.path).ok().flatten();
+        let start_commit = start.as_ref().and(head.clone());
         Ok(CreateReport {
             path: display(&registered.path),
             branch: name.as_str().to_string(),
@@ -1233,6 +1239,7 @@ impl WorktreeService {
             container: display(&self.container.path),
             container_created,
             existed: false,
+            head,
             envrc,
             envrc_local,
             hooks,

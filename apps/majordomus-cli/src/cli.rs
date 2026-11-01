@@ -2772,6 +2772,12 @@ pub struct RunArgs {
     #[arg(long, value_name = "JSON")]
     pub input: Option<String>,
 
+    /// The execution's idempotency key (executions.start's `idempotency_key`): a repeated
+    /// start with it is the execution it started. A run executes in its own process, so
+    /// the key is held there; a server's start is where repeated sends meet (I4000)
+    #[arg(long, value_name = "KEY")]
+    pub idempotency_key: Option<String>,
+
     /// Print the events as they arrive on stderr; on by default when stderr is a terminal
     #[arg(long)]
     pub follow: bool,
