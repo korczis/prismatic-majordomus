@@ -74405,13 +74405,6 @@
         "route": "/cockpit/objects/issue/i4347",
         "source": ".ai/repo/project/issues/I4347.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "Case 26: a labeled event with the label train requests no gate job and writes no `ci` conclusion",
-            "Case 26: a labeled event with ci:full reaches the full plan",
-            "Case 26: opened, synchronize and reopened plan exactly as before (case 94 passes unchanged)",
-            "Case 26 replays the events of #2631, #2630, #2593, #2592, #2591 and #2501 and plans one gate-running run per head",
-            "actionlint passes on .github/workflows/validate.yml"
-          ],
           "created_at": "2026-10-29",
           "depends_on": [],
           "evidence_required": [
@@ -74434,7 +74427,7 @@
           ],
           "serves": [],
           "slug": "a-labeled-event-starts-gates-only-for-ci-full",
-          "updated_at": "2026-10-29",
+          "updated_at": "2026-11-01",
           "validation": [
             "bash test/run.sh 26_ci_wiring 94_ci_plan",
             "actionlint .github/workflows/validate.yml",
