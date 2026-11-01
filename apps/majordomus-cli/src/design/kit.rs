@@ -479,12 +479,18 @@ fn compile(name: &str, pattern: &str) -> Result<Regex, String> {
     Regex::new(pattern).map_err(|e| format!("the profile's {name} is not an expression: {e}"))
 }
 
+/// An expression this crate writes itself rather than reads from a profile: it always
+/// compiles, and the crate's own tests compile each of them.
+fn own(pattern: &str) -> Regex {
+    Regex::new(pattern).expect("an expression of this crate's own compiles")
+}
+
 impl Compiled {
     fn new(p: &Profile) -> Result<Self, String> {
         let mut forbidden_imports = Vec::new();
         let mut forbidden_vendored = Vec::new();
         for kit in &p.forbidden {
-            forbidden_imports.push(import_pattern(&kit.packages)?);
+            forbidden_imports.push(import_pattern(&kit.packages));
             forbidden_vendored.push(match &kit.vendored {
                 Some(v) => Some(compile(&format!("{} vendored", kit.kit), v)?),
                 None => None,
@@ -560,13 +566,13 @@ impl Compiled {
             forbidden_imports,
             forbidden_vendored,
             licensed,
-            aside: compile("aside", r"<aside\b[^>]*>")?,
-            id: compile("id", r#"\bid=["']([^"']+)["']"#)?,
-            pages_artifact: compile("pages artifact", PAGES_ARTIFACT)?,
-            publish_script: compile("publish script", PUBLISH_SCRIPT)?,
-            script_dir: compile("script directory", SCRIPT_DIR)?,
-            publish_dir: compile("publish directory", PUBLISH_DIR)?,
-            pnpm_entry: compile("pnpm entry", PNPM_ENTRY)?,
+            aside: own(r"<aside\b[^>]*>"),
+            id: own(r#"\bid=["']([^"']+)["']"#),
+            pages_artifact: own(PAGES_ARTIFACT),
+            publish_script: own(PUBLISH_SCRIPT),
+            script_dir: own(SCRIPT_DIR),
+            publish_dir: own(PUBLISH_DIR),
+            pnpm_entry: own(PNPM_ENTRY),
         })
     }
 }
@@ -575,9 +581,9 @@ impl Compiled {
 /// the package by name, or a path through a `vendor/` or `node_modules/` directory that ends
 /// in it, as a vendored copy is imported (`@plugin "../vendor/daisyui"`). A relative path
 /// that is no such directory (`import './bootstrap'`) is a file of the repository's own.
-fn import_pattern(packages: &[String]) -> Result<Option<Regex>, String> {
+fn import_pattern(packages: &[String]) -> Option<Regex> {
     if packages.is_empty() {
-        return Ok(None);
+        return None;
     }
     let names: Vec<String> = packages
         .iter()
@@ -593,7 +599,8 @@ fn import_pattern(packages: &[String]) -> Result<Option<Regex>, String> {
         r#"(\bfrom|\bimport|\brequire\(|@plugin|@import)\s*["']((?:[^'"]*/)?(?:vendor|node_modules)/)?({})["']"#,
         names.join("|")
     );
-    compile("forbidden import", &pattern).map(Some)
+    // every name is escaped, so the expression is one this crate wrote
+    Some(own(&pattern))
 }
 
 // ------------------------------------------------------------------ the licence
@@ -1007,18 +1014,19 @@ fn git_files(root: &Path) -> Option<(BTreeSet<String>, BTreeSet<String>)> {
             .ok()
             .filter(|o| o.status.success())
     };
-    let prefix = git(&["rev-parse", "--show-prefix"])?;
+    // asked together, so that one answer missing is one way out: outside a work tree all fail
+    let ((prefix, listed), staged) = git(&["rev-parse", "--show-prefix"])
+        .zip(git(&[
+            "ls-files",
+            "-z",
+            "--cached",
+            "--others",
+            "--exclude-standard",
+        ]))
+        .zip(git(&["ls-files", "-z", "--stage"]))?;
     if !String::from_utf8_lossy(&prefix.stdout).trim().is_empty() {
         return None;
     }
-    let listed = git(&[
-        "ls-files",
-        "-z",
-        "--cached",
-        "--others",
-        "--exclude-standard",
-    ])?;
-    let staged = git(&["ls-files", "-z", "--stage"])?;
     let submodules: BTreeSet<String> = staged
         .stdout
         .split(|b| *b == 0)
@@ -1091,8 +1099,7 @@ impl Tree {
     /// skipped and vendored directories, links and oversized files, and keep the text of
     /// every file a signal reads.
     pub fn read(root: &Path, profile: &Profile) -> std::io::Result<Self> {
-        let publish_script = Regex::new(PUBLISH_SCRIPT).map_err(std::io::Error::other)?;
-        std::fs::read_dir(root)?;
+        let publish_script = own(PUBLISH_SCRIPT);
         let (files, submodules) = match git_files(root) {
             Some(listed) => listed,
             None => (walked_files(root, profile)?, BTreeSet::new()),
@@ -2743,7 +2750,9 @@ pub fn inspect(root: &Path, share: &Path, evidence: Option<&Path>) -> Result<Kit
     };
     let tree = Tree::read(root, &profile).map_err(|e| format!("{}: {e}", root.display()))?;
     let (licence, reason) = licence_answer(root, &profile, evidence);
-    let mut report = judge(&tree, &profile, &policy, licence)?;
+    // Profile::load compiled every expression the judge uses, so judging cannot fail here
+    let mut report = judge(&tree, &profile, &policy, licence)
+        .expect("a loaded profile compiles: Profile::parse compiled it");
     if let Some(l) = &mut report.licence {
         l.reason = reason;
     }
@@ -2889,7 +2898,14 @@ pub fn ci_workflow(paths: &BTreeSet<String>) -> Option<String> {
 /// repository's, and are left as they are.
 pub fn policy_with_kit(text: &str, profile: &str) -> Result<(String, AdoptAction), String> {
     let map = yaml::parse_mapping(text).map_err(|e| format!("{POLICY} does not parse: {e}"))?;
-    let Some(block) = policy_block(&map) else {
+    // a bare `ui:` with nothing under it reads as no block, but its header is the block's:
+    // the kit goes under it, never into a second `ui:` key
+    let header_line = format!("{POLICY_KEY}:");
+    let bare = text
+        .split_inclusive('\n')
+        .any(|l| l.trim_end() == header_line);
+    let block = policy_block(&map);
+    if block.is_none() && !bare {
         let mut out = text.to_string();
         if !out.is_empty() && !out.ends_with('\n') {
             out.push('\n');
@@ -2902,9 +2918,9 @@ pub fn policy_with_kit(text: &str, profile: &str) -> Result<(String, AdoptAction
             kit_line(profile)
         ));
         return Ok((out, AdoptAction::Created));
-    };
+    }
     let named = block
-        .get("kit")
+        .and_then(|b| b.get("kit"))
         .and_then(Value::as_str)
         .unwrap_or("")
         .trim();
@@ -2925,7 +2941,7 @@ pub fn policy_with_kit(text: &str, profile: &str) -> Result<(String, AdoptAction
     let lines: Vec<&str> = text.split_inclusive('\n').collect();
     let header = lines
         .iter()
-        .position(|l| l.trim_end() == format!("{POLICY_KEY}:"))
+        .position(|l| l.trim_end() == header_line)
         .ok_or_else(refuse)?;
     let mut end = header + 1;
     while end < lines.len() {
@@ -4369,10 +4385,8 @@ mod tests {
             "{:phoenix_live_view , \"1\"}",
             "phoenix_live_view"
         ));
-        assert!(import_pattern(&[]).unwrap().is_none());
-        let re = import_pattern(&["@radix-ui/".into(), "antd".into()])
-            .unwrap()
-            .unwrap();
+        assert!(import_pattern(&[]).is_none());
+        let re = import_pattern(&["@radix-ui/".into(), "antd".into()]).unwrap();
         assert!(re.is_match("import { Dialog } from \"@radix-ui/react-dialog\";"));
         assert!(re.is_match("import 'antd/dist/reset.css';"));
         assert!(!re.is_match("import 'antdx';"));
@@ -5032,9 +5046,7 @@ mod tests {
             "{r:#?}"
         );
         // a file of the repository's own named like a kit is no import of it
-        let re = import_pattern(&["bootstrap".into(), "daisyui".into()])
-            .unwrap()
-            .unwrap();
+        let re = import_pattern(&["bootstrap".into(), "daisyui".into()]).unwrap();
         assert!(!re.is_match("import './bootstrap';"));
         assert!(re.is_match("@import \"../node_modules/bootstrap/scss/bootstrap\";"));
         assert!(re.is_match("@plugin \"../vendor/daisyui.js\";"));
@@ -6139,5 +6151,205 @@ mod tests {
         ]);
         let r = adopt(dir.path(), share.path(), DEFAULT_PROFILE, true).unwrap();
         assert_eq!(r.ci_workflow.as_deref(), Some(".gitlab-ci.yml"), "{r:#?}");
+    }
+
+    /// Every expression a profile carries is compiled before anything is judged, and the
+    /// one that is not an expression is named; a licence that names nothing it licenses,
+    /// or a marker that matches nothing, is refused the same way.
+    #[test]
+    fn a_profile_expression_that_does_not_compile_is_named_before_any_judgement() {
+        type Edit = fn(&mut Profile);
+        let edits: &[(&str, Edit)] = &[
+            ("wiring.plugin.v4_entry is not", |p| {
+                p.wiring.plugin.v4_entry = "(".into()
+            }),
+            ("wiring.plugin.v4_plugin is not", |p| {
+                p.wiring.plugin.v4_plugin = "(".into()
+            }),
+            ("wiring.plugin.v4_source is not", |p| {
+                p.wiring.plugin.v4_source = "(".into()
+            }),
+            ("wiring.plugin.v3_entry is not", |p| {
+                p.wiring.plugin.v3_entry = "(".into()
+            }),
+            ("wiring.plugin.v3_plugin is not", |p| {
+                p.wiring.plugin.v3_plugin = "(".into()
+            }),
+            ("wiring.plugin.v3_content is not", |p| {
+                p.wiring.plugin.v3_content = "(".into()
+            }),
+            ("wiring.plugin.v3_binding is not", |p| {
+                p.wiring.plugin.v3_binding = "(".into()
+            }),
+            ("wiring.plugin.play_cdn is not", |p| {
+                p.wiring.plugin.play_cdn = "(".into()
+            }),
+            ("wiring.plugin.cdn_flowbite is not", |p| {
+                p.wiring.plugin.cdn_flowbite = "(".into()
+            }),
+            ("wiring.loaded is not", |p| p.wiring.loaded = "(".into()),
+            ("usage.attributes is not", |p| {
+                p.usage.attributes = "(".into()
+            }),
+            ("usage.components is not", |p| {
+                p.usage.components = "(".into()
+            }),
+            ("usage.api is not", |p| p.usage.api = "(".into()),
+            ("usage.reimplemented is not", |p| {
+                p.usage.reimplemented = "(".into()
+            }),
+            ("shell.fixed_nav is not", |p| p.shell.fixed_nav = "(".into()),
+            ("shell.sidebar is not", |p| p.shell.sidebar = "(".into()),
+            ("shell.react_sidebar is not", |p| {
+                p.shell.react_sidebar = "(".into()
+            }),
+            ("shell.breadcrumb is not", |p| {
+                p.shell.breadcrumb = "(".into()
+            }),
+            ("shell.react_breadcrumb is not", |p| {
+                p.shell.react_breadcrumb = "(".into()
+            }),
+            ("shell.marketing_nav is not", |p| {
+                p.shell.marketing_nav = "(".into()
+            }),
+            ("shell.marketing_footer is not", |p| {
+                p.shell.marketing_footer = "(".into()
+            }),
+            (" vendored is not", |p| {
+                let mut kit = p.forbidden[0].clone();
+                kit.vendored = Some("(".into());
+                p.forbidden.push(kit);
+            }),
+            (" markup is not", |p| {
+                let mut kit = p.reported[0].clone();
+                kit.markup = Some("(".into());
+                p.reported.push(kit);
+            }),
+            ("licence.markers[0].path is not", |p| {
+                p.licence.as_mut().unwrap().markers[0].path = Some("(".into())
+            }),
+            ("licence.markers[0].text is not", |p| {
+                let m = &mut p.licence.as_mut().unwrap().markers[0];
+                m.path = None;
+                m.text = Some("(".into());
+            }),
+            ("licence.markers[0].dependency is not", |p| {
+                let m = &mut p.licence.as_mut().unwrap().markers[0];
+                m.path = None;
+                m.text = None;
+                m.dependency = Some("(".into());
+            }),
+            ("has neither a path, a text nor a dependency", |p| {
+                let m = &mut p.licence.as_mut().unwrap().markers[0];
+                m.path = None;
+                m.text = None;
+                m.dependency = None;
+            }),
+            ("declares no licensed markers", |p| {
+                p.licence.as_mut().unwrap().markers.clear()
+            }),
+        ];
+        for (named, edit) in edits {
+            let mut p = profile();
+            edit(&mut p);
+            let err = judge(
+                &Tree::default(),
+                &p,
+                &KitPolicy::absent(),
+                LicenceState::Inactive,
+            )
+            .unwrap_err();
+            assert!(err.contains(named), "{named}: {err}");
+        }
+    }
+
+    /// A workflow is a file directly in the workflows directory; a Pages upload of `./`
+    /// publishes the root, which the evidence names as `.`.
+    #[test]
+    fn a_pages_upload_of_the_root_publishes_the_root() {
+        assert!(is_workflow(".github/workflows/pages.yml"));
+        assert!(is_workflow(".github/workflows/deploy.yaml"));
+        assert!(!is_workflow(".github/workflows/notes.txt"));
+        assert!(!is_workflow(".github/workflows/nested/ci.yml"));
+        assert!(!is_workflow("ci.yml"));
+        let mut files = BTreeMap::new();
+        files.insert(
+            ".github/workflows/pages.yml",
+            "jobs:\n  pages:\n    steps:\n      - uses: actions/upload-pages-artifact@v3\n        \
+             with:\n          path: ./\n"
+                .to_string(),
+        );
+        files.insert(
+            "index.html",
+            "<!doctype html><title>x</title>\n".to_string(),
+        );
+        let r = judged(&files, &KitPolicy::absent());
+        assert!(
+            r.ui_evidence
+                .iter()
+                .any(|e| e.contains("published page(s) (.")),
+            "{r:#?}"
+        );
+    }
+
+    /// A root that is not there is an error, not an empty tree; a policy that does not parse
+    /// earns no retired-key notice; a header on the last line without a newline still gains
+    /// its kit on a line of its own.
+    #[test]
+    fn a_missing_root_an_unparsed_policy_and_a_last_line_header_are_handled() {
+        let gone = tempfile::tempdir().unwrap().path().join("gone");
+        assert!(Tree::read(&gone, &profile()).is_err());
+        assert_eq!(retired_notice(Some("a:\n\tb: 1\n")), None);
+        let (text, action) = policy_with_kit("version: 1\nui:", "flowbite-pro").unwrap();
+        assert_eq!(action, AdoptAction::Updated);
+        // the bare header is extended, not repeated
+        assert_eq!(text.matches("ui:").count(), 1, "{text}");
+        let map = yaml::parse_mapping(&text).unwrap();
+        assert_eq!(map["ui"]["kit"], "flowbite-pro");
+        assert!(
+            text.starts_with("version: 1\nui:\n  kit: flowbite-pro"),
+            "{text}"
+        );
+    }
+
+    /// What adoption would write must read back: a policy whose `ui:` block the judge
+    /// refuses is refused, and adoption writes nothing.
+    #[test]
+    fn adoption_over_a_block_the_judge_refuses_is_refused() {
+        let err = reads_back("ui:\n  exempt:\n    - path: a\n", &[]).unwrap_err();
+        assert!(
+            matches!(&err, AdoptError::Refused(m) if m.starts_with(&format!("{POLICY}: "))),
+            "{err:?}"
+        );
+        let dir = repository(&[(POLICY, "version: 1\nui:\n  exempt:\n    - path: a\n")]);
+        let share = crate::synthetic::crate_share();
+        assert!(matches!(
+            adopt(dir.path(), &share, DEFAULT_PROFILE, true),
+            Err(AdoptError::Refused(_))
+        ));
+        assert!(!dir.path().join(RULES_DIR).exists());
+    }
+
+    /// A file adoption cannot write is an internal error naming where, whether its
+    /// directory cannot be made or the file itself cannot be written.
+    #[test]
+    fn a_file_adoption_cannot_write_is_named() {
+        let share = crate::synthetic::crate_share();
+        // the rules directory's place is taken by a file: its directory cannot be made
+        let blocked = repository(&[(POLICY, POLICY_TEXT), (RULES_DIR, "a file")]);
+        let err = adopt(blocked.path(), &share, DEFAULT_PROFILE, false).unwrap_err();
+        assert!(
+            matches!(&err, AdoptError::Internal(m) if m.contains(RULES_DIR)),
+            "{err:?}"
+        );
+        // the rule file's place is taken by a directory: the file cannot be written
+        let rule = format!("{RULES_DIR}/{}", profile().rule_file);
+        let keep = format!("{rule}/keep");
+        let taken = repository(&[(POLICY, POLICY_TEXT), (keep.as_str(), "x")]);
+        let err = adopt(taken.path(), &share, DEFAULT_PROFILE, false).unwrap_err();
+        assert!(
+            matches!(&err, AdoptError::Internal(m) if m.contains(&rule)),
+            "{err:?}"
+        );
     }
 }

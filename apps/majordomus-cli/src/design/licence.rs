@@ -381,9 +381,7 @@ pub fn judge(
     scan: impl FnOnce(&Evidence) -> Vec<Match>,
 ) -> Licence {
     if !tree.declares_kit {
-        return Licence::Inactive {
-            why: NO_KIT.into(),
-        };
+        return Licence::Inactive { why: NO_KIT.into() };
     }
     let Some(ev) = evidence else {
         return match (tree.visibility, tree.has_ui) {
@@ -471,7 +469,9 @@ impl UiPolicy {
     /// no policy section.
     fn load_from(root: &Path, rel: Option<String>) -> Result<UiPolicy, LicenceError> {
         let Some(rel) = rel else {
-            return Err(LicenceError::Policy("the manifest names no policy section".into()));
+            return Err(LicenceError::Policy(
+                "the manifest names no policy section".into(),
+            ));
         };
         std::fs::read_to_string(root.join(&rel))
             .map_err(|e| format!("{rel}: {e}"))
@@ -546,7 +546,13 @@ pub fn assess(
     // every failure of load is the block's own, and so is answered, never raised
     let ui = match UiPolicy::load(repository) {
         Ok(ui) => ui,
-        Err(e) => return Ok(unusable(&UiPolicy::default(), visibility_env, e.to_string())),
+        Err(e) => {
+            return Ok(unusable(
+                &UiPolicy::default(),
+                visibility_env,
+                e.to_string(),
+            ))
+        }
     };
     match judge_tree(repository.root(), &ui, evidence, home, visibility_env) {
         Err(LicenceError::Policy(why)) => Ok(unusable(&ui, visibility_env, why)),
@@ -1213,6 +1219,9 @@ mod tests {
         // a header that is not the first non-empty line is a comment, and names no kit
         assert_eq!(kit("# kit-evidence/v1\n# kit: flowbite-pro\n{FP}\n"), None);
         assert_eq!(kit("{FP}\n# kit: other\n"), None);
+        // a text with no non-empty line has no first line to name a kit
+        assert_eq!(kit_header(""), None);
+        assert_eq!(kit_header(" \n\t\r\n"), None);
         // the header changes no fingerprint
         let ev = Evidence::parse(&format!("# kit: x\n{FP}\n")).unwrap();
         assert_eq!(ev.len(), 1);
@@ -1281,6 +1290,25 @@ mod tests {
         assert_eq!(ui.visibility, Visibility::Private);
         assert_eq!(ui.publish, ["dist"]);
         assert!(UiPolicy::parse("ui:\n  visibility: internal\n").is_err());
+        // a root judged under a block that does not parse is not judged, and fails
+        let dir = tempfile::tempdir().unwrap();
+        let report = assess_root(
+            dir.path(),
+            Some("ui:\n  visibility: internal\n"),
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+        assert_eq!(report.verdict, Verdict::NotJudged);
+        assert!(report.fails);
+        assert!(
+            report
+                .reason
+                .as_deref()
+                .is_some_and(|r| r.contains("cannot be used: ui:")),
+            "{report:?}"
+        );
     }
 
     #[test]
@@ -1380,7 +1408,11 @@ mod tests {
         }
 
         fn evidence(&self) -> String {
-            self.side.path().join("ev.tsv").to_string_lossy().into_owned()
+            self.side
+                .path()
+                .join("ev.tsv")
+                .to_string_lossy()
+                .into_owned()
         }
 
         fn git(&self, args: &[&str]) {
@@ -1388,7 +1420,12 @@ mod tests {
                 .arg("-C")
                 .arg(self.root())
                 .args(["-c", "user.email=t@example.invalid", "-c", "user.name=t"])
-                .args(["-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null"])
+                .args([
+                    "-c",
+                    "commit.gpgsign=false",
+                    "-c",
+                    "core.hooksPath=/dev/null",
+                ])
                 .args(args)
                 .status()
                 .unwrap()
@@ -1434,7 +1471,10 @@ mod tests {
         f.write("web/shell.html", LICENSED);
         f.write("web/index.html", b"<p>own page</p>\n");
         f.commit();
-        let r = f.judged(&ui("examplekit", Visibility::Public, &[]), Some(&f.evidence()));
+        let r = f.judged(
+            &ui("examplekit", Visibility::Public, &[]),
+            Some(&f.evidence()),
+        );
         assert_eq!(only_match(&r), ("web/shell.html", MatchKind::Exact));
         assert_eq!(r.matches[0].source.as_deref(), Some("blocks/shell.html"));
         assert!(r.has_ui);
@@ -1447,9 +1487,15 @@ mod tests {
         let f = Fixture::new();
         f.write("web/index.html", b"<p>own</p>\n");
         f.commit();
-        f.write("web/shell.html", b"<div class=\"examplekit-shell\">\r\n\t<nav>pro</nav>\r\n</div>\r\n");
+        f.write(
+            "web/shell.html",
+            b"<div class=\"examplekit-shell\">\r\n\t<nav>pro</nav>\r\n</div>\r\n",
+        );
         f.git(&["add", "web/shell.html"]);
-        let r = f.judged(&ui("examplekit", Visibility::Public, &[]), Some(&f.evidence()));
+        let r = f.judged(
+            &ui("examplekit", Visibility::Public, &[]),
+            Some(&f.evidence()),
+        );
         assert_eq!(only_match(&r), ("web/shell.html", MatchKind::Normalised));
     }
 
@@ -1479,7 +1525,10 @@ mod tests {
 
         // an ignored, untracked file under the publish directory
         f.write("dist/vendor/shell.html", LICENSED);
-        assert_eq!(only_match(&f.judged(&publish, Some(&ev))).0, "dist/vendor/shell.html");
+        assert_eq!(
+            only_match(&f.judged(&publish, Some(&ev))).0,
+            "dist/vendor/shell.html"
+        );
         std::fs::remove_dir_all(f.root().join("dist")).unwrap();
 
         // a symbolic link from it into an ignored node_modules, and a dangling one
@@ -1487,7 +1536,10 @@ mod tests {
         std::fs::create_dir_all(f.root().join("dist")).unwrap();
         std::os::unix::fs::symlink("../node_modules/kit", f.root().join("dist/link")).unwrap();
         std::os::unix::fs::symlink("../absent", f.root().join("dist/dangling")).unwrap();
-        assert_eq!(only_match(&f.judged(&publish, Some(&ev))).0, "dist/link/shell.html");
+        assert_eq!(
+            only_match(&f.judged(&publish, Some(&ev))).0,
+            "dist/link/shell.html"
+        );
         std::fs::remove_dir_all(f.root().join("dist")).unwrap();
 
         // a nested repository the directory is, as a gh-pages checkout is
@@ -1499,7 +1551,10 @@ mod tests {
             .status()
             .unwrap();
         assert!(nested.success());
-        assert_eq!(only_match(&f.judged(&publish, Some(&ev))).0, "dist/page/shell.html");
+        assert_eq!(
+            only_match(&f.judged(&publish, Some(&ev))).0,
+            "dist/page/shell.html"
+        );
     }
 
     #[test]
@@ -1579,12 +1634,20 @@ mod tests {
             panic!("an absolute ui.publish entry must be a policy error: {bad:?}");
         };
         let answered = unusable(&ui("examplekit", Visibility::Private, &[]), None, why);
-        assert_eq!((answered.verdict, answered.fails), (Verdict::NotJudged, true));
-        assert!(answered.reason.unwrap().starts_with("the policy's ui: block cannot be used"));
+        assert_eq!(
+            (answered.verdict, answered.fails),
+            (Verdict::NotJudged, true)
+        );
+        assert!(answered
+            .reason
+            .unwrap()
+            .starts_with("the policy's ui: block cannot be used"));
 
         // evidence that is not there, or not text, is an evidence error naming the file
         let missing = f.judged_err(Some("/nonexistent/ev.tsv"));
-        assert!(matches!(missing, LicenceError::Evidence(m) if m.starts_with("/nonexistent/ev.tsv")));
+        assert!(
+            matches!(missing, LicenceError::Evidence(m) if m.starts_with("/nonexistent/ev.tsv"))
+        );
         std::fs::write(f.side.path().join("bin.tsv"), [0xff, 0xfe, 0x00]).unwrap();
         let binary = f.side.path().join("bin.tsv").to_string_lossy().into_owned();
         let not_text = f.judged_err(Some(&binary)).to_string();
@@ -1608,10 +1671,18 @@ mod tests {
         f.write("web/index.html", b"<p>own</p>\n");
         f.commit();
         std::fs::write(f.side.path().join("empty.tsv"), "# kit-evidence/v1\n").unwrap();
-        let empty = f.side.path().join("empty.tsv").to_string_lossy().into_owned();
+        let empty = f
+            .side
+            .path()
+            .join("empty.tsv")
+            .to_string_lossy()
+            .into_owned();
         let msg = f.judged_err(Some(&empty)).to_string();
         // a file with no fingerprint names no line: there is none to point at
-        assert!(msg.contains("no fingerprint") && !msg.contains(": line "), "{msg}");
+        assert!(
+            msg.contains("no fingerprint") && !msg.contains(": line "),
+            "{msg}"
+        );
 
         std::fs::write(f.side.path().join("bad.tsv"), "zz\tyy\n").unwrap();
         let mut declared = ui("examplekit", Visibility::Public, &[]);
@@ -1643,13 +1714,19 @@ mod tests {
     fn a_public_tree_that_tracks_nothing_is_active_with_nothing_compared() {
         let f = Fixture::new();
         f.commit();
-        let r = f.judged(&ui("examplekit", Visibility::Public, &[]), Some(&f.evidence()));
+        let r = f.judged(
+            &ui("examplekit", Visibility::Public, &[]),
+            Some(&f.evidence()),
+        );
         assert_eq!((r.verdict, r.files, r.has_ui), (Verdict::Active, 0, false));
     }
 
     #[test]
     fn a_listing_record_without_its_columns_is_skipped() {
-        let got = entries(b"no-tab-here\x00100644 aa\tshort\x00100644 bb 0\tok.html\0", 1);
+        let got = entries(
+            b"no-tab-here\x00100644 aa\tshort\x00100644 bb 0\tok.html\0",
+            1,
+        );
         assert_eq!(got.len(), 2, "{got:?}");
         assert_eq!(got.last().unwrap().path, "ok.html");
         assert!(entries(b"100644\tpath\0", 2).is_empty());
@@ -1669,7 +1746,11 @@ mod tests {
     /// `instead` (a shell fragment) — the way a git that fails half-way behaves.
     fn fake_git(dir: &Path, broken: &str, instead: &str) -> PathBuf {
         let real = String::from_utf8(
-            Command::new("sh").args(["-c", "command -v git"]).output().unwrap().stdout,
+            Command::new("sh")
+                .args(["-c", "command -v git"])
+                .output()
+                .unwrap()
+                .stdout,
         )
         .unwrap();
         let path = dir.join(format!("git-{}", broken.replace(' ', "-")));
@@ -1708,7 +1789,9 @@ mod tests {
         let publish = ui("examplekit", Visibility::Public, &["dist"]);
         let bin = tempfile::tempdir().unwrap();
         let judge_with = |program: PathBuf| {
-            with_git(&program, || judge_tree(f.root(), &publish, Some(&ev), None, None))
+            with_git(&program, || {
+                judge_tree(f.root(), &publish, Some(&ev), None, None)
+            })
         };
         // git missing altogether
         tree_error(judge_with(bin.path().join("absent")), "git could not start");
@@ -1739,7 +1822,10 @@ mod tests {
         let f = Fixture::new();
         // more object names than a pipe holds, so the writer meets the closed pipe
         for i in 0..2500 {
-            f.write(&format!("web/p{i}.html"), format!("<p>{i}</p>\n").as_bytes());
+            f.write(
+                &format!("web/p{i}.html"),
+                format!("<p>{i}</p>\n").as_bytes(),
+            );
         }
         f.commit();
         let bin = tempfile::tempdir().unwrap();
@@ -1778,16 +1864,29 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         assert_eq!(fingerprint_file(&dir.path().join("deleted")), None);
         assert_eq!(fingerprint_file(dir.path()), None);
-        let gone = vec![("gone.html".to_string(), Bytes::Disk(dir.path().join("gone.html")))];
+        let gone = vec![(
+            "gone.html".to_string(),
+            Bytes::Disk(dir.path().join("gone.html")),
+        )];
         let (n, found) = scan(dir.path(), &gone, &full_evidence()).unwrap();
         assert_eq!((n, found.len()), (0, 0));
         // a walk of nothing publishes nothing, and a directory reached twice is walked once
         let mut all = BTreeSet::new();
         let mut seen = HashSet::new();
-        walk(dir.path().join("absent"), "absent".into(), &mut all, &mut seen);
+        walk(
+            dir.path().join("absent"),
+            "absent".into(),
+            &mut all,
+            &mut seen,
+        );
         std::fs::write(dir.path().join("a.html"), "<p/>").unwrap();
         walk(dir.path().to_path_buf(), "d".into(), &mut all, &mut seen);
-        walk(dir.path().to_path_buf(), "again".into(), &mut all, &mut seen);
+        walk(
+            dir.path().to_path_buf(),
+            "again".into(),
+            &mut all,
+            &mut seen,
+        );
         assert_eq!(all.len(), 1);
     }
 
@@ -1809,10 +1908,16 @@ mod tests {
         use std::os::unix::fs::PermissionsExt;
         let f = Fixture::new();
         f.write("web/shell.html", LICENSED);
-        f.write("web/gone.html", b"<p>tracked, then deleted in the working tree</p>\n");
+        f.write(
+            "web/gone.html",
+            b"<p>tracked, then deleted in the working tree</p>\n",
+        );
         f.commit();
         std::fs::remove_file(f.root().join("web/gone.html")).unwrap();
-        let r = f.judged(&ui("examplekit", Visibility::Public, &[]), Some(&f.evidence()));
+        let r = f.judged(
+            &ui("examplekit", Visibility::Public, &[]),
+            Some(&f.evidence()),
+        );
         assert_eq!(only_match(&r).0, "web/shell.html");
         // a published directory the walk may enter but not list publishes nothing
         let locked = f.side.path().join("locked");

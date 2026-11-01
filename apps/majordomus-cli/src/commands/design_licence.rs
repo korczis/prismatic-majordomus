@@ -184,15 +184,28 @@ mod tests {
         let root = repo.root();
         let policy = root.join(".ai/repo/policy.yaml");
         let mut text = std::fs::read_to_string(&policy).unwrap();
-        text.push_str("ui:\n  kit: examplekit\n  visibility: public\n  publish: []\n  evidence: []\n");
+        text.push_str(
+            "ui:\n  kit: examplekit\n  visibility: public\n  publish: []\n  evidence: []\n",
+        );
         std::fs::write(&policy, text).unwrap();
         std::fs::create_dir_all(root.join("web")).unwrap();
         std::fs::write(root.join("web/shell.html"), LICENSED).unwrap();
         for args in [
             &["init", "-q"][..],
             &["add", "-A"][..],
-            &["-c", "user.email=t@example.invalid", "-c", "user.name=t", "-c", "commit.gpgsign=false",
-                "-c", "core.hooksPath=/dev/null", "commit", "-qm", "fixture"][..],
+            &[
+                "-c",
+                "user.email=t@example.invalid",
+                "-c",
+                "user.name=t",
+                "-c",
+                "commit.gpgsign=false",
+                "-c",
+                "core.hooksPath=/dev/null",
+                "commit",
+                "-qm",
+                "fixture",
+            ][..],
         ] {
             let ok = std::process::Command::new("git")
                 .arg("-C")
@@ -232,7 +245,11 @@ mod tests {
         (repo, side)
     }
 
-    fn args(root: &std::path::Path, evidence: Option<std::path::PathBuf>, json: bool) -> DesignArgs {
+    fn args(
+        root: &std::path::Path,
+        evidence: Option<std::path::PathBuf>,
+        json: bool,
+    ) -> DesignArgs {
         DesignArgs {
             repo: crate::cli::RepoArgs {
                 repo: Some(root.to_path_buf()),
@@ -257,17 +274,28 @@ mod tests {
         let code = run_to(args(repo.root(), Some(ev.clone()), false), &mut out).unwrap();
         let text = String::from_utf8(out).unwrap();
         assert_eq!(code, EXIT_REFUSED, "{text}");
-        assert!(text.contains("FAIL web/shell.html holds blocks/shell.html (exact copy)"), "{text}");
+        assert!(
+            text.contains("FAIL web/shell.html holds blocks/shell.html (exact copy)"),
+            "{text}"
+        );
 
         let mut out = Vec::new();
-        assert_eq!(run_to(args(repo.root(), Some(ev), true), &mut out).unwrap(), EXIT_REFUSED);
+        assert_eq!(
+            run_to(args(repo.root(), Some(ev), true), &mut out).unwrap(),
+            EXIT_REFUSED
+        );
         let doc: serde_json::Value = serde_json::from_slice(&out).unwrap();
         assert_eq!(doc["verdict"], "refused");
         assert_eq!(doc["matches"][0]["path"], "web/shell.html");
 
         let mut out = Vec::new();
-        assert_eq!(run_to(args(repo.root(), None, false), &mut out).unwrap(), EXIT_NOT_JUDGED);
-        assert!(String::from_utf8(out).unwrap().contains("design licence: not judged:"));
+        assert_eq!(
+            run_to(args(repo.root(), None, false), &mut out).unwrap(),
+            EXIT_NOT_JUDGED
+        );
+        assert!(String::from_utf8(out)
+            .unwrap()
+            .contains("design licence: not judged:"));
 
         let bad = side.path().join("bad.tsv");
         std::fs::write(&bad, "not evidence\n").unwrap();
@@ -285,10 +313,19 @@ mod tests {
         let (repo, _side) = licensed_repo();
         let policy = repo.root().join(".ai/repo/policy.yaml");
         let text = std::fs::read_to_string(&policy).unwrap();
-        std::fs::write(&policy, text.replace("visibility: public", "visibility: internal")).unwrap();
+        std::fs::write(
+            &policy,
+            text.replace("visibility: public", "visibility: internal"),
+        )
+        .unwrap();
         let mut out = Vec::new();
-        assert_eq!(run_to(args(repo.root(), None, false), &mut out).unwrap(), EXIT_NOT_JUDGED);
-        assert!(String::from_utf8(out).unwrap().contains("ui: block cannot be used"));
+        assert_eq!(
+            run_to(args(repo.root(), None, false), &mut out).unwrap(),
+            EXIT_NOT_JUDGED
+        );
+        assert!(String::from_utf8(out)
+            .unwrap()
+            .contains("ui: block cannot be used"));
 
         std::fs::remove_file(&policy).unwrap();
         let mut out = Vec::new();
@@ -304,17 +341,23 @@ mod tests {
         let mut r = report(Verdict::Active);
         let mut out = Vec::new();
         render(&mut out, &r).unwrap();
-        assert!(String::from_utf8(out).unwrap().contains("active: kit examplekit, public tree, 3 file(s)"));
+        assert!(String::from_utf8(out)
+            .unwrap()
+            .contains("active: kit examplekit, public tree, 3 file(s)"));
         r.verdict = Verdict::Inactive;
         r.kit = String::new();
         r.visibility = Visibility::Private;
         let mut out = Vec::new();
         render(&mut out, &r).unwrap();
-        assert!(String::from_utf8(out).unwrap().contains("inactive: nothing to judge"));
+        assert!(String::from_utf8(out)
+            .unwrap()
+            .contains("inactive: nothing to judge"));
         r.verdict = Verdict::NotJudged;
         let mut out = Vec::new();
         render(&mut out, &r).unwrap();
-        assert!(String::from_utf8(out).unwrap().contains("not judged: no evidence"));
+        assert!(String::from_utf8(out)
+            .unwrap()
+            .contains("not judged: no evidence"));
         r.reason = Some("why".into());
         let mut out = Vec::new();
         render(&mut out, &r).unwrap();
@@ -322,7 +365,9 @@ mod tests {
         r.verdict = Verdict::Active;
         let mut out = Vec::new();
         render(&mut out, &r).unwrap();
-        assert!(String::from_utf8(out).unwrap().contains("active: kit -, private tree"));
+        assert!(String::from_utf8(out)
+            .unwrap()
+            .contains("active: kit -, private tree"));
         let mut r = report(Verdict::Refused);
         r.matches.push(Match {
             path: "a.html".into(),
@@ -356,23 +401,54 @@ mod tests {
         let ev = side.path().join("ev.tsv");
         for json in [false, true] {
             let got = run_to(args(repo.root(), Some(ev.clone()), json), &mut Closed);
-            assert!(matches!(got, Err(Error::Transport(_))), "json {json}: {got:?}");
+            assert!(
+                matches!(got, Err(Error::Transport(_))),
+                "json {json}: {got:?}"
+            );
         }
         let mut r = report(Verdict::Refused);
-        r.matches.push(Match { path: "a".into(), source: None, kind: MatchKind::Exact });
+        r.matches.push(Match {
+            path: "a".into(),
+            source: None,
+            kind: MatchKind::Exact,
+        });
         assert!(matches!(render(&mut Closed, &r), Err(Error::Transport(_))));
 
         let empty = tempfile::tempdir().unwrap();
         assert!(run_to(args(empty.path(), None, false), &mut Vec::new()).is_err());
 
-        assert!(matches!(report_of(&json!({ "verdict": 1 })), Err(Error::Protocol { .. })));
+        // `design kit` is dispatched to its own module; handed here, it is refused
+        let mut kit = args(repo.root(), None, false);
+        kit.command = DesignCommand::Kit(crate::cli::KitArgs {
+            action: None,
+            check: false,
+            evidence: None,
+        });
+        assert!(matches!(
+            run_to(kit, &mut Vec::new()),
+            Err(Error::Protocol { reason }) if reason.contains("another design subcommand")
+        ));
+
+        assert!(matches!(
+            report_of(&json!({ "verdict": 1 })),
+            Err(Error::Protocol { .. })
+        ));
 
         let policy = repo.root().join(".ai/repo/policy.yaml");
         let text = std::fs::read_to_string(&policy).unwrap();
-        std::fs::write(&policy, text.replace("publish: []", "publish: [\"/srv/www\"]")).unwrap();
+        std::fs::write(
+            &policy,
+            text.replace("publish: []", "publish: [\"/srv/www\"]"),
+        )
+        .unwrap();
         let mut out = Vec::new();
-        assert_eq!(run_to(args(repo.root(), Some(ev), false), &mut out).unwrap(), EXIT_NOT_JUDGED);
-        assert!(String::from_utf8(out).unwrap().contains("ui.publish entry `/srv/www`"));
+        assert_eq!(
+            run_to(args(repo.root(), Some(ev), false), &mut out).unwrap(),
+            EXIT_NOT_JUDGED
+        );
+        assert!(String::from_utf8(out)
+            .unwrap()
+            .contains("ui.publish entry `/srv/www`"));
     }
 
     #[test]

@@ -42,22 +42,25 @@ fn run_to(args: DesignArgs, w: &mut dyn Write) -> Result<u8> {
             reason: "design kit was handed another design subcommand".to_string(),
         });
     };
-    match kit_args.action {
-        None => {
-            let value = judged(&args.repo, kit_args.evidence.as_deref())?;
-            let report: KitReport = answer("design.kit", &value)?;
-            emit(w, args.format, &value, || render(&report))?;
-            Ok(exit_code(&report, kit_args.check))
-        }
-        Some(KitAction::Adopt { profile, dry_run }) => {
-            let app = App::load(&args.repo)?;
-            let input = json!({ "profile": profile.name(), "dry_run": dry_run });
-            let value = execute(&app.context, &["design", "kit", "adopt"], input)?;
-            let report: AdoptReport = answer("design.kit.adopt", &value)?;
-            emit(w, args.format, &value, || render_adoption(&report))?;
-            Ok(0)
-        }
-    }
+    // Each arm folds its steps into one result, so a failure anywhere leaves by one exit.
+    let (value, text, code) = match kit_args.action {
+        None => judged(&args.repo, kit_args.evidence.as_deref()).and_then(|value| {
+            answer::<KitReport>("design.kit", &value)
+                .map(|report| (render(&report), exit_code(&report, kit_args.check)))
+                .map(|(text, code)| (value, text, code))
+        }),
+        Some(KitAction::Adopt { profile, dry_run }) => App::load(&args.repo)
+            .and_then(|app| {
+                let input = json!({ "profile": profile.name(), "dry_run": dry_run });
+                execute(&app.context, &["design", "kit", "adopt"], input)
+            })
+            .and_then(|value| {
+                answer::<AdoptReport>("design.kit.adopt", &value)
+                    .map(|report| render_adoption(&report))
+                    .map(|text| (value, text, 0))
+            }),
+    }?;
+    emit(w, args.format, &value, text).map(|()| code)
 }
 
 /// The judgement, from the registry when the repository is supervised and from the same
@@ -137,17 +140,10 @@ fn protocol(reason: impl std::fmt::Display) -> Error {
     }
 }
 
-fn emit(
-    w: &mut dyn Write,
-    format: OutputFormat,
-    value: &Value,
-    text: impl FnOnce() -> String,
-) -> Result<()> {
+fn emit(w: &mut dyn Write, format: OutputFormat, value: &Value, text: String) -> Result<()> {
     let out = match format {
-        OutputFormat::Json => {
-            serde_json::to_string_pretty(value).unwrap_or_else(|_| value.to_string())
-        }
-        OutputFormat::Text => text(),
+        OutputFormat::Json => format!("{value:#}"),
+        OutputFormat::Text => text,
     };
     writeln!(w, "{out}").map_err(Error::Transport)
 }
@@ -686,5 +682,65 @@ mod tests {
             run_to(a, &mut Vec::new()),
             Err(Error::ShareNotFound { .. })
         ));
+        // unsupervised: a share that is no share is found missing before anything is judged
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(dir.path().join(".git")).unwrap();
+        let root = dir.path().to_string_lossy().to_string();
+        let mut a = args(&[
+            "majordomus",
+            "design",
+            "kit",
+            "--repo",
+            &root,
+            "--share",
+            &empty_arg,
+        ]);
+        a.repo.discovery = DiscoveryMode::Filesystem;
+        assert!(matches!(
+            run_to(a, &mut Vec::new()),
+            Err(Error::ShareNotFound { .. })
+        ));
+    }
+
+    /// Output that cannot be written is a transport error in either form, never a verdict
+    /// lost; a start that does not exist is its own top level.
+    #[test]
+    fn a_closed_output_is_a_transport_error_and_a_missing_start_is_its_own_root() {
+        struct Closed;
+        impl Write for Closed {
+            fn write(&mut self, _: &[u8]) -> std::io::Result<usize> {
+                Err(std::io::ErrorKind::BrokenPipe.into())
+            }
+            fn flush(&mut self) -> std::io::Result<()> {
+                Ok(())
+            }
+        }
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(dir.path().join(".git")).unwrap();
+        let root = dir.path().to_string_lossy().to_string();
+        let share = crate::synthetic::crate_share()
+            .to_string_lossy()
+            .to_string();
+        for format in ["text", "json"] {
+            let mut a = args(&[
+                "majordomus",
+                "design",
+                "kit",
+                "--repo",
+                &root,
+                "--share",
+                &share,
+                "--format",
+                format,
+            ]);
+            a.repo.discovery = DiscoveryMode::Filesystem;
+            assert!(
+                matches!(run_to(a, &mut Closed), Err(Error::Transport(_))),
+                "{format}"
+            );
+        }
+        let plain = tempfile::tempdir().unwrap();
+        let missing = plain.path().join("not/there");
+        assert_eq!(toplevel(&missing), missing);
     }
 }
