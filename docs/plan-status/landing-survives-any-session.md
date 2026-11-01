@@ -33,6 +33,9 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3910` | shares .ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md with I4307; they may not run concurrently |
 | WARN | `scope_conflict` | `I3910` | shares apps/majordomus-cli/tests/integration_executor.rs with I4315; they may not run concurrently |
 | WARN | `scope_conflict` | `I3910` | shares docs/INTEGRATION.md with I4333; they may not run concurrently |
+| WARN | `scope_conflict` | `I3910` | shares apps/majordomus-cli/tests/integration_executor.rs with I4481; they may not run concurrently |
+| WARN | `scope_conflict` | `I3910` | shares .ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md with I4500; they may not run concurrently |
 | WARN | `scope_conflict` | `I3911` | shares apps/majordomus-cli/src/integration/drain.rs with I4002; they may not run concurrently |
 | WARN | `scope_conflict` | `I3911` | shares apps/majordomus-cli/tests/integration_executor.rs with I4315; they may not run concurrently |
 | WARN | `scope_conflict` | `I3911` | shares docs/INTEGRATION.md with I4333; they may not run concurrently |
+| WARN | `scope_conflict` | `I3911` | shares apps/majordomus-cli/tests/integration_executor.rs with I4481; they may not run concurrently |

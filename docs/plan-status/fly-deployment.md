@@ -122,5 +122,13 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3820` | shares docs with I4466; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4467; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares share/allow/deployment.txt with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I3820` | shares .ai/repo/adrs/0219-a-deployment-names-its-provider-and-every-provider-file-is-derived.md with I4481; they may not run concurrently |
+| WARN | `scope_conflict` | `I3820` | shares docs with I4483; they may not run concurrently |
+| WARN | `scope_conflict` | `I3820` | shares docs with I4485; they may not run concurrently |
+| WARN | `scope_conflict` | `I3820` | shares docs with I4486; they may not run concurrently |
+| WARN | `scope_conflict` | `I3820` | shares docs with I4488; they may not run concurrently |
+| WARN | `scope_conflict` | `I3820` | shares docs with I4494; they may not run concurrently |
+| WARN | `scope_conflict` | `I3820` | shares docs with I4495; they may not run concurrently |
+| WARN | `scope_conflict` | `I3820` | shares .ai/repo/adrs/0219-a-deployment-names-its-provider-and-every-provider-file-is-derived.md with I4500; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares .gitattributes with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4522; they may not run concurrently |

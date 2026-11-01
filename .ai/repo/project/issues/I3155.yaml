@@ -5,7 +5,7 @@ slug: domain-shell-only-shrinks
 priority: p2
 profile: implementation
 objective: "Add a ratchet to majordomus shell check comparing the class-A unit and line counts with the merge base and refusing an increase or an unexplained relabel, serve the per-class counts as a reading on CLI, MCP and HTTP, and draw that reading as the shell observatory on /ui."
-why: "The README of .ai/repo/automation says 'The list only shrinks' but nothing compares with master; the owner asked for progress measured by logic removed, not .sh counts (2026-10-12), and a derived shell observatory (2026-10-17). It extends milestone automation. Sources: chatgpt-majordomus:c105#1, chatgpt-majordomus:c230#5, chatgpt-majordomus:c290#2."
+why: "The README of .ai/repo/automation says 'The list only shrinks' but nothing compares with master; the owner asked for progress measured by logic removed, not .sh counts (2026-10-12), and a derived shell observatory (2026-10-17). It extends milestone automation. Sources: chatgpt-majordomus:c105#1, chatgpt-majordomus:c230#5, chatgpt-majordomus:c290#2. The owner's pack asks for the same in campaigns/majordomus-shellfall/00-audit-baseline.md; PR #1058 planned it as I2550, which never landed, and the criteria of that record this one did not hold were folded in on 2026-10-30."
 current_state: "inventory.jsonl: 237 records, dispositions A-F (113 A; counted at 707a04c with wc -l and grep -c on the disposition field); shell check refuses unexempted units; the judgement lives in apps/majordomus-cli/src/automation/mod.rs."
 desired_state: "A rise in class A fails the check; counts are derived, never typed into prose."
 scope:
@@ -25,10 +25,15 @@ acceptance_criteria:
   - "Counts by class are on CLI and MCP"
   - "/ui shows the per-class counts and their change against the merge base from the same reading, and the published page is checked to carry them"
   - "Each new case named here takes its number from `scripts/case-numbers next` and is announced on the board before the file is written (ADR 0053); a case number written in this record before that is provisional"
+  - "The report gives units and lines per governed directory"
+  - "The ratchet holds every exempt unit, not only class A"
+  - "Units that nothing calls any more are listed first, derived from the callers the inventory records"
+  - "--against <rev> reads git objects and changes neither HEAD, the index nor the worktree"
+  - "The totals equal an independent count over git ls-files"
 validation:
   - "bin/majordomus-cli shell check"
   - "bash test/run.sh 365_new_shell_is_refused"
 evidence_required:
   - "case_domain_shell_only_shrinks"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-30

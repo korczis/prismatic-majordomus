@@ -147,7 +147,10 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4416` | shares lib/derive.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4417` | shares apps/majordomus-cli/src/graph.rs with I4465; they may not run concurrently |
 | WARN | `scope_conflict` | `I4417` | shares apps/majordomus-cli/src/capability/builtin/trace.rs with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I4417` | shares docs/CAPABILITIES.md with I4481; they may not run concurrently |
+| WARN | `scope_conflict` | `I4417` | shares apps/majordomus-cli/src/capability/builtin/trace.rs with I4486; they may not run concurrently |
 | WARN | `scope_conflict` | `I4418` | shares share/schemas/majordomus/policy/policy.v1.schema.json with I4464; they may not run concurrently |
 | WARN | `scope_conflict` | `I4418` | shares docs/generated/cli.md with I4466; they may not run concurrently |
 | WARN | `scope_conflict` | `I4418` | shares share/schemas/majordomus/policy/policy.v1.schema.json with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I4418` | shares apps/majordomus-cli/src/mcp/protocol.rs with I4481; they may not run concurrently |
 | WARN | `scope_conflict` | `I4418` | shares .ai/repo/policy.yaml with I4512; they may not run concurrently |

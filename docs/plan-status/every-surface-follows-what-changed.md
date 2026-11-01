@@ -41,5 +41,10 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3219` | shares docs/MAJORDOMUS_UI.md with I3820; they may not run concurrently |
 | WARN | `scope_conflict` | `I3219` | shares docs/MAJORDOMUS_UI.md with I4315; they may not run concurrently |
 | WARN | `scope_conflict` | `I3219` | shares apps/majordomus-cli/src/ui/observatory.rs with I4327; they may not run concurrently |
+| WARN | `scope_conflict` | `I3219` | shares docs/MAJORDOMUS_UI.md with I4483; they may not run concurrently |
+| WARN | `scope_conflict` | `I3219` | shares docs/MAJORDOMUS_UI.md with I4485; they may not run concurrently |
+| WARN | `scope_conflict` | `I3219` | shares docs/MAJORDOMUS_UI.md with I4494; they may not run concurrently |
+| WARN | `scope_conflict` | `I3219` | shares docs/MAJORDOMUS_UI.md with I4495; they may not run concurrently |
 | WARN | `scope_conflict` | `I3220` | shares apps/majordomus-cli/src/capability/builtin/plan.rs with I3754; they may not run concurrently |
+| WARN | `scope_conflict` | `I3222` | shares apps/majordomus-cli/src/http/events.rs with I4481; they may not run concurrently |
 | WARN | `scope_conflict` | `I3232` | shares share/ui/observatory-kiosk.js with I3793; they may not run concurrently |

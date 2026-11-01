@@ -5,7 +5,7 @@ slug: prompt-capture-is-bounded
 priority: p2
 profile: implementation
 objective: "Declare a latency budget for the UserPromptSubmit and SessionStart hooks in benchmark policy, meet it by handing the capture to the running shared server (or a durable outbox) instead of a cold executable start, and prove no record is lost."
-why: "Measured 2026-09-10: the capture hook cost about 4 s per prompt, all cold start, and backgrounding it lost every record (lib/capture.sh:2244). The owner's standing order since then is that hooks never slow the owner down. Rebound to the new intent criterion #hooks-within-budget, because the hooks this intent generates (Stop per turn, edit guard per edit) carry the same cold-start cost. Milestone development-runtime belongs to no intent, so moving this issue there would leave it unbound. It extends milestone development-runtime. Sources: chatgpt-majordomus:c099#0, chatgpt-majordomus:c099#3, chatgpt-majordomus:c099#9."
+why: "Measured 2026-09-10: the capture hook cost about 4 s per prompt, all cold start, and backgrounding it lost every record (lib/capture.sh:2244). The owner's standing order since then is that hooks never slow the owner down. Rebound to the new intent criterion #hooks-within-budget, because the hooks this intent generates (Stop per turn, edit guard per edit) carry the same cold-start cost. Milestone development-runtime belongs to no intent, so moving this issue there would leave it unbound. It extends milestone development-runtime. Sources: chatgpt-majordomus:c099#0, chatgpt-majordomus:c099#3, chatgpt-majordomus:c099#9. The owner's pack asks for the same in campaigns/majordomus-shellfall/05-remove-shell-legacy.md; PR #1058 planned it as I2561, which never landed, and the criteria of that record this one did not hold were folded in on 2026-10-30."
 current_state: "Every lifecycle event is inline (mj_lifecycle_latency prints inline); policy.yaml declares prompt-capture with no budget."
 desired_state: "bench --check holds the budget; a case proves every prompt of a burst is recorded."
 scope:
@@ -24,6 +24,8 @@ acceptance_criteria:
   - "A burst of prompts yields one record each"
   - "With no server the hook degrades to inline capture, never to loss"
   - "The declared budget covers every generated hook that runs per prompt, per turn or per edit (capture, Stop report, edit guard), not only prompt capture"
+  - "With the executable present, the prompt hook records under a PATH with no bash"
+  - "The records written equal lib/capture.sh's on the same payloads, and exits 12 and 13 are kept while the hook never exits 2"
 validation:
   - "majordomus bench --check"
   - "bash test/run.sh 29_prompt_capture"
@@ -31,4 +33,4 @@ evidence_required:
   - "bench_prompt_capture"
   - "case_no_prompt_record_is_lost"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-30

@@ -6,7 +6,7 @@ priority: p1
 profile: implementation
 parallel_safe: false
 objective: "Make a capability declared in a file of the layer, with a Rhai script as its handler, a capability of the one registry: discovered by the index as a kind, validated with errors naming file and field, runnable through majordomus run, and projected onto the command line, MCP, OpenAPI and the generated reference by the projections that already exist."
-why: "ADR 0069 refuses a second registry (project.no-new-nouns). A script reaches the repository only through capabilities, by one host function that calls Context::execute, so validation, redaction, counters and the execution plane apply to every call a script makes; and the host refuses a callee whose effect exceeds the script's declared effect."
+why: "ADR 0069 refuses a second registry (project.no-new-nouns). A script reaches the repository only through capabilities, by one host function that calls Context::execute, so validation, redaction, counters and the execution plane apply to every call a script makes; and the host refuses a callee whose effect exceeds the script's declared effect. The owner's pack asks for the same in campaigns/majordomus-shellfall/02-rhai-runtime.md; PR #1058 planned it as I2549 and I2551 and I2552, which never landed, and the criteria of those records this one did not hold were folded in on 2026-10-30."
 current_state: "Capabilities come from Rust modules and from declarative objects as resources only; nothing turns a layer file into an executable capability."
 desired_state: "A capability kind with a versioned schema and a script kind beside it; the registry builds an executable capability from each definition; one real scripted capability ships composing read-only capabilities; case 383 drives it end to end."
 scope:
@@ -28,6 +28,10 @@ acceptance_criteria:
   - a call to a capability whose effect exceeds the declared effect is refused
   - a cancelled execution of a scripted capability stops
   - the scripted capability appears in capabilities list, OpenAPI and MCP after generate with no edit elsewhere
+  - "SECURITY.md and rule project.no-network-no-eval state the interpreter exception ADR 0069 claims they state, and ADR 0069's context is re-measured on the tree it is accepted on"
+  - "A test counts exactly one Engine construction in the crate, and the array and map size limits are tested as the string limit is"
+  - "Loading or validating a definition executes no capability, counted at the executor"
+  - "A scripted capability's events have the same shape from the command line and from MCP, and its HTTP and MCP error bodies carry file:line:col"
 validation:
   - cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib script::
   - bash test/run.sh 383_a_scripted_capability_runs
@@ -35,4 +39,4 @@ evidence_required:
   - scripted_capability_projected_everywhere
   - effect_ceiling_enforced
 created_at: 2026-09-15
-updated_at: 2026-09-15
+updated_at: 2026-10-30

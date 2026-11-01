@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [automation](https://majordomus.dev/plan/automation/) | ACTIVE | 3/6 | 2 | 1 | 0 | 0 | 0 | A capability may be scripted (ADR 0069): a Rhai script inside the Rust executable orchestrates typed capabilities through the one registry, reaches every surface by the projections that already exist, runs in a sandbox with a declared and enforced effect ceiling, and shell shrinks by migration under a gate that refuses new shell without a declared exemption. |
+| [automation](https://majordomus.dev/plan/automation/) | ACTIVE | 3/9 | 4 | 2 | 0 | 0 | 0 | A capability may be scripted (ADR 0069): a Rhai script inside the Rust executable orchestrates typed capabilities through the one registry, reaches every surface by the projections that already exist, runs in a sandbox with a declared and enforced effect ceiling, and shell shrinks by migration under a gate that refuses new shell without a declared exemption. |
 
 ## Issues
 
@@ -21,6 +21,9 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I1803](https://majordomus.dev/plan/i1803/) | DONE | 0 | — | New shell is refused without a declared exemption, and the migration inventory is tracked |
 | [I1804](https://majordomus.dev/plan/i1804/) | BLOCKED | 2 | I1801 | The first shell scripts become scripted capabilities over typed Rust |
 | [I3160](https://majordomus.dev/plan/i3160/) | READY | 0 | — | A behavioural case can be written as a Rust integration test over a disposable repository, and the continuity cases are the first ported |
+| [I4486](https://majordomus.dev/plan/i4486/) | READY | 0 | — | A program is run by one typed capability: an executable and an argument list, a bound and a process group, and never a command string |
+| [I4488](https://majordomus.dev/plan/i4488/) | READY | 0 | — | A behavioural case may be a Rust test: it counts in the suite report, a removed shell case names what replaced it, and the number of shell cases does not rise |
+| [I4489](https://majordomus.dev/plan/i4489/) | BLOCKED | 1 | I4488 | Ten cases whose subject is the Rust executable alone are Rust tests, each removed with its mapping row |
 
 ## Findings
 
@@ -73,4 +76,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3160` | shares .ai/repo/ci/gates.yaml with I4357; they may not run concurrently |
 | WARN | `scope_conflict` | `I3160` | shares .ai/repo/ci/gates.yaml with I4381; they may not run concurrently |
 | WARN | `scope_conflict` | `I3160` | shares .ai/repo/ci/gates.yaml with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I3160` | shares .ai/repo/ci/gates.yaml with I4488; they may not run concurrently |
 | WARN | `scope_conflict` | `I3160` | shares .ai/repo/ci/gates.yaml with I4512; they may not run concurrently |
+| WARN | `scope_conflict` | `I4486` | shares apps/majordomus-cli/src/capability/builtin with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I4488` | shares .ai/repo/ci with I4512; they may not run concurrently |
