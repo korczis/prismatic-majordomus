@@ -9,9 +9,11 @@
 #               run-plan exits 1, the push carries  refused with 1, naming the top (rule v3)
 #               a refs/heads/integration/train-*
 #               ref with a commit
-#               a gate exits 12 and no executable   the top goes on: the gate is NOT JUDGED,
-#               of the tree's generation exists     CI judges it, and a fast case that runs
-#                                                   the executable is left out by name
+#               a gate exits 12 with the launcher's the top goes on: the gate is NOT JUDGED,
+#               refusal (`run: just build`) and no  CI judges it, and a fast case that calls
+#               executable of the tree's generation rust_bin is left out by name
+#               a gate exits 12 for its own reason  refused on a top: a failure as any other
+#               (CANNOT MEASURE), no executable
 #               a gate exits 12 beside an executable refused on a top: a failure as any other
 #               run-plan exits 12 (no plan)         refused with 12
 #               finish --check fails                refused with its code
@@ -38,11 +40,18 @@ stub scripts/case-numbers 'echo "case 7 is claimed twice"; exit "${CASES_RC:-0}"
 stub scripts/rust-check 'echo "rustdoc: warning"; exit "${RUSTDOC_RC:-0}"'
 stub scripts/pages 'exit "${PAGES_RC:-0}"'
 stub scripts/ci/providers-check 'exit "${SSH_RC:-0}"'
-# the plan run-plan computes: one structure gate, which fails when GATE_FAILS is set and exits
-# 12 when GATE_RC12 is set, as a gate does that finds no executable
+# a gate's call of the launcher with no executable: what lib/rust_bin.sh prints, and exit 12
+stub scripts/launcher-refuses "echo 'majordomus-cli: x is missing, and no ordinary command builds it (ADR 0224)' >&2
+echo 'majordomus-cli:   run: just build   (cargo build --locked --manifest-path x), or set MAJORDOMUS_BIN' >&2
+exit 12"
+# the plan run-plan computes: one structure gate, which fails when GATE_FAILS is set, exits 12
+# with the launcher's refusal when GATE_RC12 is set, as a gate does that finds no executable
+# (lib/rust_bin.sh's words), and exits 12 for a reason of its own when GATE_OWN12 is set, as
+# collision-check does when it cannot measure
 stub scripts/ci-plan '[ -n "${PLAN_FAILS:-}" ] && exit 3
 runs=true; [ -n "${GATE_FAILS:-}" ] && runs="echo the reason it failed; false"
-[ -n "${GATE_RC12:-}" ] && runs="echo no executable of this generation; exit 12"
+[ -n "${GATE_RC12:-}" ] && runs="scripts/launcher-refuses"
+[ -n "${GATE_OWN12:-}" ] && runs="echo collision-check: CANNOT MEASURE: no remote branch could be read; exit 12"
 printf "{\"schema\":1,\"mode\":\"test\",\"reason\":\"a fixture\",\"selected\":[],\"gates\":[{\"id\":\"economics-claims\",\"job\":\"structure\",\"runs\":\"%s\",\"selected\":true,\"network\":false,\"reason\":\"t\"}]}\n" "$runs"'
 printf 'economics-claims\t2\n' > "$T/durations.tsv"; : > "$T/cases.tsv"
 export MJ_PUSH_DURATIONS="$T/durations.tsv" MJ_PUSH_CASES="$T/cases.tsv"
@@ -107,11 +116,23 @@ echo "  pre-push: with no executable of the tree's generation, a gate's exit 12 
 printf '9001_runs_the_executable\t1\n9002_runs_no_executable\t1\n' > "$T/cases.tsv"
 GATE_RC12=1 expect_exit 0 pushTop
 expect_grep 'executable: none'
-expect_grep "^  NOT JUDGED economics-claims \([0-9]+s\): exit 12, and no executable of this tree's generation is here; CI judges it$"
+expect_grep "^  NOT JUDGED economics-claims \([0-9]+s\): exit 12, the launcher's refusal for want of an executable of this tree's generation; CI judges it$"
 expect_grep "^  left out case 9001_runs_the_executable: it runs the executable, and none of this tree's generation is here; CI runs it$"
 grep -qx '9002_runs_no_executable' "$CASES_RAN" || fail "the cases run were: $(cat "$CASES_RAN")"
-expect_grep "; not judged here: economics-claims \(exit 12 with no executable of this tree's generation; CI judges them\); nothing judged here failed$"
+expect_grep "; not judged here: economics-claims \(exit 12 from the launcher, which has no executable of this tree's generation; CI judges them\); nothing judged here failed$"
 expect_no_grep 'FAILED|refused'
+echo "  pre-push: with no executable, a gate's exit 12 for a reason of its own is a failure, refused on a top"
+GATE_OWN12=1 expect_exit 1 pushTop
+expect_grep 'executable: none'
+expect_grep 'FAILED economics-claims'
+expect_grep 'CANNOT MEASURE'
+expect_grep "refused: this push carries the train top $T13,"
+expect_no_grep 'NOT JUDGED|not judged here'
+GATE_OWN12=1 expect_exit 0 pushA
+expect_grep '; reported, not refused: CI holds the verdict$'
+# run-plan matches the launcher's own line; it must still be the line lib/rust_bin.sh prints
+grep -qF "printf '%s  run: just build   (cargo build --locked --manifest-path" "$ROOT/lib/rust_bin.sh" \
+  || fail "lib/rust_bin.sh no longer prints the refusal run-plan keys NOT JUDGED on"
 echo "  pre-push: beside a judged failure the not-judged gate is still named, and the top is refused"
 GATE_RC12=1 CASES_FAIL=1 expect_exit 1 pushTop
 expect_grep '^  NOT JUDGED economics-claims '

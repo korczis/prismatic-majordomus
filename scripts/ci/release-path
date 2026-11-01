@@ -11,11 +11,12 @@
 #       the runs of the release path that are queued or running; exit 0 clear, 10 busy
 #   scripts/ci/release-path yield   --event E --pr N --branch B --self ID
 #       a pull request's validate run asks before it plans: busy, and it labels its pull
-#       request, says which run it yielded to, and cancels itself; clear, and it proceeds
+#       request, says which run it yielded to, and cancels itself, except a train's (labelled
+#       with the model's exempt_label), which proceeds; clear, and it proceeds
 #   scripts/ci/release-path preempt [--self ID]
 #       the tag push's own run: busy, and every pull-request validate already queued or
-#       running is labelled, told, and cancelled, and one still not completed after the wait
-#       is force-cancelled; clear, and nothing is touched
+#       running, except a train's, is labelled, told, and cancelled, and one still not
+#       completed after the wait is force-cancelled; clear, and nothing is touched
 #   scripts/ci/release-path resume  [--self ID]
 #       clear, and the newest validate run of each labelled pull request's head runs again
 #       when it is the cancelled one, and the label goes; busy, and nothing is touched
@@ -29,9 +30,9 @@
 # only its own run, and only when --event is pull_request and --branch is no record branch.
 # Nor a train: a pull request labelled with the model's exempt_label (`train`, the landing
 # seat's combined top) never yields and is never preempted (the owner, 2026-11-01). Its labels
-# are read from the forge; a run whose labels cannot be read is not asked to yield, by yield
-# or by preempt, because a reading that cannot be made decides nothing. Members and every
-# other pull request yield as before.
+# are read from the forge; a run whose labels cannot be read is not known to be a train, so it
+# yields as it did before the exemption, by yield and by preempt, and says why. Members and
+# every other pull request yield as before.
 #
 # Forge access is `gh api` with GH_TOKEN, against --repo or GITHUB_REPOSITORY. A reading that
 # cannot be made is said and decides nothing: `yield` lets the run proceed, `preempt` and
@@ -219,8 +220,7 @@ yield)
     say "release-path: pull request #$PR is labelled $EXEMPT, a train, and a train never yields; this run proceeds beside $first"
     exit 0
   elif [ "$ex" = 2 ]; then
-    warn "$LABELS_ERR; this run proceeds without yielding to $first"
-    exit 0
+    warn "$LABELS_ERR; it is not known to be a train, so this run yields as before"
   fi
   notice "validate run $SELF of pull request #$PR yields to $first; it runs again once the release path is clear"
   summary "## Yielded to the release path"
@@ -261,8 +261,7 @@ preempt)
       say "left   validate run $id of #$pr on $branch ($st): labelled $EXEMPT, a train, which never yields"
       continue
     elif [ "$ex" = 2 ]; then
-      warn "validate run $id of #$pr was not asked to yield: $LABELS_ERR"
-      continue
+      warn "validate run $id of #$pr: $LABELS_ERR; it is not known to be a train, so it yields as before"
     fi
     mark_and_tell "$pr" "$id" "$first"
     if out="$(api -X POST "repos/$SLUG/actions/runs/$id/cancel" 2>&1)"; then

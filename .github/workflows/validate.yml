@@ -165,8 +165,10 @@ jobs:
       # deploy it asked for is queued or running, a pull request's run gives its slots back:
       # it labels its pull request, says which run it yielded to, and cancels itself, before
       # any job of its own has asked for a runner. `release-path resume` runs it again once
-      # the path is clear. Never on master, the schedule or a dispatch, and never on a record
-      # branch; a reading that cannot be made lets the run proceed. Model and enforcer:
+      # the path is clear. Never on master, the schedule or a dispatch, never on a record
+      # branch, and never on a pull request labelled train (the exempt_label: the landing
+      # seat's combined top); a reading that cannot be made lets the run proceed, except that
+      # labels which cannot be read exempt nothing. Model and enforcer:
       # .ai/repo/ci/release-path.yaml, scripts/ci/release-path; case 3027.
       - name: the release path goes first
         if: github.event_name == 'pull_request'
