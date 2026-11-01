@@ -90,6 +90,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3829` | shares site with I4318; they may not run concurrently |
 | WARN | `scope_conflict` | `I3829` | shares docs/MCP.md with I4323; they may not run concurrently |
 | WARN | `scope_conflict` | `I3829` | shares docs/generated with I4352; they may not run concurrently |
+| WARN | `scope_conflict` | `I3829` | shares site with I4377; they may not run concurrently |
 | WARN | `scope_conflict` | `I3829` | shares site with I4380; they may not run concurrently |
 | WARN | `scope_conflict` | `I3829` | shares docs/CLAIMS.yaml with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I3829` | shares docs/claims with I4411; they may not run concurrently |

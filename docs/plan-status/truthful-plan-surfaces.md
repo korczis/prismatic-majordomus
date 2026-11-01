@@ -111,6 +111,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/Cargo.toml with I4302; they may not run concurrently |
 | WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I4327; they may not run concurrently |
 | WARN | `scope_conflict` | `I2747` | shares apps/majordomus-cli/src/ui with I4330; they may not run concurrently |
+| WARN | `scope_conflict` | `I2747` | shares share/ui/ui.js with I4377; they may not run concurrently |
 | WARN | `scope_conflict` | `I2747` | shares share/design with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I2747` | shares .ai/repo/automation/inventory.jsonl with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I2747` | shares .ai/repo/automation/inventory.jsonl with I4512; they may not run concurrently |
@@ -122,6 +123,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3079` | shares apps/majordomus-cli/src/ui/view.rs with I3449; they may not run concurrently |
 | WARN | `scope_conflict` | `I3079` | shares share/ui/src/ui.css with I3793; they may not run concurrently |
 | WARN | `scope_conflict` | `I3079` | shares apps/majordomus-cli/src/ui/deployments.rs with I4327; they may not run concurrently |
+| WARN | `scope_conflict` | `I3079` | shares share/ui/src/ui.css with I4377; they may not run concurrently |
 | WARN | `scope_conflict` | `I3319` | shares site/content/adrs/adr-0017.md with I3820; they may not run concurrently |
 | WARN | `scope_conflict` | `I3319` | shares site/content/adrs/adr-0017.md with I3829; they may not run concurrently |
 | WARN | `scope_conflict` | `I3319` | shares site/content/adrs/adr-0017.md with I3841; they may not run concurrently |
@@ -197,6 +199,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3750` | shares scripts/generate-site-data with I3836; they may not run concurrently |
 | WARN | `scope_conflict` | `I3750` | shares scripts/generate-site-data with I3841; they may not run concurrently |
 | WARN | `scope_conflict` | `I3750` | shares scripts/generate-site-data with I3945; they may not run concurrently |
+| WARN | `scope_conflict` | `I3750` | shares site/templates/partials/graph.html with I4377; they may not run concurrently |
 | WARN | `scope_conflict` | `I3750` | shares site/templates/partials/graph.html with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I3750` | shares scripts/generate-site-data with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3751` | shares site/i18n/cs/memory with I3753; they may not run concurrently |

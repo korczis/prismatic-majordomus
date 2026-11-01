@@ -21,7 +21,11 @@
 // the screen has one, from the URL the page names (`data-graph-lib`). The nodes and edges are
 // the ones the server put on the page; the table beside them is what a reader without the
 // script, or without the library, reads instead. Colours are the design system's tones, read
-// from the stylesheet, so nothing here names a colour.
+// from the stylesheet, so nothing here names a colour. Pointing at a node lights it and its
+// neighbours and shows a card naming it; the drawing is one keyboard stop, in which the arrows
+// walk to the nearest node that way, Enter opens it, + / - / 0 zoom and fit, Shift+arrows pan
+// and Escape clears. A plain wheel scrolls the page; Ctrl/Cmd+wheel or a pinch zooms. The
+// minute's refresh redraws a graph where the reader left it: nothing moves or replays.
 //
 // A command to reproduce (`data-mj-copy`) has a copy button, in a snapshot too (I3002): the
 // page carries it hidden, and it is shown only where a clipboard can be written, so a button
@@ -138,23 +142,695 @@ function loadScript(src) {
   });
 }
 
-// A token's colour as sRGB hex: the tokens resolve to OKLCH, which the graph library cannot
-// read, so the colour is painted on one pixel and its channels are read back. This converts a
-// token; it chooses no colour, and a token that does not resolve keeps the caller's fallback.
+// A colour as sRGB hex. The tokens resolve to OKLCH, which the graph library cannot read, so
+// the browser resolves the colour on a probe element (which also resolves a `color-mix()` of
+// two tokens: the soft fills below) and it is painted on one pixel whose channels are read
+// back. This converts; it chooses no colour. A token that does not resolve keeps the caller's
+// fallback, and without one the page's own body colour, as the Cockpit's palette() does: a
+// drawing without its tokens is monochrome, which is honest, and never a literal.
 const probe = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
-function token(name, fallback) {
-  const v = getComputedStyle(document.body || document.documentElement).getPropertyValue(name).trim();
-  if (!v || !probe) return fallback;
+const swatch = document.createElement('span');
+const painted = new Map(); // css -> hex, emptied when the theme changes
+const pageStyle = () => getComputedStyle(document.body || document.documentElement);
+function paint(css) {
+  if (!css || !probe || !document.body) return '';
+  if (painted.has(css)) return painted.get(css);
+  swatch.style.color = '';
+  swatch.style.color = css;
+  if (!swatch.style.color) return ''; // not a colour this browser reads
+  document.body.append(swatch);
+  const resolved = getComputedStyle(swatch).color;
+  swatch.remove();
   probe.clearRect(0, 0, 1, 1);
-  probe.fillStyle = '#000';
-  probe.fillStyle = v;
+  probe.fillStyle = 'transparent';
+  probe.fillStyle = resolved;
   probe.fillRect(0, 0, 1, 1);
   const [r, g, b, a] = probe.getImageData(0, 0, 1, 1).data;
   const hex = (c) => c.toString(16).padStart(2, '0');
-  return a === 0 ? fallback : `#${hex(r)}${hex(g)}${hex(b)}`;
+  const out = a === 0 ? '' : `#${hex(r)}${hex(g)}${hex(b)}`;
+  painted.set(css, out);
+  return out;
+}
+const declared = (name) => Boolean(pageStyle().getPropertyValue(name).trim());
+function token(name, fallback) {
+  return (declared(name) && paint(`var(${name})`)) || fallback || paint(pageStyle().color);
+}
+// `percent` of one token over another, opaque: a soft fill is a role over the ground it sits on
+function mix(name, percent, ground) {
+  if (!declared(name) || !declared(ground)) return token(name);
+  return paint(`color-mix(in oklch, var(${name}) ${percent}%, var(${ground}))`) || token(name);
+}
+// a length or a duration the stylesheet declares, as the number the library wants (px or ms)
+const measure = (name) => parseFloat(pageStyle().getPropertyValue(name));
+function motionMs() {
+  const v = pageStyle().getPropertyValue('--mj-motion-fast').trim();
+  const n = parseFloat(v);
+  if (!Number.isFinite(n)) return 0;
+  return v.endsWith('ms') ? n : n * 1000;
+}
+
+// A relationship graph reads like the rest of the design: a node of the graph's main kind is a
+// soft disc in its tone with a ring of the tone's ink and its name on a chip of the page's
+// ground; a leaf is a small solid dot, named when pointed at or chosen. Pointing at a node
+// lights it and its neighbours and dims the rest; choosing one (a click, or the keyboard) rings
+// it in the accent, the one colour that means interactive. A plain wheel scrolls the page as it
+// does everywhere else, and Ctrl/Cmd+wheel or a pinch zooms; the frame's own buttons and keys
+// do the rest. The minute's refresh redraws each graph where the reader left it, so nothing
+// moves or animates again. Every number below is geometry; every colour is a token.
+const ZOOM_MIN = 0.2;
+const ZOOM_MAX = 3;
+const ZOOM_STEP = 1.25;
+const NATURAL = 1.25; // fitting never enlarges a small graph past this: it is read, not blown up
+const FIT_PADDING = 24;
+const PAN_STEP = 48;
+const DIM = 0.15;
+const HALO_HOVER = 0.14;
+const HALO_CHOSEN = 0.22;
+const LARGE = 400; // past this many nodes, no transitions and a texture while moving
+const live = []; // { cy, key, holder, directed, moving, stop }, one per graph drawn
+const seen = new Map(); // key -> { positions, zoom, pan, moved, chosen }, what a refresh restores
+let graphCount = 0;
+
+function graphStyle(directed, moving) {
+  const size = measure('--text-label') || parseFloat(pageStyle().fontSize);
+  const mono = pageStyle().getPropertyValue('--font-mono').trim() || pageStyle().fontFamily;
+  const ink = token('--mj-fg');
+  const ground = token('--mj-bg');
+  const raised = token('--mj-raised');
+  const accent = token('--mj-accent');
+  // --mj-line is the frame's own ground in the dark theme, so an edge in it vanished there: an
+  // edge is the muted ink softened over the frame, which reads, and recedes, in both themes
+  const edge = mix('--mj-muted', 55, '--mj-sunken');
+  const tones = new Map();
+  const tone = (t) => {
+    if (!tones.has(t)) {
+      const named = /^[a-z]+$/.test(t || '') && declared(`--mj-tone-${t}`);
+      const ring = named ? `--mj-tone-${t}` : '--mj-accent';
+      tones.set(t, {
+        solid: token(`--mj-tone-${t}-fill`, token('--mj-accent-fill')),
+        ring: token(ring),
+        soft: mix(ring, 14, '--mj-raised'),
+      });
+    }
+    return tones.get(t);
+  };
+  const fast = moving ? motionMs() : 0;
+  const transition = fast
+    ? {
+      'transition-property':
+        'opacity, text-opacity, border-color, border-width, underlay-opacity, line-color, width',
+      'transition-duration': fast,
+    }
+    : {};
+  return [
+    {
+      selector: 'node',
+      style: {
+        'background-color': (n) => tone(n.data('tone')).soft,
+        'border-color': (n) => tone(n.data('tone')).ring,
+        'border-width': 2,
+        width: 26,
+        height: 26,
+        label: 'data(label)',
+        color: ink,
+        'font-size': size,
+        'font-family': mono,
+        'text-valign': 'bottom',
+        'text-margin-y': 6,
+        'text-wrap': 'ellipsis',
+        'text-max-width': 160,
+        'text-background-color': ground,
+        'text-background-opacity': 1,
+        'text-background-shape': 'round-rectangle',
+        'text-background-padding': 2,
+        'min-zoomed-font-size': 7,
+        'overlay-opacity': 0,
+        'underlay-color': accent,
+        'underlay-opacity': 0,
+        'underlay-padding': 8,
+        'underlay-shape': 'ellipse',
+        ...transition,
+      },
+    },
+    {
+      selector: 'node[kind = "leaf"]',
+      style: {
+        'background-color': (n) => tone(n.data('tone')).solid,
+        'border-color': raised,
+        label: '',
+        width: 12,
+        height: 12,
+        'underlay-padding': 6,
+      },
+    },
+    {
+      selector: 'edge',
+      style: {
+        width: 1.5,
+        'line-color': edge,
+        'target-arrow-color': edge,
+        'target-arrow-shape': 'triangle',
+        'arrow-scale': 0.8,
+        ...(directed
+          ? { 'curve-style': 'taxi', 'taxi-direction': 'downward', 'taxi-turn': '50%' }
+          : { 'curve-style': 'bezier' }),
+        ...transition,
+      },
+    },
+    { selector: '.mj-dim', style: { opacity: DIM, 'text-opacity': 0 } },
+    { selector: 'node.mj-hover', style: { 'underlay-opacity': HALO_HOVER, label: 'data(label)' } },
+    {
+      selector: 'edge.mj-near',
+      style: { 'line-color': accent, 'target-arrow-color': accent, width: 2.2, 'z-index': 9 },
+    },
+    {
+      selector: 'node:selected',
+      style: {
+        'border-color': accent,
+        'border-width': 3,
+        'underlay-opacity': HALO_CHOSEN,
+        label: 'data(label)',
+      },
+    },
+  ];
+}
+
+// The colours are read again when the theme changes, and every graph on the screen is restyled
+// where it stands: nothing is laid out again and nothing replays.
+let themeWatch = null;
+let themeGround = '';
+function watchTheme() {
+  if (themeWatch || !window.MutationObserver) return;
+  themeGround = pageStyle().getPropertyValue('--mj-bg').trim();
+  themeWatch = new MutationObserver(() => {
+    const ground = pageStyle().getPropertyValue('--mj-bg').trim();
+    if (ground === themeGround) return;
+    themeGround = ground;
+    painted.clear();
+    for (const g of live) g.cy.style(graphStyle(g.directed, g.moving));
+  });
+  themeWatch.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+}
+
+// A graph whose screen was replaced is given back: where its nodes stood, how far it was zoomed,
+// which node was chosen and whether the keyboard was in it are kept under its name, for the
+// same graph on the new screen. Only a graph that was laid out in a frame of its own is kept,
+// and the first one of a name is the one kept, so a drawing into a screen already replaced
+// (a zero-size frame) never overwrites where the reader left the real one.
+function letGo() {
+  const saved = new Set();
+  for (let i = 0; i < live.length; i++) {
+    const g = live[i];
+    const container = g.cy.container();
+    if (container && container.isConnected) continue;
+    if (!saved.has(g.key) && g.cy.width() > 0 && g.cy.height() > 0) {
+      saved.add(g.key);
+      const positions = {};
+      g.cy.nodes().forEach((n) => {
+        positions[n.id()] = { ...n.position() };
+      });
+      const chosen = g.cy.nodes(':selected');
+      seen.set(g.key, {
+        positions,
+        zoom: g.cy.zoom(),
+        pan: { ...g.cy.pan() },
+        moved: g.moved,
+        chosen: chosen.length ? chosen[0].id() : null,
+        focused: g.focused,
+      });
+    }
+    g.stop();
+    g.cy.destroy();
+    live.splice(i, 1);
+    i--;
+  }
+}
+
+// Where the nodes a refreshed screen adds stand: beside what they touch, never on top of what
+// is there. A node with a neighbour already standing goes to the middle of its standing
+// neighbours, a row below them in a tree (above, when it points at them) or an edge's length
+// away in a force layout, spread when several share those neighbours, and moved along until
+// it stands on nobody. What touches nothing standing is laid out among itself below the rest.
+const EDGE_LENGTH = 70;
+// two nodes stand on each other when nearer than ROOM one above the other, or twice that side
+// by side, where their names are
+const ROOM = 48;
+function placeNew(cy, before, directed, placement) {
+  const at = {};
+  const where = (id) => at[id] || before.positions[id];
+  const taken = [];
+  cy.nodes().forEach((node) => {
+    const p = before.positions[node.id()];
+    if (p) taken.push(p);
+  });
+  // a tree's row height is the smallest step between the rows it already has
+  let row = 0;
+  if (directed) {
+    const ys = [...new Set(taken.map((p) => Math.round(p.y)))].sort((a, b) => a - b);
+    for (let i = 1; i < ys.length; i++) {
+      const step = ys[i] - ys[i - 1];
+      if (step > ROOM / 2 && (!row || step < row)) row = step;
+    }
+  }
+  row = row || 2 * EDGE_LENGTH;
+  const free = (p) => taken.every((q) => {
+    const dx = (q.x - p.x) / (2 * ROOM);
+    const dy = (q.y - p.y) / ROOM;
+    return dx * dx + dy * dy >= 1;
+  });
+  let left = cy.nodes().filter((node) => !before.positions[node.id()]);
+  for (let progress = true; progress && left.length;) {
+    progress = false;
+    const groups = new Map(); // the neighbours a node stands by -> the nodes standing by them
+    left.forEach((node) => {
+      const by = node.neighborhood('node').filter((m) => where(m.id()));
+      if (!by.length) return;
+      const ids = by.map((m) => m.id()).sort().join(' ');
+      if (!groups.has(ids)) groups.set(ids, []);
+      groups.get(ids).push({ node, by });
+    });
+    groups.forEach((group) => {
+      group.forEach(({ node, by }, i) => {
+        let x = 0;
+        let y = 0;
+        by.forEach((m) => {
+          x += where(m.id()).x;
+          y += where(m.id()).y;
+        });
+        x /= by.length;
+        y /= by.length;
+        const spread = i - (group.length - 1) / 2;
+        let p;
+        if (directed) {
+          // below what points at it, above what it points at
+          const child = node.incomers('node').some((m) => where(m.id()));
+          p = { x: x + spread * 2 * ROOM, y: y + (child ? row : -row) };
+        } else {
+          const turn = (2 * Math.PI * i) / group.length + Math.PI / 2;
+          p = { x: x + EDGE_LENGTH * Math.cos(turn), y: y + EDGE_LENGTH * Math.sin(turn) };
+        }
+        for (let step = 0; step < 100 && !free(p); step++) p.x += ROOM / 2;
+        at[node.id()] = p;
+        taken.push(p);
+        progress = true;
+      });
+    });
+    left = left.filter((node) => !at[node.id()]);
+  }
+  cy.batch(() => {
+    for (const id of Object.keys(at)) cy.getElementById(id).position(at[id]);
+  });
+  if (!left.length) return;
+  const all = cy.nodes().not(left).boundingBox();
+  left.layout({
+    ...placement,
+    animate: false,
+    fit: false,
+    boundingBox: {
+      x1: all.x1,
+      y1: all.y2 + row,
+      w: Math.max(all.w, 4 * EDGE_LENGTH),
+      h: Math.max(row, 2 * EDGE_LENGTH),
+    },
+  }).run();
+}
+
+// The node nearest `from` in the direction (dx, dy), within 60 degrees either side of it.
+function nearestToward(cy, from, dx, dy) {
+  const p = from.position();
+  let best = null;
+  let score = Infinity;
+  cy.nodes(':visible').forEach((n) => {
+    if (n.same(from)) return;
+    const q = n.position();
+    const vx = q.x - p.x;
+    const vy = q.y - p.y;
+    const d = Math.hypot(vx, vy);
+    if (!d) return;
+    const cos = (vx * dx + vy * dy) / d;
+    if (cos < 0.5) return;
+    const s = d * (2 - cos);
+    if (s < score) {
+      score = s;
+      best = n;
+    }
+  });
+  return best;
+}
+
+// the node nearest the middle of what the frame shows: where the keyboard starts
+function nearestMiddle(cy) {
+  const z = cy.zoom();
+  const pan = cy.pan();
+  const mx = (cy.width() / 2 - pan.x) / z;
+  const my = (cy.height() / 2 - pan.y) / z;
+  let best = null;
+  let score = Infinity;
+  cy.nodes(':visible').forEach((n) => {
+    const q = n.position();
+    const d = Math.hypot(q.x - mx, q.y - my);
+    if (d < score) {
+      score = d;
+      best = n;
+    }
+  });
+  return best;
+}
+
+function drawGraph(holder, canvas, data, still) {
+  const key = canvas.getAttribute('aria-label') || `graph ${live.length}`;
+  const before = seen.get(key);
+  const directed = data.layout !== 'force';
+  const nodes = data.nodes.length;
+  const moving = !still && nodes <= LARGE;
+  const fast = still ? 0 : motionMs();
+  const n = ++graphCount;
+
+  canvas.hidden = false;
+  // a graph drawn again by the minute's refresh does not fade in again
+  if (before) holder.classList.add('mj-ui-graph--again');
+  holder.classList.add('mj-ui-graph--drawn');
+  canvas.tabIndex = 0;
+  canvas.setAttribute('role', 'application');
+  canvas.setAttribute('aria-roledescription', 'graph');
+
+  const keys = document.createElement('p');
+  keys.id = `mj-ui-graph-keys-${n}`;
+  keys.className = 'mj-sr-only';
+  keys.textContent = 'Arrow keys move between nodes, Enter opens the chosen one, Escape clears. '
+    + 'Home and End reach the first and last node. '
+    + 'Plus and minus zoom, 0 fits the graph, Shift with an arrow pans. '
+    + 'Ctrl or Cmd with the wheel zooms; the wheel alone scrolls the page.';
+  const said = document.createElement('p');
+  said.className = 'mj-sr-only';
+  said.setAttribute('aria-live', 'polite');
+  canvas.setAttribute('aria-describedby', keys.id);
+
+  const tip = document.createElement('div');
+  tip.className = 'mj-graph-tip';
+  tip.hidden = true;
+  tip.setAttribute('aria-hidden', 'true');
+
+  const tools = document.createElement('div');
+  tools.className = 'mj-ui-graph-tools';
+  tools.setAttribute('role', 'group');
+  tools.setAttribute('aria-label', 'Graph view');
+  const tool = (text, label, act) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'mj-button';
+    b.textContent = text;
+    b.title = label;
+    b.setAttribute('aria-label', label);
+    b.addEventListener('click', act);
+    tools.append(b);
+  };
+  canvas.after(tools, tip, keys, said);
+
+  const positioned = before
+    ? data.nodes.filter((d) => before.positions[d.id]).length
+    : 0;
+  const placement = directed
+    ? { name: 'breadthfirst', directed: true, spacingFactor: 1.15, padding: FIT_PADDING }
+    : {
+      name: 'cose',
+      padding: FIT_PADDING,
+      nodeRepulsion: () => 9000,
+      idealEdgeLength: () => EDGE_LENGTH,
+    };
+  const layout = before
+    ? { name: 'preset', positions: (node) => before.positions[node.id()], fit: false }
+    : {
+      ...placement,
+      // a force layout grows out of its middle; a tree settles into its rows
+      animate: fast ? (directed ? true : 'end') : false,
+      animationDuration: 3 * fast,
+      // the first fit stops at the natural size; after it, the reader may zoom to the bound
+      stop: (event) => event.cy.maxZoom(ZOOM_MAX),
+    };
+
+  const cy = window.cytoscape({
+    container: canvas,
+    elements: [
+      ...data.nodes.map((d) => ({ data: d })),
+      ...data.edges.map((e, i) => ({ data: { id: `e${i}`, ...e } })),
+    ],
+    layout,
+    minZoom: ZOOM_MIN,
+    maxZoom: before ? ZOOM_MAX : NATURAL,
+    wheelSensitivity: 0.2,
+    hideEdgesOnViewport: nodes > LARGE,
+    textureOnViewport: nodes > LARGE,
+    style: graphStyle(directed, moving),
+  });
+  holder.mjGraph = cy;
+
+  const g = { cy, key, holder, directed, moving, moved: false, focused: false, stop: () => {} };
+  live.push(g);
+
+  if (before) {
+    // the nodes this screen adds are placed beside what they touch, without moving the others
+    if (positioned < nodes) placeNew(cy, before, directed, placement);
+    cy.viewport({ zoom: before.zoom, pan: before.pan });
+    g.moved = before.moved;
+  }
+
+  // a plain wheel scrolls the page; Ctrl/Cmd+wheel (a pinch arrives as one) reaches the drawing
+  holder.addEventListener('wheel', (event) => {
+    if (!event.ctrlKey && !event.metaKey) event.stopPropagation();
+  }, { capture: true, passive: true });
+
+  const zoomTo = (level) => {
+    const z = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, level));
+    const at = { x: cy.width() / 2, y: cy.height() / 2 };
+    g.moved = true;
+    if (fast) cy.animate({ zoom: { level: z, renderedPosition: at } }, { duration: 2 * fast });
+    else cy.zoom({ level: z, renderedPosition: at });
+  };
+  // the whole graph in the frame, and no larger than its natural size, centred
+  const framing = () => {
+    const all = cy.elements();
+    const vp = cy.getFitViewport(all, FIT_PADDING);
+    if (!vp || vp.zoom <= NATURAL) return vp;
+    const bb = all.boundingBox();
+    return {
+      zoom: NATURAL,
+      pan: {
+        x: cy.width() / 2 - NATURAL * (bb.x1 + bb.w / 2),
+        y: cy.height() / 2 - NATURAL * (bb.y1 + bb.h / 2),
+      },
+    };
+  };
+  const fit = (animated) => {
+    const vp = framing();
+    g.moved = false;
+    if (!vp) return;
+    if (fast && animated !== false) cy.animate(vp, { duration: 2 * fast });
+    else cy.viewport(vp);
+  };
+  tool('−', 'Zoom out', () => zoomTo(cy.zoom() / ZOOM_STEP));
+  tool('+', 'Zoom in', () => zoomTo(cy.zoom() * ZOOM_STEP));
+  tool('Fit', 'Fit the graph to the frame', () => fit());
+  cy.on('scrollzoom pinchzoom dragpan', () => {
+    g.moved = true;
+  });
+
+  // Lit: one node and the nodes and edges it touches; everything else dims. A chosen node
+  // outranks the pointer: while one is held, pointing elsewhere names that node (its card and
+  // a halo) and leaves the picture as it is.
+  const light = (node) => {
+    cy.batch(() => {
+      cy.elements().removeClass('mj-near mj-dim');
+      if (!node) return;
+      const near = node.closedNeighborhood();
+      near.addClass('mj-near');
+      cy.elements().not(near).addClass('mj-dim');
+    });
+  };
+  const chosen = () => {
+    const c = cy.nodes(':selected');
+    return c.length ? c[0] : null;
+  };
+
+  const coarse = window.matchMedia('(pointer: coarse)').matches;
+  const hideTip = () => {
+    tip.hidden = true;
+  };
+  const showTip = (node) => {
+    const label = document.createElement('div');
+    label.className = 'mj-graph-tip-title';
+    label.textContent = node.data('label');
+    // The card says what the server said about the node and no more: its name and how many
+    // links it has. The node's `kind` is how it is drawn (a disc or a leaf), not what it is,
+    // and its tone is a status the data does not name, so neither is printed or keyed here.
+    const row = document.createElement('div');
+    row.className = 'mj-graph-tip-row';
+    const name = document.createElement('span');
+    name.className = 'mj-graph-tip-name';
+    name.textContent = 'Links';
+    const links = node.connectedEdges().length;
+    const value = document.createElement('span');
+    value.className = 'mj-graph-tip-value';
+    value.textContent = String(links);
+    row.append(name, value);
+    tip.replaceChildren(label, row);
+    if (node.data('href')) {
+      const foot = document.createElement('div');
+      foot.className = 'mj-graph-tip-foot';
+      foot.textContent = 'Enter or click to open';
+      tip.append(foot);
+    }
+    tip.hidden = false;
+    // read once, then written once: the card is kept inside the frame and off the node and
+    // its name: above them, or beside them where there is no room above, to the right when
+    // the card fits there and otherwise on the side with more room
+    const w = tip.offsetWidth;
+    const h = tip.offsetHeight;
+    const p = node.renderedPosition();
+    const box = node.renderedBoundingBox({ includeLabels: true, includeOverlays: false });
+    const gap = 8;
+    const inside = (v, room) => Math.min(Math.max(v, 4), room - 4);
+    let left = inside(p.x - w / 2, cy.width() - w);
+    let top = box.y1 - gap - h;
+    if (top < 4) {
+      top = inside(p.y - h / 2, cy.height() - h);
+      const right = box.x2 + gap + w <= cy.width() - 4 || p.x < cy.width() / 2;
+      left = inside(right ? box.x2 + gap : box.x1 - gap - w, cy.width() - w);
+    }
+    left += canvas.offsetLeft;
+    top += canvas.offsetTop;
+    tip.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
+  };
+  let restoring = false; // a refresh gives the chosen node back without announcing it again
+  const say = (node) => {
+    if (restoring) return;
+    const links = node.connectedEdges().length;
+    said.textContent = `${node.data('label')}, ${links} ${links === 1 ? 'link' : 'links'}.`
+      + `${node.data('href') ? ' Enter opens it.' : ''}`;
+  };
+
+  cy.on('mouseover', 'node', (evt) => {
+    const node = evt.target;
+    if (!chosen()) light(node);
+    node.addClass('mj-hover');
+    canvas.style.cursor = node.data('href') ? 'pointer' : '';
+    if (!coarse) showTip(node);
+  });
+  cy.on('mouseout', 'node', (evt) => {
+    evt.target.removeClass('mj-hover');
+    canvas.style.cursor = '';
+    hideTip();
+    light(chosen());
+  });
+  cy.on('viewport', hideTip);
+  cy.on('select', 'node', (evt) => {
+    light(evt.target);
+    say(evt.target);
+  });
+  cy.on('unselect', 'node', () => {
+    if (!chosen()) light(null);
+  });
+  cy.on('tap', 'node', (evt) => {
+    const href = evt.target.data('href');
+    if (href) window.location.assign(href);
+    // the keyboard carries on from what the pointer chose
+    else if (document.activeElement !== canvas) canvas.focus({ preventScroll: true });
+  });
+
+  // The keyboard: the drawing is one stop, and inside it the arrows walk the graph.
+  const choose = (node) => {
+    if (!node) return;
+    cy.nodes(':selected').unselect();
+    node.select();
+    const p = node.renderedPosition();
+    const outside = p.x < FIT_PADDING || p.y < FIT_PADDING
+      || p.x > cy.width() - FIT_PADDING || p.y > cy.height() - FIT_PADDING;
+    if (!outside) {
+      showTip(node);
+    } else if (fast) {
+      g.moved = true;
+      cy.animate({ center: { eles: node } }, {
+        duration: 2 * fast,
+        complete: () => showTip(node),
+      });
+    } else {
+      g.moved = true;
+      cy.center(node);
+      showTip(node);
+    }
+  };
+  const ARROWS = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+  canvas.addEventListener('keydown', (event) => {
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    const k = event.key;
+    const current = chosen();
+    if (ARROWS[k] && event.shiftKey) {
+      const [dx, dy] = ARROWS[k];
+      g.moved = true;
+      cy.panBy({ x: -dx * PAN_STEP, y: -dy * PAN_STEP });
+    } else if (ARROWS[k]) {
+      const [dx, dy] = ARROWS[k];
+      choose(current ? nearestToward(cy, current, dx, dy) || current : nearestMiddle(cy));
+    } else if (k === 'Home' || k === 'End') {
+      const all = cy.nodes(':visible');
+      choose(k === 'Home' ? all.first() : all.last());
+    } else if (k === 'Enter') {
+      const href = current && current.data('href');
+      if (!href) return;
+      window.location.assign(href);
+    } else if (k === '+' || k === '=') {
+      zoomTo(cy.zoom() * ZOOM_STEP);
+    } else if (k === '-' || k === '_') {
+      zoomTo(cy.zoom() / ZOOM_STEP);
+    } else if (k === '0') {
+      fit();
+    } else if (k === 'Escape') {
+      cy.nodes(':selected').unselect();
+      hideTip();
+      said.textContent = '';
+    } else {
+      return;
+    }
+    event.preventDefault();
+  });
+  // whether the keyboard is in the drawing, so a refresh gives it back: a blur that comes with
+  // the screen being replaced (the canvas already out of the page) is not the reader leaving
+  canvas.addEventListener('focus', () => {
+    g.focused = true;
+  });
+  canvas.addEventListener('blur', () => {
+    hideTip();
+    if (canvas.isConnected) g.focused = false;
+  });
+
+  // a frame that changes size is fitted again, unless the reader has zoomed or panned since
+  if (window.ResizeObserver) {
+    let size = `${canvas.clientWidth}x${canvas.clientHeight}`;
+    const watch = new ResizeObserver(() => {
+      const now = `${canvas.clientWidth}x${canvas.clientHeight}`;
+      if (now === size) return;
+      size = now;
+      cy.resize();
+      if (!g.moved) fit(false);
+    });
+    watch.observe(canvas);
+    g.stop = () => watch.disconnect();
+  }
+
+  if (before && before.chosen) {
+    const again = cy.getElementById(before.chosen);
+    restoring = true;
+    if (again.length) again.select();
+    restoring = false;
+  }
+  // the keyboard that was walking the graph walks on from where it was, unless the reader has
+  // since moved it somewhere else on the page
+  const idle = !document.activeElement || document.activeElement === document.body;
+  if (before && before.focused && idle) canvas.focus({ preventScroll: true });
 }
 
 async function drawGraphs() {
+  letGo();
   const holders = [...document.querySelectorAll('[data-graph]')];
   const lib = document.body && document.body.dataset.graphLib;
   if (!holders.length || !lib) return;
@@ -165,59 +841,14 @@ async function drawGraphs() {
   }
   const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   for (const holder of holders) {
+    // drawn already, or on a screen a refresh replaced while the library was loading
+    if (holder.mjGraph || !holder.isConnected) continue;
     const data = JSON.parse(holder.dataset.graph || '{"nodes":[],"edges":[]}');
     const canvas = holder.querySelector('.mj-ui-graph-canvas');
     if (!canvas || !data.nodes.length) continue;
-    canvas.hidden = false;
-    holder.classList.add('mj-ui-graph--drawn');
-    const fill = (tone) => token(`--mj-tone-${tone}-fill`, token('--mj-accent-fill', '#888'));
-    const cy = window.cytoscape({
-      container: canvas,
-      elements: [
-        ...data.nodes.map((n) => ({ data: n })),
-        ...data.edges.map((e, i) => ({ data: { id: `e${i}`, ...e } })),
-      ],
-      layout: data.layout === 'force'
-        ? { name: 'cose', animate: !still, padding: 24, nodeRepulsion: () => 9000, idealEdgeLength: () => 70 }
-        : { name: 'breadthfirst', directed: true, spacingFactor: 1.15, animate: !still, padding: 16 },
-      wheelSensitivity: 0.2,
-      style: [
-        {
-          selector: 'node',
-          style: {
-            'background-color': (n) => fill(n.data('tone')),
-            label: 'data(label)',
-            color: token('--mj-fg', '#888'),
-            'font-size': 11,
-            'font-family': getComputedStyle(document.body).getPropertyValue('--font-mono').trim() || 'monospace',
-            'text-valign': 'bottom',
-            'text-margin-y': 6,
-            width: 22,
-            height: 22,
-            'border-width': 3,
-            'border-color': token('--mj-raised', '#000'),
-            'overlay-opacity': 0,
-          },
-        },
-        {
-          selector: 'edge',
-          style: {
-            width: 1.5,
-            'line-color': token('--mj-line', '#888'),
-            'target-arrow-color': token('--mj-muted', '#888'),
-            'target-arrow-shape': 'triangle',
-            'curve-style': 'bezier',
-          },
-        },
-        { selector: 'node[kind = "leaf"]', style: { label: '', width: 12, height: 12, 'border-width': 2 } },
-        { selector: 'node:active, node:selected', style: { 'border-color': token('--mj-accent', '#888'), label: 'data(label)' } },
-      ],
-    });
-    cy.on('tap', 'node', (evt) => {
-      const href = evt.target.data('href');
-      if (href) window.location.assign(href);
-    });
+    drawGraph(holder, canvas, data, still);
   }
+  watchTheme();
 }
 
 // Reading the sources again: while the screen is visible, every minute, the server's

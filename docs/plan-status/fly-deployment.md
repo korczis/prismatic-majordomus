@@ -103,6 +103,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3820` | shares docs with I4349; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4352; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4357; they may not run concurrently |
+| WARN | `scope_conflict` | `I3820` | shares docs with I4377; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares site with I4380; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4381; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4400; they may not run concurrently |
