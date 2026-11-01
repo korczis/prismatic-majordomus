@@ -138,6 +138,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I4418; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I4466; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares .ai/repo/ci/gates.yaml with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I2374` | shares .ai/repo/ci/gates.yaml with I4488; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares .ai/repo/ci/gates.yaml with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3753` | shares site/i18n/cs/memory with I3757; they may not run concurrently |
 | WARN | `scope_conflict` | `I3753` | shares site/i18n/cs/memory with I3810; they may not run concurrently |

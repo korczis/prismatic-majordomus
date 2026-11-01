@@ -1,0 +1,47 @@
+id: I4508
+milestone: a-profile-is-resolved-once-and-enforced
+title: "Governance shows the profiles: each one's axes and standing, the effective profile of the active task with where every field came from, and what another profile would change"
+slug: governance-shows-the-profiles
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give majordomus ui a view of the profile system drawn from the resolver: the list of profiles, an inspector for one, the effective profile of the active task with its provenance and standing, and the structured difference a candidate profile would make."
+why: "campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md, PROMPT 05, asks for the effective profile and its origin, discovery of profiles, a preview of what would change before activation and an explanation of why a setting is effective, in the existing UI with its router, readings and components, with no frontend inventory of profiles and no policy computed in the page. No screen of src/ui reads a profile today; the only place a person sees one is check --explain in a terminal."
+current_state: "Measured at 51b38035a71, where no commit since 3491f35cab has touched the profile schema, share/allow/profile.txt, .ai/repo/profiles, share/skeleton/profiles or the claim pages. apps/majordomus-cli/src/ui/governance.rs reads only rules.report, and its inspector is the rule (ui/rule.rs). ui/mod.rs SCREENS names no profile screen. Screens ask through ui/source.rs, and case 1096_no_screen_waits_for_a_source refuses an execute under src/ui outside source.rs. The only profile any web surface shows is a task's profile name on the Cockpit (cockpit/pages.rs, cockpit/plan.rs)."
+desired_state: "The Governance screen gains a Profiles panel that lists profile.list with each profile's description and its granted effects, each row a link to the inspector (?profile=<name>). The inspector draws profile.show with the standing of every axis. When the checkout has an active task, the panel draws profile.resolve for it: each field with its source, reason and standing, the fingerprint, and whether it still equals the one the task started with. With ?profile and ?against, the inspector draws the difference profile.resolve answers for the two, field by field. Every value is the capability's; an absent one reads none; a profile, an issue and a rule named on the page are links. The page offers no control that changes a profile."
+scope:
+  - "apps/majordomus-cli/src/ui/governance.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/src/ui/view.rs"
+  - "apps/majordomus-cli/tests/ui_links.rs"
+  - "apps/majordomus-cli/tests/ui_surface.rs"
+  - "docs/MAJORDOMUS_UI.md"
+  - "docs/PROFILES.md"
+  - "test/cases"
+  - ".ai/repo/project/issues/I4508.yaml"
+non_scope:
+  - "Changing a task's profile from the page: I4509 declares the command, and a UI screen reads and does not execute"
+  - "A list of profiles, axes or standings in the script or the template: the page draws what the capabilities answer"
+  - "A live stream of profile-linked execution: I2487 owns the stream, and no execution carries a profile"
+depends_on:
+  - I4502
+  - I4507
+acceptance_criteria:
+  - "The panel lists exactly the profiles profile.list answers on a fixture, and a profile file added to the fixture appears with no change under src/ui"
+  - "With an active task, every field of the effective profile is drawn with its source and standing, and the fingerprint equals the one majordomus profile resolve --json prints"
+  - "The difference view of implementation against review names the granted effects as the changed field and nothing that did not change"
+  - "With no active task the panel says so and draws the policy's default as the profile a task would start with"
+  - "Every link the panel and the inspector draw answers 200 (tests/ui_links.rs), and nothing under src/ui calls execute (case 1096)"
+  - "At 360 px wide the panel has no horizontal overflow, held by the UI conformance checks that hold the other screens"
+  - "The panel is drawn with the existing kit of ui/view.rs (panel, table, kpi) on the Flowbite Pro structure with the --mj-* tokens, and adds no ad-hoc CSS"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::governance"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_links"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 1096_no_screen_waits_for_a_source 1091_no_link_on_the_ui_is_dead"
+evidence_required:
+  - "profiles_screen"
+  - "profiles_panel_unit_tests"
+  - "ui_links_cover_profiles"
+created_at: 2026-10-30
+updated_at: 2026-10-30

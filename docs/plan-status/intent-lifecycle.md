@@ -78,8 +78,11 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1900` | shares .ai/repo/ci/gates.yaml with I4357; they may not run concurrently |
 | WARN | `scope_conflict` | `I1900` | shares .ai/repo/ci/gates.yaml with I4381; they may not run concurrently |
 | WARN | `scope_conflict` | `I1900` | shares apps/majordomus-cli/src/capability/builtin/intents.rs with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I1900` | shares apps/majordomus-cli/src/capability/builtin/intents.rs with I4486; they may not run concurrently |
+| WARN | `scope_conflict` | `I1900` | shares .ai/repo/ci/gates.yaml with I4488; they may not run concurrently |
 | WARN | `scope_conflict` | `I1900` | shares .ai/repo/ci/gates.yaml with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3258` | shares apps/majordomus-cli/src/intent.rs with I3395; they may not run concurrently |
 | WARN | `scope_conflict` | `I3258` | shares docs/CONCEPTS.md with I3820; they may not run concurrently |
 | WARN | `scope_conflict` | `I3258` | shares apps/majordomus-cli/src/intent.rs with I4322; they may not run concurrently |
 | WARN | `scope_conflict` | `I3258` | shares apps/majordomus-cli/src/intent.rs with I4325; they may not run concurrently |
+| WARN | `scope_conflict` | `I3258` | shares apps/majordomus-cli/tests/intent.rs with I4481; they may not run concurrently |

@@ -127,6 +127,7 @@ END {
         else if (k == "adr")      edges_adr(i)
         else if (k == "knowledge") edges_knowledge(i)
         else if (k == "feature")  edges_feature(i)
+        else if (k == "session")  edges_session(i)
     }
     report_edges()
 }
@@ -493,6 +494,53 @@ function edges_issue(si,   p, id, from, n, v) {
         v = f(p, "depends_on." n)
         if (v == "") break
         add_edge(from, node_id("issue", v), "depends_on", p ":depends_on." n)
+    }
+}
+
+# session -> each task, issue, checkpoint, handover, decision and question its own front
+# matter names it touched (I0813). Every edge is `references`, the one type a dangling
+# target is never a defect for (add_edge's e_owned): a session names ids and paths the
+# knowledge graph does not otherwise hold a node for — a task, an operational checkpoint or
+# handover file, the text of a decision or question that may since have been edited or
+# removed — and the point of this edge is which session touched something, not that the
+# something still resolves. Checkpoints and handovers are named by their path in the front
+# matter; their node id, like every other checkpoint and handover node, is the path's own
+# basename without extension, so a session's edge lands on the same id a checkpoint's own
+# extraction would use, without this file ever holding a checkpoint's body (I0813's second
+# criterion: nothing here reads past the front matter it is pointed at).
+function edges_session(si,   p, id, from, n, v) {
+    p = spath[si]
+    id = f(p, "session_id"); if (id == "") return
+    from = node_id("session", id)
+    for (n = 0; ; n++) {
+        v = f(p, "tasks." n)
+        if (v == "") break
+        add_edge(from, node_id("task", v), "references", p ":tasks." n)
+    }
+    for (n = 0; ; n++) {
+        v = f(p, "issues." n)
+        if (v == "") break
+        add_edge(from, node_id("issue", v), "references", p ":issues." n)
+    }
+    for (n = 0; ; n++) {
+        v = f(p, "checkpoints." n)
+        if (v == "") break
+        add_edge(from, node_id("checkpoint", basename_noext(v)), "references", p ":checkpoints." n)
+    }
+    for (n = 0; ; n++) {
+        v = f(p, "handovers." n)
+        if (v == "") break
+        add_edge(from, node_id("handover", basename_noext(v)), "references", p ":handovers." n)
+    }
+    for (n = 0; ; n++) {
+        v = f(p, "decisions." n)
+        if (v == "") break
+        add_edge(from, node_id("decision", v), "references", p ":decisions." n)
+    }
+    for (n = 0; ; n++) {
+        v = f(p, "questions." n)
+        if (v == "") break
+        add_edge(from, node_id("question", v), "references", p ":questions." n)
     }
 }
 
