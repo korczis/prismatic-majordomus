@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.10"
   },
-  "fingerprint": "c3ab777db475b0f8ea092a855e6e4ef9fdb8bc8990d16f30904b2988cc061670",
+  "fingerprint": "9dd781f31cf8deed7737b7c034c26691ff8821f4f604397a70c509aea7dc61d4",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -17,8 +17,8 @@
     "modules_covered": 58,
     "commands": 30,
     "commands_covered": 30,
-    "kinds": 31,
-    "kinds_covered": 31
+    "kinds": 30,
+    "kinds_covered": 30
   },
   "surfaces": [
     {
@@ -37,7 +37,7 @@
       "id": "mcp",
       "title": "MCP",
       "route": "/registry/mcp/",
-      "features": 28
+      "features": 27
     },
     {
       "id": "cockpit",
@@ -1729,7 +1729,7 @@
           "surfaces": {
             "cli": true,
             "api": false,
-            "mcp": true,
+            "mcp": false,
             "cockpit": true,
             "docs": true
           },
@@ -6598,7 +6598,6 @@
         "recover"
       ],
       "kinds": [
-        "session",
         "prompt"
       ],
       "rules": [
@@ -6940,10 +6939,6 @@
         }
       ],
       "kind_refs": [
-        {
-          "name": "session",
-          "objects": 93
-        },
         {
           "name": "prompt",
           "objects": 5
@@ -7296,11 +7291,11 @@
       "counts": {
         "capabilities": 20,
         "mcp_tools": 20,
-        "mcp_resources": 103,
+        "mcp_resources": 10,
         "http_routes": 20,
         "cli_paths": 8,
         "commands": 7,
-        "objects": 98,
+        "objects": 5,
         "rules": 8,
         "enforced_rules": 7,
         "docs": 2,
@@ -12355,9 +12350,7 @@
         "capture",
         "watch"
       ],
-      "kinds": [
-        "session"
-      ],
+      "kinds": [],
       "rules": [
         "majordomus.ledger-integrity",
         "project.never-author-identity",
@@ -12405,7 +12398,7 @@
       "surfaces": {
         "cli": true,
         "api": false,
-        "mcp": true,
+        "mcp": false,
         "cockpit": true,
         "docs": true
       },
@@ -12436,12 +12429,7 @@
           "read_only": true
         }
       ],
-      "kind_refs": [
-        {
-          "name": "session",
-          "objects": 93
-        }
-      ],
+      "kind_refs": [],
       "rule_refs": [
         {
           "id": "majordomus.ledger-integrity",
@@ -12672,11 +12660,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 93,
+        "mcp_resources": 0,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 4,
-        "objects": 93,
+        "objects": 0,
         "rules": 4,
         "enforced_rules": 4,
         "docs": 2,
@@ -16599,13 +16587,12 @@
         "surfaces": {
           "cli": true,
           "api": false,
-          "mcp": true,
+          "mcp": false,
           "cockpit": true,
           "docs": true
         },
         "exposed": [
           "cli",
-          "mcp",
           "cockpit",
           "docs"
         ],
@@ -17708,14 +17695,6 @@
         ]
       },
       {
-        "id": "session",
-        "title": "session (93)",
-        "features": [
-          "continuity",
-          "provenance"
-        ]
-      },
-      {
         "id": "skill",
         "title": "skill (8)",
         "features": [
@@ -18692,17 +18671,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3728,
+    "capabilities": 3636,
     "builtin": 220,
-    "declarative": 3508,
+    "declarative": 3416,
     "modules": 60,
     "mcp_tools": 206,
-    "mcp_resources": 3565,
+    "mcp_resources": 3473,
     "http_routes": 212,
     "cli_commands": 220,
     "shell_commands": 30,
-    "kinds": 34,
-    "objects": 3508,
+    "kinds": 33,
+    "objects": 3416,
     "by_kind": {
       "adr": 167,
       "application": 5,
@@ -18732,10 +18711,9 @@
       "release-record": 38,
       "rule": 192,
       "scope": 1,
-      "session": 93,
       "skill": 8,
       "taxonomy": 10,
-      "test": 672,
+      "test": 673,
       "use-case": 49,
       "workspace": 1
     },
